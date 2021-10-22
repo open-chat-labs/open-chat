@@ -24,7 +24,6 @@
     } from "../../domain/search/search";
     import type { UserSummary } from "../../domain/user/user";
     import { blockedUsers } from "../../stores/blockedUsers";
-    import { stopMarkReadPoller } from "../../stores/markRead";
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
     import { initNotificationStores } from "../../stores/notifications";
@@ -57,7 +56,7 @@
 
     onDestroy(() => {
         // clean up anything that needs to be stopped e.g. pollers
-        stopMarkReadPoller();
+        $machine.context.markRead.stop();
     });
 
     $: {
@@ -272,7 +271,7 @@
         {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
             <MiddlePanel
                 loadingChats={$machine.matches("loading_chats")}
-                {blocked}
+                blocked={!!blocked}
                 on:newchat={newChat}
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}

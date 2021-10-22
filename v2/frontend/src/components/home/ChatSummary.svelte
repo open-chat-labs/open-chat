@@ -54,7 +54,14 @@
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
 </script>
 
-<a role="button" class="chat-summary" class:selected href={`/#/${chatSummary.chatId}`}>
+<a
+    role="button"
+    class="chat-summary"
+    class:selected
+    href={`/#/${chatSummary.chatId}`}
+    title={`Us: ${JSON.stringify(chatSummary.readByMe)} Them: ${JSON.stringify(
+        chatSummary.readByThem
+    )}`}>
     <div class="avatar">
         <Avatar {blocked} url={chat.avatarUrl} status={chat.userStatus} size={AvatarSize.Small} />
     </div>

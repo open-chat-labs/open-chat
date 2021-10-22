@@ -1,4 +1,4 @@
-import { get } from "svelte/store";
+import { get, Subscriber, Unsubscriber, Readable, writable, Writable } from "svelte/store";
 import type { MarkReadRequest, MarkReadResponse, MessageIndexRange } from "../domain/chat/chat";
 import {
     indexIsInRanges,
@@ -16,7 +16,7 @@ export interface MarkMessagesRead {
 
 type MessageRangesByChat = Record<string, MessageIndexRange[]>;
 
-export type MessageReadTracker = {
+export interface IMessageReadTracker {
     markRangeRead: (chatId: string, range: MessageIndexRange) => void;
     markMessageRead: (chatId: string, messageIndex: number, messageId: bigint) => void;
     confirmMessage: (chatId: string, messageIndex: number, messageId: bigint) => boolean;
@@ -27,24 +27,45 @@ export type MessageReadTracker = {
         latestMessageIndex: number | undefined
     ) => number;
     isRead: (chatId: string, messageIndex: number, messageId: bigint) => boolean;
-};
-
-let interval: number | undefined = undefined;
-
-export function stopMarkReadPoller(): void {
-    if (interval !== undefined) {
-        console.log("stopping the mark read poller");
-        clearInterval(interval);
-    }
+    stop: () => void;
 }
 
-export const serverState: MessageRangesByChat = {};
-export const waiting: Record<string, Set<bigint>> = {};
-export const state: MessageRangesByChat = {};
+export type MessageReadState = {
+    serverState: MessageRangesByChat;
+    waiting: Record<string, Set<bigint>>;
+    state: MessageRangesByChat;
+};
 
-export function initMarkRead(api: MarkMessagesRead): MessageReadTracker {
-    function sendToServer() {
-        const req = Object.entries(state).reduce<MarkReadRequest>((req, [chatId, ranges]) => {
+export class MessageReadTracker implements IMessageReadTracker {
+    private interval: number | undefined;
+    private serverState: MessageRangesByChat = {};
+    private waiting: Record<string, Set<bigint>> = {};
+    private state: MessageRangesByChat = {};
+
+    public store = writable<MessageReadState>({
+        serverState: {},
+        waiting: {},
+        state: {},
+    });
+
+    constructor(private api: MarkMessagesRead) {
+        if (process.env.NODE_ENV !== "test") {
+            this.interval = window.setInterval(() => this.sendToServer(), MARK_READ_INTERVAL);
+        }
+        if (process.env.NODE_ENV !== "test") {
+            window.onbeforeunload = () => this.sendToServer();
+        }
+    }
+
+    stop(): void {
+        if (this.interval !== undefined) {
+            console.log("stopping the mark read poller");
+            clearInterval(this.interval);
+        }
+    }
+
+    private sendToServer(): void {
+        const req = Object.entries(this.state).reduce<MarkReadRequest>((req, [chatId, ranges]) => {
             if (ranges.length > 0) {
                 req.push({
                     chatId,
@@ -55,82 +76,85 @@ export function initMarkRead(api: MarkMessagesRead): MessageReadTracker {
         }, [] as MarkReadRequest);
 
         if (req.length > 0) {
-            console.log("Sending mark read to server: ", req);
-            api.markMessagesRead(req);
+            console.log("Sending messages read to the server: ", req);
+            this.api.markMessagesRead(req);
         }
     }
 
-    if (interval !== undefined) {
-        clearInterval(interval);
+    private syncStore() {
+        // the store is just required so that svelte can respond to changes
+        this.store.set({
+            serverState: this.serverState,
+            waiting: this.waiting,
+            state: this.state,
+        });
     }
 
-    if (process.env.NODE_ENV !== "test") {
-        interval = window.setInterval(sendToServer, MARK_READ_INTERVAL);
-    }
-
-    // if the user closes the window, try to flush any unsynced changes to the server
-    if (process.env.NODE_ENV !== "test") {
-        window.onbeforeunload = sendToServer;
-    }
-
-    function markMessageRead(chatId: string, messageIndex: number, messageId: bigint) {
-        if (!state[chatId]) {
-            state[chatId] = [];
+    markMessageRead(chatId: string, messageIndex: number, messageId: bigint): void {
+        if (!this.state[chatId]) {
+            this.state[chatId] = [];
         }
         if (get(unconfirmed).has(messageId)) {
             // if a message is unconfirmed we will just tuck it away until we are told it has been confirmed
-            if (waiting[chatId] === undefined) {
-                waiting[chatId] = new Set<bigint>();
+            if (this.waiting[chatId] === undefined) {
+                this.waiting[chatId] = new Set<bigint>();
             }
-            waiting[chatId].add(messageId);
+            this.waiting[chatId].add(messageId);
         } else {
-            state[chatId] = insertIndexIntoRanges(messageIndex, state[chatId] ?? []);
+            this.state[chatId] = insertIndexIntoRanges(messageIndex, this.state[chatId] ?? []);
         }
+
+        this.syncStore();
     }
 
-    function markRangeRead(chatId: string, range: MessageIndexRange) {
-        if (!state[chatId]) {
-            state[chatId] = [];
+    markRangeRead(chatId: string, range: MessageIndexRange): void {
+        if (!this.state[chatId]) {
+            this.state[chatId] = [];
         }
-        state[chatId] = mergeMessageIndexRanges(state[chatId], [range]);
+        this.state[chatId] = mergeMessageIndexRanges(this.state[chatId], [range]);
+        this.syncStore();
     }
 
-    function confirmMessage(chatId: string, messageIndex: number, messageId: bigint): boolean {
+    confirmMessage(chatId: string, messageIndex: number, messageId: bigint): boolean {
         // this is called when a message is confirmed so that we can move it from
         // the unconfirmed read to the confirmed read. This means that it will get
         // marked as read on the back end
-        if (waiting[chatId] !== undefined && waiting[chatId].has(messageId)) {
-            waiting[chatId].delete(messageId);
-            markMessageRead(chatId, messageIndex, messageId);
+        if (this.waiting[chatId] !== undefined && this.waiting[chatId].has(messageId)) {
+            this.waiting[chatId].delete(messageId);
+            this.markMessageRead(chatId, messageIndex, messageId);
             return true;
         }
         return false;
     }
 
-    function syncWithServer(chatId: string, ranges: MessageIndexRange[]) {
-        serverState[chatId] = ranges;
+    syncWithServer(chatId: string, ranges: MessageIndexRange[]): void {
+        this.serverState[chatId] = ranges;
 
         // if the range from the server is equal to the range on the client and the range on the server merged
         // that means we are in sync and we can clear the local state
-        const merged = mergeMessageIndexRanges(serverState[chatId], state[chatId] ?? []);
-        if (messageIndexRangesAreEqual(serverState[chatId], merged)) {
-            state[chatId] = [];
+        const merged = mergeMessageIndexRanges(this.serverState[chatId], this.state[chatId] ?? []);
+        if (messageIndexRangesAreEqual(this.serverState[chatId], merged)) {
+            this.state[chatId] = [];
         }
+        this.syncStore();
     }
 
-    function unreadMessageCount(
+    unreadMessageCount(
         chatId: string,
         firstMessageIndex: number,
         latestMessageIndex: number | undefined
-    ) {
-        const numWaiting = waiting[chatId] === undefined ? 0 : waiting[chatId].size;
+    ): number {
+        const numWaiting = this.waiting[chatId] === undefined ? 0 : this.waiting[chatId].size;
 
         if (latestMessageIndex === undefined) {
             // if we have no latestMessage then we can only have unconfirmed unread messages
             return numWaiting;
         }
 
-        const merged = mergeMessageIndexRanges(serverState[chatId] ?? [], state[chatId] ?? []);
+        const merged = mergeMessageIndexRanges(
+            this.serverState[chatId] ?? [],
+            this.state[chatId] ?? []
+        );
         if (merged.length === 0) {
             // all messages are unread
             return latestMessageIndex - firstMessageIndex + 1;
@@ -143,50 +167,52 @@ export function initMarkRead(api: MarkMessagesRead): MessageReadTracker {
             [firstMessageIndex, 0, 0] // [firstIndex, unreadCount, lastReadIndex]
         );
 
-        // todo - this is wrong at the moment. Waiting needs to be partitioned by chatId OBVIOUSLY
         return latestMessageIndex - lastRead + unread - numWaiting;
     }
 
-    function isRead(chatId: string, messageIndex: number, messageId: bigint) {
+    isRead(chatId: string, messageIndex: number, messageId: bigint): boolean {
         if (get(unconfirmed).has(messageId)) {
-            return waiting[chatId] !== undefined && waiting[chatId].has(messageId);
+            return this.waiting[chatId] !== undefined && this.waiting[chatId].has(messageId);
         } else {
-            const merged = mergeMessageIndexRanges(serverState[chatId] ?? [], state[chatId] ?? []);
+            const merged = mergeMessageIndexRanges(
+                this.serverState[chatId] ?? [],
+                this.state[chatId] ?? []
+            );
             return indexIsInRanges(messageIndex, merged);
         }
     }
-
-    return {
-        markRangeRead,
-        markMessageRead,
-        confirmMessage,
-        syncWithServer,
-        unreadMessageCount,
-        isRead,
-    };
 }
 
-export const fakeMessageReadTracker: MessageReadTracker = {
-    markRangeRead: (_chatId: string, _range: MessageIndexRange) => {
+export class FakeMessageReadTracker implements IMessageReadTracker {
+    markRangeRead(_chatId: string, _range: MessageIndexRange): void {
         return undefined;
-    },
-    markMessageRead: (_chat: string, _messageIndex: number, _messageId: bigint) => {
+    }
+
+    markMessageRead(_chat: string, _messageIndex: number, _messageId: bigint): void {
         return undefined;
-    },
-    confirmMessage: (_chatId: string, _messageIndex: number, _messageId: bigint) => {
+    }
+
+    confirmMessage(_chatId: string, _messageIndex: number, _messageId: bigint): boolean {
         return false;
-    },
-    syncWithServer: (_chatId: string, _ranges: MessageIndexRange[]) => {
+    }
+
+    syncWithServer(_chatId: string, _ranges: MessageIndexRange[]): void {
         return undefined;
-    },
-    unreadMessageCount: (
+    }
+
+    unreadMessageCount(
         _chatId: string,
         _firstMessageIndex: number,
         _latestMessageIndex: number | undefined
-    ) => {
+    ): number {
         return 0;
-    },
-    isRead: (_chat: string, _messageIndex: number, _messageId: bigint) => {
+    }
+
+    isRead(_chat: string, _messageIndex: number, _messageId: bigint): boolean {
         return false;
-    },
-};
+    }
+
+    stop(): void {
+        return undefined;
+    }
+}

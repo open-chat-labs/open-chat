@@ -42,7 +42,7 @@ import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
 import { chatStore } from "../stores/chat";
-import type { MessageReadTracker } from "../stores/markRead";
+import type { IMessageReadTracker, MessageReadTracker } from "../stores/markRead";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { overwriteCachedEvents } from "../utils/caching";
@@ -58,6 +58,7 @@ export class ChatController {
     private initialised = false;
     public loading: Writable<boolean>;
     public chat: Writable<ChatSummary>;
+    public chatId: string;
 
     // private sendingMessage?: SendMessageEvent;
 
@@ -65,18 +66,21 @@ export class ChatController {
         public api: ServiceContainer,
         public user: UserSummary,
         private _chat: ChatSummary,
-        private markRead: MessageReadTracker
+        public markRead: MessageReadTracker,
+        private _replyingTo: EnhancedReplyContext | undefined,
+        private _focusMessageIndex: number | undefined
     ) {
         // todo - lets make it so that *only* the chat controller updates these writable stores
         // then we can keep a local copy of the chat so that we don't have to use get(this.chat)
         // everywhere
         this.events = writable([]);
         this.loading = writable(false);
-        this.focusMessageIndex = writable(undefined);
-        this.replyingTo = writable(undefined);
+        this.focusMessageIndex = writable(_focusMessageIndex);
+        this.replyingTo = writable(_replyingTo);
         this.fileToAttach = writable(undefined);
         this.editingEvent = writable(undefined);
         this.chat = writable(_chat);
+        this.chatId = _chat.chatId;
         this.loadPreviousMessages();
     }
 
@@ -98,10 +102,6 @@ export class ChatController {
             this.minVisibleMessageIndex,
             this.chatVal.latestMessage?.event.messageIndex
         );
-    }
-
-    get chatId(): string {
-        return this.chatVal.chatId;
     }
 
     get kind(): "direct_chat" | "group_chat" {
@@ -127,7 +127,7 @@ export class ChatController {
                     this.user.userId,
                     this.chatId,
                     this.markRead,
-                    this.focusMessageIndex === undefined ? events : [],
+                    get(this.focusMessageIndex) === undefined ? events : [],
                     resp.events
                 ),
                 resp.affectedEvents,
@@ -137,6 +137,7 @@ export class ChatController {
     }
 
     private async loadEventWindow(messageIndex: number) {
+        this.loading.set(true);
         const range = indexRangeForChat(this.chatVal);
         const eventsPromise: Promise<EventsResponse<ChatEvent>> =
             this.chatVal.kind === "direct_chat"
@@ -149,6 +150,7 @@ export class ChatController {
         }
 
         this.handleEventsResponse(eventsResponse);
+        this.loading.set(false);
     }
 
     newMessageCriteria(): [number, boolean] | undefined {
@@ -422,7 +424,9 @@ export class ChatController {
     }
 
     chatUpdated(chat: ChatSummary): void {
-        this.chat.set(chat);
+        this.chat.set({
+            ...chat,
+        });
         chatStore.set({
             chatId: this.chatId,
             event: { kind: "chat_updated" },

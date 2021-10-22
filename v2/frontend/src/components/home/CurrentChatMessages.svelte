@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { createEventDispatcher, onMount, setContext, tick } from "svelte";
+    import { createEventDispatcher, onDestroy, onMount, setContext, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
@@ -32,6 +32,8 @@
     import { userStore } from "../../stores/user";
     import type { UserLookup } from "../../domain/user/user";
     import type { ChatController } from "../../fsm/chat.controller";
+    import type { MessageReadState, MessageReadTracker } from "../../stores/markRead";
+    import type { Readable } from "svelte/store";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -46,6 +48,7 @@
     $: loading = controller.loading;
     $: chat = controller.chat;
     $: focusMessageIndex = controller.focusMessageIndex;
+    $: markRead = controller.markRead.store;
 
     setContext<UserLookup>("userLookup", $userStore);
 
@@ -125,7 +128,7 @@
         } else {
             // todo - this is a bit dangerous as it could cause an infinite recursion
             // if we are looking for a message that simply isn't there.
-            controller.goToMessageIndex(index);
+            controller.goToMessageIndex(index).then(() => scrollToMessageIndex(index));
         }
     }
 
@@ -291,8 +294,6 @@
 
     $: groupedEvents = groupEvents($events);
 
-    $: console.log("Grouped events: ", groupedEvents);
-
     $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($chat);
 
     // todo - this might cause a performance problem
@@ -375,9 +376,13 @@
         return true;
     }
 
-    function isReadByMe(evt: EventWrapper<ChatEventType>): boolean {
+    function isReadByMe(_store: MessageReadState, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return controller.isRead(evt.event.messageIndex, evt.event.messageId);
+            return controller.markRead.isRead(
+                $chat.chatId,
+                evt.event.messageIndex,
+                evt.event.messageId
+            );
         }
         return true;
     }
@@ -400,7 +405,7 @@
                             evt.event.messageIndex === $focusMessageIndex}
                         confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem(evt)}
-                        readByMe={isReadByMe(evt)}
+                        readByMe={isReadByMe($markRead, evt)}
                         chatId={controller.chatId}
                         chatType={controller.kind}
                         user={controller.user}
