@@ -1,9 +1,4 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-// let's just try to make something like the chat machine, but just a plain class
-// and just see what happens
-// the context will be converted to internal state
-// the events will be converted to methods
-// I suspect it will be half the code and 1000% easier to understand
 
 import { get, Writable } from "svelte/store";
 import type {
@@ -16,6 +11,7 @@ import type {
     Message,
     MessageContent,
     SendMessageSuccess,
+    UpdateGroupResponse,
 } from "../domain/chat/chat";
 import {
     containsReaction,
@@ -27,6 +23,7 @@ import {
     getNextMessageIndex,
     indexRangeForChat,
     latestLoadedEventIndex,
+    pruneLocalReactions,
     replaceAffected,
     replaceLocal,
     replaceMessageContent,
@@ -42,11 +39,15 @@ import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
 import { chatStore } from "../stores/chat";
-import type { IMessageReadTracker, MessageReadTracker } from "../stores/markRead";
+import type { MessageReadTracker } from "../stores/markRead";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { overwriteCachedEvents } from "../utils/caching";
 import { writable } from "svelte/store";
+import { rollbar } from "../utils/logging";
+import { toastStore } from "../stores/toast";
+
+const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 
 export class ChatController {
     public events: Writable<EventWrapper<ChatEvent>[]>;
@@ -59,6 +60,7 @@ export class ChatController {
     public loading: Writable<boolean>;
     public chat: Writable<ChatSummary>;
     public chatId: string;
+    private pruneInterval: number | undefined;
 
     // private sendingMessage?: SendMessageEvent;
 
@@ -82,6 +84,18 @@ export class ChatController {
         this.chat = writable(_chat);
         this.chatId = _chat.chatId;
         this.loadPreviousMessages();
+
+        if (process.env.NODE_ENV !== "test") {
+            this.pruneInterval = window.setInterval(() => {
+                this.localReactions = pruneLocalReactions(this.localReactions);
+            }, PRUNE_LOCAL_REACTIONS_INTERVAL);
+        }
+    }
+
+    destroy(): void {
+        if (this.pruneInterval !== undefined) {
+            window.clearInterval(this.pruneInterval);
+        }
     }
 
     get chatVal(): ChatSummary {
@@ -302,7 +316,6 @@ export class ChatController {
             this.chat.update((chat) =>
                 sentByMe ? setLastMessageOnChat(chat, messageEvent) : chat
             );
-            console.log("Eventz: ", get(this.events));
             chatStore.set({
                 chatId: this.chatId,
                 event: {
@@ -558,5 +571,95 @@ export class ChatController {
                   }
                 : undefined
         );
+    }
+
+    dismissAsAdmin(userId: string): Promise<void> {
+        return this.api
+            .dismissAsAdmin(this.chatId, userId)
+            .then((resp) => {
+                if (resp !== "success") {
+                    rollbar.warn("Unable to dismiss as admin", resp);
+                    toastStore.showFailureToast("dismissAsAdminFailed");
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to dismiss as admin", err);
+                toastStore.showFailureToast("dismissAsAdminFailed");
+            });
+    }
+
+    makeAdmin(userId: string): Promise<void> {
+        return this.api
+            .makeAdmin(this.chatId, userId)
+            .then((resp) => {
+                if (resp !== "success") {
+                    rollbar.warn("Unable to make admin", resp);
+                    toastStore.showFailureToast("makeAdminFailed");
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to make admin", err);
+                toastStore.showFailureToast("makeAdminFailed");
+            });
+    }
+
+    removeParticipant(userId: string): Promise<void> {
+        return this.api
+            .removeParticipant(this.chatId, userId)
+            .then((resp) => {
+                if (resp !== "success") {
+                    rollbar.warn("Unable to remove participant", resp);
+                    toastStore.showFailureToast("removeParticipantFailed");
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to remove participant", err);
+                toastStore.showFailureToast("removeParticipantFailed");
+            });
+    }
+
+    blockUser(userId: string): Promise<void> {
+        return this.api
+            .blockUserFromGroupChat(this.chatId, userId)
+            .then((resp) => {
+                if (resp === "success") {
+                    toastStore.showSuccessToast("blockUserSucceeded");
+                } else {
+                    toastStore.showFailureToast("blockUserFailed");
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("blockUserFailed");
+                rollbar.error("Error blocking user", err);
+            });
+    }
+
+    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<boolean> {
+        return this.api
+            .updateGroup(this.chatId, name, desc, avatar)
+            .then((resp) => {
+                const err = this.groupUpdateErrorMessage(resp);
+                if (err) {
+                    toastStore.showFailureToast(err);
+                    return false;
+                } else {
+                    return true;
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Update group failed: ", err);
+                toastStore.showFailureToast("groupUpdateFailed");
+                return false;
+            });
+    }
+
+    private groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
+        if (resp === "success") return undefined;
+        if (resp === "unchanged") return undefined;
+        if (resp === "desc_too_long") return "groupDescTooLong";
+        if (resp === "internal_error") return "groupUpdateFailed";
+        if (resp === "not_authorised") return "groupUpdateFailed";
+        if (resp === "name_too_long") return "groupNameTooLong";
+        if (resp === "name_taken") return "groupAlreadyExists";
     }
 }

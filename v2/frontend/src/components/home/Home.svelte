@@ -298,7 +298,7 @@
                 <RightPanel
                     {api}
                     {userId}
-                    chat={groupChat}
+                    controller={selectedChat}
                     bind:editGroupHistory
                     on:addParticipants={addParticipants}
                     on:showParticipants={showParticipants}

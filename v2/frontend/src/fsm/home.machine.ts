@@ -97,6 +97,7 @@ export type HomeEvents =
           data: { chatId: string; messageIndex: number; messageId: bigint };
       }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
+    | { type: "SYNC_WITH_RTC_HANDLER"; data: HomeContext }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
     | { type: "LEAVE_GROUP"; data: string }
     | { type: "USERS_UPDATED"; data: UserUpdateResponse }
@@ -111,20 +112,23 @@ type ChatsResponse = {
 };
 type UserUpdateResponse = { usersLastUpdate: bigint };
 
-function findDirectChatByUserId(ctx: HomeContext, userId: string): DirectChatSummary | undefined {
-    return ctx.chatSummaries.find((c) => c.kind === "direct_chat" && c.them === userId) as
+function findDirectChatByUserId(
+    chats: ChatSummary[],
+    userId: string
+): DirectChatSummary | undefined {
+    return chats.find((c) => c.kind === "direct_chat" && c.them === userId) as
         | DirectChatSummary
         | undefined;
 }
 
-function findChatById(ctx: HomeContext, chatId: string): ChatSummary | undefined {
-    return ctx.chatSummaries.find((c) => c.chatId === chatId);
+function findChatById(chats: ChatSummary[], chatId: string): ChatSummary | undefined {
+    return chats.find((c) => c.chatId === chatId);
 }
 
-function findChatByChatType(ctx: HomeContext, msg: WebRtcMessage): ChatSummary | undefined {
+function findChatByChatType(chats: ChatSummary[], msg: WebRtcMessage): ChatSummary | undefined {
     return msg.chatType === "group_chat"
-        ? findChatById(ctx, msg.chatId)
-        : findDirectChatByUserId(ctx, msg.userId);
+        ? findChatById(chats, msg.chatId)
+        : findDirectChatByUserId(chats, msg.userId);
 }
 
 function sendMessageToChatBasedOnUser(
@@ -132,10 +136,11 @@ function sendMessageToChatBasedOnUser(
     msg: WebRtcMessage,
     fn: (selectedChat: ChatController) => void
 ): void {
-    const chat = findChatByChatType(ctx, msg);
-    if (ctx.selectedChat && ctx.selectedChat.chatId === chat?.chatId) {
-        fn(ctx.selectedChat);
-    }
+    const chat = findChatByChatType(ctx.chatSummaries, msg);
+    if (chat === undefined) return;
+    if (ctx.selectedChat === undefined) return;
+    if (chat.chatId !== ctx.selectedChat.chatId) return;
+    fn(ctx.selectedChat);
 }
 
 async function getUpdates(
@@ -213,27 +218,46 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 ctx.chatUpdatesSince
             ),
 
-        webRtcMessageHandler: (ctx, _ev) => (callback, _receive) => {
+        webRtcMessageHandler: (ctx, _ev) => (callback, receive) => {
+            let selectedChat = ctx.selectedChat;
+            let chatSummaries = ctx.chatSummaries;
+
+            receive((ev) => {
+                if (ev.type === "SYNC_WITH_RTC_HANDLER") {
+                    console.log("updating local selectedChat");
+                    selectedChat = ev.data.selectedChat;
+                    chatSummaries = ev.data.chatSummaries;
+                }
+            });
+
             rtcConnectionsManager.subscribe((message: unknown) => {
                 const parsedMsg = message as WebRtcMessage;
+
+                const fromChat = findChatByChatType(chatSummaries, parsedMsg);
+
+                // if the chat can't be found - ignore
+                if (fromChat === undefined) {
+                    return;
+                }
+
+                // if the message relates to a chat we don't have open - ignore
+                if (fromChat.chatId !== selectedChat?.chatId) {
+                    return;
+                }
+
+                // if the message is from a direct chat where the other user is blocked - ignore
                 if (
-                    ctx.selectedChat?.isDirectChatWith(parsedMsg.userId) &&
-                    ctx.selectedChat?.isBlockedUser()
+                    selectedChat?.isDirectChatWith(parsedMsg.userId) &&
+                    selectedChat?.isBlockedUser()
                 ) {
                     return;
                 }
 
-                const fromChat = findChatByChatType(ctx, parsedMsg);
-
                 if (parsedMsg.kind === "remote_user_typing") {
-                    if (fromChat) {
-                        typing.add(fromChat.chatId, parsedMsg.userId);
-                    }
+                    typing.add(fromChat.chatId, parsedMsg.userId);
                 }
                 if (parsedMsg.kind === "remote_user_stopped_typing") {
-                    if (fromChat) {
-                        typing.delete(fromChat.chatId, parsedMsg.userId);
-                    }
+                    typing.delete(fromChat.chatId, parsedMsg.userId);
                 }
                 if (parsedMsg.kind === "remote_user_toggled_reaction") {
                     callback({
@@ -546,6 +570,9 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                     username: ctx.user!.username,
                                     secondsSinceLastOnline: 0,
                                 };
+                                if (ctx.selectedChat !== undefined) {
+                                    ctx.selectedChat.destroy();
+                                }
                                 return {
                                     selectedChat: new ChatController(
                                         ctx.serviceContainer!,
@@ -561,6 +588,9 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 };
                             }
                             return { selectedChat: undefined };
+                        }),
+                        send((ctx, _) => ({ type: "SYNC_WITH_RTC_HANDLER", data: ctx }), {
+                            to: "webRtcMessageHandler",
                         }),
                     ],
                 },

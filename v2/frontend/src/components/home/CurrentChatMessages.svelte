@@ -358,20 +358,20 @@
         return false;
     }
 
-    function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
+    function isConfirmed(unconfirmed: Set<bigint>, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return !$unconfirmed.has(evt.event.messageId);
+            return !unconfirmed.has(evt.event.messageId);
         }
         return true;
     }
 
-    function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
+    function isReadByThem(readByThem: Set<bigint>, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
             const confirmedRead = messageIsReadByThem($chat, evt.event);
-            if (confirmedRead) {
+            if (confirmedRead && readByThem.has(evt.event.messageId)) {
                 unconfirmedReadByThem.delete(evt.event.messageId);
             }
-            return confirmedRead || $unconfirmedReadByThem.has(evt.event.messageId);
+            return confirmedRead || readByThem.has(evt.event.messageId);
         }
         return true;
     }
@@ -403,8 +403,8 @@
                         {observer}
                         focused={evt.event.kind === "message" &&
                             evt.event.messageIndex === $focusMessageIndex}
-                        confirmed={isConfirmed(evt)}
-                        readByThem={isReadByThem(evt)}
+                        confirmed={isConfirmed($unconfirmed, evt)}
+                        readByThem={isReadByThem($unconfirmedReadByThem, evt)}
                         readByMe={isReadByMe($markRead, evt)}
                         chatId={controller.chatId}
                         chatType={controller.kind}
