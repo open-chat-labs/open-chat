@@ -21,7 +21,9 @@ fn remove_admin_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
     if let Some(caller_participant) = runtime_state.data.participants.get_by_principal(caller) {
         let caller_user_id = caller_participant.user_id;
-        if caller_participant.role.can_remove_admin() {
+        if caller_user_id == args.user_id {
+            CannotRemoveSelf
+        } else if caller_participant.role.can_remove_admin() {
             match runtime_state.data.participants.remove_admin(&args.user_id) {
                 RemoveAdminResult::Success => {
                     let event = ParticipantsDismissedAsAdmin {

@@ -11,6 +11,7 @@ const MAX_CANISTER_UPGRADES_PER_HEARTBEAT: u32 = 3;
 fn heartbeat() {
     topup_canister_pool::run();
     upgrade_canisters::run();
+    calculate_metrics::run();
 }
 
 mod upgrade_canisters {
@@ -132,5 +133,18 @@ mod topup_canister_pool {
     fn add_canister_to_pool(canister_id: CanisterId, cycles: Cycles, runtime_state: &mut RuntimeState) {
         runtime_state.data.canister_pool.push(canister_id);
         runtime_state.data.total_cycles_spent_on_canisters += cycles;
+    }
+}
+
+mod calculate_metrics {
+    use super::*;
+
+    pub fn run() {
+        RUNTIME_STATE.with(|state| calculate_metrics(state.borrow_mut().as_mut().unwrap()));
+    }
+
+    fn calculate_metrics(runtime_state: &mut RuntimeState) {
+        let now = runtime_state.env.now();
+        runtime_state.data.calculate_metrics(now);
     }
 }
