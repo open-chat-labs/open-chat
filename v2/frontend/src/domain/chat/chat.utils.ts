@@ -48,9 +48,9 @@ export function getContentAsText(content: MessageContent): string {
         text = "audio";
     } else if (content.kind === "file_content") {
         text = content.name;
-    } else if (content.kind === "cycles_content") {
-        // todo - format cycles
-        text = "cycles_content";
+    } else if (content.kind === "crypto_content") {
+        // todo - format crypto
+        text = "crypto_content";
     } else if (content.kind === "deleted_content") {
         text = "deleted message";
     } else if (content.kind === "placeholder_content") {
