@@ -3,71 +3,46 @@
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import AddParticipants from "./groupdetails/AddParticipants.svelte";
     import Participants from "./groupdetails/Participants.svelte";
-    import type { EditGroupState, UpdatedGroup } from "../../fsm/editGroup";
+    import type { EditGroupState } from "../../fsm/editGroup";
     import type { GroupChatSummary } from "../../domain/chat/chat";
     import type { ServiceContainer } from "../../services/serviceContainer";
-    import { toastStore } from "../../stores/toast";
-    import { rollbar } from "../../utils/logging";
+    import type { Writable } from "svelte/store";
+    import type { ChatController } from "../../fsm/chat.controller";
 
     export let api: ServiceContainer;
     export let editGroupHistory: EditGroupState[];
-    export let chat: GroupChatSummary;
+    export let controller: ChatController;
     export let userId: string;
+
+    let chat = controller.chat as Writable<GroupChatSummary>;
 
     $: lastState = editGroupHistory[editGroupHistory.length - 1];
 
-    let updatedGroup: UpdatedGroup = {
-        name: chat.name,
-        desc: chat.description,
-        avatar: chat.blobUrl
+    let updatedGroup = {
+        name: $chat.name,
+        desc: $chat.description,
+        avatar: $chat.blobUrl
             ? {
-                  blobUrl: chat.blobUrl,
-                  blobData: chat.blobData,
+                  blobUrl: $chat.blobUrl,
+                  blobData: $chat.blobData,
               }
             : undefined,
     };
 
     function dismissAsAdmin(ev: CustomEvent<string>): void {
-        api.dismissAsAdmin(chat.chatId, ev.detail)
-            .then((resp) => {
-                if (resp !== "success") {
-                    rollbar.warn("Unable to dismiss as admin", resp);
-                    toastStore.showFailureToast("dismissAsAdminFailed");
-                }
-            })
-            .catch((err) => {
-                rollbar.error("Unable to dismiss as admin", err);
-                toastStore.showFailureToast("dismissAsAdminFailed");
-            });
+        controller.dismissAsAdmin(ev.detail);
     }
 
     function makeAdmin(ev: CustomEvent<string>): void {
-        api.makeAdmin(chat.chatId, ev.detail)
-            .then((resp) => {
-                if (resp !== "success") {
-                    rollbar.warn("Unable to make admin", resp);
-                    toastStore.showFailureToast("makeAdminFailed");
-                }
-            })
-            .catch((err) => {
-                rollbar.error("Unable to make admin", err);
-                toastStore.showFailureToast("makeAdminFailed");
-            });
+        controller.makeAdmin(ev.detail);
     }
 
     function removeParticipant(ev: CustomEvent<string>): void {
-        chat.participants = chat.participants.filter((p) => p.userId !== ev.detail);
-        api.removeParticipant(chat.chatId, ev.detail)
-            .then((resp) => {
-                if (resp !== "success") {
-                    rollbar.warn("Unable to remove participant", resp);
-                    toastStore.showFailureToast("removeParticipantFailed");
-                }
-            })
-            .catch((err) => {
-                rollbar.error("Unable to remove participant", err);
-                toastStore.showFailureToast("removeParticipantFailed");
-            });
+        chat.update((c) => ({
+            ...c,
+            participants: c.participants.filter((p) => p.userId !== ev.detail),
+        }));
+        controller.removeParticipant(ev.detail);
     }
 
     function pop() {
@@ -75,24 +50,13 @@
     }
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
-        api.blockUserFromGroupChat(chat.chatId, ev.detail.userId)
-            .then((resp) => {
-                if (resp === "success") {
-                    toastStore.showSuccessToast("blockUserSucceeded");
-                } else {
-                    toastStore.showFailureToast("blockUserFailed");
-                }
-            })
-            .catch((err) => {
-                toastStore.showFailureToast("blockUserFailed");
-                rollbar.error("Error blocking user", err);
-            });
+        controller.blockUser(ev.detail.userId);
     }
 </script>
 
 <Panel right>
     {#if lastState === "group_details"}
-        <GroupDetails {api} {userId} {updatedGroup} {chat} on:close={pop} on:showParticipants />
+        <GroupDetails {controller} {userId} {updatedGroup} on:close={pop} on:showParticipants />
     {:else if lastState === "add_participants"}
         <AddParticipants
             closeIcon={editGroupHistory.length > 1 ? "back" : "close"}
