@@ -2,7 +2,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DirectChatSummary } from "../domain/chat/chat";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { fakeMessageReadTracker } from "../stores/markRead";
+import { FakeMessageReadTracker } from "../stores/markRead";
+import type { ChatController } from "./chat.controller";
 import { HomeContext, homeMachine } from "./home.machine";
 import { testTransition } from "./machine.spec.utils";
 
@@ -28,10 +29,9 @@ const homeContext: HomeContext = {
     selectedChat: undefined,
     error: undefined,
     usersLastUpdate: BigInt(0),
-    chatsIndex: {},
     chatUpdatesSince: undefined,
     replyingTo: undefined,
-    markRead: fakeMessageReadTracker,
+    markRead: new FakeMessageReadTracker(),
 };
 
 describe("home machine transitions", () => {
@@ -62,10 +62,13 @@ describe("home machine transitions", () => {
     test("trigger load messages", () => {
         const ctx = testTransition(
             homeMachine.withContext({
+                user: {
+                    userId: "abcdefg",
+                    username: "julian_jelfs",
+                },
                 chatSummaries: [directChat],
                 usersLastUpdate: BigInt(0),
-                chatsIndex: {},
-                markRead: fakeMessageReadTracker,
+                markRead: new FakeMessageReadTracker(),
             }),
             { loaded_chats: "no_chat_selected" },
             { type: "SELECT_CHAT", data: { chatId: "abcdefg", messageIndex: undefined } },
@@ -73,7 +76,7 @@ describe("home machine transitions", () => {
                 loaded_chats: "chat_selected",
             }
         );
-        expect(ctx.chatsIndex["abcdefg"]).not.toBe(undefined);
+        expect(ctx.selectedChat).not.toBe(undefined);
     });
     test("trigger load messages - does nothing for invalid chat", () => {
         const ctx = testTransition(
@@ -84,16 +87,15 @@ describe("home machine transitions", () => {
                 loaded_chats: "no_chat_selected",
             }
         );
-        expect(ctx.chatsIndex["qwxyz"]).toBe(undefined);
+        expect(ctx.selectedChat).toBe(undefined);
     });
     test("clear selected chat", () => {
         const ctx = testTransition(
             homeMachine.withContext({
                 chatSummaries: [directChat],
                 usersLastUpdate: BigInt(0),
-                selectedChat: directChat,
-                chatsIndex: {},
-                markRead: fakeMessageReadTracker,
+                selectedChat: {} as ChatController,
+                markRead: new FakeMessageReadTracker(),
             }),
             { loaded_chats: "no_chat_selected" },
             "CLEAR_SELECTED_CHAT",
