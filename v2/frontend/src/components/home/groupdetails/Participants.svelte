@@ -6,8 +6,9 @@
     import type { FullParticipant, GroupChatSummary } from "../../../domain/chat/chat";
     import { userStore } from "../../../stores/user";
     import { createEventDispatcher } from "svelte";
+    import type { Writable } from "svelte/store";
 
-    export let chat: GroupChatSummary;
+    export let chat: Writable<GroupChatSummary>;
     export let userId: string;
     export let closeIcon: "close" | "back";
 
@@ -29,7 +30,7 @@
         return user.username.toLowerCase().includes(searchTerm.toLowerCase());
     }
 
-    $: knownUsers = chat.participants.reduce<FullParticipant[]>((users, p) => {
+    $: knownUsers = $chat.participants.reduce<FullParticipant[]>((users, p) => {
         const user = $userStore[p.userId];
         if (user) {
             users.push({
@@ -46,7 +47,7 @@
         return matchesSearch(searchTerm, u) && u.userId !== userId;
     });
 
-    let publicGroup = chat.public;
+    let publicGroup = $chat.public;
 </script>
 
 <ParticipantsHeader

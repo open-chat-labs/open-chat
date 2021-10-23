@@ -24,12 +24,13 @@
     } from "../../domain/search/search";
     import type { UserSummary } from "../../domain/user/user";
     import { blockedUsers } from "../../stores/blockedUsers";
-    import { stopMarkReadPoller } from "../../stores/markRead";
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
     import { initNotificationStores } from "../../stores/notifications";
     import type { EditGroupState } from "../../fsm/editGroup";
     import { rollbar } from "../../utils/logging";
+    import type { EnhancedReplyContext, GroupChatSummary } from "../../domain/chat/chat";
+    import type { Writable } from "svelte/store";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
@@ -55,7 +56,7 @@
 
     onDestroy(() => {
         // clean up anything that needs to be stopped e.g. pollers
-        stopMarkReadPoller();
+        $machine.context.markRead.stop();
     });
 
     $: {
@@ -220,6 +221,10 @@
         editGroupHistory = [...editGroupHistory, "add_participants"];
     }
 
+    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
+        machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
+    }
+
     function showParticipants() {
         editGroupHistory = [...editGroupHistory, "show_participants"];
     }
@@ -230,11 +235,10 @@
 
     $: selectedChat = $machine.context.selectedChat;
 
-    $: groupChat = selectedChat && selectedChat.kind === "group_chat" ? selectedChat : undefined;
+    $: chat = selectedChat?.chat;
 
-    $: actorKey = $machine.context.selectedChat?.chatId.toString();
-
-    $: selectedChatActor = actorKey ? $machine.context.chatsIndex[actorKey] : undefined;
+    $: groupChat =
+        chat && $chat.kind === "group_chat" ? (chat as Writable<GroupChatSummary>) : undefined;
 
     $: x = $rtlStore ? -300 : 300;
 
@@ -244,10 +248,7 @@
 
     let editGroupHistory: EditGroupState[] = [];
 
-    $: blocked =
-        selectedChat !== undefined &&
-        selectedChat.kind === "direct_chat" &&
-        $blockedUsers.has(selectedChat.them);
+    $: blocked = chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
 </script>
 
 {#if $machine.context.user}
@@ -270,23 +271,24 @@
         {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
             <MiddlePanel
                 loadingChats={$machine.matches("loading_chats")}
-                {blocked}
+                blocked={!!blocked}
                 on:newchat={newChat}
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}
                 on:unblockUser={unblockUser}
                 on:leaveGroup={leaveGroup}
                 on:chatWith={chatWith}
+                on:replyPrivatelyTo={replyPrivatelyTo}
                 on:addParticipants={addParticipants}
                 on:showGroupDetails={showGroupDetails}
                 on:showParticipants={showParticipants}
                 on:messageRead={messageRead}
-                machine={selectedChatActor} />
+                controller={selectedChat} />
         {/if}
     </main>
 {/if}
 
-{#if selectedChatActor !== undefined}
+{#if selectedChat !== undefined}
     <Overlay active={editGroupHistory.length > 0}>
         {#if editGroupHistory.length > 0 && groupChat}
             <div
@@ -296,7 +298,7 @@
                 <RightPanel
                     {api}
                     {userId}
-                    chat={groupChat}
+                    controller={selectedChat}
                     bind:editGroupHistory
                     on:addParticipants={addParticipants}
                     on:showParticipants={showParticipants}

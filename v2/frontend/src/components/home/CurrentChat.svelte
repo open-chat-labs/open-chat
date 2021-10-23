@@ -2,29 +2,21 @@
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
-    import type { ChatMachine } from "../../fsm/chat.machine";
-    import type { ActorRefFrom } from "xstate";
-    import { getMinVisibleMessageIndex } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import { toastStore } from "../../stores/toast";
     import { _ } from "svelte-i18n";
+    import type { ChatController } from "../../fsm/chat.controller";
 
-    export let machine: ActorRefFrom<ChatMachine>;
+    export let controller: ChatController;
     export let blocked: boolean;
 
-    $: unreadMessages = $machine.context.markRead.unreadMessageCount(
-        $machine.context.chatSummary.chatId,
-        getMinVisibleMessageIndex($machine.context.chatSummary),
-        $machine.context.chatSummary.latestMessage?.event.messageIndex
-    );
+    // todo - I suspect this is not going to be reactive in the way that we want
+    $: unreadMessages = controller.unreadMessageCount;
 
     function toggleMuteNotifications() {
-        const op = $machine.context.chatSummary.notificationsMuted ? "unmuted" : "muted";
-        $machine.context.serviceContainer
-            .toggleMuteNotifications(
-                $machine.context.chatSummary.chatId,
-                !$machine.context.chatSummary.notificationsMuted
-            )
+        const op = controller.notificationsMuted ? "unmuted" : "muted";
+        controller.api
+            .toggleMuteNotifications(controller.chatId, !controller.notificationsMuted)
             .then((resp) => {
                 if (resp !== "success") {
                     toastStore.showFailureToast("toggleMuteNotificationsFailed", {
@@ -45,19 +37,15 @@
     }
 
     function markAllRead() {
-        const latestMessageIndex = $machine.context.chatSummary.latestMessage?.event.messageIndex;
-        if (latestMessageIndex) {
-            $machine.context.markRead.markRangeRead($machine.context.chatSummary.chatId, {
-                from: getMinVisibleMessageIndex($machine.context.chatSummary),
-                to: latestMessageIndex,
-            });
-        }
+        controller.markAllRead();
     }
+
+    $: chat = controller.chat;
 </script>
 
 <div class="wrapper">
     <CurrentChatHeader
-        user={$machine.context.user}
+        user={controller.user}
         {blocked}
         {unreadMessages}
         on:clearSelection
@@ -69,9 +57,14 @@
         on:showGroupDetails
         on:showParticipants
         on:leaveGroup
-        selectedChatSummary={$machine.context.chatSummary} />
-    <CurrentChatMessages on:messageRead on:chatWith {machine} {unreadMessages} />
-    <Footer {blocked} {machine} />
+        selectedChatSummary={chat} />
+    <CurrentChatMessages
+        on:replyPrivatelyTo
+        on:messageRead
+        on:chatWith
+        {controller}
+        {unreadMessages} />
+    <Footer {blocked} {controller} />
 </div>
 
 <style type="text/scss">
