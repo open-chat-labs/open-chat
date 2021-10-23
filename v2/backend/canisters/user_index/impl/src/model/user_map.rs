@@ -7,6 +7,9 @@ use types::{CyclesTopUp, PhoneNumber, TimestampMillis, Timestamped, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
 
+const FIVE_MINUTES_IN_MS: u64 = MINUTE_IN_MS * 5;
+const THIRTY_DAYS_IN_MS: u64 = DAY_IN_MS * 30;
+
 #[derive(CandidType, Deserialize, Default)]
 pub struct UserMap {
     users_by_principal: HashMap<Principal, User>,
@@ -21,6 +24,7 @@ pub struct Metrics {
     pub users_unconfirmed: u32,
     pub users_confirmed: u32,
     pub users_created: u64,
+    pub users_deleted: u64,
     pub users_online_5_minutes: u32,
     pub users_online_1_hour: u32,
     pub users_online_1_week: u32,
@@ -195,24 +199,12 @@ impl UserMap {
     }
 
     pub fn calculate_metrics(&mut self, now: TimestampMillis) {
-        const FIVE_MINUTES_IN_MS: u64 = MINUTE_IN_MS * 5;
-        const THIRTY_DAYS_IN_MS: u64 = DAY_IN_MS * 30;
-
         // Throttle to once every 5 minutes
         if now < self.cached_metrics.timestamp + FIVE_MINUTES_IN_MS {
             return;
         }
 
-        let mut metrics = Metrics {
-            users_unconfirmed: 0,
-            users_confirmed: 0,
-            users_created: 0,
-            users_online_5_minutes: 0,
-            users_online_1_hour: 0,
-            users_online_1_week: 0,
-            users_online_1_month: 0,
-            canister_upgrades_in_progress: 0,
-        };
+        let mut metrics = Metrics::default();
 
         for user in self.users_by_principal.values() {
             match user {

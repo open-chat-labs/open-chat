@@ -10,6 +10,7 @@ use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMil
 use utils::canister;
 use utils::env::Environment;
 use utils::memory;
+use utils::time::MINUTE_IN_MS;
 
 mod lifecycle;
 mod model;
@@ -21,6 +22,7 @@ const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 500_000_000_000; // 0.5T c
 const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const STATE_VERSION: StateVersion = StateVersion::V1;
+const FIVE_MINUTES_IN_MS: u64 = MINUTE_IN_MS * 5;
 
 #[derive(CandidType, Deserialize)]
 enum StateVersion {
@@ -51,6 +53,10 @@ impl RuntimeState {
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             public_groups: self.data.public_groups.len() as u32,
             private_groups: self.data.private_groups.len() as u64,
+            active_public_groups: self.data.cached_metrics.active_public_groups,
+            active_private_groups: self.data.cached_metrics.active_private_groups,
+            deleted_public_groups: 0,
+            deleted_private_groups: 0,
             canisters_in_pool: self.data.canister_pool.len() as u16,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
@@ -71,6 +77,7 @@ struct Data {
     pub canister_pool: canister::Pool,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
+    pub cached_metrics: CachedMetrics,
 }
 
 impl Data {
@@ -91,11 +98,38 @@ impl Data {
             canister_pool: canister::Pool::new(canister_pool_target_size),
             test_mode,
             total_cycles_spent_on_canisters: 0,
+            cached_metrics: CachedMetrics::default(),
         }
     }
 
     pub fn chat_exists(&self, chat_id: &ChatId) -> bool {
         self.private_groups.get(chat_id).is_some() || self.public_groups.get(chat_id).is_some()
+    }
+
+    pub fn calculate_metrics(&mut self, now: TimestampMillis) {
+        // Throttle to once every 5 minutes
+        if now < self.cached_metrics.last_run + FIVE_MINUTES_IN_MS {
+            return;
+        }
+
+        let mut cached_metrics = CachedMetrics {
+            last_run: now,
+            ..Default::default()
+        };
+
+        for public_group in self.public_groups.iter() {
+            if public_group.is_active(now) {
+                cached_metrics.active_public_groups += 1;
+            }
+        }
+
+        for private_group in self.private_groups.iter() {
+            if private_group.is_active(now) {
+                cached_metrics.active_private_groups += 1;
+            }
+        }
+
+        self.cached_metrics = cached_metrics;
     }
 }
 
@@ -112,6 +146,7 @@ impl Default for Data {
             canister_pool: canister::Pool::new(0),
             test_mode: true,
             total_cycles_spent_on_canisters: 0,
+            cached_metrics: CachedMetrics::default(),
         }
     }
 }
@@ -124,9 +159,20 @@ pub struct Metrics {
     pub total_cycles_spent_on_canisters: Cycles,
     pub public_groups: u32,
     pub private_groups: u64,
+    pub active_public_groups: u32,
+    pub active_private_groups: u32,
+    pub deleted_public_groups: u32,
+    pub deleted_private_groups: u64,
     pub canisters_in_pool: u16,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
     pub canister_upgrades_failed: u64,
     pub group_wasm_version: Version,
+}
+
+#[derive(CandidType, Deserialize, Serialize, Debug, Default)]
+pub struct CachedMetrics {
+    pub last_run: TimestampMillis,
+    pub active_public_groups: u32,
+    pub active_private_groups: u32,
 }
