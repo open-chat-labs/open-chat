@@ -211,25 +211,6 @@ type SearchResponse =
         }
     };
 
-type MetricsArgs =
-    record {
-    };
-
-type MetricsResponse = 
-    record {
-        unconfirmed_user_count: nat64;
-        confirmed_user_count: nat64;
-        created_user_count: nat64;
-        active_user_count: nat64;
-        online_user_count: nat64;
-        cycles_transferred: nat;
-        cycles_balance: int64;
-        bytes_used: nat64;
-        timestamp: TimestampMillis;
-        caller_id: principal;
-        wasm_memory_used: nat64;
-    };
-
 type SmsMessagesArgs =
     record {
         from_index: nat64;
@@ -301,9 +282,6 @@ service : (InitArgs) -> {
 
     // Search for users matching some query
     search: (SearchArgs) -> (SearchResponse) query;
-
-    // Canister metrics
-    metrics: (MetricsArgs) -> (MetricsResponse) query;
 
     // Get a page of SMS messages
     sms_messages: (SmsMessagesArgs) -> (SmsMessagesResponse) query;

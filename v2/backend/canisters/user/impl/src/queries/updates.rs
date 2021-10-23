@@ -10,15 +10,29 @@ use types::{
     CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DirectChatSummary, DirectChatSummaryUpdates, GroupChatSummary,
     GroupChatSummaryUpdates, Milliseconds, TimestampMillis,
 };
-use user_canister::updates::{Response::*, *};
+use user_canister::{initial_state, updates, updates::UpdatesSince};
 use utils::range_set::convert_to_message_index_ranges;
 
 #[query]
-async fn updates(args: Args) -> Response {
-    let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
-        Ok(ok) => ok,
-        Err(response) => return response,
-    };
+async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
+    let prepare_result = RUNTIME_STATE.with(|state| prepare(None, state.borrow().as_ref().unwrap()));
+
+    let summaries = get_group_chat_summaries(prepare_result.group_chats_added).await;
+
+    let result = RUNTIME_STATE.with(|state| finalize(None, summaries, vec![], state.borrow().as_ref().unwrap()));
+
+    initial_state::Response::Success(initial_state::SuccessResult {
+        timestamp: result.timestamp,
+        chats: result.chats_added,
+        transactions: result.transactions,
+        blocked_users: result.blocked_users,
+        cycles_balance: result.cycles_balance.unwrap(),
+    })
+}
+
+#[query]
+async fn updates(args: updates::Args) -> updates::Response {
+    let prepare_result = RUNTIME_STATE.with(|state| prepare(Some(&args.updates_since), state.borrow().as_ref().unwrap()));
 
     let summaries_future = get_group_chat_summaries(prepare_result.group_chats_added);
     let summary_updates_future = get_group_chat_summary_updates(
@@ -29,9 +43,16 @@ async fn updates(args: Args) -> Response {
 
     let (summaries, summary_updates) = futures::future::join(summaries_future, summary_updates_future).await;
 
-    let result = RUNTIME_STATE.with(|state| finalize(args, summaries, summary_updates, state.borrow().as_ref().unwrap()));
+    let result = RUNTIME_STATE.with(|state| {
+        finalize(
+            Some(&args.updates_since),
+            summaries,
+            summary_updates,
+            state.borrow().as_ref().unwrap(),
+        )
+    });
 
-    Success(result)
+    updates::Response::Success(result)
 }
 
 struct PrepareResult {
@@ -41,11 +62,11 @@ struct PrepareResult {
     group_chats_added: Vec<ChatId>,
 }
 
-fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(updates_since_option: Option<&UpdatesSince>, runtime_state: &RuntimeState) -> PrepareResult {
     runtime_state.trap_if_caller_not_owner();
 
     let now = runtime_state.env.now();
-    if let Some(updates_since) = &args.updates_since {
+    if let Some(updates_since) = updates_since_option {
         let duration_since_last_sync = now.saturating_sub(updates_since.timestamp);
 
         let mut group_chats_to_check_for_updates = Vec::new();
@@ -65,21 +86,21 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             }
         }
 
-        Ok(PrepareResult {
+        PrepareResult {
             group_index_canister_id: runtime_state.data.group_index_canister_id,
             duration_since_last_sync,
             group_chats_to_check_for_updates,
             group_chats_added,
-        })
+        }
     } else {
         let new_group_chats = runtime_state.data.group_chats.iter().map(|g| g.chat_id).collect();
 
-        Ok(PrepareResult {
+        PrepareResult {
             group_index_canister_id: runtime_state.data.group_index_canister_id,
             duration_since_last_sync: now,
             group_chats_to_check_for_updates: Vec::new(),
             group_chats_added: new_group_chats,
-        })
+        }
     }
 }
 
@@ -199,14 +220,13 @@ async fn get_group_chat_summary_updates(
 }
 
 fn finalize(
-    args: Args,
+    updates_since_option: Option<&UpdatesSince>,
     group_chats_added: Vec<Summary>,
     group_chats_updated: Vec<SummaryUpdates>,
     runtime_state: &RuntimeState,
-) -> SuccessResult {
+) -> updates::SuccessResult {
     let now = runtime_state.env.now();
-    let updates_since = args
-        .updates_since
+    let updates_since = updates_since_option
         .as_ref()
         .map_or(TimestampMillis::default(), |s| s.timestamp);
 
@@ -219,7 +239,7 @@ fn finalize(
     for group_chat in runtime_state
         .data
         .group_chats
-        .get_all(args.updates_since.as_ref().map(|s| s.timestamp))
+        .get_all(updates_since_option.as_ref().map(|s| s.timestamp))
     {
         if let Occupied(e) = group_chats_added.entry(group_chat.chat_id) {
             let summary = e.into_mut();
@@ -251,7 +271,7 @@ fn finalize(
     for direct_chat in runtime_state
         .data
         .direct_chats
-        .get_all(args.updates_since.as_ref().map(|s| s.timestamp))
+        .get_all(updates_since_option.as_ref().map(|s| s.timestamp))
     {
         if direct_chat.date_created > updates_since {
             chats_added.push(ChatSummary::Direct(DirectChatSummary {
@@ -301,7 +321,7 @@ fn finalize(
         None
     };
 
-    SuccessResult {
+    updates::SuccessResult {
         timestamp: now,
         chats_added,
         chats_updated,
