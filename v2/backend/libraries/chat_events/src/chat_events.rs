@@ -395,6 +395,12 @@ impl ChatEvents {
         self.events.iter()
     }
 
+    pub fn since(&self, index: EventIndex) -> impl DoubleEndedIterator<Item = &EventWrapper<ChatEventInternal>> {
+        let index: u32 = index.into();
+        let from = (index + 1) as usize;
+        self.events[from..].iter()
+    }
+
     pub fn hydrate_message(&self, message: &MessageInternal) -> Message {
         Message {
             message_index: message.message_index,
@@ -624,7 +630,7 @@ impl ChatEvents {
 
     pub fn metrics(&self) -> Metrics {
         let mut metrics = self.metrics.clone();
-        metrics.last_active = self.latest().map_or(0, |e| e.timestamp);
+        metrics.last_active = self.last().timestamp;
         metrics.total_events = self.events.len() as u64;
         metrics
     }
@@ -635,10 +641,6 @@ impl ChatEvents {
 
     pub fn is_empty(&self) -> bool {
         self.events.is_empty()
-    }
-
-    pub fn latest(&self) -> Option<&EventWrapper<ChatEventInternal>> {
-        self.events.last()
     }
 
     fn get_internal(&self, event_index: EventIndex) -> Option<&EventWrapper<ChatEventInternal>> {

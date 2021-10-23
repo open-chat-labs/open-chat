@@ -3,22 +3,17 @@ use serde::Deserialize;
 use types::{EventIndex, Participant, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
-pub struct Args {
-    pub updates_since: EventIndex,
-}
+pub struct Args {}
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    SuccessNoUpdates,
     CallerNotInGroup,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
     pub latest_event_index: EventIndex,
-    pub participants_added_or_updated: Vec<Participant>,
-    pub participants_removed: Vec<UserId>,
-    pub blocked_users_added: Vec<UserId>,
-    pub blocked_users_removed: Vec<UserId>,
+    pub participants: Vec<Participant>,
+    pub blocked_users: Vec<UserId>,
 }
