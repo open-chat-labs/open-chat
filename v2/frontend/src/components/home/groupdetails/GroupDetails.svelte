@@ -9,32 +9,31 @@
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../../domain/user/user.utils";
     import type { UpdatedGroup } from "../../../fsm/editGroup";
-    import type { GroupChatSummary, UpdateGroupResponse } from "../../../domain/chat/chat";
+    import type { GroupChatSummary } from "../../../domain/chat/chat";
     import { createEventDispatcher } from "svelte";
-    import type { ServiceContainer } from "../../../services/serviceContainer";
-    import { toastStore } from "../../../stores/toast";
-    import { rollbar } from "../../../utils/logging";
+    import type { Writable } from "svelte/store";
+    import type { ChatController } from "../../../fsm/chat.controller";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
     const dispatch = createEventDispatcher();
 
+    export let controller: ChatController;
     export let updatedGroup: UpdatedGroup;
-    export let chat: GroupChatSummary;
     export let userId: string;
-    export let api: ServiceContainer;
+
+    $: chat = controller.chat as Writable<GroupChatSummary>;
 
     let showConfirmation = false;
     let confirmed = false;
     let saving = false;
 
-    $: nameDirty = updatedGroup.name !== chat.name;
-    $: descDirty = updatedGroup.desc !== chat.description;
-    $: avatarDirty = updatedGroup.avatar?.blobUrl !== chat.blobUrl;
+    $: nameDirty = updatedGroup.name !== $chat.name;
+    $: descDirty = updatedGroup.desc !== $chat.description;
+    $: avatarDirty = updatedGroup.avatar?.blobUrl !== $chat.blobUrl;
     $: dirty = nameDirty || descDirty || avatarDirty;
-
-    $: canEdit = chat.participants.find((p) => p.userId === userId)?.role === "admin";
+    $: canEdit = $chat.participants.find((p) => p.userId === userId)?.role === "admin";
 
     function close() {
         if (dirty && !confirmed) {
@@ -59,38 +58,20 @@
 
     function updateGroup() {
         saving = true;
-        api.updateGroup(
-            chat.chatId,
-            updatedGroup.name,
-            updatedGroup.desc,
-            updatedGroup.avatar?.blobData
-        )
-            .then((resp) => {
-                const err = groupUpdateErrorMessage(resp);
-                if (err) {
-                    toastStore.showFailureToast(err);
-                } else {
-                    chat.name = updatedGroup.name;
-                    chat.description = updatedGroup.desc;
-                    chat.blobUrl = updatedGroup.avatar?.blobUrl;
+        controller
+            .updateGroup(updatedGroup.name, updatedGroup.desc, updatedGroup.avatar?.blobData)
+            .then((success) => {
+                if (success) {
+                    chat.update((c) => ({
+                        ...c,
+                        name: updatedGroup.name,
+                        description: updatedGroup.desc,
+                        blobUrl: updatedGroup.avatar?.blobUrl,
+                    }));
                     dispatch("close");
                 }
             })
-            .catch((err) => {
-                rollbar.error("Update group failed: ", err);
-                toastStore.showFailureToast("groupUpdateFailed");
-            })
             .finally(() => (showConfirmation = saving = false));
-    }
-
-    function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
-        if (resp === "success") return undefined;
-        if (resp === "unchanged") return undefined;
-        if (resp === "desc_too_long") return "groupDescTooLong";
-        if (resp === "internal_error") return "groupUpdateFailed";
-        if (resp === "not_authorised") return "groupUpdateFailed";
-        if (resp === "name_too_long") return "groupNameTooLong";
-        if (resp === "name_taken") return "groupAlreadyExists";
     }
 </script>
 
@@ -124,14 +105,14 @@
             placeholder={$_("newGroupDesc")} />
 
         <div class="sub-section">
-            {#if chat.public}
+            {#if $chat.public}
                 <h4>{$_("publicGroup")}</h4>
             {:else}
                 <h4>{$_("privateGroup")}</h4>
             {/if}
 
             <div class="info">
-                {#if chat.public}
+                {#if $chat.public}
                     <p>
                         {$_("publicGroupInfo")}
                     </p>

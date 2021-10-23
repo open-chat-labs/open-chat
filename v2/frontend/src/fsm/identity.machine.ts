@@ -10,7 +10,7 @@ import { registerMachine } from "./register.machine";
 import { rollbar } from "../utils/logging";
 import { AuthError } from "../services/httpError";
 import { homeMachine } from "./home.machine";
-import { initMarkRead } from "../stores/markRead";
+import { MessageReadTracker } from "../stores/markRead";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -342,7 +342,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                         userLookup: {},
                         usersLastUpdate: BigInt(0),
                         chatsIndex: {},
-                        markRead: initMarkRead(ctx.serviceContainer!),
+                        markRead: new MessageReadTracker(ctx.serviceContainer!),
                     }),
                     onDone: "login",
                     onError: {
