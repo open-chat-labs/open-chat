@@ -14,4 +14,5 @@ pub enum Response {
     GroupNotPublic,
     InternalError(String),
     CallerNotInGroup,
+    LastAdmin,
 }

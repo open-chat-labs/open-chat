@@ -67,7 +67,11 @@ impl Participants {
         match self.user_id_to_principal_map.remove(&user_id) {
             None => false,
             Some(principal) => {
-                self.by_principal.remove(&principal);
+                if let Some(participant) = self.by_principal.remove(&principal) {
+                    if participant.role.is_admin() {
+                        self.admin_count -= 1;
+                    }
+                }
                 true
             }
         }
