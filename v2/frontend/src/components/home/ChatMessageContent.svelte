@@ -43,8 +43,8 @@
     <FileContent {me} {content} />
 {:else if content.kind === "deleted_content"}
     <DeletedContent {content} />
-{:else if content.kind === "cycles_content"}
-    <div>Cycles content</div>
+{:else if content.kind === "crypto_content"}
+    <div>Crypto content</div>
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {/if}

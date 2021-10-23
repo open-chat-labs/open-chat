@@ -9,7 +9,7 @@ export type MessageContent =
     | AudioContent
     | DeletedContent
     | PlaceholderContent
-    | CyclesContent;
+    | CryptocurrencyContent;
 
 export type IndexRange = [number, number];
 
@@ -17,10 +17,69 @@ export interface PlaceholderContent {
     kind: "placeholder_content";
 }
 
-export interface CyclesContent {
-    kind: "cycles_content";
+export type PendingCyclesTransfer = {
+    transferKind: "cycles_transfer";
+    kind: "pending_cycles_transfer";
+    recipient: string;
+    cycles: bigint;
+};
+
+export type CompletedCyclesTransfer = {
+    transferKind: "cycles_transfer";
+    kind: "completed_cycles_transfer";
+    recipient: string;
+    sender: string;
+    cycles: bigint;
+};
+
+export type FailedCyclesTransfer = {
+    transferKind: "cycles_transfer";
+    kind: "failed_cycles_transfer";
+    recipient: string;
+    cycles: bigint;
+    errorMessage: string;
+};
+
+export type PendingICPTransfer = {
+    transferKind: "icp_transfer";
+    kind: "pending_icp_transfer";
+    recipient: string;
+    amountE8s: bigint;
+    feeE8s?: bigint;
+    memo?: bigint;
+};
+
+export type CompletedICPTransfer = {
+    transferKind: "icp_transfer";
+    kind: "completed_icp_transfer";
+    recipient: string;
+    sender: string;
+    amountE8s: bigint;
+    feeE8s: bigint;
+    memo: bigint;
+    blockHeight: bigint;
+};
+
+export type FailedICPTransfer = {
+    transferKind: "icp_transfer";
+    kind: "failed_icp_transfer";
+    recipient: string;
+    amountE8s: bigint;
+    feeE8s: bigint;
+    memo: bigint;
+    errorMessage: string;
+};
+
+export type CyclesTransfer = PendingCyclesTransfer | CompletedCyclesTransfer | FailedCyclesTransfer;
+
+export type ICPTransfer = PendingICPTransfer | CompletedICPTransfer | FailedICPTransfer;
+
+export type CryptocurrencyTransfer = CyclesTransfer | ICPTransfer;
+
+export interface CryptocurrencyContent {
+    kind: "crypto_content";
     caption?: string;
-    amount: bigint;
+    transfer: CryptocurrencyTransfer;
 }
 
 export interface ImageContent extends DataContent {
@@ -470,6 +529,7 @@ export type SendMessageResponse =
     | SendMessageTooLong
     | SendMessageBalanceExceeded
     | SendMessageRecipientNotFound
+    | TransationFailed
     | SendMessageNotInGroup;
 
 export type SendMessageSuccess = {
@@ -477,6 +537,10 @@ export type SendMessageSuccess = {
     timestamp: bigint;
     messageIndex: number;
     eventIndex: number;
+};
+
+export type TransationFailed = {
+    kind: "transaction_failed";
 };
 
 export type SendMessageRecipientBlocked = {

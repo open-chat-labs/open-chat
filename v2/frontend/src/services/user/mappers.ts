@@ -244,6 +244,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("RecipientNotFound" in candid) {
         return { kind: "recipient_not_found" };
     }
+    if ("TransactionFailed" in candid) {
+        return { kind: "transaction_failed" };
+    }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 

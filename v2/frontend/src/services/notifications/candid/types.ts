@@ -1,4 +1,5 @@
 import type { Principal } from '@dfinity/principal';
+export type AccountIdentifier = string;
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -18,6 +19,7 @@ export interface BlobReference {
   'blob_id' : bigint,
   'canister_id' : CanisterId,
 }
+export type BlockHeight = bigint;
 export type CanisterCreationStatus = { 'InProgress' : null } |
   { 'Created' : null } |
   { 'Pending' : null };
@@ -31,35 +33,72 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export interface CompletedCyclesDeposit {
+  'from' : CanisterId,
+  'cycles' : Cycles,
+}
+export interface CompletedCyclesTransfer {
+  'recipient' : UserId,
+  'sender' : UserId,
+  'cycles' : Cycles,
+}
+export interface CompletedCyclesWithdrawal {
+  'to' : CanisterId,
+  'cycles' : Cycles,
+}
+export interface CompletedICPDeposit {
+  'memo' : bigint,
+  'fee_e8s' : bigint,
+  'amount_e8s' : bigint,
+  'from_address' : string,
+  'block_height' : BlockHeight,
+}
+export interface CompletedICPTransfer {
+  'memo' : bigint,
+  'recipient' : UserId,
+  'fee_e8s' : bigint,
+  'sender' : UserId,
+  'amount_e8s' : bigint,
+  'block_height' : BlockHeight,
+}
+export interface CompletedICPWithdrawal {
+  'to' : string,
+  'memo' : bigint,
+  'fee_e8s' : bigint,
+  'amount_e8s' : bigint,
+  'block_height' : BlockHeight,
+}
 export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
 export type Cryptocurrency = { 'ICP' : null } |
   { 'Cycles' : null };
-export interface CryptocurrencyDeposit { 'from' : string, 'amount' : bigint }
-export interface CryptocurrencyReceive {
-  'from_user' : UserId,
-  'from' : string,
-  'amount' : bigint,
-}
-export interface CryptocurrencySend {
-  'to' : string,
-  'to_user' : UserId,
-  'amount' : bigint,
-}
-export interface CryptocurrencyTransaction {
+export interface CryptocurrencyAccount {
   'currency' : Cryptocurrency,
-  'block_height' : [] | [bigint],
+  'address' : string,
+}
+export interface CryptocurrencyContent {
+  'caption' : [] | [string],
   'transfer' : CryptocurrencyTransfer,
 }
-export type CryptocurrencyTransfer = { 'Deposit' : CryptocurrencyDeposit } |
-  { 'Send' : CryptocurrencySend } |
+export type CryptocurrencyDeposit = { 'ICP' : ICPDeposit } |
+  { 'Cycles' : CyclesDeposit };
+export type CryptocurrencyTransaction = { 'Deposit' : CryptocurrencyDeposit } |
   { 'Withdrawal' : CryptocurrencyWithdrawal } |
-  { 'Receive' : CryptocurrencyReceive };
-export interface CryptocurrencyWithdrawal { 'to' : string, 'amount' : bigint }
+  { 'Transfer' : CryptocurrencyTransfer };
+export type CryptocurrencyTransfer = { 'ICP' : ICPTransfer } |
+  { 'Cycles' : CyclesTransfer };
+export type CryptocurrencyWithdrawal = { 'ICP' : ICPWithdrawal } |
+  { 'Cycles' : CyclesWithdrawal };
 export type Cycles = bigint;
-export interface CyclesContent { 'caption' : [] | [string], 'amount' : Cycles }
+export type CyclesDeposit = { 'Completed' : CompletedCyclesDeposit };
+export type CyclesTransfer = { 'Failed' : FailedCyclesTransfer } |
+  { 'Completed' : CompletedCyclesTransfer } |
+  { 'Pending' : PendingCyclesTransfer };
+export type CyclesWithdrawal = { 'Failed' : FailedCyclesWithdrawal } |
+  { 'Completed' : CompletedCyclesWithdrawal } |
+  { 'Pending' : PendingCyclesWithdrawal };
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
@@ -99,6 +138,30 @@ export interface DirectMessageNotification {
   'sender_name' : string,
 }
 export type EventIndex = number;
+export interface FailedCyclesTransfer {
+  'error_message' : string,
+  'recipient' : UserId,
+  'cycles' : Cycles,
+}
+export interface FailedCyclesWithdrawal {
+  'to' : CanisterId,
+  'error_message' : string,
+  'cycles' : Cycles,
+}
+export interface FailedICPTransfer {
+  'memo' : bigint,
+  'error_message' : string,
+  'recipient' : UserId,
+  'fee_e8s' : bigint,
+  'amount_e8s' : bigint,
+}
+export interface FailedICPWithdrawal {
+  'to' : string,
+  'memo' : bigint,
+  'error_message' : string,
+  'fee_e8s' : bigint,
+  'amount_e8s' : bigint,
+}
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -183,6 +246,13 @@ export interface GroupNameChanged {
   'new_name' : string,
   'previous_name' : string,
 }
+export type ICPDeposit = { 'Completed' : CompletedICPDeposit };
+export type ICPTransfer = { 'Failed' : FailedICPTransfer } |
+  { 'Completed' : CompletedICPTransfer } |
+  { 'Pending' : PendingICPTransfer };
+export type ICPWithdrawal = { 'Failed' : FailedICPWithdrawal } |
+  { 'Completed' : CompletedICPWithdrawal } |
+  { 'Pending' : PendingICPWithdrawal };
 export interface ImageContent {
   'height' : number,
   'mime_type' : string,
@@ -208,7 +278,7 @@ export interface Message {
 export type MessageContent = { 'File' : FileContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
-  { 'Cycles' : CyclesContent } |
+  { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
   { 'Deleted' : DeletedContent };
@@ -277,6 +347,26 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
+export interface PendingCyclesTransfer {
+  'recipient' : UserId,
+  'cycles' : Cycles,
+}
+export interface PendingCyclesWithdrawal {
+  'to' : CanisterId,
+  'cycles' : Cycles,
+}
+export interface PendingICPTransfer {
+  'memo' : [] | [bigint],
+  'recipient' : UserId,
+  'fee_e8s' : [] | [bigint],
+  'amount_e8s' : bigint,
+}
+export interface PendingICPWithdrawal {
+  'to' : string,
+  'memo' : [] | [bigint],
+  'fee_e8s' : [] | [bigint],
+  'amount_e8s' : bigint,
+}
 export interface PushDirectMessageNotificationArgs {
   'recipient' : UserId,
   'notification' : DirectMessageNotification,
@@ -341,6 +431,9 @@ export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
+export type TransactionStatus = { 'Failed' : string } |
+  { 'Complete' : null } |
+  { 'Pending' : null };
 export interface TransactionWrapper {
   'transaction' : Transaction,
   'timestamp' : TimestampMillis,

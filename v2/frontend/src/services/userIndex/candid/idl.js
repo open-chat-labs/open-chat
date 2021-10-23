@@ -35,6 +35,11 @@ export const idlFactory = ({ IDL }) => {
     'Pending' : IDL.Null,
   });
   const UserId = CanisterId;
+  const Cryptocurrency = IDL.Variant({ 'ICP' : IDL.Null, 'Cycles' : IDL.Null });
+  const CryptocurrencyAccount = IDL.Record({
+    'currency' : Cryptocurrency,
+    'address' : IDL.Text,
+  });
   const CanisterUpgradeStatus = IDL.Variant({
     'Required' : IDL.Null,
     'NotRequired' : IDL.Null,
@@ -52,6 +57,7 @@ export const idlFactory = ({ IDL }) => {
     'Created' : IDL.Record({
       'username' : IDL.Text,
       'user_id' : UserId,
+      'cryptocurrency_accounts' : IDL.Vec(CryptocurrencyAccount),
       'avatar_id' : IDL.Opt(IDL.Nat),
       'canister_upgrade_status' : CanisterUpgradeStatus,
     }),
