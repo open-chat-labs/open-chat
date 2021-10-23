@@ -27,14 +27,15 @@
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
+    import type { Writable } from "svelte/store";
     const dispatch = createEventDispatcher();
 
-    export let selectedChatSummary: ChatSummary;
+    export let selectedChatSummary: Writable<ChatSummary>;
     export let user: UserSummary | undefined;
     export let blocked: boolean;
     export let unreadMessages: number;
 
-    $: isGroup = selectedChatSummary.kind === "group_chat";
+    $: isGroup = $selectedChatSummary.kind === "group_chat";
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -49,38 +50,38 @@
     }
 
     function blockUser() {
-        if (selectedChatSummary.kind === "direct_chat") {
-            dispatch("blockUser", { userId: selectedChatSummary.them });
+        if ($selectedChatSummary.kind === "direct_chat") {
+            dispatch("blockUser", { userId: $selectedChatSummary.them });
         }
     }
 
     function unblockUser() {
-        if (selectedChatSummary.kind === "direct_chat") {
-            dispatch("unblockUser", { userId: selectedChatSummary.them });
+        if ($selectedChatSummary.kind === "direct_chat") {
+            dispatch("unblockUser", { userId: $selectedChatSummary.them });
         }
     }
 
     function showGroupDetails() {
-        if (selectedChatSummary.kind === "group_chat") {
+        if ($selectedChatSummary.kind === "group_chat") {
             dispatch("showGroupDetails");
         }
     }
 
     function showParticipants() {
-        if (selectedChatSummary.kind === "group_chat") {
+        if ($selectedChatSummary.kind === "group_chat") {
             dispatch("showParticipants");
         }
     }
 
     function addParticipants() {
-        if (selectedChatSummary.kind === "group_chat") {
+        if ($selectedChatSummary.kind === "group_chat") {
             dispatch("addParticipants");
         }
     }
 
     function leaveGroup() {
-        if (selectedChatSummary.kind === "group_chat") {
-            dispatch("leaveGroup", selectedChatSummary.chatId);
+        if ($selectedChatSummary.kind === "group_chat") {
+            dispatch("leaveGroup", $selectedChatSummary.chatId);
         }
     }
 
@@ -148,7 +149,7 @@
         );
     }
 
-    $: chat = normaliseChatSummary(selectedChatSummary);
+    $: chat = normaliseChatSummary($selectedChatSummary);
 
     // for direct chats we want to either show when the user was last online or if they are typing
     // for group chats we also show if any participants are typing (they all get listed)
@@ -200,7 +201,7 @@
             </div>
             <div slot="menu">
                 <Menu>
-                    {#if selectedChatSummary.kind === "direct_chat"}
+                    {#if $selectedChatSummary.kind === "direct_chat"}
                         {#if blocked}
                             <MenuItem on:click={unblockUser}>
                                 <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
@@ -212,7 +213,7 @@
                                 <div slot="text">{$_("blockUser")}</div>
                             </MenuItem>
                         {/if}
-                    {:else if selectedChatSummary.kind === "group_chat"}
+                    {:else if $selectedChatSummary.kind === "group_chat"}
                         <MenuItem on:click={showGroupDetails}>
                             <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("groupDetails")}</div>
@@ -225,14 +226,14 @@
                             <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("participants")}</div>
                         </MenuItem>
-                        {#if canAdminister(selectedChatSummary)}
+                        {#if canAdminister($selectedChatSummary)}
                             <MenuItem on:click={addParticipants}>
                                 <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                 <div slot="text">{$_("addParticipants")}</div>
                             </MenuItem>
                         {/if}
                     {/if}
-                    {#if selectedChatSummary.notificationsMuted === true}
+                    {#if $selectedChatSummary.notificationsMuted === true}
                         <MenuItem on:click={toggleMuteNotifications}>
                             <Bell size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("unmuteNotifications")}</div>
