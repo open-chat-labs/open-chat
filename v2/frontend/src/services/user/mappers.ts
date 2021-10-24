@@ -20,6 +20,7 @@ import type {
     ApiSearchAllMessagesResponse,
     ApiMessageMatch,
     ApiEditMessageResponse,
+    ApiInitialStateResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -41,6 +42,7 @@ import type {
     DeleteMessageResponse,
     JoinGroupResponse,
     EditMessageResponse,
+    InitialStateResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -147,6 +149,9 @@ export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupRes
     }
     if ("GroupNotFound" in candid) {
         return "group_not_found";
+    }
+    if ("LastAdmin" in candid) {
+        return "last_admin";
     }
     throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
 }
@@ -353,6 +358,18 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
     }
     // todo - we know there are other event types that we are not dealing with yet
     throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
+}
+
+export function initialStateResponse(candid: ApiInitialStateResponse): InitialStateResponse {
+    if ("Success" in candid) {
+        return {
+            blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
+            chats: candid.Success.chats.map(chatSummary),
+            timestamp: candid.Success.timestamp,
+            cyclesBalance: candid.Success.cycles_balance,
+        };
+    }
+    throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
 }
 
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {

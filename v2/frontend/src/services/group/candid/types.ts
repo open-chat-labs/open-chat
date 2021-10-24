@@ -367,20 +367,6 @@ export interface MessageMatch {
   'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
-export type MetricsArgs = {};
-export interface MetricsResponse {
-  'blob_bytes_used' : bigint,
-  'cycles_balance' : bigint,
-  'image_message_count' : bigint,
-  'caller_id' : Principal,
-  'chunk_count' : number,
-  'bytes_used' : bigint,
-  'file_message_count' : bigint,
-  'timestamp' : TimestampMillis,
-  'text_message_count' : bigint,
-  'wasm_memory_used' : bigint,
-  'video_message_count' : bigint,
-}
 export type Milliseconds = bigint;
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
@@ -458,7 +444,8 @@ export interface RemoveAdminArgs { 'user_id' : UserId }
 export type RemoveAdminResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'CannotRemoveSelf' : null };
 export interface RemoveParticipantArgs { 'user_id' : UserId }
 export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
@@ -661,7 +648,6 @@ export interface _SERVICE {
   'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
   'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
   'make_admin' : (arg_0: MakeAdminArgs) => Promise<MakeAdminResponse>,
-  'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'remove_admin' : (arg_0: RemoveAdminArgs) => Promise<RemoveAdminResponse>,
   'remove_participant' : (arg_0: RemoveParticipantArgs) => Promise<

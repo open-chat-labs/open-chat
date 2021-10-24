@@ -18,21 +18,6 @@ export const idlFactory = ({ IDL }) => {
   const ActiveGroupsResponse = IDL.Variant({
     'Success' : ActiveGroupsSuccessResult,
   });
-  const MetricsArgs = IDL.Record({});
-  const TimestampMillis = IDL.Nat64;
-  const MetricsResponse = IDL.Record({
-    'cycles_balance' : IDL.Int64,
-    'private_group_count' : IDL.Nat64,
-    'active_public_group_count' : IDL.Nat64,
-    'active_private_group_count' : IDL.Nat64,
-    'caller_id' : IDL.Principal,
-    'deleted_public_group_count' : IDL.Nat64,
-    'bytes_used' : IDL.Nat64,
-    'timestamp' : TimestampMillis,
-    'deleted_private_group_count' : IDL.Nat64,
-    'public_group_count' : IDL.Nat64,
-    'wasm_memory_used' : IDL.Nat64,
-  });
   const SearchArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
@@ -74,7 +59,6 @@ export const idlFactory = ({ IDL }) => {
         [ActiveGroupsResponse],
         ['query'],
       ),
-    'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
     'update_group_canister_wasm' : IDL.Func(
         [UpdateGroupCanisterWasmArgs],

@@ -317,20 +317,6 @@ export interface MessageMatch {
   'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
-export type MetricsArgs = {};
-export interface MetricsResponse {
-  'cycles_balance' : bigint,
-  'private_group_count' : bigint,
-  'active_public_group_count' : bigint,
-  'active_private_group_count' : bigint,
-  'caller_id' : Principal,
-  'deleted_public_group_count' : bigint,
-  'bytes_used' : bigint,
-  'timestamp' : TimestampMillis,
-  'deleted_private_group_count' : bigint,
-  'public_group_count' : bigint,
-  'wasm_memory_used' : bigint,
-}
 export type Milliseconds = bigint;
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
@@ -524,7 +510,6 @@ export interface VideoContent {
 }
 export interface _SERVICE {
   'active_groups' : (arg_0: ActiveGroupsArgs) => Promise<ActiveGroupsResponse>,
-  'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
   'update_group_canister_wasm' : (
       arg_0: UpdateGroupCanisterWasmArgs,

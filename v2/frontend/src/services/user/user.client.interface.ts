@@ -28,6 +28,7 @@ import type { UserSummary } from "../../domain/user/user";
 export interface IUserClient {
     userId: string;
     getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse>;
+    getInitialState(): Promise<MergedUpdatesResponse>;
     chatEventsWindow(
         eventIndexRange: IndexRange,
         userId: string,

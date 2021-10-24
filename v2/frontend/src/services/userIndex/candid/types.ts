@@ -347,20 +347,6 @@ export interface MessageMatch {
   'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
-export type MetricsArgs = {};
-export interface MetricsResponse {
-  'cycles_balance' : bigint,
-  'unconfirmed_user_count' : bigint,
-  'caller_id' : Principal,
-  'bytes_used' : bigint,
-  'timestamp' : TimestampMillis,
-  'created_user_count' : bigint,
-  'online_user_count' : bigint,
-  'confirmed_user_count' : bigint,
-  'wasm_memory_used' : bigint,
-  'cycles_transferred' : bigint,
-  'active_user_count' : bigint,
-}
 export type Milliseconds = bigint;
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
@@ -622,7 +608,6 @@ export interface _SERVICE {
     >,
   'current_user' : (arg_0: CurrentUserArgs) => Promise<CurrentUserResponse>,
   'mark_as_online' : (arg_0: MarkAsOnlineArgs) => Promise<MarkAsOnlineResponse>,
-  'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'notify_balance' : (arg_0: NotifyBalanceArgs) => Promise<undefined>,
   'remove_sms_messages' : (arg_0: RemoveSmsMessagesArgs) => Promise<
       RemoveSmsMessagesResponse

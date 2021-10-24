@@ -272,20 +272,6 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const MetricsArgs = IDL.Record({});
-  const MetricsResponse = IDL.Record({
-    'blob_bytes_used' : IDL.Nat64,
-    'cycles_balance' : IDL.Int64,
-    'image_message_count' : IDL.Nat64,
-    'caller_id' : IDL.Principal,
-    'chunk_count' : IDL.Nat32,
-    'bytes_used' : IDL.Nat64,
-    'file_message_count' : IDL.Nat64,
-    'timestamp' : TimestampMillis,
-    'text_message_count' : IDL.Nat64,
-    'wasm_memory_used' : IDL.Nat64,
-    'video_message_count' : IDL.Nat64,
-  });
   const PutChunkArgs = IDL.Record({
     'total_chunks' : IDL.Nat32,
     'blob_id' : IDL.Nat,
@@ -307,6 +293,7 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
+    'CannotRemoveSelf' : IDL.Null,
   });
   const RemoveParticipantArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveParticipantResponse = IDL.Variant({
@@ -477,7 +464,6 @@ export const idlFactory = ({ IDL }) => {
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
     'make_admin' : IDL.Func([MakeAdminArgs], [MakeAdminResponse], []),
-    'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
     'remove_admin' : IDL.Func([RemoveAdminArgs], [RemoveAdminResponse], []),
     'remove_participant' : IDL.Func(

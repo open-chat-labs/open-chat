@@ -323,7 +323,7 @@ export type UpdatesSince = {
 };
 
 export type UpdateArgs = {
-    updatesSince?: UpdatesSince;
+    updatesSince: UpdatesSince;
 };
 
 export type MergedUpdatesResponse = {
@@ -339,6 +339,13 @@ export type UpdatesResponse = {
     chatsRemoved: Set<string>;
     timestamp: bigint;
     cyclesBalance?: bigint;
+};
+
+export type InitialStateResponse = {
+    blockedUsers: Set<string>;
+    chats: ChatSummary[];
+    timestamp: bigint;
+    cyclesBalance: bigint;
 };
 
 export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpdates;
@@ -578,10 +585,17 @@ export type PutChunkResponse =
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error";
 
-export type ChangeAdminResponse =
+export type MakeAdminResponse =
     | "user_not_in_group"
     | "caller_not_in_group"
     | "not_authorised"
+    | "success";
+
+export type RemoveAdminResponse =
+    | "user_not_in_group"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "cannot_remove_self"
     | "success";
 
 export type RemoveParticipantResponse =
@@ -608,7 +622,12 @@ export type UnblockUserResponse =
     | "caller_not_on_group"
     | "not_authorised";
 
-export type LeaveGroupResponse = "success" | "group_not_found" | "internal_error" | "not_in_group";
+export type LeaveGroupResponse =
+    | "success"
+    | "group_not_found"
+    | "internal_error"
+    | "not_in_group"
+    | "last_admin";
 
 export type JoinGroupResponse =
     | "success"

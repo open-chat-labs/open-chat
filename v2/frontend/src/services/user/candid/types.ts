@@ -339,6 +339,16 @@ export interface InitArgs {
   'owner' : Principal,
   'notification_canister_ids' : Array<CanisterId>,
 }
+export type InitialStateArgs = {};
+export type InitialStateResponse = {
+    'Success' : {
+      'cycles_balance' : Cycles,
+      'chats' : Array<ChatSummary>,
+      'blocked_users' : Array<UserId>,
+      'timestamp' : TimestampMillis,
+      'transactions' : Array<Transaction>,
+    }
+  };
 export interface JoinGroupArgs { 'chat_id' : ChatId }
 export type JoinGroupResponse = { 'Blocked' : null } |
   { 'GroupNotFound' : null } |
@@ -348,7 +358,8 @@ export type JoinGroupResponse = { 'Blocked' : null } |
   { 'ParticipantLimitReached' : number } |
   { 'InternalError' : string };
 export interface LeaveGroupArgs { 'chat_id' : ChatId }
-export type LeaveGroupResponse = { 'GroupNotFound' : null } |
+export type LeaveGroupResponse = { 'LastAdmin' : null } |
+  { 'GroupNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
@@ -567,7 +578,7 @@ export interface UpdatedMessage {
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }
-export interface UpdatesArgs { 'updates_since' : [] | [UpdatesSince] }
+export interface UpdatesArgs { 'updates_since' : UpdatesSince }
 export type UpdatesResponse = {
     'Success' : {
       'cycles_balance' : [] | [Cycles],
@@ -681,6 +692,7 @@ export interface _SERVICE {
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
   'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
   'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
+  'initial_state' : (arg_0: InitialStateArgs) => Promise<InitialStateResponse>,
   'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
   'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,

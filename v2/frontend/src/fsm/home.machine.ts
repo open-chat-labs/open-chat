@@ -151,13 +151,13 @@ async function getUpdates(
     chatUpdatesSince?: bigint
 ): Promise<ChatsResponse> {
     try {
-        const chatsResponse = await serviceContainer.getUpdates(
-            chatSummaries,
-            chatUpdatesSince
-                ? updateArgsFromChats(chatUpdatesSince, chatSummaries)
-                : { updatesSince: undefined },
-            messagesRead
-        );
+        const chatsResponse = chatUpdatesSince
+            ? await serviceContainer.getUpdates(
+                  chatSummaries,
+                  updateArgsFromChats(chatUpdatesSince, chatSummaries),
+                  messagesRead
+              )
+            : await serviceContainer.getInitialState(messagesRead);
         const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries, false);
         userIds.add(user.userId);
         const usersResponse = await serviceContainer.getUsers(
