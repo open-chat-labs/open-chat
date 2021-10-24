@@ -213,10 +213,20 @@ type UnmuteNotificationsResponse =
         ChatNotFound;
     }; 
 
+type SetPreferencesArgs =
+    record {
+        preferences: OptionalUserPreferences;
+    };
+
+type SetPreferencesResponse =
+    variant {
+        Success;
+    };
+    
 type InitialStateArgs = 
     record {
     };
-
+    
 type InitialStateResponse =
     variant {
         Success: record {
@@ -374,7 +384,8 @@ service: (InitArgs) -> {
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);
     unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
-    
+    set_preferences: (SetPreferencesArgs) -> (SetPreferencesResponse);
+
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
     events_range: (EventsRangeArgs) -> (EventsResponse) query;

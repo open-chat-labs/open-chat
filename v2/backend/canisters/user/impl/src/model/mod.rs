@@ -5,3 +5,4 @@ pub mod group_chats;
 pub mod transactions;
 pub mod unread_message_index_map;
 pub mod user_cycles_balance;
+pub mod user_preferences;
