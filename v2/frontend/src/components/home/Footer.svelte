@@ -145,8 +145,8 @@
         {#if $fileToAttach !== undefined}
             {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content"}
                 <DraftMediaMessage draft={$fileToAttach} />
-            {:else if $fileToAttach.kind === "cycles_content"}
-                <div>Cycle transfer preview</div>
+            {:else if $fileToAttach.kind === "crypto_content"}
+                <div>Crypto transfer preview</div>
             {/if}
         {/if}
         {#if showEmojiPicker}

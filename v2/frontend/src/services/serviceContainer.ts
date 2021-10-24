@@ -28,7 +28,6 @@ import type {
     AddParticipantsResponse,
     Message,
     SendMessageResponse,
-    ChangeAdminResponse,
     RemoveParticipantResponse,
     BlockUserResponse,
     UnblockUserResponse,
@@ -42,6 +41,8 @@ import type {
     JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
+    MakeAdminResponse,
+    RemoveAdminResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -420,21 +421,34 @@ export class ServiceContainer implements MarkMessagesRead {
         }));
     }
 
+    private handleMergedUpdatesResponse(
+        messagesRead: IMessageReadTracker,
+        resp: MergedUpdatesResponse
+    ): MergedUpdatesResponse {
+        return {
+            ...resp,
+            chatSummaries: resp.chatSummaries.map((chat) => {
+                messagesRead.syncWithServer(chat.chatId, chat.readByMe);
+                return chat.kind === "direct_chat"
+                    ? chat
+                    : this.rehydrateDataContent(chat, "avatar", chat.chatId);
+            }),
+        };
+    }
+
+    getInitialState(messagesRead: IMessageReadTracker): Promise<MergedUpdatesResponse> {
+        return this.userClient.getInitialState().then((resp) => {
+            return this.handleMergedUpdatesResponse(messagesRead, resp);
+        });
+    }
+
     getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
         messagesRead: IMessageReadTracker
     ): Promise<MergedUpdatesResponse> {
         return this.userClient.getUpdates(chatSummaries, args).then((resp) => {
-            return {
-                ...resp,
-                chatSummaries: resp.chatSummaries.map((chat) => {
-                    messagesRead.syncWithServer(chat.chatId, chat.readByMe);
-                    return chat.kind === "direct_chat"
-                        ? chat
-                        : this.rehydrateDataContent(chat, "avatar", chat.chatId);
-                }),
-            };
+            return this.handleMergedUpdatesResponse(messagesRead, resp);
         });
     }
 
@@ -470,11 +484,11 @@ export class ServiceContainer implements MarkMessagesRead {
         return identity.getPrincipal().toText() !== this.identity.getPrincipal().toText();
     }
 
-    makeAdmin(chatId: string, userId: string): Promise<ChangeAdminResponse> {
+    makeAdmin(chatId: string, userId: string): Promise<MakeAdminResponse> {
         return this.getGroupClient(chatId).makeAdmin(userId);
     }
 
-    dismissAsAdmin(chatId: string, userId: string): Promise<ChangeAdminResponse> {
+    dismissAsAdmin(chatId: string, userId: string): Promise<RemoveAdminResponse> {
         return this.getGroupClient(chatId).dismissAsAdmin(userId);
     }
 

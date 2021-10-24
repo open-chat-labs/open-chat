@@ -463,7 +463,7 @@ type Cryptocurrency =
 type CryptocurrencyAccount =
     record {
         currency: Cryptocurrency;
-        address: String;
+        address: text;
     };
 
 type CryptocurrencyTransaction =

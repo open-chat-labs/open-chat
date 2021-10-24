@@ -1,6 +1,5 @@
 import { Principal } from "@dfinity/principal";
 import type {
-    CyclesContent,
     FileContent,
     ImageContent,
     AudioContent,
@@ -12,13 +11,16 @@ import type {
     ReplyContext,
     Reaction,
     StaleMessage,
+    CryptocurrencyContent,
+    CryptocurrencyTransfer,
+    ICPTransfer,
+    CyclesTransfer,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import { UnsupportedValueError } from "../../utils/error";
 import { identity, optional } from "../../utils/mapping";
 import type {
     ApiBlobReference,
-    ApiCyclesContent,
     ApiFileContent,
     ApiImageContent,
     ApiAudioContent,
@@ -29,6 +31,10 @@ import type {
     ApiReplyContext,
     ApiUpdatedMessage,
     ApiDeletedContent,
+    ApiCryptocurrencyContent,
+    ApiCryptocurrencyTransfer,
+    ApiICPTransfer,
+    ApiCyclesTransfer,
 } from "../user/candid/idl";
 
 export function message(candid: ApiMessage): Message {
@@ -70,8 +76,8 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
     if ("Deleted" in candid) {
         return deletedContent(candid.Deleted);
     }
-    if ("Cycles" in candid) {
-        return cyclesContent(candid.Cycles);
+    if ("Cryptocurrency" in candid) {
+        return cryptoContent(candid.Cryptocurrency);
     }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
@@ -84,12 +90,89 @@ function deletedContent(candid: ApiDeletedContent): DeletedContent {
     };
 }
 
-function cyclesContent(candid: ApiCyclesContent): CyclesContent {
+function cryptoContent(candid: ApiCryptocurrencyContent): CryptocurrencyContent {
     return {
-        kind: "cycles_content",
+        kind: "crypto_content",
         caption: optional(candid.caption, identity),
-        amount: candid.amount,
+        transfer: cryptoTransfer(candid.transfer),
     };
+}
+
+function cryptoTransfer(candid: ApiCryptocurrencyTransfer): CryptocurrencyTransfer {
+    if ("ICP" in candid) {
+        return icpTransfer(candid.ICP);
+    }
+    if ("Cycles" in candid) {
+        return cyclesTransfer(candid.Cycles);
+    }
+    throw new UnsupportedValueError("Unexpected ApiCryptocurrencyTransfer type received", candid);
+}
+
+function cyclesTransfer(candid: ApiCyclesTransfer): CyclesTransfer {
+    if ("Pending" in candid) {
+        return {
+            transferKind: "cycles_transfer",
+            kind: "pending_cycles_transfer",
+            recipient: candid.Pending.recipient.toString(),
+            cycles: candid.Pending.cycles,
+        };
+    }
+    if ("Completed" in candid) {
+        return {
+            transferKind: "cycles_transfer",
+            kind: "completed_cycles_transfer",
+            recipient: candid.Completed.recipient.toString(),
+            sender: candid.Completed.sender.toString(),
+            cycles: candid.Completed.cycles,
+        };
+    }
+    if ("Failed" in candid) {
+        return {
+            transferKind: "cycles_transfer",
+            kind: "failed_cycles_transfer",
+            recipient: candid.Failed.recipient.toString(),
+            cycles: candid.Failed.cycles,
+            errorMessage: candid.Failed.error_message,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiCyclesTransfer type received", candid);
+}
+
+function icpTransfer(candid: ApiICPTransfer): ICPTransfer {
+    if ("Pending" in candid) {
+        return {
+            transferKind: "icp_transfer",
+            kind: "pending_icp_transfer",
+            recipient: candid.Pending.recipient.toString(),
+            amountE8s: candid.Pending.amount_e8s,
+            feeE8s: optional(candid.Pending.fee_e8s, identity),
+            memo: optional(candid.Pending.memo, identity),
+        };
+    }
+    if ("Completed" in candid) {
+        return {
+            transferKind: "icp_transfer",
+            kind: "completed_icp_transfer",
+            recipient: candid.Completed.recipient.toString(),
+            sender: candid.Completed.sender.toString(),
+            amountE8s: candid.Completed.amount_e8s,
+            feeE8s: candid.Completed.fee_e8s,
+            memo: candid.Completed.memo,
+            blockHeight: candid.Completed.block_height,
+        };
+    }
+    if ("Failed" in candid) {
+        return {
+            transferKind: "icp_transfer",
+            kind: "failed_icp_transfer",
+            recipient: candid.Failed.recipient.toString(),
+            amountE8s: candid.Failed.amount_e8s,
+            feeE8s: candid.Failed.fee_e8s,
+            memo: candid.Failed.memo,
+            errorMessage: candid.Failed.error_message,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiICPTransfer type received", candid);
 }
 
 function imageContent(candid: ApiImageContent): ImageContent {
@@ -197,8 +280,8 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
         case "file_content":
             return { File: apiFileContent(domain) };
 
-        case "cycles_content":
-            return { Cycles: apiCyclesContent(domain) };
+        case "crypto_content":
+            return { Cryptocurrency: apiCryptoContent(domain) };
 
         case "deleted_content":
             return { Deleted: apiDeletedContent(domain) };
@@ -259,12 +342,95 @@ function apiDeletedContent(domain: DeletedContent): ApiDeletedContent {
         timestamp: domain.timestamp,
     };
 }
-function apiCyclesContent(domain: CyclesContent): ApiCyclesContent {
+
+function apiCryptoContent(domain: CryptocurrencyContent): ApiCryptocurrencyContent {
     return {
         caption: apiOptional(identity, domain.caption),
-        amount: domain.amount,
+        transfer: apiCryptoTransfer(domain.transfer),
     };
 }
+
+function apiCryptoTransfer(domain: CryptocurrencyTransfer): ApiCryptocurrencyTransfer {
+    if (domain.transferKind === "cycles_transfer") {
+        return {
+            Cycles: apiCyclesTransfer(domain),
+        };
+    }
+    if (domain.transferKind === "icp_transfer") {
+        return {
+            ICP: apiICPTransfer(domain),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected transfer kind", domain);
+}
+
+function apiCyclesTransfer(domain: CyclesTransfer): ApiCyclesTransfer {
+    if (domain.kind === "pending_cycles_transfer") {
+        return {
+            Pending: {
+                recipient: Principal.fromText(domain.recipient),
+                cycles: domain.cycles,
+            },
+        };
+    }
+    if (domain.kind === "completed_cycles_transfer") {
+        return {
+            Completed: {
+                recipient: Principal.fromText(domain.recipient),
+                sender: Principal.fromText(domain.sender),
+                cycles: domain.cycles,
+            },
+        };
+    }
+    if (domain.kind === "failed_cycles_transfer") {
+        return {
+            Failed: {
+                recipient: Principal.fromText(domain.recipient),
+                cycles: domain.cycles,
+                error_message: domain.errorMessage,
+            },
+        };
+    }
+    throw new UnsupportedValueError("Unexpected cycles transfer kind", domain);
+}
+
+function apiICPTransfer(domain: ICPTransfer): ApiICPTransfer {
+    if (domain.kind === "pending_icp_transfer") {
+        return {
+            Pending: {
+                recipient: Principal.fromText(domain.recipient),
+                amount_e8s: domain.amountE8s,
+                fee_e8s: apiOptional(identity, domain.feeE8s),
+                memo: apiOptional(identity, domain.memo),
+            },
+        };
+    }
+    if (domain.kind === "completed_icp_transfer") {
+        return {
+            Completed: {
+                recipient: Principal.fromText(domain.recipient),
+                sender: Principal.fromText(domain.sender),
+                amount_e8s: domain.amountE8s,
+                fee_e8s: domain.feeE8s,
+                memo: domain.memo,
+                block_height: domain.blockHeight,
+            },
+        };
+    }
+    if (domain.kind === "failed_icp_transfer") {
+        return {
+            Failed: {
+                recipient: Principal.fromText(domain.recipient),
+                amount_e8s: domain.amountE8s,
+                fee_e8s: domain.feeE8s,
+                memo: domain.memo,
+                error_message: domain.errorMessage,
+            },
+        };
+    }
+    throw new UnsupportedValueError("Unexpected cycles transfer kind", domain);
+}
+
 function apiTextContent(domain: TextContent): ApiTextContent {
     return {
         text: domain.text,
