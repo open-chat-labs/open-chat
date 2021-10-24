@@ -17,5 +17,6 @@ pub mod put_chunk;
 pub mod receive_cycles;
 pub mod send_message;
 pub mod set_avatar;
+pub mod set_preferences;
 pub mod toggle_reaction;
 pub mod unblock_user;

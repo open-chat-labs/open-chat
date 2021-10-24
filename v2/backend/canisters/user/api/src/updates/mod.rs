@@ -16,5 +16,6 @@ pub mod mute_notifications;
 pub mod put_chunk;
 pub mod send_message;
 pub mod set_avatar;
+pub mod set_preferences;
 pub mod toggle_reaction;
 pub mod unblock_user;
