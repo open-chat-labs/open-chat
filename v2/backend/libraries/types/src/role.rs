@@ -8,6 +8,10 @@ pub enum Role {
 }
 
 impl Role {
+    pub fn is_admin(&self) -> bool {
+        matches!(self, Role::Admin)
+    }
+
     pub fn can_add_participants(&self, is_public_group: bool) -> bool {
         is_public_group || matches!(self, Role::Admin)
     }
