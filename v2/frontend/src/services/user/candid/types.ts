@@ -403,6 +403,9 @@ export type Milliseconds = bigint;
 export interface MuteNotificationsArgs { 'chat_id' : ChatId }
 export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
+export type NightMode = { 'On' : null } |
+  { 'Off' : null } |
+  { 'Auto' : null };
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -412,6 +415,24 @@ export type Notification = {
 export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
+}
+export interface OptionalUserPreferences {
+  'large_emoji' : [] | [boolean],
+  'notification_preferences' : [] | [
+    {
+      'private_group_chats' : [] | [boolean],
+      'direct_chats' : [] | [boolean],
+      'silent' : [] | [boolean],
+      'public_group_chats' : [] | [boolean],
+      'vibrate' : [] | [boolean],
+    }
+  ],
+  'night_mode' : [] | [NightMode],
+  'language' : [] | [string],
+  'enter_key_sends' : [] | [boolean],
+  'generate_link_previews' : [] | [boolean],
+  'use_system_emoji' : [] | [boolean],
+  'enable_animations' : [] | [boolean],
 }
 export interface PartialUserSummary {
   'username' : [] | [string],
@@ -528,6 +549,8 @@ export interface SetAvatarArgs {
 }
 export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : bigint };
+export interface SetPreferencesArgs { 'preferences' : OptionalUserPreferences }
+export type SetPreferencesResponse = { 'Success' : null };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -708,6 +731,9 @@ export interface _SERVICE {
     >,
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
+  'set_preferences' : (arg_0: SetPreferencesArgs) => Promise<
+      SetPreferencesResponse
+    >,
   'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
       ToggleReactionResponse
     >,

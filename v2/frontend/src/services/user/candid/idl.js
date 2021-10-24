@@ -454,6 +454,33 @@ export const idlFactory = ({ IDL }) => {
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Nat,
   });
+  const NightMode = IDL.Variant({
+    'On' : IDL.Null,
+    'Off' : IDL.Null,
+    'Auto' : IDL.Null,
+  });
+  const OptionalUserPreferences = IDL.Record({
+    'large_emoji' : IDL.Opt(IDL.Bool),
+    'notification_preferences' : IDL.Opt(
+      IDL.Record({
+        'private_group_chats' : IDL.Opt(IDL.Bool),
+        'direct_chats' : IDL.Opt(IDL.Bool),
+        'silent' : IDL.Opt(IDL.Bool),
+        'public_group_chats' : IDL.Opt(IDL.Bool),
+        'vibrate' : IDL.Opt(IDL.Bool),
+      })
+    ),
+    'night_mode' : IDL.Opt(NightMode),
+    'language' : IDL.Opt(IDL.Text),
+    'enter_key_sends' : IDL.Opt(IDL.Bool),
+    'generate_link_previews' : IDL.Opt(IDL.Bool),
+    'use_system_emoji' : IDL.Opt(IDL.Bool),
+    'enable_animations' : IDL.Opt(IDL.Bool),
+  });
+  const SetPreferencesArgs = IDL.Record({
+    'preferences' : OptionalUserPreferences,
+  });
+  const SetPreferencesResponse = IDL.Variant({ 'Success' : IDL.Null });
   const ToggleReactionArgs = IDL.Record({
     'user_id' : UserId,
     'message_id' : MessageId,
@@ -578,6 +605,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
+    'set_preferences' : IDL.Func(
+        [SetPreferencesArgs],
+        [SetPreferencesResponse],
+        [],
+      ),
     'toggle_reaction' : IDL.Func(
         [ToggleReactionArgs],
         [ToggleReactionResponse],
