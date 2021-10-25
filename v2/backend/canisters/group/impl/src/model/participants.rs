@@ -85,6 +85,10 @@ impl Participants {
         self.blocked.remove(user_id);
     }
 
+    pub fn blocked(&self) -> Vec<UserId> {
+        self.blocked.iter().copied().collect()
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &ParticipantInternal> {
         self.by_principal.values()
     }

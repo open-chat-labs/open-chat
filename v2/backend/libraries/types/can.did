@@ -190,7 +190,6 @@ type GroupChatSummary =
         is_public: bool;
         min_visible_event_index: EventIndex;
         min_visible_message_index: MessageIndex;
-        participants: vec Participant;
         latest_message: opt MessageEventWrapper;
         latest_event_index: EventIndex;
         joined: TimestampMillis;
@@ -205,8 +204,6 @@ type GroupChatSummaryUpdates =
         name: opt text;
         description: opt text;
         avatar_id: opt nat;
-        participants_added_or_updated: vec Participant;
-        participants_removed: vec UserId;
         latest_message: opt MessageEventWrapper;
         latest_event_index: opt EventIndex;
         read_by_me: opt vec MessageIndexRange;

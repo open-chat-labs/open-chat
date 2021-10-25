@@ -26,8 +26,6 @@ pub struct SummaryUpdates {
     pub name: Option<String>,
     pub description: Option<String>,
     pub avatar_id: Option<u128>,
-    pub participants_added_or_updated: Vec<Participant>,
-    pub participants_removed: Vec<UserId>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
 }
@@ -40,8 +38,6 @@ impl From<SummaryUpdates> for GroupChatSummaryUpdates {
             name: s.name,
             description: s.description,
             avatar_id: s.avatar_id,
-            participants_added_or_updated: s.participants_added_or_updated,
-            participants_removed: s.participants_removed,
             latest_message: s.latest_message,
             latest_event_index: s.latest_event_index,
             read_by_me: None,
