@@ -36,7 +36,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     };
 
     // Iterate through the new events starting from most recent
-    for event_wrapper in data.events.since(args.updates_since).rev() {
+    for event_wrapper in data.events.since(args.updates_since).iter().rev() {
         match &event_wrapper.event {
             ChatEventInternal::ParticipantsAdded(p) => {
                 for user_id in p.user_ids.iter() {

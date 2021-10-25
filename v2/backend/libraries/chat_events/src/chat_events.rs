@@ -395,10 +395,12 @@ impl ChatEvents {
         self.events.iter()
     }
 
-    pub fn since(&self, index: EventIndex) -> impl DoubleEndedIterator<Item = &EventWrapper<ChatEventInternal>> {
-        let index: u32 = index.into();
-        let from = (index + 1) as usize;
-        self.events[from..].iter()
+    pub fn since(&self, index: EventIndex) -> &[EventWrapper<ChatEventInternal>] {
+        if let Some(from) = self.get_index(index.incr()) {
+            &self.events[from..]
+        } else {
+            &[]
+        }
     }
 
     pub fn hydrate_message(&self, message: &MessageInternal) -> Message {
@@ -671,10 +673,12 @@ impl ChatEvents {
             let earliest_event_index: u32 = first_event.index.into();
             let as_u32: u32 = event_index.into();
             let index = (as_u32 - earliest_event_index) as usize;
-            Some(index)
-        } else {
-            None
+            if index < self.events.len() {
+                return Some(index);
+            }
         }
+
+        None
     }
 }
 
