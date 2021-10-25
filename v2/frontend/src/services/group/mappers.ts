@@ -11,6 +11,7 @@ import type {
     ApiToggleReactionResponse,
     ApiDeleteMessageResponse,
     ApiEditMessageResponse,
+    ApiRemoveAdminResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -19,13 +20,14 @@ import type {
     AddParticipantsResponse,
     SendMessageResponse,
     PutChunkResponse,
-    ChangeAdminResponse,
     RemoveParticipantResponse,
     UpdateGroupResponse,
     ToggleReactionResponse,
     DeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
+    MakeAdminResponse,
+    RemoveAdminResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -174,8 +176,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
-export function changeAdminResponse(candid: ApiMakeAdminResponse): ChangeAdminResponse {
-    console.debug(candid);
+export function makeAdminResponse(candid: ApiMakeAdminResponse): MakeAdminResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -187,6 +188,25 @@ export function changeAdminResponse(candid: ApiMakeAdminResponse): ChangeAdminRe
     }
     if ("NotAuthorized" in candid) {
         return "not_authorised";
+    }
+    throw new UnsupportedValueError("Unexpected ApiMakeAdminResonse type received", candid);
+}
+
+export function removeAdminResponse(candid: ApiRemoveAdminResponse): RemoveAdminResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("UserNotInGroup" in candid) {
+        return "user_not_in_group";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    if ("CannotRemoveSelf" in candid) {
+        return "cannot_remove_self";
     }
     throw new UnsupportedValueError("Unexpected ApiMakeAdminResonse type received", candid);
 }

@@ -2,6 +2,7 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
 use crate::model::transactions::Transactions;
 use crate::model::user_cycles_balance::UserCyclesBalance;
+use crate::model::user_preferences::UserPreferences;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use serde::{Deserialize, Serialize};
@@ -101,6 +102,7 @@ struct Data {
     pub user_cycles_balance: UserCyclesBalance,
     pub transactions: Transactions,
     pub test_mode: bool,
+    pub user_preferences: UserPreferences,
 }
 
 impl Data {
@@ -126,6 +128,7 @@ impl Data {
             user_cycles_balance: UserCyclesBalance::default(),
             transactions: Transactions::default(),
             test_mode,
+            user_preferences: UserPreferences::default(),
         }
     }
 }

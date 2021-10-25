@@ -143,7 +143,7 @@ impl Default for Data {
             group_canister_wasm: CanisterWasm::default(),
             notifications_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            canister_pool: canister::Pool::new(5),
+            canister_pool: canister::Pool::new(0),
             test_mode: true,
             total_cycles_spent_on_canisters: 0,
             cached_metrics: CachedMetrics::default(),

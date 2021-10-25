@@ -64,10 +64,60 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const FailedICPTransfer = IDL.Record({
+    'memo' : IDL.Nat64,
+    'error_message' : IDL.Text,
+    'recipient' : UserId,
+    'fee_e8s' : IDL.Nat64,
+    'amount_e8s' : IDL.Nat64,
+  });
+  const BlockHeight = IDL.Nat64;
+  const CompletedICPTransfer = IDL.Record({
+    'memo' : IDL.Nat64,
+    'recipient' : UserId,
+    'fee_e8s' : IDL.Nat64,
+    'sender' : UserId,
+    'amount_e8s' : IDL.Nat64,
+    'block_height' : BlockHeight,
+  });
+  const PendingICPTransfer = IDL.Record({
+    'memo' : IDL.Opt(IDL.Nat64),
+    'recipient' : UserId,
+    'fee_e8s' : IDL.Opt(IDL.Nat64),
+    'amount_e8s' : IDL.Nat64,
+  });
+  const ICPTransfer = IDL.Variant({
+    'Failed' : FailedICPTransfer,
+    'Completed' : CompletedICPTransfer,
+    'Pending' : PendingICPTransfer,
+  });
   const Cycles = IDL.Nat;
-  const CyclesContent = IDL.Record({
+  const FailedCyclesTransfer = IDL.Record({
+    'error_message' : IDL.Text,
+    'recipient' : UserId,
+    'cycles' : Cycles,
+  });
+  const CompletedCyclesTransfer = IDL.Record({
+    'recipient' : UserId,
+    'sender' : UserId,
+    'cycles' : Cycles,
+  });
+  const PendingCyclesTransfer = IDL.Record({
+    'recipient' : UserId,
+    'cycles' : Cycles,
+  });
+  const CyclesTransfer = IDL.Variant({
+    'Failed' : FailedCyclesTransfer,
+    'Completed' : CompletedCyclesTransfer,
+    'Pending' : PendingCyclesTransfer,
+  });
+  const CryptocurrencyTransfer = IDL.Variant({
+    'ICP' : ICPTransfer,
+    'Cycles' : CyclesTransfer,
+  });
+  const CryptocurrencyContent = IDL.Record({
     'caption' : IDL.Opt(IDL.Text),
-    'amount' : Cycles,
+    'transfer' : CryptocurrencyTransfer,
   });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
@@ -92,7 +142,7 @@ export const idlFactory = ({ IDL }) => {
     'File' : FileContent,
     'Text' : TextContent,
     'Image' : ImageContent,
-    'Cycles' : CyclesContent,
+    'Cryptocurrency' : CryptocurrencyContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
@@ -170,6 +220,132 @@ export const idlFactory = ({ IDL }) => {
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
   });
+  const InitialStateArgs = IDL.Record({});
+  const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
+  const Participant = IDL.Record({
+    'role' : Role,
+    'user_id' : UserId,
+    'date_added' : TimestampMillis,
+  });
+  const MessageIndexRange = IDL.Record({
+    'to' : MessageIndex,
+    'from' : MessageIndex,
+  });
+  const MessageEventWrapper = IDL.Record({
+    'event' : Message,
+    'timestamp' : TimestampMillis,
+    'index' : EventIndex,
+  });
+  const GroupChatSummary = IDL.Record({
+    'is_public' : IDL.Bool,
+    'participants' : IDL.Vec(Participant),
+    'min_visible_event_index' : EventIndex,
+    'name' : IDL.Text,
+    'notifications_muted' : IDL.Bool,
+    'description' : IDL.Text,
+    'last_updated' : TimestampMillis,
+    'read_by_me' : IDL.Vec(MessageIndexRange),
+    'joined' : TimestampMillis,
+    'avatar_id' : IDL.Opt(IDL.Nat),
+    'latest_event_index' : EventIndex,
+    'min_visible_message_index' : MessageIndex,
+    'chat_id' : ChatId,
+    'latest_message' : IDL.Opt(MessageEventWrapper),
+  });
+  const DirectChatSummary = IDL.Record({
+    'date_created' : TimestampMillis,
+    'them' : UserId,
+    'notifications_muted' : IDL.Bool,
+    'read_by_me' : IDL.Vec(MessageIndexRange),
+    'latest_event_index' : EventIndex,
+    'read_by_them' : IDL.Vec(MessageIndexRange),
+    'latest_message' : MessageEventWrapper,
+  });
+  const ChatSummary = IDL.Variant({
+    'Group' : GroupChatSummary,
+    'Direct' : DirectChatSummary,
+  });
+  const CompletedICPDeposit = IDL.Record({
+    'memo' : IDL.Nat64,
+    'fee_e8s' : IDL.Nat64,
+    'amount_e8s' : IDL.Nat64,
+    'from_address' : IDL.Text,
+    'block_height' : BlockHeight,
+  });
+  const ICPDeposit = IDL.Variant({ 'Completed' : CompletedICPDeposit });
+  const CompletedCyclesDeposit = IDL.Record({
+    'from' : CanisterId,
+    'cycles' : Cycles,
+  });
+  const CyclesDeposit = IDL.Variant({ 'Completed' : CompletedCyclesDeposit });
+  const CryptocurrencyDeposit = IDL.Variant({
+    'ICP' : ICPDeposit,
+    'Cycles' : CyclesDeposit,
+  });
+  const FailedICPWithdrawal = IDL.Record({
+    'to' : IDL.Text,
+    'memo' : IDL.Nat64,
+    'error_message' : IDL.Text,
+    'fee_e8s' : IDL.Nat64,
+    'amount_e8s' : IDL.Nat64,
+  });
+  const CompletedICPWithdrawal = IDL.Record({
+    'to' : IDL.Text,
+    'memo' : IDL.Nat64,
+    'fee_e8s' : IDL.Nat64,
+    'amount_e8s' : IDL.Nat64,
+    'block_height' : BlockHeight,
+  });
+  const PendingICPWithdrawal = IDL.Record({
+    'to' : IDL.Text,
+    'memo' : IDL.Opt(IDL.Nat64),
+    'fee_e8s' : IDL.Opt(IDL.Nat64),
+    'amount_e8s' : IDL.Nat64,
+  });
+  const ICPWithdrawal = IDL.Variant({
+    'Failed' : FailedICPWithdrawal,
+    'Completed' : CompletedICPWithdrawal,
+    'Pending' : PendingICPWithdrawal,
+  });
+  const FailedCyclesWithdrawal = IDL.Record({
+    'to' : CanisterId,
+    'error_message' : IDL.Text,
+    'cycles' : Cycles,
+  });
+  const CompletedCyclesWithdrawal = IDL.Record({
+    'to' : CanisterId,
+    'cycles' : Cycles,
+  });
+  const PendingCyclesWithdrawal = IDL.Record({
+    'to' : CanisterId,
+    'cycles' : Cycles,
+  });
+  const CyclesWithdrawal = IDL.Variant({
+    'Failed' : FailedCyclesWithdrawal,
+    'Completed' : CompletedCyclesWithdrawal,
+    'Pending' : PendingCyclesWithdrawal,
+  });
+  const CryptocurrencyWithdrawal = IDL.Variant({
+    'ICP' : ICPWithdrawal,
+    'Cycles' : CyclesWithdrawal,
+  });
+  const CryptocurrencyTransaction = IDL.Variant({
+    'Deposit' : CryptocurrencyDeposit,
+    'Withdrawal' : CryptocurrencyWithdrawal,
+    'Transfer' : CryptocurrencyTransfer,
+  });
+  const Transaction = IDL.Variant({
+    'Cryptocurrency' : CryptocurrencyTransaction,
+  });
+  const InitialStateResponse = IDL.Variant({
+    'Success' : IDL.Record({
+      'cycles_balance' : Cycles,
+      'chats' : IDL.Vec(ChatSummary),
+      'blocked_users' : IDL.Vec(UserId),
+      'timestamp' : TimestampMillis,
+      'transactions' : IDL.Vec(Transaction),
+    }),
+  });
   const JoinGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const JoinGroupResponse = IDL.Variant({
     'Blocked' : IDL.Null,
@@ -182,14 +358,11 @@ export const idlFactory = ({ IDL }) => {
   });
   const LeaveGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const LeaveGroupResponse = IDL.Variant({
+    'LastAdmin' : IDL.Null,
     'GroupNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
-  });
-  const MessageIndexRange = IDL.Record({
-    'to' : MessageIndex,
-    'from' : MessageIndex,
   });
   const ChatMessagesRead = IDL.Record({
     'message_ranges' : IDL.Vec(MessageIndexRange),
@@ -199,23 +372,6 @@ export const idlFactory = ({ IDL }) => {
     'messages_read' : IDL.Vec(ChatMessagesRead),
   });
   const MarkReadResponse = IDL.Variant({ 'Success' : IDL.Null });
-  const MetricsArgs = IDL.Record({});
-  const MetricsResponse = IDL.Record({
-    'blob_bytes_used' : IDL.Nat64,
-    'cycles_balance' : IDL.Int64,
-    'group_chat_count' : IDL.Nat32,
-    'image_message_count' : IDL.Nat64,
-    'caller_id' : IDL.Principal,
-    'direct_chat_count' : IDL.Nat32,
-    'chunk_count' : IDL.Nat32,
-    'bytes_used' : IDL.Nat64,
-    'file_message_count' : IDL.Nat64,
-    'cycles_message_count' : IDL.Nat64,
-    'timestamp' : TimestampMillis,
-    'text_message_count' : IDL.Nat64,
-    'wasm_memory_used' : IDL.Nat64,
-    'video_message_count' : IDL.Nat64,
-  });
   const MuteNotificationsArgs = IDL.Record({ 'chat_id' : ChatId });
   const MuteNotificationsResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
@@ -276,6 +432,7 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(ReplyContext),
   });
   const SendMessageResponse = IDL.Variant({
+    'TransactionFailed' : IDL.Text,
     'BalanceExceeded' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
@@ -284,7 +441,7 @@ export const idlFactory = ({ IDL }) => {
       'message_index' : MessageIndex,
     }),
     'RecipientBlocked' : IDL.Null,
-    'InvalidRequest' : IDL.Null,
+    'InvalidRequest' : IDL.Text,
     'MessageTooLong' : IDL.Nat32,
     'RecipientNotFound' : IDL.Null,
   });
@@ -297,6 +454,33 @@ export const idlFactory = ({ IDL }) => {
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Nat,
   });
+  const NightMode = IDL.Variant({
+    'On' : IDL.Null,
+    'Off' : IDL.Null,
+    'Auto' : IDL.Null,
+  });
+  const OptionalUserPreferences = IDL.Record({
+    'large_emoji' : IDL.Opt(IDL.Bool),
+    'notification_preferences' : IDL.Opt(
+      IDL.Record({
+        'private_group_chats' : IDL.Opt(IDL.Bool),
+        'direct_chats' : IDL.Opt(IDL.Bool),
+        'silent' : IDL.Opt(IDL.Bool),
+        'public_group_chats' : IDL.Opt(IDL.Bool),
+        'vibrate' : IDL.Opt(IDL.Bool),
+      })
+    ),
+    'night_mode' : IDL.Opt(NightMode),
+    'language' : IDL.Opt(IDL.Text),
+    'enter_key_sends' : IDL.Opt(IDL.Bool),
+    'generate_link_previews' : IDL.Opt(IDL.Bool),
+    'use_system_emoji' : IDL.Opt(IDL.Bool),
+    'enable_animations' : IDL.Opt(IDL.Bool),
+  });
+  const SetPreferencesArgs = IDL.Record({
+    'preferences' : OptionalUserPreferences,
+  });
+  const SetPreferencesResponse = IDL.Variant({ 'Success' : IDL.Null });
   const ToggleReactionArgs = IDL.Record({
     'user_id' : UserId,
     'message_id' : MessageId,
@@ -313,39 +497,6 @@ export const idlFactory = ({ IDL }) => {
     'max_transactions' : IDL.Nat8,
     'ascending' : IDL.Bool,
     'start_index' : IDL.Nat32,
-  });
-  const Cryptocurrency = IDL.Variant({ 'ICP' : IDL.Null, 'Cycles' : IDL.Null });
-  const CryptocurrencyDeposit = IDL.Record({
-    'from' : IDL.Text,
-    'amount' : IDL.Nat,
-  });
-  const CryptocurrencySend = IDL.Record({
-    'to' : IDL.Text,
-    'to_user' : UserId,
-    'amount' : IDL.Nat,
-  });
-  const CryptocurrencyWithdrawal = IDL.Record({
-    'to' : IDL.Text,
-    'amount' : IDL.Nat,
-  });
-  const CryptocurrencyReceive = IDL.Record({
-    'from_user' : UserId,
-    'from' : IDL.Text,
-    'amount' : IDL.Nat,
-  });
-  const CryptocurrencyTransfer = IDL.Variant({
-    'Deposit' : CryptocurrencyDeposit,
-    'Send' : CryptocurrencySend,
-    'Withdrawal' : CryptocurrencyWithdrawal,
-    'Receive' : CryptocurrencyReceive,
-  });
-  const CryptocurrencyTransaction = IDL.Record({
-    'currency' : Cryptocurrency,
-    'block_height' : IDL.Opt(IDL.Nat64),
-    'transfer' : CryptocurrencyTransfer,
-  });
-  const Transaction = IDL.Variant({
-    'Cryptocurrency' : CryptocurrencyTransaction,
   });
   const TransactionWrapper = IDL.Record({
     'transaction' : Transaction,
@@ -374,18 +525,7 @@ export const idlFactory = ({ IDL }) => {
     'group_chats' : IDL.Vec(GroupChatUpdatesSince),
     'timestamp' : TimestampMillis,
   });
-  const UpdatesArgs = IDL.Record({ 'updates_since' : IDL.Opt(UpdatesSince) });
-  const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
-  const Participant = IDL.Record({
-    'role' : Role,
-    'user_id' : UserId,
-    'date_added' : TimestampMillis,
-  });
-  const MessageEventWrapper = IDL.Record({
-    'event' : Message,
-    'timestamp' : TimestampMillis,
-    'index' : EventIndex,
-  });
+  const UpdatesArgs = IDL.Record({ 'updates_since' : UpdatesSince });
   const GroupChatSummaryUpdates = IDL.Record({
     'participants_added_or_updated' : IDL.Vec(Participant),
     'participants_removed' : IDL.Vec(UserId),
@@ -410,35 +550,6 @@ export const idlFactory = ({ IDL }) => {
   const ChatSummaryUpdates = IDL.Variant({
     'Group' : GroupChatSummaryUpdates,
     'Direct' : DirectChatSummaryUpdates,
-  });
-  const GroupChatSummary = IDL.Record({
-    'is_public' : IDL.Bool,
-    'participants' : IDL.Vec(Participant),
-    'min_visible_event_index' : EventIndex,
-    'name' : IDL.Text,
-    'notifications_muted' : IDL.Bool,
-    'description' : IDL.Text,
-    'last_updated' : TimestampMillis,
-    'read_by_me' : IDL.Vec(MessageIndexRange),
-    'joined' : TimestampMillis,
-    'avatar_id' : IDL.Opt(IDL.Nat),
-    'latest_event_index' : EventIndex,
-    'min_visible_message_index' : MessageIndex,
-    'chat_id' : ChatId,
-    'latest_message' : IDL.Opt(MessageEventWrapper),
-  });
-  const DirectChatSummary = IDL.Record({
-    'date_created' : TimestampMillis,
-    'them' : UserId,
-    'notifications_muted' : IDL.Bool,
-    'read_by_me' : IDL.Vec(MessageIndexRange),
-    'latest_event_index' : EventIndex,
-    'read_by_them' : IDL.Vec(MessageIndexRange),
-    'latest_message' : MessageEventWrapper,
-  });
-  const ChatSummary = IDL.Variant({
-    'Group' : GroupChatSummary,
-    'Direct' : DirectChatSummary,
   });
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({
@@ -468,10 +579,14 @@ export const idlFactory = ({ IDL }) => {
       ),
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
+    'initial_state' : IDL.Func(
+        [InitialStateArgs],
+        [InitialStateResponse],
+        ['query'],
+      ),
     'join_group' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
-    'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'mute_notifications' : IDL.Func(
         [MuteNotificationsArgs],
         [MuteNotificationsResponse],
@@ -490,6 +605,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
+    'set_preferences' : IDL.Func(
+        [SetPreferencesArgs],
+        [SetPreferencesResponse],
+        [],
+      ),
     'toggle_reaction' : IDL.Func(
         [ToggleReactionArgs],
         [ToggleReactionResponse],

@@ -186,8 +186,11 @@
                 if (resp === "success") {
                     toastStore.showSuccessToast("leftGroup");
                 } else {
-                    // todo - do we need to reverse the data update here (by posting to the machine)
-                    toastStore.showFailureToast("failedToLeaveGroup");
+                    if (resp === "last_admin") {
+                        toastStore.showFailureToast("lastAdmin");
+                    } else {
+                        toastStore.showFailureToast("failedToLeaveGroup");
+                    }
                 }
             })
             .catch((_err) => toastStore.showFailureToast("failedToLeaveGroup"));
@@ -211,9 +214,10 @@
     }
 
     function loadMessage(ev: CustomEvent<MessageMatch>): void {
-        push(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
         if (ev.detail.chatId === $machine.context.selectedChat?.chatId) {
             machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail.messageIndex });
+        } else {
+            push(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
         }
     }
 

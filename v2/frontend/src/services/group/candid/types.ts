@@ -1,4 +1,5 @@
 import type { Principal } from '@dfinity/principal';
+export type AccountIdentifier = string;
 export interface AddParticipantsArgs { 'user_ids' : Array<UserId> }
 export interface AddParticipantsFailedResult {
   'errors' : Array<UserId>,
@@ -40,6 +41,7 @@ export interface BlobReference {
   'blob_id' : bigint,
   'canister_id' : CanisterId,
 }
+export type BlockHeight = bigint;
 export interface BlockUserArgs { 'user_id' : UserId }
 export type BlockUserResponse = { 'GroupNotPublic' : null } |
   { 'UserNotInGroup' : null } |
@@ -61,35 +63,72 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export interface CompletedCyclesDeposit {
+  'from' : CanisterId,
+  'cycles' : Cycles,
+}
+export interface CompletedCyclesTransfer {
+  'recipient' : UserId,
+  'sender' : UserId,
+  'cycles' : Cycles,
+}
+export interface CompletedCyclesWithdrawal {
+  'to' : CanisterId,
+  'cycles' : Cycles,
+}
+export interface CompletedICPDeposit {
+  'memo' : bigint,
+  'fee_e8s' : bigint,
+  'amount_e8s' : bigint,
+  'from_address' : string,
+  'block_height' : BlockHeight,
+}
+export interface CompletedICPTransfer {
+  'memo' : bigint,
+  'recipient' : UserId,
+  'fee_e8s' : bigint,
+  'sender' : UserId,
+  'amount_e8s' : bigint,
+  'block_height' : BlockHeight,
+}
+export interface CompletedICPWithdrawal {
+  'to' : string,
+  'memo' : bigint,
+  'fee_e8s' : bigint,
+  'amount_e8s' : bigint,
+  'block_height' : BlockHeight,
+}
 export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
 export type Cryptocurrency = { 'ICP' : null } |
   { 'Cycles' : null };
-export interface CryptocurrencyDeposit { 'from' : string, 'amount' : bigint }
-export interface CryptocurrencyReceive {
-  'from_user' : UserId,
-  'from' : string,
-  'amount' : bigint,
-}
-export interface CryptocurrencySend {
-  'to' : string,
-  'to_user' : UserId,
-  'amount' : bigint,
-}
-export interface CryptocurrencyTransaction {
+export interface CryptocurrencyAccount {
   'currency' : Cryptocurrency,
-  'block_height' : [] | [bigint],
+  'address' : string,
+}
+export interface CryptocurrencyContent {
+  'caption' : [] | [string],
   'transfer' : CryptocurrencyTransfer,
 }
-export type CryptocurrencyTransfer = { 'Deposit' : CryptocurrencyDeposit } |
-  { 'Send' : CryptocurrencySend } |
+export type CryptocurrencyDeposit = { 'ICP' : ICPDeposit } |
+  { 'Cycles' : CyclesDeposit };
+export type CryptocurrencyTransaction = { 'Deposit' : CryptocurrencyDeposit } |
   { 'Withdrawal' : CryptocurrencyWithdrawal } |
-  { 'Receive' : CryptocurrencyReceive };
-export interface CryptocurrencyWithdrawal { 'to' : string, 'amount' : bigint }
+  { 'Transfer' : CryptocurrencyTransfer };
+export type CryptocurrencyTransfer = { 'ICP' : ICPTransfer } |
+  { 'Cycles' : CyclesTransfer };
+export type CryptocurrencyWithdrawal = { 'ICP' : ICPWithdrawal } |
+  { 'Cycles' : CyclesWithdrawal };
 export type Cycles = bigint;
-export interface CyclesContent { 'caption' : [] | [string], 'amount' : Cycles }
+export type CyclesDeposit = { 'Completed' : CompletedCyclesDeposit };
+export type CyclesTransfer = { 'Failed' : FailedCyclesTransfer } |
+  { 'Completed' : CompletedCyclesTransfer } |
+  { 'Pending' : PendingCyclesTransfer };
+export type CyclesWithdrawal = { 'Failed' : FailedCyclesWithdrawal } |
+  { 'Completed' : CompletedCyclesWithdrawal } |
+  { 'Pending' : PendingCyclesWithdrawal };
 export interface DeleteMessagesArgs { 'message_ids' : Array<MessageId> }
 export type DeleteMessagesResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : null };
@@ -160,6 +199,30 @@ export interface EventsWindowArgs {
   'mid_point' : MessageIndex,
   'max_messages' : number,
   'max_events' : number,
+}
+export interface FailedCyclesTransfer {
+  'error_message' : string,
+  'recipient' : UserId,
+  'cycles' : Cycles,
+}
+export interface FailedCyclesWithdrawal {
+  'to' : CanisterId,
+  'error_message' : string,
+  'cycles' : Cycles,
+}
+export interface FailedICPTransfer {
+  'memo' : bigint,
+  'error_message' : string,
+  'recipient' : UserId,
+  'fee_e8s' : bigint,
+  'amount_e8s' : bigint,
+}
+export interface FailedICPWithdrawal {
+  'to' : string,
+  'memo' : bigint,
+  'error_message' : string,
+  'fee_e8s' : bigint,
+  'amount_e8s' : bigint,
 }
 export interface FieldTooLongResult {
   'length_provided' : number,
@@ -246,6 +309,13 @@ export interface GroupNameChanged {
   'previous_name' : string,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
+export type ICPDeposit = { 'Completed' : CompletedICPDeposit };
+export type ICPTransfer = { 'Failed' : FailedICPTransfer } |
+  { 'Completed' : CompletedICPTransfer } |
+  { 'Pending' : PendingICPTransfer };
+export type ICPWithdrawal = { 'Failed' : FailedICPWithdrawal } |
+  { 'Completed' : CompletedICPWithdrawal } |
+  { 'Pending' : PendingICPWithdrawal };
 export interface ImageContent {
   'height' : number,
   'mime_type' : string,
@@ -275,7 +345,7 @@ export interface Message {
 export type MessageContent = { 'File' : FileContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
-  { 'Cycles' : CyclesContent } |
+  { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
   { 'Deleted' : DeletedContent };
@@ -297,21 +367,10 @@ export interface MessageMatch {
   'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
-export type MetricsArgs = {};
-export interface MetricsResponse {
-  'blob_bytes_used' : bigint,
-  'cycles_balance' : bigint,
-  'image_message_count' : bigint,
-  'caller_id' : Principal,
-  'chunk_count' : number,
-  'bytes_used' : bigint,
-  'file_message_count' : bigint,
-  'timestamp' : TimestampMillis,
-  'text_message_count' : bigint,
-  'wasm_memory_used' : bigint,
-  'video_message_count' : bigint,
-}
 export type Milliseconds = bigint;
+export type NightMode = { 'On' : null } |
+  { 'Off' : null } |
+  { 'Auto' : null };
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -321,6 +380,24 @@ export type Notification = {
 export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
+}
+export interface OptionalUserPreferences {
+  'large_emoji' : [] | [boolean],
+  'notification_preferences' : [] | [
+    {
+      'private_group_chats' : [] | [boolean],
+      'direct_chats' : [] | [boolean],
+      'silent' : [] | [boolean],
+      'public_group_chats' : [] | [boolean],
+      'vibrate' : [] | [boolean],
+    }
+  ],
+  'night_mode' : [] | [NightMode],
+  'language' : [] | [string],
+  'enter_key_sends' : [] | [boolean],
+  'generate_link_previews' : [] | [boolean],
+  'use_system_emoji' : [] | [boolean],
+  'enable_animations' : [] | [boolean],
 }
 export interface PartialUserSummary {
   'username' : [] | [string],
@@ -351,6 +428,26 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
+export interface PendingCyclesTransfer {
+  'recipient' : UserId,
+  'cycles' : Cycles,
+}
+export interface PendingCyclesWithdrawal {
+  'to' : CanisterId,
+  'cycles' : Cycles,
+}
+export interface PendingICPTransfer {
+  'memo' : [] | [bigint],
+  'recipient' : UserId,
+  'fee_e8s' : [] | [bigint],
+  'amount_e8s' : bigint,
+}
+export interface PendingICPWithdrawal {
+  'to' : string,
+  'memo' : [] | [bigint],
+  'fee_e8s' : [] | [bigint],
+  'amount_e8s' : bigint,
+}
 export interface PutChunkArgs {
   'total_chunks' : number,
   'blob_id' : bigint,
@@ -368,7 +465,8 @@ export interface RemoveAdminArgs { 'user_id' : UserId }
 export type RemoveAdminResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'CannotRemoveSelf' : null };
 export interface RemoveParticipantArgs { 'user_id' : UserId }
 export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
@@ -437,6 +535,9 @@ export type ToggleReactionResponse = { 'MessageNotFound' : null } |
   { 'Added' : EventIndex } |
   { 'Removed' : EventIndex };
 export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
+export type TransactionStatus = { 'Failed' : string } |
+  { 'Complete' : null } |
+  { 'Pending' : null };
 export interface TransactionWrapper {
   'transaction' : Transaction,
   'timestamp' : TimestampMillis,
@@ -568,7 +669,6 @@ export interface _SERVICE {
   'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
   'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
   'make_admin' : (arg_0: MakeAdminArgs) => Promise<MakeAdminResponse>,
-  'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'remove_admin' : (arg_0: RemoveAdminArgs) => Promise<RemoveAdminResponse>,
   'remove_participant' : (arg_0: RemoveParticipantArgs) => Promise<

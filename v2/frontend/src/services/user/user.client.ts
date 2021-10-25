@@ -31,6 +31,7 @@ import {
     editMessageResponse,
     getEventsResponse,
     getUpdatesResponse,
+    initialStateResponse,
     joinGroupResponse,
     leaveGroupResponse,
     markReadResponse,
@@ -168,23 +169,32 @@ export class UserClient extends CandidService implements IUserClient {
         }
     }
 
+    async getInitialState(): Promise<MergedUpdatesResponse> {
+        const resp = await this.handleResponse(
+            this.userService.initial_state({}),
+            initialStateResponse
+        );
+
+        return {
+            chatSummaries: resp.chats,
+            timestamp: resp.timestamp,
+            blockedUsers: resp.blockedUsers,
+        };
+    }
+
     async getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs
     ): Promise<MergedUpdatesResponse> {
         const updatesResponse = await this.handleResponse(
             this.userService.updates({
-                updates_since: args.updatesSince
-                    ? [
-                          {
-                              timestamp: args.updatesSince.timestamp,
-                              group_chats: args.updatesSince.groupChats.map((g) => ({
-                                  chat_id: Principal.fromText(g.chatId),
-                                  updates_since: g.lastUpdated,
-                              })),
-                          },
-                      ]
-                    : [],
+                updates_since: {
+                    timestamp: args.updatesSince.timestamp,
+                    group_chats: args.updatesSince.groupChats.map((g) => ({
+                        chat_id: Principal.fromText(g.chatId),
+                        updates_since: g.lastUpdated,
+                    })),
+                },
             }),
             (resp) => getUpdatesResponse(resp),
             args

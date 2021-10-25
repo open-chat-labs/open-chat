@@ -35,6 +35,11 @@ export const idlFactory = ({ IDL }) => {
     'Pending' : IDL.Null,
   });
   const UserId = CanisterId;
+  const Cryptocurrency = IDL.Variant({ 'ICP' : IDL.Null, 'Cycles' : IDL.Null });
+  const CryptocurrencyAccount = IDL.Record({
+    'currency' : Cryptocurrency,
+    'address' : IDL.Text,
+  });
   const CanisterUpgradeStatus = IDL.Variant({
     'Required' : IDL.Null,
     'NotRequired' : IDL.Null,
@@ -52,6 +57,7 @@ export const idlFactory = ({ IDL }) => {
     'Created' : IDL.Record({
       'username' : IDL.Text,
       'user_id' : UserId,
+      'cryptocurrency_accounts' : IDL.Vec(CryptocurrencyAccount),
       'avatar_id' : IDL.Opt(IDL.Nat),
       'canister_upgrade_status' : CanisterUpgradeStatus,
     }),
@@ -61,21 +67,6 @@ export const idlFactory = ({ IDL }) => {
   const MarkAsOnlineResponse = IDL.Variant({
     'Success' : IDL.Null,
     'UserNotFound' : IDL.Null,
-  });
-  const MetricsArgs = IDL.Record({});
-  const TimestampMillis = IDL.Nat64;
-  const MetricsResponse = IDL.Record({
-    'cycles_balance' : IDL.Int64,
-    'unconfirmed_user_count' : IDL.Nat64,
-    'caller_id' : IDL.Principal,
-    'bytes_used' : IDL.Nat64,
-    'timestamp' : TimestampMillis,
-    'created_user_count' : IDL.Nat64,
-    'online_user_count' : IDL.Nat64,
-    'confirmed_user_count' : IDL.Nat64,
-    'wasm_memory_used' : IDL.Nat64,
-    'cycles_transferred' : IDL.Nat,
-    'active_user_count' : IDL.Nat64,
   });
   const NotifyBalanceArgs = IDL.Record({ 'balance' : IDL.Nat });
   const RemoveSmsMessagesArgs = IDL.Record({ 'up_to_sms_index' : IDL.Nat64 });
@@ -180,6 +171,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : UserSummary,
     'UserNotFound' : IDL.Null,
   });
+  const TimestampMillis = IDL.Nat64;
   const UsersArgs = IDL.Record({
     'users' : IDL.Vec(UserId),
     'updated_since' : IDL.Opt(TimestampMillis),
@@ -213,7 +205,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'mark_as_online' : IDL.Func([MarkAsOnlineArgs], [MarkAsOnlineResponse], []),
-    'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'notify_balance' : IDL.Func([NotifyBalanceArgs], [], []),
     'remove_sms_messages' : IDL.Func(
         [RemoveSmsMessagesArgs],

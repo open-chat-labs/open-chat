@@ -9,7 +9,7 @@ export type MessageContent =
     | AudioContent
     | DeletedContent
     | PlaceholderContent
-    | CyclesContent;
+    | CryptocurrencyContent;
 
 export type IndexRange = [number, number];
 
@@ -17,10 +17,69 @@ export interface PlaceholderContent {
     kind: "placeholder_content";
 }
 
-export interface CyclesContent {
-    kind: "cycles_content";
+export type PendingCyclesTransfer = {
+    transferKind: "cycles_transfer";
+    kind: "pending_cycles_transfer";
+    recipient: string;
+    cycles: bigint;
+};
+
+export type CompletedCyclesTransfer = {
+    transferKind: "cycles_transfer";
+    kind: "completed_cycles_transfer";
+    recipient: string;
+    sender: string;
+    cycles: bigint;
+};
+
+export type FailedCyclesTransfer = {
+    transferKind: "cycles_transfer";
+    kind: "failed_cycles_transfer";
+    recipient: string;
+    cycles: bigint;
+    errorMessage: string;
+};
+
+export type PendingICPTransfer = {
+    transferKind: "icp_transfer";
+    kind: "pending_icp_transfer";
+    recipient: string;
+    amountE8s: bigint;
+    feeE8s?: bigint;
+    memo?: bigint;
+};
+
+export type CompletedICPTransfer = {
+    transferKind: "icp_transfer";
+    kind: "completed_icp_transfer";
+    recipient: string;
+    sender: string;
+    amountE8s: bigint;
+    feeE8s: bigint;
+    memo: bigint;
+    blockHeight: bigint;
+};
+
+export type FailedICPTransfer = {
+    transferKind: "icp_transfer";
+    kind: "failed_icp_transfer";
+    recipient: string;
+    amountE8s: bigint;
+    feeE8s: bigint;
+    memo: bigint;
+    errorMessage: string;
+};
+
+export type CyclesTransfer = PendingCyclesTransfer | CompletedCyclesTransfer | FailedCyclesTransfer;
+
+export type ICPTransfer = PendingICPTransfer | CompletedICPTransfer | FailedICPTransfer;
+
+export type CryptocurrencyTransfer = CyclesTransfer | ICPTransfer;
+
+export interface CryptocurrencyContent {
+    kind: "crypto_content";
     caption?: string;
-    amount: bigint;
+    transfer: CryptocurrencyTransfer;
 }
 
 export interface ImageContent extends DataContent {
@@ -264,7 +323,7 @@ export type UpdatesSince = {
 };
 
 export type UpdateArgs = {
-    updatesSince?: UpdatesSince;
+    updatesSince: UpdatesSince;
 };
 
 export type MergedUpdatesResponse = {
@@ -280,6 +339,13 @@ export type UpdatesResponse = {
     chatsRemoved: Set<string>;
     timestamp: bigint;
     cyclesBalance?: bigint;
+};
+
+export type InitialStateResponse = {
+    blockedUsers: Set<string>;
+    chats: ChatSummary[];
+    timestamp: bigint;
+    cyclesBalance: bigint;
 };
 
 export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpdates;
@@ -470,6 +536,7 @@ export type SendMessageResponse =
     | SendMessageTooLong
     | SendMessageBalanceExceeded
     | SendMessageRecipientNotFound
+    | TransationFailed
     | SendMessageNotInGroup;
 
 export type SendMessageSuccess = {
@@ -477,6 +544,10 @@ export type SendMessageSuccess = {
     timestamp: bigint;
     messageIndex: number;
     eventIndex: number;
+};
+
+export type TransationFailed = {
+    kind: "transaction_failed";
 };
 
 export type SendMessageRecipientBlocked = {
@@ -514,10 +585,17 @@ export type PutChunkResponse =
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error";
 
-export type ChangeAdminResponse =
+export type MakeAdminResponse =
     | "user_not_in_group"
     | "caller_not_in_group"
     | "not_authorised"
+    | "success";
+
+export type RemoveAdminResponse =
+    | "user_not_in_group"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "cannot_remove_self"
     | "success";
 
 export type RemoveParticipantResponse =
@@ -544,7 +622,12 @@ export type UnblockUserResponse =
     | "caller_not_on_group"
     | "not_authorised";
 
-export type LeaveGroupResponse = "success" | "group_not_found" | "internal_error" | "not_in_group";
+export type LeaveGroupResponse =
+    | "success"
+    | "group_not_found"
+    | "internal_error"
+    | "not_in_group"
+    | "last_admin";
 
 export type JoinGroupResponse =
     | "success"

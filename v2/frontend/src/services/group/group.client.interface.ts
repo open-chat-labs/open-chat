@@ -2,7 +2,6 @@ import type {
     AddParticipantsResponse,
     EventsResponse,
     GroupChatEvent,
-    ChangeAdminResponse,
     SendMessageResponse,
     RemoveParticipantResponse,
     UpdateGroupResponse,
@@ -13,6 +12,8 @@ import type {
     DeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
+    MakeAdminResponse,
+    RemoveAdminResponse,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
@@ -31,8 +32,8 @@ export interface IGroupClient {
     addParticipants(userIds: string[]): Promise<AddParticipantsResponse>;
     sendMessage(senderName: string, message: Message): Promise<SendMessageResponse>;
     editMessage(message: Message): Promise<EditMessageResponse>;
-    makeAdmin(userId: string): Promise<ChangeAdminResponse>;
-    dismissAsAdmin(userId: string): Promise<ChangeAdminResponse>;
+    makeAdmin(userId: string): Promise<MakeAdminResponse>;
+    dismissAsAdmin(userId: string): Promise<RemoveAdminResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;
