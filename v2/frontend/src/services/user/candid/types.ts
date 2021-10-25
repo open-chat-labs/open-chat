@@ -268,7 +268,6 @@ export interface GroupChatEventWrapper {
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
-  'participants' : Array<Participant>,
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'notifications_muted' : boolean,
@@ -283,8 +282,6 @@ export interface GroupChatSummary {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
-  'participants_added_or_updated' : Array<Participant>,
-  'participants_removed' : Array<UserId>,
   'name' : [] | [string],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],

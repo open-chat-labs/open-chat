@@ -325,6 +325,35 @@ export const idlFactory = ({ IDL }) => {
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
+  const SelectedInitialArgs = IDL.Record({});
+  const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
+  const Participant = IDL.Record({
+    'role' : Role,
+    'user_id' : UserId,
+    'date_added' : TimestampMillis,
+  });
+  const SelectedInitialSuccess = IDL.Record({
+    'participants' : IDL.Vec(Participant),
+    'blocked_users' : IDL.Vec(UserId),
+    'latest_event_index' : EventIndex,
+  });
+  const SelectedInitialResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : SelectedInitialSuccess,
+  });
+  const SelectedUpdatesArgs = IDL.Record({ 'updates_since' : EventIndex });
+  const SelectedUpdatesSuccess = IDL.Record({
+    'blocked_users_removed' : IDL.Vec(UserId),
+    'participants_added_or_updated' : IDL.Vec(Participant),
+    'participants_removed' : IDL.Vec(UserId),
+    'latest_event_index' : EventIndex,
+    'blocked_users_added' : IDL.Vec(UserId),
+  });
+  const SelectedUpdatesResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : SelectedUpdatesSuccess,
+    'SuccessNoUpdates' : IDL.Null,
+  });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const SendMessageArgs = IDL.Record({
     'content' : MessageContent,
@@ -341,12 +370,6 @@ export const idlFactory = ({ IDL }) => {
     }),
   });
   const SummaryArgs = IDL.Record({});
-  const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
-  const Participant = IDL.Record({
-    'role' : Role,
-    'user_id' : UserId,
-    'date_added' : TimestampMillis,
-  });
   const MessageIndexRange = IDL.Record({
     'to' : MessageIndex,
     'from' : MessageIndex,
@@ -358,7 +381,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
-    'participants' : IDL.Vec(Participant),
     'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
     'notifications_muted' : IDL.Bool,
@@ -379,8 +401,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const SummaryUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
   const GroupChatSummaryUpdates = IDL.Record({
-    'participants_added_or_updated' : IDL.Vec(Participant),
-    'participants_removed' : IDL.Vec(UserId),
     'name' : IDL.Opt(IDL.Text),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'description' : IDL.Opt(IDL.Text),
@@ -474,6 +494,16 @@ export const idlFactory = ({ IDL }) => {
     'search_messages' : IDL.Func(
         [SearchMessagesArgs],
         [SearchMessagesResponse],
+        ['query'],
+      ),
+    'selected_initial' : IDL.Func(
+        [SelectedInitialArgs],
+        [SelectedInitialResponse],
+        ['query'],
+      ),
+    'selected_updates' : IDL.Func(
+        [SelectedUpdatesArgs],
+        [SelectedUpdatesResponse],
         ['query'],
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
