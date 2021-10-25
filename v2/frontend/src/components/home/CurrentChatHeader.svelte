@@ -28,6 +28,7 @@
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
     import type { Writable } from "svelte/store";
+    import { toastStore } from "../../stores/toast";
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: Writable<ChatSummary>;
@@ -81,7 +82,14 @@
 
     function leaveGroup() {
         if ($selectedChatSummary.kind === "group_chat") {
-            dispatch("leaveGroup", $selectedChatSummary.chatId);
+            const numAdmins = $selectedChatSummary.participants.filter(
+                (p) => p.role === "admin"
+            ).length;
+            if (numAdmins > 1) {
+                dispatch("leaveGroup", $selectedChatSummary.chatId);
+            } else {
+                toastStore.showFailureToast("lastAdmin");
+            }
         }
     }
 
