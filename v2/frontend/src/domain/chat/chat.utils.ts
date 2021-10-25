@@ -381,7 +381,15 @@ function mergeThings<A, U>(
         }
         return dict;
     }, dict);
-    return [...Object.values(updated), ...updates.added];
+
+    // concat the updated and the added and then merge the result so we are sure
+    // there are no duplicates (according to the provided keyFn)
+    return Object.values(
+        [...Object.values(updated), ...updates.added].reduce((merged, thing) => {
+            merged[keyFn(thing)] = thing;
+            return merged;
+        }, {} as Record<string, A>)
+    );
 }
 
 function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boolean {
