@@ -211,9 +211,10 @@
     }
 
     function loadMessage(ev: CustomEvent<MessageMatch>): void {
-        push(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
         if (ev.detail.chatId === $machine.context.selectedChat?.chatId) {
             machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail.messageIndex });
+        } else {
+            push(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
         }
     }
 
