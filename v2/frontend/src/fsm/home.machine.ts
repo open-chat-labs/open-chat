@@ -34,7 +34,7 @@ import type {
     WebRtcMessage,
 } from "../domain/webrtc/webrtc";
 import { typing } from "../stores/typing";
-import type { IMessageReadTracker, MessageReadTracker } from "../stores/markRead";
+import type { IMessageReadTracker } from "../stores/markRead";
 import { userStore } from "../stores/user";
 import { closeNotificationsForChat } from "../utils/notifications";
 import { blockedUsers } from "../stores/blockedUsers";

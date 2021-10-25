@@ -186,8 +186,11 @@
                 if (resp === "success") {
                     toastStore.showSuccessToast("leftGroup");
                 } else {
-                    // todo - do we need to reverse the data update here (by posting to the machine)
-                    toastStore.showFailureToast("failedToLeaveGroup");
+                    if (resp === "last_admin") {
+                        toastStore.showFailureToast("lastAdmin");
+                    } else {
+                        toastStore.showFailureToast("failedToLeaveGroup");
+                    }
                 }
             })
             .catch((_err) => toastStore.showFailureToast("failedToLeaveGroup"));
