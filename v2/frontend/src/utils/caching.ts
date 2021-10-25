@@ -16,12 +16,18 @@ const blobbyContentTypes = ["file_content", "image_content", "video_content", "a
 
 export interface ChatSchema extends DBSchema {
     chats: {
-        key: "cached_chats";
+        key: string;
         value: MergedUpdatesResponse;
     };
+
     chat_messages: {
         key: string;
         value: EventWrapper<ChatEvent>;
+    };
+
+    message_index_event_index: {
+        key: string; // chatId_messageIndex
+        value: number;
     };
 
     // this is obsolete and preserved only to keep the type checker happy
@@ -49,7 +55,7 @@ export function openMessageCache(): Database | undefined {
         return undefined;
     }
     try {
-        return openDB<ChatSchema>("openchat_db", 8, {
+        return openDB<ChatSchema>("openchat_db", 10, {
             upgrade(db, _oldVersion, _newVersion) {
                 try {
                     if (db.objectStoreNames.contains("chat_messages")) {
@@ -61,8 +67,12 @@ export function openMessageCache(): Database | undefined {
                     if (db.objectStoreNames.contains("chats")) {
                         db.deleteObjectStore("chats");
                     }
+                    if (db.objectStoreNames.contains("message_index_event_index")) {
+                        db.deleteObjectStore("message_index_event_index");
+                    }
                     db.createObjectStore("chat_messages");
                     db.createObjectStore("chats");
+                    db.createObjectStore("message_index_event_index");
                     if (!db.objectStoreNames.contains("soft_disabled")) {
                         db.createObjectStore("soft_disabled");
                     }
@@ -76,12 +86,16 @@ export function openMessageCache(): Database | undefined {
     }
 }
 
-export async function getCachedChats(db: Database): Promise<MergedUpdatesResponse | undefined> {
-    return (await db).get("chats", "cached_chats") as Promise<MergedUpdatesResponse | undefined>;
+export async function getCachedChats(
+    db: Database,
+    userId: string
+): Promise<MergedUpdatesResponse | undefined> {
+    return (await db).get("chats", userId) as Promise<MergedUpdatesResponse | undefined>;
 }
 
 export function setCachedChats(
-    db: Database
+    db: Database,
+    userId: string
 ): (data: MergedUpdatesResponse) => Promise<MergedUpdatesResponse> {
     return async (data: MergedUpdatesResponse) => {
         // irritating hoop jumping to keep typescript happy here
@@ -107,7 +121,7 @@ export function setCachedChats(
                 timestamp: data.timestamp,
                 blockedUsers: data.blockedUsers,
             },
-            "cached_chats"
+            userId
         );
         return data;
     };
@@ -158,6 +172,16 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     let ascIdx = middleIndex + 1;
     const events: EventWrapper<T>[] = [];
     const resolvedDb = await db;
+
+    const eventIndex = await resolvedDb.get(
+        "message_index_event_index",
+        `${chatId}_${middleIndex}`
+    );
+
+    if (eventIndex === undefined) {
+        console.log("cache miss: could not find the starting event index for the message window");
+        return [false, []];
+    }
 
     while (numMessages < MAX_MSGS) {
         // if we have exceeded the range of this chat then we have succeeded
@@ -315,12 +339,22 @@ export function setCachedMessages<T extends ChatEvent>(
 ): (resp: EventsResponse<T>) => Promise<EventsResponse<T>> {
     return async (resp: EventsResponse<T>) => {
         if (resp === "events_failed") return Promise.resolve(resp);
-        const tx = (await db).transaction("chat_messages", "readwrite");
-        const store = tx.objectStore("chat_messages");
+        const messageTx = (await db).transaction("chat_messages", "readwrite");
+        const messageStore = messageTx.objectStore("chat_messages");
         resp.events.forEach(async (event) => {
-            await store.put(makeSerialisable<T>(event), createCacheKey(chatId, event.index));
+            await messageStore.put(makeSerialisable<T>(event), createCacheKey(chatId, event.index));
         });
-        await tx.done;
+        await messageTx.done;
+
+        const mapTx = (await db).transaction("message_index_event_index", "readwrite");
+        const mapStore = mapTx.objectStore("message_index_event_index");
+        resp.events.forEach(async (event) => {
+            if (event.event.kind === "message") {
+                await mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`);
+            }
+        });
+        await mapTx.done;
+
         return resp;
     };
 }

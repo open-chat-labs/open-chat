@@ -22,7 +22,6 @@ fn summary_impl(runtime_state: &RuntimeState) -> Response {
             is_public: runtime_state.data.is_public,
             min_visible_event_index: participant.min_visible_event_index,
             min_visible_message_index: participant.min_visible_message_index,
-            participants: runtime_state.data.participants.iter().map(|p| p.into()).collect(),
             latest_message: runtime_state.data.events.latest_message(),
             latest_event_index: latest_event.index,
             joined: participant.date_added,

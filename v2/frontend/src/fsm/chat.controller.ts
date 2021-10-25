@@ -432,6 +432,10 @@ export class ChatController {
     async goToMessageIndex(messageIndex: number): Promise<void> {
         this.focusMessageIndex.set(messageIndex);
         await this.loadEventWindow(messageIndex);
+        chatStore.set({
+            chatId: this.chatId,
+            event: { kind: "scroll_to_message_index", messageIndex: messageIndex },
+        });
     }
 
     chatUpdated(chat: ChatSummary): void {
