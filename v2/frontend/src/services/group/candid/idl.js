@@ -59,10 +59,60 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const FailedICPTransfer = IDL.Record({
+    'memo' : IDL.Nat64,
+    'error_message' : IDL.Text,
+    'recipient' : UserId,
+    'fee_e8s' : IDL.Nat64,
+    'amount_e8s' : IDL.Nat64,
+  });
+  const BlockHeight = IDL.Nat64;
+  const CompletedICPTransfer = IDL.Record({
+    'memo' : IDL.Nat64,
+    'recipient' : UserId,
+    'fee_e8s' : IDL.Nat64,
+    'sender' : UserId,
+    'amount_e8s' : IDL.Nat64,
+    'block_height' : BlockHeight,
+  });
+  const PendingICPTransfer = IDL.Record({
+    'memo' : IDL.Opt(IDL.Nat64),
+    'recipient' : UserId,
+    'fee_e8s' : IDL.Opt(IDL.Nat64),
+    'amount_e8s' : IDL.Nat64,
+  });
+  const ICPTransfer = IDL.Variant({
+    'Failed' : FailedICPTransfer,
+    'Completed' : CompletedICPTransfer,
+    'Pending' : PendingICPTransfer,
+  });
   const Cycles = IDL.Nat;
-  const CyclesContent = IDL.Record({
+  const FailedCyclesTransfer = IDL.Record({
+    'error_message' : IDL.Text,
+    'recipient' : UserId,
+    'cycles' : Cycles,
+  });
+  const CompletedCyclesTransfer = IDL.Record({
+    'recipient' : UserId,
+    'sender' : UserId,
+    'cycles' : Cycles,
+  });
+  const PendingCyclesTransfer = IDL.Record({
+    'recipient' : UserId,
+    'cycles' : Cycles,
+  });
+  const CyclesTransfer = IDL.Variant({
+    'Failed' : FailedCyclesTransfer,
+    'Completed' : CompletedCyclesTransfer,
+    'Pending' : PendingCyclesTransfer,
+  });
+  const CryptocurrencyTransfer = IDL.Variant({
+    'ICP' : ICPTransfer,
+    'Cycles' : CyclesTransfer,
+  });
+  const CryptocurrencyContent = IDL.Record({
     'caption' : IDL.Opt(IDL.Text),
-    'amount' : Cycles,
+    'transfer' : CryptocurrencyTransfer,
   });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
@@ -87,7 +137,7 @@ export const idlFactory = ({ IDL }) => {
     'File' : FileContent,
     'Text' : TextContent,
     'Image' : ImageContent,
-    'Cycles' : CyclesContent,
+    'Cryptocurrency' : CryptocurrencyContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
@@ -222,20 +272,6 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const MetricsArgs = IDL.Record({});
-  const MetricsResponse = IDL.Record({
-    'blob_bytes_used' : IDL.Nat64,
-    'cycles_balance' : IDL.Int64,
-    'image_message_count' : IDL.Nat64,
-    'caller_id' : IDL.Principal,
-    'chunk_count' : IDL.Nat32,
-    'bytes_used' : IDL.Nat64,
-    'file_message_count' : IDL.Nat64,
-    'timestamp' : TimestampMillis,
-    'text_message_count' : IDL.Nat64,
-    'wasm_memory_used' : IDL.Nat64,
-    'video_message_count' : IDL.Nat64,
-  });
   const PutChunkArgs = IDL.Record({
     'total_chunks' : IDL.Nat32,
     'blob_id' : IDL.Nat,
@@ -257,6 +293,7 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
+    'CannotRemoveSelf' : IDL.Null,
   });
   const RemoveParticipantArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveParticipantResponse = IDL.Variant({
@@ -427,7 +464,6 @@ export const idlFactory = ({ IDL }) => {
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
     'make_admin' : IDL.Func([MakeAdminArgs], [MakeAdminResponse], []),
-    'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
     'remove_admin' : IDL.Func([RemoveAdminArgs], [RemoveAdminResponse], []),
     'remove_participant' : IDL.Func(

@@ -26,7 +26,7 @@ async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
         chats: result.chats_added,
         transactions: result.transactions,
         blocked_users: result.blocked_users,
-        cycles_balance: result.cycles_balance.unwrap(),
+        cycles_balance: result.cycles_balance.unwrap_or(0),
     })
 }
 

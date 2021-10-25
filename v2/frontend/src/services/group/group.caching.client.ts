@@ -3,7 +3,6 @@ import type {
     EventsResponse,
     GroupChatEvent,
     Message,
-    ChangeAdminResponse,
     SendMessageResponse,
     RemoveParticipantResponse,
     UpdateGroupResponse,
@@ -12,6 +11,8 @@ import type {
     DeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
+    MakeAdminResponse,
+    RemoveAdminResponse,
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -98,11 +99,11 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.editMessage(message);
     }
 
-    makeAdmin(userId: string): Promise<ChangeAdminResponse> {
+    makeAdmin(userId: string): Promise<MakeAdminResponse> {
         return this.client.makeAdmin(userId);
     }
 
-    dismissAsAdmin(userId: string): Promise<ChangeAdminResponse> {
+    dismissAsAdmin(userId: string): Promise<RemoveAdminResponse> {
         return this.client.dismissAsAdmin(userId);
     }
 
