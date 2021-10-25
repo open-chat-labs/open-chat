@@ -13,7 +13,8 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     fn get_blob_impl(blob_id: u128, runtime_state: &RuntimeState) -> HttpResponse {
         let canister_id = runtime_state.env.canister_id();
         let blob_storage = &runtime_state.data.blob_storage;
-        get_blob(blob_id, canister_id, blob_storage)
+        let blob_hashes = &runtime_state.blob_hashes;
+        get_blob(blob_id, canister_id, blob_storage, blob_hashes)
     }
 
     fn get_logs_impl(since: Option<TimestampMillis>, messages_container: &LogMessagesContainer) -> HttpResponse {

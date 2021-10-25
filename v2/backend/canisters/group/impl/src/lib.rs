@@ -1,12 +1,12 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::participants::Participants;
+use blob_storage::{BlobHashes, BlobStorage};
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use chat_events::GroupChatEvents;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{Avatar, CanisterId, ChatId, Cycles, Milliseconds, TimestampMillis, UserId, Version};
-use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 use utils::memory;
 use utils::regular_jobs::RegularJobs;
@@ -33,12 +33,19 @@ thread_local! {
 struct RuntimeState {
     pub env: Box<dyn Environment>,
     pub data: Data,
+    pub blob_hashes: BlobHashes,
     pub regular_jobs: RegularJobs<Data>,
 }
 
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data, regular_jobs: RegularJobs<Data>) -> RuntimeState {
-        RuntimeState { env, data, regular_jobs }
+        let blob_hashes = BlobHashes::from(&data.blob_storage);
+        RuntimeState {
+            env,
+            data,
+            blob_hashes,
+            regular_jobs,
+        }
     }
 
     pub fn is_caller_participant(&self) -> bool {

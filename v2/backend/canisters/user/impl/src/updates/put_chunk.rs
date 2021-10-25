@@ -1,9 +1,9 @@
 use crate::updates::put_chunk::Response::*;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use blob_storage::PutChunkResult;
 use ic_cdk_macros::update;
 use tracing::instrument;
 use user_canister::put_chunk::*;
-use utils::blob_storage::PutChunkResult;
 
 #[update]
 #[instrument(level = "trace")]
@@ -19,6 +19,7 @@ fn put_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
     match runtime_state.data.blob_storage.put_chunk(
+        &mut runtime_state.blob_hashes,
         args.blob_id,
         args.mime_type,
         args.total_chunks,

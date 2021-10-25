@@ -1,13 +1,15 @@
-use candid::CandidType;
+use ic_certified_map::{labeled, Hash, RbTree, labeled_hash, AsHashTree};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use sha2::{Digest, Sha256};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::TimestampMillis;
+use types::{HeaderField, TimestampMillis};
 
 const MAX_CHUNK_SIZE: u64 = 1024 * 1024; // 1MB
+const LABEL_BLOBS: &[u8] = b"blobs";
 
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct BlobStorage {
     blobs: HashMap<u128, Blob>,
     pending_blobs: HashMap<u128, PendingBlob>,
@@ -18,14 +20,14 @@ pub struct BlobStorage {
     audio_bytes: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Blob {
     created: TimestampMillis,
     mime_type: String,
     chunks: Vec<ByteBuf>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct PendingBlob {
     created: TimestampMillis,
     total_chunks: u32,
@@ -40,6 +42,56 @@ pub enum PutChunkResult {
     ChunkAlreadyExists,
     ChunkTooBig,
     Full,
+}
+
+#[derive(Default)]
+pub struct BlobHashes(RbTree<Vec<u8>, Hash>);
+
+impl From<&BlobStorage> for BlobHashes {
+    fn from(blob_storage: &BlobStorage) -> Self {
+        let mut hashes = Self::default();
+        for (blob_id, blob) in blob_storage.blobs.iter() {
+            hashes.insert(*blob_id, blob.hash());
+        }
+        hashes.update_root_hash();
+        hashes
+    }
+}
+
+impl BlobHashes {
+    pub fn make_certificate_header(&self, blob_id: u128) -> HeaderField {
+        let certificate = ic_cdk::api::data_certificate().unwrap_or_else(|| {
+            panic!("data certificate is only available in query calls");
+        });
+        let witness = self.0.witness(&blob_id.to_be_bytes());
+        let tree = labeled(LABEL_BLOBS, witness);
+        let mut serializer = serde_cbor::ser::Serializer::new(vec![]);
+        serializer.self_describe().unwrap();
+        tree.serialize(&mut serializer).unwrap_or_else(|e| {
+            panic!("failed to serialize a hash tree: {}", e);
+        });
+        let name = "IC-Certificate".to_owned();
+        let value = format!(
+            "certificate=:{}:, tree=:{}:",
+            base64::encode(&certificate),
+            base64::encode(&serializer.into_inner())
+        );
+
+        HeaderField(name, value)
+    }
+
+    pub fn insert(&mut self, blob_id: u128, hash: Hash) {
+        self.0.insert(blob_id.to_be_bytes().to_vec(), hash);
+    }
+
+    pub fn delete(&mut self, blob_id: u128) {
+        self.0.delete(&blob_id.to_be_bytes().to_vec());
+    }
+
+    pub fn update_root_hash(&self) {
+        let prefixed_root_hash = &labeled_hash(LABEL_BLOBS, &self.0.root_hash());
+        ic_cdk::api::set_certified_data(&prefixed_root_hash[..]);
+    }
 }
 
 impl PendingBlob {
@@ -92,6 +144,14 @@ impl Blob {
     pub fn chunk(&self, index: u32) -> Option<&ByteBuf> {
         self.chunks.get(index as usize)
     }
+
+    pub fn hash(&self) -> Hash {
+        let mut hasher = Sha256::new();
+        for chunk in self.chunks.iter() {
+            hasher.update(chunk.as_ref());
+        }
+        hasher.finalize().into()
+    }
 }
 
 impl BlobStorage {
@@ -113,6 +173,7 @@ impl BlobStorage {
 
     pub fn put_chunk(
         &mut self,
+        blob_hashes: &mut BlobHashes,
         blob_id: u128,
         mime_type: String,
         total_chunks: u32,
@@ -172,7 +233,11 @@ impl BlobStorage {
         self.total_bytes += byte_count;
 
         if let Some(pending_blob) = pending_blob_to_insert {
-            self.blobs.insert(blob_id, Blob::from(pending_blob, now));
+            let blob = Blob::from(pending_blob, now);
+            let hash = blob.hash();
+            self.blobs.insert(blob_id, blob);
+            blob_hashes.insert(blob_id, hash);
+            blob_hashes.update_root_hash();
             PutChunkResult::Complete
         } else {
             PutChunkResult::Success
@@ -189,7 +254,7 @@ impl BlobStorage {
             .map_or(false, |b| b.chunks.len() as u32 > chunk_index)
     }
 
-    pub fn delete_blob(&mut self, blob_id: &u128) -> bool {
+    pub fn delete_blob(&mut self, blob_hashes: &mut BlobHashes, blob_id: &u128) -> bool {
         if let Some(bytes_removed) = self
             .blobs
             .remove(blob_id)
@@ -197,6 +262,8 @@ impl BlobStorage {
             .or_else(|| self.pending_blobs.remove(blob_id).map(|b| count_bytes(b.chunks.values())))
         {
             self.total_bytes -= bytes_removed;
+            blob_hashes.delete(*blob_id);
+            blob_hashes.update_root_hash();
             true
         } else {
             false
@@ -232,6 +299,7 @@ mod tests {
     use rand::seq::SliceRandom;
     use rand::thread_rng;
     use std::cell::RefCell;
+    use std::ops::DerefMut;
 
     #[test]
     fn when_adding_chunks_order_is_irrelevant() {
@@ -250,32 +318,63 @@ mod tests {
         }
 
         let blob_storage = RefCell::new(BlobStorage::new(10_000));
+        let blob_hashes = RefCell::new(BlobHashes::default());
 
         let mut actions: Vec<Box<dyn Fn() -> PutChunkResult>> = vec![
             Box::new(|| {
-                blob_storage
-                    .borrow_mut()
-                    .put_chunk(1, "mt".to_string(), 5, 0, generate_chunk(0), 1)
+                blob_storage.borrow_mut().put_chunk(
+                    &mut blob_hashes.borrow_mut(),
+                    1,
+                    "mt".to_string(),
+                    5,
+                    0,
+                    generate_chunk(0),
+                    1,
+                )
             }),
             Box::new(|| {
-                blob_storage
-                    .borrow_mut()
-                    .put_chunk(1, "mt".to_string(), 5, 1, generate_chunk(1), 2)
+                blob_storage.borrow_mut().put_chunk(
+                    &mut blob_hashes.borrow_mut(),
+                    1,
+                    "mt".to_string(),
+                    5,
+                    1,
+                    generate_chunk(1),
+                    2,
+                )
             }),
             Box::new(|| {
-                blob_storage
-                    .borrow_mut()
-                    .put_chunk(1, "mt".to_string(), 5, 2, generate_chunk(2), 3)
+                blob_storage.borrow_mut().put_chunk(
+                    &mut blob_hashes.borrow_mut(),
+                    1,
+                    "mt".to_string(),
+                    5,
+                    2,
+                    generate_chunk(2),
+                    3,
+                )
             }),
             Box::new(|| {
-                blob_storage
-                    .borrow_mut()
-                    .put_chunk(1, "mt".to_string(), 5, 3, generate_chunk(3), 4)
+                blob_storage.borrow_mut().put_chunk(
+                    &mut blob_hashes.borrow_mut(),
+                    1,
+                    "mt".to_string(),
+                    5,
+                    3,
+                    generate_chunk(3),
+                    4,
+                )
             }),
             Box::new(|| {
-                blob_storage
-                    .borrow_mut()
-                    .put_chunk(1, "mt".to_string(), 5, 4, generate_chunk(4), 5)
+                blob_storage.borrow_mut().put_chunk(
+                    &mut blob_hashes.borrow_mut(),
+                    1,
+                    "mt".to_string(),
+                    5,
+                    4,
+                    generate_chunk(4),
+                    5,
+                )
             }),
         ];
 
@@ -294,7 +393,7 @@ mod tests {
 
             check_blob(blob_storage.borrow().get_blob(&1).unwrap());
 
-            blob_storage.borrow_mut().delete_blob(&1);
+            blob_storage.borrow_mut().delete_blob(&mut blob_hashes.borrow_mut(), &1);
 
             assert_eq!(blob_storage.borrow().total_bytes, 0);
         }

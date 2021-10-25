@@ -1,10 +1,10 @@
 use crate::{extract_route, Route};
+use blob_storage::{BlobHashes, BlobStorage};
 use candid::Func;
 use num_traits::ToPrimitive;
 use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 use types::{Avatar, CanisterId, HeaderField, HttpResponse, StreamingCallbackHttpResponse, StreamingStrategy, Token};
-use utils::blob_storage::BlobStorage;
 
 const CACHE_HEADER_VALUE: &str = "public, max-age=100000000, immutable";
 
@@ -36,8 +36,8 @@ pub fn get_avatar(requested_avatar_id: Option<u128>, avatar: &Option<Avatar>) ->
     }
 }
 
-pub fn get_blob(blob_id: u128, canister_id: CanisterId, blob_storage: &BlobStorage) -> HttpResponse {
-    match start_streaming_blob(canister_id, blob_storage, blob_id) {
+pub fn get_blob(blob_id: u128, canister_id: CanisterId, blob_storage: &BlobStorage, blob_hashes: &BlobHashes) -> HttpResponse {
+    match start_streaming_blob(blob_id, canister_id, blob_storage, blob_hashes) {
         Some(response) => response,
         None => HttpResponse::gone(),
     }
@@ -71,7 +71,12 @@ fn build_avatar_location(blob_id: u128) -> String {
     format!("/avatar/{}", blob_id)
 }
 
-fn start_streaming_blob(canister_id: CanisterId, blob_storage: &BlobStorage, blob_id: u128) -> Option<HttpResponse> {
+fn start_streaming_blob(
+    blob_id: u128,
+    canister_id: CanisterId,
+    blob_storage: &BlobStorage,
+    blob_hashes: &BlobHashes,
+) -> Option<HttpResponse> {
     if let Some(blob) = blob_storage.get_blob(&blob_id) {
         let next_chunk_index = 1;
         let streaming_strategy = if blob_storage.exists(blob_id, next_chunk_index) {
@@ -86,11 +91,14 @@ fn start_streaming_blob(canister_id: CanisterId, blob_storage: &BlobStorage, blo
             None
         };
 
+        let certificate_header = blob_hashes.make_certificate_header(blob_id);
+
         return Some(HttpResponse {
             status_code: 200,
             headers: vec![
                 HeaderField("Content-Type".to_string(), blob.mime_type().to_string()),
                 HeaderField("Cache-Control".to_string(), CACHE_HEADER_VALUE.to_string()),
+                certificate_header,
             ],
             body: Cow::Owned(blob.chunk(0).unwrap().clone()),
             streaming_strategy,

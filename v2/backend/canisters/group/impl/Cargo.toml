@@ -11,6 +11,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+blob_storage = { path = "../../../libraries/blob_storage" }
 candid = "0.7.7"
 canister_logger = { path = "../../../libraries/canister_logger" }
 chat_events = { path = "../../../libraries/chat_events" }
