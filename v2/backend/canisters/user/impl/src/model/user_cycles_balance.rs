@@ -2,12 +2,18 @@ use candid::CandidType;
 use serde::Deserialize;
 use types::{Cycles, TimestampMillis, Timestamped};
 
-#[derive(CandidType, Deserialize, Default)]
+#[derive(CandidType, Deserialize)]
 pub struct UserCyclesBalance {
     cycles: Timestamped<Cycles>,
 }
 
 impl UserCyclesBalance {
+    pub fn new(now: TimestampMillis) -> UserCyclesBalance {
+        UserCyclesBalance {
+            cycles: Timestamped::new(0, now)
+        }
+    }
+
     pub fn value(&self) -> Cycles {
         self.cycles.value
     }

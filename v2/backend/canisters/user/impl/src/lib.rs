@@ -112,6 +112,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notification_canister_ids: Vec<CanisterId>,
         wasm_version: Version,
+        now: TimestampMillis,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -125,7 +126,7 @@ impl Data {
             wasm_version,
             blob_storage: BlobStorage::new(MAX_STORAGE),
             avatar: None,
-            user_cycles_balance: UserCyclesBalance::default(),
+            user_cycles_balance: UserCyclesBalance::new(now),
             transactions: Transactions::default(),
             test_mode,
             user_preferences: UserPreferences::default(),
