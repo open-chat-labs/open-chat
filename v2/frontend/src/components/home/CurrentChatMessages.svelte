@@ -129,7 +129,7 @@
         } else {
             // todo - this is a bit dangerous as it could cause an infinite recursion
             // if we are looking for a message that simply isn't there.
-            controller.goToMessageIndex(index).then(() => scrollToMessageIndex(index));
+            controller.goToMessageIndex(index);
         }
     }
 
@@ -162,7 +162,7 @@
 
             fromBottomVal = fromBottom();
             if (fromBottomVal < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable()) {
-                controller.loadPreviousMessages();
+                controller.loadNewMessages();
             }
         }
     }
@@ -318,13 +318,14 @@
             switch ($chatStore.event.kind) {
                 case "loaded_previous_messages":
                     tick().then(resetScroll);
-                    chatStore.clear();
                     break;
                 case "loaded_new_messages":
                     if (fromBottomVal < FROM_BOTTOM_THRESHOLD) {
                         scrollBottom("smooth");
                     }
-                    chatStore.clear();
+                    break;
+                case "scroll_to_message_index":
+                    scrollToMessageIndex($chatStore.event.messageIndex);
                     break;
                 case "sending_message":
                     // if we are within the from bottom threshold *or* if the new message
@@ -334,7 +335,6 @@
                         // which means we are stuck with abrupt scroll which is disappointing
                         scrollBottom($chatStore.event.scroll);
                     }
-                    chatStore.clear();
                     break;
                 case "chat_updated":
                     if (
@@ -343,9 +343,9 @@
                     ) {
                         controller.loadNewMessages();
                     }
-                    chatStore.clear();
                     break;
             }
+            chatStore.clear();
         }
     }
 

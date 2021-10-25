@@ -173,6 +173,16 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     const events: EventWrapper<T>[] = [];
     const resolvedDb = await db;
 
+    const eventIndex = await resolvedDb.get(
+        "message_index_event_index",
+        `${chatId}_${middleIndex}`
+    );
+
+    if (eventIndex === undefined) {
+        console.log("cache miss: could not find the starting event index for the message window");
+        return [false, []];
+    }
+
     while (numMessages < MAX_MSGS) {
         // if we have exceeded the range of this chat then we have succeeded
         if (ascIdx > max && descIdx < min) {
