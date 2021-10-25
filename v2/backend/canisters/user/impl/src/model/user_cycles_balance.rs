@@ -10,7 +10,7 @@ pub struct UserCyclesBalance {
 impl UserCyclesBalance {
     pub fn new(now: TimestampMillis) -> UserCyclesBalance {
         UserCyclesBalance {
-            cycles: Timestamped::new(0, now)
+            cycles: Timestamped::new(0, now),
         }
     }
 
