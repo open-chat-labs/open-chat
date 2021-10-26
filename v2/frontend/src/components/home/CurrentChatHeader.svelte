@@ -97,7 +97,7 @@
             return "";
         }
 
-        const secondsSinceLastOnline = (+new Date() - lastOnline) / 1000;
+        const secondsSinceLastOnline = (Date.now() - lastOnline) / 1000;
 
         const minutesSinceLastOnline = Math.floor(secondsSinceLastOnline / 60);
 

@@ -83,7 +83,7 @@
                     // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
                 });
 
-            const event = { event: msg!, index: nextEventIndex, timestamp: BigInt(+new Date()) };
+            const event = { event: msg!, index: nextEventIndex, timestamp: BigInt(Date.now()) };
             controller.sendMessage(event, controller.user.userId);
         }
     }

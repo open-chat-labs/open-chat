@@ -2,7 +2,6 @@ import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
 import type {
     DirectChatSummary,
     GroupChatSummary,
-    Participant,
     DirectChatSummaryUpdates,
     GroupChatSummaryUpdates,
     MessageIndexRange,
@@ -17,7 +16,6 @@ import {
     mergeMessageIndexRanges,
     messageIndexRangesAreEqual,
     newMessageId,
-    userIdsFromChatSummaries,
 } from "./chat.utils";
 
 const defaultDirectChat: DirectChatSummary = {
@@ -74,26 +72,6 @@ function groupChatId(id: number): GroupChatSummary {
     return {
         ...defaultGroupChat,
         chatId: String(id),
-    };
-}
-
-function directChatWith(them: string): DirectChatSummary {
-    return {
-        ...defaultDirectChat,
-        them,
-    };
-}
-
-function groupChatWith(_id: string): GroupChatSummary {
-    return {
-        ...defaultGroupChat,
-    };
-}
-
-function participant(id: string): Participant {
-    return {
-        role: "admin",
-        userId: id,
     };
 }
 
@@ -330,29 +308,6 @@ describe("getting first unread message index", () => {
                 ],
             })
         ).toEqual(41);
-    });
-});
-
-describe("extract userids from chat summaries", () => {
-    test("when there are no chats", () => {
-        const userIds = userIdsFromChatSummaries([], false);
-        expect(userIds.size).toEqual(0);
-    });
-    test("when excluding group chat summaries", () => {
-        const chats = [directChatWith("a"), directChatWith("b"), groupChatWith("c")];
-        const userIds = userIdsFromChatSummaries(chats, false);
-        expect(userIds.size).toEqual(2);
-        expect(userIds.has("a")).toBe(true);
-        expect(userIds.has("b")).toBe(true);
-        expect(userIds.has("c")).toBe(false);
-    });
-    test("when including group chat summaries", () => {
-        const chats = [directChatWith("a"), directChatWith("b"), groupChatWith("c")];
-        const userIds = userIdsFromChatSummaries(chats, true);
-        expect(userIds.size).toEqual(3);
-        expect(userIds.has("a")).toBe(true);
-        expect(userIds.has("b")).toBe(true);
-        expect(userIds.has("c")).toBe(true);
     });
 });
 

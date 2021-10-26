@@ -20,8 +20,9 @@ export function phoneNumberToString({ countryCode, number }: PhoneNumber): strin
     return `(+${countryCode}) ${number}`;
 }
 
-export function userStatus(user: UserLastOnline): UserStatus {
-    const secondsSinceOnline = (+new Date() - user.lastOnline) / 1000;
+export function userStatus(user?: UserLastOnline): UserStatus {
+    if (user === undefined) return UserStatus.Offline;
+    const secondsSinceOnline = (Date.now() - user.lastOnline) / 1000;
     return secondsSinceOnline < ONLINE_THRESHOLD ? UserStatus.Online : UserStatus.Offline;
 }
 

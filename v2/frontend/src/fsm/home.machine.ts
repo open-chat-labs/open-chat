@@ -9,13 +9,9 @@ import {
 } from "xstate";
 import type { ServiceContainer } from "../services/serviceContainer";
 import type { ChatSummary, DirectChatSummary, EnhancedReplyContext } from "../domain/chat/chat";
-import {
-    updateArgsFromChats,
-    userIdsFromChatSummaries,
-    userIdsFromChatSummary,
-} from "../domain/chat/chat.utils";
+import { updateArgsFromChats } from "../domain/chat/chat.utils";
 import type { User, UsersResponse, UserSummary } from "../domain/user/user";
-import { missingUserIds, userIsOnline } from "../domain/user/user.utils";
+import { missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log, pure, send } from "xstate/lib/actions";
 import { push } from "svelte-spa-router";
@@ -44,7 +40,6 @@ const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
 const USER_UPDATE_INTERVAL = ONE_MINUTE;
-const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 
 export interface HomeContext {
     serviceContainer?: ServiceContainer;
@@ -143,6 +138,16 @@ function sendMessageToChatBasedOnUser(
     fn(ctx.selectedChat);
 }
 
+function userIdsFromDirectChatSummaries(chats: ChatSummary[]): Set<string> {
+    const userIds = new Set<string>();
+    chats.forEach((chat) => {
+        if (chat.kind === "direct_chat") {
+            userIds.add(chat.them);
+        }
+    });
+    return userIds;
+}
+
 async function getUpdates(
     user: User,
     serviceContainer: ServiceContainer,
@@ -158,7 +163,7 @@ async function getUpdates(
                   messagesRead
               )
             : await serviceContainer.getInitialState(messagesRead);
-        const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries, false);
+        const userIds = userIdsFromDirectChatSummaries(chatsResponse.chatSummaries);
         userIds.add(user.userId);
         const usersResponse = await serviceContainer.getUsers(
             missingUserIds(get(userStore), userIds),
@@ -187,27 +192,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
             }
             return false;
         },
-    },
-    actions: {
-        sendWebRtcOffers: pure((ctx, ev) => {
-            if (ev.type === "SELECT_CHAT") {
-                const lookup = get(userStore);
-                const chat = ctx.chatSummaries.find((c) => c.chatId === ev.data.chatId);
-                if (chat) {
-                    // FIXME - for group chats we need to do this differently
-                    const userIds = userIdsFromChatSummary(chat)
-                        .map((u) => lookup[u])
-                        .filter((user) => user && userIsOnline(lookup, user.userId))
-                        .sort((a, b) => b.lastOnline - a.lastOnline)
-                        .slice(0, MAX_RTC_CONNECTIONS_PER_CHAT)
-                        .filter((user) => !rtcConnectionsManager.exists(user.userId))
-                        .map((user) => user.userId);
-
-                    userIds.forEach((u) => rtcConnectionsManager.create(ctx.user!.userId, u));
-                }
-            }
-            return undefined;
-        }),
     },
     services: {
         getUpdates: async (ctx, _) =>
@@ -560,7 +544,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             closeNotificationsForChat(ev.data.chatId);
                             return undefined;
                         }),
-                        "sendWebRtcOffers",
                         assign((ctx, ev) => {
                             const chatSummary = ctx.chatSummaries.find(
                                 (c) => c.chatId === ev.data.chatId
@@ -569,7 +552,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 const user = {
                                     userId: ctx.user!.userId,
                                     username: ctx.user!.username,
-                                    lastOnline: +new Date(),
+                                    lastOnline: Date.now(),
                                 };
                                 if (ctx.selectedChat !== undefined) {
                                     ctx.selectedChat.destroy();
@@ -607,30 +590,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     target: ".new_chat",
                     actions: log("received new chat"),
                 },
-                MESSAGE_READ_BY_ME: {
-                    actions: pure((ctx, ev) => {
-                        const chat = ctx.chatSummaries.find((c) => c.chatId === ev.data.chatId);
-                        if (chat !== undefined) {
-                            ctx.markRead.markMessageRead(
-                                chat.chatId,
-                                ev.data.messageIndex,
-                                ev.data.messageId
-                            );
-
-                            const rtc: WebRtcMessage = {
-                                kind: "remote_user_read_message",
-                                chatType: chat.kind,
-                                messageId: ev.data.messageId,
-                                chatId: ev.data.chatId,
-                                userId: ctx.user!.userId,
-                            };
-
-                            rtcConnectionsManager.sendMessage(userIdsFromChatSummary(chat), rtc);
-                        }
-
-                        return undefined;
-                    }),
-                },
                 REPLY_PRIVATELY_TO: {
                     actions: assign((ctx, ev) => {
                         // let's see if we already have a direct chat with this user?
@@ -651,7 +610,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 readByThem: [],
                                 latestMessage: undefined,
                                 latestEventIndex: 0,
-                                dateCreated: BigInt(+new Date()),
+                                dateCreated: BigInt(Date.now()),
                                 notificationsMuted: false,
                             };
                             const chatSummaries: ChatSummary[] = [newChat, ...ctx.chatSummaries];
@@ -675,7 +634,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 readByThem: [],
                                 latestMessage: undefined,
                                 latestEventIndex: 0,
-                                dateCreated: BigInt(+new Date()),
+                                dateCreated: BigInt(Date.now()),
                                 notificationsMuted: false,
                             };
                             push(`/${dummyChat.chatId}`);
@@ -710,7 +669,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                         readByThem: [],
                                         latestMessage: undefined,
                                         latestEventIndex: 0,
-                                        dateCreated: BigInt(+new Date()),
+                                        dateCreated: BigInt(Date.now()),
                                         notificationsMuted: false,
                                     };
                                     push(`/${dummyChat.chatId}`);

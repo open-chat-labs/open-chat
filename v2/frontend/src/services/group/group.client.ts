@@ -261,13 +261,10 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     getGroupDetails(): Promise<GroupChatDetailsResponse> {
-        // FIXME - need to check the cache here ideally
         return this.handleResponse(this.groupService.selected_initial({}), groupDetailsResponse);
     }
 
     async getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
-        // FIXME - we probably want to pass in the existing details so that we can do the
-        // mergeroo inside the group client and then cache the results ala user client
         const updatesResponse = await this.handleResponse(
             this.groupService.selected_updates({
                 updates_since: previous.latestEventIndex,

@@ -80,7 +80,6 @@
 
     $: myRole = me && me.kind === "full_participant" ? me.role : "standard";
 
-    // FIXME - we need to sort this list to put blocked users to the bottom
     $: others = knownUsers.filter((u) => {
         return matchesSearch(searchTerm, u) && u.userId !== userId;
     });

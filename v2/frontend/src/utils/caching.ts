@@ -134,7 +134,7 @@ export async function getCachedMessagesWindow<T extends ChatEvent>(
     messageIndex: number
 ): Promise<EventsResponse<T> | undefined> {
     console.log("cache: window: ", eventIndexRange, messageIndex);
-    const start = +new Date();
+    const start = Date.now();
     const [complete, events] = await aggregateEventsWindow<T>(
         db,
         eventIndexRange,
@@ -143,7 +143,7 @@ export async function getCachedMessagesWindow<T extends ChatEvent>(
     );
 
     if (complete) {
-        console.log("cache hit: ", events, +new Date() - start);
+        console.log("cache hit: ", events, Date.now() - start);
     }
 
     events.sort((a, b) => a.index - b.index);
@@ -297,7 +297,7 @@ export async function getCachedMessages<T extends ChatEvent>(
     ascending: boolean
 ): Promise<EventsResponse<T> | undefined> {
     console.log("cache: ", eventIndexRange, startIndex, ascending);
-    const start = +new Date();
+    const start = Date.now();
     const [complete, events] = await aggregateEvents<T>(
         db,
         eventIndexRange,
@@ -307,7 +307,7 @@ export async function getCachedMessages<T extends ChatEvent>(
     );
 
     if (complete) {
-        console.log("cache hit: ", events.length, +new Date() - start);
+        console.log("cache hit: ", events.length, Date.now() - start);
     }
 
     // if we are retrieving completely from the cache, affectedEvents is always empty

@@ -40,6 +40,12 @@
         controller.markAllRead();
     }
 
+    function messageRead(
+        ev: CustomEvent<{ chatId: string; messageIndex: number; messageId: bigint }>
+    ) {
+        controller.messageRead(ev.detail.messageIndex, ev.detail.messageId);
+    }
+
     $: chat = controller.chat;
     $: participants = controller.participants;
 </script>
@@ -62,7 +68,7 @@
         {participants} />
     <CurrentChatMessages
         on:replyPrivatelyTo
-        on:messageRead
+        on:messageRead={messageRead}
         on:chatWith
         {controller}
         {unreadMessages} />

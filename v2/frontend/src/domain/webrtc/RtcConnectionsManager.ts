@@ -30,9 +30,7 @@ export class RtcConnectionsManager {
         if (this._peer) return Promise.resolve(this._peer);
 
         return new Promise((resolve) => {
-            this._peer = new Peer(me, {
-                debug: 2,
-            });
+            this._peer = new Peer(me);
 
             this._peer.on("open", (_id) => {
                 if (this._peer) {

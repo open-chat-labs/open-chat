@@ -54,7 +54,7 @@
 
     function onInput() {
         requestAnimationFrame(() => {
-            const now = +new Date();
+            const now = Date.now();
             if (now - lastTypingUpdate > USER_TYPING_EVENT_MIN_INTERVAL_MS) {
                 lastTypingUpdate = now;
                 controller.startTyping();

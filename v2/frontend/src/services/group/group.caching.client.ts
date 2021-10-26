@@ -141,8 +141,6 @@ export class CachingGroupClient implements IGroupClient {
     }
 
     getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
-        // FIXME - we probably want to pass in the existing details so that we can do the
-        // mergeroo inside the group client and then cache the results ala user client
         return this.client.getGroupDetailsUpdates(previous);
     }
 }
