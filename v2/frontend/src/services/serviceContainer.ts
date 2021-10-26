@@ -43,6 +43,8 @@ import type {
     MarkReadRequest,
     MakeAdminResponse,
     RemoveAdminResponse,
+    GroupChatDetailsResponse,
+    GroupChatDetails,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -504,6 +506,10 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.getGroupClient(chatId).blockUser(userId);
     }
 
+    unblockUserFromGroupChat(chatId: string, userId: string): Promise<UnblockUserResponse> {
+        return this.getGroupClient(chatId).unblockUser(userId);
+    }
+
     unblockUserFromDirectChat(userId: string): Promise<UnblockUserResponse> {
         return this.userClient.unblockUser(userId);
     }
@@ -569,5 +575,16 @@ export class ServiceContainer implements MarkMessagesRead {
         muted: boolean
     ): Promise<ToggleMuteNotificationResponse> {
         return this.userClient.toggleMuteNotifications(chatId, muted);
+    }
+
+    getGroupDetails(chatId: string): Promise<GroupChatDetailsResponse> {
+        return this.getGroupClient(chatId).getGroupDetails();
+    }
+
+    async getGroupDetailsUpdates(
+        chatId: string,
+        previous: GroupChatDetails
+    ): Promise<GroupChatDetails> {
+        return this.getGroupClient(chatId).getGroupDetailsUpdates(previous);
     }
 }

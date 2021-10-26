@@ -1,16 +1,21 @@
 import type { UserLookup } from "./user";
 import { compareUsername, missingUserIds, userIsOnline } from "./user.utils";
 
+const now = new Date();
+const nowMS = now.getTime();
+const nowStr = now as unknown as string;
+const spy = jest.spyOn(global, "Date").mockImplementation(() => nowStr);
+
 const lookup: UserLookup = {
     a: {
         userId: "a",
         username: "a",
-        secondsSinceLastOnline: 119,
+        lastOnline: nowMS - 119 * 1000,
     },
     b: {
         userId: "b",
         username: "b",
-        secondsSinceLastOnline: 200,
+        lastOnline: nowMS - 200 * 1000,
     },
 };
 
@@ -37,7 +42,7 @@ describe("missing userIds", () => {
 
 describe("compare username", () => {
     function toUser(username: string | undefined) {
-        return { userId: "a", username, secondsSinceLastOnline: 0 };
+        return { userId: "a", username, lastOnline: nowMS };
     }
     test("works with non-null usernames", () => {
         const users = ["zulu", "yanky", "foxtrot", "lima"].map(toUser);

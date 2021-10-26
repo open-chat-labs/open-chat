@@ -13,6 +13,10 @@ import type {
     BlockUserResponse,
     MakeAdminResponse,
     RemoveAdminResponse,
+    GroupChatDetails,
+    GroupChatDetailsUpdates,
+    GroupChatDetailsResponse,
+    UnblockUserResponse,
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -125,5 +129,20 @@ export class CachingGroupClient implements IGroupClient {
 
     blockUser(userId: string): Promise<BlockUserResponse> {
         return this.client.blockUser(userId);
+    }
+
+    unblockUser(userId: string): Promise<UnblockUserResponse> {
+        return this.client.unblockUser(userId);
+    }
+
+    getGroupDetails(): Promise<GroupChatDetailsResponse> {
+        // FIXME - need to check the cache here ideally
+        return this.client.getGroupDetails();
+    }
+
+    getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
+        // FIXME - we probably want to pass in the existing details so that we can do the
+        // mergeroo inside the group client and then cache the results ala user client
+        return this.client.getGroupDetailsUpdates(previous);
     }
 }

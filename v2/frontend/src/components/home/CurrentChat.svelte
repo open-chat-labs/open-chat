@@ -41,6 +41,7 @@
     }
 
     $: chat = controller.chat;
+    $: participants = controller.participants;
 </script>
 
 <div class="wrapper">
@@ -57,7 +58,8 @@
         on:showGroupDetails
         on:showParticipants
         on:leaveGroup
-        selectedChatSummary={chat} />
+        selectedChatSummary={chat}
+        {participants} />
     <CurrentChatMessages
         on:replyPrivatelyTo
         on:messageRead

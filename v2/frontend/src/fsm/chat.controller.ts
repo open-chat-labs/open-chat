@@ -7,9 +7,11 @@ import type {
     EnhancedReplyContext,
     EventsResponse,
     EventWrapper,
+    GroupChatDetails,
     LocalReaction,
     Message,
     MessageContent,
+    Participant,
     SendMessageSuccess,
     UpdateGroupResponse,
 } from "../domain/chat/chat";
@@ -39,7 +41,7 @@ import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
 import { chatStore } from "../stores/chat";
-import type { IMessageReadTracker, MessageReadTracker } from "../stores/markRead";
+import type { IMessageReadTracker } from "../stores/markRead";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { overwriteCachedEvents } from "../utils/caching";
@@ -54,15 +56,17 @@ export class ChatController {
     public focusMessageIndex: Writable<number | undefined>;
     public replyingTo: Writable<EnhancedReplyContext | undefined>;
     public fileToAttach: Writable<MessageContent | undefined>;
-    private localReactions: Record<string, LocalReaction[]> = {};
     public editingEvent: Writable<EventWrapper<Message> | undefined>;
-    private initialised = false;
     public loading: Writable<boolean>;
     public chat: Writable<ChatSummary>;
     public chatId: string;
-    private pruneInterval: number | undefined;
+    public participants: Writable<Participant[]>;
+    public blockedUsers: Writable<Set<string>>;
 
-    // private sendingMessage?: SendMessageEvent;
+    private localReactions: Record<string, LocalReaction[]> = {};
+    private initialised = false;
+    private pruneInterval: number | undefined;
+    private groupDetails: GroupChatDetails | undefined;
 
     constructor(
         public api: ServiceContainer,
@@ -78,11 +82,15 @@ export class ChatController {
         this.replyingTo = writable(_replyingTo);
         this.fileToAttach = writable(undefined);
         this.editingEvent = writable(undefined);
+        this.participants = writable([]);
+        this.blockedUsers = writable(new Set<string>());
         this.chat = writable(_chat);
         this.chatId = _chat.chatId;
 
         if (process.env.NODE_ENV !== "test") {
-            this.loadPreviousMessages();
+            // FIXME - this is being done in series because we need to make sure that the
+            // users are loaded *before* the timeline is rendered
+            this.loadDetails().then(() => this.loadPreviousMessages());
             this.pruneInterval = window.setInterval(() => {
                 this.localReactions = pruneLocalReactions(this.localReactions);
             }, PRUNE_LOCAL_REACTIONS_INTERVAL);
@@ -91,6 +99,7 @@ export class ChatController {
 
     destroy(): void {
         if (this.pruneInterval !== undefined) {
+            console.log("Stopping the local reactions pruner");
             window.clearInterval(this.pruneInterval);
         }
     }
@@ -117,6 +126,56 @@ export class ChatController {
 
     get kind(): "direct_chat" | "group_chat" {
         return this.chatVal.kind;
+    }
+
+    private async loadDetails(): Promise<void> {
+        // currently this is only meaningful for group chats, but we'll set it up generically just in case
+        console.log("loading chat details");
+        if (this.chatVal.kind === "group_chat") {
+            if (this.groupDetails === undefined) {
+                console.log("loading chat details for the first time");
+                const resp = await this.api.getGroupDetails(this.chatId);
+                if (resp !== "caller_not_in_group") {
+                    this.groupDetails = resp;
+                    this.participants.set(resp.participants);
+                    this.blockedUsers.set(resp.blockedUsers);
+                }
+            } else {
+                this.groupDetails = await this.api.getGroupDetailsUpdates(
+                    this.chatId,
+                    this.groupDetails
+                );
+                this.participants.set(this.groupDetails.participants);
+                this.blockedUsers.set(this.groupDetails.blockedUsers);
+                console.log(
+                    "loading chat details updated to: ",
+                    this.groupDetails.latestEventIndex
+                );
+            }
+            console.log("group details", this.groupDetails);
+            await this.updateUserStore();
+        }
+    }
+
+    // FIXME - this userstore is still unconstrained at the moment and we are still
+    // potentially loading thousands of users each time the chat is selected
+    // The reason we need to load the participants is because we need their usernames
+    // in the timeline, not just in the participants list
+    // We could alternatively do this when we rehydrate the events. That would be better
+    // because we would just get the users from the rendered events and not all participants
+    // of which there may be thousands
+    private async updateUserStore(): Promise<void> {
+        const participantIds = get(this.participants).map((p) => p.userId);
+        const blockedIds = [...get(this.blockedUsers)];
+
+        const resp = await this.api.getUsers(
+            missingUserIds(get(userStore), new Set<string>([...participantIds, ...blockedIds])),
+            BigInt(0)
+        );
+
+        console.log(resp);
+
+        userStore.addMany(resp.users);
     }
 
     private upToDate(): boolean {
@@ -438,10 +497,18 @@ export class ChatController {
         });
     }
 
-    chatUpdated(chat: ChatSummary): void {
+    async chatUpdated(chat: ChatSummary): Promise<void> {
         this.chat.set({
             ...chat,
         });
+
+        if (
+            chat.kind === "group_chat" &&
+            chat.latestEventIndex > (this.groupDetails?.latestEventIndex ?? 0)
+        ) {
+            await this.loadDetails();
+        }
+
         chatStore.set({
             chatId: this.chatId,
             event: { kind: "chat_updated" },
@@ -576,6 +643,9 @@ export class ChatController {
     }
 
     dismissAsAdmin(userId: string): Promise<void> {
+        this.participants.update((ps) =>
+            ps.map((p) => (p.userId === userId ? { ...p, role: "standard" } : p))
+        );
         return this.api
             .dismissAsAdmin(this.chatId, userId)
             .then((resp) => {
@@ -591,6 +661,9 @@ export class ChatController {
     }
 
     makeAdmin(userId: string): Promise<void> {
+        this.participants.update((ps) =>
+            ps.map((p) => (p.userId === userId ? { ...p, role: "admin" } : p))
+        );
         return this.api
             .makeAdmin(this.chatId, userId)
             .then((resp) => {
@@ -620,7 +693,28 @@ export class ChatController {
             });
     }
 
+    private blockUserLocally(userId: string): void {
+        this.blockedUsers.update((b) => b.add(userId));
+        this.participants.update((p) => p.filter((p) => p.userId !== userId));
+    }
+
+    private unblockUserLocally(userId: string): void {
+        this.blockedUsers.update((b) => {
+            b.delete(userId);
+            return b;
+        });
+        this.participants.update((p) => [
+            ...p,
+            {
+                role: "standard",
+                userId,
+                username: get(userStore)[userId]?.username ?? "unknown",
+            },
+        ]);
+    }
+
     blockUser(userId: string): Promise<void> {
+        this.blockUserLocally(userId);
         return this.api
             .blockUserFromGroupChat(this.chatId, userId)
             .then((resp) => {
@@ -628,11 +722,33 @@ export class ChatController {
                     toastStore.showSuccessToast("blockUserSucceeded");
                 } else {
                     toastStore.showFailureToast("blockUserFailed");
+                    this.unblockUserLocally(userId);
                 }
             })
             .catch((err) => {
                 toastStore.showFailureToast("blockUserFailed");
                 rollbar.error("Error blocking user", err);
+                this.unblockUserLocally(userId);
+            });
+    }
+
+    unblockUser(userId: string): Promise<void> {
+        this.unblockUserLocally(userId);
+        return this.api
+            .unblockUserFromGroupChat(this.chatId, userId)
+            .then((resp) => {
+                console.log(resp);
+                if (resp === "success") {
+                    toastStore.showSuccessToast("unblockUserSucceeded");
+                } else {
+                    toastStore.showFailureToast("unblockUserFailed");
+                    this.blockUserLocally(userId);
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("unblockUserFailed");
+                rollbar.error("Error unblocking user", err);
+                this.blockUserLocally(userId);
             });
     }
 

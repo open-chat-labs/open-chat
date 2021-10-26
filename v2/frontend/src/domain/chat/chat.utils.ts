@@ -20,6 +20,8 @@ import type {
     Message,
     IndexRange,
     LocalReaction,
+    GroupChatDetails,
+    GroupChatDetailsUpdates,
 } from "./chat";
 import { dedupe, groupWhile, zip } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -65,23 +67,25 @@ export function userIdsFromChatSummary(chat: ChatSummary): string[] {
     if (chat.kind === "direct_chat") {
         return [chat.them];
     }
-    if (chat.kind === "group_chat") {
-        return chat.participants.map((p) => p.userId);
-    }
+    // FIXME what do we do about this
+    // if (chat.kind === "group_chat") {
+    //     return chat.participants.map((p) => p.userId);
+    // }
     return [];
 }
 
 export function userIdsFromChatSummaries(
     chats: ChatSummary[],
-    includeGroupChats = false
+    _includeGroupChats = false
 ): Set<string> {
     return chats.reduce<Set<string>>((userIds, chat) => {
         if (chat.kind === "direct_chat") {
             userIds.add(chat.them);
         }
-        if (chat.kind === "group_chat" && includeGroupChats) {
-            chat.participants.forEach((p) => userIds.add(p.userId));
-        }
+        // FIXME what are we going to do about this
+        // if (chat.kind === "group_chat" && includeGroupChats) {
+        //     chat.participants.forEach((p) => userIds.add(p.userId));
+        // }
         return userIds;
     }, new Set<string>());
 }
@@ -259,6 +263,28 @@ export function mergeUpdates(
     throw new Error("Cannot update chat with a chat of a different kind");
 }
 
+// FIXME - test this
+export function mergeGroupChatDetails(
+    previous: GroupChatDetails,
+    updates: GroupChatDetailsUpdates
+): GroupChatDetails {
+    return {
+        latestEventIndex: updates.latestEventIndex,
+        participants: mergeThings((p) => p.userId, mergeParticipants, previous.participants, {
+            added: [],
+            updated: updates.participantsAddedOrUpdated,
+            removed: updates.participantsRemoved,
+        }),
+        blockedUsers: new Set<string>(
+            mergeThings(identity, identity, [...previous.blockedUsers], {
+                added: [...updates.blockedUsersAdded],
+                updated: [],
+                removed: updates.blockedUsersRemoved,
+            })
+        ),
+    };
+}
+
 export function mergeChatUpdates(
     chatSummaries: ChatSummary[],
     updateResponse: UpdatesResponse
@@ -346,11 +372,6 @@ function mergeUpdatedGroupChat(
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
-    chat.participants = mergeThings((p) => p.userId, mergeParticipants, chat.participants, {
-        added: [],
-        updated: updatedChat.participantsAddedOrUpdated,
-        removed: updatedChat.participantsRemoved,
-    });
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     return chat;
@@ -518,17 +539,19 @@ export function updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummar
 
 export function updateParticipant(
     chat: GroupChatSummary,
-    id: string,
-    updater: (p: Participant) => Participant
+    _id: string,
+    _updater: (p: Participant) => Participant
 ): GroupChatSummary {
     // note that this mutates the chat rather than cloning. Quite significant as it means the
     // parent machine's chat is the same object
-    chat.participants = chat.participants.map((p) => (p.userId === id ? updater(p) : p));
+    // FIXME
+    // chat.participants = chat.participants.map((p) => (p.userId === id ? updater(p) : p));
     return chat;
 }
 
-export function removeParticipant(chat: GroupChatSummary, id: string): GroupChatSummary {
-    chat.participants = chat.participants.filter((p) => p.userId !== id);
+export function removeParticipant(chat: GroupChatSummary, _id: string): GroupChatSummary {
+    // FIXME
+    // chat.participants = chat.participants.filter((p) => p.userId !== id);
     return chat;
 }
 

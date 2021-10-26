@@ -14,6 +14,9 @@ import type {
     BlockUserResponse,
     MakeAdminResponse,
     RemoveAdminResponse,
+    GroupChatDetails,
+    GroupChatDetailsResponse,
+    UnblockUserResponse,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
@@ -39,4 +42,7 @@ export interface IGroupClient {
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;
     deleteMessage(messageId: bigint): Promise<DeleteMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;
+    unblockUser(userId: string): Promise<UnblockUserResponse>;
+    getGroupDetails(): Promise<GroupChatDetailsResponse>;
+    getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails>;
 }

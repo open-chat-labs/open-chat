@@ -10,7 +10,7 @@
     export let event: GroupChatCreated;
     export let timestamp: bigint;
 
-    $: username = me ? $_("you") : $userStore[event.created_by].username ?? $_("unknownUser");
+    $: username = me ? $_("you") : $userStore[event.created_by]?.username ?? $_("unknownUser");
     $: text = $_("groupCreatedBy", {
         values: {
             username: username,

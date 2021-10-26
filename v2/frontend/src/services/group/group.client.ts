@@ -16,6 +16,9 @@ import type {
     BlockUserResponse,
     MakeAdminResponse,
     RemoveAdminResponse,
+    GroupChatDetails,
+    GroupChatDetailsResponse,
+    UnblockUserResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -30,6 +33,9 @@ import {
     editMessageResponse,
     blockUserResponse,
     removeAdminResponse,
+    groupDetailsResponse,
+    groupDetailsUpdatesResponse,
+    unblockUserResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -37,7 +43,11 @@ import type { Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
 import { apiMessageContent, apiOptional } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
-import { enoughVisibleMessages, nextIndex } from "../../domain/chat/chat.utils";
+import {
+    enoughVisibleMessages,
+    mergeGroupChatDetails,
+    nextIndex,
+} from "../../domain/chat/chat.utils";
 
 const MAX_RECURSION = 10;
 
@@ -239,5 +249,36 @@ export class GroupClient extends CandidService implements IGroupClient {
             }),
             blockUserResponse
         );
+    }
+
+    unblockUser(userId: string): Promise<UnblockUserResponse> {
+        return this.handleResponse(
+            this.groupService.unblock_user({
+                user_id: Principal.fromText(userId),
+            }),
+            unblockUserResponse
+        );
+    }
+
+    getGroupDetails(): Promise<GroupChatDetailsResponse> {
+        // FIXME - need to check the cache here ideally
+        return this.handleResponse(this.groupService.selected_initial({}), groupDetailsResponse);
+    }
+
+    async getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
+        // FIXME - we probably want to pass in the existing details so that we can do the
+        // mergeroo inside the group client and then cache the results ala user client
+        const updatesResponse = await this.handleResponse(
+            this.groupService.selected_updates({
+                updates_since: previous.latestEventIndex,
+            }),
+            groupDetailsUpdatesResponse
+        );
+
+        if (updatesResponse === "caller_not_in_group" || updatesResponse === "success_no_updates") {
+            return previous;
+        }
+
+        return mergeGroupChatDetails(previous, updatesResponse);
     }
 }

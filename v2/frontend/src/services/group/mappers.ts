@@ -12,6 +12,9 @@ import type {
     ApiDeleteMessageResponse,
     ApiEditMessageResponse,
     ApiRemoveAdminResponse,
+    ApiSelectedInitialResponse,
+    ApiParticipant,
+    ApiSelectedUpdatesResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -28,14 +31,84 @@ import type {
     BlockUserResponse,
     MakeAdminResponse,
     RemoveAdminResponse,
+    Participant,
+    GroupChatDetailsResponse,
+    GroupChatDetailsUpdatesResponse,
+    UnblockUserResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
 import { message, updatedMessage } from "../common/chatMappers";
-import type { ApiBlockUserResponse } from "../group/candid/idl";
+import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 
 function principalToString(p: Principal): string {
     return p.toString();
+}
+
+function participant(candid: ApiParticipant): Participant {
+    return {
+        role: "Admin" in candid.role ? "admin" : "standard",
+        userId: candid.user_id.toString(),
+    };
+}
+
+export function groupDetailsUpdatesResponse(
+    candid: ApiSelectedUpdatesResponse
+): GroupChatDetailsUpdatesResponse {
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("SuccessNoUpdates" in candid) {
+        return "success_no_updates";
+    }
+    if ("Success" in candid) {
+        return {
+            participantsAddedOrUpdated:
+                candid.Success.participants_added_or_updated.map(participant),
+            participantsRemoved: new Set(
+                candid.Success.participants_removed.map((u) => u.toString())
+            ),
+            blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
+            blockedUsersRemoved: new Set(
+                candid.Success.blocked_users_removed.map((u) => u.toString())
+            ),
+            latestEventIndex: candid.Success.latest_event_index,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
+}
+
+export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupChatDetailsResponse {
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("Success" in candid) {
+        return {
+            participants: candid.Success.participants.map(participant),
+            blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
+            latestEventIndex: candid.Success.latest_event_index,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
+}
+
+export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUserResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("GroupNotPublic" in candid) {
+        return "group_not_public";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    if ("CannotUnblockSelf" in candid) {
+        return "cannot_unblock_self";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
 export function blockUserResponse(candid: ApiBlockUserResponse): BlockUserResponse {

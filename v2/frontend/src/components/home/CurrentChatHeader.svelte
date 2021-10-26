@@ -22,7 +22,7 @@
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary, GroupChatSummary } from "../../domain/chat/chat";
+    import type { ChatSummary, GroupChatSummary, Participant } from "../../domain/chat/chat";
     import { getParticipantsString } from "../../domain/chat/chat.utils";
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
@@ -32,6 +32,7 @@
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: Writable<ChatSummary>;
+    export let participants: Writable<Participant[]>;
     export let user: UserSummary | undefined;
     export let blocked: boolean;
     export let unreadMessages: number;
@@ -82,9 +83,7 @@
 
     function leaveGroup() {
         if ($selectedChatSummary.kind === "group_chat") {
-            const numAdmins = $selectedChatSummary.participants.filter(
-                (p) => p.role === "admin"
-            ).length;
+            const numAdmins = $participants.filter((p) => p.role === "admin").length;
             if (numAdmins > 1) {
                 dispatch("leaveGroup", $selectedChatSummary.chatId);
             } else {
@@ -93,10 +92,13 @@
         }
     }
 
-    function formatLastOnlineDate(secondsSinceLastOnline: number): string {
-        if (isNaN(secondsSinceLastOnline)) {
+    function formatLastOnlineDate(lastOnline: number | undefined): string {
+        if (lastOnline === undefined) {
             return "";
         }
+
+        const secondsSinceLastOnline = (+new Date() - lastOnline) / 1000;
+
         const minutesSinceLastOnline = Math.floor(secondsSinceLastOnline / 60);
 
         if (minutesSinceLastOnline < 2) {
@@ -129,11 +131,11 @@
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus($userStore, chatSummary.them),
-                subtext: formatLastOnlineDate($userStore[chatSummary.them]?.secondsSinceLastOnline),
+                subtext: formatLastOnlineDate($userStore[chatSummary.them]?.lastOnline),
                 typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
             };
         }
-        const participantIds = chatSummary.participants.map((p) => p.userId);
+        const participantIds = $participants.map((p) => p.userId);
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
@@ -152,8 +154,7 @@
     function canAdminister(chat: GroupChatSummary): boolean {
         // todo - this might cause a performance issue on a large group
         return (
-            chat.public ||
-            chat.participants.find((p) => p.userId === user!.userId)?.role === "admin"
+            chat.public || $participants.find((p) => p.userId === user!.userId)?.role === "admin"
         );
     }
 

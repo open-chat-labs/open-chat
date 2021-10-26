@@ -194,10 +194,11 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 const lookup = get(userStore);
                 const chat = ctx.chatSummaries.find((c) => c.chatId === ev.data.chatId);
                 if (chat) {
+                    // FIXME - for group chats we need to do this differently
                     const userIds = userIdsFromChatSummary(chat)
                         .map((u) => lookup[u])
                         .filter((user) => user && userIsOnline(lookup, user.userId))
-                        .sort((a, b) => a.secondsSinceLastOnline - b.secondsSinceLastOnline)
+                        .sort((a, b) => b.lastOnline - a.lastOnline)
                         .slice(0, MAX_RTC_CONNECTIONS_PER_CHAT)
                         .filter((user) => !rtcConnectionsManager.exists(user.userId))
                         .map((user) => user.userId);
@@ -568,7 +569,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 const user = {
                                     userId: ctx.user!.userId,
                                     username: ctx.user!.username,
-                                    secondsSinceLastOnline: 0,
+                                    lastOnline: +new Date(),
                                 };
                                 if (ctx.selectedChat !== undefined) {
                                     ctx.selectedChat.destroy();

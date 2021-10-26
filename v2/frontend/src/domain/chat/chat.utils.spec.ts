@@ -51,7 +51,6 @@ const defaultGroupChat: GroupChatSummary = {
     kind: "group_chat",
     name: "whatever",
     description: "whatever",
-    participants: [participant("1"), participant("2"), participant("3")],
     chatId: "abc",
     lastUpdated: BigInt(0),
     readByMe: [],
@@ -85,10 +84,9 @@ function directChatWith(them: string): DirectChatSummary {
     };
 }
 
-function groupChatWith(id: string): GroupChatSummary {
+function groupChatWith(_id: string): GroupChatSummary {
     return {
         ...defaultGroupChat,
-        participants: [participant(id), participant(id), participant(id)],
     };
 }
 
@@ -362,7 +360,7 @@ function createUser(userId: string, username: string, lastonline: number): Parti
     return {
         userId,
         username,
-        secondsSinceLastOnline: lastonline,
+        lastOnline: lastonline,
     };
 }
 
@@ -500,12 +498,6 @@ describe("merging updates", () => {
                 timestamp: BigInt(400),
             },
             latestEventIndex: 300,
-            participantsAddedOrUpdated: [
-                participant("4"),
-                participant("5"),
-                { ...participant("1"), role: "standard" },
-            ],
-            participantsRemoved: new Set(["2"]),
             name: "stuff",
             description: "stuff",
         };
@@ -556,12 +548,6 @@ describe("merging updates", () => {
                 expect(updated.readByMe).toEqual([]);
                 expect(updated?.lastUpdated).toEqual(BigInt(1000));
                 expect(updated?.latestMessage).not.toBe(undefined);
-                expect(updated.participants.length).toEqual(4);
-                expect(updated.participants[0].userId).toEqual("1");
-                expect(updated.participants[1].userId).toEqual("3");
-                expect(updated.participants[2].userId).toEqual("4");
-                expect(updated.participants[3].userId).toEqual("5");
-                expect(updated.participants[0].role).toEqual("standard");
             } else {
                 fail("updated chat not found or was not a group chat");
             }

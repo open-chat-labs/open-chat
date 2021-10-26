@@ -48,6 +48,7 @@
     $: chat = controller.chat;
     $: focusMessageIndex = controller.focusMessageIndex;
     $: markRead = controller.markRead.store;
+    $: participants = controller.participants;
 
     setContext<UserLookup>("userLookup", $userStore);
 
@@ -162,6 +163,9 @@
 
             fromBottomVal = fromBottom();
             if (fromBottomVal < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable()) {
+                // Note - this fires even when we have entered our own message. This *seems* wrong but
+                // it is actually correct because we do want to load our own messages from the server
+                // so that any incorrect indexes are corrected and only the right thing goes in the cache
                 controller.loadNewMessages();
             }
         }
@@ -300,7 +304,7 @@
     // todo - this might cause a performance problem
     $: admin =
         $chat.kind === "group_chat" &&
-        $chat.participants.find((p) => p.userId === controller.user?.userId)?.role === "admin";
+        $participants.find((p) => p.userId === controller.user?.userId)?.role === "admin";
 
     $: {
         if (controller.chatId !== currentChatId) {

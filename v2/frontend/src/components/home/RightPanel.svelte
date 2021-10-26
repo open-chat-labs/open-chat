@@ -15,6 +15,8 @@
     export let userId: string;
 
     let chat = controller.chat as Writable<GroupChatSummary>;
+    $: participants = controller.participants;
+    $: blockedUsers = controller.blockedUsers;
 
     $: lastState = editGroupHistory[editGroupHistory.length - 1];
 
@@ -38,10 +40,7 @@
     }
 
     function removeParticipant(ev: CustomEvent<string>): void {
-        chat.update((c) => ({
-            ...c,
-            participants: c.participants.filter((p) => p.userId !== ev.detail),
-        }));
+        participants.update((ps) => ps.filter((p) => p.userId !== ev.detail));
         controller.removeParticipant(ev.detail);
     }
 
@@ -52,6 +51,10 @@
     function blockUser(ev: CustomEvent<{ userId: string }>) {
         controller.blockUser(ev.detail.userId);
     }
+
+    function unblockUser(ev: CustomEvent<{ userId: string }>) {
+        controller.unblockUser(ev.detail.userId);
+    }
 </script>
 
 <Panel right>
@@ -60,16 +63,20 @@
     {:else if lastState === "add_participants"}
         <AddParticipants
             closeIcon={editGroupHistory.length > 1 ? "back" : "close"}
-            {chat}
+            chatId={controller.chatId}
+            {participants}
             {api}
             on:cancelAddParticipants={pop} />
     {:else if lastState === "show_participants"}
         <Participants
             closeIcon={editGroupHistory.length > 1 ? "back" : "close"}
+            {participants}
+            {blockedUsers}
             {chat}
             {userId}
             on:close={pop}
             on:blockUser={blockUser}
+            on:unblockUser={unblockUser}
             on:chatWith
             on:addParticipants
             on:dismissAsAdmin={dismissAsAdmin}

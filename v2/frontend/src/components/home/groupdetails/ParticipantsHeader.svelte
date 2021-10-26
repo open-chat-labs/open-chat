@@ -5,10 +5,10 @@
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
-    import type { FullParticipant } from "../../../domain/chat/chat";
+    import type { BlockedParticipant, FullParticipant } from "../../../domain/chat/chat";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
 
-    export let me: FullParticipant | undefined;
+    export let me: FullParticipant | BlockedParticipant | undefined;
     export let publicGroup: boolean;
     export let closeIcon: "close" | "back";
 
