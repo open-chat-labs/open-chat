@@ -405,6 +405,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
                 canisterId: chatId,
             })),
             notificationsMuted: optional(candid.Group.notifications_muted, identity),
+            participantCount: optional(candid.Group.participant_count, identity),
         };
     }
     if ("Direct" in candid) {
@@ -452,6 +453,8 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
                 canisterId: candid.Group.chat_id.toString(),
             })),
             notificationsMuted: candid.Group.notifications_muted,
+            participantCount: candid.Group.participant_count,
+            myRole: "admin", // FIXME when api is done
         };
     }
     if ("Direct" in candid) {

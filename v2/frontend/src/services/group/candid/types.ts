@@ -275,6 +275,7 @@ export interface GroupChatSummary {
   'latest_event_index' : EventIndex,
   'min_visible_message_index' : MessageIndex,
   'chat_id' : ChatId,
+  'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
@@ -286,6 +287,7 @@ export interface GroupChatSummaryUpdates {
   'avatar_id' : [] | [bigint],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
+  'participant_count' : [] | [number],
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupDescriptionChanged {

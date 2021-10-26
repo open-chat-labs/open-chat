@@ -76,6 +76,8 @@
     "toggleMuteNotificationsSucceeded": "Notifications successfully {operation}",
     "filterParticipants": "filter participants",
     "markAllRead": "Mark all as read",
+    "publicGroupWithN": "Public group with {number} participant(s)",
+    "privateGroupWithN": "Private group with {number} participant(s)",
     "muted": "muted",
     "unmuted": "unmuted",
     "yesPlease": "Yes please",

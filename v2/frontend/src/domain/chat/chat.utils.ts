@@ -394,6 +394,7 @@ function mergeUpdatedGroupChat(
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
+    chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
     return chat;
 }
 

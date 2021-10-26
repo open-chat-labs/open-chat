@@ -135,35 +135,22 @@
                 typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
             };
         }
-        const participantIds = $participants.map((p) => p.userId);
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
-            subtext: getParticipantsString(
-                user!,
-                $userStore,
-                participantIds,
-                $_("unknownUser"),
-                $_("you")
-            ),
+            subtext: chatSummary.public
+                ? $_("publicGroupWithN", { values: { number: chatSummary.participantCount } })
+                : $_("privateGroupWithN", { values: { number: chatSummary.participantCount } }),
             typing: false,
         };
     }
 
     function canAdminister(chat: GroupChatSummary): boolean {
-        // todo - this might cause a performance issue on a large group
-        return (
-            chat.public || $participants.find((p) => p.userId === user!.userId)?.role === "admin"
-        );
+        return chat.public || chat.myRole === "admin";
     }
 
     $: chat = normaliseChatSummary($selectedChatSummary);
-
-    // for direct chats we want to either show when the user was last online or if they are typing
-    // for group chats we also show if any participants are typing (they all get listed)
-    // if no one is typing we check how many users there are. If > 5 we just say n members (m online)
-    // if 5 or fewer, we list the usernames sorted by online status
 </script>
 
 <SectionHeader flush={true}>

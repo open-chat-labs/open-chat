@@ -45,12 +45,8 @@
         blockedUsers: Set<string>
     ): (FullParticipant | BlockedParticipant)[] {
         const users: (FullParticipant | BlockedParticipant)[] = [];
-        let includeBlocked = false;
         participants.forEach((p) => {
             const user = $userStore[p.userId];
-            if (p.userId === userId && p.role === "admin") {
-                includeBlocked = true;
-            }
             if (user) {
                 users.push({
                     kind: "full_participant",
@@ -59,7 +55,7 @@
                 });
             }
         });
-        if (includeBlocked) {
+        if ($chat.myRole === "admin") {
             blockedUsers.forEach((userId) => {
                 const user = $userStore[userId];
                 if (user) {
@@ -77,8 +73,6 @@
     $: knownUsers = getKnownUsers($participants, $blockedUsers);
 
     $: me = knownUsers.find((u) => u.userId === userId);
-
-    $: myRole = me && me.kind === "full_participant" ? me.role : "standard";
 
     $: others = knownUsers.filter((u) => {
         return matchesSearch(searchTerm, u) && u.userId !== userId;
@@ -112,7 +106,7 @@
     <Participant
         me={false}
         participant={item}
-        {myRole}
+        myRole={$chat.myRole}
         {publicGroup}
         on:blockUser
         on:unblockUser

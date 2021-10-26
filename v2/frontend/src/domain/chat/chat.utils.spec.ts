@@ -59,6 +59,8 @@ const defaultGroupChat: GroupChatSummary = {
     minVisibleMessageIndex: 0,
     latestEventIndex: 0,
     notificationsMuted: false,
+    participantCount: 10,
+    myRole: "admin",
 };
 
 function directChatId(id: number): DirectChatSummary {

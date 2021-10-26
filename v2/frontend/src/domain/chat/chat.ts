@@ -370,6 +370,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     description?: string;
     latestMessage?: EventWrapper<Message>;
     avatarBlobReference?: BlobReference;
+    participantCount?: number;
 };
 
 export type ParticipantRole = "admin" | "standard";
@@ -435,6 +436,8 @@ export type GroupChatSummary = DataContent &
         minVisibleEventIndex: number;
         minVisibleMessageIndex: number;
         lastUpdated: bigint;
+        participantCount: number;
+        myRole: ParticipantRole;
         latestMessage?: EventWrapper<Message>;
     };
 
