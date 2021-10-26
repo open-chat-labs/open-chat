@@ -49,6 +49,7 @@ pub struct GroupChatSummary {
     pub joined: TimestampMillis,
     pub read_by_me: Vec<MessageIndexRange>,
     pub notifications_muted: bool,
+    pub participant_count: u32,
 }
 
 impl GroupChatSummary {
@@ -84,4 +85,5 @@ pub struct GroupChatSummaryUpdates {
     pub latest_event_index: Option<EventIndex>,
     pub read_by_me: Option<Vec<MessageIndexRange>>,
     pub notifications_muted: Option<bool>,
+    pub participant_count: Option<u32>,
 }

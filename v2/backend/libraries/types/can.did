@@ -195,6 +195,7 @@ type GroupChatSummary =
         joined: TimestampMillis;
         read_by_me: vec MessageIndexRange;
         notifications_muted: bool;
+        participant_count: nat32;
     };
 
 type GroupChatSummaryUpdates =
@@ -208,6 +209,7 @@ type GroupChatSummaryUpdates =
         latest_event_index: opt EventIndex;
         read_by_me: opt vec MessageIndexRange;
         notifications_muted: opt bool;
+        participant_count: opt nat32;
     };
 
 type GroupDescriptionChanged =

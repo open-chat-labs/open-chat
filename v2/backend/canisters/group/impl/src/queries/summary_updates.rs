@@ -25,6 +25,11 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             avatar_id: Avatar::id(&runtime_state.data.avatar),
             latest_message: updates_from_events.latest_message,
             latest_event_index: updates_from_events.latest_event_index,
+            participant_count: if updates_from_events.participants_changed {
+                Some(runtime_state.data.participants.len())
+            } else {
+                None
+            },
         };
         Success(SuccessResult { updates })
     } else {
@@ -40,6 +45,7 @@ struct UpdatesFromEvents {
     avatar_id: Option<u128>,
     latest_message: Option<EventWrapper<Message>>,
     latest_event_index: Option<EventIndex>,
+    participants_changed: bool,
 }
 
 fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> UpdatesFromEvents {
@@ -73,6 +79,14 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> Updat
                 if updates.avatar_id.is_none() {
                     updates.avatar_id = Some(a.new_avatar);
                 }
+            }
+            ChatEventInternal::ParticipantsAdded(_)
+            | ChatEventInternal::ParticipantsRemoved(_)
+            | ChatEventInternal::ParticipantJoined(_)
+            | ChatEventInternal::ParticipantLeft(_)
+            | ChatEventInternal::UsersBlocked(_)
+            | ChatEventInternal::UsersUnblocked(_) => {
+                updates.participants_changed = true;
             }
             _ => {}
         }
