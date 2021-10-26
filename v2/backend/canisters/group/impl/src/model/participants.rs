@@ -11,7 +11,7 @@ const MAX_PARTICIPANTS_PER_PRIVATE_GROUP: u32 = 200;
 pub struct Participants {
     by_principal: HashMap<Principal, ParticipantInternal>,
     user_id_to_principal_map: HashMap<UserId, Principal>,
-    blocked: HashMap<UserId, Principal>,
+    blocked: HashMap<UserId, BlockedUser>,
     admin_count: u32,
 }
 
@@ -77,12 +77,19 @@ impl Participants {
         }
     }
 
-    pub fn block(&mut self, user_id: UserId, principal: Principal) {
-        self.blocked.insert(user_id, principal);
+    pub fn block(&mut self, user_id: UserId, principal: Principal, blocked_by: UserId, now: TimestampMillis) {
+        self.blocked.insert(
+            user_id,
+            BlockedUser {
+                principal,
+                blocked_by,
+                timestamp: now,
+            },
+        );
     }
 
     pub fn unblock(&mut self, user_id: &UserId) -> Option<Principal> {
-        self.blocked.remove(user_id)
+        self.blocked.remove(user_id).map(|bu| bu.principal)
     }
 
     pub fn blocked(&self) -> Vec<UserId> {
@@ -233,4 +240,11 @@ impl From<&ParticipantInternal> for Participant {
             role: p.role,
         }
     }
+}
+
+#[derive(CandidType, Deserialize)]
+struct BlockedUser {
+    principal: Principal,
+    blocked_by: UserId,
+    timestamp: TimestampMillis,
 }

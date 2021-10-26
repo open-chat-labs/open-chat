@@ -57,7 +57,7 @@ fn commit(blocked_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState)
     let now = runtime_state.env.now();
 
     if let Some(principal) = runtime_state.data.participants.remove(&user_id) {
-        runtime_state.data.participants.block(user_id, principal);
+        runtime_state.data.participants.block(user_id, principal, blocked_by, now);
 
         let event = UsersBlocked {
             user_ids: vec![user_id],
