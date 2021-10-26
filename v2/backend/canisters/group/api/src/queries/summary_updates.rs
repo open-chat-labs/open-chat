@@ -28,6 +28,7 @@ pub struct SummaryUpdates {
     pub avatar_id: Option<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
+    pub participant_count: Option<u32>,
 }
 
 impl From<SummaryUpdates> for GroupChatSummaryUpdates {
@@ -40,6 +41,7 @@ impl From<SummaryUpdates> for GroupChatSummaryUpdates {
             avatar_id: s.avatar_id,
             latest_message: s.latest_message,
             latest_event_index: s.latest_event_index,
+            participant_count: s.participant_count,
             read_by_me: None,
             notifications_muted: None,
         }

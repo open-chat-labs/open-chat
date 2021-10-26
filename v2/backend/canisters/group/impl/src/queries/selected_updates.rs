@@ -67,6 +67,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             ChatEventInternal::UsersBlocked(ub) => {
                 for user_id in ub.user_ids.iter() {
                     user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
+                    user_updates_handler.mark_participant_updated(&mut result, *user_id, true);
                 }
             }
             ChatEventInternal::UsersUnblocked(ub) => {
