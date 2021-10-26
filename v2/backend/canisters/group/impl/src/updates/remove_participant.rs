@@ -54,7 +54,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 fn commit(removed_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
 
-    runtime_state.data.participants.remove(user_id);
+    runtime_state.data.participants.remove(&user_id);
 
     let event = ParticipantsRemoved {
         user_ids: vec![user_id],
