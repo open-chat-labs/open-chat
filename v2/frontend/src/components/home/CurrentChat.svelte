@@ -52,7 +52,6 @@
 
 <div class="wrapper">
     <CurrentChatHeader
-        user={controller.user}
         {blocked}
         {unreadMessages}
         on:clearSelection

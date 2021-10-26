@@ -1,6 +1,5 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
-    import type { UserSummary } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -23,7 +22,6 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import type { ChatSummary, GroupChatSummary, Participant } from "../../domain/chat/chat";
-    import { getParticipantsString } from "../../domain/chat/chat.utils";
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
@@ -33,7 +31,6 @@
 
     export let selectedChatSummary: Writable<ChatSummary>;
     export let participants: Writable<Participant[]>;
-    export let user: UserSummary | undefined;
     export let blocked: boolean;
     export let unreadMessages: number;
 

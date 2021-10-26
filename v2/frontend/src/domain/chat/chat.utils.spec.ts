@@ -313,11 +313,12 @@ describe("getting first unread message index", () => {
     });
 });
 
-function createUser(userId: string, username: string, lastonline: number): PartialUserSummary {
+function createUser(userId: string, username: string, seconds: number): PartialUserSummary {
+    const now = Date.now();
     return {
         userId,
         username,
-        lastOnline: lastonline,
+        lastOnline: now - seconds * 1000,
     };
 }
 
