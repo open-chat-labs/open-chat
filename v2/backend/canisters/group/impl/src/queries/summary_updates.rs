@@ -10,9 +10,11 @@ fn summary_updates(args: Args) -> Response {
 }
 
 fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    if !runtime_state.is_caller_participant() {
-        return CallerNotInGroup;
-    }
+    let caller = runtime_state.env.caller();
+    let participant = match runtime_state.data.participants.get(caller) {
+        None => return CallerNotInGroup,
+        Some(p) => p,
+    };
 
     let updates_from_events = process_events(args.updates_since, runtime_state);
 
@@ -30,6 +32,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             } else {
                 None
             },
+            role: if updates_from_events.role_changed { Some(participant.role) } else { None },
         };
         Success(SuccessResult { updates })
     } else {
@@ -46,6 +49,7 @@ struct UpdatesFromEvents {
     latest_message: Option<EventWrapper<Message>>,
     latest_event_index: Option<EventIndex>,
     participants_changed: bool,
+    role_changed: bool,
 }
 
 fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> UpdatesFromEvents {
@@ -79,6 +83,9 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> Updat
                 if updates.avatar_id.is_none() {
                     updates.avatar_id = Some(a.new_avatar);
                 }
+            }
+            ChatEventInternal::ParticipantsPromotedToAdmin(_) | ChatEventInternal::ParticipantsDismissedAsAdmin(_) => {
+                updates.role_changed = true;
             }
             ChatEventInternal::ParticipantsAdded(_)
             | ChatEventInternal::ParticipantsRemoved(_)
