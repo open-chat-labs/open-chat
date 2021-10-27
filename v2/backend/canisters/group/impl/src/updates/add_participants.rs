@@ -96,11 +96,12 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         let can_add_participants = participant.role.can_add_participants(runtime_state.data.is_public);
         if can_add_participants {
+            let can_unblock_user = participant.role.can_unblock_user();
             let mut users_to_add = Vec::new();
             let mut users_already_in_group = Vec::new();
             let mut users_blocked_from_group = Vec::new();
             for user_id in args.user_ids.iter() {
-                if runtime_state.data.participants.is_blocked(user_id) {
+                if !(args.allow_blocked_users && can_unblock_user) && runtime_state.data.participants.is_blocked(user_id) {
                     users_blocked_from_group.push(*user_id);
                 } else if runtime_state.data.participants.get_by_user_id(user_id).is_none() {
                     users_to_add.push(*user_id);
@@ -139,6 +140,9 @@ fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut R
             .data
             .participants
             .add(user_id, principal, now, min_visible_event_index, min_visible_message_index);
+
+        // Ensure any users added are also unblocked
+        runtime_state.data.participants.unblock(&user_id);
     }
 
     let event = ParticipantsAdded {
