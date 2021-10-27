@@ -101,7 +101,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             let mut users_already_in_group = Vec::new();
             let mut users_blocked_from_group = Vec::new();
             for user_id in args.user_ids.iter() {
-                if runtime_state.data.participants.is_blocked(user_id) && !(args.unblock && can_unblock_user) {
+                if !(args.allow_blocked_users && can_unblock_user) && runtime_state.data.participants.is_blocked(user_id) {
                     users_blocked_from_group.push(*user_id);
                 } else if runtime_state.data.participants.get_by_user_id(user_id).is_none() {
                     users_to_add.push(*user_id);
