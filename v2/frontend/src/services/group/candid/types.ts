@@ -1,6 +1,9 @@
 import type { Principal } from '@dfinity/principal';
 export type AccountIdentifier = string;
-export interface AddParticipantsArgs { 'user_ids' : Array<UserId> }
+export interface AddParticipantsArgs {
+  'allow_blocked_users' : boolean,
+  'user_ids' : Array<UserId>,
+}
 export interface AddParticipantsFailedResult {
   'errors' : Array<UserId>,
   'users_blocked_from_group' : Array<UserId>,
@@ -266,6 +269,7 @@ export interface GroupChatSummary {
   'is_public' : boolean,
   'min_visible_event_index' : EventIndex,
   'name' : string,
+  'role' : Role,
   'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
@@ -280,6 +284,7 @@ export interface GroupChatSummary {
 }
 export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
+  'role' : [] | [Role],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,

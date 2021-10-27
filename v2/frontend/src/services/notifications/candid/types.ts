@@ -204,6 +204,7 @@ export interface GroupChatSummary {
   'is_public' : boolean,
   'min_visible_event_index' : EventIndex,
   'name' : string,
+  'role' : Role,
   'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
@@ -218,6 +219,7 @@ export interface GroupChatSummary {
 }
 export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
+  'role' : [] | [Role],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,

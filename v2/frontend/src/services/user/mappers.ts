@@ -406,6 +406,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             })),
             notificationsMuted: optional(candid.Group.notifications_muted, identity),
             participantCount: optional(candid.Group.participant_count, identity),
+            myRole: optional(candid.Group.role, (r) => ("Admin" in r ? "admin" : "standard")),
         };
     }
     if ("Direct" in candid) {
@@ -454,7 +455,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             })),
             notificationsMuted: candid.Group.notifications_muted,
             participantCount: candid.Group.participant_count,
-            myRole: "admin", // FIXME when api is done
+            myRole: "Admin" in candid.Group.role ? "admin" : "standard",
         };
     }
     if ("Direct" in candid) {

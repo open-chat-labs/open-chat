@@ -196,6 +196,7 @@ type GroupChatSummary =
         read_by_me: vec MessageIndexRange;
         notifications_muted: bool;
         participant_count: nat32;
+        role: Role;
     };
 
 type GroupChatSummaryUpdates =
@@ -210,6 +211,7 @@ type GroupChatSummaryUpdates =
         read_by_me: opt vec MessageIndexRange;
         notifications_muted: opt bool;
         participant_count: opt nat32;
+        role: opt Role;
     };
 
 type GroupDescriptionChanged =

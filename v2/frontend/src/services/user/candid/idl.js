@@ -221,6 +221,7 @@ export const idlFactory = ({ IDL }) => {
     'max_events' : IDL.Nat32,
   });
   const InitialStateArgs = IDL.Record({});
+  const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
   const MessageIndexRange = IDL.Record({
     'to' : MessageIndex,
     'from' : MessageIndex,
@@ -234,6 +235,7 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Bool,
     'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
+    'role' : Role,
     'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
@@ -522,6 +524,7 @@ export const idlFactory = ({ IDL }) => {
   const UpdatesArgs = IDL.Record({ 'updates_since' : UpdatesSince });
   const GroupChatSummaryUpdates = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
+    'role' : IDL.Opt(Role),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,

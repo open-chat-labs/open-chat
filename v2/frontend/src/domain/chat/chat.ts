@@ -371,6 +371,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     latestMessage?: EventWrapper<Message>;
     avatarBlobReference?: BlobReference;
     participantCount?: number;
+    myRole?: ParticipantRole;
 };
 
 export type ParticipantRole = "admin" | "standard";

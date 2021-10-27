@@ -395,6 +395,7 @@ function mergeUpdatedGroupChat(
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
+    chat.myRole = updatedChat.myRole ?? chat.myRole;
     return chat;
 }
 

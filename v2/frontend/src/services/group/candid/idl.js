@@ -1,7 +1,10 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
-  const AddParticipantsArgs = IDL.Record({ 'user_ids' : IDL.Vec(UserId) });
+  const AddParticipantsArgs = IDL.Record({
+    'allow_blocked_users' : IDL.Bool,
+    'user_ids' : IDL.Vec(UserId),
+  });
   const AddParticipantsFailedResult = IDL.Record({
     'errors' : IDL.Vec(UserId),
     'users_blocked_from_group' : IDL.Vec(UserId),
@@ -383,6 +386,7 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Bool,
     'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
+    'role' : Role,
     'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
@@ -403,6 +407,7 @@ export const idlFactory = ({ IDL }) => {
   const SummaryUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
   const GroupChatSummaryUpdates = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
+    'role' : IDL.Opt(Role),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,

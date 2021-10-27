@@ -111,6 +111,7 @@
     "unblockUser": "Unblock user",
     "unblockUserFailed": "Unable to unblock user",
     "unblockUserSucceeded": "User has been unblocked",
+    "unblockUserSucceededAddFailed": "User has been unblocked but could not be re-added to the group",
     "blocked": "blocked",
     "userIsBlocked": "Unblock user to send messages",
     "participants": "Participants",

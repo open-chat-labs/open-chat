@@ -752,7 +752,13 @@ export class ChatController {
             .then((resp) => {
                 console.log(resp);
                 if (resp === "success") {
-                    toastStore.showSuccessToast("unblockUserSucceeded");
+                    this.api.addParticipants(this.chatId, [userId]).then((resp) => {
+                        if (resp.kind === "add_participants_success") {
+                            toastStore.showSuccessToast("unblockUserSucceeded");
+                        } else {
+                            toastStore.showSuccessToast("unblockUserSucceededAddFailed");
+                        }
+                    });
                 } else {
                     toastStore.showFailureToast("unblockUserFailed");
                     this.blockUserLocally(userId);
