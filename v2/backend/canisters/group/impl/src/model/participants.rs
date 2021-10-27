@@ -81,8 +81,8 @@ impl Participants {
         self.blocked.insert(user_id);
     }
 
-    pub fn unblock(&mut self, user_id: &UserId) {
-        self.blocked.remove(user_id);
+    pub fn unblock(&mut self, user_id: &UserId) -> bool {
+        self.blocked.remove(user_id)
     }
 
     pub fn blocked(&self) -> Vec<UserId> {

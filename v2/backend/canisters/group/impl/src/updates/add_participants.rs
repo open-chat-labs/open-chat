@@ -135,6 +135,8 @@ fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut R
         min_visible_message_index = runtime_state.data.events.next_message_index();
     };
 
+    let mut unblocked = vec![];
+
     for (user_id, principal) in users.iter().cloned() {
         runtime_state
             .data
@@ -142,12 +144,15 @@ fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut R
             .add(user_id, principal, now, min_visible_event_index, min_visible_message_index);
 
         // Ensure any users added are also unblocked
-        runtime_state.data.participants.unblock(&user_id);
+        if runtime_state.data.participants.unblock(&user_id) {
+            unblocked.push(user_id);
+        }
     }
 
     let event = ParticipantsAdded {
         user_ids: users.iter().map(|(u, _)| u).cloned().collect(),
         added_by,
+        unblocked,
     };
     runtime_state
         .data
