@@ -143,7 +143,7 @@
         };
     }
 
-    function canAdminister(chat: GroupChatSummary): boolean {
+    function canAddParticipants(chat: GroupChatSummary): boolean {
         return chat.public || chat.myRole === "admin";
     }
 
@@ -219,7 +219,7 @@
                             <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("participants")}</div>
                         </MenuItem>
-                        {#if canAdminister($selectedChatSummary)}
+                        {#if canAddParticipants($selectedChatSummary)}
                             <MenuItem on:click={addParticipants}>
                                 <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                 <div slot="text">{$_("addParticipants")}</div>

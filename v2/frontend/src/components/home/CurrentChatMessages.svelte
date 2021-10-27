@@ -301,10 +301,7 @@
 
     $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($chat);
 
-    // todo - this might cause a performance problem
-    $: admin =
-        $chat.kind === "group_chat" &&
-        $participants.find((p) => p.userId === controller.user?.userId)?.role === "admin";
+    $: admin = $chat.kind === "group_chat" && $chat.myRole === "admin";
 
     $: {
         if (controller.chatId !== currentChatId) {
