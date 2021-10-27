@@ -42,6 +42,9 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 for user_id in p.user_ids.iter() {
                     user_updates_handler.mark_participant_updated(&mut result, *user_id, false);
                 }
+                for user_id in p.unblocked.iter() {
+                    user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
+                }
             }
             ChatEventInternal::ParticipantsRemoved(p) => {
                 for user_id in p.user_ids.iter() {
@@ -73,7 +76,6 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             ChatEventInternal::UsersUnblocked(ub) => {
                 for user_id in ub.user_ids.iter() {
                     user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
-                    user_updates_handler.mark_participant_updated(&mut result, *user_id, false);
                 }
             }
             _ => {}

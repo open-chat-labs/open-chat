@@ -1,7 +1,7 @@
 use candid::{CandidType, Principal};
 use serde::Deserialize;
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId};
 
 const MAX_PARTICIPANTS_PER_PUBLIC_GROUP: u32 = 100_000;
@@ -11,7 +11,7 @@ const MAX_PARTICIPANTS_PER_PRIVATE_GROUP: u32 = 200;
 pub struct Participants {
     by_principal: HashMap<Principal, ParticipantInternal>,
     user_id_to_principal_map: HashMap<UserId, Principal>,
-    blocked: HashMap<UserId, BlockedUser>,
+    blocked: HashSet<UserId>,
     admin_count: u32,
 }
 
@@ -29,7 +29,7 @@ impl Participants {
         Participants {
             by_principal: vec![(creator_principal, participant)].into_iter().collect(),
             user_id_to_principal_map: vec![(creator_user_id, creator_principal)].into_iter().collect(),
-            blocked: HashMap::new(),
+            blocked: HashSet::new(),
             admin_count: 1,
         }
     }
@@ -42,7 +42,7 @@ impl Participants {
         min_visible_event_index: EventIndex,
         min_visible_message_index: MessageIndex,
     ) -> AddResult {
-        if self.blocked.contains_key(&user_id) {
+        if self.blocked.contains(&user_id) {
             AddResult::Blocked
         } else {
             match self.by_principal.entry(principal) {
@@ -63,37 +63,30 @@ impl Participants {
         }
     }
 
-    pub fn remove(&mut self, user_id: &UserId) -> Option<Principal> {
-        match self.user_id_to_principal_map.remove(user_id) {
+    pub fn remove(&mut self, user_id: UserId) -> bool {
+        match self.user_id_to_principal_map.remove(&user_id) {
+            None => false,
             Some(principal) => {
                 if let Some(participant) = self.by_principal.remove(&principal) {
                     if participant.role.is_admin() {
                         self.admin_count -= 1;
                     }
                 }
-                Some(principal)
+                true
             }
-            None => None,
         }
     }
 
-    pub fn block(&mut self, user_id: UserId, principal: Principal, blocked_by: UserId, now: TimestampMillis) {
-        self.blocked.insert(
-            user_id,
-            BlockedUser {
-                principal,
-                blocked_by,
-                timestamp: now,
-            },
-        );
+    pub fn block(&mut self, user_id: UserId) {
+        self.blocked.insert(user_id);
     }
 
-    pub fn unblock(&mut self, user_id: &UserId) -> Option<Principal> {
-        self.blocked.remove(user_id).map(|bu| bu.principal)
+    pub fn unblock(&mut self, user_id: &UserId) -> bool {
+        self.blocked.remove(user_id)
     }
 
     pub fn blocked(&self) -> Vec<UserId> {
-        self.blocked.keys().copied().collect()
+        self.blocked.iter().copied().collect()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &ParticipantInternal> {
@@ -134,7 +127,7 @@ impl Participants {
     }
 
     pub fn is_blocked(&self, user_id: &UserId) -> bool {
-        self.blocked.contains_key(user_id)
+        self.blocked.contains(user_id)
     }
 
     pub fn users_to_notify(&self, my_user_id: UserId) -> Vec<UserId> {
@@ -240,11 +233,4 @@ impl From<&ParticipantInternal> for Participant {
             role: p.role,
         }
     }
-}
-
-#[derive(CandidType, Deserialize)]
-struct BlockedUser {
-    principal: Principal,
-    blocked_by: UserId,
-    timestamp: TimestampMillis,
 }
