@@ -5,6 +5,7 @@ use types::UserId;
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
     pub user_ids: Vec<UserId>,
+    pub unblock: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
