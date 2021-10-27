@@ -68,6 +68,7 @@ pub struct AvatarChanged {
 pub struct ParticipantsAdded {
     pub user_ids: Vec<UserId>,
     pub added_by: UserId,
+    pub unblocked: Vec<UserId>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]

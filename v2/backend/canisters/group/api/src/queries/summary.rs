@@ -30,6 +30,7 @@ pub struct Summary {
     pub latest_event_index: EventIndex,
     pub joined: TimestampMillis,
     pub participant_count: u32,
+    pub role: Role,
 }
 
 impl From<Summary> for GroupChatSummary {
@@ -49,6 +50,7 @@ impl From<Summary> for GroupChatSummary {
             read_by_me: vec![],
             notifications_muted: false,
             participant_count: s.participant_count,
+            role: s.role,
         }
     }
 }

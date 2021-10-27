@@ -26,6 +26,7 @@ fn summary_impl(runtime_state: &RuntimeState) -> Response {
             latest_event_index: latest_event.index,
             joined: participant.date_added,
             participant_count: data.participants.len(),
+            role: participant.role,
         };
         Success(SuccessResult { summary })
     } else {
