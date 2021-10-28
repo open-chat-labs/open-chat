@@ -1,4 +1,3 @@
-//use crate::model::public_groups::UpdateGroupResult;
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_index_canister::c2c_delete_group::{Response::*, *};
 use ic_cdk_macros::update;

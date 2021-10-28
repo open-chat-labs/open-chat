@@ -26,10 +26,7 @@ async fn delete_group(_args: Args) -> Response {
             }
             c2c_delete_group::Response::Success => Success,
         },
-        Err(error) => {
-            error!(?error, "Error calling c2c_delete_group");
-            InternalError
-        }
+        Err(_) => InternalError,
     }
 }
 

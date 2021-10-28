@@ -29,9 +29,9 @@ async fn update_group(args: Args) -> Response {
             avatar_id: Avatar::id(&args.avatar),
         };
 
-        match group_index_canister_c2c_client::c2c_update_group(prepare_result.group_index_canister_id, &c2c_update_group_args)
-            .await
-        {
+        let group_index_canister_id = prepare_result.group_index_canister_id;
+
+        match group_index_canister_c2c_client::c2c_update_group(group_index_canister_id, &c2c_update_group_args).await {
             Ok(response) => match response {
                 c2c_update_group::Response::NameTaken => return NameTaken,
                 c2c_update_group::Response::ChatNotFound => {
@@ -40,10 +40,7 @@ async fn update_group(args: Args) -> Response {
                 }
                 c2c_update_group::Response::Success => (),
             },
-            Err(error) => {
-                error!(?error, "Error calling update group");
-                return InternalError;
-            }
+            Err(_) => return InternalError,
         };
     }
 
