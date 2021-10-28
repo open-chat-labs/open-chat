@@ -40,12 +40,18 @@
         controller.markAllRead();
     }
 
+    function messageRead(
+        ev: CustomEvent<{ chatId: string; messageIndex: number; messageId: bigint }>
+    ) {
+        controller.messageRead(ev.detail.messageIndex, ev.detail.messageId);
+    }
+
     $: chat = controller.chat;
+    $: participants = controller.participants;
 </script>
 
 <div class="wrapper">
     <CurrentChatHeader
-        user={controller.user}
         {blocked}
         {unreadMessages}
         on:clearSelection
@@ -57,10 +63,11 @@
         on:showGroupDetails
         on:showParticipants
         on:leaveGroup
-        selectedChatSummary={chat} />
+        selectedChatSummary={chat}
+        {participants} />
     <CurrentChatMessages
         on:replyPrivatelyTo
-        on:messageRead
+        on:messageRead={messageRead}
         on:chatWith
         {controller}
         {unreadMessages} />

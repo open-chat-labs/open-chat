@@ -62,7 +62,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {
         if (userIds.length === 0) {
             return Promise.resolve({
-                timestamp: BigInt(+new Date()),
+                timestamp: BigInt(Date.now()),
                 users: [],
             });
         }

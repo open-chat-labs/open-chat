@@ -35,6 +35,10 @@ import {
     ToggleReactionResponse,
     DeleteMessagesResponse,
     BlockUserResponse,
+    UnblockUserResponse,
+    SelectedInitialResponse,
+    SelectedUpdatesResponse,
+    Participant,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -71,6 +75,10 @@ export {
     ToggleReactionResponse as ApiToggleReactionResponse,
     DeleteMessagesResponse as ApiDeleteMessageResponse,
     BlockUserResponse as ApiBlockUserResponse,
+    UnblockUserResponse as ApiUnblockUserResponse,
+    SelectedInitialResponse as ApiSelectedInitialResponse,
+    SelectedUpdatesResponse as ApiSelectedUpdatesResponse,
+    Participant as ApiParticipant,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

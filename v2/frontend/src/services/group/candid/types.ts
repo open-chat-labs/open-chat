@@ -1,6 +1,9 @@
 import type { Principal } from '@dfinity/principal';
 export type AccountIdentifier = string;
-export interface AddParticipantsArgs { 'user_ids' : Array<UserId> }
+export interface AddParticipantsArgs {
+  'allow_blocked_users' : boolean,
+  'user_ids' : Array<UserId>,
+}
 export interface AddParticipantsFailedResult {
   'errors' : Array<UserId>,
   'users_blocked_from_group' : Array<UserId>,
@@ -264,9 +267,9 @@ export interface GroupChatEventWrapper {
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
-  'participants' : Array<Participant>,
   'min_visible_event_index' : EventIndex,
   'name' : string,
+  'role' : Role,
   'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
@@ -276,12 +279,12 @@ export interface GroupChatSummary {
   'latest_event_index' : EventIndex,
   'min_visible_message_index' : MessageIndex,
   'chat_id' : ChatId,
+  'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
-  'participants_added_or_updated' : Array<Participant>,
-  'participants_removed' : Array<UserId>,
   'name' : [] | [string],
+  'role' : [] | [Role],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -289,6 +292,7 @@ export interface GroupChatSummaryUpdates {
   'avatar_id' : [] | [bigint],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
+  'participant_count' : [] | [number],
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupDescriptionChanged {
@@ -490,6 +494,25 @@ export type SearchMessagesResponse = { 'TermTooShort' : number } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
 export interface SearchMessagesSuccessResult { 'matches' : Array<MessageMatch> }
+export type SelectedInitialArgs = {};
+export type SelectedInitialResponse = { 'CallerNotInGroup' : null } |
+  { 'Success' : SelectedInitialSuccess };
+export interface SelectedInitialSuccess {
+  'participants' : Array<Participant>,
+  'blocked_users' : Array<UserId>,
+  'latest_event_index' : EventIndex,
+}
+export interface SelectedUpdatesArgs { 'updates_since' : EventIndex }
+export type SelectedUpdatesResponse = { 'CallerNotInGroup' : null } |
+  { 'Success' : SelectedUpdatesSuccess } |
+  { 'SuccessNoUpdates' : null };
+export interface SelectedUpdatesSuccess {
+  'blocked_users_removed' : Array<UserId>,
+  'participants_added_or_updated' : Array<Participant>,
+  'participants_removed' : Array<UserId>,
+  'latest_event_index' : EventIndex,
+  'blocked_users_added' : Array<UserId>,
+}
 export interface SendMessageArgs {
   'content' : MessageContent,
   'sender_name' : string,
@@ -676,6 +699,12 @@ export interface _SERVICE {
     >,
   'search_messages' : (arg_0: SearchMessagesArgs) => Promise<
       SearchMessagesResponse
+    >,
+  'selected_initial' : (arg_0: SelectedInitialArgs) => Promise<
+      SelectedInitialResponse
+    >,
+  'selected_updates' : (arg_0: SelectedUpdatesArgs) => Promise<
+      SelectedUpdatesResponse
     >,
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'summary' : (arg_0: SummaryArgs) => Promise<SummaryResponse>,

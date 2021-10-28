@@ -20,10 +20,10 @@ export function phoneNumberToString({ countryCode, number }: PhoneNumber): strin
     return `(+${countryCode}) ${number}`;
 }
 
-export function userStatus(user: UserLastOnline): UserStatus {
-    return (user?.secondsSinceLastOnline ?? Number.MAX_VALUE) < ONLINE_THRESHOLD
-        ? UserStatus.Online
-        : UserStatus.Offline;
+export function userStatus(user?: UserLastOnline): UserStatus {
+    if (user === undefined) return UserStatus.Offline;
+    const secondsSinceOnline = (Date.now() - user.lastOnline) / 1000;
+    return secondsSinceOnline < ONLINE_THRESHOLD ? UserStatus.Online : UserStatus.Offline;
 }
 
 export function getUserStatus(users: UserLookup, userId: string): UserStatus {
@@ -39,8 +39,8 @@ export function missingUserIds(userLookup: UserLookup, userIds: Set<string>): st
 }
 
 export function compareUsersOnlineFirst(u1: PartialUserSummary, u2: PartialUserSummary): number {
-    const u1Online = u1.secondsSinceLastOnline < ONLINE_THRESHOLD;
-    const u2Online = u2.secondsSinceLastOnline < ONLINE_THRESHOLD;
+    const u1Online = userStatus(u1) === UserStatus.Online;
+    const u2Online = userStatus(u2) === UserStatus.Online;
 
     if (u1Online !== u2Online) {
         return u1Online ? -1 : 1;
@@ -58,6 +58,6 @@ export function nullUser(username: string): UserSummary {
     return {
         userId: "null_user", // this might cause problems if we try to create a Principal from it
         username,
-        secondsSinceLastOnline: Number.MAX_VALUE,
+        lastOnline: 0,
     };
 }

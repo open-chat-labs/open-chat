@@ -2,7 +2,7 @@ import type { DataContent } from "../data/data";
 
 export type UserLastOnline = {
     userId: string;
-    secondsSinceLastOnline: number;
+    lastOnline: number; // timestamp calculated from server response in seconds
 };
 
 export type UserSummary = UserLastOnline &

@@ -241,9 +241,9 @@ export interface GroupChatEventWrapper {
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
-  'participants' : Array<Participant>,
   'min_visible_event_index' : EventIndex,
   'name' : string,
+  'role' : Role,
   'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
@@ -253,12 +253,12 @@ export interface GroupChatSummary {
   'latest_event_index' : EventIndex,
   'min_visible_message_index' : MessageIndex,
   'chat_id' : ChatId,
+  'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
-  'participants_added_or_updated' : Array<Participant>,
-  'participants_removed' : Array<UserId>,
   'name' : [] | [string],
+  'role' : [] | [Role],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -266,6 +266,7 @@ export interface GroupChatSummaryUpdates {
   'avatar_id' : [] | [bigint],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
+  'participant_count' : [] | [number],
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupDescriptionChanged {

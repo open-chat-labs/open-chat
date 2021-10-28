@@ -1,6 +1,5 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
-    import type { UserSummary } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -22,8 +21,7 @@
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary, GroupChatSummary } from "../../domain/chat/chat";
-    import { getParticipantsString } from "../../domain/chat/chat.utils";
+    import type { ChatSummary, GroupChatSummary, Participant } from "../../domain/chat/chat";
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
@@ -32,7 +30,7 @@
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: Writable<ChatSummary>;
-    export let user: UserSummary | undefined;
+    export let participants: Writable<Participant[]>;
     export let blocked: boolean;
     export let unreadMessages: number;
 
@@ -82,9 +80,7 @@
 
     function leaveGroup() {
         if ($selectedChatSummary.kind === "group_chat") {
-            const numAdmins = $selectedChatSummary.participants.filter(
-                (p) => p.role === "admin"
-            ).length;
+            const numAdmins = $participants.filter((p) => p.role === "admin").length;
             if (numAdmins > 1) {
                 dispatch("leaveGroup", $selectedChatSummary.chatId);
             } else {
@@ -93,10 +89,13 @@
         }
     }
 
-    function formatLastOnlineDate(secondsSinceLastOnline: number): string {
-        if (isNaN(secondsSinceLastOnline)) {
+    function formatLastOnlineDate(lastOnline: number | undefined): string {
+        if (lastOnline === undefined) {
             return "";
         }
+
+        const secondsSinceLastOnline = (Date.now() - lastOnline) / 1000;
+
         const minutesSinceLastOnline = Math.floor(secondsSinceLastOnline / 60);
 
         if (minutesSinceLastOnline < 2) {
@@ -129,40 +128,26 @@
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus($userStore, chatSummary.them),
-                subtext: formatLastOnlineDate($userStore[chatSummary.them]?.secondsSinceLastOnline),
+                subtext: formatLastOnlineDate($userStore[chatSummary.them]?.lastOnline),
                 typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
             };
         }
-        const participantIds = chatSummary.participants.map((p) => p.userId);
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
-            subtext: getParticipantsString(
-                user!,
-                $userStore,
-                participantIds,
-                $_("unknownUser"),
-                $_("you")
-            ),
+            subtext: chatSummary.public
+                ? $_("publicGroupWithN", { values: { number: chatSummary.participantCount } })
+                : $_("privateGroupWithN", { values: { number: chatSummary.participantCount } }),
             typing: false,
         };
     }
 
-    function canAdminister(chat: GroupChatSummary): boolean {
-        // todo - this might cause a performance issue on a large group
-        return (
-            chat.public ||
-            chat.participants.find((p) => p.userId === user!.userId)?.role === "admin"
-        );
+    function canAddParticipants(chat: GroupChatSummary): boolean {
+        return chat.public || chat.myRole === "admin";
     }
 
     $: chat = normaliseChatSummary($selectedChatSummary);
-
-    // for direct chats we want to either show when the user was last online or if they are typing
-    // for group chats we also show if any participants are typing (they all get listed)
-    // if no one is typing we check how many users there are. If > 5 we just say n members (m online)
-    // if 5 or fewer, we list the usernames sorted by online status
 </script>
 
 <SectionHeader flush={true}>
@@ -234,7 +219,7 @@
                             <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("participants")}</div>
                         </MenuItem>
-                        {#if canAdminister($selectedChatSummary)}
+                        {#if canAddParticipants($selectedChatSummary)}
                             <MenuItem on:click={addParticipants}>
                                 <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                 <div slot="text">{$_("addParticipants")}</div>

@@ -13,6 +13,9 @@ import type {
     BlockUserResponse,
     MakeAdminResponse,
     RemoveAdminResponse,
+    GroupChatDetails,
+    GroupChatDetailsResponse,
+    UnblockUserResponse,
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -87,8 +90,8 @@ export class CachingGroupClient implements IGroupClient {
         );
     }
 
-    addParticipants(userIds: string[]): Promise<AddParticipantsResponse> {
-        return this.client.addParticipants(userIds);
+    addParticipants(userIds: string[], allowBlocked: boolean): Promise<AddParticipantsResponse> {
+        return this.client.addParticipants(userIds, allowBlocked);
     }
 
     sendMessage(senderName: string, message: Message): Promise<SendMessageResponse> {
@@ -125,5 +128,18 @@ export class CachingGroupClient implements IGroupClient {
 
     blockUser(userId: string): Promise<BlockUserResponse> {
         return this.client.blockUser(userId);
+    }
+
+    unblockUser(userId: string): Promise<UnblockUserResponse> {
+        return this.client.unblockUser(userId);
+    }
+
+    getGroupDetails(): Promise<GroupChatDetailsResponse> {
+        // FIXME - need to check the cache here ideally
+        return this.client.getGroupDetails();
+    }
+
+    getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
+        return this.client.getGroupDetailsUpdates(previous);
     }
 }

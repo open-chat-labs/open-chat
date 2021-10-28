@@ -63,7 +63,8 @@
             addingParticipants = true;
             api.addParticipants(
                 canisterId,
-                candidateGroup.participants.map((p) => p.user.userId)
+                candidateGroup.participants.map((p) => p.user.userId),
+                false
             )
                 .then((resp) => {
                     if (resp.kind === "add_participants_success") {

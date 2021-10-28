@@ -2,7 +2,6 @@ import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
 import type {
     DirectChatSummary,
     GroupChatSummary,
-    Participant,
     DirectChatSummaryUpdates,
     GroupChatSummaryUpdates,
     MessageIndexRange,
@@ -17,7 +16,6 @@ import {
     mergeMessageIndexRanges,
     messageIndexRangesAreEqual,
     newMessageId,
-    userIdsFromChatSummaries,
 } from "./chat.utils";
 
 const defaultDirectChat: DirectChatSummary = {
@@ -51,7 +49,6 @@ const defaultGroupChat: GroupChatSummary = {
     kind: "group_chat",
     name: "whatever",
     description: "whatever",
-    participants: [participant("1"), participant("2"), participant("3")],
     chatId: "abc",
     lastUpdated: BigInt(0),
     readByMe: [],
@@ -62,6 +59,8 @@ const defaultGroupChat: GroupChatSummary = {
     minVisibleMessageIndex: 0,
     latestEventIndex: 0,
     notificationsMuted: false,
+    participantCount: 10,
+    myRole: "admin",
 };
 
 function directChatId(id: number): DirectChatSummary {
@@ -75,27 +74,6 @@ function groupChatId(id: number): GroupChatSummary {
     return {
         ...defaultGroupChat,
         chatId: String(id),
-    };
-}
-
-function directChatWith(them: string): DirectChatSummary {
-    return {
-        ...defaultDirectChat,
-        them,
-    };
-}
-
-function groupChatWith(id: string): GroupChatSummary {
-    return {
-        ...defaultGroupChat,
-        participants: [participant(id), participant(id), participant(id)],
-    };
-}
-
-function participant(id: string): Participant {
-    return {
-        role: "admin",
-        userId: id,
     };
 }
 
@@ -335,34 +313,12 @@ describe("getting first unread message index", () => {
     });
 });
 
-describe("extract userids from chat summaries", () => {
-    test("when there are no chats", () => {
-        const userIds = userIdsFromChatSummaries([], false);
-        expect(userIds.size).toEqual(0);
-    });
-    test("when excluding group chat summaries", () => {
-        const chats = [directChatWith("a"), directChatWith("b"), groupChatWith("c")];
-        const userIds = userIdsFromChatSummaries(chats, false);
-        expect(userIds.size).toEqual(2);
-        expect(userIds.has("a")).toBe(true);
-        expect(userIds.has("b")).toBe(true);
-        expect(userIds.has("c")).toBe(false);
-    });
-    test("when including group chat summaries", () => {
-        const chats = [directChatWith("a"), directChatWith("b"), groupChatWith("c")];
-        const userIds = userIdsFromChatSummaries(chats, true);
-        expect(userIds.size).toEqual(3);
-        expect(userIds.has("a")).toBe(true);
-        expect(userIds.has("b")).toBe(true);
-        expect(userIds.has("c")).toBe(true);
-    });
-});
-
-function createUser(userId: string, username: string, lastonline: number): PartialUserSummary {
+function createUser(userId: string, username: string, seconds: number): PartialUserSummary {
+    const now = Date.now();
     return {
         userId,
         username,
-        secondsSinceLastOnline: lastonline,
+        lastOnline: now - seconds * 1000,
     };
 }
 
@@ -500,12 +456,6 @@ describe("merging updates", () => {
                 timestamp: BigInt(400),
             },
             latestEventIndex: 300,
-            participantsAddedOrUpdated: [
-                participant("4"),
-                participant("5"),
-                { ...participant("1"), role: "standard" },
-            ],
-            participantsRemoved: new Set(["2"]),
             name: "stuff",
             description: "stuff",
         };
@@ -556,12 +506,6 @@ describe("merging updates", () => {
                 expect(updated.readByMe).toEqual([]);
                 expect(updated?.lastUpdated).toEqual(BigInt(1000));
                 expect(updated?.latestMessage).not.toBe(undefined);
-                expect(updated.participants.length).toEqual(4);
-                expect(updated.participants[0].userId).toEqual("1");
-                expect(updated.participants[1].userId).toEqual("3");
-                expect(updated.participants[2].userId).toEqual("4");
-                expect(updated.participants[3].userId).toEqual("5");
-                expect(updated.participants[0].role).toEqual("standard");
             } else {
                 fail("updated chat not found or was not a group chat");
             }

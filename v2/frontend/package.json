@@ -97,6 +97,7 @@
         "xstate": "^4.20.0"
     },
     "jest": {
+        "timers": "fake",
         "transform": {
             "^.+\\.svelte$": [
                 "svelte-jester",

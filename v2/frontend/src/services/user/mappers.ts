@@ -2,7 +2,6 @@ import type {
     ApiChatSummary,
     ApiEventsResponse,
     ApiUpdatesResponse,
-    ApiParticipant,
     ApiCreateGroupResponse,
     ApiChatSummaryUpdates,
     ApiDirectChatEventWrapper,
@@ -27,7 +26,6 @@ import type {
     UpdatesResponse,
     EventsResponse,
     EventWrapper,
-    Participant,
     ChatSummaryUpdates,
     CreateGroupResponse,
     DirectChatEvent,
@@ -401,16 +399,14 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             })),
             name: optional(candid.Group.name, identity),
             description: optional(candid.Group.description, identity),
-            participantsAddedOrUpdated: candid.Group.participants_added_or_updated.map(participant),
-            participantsRemoved: new Set(
-                candid.Group.participants_removed.map((p) => p.toString())
-            ),
             latestEventIndex: optional(candid.Group.latest_event_index, identity),
             avatarBlobReference: optional(candid.Group.avatar_id, (blobId) => ({
                 blobId,
                 canisterId: chatId,
             })),
             notificationsMuted: optional(candid.Group.notifications_muted, identity),
+            participantCount: optional(candid.Group.participant_count, identity),
+            myRole: optional(candid.Group.role, (r) => ("Admin" in r ? "admin" : "standard")),
         };
     }
     if ("Direct" in candid) {
@@ -434,7 +430,6 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
 
 function chatSummary(candid: ApiChatSummary): ChatSummary {
     if ("Group" in candid) {
-        const participants = candid.Group.participants.map(participant);
         return {
             kind: "group_chat",
             chatId: candid.Group.chat_id.toString(),
@@ -448,7 +443,6 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             readByMe: candid.Group.read_by_me,
             name: candid.Group.name,
             description: candid.Group.description,
-            participants,
             public: candid.Group.is_public,
             joined: candid.Group.joined,
             minVisibleEventIndex: candid.Group.min_visible_event_index,
@@ -460,6 +454,8 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
                 canisterId: candid.Group.chat_id.toString(),
             })),
             notificationsMuted: candid.Group.notifications_muted,
+            participantCount: candid.Group.participant_count,
+            myRole: "Admin" in candid.Group.role ? "admin" : "standard",
         };
     }
     if ("Direct" in candid) {
@@ -480,11 +476,4 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummary type received", candid);
-}
-
-function participant(candid: ApiParticipant): Participant {
-    return {
-        role: "Admin" in candid.role ? "admin" : "standard",
-        userId: candid.user_id.toString(),
-    };
 }

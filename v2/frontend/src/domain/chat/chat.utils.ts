@@ -20,6 +20,8 @@ import type {
     Message,
     IndexRange,
     LocalReaction,
+    GroupChatDetails,
+    GroupChatDetailsUpdates,
 } from "./chat";
 import { dedupe, groupWhile, zip } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -61,26 +63,49 @@ export function getContentAsText(content: MessageContent): string {
     return text.trim();
 }
 
-export function userIdsFromChatSummary(chat: ChatSummary): string[] {
-    if (chat.kind === "direct_chat") {
-        return [chat.them];
-    }
-    if (chat.kind === "group_chat") {
-        return chat.participants.map((p) => p.userId);
-    }
-    return [];
-}
-
-export function userIdsFromChatSummaries(
-    chats: ChatSummary[],
-    includeGroupChats = false
-): Set<string> {
-    return chats.reduce<Set<string>>((userIds, chat) => {
-        if (chat.kind === "direct_chat") {
-            userIds.add(chat.them);
+export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string> {
+    return events.reduce<Set<string>>((userIds, e) => {
+        if ("userIds" in e.event) {
+            e.event.userIds.forEach((u) => userIds.add(u));
         }
-        if (chat.kind === "group_chat" && includeGroupChats) {
-            chat.participants.forEach((p) => userIds.add(p.userId));
+        if (e.event.kind === "message") {
+            userIds.add(e.event.sender);
+        }
+        if (e.event.kind === "group_chat_created") {
+            userIds.add(e.event.created_by);
+        }
+        if (e.event.kind === "participants_added") {
+            userIds.add(e.event.addedBy);
+        }
+        if (e.event.kind === "participant_joined") {
+            userIds.add(e.event.userId);
+        }
+        if (e.event.kind === "participants_promoted_to_admin") {
+            userIds.add(e.event.promotedBy);
+        }
+        if (e.event.kind === "participants_dismissed_as_admin") {
+            userIds.add(e.event.dismissedBy);
+        }
+        if (e.event.kind === "participants_removed") {
+            userIds.add(e.event.removedBy);
+        }
+        if (e.event.kind === "participant_left") {
+            userIds.add(e.event.userId);
+        }
+        if (e.event.kind === "name_changed") {
+            userIds.add(e.event.changedBy);
+        }
+        if (e.event.kind === "avatar_changed") {
+            userIds.add(e.event.changedBy);
+        }
+        if (e.event.kind === "desc_changed") {
+            userIds.add(e.event.changedBy);
+        }
+        if (e.event.kind === "users_blocked") {
+            userIds.add(e.event.blockedBy);
+        }
+        if (e.event.kind === "users_unblocked") {
+            userIds.add(e.event.unblockedBy);
         }
         return userIds;
     }, new Set<string>());
@@ -220,7 +245,7 @@ export function createMessage(
 export function getDisplayDate(chat: ChatSummary): bigint {
     return (
         chat.latestMessage?.timestamp ??
-        (chat.kind === "group_chat" ? chat.joined : BigInt(+new Date()))
+        (chat.kind === "group_chat" ? chat.joined : BigInt(Date.now()))
     );
 }
 
@@ -257,6 +282,27 @@ export function mergeUpdates(
     }
 
     throw new Error("Cannot update chat with a chat of a different kind");
+}
+
+export function mergeGroupChatDetails(
+    previous: GroupChatDetails,
+    updates: GroupChatDetailsUpdates
+): GroupChatDetails {
+    return {
+        latestEventIndex: updates.latestEventIndex,
+        participants: mergeThings((p) => p.userId, mergeParticipants, previous.participants, {
+            added: [],
+            updated: updates.participantsAddedOrUpdated,
+            removed: updates.participantsRemoved,
+        }),
+        blockedUsers: new Set<string>(
+            mergeThings(identity, identity, [...previous.blockedUsers], {
+                added: [...updates.blockedUsersAdded],
+                updated: [],
+                removed: updates.blockedUsersRemoved,
+            })
+        ),
+    };
 }
 
 export function mergeChatUpdates(
@@ -346,13 +392,10 @@ function mergeUpdatedGroupChat(
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
-    chat.participants = mergeThings((p) => p.userId, mergeParticipants, chat.participants, {
-        added: [],
-        updated: updatedChat.participantsAddedOrUpdated,
-        removed: updatedChat.participantsRemoved,
-    });
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
+    chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
+    chat.myRole = updatedChat.myRole ?? chat.myRole;
     return chat;
 }
 
@@ -514,22 +557,6 @@ export function updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummar
                 })),
         },
     };
-}
-
-export function updateParticipant(
-    chat: GroupChatSummary,
-    id: string,
-    updater: (p: Participant) => Participant
-): GroupChatSummary {
-    // note that this mutates the chat rather than cloning. Quite significant as it means the
-    // parent machine's chat is the same object
-    chat.participants = chat.participants.map((p) => (p.userId === id ? updater(p) : p));
-    return chat;
-}
-
-export function removeParticipant(chat: GroupChatSummary, id: string): GroupChatSummary {
-    chat.participants = chat.participants.filter((p) => p.userId !== id);
-    return chat;
 }
 
 export function toggleReaction(
@@ -720,7 +747,7 @@ export function replaceAffected(
 export function pruneLocalReactions(
     reactions: Record<string, LocalReaction[]>
 ): Record<string, LocalReaction[]> {
-    const limit = +new Date() - 10000;
+    const limit = Date.now() - 10000;
     return Object.entries(reactions).reduce((pruned, [k, v]) => {
         const filtered = v.filter((r) => r.timestamp > limit);
         if (filtered.length > 0) {

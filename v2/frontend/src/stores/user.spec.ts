@@ -7,16 +7,16 @@ describe("overwrite users", () => {
                 abc: {
                     userId: "abc",
                     username: "julian_jelfs",
-                    secondsSinceLastOnline: 10,
+                    lastOnline: 10,
                 },
             },
             {
                 userId: "abc",
-                secondsSinceLastOnline: 20,
+                lastOnline: 20,
                 username: undefined,
             }
         );
         expect(lookup["abc"].username).toEqual("julian_jelfs");
-        expect(lookup["abc"].secondsSinceLastOnline).toEqual(20);
+        expect(lookup["abc"].lastOnline).toEqual(20);
     });
 });

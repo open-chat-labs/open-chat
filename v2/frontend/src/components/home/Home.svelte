@@ -207,12 +207,6 @@
         }
     }
 
-    function messageRead(
-        ev: CustomEvent<{ chatId: string; messageIndex: number; messageId: bigint }>
-    ) {
-        machine.send({ type: "MESSAGE_READ_BY_ME", data: ev.detail });
-    }
-
     function loadMessage(ev: CustomEvent<MessageMatch>): void {
         if (ev.detail.chatId === $machine.context.selectedChat?.chatId) {
             machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail.messageIndex });
@@ -230,7 +224,10 @@
     }
 
     function showParticipants() {
-        editGroupHistory = [...editGroupHistory, "show_participants"];
+        if (selectedChat !== undefined) {
+            editGroupHistory = [...editGroupHistory, "show_participants"];
+            selectedChat.loadDetails();
+        }
     }
 
     function showGroupDetails() {
@@ -286,7 +283,6 @@
                 on:addParticipants={addParticipants}
                 on:showGroupDetails={showGroupDetails}
                 on:showParticipants={showParticipants}
-                on:messageRead={messageRead}
                 controller={selectedChat} />
         {/if}
     </main>

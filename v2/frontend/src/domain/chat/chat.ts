@@ -365,13 +365,13 @@ export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
 
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "group_chat";
-    participantsAddedOrUpdated: Participant[];
-    participantsRemoved: Set<string>;
     lastUpdated: bigint;
     name?: string;
     description?: string;
     latestMessage?: EventWrapper<Message>;
     avatarBlobReference?: BlobReference;
+    participantCount?: number;
+    myRole?: ParticipantRole;
 };
 
 export type ParticipantRole = "admin" | "standard";
@@ -381,7 +381,29 @@ export type Participant = {
     userId: string;
 };
 
-export type FullParticipant = Participant & PartialUserSummary;
+export type FullParticipant = Participant & PartialUserSummary & { kind: "full_participant" };
+export type BlockedParticipant = Participant & PartialUserSummary & { kind: "blocked_participant" };
+
+export type GroupChatDetailsResponse = "caller_not_in_group" | GroupChatDetails;
+
+export type GroupChatDetailsUpdatesResponse =
+    | "success_no_updates"
+    | "caller_not_in_group"
+    | GroupChatDetailsUpdates;
+
+export type GroupChatDetails = {
+    participants: Participant[];
+    blockedUsers: Set<string>;
+    latestEventIndex: number;
+};
+
+export type GroupChatDetailsUpdates = {
+    participantsAddedOrUpdated: Participant[];
+    participantsRemoved: Set<string>;
+    blockedUsersAdded: Set<string>;
+    blockedUsersRemoved: Set<string>;
+    latestEventIndex: number;
+};
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
 
@@ -410,12 +432,13 @@ export type GroupChatSummary = DataContent &
         kind: "group_chat";
         name: string;
         description: string;
-        participants: Participant[];
         public: boolean;
         joined: bigint;
         minVisibleEventIndex: number;
         minVisibleMessageIndex: number;
         lastUpdated: bigint;
+        participantCount: number;
+        myRole: ParticipantRole;
         latestMessage?: EventWrapper<Message>;
     };
 
@@ -619,7 +642,7 @@ export type UnblockUserResponse =
     | "success"
     | "group_not_public"
     | "cannot_unblock_self"
-    | "caller_not_on_group"
+    | "caller_not_in_group"
     | "not_authorised";
 
 export type LeaveGroupResponse =
