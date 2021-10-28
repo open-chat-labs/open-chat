@@ -24,7 +24,7 @@ const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const STATE_VERSION: StateVersion = StateVersion::V1;
 const FIVE_MINUTES_IN_MS: u64 = MINUTE_IN_MS * 5;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 enum StateVersion {
     V1,
 }
@@ -66,7 +66,7 @@ impl RuntimeState {
     }
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct Data {
     pub public_groups: PublicGroups,
     pub private_groups: PrivateGroups,
@@ -170,7 +170,7 @@ pub struct Metrics {
     pub group_wasm_version: Version,
 }
 
-#[derive(CandidType, Deserialize, Serialize, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct CachedMetrics {
     pub last_run: TimestampMillis,
     pub active_public_groups: u32,

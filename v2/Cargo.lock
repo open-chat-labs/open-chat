@@ -1194,6 +1194,7 @@ dependencies = [
  "itertools 0.10.1",
  "notifications_canister",
  "notifications_canister_c2c_client",
+ "rmp-serde",
  "search",
  "serde",
  "serde_bytes",
@@ -1248,6 +1249,7 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-macros",
+ "rmp-serde",
  "search",
  "serde",
  "tracing",
@@ -2137,6 +2139,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-macros",
  "notifications_canister",
+ "rmp-serde",
  "serde",
  "tracing",
  "types",
@@ -2926,6 +2929,27 @@ dependencies = [
  "untrusted",
  "web-sys",
  "winapi",
+]
+
+[[package]]
+name = "rmp"
+version = "0.8.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f55e5fa1446c4d5dd1f5daeed2a4fe193071771a2636274d0d7a3b082aa7ad6"
+dependencies = [
+ "byteorder",
+ "num-traits",
+]
+
+[[package]]
+name = "rmp-serde"
+version = "1.0.0-beta.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05d18f64792a930cdb215b849eb75d8d7ffaaf70c3b9bd594b5ccc5ab63b4f70"
+dependencies = [
+ "byteorder",
+ "rmp",
+ "serde",
 ]
 
 [[package]]
@@ -4055,6 +4079,7 @@ dependencies = [
  "ledger_utils",
  "notifications_canister",
  "notifications_canister_c2c_client",
+ "rmp-serde",
  "search",
  "serde",
  "tracing",
@@ -4110,6 +4135,7 @@ dependencies = [
  "ic-cdk-macros",
  "itertools 0.10.1",
  "ledger_utils",
+ "rmp-serde",
  "serde",
  "serde_bytes",
  "tracing",

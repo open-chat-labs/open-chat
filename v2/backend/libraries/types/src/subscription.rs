@@ -1,20 +1,20 @@
 use crate::TimestampMillis;
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct Subscription {
     value: SubscriptionInfo,
     last_active: TimestampMillis,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct SubscriptionInfo {
     pub endpoint: String,
     pub keys: SubscriptionKeys,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct SubscriptionKeys {
     pub p256dh: String,
     pub auth: String,

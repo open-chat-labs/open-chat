@@ -1,11 +1,11 @@
 use crate::MARK_ACTIVE_DURATION;
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{ChatId, CyclesTopUp, TimestampMillis, Version};
 
-#[derive(CandidType, Deserialize, Default)]
+#[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct PrivateGroups {
     groups: HashMap<ChatId, PrivateGroupInfo>,
 }
@@ -39,7 +39,7 @@ impl PrivateGroups {
     }
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct PrivateGroupInfo {
     id: ChatId,
     created: TimestampMillis,

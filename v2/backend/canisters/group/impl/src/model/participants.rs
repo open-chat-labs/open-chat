@@ -1,5 +1,5 @@
 use candid::{CandidType, Principal};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId};
@@ -7,7 +7,7 @@ use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId
 const MAX_PARTICIPANTS_PER_PUBLIC_GROUP: u32 = 100_000;
 const MAX_PARTICIPANTS_PER_PRIVATE_GROUP: u32 = 200;
 
-#[derive(CandidType, Deserialize, Default)]
+#[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct Participants {
     by_principal: HashMap<Principal, ParticipantInternal>,
     user_id_to_principal_map: HashMap<UserId, Principal>,
@@ -205,7 +205,7 @@ pub enum RemoveAdminResult {
     NotAdmin,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct ParticipantInternal {
     pub user_id: UserId,
     pub date_added: TimestampMillis,

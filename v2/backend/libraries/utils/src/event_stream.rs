@@ -1,12 +1,12 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::collections::VecDeque;
 use types::IndexedEvent;
 
 const MAX_EVENTS: usize = 100_000;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct EventStream<T: CandidType + Clone> {
     events: VecDeque<IndexedEvent<T>>,
     latest_event_index: u64,

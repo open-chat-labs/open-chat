@@ -1,12 +1,11 @@
 use crate::model::direct_chat::DirectChat;
-use candid::CandidType;
 use chat_events::{Metrics, PushMessageArgs};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{ChatId, EventIndex, Message, MessageIndex, TimestampMillis, UserId};
 
-#[derive(CandidType, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
     metrics: Metrics,

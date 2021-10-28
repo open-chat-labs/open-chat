@@ -1,5 +1,5 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
@@ -7,7 +7,7 @@ use types::TimestampMillis;
 
 const MAX_CHUNK_SIZE: u64 = 1024 * 1024; // 1MB
 
-#[derive(Default, CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct BlobStorage {
     blobs: HashMap<u128, Blob>,
     pending_blobs: HashMap<u128, PendingBlob>,
@@ -18,14 +18,14 @@ pub struct BlobStorage {
     audio_bytes: u64,
 }
 
-#[derive(Default, CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct Blob {
     created: TimestampMillis,
     mime_type: String,
     chunks: Vec<ByteBuf>,
 }
 
-#[derive(Default, CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct PendingBlob {
     created: TimestampMillis,
     total_chunks: u32,

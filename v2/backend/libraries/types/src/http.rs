@@ -3,10 +3,10 @@ use serde::Deserialize;
 use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct HeaderField(pub String, pub String);
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct HttpRequest {
     pub method: String,
     pub url: String,
@@ -14,7 +14,7 @@ pub struct HttpRequest {
     pub body: ByteBuf,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct HttpResponse {
     pub status_code: u16,
     pub headers: Vec<HeaderField>,
@@ -22,7 +22,7 @@ pub struct HttpResponse {
     pub streaming_strategy: Option<StreamingStrategy>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct Token {
     pub key: String,
     pub content_encoding: String,
@@ -32,12 +32,12 @@ pub struct Token {
     pub sha256: Option<ByteBuf>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum StreamingStrategy {
     Callback { callback: Func, token: Token },
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct StreamingCallbackHttpResponse {
     pub body: ByteBuf,
     pub token: Option<Token>,

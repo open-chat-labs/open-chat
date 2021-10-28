@@ -1,8 +1,8 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct CaseInsensitiveHashMap<V> {
     map: HashMap<String, V>,
 }

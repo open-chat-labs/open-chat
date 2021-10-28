@@ -1,8 +1,8 @@
 use crate::{ChatId, MessageContent, MessageIndex, UserId};
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageMatch {
     pub chat_id: ChatId,
     pub sender: UserId,
