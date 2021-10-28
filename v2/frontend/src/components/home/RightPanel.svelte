@@ -78,7 +78,7 @@
 
 <Panel right>
     {#if lastState === "group_details"}
-        <GroupDetails {controller} {userId} {updatedGroup} on:close={pop} on:showParticipants />
+        <GroupDetails {controller} {updatedGroup} on:close={pop} on:showParticipants />
     {:else if lastState === "add_participants"}
         <AddParticipants
             busy={savingParticipants}

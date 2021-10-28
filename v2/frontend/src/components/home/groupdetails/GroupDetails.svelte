@@ -21,10 +21,8 @@
 
     export let controller: ChatController;
     export let updatedGroup: UpdatedGroup;
-    export let userId: string;
 
     $: chat = controller.chat as Writable<GroupChatSummary>;
-    $: participants = controller.participants;
 
     let showConfirmation = false;
     let confirmed = false;
@@ -34,7 +32,7 @@
     $: descDirty = updatedGroup.desc !== $chat.description;
     $: avatarDirty = updatedGroup.avatar?.blobUrl !== $chat.blobUrl;
     $: dirty = nameDirty || descDirty || avatarDirty;
-    $: canEdit = $participants.find((p) => p.userId === userId)?.role === "admin";
+    $: canEdit = $chat.myRole === "admin";
 
     function close() {
         if (dirty && !confirmed) {
