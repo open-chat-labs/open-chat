@@ -1,10 +1,9 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use types::{ChatId, GroupChatSummaryUpdates, TimestampMillis, Timestamped};
 use utils::range_set::{convert_to_message_index_ranges, RangeSet};
 
-#[derive(CandidType, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct GroupChat {
     pub chat_id: ChatId,
     pub date_joined: TimestampMillis,
