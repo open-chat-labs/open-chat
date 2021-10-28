@@ -1,10 +1,10 @@
 use candid::{CandidType, Principal};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::{
     CanisterCreationStatusInternal, CyclesTopUp, PartialUserSummary, PhoneNumber, TimestampMillis, UserId, UserSummary, Version,
 };
 
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum User {
     Unconfirmed(UnconfirmedUser),
     Confirmed(ConfirmedUser),
@@ -97,7 +97,7 @@ impl User {
     }
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UnconfirmedUser {
     pub principal: Principal,
     pub phone_number: PhoneNumber,
@@ -106,7 +106,7 @@ pub struct UnconfirmedUser {
     pub sms_messages_sent: u16,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ConfirmedUser {
     pub principal: Principal,
     pub phone_number: PhoneNumber,
@@ -115,7 +115,7 @@ pub struct ConfirmedUser {
     pub date_confirmed: TimestampMillis,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CreatedUser {
     pub principal: Principal,
     pub phone_number: PhoneNumber,

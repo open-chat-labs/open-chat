@@ -15,11 +15,8 @@ fn post_upgrade() {
 
     match version {
         StateVersion::V1 => {
-            let (data_bytes, log_messages_bytes): (Vec<u8>, Vec<u8>) = candid::decode_args(&bytes).unwrap();
-
-            let data: Data = candid::decode_one(&data_bytes).unwrap();
-            let (log_messages, trace_messages): (Vec<LogMessage>, Vec<LogMessage>) =
-                candid::decode_args(&log_messages_bytes).unwrap();
+            let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
+                rmp_serde::from_slice(&bytes).unwrap();
 
             init_logger(data.test_mode);
             init_state(env, data);

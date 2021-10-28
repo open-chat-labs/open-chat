@@ -1,9 +1,9 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use types::CanisterId;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct Pool {
     target_size: u16,
     canister_ids: VecDeque<CanisterId>,

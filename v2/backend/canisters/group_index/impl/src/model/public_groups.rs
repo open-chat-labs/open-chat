@@ -1,12 +1,12 @@
 use crate::MARK_ACTIVE_DURATION;
 use candid::CandidType;
 use search::*;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{ChatId, CyclesTopUp, GroupMatch, TimestampMillis, Version};
 
-#[derive(CandidType, Deserialize, Default)]
+#[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct PublicGroups {
     groups: HashMap<ChatId, PublicGroupInfo>,
     name_to_id_map: HashMap<String, ChatId>,
@@ -111,7 +111,7 @@ impl PublicGroups {
     }
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct PublicGroupInfo {
     id: ChatId,
     name: String,

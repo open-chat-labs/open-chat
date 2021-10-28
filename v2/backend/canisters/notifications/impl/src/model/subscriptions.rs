@@ -1,12 +1,12 @@
 use crate::HashSet;
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use std::time::Duration;
 use types::{Subscription, SubscriptionInfo, TimestampMillis, UserId};
 
-#[derive(CandidType, Deserialize, Default)]
+#[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct Subscriptions {
     subscriptions: HashMap<UserId, Vec<Subscription>>,
     total: u64,

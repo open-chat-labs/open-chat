@@ -1,8 +1,8 @@
 use crate::{ChatId, EventIndex, EventWrapper, Message, MessageIndex, MessageIndexRange, Role, TimestampMillis, UserId};
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatSummary {
     Direct(DirectChatSummary),
     Group(GroupChatSummary),
@@ -17,7 +17,7 @@ impl ChatSummary {
     }
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummary {
     pub them: UserId,
     pub latest_message: EventWrapper<Message>,
@@ -34,7 +34,7 @@ impl DirectChatSummary {
     }
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
@@ -59,13 +59,13 @@ impl GroupChatSummary {
     }
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatSummaryUpdates {
     Direct(DirectChatSummaryUpdates),
     Group(GroupChatSummaryUpdates),
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummaryUpdates {
     pub chat_id: ChatId,
     pub latest_message: Option<EventWrapper<Message>>,
@@ -75,7 +75,7 @@ pub struct DirectChatSummaryUpdates {
     pub notifications_muted: Option<bool>,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummaryUpdates {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,

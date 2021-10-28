@@ -1,8 +1,8 @@
 use crate::Version;
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CanisterWasm {
     pub version: Version,
     pub compressed: bool,

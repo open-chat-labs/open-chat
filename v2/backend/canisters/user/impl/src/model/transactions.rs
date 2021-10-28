@@ -1,13 +1,13 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::{TimestampMillis, Transaction, TransactionWrapper};
 
-#[derive(CandidType, Deserialize, Default)]
+#[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct Transactions {
     transactions: Vec<TransactionWrapperInternal>,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 struct TransactionWrapperInternal {
     timestamp: TimestampMillis,
     transaction: Transaction,

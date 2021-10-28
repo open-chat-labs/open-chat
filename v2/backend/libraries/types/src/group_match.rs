@@ -1,8 +1,8 @@
 use crate::ChatId;
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct GroupMatch {
     pub chat_id: ChatId,
     pub name: String,

@@ -1,7 +1,7 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct IndexedEvent<T: CandidType + Clone> {
     pub value: T,
     pub index: u64,

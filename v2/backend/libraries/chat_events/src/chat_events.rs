@@ -1,13 +1,13 @@
 use candid::CandidType;
 use search::*;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::FromIterator;
 use types::*;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct ChatEvents {
     chat_type: ChatType,
     chat_id: ChatId,
@@ -19,13 +19,13 @@ pub struct ChatEvents {
     metrics: Metrics,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 enum ChatType {
     Direct,
     Group,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatEventInternal {
     Message(Box<MessageInternal>),
     MessageEdited(Box<MessageId>),
@@ -84,7 +84,7 @@ impl ChatEventInternal {
     }
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageInternal {
     pub message_index: MessageIndex,
     pub message_id: MessageId,
@@ -129,7 +129,7 @@ pub enum ToggleReactionResult {
     MessageNotFound,
 }
 
-#[derive(CandidType, Deserialize, Debug, Default, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone)]
 pub struct Metrics {
     pub text_messages: u64,
     pub image_messages: u64,
