@@ -20,7 +20,7 @@ const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 60 * 60 * 1000; // 1 hour
 const STATE_VERSION: StateVersion = StateVersion::V1;
 
-#[derive(Serialize, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 enum StateVersion {
     V1,
 }

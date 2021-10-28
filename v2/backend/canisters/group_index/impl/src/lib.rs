@@ -24,7 +24,7 @@ const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const STATE_VERSION: StateVersion = StateVersion::V1;
 const FIVE_MINUTES_IN_MS: u64 = MINUTE_IN_MS * 5;
 
-#[derive(Serialize, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 enum StateVersion {
     V1,
 }
