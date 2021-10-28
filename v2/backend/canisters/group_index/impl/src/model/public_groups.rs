@@ -106,6 +106,15 @@ impl PublicGroups {
         }
     }
 
+    pub fn delete(&mut self, chat_id: &ChatId) -> bool {
+        if let Some(group) = self.groups.remove(chat_id) {
+            self.name_to_id_map.remove(&group.name);
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &PublicGroupInfo> {
         self.groups.values()
     }

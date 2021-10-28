@@ -34,6 +34,10 @@ impl PrivateGroups {
         }
     }
 
+    pub fn delete(&mut self, chat_id: &ChatId) -> bool {
+        self.groups.remove(chat_id).is_some()
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &PrivateGroupInfo> {
         self.groups.values()
     }

@@ -7,6 +7,7 @@ mod block_user;
 mod c2c_join_group;
 mod c2c_leave_group;
 mod c2c_toggle_mute_notifications;
+mod delete_group;
 mod delete_messages;
 mod edit_message;
 mod make_admin;

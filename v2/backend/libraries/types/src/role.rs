@@ -44,6 +44,10 @@ impl Role {
         matches!(self, Role::Admin)
     }
 
+    pub fn can_delete_group(&self) -> bool {
+        matches!(self, Role::Admin)
+    }
+
     pub fn can_delete_messages(&self) -> bool {
         matches!(self, Role::Admin)
     }

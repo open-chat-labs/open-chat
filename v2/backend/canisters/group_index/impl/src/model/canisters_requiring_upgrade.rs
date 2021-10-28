@@ -44,6 +44,12 @@ impl CanistersRequiringUpgrade {
             failed: self.failed.len(),
         }
     }
+
+    pub fn remove(&mut self, chat_id: &ChatId) {
+        self.pending.retain(|id| id != chat_id);
+        self.in_progress.remove(chat_id);
+        self.failed.retain(|pu| &pu.chat_id != chat_id);
+    }
 }
 
 pub struct Metrics {

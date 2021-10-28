@@ -205,6 +205,17 @@ type UpdateGroupResponse =
         InternalError;
     };
 
+type DeleteGroupArgs =
+    record {
+    };
+
+type DeleteGroupResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        InternalError;
+    };
+
 type SelectedInitialArgs =
     record {
     };
@@ -337,6 +348,7 @@ service: {
     remove_admin: (RemoveAdminArgs) -> (RemoveAdminResponse);
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group: (UpdateGroupArgs) -> (UpdateGroupResponse);
+    delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);
 
     // Can be called by admins or regular users of public groups
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse); 
