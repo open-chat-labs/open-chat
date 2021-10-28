@@ -2,21 +2,21 @@ use crate::{
     CryptocurrencyDeposit, CryptocurrencyTransaction, CryptocurrencyTransfer, CryptocurrencyWithdrawal, TimestampMillis,
 };
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TransactionWrapper {
     pub index: u32,
     pub timestamp: TimestampMillis,
     pub transaction: Transaction,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum Transaction {
     Cryptocurrency(CryptocurrencyTransaction),
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum TransactionStatus {
     Pending,
     Completed,

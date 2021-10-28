@@ -23,7 +23,7 @@ mod updates;
 const MAX_STORAGE: u64 = 2 * 1024 * 1024 * 1024; // 2GB
 const STATE_VERSION: StateVersion = StateVersion::V1;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 enum StateVersion {
     V1,
 }
@@ -87,7 +87,7 @@ impl RuntimeState {
     }
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 struct Data {
     pub owner: Principal,
     pub direct_chats: DirectChats,

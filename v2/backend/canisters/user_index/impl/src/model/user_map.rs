@@ -1,6 +1,6 @@
 use crate::model::user::User;
 use candid::{CandidType, Principal};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{CyclesTopUp, PhoneNumber, TimestampMillis, Timestamped, UserId};
@@ -10,7 +10,7 @@ use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
 const FIVE_MINUTES_IN_MS: u64 = MINUTE_IN_MS * 5;
 const THIRTY_DAYS_IN_MS: u64 = DAY_IN_MS * 30;
 
-#[derive(CandidType, Deserialize, Default)]
+#[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct UserMap {
     users_by_principal: HashMap<Principal, User>,
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,
@@ -19,7 +19,7 @@ pub struct UserMap {
     cached_metrics: Timestamped<Metrics>,
 }
 
-#[derive(CandidType, Clone, Deserialize, Default, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Default, Debug)]
 pub struct Metrics {
     pub users_unconfirmed: u32,
     pub users_confirmed: u32,

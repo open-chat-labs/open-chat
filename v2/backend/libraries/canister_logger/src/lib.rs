@@ -1,5 +1,5 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::fmt::Write;
 use std::iter::FromIterator;
@@ -65,7 +65,7 @@ pub struct LogMessagesWrapper {
     pub traces: LogMessagesContainer,
 }
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct LogMessage {
     pub timestamp: TimestampMillis,
     pub json: String,
@@ -125,7 +125,7 @@ impl LogMessagesContainer {
     }
 }
 
-#[derive(CandidType, Deserialize, Default)]
+#[derive(CandidType, Serialize, Deserialize, Default)]
 struct LogMessages {
     max_messages: usize,
     messages: VecDeque<LogMessage>,

@@ -1,5 +1,5 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::MessageIndex;
 
@@ -9,7 +9,7 @@ use types::MessageIndex;
 /// that it has been read. Because this map is only used to handle marking their messages as read,
 /// it only stores data for messages sent by them and we can remove entries once they have been
 /// marked as read.
-#[derive(CandidType, Deserialize, Default)]
+#[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct UnreadMessageIndexMap {
     map: HashMap<MessageIndex, MessageIndex>,
 }

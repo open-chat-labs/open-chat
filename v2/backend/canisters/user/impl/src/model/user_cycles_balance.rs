@@ -1,8 +1,8 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::{Cycles, TimestampMillis, Timestamped};
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct UserCyclesBalance {
     cycles: Timestamped<Cycles>,
 }

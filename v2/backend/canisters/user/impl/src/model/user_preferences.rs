@@ -1,8 +1,8 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::{NightMode, Timestamped};
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct UserPreferences {
     pub enter_key_sends: Timestamped<bool>,
     pub enable_animations: Timestamped<bool>,
@@ -14,7 +14,7 @@ pub struct UserPreferences {
     pub language: Timestamped<String>,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct NotificationPreferences {
     pub direct_chats: Timestamped<bool>,
     pub private_group_chats: Timestamped<bool>,

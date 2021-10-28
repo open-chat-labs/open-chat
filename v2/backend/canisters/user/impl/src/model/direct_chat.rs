@@ -1,11 +1,11 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
 use candid::CandidType;
 use chat_events::DirectChatEvents;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::{TimestampMillis, Timestamped, UserId};
 use utils::range_set::RangeSet;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct DirectChat {
     pub them: UserId,
     pub date_created: TimestampMillis,

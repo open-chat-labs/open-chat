@@ -1,7 +1,7 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct UserPreferences {
     pub enter_key_sends: bool,
     pub enable_animations: bool,
@@ -13,7 +13,7 @@ pub struct UserPreferences {
     pub language: String,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct NotificationPreferences {
     pub direct_chats: bool,
     pub private_group_chats: bool,
@@ -22,7 +22,7 @@ pub struct NotificationPreferences {
     pub vibrate: bool,
 }
 
-#[derive(CandidType, Deserialize, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct OptionalUserPreferences {
     pub enter_key_sends: Option<bool>,
     pub enable_animations: Option<bool>,
@@ -34,7 +34,7 @@ pub struct OptionalUserPreferences {
     pub language: Option<String>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct OptionalNotificationPreferences {
     pub direct_chats: Option<bool>,
     pub private_group_chats: Option<bool>,
@@ -43,7 +43,7 @@ pub struct OptionalNotificationPreferences {
     pub vibrate: Option<bool>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone, Copy)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum NightMode {
     On,
     Off,

@@ -1,13 +1,13 @@
 use candid::types::{Compound, Field, Label, Serializer, Type};
 use candid::CandidType;
 use range_set::RangeSet as _RangeSet;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut, RangeInclusive};
 use types::MessageIndexRange;
 
 type RangeSetInner = _RangeSet<[RangeInclusive<u32>; 2]>;
 
-#[derive(Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct RangeSet(pub RangeSetInner);
 
 impl Default for RangeSet {
@@ -67,7 +67,7 @@ pub fn convert_to_message_index_ranges(range_set: RangeSet) -> Vec<MessageIndexR
         .collect()
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 struct RangeInc {
     start: u32,
     end: u32,

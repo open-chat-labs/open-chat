@@ -1,9 +1,9 @@
 use crate::TimestampMillis;
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct Timestamped<T: CandidType + Debug + Clone> {
     pub value: T,
     pub timestamp: TimestampMillis,

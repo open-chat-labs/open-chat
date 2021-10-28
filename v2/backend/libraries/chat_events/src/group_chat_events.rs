@@ -1,12 +1,12 @@
 use crate::chat_events::{ChatEventInternal, ChatEvents};
 use candid::CandidType;
 use itertools::Itertools;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ops::{Deref, DerefMut};
 use types::{ChatId, EventIndex, EventWrapper, GroupChatEvent, MessageIndex, TimestampMillis, UserId};
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct GroupChatEvents {
     inner: ChatEvents,
 }

@@ -18,7 +18,7 @@ mod updates;
 const MAX_SUBSCRIPTION_AGE: Duration = Duration::from_secs(365 * 24 * 60 * 60); // 365 days
 const STATE_VERSION: StateVersion = StateVersion::V1;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 enum StateVersion {
     V1,
 }
@@ -54,7 +54,7 @@ impl RuntimeState {
     }
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 struct Data {
     pub push_service_principals: HashSet<Principal>,
     pub notifications: EventStream<NotificationEnvelope>,

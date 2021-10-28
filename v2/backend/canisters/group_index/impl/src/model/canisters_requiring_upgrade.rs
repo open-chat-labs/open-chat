@@ -1,16 +1,16 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
 use types::{ChatId, Version};
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct FailedUpgrade {
     pub chat_id: ChatId,
     pub from_version: Version,
     pub to_version: Version,
 }
 
-#[derive(CandidType, Deserialize, Default)]
+#[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct CanistersRequiringUpgrade {
     pending: VecDeque<ChatId>,
     in_progress: HashSet<ChatId>,

@@ -1,10 +1,10 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::{Milliseconds, TimestampMillis};
 
 const ONE_MINUTE: Milliseconds = 60 * 1000;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct ActivityNotificationState {
     /// When we last notified the group_index canister of activity in this group
     last_notification_date: TimestampMillis,
