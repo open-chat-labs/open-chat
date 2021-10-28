@@ -8,12 +8,15 @@
     import type { ServiceContainer } from "../../services/serviceContainer";
     import type { Writable } from "svelte/store";
     import type { ChatController } from "../../fsm/chat.controller";
+    import type { UserSummary } from "../../domain/user/user";
+    import { toastStore } from "../../stores/toast";
 
     export let api: ServiceContainer;
     export let editGroupHistory: EditGroupState[];
     export let controller: ChatController;
     export let userId: string;
 
+    let savingParticipants = false;
     let chat = controller.chat as Writable<GroupChatSummary>;
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
@@ -52,8 +55,24 @@
         controller.blockUser(ev.detail.userId);
     }
 
-    function unblockUser(ev: CustomEvent<{ userId: string }>) {
-        controller.unblockUser(ev.detail.userId);
+    async function unblockUser(ev: CustomEvent<UserSummary>) {
+        const success = await controller.addParticipants(true, [ev.detail]);
+        if (success) {
+            toastStore.showSuccessToast("unblockUserSucceeded");
+        } else {
+            toastStore.showFailureToast("unblockUserFailed");
+        }
+    }
+
+    async function saveParticipants(ev: CustomEvent<UserSummary[]>) {
+        savingParticipants = true;
+        const success = await controller.addParticipants(false, ev.detail);
+        if (success) {
+            pop();
+        } else {
+            toastStore.showFailureToast("addParticipantsFailed");
+        }
+        savingParticipants = false;
     }
 </script>
 
@@ -62,10 +81,10 @@
         <GroupDetails {controller} {userId} {updatedGroup} on:close={pop} on:showParticipants />
     {:else if lastState === "add_participants"}
         <AddParticipants
+            busy={savingParticipants}
             closeIcon={editGroupHistory.length > 1 ? "back" : "close"}
-            chatId={controller.chatId}
-            {participants}
             {api}
+            on:saveParticipants={saveParticipants}
             on:cancelAddParticipants={pop} />
     {:else if lastState === "show_participants"}
         <Participants

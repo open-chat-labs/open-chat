@@ -14,7 +14,6 @@ import type {
     MakeAdminResponse,
     RemoveAdminResponse,
     GroupChatDetails,
-    GroupChatDetailsUpdates,
     GroupChatDetailsResponse,
     UnblockUserResponse,
 } from "../../domain/chat/chat";
@@ -91,8 +90,8 @@ export class CachingGroupClient implements IGroupClient {
         );
     }
 
-    addParticipants(userIds: string[]): Promise<AddParticipantsResponse> {
-        return this.client.addParticipants(userIds);
+    addParticipants(userIds: string[], allowBlocked: boolean): Promise<AddParticipantsResponse> {
+        return this.client.addParticipants(userIds, allowBlocked);
     }
 
     sendMessage(senderName: string, message: Message): Promise<SendMessageResponse> {

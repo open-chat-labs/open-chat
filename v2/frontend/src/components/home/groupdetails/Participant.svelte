@@ -53,7 +53,7 @@
     }
 
     function unblockUser() {
-        dispatch("unblockUser", { userId: participant.userId });
+        dispatch("unblockUser", participant);
     }
 </script>
 

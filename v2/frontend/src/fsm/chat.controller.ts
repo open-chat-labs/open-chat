@@ -2,6 +2,7 @@
 
 import { get, Writable } from "svelte/store";
 import type {
+    AddParticipantsResponse,
     ChatEvent,
     ChatSummary,
     EnhancedReplyContext,
@@ -12,6 +13,7 @@ import type {
     Message,
     MessageContent,
     Participant,
+    ParticipantRole,
     SendMessageSuccess,
     UpdateGroupResponse,
 } from "../domain/chat/chat";
@@ -140,6 +142,7 @@ export class ChatController {
                     this.groupDetails = resp;
                     this.participants.set(resp.participants);
                     this.blockedUsers.set(resp.blockedUsers);
+                    console.log("Details: ", resp);
                 }
                 await this.updateUserStore(userIdsFromEvents(get(this.events)));
             } else {
@@ -745,6 +748,77 @@ export class ChatController {
             });
     }
 
+    private removeParticipantsLocally(
+        viaUnblock: boolean,
+        users: UserSummary[],
+        resp: AddParticipantsResponse | { kind: "unknown" }
+    ): void {
+        if (resp.kind === "add_participants_success") return;
+
+        let toRemove: string[] = [];
+        if (resp.kind === "add_participants_partial_success") {
+            toRemove = [
+                ...resp.usersAlreadyInGroup,
+                ...resp.usersBlockedFromGroup,
+                ...resp.usersWhoBlockedRequest,
+            ];
+        } else {
+            toRemove = users.map((u) => u.userId);
+        }
+
+        this.participants.update((ps) =>
+            ps.filter((p) => {
+                !toRemove.includes(p.userId);
+            })
+        );
+
+        if (viaUnblock) {
+            this.blockedUsers.update((b) => {
+                return toRemove.reduce((blocked, u) => blocked.add(u), b);
+            });
+        }
+    }
+
+    private addParticipantsLocally(viaUnblock: boolean, users: UserSummary[]): void {
+        if (viaUnblock) {
+            this.blockedUsers.update((b) => {
+                users.forEach((u) => b.delete(u.userId));
+                return b;
+            });
+        }
+        this.participants.update((ps) => [
+            ...users.map((u) => ({
+                userId: u.userId,
+                role: "standard" as ParticipantRole,
+            })),
+            ...ps,
+        ]);
+    }
+
+    addParticipants(viaUnblock: boolean, users: UserSummary[]): Promise<boolean> {
+        this.addParticipantsLocally(viaUnblock, users);
+        return this.api
+            .addParticipants(
+                this.chatId,
+                users.map((u) => u.userId),
+                viaUnblock
+            )
+            .then((resp) => {
+                if (resp.kind === "add_participants_success") {
+                    return true;
+                } else {
+                    this.removeParticipantsLocally(viaUnblock, users, resp);
+                    rollbar.warn("AddParticipantsFailed", resp);
+                    return false;
+                }
+            })
+            .catch((err) => {
+                this.removeParticipantsLocally(viaUnblock, users, { kind: "unknown" });
+                rollbar.error("AddParticipantsFailed", err);
+                return false;
+            });
+    }
+
     unblockUser(userId: string): Promise<void> {
         this.unblockUserLocally(userId);
         return this.api
@@ -752,13 +826,7 @@ export class ChatController {
             .then((resp) => {
                 console.log(resp);
                 if (resp === "success") {
-                    this.api.addParticipants(this.chatId, [userId]).then((resp) => {
-                        if (resp.kind === "add_participants_success") {
-                            toastStore.showSuccessToast("unblockUserSucceeded");
-                        } else {
-                            toastStore.showSuccessToast("unblockUserSucceededAddFailed");
-                        }
-                    });
+                    toastStore.showSuccessToast("unblockUserSucceeded");
                 } else {
                     toastStore.showFailureToast("unblockUserFailed");
                     this.blockUserLocally(userId);

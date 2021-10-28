@@ -10,64 +10,20 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { createEventDispatcher } from "svelte";
     import type { ServiceContainer } from "../../../services/serviceContainer";
-    import type { Participant, ParticipantRole } from "../../../domain/chat/chat";
-    import { toastStore } from "../../../stores/toast";
-    import { rollbar } from "../../../utils/logging";
-    import type { Writable } from "svelte/store";
 
     export let api: ServiceContainer;
-    export let chatId: string;
-    export let participants: Writable<Participant[]>;
     export let closeIcon: "close" | "back";
+    export let busy = false;
 
     const dispatch = createEventDispatcher();
-    let busy = false;
     let usersToAdd: UserSummary[] = [];
 
     function cancelAddParticipant() {
         dispatch("cancelAddParticipants");
     }
 
-    function rollback() {
-        participants.update((ps) =>
-            ps.filter((p) => {
-                !usersToAdd.map((u) => u.userId).includes(p.userId);
-            })
-        );
-    }
-
-    function complete() {
-        busy = true;
-        participants.update((ps) => [
-            ...usersToAdd.map((u) => ({
-                userId: u.userId,
-                role: "standard" as ParticipantRole,
-            })),
-            ...ps,
-        ]);
-        api.addParticipants(
-            chatId,
-            usersToAdd.map((u) => u.userId)
-        )
-            .then((resp) => {
-                if (resp.kind === "add_participants_success") {
-                    cancelAddParticipant();
-                    usersToAdd = [];
-                } else {
-                    // todo - we are not very gracefully handling a number of partial and complete failure
-                    // conditions here. Prefer to wait to see what participants and blocked users end up
-                    // looking like before handling that better.
-                    toastStore.showFailureToast("addParticipantsFailed");
-                    rollbar.warn("AddParticipantsFailed", resp);
-                    rollback();
-                }
-            })
-            .catch((err) => {
-                rollbar.error("AddParticipantsFailed", err);
-                toastStore.showFailureToast("addParticipantsFailed");
-                rollback();
-            })
-            .finally(() => (busy = false));
+    function saveParticipants() {
+        dispatch("saveParticipants", usersToAdd);
     }
 
     function deleteUser(ev: CustomEvent<UserSummary>) {
@@ -110,7 +66,7 @@
     <Button
         disabled={busy || usersToAdd.length === 0}
         loading={busy}
-        on:click={complete}
+        on:click={saveParticipants}
         fill={true}>{$_("addParticipants")}</Button>
 </div>
 
