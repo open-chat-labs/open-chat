@@ -23,7 +23,7 @@
 <emoji-picker
     class:message={mode === "message"}
     class:reaction={mode === "reaction"}
-    class:dark={theme === "batman"}
+    class:dark={theme === "dark"}
     class:light={theme === "light"} />
 
 <style type="text/scss">

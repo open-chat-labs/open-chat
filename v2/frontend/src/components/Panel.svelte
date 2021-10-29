@@ -18,14 +18,16 @@
             padding-left $trans;
         background: var(--panel-bg);
         padding: $sp3;
+        padding-bottom: 0;
         overflow: auto;
+        overflow-x: hidden;
         @include fullHeight();
 
         &.middle {
             flex: auto;
             width: 100%;
-            padding-left: $sp3;
-            padding-right: $sp3;
+            padding-left: 0;
+            padding-right: 0;
             @include size-below(xs) {
                 padding: 0;
             }

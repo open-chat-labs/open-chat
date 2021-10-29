@@ -84,4 +84,7 @@
         display: flex;
         flex-direction: column;
     }
+    .cta {
+        height: 57px;
+    }
 </style>

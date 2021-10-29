@@ -83,6 +83,10 @@
 
         margin-bottom: $sp4;
 
+        @include size-below(xs) {
+            margin-bottom: $sp3;
+        }
+
         &.small {
             @include font(book, normal, fs-80);
         }
