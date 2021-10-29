@@ -3,7 +3,7 @@ use group_canister::delete_group::{Response::*, *};
 use group_index_canister::c2c_delete_group;
 use ic_cdk_macros::update;
 use tracing::{error, instrument};
-use types::{CanisterId, ChatId};
+use types::{CanisterId, ChatId, UserId};
 
 #[update]
 #[instrument(level = "trace")]
@@ -16,7 +16,9 @@ async fn delete_group(_args: Args) -> Response {
     };
 
     let group_index_canister_id = prepare_result.group_index_canister_id;
-    let c2c_delete_group_args = c2c_delete_group::Args {};
+    let c2c_delete_group_args = c2c_delete_group::Args {
+        deleted_by: prepare_result.deleted_by,
+    };
 
     match group_index_canister_c2c_client::c2c_delete_group(group_index_canister_id, &c2c_delete_group_args).await {
         Ok(response) => match response {
@@ -33,6 +35,7 @@ async fn delete_group(_args: Args) -> Response {
 struct PrepareResult {
     group_index_canister_id: CanisterId,
     chat_id: ChatId,
+    deleted_by: UserId,
 }
 
 fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -44,6 +47,7 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
             Ok(PrepareResult {
                 group_index_canister_id: runtime_state.data.group_index_canister_id,
                 chat_id: runtime_state.env.canister_id().into(),
+                deleted_by: participant.user_id,
             })
         }
     } else {

@@ -5,6 +5,7 @@ use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::query;
 use std::collections::hash_map::Entry::Occupied;
 use std::collections::{HashMap, HashSet};
+use std::iter::FromIterator;
 use tracing::error;
 use types::{
     CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DirectChatSummary, DirectChatSummaryUpdates, GroupChatSummary,
@@ -19,7 +20,14 @@ async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
 
     let summaries = get_group_chat_summaries(prepare_result.group_chats_added).await;
 
-    let result = RUNTIME_STATE.with(|state| finalize(None, summaries, vec![], state.borrow().as_ref().unwrap()));
+    let result = RUNTIME_STATE.with(|state| {
+        finalize(
+            None,
+            summaries,
+            GroupChatSummaryUpdatesList::default(),
+            state.borrow().as_ref().unwrap(),
+        )
+    });
 
     initial_state::Response::Success(initial_state::SuccessResult {
         timestamp: result.timestamp,
@@ -104,76 +112,79 @@ fn prepare(updates_since_option: Option<&UpdatesSince>, runtime_state: &RuntimeS
     }
 }
 
-async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> Vec<Summary> {
+#[derive(Default)]
+struct GroupChatSummaryList {
+    summaries: Vec<Summary>,
+    deleted_groups: Vec<ChatId>,
+}
+
+async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> GroupChatSummaryList {
     if chat_ids.is_empty() {
-        return Vec::new();
+        return GroupChatSummaryList::default();
     }
 
-    let count = chat_ids.len();
     let args = group_canister::summary::Args {};
     let futures: Vec<_> = chat_ids
-        .into_iter()
-        .map(|g| group_canister_c2c_client::summary(g.into(), &args))
+        .iter()
+        .map(|chat_id| group_canister_c2c_client::summary((*chat_id).into(), &args))
         .collect();
 
     let responses = futures::future::join_all(futures).await;
 
     let mut summaries = Vec::new();
-    let mut failures = Vec::new();
-    for response in responses.into_iter() {
-        match response {
-            Ok(result) => {
-                if let group_canister::summary::Response::Success(r) = result {
-                    summaries.push(r.summary);
-                };
-            }
-            Err(error) => failures.push(error),
+    let mut deleted_groups = Vec::new();
+
+    for (index, response) in responses.into_iter().enumerate() {
+        if let Ok(group_canister::summary::Response::Success(result)) = response {
+            summaries.push(result.summary);
+        } else {
+            deleted_groups.push(chat_ids[index]);
         }
     }
 
-    if !failures.is_empty() {
-        let failed_chat_count = failures.len();
-        let total_chat_count = count;
-        error!(
-            failed_chat_count,
-            total_chat_count,
-            first_error = ?failures.first().unwrap(),
-            "Error getting group chat summaries",
-        );
+    GroupChatSummaryList {
+        summaries,
+        deleted_groups,
     }
+}
 
-    summaries
+#[derive(Default)]
+struct GroupChatSummaryUpdatesList {
+    summary_updates: Vec<SummaryUpdates>,
+    deleted_groups: Vec<ChatId>,
 }
 
 async fn get_group_chat_summary_updates(
     group_index_canister_id: CanisterId,
     duration_since_last_sync: Milliseconds,
     mut group_chats: Vec<(ChatId, TimestampMillis)>,
-) -> Vec<SummaryUpdates> {
-    if group_chats.len() >= 5 {
-        if group_chats.is_empty() {
-            return Vec::new();
-        }
+) -> GroupChatSummaryUpdatesList {
+    if group_chats.is_empty() {
+        return GroupChatSummaryUpdatesList::default();
+    }
 
-        let args = group_index_canister::active_groups::Args {
-            chat_ids: group_chats.iter().map(|g| g.0).collect(),
-            active_in_last: duration_since_last_sync,
-        };
-        let active_groups = match group_index_canister_c2c_client::active_groups(group_index_canister_id, &args).await {
-            Ok(group_index_canister::active_groups::Response::Success(r)) => r.active_groups,
+    let args = group_index_canister::active_groups::Args {
+        chat_ids: group_chats.iter().map(|g| g.0).collect(),
+        active_in_last: duration_since_last_sync,
+    };
+    let (active_groups, deleted_groups) =
+        match group_index_canister_c2c_client::active_groups(group_index_canister_id, &args).await {
+            Ok(group_index_canister::active_groups::Response::Success(r)) => (r.active_groups, r.deleted_groups),
             Err(error) => {
                 error!(?error, "Failed to get active groups");
-                Vec::new()
+                (Vec::new(), Vec::new())
             }
         };
 
-        let active_groups_set: HashSet<_> = active_groups.into_iter().collect();
+    let active_groups_set: HashSet<_> = active_groups.into_iter().collect();
 
-        group_chats.retain(|(g, _)| active_groups_set.contains(g));
-    }
+    group_chats.retain(|(g, _)| active_groups_set.contains(g));
 
     if group_chats.is_empty() {
-        return Vec::new();
+        return GroupChatSummaryUpdatesList {
+            summary_updates: Vec::new(),
+            deleted_groups,
+        };
     }
 
     async fn get_summary_updates(
@@ -216,13 +227,16 @@ async fn get_group_chat_summary_updates(
         );
     }
 
-    summary_updates
+    GroupChatSummaryUpdatesList {
+        summary_updates,
+        deleted_groups,
+    }
 }
 
 fn finalize(
     updates_since_option: Option<&UpdatesSince>,
-    group_chats_added: Vec<Summary>,
-    group_chats_updated: Vec<SummaryUpdates>,
+    group_chats_added: GroupChatSummaryList,
+    group_chats_updated: GroupChatSummaryUpdatesList,
     runtime_state: &RuntimeState,
 ) -> updates::SuccessResult {
     let now = runtime_state.env.now();
@@ -230,17 +244,31 @@ fn finalize(
         .as_ref()
         .map_or(TimestampMillis::default(), |s| s.timestamp);
 
-    let mut group_chats_added: HashMap<ChatId, GroupChatSummary> =
-        group_chats_added.into_iter().map(|s| (s.chat_id, s.into())).collect();
+    let mut group_chats_deleted: HashSet<ChatId> = HashSet::from_iter(group_chats_added.deleted_groups);
+    let extra_group_chats_deleted: HashSet<ChatId> = HashSet::from_iter(group_chats_updated.deleted_groups);
+    group_chats_deleted.extend(&extra_group_chats_deleted);
 
-    let mut group_chats_updated: HashMap<ChatId, GroupChatSummaryUpdates> =
-        group_chats_updated.into_iter().map(|s| (s.chat_id, s.into())).collect();
+    let mut group_chats_added: HashMap<ChatId, GroupChatSummary> = group_chats_added
+        .summaries
+        .into_iter()
+        .map(|s| (s.chat_id, s.into()))
+        .collect();
+
+    let mut group_chats_updated: HashMap<ChatId, GroupChatSummaryUpdates> = group_chats_updated
+        .summary_updates
+        .into_iter()
+        .map(|s| (s.chat_id, s.into()))
+        .collect();
 
     for group_chat in runtime_state
         .data
         .group_chats
         .get_all(updates_since_option.as_ref().map(|s| s.timestamp))
     {
+        if group_chats_deleted.contains(&group_chat.chat_id) {
+            continue;
+        }
+
         if let Occupied(e) = group_chats_added.entry(group_chat.chat_id) {
             let summary = e.into_mut();
             summary.notifications_muted = group_chat.notifications_muted.value;

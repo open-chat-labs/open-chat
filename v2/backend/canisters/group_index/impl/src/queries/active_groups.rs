@@ -9,6 +9,10 @@ fn active_groups(args: Args) -> Response {
 
 fn active_groups_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let now = runtime_state.env.now();
+    let all_deleted = &runtime_state.data.deleted_groups;
+
+    let deleted_groups = args.chat_ids.iter().filter(|id| all_deleted.contains(id)).copied().collect();
+
     let active_groups = args
         .chat_ids
         .into_iter()
@@ -26,7 +30,8 @@ fn active_groups_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         })
         .collect();
 
-    let result = SuccessResult { active_groups };
-
-    Success(result)
+    Success(SuccessResult {
+        active_groups,
+        deleted_groups,
+    })
 }

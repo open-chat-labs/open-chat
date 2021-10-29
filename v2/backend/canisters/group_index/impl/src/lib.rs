@@ -1,4 +1,5 @@
 use crate::model::canisters_requiring_upgrade::CanistersRequiringUpgrade;
+use crate::model::deleted_groups::DeletedGroups;
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
 use candid::{CandidType, Principal};
@@ -70,6 +71,7 @@ impl RuntimeState {
 struct Data {
     pub public_groups: PublicGroups,
     pub private_groups: PrivateGroups,
+    pub deleted_groups: DeletedGroups,
     pub service_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
     pub notifications_canister_id: CanisterId,
@@ -91,6 +93,7 @@ impl Data {
         Data {
             public_groups: PublicGroups::default(),
             private_groups: PrivateGroups::default(),
+            deleted_groups: DeletedGroups::default(),
             service_principals: service_principals.into_iter().collect(),
             group_canister_wasm,
             notifications_canister_id,
@@ -139,6 +142,7 @@ impl Default for Data {
         Data {
             public_groups: PublicGroups::default(),
             private_groups: PrivateGroups::default(),
+            deleted_groups: DeletedGroups::default(),
             service_principals: HashSet::default(),
             group_canister_wasm: CanisterWasm::default(),
             notifications_canister_id: Principal::anonymous(),

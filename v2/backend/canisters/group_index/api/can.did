@@ -14,6 +14,7 @@ type ActiveGroupsResponse =
 type ActiveGroupsSuccessResult = 
     record {
         active_groups: vec ChatId;
+        deleted_groups: vec ChatId;
     };
 
 type SearchArgs =

@@ -16,4 +16,5 @@ pub enum Response {
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
     pub active_groups: Vec<ChatId>,
+    pub deleted_groups: Vec<ChatId>,
 }
