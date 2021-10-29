@@ -60,7 +60,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     static create(chatId: string, identity: Identity, db?: Database): IGroupClient {
-        return db && process.env.CLIENT_CACHING
+        return db !== undefined && process.env.CLIENT_CACHING
             ? new CachingGroupClient(db, chatId, new GroupClient(identity, chatId))
             : new GroupClient(identity, chatId);
     }
