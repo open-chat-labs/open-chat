@@ -179,7 +179,6 @@
     }
 
     .form-fields {
-        // padding: $sp4;
         @include size-below(xs) {
             padding: $sp3;
             padding-top: $sp2;
