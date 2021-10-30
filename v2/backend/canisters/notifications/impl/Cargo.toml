@@ -19,6 +19,7 @@ ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70
 notifications_canister = { path = "../api" }
 rmp-serde = "1.0.0-beta.2"
 serde = "1.0.126"
+serde_cbor = "0.11.2"
 tracing = "0.1.29"
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }

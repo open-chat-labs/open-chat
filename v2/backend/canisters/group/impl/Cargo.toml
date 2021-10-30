@@ -29,6 +29,7 @@ rmp-serde = "1.0.0-beta.2"
 search = { path = "../../../libraries/search" }
 serde = "1.0.126"
 serde_bytes = "0.11.5"
+serde_cbor = "0.11.2"
 tracing = "0.1.29"
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }

@@ -22,6 +22,7 @@ ledger_utils = { path = "../../../libraries/ledger_utils" }
 rmp-serde = "1.0.0-beta.2"
 serde = "1.0.126"
 serde_bytes = "0.11"
+serde_cbor = "0.11.2"
 tracing = "0.1.29"
 types = { path = "../../../libraries/types", features = ["compression"] }
 user_canister = { path = "../../user/api" }
