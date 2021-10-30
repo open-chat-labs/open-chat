@@ -25,7 +25,6 @@ ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70
 itertools = "0.10.1"
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
-rmp-serde = "1.0.0-beta.2"
 search = { path = "../../../libraries/search" }
 serde = "1.0.126"
 serde_bytes = "0.11.5"
