@@ -15,8 +15,8 @@ candid = "0.7.7"
 canister_logger = { path = "../../../libraries/canister_logger" }
 cycles_utils = { path = "../../../libraries/cycles_utils" }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70aae9ee7f1d2c326c633b6b863721f" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70aae9ee7f1d2c326c633b6b863721f" }
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
 itertools = "0.10.1"
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 serde = "1.0.126"
