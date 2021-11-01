@@ -324,7 +324,7 @@
         position: relative;
         @include fullHeight();
         width: 100%;
-        max-width: 1000px;
+        max-width: 1300px;
         margin: auto;
         display: flex;
     }

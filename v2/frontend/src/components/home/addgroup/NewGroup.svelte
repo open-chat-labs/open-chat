@@ -76,6 +76,7 @@
             placeholder={$_("newGroupName")} />
 
         <TextArea
+            rows={3}
             invalid={false}
             bind:value={candidateGroup.description}
             maxlength={MAX_DESC_LENGTH}
@@ -140,11 +141,11 @@
             </div>
         </div>
     </div>
-    <div class="cta">
-        <Button fill={true} disabled={!valid || creatingCanister} loading={creatingCanister}
-            >{$_("submitNewGroup")}</Button>
-    </div>
 </form>
+<div class="cta">
+    <Button fill={true} disabled={!valid || creatingCanister} loading={creatingCanister}
+        >{$_("submitNewGroup")}</Button>
+</div>
 
 <style type="text/scss">
     h4 {
@@ -171,18 +172,16 @@
 
     .group-form {
         flex: 1;
-        background-color: var(--section-bg);
         color: var(--section-txt);
         overflow: auto;
-        @include size-below(xs) {
-            background-color: transparent;
-        }
+        overflow-x: hidden;
+        @include nice-scrollbar();
     }
 
     .form-fields {
-        padding: $sp4;
         @include size-below(xs) {
             padding: $sp3;
+            padding-top: $sp2;
         }
     }
 
@@ -191,6 +190,9 @@
         background-color: var(--sub-section-bg);
         margin-bottom: $sp4;
         @include box-shadow(1);
+        @include size-below(xs) {
+            margin-bottom: $sp3;
+        }
     }
 
     .scope {

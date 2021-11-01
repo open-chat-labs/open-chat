@@ -20,6 +20,7 @@
         border: 1px solid var(--section-bd);
         color: var(--section-txt);
         @include z-index("section-header");
+        flex: 0 0 60px;
 
         &.flush {
             margin-bottom: 0;

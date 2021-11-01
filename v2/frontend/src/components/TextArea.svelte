@@ -63,6 +63,9 @@
         outline: none;
         border-radius: $sp2;
         margin-bottom: $sp4;
+        @include size-below(xs) {
+            margin-bottom: $sp3;
+        }
 
         &.invalid {
             border: 1px solid var(--error);

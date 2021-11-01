@@ -505,10 +505,13 @@
     .chat-messages {
         flex: auto;
         background-color: var(--currentChat-msgs-bg);
-        padding: 10px 0;
+        padding: $sp3 $sp3;
         overflow-y: scroll;
         overflow-x: hidden;
         position: relative;
+
+        @include nice-scrollbar();
+
         @include size-below(xs) {
             padding: 10px;
             -webkit-overflow-scrolling: touch;

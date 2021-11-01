@@ -307,3 +307,20 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
         @include font-size($size);
     }
 }
+
+@mixin nice-scrollbar() {
+    &::-webkit-scrollbar {
+        background-color: transparent;
+        width: 5px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        // background-color: rgba(34, 167, 242, 0.4);
+        background-color: rgba(34, 167, 242, 0.4);
+        border-radius: 2px;
+    }
+}

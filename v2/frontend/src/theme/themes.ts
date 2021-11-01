@@ -209,16 +209,15 @@ export interface Theme {
 
 export type Themes = {
     light: Theme;
-    batman: Theme;
+    dark: Theme;
 };
 
 const defaultTheme = {
     name: "light",
     label: "Light",
 
-    bg: "linear-gradient(#22A7F2, #EF5DA8)",
+    bg: "linear-gradient(#22A7F2, #5f2583)",
     txt: "#191919",
-    // error: "#ff0000",
     error: "#CF6679",
     accent: "hotpink",
 
@@ -249,7 +248,7 @@ const defaultTheme = {
     },
 
     section: {
-        bg: "#efefef",
+        bg: "white",
         txt: "#191919",
         bd: "transparent",
     },
@@ -281,15 +280,15 @@ const defaultTheme = {
     },
 
     panel: {
-        bg: "linear-gradient(#22A7F2, #EF5DA8)",
+        bg: "linear-gradient(#22A7F2, #5f2583)",
         left: {
-            bg: "rgba(255,255,255,0.05)",
+            bg: "rgba(255,255,255,0.15)",
         },
     },
 
     currentUser: {
         bd: "transparent",
-        bg: "#efefef",
+        bg: "white",
         txt: "#191919",
         ic: "#aaa",
     },
@@ -311,22 +310,22 @@ const defaultTheme = {
     },
 
     chatSummary: {
-        bg: "#efefef",
-        hv: "#e2e2e2",
+        bg: "white",
+        hv: "#efefef",
         txt1: "#191919",
         txt2: "#777777",
         bd: "transparent",
-        "bd-selected": "#22a7f2",
+        "bd-selected": "#f79031",
     },
 
     spinner: "#ffffff",
 
     menu: {
-        bg: "#efefef",
+        bg: "white",
         txt: "#191919",
         "disabled-txt": "#999999",
         bd: "#cccccc",
-        hv: "#e2e2e2",
+        hv: "#efefef",
         sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.5)",
     },
 
@@ -373,7 +372,8 @@ const defaultTheme = {
 
     currentChat: {
         header: {
-            bg: "#efefef",
+            // bg: "#efefef",
+            bg: "rgba(255,255,255,0.35)",
             txt: "#191919",
             bd: "transparent",
         },
@@ -405,14 +405,13 @@ const defaultTheme = {
 
 export const themes: Themes = {
     light: defaultTheme,
-    batman: {
+    dark: {
         ...defaultTheme,
-        name: "batman",
-        label: "Batman",
+        name: "dark",
+        label: "Dark",
 
         bg: darkBase,
         txt: dark60,
-        // error: "#800000",
         error: "#CF6679",
         accent: "hotpink",
 
@@ -519,7 +518,6 @@ export const themes: Themes = {
             "disabled-txt": dark45,
             bd: dark20,
             hv: "#424242",
-            // sh: "0px 0px 30px 10px rgba(8,93,140,0.3)",
             sh: "-10px 10px 10px 0px rgba(8,93,140,0.3)",
         },
 
@@ -541,7 +539,6 @@ export const themes: Themes = {
         modal: {
             bg: dark20,
             txt: dark60,
-            // sh: "0px 0px 30px 10px rgba(8,93,140,0.5)",
             sh: "0px 0px 0px 10px rgba(8,93,140,0.4)",
             filter: "blur(5px)",
             header: {
@@ -557,7 +554,6 @@ export const themes: Themes = {
         },
 
         modalPage: {
-            // bg: "rgba(8,93,140, 0.3)",
             bg: "rgba(0, 0, 0, 0.4)",
             txt: dark60,
             sh: "none",
@@ -619,7 +615,7 @@ function themeByName(name: string | null): Theme {
     if (!name) return themes.light;
 
     if (name === "system") {
-        return osDark() ? themes.batman : themes.light;
+        return osDark() ? themes.dark : themes.light;
     }
 
     return themes[name as keyof Themes] ?? themes.light;
