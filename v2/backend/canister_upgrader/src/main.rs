@@ -23,7 +23,7 @@ async fn main() {
         CanisterName::GroupIndex => upgrade_group_index_canister(identity, opts.url, opts.group_index).await,
         CanisterName::Notifications => upgrade_notifications_canister(identity, opts.url, opts.notifications).await,
         CanisterName::OnlineUsersAggregator => {
-            upgrade_online_users_agg_canister(identity, opts.url, opts.online_users_agg).await
+            upgrade_online_users_aggregator_canister(identity, opts.url, opts.online_users_agg).await
         }
         CanisterName::User => {
             upgrade_user_canister(

@@ -436,7 +436,7 @@ dependencies = [
  "ic-agent 0.7.0",
  "ic-utils 0.5.0",
  "notifications_canister",
- "online_users_agg_canister",
+ "online_users_aggregator_canister",
  "serde",
  "types",
  "user_canister",
@@ -2235,7 +2235,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "692fcb63b64b1758029e0a96ee63e049ce8c5948587f2f7208df04625e5f6b56"
 
 [[package]]
-name = "online_users_agg_canister"
+name = "online_users_aggregator_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
@@ -2244,18 +2244,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "online_users_agg_canister_client"
+name = "online_users_aggregator_canister_client"
 version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client_macros",
  "ic-agent 0.7.0",
- "online_users_agg_canister",
+ "online_users_aggregator_canister",
  "types",
 ]
 
 [[package]]
-name = "online_users_agg_canister_impl"
+name = "online_users_aggregator_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
@@ -2263,7 +2263,7 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-macros",
- "online_users_agg_canister",
+ "online_users_aggregator_canister",
  "serde",
  "serde_cbor",
  "tracing",

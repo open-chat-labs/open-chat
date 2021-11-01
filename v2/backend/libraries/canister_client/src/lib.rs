@@ -31,7 +31,7 @@ impl FromStr for CanisterName {
             "group" => Ok(CanisterName::Group),
             "group_index" => Ok(CanisterName::GroupIndex),
             "notifications" => Ok(CanisterName::Notifications),
-            "online_users_agg" => Ok(CanisterName::OnlineUsersAggregator),
+            "online_users_aggregator" => Ok(CanisterName::OnlineUsersAggregator),
             "user" => Ok(CanisterName::User),
             "user_index" => Ok(CanisterName::UserIndex),
             _ => Err(format!("Unrecognised canister name: {}", s)),
@@ -45,7 +45,7 @@ impl Display for CanisterName {
             CanisterName::Group => "group",
             CanisterName::GroupIndex => "group_index",
             CanisterName::Notifications => "notifications",
-            CanisterName::OnlineUsersAggregator => "online_users_agg",
+            CanisterName::OnlineUsersAggregator => "online_users_aggregator",
             CanisterName::User => "user",
             CanisterName::UserIndex => "user_index",
         };

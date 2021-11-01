@@ -9,7 +9,7 @@ fn c2c_mark_users_online(args: Args) -> Response {
 
 fn c2c_mark_users_online_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if !runtime_state.data.online_users_agg_canister_ids.contains(&caller) {
+    if !runtime_state.data.online_users_aggregator_canister_ids.contains(&caller) {
         panic!("Only an 'online_users_aggregator canister' can call 'c2c_mark_users_online'");
     }
     let now = runtime_state.env.now();
