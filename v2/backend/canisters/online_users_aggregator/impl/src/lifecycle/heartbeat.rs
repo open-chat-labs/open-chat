@@ -13,21 +13,21 @@ mod flush_online_users {
 
     pub fn run() {
         if let Some(result) = RUNTIME_STATE.with(|state| prepare(state.borrow_mut().as_mut().unwrap())) {
-            ic_cdk::block_on(send_to_user_index(result.user_index_canister_id, result.users_to_mark_online));
+            ic_cdk::block_on(send_to_user_index(result.user_index_canister_id, result.online_users));
         }
     }
 
     struct PrepareResult {
-        users_to_mark_online: Vec<Principal>,
+        online_users: Vec<Principal>,
         user_index_canister_id: CanisterId,
     }
 
     fn prepare(runtime_state: &mut RuntimeState) -> Option<PrepareResult> {
         let now = runtime_state.env.now();
-        let users_to_mark_online = runtime_state.data.online_users.take_if_due_for_sync(now)?;
+        let online_users = runtime_state.data.online_users.take_if_due_for_sync(now)?;
 
         Some(PrepareResult {
-            users_to_mark_online,
+            online_users,
             user_index_canister_id: runtime_state.data.user_index_canister_id,
         })
     }
