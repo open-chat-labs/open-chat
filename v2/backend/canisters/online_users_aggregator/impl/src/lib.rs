@@ -1,4 +1,4 @@
-use crate::model::online_users::{OnlineUsers, UsersToMarkOnline};
+use crate::model::online_users::OnlineUsers;
 use candid::CandidType;
 use canister_logger::LogMessagesWrapper;
 use serde::{Deserialize, Serialize};

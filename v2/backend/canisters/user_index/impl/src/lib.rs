@@ -94,6 +94,7 @@ struct Data {
 }
 
 impl Data {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         service_principals: Vec<Principal>,
         sms_service_principals: Vec<Principal>,
