@@ -7,13 +7,14 @@ use utils::canister::{delete, stop};
 
 #[update]
 #[instrument(level = "trace")]
-fn c2c_delete_group(_args: Args) -> Response {
-    RUNTIME_STATE.with(|state| c2c_delete_group_impl(state.borrow_mut().as_mut().unwrap()))
+fn c2c_delete_group(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| c2c_delete_group_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
-fn c2c_delete_group_impl(runtime_state: &mut RuntimeState) -> Response {
+fn c2c_delete_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let chat_id = ChatId::from(caller);
+    let now = runtime_state.env.now();
 
     let mut deleted = runtime_state.data.private_groups.delete(&chat_id);
 
@@ -25,6 +26,7 @@ fn c2c_delete_group_impl(runtime_state: &mut RuntimeState) -> Response {
 
     if deleted {
         runtime_state.data.canisters_requiring_upgrade.remove(&chat_id);
+        runtime_state.data.deleted_groups.insert(chat_id, now, args.deleted_by);
         Success
     } else {
         ChatNotFound

@@ -1,14 +1,18 @@
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_index_canister::active_groups::{Response::*, *};
+use group_index_canister::c2c_active_and_deleted_groups::{Response::*, *};
 use ic_cdk_macros::query;
 
 #[query]
-fn active_groups(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| active_groups_impl(args, state.borrow().as_ref().unwrap()))
+fn c2c_active_and_deleted_groups(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| c2c_active_and_deleted_groups_impl(args, state.borrow().as_ref().unwrap()))
 }
 
-fn active_groups_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+fn c2c_active_and_deleted_groups_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let now = runtime_state.env.now();
+    let all_deleted = &runtime_state.data.deleted_groups;
+
+    let deleted_groups = args.chat_ids.iter().filter_map(|id| all_deleted.get(id)).copied().collect();
+
     let active_groups = args
         .chat_ids
         .into_iter()
@@ -26,7 +30,8 @@ fn active_groups_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         })
         .collect();
 
-    let result = SuccessResult { active_groups };
-
-    Success(result)
+    Success(SuccessResult {
+        active_groups,
+        deleted_groups,
+    })
 }
