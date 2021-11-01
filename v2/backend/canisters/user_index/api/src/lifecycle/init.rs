@@ -17,6 +17,8 @@ pub struct Args {
 
     pub notifications_canister_id: CanisterId,
 
+    pub online_users_agg_canister_id: CanisterId,
+
     // Accepts confirmation code 123456
     pub test_mode: bool,
 }

@@ -18,6 +18,12 @@
       "wasm": "target/wasm32-unknown-unknown/release/group_index_canister_impl-opt.wasm",
       "build": "./generate-wasm.sh group_index_canister_impl"
     },
+    "online_users_agg": {
+      "type": "custom",
+      "candid": "backend/canisters/online_users_agg/api/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/online_users_agg_canister_impl-opt.wasm",
+      "build": "./generate-wasm.sh online_users_agg_canister_impl"
+    },
     "user": {
       "type": "custom",
       "candid": "backend/canisters/user/api/can.did",

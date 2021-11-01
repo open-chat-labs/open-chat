@@ -1,0 +1,21 @@
+import "../../../libraries/types/can.did";
+
+type MarkAsOnlineArgs =
+    record {
+    };
+
+type MarkAsOnlineResponse =
+    variant {
+        Success;
+    };
+
+type InitArgs =
+    record {
+        user_index_canister_id: CanisterId;
+        test_mode: bool;
+    };
+
+service : (InitArgs) -> {
+    // Call this regularly to maintain the online status of the user
+    mark_as_online: (MarkAsOnlineArgs) -> (MarkAsOnlineResponse);
+}

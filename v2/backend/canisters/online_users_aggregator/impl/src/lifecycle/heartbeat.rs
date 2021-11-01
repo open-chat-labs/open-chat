@@ -1,0 +1,39 @@
+use crate::{RuntimeState, RUNTIME_STATE};
+use candid::Principal;
+use ic_cdk_macros::heartbeat;
+use types::CanisterId;
+
+#[heartbeat]
+fn heartbeat() {
+    flush_online_users::run();
+}
+
+mod flush_online_users {
+    use super::*;
+
+    pub fn run() {
+        if let Some(result) = RUNTIME_STATE.with(|state| prepare(state.borrow_mut().as_mut().unwrap())) {
+            ic_cdk::block_on(send_to_user_index(result.user_index_canister_id, result.users_to_mark_online));
+        }
+    }
+
+    struct PrepareResult {
+        users_to_mark_online: Vec<Principal>,
+        user_index_canister_id: CanisterId,
+    }
+
+    fn prepare(runtime_state: &mut RuntimeState) -> Option<PrepareResult> {
+        let now = runtime_state.env.now();
+        let users_to_mark_online = runtime_state.data.online_users.take_if_due_for_sync(now)?;
+
+        Some(PrepareResult {
+            users_to_mark_online,
+            user_index_canister_id: runtime_state.data.user_index_canister_id,
+        })
+    }
+
+    async fn send_to_user_index(user_index_canister_id: CanisterId, users: Vec<Principal>) {
+        let args = user_index_canister::c2c_mark_users_online::Args { users };
+        let _ = user_index_canister_c2c_client::c2c_mark_users_online(user_index_canister_id, &args).await;
+    }
+}
