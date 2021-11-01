@@ -261,7 +261,7 @@ type UpdatesResponse =
             timestamp: TimestampMillis;
             chats_added: vec ChatSummary;
             chats_updated: vec ChatSummaryUpdates;
-            chats_removed: vec ChatId;
+            groups_deleted: vec DeletedGroupInfo;
             transactions: vec Transaction;
             blocked_users: vec UserId;
             cycles_balance: opt Cycles;

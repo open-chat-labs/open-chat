@@ -1,2 +1,3 @@
-pub mod active_groups;
+pub mod c2c_active_and_deleted_groups;
+pub mod c2c_deleted_groups;
 pub mod search;

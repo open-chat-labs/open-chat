@@ -1,15 +1,15 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_canister::summary::Summary;
 use group_canister::summary_updates::SummaryUpdates;
+use group_index_canister::{c2c_active_and_deleted_groups, c2c_deleted_groups};
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::query;
 use std::collections::hash_map::Entry::Occupied;
 use std::collections::{HashMap, HashSet};
-use std::iter::FromIterator;
 use tracing::error;
 use types::{
-    CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DirectChatSummary, DirectChatSummaryUpdates, GroupChatSummary,
-    GroupChatSummaryUpdates, Milliseconds, TimestampMillis,
+    CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary, DirectChatSummaryUpdates,
+    GroupChatSummary, GroupChatSummaryUpdates, Milliseconds, TimestampMillis,
 };
 use user_canister::{initial_state, updates, updates::UpdatesSince};
 use utils::range_set::convert_to_message_index_ranges;
@@ -18,7 +18,7 @@ use utils::range_set::convert_to_message_index_ranges;
 async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
     let prepare_result = RUNTIME_STATE.with(|state| prepare(None, state.borrow().as_ref().unwrap()));
 
-    let summaries = get_group_chat_summaries(prepare_result.group_chats_added).await;
+    let summaries = get_group_chat_summaries(prepare_result.group_index_canister_id, prepare_result.group_chats_added).await;
 
     let result = RUNTIME_STATE.with(|state| {
         finalize(
@@ -42,7 +42,7 @@ async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
 async fn updates(args: updates::Args) -> updates::Response {
     let prepare_result = RUNTIME_STATE.with(|state| prepare(Some(&args.updates_since), state.borrow().as_ref().unwrap()));
 
-    let summaries_future = get_group_chat_summaries(prepare_result.group_chats_added);
+    let summaries_future = get_group_chat_summaries(prepare_result.group_index_canister_id, prepare_result.group_chats_added);
     let summary_updates_future = get_group_chat_summary_updates(
         prepare_result.group_index_canister_id,
         prepare_result.duration_since_last_sync,
@@ -115,13 +115,26 @@ fn prepare(updates_since_option: Option<&UpdatesSince>, runtime_state: &RuntimeS
 #[derive(Default)]
 struct GroupChatSummaryList {
     summaries: Vec<Summary>,
-    deleted_groups: Vec<ChatId>,
+    deleted_groups: Vec<DeletedGroupInfo>,
 }
 
-async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> GroupChatSummaryList {
+async fn get_group_chat_summaries(group_index_canister_id: CanisterId, mut chat_ids: Vec<ChatId>) -> GroupChatSummaryList {
     if chat_ids.is_empty() {
         return GroupChatSummaryList::default();
     }
+
+    let args = c2c_deleted_groups::Args {
+        chat_ids: chat_ids.iter().copied().collect(),
+    };
+    let deleted_groups = match group_index_canister_c2c_client::c2c_deleted_groups(group_index_canister_id, &args).await {
+        Ok(c2c_deleted_groups::Response::Success(r)) => r.deleted_groups,
+        Err(error) => {
+            error!(?error, "Failed to get deleted groups");
+            Vec::new()
+        }
+    };
+
+    chat_ids.retain(|id| !has_group_been_deleted(&deleted_groups, id));
 
     let args = group_canister::summary::Args {};
     let futures: Vec<_> = chat_ids
@@ -132,13 +145,9 @@ async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> GroupChatSummaryList
     let responses = futures::future::join_all(futures).await;
 
     let mut summaries = Vec::new();
-    let mut deleted_groups = Vec::new();
-
-    for (index, response) in responses.into_iter().enumerate() {
-        if let Ok(group_canister::summary::Response::Success(result)) = response {
+    for response in responses.into_iter().flatten() {
+        if let group_canister::summary::Response::Success(result) = response {
             summaries.push(result.summary);
-        } else {
-            deleted_groups.push(chat_ids[index]);
         }
     }
 
@@ -151,7 +160,7 @@ async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> GroupChatSummaryList
 #[derive(Default)]
 struct GroupChatSummaryUpdatesList {
     summary_updates: Vec<SummaryUpdates>,
-    deleted_groups: Vec<ChatId>,
+    deleted_groups: Vec<DeletedGroupInfo>,
 }
 
 async fn get_group_chat_summary_updates(
@@ -163,15 +172,15 @@ async fn get_group_chat_summary_updates(
         return GroupChatSummaryUpdatesList::default();
     }
 
-    let args = group_index_canister::active_groups::Args {
+    let args = c2c_active_and_deleted_groups::Args {
         chat_ids: group_chats.iter().map(|g| g.0).collect(),
         active_in_last: duration_since_last_sync,
     };
     let (active_groups, deleted_groups) =
-        match group_index_canister_c2c_client::active_groups(group_index_canister_id, &args).await {
-            Ok(group_index_canister::active_groups::Response::Success(r)) => (r.active_groups, r.deleted_groups),
+        match group_index_canister_c2c_client::c2c_active_and_deleted_groups(group_index_canister_id, &args).await {
+            Ok(c2c_active_and_deleted_groups::Response::Success(r)) => (r.active_groups, r.deleted_groups),
             Err(error) => {
-                error!(?error, "Failed to get active groups");
+                error!(?error, "Failed to get active and deleted groups");
                 (Vec::new(), Vec::new())
             }
         };
@@ -194,7 +203,6 @@ async fn get_group_chat_summary_updates(
         group_canister_c2c_client::summary_updates(canister_id, &args).await
     }
 
-    let count = group_chats.len();
     let futures: Vec<_> = group_chats
         .into_iter()
         .map(|(g, t)| {
@@ -206,25 +214,10 @@ async fn get_group_chat_summary_updates(
     let responses = futures::future::join_all(futures).await;
 
     let mut summary_updates = Vec::new();
-    let mut failures = Vec::new();
-    for response in responses.into_iter() {
-        match response {
-            Ok(result) => {
-                if let group_canister::summary_updates::Response::Success(r) = result {
-                    summary_updates.push(r.updates);
-                };
-            }
-            Err(error) => failures.push(error),
+    for response in responses.into_iter().flatten() {
+        if let group_canister::summary_updates::Response::Success(result) = response {
+            summary_updates.push(result.updates);
         }
-    }
-
-    if !failures.is_empty() {
-        error!(
-            failed_chat_count = failures.len(),
-            total_chat_count = count,
-            first_error = ?failures.first().unwrap(),
-            "Error getting group chat summary updates",
-        );
     }
 
     GroupChatSummaryUpdatesList {
@@ -244,9 +237,8 @@ fn finalize(
         .as_ref()
         .map_or(TimestampMillis::default(), |s| s.timestamp);
 
-    let mut group_chats_deleted: HashSet<ChatId> = HashSet::from_iter(group_chats_added.deleted_groups);
-    let extra_group_chats_deleted: HashSet<ChatId> = HashSet::from_iter(group_chats_updated.deleted_groups);
-    group_chats_deleted.extend(&extra_group_chats_deleted);
+    let mut groups_deleted: Vec<_> = group_chats_added.deleted_groups.iter().copied().collect();
+    groups_deleted.extend(group_chats_updated.deleted_groups);
 
     let mut group_chats_added: HashMap<ChatId, GroupChatSummary> = group_chats_added
         .summaries
@@ -265,7 +257,7 @@ fn finalize(
         .group_chats
         .get_all(updates_since_option.as_ref().map(|s| s.timestamp))
     {
-        if group_chats_deleted.contains(&group_chat.chat_id) {
+        if has_group_been_deleted(&groups_deleted, &group_chat.chat_id) {
             continue;
         }
 
@@ -353,9 +345,13 @@ fn finalize(
         timestamp: now,
         chats_added,
         chats_updated,
-        chats_removed: Vec::new(), // TODO
+        groups_deleted,
         transactions,
         blocked_users,
         cycles_balance,
     }
+}
+
+fn has_group_been_deleted(groups: &[DeletedGroupInfo], group_id: &ChatId) -> bool {
+    groups.iter().any(|g| g.id == *group_id)
 }
