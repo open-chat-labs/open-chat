@@ -118,7 +118,7 @@ struct GroupChatSummaryList {
     deleted_groups: Vec<DeletedGroupInfo>,
 }
 
-async fn get_group_chat_summaries(group_index_canister_id: CanisterId, mut chat_ids: Vec<ChatId>) -> GroupChatSummaryList {
+async fn get_group_chat_summaries(group_index_canister_id: CanisterId, chat_ids: Vec<ChatId>) -> GroupChatSummaryList {
     if chat_ids.is_empty() {
         return GroupChatSummaryList::default();
     }
@@ -134,11 +134,10 @@ async fn get_group_chat_summaries(group_index_canister_id: CanisterId, mut chat_
         }
     };
 
-    chat_ids.retain(|id| !has_group_been_deleted(&deleted_groups, id));
-
     let args = group_canister::summary::Args {};
     let futures: Vec<_> = chat_ids
         .iter()
+        .filter(|id| !has_group_been_deleted(&deleted_groups, id))
         .map(|chat_id| group_canister_c2c_client::summary((*chat_id).into(), &args))
         .collect();
 
@@ -166,7 +165,7 @@ struct GroupChatSummaryUpdatesList {
 async fn get_group_chat_summary_updates(
     group_index_canister_id: CanisterId,
     duration_since_last_sync: Milliseconds,
-    mut group_chats: Vec<(ChatId, TimestampMillis)>,
+    group_chats: Vec<(ChatId, TimestampMillis)>,
 ) -> GroupChatSummaryUpdatesList {
     if group_chats.is_empty() {
         return GroupChatSummaryUpdatesList::default();
@@ -185,11 +184,7 @@ async fn get_group_chat_summary_updates(
             }
         };
 
-    let active_groups_set: HashSet<_> = active_groups.into_iter().collect();
-
-    group_chats.retain(|(g, _)| active_groups_set.contains(g));
-
-    if group_chats.is_empty() {
+    if active_groups.is_empty() {
         return GroupChatSummaryUpdatesList {
             summary_updates: Vec::new(),
             deleted_groups,
@@ -203,8 +198,11 @@ async fn get_group_chat_summary_updates(
         group_canister_c2c_client::summary_updates(canister_id, &args).await
     }
 
+    let active_groups_set: HashSet<_> = active_groups.into_iter().collect();
+
     let futures: Vec<_> = group_chats
         .into_iter()
+        .filter(|(g, _)| active_groups_set.contains(g))
         .map(|(g, t)| {
             let args = group_canister::summary_updates::Args { updates_since: t };
             get_summary_updates(g.into(), args)
