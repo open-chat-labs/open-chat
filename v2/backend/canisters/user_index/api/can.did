@@ -100,7 +100,7 @@ type UpgradeCanisterResponse =
         UserNotCreated;
         UpgradeNotRequired;
         UpgradeInProgress;
-        InternalError;
+        InternalError: text;
     };
 
 type MarkAsOnlineArgs = 

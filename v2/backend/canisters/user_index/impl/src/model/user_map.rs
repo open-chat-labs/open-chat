@@ -238,6 +238,10 @@ impl UserMap {
         self.cached_metrics = Timestamped::new(metrics, now);
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &User> {
+        self.users_by_principal.values()
+    }
+
     pub fn len(&self) -> usize {
         self.users_by_principal.len()
     }
@@ -250,6 +254,7 @@ pub enum AddUserResult {
     UsernameTaken,
 }
 
+#[derive(Debug)]
 pub enum UpdateUserResult {
     Success,
     PhoneNumberTaken,

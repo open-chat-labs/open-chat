@@ -1,16 +1,15 @@
-use crate::model::canisters_requiring_upgrade::FailedUpgrade;
 use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MIN_CYCLES_BALANCE, RUNTIME_STATE};
 use ic_cdk_macros::heartbeat;
-use types::{CanisterId, CanisterWasm, ChatId, Cycles, Version};
-use utils::canister;
+use types::{CanisterId, Cycles, Version};
+use utils::canister::{self, CanisterToUpgrade, FailedUpgrade};
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 const MAX_CANISTER_UPGRADES_PER_HEARTBEAT: u32 = 3;
 
 #[heartbeat]
 fn heartbeat() {
-    topup_canister_pool::run();
     upgrade_canisters::run();
+    topup_canister_pool::run();
     calculate_metrics::run();
 }
 
@@ -24,13 +23,7 @@ mod upgrade_canisters {
         }
     }
 
-    struct ChatToUpgrade {
-        chat_id: ChatId,
-        current_wasm_version: Version,
-        new_wasm: CanisterWasm,
-    }
-
-    fn get_next_batch(runtime_state: &mut RuntimeState) -> Vec<ChatToUpgrade> {
+    fn get_next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
         (0..MAX_CANISTER_UPGRADES_PER_HEARTBEAT)
             // TODO replace this with 'map_while' once we have upgraded to Rust 1.57
             .map(|_| try_get_next(runtime_state))
@@ -39,8 +32,9 @@ mod upgrade_canisters {
             .collect()
     }
 
-    fn try_get_next(runtime_state: &mut RuntimeState) -> Option<ChatToUpgrade> {
-        let chat_id = runtime_state.data.canisters_requiring_upgrade.try_take_next()?;
+    fn try_get_next(runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
+        let canister_id = runtime_state.data.canisters_requiring_upgrade.try_take_next()?;
+        let chat_id = canister_id.into();
 
         let current_wasm_version = runtime_state
             .data
@@ -49,59 +43,52 @@ mod upgrade_canisters {
             .map(|g| g.wasm_version())
             .or_else(|| runtime_state.data.private_groups.get(&chat_id).map(|g| g.wasm_version()))?;
 
-        Some(ChatToUpgrade {
-            chat_id,
+        Some(CanisterToUpgrade {
+            canister_id,
             current_wasm_version,
             new_wasm: runtime_state.data.group_canister_wasm.clone(),
         })
     }
 
-    async fn perform_upgrades(chats_to_update: Vec<ChatToUpgrade>) {
-        let futures: Vec<_> = chats_to_update.into_iter().map(perform_upgrade).collect();
+    async fn perform_upgrades(canisters_to_upgrade: Vec<CanisterToUpgrade>) {
+        let futures: Vec<_> = canisters_to_upgrade.into_iter().map(perform_upgrade).collect();
 
         futures::future::join_all(futures).await;
     }
 
-    async fn perform_upgrade(chat_to_update: ChatToUpgrade) {
-        let chat_id = chat_to_update.chat_id;
-        let from_version = chat_to_update.current_wasm_version;
-        let to_version = chat_to_update.new_wasm.version;
-        let success = canister::upgrade(chat_id.into(), chat_to_update.new_wasm.module)
-            .await
-            .is_ok();
+    async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
+        let canister_id = canister_to_upgrade.canister_id;
+        let from_version = canister_to_upgrade.current_wasm_version;
+        let to_version = canister_to_upgrade.new_wasm.version;
 
-        RUNTIME_STATE.with(|state| {
-            mark_complete(
-                chat_id,
-                success,
-                from_version,
-                to_version,
-                state.borrow_mut().as_mut().unwrap(),
-            )
-        });
+        match canister::upgrade(canister_id, canister_to_upgrade.new_wasm.module).await {
+            Ok(_) => {
+                RUNTIME_STATE.with(|state| on_success(canister_id, to_version, state.borrow_mut().as_mut().unwrap()));
+            }
+            Err(_) => {
+                RUNTIME_STATE
+                    .with(|state| on_failure(canister_id, from_version, to_version, state.borrow_mut().as_mut().unwrap()));
+            }
+        }
     }
 
-    fn mark_complete(
-        chat_id: ChatId,
-        success: bool,
-        from_version: Version,
-        to_version: Version,
-        runtime_state: &mut RuntimeState,
-    ) {
-        if success {
-            runtime_state.data.canisters_requiring_upgrade.mark_success(&chat_id);
-            if let Some(chat) = runtime_state.data.public_groups.get_mut(&chat_id) {
-                chat.set_wasm_version(to_version);
-            } else if let Some(chat) = runtime_state.data.private_groups.get_mut(&chat_id) {
-                chat.set_wasm_version(to_version);
-            }
-        } else {
-            runtime_state.data.canisters_requiring_upgrade.mark_failure(FailedUpgrade {
-                chat_id,
-                from_version,
-                to_version,
-            });
+    fn on_success(canister_id: CanisterId, to_version: Version, runtime_state: &mut RuntimeState) {
+        let chat_id = canister_id.into();
+        runtime_state.data.canisters_requiring_upgrade.mark_success(&canister_id);
+
+        if let Some(chat) = runtime_state.data.public_groups.get_mut(&chat_id) {
+            chat.set_wasm_version(to_version);
+        } else if let Some(chat) = runtime_state.data.private_groups.get_mut(&chat_id) {
+            chat.set_wasm_version(to_version);
         }
+    }
+
+    fn on_failure(canister_id: CanisterId, from_version: Version, to_version: Version, runtime_state: &mut RuntimeState) {
+        runtime_state.data.canisters_requiring_upgrade.mark_failure(FailedUpgrade {
+            canister_id,
+            from_version,
+            to_version,
+        });
     }
 }
 

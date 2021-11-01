@@ -14,6 +14,7 @@ crate-type = ["cdylib"]
 candid = "0.7.7"
 canister_logger = { path = "../../../libraries/canister_logger" }
 cycles_utils = { path = "../../../libraries/cycles_utils" }
+futures = "0.3.16"
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
