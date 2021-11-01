@@ -90,15 +90,18 @@ struct Data {
     pub canister_pool: canister::Pool,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
+    pub online_users_aggregator_canister_ids: HashSet<CanisterId>,
 }
 
 impl Data {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         service_principals: Vec<Principal>,
         sms_service_principals: Vec<Principal>,
         user_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
+        online_users_aggregator_canister_id: CanisterId,
         canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Self {
@@ -110,6 +113,7 @@ impl Data {
             sms_messages: EventStream::default(),
             group_index_canister_id,
             notifications_canister_id,
+            online_users_aggregator_canister_ids: HashSet::from([online_users_aggregator_canister_id]),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             test_mode,
             total_cycles_spent_on_canisters: 0,
@@ -128,6 +132,7 @@ impl Default for Data {
             sms_messages: EventStream::default(),
             group_index_canister_id: Principal::anonymous(),
             notifications_canister_id: Principal::anonymous(),
+            online_users_aggregator_canister_ids: HashSet::new(),
             canister_pool: canister::Pool::new(5),
             test_mode: true,
             total_cycles_spent_on_canisters: 0,

@@ -23,6 +23,7 @@ fn init(args: Args) {
         user_canister_wasm,
         args.group_index_canister_id,
         args.notifications_canister_id,
+        args.online_users_aggregator_canister_id,
         canister_pool_target_size,
         args.test_mode,
     );

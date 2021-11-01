@@ -1,0 +1,26 @@
+[package]
+name = "online_users_aggregator_canister_impl"
+version = "0.1.0"
+authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+candid = "0.7.7"
+canister_logger = { path = "../../../libraries/canister_logger" }
+http_request = { path = "../../../libraries/http_request" }
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
+serde = "1.0.126"
+serde_cbor = "0.11.2"
+tracing = "0.1.29"
+types = { path = "../../../libraries/types", features = ["compression"] }
+user_index_canister = { path = "../../user_index/api" }
+user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
+online_users_aggregator_canister = { path = "../api" }
+utils = { path = "../../../libraries/utils" }

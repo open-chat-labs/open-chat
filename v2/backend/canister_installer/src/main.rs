@@ -12,6 +12,7 @@ async fn main() {
         user_index: opts.user_index,
         group_index: opts.group_index,
         notifications: opts.notifications,
+        online_users_aggregator: opts.online_users_aggregator,
     };
 
     let identity = get_dfx_identity(&opts.controller);
@@ -29,4 +30,5 @@ struct Opts {
     user_index: CanisterId,
     group_index: CanisterId,
     notifications: CanisterId,
+    online_users_aggregator: CanisterId,
 }

@@ -18,6 +18,7 @@ VERSION=${3:-0.0.0}
 USER_INDEX_CANISTER_ID=$(dfx canister --no-wallet id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --no-wallet id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --no-wallet id notifications)
+ONLINE_USERS_AGGREGATOR=$(dfx canister --no-wallet id online_users_aggregator)
 
 cargo run \
   --manifest-path backend/canister_upgrader/Cargo.toml \
@@ -26,5 +27,6 @@ cargo run \
   $USER_INDEX_CANISTER_ID \
   $GROUP_INDEX_CANISTER_ID \
   $NOTIFICATIONS_INDEX_CANISTER_ID \
+  $ONLINE_USERS_AGGREGATOR \
   $CANISTER_TO_UPGRADE \
-  $VERSION
+  $VERSION \

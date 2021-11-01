@@ -1,3 +1,4 @@
+pub mod c2c_mark_users_online;
 pub mod c2c_notify_low_balance;
 pub mod c2c_set_avatar;
 pub mod confirm_phone_number;

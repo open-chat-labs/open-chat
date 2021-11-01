@@ -21,6 +21,21 @@ pub async fn upgrade_notifications_canister(identity: BasicIdentity, url: String
     println!("Notifications canister upgraded");
 }
 
+pub async fn upgrade_online_users_aggregator_canister(
+    identity: BasicIdentity,
+    url: String,
+    online_users_aggregator_canister_id: CanisterId,
+) {
+    upgrade_root_canister(
+        identity,
+        url,
+        online_users_aggregator_canister_id,
+        CanisterName::OnlineUsersAggregator,
+    )
+    .await;
+    println!("Online users aggregator canister upgraded");
+}
+
 pub async fn upgrade_group_canister(
     identity: BasicIdentity,
     url: String,

@@ -12,21 +12,28 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     let agent = build_ic_agent(url, identity).await;
     let management_canister = build_management_canister(&agent);
 
-    let (user_index_canister_id, group_index_canister_id, notifications_canister_id) = futures::future::join3(
-        create_empty_canister(&management_canister),
-        create_empty_canister(&management_canister),
-        create_empty_canister(&management_canister),
-    )
-    .await;
+    let (user_index_canister_id, group_index_canister_id, notifications_canister_id, online_users_aggregator_canister_id) =
+        futures::future::join4(
+            create_empty_canister(&management_canister),
+            create_empty_canister(&management_canister),
+            create_empty_canister(&management_canister),
+            create_empty_canister(&management_canister),
+        )
+        .await;
 
     println!("user_index canister id: {}", user_index_canister_id.to_string());
     println!("group_index canister id: {}", group_index_canister_id.to_string());
     println!("notifications canister id: {}", notifications_canister_id.to_string());
+    println!(
+        "users online aggregator canister id: {}",
+        online_users_aggregator_canister_id.to_string()
+    );
 
     let canister_ids = CanisterIds {
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
         notifications: notifications_canister_id,
+        online_users_aggregator: online_users_aggregator_canister_id,
     };
 
     install_service_canisters_impl(principal, &canister_ids, &management_canister, test_mode).await;
@@ -56,6 +63,7 @@ async fn install_service_canisters_impl(
         user_canister_wasm,
         group_index_canister_id: canister_ids.group_index,
         notifications_canister_id: canister_ids.notifications,
+        online_users_aggregator_canister_id: canister_ids.online_users_aggregator,
         test_mode,
     };
 
@@ -74,7 +82,13 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    futures::future::join3(
+    let online_users_aggregator_canister_wasm = get_canister_wasm(CanisterName::OnlineUsersAggregator, false);
+    let online_users_aggregator_init_args = online_users_aggregator_canister::init::Args {
+        user_index_canister_id: canister_ids.user_index,
+        test_mode,
+    };
+
+    futures::future::join4(
         install_wasm(
             management_canister,
             &canister_ids.user_index,
@@ -92,6 +106,12 @@ async fn install_service_canisters_impl(
             &canister_ids.notifications,
             &notifications_canister_wasm.module,
             notifications_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.online_users_aggregator,
+            &online_users_aggregator_canister_wasm.module,
+            online_users_aggregator_init_args,
         ),
     )
     .await;
