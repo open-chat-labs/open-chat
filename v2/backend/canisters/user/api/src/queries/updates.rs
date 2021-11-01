@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{ChatId, ChatSummary, ChatSummaryUpdates, Cycles, DeletedGroupInfo, TimestampMillis, TransactionWrapper, UserId};
+use types::{ChatId, ChatSummary, ChatSummaryUpdates, Cycles, TimestampMillis, TransactionWrapper, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -29,7 +29,7 @@ pub struct SuccessResult {
     pub timestamp: TimestampMillis,
     pub chats_added: Vec<ChatSummary>,
     pub chats_updated: Vec<ChatSummaryUpdates>,
-    pub groups_deleted: Vec<DeletedGroupInfo>,
+    pub chats_removed: Vec<ChatId>,
     pub transactions: Vec<TransactionWrapper>,
     pub blocked_users: Vec<UserId>,
     pub cycles_balance: Option<Cycles>,

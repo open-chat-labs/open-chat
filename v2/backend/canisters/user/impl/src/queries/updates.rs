@@ -238,6 +238,8 @@ fn finalize(
     let mut groups_deleted: Vec<_> = group_chats_added.deleted_groups.iter().copied().collect();
     groups_deleted.extend(group_chats_updated.deleted_groups);
 
+    let chats_removed: Vec<ChatId> = groups_deleted.iter().map(|gd| gd.id).collect();
+
     let mut group_chats_added: HashMap<ChatId, GroupChatSummary> = group_chats_added
         .summaries
         .into_iter()
@@ -343,7 +345,7 @@ fn finalize(
         timestamp: now,
         chats_added,
         chats_updated,
-        groups_deleted,
+        chats_removed,
         transactions,
         blocked_users,
         cycles_balance,
