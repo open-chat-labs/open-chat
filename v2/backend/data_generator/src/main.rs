@@ -17,7 +17,7 @@ async fn main() {
         user_index: opts.user_index,
         group_index: opts.group_index,
         notifications: opts.notifications,
-        online_users_agg: opts.online_users_agg,
+        online_users_aggregator: opts.online_users_aggregator,
     };
 
     run_data_generator(opts.url, canister_ids, opts.username, opts.seed, opts.max_groups).await;
@@ -185,7 +185,7 @@ struct Opts {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub notifications: CanisterId,
-    pub online_users_agg: CanisterId,
+    pub online_users_aggregator: CanisterId,
     pub username: String,
     pub seed: Option<u32>,
     pub max_groups: Option<u32>,

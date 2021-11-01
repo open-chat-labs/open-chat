@@ -33,7 +33,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
         notifications: notifications_canister_id,
-        online_users_agg: online_users_aggregator_canister_id,
+        online_users_aggregator: online_users_aggregator_canister_id,
     };
 
     install_service_canisters_impl(principal, &canister_ids, &management_canister, test_mode).await;
@@ -63,7 +63,7 @@ async fn install_service_canisters_impl(
         user_canister_wasm,
         group_index_canister_id: canister_ids.group_index,
         notifications_canister_id: canister_ids.notifications,
-        online_users_aggregator_canister_id: canister_ids.online_users_agg,
+        online_users_aggregator_canister_id: canister_ids.online_users_aggregator,
         test_mode,
     };
 
@@ -109,7 +109,7 @@ async fn install_service_canisters_impl(
         ),
         install_wasm(
             management_canister,
-            &canister_ids.online_users_agg,
+            &canister_ids.online_users_aggregator,
             &online_users_aggregator_canister_wasm.module,
             online_users_aggregator_init_args,
         ),
