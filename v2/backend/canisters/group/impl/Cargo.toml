@@ -20,15 +20,15 @@ group_canister = { path = "../api" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70aae9ee7f1d2c326c633b6b863721f" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70aae9ee7f1d2c326c633b6b863721f" }
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
 itertools = "0.10.1"
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
-rmp-serde = "1.0.0-beta.2"
 search = { path = "../../../libraries/search" }
 serde = "1.0.126"
 serde_bytes = "0.11.5"
+serde_cbor = "0.11.2"
 tracing = "0.1.29"
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
