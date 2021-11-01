@@ -12,18 +12,22 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     let agent = build_ic_agent(url, identity).await;
     let management_canister = build_management_canister(&agent);
 
-    let (user_index_canister_id, group_index_canister_id, notifications_canister_id, online_users_agg_canister_id) = futures::future::join4(
-        create_empty_canister(&management_canister),
-        create_empty_canister(&management_canister),
-        create_empty_canister(&management_canister),
-        create_empty_canister(&management_canister),
-    )
-    .await;
+    let (user_index_canister_id, group_index_canister_id, notifications_canister_id, online_users_agg_canister_id) =
+        futures::future::join4(
+            create_empty_canister(&management_canister),
+            create_empty_canister(&management_canister),
+            create_empty_canister(&management_canister),
+            create_empty_canister(&management_canister),
+        )
+        .await;
 
     println!("user_index canister id: {}", user_index_canister_id.to_string());
     println!("group_index canister id: {}", group_index_canister_id.to_string());
     println!("notifications canister id: {}", notifications_canister_id.to_string());
-    println!("users online aggregator canister id: {}", online_users_agg_canister_id.to_string());
+    println!(
+        "users online aggregator canister id: {}",
+        online_users_agg_canister_id.to_string()
+    );
 
     let canister_ids = CanisterIds {
         user_index: user_index_canister_id,

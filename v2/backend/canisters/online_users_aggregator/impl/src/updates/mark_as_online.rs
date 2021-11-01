@@ -1,6 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
-use online_users_agg_canister::mark_as_online::{Response::*, *};
 use ic_cdk_macros::update;
+use online_users_agg_canister::mark_as_online::{Response::*, *};
 
 #[update]
 fn mark_as_online(_: Args) -> Response {
