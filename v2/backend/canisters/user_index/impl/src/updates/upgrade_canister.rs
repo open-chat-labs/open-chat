@@ -58,7 +58,7 @@ pub(crate) fn initialize_upgrade(
     if user.upgrade_in_progress() {
         Err(UpgradeInProgress)
     } else {
-        let current_wasm_version = user.wasm_version().unwrap_or(Version::min());
+        let current_wasm_version = user.wasm_version().unwrap_or_else(Version::min);
         if current_wasm_version >= user_canister_wasm.version {
             Err(UpgradeNotRequired)
         } else {
