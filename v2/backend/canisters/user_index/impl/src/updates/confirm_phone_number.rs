@@ -42,6 +42,7 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
         username: None,
         date_confirmed: now,
         canister_creation_status: CanisterCreationStatusInternal::Pending(None),
+        upgrade_in_progress: false,
     };
     runtime_state.data.users.update(User::Confirmed(user));
 

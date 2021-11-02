@@ -14,6 +14,14 @@ impl Version {
     pub fn new(major: u32, minor: u32, patch: u32) -> Version {
         Version { major, minor, patch }
     }
+
+    pub fn min() -> Version {
+        Version {
+            major: 0,
+            minor: 0,
+            patch: 0,
+        }
+    }
 }
 
 impl Display for Version {

@@ -48,7 +48,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                         date_updated: now,
                         last_online: now,
                         wasm_version: *wasm_version,
-                        upgrade_in_progress: false,
+                        upgrade_in_progress: user.upgrade_in_progress,
                         cycle_top_ups: vec![CyclesTopUp {
                             amount: *cycles,
                             date: now,

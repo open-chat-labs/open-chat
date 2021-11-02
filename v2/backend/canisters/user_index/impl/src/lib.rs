@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ConfirmationCodeSms, Cycles, TimestampMillis, Version};
+use utils::canister::CanistersRequiringUpgrade;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 use utils::{canister, memory};
@@ -87,6 +88,7 @@ struct Data {
     pub sms_messages: EventStream<ConfirmationCodeSms>,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
+    pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -114,6 +116,7 @@ impl Data {
             group_index_canister_id,
             notifications_canister_id,
             online_users_aggregator_canister_ids: HashSet::from([online_users_aggregator_canister_id]),
+            canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             test_mode,
             total_cycles_spent_on_canisters: 0,
@@ -132,6 +135,7 @@ impl Default for Data {
             sms_messages: EventStream::default(),
             group_index_canister_id: Principal::anonymous(),
             notifications_canister_id: Principal::anonymous(),
+            canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             online_users_aggregator_canister_ids: HashSet::new(),
             canister_pool: canister::Pool::new(5),
             test_mode: true,

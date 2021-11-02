@@ -3,7 +3,13 @@ use candid::{CandidType, Principal};
 use ic_cdk::api;
 use serde::Deserialize;
 use tracing::error;
-use types::CanisterId;
+use types::{CanisterId, CanisterWasm, Version};
+
+pub struct CanisterToUpgrade {
+    pub canister_id: CanisterId,
+    pub current_wasm_version: Version,
+    pub new_wasm: CanisterWasm,
+}
 
 pub async fn upgrade(canister_id: CanisterId, wasm_module: Vec<u8>) -> Result<(), canister::Error> {
     #[derive(CandidType, Deserialize)]
