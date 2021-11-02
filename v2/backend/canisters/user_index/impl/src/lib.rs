@@ -135,6 +135,7 @@ impl Default for Data {
             sms_messages: EventStream::default(),
             group_index_canister_id: Principal::anonymous(),
             notifications_canister_id: Principal::anonymous(),
+            canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             online_users_aggregator_canister_ids: HashSet::new(),
             canister_pool: canister::Pool::new(5),
             test_mode: true,

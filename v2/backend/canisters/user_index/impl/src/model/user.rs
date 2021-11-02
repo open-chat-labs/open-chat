@@ -195,6 +195,7 @@ impl Default for ConfirmedUser {
             phone_number: PhoneNumber::new(44, "000".to_owned()),
             username: None,
             canister_creation_status: CanisterCreationStatusInternal::Pending(None),
+            upgrade_in_progress: false,
             date_confirmed: 0,
         }
     }

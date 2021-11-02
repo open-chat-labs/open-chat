@@ -300,6 +300,7 @@ mod tests {
             phone_number: phone_number2.clone(),
             username: Some(username2.clone()),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id2.into())),
+            upgrade_in_progress: false,
             date_confirmed: 2,
         });
         user_map.add(confirmed.clone());
@@ -377,6 +378,7 @@ mod tests {
             phone_number: phone_number2.clone(),
             username: Some("2".to_string()),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id.into())),
+            upgrade_in_progress: false,
             date_confirmed: 2,
         });
         assert!(matches!(user_map.add(confirmed), AddUserResult::AlreadyExists));
@@ -407,6 +409,7 @@ mod tests {
             phone_number,
             username: Some("2".to_string()),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id).into()),
+            upgrade_in_progress: false,
             date_confirmed: 2,
         });
         assert!(matches!(user_map.add(confirmed), AddUserResult::PhoneNumberTaken));
@@ -432,6 +435,7 @@ mod tests {
             phone_number: phone_number1,
             username: Some(username.clone()),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id1).into()),
+            upgrade_in_progress: false,
             date_confirmed: 2,
         });
         user_map.add(confirmed);
@@ -470,6 +474,7 @@ mod tests {
             phone_number: phone_number1,
             username: Some(username1),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id1).into()),
+            upgrade_in_progress: false,
             date_confirmed: 2,
         });
         user_map.add(confirmed);
@@ -680,6 +685,7 @@ mod tests {
             phone_number: phone_number2.clone(),
             username: Some(username2.clone()),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id2).into()),
+            upgrade_in_progress: false,
             date_confirmed: 2,
         });
         user_map.add(confirmed.clone());
