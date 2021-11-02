@@ -18,7 +18,7 @@ TEST_MODE=true
 dfx --identity $IDENTITY canister --no-wallet create user_index
 dfx --identity $IDENTITY canister --no-wallet create group_index
 dfx --identity $IDENTITY canister --no-wallet create notifications
-dfx --identity $IDENTITY canister --no-wallet create online_users_agg
+dfx --identity $IDENTITY canister --no-wallet create online_users_aggregator
 
 USER_INDEX_CANISTER_ID=$(dfx canister --no-wallet id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --no-wallet id group_index)

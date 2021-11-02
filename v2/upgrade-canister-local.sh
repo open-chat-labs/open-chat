@@ -9,6 +9,7 @@ VERSION=${3:-0.0.0}
 ./generate-wasm.sh group_canister_impl
 ./generate-wasm.sh group_index_canister_impl
 ./generate-wasm.sh notifications_canister_impl
+./generate-wasm.sh online_users_aggregator_canister_impl
 ./generate-wasm.sh user_canister_impl
 ./generate-wasm.sh user_index_canister_impl
 
