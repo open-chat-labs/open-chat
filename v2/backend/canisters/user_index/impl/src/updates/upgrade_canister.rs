@@ -10,11 +10,10 @@ use utils::canister::CanisterToUpgrade;
 #[update]
 #[instrument(level = "trace")]
 async fn upgrade_canister(_: Args) -> Response {
-    let canister_to_upgrade =
-        match RUNTIME_STATE.with(|state| initialize_upgrade(None, state.borrow_mut().as_mut().unwrap())) {
-            Ok(ok) => ok,
-            Err(response) => return response,
-        };
+    let canister_to_upgrade = match RUNTIME_STATE.with(|state| initialize_upgrade(None, state.borrow_mut().as_mut().unwrap())) {
+        Ok(ok) => ok,
+        Err(response) => return response,
+    };
 
     let canister_id = canister_to_upgrade.canister_id;
     let user_id = canister_id.into();
