@@ -1,14 +1,13 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::UserId;
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub removed_by: UserId,
-    pub blocked: bool,
+    pub alert_id: u32,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success,
+    AlertNotFound,
 }

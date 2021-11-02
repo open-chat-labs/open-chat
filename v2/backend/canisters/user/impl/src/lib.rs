@@ -1,3 +1,4 @@
+use crate::model::alerts::Alerts;
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
 use crate::model::transactions::Transactions;
@@ -103,6 +104,7 @@ struct Data {
     pub transactions: Transactions,
     pub test_mode: bool,
     pub user_preferences: UserPreferences,
+    pub alerts: Alerts,
 }
 
 impl Data {
@@ -130,6 +132,7 @@ impl Data {
             transactions: Transactions::default(),
             test_mode,
             user_preferences: UserPreferences::default(),
+            alerts: Alerts::default(),
         }
     }
 }

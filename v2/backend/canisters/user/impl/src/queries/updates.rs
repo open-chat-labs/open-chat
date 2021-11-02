@@ -263,11 +263,9 @@ fn finalize(
         .map(|s| (s.chat_id, s.into()))
         .collect();
 
-    for group_chat in runtime_state
-        .data
-        .group_chats
-        .get_all(updates_since_option.as_ref().map(|s| s.timestamp))
-    {
+    let since = updates_since_option.as_ref().map(|s| s.timestamp);
+
+    for group_chat in runtime_state.data.group_chats.get_all(since) {
         if has_group_been_deleted(&groups_deleted, &group_chat.chat_id) {
             continue;
         }
@@ -299,11 +297,7 @@ fn finalize(
     let mut chats_added: Vec<_> = group_chats_added.into_values().map(ChatSummary::Group).collect();
     let mut chats_updated: Vec<_> = group_chats_updated.into_values().map(ChatSummaryUpdates::Group).collect();
 
-    for direct_chat in runtime_state
-        .data
-        .direct_chats
-        .get_all(updates_since_option.as_ref().map(|s| s.timestamp))
-    {
+    for direct_chat in runtime_state.data.direct_chats.get_all(since) {
         if direct_chat.date_created > updates_since {
             chats_added.push(ChatSummary::Direct(DirectChatSummary {
                 them: direct_chat.them,
@@ -352,6 +346,8 @@ fn finalize(
         None
     };
 
+    let alerts = runtime_state.data.alerts.get_all(since);
+
     updates::SuccessResult {
         timestamp: now,
         chats_added,
@@ -360,6 +356,7 @@ fn finalize(
         transactions,
         blocked_users,
         cycles_balance,
+        alerts,
     }
 }
 

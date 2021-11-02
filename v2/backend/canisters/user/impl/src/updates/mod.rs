@@ -8,6 +8,7 @@ pub mod c2c_toggle_reaction;
 pub mod c2c_try_add_to_group;
 pub mod create_group;
 pub mod delete_messages;
+pub mod dismiss_alert;
 pub mod edit_message;
 pub mod join_group;
 pub mod leave_group;
