@@ -34,6 +34,7 @@ members = [
     "backend/libraries/http_request",
     "backend/libraries/ledger_utils",
     "backend/libraries/search",
+    "backend/libraries/serializer",
     "backend/libraries/types",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
