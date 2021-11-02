@@ -235,7 +235,7 @@ fn finalize(
         .as_ref()
         .map_or(TimestampMillis::default(), |s| s.timestamp);
 
-    let mut groups_deleted: Vec<DeletedGroupInfo> = group_chats_added.deleted_groups.iter().copied().collect();
+    let mut groups_deleted: Vec<_> = group_chats_added.deleted_groups.iter().copied().collect();
     groups_deleted.extend(group_chats_updated.deleted_groups);
 
     // The list of chats_removed currently consists of deleted groups and groups the user
@@ -346,7 +346,7 @@ fn finalize(
         None
     };
 
-    // Combine the interal alerts with alerts based on deleted groups
+    // Combine the internal alerts with alerts based on deleted groups
     // and sort so the most recent alerts are at the top
     let mut alerts = runtime_state.data.alerts.get_all(since, now);
     for group_deleted in groups_deleted {
