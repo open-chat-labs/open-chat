@@ -238,7 +238,18 @@ fn finalize(
     let mut groups_deleted: Vec<_> = group_chats_added.deleted_groups.iter().copied().collect();
     groups_deleted.extend(group_chats_updated.deleted_groups);
 
-    let chats_removed: Vec<ChatId> = groups_deleted.iter().map(|gd| gd.id).collect();
+    // The list of chats_removed currently consists of deleted groups and groups the user
+    // has been removed from since the given timestamp
+    let chats_removed: Vec<ChatId> = if let Some(since) = updates_since_option {
+        let mut chats_removed: HashSet<ChatId> = groups_deleted.iter().map(|gd| gd.id).collect();
+        let groups_removed = runtime_state.data.group_chats.removed_since(since.timestamp);
+        if !groups_removed.is_empty() {
+            chats_removed.extend(groups_removed.iter());
+        }
+        chats_removed.into_iter().collect()
+    } else {
+        groups_deleted.iter().map(|gd| gd.id).collect()
+    };
 
     let mut group_chats_added: HashMap<ChatId, GroupChatSummary> = group_chats_added
         .summaries

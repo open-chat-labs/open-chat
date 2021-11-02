@@ -10,6 +10,13 @@ const MAX_GROUPS_PER_USER: u32 = 10;
 pub struct GroupChats {
     groups_created: u32,
     group_chats: HashMap<ChatId, GroupChat>,
+    removed: Vec<RemovedGroup>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct RemovedGroup {
+    chat_id: ChatId,
+    timestamp: TimestampMillis,
 }
 
 impl GroupChats {
@@ -41,18 +48,30 @@ impl GroupChats {
         match self.group_chats.entry(chat_id) {
             Vacant(e) => {
                 e.insert(GroupChat::new(chat_id, now));
+                self.removed.retain(|g| g.chat_id != chat_id);
                 true
             }
             Occupied(_) => false,
         }
     }
 
-    pub fn remove(&mut self, chat_id: &ChatId) {
-        self.group_chats.remove(chat_id);
+    pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) {
+        if self.group_chats.remove(&chat_id).is_some() {
+            self.removed.push(RemovedGroup { chat_id, timestamp: now });
+        }
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &GroupChat> {
         self.group_chats.values()
+    }
+
+    pub fn removed_since(&self, timestamp: TimestampMillis) -> Vec<ChatId> {
+        self.removed
+            .iter()
+            .rev()
+            .take_while(|g| g.timestamp > timestamp)
+            .map(|g| g.chat_id)
+            .collect()
     }
 
     pub fn max_groups_created(&self) -> Option<u32> {
