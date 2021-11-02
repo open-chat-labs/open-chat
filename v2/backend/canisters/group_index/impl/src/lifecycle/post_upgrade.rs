@@ -16,7 +16,7 @@ fn post_upgrade() {
     match version {
         StateVersion::V1 => {
             let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
-                serde_cbor::from_slice(&bytes).unwrap();
+                serializer::deserialize(&bytes).unwrap();
 
             init_logger(data.test_mode);
             init_state(env, data);
