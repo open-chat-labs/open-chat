@@ -1,4 +1,4 @@
-use crate::{ChatId, Milliseconds, UserId};
+use crate::{ChatId, CryptocurrencyDeposit, Milliseconds, UserId};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -16,7 +16,7 @@ pub enum AlertDetails {
     RemovedFromGroup(RemovedFromGroup),
     BlockedFromGroup(RemovedFromGroup),
     GroupDeleted(GroupDeleted),
-    DepositReceived(DepositReceived),
+    CryptocurrencyDepositReceived(CryptocurrencyDeposit),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -30,9 +30,6 @@ pub struct GroupDeleted {
     pub chat_id: ChatId,
     pub deleted_by: UserId,
 }
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct DepositReceived {}
 
 pub enum AlertId {
     Internal(u32),
