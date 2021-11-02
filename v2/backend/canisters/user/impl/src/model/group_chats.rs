@@ -55,10 +55,12 @@ impl GroupChats {
         }
     }
 
-    pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) {
-        if self.group_chats.remove(&chat_id).is_some() {
+    pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {
+        let group = self.group_chats.remove(&chat_id);
+        if group.is_some() {
             self.removed.push(RemovedGroup { chat_id, timestamp: now });
         }
+        group
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &GroupChat> {
