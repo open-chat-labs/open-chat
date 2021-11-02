@@ -10,13 +10,8 @@ use utils::canister::CanisterToUpgrade;
 #[update]
 #[instrument(level = "trace")]
 async fn upgrade_canister(_: Args) -> Response {
-    upgrade_canister_internal(None).await
-}
-
-// Called by user (browser) or by heartbeat
-async fn upgrade_canister_internal(user_id: Option<UserId>) -> Response {
     let canister_to_upgrade =
-        match RUNTIME_STATE.with(|state| initialize_upgrade(user_id, state.borrow_mut().as_mut().unwrap())) {
+        match RUNTIME_STATE.with(|state| initialize_upgrade(None, state.borrow_mut().as_mut().unwrap())) {
             Ok(ok) => ok,
             Err(response) => return response,
         };
