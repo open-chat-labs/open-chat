@@ -3,11 +3,11 @@ use serde::Deserialize;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub alert_id: u32,
+    pub alert_ids: Vec<String>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success,
-    AlertNotFound,
+    PartialSuccess(Vec<String>),
 }

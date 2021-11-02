@@ -223,15 +223,15 @@ type SetPreferencesResponse =
         Success;
     };
     
-type DismissAlertArgs =
+type DismissAlertsArgs =
     record {
-        alert_id: nat32;
+        alert_ids: vec text;
     };
 
-type DismissAlertResponse =
+type DismissAlertsResponse =
     variant {
         Success;
-        AlertNotFound;
+        PartialSuccess: vec text;
     };
 
 type InitialStateArgs = 
@@ -397,7 +397,7 @@ service: (InitArgs) -> {
     mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);
     unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
     set_preferences: (SetPreferencesArgs) -> (SetPreferencesResponse);
-    dismiss_alert: (DismissAlertArgs) -> (DismissAlertResponse);
+    dismiss_alerts: (DismissAlertsArgs) -> (DismissAlertsResponse);
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;

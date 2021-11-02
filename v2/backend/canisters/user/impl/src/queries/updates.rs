@@ -8,8 +8,8 @@ use std::collections::hash_map::Entry::Occupied;
 use std::collections::{HashMap, HashSet};
 use tracing::error;
 use types::{
-    CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary, DirectChatSummaryUpdates,
-    GroupChatSummary, GroupChatSummaryUpdates, Milliseconds, TimestampMillis,
+    Alert, AlertDetails, AlertId, CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary,
+    DirectChatSummaryUpdates, GroupChatSummary, GroupChatSummaryUpdates, GroupDeleted, Milliseconds, TimestampMillis,
 };
 use user_canister::{initial_state, updates, updates::UpdatesSince};
 use utils::range_set::convert_to_message_index_ranges;
@@ -235,7 +235,7 @@ fn finalize(
         .as_ref()
         .map_or(TimestampMillis::default(), |s| s.timestamp);
 
-    let mut groups_deleted: Vec<_> = group_chats_added.deleted_groups.iter().copied().collect();
+    let mut groups_deleted: Vec<DeletedGroupInfo> = group_chats_added.deleted_groups.iter().copied().collect();
     groups_deleted.extend(group_chats_updated.deleted_groups);
 
     // The list of chats_removed currently consists of deleted groups and groups the user
@@ -346,7 +346,21 @@ fn finalize(
         None
     };
 
-    let alerts = runtime_state.data.alerts.get_all(since);
+    // Combine the interal alerts with alerts based on deleted groups
+    // and sort so the most recent alerts are at the top
+    let mut alerts = runtime_state.data.alerts.get_all(since, now);
+    for group_deleted in groups_deleted {
+        let alert = Alert {
+            id: AlertId::GroupDeleted(group_deleted.id).to_string(),
+            elapsed: now - group_deleted.timestamp,
+            details: AlertDetails::GroupDeleted(GroupDeleted {
+                chat_id: group_deleted.id,
+                deleted_by: group_deleted.deleted_by,
+            }),
+        };
+        alerts.push(alert);
+    }
+    alerts.sort_by_key(|a| a.elapsed);
 
     updates::SuccessResult {
         timestamp: now,
