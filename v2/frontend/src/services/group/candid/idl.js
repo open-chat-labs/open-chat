@@ -29,6 +29,7 @@ export const idlFactory = ({ IDL }) => {
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({
     'GroupNotPublic' : IDL.Null,
+    'CannotBlockOwner' : IDL.Null,
     'UserNotInGroup' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
@@ -223,6 +224,10 @@ export const idlFactory = ({ IDL }) => {
     'new_name' : IDL.Text,
     'previous_name' : IDL.Text,
   });
+  const OwnershipTransferred = IDL.Record({
+    'old_owner' : UserId,
+    'new_owner' : UserId,
+  });
   const AvatarChanged = IDL.Record({
     'changed_by' : UserId,
     'previous_avatar' : IDL.Opt(IDL.Nat),
@@ -247,6 +252,7 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantLeft' : ParticipantLeft,
     'MessageDeleted' : UpdatedMessage,
     'GroupNameChanged' : GroupNameChanged,
+    'OwnershipTransferred' : OwnershipTransferred,
     'MessageEdited' : UpdatedMessage,
     'AvatarChanged' : AvatarChanged,
     'ParticipantsAdded' : ParticipantsAdded,
@@ -310,6 +316,7 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
+    'CannotRemoveOwner' : IDL.Null,
     'CannotRemoveSelf' : IDL.Null,
     'InternalError' : IDL.Text,
   });
@@ -443,6 +450,13 @@ export const idlFactory = ({ IDL }) => {
     'Added' : EventIndex,
     'Removed' : EventIndex,
   });
+  const TransferOwnershipArgs = IDL.Record({ 'new_owner' : UserId });
+  const TransferOwnershipResponse = IDL.Variant({
+    'UserNotInGroup' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({
     'GroupNotPublic' : IDL.Null,
@@ -530,6 +544,11 @@ export const idlFactory = ({ IDL }) => {
     'toggle_reaction' : IDL.Func(
         [ToggleReactionArgs],
         [ToggleReactionResponse],
+        [],
+      ),
+    'transfer_ownership' : IDL.Func(
+        [TransferOwnershipArgs],
+        [TransferOwnershipResponse],
         [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),

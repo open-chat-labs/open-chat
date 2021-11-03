@@ -44,6 +44,11 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
   });
+  const DismissAlertsArgs = IDL.Record({ 'alert_ids' : IDL.Vec(IDL.Text) });
+  const DismissAlertsResponse = IDL.Variant({
+    'PartialSuccess' : IDL.Vec(IDL.Text),
+    'Success' : IDL.Null,
+  });
   const BlobReference = IDL.Record({
     'blob_id' : IDL.Nat,
     'canister_id' : CanisterId,
@@ -354,8 +359,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const LeaveGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const LeaveGroupResponse = IDL.Variant({
-    'LastAdmin' : IDL.Null,
     'GroupNotFound' : IDL.Null,
+    'OwnerCannotLeave' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
@@ -522,6 +527,26 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
   });
   const UpdatesArgs = IDL.Record({ 'updates_since' : UpdatesSince });
+  const GroupDeletedAlert = IDL.Record({
+    'deleted_by' : UserId,
+    'chat_id' : ChatId,
+  });
+  const RemovedFromGroupAlert = IDL.Record({
+    'chat_id' : ChatId,
+    'removed_by' : UserId,
+  });
+  const AlertDetails = IDL.Variant({
+    'GroupDeleted' : GroupDeletedAlert,
+    'CryptocurrencyDepositReceived' : CryptocurrencyDeposit,
+    'RemovedFromGroup' : RemovedFromGroupAlert,
+    'BlockedFromGroup' : RemovedFromGroupAlert,
+  });
+  const Milliseconds = IDL.Nat64;
+  const Alert = IDL.Record({
+    'id' : IDL.Text,
+    'details' : AlertDetails,
+    'elapsed' : Milliseconds,
+  });
   const GroupChatSummaryUpdates = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
@@ -550,6 +575,7 @@ export const idlFactory = ({ IDL }) => {
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({
       'cycles_balance' : IDL.Opt(Cycles),
+      'alerts' : IDL.Vec(Alert),
       'chats_updated' : IDL.Vec(ChatSummaryUpdates),
       'blocked_users' : IDL.Vec(UserId),
       'chats_added' : IDL.Vec(ChatSummary),
@@ -564,6 +590,11 @@ export const idlFactory = ({ IDL }) => {
     'delete_messages' : IDL.Func(
         [DeleteMessagesArgs],
         [DeleteMessagesResponse],
+        [],
+      ),
+    'dismiss_alerts' : IDL.Func(
+        [DismissAlertsArgs],
+        [DismissAlertsResponse],
         [],
       ),
     'edit_message' : IDL.Func([EditMessageArgs], [EditMessageResponse], []),

@@ -680,9 +680,9 @@ type Alert =
 
 type AlertDetails =
     variant {
-        RemovedFromGroup: RemovedFromGroup;
-        BlockedFromGroup: RemovedFromGroup;
-        GroupDeleted: GroupDeleted;
+        RemovedFromGroup: RemovedFromGroupAlert;
+        BlockedFromGroup: RemovedFromGroupAlert;
+        GroupDeleted: GroupDeletedAlert;
         CryptocurrencyDepositReceived: CryptocurrencyDeposit;
     };
 

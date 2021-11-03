@@ -160,7 +160,7 @@ export const idlFactory = ({ IDL }) => {
     'UserNotCreated' : IDL.Null,
     'Success' : IDL.Null,
     'UpgradeNotRequired' : IDL.Null,
-    'InternalError' : IDL.Null,
+    'InternalError' : IDL.Text,
     'UserNotFound' : IDL.Null,
   });
   const UserArgs = IDL.Record({
