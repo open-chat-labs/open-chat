@@ -17,6 +17,7 @@ import type {
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
+    TransferOwnershipResponse,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
@@ -45,4 +46,5 @@ export interface IGroupClient {
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     getGroupDetails(): Promise<GroupChatDetailsResponse>;
     getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails>;
+    transferOwnership(userId: string): Promise<TransferOwnershipResponse>;
 }

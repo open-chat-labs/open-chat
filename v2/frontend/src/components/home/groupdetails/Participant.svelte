@@ -5,6 +5,7 @@
     import AccountRemoveOutline from "svelte-material-icons/AccountRemoveOutline.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
+    import AccountArrowLeftOutline from "svelte-material-icons/AccountArrowLeftOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import AccountLock from "svelte-material-icons/AccountLock.svelte";
     import { AvatarSize } from "../../../domain/user/user";
@@ -31,6 +32,10 @@
 
     function removeUser() {
         dispatch("removeParticipant", participant.userId);
+    }
+
+    function transferOwnership() {
+        dispatch("transferOwnership", participant);
     }
 
     function dismissAsAdmin() {
@@ -65,7 +70,7 @@
             status={getUserStatus($userStore, participant.userId)}
             size={AvatarSize.Small} />
 
-        {#if participant.role === "admin"}
+        {#if participant.role === "admin" || participant.role === "owner"}
             <div class="admin">
                 <AccountLock size={"1.2em"} color={"#fff"} />
             </div>
@@ -74,7 +79,7 @@
     <h4 class="details" class:blocked={participant.kind === "blocked_participant"}>
         {me ? $_("you") : participant.username ?? $_("unknownUser")}
     </h4>
-    {#if !me && myRole === "admin"}
+    {#if !me && (myRole === "admin" || myRole === "owner")}
         <span class="menu">
             <MenuIcon>
                 <span slot="icon">
@@ -105,15 +110,29 @@
                                     <div slot="text">{$_("makeAdmin")}</div>
                                 </MenuItem>
                             {/if}
-                            {#if publicGroup}
-                                <MenuItem on:click={blockUser}>
-                                    <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
-                                    <div slot="text">{$_("blockUser")}</div>
-                                </MenuItem>
-                            {:else}
-                                <MenuItem on:click={removeUser}>
-                                    <MinusCircleOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                                    <div slot="text">{$_("remove")}</div>
+                            {#if participant.role !== "owner"}
+                                {#if publicGroup}
+                                    <MenuItem on:click={blockUser}>
+                                        <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <div slot="text">{$_("blockUser")}</div>
+                                    </MenuItem>
+                                {:else}
+                                    <MenuItem on:click={removeUser}>
+                                        <MinusCircleOutline
+                                            size={"1.2em"}
+                                            color={"#aaa"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("remove")}</div>
+                                    </MenuItem>
+                                {/if}
+                            {/if}
+                            {#if myRole === "owner"}
+                                <MenuItem on:click={transferOwnership}>
+                                    <AccountArrowLeftOutline
+                                        size={"1.2em"}
+                                        color={"#aaa"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("transferOwnership")}</div>
                                 </MenuItem>
                             {/if}
                         {/if}

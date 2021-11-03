@@ -737,6 +737,12 @@ export type MakeAdminResponse =
     | "not_authorised"
     | "success";
 
+export type TransferOwnershipResponse =
+    | "user_not_in_group"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "success";
+
 export type RemoveAdminResponse =
     | "user_not_in_group"
     | "caller_not_in_group"

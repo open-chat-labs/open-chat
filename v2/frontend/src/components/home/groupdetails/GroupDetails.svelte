@@ -32,7 +32,7 @@
     $: descDirty = updatedGroup.desc !== $chat.description;
     $: avatarDirty = updatedGroup.avatar?.blobUrl !== $chat.blobUrl;
     $: dirty = nameDirty || descDirty || avatarDirty;
-    $: canEdit = $chat.myRole === "admin";
+    $: canEdit = $chat.myRole === "admin" || $chat.myRole === "owner";
 
     function close() {
         if (dirty && !confirmed) {

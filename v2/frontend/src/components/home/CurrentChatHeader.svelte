@@ -80,11 +80,10 @@
 
     function leaveGroup() {
         if ($selectedChatSummary.kind === "group_chat") {
-            const numAdmins = $participants.filter((p) => p.role === "admin").length;
-            if (numAdmins > 1) {
-                dispatch("leaveGroup", $selectedChatSummary.chatId);
+            if ($selectedChatSummary.myRole === "owner") {
+                toastStore.showFailureToast("ownerCantLeave");
             } else {
-                toastStore.showFailureToast("lastAdmin");
+                dispatch("leaveGroup", $selectedChatSummary.chatId);
             }
         }
     }
@@ -144,7 +143,7 @@
     }
 
     function canAddParticipants(chat: GroupChatSummary): boolean {
-        return chat.public || chat.myRole === "admin";
+        return chat.public || chat.myRole === "admin" || chat.myRole === "owner";
     }
 
     $: chat = normaliseChatSummary($selectedChatSummary);

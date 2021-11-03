@@ -45,6 +45,7 @@ import type {
     RemoveAdminResponse,
     GroupChatDetailsResponse,
     GroupChatDetails,
+    TransferOwnershipResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -492,6 +493,10 @@ export class ServiceContainer implements MarkMessagesRead {
 
     makeAdmin(chatId: string, userId: string): Promise<MakeAdminResponse> {
         return this.getGroupClient(chatId).makeAdmin(userId);
+    }
+
+    transferOwnership(chatId: string, userId: string): Promise<TransferOwnershipResponse> {
+        return this.getGroupClient(chatId).transferOwnership(userId);
     }
 
     dismissAsAdmin(chatId: string, userId: string): Promise<RemoveAdminResponse> {

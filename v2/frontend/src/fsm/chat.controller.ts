@@ -8,6 +8,7 @@ import type {
     EnhancedReplyContext,
     EventsResponse,
     EventWrapper,
+    FullParticipant,
     GroupChatDetails,
     LocalReaction,
     Message,
@@ -673,6 +674,57 @@ export class ChatController {
             .catch((err) => {
                 rollbar.error("Unable to dismiss as admin", err);
                 toastStore.showFailureToast("dismissAsAdminFailed");
+            });
+    }
+
+    private transferOwnershipLocally(me: string, them: string): void {
+        this.participants.update((ps) =>
+            ps.map((p) => {
+                if (p.userId === them) {
+                    return { ...p, role: "owner" };
+                }
+                if (p.userId === me) {
+                    return { ...p, role: "admin" };
+                }
+                return p;
+            })
+        );
+    }
+
+    private undoTransferOwnershipLocally(
+        me: string,
+        them: string,
+        theirRole: ParticipantRole
+    ): void {
+        this.participants.update((ps) =>
+            ps.map((p) => {
+                if (p.userId === them) {
+                    return { ...p, role: theirRole };
+                }
+                if (p.userId === me) {
+                    return { ...p, role: "owner" };
+                }
+                return p;
+            })
+        );
+    }
+
+    transferOwnership(me: string, them: FullParticipant): Promise<boolean> {
+        this.transferOwnershipLocally(me, them.userId);
+        return this.api
+            .transferOwnership(this.chatId, them.userId)
+            .then((resp) => {
+                if (resp !== "success") {
+                    rollbar.warn("Unable to transfer ownership", resp);
+                    this.undoTransferOwnershipLocally(me, them.userId, them.role);
+                    return false;
+                }
+                return true;
+            })
+            .catch((err) => {
+                this.undoTransferOwnershipLocally(me, them.userId, them.role);
+                rollbar.error("Unable to make admin", err);
+                return false;
             });
     }
 
