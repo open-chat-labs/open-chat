@@ -9,7 +9,7 @@
             "type": "image/png"
         },
         {
-            "src": "/_/raw/oc-logo2.svg",
+            "src": "oc-logo2.svg",
             "purpose": "maskable any",
             "type": "image/svg+xml",
             "sizes": "any"

@@ -13,6 +13,7 @@ export const idlFactory = ({ IDL }) => {
     'chat_ids' : IDL.Vec(ChatId),
   });
   const ActiveGroupsSuccessResult = IDL.Record({
+    'deleted_groups' : IDL.Vec(ChatId),
     'active_groups' : IDL.Vec(ChatId),
   });
   const ActiveGroupsResponse = IDL.Variant({

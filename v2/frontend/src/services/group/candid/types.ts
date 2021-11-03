@@ -132,6 +132,10 @@ export type CyclesTransfer = { 'Failed' : FailedCyclesTransfer } |
 export type CyclesWithdrawal = { 'Failed' : FailedCyclesWithdrawal } |
   { 'Completed' : CompletedCyclesWithdrawal } |
   { 'Pending' : PendingCyclesWithdrawal };
+export type DeleteGroupArgs = {};
+export type DeleteGroupResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : null };
 export interface DeleteMessagesArgs { 'message_ids' : Array<MessageId> }
 export type DeleteMessagesResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : null };
@@ -683,6 +687,7 @@ export interface _SERVICE {
       AddParticipantsResponse
     >,
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
+  'delete_group' : (arg_0: DeleteGroupArgs) => Promise<DeleteGroupResponse>,
   'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
       DeleteMessagesResponse
     >,

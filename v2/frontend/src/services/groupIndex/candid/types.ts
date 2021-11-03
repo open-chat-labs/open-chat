@@ -5,7 +5,10 @@ export interface ActiveGroupsArgs {
   'chat_ids' : Array<ChatId>,
 }
 export type ActiveGroupsResponse = { 'Success' : ActiveGroupsSuccessResult };
-export interface ActiveGroupsSuccessResult { 'active_groups' : Array<ChatId> }
+export interface ActiveGroupsSuccessResult {
+  'deleted_groups' : Array<ChatId>,
+  'active_groups' : Array<ChatId>,
+}
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],

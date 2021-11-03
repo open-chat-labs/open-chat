@@ -36,6 +36,12 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'CannotBlockSelf' : IDL.Null,
   });
+  const DeleteGroupArgs = IDL.Record({});
+  const DeleteGroupResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Null,
+  });
   const MessageId = IDL.Nat;
   const DeleteMessagesArgs = IDL.Record({ 'message_ids' : IDL.Vec(MessageId) });
   const DeleteMessagesResponse = IDL.Variant({
@@ -476,6 +482,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
+    'delete_group' : IDL.Func([DeleteGroupArgs], [DeleteGroupResponse], []),
     'delete_messages' : IDL.Func(
         [DeleteMessagesArgs],
         [DeleteMessagesResponse],
