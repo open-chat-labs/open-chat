@@ -24,8 +24,8 @@ fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
         None => return CallerNotInGroup,
     };
 
-    if participant.role.is_admin() && runtime_state.data.participants.admin_count() <= 1 {
-        return LastAdmin;
+    if participant.role.is_owner() {
+        return OwnerCannotLeave;
     }
 
     runtime_state.data.participants.remove(caller);

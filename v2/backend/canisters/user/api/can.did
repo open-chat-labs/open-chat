@@ -175,7 +175,7 @@ type LeaveGroupResponse =
         GroupNotFound;
         InternalError: text;
         CallerNotInGroup;
-        LastAdmin;
+        OwnerCannotLeave;
     }; 
 
 type SetAvatarArgs =

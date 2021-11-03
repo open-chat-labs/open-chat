@@ -16,6 +16,7 @@ mod remove_admin;
 mod remove_participant;
 mod send_message;
 mod toggle_reaction;
+mod transfer_ownership;
 mod unblock_user;
 mod update_group;
 mod wallet_receive;

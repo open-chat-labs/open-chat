@@ -72,6 +72,7 @@ type BlockUserResponse =
         Success;
         CallerNotInGroup;
         CannotBlockSelf;
+        CannotBlockOwner;
         GroupNotPublic;
         InternalError: text;
         NotAuthorized;
@@ -135,6 +136,7 @@ type RemoveParticipantResponse =
         Success;
         CallerNotInGroup;
         CannotRemoveSelf;
+        CannotRemoveOwner;
         InternalError: text;
         NotAuthorized;
         UserNotInGroup;
@@ -214,6 +216,19 @@ type DeleteGroupResponse =
         Success;
         NotAuthorized;
         InternalError;
+    };
+
+type TransferOwnershipArgs =
+    record {
+        new_owner: UserId;
+    };
+
+type TransferOwnershipResponse =
+    variant {
+        Success;
+        CallerNotInGroup;
+        UserNotInGroup;
+        NotAuthorized;
     };
 
 type SelectedInitialArgs =
@@ -341,6 +356,10 @@ type SearchMessagesSuccessResult =
     };
 
 service: {
+    // Owner only
+    delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);
+    transfer_ownership: (TransferOwnershipArgs) -> (TransferOwnershipResponse);
+
     // Admin only
     block_user: (BlockUserArgs) -> (BlockUserResponse); // public only
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
@@ -348,7 +367,6 @@ service: {
     remove_admin: (RemoveAdminArgs) -> (RemoveAdminResponse);
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group: (UpdateGroupArgs) -> (UpdateGroupResponse);
-    delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);
 
     // Can be called by admins or regular users of public groups
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse); 

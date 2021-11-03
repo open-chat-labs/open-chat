@@ -159,6 +159,7 @@ type GroupChatEvent =
         GroupNameChanged: GroupNameChanged;
         GroupDescriptionChanged: GroupDescriptionChanged;
         AvatarChanged: AvatarChanged;
+        OwnershipTransferred: OwnershipTransferred;
         ParticipantsAdded: ParticipantsAdded;
         ParticipantsRemoved: ParticipantsRemoved;
         ParticipantJoined: ParticipantJoined;
@@ -365,6 +366,12 @@ type ParticipantsDismissedAsAdmin =
     record {
         user_ids: vec UserId;
         dismissed_by: UserId;
+    };
+
+type OwnershipTransferred =
+    record {
+        old_owner: UserId;
+        new_owner: UserId;
     };
 
 type ParticipantsPromotedToAdmin =
