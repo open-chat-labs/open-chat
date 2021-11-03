@@ -637,6 +637,67 @@ type FailedICPTransfer =
         error_message: text;
     };
 
+// Preferences
+type OptionalUserPreferences =
+    record {
+        enter_key_sends: opt bool;
+        enable_animations: opt bool;
+        night_mode: opt NightMode;
+        large_emoji: opt bool;
+        use_system_emoji: opt bool;
+        generate_link_previews: opt bool;
+        notification_preferences: opt record {
+            direct_chats: opt bool;
+            private_group_chats: opt bool;
+            public_group_chats: opt bool;
+            silent: opt bool;
+            vibrate: opt bool;
+        };
+        language: opt text;
+    };
+
+type NightMode =
+    variant {
+        On;
+        Off;
+        Auto;
+    };
+
+// Alerts
+type Alert =
+    record {
+        id: text;
+        elapsed: Milliseconds;
+        details: AlertDetails;
+    };
+
+type AlertDetails =
+    variant {
+        RemovedFromGroup: RemovedFromGroup;
+        BlockedFromGroup: RemovedFromGroup;
+        GroupDeleted: GroupDeleted;
+        CryptocurrencyDepositReceived: CryptocurrencyDeposit;
+    };
+
+type RemovedFromGroupAlert =
+    record {
+        chat_id: ChatId;
+        removed_by: UserId;
+    };
+
+type GroupDeletedAlert =
+    record {
+        chat_id: ChatId;
+        deleted_by: UserId;
+    };
+
+type AlertId =
+    variant {
+        Internal: nat32;
+        GroupDeleted: ChatId;
+    };
+
+
 // TODO Delete the V1 stuff below
 
 type V1GroupId = nat;
@@ -729,29 +790,4 @@ type VideoContent =
         mime_type: text;
         image_blob_reference: opt BlobReference;
         video_blob_reference: opt BlobReference;
-    };
-
-type OptionalUserPreferences =
-    record {
-        enter_key_sends: opt bool;
-        enable_animations: opt bool;
-        night_mode: opt NightMode;
-        large_emoji: opt bool;
-        use_system_emoji: opt bool;
-        generate_link_previews: opt bool;
-        notification_preferences: opt record {
-            direct_chats: opt bool;
-            private_group_chats: opt bool;
-            public_group_chats: opt bool;
-            silent: opt bool;
-            vibrate: opt bool;
-        };
-        language: opt text;
-    };
-
-type NightMode =
-    variant {
-        On;
-        Off;
-        Auto;
     };
