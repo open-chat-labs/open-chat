@@ -22,7 +22,7 @@
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary, GroupChatSummary, Participant } from "../../domain/chat/chat";
+    import type { ChatSummary, GroupChatSummary } from "../../domain/chat/chat";
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
