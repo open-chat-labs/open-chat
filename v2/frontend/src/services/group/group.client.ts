@@ -20,6 +20,7 @@ import type {
     GroupChatDetailsResponse,
     UnblockUserResponse,
     TransferOwnershipResponse,
+    DeleteGroupResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -38,6 +39,7 @@ import {
     groupDetailsUpdatesResponse,
     unblockUserResponse,
     transferOwnershipResponse,
+    deleteGroupResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -289,5 +291,9 @@ export class GroupClient extends CandidService implements IGroupClient {
             }),
             transferOwnershipResponse
         );
+    }
+
+    deleteGroup(): Promise<DeleteGroupResponse> {
+        return this.handleResponse(this.groupService.delete_group({}), deleteGroupResponse);
     }
 }

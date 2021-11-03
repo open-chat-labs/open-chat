@@ -17,6 +17,7 @@ import type {
     ApiSelectedUpdatesResponse,
     ApiRole,
     ApiTransferOwnershipResponse,
+    ApiDeleteGroupResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -39,6 +40,7 @@ import type {
     UnblockUserResponse,
     ParticipantRole,
     TransferOwnershipResponse,
+    DeleteGroupResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -107,6 +109,19 @@ export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupC
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
+}
+
+export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroupResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteGroupResponse type received", candid);
 }
 
 export function transferOwnershipResponse(

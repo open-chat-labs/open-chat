@@ -6,6 +6,7 @@
     import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
+    import DeleteAlertOutline from "svelte-material-icons/DeleteAlertOutline.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -30,7 +31,6 @@
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: Writable<ChatSummary>;
-    export let participants: Writable<Participant[]>;
     export let blocked: boolean;
     export let unreadMessages: number;
 
@@ -46,6 +46,10 @@
 
     function markAllRead() {
         dispatch("markAllRead");
+    }
+
+    function deleteGroup() {
+        dispatch("deleteGroup");
     }
 
     function blockUser() {
@@ -206,6 +210,12 @@
                             </MenuItem>
                         {/if}
                     {:else if $selectedChatSummary.kind === "group_chat"}
+                        {#if $selectedChatSummary.myRole === "owner"}
+                            <MenuItem on:click={deleteGroup}>
+                                <DeleteAlertOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <div slot="text">{$_("deleteGroup")}</div>
+                            </MenuItem>
+                        {/if}
                         <MenuItem on:click={showGroupDetails}>
                             <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("groupDetails")}</div>

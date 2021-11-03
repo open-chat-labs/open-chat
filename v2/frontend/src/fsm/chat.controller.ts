@@ -723,7 +723,23 @@ export class ChatController {
             })
             .catch((err) => {
                 this.undoTransferOwnershipLocally(me, them.userId, them.role);
-                rollbar.error("Unable to make admin", err);
+                rollbar.error("Unable to transfer ownership", err);
+                return false;
+            });
+    }
+
+    deleteGroup(): Promise<boolean> {
+        return this.api
+            .deleteGroup(this.chatId)
+            .then((resp) => {
+                if (resp !== "success") {
+                    rollbar.warn("Unable to delete group", resp);
+                    return false;
+                }
+                return true;
+            })
+            .catch((err) => {
+                rollbar.error("Unable to delete group", err);
                 return false;
             });
     }

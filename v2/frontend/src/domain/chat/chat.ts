@@ -743,6 +743,8 @@ export type TransferOwnershipResponse =
     | "not_authorised"
     | "success";
 
+export type DeleteGroupResponse = "internal_error" | "not_authorised" | "success";
+
 export type RemoveAdminResponse =
     | "user_not_in_group"
     | "caller_not_in_group"

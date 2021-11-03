@@ -39,6 +39,7 @@
         background-color: var(--button-bg);
         padding: $sp4;
         width: 75%;
+        max-width: 800px;
         margin: 0 $sp4;
         display: flex;
         justify-content: center;

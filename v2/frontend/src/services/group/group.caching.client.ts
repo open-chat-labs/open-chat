@@ -17,6 +17,7 @@ import type {
     GroupChatDetailsResponse,
     UnblockUserResponse,
     TransferOwnershipResponse,
+    DeleteGroupResponse,
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -146,5 +147,9 @@ export class CachingGroupClient implements IGroupClient {
 
     transferOwnership(userId: string): Promise<TransferOwnershipResponse> {
         return this.client.transferOwnership(userId);
+    }
+
+    deleteGroup(): Promise<DeleteGroupResponse> {
+        return this.deleteGroup();
     }
 }
