@@ -143,8 +143,11 @@
     </div>
 </form>
 <div class="cta">
-    <Button fill={true} disabled={!valid || creatingCanister} loading={creatingCanister}
-        >{$_("submitNewGroup")}</Button>
+    <Button
+        on:click={chooseParticipants}
+        fill={true}
+        disabled={!valid || creatingCanister}
+        loading={creatingCanister}>{$_("submitNewGroup")}</Button>
 </div>
 
 <style type="text/scss">
