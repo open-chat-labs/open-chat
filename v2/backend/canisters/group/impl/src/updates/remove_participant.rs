@@ -17,7 +17,11 @@ async fn remove_participant(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let response = user_canister_c2c_client::c2c_remove_from_group(args.user_id.into(), &c2c_remove_from_group::Args {}).await;
+    let c2c_remove_from_group_args = c2c_remove_from_group::Args {
+        removed_by: prepare_result.removed_by,
+        blocked: false,
+    };
+    let response = user_canister_c2c_client::c2c_remove_from_group(args.user_id.into(), &c2c_remove_from_group_args).await;
     if let Err(error) = response {
         return InternalError(format!("{:?}", error));
     }
@@ -39,9 +43,15 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
         } else if participant.role.can_remove_participants() {
             match runtime_state.data.participants.get_by_user_id(&args.user_id) {
                 None => Err(UserNotInGroup),
-                Some(_) => Ok(PrepareResult {
-                    removed_by: participant.user_id,
-                }),
+                Some(participant_to_remove) => {
+                    if participant_to_remove.role.is_owner() {
+                        Err(CannotRemoveOwner)
+                    } else {
+                        Ok(PrepareResult {
+                            removed_by: participant.user_id,
+                        })
+                    }
+                }
             }
         } else {
             Err(NotAuthorized)

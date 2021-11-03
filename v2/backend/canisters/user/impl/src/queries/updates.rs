@@ -8,8 +8,8 @@ use std::collections::hash_map::Entry::Occupied;
 use std::collections::{HashMap, HashSet};
 use tracing::error;
 use types::{
-    CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary, DirectChatSummaryUpdates,
-    GroupChatSummary, GroupChatSummaryUpdates, Milliseconds, TimestampMillis,
+    Alert, AlertDetails, AlertId, CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary,
+    DirectChatSummaryUpdates, GroupChatSummary, GroupChatSummaryUpdates, GroupDeleted, Milliseconds, TimestampMillis,
 };
 use user_canister::{initial_state, updates, updates::UpdatesSince};
 use utils::range_set::convert_to_message_index_ranges;
@@ -263,11 +263,9 @@ fn finalize(
         .map(|s| (s.chat_id, s.into()))
         .collect();
 
-    for group_chat in runtime_state
-        .data
-        .group_chats
-        .get_all(updates_since_option.as_ref().map(|s| s.timestamp))
-    {
+    let since = updates_since_option.as_ref().map(|s| s.timestamp);
+
+    for group_chat in runtime_state.data.group_chats.get_all(since) {
         if has_group_been_deleted(&groups_deleted, &group_chat.chat_id) {
             continue;
         }
@@ -299,11 +297,7 @@ fn finalize(
     let mut chats_added: Vec<_> = group_chats_added.into_values().map(ChatSummary::Group).collect();
     let mut chats_updated: Vec<_> = group_chats_updated.into_values().map(ChatSummaryUpdates::Group).collect();
 
-    for direct_chat in runtime_state
-        .data
-        .direct_chats
-        .get_all(updates_since_option.as_ref().map(|s| s.timestamp))
-    {
+    for direct_chat in runtime_state.data.direct_chats.get_all(since) {
         if direct_chat.date_created > updates_since {
             chats_added.push(ChatSummary::Direct(DirectChatSummary {
                 them: direct_chat.them,
@@ -352,6 +346,22 @@ fn finalize(
         None
     };
 
+    // Combine the internal alerts with alerts based on deleted groups
+    // and sort so the most recent alerts are at the top
+    let mut alerts = runtime_state.data.alerts.get_all(since, now);
+    for group_deleted in groups_deleted {
+        let alert = Alert {
+            id: AlertId::GroupDeleted(group_deleted.id).to_string(),
+            elapsed: now - group_deleted.timestamp,
+            details: AlertDetails::GroupDeleted(GroupDeleted {
+                chat_id: group_deleted.id,
+                deleted_by: group_deleted.deleted_by,
+            }),
+        };
+        alerts.push(alert);
+    }
+    alerts.sort_by_key(|a| a.elapsed);
+
     updates::SuccessResult {
         timestamp: now,
         chats_added,
@@ -360,6 +370,7 @@ fn finalize(
         transactions,
         blocked_users,
         cycles_balance,
+        alerts,
     }
 }
 

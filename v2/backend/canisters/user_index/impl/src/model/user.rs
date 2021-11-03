@@ -48,6 +48,28 @@ impl User {
         }
     }
 
+    pub fn upgrade_in_progress(&self) -> bool {
+        match self {
+            User::Unconfirmed(_) => false,
+            User::Confirmed(u) => u.upgrade_in_progress,
+            User::Created(u) => u.upgrade_in_progress,
+        }
+    }
+
+    pub fn wasm_version(&self) -> Option<Version> {
+        match self {
+            User::Confirmed(u) => {
+                if let CanisterCreationStatusInternal::Created(_, v, _) = u.canister_creation_status {
+                    Some(v)
+                } else {
+                    None
+                }
+            }
+            User::Created(u) => Some(u.wasm_version),
+            _ => None,
+        }
+    }
+
     pub fn created_user(&self) -> Option<&CreatedUser> {
         match self {
             User::Created(u) => Some(u),
@@ -82,6 +104,14 @@ impl User {
                     u.wasm_version = version;
                 }
             }
+            User::Confirmed(u) => {
+                u.upgrade_in_progress = upgrade_in_progress;
+                if let Some(version) = new_version {
+                    if let CanisterCreationStatusInternal::Created(_, v, _) = &mut u.canister_creation_status {
+                        *v = version;
+                    }
+                }
+            }
             _ => return false,
         }
         true
@@ -111,8 +141,9 @@ pub struct ConfirmedUser {
     pub principal: Principal,
     pub phone_number: PhoneNumber,
     pub username: Option<String>,
-    pub canister_creation_status: CanisterCreationStatusInternal,
     pub date_confirmed: TimestampMillis,
+    pub canister_creation_status: CanisterCreationStatusInternal,
+    pub upgrade_in_progress: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -164,6 +195,7 @@ impl Default for ConfirmedUser {
             phone_number: PhoneNumber::new(44, "000".to_owned()),
             username: None,
             canister_creation_status: CanisterCreationStatusInternal::Pending(None),
+            upgrade_in_progress: false,
             date_confirmed: 0,
         }
     }

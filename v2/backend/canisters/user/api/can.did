@@ -175,7 +175,7 @@ type LeaveGroupResponse =
         GroupNotFound;
         InternalError: text;
         CallerNotInGroup;
-        LastAdmin;
+        OwnerCannotLeave;
     }; 
 
 type SetAvatarArgs =
@@ -223,6 +223,17 @@ type SetPreferencesResponse =
         Success;
     };
     
+type DismissAlertsArgs =
+    record {
+        alert_ids: vec text;
+    };
+
+type DismissAlertsResponse =
+    variant {
+        Success;
+        PartialSuccess: vec text;
+    };
+
 type InitialStateArgs = 
     record {
     };
@@ -265,6 +276,7 @@ type UpdatesResponse =
             transactions: vec Transaction;
             blocked_users: vec UserId;
             cycles_balance: opt Cycles;
+            alerts: vec Alert;
         }
     };
 
@@ -385,6 +397,7 @@ service: (InitArgs) -> {
     mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);
     unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
     set_preferences: (SetPreferencesArgs) -> (SetPreferencesResponse);
+    dismiss_alerts: (DismissAlertsArgs) -> (DismissAlertsResponse);
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;

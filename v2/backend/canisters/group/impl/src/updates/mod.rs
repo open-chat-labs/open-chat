@@ -16,8 +16,10 @@ mod remove_admin;
 mod remove_participant;
 mod send_message;
 mod toggle_reaction;
+mod transfer_ownership;
 mod unblock_user;
 mod update_group;
+mod wallet_receive;
 
 // If needed, notify the group index canister that there has been activity in this group
 fn handle_activity_notification(runtime_state: &mut RuntimeState) {

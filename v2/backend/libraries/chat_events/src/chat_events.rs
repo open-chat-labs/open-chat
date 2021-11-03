@@ -37,6 +37,7 @@ pub enum ChatEventInternal {
     GroupNameChanged(Box<GroupNameChanged>),
     GroupDescriptionChanged(Box<GroupDescriptionChanged>),
     AvatarChanged(Box<AvatarChanged>),
+    OwnershipTransferred(Box<OwnershipTransferred>),
     ParticipantsAdded(Box<ParticipantsAdded>),
     ParticipantsRemoved(Box<ParticipantsRemoved>),
     ParticipantJoined(Box<ParticipantJoined>),
@@ -72,6 +73,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::GroupNameChanged(_)
                 | ChatEventInternal::GroupDescriptionChanged(_)
                 | ChatEventInternal::AvatarChanged(_)
+                | ChatEventInternal::OwnershipTransferred(_)
                 | ChatEventInternal::ParticipantsAdded(_)
                 | ChatEventInternal::ParticipantsRemoved(_)
                 | ChatEventInternal::ParticipantJoined(_)

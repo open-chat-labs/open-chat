@@ -38,6 +38,10 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     // Iterate through the new events starting from most recent
     for event_wrapper in data.events.since(args.updates_since).iter().rev() {
         match &event_wrapper.event {
+            ChatEventInternal::OwnershipTransferred(e) => {
+                user_updates_handler.mark_participant_updated(&mut result, e.old_owner, false);
+                user_updates_handler.mark_participant_updated(&mut result, e.new_owner, false);
+            }
             ChatEventInternal::ParticipantsAdded(p) => {
                 for user_id in p.user_ids.iter() {
                     user_updates_handler.mark_participant_updated(&mut result, *user_id, false);

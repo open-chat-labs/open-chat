@@ -1,5 +1,6 @@
 use candid::Principal;
 
+mod alert;
 mod avatar;
 mod canister_creation_status;
 mod canister_upgrade_status;
@@ -35,6 +36,7 @@ mod user_preferences;
 mod user_summary;
 mod version;
 
+pub use alert::*;
 pub use avatar::*;
 pub use canister_creation_status::*;
 pub use canister_upgrade_status::*;

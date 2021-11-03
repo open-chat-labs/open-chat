@@ -10,3 +10,4 @@ pub mod set_username;
 pub mod submit_phone_number;
 pub mod update_user_canister_wasm;
 pub mod upgrade_canister;
+pub mod wallet_receive;

@@ -2159,6 +2159,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_logger",
+ "cycles_utils",
  "http_request",
  "ic-cdk 0.3.2",
  "ic-cdk-macros 0.3.2",
@@ -2283,6 +2284,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_logger",
+ "cycles_utils",
  "http_request",
  "ic-cdk 0.3.2",
  "ic-cdk-macros 0.3.2",
@@ -4201,6 +4203,7 @@ dependencies = [
  "candid",
  "canister_logger",
  "cycles_utils",
+ "futures",
  "http_request",
  "ic-cdk 0.3.2",
  "ic-cdk-macros 0.3.2",

@@ -10,6 +10,7 @@ pub enum GroupChatEvent {
     GroupNameChanged(GroupNameChanged),
     GroupDescriptionChanged(GroupDescriptionChanged),
     AvatarChanged(AvatarChanged),
+    OwnershipTransferred(OwnershipTransferred),
     ParticipantsAdded(ParticipantsAdded),
     ParticipantsRemoved(ParticipantsRemoved),
     ParticipantJoined(ParticipantJoined),
@@ -103,6 +104,12 @@ pub struct ParticipantLeft {
 pub struct ParticipantsPromotedToAdmin {
     pub user_ids: Vec<UserId>,
     pub promoted_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct OwnershipTransferred {
+    pub old_owner: UserId,
+    pub new_owner: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

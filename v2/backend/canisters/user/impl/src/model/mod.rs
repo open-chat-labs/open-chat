@@ -1,3 +1,4 @@
+pub mod alerts;
 pub mod direct_chat;
 pub mod direct_chats;
 pub mod group_chat;

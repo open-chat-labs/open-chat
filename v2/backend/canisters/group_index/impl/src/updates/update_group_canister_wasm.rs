@@ -29,7 +29,7 @@ fn update_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState)
             .map(|g| g.id())
             .chain(runtime_state.data.private_groups.iter().map(|g| g.id()))
         {
-            runtime_state.data.canisters_requiring_upgrade.enqueue(chat_id);
+            runtime_state.data.canisters_requiring_upgrade.enqueue(chat_id.into());
         }
         Success
     }

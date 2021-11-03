@@ -1,4 +1,3 @@
-use crate::model::canisters_requiring_upgrade::CanistersRequiringUpgrade;
 use crate::model::deleted_groups::DeletedGroups;
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
@@ -8,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMillis, Version};
-use utils::canister;
+use utils::canister::{self, CanistersRequiringUpgrade};
 use utils::env::Environment;
 use utils::memory;
 use utils::time::MINUTE_IN_MS;

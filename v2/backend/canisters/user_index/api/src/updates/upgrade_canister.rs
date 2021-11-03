@@ -11,5 +11,5 @@ pub enum Response {
     UserNotCreated,
     UpgradeNotRequired,
     UpgradeInProgress,
-    InternalError,
+    InternalError(String),
 }
