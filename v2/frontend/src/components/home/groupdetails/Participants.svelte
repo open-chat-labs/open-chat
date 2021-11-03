@@ -62,7 +62,7 @@
                     users.push({
                         kind: "blocked_participant",
                         ...user,
-                        role: "standard",
+                        role: "participant",
                     });
                 }
             });

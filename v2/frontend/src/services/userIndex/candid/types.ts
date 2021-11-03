@@ -464,7 +464,8 @@ export type ResendCodeResponse = { 'AlreadyClaimed' : null } |
   { 'Success' : null } |
   { 'UserNotFound' : null };
 export type Role = { 'Participant' : null } |
-  { 'Admin' : null };
+  { 'Admin' : null } |
+  { 'Owner' : null };
 export interface SearchArgs { 'max_results' : number, 'search_term' : string }
 export type SearchResponse = { 'Success' : { 'users' : Array<UserSummary> } };
 export interface SetUsernameArgs { 'username' : string }

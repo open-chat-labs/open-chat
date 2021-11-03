@@ -282,7 +282,8 @@ export type GroupChatEvent =
     | GroupDescChanged
     | UsersBlocked
     | UsersUnblocked
-    | ParticipantsDismissedAsAdmin;
+    | ParticipantsDismissedAsAdmin
+    | OwnershipTransferred;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -368,6 +369,12 @@ export type ParticipantsDismissedAsAdmin = {
     kind: "participants_dismissed_as_admin";
     userIds: string[];
     dismissedBy: string;
+};
+
+export type OwnershipTransferred = {
+    kind: "ownership_transferred";
+    oldOwner: string;
+    newOwner: string;
 };
 
 export type ParticipantsPromotedToAdmin = {
@@ -490,7 +497,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     myRole?: ParticipantRole;
 };
 
-export type ParticipantRole = "admin" | "standard";
+export type ParticipantRole = "admin" | "participant" | "owner";
 
 export type Participant = {
     role: ParticipantRole;
@@ -743,6 +750,7 @@ export type RemoveParticipantResponse =
     | "not_authorised"
     | "success"
     | "cannot_remove_self"
+    | "cannot_remove_owner"
     | "internal_error";
 
 export type BlockUserResponse =
@@ -752,7 +760,8 @@ export type BlockUserResponse =
     | "caller_not_in_group"
     | "not_authorised"
     | "internal_error"
-    | "cannot_block_self";
+    | "cannot_block_self"
+    | "cannot_block_owner";
 
 export type UnblockUserResponse =
     | "success"

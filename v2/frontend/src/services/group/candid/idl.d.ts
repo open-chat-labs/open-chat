@@ -39,6 +39,7 @@ import {
     SelectedInitialResponse,
     SelectedUpdatesResponse,
     Participant,
+    Role,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -79,6 +80,7 @@ export {
     SelectedInitialResponse as ApiSelectedInitialResponse,
     SelectedUpdatesResponse as ApiSelectedUpdatesResponse,
     Participant as ApiParticipant,
+    Role as ApiRole,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

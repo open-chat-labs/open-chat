@@ -660,7 +660,7 @@ export class ChatController {
 
     dismissAsAdmin(userId: string): Promise<void> {
         this.participants.update((ps) =>
-            ps.map((p) => (p.userId === userId ? { ...p, role: "standard" } : p))
+            ps.map((p) => (p.userId === userId ? { ...p, role: "participant" } : p))
         );
         return this.api
             .dismissAsAdmin(this.chatId, userId)
@@ -722,7 +722,7 @@ export class ChatController {
         this.participants.update((p) => [
             ...p,
             {
-                role: "standard",
+                role: "participant",
                 userId,
                 username: get(userStore)[userId]?.username ?? "unknown",
             },
@@ -789,7 +789,7 @@ export class ChatController {
         this.participants.update((ps) => [
             ...users.map((u) => ({
                 userId: u.userId,
-                role: "standard" as ParticipantRole,
+                role: "participant" as ParticipantRole,
             })),
             ...ps,
         ]);

@@ -342,7 +342,11 @@ export const idlFactory = ({ IDL }) => {
     'InvalidTerm' : IDL.Null,
   });
   const SelectedInitialArgs = IDL.Record({});
-  const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
+  const Role = IDL.Variant({
+    'Participant' : IDL.Null,
+    'Admin' : IDL.Null,
+    'Owner' : IDL.Null,
+  });
   const Participant = IDL.Record({
     'role' : Role,
     'user_id' : UserId,

@@ -23,6 +23,7 @@ import type {
     ApiAlert,
     ApiAlertDetails,
     ApiCryptocurrencyDeposit,
+    ApiRole,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -47,6 +48,7 @@ import type {
     Alert,
     AlertDetails,
     CryptocurrencyDeposit,
+    ParticipantRole,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -475,7 +477,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             })),
             notificationsMuted: optional(candid.Group.notifications_muted, identity),
             participantCount: optional(candid.Group.participant_count, identity),
-            myRole: optional(candid.Group.role, (r) => ("Admin" in r ? "admin" : "standard")),
+            myRole: optional(candid.Group.role, participantRole),
         };
     }
     if ("Direct" in candid) {
@@ -495,6 +497,19 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
+}
+
+function participantRole(candid: ApiRole): ParticipantRole {
+    if ("Admin" in candid) {
+        return "admin";
+    }
+    if ("Participant" in candid) {
+        return "participant";
+    }
+    if ("Owner" in candid) {
+        return "owner";
+    }
+    throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
 }
 
 function chatSummary(candid: ApiChatSummary): ChatSummary {
@@ -524,7 +539,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             })),
             notificationsMuted: candid.Group.notifications_muted,
             participantCount: candid.Group.participant_count,
-            myRole: "Admin" in candid.Group.role ? "admin" : "standard",
+            myRole: participantRole(candid.Group.role),
         };
     }
     if ("Direct" in candid) {

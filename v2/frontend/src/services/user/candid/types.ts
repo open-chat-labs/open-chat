@@ -1,805 +1,776 @@
-import type { Principal } from "@dfinity/principal";
+import type { Principal } from '@dfinity/principal';
 export type AccountIdentifier = string;
 export interface Alert {
-    id: string;
-    details: AlertDetails;
-    elapsed: Milliseconds;
+  'id' : string,
+  'details' : AlertDetails,
+  'elapsed' : Milliseconds,
 }
-export type AlertDetails =
-    | { GroupDeleted: GroupDeletedAlert }
-    | { CryptocurrencyDepositReceived: CryptocurrencyDeposit }
-    | { RemovedFromGroup: RemovedFromGroupAlert }
-    | { BlockedFromGroup: RemovedFromGroupAlert };
-export type AlertId = { Internal: number } | { GroupDeleted: ChatId };
+export type AlertDetails = { 'GroupDeleted' : GroupDeletedAlert } |
+  { 'CryptocurrencyDepositReceived' : CryptocurrencyDeposit } |
+  { 'RemovedFromGroup' : RemovedFromGroupAlert } |
+  { 'BlockedFromGroup' : RemovedFromGroupAlert };
+export type AlertId = { 'Internal' : number } |
+  { 'GroupDeleted' : ChatId };
 export interface AudioContent {
-    mime_type: string;
-    blob_reference: [] | [BlobReference];
-    caption: [] | [string];
+  'mime_type' : string,
+  'blob_reference' : [] | [BlobReference],
+  'caption' : [] | [string],
 }
 export interface Avatar {
-    id: bigint;
-    data: Array<number>;
-    mime_type: string;
+  'id' : bigint,
+  'data' : Array<number>,
+  'mime_type' : string,
 }
 export interface AvatarChanged {
-    changed_by: UserId;
-    previous_avatar: [] | [bigint];
-    new_avatar: bigint;
+  'changed_by' : UserId,
+  'previous_avatar' : [] | [bigint],
+  'new_avatar' : bigint,
 }
 export interface BlobReference {
-    blob_id: bigint;
-    canister_id: CanisterId;
+  'blob_id' : bigint,
+  'canister_id' : CanisterId,
 }
 export type BlockHeight = bigint;
-export interface BlockUserArgs {
-    user_id: UserId;
-}
-export type BlockUserResponse = { Success: null };
-export type CanisterCreationStatus = { InProgress: null } | { Created: null } | { Pending: null };
+export interface BlockUserArgs { 'user_id' : UserId }
+export type BlockUserResponse = { 'Success' : null };
+export type CanisterCreationStatus = { 'InProgress' : null } |
+  { 'Created' : null } |
+  { 'Pending' : null };
 export type CanisterId = Principal;
-export type CanisterUpgradeStatus =
-    | { Required: null }
-    | { NotRequired: null }
-    | { InProgress: null };
-export interface CanisterWasm {
-    version: Version;
-    module: Array<number>;
-}
+export type CanisterUpgradeStatus = { 'Required' : null } |
+  { 'NotRequired' : null } |
+  { 'InProgress' : null };
+export interface CanisterWasm { 'version' : Version, 'module' : Array<number> }
 export type ChatId = CanisterId;
 export interface ChatMessagesRead {
-    message_ranges: Array<MessageIndexRange>;
-    chat_id: ChatId;
+  'message_ranges' : Array<MessageIndexRange>,
+  'chat_id' : ChatId,
 }
-export type ChatSummary = { Group: GroupChatSummary } | { Direct: DirectChatSummary };
-export type ChatSummaryUpdates =
-    | { Group: GroupChatSummaryUpdates }
-    | { Direct: DirectChatSummaryUpdates };
+export type ChatSummary = { 'Group' : GroupChatSummary } |
+  { 'Direct' : DirectChatSummary };
+export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
+  { 'Direct' : DirectChatSummaryUpdates };
 export interface CompletedCyclesDeposit {
-    from: CanisterId;
-    cycles: Cycles;
+  'from' : CanisterId,
+  'cycles' : Cycles,
 }
 export interface CompletedCyclesTransfer {
-    recipient: UserId;
-    sender: UserId;
-    cycles: Cycles;
+  'recipient' : UserId,
+  'sender' : UserId,
+  'cycles' : Cycles,
 }
 export interface CompletedCyclesWithdrawal {
-    to: CanisterId;
-    cycles: Cycles;
+  'to' : CanisterId,
+  'cycles' : Cycles,
 }
 export interface CompletedICPDeposit {
-    memo: bigint;
-    fee_e8s: bigint;
-    amount_e8s: bigint;
-    from_address: string;
-    block_height: BlockHeight;
+  'memo' : bigint,
+  'fee_e8s' : bigint,
+  'amount_e8s' : bigint,
+  'from_address' : string,
+  'block_height' : BlockHeight,
 }
 export interface CompletedICPTransfer {
-    memo: bigint;
-    recipient: UserId;
-    fee_e8s: bigint;
-    sender: UserId;
-    amount_e8s: bigint;
-    block_height: BlockHeight;
+  'memo' : bigint,
+  'recipient' : UserId,
+  'fee_e8s' : bigint,
+  'sender' : UserId,
+  'amount_e8s' : bigint,
+  'block_height' : BlockHeight,
 }
 export interface CompletedICPWithdrawal {
-    to: string;
-    memo: bigint;
-    fee_e8s: bigint;
-    amount_e8s: bigint;
-    block_height: BlockHeight;
+  'to' : string,
+  'memo' : bigint,
+  'fee_e8s' : bigint,
+  'amount_e8s' : bigint,
+  'block_height' : BlockHeight,
 }
 export interface ConfirmationCodeSms {
-    confirmation_code: string;
-    phone_number: string;
+  'confirmation_code' : string,
+  'phone_number' : string,
 }
 export interface CreateGroupArgs {
-    is_public: boolean;
-    name: string;
-    description: string;
-    history_visible_to_new_joiners: boolean;
-    avatar: [] | [Avatar];
+  'is_public' : boolean,
+  'name' : string,
+  'description' : string,
+  'history_visible_to_new_joiners' : boolean,
+  'avatar' : [] | [Avatar],
 }
-export type CreateGroupResponse =
-    | {
-          DescriptionTooLong: FieldTooLongResult;
-      }
-    | { Throttled: null }
-    | { AvatarTooBig: FieldTooLongResult }
-    | { Success: CreateGroupSuccessResult }
-    | { NameTooLong: FieldTooLongResult }
-    | { NameTaken: null }
-    | { MaxGroupsCreated: number }
-    | { InternalError: null };
-export interface CreateGroupSuccessResult {
-    chat_id: ChatId;
-}
-export type Cryptocurrency = { ICP: null } | { Cycles: null };
+export type CreateGroupResponse = {
+    'DescriptionTooLong' : FieldTooLongResult
+  } |
+  { 'Throttled' : null } |
+  { 'AvatarTooBig' : FieldTooLongResult } |
+  { 'Success' : CreateGroupSuccessResult } |
+  { 'NameTooLong' : FieldTooLongResult } |
+  { 'NameTaken' : null } |
+  { 'MaxGroupsCreated' : number } |
+  { 'InternalError' : null };
+export interface CreateGroupSuccessResult { 'chat_id' : ChatId }
+export type Cryptocurrency = { 'ICP' : null } |
+  { 'Cycles' : null };
 export interface CryptocurrencyAccount {
-    currency: Cryptocurrency;
-    address: string;
+  'currency' : Cryptocurrency,
+  'address' : string,
 }
 export interface CryptocurrencyContent {
-    caption: [] | [string];
-    transfer: CryptocurrencyTransfer;
+  'caption' : [] | [string],
+  'transfer' : CryptocurrencyTransfer,
 }
-export type CryptocurrencyDeposit = { ICP: ICPDeposit } | { Cycles: CyclesDeposit };
-export type CryptocurrencyTransaction =
-    | { Deposit: CryptocurrencyDeposit }
-    | { Withdrawal: CryptocurrencyWithdrawal }
-    | { Transfer: CryptocurrencyTransfer };
-export type CryptocurrencyTransfer = { ICP: ICPTransfer } | { Cycles: CyclesTransfer };
-export type CryptocurrencyWithdrawal = { ICP: ICPWithdrawal } | { Cycles: CyclesWithdrawal };
+export type CryptocurrencyDeposit = { 'ICP' : ICPDeposit } |
+  { 'Cycles' : CyclesDeposit };
+export type CryptocurrencyTransaction = { 'Deposit' : CryptocurrencyDeposit } |
+  { 'Withdrawal' : CryptocurrencyWithdrawal } |
+  { 'Transfer' : CryptocurrencyTransfer };
+export type CryptocurrencyTransfer = { 'ICP' : ICPTransfer } |
+  { 'Cycles' : CyclesTransfer };
+export type CryptocurrencyWithdrawal = { 'ICP' : ICPWithdrawal } |
+  { 'Cycles' : CyclesWithdrawal };
 export type Cycles = bigint;
-export type CyclesDeposit = { Completed: CompletedCyclesDeposit };
-export type CyclesTransfer =
-    | { Failed: FailedCyclesTransfer }
-    | { Completed: CompletedCyclesTransfer }
-    | { Pending: PendingCyclesTransfer };
-export type CyclesWithdrawal =
-    | { Failed: FailedCyclesWithdrawal }
-    | { Completed: CompletedCyclesWithdrawal }
-    | { Pending: PendingCyclesWithdrawal };
+export type CyclesDeposit = { 'Completed' : CompletedCyclesDeposit };
+export type CyclesTransfer = { 'Failed' : FailedCyclesTransfer } |
+  { 'Completed' : CompletedCyclesTransfer } |
+  { 'Pending' : PendingCyclesTransfer };
+export type CyclesWithdrawal = { 'Failed' : FailedCyclesWithdrawal } |
+  { 'Completed' : CompletedCyclesWithdrawal } |
+  { 'Pending' : PendingCyclesWithdrawal };
 export interface DeleteMessagesArgs {
-    user_id: UserId;
-    message_ids: Array<MessageId>;
+  'user_id' : UserId,
+  'message_ids' : Array<MessageId>,
 }
-export type DeleteMessagesResponse = { ChatNotFound: null } | { Success: null };
+export type DeleteMessagesResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface DeletedContent {
-    timestamp: TimestampMillis;
-    deleted_by: UserId;
+  'timestamp' : TimestampMillis,
+  'deleted_by' : UserId,
 }
 export type DirectChatCreated = {};
-export type DirectChatEvent =
-    | { MessageReactionRemoved: UpdatedMessage }
-    | { MessageReactionAdded: UpdatedMessage }
-    | { Message: Message }
-    | { MessageDeleted: UpdatedMessage }
-    | { DirectChatCreated: DirectChatCreated }
-    | { MessageEdited: UpdatedMessage };
+export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+  { 'MessageReactionAdded' : UpdatedMessage } |
+  { 'Message' : Message } |
+  { 'MessageDeleted' : UpdatedMessage } |
+  { 'DirectChatCreated' : DirectChatCreated } |
+  { 'MessageEdited' : UpdatedMessage };
 export interface DirectChatEventWrapper {
-    event: DirectChatEvent;
-    timestamp: TimestampMillis;
-    index: EventIndex;
+  'event' : DirectChatEvent,
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
 }
 export interface DirectChatSummary {
-    date_created: TimestampMillis;
-    them: UserId;
-    notifications_muted: boolean;
-    read_by_me: Array<MessageIndexRange>;
-    latest_event_index: EventIndex;
-    read_by_them: Array<MessageIndexRange>;
-    latest_message: MessageEventWrapper;
+  'date_created' : TimestampMillis,
+  'them' : UserId,
+  'notifications_muted' : boolean,
+  'read_by_me' : Array<MessageIndexRange>,
+  'latest_event_index' : EventIndex,
+  'read_by_them' : Array<MessageIndexRange>,
+  'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
-    notifications_muted: [] | [boolean];
-    read_by_me: [] | [Array<MessageIndexRange>];
-    latest_event_index: [] | [EventIndex];
-    chat_id: ChatId;
-    read_by_them: [] | [Array<MessageIndexRange>];
-    latest_message: [] | [MessageEventWrapper];
+  'notifications_muted' : [] | [boolean],
+  'read_by_me' : [] | [Array<MessageIndexRange>],
+  'latest_event_index' : [] | [EventIndex],
+  'chat_id' : ChatId,
+  'read_by_them' : [] | [Array<MessageIndexRange>],
+  'latest_message' : [] | [MessageEventWrapper],
 }
 export interface DirectMessageNotification {
-    sender: UserId;
-    message: Message;
-    sender_name: string;
+  'sender' : UserId,
+  'message' : Message,
+  'sender_name' : string,
 }
-export interface DismissAlertsArgs {
-    alert_ids: Array<string>;
-}
-export type DismissAlertsResponse = { PartialSuccess: Array<string> } | { Success: null };
+export interface DismissAlertsArgs { 'alert_ids' : Array<string> }
+export type DismissAlertsResponse = { 'PartialSuccess' : Array<string> } |
+  { 'Success' : null };
 export interface EditMessageArgs {
-    content: MessageContent;
-    user_id: UserId;
-    message_id: MessageId;
+  'content' : MessageContent,
+  'user_id' : UserId,
+  'message_id' : MessageId,
 }
-export type EditMessageResponse =
-    | { MessageNotFound: null }
-    | { ChatNotFound: null }
-    | { Success: null };
+export type EditMessageResponse = { 'MessageNotFound' : null } |
+  { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export type EventIndex = number;
 export interface EventsArgs {
-    user_id: UserId;
-    max_messages: number;
-    max_events: number;
-    ascending: boolean;
-    start_index: EventIndex;
+  'user_id' : UserId,
+  'max_messages' : number,
+  'max_events' : number,
+  'ascending' : boolean,
+  'start_index' : EventIndex,
 }
 export interface EventsByIndexArgs {
-    user_id: UserId;
-    events: Array<EventIndex>;
+  'user_id' : UserId,
+  'events' : Array<EventIndex>,
 }
 export interface EventsRangeArgs {
-    user_id: UserId;
-    to_index: EventIndex;
-    from_index: EventIndex;
+  'user_id' : UserId,
+  'to_index' : EventIndex,
+  'from_index' : EventIndex,
 }
-export type EventsResponse = { ChatNotFound: null } | { Success: EventsSuccessResult };
+export type EventsResponse = { 'ChatNotFound' : null } |
+  { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
-    affected_events: Array<DirectChatEventWrapper>;
-    events: Array<DirectChatEventWrapper>;
+  'affected_events' : Array<DirectChatEventWrapper>,
+  'events' : Array<DirectChatEventWrapper>,
 }
 export interface EventsWindowArgs {
-    mid_point: MessageIndex;
-    user_id: UserId;
-    max_messages: number;
-    max_events: number;
+  'mid_point' : MessageIndex,
+  'user_id' : UserId,
+  'max_messages' : number,
+  'max_events' : number,
 }
 export interface FailedCyclesTransfer {
-    error_message: string;
-    recipient: UserId;
-    cycles: Cycles;
+  'error_message' : string,
+  'recipient' : UserId,
+  'cycles' : Cycles,
 }
 export interface FailedCyclesWithdrawal {
-    to: CanisterId;
-    error_message: string;
-    cycles: Cycles;
+  'to' : CanisterId,
+  'error_message' : string,
+  'cycles' : Cycles,
 }
 export interface FailedICPTransfer {
-    memo: bigint;
-    error_message: string;
-    recipient: UserId;
-    fee_e8s: bigint;
-    amount_e8s: bigint;
+  'memo' : bigint,
+  'error_message' : string,
+  'recipient' : UserId,
+  'fee_e8s' : bigint,
+  'amount_e8s' : bigint,
 }
 export interface FailedICPWithdrawal {
-    to: string;
-    memo: bigint;
-    error_message: string;
-    fee_e8s: bigint;
-    amount_e8s: bigint;
+  'to' : string,
+  'memo' : bigint,
+  'error_message' : string,
+  'fee_e8s' : bigint,
+  'amount_e8s' : bigint,
 }
 export interface FieldTooLongResult {
-    length_provided: number;
-    max_length: number;
+  'length_provided' : number,
+  'max_length' : number,
 }
 export interface FileContent {
-    name: string;
-    mime_type: string;
-    file_size: number;
-    blob_reference: [] | [BlobReference];
-    caption: [] | [string];
+  'name' : string,
+  'mime_type' : string,
+  'file_size' : number,
+  'blob_reference' : [] | [BlobReference],
+  'caption' : [] | [string],
 }
 export interface GroupChatCreated {
-    name: string;
-    description: string;
-    created_by: UserId;
+  'name' : string,
+  'description' : string,
+  'created_by' : UserId,
 }
-export type GroupChatEvent =
-    | { MessageReactionRemoved: UpdatedMessage }
-    | { ParticipantJoined: ParticipantJoined }
-    | { GroupDescriptionChanged: GroupDescriptionChanged }
-    | { GroupChatCreated: GroupChatCreated }
-    | { ParticipantsPromotedToAdmin: ParticipantsPromotedToAdmin }
-    | { UsersBlocked: UsersBlocked }
-    | { MessageReactionAdded: UpdatedMessage }
-    | { ParticipantsRemoved: ParticipantsRemoved }
-    | { Message: Message }
-    | { ParticipantsDismissedAsAdmin: ParticipantsDismissedAsAdmin }
-    | { UsersUnblocked: UsersUnblocked }
-    | { ParticipantLeft: ParticipantLeft }
-    | { MessageDeleted: UpdatedMessage }
-    | { GroupNameChanged: GroupNameChanged }
-    | { OwnershipTransferred: OwnershipTransferred }
-    | { MessageEdited: UpdatedMessage }
-    | { AvatarChanged: AvatarChanged }
-    | { ParticipantsAdded: ParticipantsAdded };
+export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+  { 'ParticipantJoined' : ParticipantJoined } |
+  { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
+  { 'GroupChatCreated' : GroupChatCreated } |
+  { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
+  { 'UsersBlocked' : UsersBlocked } |
+  { 'MessageReactionAdded' : UpdatedMessage } |
+  { 'ParticipantsRemoved' : ParticipantsRemoved } |
+  { 'Message' : Message } |
+  { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
+  { 'UsersUnblocked' : UsersUnblocked } |
+  { 'ParticipantLeft' : ParticipantLeft } |
+  { 'MessageDeleted' : UpdatedMessage } |
+  { 'GroupNameChanged' : GroupNameChanged } |
+  { 'OwnershipTransferred' : OwnershipTransferred } |
+  { 'MessageEdited' : UpdatedMessage } |
+  { 'AvatarChanged' : AvatarChanged } |
+  { 'ParticipantsAdded' : ParticipantsAdded };
 export interface GroupChatEventWrapper {
-    event: GroupChatEvent;
-    timestamp: TimestampMillis;
-    index: EventIndex;
+  'event' : GroupChatEvent,
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
 }
 export interface GroupChatSummary {
-    is_public: boolean;
-    min_visible_event_index: EventIndex;
-    name: string;
-    role: Role;
-    notifications_muted: boolean;
-    description: string;
-    last_updated: TimestampMillis;
-    read_by_me: Array<MessageIndexRange>;
-    joined: TimestampMillis;
-    avatar_id: [] | [bigint];
-    latest_event_index: EventIndex;
-    min_visible_message_index: MessageIndex;
-    chat_id: ChatId;
-    participant_count: number;
-    latest_message: [] | [MessageEventWrapper];
+  'is_public' : boolean,
+  'min_visible_event_index' : EventIndex,
+  'name' : string,
+  'role' : Role,
+  'notifications_muted' : boolean,
+  'description' : string,
+  'last_updated' : TimestampMillis,
+  'read_by_me' : Array<MessageIndexRange>,
+  'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
+  'latest_event_index' : EventIndex,
+  'min_visible_message_index' : MessageIndex,
+  'chat_id' : ChatId,
+  'participant_count' : number,
+  'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
-    name: [] | [string];
-    role: [] | [Role];
-    notifications_muted: [] | [boolean];
-    description: [] | [string];
-    last_updated: TimestampMillis;
-    read_by_me: [] | [Array<MessageIndexRange>];
-    avatar_id: [] | [bigint];
-    latest_event_index: [] | [EventIndex];
-    chat_id: ChatId;
-    participant_count: [] | [number];
-    latest_message: [] | [MessageEventWrapper];
+  'name' : [] | [string],
+  'role' : [] | [Role],
+  'notifications_muted' : [] | [boolean],
+  'description' : [] | [string],
+  'last_updated' : TimestampMillis,
+  'read_by_me' : [] | [Array<MessageIndexRange>],
+  'avatar_id' : [] | [bigint],
+  'latest_event_index' : [] | [EventIndex],
+  'chat_id' : ChatId,
+  'participant_count' : [] | [number],
+  'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatUpdatesSince {
-    updates_since: TimestampMillis;
-    chat_id: ChatId;
+  'updates_since' : TimestampMillis,
+  'chat_id' : ChatId,
 }
-export interface GroupDeletedAlert {
-    deleted_by: UserId;
-    chat_id: ChatId;
-}
+export interface GroupDeletedAlert { 'deleted_by' : UserId, 'chat_id' : ChatId }
 export interface GroupDescriptionChanged {
-    new_description: string;
-    previous_description: string;
-    changed_by: UserId;
+  'new_description' : string,
+  'previous_description' : string,
+  'changed_by' : UserId,
 }
 export interface GroupMessageNotification {
-    sender: UserId;
-    message: Message;
-    sender_name: string;
-    chat_id: ChatId;
-    group_name: string;
+  'sender' : UserId,
+  'message' : Message,
+  'sender_name' : string,
+  'chat_id' : ChatId,
+  'group_name' : string,
 }
 export interface GroupNameChanged {
-    changed_by: UserId;
-    new_name: string;
-    previous_name: string;
+  'changed_by' : UserId,
+  'new_name' : string,
+  'previous_name' : string,
 }
-export type ICPDeposit = { Completed: CompletedICPDeposit };
-export type ICPTransfer =
-    | { Failed: FailedICPTransfer }
-    | { Completed: CompletedICPTransfer }
-    | { Pending: PendingICPTransfer };
-export type ICPWithdrawal =
-    | { Failed: FailedICPWithdrawal }
-    | { Completed: CompletedICPWithdrawal }
-    | { Pending: PendingICPWithdrawal };
+export type ICPDeposit = { 'Completed' : CompletedICPDeposit };
+export type ICPTransfer = { 'Failed' : FailedICPTransfer } |
+  { 'Completed' : CompletedICPTransfer } |
+  { 'Pending' : PendingICPTransfer };
+export type ICPWithdrawal = { 'Failed' : FailedICPWithdrawal } |
+  { 'Completed' : CompletedICPWithdrawal } |
+  { 'Pending' : PendingICPWithdrawal };
 export interface ImageContent {
-    height: number;
-    mime_type: string;
-    blob_reference: [] | [BlobReference];
-    thumbnail_data: string;
-    caption: [] | [string];
-    width: number;
+  'height' : number,
+  'mime_type' : string,
+  'blob_reference' : [] | [BlobReference],
+  'thumbnail_data' : string,
+  'caption' : [] | [string],
+  'width' : number,
 }
 export interface IndexedNotification {
-    value: NotificationEnvelope;
-    index: bigint;
+  'value' : NotificationEnvelope,
+  'index' : bigint,
 }
 export interface InitArgs {
-    owner: Principal;
-    notification_canister_ids: Array<CanisterId>;
+  'owner' : Principal,
+  'notification_canister_ids' : Array<CanisterId>,
 }
 export type InitialStateArgs = {};
 export type InitialStateResponse = {
-    Success: {
-        cycles_balance: Cycles;
-        chats: Array<ChatSummary>;
-        blocked_users: Array<UserId>;
-        timestamp: TimestampMillis;
-        transactions: Array<Transaction>;
-    };
-};
-export interface JoinGroupArgs {
-    chat_id: ChatId;
-}
-export type JoinGroupResponse =
-    | { Blocked: null }
-    | { GroupNotFound: null }
-    | { GroupNotPublic: null }
-    | { AlreadyInGroup: null }
-    | { Success: null }
-    | { ParticipantLimitReached: number }
-    | { InternalError: string };
-export interface LeaveGroupArgs {
-    chat_id: ChatId;
-}
-export type LeaveGroupResponse =
-    | { GroupNotFound: null }
-    | { OwnerCannotLeave: null }
-    | { CallerNotInGroup: null }
-    | { Success: null }
-    | { InternalError: string };
-export interface MarkReadArgs {
-    messages_read: Array<ChatMessagesRead>;
-}
-export type MarkReadResponse = { Success: null };
+    'Success' : {
+      'cycles_balance' : Cycles,
+      'chats' : Array<ChatSummary>,
+      'blocked_users' : Array<UserId>,
+      'timestamp' : TimestampMillis,
+      'transactions' : Array<Transaction>,
+    }
+  };
+export interface JoinGroupArgs { 'chat_id' : ChatId }
+export type JoinGroupResponse = { 'Blocked' : null } |
+  { 'GroupNotFound' : null } |
+  { 'GroupNotPublic' : null } |
+  { 'AlreadyInGroup' : null } |
+  { 'Success' : null } |
+  { 'ParticipantLimitReached' : number } |
+  { 'InternalError' : string };
+export interface LeaveGroupArgs { 'chat_id' : ChatId }
+export type LeaveGroupResponse = { 'GroupNotFound' : null } |
+  { 'OwnerCannotLeave' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
+export interface MarkReadArgs { 'messages_read' : Array<ChatMessagesRead> }
+export type MarkReadResponse = { 'Success' : null };
 export interface Message {
-    content: MessageContent;
-    edited: boolean;
-    sender: UserId;
-    message_id: MessageId;
-    replies_to: [] | [ReplyContext];
-    reactions: Array<[string, Array<UserId>]>;
-    message_index: MessageIndex;
+  'content' : MessageContent,
+  'edited' : boolean,
+  'sender' : UserId,
+  'message_id' : MessageId,
+  'replies_to' : [] | [ReplyContext],
+  'reactions' : Array<[string, Array<UserId>]>,
+  'message_index' : MessageIndex,
 }
-export type MessageContent =
-    | { File: FileContent }
-    | { Text: TextContent }
-    | { Image: ImageContent }
-    | { Cryptocurrency: CryptocurrencyContent }
-    | { Audio: AudioContent }
-    | { Video: VideoContent }
-    | { Deleted: DeletedContent };
+export type MessageContent = { 'File' : FileContent } |
+  { 'Text' : TextContent } |
+  { 'Image' : ImageContent } |
+  { 'Cryptocurrency' : CryptocurrencyContent } |
+  { 'Audio' : AudioContent } |
+  { 'Video' : VideoContent } |
+  { 'Deleted' : DeletedContent };
 export interface MessageEventWrapper {
-    event: Message;
-    timestamp: TimestampMillis;
-    index: EventIndex;
+  'event' : Message,
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
 }
 export type MessageId = bigint;
 export type MessageIndex = number;
 export interface MessageIndexRange {
-    to: MessageIndex;
-    from: MessageIndex;
+  'to' : MessageIndex,
+  'from' : MessageIndex,
 }
 export interface MessageMatch {
-    content: MessageContent;
-    sender: UserId;
-    score: number;
-    chat_id: ChatId;
-    message_index: MessageIndex;
+  'content' : MessageContent,
+  'sender' : UserId,
+  'score' : number,
+  'chat_id' : ChatId,
+  'message_index' : MessageIndex,
 }
 export type Milliseconds = bigint;
-export interface MuteNotificationsArgs {
-    chat_id: ChatId;
-}
-export type MuteNotificationsResponse = { ChatNotFound: null } | { Success: null };
-export type NightMode = { On: null } | { Off: null } | { Auto: null };
-export type Notification =
-    | {
-          DirectMessageNotification: DirectMessageNotification;
-      }
-    | { GroupMessageNotification: GroupMessageNotification }
-    | { V1GroupMessageNotification: V1GroupMessageNotification }
-    | { V1DirectMessageNotification: V1DirectMessageNotification };
+export interface MuteNotificationsArgs { 'chat_id' : ChatId }
+export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
+export type NightMode = { 'On' : null } |
+  { 'Off' : null } |
+  { 'Auto' : null };
+export type Notification = {
+    'DirectMessageNotification' : DirectMessageNotification
+  } |
+  { 'GroupMessageNotification' : GroupMessageNotification } |
+  { 'V1GroupMessageNotification' : V1GroupMessageNotification } |
+  { 'V1DirectMessageNotification' : V1DirectMessageNotification };
 export interface NotificationEnvelope {
-    notification: Notification;
-    recipients: Array<UserId>;
+  'notification' : Notification,
+  'recipients' : Array<UserId>,
 }
 export interface OptionalUserPreferences {
-    large_emoji: [] | [boolean];
-    notification_preferences:
-        | []
-        | [
-              {
-                  private_group_chats: [] | [boolean];
-                  direct_chats: [] | [boolean];
-                  silent: [] | [boolean];
-                  public_group_chats: [] | [boolean];
-                  vibrate: [] | [boolean];
-              }
-          ];
-    night_mode: [] | [NightMode];
-    language: [] | [string];
-    enter_key_sends: [] | [boolean];
-    generate_link_previews: [] | [boolean];
-    use_system_emoji: [] | [boolean];
-    enable_animations: [] | [boolean];
+  'large_emoji' : [] | [boolean],
+  'notification_preferences' : [] | [
+    {
+      'private_group_chats' : [] | [boolean],
+      'direct_chats' : [] | [boolean],
+      'silent' : [] | [boolean],
+      'public_group_chats' : [] | [boolean],
+      'vibrate' : [] | [boolean],
+    }
+  ],
+  'night_mode' : [] | [NightMode],
+  'language' : [] | [string],
+  'enter_key_sends' : [] | [boolean],
+  'generate_link_previews' : [] | [boolean],
+  'use_system_emoji' : [] | [boolean],
+  'enable_animations' : [] | [boolean],
 }
 export interface OwnershipTransferred {
-    old_owner: UserId;
-    new_owner: UserId;
+  'old_owner' : UserId,
+  'new_owner' : UserId,
 }
 export interface PartialUserSummary {
-    username: [] | [string];
-    user_id: UserId;
-    avatar_id: [] | [bigint];
-    seconds_since_last_online: number;
+  'username' : [] | [string],
+  'user_id' : UserId,
+  'avatar_id' : [] | [bigint],
+  'seconds_since_last_online' : number,
 }
 export interface Participant {
-    role: Role;
-    user_id: UserId;
-    date_added: TimestampMillis;
+  'role' : Role,
+  'user_id' : UserId,
+  'date_added' : TimestampMillis,
 }
-export interface ParticipantJoined {
-    user_id: UserId;
-}
-export interface ParticipantLeft {
-    user_id: UserId;
-}
+export interface ParticipantJoined { 'user_id' : UserId }
+export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantsAdded {
-    user_ids: Array<UserId>;
-    added_by: UserId;
+  'user_ids' : Array<UserId>,
+  'added_by' : UserId,
 }
 export interface ParticipantsDismissedAsAdmin {
-    user_ids: Array<UserId>;
-    dismissed_by: UserId;
+  'user_ids' : Array<UserId>,
+  'dismissed_by' : UserId,
 }
 export interface ParticipantsPromotedToAdmin {
-    user_ids: Array<UserId>;
-    promoted_by: UserId;
+  'user_ids' : Array<UserId>,
+  'promoted_by' : UserId,
 }
 export interface ParticipantsRemoved {
-    user_ids: Array<UserId>;
-    removed_by: UserId;
+  'user_ids' : Array<UserId>,
+  'removed_by' : UserId,
 }
 export interface PendingCyclesTransfer {
-    recipient: UserId;
-    cycles: Cycles;
+  'recipient' : UserId,
+  'cycles' : Cycles,
 }
 export interface PendingCyclesWithdrawal {
-    to: CanisterId;
-    cycles: Cycles;
+  'to' : CanisterId,
+  'cycles' : Cycles,
 }
 export interface PendingICPTransfer {
-    memo: [] | [bigint];
-    recipient: UserId;
-    fee_e8s: [] | [bigint];
-    amount_e8s: bigint;
+  'memo' : [] | [bigint],
+  'recipient' : UserId,
+  'fee_e8s' : [] | [bigint],
+  'amount_e8s' : bigint,
 }
 export interface PendingICPWithdrawal {
-    to: string;
-    memo: [] | [bigint];
-    fee_e8s: [] | [bigint];
-    amount_e8s: bigint;
+  'to' : string,
+  'memo' : [] | [bigint],
+  'fee_e8s' : [] | [bigint],
+  'amount_e8s' : bigint,
 }
 export interface PutChunkArgs {
-    total_chunks: number;
-    blob_id: bigint;
-    mime_type: string;
-    bytes: Array<number>;
-    index: number;
+  'total_chunks' : number,
+  'blob_id' : bigint,
+  'mime_type' : string,
+  'bytes' : Array<number>,
+  'index' : number,
 }
-export type PutChunkResponse =
-    | { ChunkAlreadyExists: null }
-    | { BlobTooBig: null }
-    | { Full: null }
-    | { BlobAlreadyExists: null }
-    | { Success: null }
-    | { ChunkTooBig: null };
+export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
+  { 'BlobTooBig' : null } |
+  { 'Full' : null } |
+  { 'BlobAlreadyExists' : null } |
+  { 'Success' : null } |
+  { 'ChunkTooBig' : null };
 export interface RemovedFromGroupAlert {
-    chat_id: ChatId;
-    removed_by: UserId;
+  'chat_id' : ChatId,
+  'removed_by' : UserId,
 }
 export interface ReplyContext {
-    chat_id_if_other: [] | [ChatId];
-    event_index: EventIndex;
+  'chat_id_if_other' : [] | [ChatId],
+  'event_index' : EventIndex,
 }
-export type Role = { Participant: null } | { Admin: null };
+export type Role = { 'Participant' : null } |
+  { 'Admin' : null } |
+  { 'Owner' : null };
 export interface SearchAllMessagesArgs {
-    max_results: number;
-    search_term: string;
+  'max_results' : number,
+  'search_term' : string,
 }
-export type SearchAllMessagesResponse =
-    | { TermTooShort: number }
-    | { Success: SearchMessagesSuccessResult }
-    | { TermTooLong: number }
-    | { InvalidTerm: null };
+export type SearchAllMessagesResponse = { 'TermTooShort' : number } |
+  { 'Success' : SearchMessagesSuccessResult } |
+  { 'TermTooLong' : number } |
+  { 'InvalidTerm' : null };
 export interface SearchMessagesArgs {
-    max_results: number;
-    user_id: UserId;
-    search_term: string;
+  'max_results' : number,
+  'user_id' : UserId,
+  'search_term' : string,
 }
-export type SearchMessagesResponse =
-    | { TermTooShort: number }
-    | { ChatNotFound: null }
-    | { Success: SearchMessagesSuccessResult }
-    | { TermTooLong: number }
-    | { InvalidTerm: null };
-export interface SearchMessagesSuccessResult {
-    matches: Array<MessageMatch>;
-}
+export type SearchMessagesResponse = { 'TermTooShort' : number } |
+  { 'ChatNotFound' : null } |
+  { 'Success' : SearchMessagesSuccessResult } |
+  { 'TermTooLong' : number } |
+  { 'InvalidTerm' : null };
+export interface SearchMessagesSuccessResult { 'matches' : Array<MessageMatch> }
 export interface SendMessageArgs {
-    content: MessageContent;
-    recipient: UserId;
-    sender_name: string;
-    message_id: MessageId;
-    replies_to: [] | [ReplyContext];
+  'content' : MessageContent,
+  'recipient' : UserId,
+  'sender_name' : string,
+  'message_id' : MessageId,
+  'replies_to' : [] | [ReplyContext],
 }
-export type SendMessageResponse =
-    | { TransactionFailed: string }
-    | { BalanceExceeded: null }
-    | {
-          Success: {
-              timestamp: TimestampMillis;
-              chat_id: ChatId;
-              event_index: EventIndex;
-              message_index: MessageIndex;
-          };
-      }
-    | { RecipientBlocked: null }
-    | { InvalidRequest: string }
-    | { MessageTooLong: number }
-    | { RecipientNotFound: null };
+export type SendMessageResponse = { 'TransactionFailed' : string } |
+  { 'BalanceExceeded' : null } |
+  {
+    'Success' : {
+      'timestamp' : TimestampMillis,
+      'chat_id' : ChatId,
+      'event_index' : EventIndex,
+      'message_index' : MessageIndex,
+    }
+  } |
+  { 'RecipientBlocked' : null } |
+  { 'InvalidRequest' : string } |
+  { 'MessageTooLong' : number } |
+  { 'RecipientNotFound' : null };
 export interface SetAvatarArgs {
-    id: bigint;
-    data: Array<number>;
-    mime_type: string;
+  'id' : bigint,
+  'data' : Array<number>,
+  'mime_type' : string,
 }
-export type SetAvatarResponse = { AvatarTooBig: FieldTooLongResult } | { Success: bigint };
-export interface SetPreferencesArgs {
-    preferences: OptionalUserPreferences;
-}
-export type SetPreferencesResponse = { Success: null };
+export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
+  { 'Success' : bigint };
+export interface SetPreferencesArgs { 'preferences' : OptionalUserPreferences }
+export type SetPreferencesResponse = { 'Success' : null };
 export interface Subscription {
-    value: SubscriptionInfo;
-    last_active: TimestampMillis;
+  'value' : SubscriptionInfo,
+  'last_active' : TimestampMillis,
 }
 export interface SubscriptionInfo {
-    endpoint: string;
-    keys: SubscriptionKeys;
+  'endpoint' : string,
+  'keys' : SubscriptionKeys,
 }
-export interface SubscriptionKeys {
-    auth: string;
-    p256dh: string;
-}
-export interface TextContent {
-    text: string;
-}
+export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export interface ToggleReactionArgs {
-    user_id: UserId;
-    message_id: MessageId;
-    reaction: string;
+  'user_id' : UserId,
+  'message_id' : MessageId,
+  'reaction' : string,
 }
-export type ToggleReactionResponse =
-    | { MessageNotFound: null }
-    | { ChatNotFound: null }
-    | { InvalidReaction: null }
-    | { Added: EventIndex }
-    | { Removed: EventIndex };
-export type Transaction = { Cryptocurrency: CryptocurrencyTransaction };
-export type TransactionStatus = { Failed: string } | { Complete: null } | { Pending: null };
+export type ToggleReactionResponse = { 'MessageNotFound' : null } |
+  { 'ChatNotFound' : null } |
+  { 'InvalidReaction' : null } |
+  { 'Added' : EventIndex } |
+  { 'Removed' : EventIndex };
+export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
+export type TransactionStatus = { 'Failed' : string } |
+  { 'Complete' : null } |
+  { 'Pending' : null };
 export interface TransactionWrapper {
-    transaction: Transaction;
-    timestamp: TimestampMillis;
-    index: number;
+  'transaction' : Transaction,
+  'timestamp' : TimestampMillis,
+  'index' : number,
 }
 export interface TransactionsArgs {
-    max_transactions: number;
-    ascending: boolean;
-    start_index: number;
+  'max_transactions' : number,
+  'ascending' : boolean,
+  'start_index' : number,
 }
-export type TransactionsResponse = { Success: TransactionsSuccessResult };
+export type TransactionsResponse = { 'Success' : TransactionsSuccessResult };
 export interface TransactionsSuccessResult {
-    latest_transaction_index: [] | [number];
-    transactions: Array<TransactionWrapper>;
+  'latest_transaction_index' : [] | [number],
+  'transactions' : Array<TransactionWrapper>,
 }
-export interface UnblockUserArgs {
-    user_id: UserId;
-}
-export type UnblockUserResponse = { Success: null };
-export interface UnmuteNotificationsArgs {
-    chat_id: ChatId;
-}
-export type UnmuteNotificationsResponse = { ChatNotFound: null } | { Success: null };
+export interface UnblockUserArgs { 'user_id' : UserId }
+export type UnblockUserResponse = { 'Success' : null };
+export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
+export type UnmuteNotificationsResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface UpdatedMessage {
-    message_id: MessageId;
-    event_index: EventIndex;
+  'message_id' : MessageId,
+  'event_index' : EventIndex,
 }
-export interface UpdatesArgs {
-    updates_since: UpdatesSince;
-}
+export interface UpdatesArgs { 'updates_since' : UpdatesSince }
 export type UpdatesResponse = {
-    Success: {
-        cycles_balance: [] | [Cycles];
-        alerts: Array<Alert>;
-        chats_updated: Array<ChatSummaryUpdates>;
-        blocked_users: Array<UserId>;
-        chats_added: Array<ChatSummary>;
-        chats_removed: Array<ChatId>;
-        timestamp: TimestampMillis;
-        transactions: Array<Transaction>;
-    };
-};
+    'Success' : {
+      'cycles_balance' : [] | [Cycles],
+      'alerts' : Array<Alert>,
+      'chats_updated' : Array<ChatSummaryUpdates>,
+      'blocked_users' : Array<UserId>,
+      'chats_added' : Array<ChatSummary>,
+      'chats_removed' : Array<ChatId>,
+      'timestamp' : TimestampMillis,
+      'transactions' : Array<Transaction>,
+    }
+  };
 export interface UpdatesSince {
-    group_chats: Array<GroupChatUpdatesSince>;
-    timestamp: TimestampMillis;
+  'group_chats' : Array<GroupChatUpdatesSince>,
+  'timestamp' : TimestampMillis,
 }
 export type UserId = CanisterId;
 export interface UserSummary {
-    username: string;
-    user_id: UserId;
-    avatar_id: [] | [bigint];
-    seconds_since_last_online: number;
+  'username' : string,
+  'user_id' : UserId,
+  'avatar_id' : [] | [bigint],
+  'seconds_since_last_online' : number,
 }
 export interface UsersBlocked {
-    user_ids: Array<UserId>;
-    blocked_by: UserId;
+  'user_ids' : Array<UserId>,
+  'blocked_by' : UserId,
 }
 export interface UsersUnblocked {
-    user_ids: Array<UserId>;
-    unblocked_by: UserId;
+  'user_ids' : Array<UserId>,
+  'unblocked_by' : UserId,
 }
 export type V1ChatId = bigint;
 export interface V1CyclesContent {
-    caption: [] | [string];
-    amount: Cycles;
+  'caption' : [] | [string],
+  'amount' : Cycles,
 }
 export interface V1DirectMessageNotification {
-    sender: UserId;
-    message: V1Message;
-    sender_name: string;
-    chat_id: string;
+  'sender' : UserId,
+  'message' : V1Message,
+  'sender_name' : string,
+  'chat_id' : string,
 }
 export interface V1FileContent {
-    blob_size: number;
-    blob_id: string;
-    name: string;
-    mime_type: string;
-    caption: [] | [string];
-    chunk_size: number;
-    blob_deleted: boolean;
+  'blob_size' : number,
+  'blob_id' : string,
+  'name' : string,
+  'mime_type' : string,
+  'caption' : [] | [string],
+  'chunk_size' : number,
+  'blob_deleted' : boolean,
 }
 export type V1GroupId = bigint;
 export interface V1GroupMessageNotification {
-    sender: UserId;
-    message: V1Message;
-    sender_name: string;
-    chat_id: string;
-    group_name: string;
+  'sender' : UserId,
+  'message' : V1Message,
+  'sender_name' : string,
+  'chat_id' : string,
+  'group_name' : string,
 }
 export interface V1MediaContent {
-    height: number;
-    blob_size: number;
-    blob_id: string;
-    mime_type: string;
-    thumbnail_data: string;
-    caption: [] | [string];
-    width: number;
-    chunk_size: number;
-    blob_deleted: boolean;
+  'height' : number,
+  'blob_size' : number,
+  'blob_id' : string,
+  'mime_type' : string,
+  'thumbnail_data' : string,
+  'caption' : [] | [string],
+  'width' : number,
+  'chunk_size' : number,
+  'blob_deleted' : boolean,
 }
 export interface V1Message {
-    id: number;
-    content: V1MessageContent;
-    sender: UserId;
-    timestamp: TimestampMillis;
-    replies_to: [] | [V1ReplyContext];
-    client_message_id: string;
+  'id' : number,
+  'content' : V1MessageContent,
+  'sender' : UserId,
+  'timestamp' : TimestampMillis,
+  'replies_to' : [] | [V1ReplyContext],
+  'client_message_id' : string,
 }
-export type V1MessageContent =
-    | { File: V1FileContent }
-    | { Text: V1TextContent }
-    | { Media: V1MediaContent }
-    | { Cycles: V1CyclesContent };
+export type V1MessageContent = { 'File' : V1FileContent } |
+  { 'Text' : V1TextContent } |
+  { 'Media' : V1MediaContent } |
+  { 'Cycles' : V1CyclesContent };
 export interface V1ReplyContext {
-    content: V1MessageContent;
-    user_id: UserId;
-    chat_id: V1ChatId;
-    message_id: number;
+  'content' : V1MessageContent,
+  'user_id' : UserId,
+  'chat_id' : V1ChatId,
+  'message_id' : number,
 }
-export interface V1TextContent {
-    text: string;
-}
+export interface V1TextContent { 'text' : string }
 export interface Version {
-    major: number;
-    minor: number;
-    patch: number;
+  'major' : number,
+  'minor' : number,
+  'patch' : number,
 }
 export interface VideoContent {
-    height: number;
-    image_blob_reference: [] | [BlobReference];
-    video_blob_reference: [] | [BlobReference];
-    mime_type: string;
-    thumbnail_data: string;
-    caption: [] | [string];
-    width: number;
+  'height' : number,
+  'image_blob_reference' : [] | [BlobReference],
+  'video_blob_reference' : [] | [BlobReference],
+  'mime_type' : string,
+  'thumbnail_data' : string,
+  'caption' : [] | [string],
+  'width' : number,
 }
 export interface _SERVICE {
-    block_user: (arg_0: BlockUserArgs) => Promise<BlockUserResponse>;
-    create_group: (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>;
-    delete_messages: (arg_0: DeleteMessagesArgs) => Promise<DeleteMessagesResponse>;
-    dismiss_alerts: (arg_0: DismissAlertsArgs) => Promise<DismissAlertsResponse>;
-    edit_message: (arg_0: EditMessageArgs) => Promise<EditMessageResponse>;
-    events: (arg_0: EventsArgs) => Promise<EventsResponse>;
-    events_by_index: (arg_0: EventsByIndexArgs) => Promise<EventsResponse>;
-    events_range: (arg_0: EventsRangeArgs) => Promise<EventsResponse>;
-    events_window: (arg_0: EventsWindowArgs) => Promise<EventsResponse>;
-    initial_state: (arg_0: InitialStateArgs) => Promise<InitialStateResponse>;
-    join_group: (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>;
-    leave_group: (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>;
-    mark_read: (arg_0: MarkReadArgs) => Promise<MarkReadResponse>;
-    mute_notifications: (arg_0: MuteNotificationsArgs) => Promise<MuteNotificationsResponse>;
-    put_chunk: (arg_0: PutChunkArgs) => Promise<PutChunkResponse>;
-    search_all_messages: (arg_0: SearchAllMessagesArgs) => Promise<SearchAllMessagesResponse>;
-    search_messages: (arg_0: SearchMessagesArgs) => Promise<SearchMessagesResponse>;
-    send_message: (arg_0: SendMessageArgs) => Promise<SendMessageResponse>;
-    set_avatar: (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>;
-    set_preferences: (arg_0: SetPreferencesArgs) => Promise<SetPreferencesResponse>;
-    toggle_reaction: (arg_0: ToggleReactionArgs) => Promise<ToggleReactionResponse>;
-    transactions: (arg_0: TransactionsArgs) => Promise<TransactionsResponse>;
-    unblock_user: (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>;
-    unmute_notifications: (arg_0: UnmuteNotificationsArgs) => Promise<UnmuteNotificationsResponse>;
-    updates: (arg_0: UpdatesArgs) => Promise<UpdatesResponse>;
+  'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
+  'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
+  'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
+      DeleteMessagesResponse
+    >,
+  'dismiss_alerts' : (arg_0: DismissAlertsArgs) => Promise<
+      DismissAlertsResponse
+    >,
+  'edit_message' : (arg_0: EditMessageArgs) => Promise<EditMessageResponse>,
+  'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
+  'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
+  'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
+  'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
+  'initial_state' : (arg_0: InitialStateArgs) => Promise<InitialStateResponse>,
+  'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
+  'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
+  'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
+  'mute_notifications' : (arg_0: MuteNotificationsArgs) => Promise<
+      MuteNotificationsResponse
+    >,
+  'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
+  'search_all_messages' : (arg_0: SearchAllMessagesArgs) => Promise<
+      SearchAllMessagesResponse
+    >,
+  'search_messages' : (arg_0: SearchMessagesArgs) => Promise<
+      SearchMessagesResponse
+    >,
+  'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
+  'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
+  'set_preferences' : (arg_0: SetPreferencesArgs) => Promise<
+      SetPreferencesResponse
+    >,
+  'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
+      ToggleReactionResponse
+    >,
+  'transactions' : (arg_0: TransactionsArgs) => Promise<TransactionsResponse>,
+  'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
+  'unmute_notifications' : (arg_0: UnmuteNotificationsArgs) => Promise<
+      UnmuteNotificationsResponse
+    >,
+  'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
 }

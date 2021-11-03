@@ -428,7 +428,8 @@ export interface ReplyContext {
   'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |
-  { 'Admin' : null };
+  { 'Admin' : null } |
+  { 'Owner' : null };
 export interface SearchArgs { 'max_results' : number, 'search_term' : string }
 export type SearchResponse = { 'TermTooShort' : number } |
   { 'Success' : SearchSuccessResult } |

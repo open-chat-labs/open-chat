@@ -99,7 +99,7 @@
                                     <div slot="text">{$_("dismissAsAdmin")}</div>
                                 </MenuItem>
                             {/if}
-                            {#if participant.role === "standard"}
+                            {#if participant.role === "participant"}
                                 <MenuItem on:click={makeAdmin}>
                                     <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                     <div slot="text">{$_("makeAdmin")}</div>

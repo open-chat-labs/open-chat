@@ -454,7 +454,8 @@ export interface ReplyContext {
   'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |
-  { 'Admin' : null };
+  { 'Admin' : null } |
+  { 'Owner' : null };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,

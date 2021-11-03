@@ -15,6 +15,7 @@ import type {
     ApiSelectedInitialResponse,
     ApiParticipant,
     ApiSelectedUpdatesResponse,
+    ApiRole,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -35,6 +36,7 @@ import type {
     GroupChatDetailsResponse,
     GroupChatDetailsUpdatesResponse,
     UnblockUserResponse,
+    ParticipantRole,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -45,9 +47,22 @@ function principalToString(p: Principal): string {
     return p.toString();
 }
 
+function participantRole(candid: ApiRole): ParticipantRole {
+    if ("Admin" in candid) {
+        return "admin";
+    }
+    if ("Participant" in candid) {
+        return "participant";
+    }
+    if ("Owner" in candid) {
+        return "owner";
+    }
+    throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
+}
+
 function participant(candid: ApiParticipant): Participant {
     return {
-        role: "Admin" in candid.role ? "admin" : "standard",
+        role: participantRole(candid.role),
         userId: candid.user_id.toString(),
     };
 }
@@ -132,6 +147,9 @@ export function blockUserResponse(candid: ApiBlockUserResponse): BlockUserRespon
     }
     if ("CannotBlockSelf" in candid) {
         return "cannot_block_self";
+    }
+    if ("CannotBlockOwner" in candid) {
+        return "cannot_block_owner";
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
@@ -302,6 +320,9 @@ export function removeParticipantResponse(
     }
     if ("CannotRemoveSelf" in candid) {
         return "cannot_remove_self";
+    }
+    if ("CannotRemoveOwner" in candid) {
+        return "cannot_remove_owner";
     }
     if ("InternalError" in candid) {
         return "internal_error";
@@ -493,6 +514,14 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "users_unblocked",
             userIds: candid.UsersUnblocked.user_ids.map((p) => p.toString()),
             unblockedBy: candid.UsersUnblocked.unblocked_by.toString(),
+        };
+    }
+
+    if ("OwnershipTransferred" in candid) {
+        return {
+            kind: "ownership_transferred",
+            oldOwner: candid.OwnershipTransferred.old_owner.toString(),
+            newOwner: candid.OwnershipTransferred.new_owner.toString(),
         };
     }
 

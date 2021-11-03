@@ -226,7 +226,11 @@ export const idlFactory = ({ IDL }) => {
     'max_events' : IDL.Nat32,
   });
   const InitialStateArgs = IDL.Record({});
-  const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
+  const Role = IDL.Variant({
+    'Participant' : IDL.Null,
+    'Admin' : IDL.Null,
+    'Owner' : IDL.Null,
+  });
   const MessageIndexRange = IDL.Record({
     'to' : MessageIndex,
     'from' : MessageIndex,
