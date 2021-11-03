@@ -45,9 +45,15 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
         } else if participant.role.can_block_user() {
             match runtime_state.data.participants.get_by_user_id(&args.user_id) {
                 None => Err(UserNotInGroup),
-                Some(_) => Ok(PrepareResult {
-                    blocked_by: participant.user_id,
-                }),
+                Some(participant_to_remove) => {
+                    if participant_to_remove.role.is_owner() {
+                        Err(CannotBlockOwner)
+                    } else {
+                        Ok(PrepareResult {
+                            blocked_by: participant.user_id,
+                        })
+                    }
+                }
             }
         } else {
             Err(NotAuthorized)

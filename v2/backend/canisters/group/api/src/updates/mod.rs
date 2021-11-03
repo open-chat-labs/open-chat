@@ -12,5 +12,6 @@ pub mod remove_admin;
 pub mod remove_participant;
 pub mod send_message;
 pub mod toggle_reaction;
+pub mod transfer_ownership;
 pub mod unblock_user;
 pub mod update_group;

@@ -20,7 +20,7 @@ impl Participants {
         let participant = ParticipantInternal {
             user_id: creator_user_id,
             date_added: now,
-            role: Role::Admin,
+            role: Role::Owner,
             min_visible_event_index: EventIndex::default(),
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: false,
@@ -30,7 +30,7 @@ impl Participants {
             by_principal: vec![(creator_principal, participant)].into_iter().collect(),
             user_id_to_principal_map: vec![(creator_user_id, creator_principal)].into_iter().collect(),
             blocked: HashSet::new(),
-            admin_count: 1,
+            admin_count: 0,
         }
     }
 
@@ -155,8 +155,10 @@ impl Participants {
     pub fn make_admin(&mut self, user_id: &UserId) -> MakeAdminResult {
         match self.get_by_user_id_mut(user_id) {
             Some(p) => {
-                if matches!(p.role, Role::Admin) {
+                if p.role.is_admin() {
                     MakeAdminResult::AlreadyAdmin
+                } else if p.role.is_owner() {
+                    MakeAdminResult::AlreadyOwner
                 } else {
                     p.role = Role::Admin;
                     self.admin_count += 1;
@@ -167,10 +169,46 @@ impl Participants {
         }
     }
 
+    pub fn transfer_ownership(&mut self, caller_id: &UserId, user_id: &UserId) -> TransferOwnershipResult {
+        match self.get_by_user_id(caller_id) {
+            Some(caller) => {
+                if !caller.role.is_owner() {
+                    return TransferOwnershipResult::CallerNotOwner;
+                } else {
+                    match self.get_by_user_id(user_id) {
+                        Some(user) => {
+                            if user.role.is_owner() {
+                                // Should not happen. Means > 1 owner!
+                                return TransferOwnershipResult::UserAlreadyOwner;
+                            }
+                        }
+                        None => return TransferOwnershipResult::UserNotInGroup,
+                    }
+                }
+            }
+            None => return TransferOwnershipResult::CallerNotInGroup,
+        }
+
+        if let Some(caller) = self.get_by_user_id_mut(caller_id) {
+            caller.role = Role::Admin;
+            self.admin_count += 1;
+        }
+
+        if let Some(user) = self.get_by_user_id_mut(user_id) {
+            let was_user_admin = user.role.is_admin();
+            user.role = Role::Owner;
+            if was_user_admin {
+                self.admin_count -= 1;
+            }
+        }
+
+        TransferOwnershipResult::Success
+    }
+
     pub fn remove_admin(&mut self, user_id: &UserId) -> RemoveAdminResult {
         match self.get_by_user_id_mut(user_id) {
             Some(p) => {
-                if matches!(p.role, Role::Admin) {
+                if p.role.is_admin() {
                     p.role = Role::Participant;
                     self.admin_count -= 1;
                     RemoveAdminResult::Success
@@ -197,6 +235,15 @@ pub enum MakeAdminResult {
     Success,
     NotInGroup,
     AlreadyAdmin,
+    AlreadyOwner,
+}
+
+pub enum TransferOwnershipResult {
+    Success,
+    UserNotInGroup,
+    UserAlreadyOwner,
+    CallerNotInGroup,
+    CallerNotOwner,
 }
 
 pub enum RemoveAdminResult {

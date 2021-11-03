@@ -84,7 +84,9 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> Updat
                     updates.avatar_id = Some(a.new_avatar);
                 }
             }
-            ChatEventInternal::ParticipantsPromotedToAdmin(_) | ChatEventInternal::ParticipantsDismissedAsAdmin(_) => {
+            ChatEventInternal::ParticipantsPromotedToAdmin(_)
+            | ChatEventInternal::ParticipantsDismissedAsAdmin(_)
+            | ChatEventInternal::OwnershipTransferred(_) => {
                 updates.role_changed = true;
             }
             ChatEventInternal::ParticipantsAdded(_)
