@@ -400,9 +400,9 @@ type UsersUnblocked =
 
 type Role =
     variant {
+        Owner;
         Admin;
         Participant;
-        Owner;
     };
 
 type Subscription =
