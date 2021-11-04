@@ -5,7 +5,7 @@ use types::{Avatar, FieldTooLongResult};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub avatar: Avatar
+    pub avatar: Avatar,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

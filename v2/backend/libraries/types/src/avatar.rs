@@ -1,7 +1,7 @@
-use std::fmt::{Debug, Formatter};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use std::fmt::{Debug, Formatter};
 
 pub const MAX_AVATAR_SIZE: u64 = 1024 * 1024; // 1MB
 
