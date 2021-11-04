@@ -4,7 +4,7 @@
     import AddParticipants from "./groupdetails/AddParticipants.svelte";
     import Participants from "./groupdetails/Participants.svelte";
     import type { EditGroupState } from "../../fsm/editGroup";
-    import type { GroupChatSummary } from "../../domain/chat/chat";
+    import type { FullParticipant, GroupChatSummary } from "../../domain/chat/chat";
     import type { ServiceContainer } from "../../services/serviceContainer";
     import type { Writable } from "svelte/store";
     import type { ChatController } from "../../fsm/chat.controller";
@@ -55,6 +55,15 @@
         controller.blockUser(ev.detail.userId);
     }
 
+    async function transferOwnership(ev: CustomEvent<FullParticipant>) {
+        const success = await controller.transferOwnership(userId, ev.detail);
+        if (success) {
+            toastStore.showSuccessToast("transferOwnershipSucceeded");
+        } else {
+            toastStore.showFailureToast("transferOwnershipFailed");
+        }
+    }
+
     async function unblockUser(ev: CustomEvent<UserSummary>) {
         const success = await controller.addParticipants(true, [ev.detail]);
         if (success) {
@@ -96,6 +105,7 @@
             on:close={pop}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
+            on:transferOwnership={transferOwnership}
             on:chatWith
             on:addParticipants
             on:dismissAsAdmin={dismissAsAdmin}

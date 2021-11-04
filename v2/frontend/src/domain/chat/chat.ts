@@ -40,6 +40,34 @@ export type FailedCyclesTransfer = {
     errorMessage: string;
 };
 
+export type PendingCyclesWithdrawal = {
+    transferKind: "cycles_withdrawal";
+    kind: "pending_cycles_withdrawal";
+    to: string;
+    cycles: bigint;
+};
+
+export type CompletedCyclesWithdrawal = {
+    transferKind: "cycles_withdrawal";
+    kind: "completed_cycles_withdrawal";
+    to: string;
+    cycles: bigint;
+};
+
+export type FailedCyclesWithdrawal = {
+    transferKind: "cycles_withdrawal";
+    kind: "failed_cycles_withdrawal";
+    cycles: bigint;
+    errorMessage: string;
+};
+
+export type CompletedCyclesDeposit = {
+    transferKind: "cycles_deposit";
+    kind: "completed_cycles_deposit";
+    from: string;
+    cycles: bigint;
+};
+
 export type PendingICPTransfer = {
     transferKind: "icp_transfer";
     kind: "pending_icp_transfer";
@@ -60,6 +88,15 @@ export type CompletedICPTransfer = {
     blockHeight: bigint;
 };
 
+export type CompletedICPDeposit = {
+    transferKind: "icp_deposit";
+    kind: "completed_icp_deposit";
+    amountE8s: bigint;
+    feeE8s: bigint;
+    memo: bigint;
+    blockHeight: bigint;
+};
+
 export type FailedICPTransfer = {
     transferKind: "icp_transfer";
     kind: "failed_icp_transfer";
@@ -70,11 +107,56 @@ export type FailedICPTransfer = {
     errorMessage: string;
 };
 
+export type PendingICPWithdrawal = {
+    transferKind: "icp_withdrawal";
+    kind: "pending_icp_withdrawal";
+    to: string;
+    amountE8s: bigint;
+    feeE8s?: bigint;
+    memo?: bigint;
+};
+
+export type CompletedICPWithdrawal = {
+    transferKind: "icp_withdrawal";
+    kind: "completed_icp_withdrawal";
+    to: string;
+    amountE8s: bigint;
+    feeE8s: bigint;
+    memo: bigint;
+    blockHeight: bigint;
+};
+
+export type FailedICPWithdrawal = {
+    transferKind: "icp_withdrawal";
+    kind: "failed_icp_withdrawal";
+    to: string;
+    amountE8s: bigint;
+    feeE8s: bigint;
+    memo: bigint;
+    errorMessage: string;
+};
+
 export type CyclesTransfer = PendingCyclesTransfer | CompletedCyclesTransfer | FailedCyclesTransfer;
+export type CyclesWithdrawal =
+    | PendingCyclesWithdrawal
+    | CompletedCyclesWithdrawal
+    | FailedCyclesWithdrawal;
+export type CyclesDeposit = CompletedCyclesDeposit;
 
 export type ICPTransfer = PendingICPTransfer | CompletedICPTransfer | FailedICPTransfer;
+export type ICPWithdrawal = PendingICPWithdrawal | CompletedICPWithdrawal | FailedICPWithdrawal;
+export type ICPDeposit = CompletedICPDeposit;
 
 export type CryptocurrencyTransfer = CyclesTransfer | ICPTransfer;
+
+export type CryptocurrencyWithdrawal = CyclesWithdrawal | ICPWithdrawal;
+
+export type CryptocurrencyDeposit = CyclesDeposit | ICPDeposit;
+
+export type CryptocurrencyTransaction =
+    | CryptocurrencyTransfer
+    | CryptocurrencyWithdrawal
+    | CryptocurrencyDeposit;
 
 export interface CryptocurrencyContent {
     kind: "crypto_content";
@@ -200,7 +282,8 @@ export type GroupChatEvent =
     | GroupDescChanged
     | UsersBlocked
     | UsersUnblocked
-    | ParticipantsDismissedAsAdmin;
+    | ParticipantsDismissedAsAdmin
+    | OwnershipTransferred;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -288,6 +371,12 @@ export type ParticipantsDismissedAsAdmin = {
     dismissedBy: string;
 };
 
+export type OwnershipTransferred = {
+    kind: "ownership_transferred";
+    oldOwner: string;
+    newOwner: string;
+};
+
 export type ParticipantsPromotedToAdmin = {
     kind: "participants_promoted_to_admin";
     userIds: string[];
@@ -339,6 +428,40 @@ export type UpdatesResponse = {
     chatsRemoved: Set<string>;
     timestamp: bigint;
     cyclesBalance?: bigint;
+    transactions: CryptocurrencyTransfer[];
+    alerts: Alert[];
+};
+
+export type Alert = {
+    id: string;
+    details: AlertDetails;
+    elapsed: bigint;
+};
+
+export type AlertDetails =
+    | GroupDeletedAlert
+    | CryptoDepositReceivedAlert
+    | RemovedFromGroupAlert
+    | BlockedFromGroupAlert;
+
+export type GroupDeletedAlert = {
+    kind: "group_deleted_alert";
+    deletedBy: string;
+    chatId: string;
+};
+
+export type CryptoDepositReceivedAlert = ICPDeposit | CyclesDeposit;
+
+export type RemovedFromGroupAlert = {
+    kind: "removed_from_group_alert";
+    removedBy: string;
+    chatId: string;
+};
+
+export type BlockedFromGroupAlert = {
+    kind: "blocked_from_group_alert";
+    blockedBy: string;
+    chatId: string;
 };
 
 export type InitialStateResponse = {
@@ -374,7 +497,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     myRole?: ParticipantRole;
 };
 
-export type ParticipantRole = "admin" | "standard";
+export type ParticipantRole = "admin" | "participant" | "owner";
 
 export type Participant = {
     role: ParticipantRole;
@@ -614,6 +737,14 @@ export type MakeAdminResponse =
     | "not_authorised"
     | "success";
 
+export type TransferOwnershipResponse =
+    | "user_not_in_group"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "success";
+
+export type DeleteGroupResponse = "internal_error" | "not_authorised" | "success";
+
 export type RemoveAdminResponse =
     | "user_not_in_group"
     | "caller_not_in_group"
@@ -627,6 +758,7 @@ export type RemoveParticipantResponse =
     | "not_authorised"
     | "success"
     | "cannot_remove_self"
+    | "cannot_remove_owner"
     | "internal_error";
 
 export type BlockUserResponse =
@@ -636,7 +768,8 @@ export type BlockUserResponse =
     | "caller_not_in_group"
     | "not_authorised"
     | "internal_error"
-    | "cannot_block_self";
+    | "cannot_block_self"
+    | "cannot_block_owner";
 
 export type UnblockUserResponse =
     | "success"
@@ -650,6 +783,7 @@ export type LeaveGroupResponse =
     | "group_not_found"
     | "internal_error"
     | "not_in_group"
+    | "owner_cannot_leave"
     | "last_admin";
 
 export type JoinGroupResponse =

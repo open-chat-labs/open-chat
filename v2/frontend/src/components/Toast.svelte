@@ -37,9 +37,9 @@
     .message {
         transition: background-color 200ms ease-in-out;
         background-color: var(--button-bg);
-        border-radius: $sp6;
         padding: $sp4;
-        width: 50%;
+        width: 75%;
+        max-width: 800px;
         margin: 0 $sp4;
         display: flex;
         justify-content: center;

@@ -32,7 +32,7 @@
         candidateGroup.participants = [
             ...candidateGroup.participants,
             {
-                role: "standard",
+                role: "participant",
                 user: ev.detail,
             },
         ];

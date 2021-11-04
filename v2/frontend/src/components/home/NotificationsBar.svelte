@@ -33,7 +33,6 @@
         bottom: 0;
         left: 0;
         right: 0;
-        margin-bottom: $sp3;
 
         @include size-below(xs) {
             margin-bottom: 0;

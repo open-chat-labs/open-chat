@@ -300,7 +300,8 @@
 
     $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($chat);
 
-    $: admin = $chat.kind === "group_chat" && $chat.myRole === "admin";
+    $: admin =
+        $chat.kind === "group_chat" && ($chat.myRole === "admin" || $chat.myRole === "owner");
 
     $: {
         if (controller.chatId !== currentChatId) {

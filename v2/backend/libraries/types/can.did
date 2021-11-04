@@ -402,6 +402,7 @@ type Role =
     variant {
         Admin;
         Participant;
+        Owner;
     };
 
 type Subscription =

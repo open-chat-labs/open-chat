@@ -5,6 +5,7 @@ import type {
     DirectChatSummaryUpdates,
     GroupChatSummaryUpdates,
     MessageIndexRange,
+    UpdatesResponse,
 } from "./chat";
 import {
     compareMessageRange,
@@ -381,12 +382,14 @@ describe("merging updates", () => {
     ];
 
     test("removed chats get removed", () => {
-        const updatesResponse = {
+        const updatesResponse: UpdatesResponse = {
             chatsUpdated: [],
             chatsRemoved: new Set(["1", "3", "5"]),
             chatsAdded: [],
             timestamp: BigInt(0),
             blockedUsers: new Set<string>(),
+            transactions: [],
+            alerts: [],
         };
         const merged = mergeChatUpdates(initialChats, updatesResponse);
         expect(merged.length).toEqual(2);
@@ -395,12 +398,14 @@ describe("merging updates", () => {
     });
 
     test("added chats get added", () => {
-        const updatesResponse = {
+        const updatesResponse: UpdatesResponse = {
             chatsUpdated: [],
             chatsRemoved: new Set([]),
             chatsAdded: [directChatId(6), directChatId(7)],
             timestamp: BigInt(0),
             blockedUsers: new Set<string>(),
+            transactions: [],
+            alerts: [],
         };
         const merged = mergeChatUpdates(initialChats, updatesResponse);
         expect(merged.length).toEqual(7);
@@ -461,23 +466,27 @@ describe("merging updates", () => {
         };
 
         test("attempting to update with a mismatched kind throws error", () => {
-            const updatesResponse = {
+            const updatesResponse: UpdatesResponse = {
                 chatsUpdated: [{ ...updatedDirect, chatId: "1" }],
                 chatsRemoved: new Set([]),
                 chatsAdded: [],
                 timestamp: BigInt(0),
                 blockedUsers: new Set<string>(),
+                transactions: [],
+                alerts: [],
             };
             expect(() => mergeChatUpdates(initialChats, updatesResponse)).toThrow();
         });
 
         test("direct chats get merged correctly", () => {
-            const updatesResponse = {
+            const updatesResponse: UpdatesResponse = {
                 chatsUpdated: [updatedDirect],
                 chatsRemoved: new Set([]),
                 chatsAdded: [],
                 timestamp: BigInt(0),
                 blockedUsers: new Set<string>(),
+                transactions: [],
+                alerts: [],
             };
             const merged = mergeChatUpdates(initialChats, updatesResponse);
             const updated = merged.find((c) => c.chatId === "4");
@@ -492,12 +501,14 @@ describe("merging updates", () => {
         });
 
         test("updated group chats get merged correctly", () => {
-            const updatesResponse = {
+            const updatesResponse: UpdatesResponse = {
                 chatsUpdated: [updatedGroup],
                 chatsRemoved: new Set([]),
                 chatsAdded: [],
                 timestamp: BigInt(0),
                 blockedUsers: new Set<string>(),
+                transactions: [],
+                alerts: [],
             };
             const merged = mergeChatUpdates(initialChats, updatesResponse);
             const updated = merged.find((c) => c.chatId === "2");

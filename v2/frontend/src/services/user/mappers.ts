@@ -20,6 +20,10 @@ import type {
     ApiMessageMatch,
     ApiEditMessageResponse,
     ApiInitialStateResponse,
+    ApiAlert,
+    ApiAlertDetails,
+    ApiCryptocurrencyDeposit,
+    ApiRole,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -41,6 +45,10 @@ import type {
     JoinGroupResponse,
     EditMessageResponse,
     InitialStateResponse,
+    Alert,
+    AlertDetails,
+    CryptocurrencyDeposit,
+    ParticipantRole,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -150,6 +158,9 @@ export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupRes
     }
     if ("LastAdmin" in candid) {
         return "last_admin";
+    }
+    if ("OwnerCannotLeave" in candid) {
+        return "owner_cannot_leave";
     }
     throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
 }
@@ -379,9 +390,69 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             chatsRemoved: new Set(candid.Success.chats_removed.map((p) => p.toString())),
             timestamp: candid.Success.timestamp,
             cyclesBalance: optional(candid.Success.cycles_balance, identity),
+            transactions: [], // todo - come back when we need this
+            alerts: candid.Success.alerts.map(alert),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
+}
+
+function alert(candid: ApiAlert): Alert {
+    return {
+        id: candid.id,
+        details: alertDetails(candid.details),
+        elapsed: candid.elapsed,
+    };
+}
+
+function alertDetails(candid: ApiAlertDetails): AlertDetails {
+    if ("GroupDeleted" in candid) {
+        return {
+            kind: "group_deleted_alert",
+            deletedBy: candid.GroupDeleted.deleted_by.toString(),
+            chatId: candid.GroupDeleted.chat_id.toString(),
+        };
+    }
+    if ("RemovedFromGroup" in candid) {
+        return {
+            kind: "removed_from_group_alert",
+            removedBy: candid.RemovedFromGroup.removed_by.toString(),
+            chatId: candid.RemovedFromGroup.chat_id.toString(),
+        };
+    }
+    if ("BlockedFromGroup" in candid) {
+        return {
+            kind: "blocked_from_group_alert",
+            blockedBy: candid.BlockedFromGroup.removed_by.toString(),
+            chatId: candid.BlockedFromGroup.chat_id.toString(),
+        };
+    }
+    if ("CryptocurrencyDepositReceived" in candid) {
+        return cryptoDepositAlert(candid.CryptocurrencyDepositReceived);
+    }
+    throw new UnsupportedValueError("Unexpected ApiAlertDetails type received:", candid);
+}
+
+function cryptoDepositAlert(candid: ApiCryptocurrencyDeposit): CryptocurrencyDeposit {
+    if ("ICP" in candid) {
+        return {
+            transferKind: "icp_deposit",
+            kind: "completed_icp_deposit",
+            amountE8s: candid.ICP.Completed.amount_e8s,
+            feeE8s: candid.ICP.Completed.fee_e8s,
+            memo: candid.ICP.Completed.memo,
+            blockHeight: candid.ICP.Completed.block_height,
+        };
+    }
+    if ("Cycles" in candid) {
+        return {
+            transferKind: "cycles_deposit",
+            kind: "completed_cycles_deposit",
+            from: candid.Cycles.Completed.from.toString(),
+            cycles: candid.Cycles.Completed.cycles,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiAlertDetails type received:", candid);
 }
 
 function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
@@ -406,7 +477,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             })),
             notificationsMuted: optional(candid.Group.notifications_muted, identity),
             participantCount: optional(candid.Group.participant_count, identity),
-            myRole: optional(candid.Group.role, (r) => ("Admin" in r ? "admin" : "standard")),
+            myRole: optional(candid.Group.role, participantRole),
         };
     }
     if ("Direct" in candid) {
@@ -426,6 +497,19 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
+}
+
+function participantRole(candid: ApiRole): ParticipantRole {
+    if ("Admin" in candid) {
+        return "admin";
+    }
+    if ("Participant" in candid) {
+        return "participant";
+    }
+    if ("Owner" in candid) {
+        return "owner";
+    }
+    throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
 }
 
 function chatSummary(candid: ApiChatSummary): ChatSummary {
@@ -455,7 +539,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             })),
             notificationsMuted: candid.Group.notifications_muted,
             participantCount: candid.Group.participant_count,
-            myRole: "Admin" in candid.Group.role ? "admin" : "standard",
+            myRole: participantRole(candid.Group.role),
         };
     }
     if ("Direct" in candid) {

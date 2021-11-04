@@ -1,5 +1,16 @@
 import type { Principal } from '@dfinity/principal';
 export type AccountIdentifier = string;
+export interface Alert {
+  'id' : string,
+  'details' : AlertDetails,
+  'elapsed' : Milliseconds,
+}
+export type AlertDetails = { 'GroupDeleted' : GroupDeletedAlert } |
+  { 'CryptocurrencyDepositReceived' : CryptocurrencyDeposit } |
+  { 'RemovedFromGroup' : RemovedFromGroupAlert } |
+  { 'BlockedFromGroup' : RemovedFromGroupAlert };
+export type AlertId = { 'Internal' : number } |
+  { 'GroupDeleted' : ChatId };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -167,6 +178,9 @@ export interface DirectMessageNotification {
   'message' : Message,
   'sender_name' : string,
 }
+export interface DismissAlertsArgs { 'alert_ids' : Array<string> }
+export type DismissAlertsResponse = { 'PartialSuccess' : Array<string> } |
+  { 'Success' : null };
 export interface EditMessageArgs {
   'content' : MessageContent,
   'user_id' : UserId,
@@ -258,6 +272,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'MessageEdited' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
@@ -300,6 +315,7 @@ export interface GroupChatUpdatesSince {
   'updates_since' : TimestampMillis,
   'chat_id' : ChatId,
 }
+export interface GroupDeletedAlert { 'deleted_by' : UserId, 'chat_id' : ChatId }
 export interface GroupDescriptionChanged {
   'new_description' : string,
   'previous_description' : string,
@@ -359,8 +375,8 @@ export type JoinGroupResponse = { 'Blocked' : null } |
   { 'ParticipantLimitReached' : number } |
   { 'InternalError' : string };
 export interface LeaveGroupArgs { 'chat_id' : ChatId }
-export type LeaveGroupResponse = { 'LastAdmin' : null } |
-  { 'GroupNotFound' : null } |
+export type LeaveGroupResponse = { 'GroupNotFound' : null } |
+  { 'OwnerCannotLeave' : null } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
@@ -435,6 +451,10 @@ export interface OptionalUserPreferences {
   'use_system_emoji' : [] | [boolean],
   'enable_animations' : [] | [boolean],
 }
+export interface OwnershipTransferred {
+  'old_owner' : UserId,
+  'new_owner' : UserId,
+}
 export interface PartialUserSummary {
   'username' : [] | [string],
   'user_id' : UserId,
@@ -497,12 +517,17 @@ export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
   { 'BlobAlreadyExists' : null } |
   { 'Success' : null } |
   { 'ChunkTooBig' : null };
+export interface RemovedFromGroupAlert {
+  'chat_id' : ChatId,
+  'removed_by' : UserId,
+}
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |
-  { 'Admin' : null };
+  { 'Admin' : null } |
+  { 'Owner' : null };
 export interface SearchAllMessagesArgs {
   'max_results' : number,
   'search_term' : string,
@@ -606,6 +631,7 @@ export interface UpdatesArgs { 'updates_since' : UpdatesSince }
 export type UpdatesResponse = {
     'Success' : {
       'cycles_balance' : [] | [Cycles],
+      'alerts' : Array<Alert>,
       'chats_updated' : Array<ChatSummaryUpdates>,
       'blocked_users' : Array<UserId>,
       'chats_added' : Array<ChatSummary>,
@@ -710,6 +736,9 @@ export interface _SERVICE {
   'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
   'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
       DeleteMessagesResponse
+    >,
+  'dismiss_alerts' : (arg_0: DismissAlertsArgs) => Promise<
+      DismissAlertsResponse
     >,
   'edit_message' : (arg_0: EditMessageArgs) => Promise<EditMessageResponse>,
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,

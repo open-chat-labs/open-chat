@@ -29,12 +29,19 @@ export const idlFactory = ({ IDL }) => {
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({
     'GroupNotPublic' : IDL.Null,
+    'CannotBlockOwner' : IDL.Null,
     'UserNotInGroup' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
     'CannotBlockSelf' : IDL.Null,
+  });
+  const DeleteGroupArgs = IDL.Record({});
+  const DeleteGroupResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Null,
   });
   const MessageId = IDL.Nat;
   const DeleteMessagesArgs = IDL.Record({ 'message_ids' : IDL.Vec(MessageId) });
@@ -217,6 +224,10 @@ export const idlFactory = ({ IDL }) => {
     'new_name' : IDL.Text,
     'previous_name' : IDL.Text,
   });
+  const OwnershipTransferred = IDL.Record({
+    'old_owner' : UserId,
+    'new_owner' : UserId,
+  });
   const AvatarChanged = IDL.Record({
     'changed_by' : UserId,
     'previous_avatar' : IDL.Opt(IDL.Nat),
@@ -241,6 +252,7 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantLeft' : ParticipantLeft,
     'MessageDeleted' : UpdatedMessage,
     'GroupNameChanged' : GroupNameChanged,
+    'OwnershipTransferred' : OwnershipTransferred,
     'MessageEdited' : UpdatedMessage,
     'AvatarChanged' : AvatarChanged,
     'ParticipantsAdded' : ParticipantsAdded,
@@ -304,6 +316,7 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
+    'CannotRemoveOwner' : IDL.Null,
     'CannotRemoveSelf' : IDL.Null,
     'InternalError' : IDL.Text,
   });
@@ -329,7 +342,11 @@ export const idlFactory = ({ IDL }) => {
     'InvalidTerm' : IDL.Null,
   });
   const SelectedInitialArgs = IDL.Record({});
-  const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
+  const Role = IDL.Variant({
+    'Participant' : IDL.Null,
+    'Admin' : IDL.Null,
+    'Owner' : IDL.Null,
+  });
   const Participant = IDL.Record({
     'role' : Role,
     'user_id' : UserId,
@@ -437,6 +454,13 @@ export const idlFactory = ({ IDL }) => {
     'Added' : EventIndex,
     'Removed' : EventIndex,
   });
+  const TransferOwnershipArgs = IDL.Record({ 'new_owner' : UserId });
+  const TransferOwnershipResponse = IDL.Variant({
+    'UserNotInGroup' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({
     'GroupNotPublic' : IDL.Null,
@@ -476,6 +500,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
+    'delete_group' : IDL.Func([DeleteGroupArgs], [DeleteGroupResponse], []),
     'delete_messages' : IDL.Func(
         [DeleteMessagesArgs],
         [DeleteMessagesResponse],
@@ -523,6 +548,11 @@ export const idlFactory = ({ IDL }) => {
     'toggle_reaction' : IDL.Func(
         [ToggleReactionArgs],
         [ToggleReactionResponse],
+        [],
+      ),
+    'transfer_ownership' : IDL.Func(
+        [TransferOwnershipArgs],
+        [TransferOwnershipResponse],
         [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),

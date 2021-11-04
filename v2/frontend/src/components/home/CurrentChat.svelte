@@ -6,9 +6,15 @@
     import { toastStore } from "../../stores/toast";
     import { _ } from "svelte-i18n";
     import type { ChatController } from "../../fsm/chat.controller";
+    import Overlay from "../Overlay.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Button from "../Button.svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
+
+    let confirmDelete = false;
+    let deleting = false;
 
     // todo - I suspect this is not going to be reactive in the way that we want
     $: unreadMessages = controller.unreadMessageCount;
@@ -46,8 +52,21 @@
         controller.messageRead(ev.detail.messageIndex, ev.detail.messageId);
     }
 
+    function deleteGroup() {
+        deleting = true;
+        controller
+            .deleteGroup()
+            .then((deleted) => {
+                if (deleted) {
+                    toastStore.showSuccessToast("deleteGroupSuccess");
+                } else {
+                    toastStore.showFailureToast("deleteGroupFailure");
+                }
+            })
+            .finally(() => (confirmDelete = deleting = false));
+    }
+
     $: chat = controller.chat;
-    $: participants = controller.participants;
 </script>
 
 <div class="wrapper">
@@ -63,8 +82,8 @@
         on:showGroupDetails
         on:showParticipants
         on:leaveGroup
-        selectedChatSummary={chat}
-        {participants} />
+        on:deleteGroup={() => (confirmDelete = true)}
+        selectedChatSummary={chat} />
     <CurrentChatMessages
         on:replyPrivatelyTo
         on:messageRead={messageRead}
@@ -74,11 +93,41 @@
     <Footer {blocked} {controller} />
 </div>
 
+<Overlay active={confirmDelete}>
+    <ModalContent fill={true}>
+        <span slot="header">{$_("areYouSure")}</span>
+        <span slot="body">
+            <p class="msg">
+                {$_("irreversible")}
+            </p>
+        </span>
+        <span slot="footer">
+            <div class="buttons">
+                <Button loading={deleting} disabled={deleting} small={true} on:click={deleteGroup}
+                    >{$_("yesPlease")}</Button>
+                <Button
+                    disabled={deleting}
+                    small={true}
+                    on:click={() => (confirmDelete = false)}
+                    secondary={true}>{$_("noThanks")}</Button>
+            </div>
+        </span>
+    </ModalContent>
+</Overlay>
+
 <style type="text/scss">
     .wrapper {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         height: 100%;
+    }
+    .msg {
+        padding: $sp5;
+    }
+    .buttons {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
     }
 </style>

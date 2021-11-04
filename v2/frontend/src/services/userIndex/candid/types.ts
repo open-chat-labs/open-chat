@@ -1,5 +1,16 @@
 import type { Principal } from '@dfinity/principal';
 export type AccountIdentifier = string;
+export interface Alert {
+  'id' : string,
+  'details' : AlertDetails,
+  'elapsed' : Milliseconds,
+}
+export type AlertDetails = { 'GroupDeleted' : GroupDeletedAlert } |
+  { 'CryptocurrencyDepositReceived' : CryptocurrencyDeposit } |
+  { 'RemovedFromGroup' : RemovedFromGroupAlert } |
+  { 'BlockedFromGroup' : RemovedFromGroupAlert };
+export type AlertId = { 'Internal' : number } |
+  { 'GroupDeleted' : ChatId };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -231,6 +242,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'MessageEdited' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
@@ -269,6 +281,7 @@ export interface GroupChatSummaryUpdates {
   'participant_count' : [] | [number],
   'latest_message' : [] | [MessageEventWrapper],
 }
+export interface GroupDeletedAlert { 'deleted_by' : UserId, 'chat_id' : ChatId }
 export interface GroupDescriptionChanged {
   'new_description' : string,
   'previous_description' : string,
@@ -381,6 +394,10 @@ export interface OptionalUserPreferences {
   'use_system_emoji' : [] | [boolean],
   'enable_animations' : [] | [boolean],
 }
+export interface OwnershipTransferred {
+  'old_owner' : UserId,
+  'new_owner' : UserId,
+}
 export interface PartialUserSummary {
   'username' : [] | [string],
   'user_id' : UserId,
@@ -434,6 +451,10 @@ export interface PhoneNumber { 'country_code' : number, 'number' : string }
 export interface RemoveSmsMessagesArgs { 'up_to_sms_index' : bigint }
 export type RemoveSmsMessagesResponse = { 'NotAuthorized' : null } |
   { 'Success' : null };
+export interface RemovedFromGroupAlert {
+  'chat_id' : ChatId,
+  'removed_by' : UserId,
+}
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
@@ -443,7 +464,8 @@ export type ResendCodeResponse = { 'AlreadyClaimed' : null } |
   { 'Success' : null } |
   { 'UserNotFound' : null };
 export type Role = { 'Participant' : null } |
-  { 'Admin' : null };
+  { 'Admin' : null } |
+  { 'Owner' : null };
 export interface SearchArgs { 'max_results' : number, 'search_term' : string }
 export type SearchResponse = { 'Success' : { 'users' : Array<UserSummary> } };
 export interface SetUsernameArgs { 'username' : string }
@@ -516,7 +538,7 @@ export type UpgradeCanisterResponse = { 'UpgradeInProgress' : null } |
   { 'UserNotCreated' : null } |
   { 'Success' : null } |
   { 'UpgradeNotRequired' : null } |
-  { 'InternalError' : null } |
+  { 'InternalError' : string } |
   { 'UserNotFound' : null };
 export interface UserArgs {
   'username' : [] | [string],

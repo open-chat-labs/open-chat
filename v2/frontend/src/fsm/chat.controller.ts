@@ -8,6 +8,7 @@ import type {
     EnhancedReplyContext,
     EventsResponse,
     EventWrapper,
+    FullParticipant,
     GroupChatDetails,
     LocalReaction,
     Message,
@@ -660,7 +661,7 @@ export class ChatController {
 
     dismissAsAdmin(userId: string): Promise<void> {
         this.participants.update((ps) =>
-            ps.map((p) => (p.userId === userId ? { ...p, role: "standard" } : p))
+            ps.map((p) => (p.userId === userId ? { ...p, role: "participant" } : p))
         );
         return this.api
             .dismissAsAdmin(this.chatId, userId)
@@ -673,6 +674,73 @@ export class ChatController {
             .catch((err) => {
                 rollbar.error("Unable to dismiss as admin", err);
                 toastStore.showFailureToast("dismissAsAdminFailed");
+            });
+    }
+
+    private transferOwnershipLocally(me: string, them: string): void {
+        this.participants.update((ps) =>
+            ps.map((p) => {
+                if (p.userId === them) {
+                    return { ...p, role: "owner" };
+                }
+                if (p.userId === me) {
+                    return { ...p, role: "admin" };
+                }
+                return p;
+            })
+        );
+    }
+
+    private undoTransferOwnershipLocally(
+        me: string,
+        them: string,
+        theirRole: ParticipantRole
+    ): void {
+        this.participants.update((ps) =>
+            ps.map((p) => {
+                if (p.userId === them) {
+                    return { ...p, role: theirRole };
+                }
+                if (p.userId === me) {
+                    return { ...p, role: "owner" };
+                }
+                return p;
+            })
+        );
+    }
+
+    transferOwnership(me: string, them: FullParticipant): Promise<boolean> {
+        this.transferOwnershipLocally(me, them.userId);
+        return this.api
+            .transferOwnership(this.chatId, them.userId)
+            .then((resp) => {
+                if (resp !== "success") {
+                    rollbar.warn("Unable to transfer ownership", resp);
+                    this.undoTransferOwnershipLocally(me, them.userId, them.role);
+                    return false;
+                }
+                return true;
+            })
+            .catch((err) => {
+                this.undoTransferOwnershipLocally(me, them.userId, them.role);
+                rollbar.error("Unable to transfer ownership", err);
+                return false;
+            });
+    }
+
+    deleteGroup(): Promise<boolean> {
+        return this.api
+            .deleteGroup(this.chatId)
+            .then((resp) => {
+                if (resp !== "success") {
+                    rollbar.warn("Unable to delete group", resp);
+                    return false;
+                }
+                return true;
+            })
+            .catch((err) => {
+                rollbar.error("Unable to delete group", err);
+                return false;
             });
     }
 
@@ -722,7 +790,7 @@ export class ChatController {
         this.participants.update((p) => [
             ...p,
             {
-                role: "standard",
+                role: "participant",
                 userId,
                 username: get(userStore)[userId]?.username ?? "unknown",
             },
@@ -789,7 +857,7 @@ export class ChatController {
         this.participants.update((ps) => [
             ...users.map((u) => ({
                 userId: u.userId,
-                role: "standard" as ParticipantRole,
+                role: "participant" as ParticipantRole,
             })),
             ...ps,
         ]);

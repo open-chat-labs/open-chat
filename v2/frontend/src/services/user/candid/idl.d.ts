@@ -65,6 +65,10 @@ import {
     MessageMatch,
     MuteNotificationsResponse,
     UnmuteNotificationsResponse,
+    Alert,
+    AlertDetails,
+    CryptocurrencyDeposit,
+    Role,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -132,6 +136,10 @@ export {
     MessageMatch as ApiMessageMatch,
     MuteNotificationsResponse as ApiMuteNotificationsResponse,
     UnmuteNotificationsResponse as ApiUnmuteNotificationsResponse,
+    Alert as ApiAlert,
+    AlertDetails as ApiAlertDetails,
+    CryptocurrencyDeposit as ApiCryptocurrencyDeposit,
+    Role as ApiRole,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

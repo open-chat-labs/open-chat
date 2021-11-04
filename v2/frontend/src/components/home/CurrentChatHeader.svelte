@@ -6,6 +6,7 @@
     import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
+    import DeleteAlertOutline from "svelte-material-icons/DeleteAlertOutline.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -21,7 +22,7 @@
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary, GroupChatSummary, Participant } from "../../domain/chat/chat";
+    import type { ChatSummary, GroupChatSummary } from "../../domain/chat/chat";
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
@@ -30,7 +31,6 @@
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: Writable<ChatSummary>;
-    export let participants: Writable<Participant[]>;
     export let blocked: boolean;
     export let unreadMessages: number;
 
@@ -46,6 +46,10 @@
 
     function markAllRead() {
         dispatch("markAllRead");
+    }
+
+    function deleteGroup() {
+        dispatch("deleteGroup");
     }
 
     function blockUser() {
@@ -80,11 +84,10 @@
 
     function leaveGroup() {
         if ($selectedChatSummary.kind === "group_chat") {
-            const numAdmins = $participants.filter((p) => p.role === "admin").length;
-            if (numAdmins > 1) {
-                dispatch("leaveGroup", $selectedChatSummary.chatId);
+            if ($selectedChatSummary.myRole === "owner") {
+                toastStore.showFailureToast("ownerCantLeave");
             } else {
-                toastStore.showFailureToast("lastAdmin");
+                dispatch("leaveGroup", $selectedChatSummary.chatId);
             }
         }
     }
@@ -144,7 +147,7 @@
     }
 
     function canAddParticipants(chat: GroupChatSummary): boolean {
-        return chat.public || chat.myRole === "admin";
+        return chat.public || chat.myRole === "admin" || chat.myRole === "owner";
     }
 
     $: chat = normaliseChatSummary($selectedChatSummary);
@@ -207,6 +210,12 @@
                             </MenuItem>
                         {/if}
                     {:else if $selectedChatSummary.kind === "group_chat"}
+                        {#if $selectedChatSummary.myRole === "owner"}
+                            <MenuItem on:click={deleteGroup}>
+                                <DeleteAlertOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <div slot="text">{$_("deleteGroup")}</div>
+                            </MenuItem>
+                        {/if}
                         <MenuItem on:click={showGroupDetails}>
                             <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("groupDetails")}</div>

@@ -55,14 +55,14 @@
                 });
             }
         });
-        if ($chat.myRole === "admin") {
+        if ($chat.myRole === "admin" || $chat.myRole === "owner") {
             blockedUsers.forEach((userId) => {
                 const user = $userStore[userId];
                 if (user) {
                     users.push({
                         kind: "blocked_participant",
                         ...user,
-                        role: "standard",
+                        role: "participant",
                     });
                 }
             });
@@ -97,7 +97,7 @@
         {publicGroup}
         me={true}
         participant={me}
-        myRole={me.role}
+        myRole={$chat.myRole}
         on:blockUser
         on:chatWith />
 {/if}
@@ -113,6 +113,7 @@
         on:chatWith
         on:dismissAsAdmin
         on:makeAdmin
+        on:transferOwnership
         on:removeParticipant
         on:close={close} />
 </VirtualList>

@@ -118,6 +118,13 @@
         changedBy={event.event.unblockedBy}
         resourceKey={"unblockedBy"}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "ownership_transferred"}
+    <ParticipantsChangedEvent
+        {user}
+        changed={[event.event.newOwner]}
+        changedBy={event.event.oldOwner}
+        resourceKey={"ownershipTransferredBy"}
+        timestamp={event.timestamp} />
 {:else if event.event.kind === "name_changed"}
     <GroupChangedEvent
         {user}
