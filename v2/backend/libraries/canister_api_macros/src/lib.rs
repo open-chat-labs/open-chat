@@ -11,7 +11,7 @@ pub fn trace(_: TokenStream, item: TokenStream) -> TokenStream {
     let wrapper_sig = inner.sig.clone();
 
     // Change the name of the inner fn so that it doesn't clash with the wrapper fn
-    let inner_method_name = format_ident!("{}_inner_", inner.sig.ident.clone());
+    let inner_method_name = format_ident!("{}_inner_", inner.sig.ident);
     inner.sig.ident = inner_method_name.clone();
 
     let is_async = inner.sig.asyncness.is_some();
