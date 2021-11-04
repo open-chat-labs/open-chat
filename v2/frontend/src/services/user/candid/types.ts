@@ -363,7 +363,7 @@ export type InitialStateResponse = {
       'chats' : Array<ChatSummary>,
       'blocked_users' : Array<UserId>,
       'timestamp' : TimestampMillis,
-      'transactions' : Array<Transaction>,
+      'transactions' : Array<TransactionWrapper>,
     }
   };
 export interface JoinGroupArgs { 'chat_id' : ChatId }
@@ -568,11 +568,7 @@ export type SendMessageResponse = { 'TransactionFailed' : string } |
   { 'InvalidRequest' : string } |
   { 'MessageTooLong' : number } |
   { 'RecipientNotFound' : null };
-export interface SetAvatarArgs {
-  'id' : bigint,
-  'data' : Array<number>,
-  'mime_type' : string,
-}
+export interface SetAvatarArgs { 'avatar' : Avatar }
 export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : bigint };
 export interface SetPreferencesArgs { 'preferences' : OptionalUserPreferences }
@@ -637,7 +633,7 @@ export type UpdatesResponse = {
       'chats_added' : Array<ChatSummary>,
       'chats_removed' : Array<ChatId>,
       'timestamp' : TimestampMillis,
-      'transactions' : Array<Transaction>,
+      'transactions' : Array<TransactionWrapper>,
     }
   };
 export interface UpdatesSince {

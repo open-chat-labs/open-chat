@@ -342,13 +342,18 @@ export const idlFactory = ({ IDL }) => {
   const Transaction = IDL.Variant({
     'Cryptocurrency' : CryptocurrencyTransaction,
   });
+  const TransactionWrapper = IDL.Record({
+    'transaction' : Transaction,
+    'timestamp' : TimestampMillis,
+    'index' : IDL.Nat32,
+  });
   const InitialStateResponse = IDL.Variant({
     'Success' : IDL.Record({
       'cycles_balance' : Cycles,
       'chats' : IDL.Vec(ChatSummary),
       'blocked_users' : IDL.Vec(UserId),
       'timestamp' : TimestampMillis,
-      'transactions' : IDL.Vec(Transaction),
+      'transactions' : IDL.Vec(TransactionWrapper),
     }),
   });
   const JoinGroupArgs = IDL.Record({ 'chat_id' : ChatId });
@@ -450,11 +455,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageTooLong' : IDL.Nat32,
     'RecipientNotFound' : IDL.Null,
   });
-  const SetAvatarArgs = IDL.Record({
-    'id' : IDL.Nat,
-    'data' : IDL.Vec(IDL.Nat8),
-    'mime_type' : IDL.Text,
-  });
+  const SetAvatarArgs = IDL.Record({ 'avatar' : Avatar });
   const SetAvatarResponse = IDL.Variant({
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Nat,
@@ -502,11 +503,6 @@ export const idlFactory = ({ IDL }) => {
     'max_transactions' : IDL.Nat8,
     'ascending' : IDL.Bool,
     'start_index' : IDL.Nat32,
-  });
-  const TransactionWrapper = IDL.Record({
-    'transaction' : Transaction,
-    'timestamp' : TimestampMillis,
-    'index' : IDL.Nat32,
   });
   const TransactionsSuccessResult = IDL.Record({
     'latest_transaction_index' : IDL.Opt(IDL.Nat32),
@@ -585,7 +581,7 @@ export const idlFactory = ({ IDL }) => {
       'chats_added' : IDL.Vec(ChatSummary),
       'chats_removed' : IDL.Vec(ChatId),
       'timestamp' : TimestampMillis,
-      'transactions' : IDL.Vec(Transaction),
+      'transactions' : IDL.Vec(TransactionWrapper),
     }),
   });
   return IDL.Service({

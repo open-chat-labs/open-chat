@@ -523,7 +523,9 @@ export function identity<T>(x: T): T {
 }
 
 export function setLastMessageOnChat(chat: ChatSummary, ev: EventWrapper<Message>): ChatSummary {
-    chat.latestEventIndex = ev.index;
+    // we cannot update this index when we send a message because it will cause us to attempt to
+    // load messages from the server before they have even been committed to the server
+    // chat.latestEventIndex = ev.index;
     chat.latestMessage = ev;
     chat.readByMe = insertIndexIntoRanges(ev.event.messageIndex, chat.readByMe);
     return chat;

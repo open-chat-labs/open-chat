@@ -211,9 +211,11 @@ export class UserClient extends CandidService implements IUserClient {
         const blobId = DataClient.newBlobId();
         return this.handleResponse(
             this.userService.set_avatar({
-                id: blobId,
-                data: Array.from(bytes),
-                mime_type: "image/jpg",
+                avatar: {
+                    id: blobId,
+                    data: Array.from(bytes),
+                    mime_type: "image/jpg",
+                },
             }),
             setAvatarResponse
         ).then((resp) => {
