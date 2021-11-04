@@ -2,14 +2,14 @@ use crate::model::participants::RemoveAdminResult;
 use crate::updates::handle_activity_notification;
 use crate::updates::remove_admin::Response::*;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::remove_admin::*;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::ParticipantsDismissedAsAdmin;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn remove_admin(args: Args) -> Response {
     run_regular_jobs();
 

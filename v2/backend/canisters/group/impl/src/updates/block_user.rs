@@ -1,14 +1,14 @@
 use crate::updates::handle_activity_notification;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::block_user::{Response::*, *};
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::{UserId, UsersBlocked};
 use user_canister::c2c_remove_from_group;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 async fn block_user(args: Args) -> Response {
     run_regular_jobs();
 

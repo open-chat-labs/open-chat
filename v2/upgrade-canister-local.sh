@@ -5,7 +5,7 @@ CANISTER_TO_UPGRADE=$2
 VERSION=${3:-0.0.0}
 
 # Pass in the dfx identity name
-# eg './deploy-local openchat'
+# eg './upgrade-canister-local openchat user_index'
 ./generate-wasm.sh group_canister_impl
 ./generate-wasm.sh group_index_canister_impl
 ./generate-wasm.sh notifications_canister_impl

@@ -180,9 +180,7 @@ type LeaveGroupResponse =
 
 type SetAvatarArgs =
     record {
-        id: nat;
-        mime_type: text;
-        data: blob;
+        avatar: Avatar
     };
 
 type SetAvatarResponse =
@@ -243,7 +241,7 @@ type InitialStateResponse =
         Success: record {
             timestamp: TimestampMillis;
             chats: vec ChatSummary;
-            transactions: vec Transaction;
+            transactions: vec TransactionWrapper;
             blocked_users: vec UserId;
             cycles_balance: Cycles;
         }

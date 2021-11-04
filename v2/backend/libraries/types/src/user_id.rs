@@ -1,9 +1,9 @@
 use crate::CanisterId;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UserId(pub(crate) CanisterId);
 
 impl From<Principal> for UserId {
@@ -18,8 +18,14 @@ impl From<UserId> for CanisterId {
     }
 }
 
+impl Debug for UserId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.0, f)
+    }
+}
+
 impl Display for UserId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
+        std::fmt::Display::fmt(&self.0, f)
     }
 }

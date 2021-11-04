@@ -1,9 +1,11 @@
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use cycles_utils::accept_cycles;
 use ic_cdk_macros::update;
 use types::{AlertDetails, CompletedCyclesDeposit, CryptocurrencyDeposit, Cycles, CyclesDeposit};
 
 #[update]
+#[trace]
 fn wallet_receive() {
     run_regular_jobs();
 

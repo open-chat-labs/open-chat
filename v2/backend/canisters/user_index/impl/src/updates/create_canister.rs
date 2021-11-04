@@ -2,8 +2,8 @@ use crate::model::user::{CreatedUser, User};
 use crate::model::user_map::UpdateUserResult;
 use crate::{RuntimeState, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
+use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::{CanisterCreationStatus, CanisterCreationStatusInternal, CanisterId, CanisterWasm, Cycles, CyclesTopUp, Version};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_index_canister::create_canister::{Response::*, *};
@@ -12,7 +12,7 @@ use utils::canister::CreateAndInstallError;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 async fn create_canister(_args: Args) -> Response {
     // Confirm the user needs a canister to be created.
     // Extract the user canister_id and wasm module from the runtime state.

@@ -1,14 +1,14 @@
 use crate::updates::handle_activity_notification;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_leave_group::{Response::*, *};
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::ParticipantLeft;
 
 // Called via the user's user canister
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn c2c_leave_group(_args: Args) -> Response {
     run_regular_jobs();
 

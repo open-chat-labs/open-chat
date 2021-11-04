@@ -1,8 +1,10 @@
 use crate::{RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use user_index_canister::c2c_mark_users_online::{Response::*, *};
 
 #[update]
+#[trace]
 fn c2c_mark_users_online(args: Args) -> Response {
     RUNTIME_STATE.with(|state| c2c_mark_users_online_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

@@ -1,8 +1,8 @@
 use crate::{run_regular_jobs, Data, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
-use tracing::instrument;
 use types::{
     CanisterId, CompletedCyclesTransfer, CryptocurrencyTransfer, Cycles, CyclesTransfer, DirectMessageNotification,
     MessageContent, TimestampMillis, UserId,
@@ -11,7 +11,7 @@ use user_canister::c2c_send_message::{Response::*, *};
 use utils::rand::get_random_item;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 async fn c2c_send_message(args: Args) -> Response {
     run_regular_jobs();
 

@@ -1,11 +1,11 @@
 use crate::updates::handle_activity_notification;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use group_canister::delete_messages::{Response::*, *};
 use ic_cdk_macros::update;
-use tracing::instrument;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn delete_messages(args: Args) -> Response {
     run_regular_jobs();
 

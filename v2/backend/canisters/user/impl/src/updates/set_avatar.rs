@@ -1,12 +1,12 @@
 use crate::updates::set_avatar::Response::*;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use tracing::instrument;
-use types::{Avatar, CanisterId, FieldTooLongResult, MAX_AVATAR_SIZE};
+use types::{CanisterId, FieldTooLongResult, MAX_AVATAR_SIZE};
 use user_canister::set_avatar::*;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn set_avatar(args: Args) -> Response {
     run_regular_jobs();
 
@@ -16,20 +16,16 @@ fn set_avatar(args: Args) -> Response {
 fn set_avatar_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     runtime_state.trap_if_caller_not_owner();
 
-    if args.data.len() > MAX_AVATAR_SIZE as usize {
+    let avatar = args.avatar;
+
+    if avatar.data.len() > MAX_AVATAR_SIZE as usize {
         return AvatarTooBig(FieldTooLongResult {
-            length_provided: args.data.len() as u32,
+            length_provided: avatar.data.len() as u32,
             max_length: MAX_AVATAR_SIZE as u32,
         });
     }
 
-    let id = args.id;
-
-    let avatar = Avatar {
-        id,
-        mime_type: args.mime_type,
-        data: args.data,
-    };
+    let id = avatar.id;
 
     runtime_state.data.avatar = Some(avatar);
 

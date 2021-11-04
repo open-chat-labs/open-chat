@@ -1,12 +1,12 @@
 use crate::{RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use group_index_canister::c2c_delete_group::{Response::*, *};
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::{CanisterId, ChatId};
 use utils::canister::{delete, stop};
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn c2c_delete_group(args: Args) -> Response {
     RUNTIME_STATE.with(|state| c2c_delete_group_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

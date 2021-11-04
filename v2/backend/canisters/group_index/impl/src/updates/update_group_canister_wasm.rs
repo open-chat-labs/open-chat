@@ -1,10 +1,10 @@
 use crate::{RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use group_index_canister::update_group_canister_wasm::{Response::*, *};
 use ic_cdk_macros::update;
-use tracing::instrument;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn update_group_canister_wasm(args: Args) -> Response {
     RUNTIME_STATE.with(|state| update_group_canister_wasm_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

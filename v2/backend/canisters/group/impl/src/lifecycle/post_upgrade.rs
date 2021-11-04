@@ -1,12 +1,13 @@
 use crate::lifecycle::{init_logger, init_state};
 use crate::{Data, StateVersion, LOG_MESSAGES};
+use canister_api_macros::trace;
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use ic_cdk_macros::post_upgrade;
-use tracing::{info, instrument};
+use tracing::info;
 use utils::env::canister::CanisterEnv;
 
 #[post_upgrade]
-#[instrument(level = "trace")]
+#[trace]
 fn post_upgrade() {
     ic_cdk::setup();
 

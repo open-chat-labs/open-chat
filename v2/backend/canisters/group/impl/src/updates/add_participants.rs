@@ -1,15 +1,15 @@
 use crate::updates::handle_activity_notification;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use candid::Principal;
+use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::{EventIndex, MessageIndex, ParticipantsAdded, UserId};
 use user_canister::c2c_try_add_to_group;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 async fn add_participants(args: Args) -> Response {
     run_regular_jobs();
 

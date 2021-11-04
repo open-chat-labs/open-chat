@@ -1,8 +1,8 @@
 use crate::model::user::{UnconfirmedUser, User};
 use crate::model::user_map::AddUserResult;
 use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
+use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::ConfirmationCodeSms;
 use user_index_canister::submit_phone_number::{Response::*, *};
 
@@ -10,7 +10,7 @@ const USER_LIMIT: usize = 100;
 const TEST_USER_LIMIT: usize = 3;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn submit_phone_number(args: Args) -> Response {
     RUNTIME_STATE.with(|state| submit_phone_number_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

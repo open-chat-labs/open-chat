@@ -1,8 +1,9 @@
 use crate::Version;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Formatter};
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct CanisterWasm {
     pub version: Version,
     pub compressed: bool,
@@ -35,5 +36,15 @@ impl CanisterWasm {
                 module: decompressed,
             }
         }
+    }
+}
+
+impl Debug for CanisterWasm {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CanisterWasm")
+            .field("version", &self.version)
+            .field("compressed", &self.compressed)
+            .field("byte_length", &self.module.len())
+            .finish()
     }
 }

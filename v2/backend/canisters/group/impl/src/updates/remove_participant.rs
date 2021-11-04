@@ -1,14 +1,14 @@
 use crate::updates::handle_activity_notification;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::remove_participant::{Response::*, *};
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::{ParticipantsRemoved, UserId};
 use user_canister::c2c_remove_from_group;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 async fn remove_participant(args: Args) -> Response {
     run_regular_jobs();
 

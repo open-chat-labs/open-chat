@@ -1,12 +1,12 @@
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use chat_events::ToggleReactionResult;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::UserId;
 use user_canister::c2c_toggle_reaction::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn c2c_toggle_reaction(args: Args) -> Response {
     run_regular_jobs();
 

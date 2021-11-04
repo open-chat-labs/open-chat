@@ -2,14 +2,14 @@ use crate::model::participants::TransferOwnershipResult;
 use crate::updates::handle_activity_notification;
 use crate::updates::transfer_ownership::Response::*;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::transfer_ownership::*;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::OwnershipTransferred;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn transfer_ownership(args: Args) -> Response {
     run_regular_jobs();
 

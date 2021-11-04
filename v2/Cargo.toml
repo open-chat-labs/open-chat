@@ -26,6 +26,7 @@ members = [
     "backend/canisters/user_index/client",
     "backend/canisters/user_index/impl",
     "backend/data_generator",
+    "backend/libraries/canister_api_macros",
     "backend/libraries/canister_client",
     "backend/libraries/canister_client_macros",
     "backend/libraries/canister_logger",
