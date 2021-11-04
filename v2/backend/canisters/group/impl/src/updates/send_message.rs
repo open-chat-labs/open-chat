@@ -1,15 +1,15 @@
 use crate::updates::handle_activity_notification;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
 use notifications_canister::push_group_message_notification;
-use tracing::instrument;
 use types::{CanisterId, GroupMessageNotification, UserId};
 use utils::rand::get_random_item;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn send_message(args: Args) -> Response {
     run_regular_jobs();
 

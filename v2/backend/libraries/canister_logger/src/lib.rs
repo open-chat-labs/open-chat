@@ -15,7 +15,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::Registry;
 use types::TimestampMillis;
 
-const DEFAULT_MAX_MESSAGES: usize = 1000;
+const DEFAULT_MAX_MESSAGES: usize = 100;
 
 pub fn init_logger(enable_trace: bool, max_messages: Option<usize>, time_fn: fn() -> TimestampMillis) -> LogMessagesWrapper {
     let log_messages_container = LogMessagesContainer::new(max_messages.unwrap_or(DEFAULT_MAX_MESSAGES));
@@ -47,14 +47,18 @@ pub fn init_logger(enable_trace: bool, max_messages: Option<usize>, time_fn: fn(
         .with_current_span(false)
         .with_span_list(false);
 
-    let trace_layer = Layer::default()
-        .with_writer(make_trace_writer.with_filter(move |_| enable_trace))
-        .with_timer(timer)
-        .with_span_events(FmtSpan::ENTER)
-        .json()
-        .with_current_span(false);
+    if enable_trace {
+        let trace_layer = Layer::default()
+            .with_writer(make_trace_writer)
+            .with_timer(timer)
+            .with_span_events(FmtSpan::ENTER)
+            .json()
+            .with_current_span(false);
 
-    Registry::default().with(log_layer).with(trace_layer).init();
+        Registry::default().with(log_layer).with(trace_layer).init();
+    } else {
+        Registry::default().with(log_layer).init();
+    }
 
     log_messages_wrapper
 }

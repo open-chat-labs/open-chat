@@ -1,12 +1,12 @@
 use crate::updates::put_chunk::Response::*;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use group_canister::put_chunk::*;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use utils::blob_storage::PutChunkResult;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn put_chunk(args: Args) -> Response {
     run_regular_jobs();
 

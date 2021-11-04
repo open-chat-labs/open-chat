@@ -1,13 +1,14 @@
 use crate::lifecycle::{init_logger, init_state};
 use crate::Data;
+use canister_api_macros::trace;
 use ic_cdk_macros::init;
-use tracing::{info, instrument};
+use tracing::info;
 use user_canister::init::Args;
 use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
 
 #[init]
-#[instrument(level = "trace")]
+#[trace]
 fn init(args: Args) {
     init_logger(args.test_mode);
     ic_cdk::setup();

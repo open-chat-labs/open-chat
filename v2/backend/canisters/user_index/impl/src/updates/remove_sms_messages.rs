@@ -1,10 +1,10 @@
 use crate::{RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use user_index_canister::remove_sms_messages::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn remove_sms_messages(args: Args) -> Response {
     RUNTIME_STATE.with(|state| remove_sms_messages_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

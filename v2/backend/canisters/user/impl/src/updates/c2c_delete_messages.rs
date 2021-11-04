@@ -1,11 +1,11 @@
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::UserId;
 use user_canister::c2c_delete_messages::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn c2c_delete_messages(args: Args) -> Response {
     run_regular_jobs();
 

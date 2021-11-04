@@ -2,14 +2,14 @@ use crate::model::participants::MakeAdminResult;
 use crate::updates::handle_activity_notification;
 use crate::updates::make_admin::Response::*;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::make_admin::*;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::ParticipantsPromotedToAdmin;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn make_admin(args: Args) -> Response {
     run_regular_jobs();
 

@@ -1,12 +1,12 @@
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use chat_events::{EditMessageArgs, EditMessageResult};
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::UserId;
 use user_canister::edit_message::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn c2c_edit_messages(args: Args) -> Response {
     run_regular_jobs();
 

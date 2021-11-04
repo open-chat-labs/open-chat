@@ -1,12 +1,12 @@
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use std::str::FromStr;
-use tracing::instrument;
 use types::AlertId;
 use user_canister::dismiss_alerts::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn dismiss_alerts(args: Args) -> Response {
     run_regular_jobs();
 

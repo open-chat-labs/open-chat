@@ -1,15 +1,15 @@
 use crate::model::user_map::UpdateUserResult;
 use crate::{RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::{UserId, Version};
 use user_index_canister::upgrade_canister::{Response::*, *};
 use utils::canister;
 use utils::canister::CanisterToUpgrade;
 
 #[update]
-#[instrument(level = "trace")]
-async fn upgrade_canister(_: Args) -> Response {
+#[trace]
+async fn upgrade_canister(_args: Args) -> Response {
     let canister_to_upgrade = match RUNTIME_STATE.with(|state| initialize_upgrade(None, state.borrow_mut().as_mut().unwrap())) {
         Ok(ok) => ok,
         Err(response) => return response,

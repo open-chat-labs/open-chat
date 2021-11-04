@@ -1,12 +1,12 @@
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use group_canister::c2c_toggle_mute_notifications;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::{CanisterId, ChatId, Timestamped};
 use user_canister::mute_notifications::*;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn mute_notifications(args: Args) -> Response {
     run_regular_jobs();
 
@@ -14,7 +14,7 @@ fn mute_notifications(args: Args) -> Response {
 }
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn unmute_notifications(args: Args) -> Response {
     run_regular_jobs();
 

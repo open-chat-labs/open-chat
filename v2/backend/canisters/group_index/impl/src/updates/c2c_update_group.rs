@@ -1,12 +1,12 @@
 use crate::model::public_groups::UpdateGroupResult;
 use crate::{RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use group_index_canister::c2c_update_group::{Response::*, *};
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::ChatId;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn c2c_update_group(args: Args) -> Response {
     RUNTIME_STATE.with(|state| c2c_update_group_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

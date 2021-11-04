@@ -1,13 +1,13 @@
 use crate::model::user::User;
 use crate::{RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::ConfirmationCodeSms;
 use user_index_canister::resend_code::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace")]
-fn resend_code(_: Args) -> Response {
+#[trace]
+fn resend_code(_args: Args) -> Response {
     RUNTIME_STATE.with(|state| resend_code_impl(state.borrow_mut().as_mut().unwrap()))
 }
 

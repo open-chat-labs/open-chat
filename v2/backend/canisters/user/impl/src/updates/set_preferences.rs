@@ -1,11 +1,11 @@
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::Timestamped;
 use user_canister::set_preferences::*;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 fn set_preferences(args: Args) -> Response {
     run_regular_jobs();
 

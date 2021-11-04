@@ -1,14 +1,14 @@
 use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE, RUNTIME_STATE};
+use canister_api_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::{Avatar, CanisterId, CanisterWasm, ChatId, Cycles, Version};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 async fn c2c_create_group(args: Args) -> Response {
     let name = args.name.to_owned();
     let description = args.description.to_owned();

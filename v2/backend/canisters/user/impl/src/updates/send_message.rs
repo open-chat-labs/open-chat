@@ -1,7 +1,7 @@
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::{
     CompletedCyclesTransfer, CompletedICPTransfer, CryptocurrencyTransfer, CyclesTransfer, FailedCyclesTransfer, ICPTransfer,
     MessageContent, MessageIndex, PendingCyclesTransfer, PendingICPTransfer, Transaction, UserId,
@@ -13,7 +13,7 @@ use utils::consts::{DEFAULT_MEMO, ICP_TRANSACTION_FEE_E8S};
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 async fn send_message(mut args: Args) -> Response {
     run_regular_jobs();
 

@@ -1,12 +1,12 @@
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
 use group_canister::c2c_leave_group;
 use ic_cdk_macros::update;
-use tracing::instrument;
 use types::ChatId;
 use user_canister::leave_group::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace")]
+#[trace]
 async fn leave_group(args: Args) -> Response {
     run_regular_jobs();
 
