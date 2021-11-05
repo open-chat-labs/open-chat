@@ -4,6 +4,7 @@ use crate::domain::user_store::{
 use crate::queries::*;
 use crate::updates::*;
 use ic_cdk_macros::*;
+use shared::accept_cycles;
 
 #[update]
 pub fn register_user(username: String) -> RegisterUserResponse {
@@ -23,6 +24,11 @@ pub fn set_profile_image(image_id: String) -> set_profile_image::Response {
 #[update]
 pub fn mark_as_online() {
     mark_as_online::update();
+}
+
+#[update]
+fn wallet_receive() {
+    accept_cycles();
 }
 
 #[update]

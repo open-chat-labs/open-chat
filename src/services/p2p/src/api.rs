@@ -1,6 +1,7 @@
 use crate::queries::*;
 use crate::updates::*;
 use ic_cdk_macros::*;
+use shared::accept_cycles;
 use shared::timestamp::Timestamp;
 
 #[update]
@@ -16,6 +17,11 @@ pub fn add_answers(request: add_answers::Request) {
 #[update]
 pub fn remove_connection_details(request: remove_connection_details::Request) -> u32 {
     remove_connection_details::update(request)
+}
+
+#[update]
+fn wallet_receive() {
+    accept_cycles();
 }
 
 #[query]
