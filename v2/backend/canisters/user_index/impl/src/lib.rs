@@ -51,6 +51,11 @@ impl RuntimeState {
         }
     }
 
+    pub fn is_caller_service_principal(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.service_principals.contains(&caller)
+    }
+
     pub fn is_caller_sms_service(&self) -> bool {
         let caller = self.env.caller();
 

@@ -15,7 +15,12 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         return;
     }
 
-    if runtime_state.is_caller_owner() {
+    let is_valid = match method_name.as_str() {
+        "update_group_canister_wasm" => runtime_state.is_caller_service_principal(),
+        _ => false,
+    };
+
+    if is_valid {
         ic_cdk::api::call::accept_message();
     }
 }

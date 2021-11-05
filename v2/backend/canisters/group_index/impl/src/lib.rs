@@ -44,6 +44,11 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
+    pub fn is_caller_service_principal(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.service_principals.contains(&caller)
+    }
+
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         Metrics {

@@ -15,7 +15,20 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         return;
     }
 
-    if runtime_state.is_caller_owner() {
+    let caller = runtime_state.env.caller();
+    let is_user = runtime_state.data.users.get_by_principal(&caller).is_some();
+
+    let is_valid = match method_name.as_str() {
+        "confirm_phone_number" | "create_canister" | "mark_as_online" | "resend_code" | "set_username" | "upgrade_canister" => {
+            is_user
+        }
+        "remove_sms_messages" => runtime_state.is_caller_sms_service(),
+        "submit_phone_number" => true,
+        "update_user_canister_wasm" => runtime_state.is_caller_service_principal(),
+        _ => false,
+    };
+
+    if is_valid {
         ic_cdk::api::call::accept_message();
     }
 }
