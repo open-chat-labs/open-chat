@@ -1,15 +1,25 @@
 import type { Identity } from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
 import { AuthClient } from "@dfinity/auth-client";
 import { DelegationIdentity } from "@dfinity/identity";
 import { unregister } from "../utils/notifications";
+import { Usergeek } from "usergeek-ic-js"
 
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const ONE_MINUTE_MILLIS = 60 * 1000;
+
+const isProd = process.env.NODE_ENV === "production";
 
 // Use your local .env file to direct this to the local IC replica
 const IDENTITY_URL = process.env.INTERNET_IDENTITY_URL || "https://identity.ic0.app";
 
 const authClient = AuthClient.create();
+
+if (isProd) {
+    Usergeek.init({
+        apiKey: "process.env.USERGEEK_APIKEY",
+    });
+}
 
 export function getIdentity(): Promise<Identity> {
     return authClient.then((c) => c.getIdentity());
@@ -36,10 +46,20 @@ export function login(): Promise<Identity> {
 
 export async function logout(): Promise<void> {
     await unregister();
-    return authClient.then((c) => c.logout());
+    return authClient.then((c) => {
+        c.logout();
+        if (isProd) {
+            Usergeek.setPrincipal(Principal.anonymous());
+        }
+    });
 }
 
 export function startSession(identity: Identity): Promise<void> {
+    if (isProd) {
+        Usergeek.setPrincipal(identity.getPrincipal());
+        Usergeek.trackSession();
+    }
+
     return new Promise((resolve) => {
         const durationUntilSessionExpireMS = getTimeUntilSessionExpiryMs(identity);
         const durationUntilLogoutMs = durationUntilSessionExpireMS - ONE_MINUTE_MILLIS;

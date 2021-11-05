@@ -163,6 +163,7 @@ export default [
                 "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
                 "process.env.BLOB_URL_PATTERN": process.env.BLOB_URL_PATTERN,
                 "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
+                "process.env.USERGEEK_APIKEY": process.env.USERGEEK_APIKEY,
             }),
 
             // In dev mode, call `npm run start` once

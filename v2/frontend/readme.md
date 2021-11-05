@@ -34,6 +34,7 @@ USER_INDEX_CANISTER=naxa5-eyaaa-aaaaa-aacda-cai
 GROUP_INDEX_CANISTER=nhwgj-jaaaa-aaaaa-aacdq-cai
 NOTIFICATIONS_CANISTER=mkych-giaaa-aaaaa-aacea-cai
 BLOB_URL_PATTERN=http://{canisterId}.localhost:8000/blobs/
+USERGEEK_APIKEY=042386876AB899A32FF13323DEA23098
 ```
 
 Where the INTERNET_IDENTITY value should be replaced with a value containing the correct internet identity canister ID for your local environment.
