@@ -129,6 +129,10 @@
             messageContentFromDataTransferItemList(
                 [...e.clipboardData.items].filter((item) => /image/.test(item.type))
             );
+            const text = e.clipboardData.getData("text/plain");
+            if (text) {
+                document.execCommand("insertText", false, text);
+            }
             e.preventDefault();
         }
     }
