@@ -2,6 +2,7 @@ use crate::queries::*;
 use crate::updates::*;
 use ic_cdk_macros::*;
 use serde_bytes::ByteBuf;
+use shared::accept_cycles;
 use shared::chat_id::ChatId;
 use shared::user_id::UserId;
 
@@ -65,6 +66,11 @@ fn block_user(user: UserId, unblock: bool) {
 #[update]
 fn toggle_notifications(chat_id: ChatId, mute: bool) {
     toggle_notifications::update(chat_id, mute);
+}
+
+#[update]
+fn wallet_receive() {
+    accept_cycles();
 }
 
 #[query]
