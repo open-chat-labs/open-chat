@@ -28,6 +28,7 @@
     import { userStore } from "../../stores/user";
     import type { Writable } from "svelte/store";
     import { toastStore } from "../../stores/toast";
+    import Link from "../Link.svelte";
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: Writable<ChatSummary>;
@@ -183,6 +184,10 @@
                 {$_("blocked")}
             {:else if chat.typing}
                 <Typing />
+            {:else if isGroup}
+                <Link on:click={showParticipants}>
+                    {chat.subtext}
+                </Link>
             {:else}
                 {chat.subtext}
             {/if}
@@ -283,9 +288,9 @@
 
 <style type="text/scss">
     .chat-name {
-        @include font(bold, normal, fs-120);
+        @include font(book, normal, fs-120);
         @include ellipsis();
-        margin-bottom: $sp2;
+        margin-bottom: $sp1;
     }
 
     .chat-subtext {

@@ -8,17 +8,21 @@ export function heritageTheme(defaultTheme: Theme): Theme {
         bg: "#41398b",
         mg: "20px auto",
 
+        // accent: "#32cd32",
+        accent: "#f79031",
+
         panel: {
             ...defaultTheme.panel,
             pd: "0",
             bg: "#3ec4ee",
+            // bg: "linear-gradient(#22A7F2, #5f2583)",
             left: {
                 ...defaultTheme.panel.left,
-                bg: "#ffffff",
+                bg: "#f6f6f6",
             },
             right: {
                 ...defaultTheme.panel.right,
-                bg: "#ffffff",
+                bg: "#f6f6f6",
             },
         },
 
@@ -35,22 +39,33 @@ export function heritageTheme(defaultTheme: Theme): Theme {
             bg: "#ededed",
         },
 
+        currentChat: {
+            ...defaultTheme.currentChat,
+            date: {
+                bg: "#f6f6f6",
+                txt: "inherit",
+            },
+        },
+
         chatSearch: {
             ...defaultTheme.chatSearch,
             mg: "0 8px",
             bg: "#ffffff",
+            section: {
+                txt: "#191919",
+                title: {
+                    ml: "8px",
+                },
+            },
+            xs: {
+                pd: "0",
+            },
         },
 
         button: {
             ...defaultTheme.button,
             bg: "#f79031",
-            hv: "#52baf5",
-            txt: "#ffffff",
-            bd: "transparent",
-            disabled: "#cccccc",
-            spinner: "#ffffff",
-            "disabled-txt": "#999999",
-            "disabled-bd": "transparent",
+            hv: "#E37C1D",
         },
 
         section: {
@@ -66,6 +81,11 @@ export function heritageTheme(defaultTheme: Theme): Theme {
         scrollbar: {
             ...defaultTheme.scrollbar,
             bg: "rgba(255,255,255, 0.5)",
+        },
+
+        groupForm: {
+            ...defaultTheme.groupForm,
+            pd: "4px 8px 0 8px",
         },
     };
 }

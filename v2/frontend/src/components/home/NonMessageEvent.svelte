@@ -18,7 +18,7 @@
     .timeline-event {
         padding: $sp2;
         background-color: var(--timeline-bg);
-        margin: $sp5 auto;
+        margin: $sp4 auto;
         text-align: center;
         color: var(--timeline-txt);
         @include font(book, normal, fs-70);

@@ -41,11 +41,6 @@
 </script>
 
 <div class="current-user-box">
-    <span title="logout" class="logout" on:click={() => dispatch("logout")}>
-        <HoverIcon>
-            <Logout size={"1.2em"} color={"var(--icon-txt)"} />
-        </HoverIcon>
-    </span>
     <div class="current-user">
         {#if $screenWidth !== ScreenWidth.ExtraSmall}
             <EditableAvatar image={avatarUrl(user)} on:imageSelected={userAvatarSelected} />
@@ -91,6 +86,10 @@
                             <span slot="text">{$_("disableNotificationsMenu")}</span>
                         </MenuItem>
                     {/if}
+                    <MenuItem on:click={() => dispatch("logout")}>
+                        <Logout size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
+                        <span slot="text">{$_("logout")}</span>
+                    </MenuItem>
                 </Menu>
             </span>
         </MenuIcon>
@@ -100,7 +99,7 @@
 <style type="text/scss">
     .current-user-box {
         display: flex;
-        flex: 0 0 180px;
+        flex: 0 0 160px;
         background-color: var(--currentUser-bg);
         border: var(--currentUser-bd);
         margin-bottom: $sp3;
@@ -129,18 +128,15 @@
         align-items: center;
     }
     .menu {
-        flex: 0 0 40px;
-        cursor: pointer;
-        padding: $sp4;
-    }
-    .logout {
+        position: absolute;
+        top: 0;
+        right: 0;
         flex: 0 0 40px;
         cursor: pointer;
         padding: $sp4;
     }
     @include size-below(xs) {
-        .menu,
-        .logout {
+        .menu {
             padding: $sp3;
         }
     }

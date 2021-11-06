@@ -465,11 +465,10 @@
 
         .date-label {
             padding: $sp2;
-            background-color: #ffffff;
+            background-color: var(--currentChat-date-bg);
             position: sticky;
             top: 0;
             width: 200px;
-            opacity: 70%;
             margin: auto;
             border-radius: $sp4;
             @include z-index("date-label");

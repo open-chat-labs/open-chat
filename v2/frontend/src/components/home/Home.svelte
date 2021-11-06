@@ -321,13 +321,14 @@
 
 <style type="text/scss">
     main {
+        transition: margin ease-in-out 300ms;
         position: relative;
         // @include fullHeight();
         width: 100%;
-        max-width: 1300px;
+        max-width: 1200px;
         display: flex;
         margin: var(--mg);
-        @include size-below(xs) {
+        @include size-below(lg) {
             margin: 0 auto;
         }
     }

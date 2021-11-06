@@ -185,11 +185,12 @@
                         {#await groupSearchResults then resp}
                             {#if resp.kind === "success" && resp.matches.length > 0}
                                 <h3 class="search-subtitle">{$_("publicGroups")}</h3>
-                                {#each resp.matches as group, _i (group.chatId)}
+                                {#each resp.matches as group, i (group.chatId)}
                                     <div
                                         animate:flip={{ duration: 600, easing: elasticOut }}
                                         out:fade|local={{ duration: 150 }}>
                                         <SearchResult
+                                            index={i}
                                             avatarUrl={avatarUrl(group)}
                                             showSpinner={joiningGroup === group.chatId}
                                             on:click={() => joinGroup(group)}>
@@ -211,11 +212,12 @@
                         {#await userSearchResults then resp}
                             {#if resp.length > 0}
                                 <h3 class="search-subtitle">{$_("users")}</h3>
-                                {#each resp as user, _i (user.userId)}
+                                {#each resp as user, i (user.userId)}
                                     <div
                                         animate:flip={{ duration: 600, easing: elasticOut }}
                                         out:fade|local={{ duration: 150 }}>
                                         <SearchResult
+                                            index={i}
                                             avatarUrl={avatarUrl(user)}
                                             on:click={() => chatWith(user.userId)}>
                                             <h4 class="search-item-title">
@@ -233,11 +235,12 @@
                         {#await messageSearchResults then resp}
                             {#if resp.kind == "success" && resp.matches.length > 0}
                                 <h3 class="search-subtitle">{$_("messages")}</h3>
-                                {#each resp.matches as msg, _i (`${msg.chatId}_${msg.messageIndex}`)}
+                                {#each resp.matches as msg, i (`${msg.chatId}_${msg.messageIndex}`)}
                                     <div
                                         animate:flip={{ duration: 600, easing: elasticOut }}
                                         out:fade|local={{ duration: 150 }}>
                                         <SearchResult
+                                            index={i}
                                             avatarUrl={avatarUrl(messageMatchDataContent(msg))}
                                             showSpinner={false}
                                             on:click={() => loadMessage(msg)}>
@@ -269,8 +272,7 @@
     .body {
         overflow: auto;
         @include size-below(xs) {
-            // TODO heritage
-            padding: 0 $sp3;
+            padding: var(--chatSearch-xs-pd);
         }
     }
     .chat-summaries {
@@ -279,6 +281,7 @@
 
     .search-subtitle {
         margin-bottom: $sp3;
+        margin-left: var(--chatSearch-section-title-ml);
         color: var(--chatSearch-section-txt);
     }
 

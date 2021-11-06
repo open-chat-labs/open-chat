@@ -67,16 +67,12 @@
     <div class="details">
         <div class="name-date">
             <h4 class="chat-name">{chat.name}</h4>
-            <!-- this date formatting is OK for now but we might want to use something like this: 
-            https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
-            <p class="chat-date">{formatMessageDate(new Date(Number(displayDate)))}</p>
         </div>
         {#if isTyping}
             <Typing />
         {:else}
             <div class="chat-msg">{lastMessage}</div>
         {/if}
-
         {#if unreadMessages > 0}
             <div
                 in:pop={{ duration: 1500 }}
@@ -86,6 +82,11 @@
                 {unreadMessages > 9 ? "9+" : unreadMessages}
             </div>
         {/if}
+    </div>
+    <!-- this date formatting is OK for now but we might want to use something like this: 
+    https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
+    <div class:rtl={$rtlStore} class="chat-date">
+        {formatMessageDate(new Date(Number(displayDate)))}
     </div>
     {#if $rtlStore}
         <div class="icon rtl"><ChevronLeft /></div>
@@ -139,20 +140,18 @@
         padding: 0 $sp2;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        justify-content: center;
         height: $sp7;
         overflow: hidden;
 
         .name-date {
             display: flex;
+            margin-bottom: $sp2;
             .chat-name {
+                @include font(book, normal, fs-100);
                 color: var(--chatSummary-txt1);
                 @include ellipsis();
                 flex: auto;
-            }
-            .chat-date {
-                @include font(light, normal, fs-60);
-                color: var(--chatSummary-txt2);
             }
         }
 
@@ -160,6 +159,19 @@
             @include ellipsis();
             @include font(light, normal, fs-70);
             color: var(--chatSummary-txt2);
+        }
+    }
+
+    .chat-date {
+        position: absolute;
+        @include font(light, normal, fs-60);
+        color: var(--chatSummary-txt2);
+        top: $sp2;
+        &:not(.rtl) {
+            right: $sp3;
+        }
+        &.rtl {
+            left: $sp3;
         }
     }
 
@@ -181,7 +193,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        background-color: hotpink;
+        background-color: var(--accent);
         text-shadow: 1px 1px 1px rgba(150, 50, 50, 0.8);
         border-radius: 50%;
         font-weight: bold;

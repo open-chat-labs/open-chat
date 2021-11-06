@@ -106,6 +106,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bd: dark15,
 
             section: {
+                ...defaultTheme.chatSearch.section,
                 txt: dark60,
             },
         },
@@ -171,6 +172,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         currentChat: {
+            ...defaultTheme.currentChat,
             header: {
                 bg: dark20,
                 txt: dark60,

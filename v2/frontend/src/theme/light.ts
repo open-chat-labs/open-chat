@@ -78,7 +78,7 @@ export function lightTheme(): Theme {
                 bg: "rgba(255,255,255,0.15)",
             },
             right: {
-                bg: "transparent",
+                bg: "linear-gradient(#22A7F2, #5f2583)",
             },
         },
 
@@ -103,6 +103,13 @@ export function lightTheme(): Theme {
 
             section: {
                 txt: "#ffffff",
+                title: {
+                    ml: "0",
+                },
+            },
+
+            xs: {
+                pd: "0 8px",
             },
         },
 
@@ -110,7 +117,7 @@ export function lightTheme(): Theme {
             bg: "white",
             hv: "#efefef",
             txt1: "#191919",
-            txt2: "#777777",
+            txt2: "#333",
             bd: "transparent",
             "bd-selected": "#f79031",
             mb: sp3,
@@ -176,6 +183,11 @@ export function lightTheme(): Theme {
                 bd: "transparent",
             },
 
+            date: {
+                bg: "rgba(255,255,255,0.7)",
+                txt: "inherit",
+            },
+
             msgs: {
                 bg: "transparent",
             },
@@ -203,6 +215,10 @@ export function lightTheme(): Theme {
 
         scrollbar: {
             bg: "rgba(34, 167, 242, 0.4)",
+        },
+
+        groupForm: {
+            pd: "0",
         },
     };
 }

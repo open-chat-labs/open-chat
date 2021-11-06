@@ -114,6 +114,13 @@ export interface Theme {
 
         section: {
             txt: string;
+            title: {
+                ml: string;
+            };
+        };
+
+        xs: {
+            pd: string;
         };
     };
 
@@ -188,6 +195,10 @@ export interface Theme {
         msgs: {
             bg: string;
         };
+        date: {
+            bg: string;
+            txt: string;
+        };
         msg: {
             bg: string;
             txt: string;
@@ -211,6 +222,10 @@ export interface Theme {
 
     scrollbar: {
         bg: string;
+    };
+
+    groupForm: {
+        pd: string;
     };
 }
 
