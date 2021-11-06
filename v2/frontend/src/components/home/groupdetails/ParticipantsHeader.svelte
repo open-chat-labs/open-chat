@@ -29,7 +29,7 @@
     {#if canAdd}
         <span title={$_("addParticipants")} class="add" on:click={addParticipants}>
             <HoverIcon>
-                <AccountPlusOutline size={"1.2em"} color={"#aaa"} />
+                <AccountPlusOutline size={"1.2em"} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     {/if}
@@ -37,9 +37,9 @@
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             {#if closeIcon === "close"}
-                <Close size={"1.2em"} color={"#aaa"} />
+                <Close size={"1.2em"} color={"var(--icon-txt)"} />
             {:else}
-                <ArrowLeft size={"1.2em"} color={"#aaa"} />
+                <ArrowLeft size={"1.2em"} color={"var(--icon-txt)"} />
             {/if}
         </HoverIcon>
     </span>

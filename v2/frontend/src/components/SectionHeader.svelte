@@ -1,8 +1,9 @@
 <script lang="ts">
     export let flush: boolean = false;
+    export let shadow: boolean = false;
 </script>
 
-<div class="section-header" class:flush>
+<div class="section-header" class:flush class:shadow>
     <slot />
 </div>
 
@@ -24,6 +25,10 @@
 
         &.flush {
             margin-bottom: 0;
+        }
+
+        &.shadow {
+            box-shadow: 0 5px 5px rgba(0, 0, 0, 0.2);
         }
     }
 </style>

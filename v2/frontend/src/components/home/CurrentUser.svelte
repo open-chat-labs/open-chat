@@ -43,7 +43,7 @@
 <div class="current-user-box">
     <span title="logout" class="logout" on:click={() => dispatch("logout")}>
         <HoverIcon>
-            <Logout size={"1.2em"} color={"#aaa"} />
+            <Logout size={"1.2em"} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
     <div class="current-user">
@@ -56,38 +56,38 @@
         <MenuIcon>
             <span slot="icon">
                 <HoverIcon>
-                    <DotsVertical size={"1.2em"} color={"#aaa"} />
+                    <DotsVertical size={"1.2em"} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </span>
             <span slot="menu">
                 <Menu>
                     <MenuItem on:click={newChat}>
-                        <MessagePlus size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <MessagePlus size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("newChat")}</span>
                     </MenuItem>
                     <MenuItem on:click={newGroup}>
-                        <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <AccountMultiplePlus size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("newGroup")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => modalStore.showModal(ModalType.ThemeSelection)}>
-                        <Palette size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <Palette size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("changeTheme")}</span>
                     </MenuItem>
                     {#if $notificationStatus !== "granted"}
                         {#if $notificationStatus === "hard-denied"}
                             <MenuItem>
-                                <BellOff size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <BellOff size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                                 <span slot="text">{$_("notificationsDisabled")}</span>
                             </MenuItem>
                         {:else}
                             <MenuItem on:click={askForNotificationPermission}>
-                                <Bell size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <Bell size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                                 <span slot="text">{$_("enableNotificationsMenu")}</span>
                             </MenuItem>
                         {/if}
                     {:else}
                         <MenuItem on:click={unsubscribeNotifications}>
-                            <BellOff size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <BellOff size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                             <span slot="text">{$_("disableNotificationsMenu")}</span>
                         </MenuItem>
                     {/if}
@@ -102,7 +102,7 @@
         display: flex;
         flex: 0 0 180px;
         background-color: var(--currentUser-bg);
-        border: 1px solid var(--currentUser-bd);
+        border: var(--currentUser-bd);
         margin-bottom: $sp3;
 
         @include size-below(xs) {

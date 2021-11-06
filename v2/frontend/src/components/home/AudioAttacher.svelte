@@ -100,7 +100,7 @@
             {#if recording}
                 <RadioboxMarked size={"1.2em"} color={"red"} />
             {:else}
-                <Microphone size={"1.2em"} color={"#aaa"} />
+                <Microphone size={"1.2em"} color={"var(--icon-txt)"} />
             {/if}
         </HoverIcon>
     </div>

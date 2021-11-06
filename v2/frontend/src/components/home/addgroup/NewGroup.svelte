@@ -50,7 +50,7 @@
 <SectionHeader>
     <span title={$_("close")} class="close" on:click={cancel}>
         <HoverIcon>
-            <Close size={"1.2em"} color={"#aaa"} />
+            <Close size={"1.2em"} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
     <h4>{$_("createNewGroup")}</h4>

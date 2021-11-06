@@ -167,11 +167,12 @@
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">{$_("yourChats")}</h3>
                 {/if}
-                {#each chats as chatSummary, _i (chatSummary.chatId)}
+                {#each chats as chatSummary, i (chatSummary.chatId)}
                     <div
                         animate:flip={{ duration: 600, easing: elasticOut }}
                         out:fade|local={{ duration: 150 }}>
                         <ChatSummary
+                            index={i}
                             messagesRead={$machine.context.markRead}
                             {chatSummary}
                             selected={$machine.context.selectedChat?.chatId ===
@@ -268,6 +269,7 @@
     .body {
         overflow: auto;
         @include size-below(xs) {
+            // TODO heritage
             padding: 0 $sp3;
         }
     }

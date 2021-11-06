@@ -102,7 +102,7 @@
         {#if image}
             <div class="avatar" style={`background-image: url(${image})`} />
         {:else}
-            <Camera size={"3em"} color={"#aaa"} />
+            <Camera size={"3em"} color={"var(--icon-txt)"} />
         {/if}
     </div>
 </div>

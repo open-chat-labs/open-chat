@@ -240,23 +240,32 @@
                             <Menu>
                                 {#if confirmed}
                                     <MenuItem on:click={reply}>
-                                        <Reply size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <Reply
+                                            size={"1.2em"}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
                                         <div slot="text">{$_("reply")}</div>
                                     </MenuItem>
                                 {/if}
                                 {#if confirmed && groupChat && !me}
                                     <MenuItem on:click={replyPrivately}>
-                                        <ReplyOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <ReplyOutline
+                                            size={"1.2em"}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
                                         <div slot="text">{$_("replyPrivately")}</div>
                                     </MenuItem>
                                 {/if}
                                 {#if me || admin}
                                     <!-- <MenuItem on:click={editMessage}>
-                                        <PencilOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <PencilOutline size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                                         <div slot="text">{$_("editMessage")}</div>
                                     </MenuItem> -->
                                     <MenuItem on:click={deleteMessage}>
-                                        <DeleteOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <DeleteOutline
+                                            size={"1.2em"}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
                                         <div slot="text">{$_("deleteMessage")}</div>
                                     </MenuItem>
                                 {/if}
@@ -463,7 +472,7 @@
         @include font(book, normal, fs-100);
         border-radius: $sp5;
         max-width: 90%;
-        min-width: 50%;
+        min-width: 25%;
 
         &:hover {
             box-shadow: 0 5px 10px var(--currentChat-msg-hv);

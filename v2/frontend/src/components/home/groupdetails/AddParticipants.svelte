@@ -40,9 +40,9 @@
     <span title={$_("close")} class="close" on:click={cancelAddParticipant}>
         <HoverIcon>
             {#if closeIcon === "close"}
-                <Close size={"1.2em"} color={"#aaa"} />
+                <Close size={"1.2em"} color={"var(--icon-txt)"} />
             {:else}
-                <ArrowLeft size={"1.2em"} color={"#aaa"} />
+                <ArrowLeft size={"1.2em"} color={"var(--icon-txt)"} />
             {/if}
         </HoverIcon>
     </span>

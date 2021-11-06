@@ -20,6 +20,7 @@
     import type { IMessageReadTracker } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
 
+    export let index: number;
     export let chatSummary: ChatSummary;
     export let selected: boolean;
     export let messagesRead: IMessageReadTracker;
@@ -54,7 +55,12 @@
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
 </script>
 
-<a role="button" class="chat-summary" class:selected href={`/#/${chatSummary.chatId}`}>
+<a
+    role="button"
+    class="chat-summary"
+    class:first={index === 0}
+    class:selected
+    href={`/#/${chatSummary.chatId}`}>
     <div class="avatar">
         <Avatar {blocked} url={chat.avatarUrl} status={chat.userStatus} size={AvatarSize.Small} />
     </div>
@@ -97,10 +103,15 @@
         background-color: var(--chatSummary-bg);
         color: var(--chatSummary-txt1);
         padding: $sp3;
-        margin-bottom: $sp3;
+        margin-bottom: var(--chatSummary-mb);
         cursor: pointer;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         position: relative;
+        border-bottom: var(--chatSummary-bd);
+
+        &.first {
+            border-top: var(--chatSummary-bd);
+        }
 
         &.selected::before {
             content: "";

@@ -24,7 +24,7 @@
 <SectionHeader>
     <span title={$_("close")} class="close" on:click={cancelNewChat}>
         <HoverIcon>
-            <Close size={"1.2em"} color={"#aaa"} />
+            <Close size={"1.2em"} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
     <h4>{$_("startNewChat")}</h4>

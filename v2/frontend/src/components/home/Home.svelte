@@ -322,11 +322,14 @@
 <style type="text/scss">
     main {
         position: relative;
-        @include fullHeight();
+        // @include fullHeight();
         width: 100%;
         max-width: 1300px;
-        margin: auto;
         display: flex;
+        margin: var(--mg);
+        @include size-below(xs) {
+            margin: 0 auto;
+        }
     }
     :global(body) {
         transition: color ease-in-out 300ms;
