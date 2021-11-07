@@ -138,10 +138,6 @@
         push("/");
     }
 
-    function newChat() {
-        machine.send({ type: "NEW_CHAT" });
-    }
-
     function blockUser(ev: CustomEvent<{ userId: string }>) {
         blockedUsers.add(ev.detail.userId);
         $machine.context
@@ -266,14 +262,12 @@
                 on:searchEntered={performSearch}
                 on:chatWith={chatWith}
                 on:logout={logout}
-                on:loadMessage={loadMessage}
-                on:newchat={newChat} />
+                on:loadMessage={loadMessage} />
         {/if}
         {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
             <MiddlePanel
                 loadingChats={$machine.matches("loading_chats")}
                 blocked={!!blocked}
-                on:newchat={newChat}
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}
                 on:unblockUser={unblockUser}

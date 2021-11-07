@@ -189,7 +189,7 @@
     }
 
     .form-fields {
-        padding: $sp4;
+        padding: var(--groupForm-edit-pd);
         @include size-below(xs) {
             padding: 0 $sp3;
         }

@@ -182,7 +182,7 @@
     }
 
     .form-fields {
-        padding: var(--groupForm-pd);
+        padding: var(--groupForm-add-pd);
         @include size-below(xs) {
             padding: $sp3;
             padding-top: $sp2;

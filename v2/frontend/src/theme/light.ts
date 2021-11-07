@@ -60,6 +60,14 @@ export function lightTheme(): Theme {
             txt: "#191919",
             hv: "#e2e2e2",
             bd: "transparent",
+            bdb: "transparent",
+            mg: "0 8px 8px 8px",
+            search: {
+                pd: "0 8px",
+            },
+            panel: {
+                bg: "#fff",
+            },
         },
 
         entry: {
@@ -218,7 +226,40 @@ export function lightTheme(): Theme {
         },
 
         groupForm: {
-            pd: "0",
+            add: {
+                pd: "0",
+            },
+            edit: {
+                pd: "8px",
+            },
+        },
+
+        findUser: {
+            mg: "0 0 8px 0",
+            edit: {
+                wrapper: {
+                    mg: "0 8px",
+                },
+                search: {
+                    mg: "0 0 8px 0",
+                },
+                selected: {
+                    mg: "0",
+                },
+                pill: {
+                    txt: "#fff",
+                },
+            },
+            add: {
+                pd: "8px",
+                pdxs: "8px",
+                search: {
+                    mg: "0 0 8px 0",
+                },
+                pill: {
+                    txt: "#191919",
+                },
+            },
         },
     };
 }

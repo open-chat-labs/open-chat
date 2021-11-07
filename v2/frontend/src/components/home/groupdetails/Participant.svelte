@@ -152,15 +152,13 @@
 <style type="text/scss">
     .participant {
         display: flex;
-        margin-left: $sp3;
-        margin-right: $sp3;
         justify-content: center;
         align-items: center;
-        border: 1px solid var(--participants-bd);
+        border-bottom: var(--participants-bdb);
         background-color: var(--participants-bg);
         color: var(--participants-txt);
         padding: $sp3;
-        margin-bottom: $sp3;
+        margin: var(--participants-mg);
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
 
         &:not(.me) {

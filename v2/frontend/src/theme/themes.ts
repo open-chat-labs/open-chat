@@ -1,4 +1,4 @@
-import { heritageTheme } from "./heritage";
+import { originalTheme } from "./original";
 import { darkTheme } from "./dark";
 import { lightTheme } from "./light";
 
@@ -71,6 +71,14 @@ export interface Theme {
         txt: string;
         hv: string;
         bd: string;
+        bdb: string;
+        mg: string;
+        search: {
+            pd: string;
+        };
+        panel: {
+            bg: string;
+        };
     };
 
     entry: {
@@ -225,21 +233,54 @@ export interface Theme {
     };
 
     groupForm: {
-        pd: string;
+        add: {
+            pd: string;
+        };
+        edit: {
+            pd: string;
+        };
+    };
+
+    findUser: {
+        mg: string;
+        edit: {
+            wrapper: {
+                mg: string;
+            };
+            search: {
+                mg: string;
+            };
+            selected: {
+                mg: string;
+            };
+            pill: {
+                txt: string;
+            };
+        };
+        add: {
+            pd: string;
+            pdxs: string;
+            search: {
+                mg: string;
+            };
+            pill: {
+                txt: string;
+            };
+        };
     };
 }
 
 export type Themes = {
     light: Theme;
     dark: Theme;
-    heritage: Theme;
+    original: Theme;
 };
 
 const defaultTheme = lightTheme();
 
 export const themes: Themes = {
     light: defaultTheme,
-    heritage: heritageTheme(defaultTheme),
+    original: originalTheme(defaultTheme),
     dark: darkTheme(defaultTheme),
 };
 

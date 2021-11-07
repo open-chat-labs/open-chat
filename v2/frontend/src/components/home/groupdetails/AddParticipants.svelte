@@ -51,6 +51,7 @@
 {#if !busy}
     <div class="find-user">
         <SelectUsers
+            mode={"edit"}
             {api}
             on:selectUser={selectUser}
             on:deleteUser={deleteUser}
@@ -79,7 +80,7 @@
         flex: 0 0 30px;
     }
     .find-user {
-        margin: 0 $sp3;
+        margin: var(--findUser-edit-wrapper-mg);
         flex: 1;
         display: flex;
         flex-direction: column;

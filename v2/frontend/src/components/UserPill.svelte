@@ -7,6 +7,7 @@
     import { avatarUrl } from "../domain/user/user.utils";
     const dispatch = createEventDispatcher();
 
+    export let mode: "add" | "edit";
     export let user: UserSummary;
 
     function deleteUser() {
@@ -14,7 +15,7 @@
     }
 </script>
 
-<div class="pill">
+<div class="pill" class:add={mode === "add"} class:edit={mode === "edit"}>
     <div class="avatar">
         <Avatar url={avatarUrl(user)} status={UserStatus.None} size={AvatarSize.Small} />
     </div>
@@ -31,13 +32,17 @@
         margin-right: $sp3;
         display: inline-block;
         width: 60px;
-        color: var(--section-txt);
+
+        &.edit {
+            color: var(--findUser-edit-pill-txt);
+        }
+
+        &.add {
+            color: var(--findUser-add-pill-txt);
+        }
 
         .username {
             @include ellipsis();
-            @include size-below(xs) {
-                color: #fff;
-            }
         }
 
         .delete {
@@ -48,7 +53,7 @@
             width: 20px;
             height: 20px;
             color: #fff;
-            background-color: hotpink;
+            background-color: var(--accent);
             border-radius: 50%;
             display: flex;
             justify-content: center;

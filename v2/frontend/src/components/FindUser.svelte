@@ -13,6 +13,7 @@
     import { toastStore } from "../stores/toast";
 
     export let api: ServiceContainer;
+    export let mode: "add" | "edit";
 
     const dispatch = createEventDispatcher();
     let inp: HTMLInputElement;
@@ -60,7 +61,7 @@
     }
 </script>
 
-<div class="search-form">
+<div class="search-form" class:add={mode === "add"} class:edit={mode === "edit"}>
     <span class="icon"><Magnify color={"#ccc"} /></span>
     <input
         bind:this={inp}
@@ -98,12 +99,19 @@
     .search-form {
         background-color: var(--chatSearch-bg);
         display: flex;
-        margin-bottom: $sp3;
         align-items: center;
         position: relative;
         padding: $sp2 $sp4;
         border-radius: $sp5;
         border: 1px solid var(--chatSearch-bd);
+
+        &.add {
+            margin: var(--findUser-add-search-mg);
+        }
+
+        &.edit {
+            margin: var(--findUser-edit-search-mg);
+        }
     }
     .icon {
         flex: 0 0 25px;
@@ -127,11 +135,12 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        border: 1px solid var(--participants-bd);
+        border: var(--participants-bd);
+        border-bottom: var(--participants-bdb);
         background-color: var(--participants-bg);
         color: var(--participants-txt);
         padding: $sp3;
-        margin-bottom: $sp3;
+        margin: var(--findUser-mg);
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         cursor: pointer;
 

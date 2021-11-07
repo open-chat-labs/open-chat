@@ -1,10 +1,10 @@
 import type { Theme } from "./themes";
 
-export function heritageTheme(defaultTheme: Theme): Theme {
+export function originalTheme(defaultTheme: Theme): Theme {
     return {
         ...defaultTheme,
-        name: "heritage",
-        label: "Heritage",
+        name: "original",
+        label: "Original",
         bg: "#41398b",
         mg: "20px auto",
 
@@ -64,8 +64,10 @@ export function heritageTheme(defaultTheme: Theme): Theme {
 
         button: {
             ...defaultTheme.button,
-            bg: "#f79031",
-            hv: "#E37C1D",
+            bg: "#085d8c",
+            hv: "#053d5c",
+            // bg: "#f79031",
+            // hv: "#E37C1D",
         },
 
         section: {
@@ -85,7 +87,57 @@ export function heritageTheme(defaultTheme: Theme): Theme {
 
         groupForm: {
             ...defaultTheme.groupForm,
-            pd: "4px 8px 0 8px",
+            add: {
+                pd: "4px 8px 0 8px",
+            },
+            edit: {
+                pd: "4px 8px 0 8px",
+            },
+        },
+
+        participants: {
+            ...defaultTheme.participants,
+            bg: "#fff",
+            bd: "transparent",
+            bdb: "1px solid #ddd",
+            hv: "#efefef",
+            mg: "0",
+            search: {
+                pd: "0",
+            },
+            panel: {
+                bg: "transparent",
+            },
+        },
+
+        findUser: {
+            ...defaultTheme.findUser,
+            mg: "0",
+            edit: {
+                ...defaultTheme.findUser.edit,
+                wrapper: {
+                    mg: "0",
+                },
+                search: {
+                    mg: "0 8px 8px 8px",
+                },
+                selected: {
+                    mg: "0 8px",
+                },
+                pill: {
+                    txt: "#191919",
+                },
+            },
+            add: {
+                pd: "0",
+                pdxs: "0",
+                search: {
+                    mg: "0 8px 8px 8px",
+                },
+                pill: {
+                    txt: "#191919",
+                },
+            },
         },
     };
 }

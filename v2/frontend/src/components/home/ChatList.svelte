@@ -155,7 +155,6 @@
         on:userAvatarSelected={userAvatarSelected}
         on:logout
         {user}
-        on:newchat
         on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
         on:newGroup />
     <div class="body">

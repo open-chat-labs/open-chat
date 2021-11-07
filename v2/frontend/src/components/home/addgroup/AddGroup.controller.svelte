@@ -33,6 +33,7 @@
         if (resp.kind === "name_too_long") return "groupNameTooLong";
         if (resp.kind === "group_name_taken") return "groupAlreadyExists";
         if (resp.kind === "throttled") return "groupCreationFailed";
+        if (resp.kind === "max_groups_created") return "maxGroupsCreated";
     }
 
     function chooseParticipants() {

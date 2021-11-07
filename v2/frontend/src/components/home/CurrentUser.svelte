@@ -23,10 +23,6 @@
 
     export let user: PartialUserSummary;
 
-    function newChat() {
-        dispatch("newchat");
-    }
-
     function newGroup() {
         dispatch("newGroup");
     }
@@ -56,10 +52,6 @@
             </span>
             <span slot="menu">
                 <Menu>
-                    <MenuItem on:click={newChat}>
-                        <MessagePlus size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
-                        <span slot="text">{$_("newChat")}</span>
-                    </MenuItem>
                     <MenuItem on:click={newGroup}>
                         <AccountMultiplePlus size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("newGroup")}</span>

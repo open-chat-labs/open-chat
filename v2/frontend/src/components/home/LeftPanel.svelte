@@ -37,7 +37,6 @@
             on:loadMessage
             on:chatWith
             on:newGroup={() => (addingGroup = true)}
-            on:newchat
             on:logout
             on:searchEntered
             {searchResultsAvailable}

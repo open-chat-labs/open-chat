@@ -63,10 +63,14 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         participants: {
+            ...defaultTheme.participants,
             bg: dark20,
             txt: dark60,
             hv: dark15,
-            bd: dark15,
+            bd: `1px solid ${dark15}`,
+            panel: {
+                bg: dark20,
+            },
         },
 
         entry: {
@@ -83,6 +87,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bg: dark05,
             left: {
                 bg: "rgba(0,0,0,0.1)",
+            },
+            right: {
+                bg: dark10,
             },
         },
 
@@ -203,5 +210,15 @@ export function darkTheme(defaultTheme: Theme): Theme {
             txt: dark60,
         },
         spinner: dark25,
+
+        findUser: {
+            ...defaultTheme.findUser,
+            add: {
+                ...defaultTheme.findUser.add,
+                pill: {
+                    txt: "#fff",
+                },
+            },
+        },
     };
 }
