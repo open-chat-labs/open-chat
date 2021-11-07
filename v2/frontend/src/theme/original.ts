@@ -1,5 +1,7 @@
 import type { Theme } from "./themes";
 
+const accent = "#ff9505";
+
 export function originalTheme(defaultTheme: Theme): Theme {
     return {
         ...defaultTheme,
@@ -9,7 +11,8 @@ export function originalTheme(defaultTheme: Theme): Theme {
         mg: "20px auto",
 
         // accent: "#32cd32",
-        accent: "#f79031",
+        // accent: "#f79031",
+        accent: accent,
 
         panel: {
             ...defaultTheme.panel,
@@ -143,7 +146,8 @@ export function originalTheme(defaultTheme: Theme): Theme {
         toast: {
             ...defaultTheme.toast,
             success: {
-                bg: "#f79031",
+                bg: accent,
+                // bg: "#f79031",
                 txt: "#ffffff",
             },
         },

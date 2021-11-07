@@ -2,6 +2,8 @@ import type { Theme } from "./themes";
 
 const sp3 = "8px";
 
+const orangeAccent = "#ff9505";
+
 export function lightTheme(): Theme {
     return {
         name: "light",
@@ -14,7 +16,7 @@ export function lightTheme(): Theme {
         accent: "hotpink",
 
         notificationBar: {
-            bg: "#f79031",
+            bg: orangeAccent,
             txt: "#ffffff",
         },
 
@@ -34,7 +36,7 @@ export function lightTheme(): Theme {
                 txt: "#ffffff",
             },
             success: {
-                bg: "#f79031",
+                bg: orangeAccent,
                 txt: "#ffffff",
             },
         },
@@ -127,7 +129,7 @@ export function lightTheme(): Theme {
             txt1: "#191919",
             txt2: "#333",
             bd: "transparent",
-            "bd-selected": "#f79031",
+            "bd-selected": orangeAccent,
             mb: sp3,
         },
 
