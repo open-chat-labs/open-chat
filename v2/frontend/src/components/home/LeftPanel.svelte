@@ -1,7 +1,6 @@
 <script lang="ts">
     import Panel from "../Panel.svelte";
     import ChatList from "./ChatList.svelte";
-    import NewChat from "./NewChat.svelte";
     import NewGroup from "./addgroup/AddGroup.controller.svelte";
     import type { ActorRefFrom } from "xstate";
     import type { HomeMachine } from "../../fsm/home.machine";
@@ -20,14 +19,11 @@
     export let searchResultsAvailable: boolean = false;
 
     $: api = $machine.context.serviceContainer!;
-    $: newChat = $machine.matches({ loaded_chats: "new_chat" });
     let addingGroup: boolean = false;
 </script>
 
 <Panel left>
-    {#if newChat}
-        <NewChat {machine} />
-    {:else if addingGroup}
+    {#if addingGroup}
         <NewGroup
             {api}
             on:cancelNewGroup={() => (addingGroup = false)}

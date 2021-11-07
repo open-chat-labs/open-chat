@@ -147,7 +147,6 @@ export function originalTheme(defaultTheme: Theme): Theme {
             ...defaultTheme.toast,
             success: {
                 bg: accent,
-                // bg: "#f79031",
                 txt: "#ffffff",
             },
         },

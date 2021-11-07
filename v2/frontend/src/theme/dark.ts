@@ -36,12 +36,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         toast: {
+            ...defaultTheme.toast,
             failure: {
                 bg: "darkred",
-                txt: "#ffffff",
-            },
-            success: {
-                bg: "seagreen",
                 txt: "#ffffff",
             },
         },
