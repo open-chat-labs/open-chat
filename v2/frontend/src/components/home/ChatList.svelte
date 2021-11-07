@@ -3,11 +3,9 @@
     import Search from "../Search.svelte";
     import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
-    import NewMessageFab from "./NewMessageFab.svelte";
     import { fade } from "svelte/transition";
     import { flip } from "svelte/animate";
     import { elasticOut } from "svelte/easing";
-    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import { _ } from "svelte-i18n";
     import type { ActorRefFrom } from "xstate";
     import type { HomeMachine } from "../../fsm/home.machine";
@@ -259,9 +257,6 @@
                     </div>
                 {/if}
             </div>
-        {/if}
-        {#if $screenWidth === ScreenWidth.ExtraSmall}
-            <NewMessageFab on:newchat />
         {/if}
     </div>
     <NotificationsBar />

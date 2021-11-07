@@ -139,5 +139,13 @@ export function originalTheme(defaultTheme: Theme): Theme {
                 },
             },
         },
+
+        toast: {
+            ...defaultTheme.toast,
+            success: {
+                bg: "#f79031",
+                txt: "#ffffff",
+            },
+        },
     };
 }

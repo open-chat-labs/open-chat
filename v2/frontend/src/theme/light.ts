@@ -34,7 +34,7 @@ export function lightTheme(): Theme {
                 txt: "#ffffff",
             },
             success: {
-                bg: "limegreen",
+                bg: "#f79031",
                 txt: "#ffffff",
             },
         },
