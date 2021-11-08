@@ -155,8 +155,8 @@
         {user}
         on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
         on:newGroup />
+    <Search {searching} {searchTerm} on:searchEntered />
     <div class="body">
-        <Search {searching} {searchTerm} on:searchEntered />
         {#if $machine.matches("loading_chats")}
             <Loading />
         {:else}
