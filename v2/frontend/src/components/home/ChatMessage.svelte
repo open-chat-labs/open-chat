@@ -23,6 +23,7 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
@@ -135,6 +136,17 @@
     <Overlay active={showEmojiPicker}>
         <ModalContent hideFooter={true} hideHeader={true} fill={true}>
             <span slot="body">
+                <div class="emoji-header">
+                    <h4>{$_("chooseReaction")}</h4>
+                    <span
+                        title={$_("close")}
+                        class="close-emoji"
+                        on:click={() => (showEmojiPicker = false)}>
+                        <HoverIcon>
+                            <Close size={"1.2em"} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    </span>
+                </div>
                 {#await import("./EmojiPicker.svelte")}
                     <div class="loading-emoji"><Loading /></div>
                 {:then picker}
@@ -592,5 +604,17 @@
         margin: 0;
         @include font(bold, normal, fs-100);
         color: #fff;
+    }
+
+    .emoji-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: $sp3 $sp4;
+        background-color: var(--section-bg);
+
+        .close-emoji {
+            flex: 0 0 20px;
+        }
     }
 </style>

@@ -68,6 +68,7 @@
     "groupDescTooLong": "The group description is too long",
     "groupNameTooLong": "The group name is too long",
     "maxGroupsCreated": "You have already created the maximum number of groups",
+    "chooseReaction": "Choose a reaction",
     "groupNameInvalid": "The group name is invalid",
     "groupAlreadyExists": "A public group with that name already exists",
     "userSearchFailed": "There was an error searching for users",
