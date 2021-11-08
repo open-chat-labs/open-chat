@@ -52,6 +52,7 @@
     <div class="form-fields">
         {#if !addingParticipants}
             <SelectUsers
+                mode={"add"}
                 {api}
                 on:deleteUser={deleteParticipant}
                 on:selectUser={addParticipant}
@@ -79,7 +80,7 @@
 
     .participants {
         flex: 1;
-        background-color: var(--section-bg);
+        background-color: var(--participants-panel-bg);
         color: var(--section-txt);
         display: flex;
         flex-direction: column;
@@ -91,11 +92,11 @@
     }
 
     .form-fields {
-        padding: $sp4;
+        padding: var(--findUser-add-pd);
         flex: auto;
         overflow: auto;
         @include size-below(xs) {
-            padding: $sp3;
+            padding: var(--findUser-add-pdxs);
         }
     }
 </style>

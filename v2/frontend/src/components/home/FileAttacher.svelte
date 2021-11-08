@@ -35,9 +35,9 @@
 <div on:click={click}>
     <HoverIcon>
         {#if open}
-            <Close size={"1.2em"} color={"#aaa"} />
+            <Close size={"1.2em"} color={"var(--icon-txt)"} />
         {:else}
-            <Paperclip size={"1.2em"} color={"#aaa"} />
+            <Paperclip size={"1.2em"} color={"var(--icon-txt)"} />
         {/if}
         <input bind:this={fileinput} hidden={true} type="file" on:change={onFileSelected} />
     </HoverIcon>

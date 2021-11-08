@@ -41,6 +41,7 @@
     export let me: boolean;
     export let eventIndex: number;
     export let timestamp: bigint;
+    export let first: boolean;
     export let last: boolean;
     export let confirmed: boolean;
     export let readByThem: boolean;
@@ -172,9 +173,15 @@
             class:fill={fill && !deleted}
             class:me
             class:deleted
+            class:first
             class:last
             class:readByMe
             class:rtl={$rtlStore}>
+            {#if first && !me && !deleted}
+                <Link on:click={chatWithUser}>
+                    <h4 class="username">{username}</h4>
+                </Link>
+            {/if}
             {#if msg.repliesTo !== undefined && !deleted}
                 {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                     <RepliesTo {chatId} {user} on:goToMessageIndex repliesTo={msg.repliesTo} />
@@ -240,23 +247,32 @@
                             <Menu>
                                 {#if confirmed}
                                     <MenuItem on:click={reply}>
-                                        <Reply size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <Reply
+                                            size={"1.2em"}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
                                         <div slot="text">{$_("reply")}</div>
                                     </MenuItem>
                                 {/if}
                                 {#if confirmed && groupChat && !me}
                                     <MenuItem on:click={replyPrivately}>
-                                        <ReplyOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <ReplyOutline
+                                            size={"1.2em"}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
                                         <div slot="text">{$_("replyPrivately")}</div>
                                     </MenuItem>
                                 {/if}
                                 {#if me || admin}
                                     <!-- <MenuItem on:click={editMessage}>
-                                        <PencilOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <PencilOutline size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                                         <div slot="text">{$_("editMessage")}</div>
                                     </MenuItem> -->
                                     <MenuItem on:click={deleteMessage}>
-                                        <DeleteOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <DeleteOutline
+                                            size={"1.2em"}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
                                         <div slot="text">{$_("deleteMessage")}</div>
                                     </MenuItem>
                                 {/if}
@@ -392,34 +408,34 @@
         .message-sender {
             margin-bottom: $sp2;
         }
+    }
 
-        .message-reactions {
+    .message-reactions {
+        display: flex;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+
+        &.me {
+            justify-content: flex-end;
+        }
+
+        .message-reaction {
+            border-radius: $sp4;
+            background-color: var(--reaction-bg);
+            color: var(--reaction-txt);
+            cursor: pointer;
+            height: $sp5;
+            padding: $sp2;
             display: flex;
-            justify-content: flex-start;
-            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            margin-left: 1px;
+            margin-right: 1px;
+            margin-bottom: $sp2;
 
-            &.me {
-                justify-content: flex-end;
-            }
-
-            .message-reaction {
-                border-radius: $sp4;
-                background-color: var(--reaction-bg);
-                color: var(--reaction-txt);
-                cursor: pointer;
-                height: $sp5;
-                padding: $sp2;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                margin-left: 1px;
-                margin-right: 1px;
-                margin-bottom: $sp2;
-
-                .reaction-count {
-                    @include font(book, normal, fs-60);
-                    margin-left: $sp2;
-                }
+            .reaction-count {
+                @include font(book, normal, fs-60);
+                margin-left: $sp2;
             }
         }
     }
@@ -452,18 +468,33 @@
         }
     }
 
+    .username {
+        margin: 0;
+        @include font(bold, normal, fs-100);
+        color: #fff;
+    }
+
     .message-bubble {
+        $radius: 20px;
+        $inner-radius: 4px;
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
             border ease-in-out 300ms, transform ease-in-out 200ms;
         position: relative;
         padding: $sp4;
+        padding-top: 10px;
         border: 1px solid var(--currentChat-msg-bd);
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
-        border-radius: $sp5;
+        border-radius: $radius;
         max-width: 90%;
-        min-width: 50%;
+        min-width: 30%;
+
+        .username {
+            color: inherit;
+            margin-bottom: $sp2;
+            color: var(--accent);
+        }
 
         &:hover {
             box-shadow: 0 5px 10px var(--currentChat-msg-hv);
@@ -476,8 +507,14 @@
             box-shadow: 0 0 0 5px yellow;
         }
 
-        &.last {
-            border-radius: $sp5 $sp5 $sp5 0;
+        &.last:not(.first) {
+            border-radius: $inner-radius $radius $radius $radius;
+        }
+        &.first:not(.last) {
+            border-radius: $radius $radius $radius $inner-radius;
+        }
+        &:not(.first):not(.last) {
+            border-radius: $inner-radius $radius $radius $inner-radius;
         }
 
         &.me {
@@ -489,19 +526,37 @@
                 background-color: var(--currentChat-msg-me-hv);
             }
 
-            &.last {
-                border-radius: $sp5 $sp5 0 $sp5;
+            &.last:not(.first) {
+                border-radius: $radius $inner-radius $radius $radius;
+            }
+            &.first:not(.last) {
+                border-radius: $radius $radius $inner-radius $radius;
+            }
+            &:not(.first):not(.last) {
+                border-radius: $radius $inner-radius $inner-radius $radius;
             }
         }
 
         &.rtl {
-            &.last {
-                border-radius: $sp5 $sp5 0 $sp5;
+            &.last:not(.first) {
+                border-radius: $radius $inner-radius $radius $radius;
+            }
+            &.first:not(.last) {
+                border-radius: $radius $radius $inner-radius $radius;
+            }
+            &:not(.first):not(.last) {
+                border-radius: $radius $inner-radius $inner-radius $radius;
             }
 
             &.me {
-                &.last {
-                    border-radius: $sp5 $sp5 $sp5 0;
+                &.last:not(.first) {
+                    border-radius: $inner-radius $radius $radius $radius;
+                }
+                &.first:not(.last) {
+                    border-radius: $radius $radius $radius $inner-radius;
+                }
+                &:not(.first):not(.last) {
+                    border-radius: $inner-radius $radius $radius $inner-radius;
                 }
             }
 

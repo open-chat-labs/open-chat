@@ -18,6 +18,7 @@
     export let chatType: "group_chat" | "direct_chat";
     export let user: UserSummary | undefined;
     export let event: EventWrapper<ChatEvent>;
+    export let first: boolean;
     export let last: boolean;
     export let me: boolean;
     export let confirmed: boolean;
@@ -48,6 +49,7 @@
         {chatType}
         {user}
         {me}
+        {first}
         {last}
         {admin}
         on:chatWith

@@ -5,9 +5,10 @@
 
     export let showSpinner: boolean | undefined = false;
     export let avatarUrl: string;
+    export let index: number;
 </script>
 
-<div class="group" on:click>
+<div class="search-result" class:first={index === 0} on:click>
     <span class="avatar">
         <Avatar url={avatarUrl} status={UserStatus.None} size={AvatarSize.Small} />
     </span>
@@ -21,16 +22,21 @@
 </div>
 
 <style type="text/scss">
-    .group {
+    .search-result {
         display: flex;
         justify-content: center;
         align-items: center;
         background-color: var(--chatSummary-bg);
         color: var(--chatSummary-txt1);
         padding: $sp3;
-        margin-bottom: $sp3;
+        margin-bottom: var(--chatSummary-mb);
         transition: background-color ease-in-out 100ms;
         cursor: pointer;
+        border-bottom: var(--chatSummary-bd);
+
+        &.first {
+            border-top: var(--chatSummary-bd);
+        }
 
         &:hover {
             background-color: var(--chatSummary-hv);

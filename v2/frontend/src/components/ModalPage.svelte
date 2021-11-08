@@ -22,6 +22,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        width: 100%;
 
         &.underwater {
             @include fullScreenImg("../assets/underwater.jpg");

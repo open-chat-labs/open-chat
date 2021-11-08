@@ -9,19 +9,19 @@
 </section>
 
 <style type="text/scss">
-    $left-width: 350px;
-    $right-width: 350px;
+    $left-width: 400px;
+    $right-width: 400px;
     $trans: ease-in-out 200ms;
 
     section {
         transition: background $trans, width $trans, right $trans, padding $trans, left $trans,
             padding-left $trans;
         background: var(--panel-bg);
-        padding: $sp3;
+        padding: var(--panel-pd);
         padding-bottom: 0;
         overflow: auto;
         overflow-x: hidden;
-        @include fullHeight();
+        // @include fullHeight();
 
         &.middle {
             flex: auto;
@@ -41,7 +41,6 @@
             min-width: 320px;
             width: $left-width;
             position: relative;
-            @include fullHeight();
             @include size-below(xs) {
                 width: 100%;
                 padding: 0;
@@ -50,10 +49,12 @@
         }
 
         &.right {
+            background: var(--panel-right-bg);
             padding: 0px;
             width: $right-width;
             display: flex;
             flex-direction: column;
+            @include fullHeight();
             @include size-below(xs) {
                 width: 100%;
             }

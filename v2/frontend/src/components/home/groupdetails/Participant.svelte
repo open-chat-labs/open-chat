@@ -84,14 +84,14 @@
             <MenuIcon>
                 <span slot="icon">
                     <HoverIcon>
-                        <ChevronDown size={"1.2em"} color={"#aaa"} />
+                        <ChevronDown size={"1.2em"} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 </span>
                 <span slot="menu">
                     <Menu>
                         {#if participant.kind === "blocked_participant" && publicGroup}
                             <MenuItem on:click={unblockUser}>
-                                <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <Cancel size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                                 <div slot="text">{$_("unblockUser")}</div>
                             </MenuItem>
                         {:else}
@@ -99,28 +99,34 @@
                                 <MenuItem on:click={dismissAsAdmin}>
                                     <AccountRemoveOutline
                                         size={"1.2em"}
-                                        color={"#aaa"}
+                                        color={"var(--icon-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("dismissAsAdmin")}</div>
                                 </MenuItem>
                             {/if}
                             {#if participant.role === "participant"}
                                 <MenuItem on:click={makeAdmin}>
-                                    <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                    <AccountPlusOutline
+                                        size={"1.2em"}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
                                     <div slot="text">{$_("makeAdmin")}</div>
                                 </MenuItem>
                             {/if}
                             {#if participant.role !== "owner"}
                                 {#if publicGroup}
                                     <MenuItem on:click={blockUser}>
-                                        <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <Cancel
+                                            size={"1.2em"}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
                                         <div slot="text">{$_("blockUser")}</div>
                                     </MenuItem>
                                 {:else}
                                     <MenuItem on:click={removeUser}>
                                         <MinusCircleOutline
                                             size={"1.2em"}
-                                            color={"#aaa"}
+                                            color={"var(--icon-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("remove")}</div>
                                     </MenuItem>
@@ -130,7 +136,7 @@
                                 <MenuItem on:click={transferOwnership}>
                                     <AccountArrowLeftOutline
                                         size={"1.2em"}
-                                        color={"#aaa"}
+                                        color={"var(--icon-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("transferOwnership")}</div>
                                 </MenuItem>
@@ -146,15 +152,13 @@
 <style type="text/scss">
     .participant {
         display: flex;
-        margin-left: $sp3;
-        margin-right: $sp3;
         justify-content: center;
         align-items: center;
-        border: 1px solid var(--participants-bd);
+        border-bottom: var(--participants-bdb);
         background-color: var(--participants-bg);
         color: var(--participants-txt);
         padding: $sp3;
-        margin-bottom: $sp3;
+        margin: var(--participants-mg);
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
 
         &:not(.me) {

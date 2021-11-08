@@ -50,7 +50,7 @@
 <SectionHeader>
     <span title={$_("close")} class="close" on:click={cancel}>
         <HoverIcon>
-            <Close size={"1.2em"} color={"#aaa"} />
+            <Close size={"1.2em"} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
     <h4>{$_("createNewGroup")}</h4>
@@ -182,6 +182,7 @@
     }
 
     .form-fields {
+        padding: var(--groupForm-add-pd);
         @include size-below(xs) {
             padding: $sp3;
             padding-top: $sp2;

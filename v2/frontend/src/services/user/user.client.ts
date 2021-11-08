@@ -42,7 +42,12 @@ import {
     unblockResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import { enoughVisibleMessages, mergeChatUpdates, nextIndex } from "../../domain/chat/chat.utils";
+import {
+    compareChats,
+    enoughVisibleMessages,
+    mergeChatUpdates,
+    nextIndex,
+} from "../../domain/chat/chat.utils";
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import { apiMessageContent, apiOptional, apiReplyContextArgs } from "../common/chatMappers";
@@ -176,7 +181,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
 
         return {
-            chatSummaries: resp.chats,
+            chatSummaries: resp.chats.sort(compareChats),
             timestamp: resp.timestamp,
             blockedUsers: resp.blockedUsers,
         };

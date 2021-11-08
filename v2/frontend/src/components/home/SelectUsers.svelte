@@ -8,6 +8,7 @@
     import { pop } from "../../utils/transition";
     import type { ServiceContainer } from "../../services/serviceContainer";
 
+    export let mode: "add" | "edit";
     export let api: ServiceContainer;
     export let selectedUsers: UserSummary[];
 
@@ -21,7 +22,7 @@
             in:pop={{ duration: 500 }}
             out:fade={{ duration: 200 }}
             title={user.username}>
-            <UserPill on:deleteUser {user} />
+            <UserPill {mode} on:deleteUser {user} />
         </div>
     {/each}
 </div>
@@ -30,11 +31,14 @@
 {/if}
 
 <div class="find-user">
-    <FindUser on:selectUser {api} />
+    <FindUser {mode} on:selectUser {api} />
 </div>
 
 <style type="text/scss">
     .pill {
         display: inline-block;
+    }
+    .selected {
+        margin: var(--findUser-edit-selected-mg);
     }
 </style>

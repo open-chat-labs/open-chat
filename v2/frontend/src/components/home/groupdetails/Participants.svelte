@@ -120,6 +120,6 @@
 
 <style type="text/scss">
     .search {
-        padding: 0 $sp3;
+        padding: var(--participants-search-pd);
     }
 </style>

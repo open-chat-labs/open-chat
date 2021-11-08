@@ -11,10 +11,12 @@
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
+    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
 
     export let controller: ChatController;
     export let blocked: boolean;
 
+    $: iconSize = $screenWidth === ScreenWidth.ExtraSmall ? "1.2em" : "1.5em";
     $: editingEvent = controller.editingEvent;
     $: fileToAttach = controller.fileToAttach;
 
@@ -155,11 +157,11 @@
         <div class="emoji" on:click={toggleEmojiPicker}>
             {#if showEmojiPicker}
                 <HoverIcon>
-                    <Close size={"1.2em"} color={"#aaa"} />
+                    <Close size={iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             {:else}
                 <HoverIcon>
-                    <EmoticonHappyOutline size={"1.2em"} color={"#aaa"} />
+                    <EmoticonHappyOutline size={iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             {/if}
         </div>
@@ -195,7 +197,7 @@
         </div>
         <div class="send" on:click={sendMessage}>
             <HoverIcon>
-                <Send size={"1.2em"} color={"#aaa"} />
+                <Send size={iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </div>
     {/if}

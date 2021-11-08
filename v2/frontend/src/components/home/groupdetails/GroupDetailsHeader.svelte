@@ -24,13 +24,13 @@
 <SectionHeader>
     <span title={$_("participants")} class="participants" on:click={showParticipants}>
         <HoverIcon>
-            <AccountMultiplePlus size={"1.2em"} color={"#aaa"} />
+            <AccountMultiplePlus size={"1.2em"} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
     <h4>{$_("groupDetails")}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
-            <Close size={"1.2em"} color={"#aaa"} />
+            <Close size={"1.2em"} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>

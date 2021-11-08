@@ -138,10 +138,6 @@
         push("/");
     }
 
-    function newChat() {
-        machine.send({ type: "NEW_CHAT" });
-    }
-
     function blockUser(ev: CustomEvent<{ userId: string }>) {
         blockedUsers.add(ev.detail.userId);
         $machine.context
@@ -266,14 +262,12 @@
                 on:searchEntered={performSearch}
                 on:chatWith={chatWith}
                 on:logout={logout}
-                on:loadMessage={loadMessage}
-                on:newchat={newChat} />
+                on:loadMessage={loadMessage} />
         {/if}
         {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
             <MiddlePanel
                 loadingChats={$machine.matches("loading_chats")}
                 blocked={!!blocked}
-                on:newchat={newChat}
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}
                 on:unblockUser={unblockUser}
@@ -321,12 +315,16 @@
 
 <style type="text/scss">
     main {
+        transition: margin ease-in-out 300ms;
         position: relative;
-        @include fullHeight();
+        // @include fullHeight();
         width: 100%;
-        max-width: 1300px;
-        margin: auto;
+        max-width: 1200px;
         display: flex;
+        margin: var(--mg);
+        @include size-below(lg) {
+            margin: 0 auto;
+        }
     }
     :global(body) {
         transition: color ease-in-out 300ms;
