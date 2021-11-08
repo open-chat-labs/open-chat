@@ -89,6 +89,6 @@ pub async fn upgrade(canister_id: CanisterId, wasm_module: Vec<u8>) -> Result<()
 
     match error {
         None => Ok(()),
-        Some(e) => Err(e)
+        Some(e) => Err(e),
     }
 }
