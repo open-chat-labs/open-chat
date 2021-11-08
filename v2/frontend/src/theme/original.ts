@@ -54,7 +54,7 @@ export function originalTheme(defaultTheme: Theme): Theme {
                     ...defaultTheme.currentChat.msg.me,
                     bg: "#d62c7d",
                     bd: "#d62c7d",
-                    hv: "#d62c7d",
+                    hv: "#EA4091",
                 },
             },
         },
