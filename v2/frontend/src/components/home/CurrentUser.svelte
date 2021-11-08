@@ -1,6 +1,5 @@
 <script lang="ts">
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
-    import MessagePlus from "svelte-material-icons/MessagePlus.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import Bell from "svelte-material-icons/Bell.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
