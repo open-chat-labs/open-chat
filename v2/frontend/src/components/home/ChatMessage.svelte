@@ -177,10 +177,12 @@
             class:last
             class:readByMe
             class:rtl={$rtlStore}>
-            {#if first && !me && !deleted}
-                <Link on:click={chatWithUser}>
-                    <h4 class="username">{username}</h4>
-                </Link>
+            {#if first && !me && groupChat && !deleted}
+                <div class="sender">
+                    <Link on:click={chatWithUser}>
+                        <h4 class="username">{username}</h4>
+                    </Link>
+                </div>
             {/if}
             {#if msg.repliesTo !== undefined && !deleted}
                 {#if msg.repliesTo.kind === "rehydrated_reply_context"}
@@ -293,39 +295,21 @@
         {/if}
     </div>
 
-    <div class="message-footer" class:last>
-        {#if msg.reactions.length > 0 && !deleted}
-            <div class="message-reactions" class:me>
-                {#each msg.reactions as { reaction, userIds }}
-                    <div
-                        in:pop={{ duration: 500 }}
-                        on:click={() => toggleReaction(reaction)}
-                        class="message-reaction">
-                        {reaction}
-                        <span class="reaction-count">
-                            {userIds.size > 9 ? "9+" : userIds.size}
-                        </span>
-                    </div>
-                {/each}
-            </div>
-        {/if}
-        {#if groupChat && !me && last}
-            <div class="message-sender">
-                <Link on:click={chatWithUser}>
-                    <div class="avatar-section">
-                        <div class="avatar">
-                            <Avatar
-                                url={avatarUrl(sender)}
-                                status={userStatus}
-                                size={AvatarSize.Tiny} />
-                        </div>
-
-                        <h4 class="username">{username}</h4>
-                    </div>
-                </Link>
-            </div>
-        {/if}
-    </div>
+    {#if msg.reactions.length > 0 && !deleted}
+        <div class="message-reactions" class:me>
+            {#each msg.reactions as { reaction, userIds }}
+                <div
+                    in:pop={{ duration: 500 }}
+                    on:click={() => toggleReaction(reaction)}
+                    class="message-reaction">
+                    {reaction}
+                    <span class="reaction-count">
+                        {userIds.size > 9 ? "9+" : userIds.size}
+                    </span>
+                </div>
+            {/each}
+        </div>
+    {/if}
 </div>
 
 <style type="text/scss">
@@ -367,6 +351,7 @@
         bottom: $sp2;
         right: $sp3;
         display: flex;
+        align-items: center;
         @include font(light, normal, fs-60);
 
         .time {
@@ -376,6 +361,10 @@
         // .edited {
         //     @include font(light, italic, fs-60);
         // }
+    }
+
+    .sender {
+        margin-bottom: $sp1;
     }
 
     .menu {
@@ -392,22 +381,6 @@
     .menu-icon {
         transition: opacity ease-in-out 200ms;
         opacity: 0;
-    }
-
-    .avatar-section {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-
-        .avatar {
-            flex: 0 0 45px;
-        }
-    }
-
-    .message-footer {
-        .message-sender {
-            margin-bottom: $sp2;
-        }
     }
 
     .message-reactions {
@@ -468,31 +441,23 @@
         }
     }
 
-    .username {
-        margin: 0;
-        @include font(bold, normal, fs-100);
-        color: #fff;
-    }
-
     .message-bubble {
         $radius: 20px;
         $inner-radius: 4px;
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
             border ease-in-out 300ms, transform ease-in-out 200ms;
         position: relative;
-        padding: $sp4;
-        padding-top: 10px;
+        padding: $sp3 $sp3 $sp4 $sp3;
         border: 1px solid var(--currentChat-msg-bd);
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
         border-radius: $radius;
         max-width: 90%;
-        min-width: 30%;
+        min-width: 90px;
 
         .username {
             color: inherit;
-            margin-bottom: $sp2;
             color: var(--accent);
         }
 

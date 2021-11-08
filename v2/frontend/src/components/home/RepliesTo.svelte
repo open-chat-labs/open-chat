@@ -61,9 +61,12 @@
         box-shadow: -7px 0px 0px 0px var(--button-bg);
         border: 1px solid var(--button-bg);
         margin-bottom: $sp3;
+        margin-left: 7px;
 
         &.rtl {
             box-shadow: 7px 0px 0px 0px var(--button-bg);
+            margin-left: 0;
+            margin-right: 7px;
         }
 
         &.me {
