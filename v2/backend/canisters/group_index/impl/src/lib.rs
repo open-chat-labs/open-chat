@@ -125,13 +125,13 @@ impl Data {
         };
 
         for public_group in self.public_groups.iter() {
-            if public_group.is_active(now) {
+            if public_group.has_been_active_since(now) {
                 cached_metrics.active_public_groups += 1;
             }
         }
 
         for private_group in self.private_groups.iter() {
-            if private_group.is_active(now) {
+            if private_group.has_been_active_since(now) {
                 cached_metrics.active_private_groups += 1;
             }
         }

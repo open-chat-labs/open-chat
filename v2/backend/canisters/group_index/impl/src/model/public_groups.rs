@@ -177,8 +177,8 @@ impl PublicGroupInfo {
         self.marked_active_until = until;
     }
 
-    pub fn is_active(&self, now: TimestampMillis) -> bool {
-        self.marked_active_until > now
+    pub fn has_been_active_since(&self, since: TimestampMillis) -> bool {
+        self.marked_active_until > since
     }
 
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {

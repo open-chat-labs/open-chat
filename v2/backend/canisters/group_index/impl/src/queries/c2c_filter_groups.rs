@@ -19,13 +19,13 @@ fn c2c_active_and_deleted_groups_impl(args: Args, runtime_state: &RuntimeState) 
         if let Some(g) = runtime_state.data.private_groups.get(&chat_id) {
             if g.upgrade_in_progress() {
                 upgrades_in_progress.push(g.id());
-            } else if active_since.map(|t| g.is_active(t)).unwrap_or_default() {
+            } else if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
                 active_groups.push(g.id());
             }
         } else if let Some(g) = runtime_state.data.public_groups.get(&chat_id) {
             if g.upgrade_in_progress() {
                 upgrades_in_progress.push(g.id());
-            } else if active_since.map(|t| g.is_active(t)).unwrap_or_default() {
+            } else if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
                 active_groups.push(g.id());
             }
         }
