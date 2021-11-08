@@ -176,7 +176,7 @@
             class:last
             class:readByMe
             class:rtl={$rtlStore}>
-            {#if first && !me && groupChat && !deleted}
+            {#if first && !me && groupChat && !deleted && !fill}
                 <div class="sender">
                     <Link on:click={chatWithUser}>
                         <h4 class="username">{username}</h4>
@@ -202,7 +202,7 @@
                 <pre>ReadByUs: {readByMe}</pre>
             {/if}
 
-            <div class="meta-time-and-ticks">
+            <div class:rtl={$rtlStore} class:fill class="meta-time-and-ticks">
                 <!-- {#if msg.edited}
                     <span class="edited">{$_("edited")}</span>
                 {/if} -->
@@ -347,6 +347,17 @@
         align-items: center;
         justify-content: flex-end;
         @include font(light, normal, fs-60);
+
+        &.fill {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+
+            &.rtl {
+                left: 6px;
+                right: unset;
+            }
+        }
 
         .time {
             margin: 0 $sp2;
