@@ -1,22 +1,5 @@
 import "../../../libraries/types/can.did";
 
-type ActiveGroupsArgs =
-    record {
-        chat_ids: vec ChatId;
-        active_in_last: Milliseconds;
-    };
-
-type ActiveGroupsResponse =
-    variant {
-        Success: ActiveGroupsSuccessResult;
-    };
-
-type ActiveGroupsSuccessResult = 
-    record {
-        active_groups: vec ChatId;
-        deleted_groups: vec ChatId;
-    };
-
 type SearchArgs =
     record {
         search_term: text;
@@ -66,7 +49,6 @@ type InitArgs =
     };
 
 service: (InitArgs) -> {
-    active_groups: (ActiveGroupsArgs) -> (ActiveGroupsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
 
     // Update the stored group canister WASM module
