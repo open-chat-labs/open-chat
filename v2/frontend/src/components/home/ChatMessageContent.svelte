@@ -48,9 +48,3 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {/if}
-
-<style type="text/scss">
-    .text-content {
-        margin-bottom: $sp3;
-    }
-</style>

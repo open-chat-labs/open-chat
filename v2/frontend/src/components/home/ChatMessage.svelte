@@ -12,14 +12,13 @@
     import MenuItem from "../MenuItem.svelte";
     import Loading from "../Loading.svelte";
     import MenuIcon from "../MenuIcon.svelte";
-    import Avatar from "../Avatar.svelte";
     import type { Message, EnhancedReplyContext } from "../../domain/chat/chat";
     import RepliesTo from "./RepliesTo.svelte";
     import { pop } from "../../utils/transition";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
-    import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import { getUserStatus } from "../../domain/user/user.utils";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
@@ -203,38 +202,42 @@
                 <pre>ReadByUs: {readByMe}</pre>
             {/if}
 
-            {#if metaData && !deleted}
-                {#await metaData then meta}
-                    <div class="meta">
-                        {meta}
-                    </div>
-                {/await}
-            {/if}
-            <div class="time-and-ticks">
+            <div class="meta-time-and-ticks">
                 <!-- {#if msg.edited}
                     <span class="edited">{$_("edited")}</span>
                 {/if} -->
-                <span class="time">
-                    {toShortTimeString(new Date(Number(timestamp)))}
-                </span>
-                {#if me}
-                    {#if confirmed}
-                        <CheckCircle size={"0.9em"} color={"var(--currentChat-msg-me-txt)"} />
-                    {:else}
-                        <CheckCircleOutline
-                            size={"0.9em"}
-                            color={"var(--currentChat-msg-me-txt)"} />
-                    {/if}
-                    {#if chatType === "direct_chat"}
-                        {#if readByThem}
+                {#if metaData && !deleted}
+                    {#await metaData then meta}
+                        <div class="meta">
+                            {meta}
+                        </div>
+                    {/await}
+                {/if}
+                <div class="time-and-ticks">
+                    <span class="time">
+                        {toShortTimeString(new Date(Number(timestamp)))}
+                    </span>
+                    {#if me}
+                        {#if confirmed}
                             <CheckCircle size={"0.9em"} color={"var(--currentChat-msg-me-txt)"} />
                         {:else}
                             <CheckCircleOutline
                                 size={"0.9em"}
                                 color={"var(--currentChat-msg-me-txt)"} />
                         {/if}
+                        {#if chatType === "direct_chat"}
+                            {#if readByThem}
+                                <CheckCircle
+                                    size={"0.9em"}
+                                    color={"var(--currentChat-msg-me-txt)"} />
+                            {:else}
+                                <CheckCircleOutline
+                                    size={"0.9em"}
+                                    color={"var(--currentChat-msg-me-txt)"} />
+                            {/if}
+                        {/if}
                     {/if}
-                {/if}
+                </div>
             </div>
 
             {#if !deleted}
@@ -339,28 +342,30 @@
         }
     }
 
-    .meta {
-        position: absolute;
-        bottom: $sp2;
-        left: $sp4;
-        @include font(light, normal, fs-60);
-    }
-
-    .time-and-ticks {
-        position: absolute;
-        bottom: $sp2;
-        right: $sp3;
+    .meta-time-and-ticks {
         display: flex;
         align-items: center;
+        justify-content: flex-end;
         @include font(light, normal, fs-60);
 
         .time {
-            margin: 0 $sp3;
+            margin: 0 $sp2;
         }
 
         // .edited {
         //     @include font(light, italic, fs-60);
         // }
+
+        .meta {
+            flex: 1;
+            @include font(light, normal, fs-60);
+            @include ellipsis();
+        }
+
+        .time-and-ticks {
+            display: flex;
+            align-items: center;
+        }
     }
 
     .sender {
@@ -447,7 +452,7 @@
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
             border ease-in-out 300ms, transform ease-in-out 200ms;
         position: relative;
-        padding: $sp3 $sp3 $sp4 $sp3;
+        padding: $sp3 $sp3 $sp2 $sp3;
         border: 1px solid var(--currentChat-msg-bd);
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
