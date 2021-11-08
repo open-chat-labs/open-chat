@@ -39,8 +39,8 @@ pub async fn upgrade(canister_id: CanisterId, wasm_module: Vec<u8>) -> Result<()
     }
 
     let stop_canister_args = StartOrStopCanisterArgs { canister_id };
-    let start_canister_response: CallResult<()> = api::call::call(Principal::management_canister(), "stop_canister", (stop_canister_args,)).await;
-    if let Err((code, msg)) = start_canister_response {
+    let stop_canister_response: CallResult<()> = api::call::call(Principal::management_canister(), "stop_canister", (stop_canister_args,)).await;
+    if let Err((code, msg)) = stop_canister_response {
         let code = code as u8;
         error!(error_code = code, error_message = msg.as_str(), "Error calling 'stop_canister'");
         return Err(canister::Error { code, msg });
