@@ -130,6 +130,7 @@ pub struct PublicGroupInfo {
     marked_active_until: TimestampMillis,
     wasm_version: Version,
     cycle_top_ups: Vec<CyclesTopUp>,
+    upgrade_in_progress: bool,
 }
 
 pub enum UpdateGroupResult {
@@ -156,6 +157,7 @@ impl PublicGroupInfo {
             marked_active_until: now + MARK_ACTIVE_DURATION,
             wasm_version,
             cycle_top_ups: Vec::new(),
+            upgrade_in_progress: false,
         }
     }
 
@@ -181,6 +183,14 @@ impl PublicGroupInfo {
 
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
         self.cycle_top_ups.push(top_up)
+    }
+
+    pub fn upgrade_in_progress(&self) -> bool {
+        self.upgrade_in_progress
+    }
+
+    pub fn set_upgrade_in_progress(&mut self, upgrade_in_progress: bool) {
+        self.upgrade_in_progress = upgrade_in_progress;
     }
 }
 

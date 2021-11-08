@@ -36,12 +36,16 @@ mod upgrade_canisters {
         let canister_id = runtime_state.data.canisters_requiring_upgrade.try_take_next()?;
         let chat_id = canister_id.into();
 
-        let current_wasm_version = runtime_state
-            .data
-            .public_groups
-            .get(&chat_id)
-            .map(|g| g.wasm_version())
-            .or_else(|| runtime_state.data.private_groups.get(&chat_id).map(|g| g.wasm_version()))?;
+        let current_wasm_version: Version;
+        if let Some(chat) = runtime_state.data.public_groups.get_mut(&chat_id) {
+            chat.set_upgrade_in_progress(true);
+            current_wasm_version = chat.wasm_version();
+        } else if let Some(chat) = runtime_state.data.private_groups.get_mut(&chat_id) {
+            chat.set_upgrade_in_progress(true);
+            current_wasm_version = chat.wasm_version();
+        } else {
+            return None;
+        }
 
         Some(CanisterToUpgrade {
             canister_id,
@@ -78,8 +82,10 @@ mod upgrade_canisters {
 
         if let Some(chat) = runtime_state.data.public_groups.get_mut(&chat_id) {
             chat.set_wasm_version(to_version);
+            chat.set_upgrade_in_progress(false);
         } else if let Some(chat) = runtime_state.data.private_groups.get_mut(&chat_id) {
             chat.set_wasm_version(to_version);
+            chat.set_upgrade_in_progress(false);
         }
     }
 
