@@ -5,8 +5,7 @@ use tracing::error;
 use types::CanisterId;
 
 // Queries
-generate_c2c_call!(c2c_active_and_deleted_groups);
-generate_c2c_call!(c2c_deleted_groups);
+generate_c2c_call!(c2c_filter_groups);
 
 // Updates
 generate_c2c_call!(c2c_create_group);

@@ -22,6 +22,7 @@ pub struct GroupChatUpdatesSince {
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
+    InternalError(String),
 }
 
 #[derive(CandidType, Deserialize, Debug)]
@@ -34,4 +35,5 @@ pub struct SuccessResult {
     pub blocked_users: Vec<UserId>,
     pub cycles_balance: Option<Cycles>,
     pub alerts: Vec<Alert>,
+    pub upgrades_in_progress: Vec<ChatId>,
 }
