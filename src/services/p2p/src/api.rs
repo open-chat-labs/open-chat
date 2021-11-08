@@ -30,3 +30,8 @@ pub fn get_connection_details(
 ) -> get_connection_details::Response {
     get_connection_details::query(updated_since)
 }
+
+#[query]
+fn stats() -> get_stats::Stats {
+    get_stats::query()
+}
