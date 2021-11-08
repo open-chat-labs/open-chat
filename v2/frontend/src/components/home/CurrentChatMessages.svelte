@@ -412,6 +412,7 @@
                         chatType={controller.kind}
                         user={controller.user}
                         me={isMe(evt)}
+                        first={i === 0}
                         last={i + 1 === userGroup.length}
                         {admin}
                         on:chatWith

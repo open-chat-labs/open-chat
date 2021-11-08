@@ -48,6 +48,15 @@ export function originalTheme(defaultTheme: Theme): Theme {
                 bg: "#f6f6f6",
                 txt: "inherit",
             },
+            msg: {
+                ...defaultTheme.currentChat.msg,
+                me: {
+                    ...defaultTheme.currentChat.msg.me,
+                    bg: "#d62c7d",
+                    bd: "#d62c7d",
+                    hv: "#d62c7d",
+                },
+            },
         },
 
         chatSearch: {
