@@ -1,6 +1,7 @@
 use crate::canister;
 use candid::{CandidType, Principal};
 use ic_cdk::api;
+use ic_cdk::api::call::CallResult;
 use serde::Deserialize;
 use tracing::error;
 use types::{CanisterId, CanisterWasm, Version};
@@ -12,6 +13,11 @@ pub struct CanisterToUpgrade {
 }
 
 pub async fn upgrade(canister_id: CanisterId, wasm_module: Vec<u8>) -> Result<(), canister::Error> {
+    #[derive(CandidType, Deserialize)]
+    struct StartOrStopCanisterArgs {
+        canister_id: Principal,
+    }
+
     #[derive(CandidType, Deserialize)]
     enum InstallMode {
         #[serde(rename = "install")]
@@ -32,21 +38,37 @@ pub async fn upgrade(canister_id: CanisterId, wasm_module: Vec<u8>) -> Result<()
         arg: Vec<u8>,
     }
 
-    let install_config = CanisterInstall {
+    let stop_canister_args = StartOrStopCanisterArgs { canister_id };
+    let start_canister_response: CallResult<()> = api::call::call(Principal::management_canister(), "stop_canister", (stop_canister_args,)).await;
+    if let Err((code, msg)) = start_canister_response {
+        let code = code as u8;
+        error!(error_code = code, error_message = msg.as_str(), "Error calling 'stop_canister'");
+        return Err(canister::Error { code, msg });
+    }
+
+    let install_code_args = CanisterInstall {
         mode: InstallMode::Upgrade,
         canister_id,
         wasm_module,
         arg: b" ".to_vec(),
     };
+    let install_code_response: CallResult<()> = api::call::call(Principal::management_canister(), "install_code", (install_code_args,)).await;
 
-    let (_,): ((),) = match api::call::call(Principal::management_canister(), "install_code", (install_config,)).await {
-        Ok(x) => x,
-        Err((code, msg)) => {
-            let code = code as u8;
-            error!(error_code = code, error_message = msg.as_str(), "Error calling install_code");
-            return Err(canister::Error { code, msg });
-        }
-    };
+    // Call 'start canister' regardless of if 'install_code' succeeded or not.
+    let start_canister_args = StartOrStopCanisterArgs { canister_id };
+    let start_canister_response: CallResult<()> = api::call::call(Principal::management_canister(), "start_canister", (start_canister_args,)).await;
+
+    if let Err((code, msg)) = install_code_response {
+        let code = code as u8;
+        error!(error_code = code, error_message = msg.as_str(), "Error calling 'install_code'");
+        return Err(canister::Error { code, msg });
+    }
+
+    if let Err((code, msg)) = start_canister_response {
+        let code = code as u8;
+        error!(error_code = code, error_message = msg.as_str(), "Error calling 'start_canister'");
+        return Err(canister::Error { code, msg });
+    }
 
     Ok(())
 }
