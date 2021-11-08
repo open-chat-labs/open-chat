@@ -31,8 +31,10 @@
         width: 100%;
         --num-columns: 12;
         --emoji-padding: 0.3rem;
+        --emoji-size: 1.5rem;
         @include size-below(xs) {
-            --num-columns: 6;
+            --num-columns: 7;
+            --emoji-size: 1.375rem;
         }
     }
 </style>
