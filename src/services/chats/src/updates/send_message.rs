@@ -62,36 +62,42 @@ pub fn update(request: Request) -> Response {
 
             // TODO: truncate the message text/caption to 200 chars.
             // A notification can only be 3800 chars. Only the first 150 or so chars are rendered in any case.
-            
+
             if let Some(sender_name) = request.sender_name {
                 match chat {
                     ChatEnum::Direct(direct) => {
-                        let recipient = *direct.get_other(&me);  
+                        let recipient = *direct.get_other(&me);
 
                         if !direct.notifications_muted(recipient) {
                             let notification = push_direct_message_notification::Notification {
-                                chat_id: format!("{:x}", request.chat_id.0), 
+                                chat_id: format!("{:x}", request.chat_id.0),
                                 sender: me,
                                 sender_name,
                                 message,
                             };
 
-                            push_direct_message_notification::fire_and_forget(recipient, notification);
+                            push_direct_message_notification::fire_and_forget(
+                                recipient,
+                                notification,
+                            );
                         }
-                    },
+                    }
                     ChatEnum::Group(group) => {
                         let recipients = group.notification_recipients(me);
 
                         if !recipients.is_empty() {
                             let notification = push_group_message_notification::Notification {
-                                chat_id: format!("{:x}", request.chat_id.0), 
+                                chat_id: format!("{:x}", request.chat_id.0),
                                 group_name: group.subject().clone(),
                                 sender: me,
                                 sender_name,
                                 message,
                             };
 
-                            push_group_message_notification::fire_and_forget(recipients, notification);
+                            push_group_message_notification::fire_and_forget(
+                                recipients,
+                                notification,
+                            );
                         }
                     }
                 };

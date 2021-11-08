@@ -7,8 +7,8 @@ use serde::Deserialize;
 use shared::chat_id::ChatId;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
-use std::ops::RangeInclusive;
 use std::cmp::max;
+use std::ops::RangeInclusive;
 
 pub struct GroupChat {
     id: ChatId,
