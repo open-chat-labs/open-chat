@@ -101,7 +101,7 @@
             if ($editingEvent !== undefined) {
                 editMessageWithAttachment(null, $fileToAttach, $editingEvent);
             } else {
-                sendMessageWithAttachment(null, $fileToAttach);
+                sendMessageWithAttachment(null, ev.detail);
             }
         } else {
             controller.attachFile(ev.detail);

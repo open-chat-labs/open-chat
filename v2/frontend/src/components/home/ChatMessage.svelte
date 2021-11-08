@@ -2,7 +2,6 @@
 
 <script lang="ts">
     import Link from "../Link.svelte";
-    import { AvatarSize } from "../../domain/user/user";
     import type { UserSummary, UserLookup } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
@@ -12,14 +11,12 @@
     import MenuItem from "../MenuItem.svelte";
     import Loading from "../Loading.svelte";
     import MenuIcon from "../MenuIcon.svelte";
-    import Avatar from "../Avatar.svelte";
     import type { Message, EnhancedReplyContext } from "../../domain/chat/chat";
     import RepliesTo from "./RepliesTo.svelte";
     import { pop } from "../../utils/transition";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
-    import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
@@ -57,7 +54,6 @@
 
     let groupChat = chatType === "group_chat";
     let username = sender?.username;
-    let userStatus = getUserStatus(userLookup, senderId);
     let metaData = messageMetaData(msg.content);
     let showEmojiPicker = false;
     let debug = false;
@@ -189,10 +185,12 @@
             class:last
             class:readByMe
             class:rtl={$rtlStore}>
-            {#if first && !me && !deleted}
-                <Link on:click={chatWithUser}>
-                    <h4 class="username">{username}</h4>
-                </Link>
+            {#if first && !me && groupChat && !deleted}
+                <div class="sender" class:fill class:rtl={$rtlStore}>
+                    <Link on:click={chatWithUser}>
+                        <h4 class="username">{username}</h4>
+                    </Link>
+                </div>
             {/if}
             {#if msg.repliesTo !== undefined && !deleted}
                 {#if msg.repliesTo.kind === "rehydrated_reply_context"}
@@ -213,38 +211,42 @@
                 <pre>ReadByUs: {readByMe}</pre>
             {/if}
 
-            {#if metaData && !deleted}
-                {#await metaData then meta}
-                    <div class="meta">
-                        {meta}
-                    </div>
-                {/await}
-            {/if}
-            <div class="time-and-ticks">
+            <div class:rtl={$rtlStore} class:fill class="meta-time-and-ticks">
                 <!-- {#if msg.edited}
                     <span class="edited">{$_("edited")}</span>
                 {/if} -->
-                <span class="time">
-                    {toShortTimeString(new Date(Number(timestamp)))}
-                </span>
-                {#if me}
-                    {#if confirmed}
-                        <CheckCircle size={"0.9em"} color={"var(--currentChat-msg-me-txt)"} />
-                    {:else}
-                        <CheckCircleOutline
-                            size={"0.9em"}
-                            color={"var(--currentChat-msg-me-txt)"} />
-                    {/if}
-                    {#if chatType === "direct_chat"}
-                        {#if readByThem}
+                {#if metaData && !deleted}
+                    {#await metaData then meta}
+                        <div class="meta">
+                            {meta}
+                        </div>
+                    {/await}
+                {/if}
+                <div class="time-and-ticks">
+                    <span class="time">
+                        {toShortTimeString(new Date(Number(timestamp)))}
+                    </span>
+                    {#if me}
+                        {#if confirmed}
                             <CheckCircle size={"0.9em"} color={"var(--currentChat-msg-me-txt)"} />
                         {:else}
                             <CheckCircleOutline
                                 size={"0.9em"}
                                 color={"var(--currentChat-msg-me-txt)"} />
                         {/if}
+                        {#if chatType === "direct_chat"}
+                            {#if readByThem}
+                                <CheckCircle
+                                    size={"0.9em"}
+                                    color={"var(--currentChat-msg-me-txt)"} />
+                            {:else}
+                                <CheckCircleOutline
+                                    size={"0.9em"}
+                                    color={"var(--currentChat-msg-me-txt)"} />
+                            {/if}
+                        {/if}
                     {/if}
-                {/if}
+                </div>
             </div>
 
             {#if !deleted}
@@ -305,39 +307,21 @@
         {/if}
     </div>
 
-    <div class="message-footer" class:last>
-        {#if msg.reactions.length > 0 && !deleted}
-            <div class="message-reactions" class:me>
-                {#each msg.reactions as { reaction, userIds }}
-                    <div
-                        in:pop={{ duration: 500 }}
-                        on:click={() => toggleReaction(reaction)}
-                        class="message-reaction">
-                        {reaction}
-                        <span class="reaction-count">
-                            {userIds.size > 9 ? "9+" : userIds.size}
-                        </span>
-                    </div>
-                {/each}
-            </div>
-        {/if}
-        {#if groupChat && !me && last}
-            <div class="message-sender">
-                <Link on:click={chatWithUser}>
-                    <div class="avatar-section">
-                        <div class="avatar">
-                            <Avatar
-                                url={avatarUrl(sender)}
-                                status={userStatus}
-                                size={AvatarSize.Tiny} />
-                        </div>
-
-                        <h4 class="username">{username}</h4>
-                    </div>
-                </Link>
-            </div>
-        {/if}
-    </div>
+    {#if msg.reactions.length > 0 && !deleted}
+        <div class="message-reactions" class:me>
+            {#each msg.reactions as { reaction, userIds }}
+                <div
+                    in:pop={{ duration: 500 }}
+                    on:click={() => toggleReaction(reaction)}
+                    class="message-reaction">
+                    {reaction}
+                    <span class="reaction-count">
+                        {userIds.size > 9 ? "9+" : userIds.size}
+                    </span>
+                </div>
+            {/each}
+        </div>
+    {/if}
 </div>
 
 <style type="text/scss">
@@ -367,27 +351,61 @@
         }
     }
 
-    .meta {
-        position: absolute;
-        bottom: $sp2;
-        left: $sp4;
-        @include font(light, normal, fs-60);
-    }
-
-    .time-and-ticks {
-        position: absolute;
-        bottom: $sp2;
-        right: $sp3;
+    .meta-time-and-ticks {
         display: flex;
+        align-items: center;
+        justify-content: flex-end;
         @include font(light, normal, fs-60);
+
+        &.fill {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: $sp4 0 0 0;
+            padding: $sp2 $sp4;
+
+            &.rtl {
+                left: 0;
+                right: unset;
+                border-radius: 0 $sp4 0 0;
+            }
+        }
 
         .time {
-            margin: 0 $sp3;
+            margin: 0 $sp2;
         }
 
         // .edited {
         //     @include font(light, italic, fs-60);
         // }
+
+        .meta {
+            flex: 1;
+            @include font(light, normal, fs-60);
+            @include ellipsis();
+        }
+
+        .time-and-ticks {
+            display: flex;
+            align-items: center;
+        }
+    }
+
+    .sender {
+        margin-bottom: $sp1;
+
+        &.fill {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.5);
+            padding: $sp2 $sp4;
+            border-radius: 0 0 $sp4 0;
+
+            &.rtl {
+                right: 0;
+                border-radius: 0 0 0 $sp4;
+            }
+        }
     }
 
     .menu {
@@ -404,22 +422,6 @@
     .menu-icon {
         transition: opacity ease-in-out 200ms;
         opacity: 0;
-    }
-
-    .avatar-section {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-
-        .avatar {
-            flex: 0 0 45px;
-        }
-    }
-
-    .message-footer {
-        .message-sender {
-            margin-bottom: $sp2;
-        }
     }
 
     .message-reactions {
@@ -480,31 +482,23 @@
         }
     }
 
-    .username {
-        margin: 0;
-        @include font(bold, normal, fs-100);
-        color: #fff;
-    }
-
     .message-bubble {
         $radius: 20px;
         $inner-radius: 4px;
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
             border ease-in-out 300ms, transform ease-in-out 200ms;
         position: relative;
-        padding: $sp4;
-        padding-top: 10px;
+        padding: $sp3 $sp3 $sp2 $sp3;
         border: 1px solid var(--currentChat-msg-bd);
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
         border-radius: $radius;
         max-width: 90%;
-        min-width: 30%;
+        min-width: 90px;
 
         .username {
             color: inherit;
-            margin-bottom: $sp2;
             color: var(--accent);
         }
 
