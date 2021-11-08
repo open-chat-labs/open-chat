@@ -488,7 +488,7 @@
         @include font(book, normal, fs-100);
         border-radius: $radius;
         max-width: 90%;
-        min-width: 25%;
+        min-width: 30%;
 
         .username {
             color: inherit;
