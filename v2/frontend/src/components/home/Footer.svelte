@@ -186,4 +186,11 @@
         display: flex;
         flex-direction: column;
     }
+
+    :global(.footer-overlay emoji-picker) {
+        --num-columns: 15 !important;
+        @include size-below(xs) {
+            --num-columns: 7 !important;
+        }
+    }
 </style>
