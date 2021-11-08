@@ -2,7 +2,6 @@
 
 <script lang="ts">
     import Link from "../Link.svelte";
-    import { AvatarSize } from "../../domain/user/user";
     import type { UserSummary, UserLookup } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
@@ -18,7 +17,6 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
-    import { getUserStatus } from "../../domain/user/user.utils";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
@@ -55,7 +53,6 @@
 
     let groupChat = chatType === "group_chat";
     let username = sender?.username;
-    let userStatus = getUserStatus(userLookup, senderId);
     let metaData = messageMetaData(msg.content);
     let showEmojiPicker = false;
     let debug = false;
@@ -176,8 +173,8 @@
             class:last
             class:readByMe
             class:rtl={$rtlStore}>
-            {#if first && !me && groupChat && !deleted && !fill}
-                <div class="sender">
+            {#if first && !me && groupChat && !deleted}
+                <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link on:click={chatWithUser}>
                         <h4 class="username">{username}</h4>
                     </Link>
@@ -350,12 +347,16 @@
 
         &.fill {
             position: absolute;
-            bottom: 6px;
-            right: 6px;
+            bottom: 0;
+            right: 0;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: $sp4 0 0 0;
+            padding: $sp2 $sp4;
 
             &.rtl {
-                left: 6px;
+                left: 0;
                 right: unset;
+                border-radius: 0 $sp4 0 0;
             }
         }
 
@@ -381,6 +382,18 @@
 
     .sender {
         margin-bottom: $sp1;
+
+        &.fill {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.5);
+            padding: $sp2 $sp4;
+            border-radius: 0 0 $sp4 0;
+
+            &.rtl {
+                right: 0;
+                border-radius: 0 0 0 $sp4;
+            }
+        }
     }
 
     .menu {
