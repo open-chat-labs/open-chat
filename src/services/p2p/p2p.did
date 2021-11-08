@@ -85,10 +85,20 @@ type GetConnectionDetailsResult =
         timestamp: Timestamp;
     };
 
+type Stats =
+    record {
+        memory_used: nat64;
+        timestamp: nat64;
+        user_id: UserId;
+        cycles_balance: int64;
+        user_count: nat64;
+    };
+
 service : {
     add_offers: (AddOffersRequest) -> (AddOffersResponse);
     add_answers: (AddAnswersRequest) -> ();
     remove_connection_details: (RemoveConnectionDetailsRequest) -> (nat32);
 
     get_connection_details: (opt Timestamp) -> (GetConnectionDetailsResponse) query;
+    stats: () -> (Stats) query;
 }

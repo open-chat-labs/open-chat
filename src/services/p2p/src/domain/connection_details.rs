@@ -64,6 +64,10 @@ pub struct AnswerSummary {
     age_seconds: u32,
 }
 
+pub struct Stats {
+    pub user_count: u64,
+}
+
 impl AllConnectionDetails {
     pub fn add_offer(
         &mut self,
@@ -169,6 +173,12 @@ impl AllConnectionDetails {
                 connections.push(connection_details);
             }
         };
+    }
+
+    pub fn get_stats(&self) -> Stats {
+        Stats {
+            user_count: self.connection_details_per_user.len() as u64,
+        }
     }
 }
 
