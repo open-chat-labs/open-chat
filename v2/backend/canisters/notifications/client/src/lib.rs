@@ -1,6 +1,4 @@
-use candid::{Decode, Encode, Principal};
 use canister_client_macros::*;
-use ic_agent::Agent;
 use notifications_canister::*;
 
 // Queries
