@@ -71,6 +71,7 @@ export function originalTheme(defaultTheme: Theme): Theme {
             },
             xs: {
                 pd: "0",
+                mg: "0 8px",
             },
         },
 

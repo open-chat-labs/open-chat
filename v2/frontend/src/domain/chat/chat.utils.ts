@@ -709,6 +709,7 @@ export function replaceLocal(
                 messageReadTracker.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
             }
         }
+        revokeObjectUrls(clientMsgs[id]);
         clientMsgs[id] = e;
     });
 
@@ -720,6 +721,14 @@ export function replaceLocal(
 
     // concat it with the merged non-message event list
     return [...uniqEvts, ...msgEvts].sort((a, b) => a.index - b.index);
+}
+
+function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
+    if (event?.event.kind === "message") {
+        if ("blobUrl" in event.event.content && event.event.content.blobUrl !== undefined) {
+            URL.revokeObjectURL(event.event.content.blobUrl);
+        }
+    }
 }
 
 // todo - this is not very efficient at the moment

@@ -5,16 +5,11 @@
     import { rtlStore } from "../../stores/rtl";
     import type { FileContent } from "../../domain/chat/chat";
     import FileDownload from "svelte-material-icons/FileDownload.svelte";
-    import { onDestroy } from "svelte";
 
     export let content: FileContent;
     export let me: boolean = false;
 
     let color = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
-
-    onDestroy(() => {
-        content.blobUrl && URL.revokeObjectURL(content.blobUrl);
-    });
 </script>
 
 {#if content.blobUrl}

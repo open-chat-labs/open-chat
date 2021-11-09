@@ -33,7 +33,7 @@
         <h4 class="username">
             {username}
         </h4>
-        <ChatMessageContent {me} truncate={true} content={replyingTo.content} />
+        <ChatMessageContent fill={false} {me} truncate={true} content={replyingTo.content} />
     </div>
 </div>
 

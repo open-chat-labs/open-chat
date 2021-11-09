@@ -22,6 +22,7 @@
     onMount(() => {
         loadAndApplySavedTheme();
         calculateHeight();
+        window.addEventListener("orientationchange", calculateHeight);
     });
 
     function calculateHeight() {

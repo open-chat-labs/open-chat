@@ -1,7 +1,6 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
     import type { AudioContent } from "../../domain/chat/chat";
     import MusicNote from "svelte-material-icons/MusicNote.svelte";
@@ -15,10 +14,6 @@
     let fractionPlayed: number = 0;
     let leftRotation: number = 0;
     let rightRotation: number = 0;
-
-    onDestroy(() => {
-        content.blobUrl && URL.revokeObjectURL(content.blobUrl);
-    });
 
     function timeupdate() {
         fractionPlayed = Math.min(audioPlayer.currentTime / audioPlayer.duration, 1);

@@ -120,6 +120,7 @@ export function lightTheme(): Theme {
 
             xs: {
                 pd: "0 8px",
+                mg: "0 8px",
             },
         },
 
@@ -206,7 +207,7 @@ export function lightTheme(): Theme {
                 bg: "#ffffff",
                 txt: "#191919",
                 hv: "transparent",
-                bd: "#cccccc",
+                bd: "transparent",
 
                 me: {
                     bg: "#ff69b4",

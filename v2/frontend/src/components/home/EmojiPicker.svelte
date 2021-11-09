@@ -24,7 +24,7 @@
     class:message={mode === "message"}
     class:reaction={mode === "reaction"}
     class:dark={theme === "dark"}
-    class:light={theme === "light"} />
+    class:light={theme === "light" || theme === "original"} />
 
 <style type="text/scss">
     emoji-picker {

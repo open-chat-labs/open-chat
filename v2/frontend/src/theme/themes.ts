@@ -129,6 +129,7 @@ export interface Theme {
 
         xs: {
             pd: string;
+            mg: string;
         };
     };
 
