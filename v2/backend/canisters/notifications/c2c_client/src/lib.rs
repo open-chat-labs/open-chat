@@ -1,8 +1,5 @@
 use canister_client_macros::*;
-use ic_cdk::api::call::CallResult;
 use notifications_canister::*;
-use tracing::error;
-use types::CanisterId;
 
 // Queries
 generate_c2c_call!(notifications);

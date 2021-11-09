@@ -1,7 +1,13 @@
 #[macro_export]
 macro_rules! generate_update_call {
     ($method_name:ident) => {
-        pub async fn $method_name(agent: &Agent, canister_id: &Principal, args: &$method_name::Args) -> $method_name::Response {
+        pub async fn $method_name(
+            agent: &ic_agent::Agent,
+            canister_id: &candid::Principal,
+            args: &$method_name::Args,
+        ) -> $method_name::Response {
+            use candid::{Decode, Encode};
+
             let method_name = stringify!($method_name);
             let response = agent
                 .update(canister_id, method_name)
@@ -19,7 +25,13 @@ macro_rules! generate_update_call {
 #[macro_export]
 macro_rules! generate_query_call {
     ($method_name:ident) => {
-        pub async fn $method_name(agent: &Agent, canister_id: &Principal, args: &$method_name::Args) -> $method_name::Response {
+        pub async fn $method_name(
+            agent: &ic_agent::Agent,
+            canister_id: &candid::Principal,
+            args: &$method_name::Args,
+        ) -> $method_name::Response {
+            use candid::{Decode, Encode};
+
             let method_name = stringify!($method_name);
             let response = agent
                 .query(canister_id, method_name)
@@ -37,12 +49,12 @@ macro_rules! generate_query_call {
 #[macro_export]
 macro_rules! generate_c2c_call {
     ($method_name:ident) => {
-        pub async fn $method_name(canister_id: CanisterId, args: &$method_name::Args) -> CallResult<$method_name::Response> {
+        pub async fn $method_name(canister_id: types::CanisterId, args: &$method_name::Args) -> ic_cdk::api::call::CallResult<$method_name::Response> {
             let method_name = stringify!($method_name);
-            let result: CallResult<($method_name::Response,)> = ic_cdk::call(canister_id, method_name, (args,)).await;
+            let result: ic_cdk::api::call::CallResult<($method_name::Response,)> = ic_cdk::call(canister_id, method_name, (args,)).await;
 
             if let Err(error) = &result {
-                error!(method_name, error_code = ?error.0, error_message = error.1.as_str(), "Error calling c2c");
+                tracing::error!(method_name, error_code = ?error.0, error_message = error.1.as_str(), "Error calling c2c");
             }
 
             result.map(|r| r.0)
@@ -53,12 +65,15 @@ macro_rules! generate_c2c_call {
 #[macro_export]
 macro_rules! generate_c2c_call_with_cycles {
     ($method_name:ident) => {
-        pub async fn $method_name(canister_id: CanisterId, args: &$method_name::Args, cycles: Cycles) -> CallResult<$method_name::Response> {
+        pub async fn $method_name(canister_id: types::CanisterId, args: &$method_name::Args, cycles: types::Cycles) -> ic_cdk::api::call::CallResult<$method_name::Response> {
+            use std::convert::TryInto;
+
             let method_name = stringify!($method_name);
-            let result: CallResult<($method_name::Response,)> = ic_cdk::api::call::call_with_payment(canister_id, method_name, (args,), cycles.try_into().unwrap()).await;
+            let result: ic_cdk::api::call::CallResult<($method_name::Response,)> =
+                ic_cdk::api::call::call_with_payment(canister_id, method_name, (args,), cycles.try_into().unwrap()).await;
 
             if let Err(error) = &result {
-                error!(method_name, error_code = ?error.0, error_message = error.1.as_str(), "Error calling c2c");
+                tracing::error!(method_name, error_code = ?error.0, error_message = error.1.as_str(), "Error calling c2c");
             }
 
             result.map(|r| r.0)
