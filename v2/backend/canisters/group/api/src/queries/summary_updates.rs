@@ -30,6 +30,7 @@ pub struct SummaryUpdates {
     pub latest_event_index: Option<EventIndex>,
     pub participant_count: Option<u32>,
     pub role: Option<Role>,
+    pub mentions: Vec<Mention>,
 }
 
 impl From<SummaryUpdates> for GroupChatSummaryUpdates {

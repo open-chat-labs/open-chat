@@ -2,7 +2,8 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use chat_events::ChatEventInternal;
 use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
-use types::{Avatar, EventIndex, EventWrapper, Message, TimestampMillis};
+use std::collections::HashSet;
+use types::{Avatar, EventIndex, EventWrapper, Mention, Message, MessageIndex, TimestampMillis, MAX_RETURNED_MENTIONS};
 
 #[query]
 fn summary_updates(args: Args) -> Response {
@@ -15,8 +16,9 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         None => return CallerNotInGroup,
         Some(p) => p,
     };
+    let mention_event_indexes: HashSet<EventIndex> = participant.mentions.iter().copied().collect();
 
-    let updates_from_events = process_events(args.updates_since, runtime_state);
+    let updates_from_events = process_events(args.updates_since, runtime_state, mention_event_indexes);
 
     if let Some(last_updated) = updates_from_events.latest_update {
         let updates = SummaryUpdates {
@@ -33,6 +35,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 None
             },
             role: if updates_from_events.role_changed { Some(participant.role) } else { None },
+            mentions: updates_from_events.mentions.iter().rev().map(|message_index| Mention { message_index: *message_index }).collect(),
         };
         Success(SuccessResult { updates })
     } else {
@@ -50,9 +53,10 @@ struct UpdatesFromEvents {
     latest_event_index: Option<EventIndex>,
     participants_changed: bool,
     role_changed: bool,
+    mentions: Vec<MessageIndex>,
 }
 
-fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> UpdatesFromEvents {
+fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, mention_event_indexes: HashSet<EventIndex>) -> UpdatesFromEvents {
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
@@ -96,6 +100,11 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> Updat
             | ChatEventInternal::UsersBlocked(_)
             | ChatEventInternal::UsersUnblocked(_) => {
                 updates.participants_changed = true;
+            }
+            ChatEventInternal::Message(message) => {
+                if updates.mentions.len() < MAX_RETURNED_MENTIONS && mention_event_indexes.contains(&event_wrapper.index) {
+                    updates.mentions.push(message.message_index);
+                }        
             }
             _ => {}
         }

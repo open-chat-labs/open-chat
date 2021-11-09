@@ -24,8 +24,10 @@ http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
 itertools = "0.10.1"
+lazy_static = "1.4.0"
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
+regex = "1.5.4"
 search = { path = "../../../libraries/search" }
 serde = "1.0.126"
 serializer = { path = "../../../libraries/serializer" }

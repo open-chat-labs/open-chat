@@ -31,6 +31,7 @@ pub struct Summary {
     pub joined: TimestampMillis,
     pub participant_count: u32,
     pub role: Role,
+    pub mentions: Vec<Mention>,
 }
 
 impl From<Summary> for GroupChatSummary {
