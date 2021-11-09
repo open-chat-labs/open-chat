@@ -1,8 +1,4 @@
 use canister_client_macros::*;
-use ic_cdk::api::call::CallResult;
-use std::convert::TryInto;
-use tracing::error;
-use types::{CanisterId, Cycles};
 use user_canister::*;
 
 // Updates

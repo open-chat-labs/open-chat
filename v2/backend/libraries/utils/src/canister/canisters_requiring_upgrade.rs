@@ -37,6 +37,10 @@ impl CanistersRequiringUpgrade {
         self.failed.push_back(failed_upgrade);
     }
 
+    pub fn count_in_progress(&self) -> u32 {
+        self.in_progress.len() as u32
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             pending: self.pending.len(),

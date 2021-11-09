@@ -1,5 +1,4 @@
 use canister_client_macros::generate_c2c_call;
-use ic_cdk::api::call::CallResult;
 use std::cmp::max;
 use tracing::error;
 use types::{CanisterId, Cycles};
