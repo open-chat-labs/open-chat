@@ -197,23 +197,6 @@ impl ChatEvents {
     }
 
     pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, Message) {
-        match &args.content {
-            MessageContent::Text(_) => self.metrics.text_messages += 1,
-            MessageContent::Image(_) => self.metrics.image_messages += 1,
-            MessageContent::Video(_) => self.metrics.video_messages += 1,
-            MessageContent::Audio(_) => self.metrics.audio_messages += 1,
-            MessageContent::File(_) => self.metrics.file_messages += 1,
-            MessageContent::Cryptocurrency(c) => match c.transfer {
-                CryptocurrencyTransfer::Cycles(_) => self.metrics.cycles_messages += 1,
-                CryptocurrencyTransfer::ICP(_) => self.metrics.icp_messages += 1,
-            },
-            MessageContent::Deleted(_) => self.metrics.deleted_messages += 1,
-        }
-
-        if args.replies_to.is_some() {
-            self.metrics.replies += 1;
-        }
-
         let message_index = self.next_message_index();
         let message_internal = MessageInternal {
             message_index,
@@ -248,6 +231,23 @@ impl ChatEvents {
             self.message_index_map.insert(m.message_index, event_index);
             self.latest_message_index = Some(m.message_index);
             self.latest_message_event_index = Some(event_index);
+
+            match &m.content {
+                MessageContent::Text(_) => self.metrics.text_messages += 1,
+                MessageContent::Image(_) => self.metrics.image_messages += 1,
+                MessageContent::Video(_) => self.metrics.video_messages += 1,
+                MessageContent::Audio(_) => self.metrics.audio_messages += 1,
+                MessageContent::File(_) => self.metrics.file_messages += 1,
+                MessageContent::Cryptocurrency(c) => match c.transfer {
+                    CryptocurrencyTransfer::Cycles(_) => self.metrics.cycles_messages += 1,
+                    CryptocurrencyTransfer::ICP(_) => self.metrics.icp_messages += 1,
+                },
+                MessageContent::Deleted(_) => self.metrics.deleted_messages += 1,
+            }
+
+            if m.replies_to.is_some() {
+                self.metrics.replies += 1;
+            }
         }
         self.events.push(EventWrapper {
             index: event_index,
