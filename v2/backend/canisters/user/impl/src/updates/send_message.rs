@@ -2,9 +2,11 @@ use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
+use serde::{Deserialize, Serialize};
+use tracing::error;
 use types::{
-    CompletedCyclesTransfer, CompletedICPTransfer, CryptocurrencyTransfer, CyclesTransfer, FailedCyclesTransfer, ICPTransfer,
-    MessageContent, MessageIndex, PendingCyclesTransfer, PendingICPTransfer, Transaction, UserId,
+    CanisterId, CompletedCyclesTransfer, CompletedICPTransfer, CryptocurrencyTransfer, CyclesTransfer, FailedCyclesTransfer,
+    ICPTransfer, MessageContent, MessageIndex, PendingCyclesTransfer, PendingICPTransfer, Transaction, UserId,
 };
 use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
@@ -79,7 +81,7 @@ fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>,
             .push_message(true, recipient, None, push_message_args);
 
     let c2c_args = build_c2c_args(args, message.message_index);
-    ic_cdk::block_on(send_to_recipients_canister(recipient, c2c_args, cycles_transfer));
+    ic_cdk::block_on(send_to_recipients_canister(recipient, c2c_args, cycles_transfer, false));
 
     Success(SuccessResult {
         chat_id,
@@ -109,10 +111,11 @@ fn build_c2c_args(args: Args, message_index: MessageIndex) -> c2c_send_message::
     }
 }
 
-async fn send_to_recipients_canister(
+pub(crate) async fn send_to_recipients_canister(
     recipient: UserId,
     args: c2c_send_message::Args,
     cycles_transfer: Option<CyclesTransferDetails>,
+    is_retry: bool,
 ) {
     let cycles_to_send = cycles_transfer.as_ref().map_or(0, |ct| ct.transfer.cycles);
 
@@ -129,18 +132,48 @@ async fn send_to_recipients_canister(
             }
         }
         Err(error) => {
-            if let Some(ct) = cycles_transfer {
-                let failed_cycles_transfer = FailedCyclesTransfer {
-                    recipient: ct.transfer.recipient,
-                    cycles: ct.transfer.cycles,
-                    error_message: format!("{:?}", error),
-                };
-                RUNTIME_STATE.with(|state| {
-                    handle_failed_cycles_transfer(ct.index, failed_cycles_transfer, state.borrow_mut().as_mut().unwrap());
+            if is_retry {
+                // If this is already a retry, don't try sending again
+                error!(?error, ?recipient, "Failed to send message to recipient even after retrying");
+                if let Some(ct) = cycles_transfer {
+                    let failed_cycles_transfer = FailedCyclesTransfer {
+                        recipient: ct.transfer.recipient,
+                        cycles: ct.transfer.cycles,
+                        error_message: format!("{:?}", error),
+                    };
+                    RUNTIME_STATE.with(|state| {
+                        handle_failed_cycles_transfer(ct.index, failed_cycles_transfer, state.borrow_mut().as_mut().unwrap());
+                    });
+                }
+            } else {
+                // If this is not a retry, queue up the message to be retried
+                let user_index_canister_id = RUNTIME_STATE.with(|state| {
+                    queue_failed_message_for_retry(recipient, args, cycles_transfer, state.borrow_mut().as_mut().unwrap())
                 });
+
+                let _ = user_index_canister_c2c_client::c2c_mark_send_message_failed(
+                    user_index_canister_id,
+                    &user_index_canister::c2c_mark_send_message_failed::Args { recipient },
+                )
+                .await;
             }
         }
     }
+}
+
+// Returns the user_index_canister_id
+fn queue_failed_message_for_retry(
+    recipient: UserId,
+    args: c2c_send_message::Args,
+    cycles_transfer: Option<CyclesTransferDetails>,
+    runtime_state: &mut RuntimeState,
+) -> CanisterId {
+    runtime_state
+        .data
+        .failed_messages_pending_retry
+        .add(recipient, args, cycles_transfer);
+
+    runtime_state.data.user_index_canister_id
 }
 
 async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> Result<CompletedICPTransfer, String> {
@@ -181,7 +214,8 @@ async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> 
     }
 }
 
-struct CyclesTransferDetails {
+#[derive(Serialize, Deserialize)]
+pub struct CyclesTransferDetails {
     index: u32,
     transfer: CompletedCyclesTransfer,
 }

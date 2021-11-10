@@ -1,5 +1,6 @@
 use crate::model::alerts::Alerts;
 use crate::model::direct_chats::DirectChats;
+use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::group_chats::GroupChats;
 use crate::model::transactions::Transactions;
 use crate::model::user_cycles_balance::UserCyclesBalance;
@@ -105,6 +106,8 @@ struct Data {
     pub test_mode: bool,
     pub user_preferences: UserPreferences,
     pub alerts: Alerts,
+    #[serde(default)]
+    pub failed_messages_pending_retry: FailedMessagesPendingRetry,
 }
 
 impl Data {
@@ -133,6 +136,7 @@ impl Data {
             test_mode,
             user_preferences: UserPreferences::default(),
             alerts: Alerts::default(),
+            failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
         }
     }
 }
