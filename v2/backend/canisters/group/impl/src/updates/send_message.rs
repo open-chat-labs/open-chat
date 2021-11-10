@@ -50,18 +50,18 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 message,
             };
 
-            let mut recipients = runtime_state.data.participants.users_to_notify(sender);
+            let mut notification_recipients = runtime_state.data.participants.users_to_notify(sender);
 
             // Also notify any mentioned participants regardless of whether they have muted notifications for the group
             for u in mentioned_users.into_iter() {
                 if runtime_state.data.participants.add_mention(&u, message_index) {
-                    recipients.insert(u);
+                    notification_recipients.insert(u);
                 }
             }
 
             ic_cdk::block_on(push_notification(
                 *canister_id,
-                recipients.into_iter().collect(),
+                notification_recipients.into_iter().collect(),
                 notification,
             ));
         }

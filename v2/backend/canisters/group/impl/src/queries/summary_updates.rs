@@ -32,14 +32,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 None
             },
             role: if updates_from_events.role_changed { Some(participant.role) } else { None },
-            mentions: updates_from_events
-                .mentions
-                .iter()
-                .rev()
-                .map(|message_index| Mention {
-                    message_index: *message_index,
-                })
-                .collect(),
+            mentions: updates_from_events.mentions,
         };
         Success(SuccessResult { updates })
     } else {
@@ -57,7 +50,7 @@ struct UpdatesFromEvents {
     latest_event_index: Option<EventIndex>,
     participants_changed: bool,
     role_changed: bool,
-    mentions: Vec<MessageIndex>,
+    mentions: Vec<Mention>,
 }
 
 fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_mentions: &[MessageIndex]) -> UpdatesFromEvents {
@@ -118,8 +111,10 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
         .rev()
         .filter(|m| **m >= lowest_message_index)
         .take(MAX_RETURNED_MENTIONS)
-        .copied()
+        .map(|m| Mention { message_index: *m })
         .collect();
+
+    updates.mentions.reverse();
 
     updates
 }
