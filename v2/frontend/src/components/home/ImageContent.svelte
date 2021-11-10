@@ -1,14 +1,15 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte";
+    import { onMount } from "svelte";
     import type { ImageContent } from "../../domain/chat/chat";
     import { calculateHeight } from "../../utils/layout";
     import Caption from "./Caption.svelte";
 
     export let content: ImageContent;
+    export let fill: boolean;
+    let imgElement: HTMLImageElement;
 
-    let obj: HTMLElement;
     let landscape = content.height < content.width;
     let height = 0;
 
@@ -20,29 +21,19 @@
     }
 
     onMount(recalculateHeight);
-
-    onDestroy(() => {
-        content.blobUrl && URL.revokeObjectURL(content.blobUrl);
-    });
 </script>
 
 <svelte:window on:resize={recalculateHeight} />
 
 {#if content.blobUrl !== undefined}
-    <!-- This looks a bit odd, but it should display the thumbnail if the main image fails to load -->
-    <object
-        bind:this={obj}
+    <img
+        bind:this={imgElement}
+        on:error={() => (imgElement.src = content.thumbnailData)}
         class:landscape
+        class:fill
         style={`height: ${height}px`}
-        title={content.caption}
-        data={content.blobUrl}
-        type={content.mimeType}>
-        <img
-            class:landscape
-            style={`height: ${height}px`}
-            src={content.thumbnailData}
-            alt={content.caption} />
-    </object>
+        src={content.blobUrl}
+        alt={content.caption} />
 {/if}
 
 {#if content.caption !== undefined}
@@ -50,15 +41,17 @@
 {/if}
 
 <style type="text/scss">
-    img,
-    object {
+    img {
         max-width: none;
         width: auto;
         display: block;
 
+        &:not(.fill) {
+            border-radius: $sp4;
+        }
+
         &.landscape {
             max-width: calc(var(--vh, 1vh) * 50);
-            width: 100%;
         }
     }
 </style>

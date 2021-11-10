@@ -200,7 +200,7 @@
                 {/if}
             {/if}
 
-            <ChatMessageContent {me} content={msg.content} />
+            <ChatMessageContent {fill} {me} content={msg.content} />
 
             {#if debug}
                 <pre>EventIdx: {eventIndex}</pre>

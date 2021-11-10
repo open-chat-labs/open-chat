@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte";
+    import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import type { VideoContent } from "../../domain/chat/chat";
     import { calculateHeight } from "../../utils/layout";
@@ -10,7 +10,6 @@
     export let content: VideoContent;
 
     let landscape = content.height < content.width;
-    let videoPlayer: HTMLVideoElement;
     let height = 0;
 
     function recalculateHeight() {
@@ -21,18 +20,12 @@
     }
 
     onMount(recalculateHeight);
-
-    onDestroy(() => {
-        content.videoData.blobUrl && URL.revokeObjectURL(content.videoData.blobUrl);
-        content.imageData.blobUrl && URL.revokeObjectURL(content.imageData.blobUrl);
-    });
 </script>
 
 <svelte:window on:resize={recalculateHeight} />
 
 <div class="video">
     <video
-        bind:this={videoPlayer}
         preload="none"
         style={`height: ${height}px`}
         poster={content.imageData.blobUrl}

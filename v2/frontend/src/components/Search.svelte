@@ -33,14 +33,19 @@
 <style type="text/scss">
     .wrapper {
         margin: var(--chatSearch-mg);
+        margin-bottom: $sp3;
         background-color: var(--chatSearch-bg);
         display: flex;
         align-items: center;
         position: relative;
         padding: $sp2 $sp4;
-        margin-bottom: $sp3;
         border-radius: $sp5;
         border: 1px solid var(--chatSearch-bd);
+
+        @include size-below(xs) {
+            margin: var(--chatSearch-xs-mg);
+            margin-bottom: $sp3;
+        }
     }
     .icon {
         flex: 0 0 25px;

@@ -16,6 +16,7 @@
     export let content: MessageContent;
     export let me: boolean = false;
     export let truncate: boolean = false;
+    export let fill: boolean;
 
     $: textContent = getContentAsText(content);
 
@@ -34,7 +35,7 @@
         <SvelteMarkdown source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} />
     </div>
 {:else if content.kind === "image_content"}
-    <ImageContent {content} />
+    <ImageContent {fill} {content} />
 {:else if content.kind === "video_content"}
     <VideoContent {content} />
 {:else if content.kind === "audio_content"}

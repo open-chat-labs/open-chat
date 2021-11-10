@@ -21,7 +21,10 @@
         padding-bottom: 0;
         overflow: auto;
         overflow-x: hidden;
-        // @include fullHeight();
+
+        @include size-below(xs) {
+            @include fullHeight();
+        }
 
         &.middle {
             flex: auto;

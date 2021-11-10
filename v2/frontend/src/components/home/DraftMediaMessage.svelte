@@ -18,7 +18,7 @@
     {:else if draft.kind === "audio_content"}
         <AudioContent content={draft} />
     {:else if draft.kind === "image_content"}
-        <ImageContent content={draft} />
+        <ImageContent fill={false} content={draft} />
     {/if}
 </div>
 
