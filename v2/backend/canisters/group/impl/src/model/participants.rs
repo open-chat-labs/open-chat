@@ -227,13 +227,14 @@ impl Participants {
     }
 
     pub fn add_mention(&mut self, user_id: &UserId, event_index: EventIndex) -> bool {
-        match self.get_by_user_id_mut(user_id) {
-            Some(p) => {
+        if let Some(p) = self.get_by_user_id_mut(user_id) {
+            if p.mentions.is_empty() || (event_index > *p.mentions.last().unwrap()) {
                 p.mentions.push(event_index);
-                true
+                return true;
             }
-            None => false,
         }
+
+        false
     }
 }
 

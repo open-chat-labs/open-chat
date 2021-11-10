@@ -4,8 +4,8 @@ use candid::Principal;
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use group_canister::send_message::{Response::*, *};
-use lazy_static::lazy_static;
 use ic_cdk_macros::update;
+use lazy_static::lazy_static;
 use notifications_canister::push_group_message_notification;
 use regex::Regex;
 use types::{CanisterId, GroupMessageNotification, MessageContent, UserId};
@@ -19,6 +19,7 @@ fn send_message(args: Args) -> Response {
     RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
+//#[allow(clippy::needless_collect)]
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(&caller) {
@@ -36,19 +37,6 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let (event_index, message) = runtime_state.data.events.push_message(push_message_args);
 
-        let mentioned_participants: Vec<_> = mentioned_users
-            .iter()
-            .filter_map(
-                |u| {
-                    if runtime_state.data.participants.add_mention(u, event_index) {
-                        Some(*u)
-                    } else {
-                        None
-                    }
-                },
-            )
-            .collect();
-
         handle_activity_notification(runtime_state);
 
         let random = runtime_state.env.random_u32() as usize;
@@ -62,8 +50,15 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 sender_name: args.sender_name,
                 message,
             };
+
             let mut recipients = runtime_state.data.participants.users_to_notify(sender);
-            recipients.extend(mentioned_participants.into_iter());
+
+            // Also notify any mentioned participants regardless of whether they have muted notifications for the group
+            for u in mentioned_users.into_iter() {
+                if runtime_state.data.participants.add_mention(&u, event_index) {
+                    recipients.insert(u);
+                }
+            }
 
             ic_cdk::block_on(push_notification(
                 *canister_id,
@@ -102,7 +97,7 @@ fn extract_mentioned_users(content: &MessageContent) -> Vec<UserId> {
         MessageContent::Audio(m) => m.caption.as_ref(),
         MessageContent::File(m) => m.caption.as_ref(),
         MessageContent::Cryptocurrency(m) => m.caption.as_ref(),
-        _ => None
+        _ => None,
     };
 
     if let Some(text) = text {
@@ -115,7 +110,6 @@ fn extract_mentioned_users(content: &MessageContent) -> Vec<UserId> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -124,7 +118,9 @@ mod tests {
     #[test]
     fn text_extract_mentioned_users() {
         let message = "Hey @UserId(qoctq-giaaa-aaaaa-aaaea-cai), \n@UserId(renrk-eyaaa-aaaaa-aaada-cai), check this out";
-        let content = MessageContent::Text(TextContent { text: message.to_owned() });
+        let content = MessageContent::Text(TextContent {
+            text: message.to_owned(),
+        });
         let users = extract_mentioned_users(&content);
 
         assert_eq!(2, users.len());
