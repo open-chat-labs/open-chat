@@ -1,7 +1,8 @@
+use crate::model::participants::ParticipantInternal;
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_canister::summary::{Response::*, *};
 use ic_cdk_macros::query;
-use types::Avatar;
+use types::{Avatar, Mention, MAX_RETURNED_MENTIONS};
 
 #[query]
 fn summary(_: Args) -> Response {
@@ -13,6 +14,7 @@ fn summary_impl(runtime_state: &RuntimeState) -> Response {
     let data = &runtime_state.data;
     if let Some(participant) = data.participants.get(caller) {
         let latest_event = runtime_state.data.events.last();
+        let mentions = get_most_recent_mentions(participant);
         let summary = Summary {
             chat_id: runtime_state.env.canister_id().into(),
             last_updated: latest_event.timestamp,
@@ -27,9 +29,22 @@ fn summary_impl(runtime_state: &RuntimeState) -> Response {
             joined: participant.date_added,
             participant_count: data.participants.len(),
             role: participant.role,
+            mentions,
         };
         Success(SuccessResult { summary })
     } else {
         CallerNotInGroup
     }
+}
+
+fn get_most_recent_mentions(participant: &ParticipantInternal) -> Vec<Mention> {
+    participant
+        .mentions
+        .iter()
+        .rev()
+        .take(MAX_RETURNED_MENTIONS)
+        .map(|message_index| Mention {
+            message_index: *message_index,
+        })
+        .collect()
 }

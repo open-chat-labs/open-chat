@@ -198,6 +198,7 @@ type GroupChatSummary =
         notifications_muted: bool;
         participant_count: nat32;
         role: Role;
+        mentions: vec Mention;
     };
 
 type GroupChatSummaryUpdates =
@@ -213,6 +214,7 @@ type GroupChatSummaryUpdates =
         notifications_muted: opt bool;
         participant_count: opt nat32;
         role: opt Role;
+        mentions: vec Mention;
     };
 
 type GroupDescriptionChanged =
@@ -227,6 +229,11 @@ type AvatarChanged =
         new_avatar: nat;
         previous_avatar: opt nat;
         changed_by: UserId;
+    };
+
+type Mention =
+    record {
+        message_index: MessageIndex;
     };
 
 type Message =

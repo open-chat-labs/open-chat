@@ -24,6 +24,7 @@ impl Participants {
             min_visible_event_index: EventIndex::default(),
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: false,
+            mentions: Vec::new(),
         };
 
         Participants {
@@ -54,6 +55,7 @@ impl Participants {
                         min_visible_event_index,
                         min_visible_message_index,
                         notifications_muted: false,
+                        mentions: Vec::new(),
                     });
                     self.user_id_to_principal_map.insert(user_id, principal);
                     AddResult::Success
@@ -130,7 +132,7 @@ impl Participants {
         self.blocked.contains(user_id)
     }
 
-    pub fn users_to_notify(&self, my_user_id: UserId) -> Vec<UserId> {
+    pub fn users_to_notify(&self, my_user_id: UserId) -> HashSet<UserId> {
         self.by_principal
             .values()
             .filter(|p| p.user_id != my_user_id && !p.notifications_muted)
@@ -223,6 +225,17 @@ impl Participants {
     pub fn admin_count(&self) -> u32 {
         self.admin_count
     }
+
+    pub fn add_mention(&mut self, user_id: &UserId, message_index: MessageIndex) -> bool {
+        if let Some(p) = self.get_by_user_id_mut(user_id) {
+            if p.mentions.is_empty() || (message_index > *p.mentions.last().unwrap()) {
+                p.mentions.push(message_index);
+                return true;
+            }
+        }
+
+        false
+    }
 }
 
 pub enum AddResult {
@@ -260,6 +273,7 @@ pub struct ParticipantInternal {
     pub min_visible_event_index: EventIndex,
     pub min_visible_message_index: MessageIndex,
     pub notifications_muted: bool,
+    pub mentions: Vec<MessageIndex>,
 }
 
 impl From<ParticipantInternal> for Participant {

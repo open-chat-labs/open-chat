@@ -1,11 +1,14 @@
 use crate::updates::handle_activity_notification;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use candid::Principal;
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
+use lazy_static::lazy_static;
 use notifications_canister::push_group_message_notification;
-use types::{CanisterId, GroupMessageNotification, UserId};
+use regex::Regex;
+use types::{CanisterId, GroupMessageNotification, MessageContent, UserId};
 use utils::rand::get_random_item;
 
 #[update]
@@ -21,6 +24,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(&caller) {
         let now = runtime_state.env.now();
         let sender = participant.user_id;
+        let mentioned_users = extract_mentioned_users(&args.content);
 
         let push_message_args = PushMessageArgs {
             sender,
@@ -45,9 +49,21 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 sender_name: args.sender_name,
                 message,
             };
-            let recipients = runtime_state.data.participants.users_to_notify(sender);
 
-            ic_cdk::block_on(push_notification(*canister_id, recipients, notification));
+            let mut notification_recipients = runtime_state.data.participants.users_to_notify(sender);
+
+            // Also notify any mentioned participants regardless of whether they have muted notifications for the group
+            for u in mentioned_users.into_iter() {
+                if runtime_state.data.participants.add_mention(&u, message_index) {
+                    notification_recipients.insert(u);
+                }
+            }
+
+            ic_cdk::block_on(push_notification(
+                *canister_id,
+                notification_recipients.into_iter().collect(),
+                notification,
+            ));
         }
 
         Success(SuccessResult {
@@ -66,4 +82,48 @@ async fn push_notification(canister_id: CanisterId, recipients: Vec<UserId>, not
         notification,
     };
     let _ = notifications_canister_c2c_client::push_group_message_notification(canister_id, &args).await;
+}
+
+fn extract_mentioned_users(content: &MessageContent) -> Vec<UserId> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"@UserId\(([^\)]*)\)").unwrap();
+    }
+
+    let text = match content {
+        MessageContent::Text(m) => Some(&m.text),
+        MessageContent::Image(m) => m.caption.as_ref(),
+        MessageContent::Video(m) => m.caption.as_ref(),
+        MessageContent::Audio(m) => m.caption.as_ref(),
+        MessageContent::File(m) => m.caption.as_ref(),
+        MessageContent::Cryptocurrency(m) => m.caption.as_ref(),
+        _ => None,
+    };
+
+    if let Some(text) = text {
+        RE.captures_iter(text)
+            .filter_map(|cap| Principal::from_text(&cap[1]).ok())
+            .map(|p| p.into())
+            .collect()
+    } else {
+        Vec::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use types::TextContent;
+
+    #[test]
+    fn text_extract_mentioned_users() {
+        let message = "Hey @UserId(qoctq-giaaa-aaaaa-aaaea-cai), \n@UserId(renrk-eyaaa-aaaaa-aaada-cai), check this out";
+        let content = MessageContent::Text(TextContent {
+            text: message.to_owned(),
+        });
+        let users = extract_mentioned_users(&content);
+
+        assert_eq!(2, users.len());
+        assert_eq!("qoctq-giaaa-aaaaa-aaaea-cai".to_owned(), users[0].to_string());
+        assert_eq!("renrk-eyaaa-aaaaa-aaada-cai".to_owned(), users[1].to_string());
+    }
 }
