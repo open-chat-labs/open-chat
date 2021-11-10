@@ -1,8 +1,8 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::{MessageContent, MessageId, MessageIndex, ReplyContext};
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub message_id: MessageId,
     pub sender_message_index: MessageIndex,

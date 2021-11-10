@@ -26,5 +26,6 @@ serializer = { path = "../../../libraries/serializer" }
 tracing = "0.1.29"
 types = { path = "../../../libraries/types", features = ["compression"] }
 user_canister = { path = "../../user/api" }
+user_canister_c2c_client = { path = "../../user/c2c_client" }
 user_index_canister = { path = "../api" }
 utils = { path = "../../../libraries/utils" }

@@ -1,3 +1,4 @@
+use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::user_map::UserMap;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
@@ -98,6 +99,8 @@ struct Data {
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub online_users_aggregator_canister_ids: HashSet<CanisterId>,
+    #[serde(default)]
+    pub failed_messages_pending_retry: FailedMessagesPendingRetry,
 }
 
 impl Data {
@@ -125,6 +128,7 @@ impl Data {
             canister_pool: canister::Pool::new(canister_pool_target_size),
             test_mode,
             total_cycles_spent_on_canisters: 0,
+            failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
         }
     }
 }
@@ -145,6 +149,7 @@ impl Default for Data {
             canister_pool: canister::Pool::new(5),
             test_mode: true,
             total_cycles_spent_on_canisters: 0,
+            failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
         }
     }
 }

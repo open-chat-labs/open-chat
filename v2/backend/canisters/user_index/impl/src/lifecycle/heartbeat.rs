@@ -1,17 +1,19 @@
 use crate::updates::upgrade_canister::{initialize_upgrade, set_upgrade_complete};
 use crate::{RuntimeState, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use ic_cdk_macros::heartbeat;
-use types::{CanisterId, Cycles, Version};
+use types::{CanisterId, Cycles, UserId, Version};
 use utils::canister;
 use utils::canister::{CanisterToUpgrade, FailedUpgrade};
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 const MAX_CONCURRENT_CANISTER_UPGRADES: u32 = 5;
+const MAX_MESSAGES_TO_RETRY_PER_HEARTBEAT: u32 = 5;
 
 #[heartbeat]
 fn heartbeat() {
     upgrade_canisters::run();
     topup_canister_pool::run();
+    retry_failed_messages::run();
     calculate_metrics::run();
 }
 
@@ -106,6 +108,45 @@ mod topup_canister_pool {
     fn add_canister_to_pool(canister_id: CanisterId, cycles: Cycles, runtime_state: &mut RuntimeState) {
         runtime_state.data.canister_pool.push(canister_id);
         runtime_state.data.total_cycles_spent_on_canisters += cycles;
+    }
+}
+
+mod retry_failed_messages {
+    use super::*;
+
+    pub fn run() {
+        let messages_to_retry = RUNTIME_STATE.with(|state| get_next_batch(state.borrow_mut().as_mut().unwrap()));
+        if !messages_to_retry.is_empty() {
+            ic_cdk::block_on(send_to_canisters(messages_to_retry));
+        }
+    }
+
+    fn get_next_batch(runtime_state: &mut RuntimeState) -> Vec<(UserId, UserId)> {
+        let canisters_requiring_upgrade = &runtime_state.data.canisters_requiring_upgrade;
+        // Filter out canisters that are currently being upgraded
+        let filter = |_: &UserId, recipient: &UserId| {
+            let canister_id: CanisterId = (*recipient).into();
+            !canisters_requiring_upgrade.is_in_progress(&canister_id)
+        };
+
+        runtime_state
+            .data
+            .failed_messages_pending_retry
+            .take_oldest(MAX_MESSAGES_TO_RETRY_PER_HEARTBEAT, filter)
+    }
+
+    async fn send_to_canisters(messages_to_retry: Vec<(UserId, UserId)>) {
+        let futures: Vec<_> = messages_to_retry
+            .into_iter()
+            .map(|(sender, recipient)| send_to_canister(sender, recipient))
+            .collect();
+
+        futures::future::join_all(futures).await;
+    }
+
+    async fn send_to_canister(sender: UserId, recipient: UserId) {
+        let args = user_canister::c2c_retry_sending_failed_messages::Args { recipient };
+        let _ = user_canister_c2c_client::c2c_retry_sending_failed_messages(sender.into(), &args).await;
     }
 }
 

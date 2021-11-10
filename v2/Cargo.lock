@@ -4231,6 +4231,7 @@ dependencies = [
  "tracing",
  "types",
  "user_canister",
+ "user_canister_c2c_client",
  "user_index_canister",
  "utils",
 ]
