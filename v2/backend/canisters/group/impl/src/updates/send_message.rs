@@ -19,7 +19,6 @@ fn send_message(args: Args) -> Response {
     RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
-//#[allow(clippy::needless_collect)]
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(&caller) {
@@ -55,7 +54,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
             // Also notify any mentioned participants regardless of whether they have muted notifications for the group
             for u in mentioned_users.into_iter() {
-                if runtime_state.data.participants.add_mention(&u, event_index) {
+                if runtime_state.data.participants.add_mention(&u, message_index) {
                     recipients.insert(u);
                 }
             }

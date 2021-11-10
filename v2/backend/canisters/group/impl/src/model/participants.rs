@@ -226,10 +226,10 @@ impl Participants {
         self.admin_count
     }
 
-    pub fn add_mention(&mut self, user_id: &UserId, event_index: EventIndex) -> bool {
+    pub fn add_mention(&mut self, user_id: &UserId, message_index: MessageIndex) -> bool {
         if let Some(p) = self.get_by_user_id_mut(user_id) {
-            if p.mentions.is_empty() || (event_index > *p.mentions.last().unwrap()) {
-                p.mentions.push(event_index);
+            if p.mentions.is_empty() || (message_index > *p.mentions.last().unwrap()) {
+                p.mentions.push(message_index);
                 return true;
             }
         }
@@ -273,7 +273,7 @@ pub struct ParticipantInternal {
     pub min_visible_event_index: EventIndex,
     pub min_visible_message_index: MessageIndex,
     pub notifications_muted: bool,
-    pub mentions: Vec<EventIndex>,
+    pub mentions: Vec<MessageIndex>,
 }
 
 impl From<ParticipantInternal> for Participant {

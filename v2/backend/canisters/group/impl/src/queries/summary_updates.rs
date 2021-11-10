@@ -60,11 +60,7 @@ struct UpdatesFromEvents {
     mentions: Vec<MessageIndex>,
 }
 
-fn process_events(
-    since: TimestampMillis,
-    runtime_state: &RuntimeState,
-    mention_event_indexes: &[EventIndex],
-) -> UpdatesFromEvents {
+fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_mentions: &[MessageIndex]) -> UpdatesFromEvents {
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
@@ -74,6 +70,7 @@ fn process_events(
     };
 
     // Iterate through events starting from most recent
+    let mut lowest_message_index: MessageIndex = u32::MIN.into();
     for event_wrapper in runtime_state.data.events.iter().rev().take_while(|e| e.timestamp > since) {
         if updates.latest_event_index.is_none() {
             updates.latest_update = Some(event_wrapper.timestamp);
@@ -110,15 +107,19 @@ fn process_events(
                 updates.participants_changed = true;
             }
             ChatEventInternal::Message(message) => {
-                if updates.mentions.len() < MAX_RETURNED_MENTIONS
-                    && mention_event_indexes.binary_search(&event_wrapper.index).is_ok()
-                {
-                    updates.mentions.push(message.message_index);
-                }
+                lowest_message_index = message.message_index;
             }
             _ => {}
         }
     }
+
+    updates.mentions = all_mentions
+        .iter()
+        .rev()
+        .filter(|m| **m >= lowest_message_index)
+        .take(MAX_RETURNED_MENTIONS)
+        .copied()
+        .collect();
 
     updates
 }
