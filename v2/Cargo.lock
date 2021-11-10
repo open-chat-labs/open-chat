@@ -476,6 +476,7 @@ name = "canister_logger"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "ic-cdk 0.3.2",
  "serde",
  "tracing",
  "tracing-attributes",

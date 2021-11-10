@@ -1,7 +1,7 @@
 use crate::lifecycle::{init_logger, init_state};
 use crate::{Data, StateVersion, LOG_MESSAGES};
 use canister_api_macros::trace;
-use canister_logger::{LogMessage, LogMessagesWrapper};
+use canister_logger::{set_panic_hook, LogMessage, LogMessagesWrapper};
 use ic_cdk_macros::post_upgrade;
 use tracing::info;
 use utils::env::canister::CanisterEnv;
@@ -9,7 +9,7 @@ use utils::env::canister::CanisterEnv;
 #[post_upgrade]
 #[trace]
 fn post_upgrade() {
-    ic_cdk::setup();
+    set_panic_hook();
 
     let (version, bytes): (StateVersion, Vec<u8>) = ic_cdk::storage::stable_restore().unwrap();
     let env = Box::new(CanisterEnv::new());
