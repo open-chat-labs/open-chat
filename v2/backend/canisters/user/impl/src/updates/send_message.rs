@@ -133,7 +133,7 @@ pub(crate) async fn send_to_recipients_canister(
         }
         Err(error) => {
             if is_retry {
-                // If this already a retry, don't try sending again
+                // If this is already a retry, don't try sending again
                 error!(?error, ?recipient, "Failed to send message to recipient even after retrying");
                 if let Some(ct) = cycles_transfer {
                     let failed_cycles_transfer = FailedCyclesTransfer {
