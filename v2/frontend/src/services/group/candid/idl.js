@@ -394,7 +394,6 @@ export const idlFactory = ({ IDL }) => {
     'to' : MessageIndex,
     'from' : MessageIndex,
   });
-  const Mention = IDL.Record({ 'message_index' : MessageIndex });
   const MessageEventWrapper = IDL.Record({
     'event' : Message,
     'timestamp' : TimestampMillis,
@@ -413,7 +412,6 @@ export const idlFactory = ({ IDL }) => {
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : EventIndex,
     'min_visible_message_index' : MessageIndex,
-    'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
     'participant_count' : IDL.Nat32,
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -433,7 +431,6 @@ export const idlFactory = ({ IDL }) => {
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : IDL.Opt(EventIndex),
-    'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
     'participant_count' : IDL.Opt(IDL.Nat32),
     'latest_message' : IDL.Opt(MessageEventWrapper),

@@ -563,6 +563,7 @@ export type GroupChatSummary = DataContent &
         participantCount: number;
         myRole: ParticipantRole;
         latestMessage?: EventWrapper<Message>;
+        mentions: number[];
     };
 
 export type CandidateParticipant = {

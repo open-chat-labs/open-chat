@@ -3,6 +3,7 @@
     import { onMount, onDestroy } from "svelte";
 
     export let active: boolean;
+    export let dismissible: boolean = false;
     let ref: HTMLElement;
     let portal: HTMLElement;
 
@@ -21,10 +22,17 @@
     onDestroy(() => {
         document.body.removeChild(portal);
     });
+
+    function onClick() {
+        if (dismissible) {
+            active = false;
+        }
+        modalStore.hideModal;
+    }
 </script>
 
 <div class="blueprint">
-    <div bind:this={ref} class="overlay" class:active on:click={modalStore.hideModal}>
+    <div bind:this={ref} class="overlay" class:active on:click={onClick}>
         {#if active}
             <slot />
         {/if}

@@ -540,6 +540,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             notificationsMuted: candid.Group.notifications_muted,
             participantCount: candid.Group.participant_count,
             myRole: participantRole(candid.Group.role),
+            mentions: [], // this is not ready yet
         };
     }
     if ("Direct" in candid) {
