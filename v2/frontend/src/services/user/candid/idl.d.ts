@@ -69,6 +69,7 @@ import {
     AlertDetails,
     CryptocurrencyDeposit,
     Role,
+    Mention,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -140,6 +141,7 @@ export {
     AlertDetails as ApiAlertDetails,
     CryptocurrencyDeposit as ApiCryptocurrencyDeposit,
     Role as ApiRole,
+    Mention as ApiMention,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

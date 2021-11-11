@@ -3,6 +3,7 @@
     import { onMount, onDestroy } from "svelte";
 
     export let active: boolean;
+    export let dismissible: boolean = false;
     let ref: HTMLElement;
     let portal: HTMLElement;
 
@@ -16,15 +17,31 @@
         portal.className = "portal";
         document.body.appendChild(portal);
         portal.appendChild(ref);
+
+        document.addEventListener("keydown", onKeyDown);
     });
 
     onDestroy(() => {
         document.body.removeChild(portal);
+        document.removeEventListener("keydown", onKeyDown);
     });
+
+    function onClick() {
+        if (dismissible) {
+            active = false;
+        }
+        modalStore.hideModal;
+    }
+
+    function onKeyDown(ev: KeyboardEvent) {
+        if (dismissible && ev.key === "Escape") {
+            active = false;
+        }
+    }
 </script>
 
 <div class="blueprint">
-    <div bind:this={ref} class="overlay" class:active on:click={modalStore.hideModal}>
+    <div bind:this={ref} class="overlay" class:active on:click={onClick}>
         {#if active}
             <slot />
         {/if}
