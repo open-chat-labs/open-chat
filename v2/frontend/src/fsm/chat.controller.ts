@@ -934,6 +934,7 @@ export class ChatController {
         if (resp === "not_authorised") return "groupUpdateFailed";
         if (resp === "name_too_long") return "groupNameTooLong";
         if (resp === "name_taken") return "groupAlreadyExists";
+        if (resp === "avatar_too_big") return "avatagTooBig";
     }
 
     messageRead(messageIndex: number, messageId: bigint): void {

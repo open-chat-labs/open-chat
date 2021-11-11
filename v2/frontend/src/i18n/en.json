@@ -71,6 +71,7 @@
     "chooseReaction": "Choose a reaction",
     "groupNameInvalid": "The group name is invalid",
     "groupAlreadyExists": "A public group with that name already exists",
+    "avatarTooBig": "The selected avatar is too big",
     "userSearchFailed": "There was an error searching for users",
     "addParticipantsFailed": "There was an error adding participants",
     "enableNotifications": "Would you like to enable notifications?",

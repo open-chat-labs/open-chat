@@ -47,6 +47,7 @@ import type {
     GroupChatDetails,
     TransferOwnershipResponse,
     DeleteGroupResponse,
+    MessageContent,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -228,27 +229,26 @@ export class ServiceContainer implements MarkMessagesRead {
         );
     }
 
+    private rehydrateMessageContent(content: MessageContent): MessageContent {
+        if (
+            (content.kind === "file_content" ||
+                content.kind === "image_content" ||
+                content.kind === "audio_content") &&
+            content.blobReference !== undefined
+        ) {
+            content = this.rehydrateDataContent(content, "blobs");
+        }
+        if (content.kind === "video_content") {
+            content.videoData = this.rehydrateDataContent(content.videoData, "blobs");
+            content.imageData = this.rehydrateDataContent(content.imageData, "blobs");
+        }
+        return content;
+    }
+
     private reydrateEventList<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[] {
         return events.map((e) => {
             if (e.event.kind === "message") {
-                if (
-                    (e.event.content.kind === "file_content" ||
-                        e.event.content.kind === "image_content" ||
-                        e.event.content.kind === "audio_content") &&
-                    e.event.content.blobReference !== undefined
-                ) {
-                    e.event.content = this.rehydrateDataContent(e.event.content, "blobs");
-                }
-                if (e.event.content.kind === "video_content") {
-                    e.event.content.videoData = this.rehydrateDataContent(
-                        e.event.content.videoData,
-                        "blobs"
-                    );
-                    e.event.content.imageData = this.rehydrateDataContent(
-                        e.event.content.imageData,
-                        "blobs"
-                    );
-                }
+                e.event.content = this.rehydrateMessageContent(e.event.content);
             }
             return e;
         });
@@ -348,7 +348,7 @@ export class ServiceContainer implements MarkMessagesRead {
                 if (msg) {
                     ev.event.repliesTo = {
                         kind: "rehydrated_reply_context",
-                        content: msg.content,
+                        content: this.rehydrateMessageContent(msg.content),
                         senderId: msg.sender,
                         messageId: msg.messageId,
                         messageIndex: msg.messageIndex,
