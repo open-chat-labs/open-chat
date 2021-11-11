@@ -62,6 +62,7 @@ const defaultGroupChat: GroupChatSummary = {
     notificationsMuted: false,
     participantCount: 10,
     myRole: "admin",
+    mentions: [],
 };
 
 function directChatId(id: number): DirectChatSummary {
@@ -463,6 +464,7 @@ describe("merging updates", () => {
             latestEventIndex: 300,
             name: "stuff",
             description: "stuff",
+            mentions: [],
         };
 
         test("attempting to update with a mismatched kind throws error", () => {
