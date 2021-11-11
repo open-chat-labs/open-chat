@@ -4,8 +4,10 @@ use types::{CanisterId, Milliseconds};
 
 mod add_participants;
 mod block_user;
+mod c2c_assume_super_admin;
 mod c2c_join_group;
 mod c2c_leave_group;
+mod c2c_relinquish_super_admin;
 mod c2c_toggle_mute_notifications;
 mod delete_group;
 mod delete_messages;

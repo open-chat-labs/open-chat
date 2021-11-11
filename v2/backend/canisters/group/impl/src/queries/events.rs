@@ -10,7 +10,7 @@ fn events(args: Args) -> Response {
 fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        let min_visible_event_index = participant.min_visible_event_index;
+        let min_visible_event_index = participant.min_visible_event_index();
 
         let events = runtime_state.data.events.from_index(
             args.start_index,

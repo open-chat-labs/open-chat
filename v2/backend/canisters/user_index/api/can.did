@@ -225,6 +225,42 @@ type SmsMessagesResponse =
         };
     };
 
+type AddSuperAdminArgs =
+    record {
+        user_id: UserId;
+    };
+
+type AddSuperAdminResponse =
+    variant {
+        Success;
+        AlreadySuperAdmin,
+        InternalError: text;
+    };
+
+type RemoveSuperAdminArgs =
+    record {
+        user_id: UserId;
+    };
+
+type RemoveSuperAdminResponse =
+    variant {
+        Success;
+        NotSuperAdmin,
+        InternalError: text;
+    };
+
+type SuperAdminsArgs =
+    record {
+    };
+
+type SuperAdminsResponse =
+    variant {
+        Success: record {
+            users: vec UserId;
+        };
+        NotController;
+    };
+
 type InitArgs = 
     record {
         service_principals: vec principal;
@@ -285,4 +321,9 @@ service : (InitArgs) -> {
 
     // Get a page of SMS messages
     sms_messages: (SmsMessagesArgs) -> (SmsMessagesResponse) query;
+
+    // Only callable by "service principals"
+    add_super_admin: (AddSuperAdminArgs) -> (AddSuperAdminResponse);
+    remove_super_admin: (RemoveSuperAdminArgs) -> (RemoveSuperAdminResponse);
+    super_admins: (SuperAdminsArgs) -> (SuperAdminsResponse) query;
 }

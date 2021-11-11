@@ -1,0 +1,62 @@
+use crate::model::participants::MakeSuperAdminResult;
+use crate::updates::handle_activity_notification;
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use canister_api_macros::trace;
+use chat_events::ChatEventInternal;
+use group_canister::c2c_assume_super_admin::{Response::*, *};
+use ic_cdk_macros::update;
+use types::{CanisterId, ParticipantAssumesSuperAdmin, UserId};
+use user_index_canister::c2c_is_super_admin;
+
+#[update]
+#[trace]
+async fn c2c_assume_super_admin(_args: Args) -> Response {
+    run_regular_jobs();
+
+    let prepare_result = RUNTIME_STATE.with(|state| prepare(state.borrow_mut().as_mut().unwrap()));
+
+    let canister_id = prepare_result.user_index_canister_id;
+    let is_super_admin_args = c2c_is_super_admin::Args {
+        user_id: prepare_result.user_id,
+    };
+    match user_index_canister_c2c_client::c2c_is_super_admin(canister_id, &is_super_admin_args).await {
+        Ok(user_index_canister::c2c_is_super_admin::Response::Yes) => (),
+        Ok(user_index_canister::c2c_is_super_admin::Response::No) => return NotSuperAdmin,
+        Err(error) => return InternalError(format!("Failed to call 'user_idex::c2c_is_super_admin': {:?}", error)),
+    };
+
+    RUNTIME_STATE.with(|state| commit(state.borrow_mut().as_mut().unwrap()))
+}
+
+struct PrepareResult {
+    pub user_id: UserId,
+    pub user_index_canister_id: CanisterId,
+}
+
+fn prepare(runtime_state: &mut RuntimeState) -> PrepareResult {
+    PrepareResult {
+        user_id: runtime_state.env.caller().into(),
+        user_index_canister_id: runtime_state.data.user_index_canister_id,
+    }
+}
+
+fn commit(runtime_state: &mut RuntimeState) -> Response {
+    let user_id = runtime_state.env.caller().into();
+    let now = runtime_state.env.now();
+
+    match runtime_state.data.participants.make_super_admin(&user_id) {
+        MakeSuperAdminResult::Success => {
+            let event = ParticipantAssumesSuperAdmin { user_id };
+            runtime_state
+                .data
+                .events
+                .push_event(ChatEventInternal::ParticipantAssumesSuperAdmin(Box::new(event)), now);
+
+            handle_activity_notification(runtime_state);
+            Success
+        }
+        MakeSuperAdminResult::NotInGroup => CallerNotInGroup,
+        MakeSuperAdminResult::AlreadySuperAdmin => Success,
+        MakeSuperAdminResult::AlreadyOwner => AlreadyOwner,
+    }
+}

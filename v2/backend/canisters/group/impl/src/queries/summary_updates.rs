@@ -88,7 +88,9 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
             }
             ChatEventInternal::ParticipantsPromotedToAdmin(_)
             | ChatEventInternal::ParticipantsDismissedAsAdmin(_)
-            | ChatEventInternal::OwnershipTransferred(_) => {
+            | ChatEventInternal::OwnershipTransferred(_)
+            | ChatEventInternal::ParticipantAssumesSuperAdmin(_)
+            | ChatEventInternal::ParticipantRelinquishesSuperAdmin(_) => {
                 updates.role_changed = true;
             }
             ChatEventInternal::ParticipantsAdded(_)

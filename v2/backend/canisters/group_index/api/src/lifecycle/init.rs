@@ -9,5 +9,6 @@ pub struct Args {
 
     pub group_canister_wasm: CanisterWasm,
     pub notifications_canister_id: CanisterId,
+    pub user_index_canister_id: CanisterId,
     pub test_mode: bool,
 }

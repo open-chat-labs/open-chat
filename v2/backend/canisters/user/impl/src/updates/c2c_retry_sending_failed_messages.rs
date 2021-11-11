@@ -14,9 +14,8 @@ fn c2c_retry_sending_failed_messages(args: Args) -> Response {
 }
 
 fn c2c_retry_sending_failed_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    if caller != runtime_state.data.user_index_canister_id {
-        panic!("'c2c_retry_sending_failed_messages_impl' can only be called by the user_index");
+    if !runtime_state.is_caller_user_index() {
+        panic!("'c2c_retry_sending_failed_messages' can only be called by the user_index");
     }
 
     let messages_to_retry = runtime_state.data.failed_messages_pending_retry.take(&args.recipient);
