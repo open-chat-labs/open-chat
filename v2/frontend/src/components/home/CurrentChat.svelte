@@ -93,7 +93,7 @@
     <Footer {blocked} {controller} />
 </div>
 
-<Overlay active={confirmDelete}>
+<Overlay bind:active={confirmDelete}>
     <ModalContent fill={true}>
         <span slot="header">{$_("areYouSure")}</span>
         <span slot="body">

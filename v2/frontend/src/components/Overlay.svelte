@@ -17,10 +17,13 @@
         portal.className = "portal";
         document.body.appendChild(portal);
         portal.appendChild(ref);
+
+        document.addEventListener("keydown", onKeyDown);
     });
 
     onDestroy(() => {
         document.body.removeChild(portal);
+        document.removeEventListener("keydown", onKeyDown);
     });
 
     function onClick() {
@@ -28,6 +31,12 @@
             active = false;
         }
         modalStore.hideModal;
+    }
+
+    function onKeyDown(ev: KeyboardEvent) {
+        if (dismissible && ev.key === "Escape") {
+            active = false;
+        }
     }
 </script>
 

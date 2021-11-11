@@ -129,7 +129,7 @@
 </script>
 
 {#if showEmojiPicker}
-    <Overlay dismissible={true} active={showEmojiPicker}>
+    <Overlay dismissible={true} bind:active={showEmojiPicker}>
         <ModalContent hideFooter={true} hideHeader={true} fill={true}>
             <span slot="body">
                 <div class="emoji-header">

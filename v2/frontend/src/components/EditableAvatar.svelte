@@ -72,7 +72,7 @@
     }
 </script>
 
-<Overlay active={showModal}>
+<Overlay bind:active={showModal}>
     <ModalContent fill={true}>
         <span slot="header">Crop image</span>
         <span slot="body">

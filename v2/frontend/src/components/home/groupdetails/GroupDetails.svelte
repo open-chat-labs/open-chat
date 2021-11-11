@@ -132,7 +132,7 @@
     </div>
 </form>
 
-<Overlay active={showConfirmation}>
+<Overlay bind:active={showConfirmation}>
     <ModalContent fill={true}>
         <span slot="header">{$_("areYouSure")}</span>
         <span slot="body">
