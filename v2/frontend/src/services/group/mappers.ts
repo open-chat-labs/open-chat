@@ -249,6 +249,9 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
     if ("CallerNotInGroup" in candid) {
         return "not_in_group";
     }
+    if ("AvatarTooBig" in candid) {
+        return "avatar_too_big";
+    }
     throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
 }
 

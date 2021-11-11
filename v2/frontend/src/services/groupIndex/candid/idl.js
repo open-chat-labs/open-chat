@@ -6,23 +6,11 @@ export const idlFactory = ({ IDL }) => {
     'notifications_canister_id' : CanisterId,
     'group_wasm_module' : IDL.Vec(IDL.Nat8),
   });
-  const Milliseconds = IDL.Nat64;
-  const ChatId = CanisterId;
-  const ActiveGroupsArgs = IDL.Record({
-    'active_in_last' : Milliseconds,
-    'chat_ids' : IDL.Vec(ChatId),
-  });
-  const ActiveGroupsSuccessResult = IDL.Record({
-    'deleted_groups' : IDL.Vec(ChatId),
-    'active_groups' : IDL.Vec(ChatId),
-  });
-  const ActiveGroupsResponse = IDL.Variant({
-    'Success' : ActiveGroupsSuccessResult,
-  });
   const SearchArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
+  const ChatId = CanisterId;
   const GroupMatch = IDL.Record({
     'name' : IDL.Text,
     'description' : IDL.Text,
@@ -55,11 +43,6 @@ export const idlFactory = ({ IDL }) => {
     'InvalidVersion' : IDL.Null,
   });
   return IDL.Service({
-    'active_groups' : IDL.Func(
-        [ActiveGroupsArgs],
-        [ActiveGroupsResponse],
-        ['query'],
-      ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
     'update_group_canister_wasm' : IDL.Func(
         [UpdateGroupCanisterWasmArgs],

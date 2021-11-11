@@ -225,6 +225,7 @@ export interface GroupChatSummary {
   'avatar_id' : [] | [bigint],
   'latest_event_index' : EventIndex,
   'min_visible_message_index' : MessageIndex,
+  'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
@@ -238,6 +239,7 @@ export interface GroupChatSummaryUpdates {
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'avatar_id' : [] | [bigint],
   'latest_event_index' : [] | [EventIndex],
+  'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'participant_count' : [] | [number],
   'latest_message' : [] | [MessageEventWrapper],
@@ -280,6 +282,7 @@ export interface IndexedNotification {
   'index' : bigint,
 }
 export interface InitArgs { 'push_service_principals' : Array<Principal> }
+export interface Mention { 'message_index' : MessageIndex }
 export interface Message {
   'content' : MessageContent,
   'edited' : boolean,

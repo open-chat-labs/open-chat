@@ -810,6 +810,7 @@ export type UpdateGroupResponse =
     | "unchanged"
     | "name_taken"
     | "not_in_group"
+    | "avatar_too_big"
     | "internal_error";
 
 export type ToggleReactionResponse =

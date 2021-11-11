@@ -1,14 +1,5 @@
 import type { Principal } from '@dfinity/principal';
 export type AccountIdentifier = string;
-export interface ActiveGroupsArgs {
-  'active_in_last' : Milliseconds,
-  'chat_ids' : Array<ChatId>,
-}
-export type ActiveGroupsResponse = { 'Success' : ActiveGroupsSuccessResult };
-export interface ActiveGroupsSuccessResult {
-  'deleted_groups' : Array<ChatId>,
-  'active_groups' : Array<ChatId>,
-}
 export interface Alert {
   'id' : string,
   'details' : AlertDetails,
@@ -234,6 +225,7 @@ export interface GroupChatSummary {
   'avatar_id' : [] | [bigint],
   'latest_event_index' : EventIndex,
   'min_visible_message_index' : MessageIndex,
+  'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
@@ -247,6 +239,7 @@ export interface GroupChatSummaryUpdates {
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'avatar_id' : [] | [bigint],
   'latest_event_index' : [] | [EventIndex],
+  'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'participant_count' : [] | [number],
   'latest_message' : [] | [MessageEventWrapper],
@@ -300,6 +293,7 @@ export interface InitArgs {
   'notifications_canister_id' : CanisterId,
   'group_wasm_module' : Array<number>,
 }
+export interface Mention { 'message_index' : MessageIndex }
 export interface Message {
   'content' : MessageContent,
   'edited' : boolean,
@@ -556,7 +550,6 @@ export interface VideoContent {
   'width' : number,
 }
 export interface _SERVICE {
-  'active_groups' : (arg_0: ActiveGroupsArgs) => Promise<ActiveGroupsResponse>,
   'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
   'update_group_canister_wasm' : (
       arg_0: UpdateGroupCanisterWasmArgs,
