@@ -273,6 +273,7 @@ pub struct ParticipantInternal {
     pub min_visible_event_index: EventIndex,
     pub min_visible_message_index: MessageIndex,
     pub notifications_muted: bool,
+    #[serde(default)]
     pub mentions: Vec<MessageIndex>,
 }
 
