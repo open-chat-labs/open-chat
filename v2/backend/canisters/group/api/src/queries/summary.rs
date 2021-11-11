@@ -52,6 +52,7 @@ impl From<Summary> for GroupChatSummary {
             notifications_muted: false,
             participant_count: s.participant_count,
             role: s.role,
+            mentions: s.mentions,
         }
     }
 }
