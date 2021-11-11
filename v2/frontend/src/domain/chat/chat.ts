@@ -495,6 +495,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     avatarBlobReference?: BlobReference;
     participantCount?: number;
     myRole?: ParticipantRole;
+    mentions: number[];
 };
 
 export type ParticipantRole = "admin" | "participant" | "owner";

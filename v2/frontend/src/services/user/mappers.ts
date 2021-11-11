@@ -478,6 +478,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             notificationsMuted: optional(candid.Group.notifications_muted, identity),
             participantCount: optional(candid.Group.participant_count, identity),
             myRole: optional(candid.Group.role, participantRole),
+            mentions: candid.Group.mentions.map((m) => m.message_index),
         };
     }
     if ("Direct" in candid) {
@@ -540,7 +541,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             notificationsMuted: candid.Group.notifications_muted,
             participantCount: candid.Group.participant_count,
             myRole: participantRole(candid.Group.role),
-            mentions: [], // this is not ready yet
+            mentions: candid.Group.mentions.map((m) => m.message_index),
         };
     }
     if ("Direct" in candid) {
