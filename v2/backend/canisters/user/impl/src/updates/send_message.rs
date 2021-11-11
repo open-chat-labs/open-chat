@@ -1,3 +1,4 @@
+use crate::guards::caller_is_owner;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
@@ -14,15 +15,13 @@ use utils::consts::{DEFAULT_MEMO, ICP_TRANSACTION_FEE_E8S};
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
-#[update]
+#[update(guard = "caller_is_owner")]
 #[trace]
 async fn send_message(mut args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(response) =
-        RUNTIME_STATE.with(|state| validate_caller_and_recipient(&args.recipient, state.borrow().as_ref().unwrap()))
-    {
-        return response;
+    if RUNTIME_STATE.with(|state| is_recipient_blocked(&args.recipient, state.borrow().as_ref().unwrap())) {
+        return RecipientBlocked;
     }
 
     let mut cycles_transfer = None;
@@ -91,14 +90,8 @@ fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>,
     })
 }
 
-fn validate_caller_and_recipient(recipient: &UserId, runtime_state: &RuntimeState) -> Result<(), Response> {
-    runtime_state.trap_if_caller_not_owner();
-
-    if runtime_state.data.blocked_users.contains(recipient) {
-        Err(RecipientBlocked)
-    } else {
-        Ok(())
-    }
+fn is_recipient_blocked(recipient: &UserId, runtime_state: &RuntimeState) -> bool {
+    runtime_state.data.blocked_users.contains(recipient)
 }
 
 fn build_c2c_args(args: Args, message_index: MessageIndex) -> c2c_send_message::Args {

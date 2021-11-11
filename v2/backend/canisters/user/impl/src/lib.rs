@@ -16,6 +16,7 @@ use utils::env::Environment;
 use utils::memory;
 use utils::regular_jobs::RegularJobs;
 
+mod guards;
 mod lifecycle;
 mod model;
 mod queries;
@@ -48,12 +49,6 @@ impl RuntimeState {
 
     pub fn is_caller_owner(&self) -> bool {
         self.env.caller() == self.data.owner
-    }
-
-    pub fn trap_if_caller_not_owner(&self) {
-        if !self.is_caller_owner() {
-            ic_cdk::trap("Not authorized");
-        }
     }
 
     pub fn metrics(&self) -> Metrics {

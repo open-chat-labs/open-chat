@@ -1,3 +1,4 @@
+use crate::guards::caller_is_owner;
 use crate::{RuntimeState, RUNTIME_STATE};
 use chat_events::ChatEventInternal;
 use ic_cdk_macros::query;
@@ -10,7 +11,7 @@ use user_canister::search_all_messages::{Response::*, *};
 const MIN_TERM_LENGTH: u8 = 3;
 const MAX_TERM_LENGTH: u8 = 30;
 
-#[query]
+#[query(guard = "caller_is_owner")]
 async fn search_all_messages(args: Args) -> Response {
     let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,
@@ -40,8 +41,6 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    runtime_state.trap_if_caller_not_owner();
-
     let term_length = args.search_term.len() as u8;
 
     if term_length < MIN_TERM_LENGTH {

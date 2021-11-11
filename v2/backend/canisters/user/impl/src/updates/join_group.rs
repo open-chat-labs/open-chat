@@ -1,24 +1,19 @@
+use crate::guards::caller_is_owner;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
-use candid::Principal;
 use canister_api_macros::trace;
 use group_canister::c2c_join_group;
 use ic_cdk_macros::update;
 use types::ChatId;
 use user_canister::join_group::{Response::*, *};
 
-#[update]
+#[update(guard = "caller_is_owner")]
 #[trace]
 async fn join_group(args: Args) -> Response {
     run_regular_jobs();
 
-    let prepare_ok = match RUNTIME_STATE.with(|state| prepare(state.borrow().as_ref().unwrap())) {
-        Ok(ok) => ok,
-        Err(response) => return response,
-    };
+    let principal = RUNTIME_STATE.with(|state| state.borrow().as_ref().unwrap().env.caller());
 
-    let c2c_args = c2c_join_group::Args {
-        principal: prepare_ok.principal,
-    };
+    let c2c_args = c2c_join_group::Args { principal };
 
     match group_canister_c2c_client::c2c_join_group(args.chat_id.into(), &c2c_args).await {
         Ok(result) => match result {
@@ -33,18 +28,6 @@ async fn join_group(args: Args) -> Response {
         },
         Err(error) => InternalError(format!("{:?}", error)),
     }
-}
-
-struct PrepareResult {
-    principal: Principal,
-}
-
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    runtime_state.trap_if_caller_not_owner();
-
-    Ok(PrepareResult {
-        principal: runtime_state.env.caller(),
-    })
 }
 
 fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {

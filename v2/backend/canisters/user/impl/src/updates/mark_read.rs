@@ -1,3 +1,4 @@
+use crate::guards::caller_is_owner;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
@@ -6,7 +7,7 @@ use user_canister::c2c_mark_read;
 use user_canister::mark_read::{Response::*, *};
 use utils::range_set::{convert_to_message_index_ranges, insert_ranges, RangeSet};
 
-#[update]
+#[update(guard = "caller_is_owner")]
 #[trace]
 fn mark_read(args: Args) -> Response {
     run_regular_jobs();
@@ -15,8 +16,6 @@ fn mark_read(args: Args) -> Response {
 }
 
 fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.trap_if_caller_not_owner();
-
     let now = runtime_state.env.now();
 
     for chat_messages_read in args.messages_read {
