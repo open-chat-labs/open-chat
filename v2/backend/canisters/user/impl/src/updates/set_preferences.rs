@@ -1,10 +1,11 @@
+use crate::guards::caller_is_owner;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::Timestamped;
 use user_canister::set_preferences::*;
 
-#[update]
+#[update(guard = "caller_is_owner")]
 #[trace]
 fn set_preferences(args: Args) -> Response {
     run_regular_jobs();
@@ -13,7 +14,6 @@ fn set_preferences(args: Args) -> Response {
 }
 
 fn set_preferences_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.trap_if_caller_not_owner();
     let now = runtime_state.env.now();
     let pref_args = &args.preferences;
     let pref_data = &mut runtime_state.data.user_preferences;

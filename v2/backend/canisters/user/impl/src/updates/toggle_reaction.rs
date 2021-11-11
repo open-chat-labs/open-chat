@@ -1,3 +1,4 @@
+use crate::guards::caller_is_owner;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use chat_events::ToggleReactionResult;
@@ -6,7 +7,7 @@ use types::{CanisterId, MessageId, Reaction};
 use user_canister::c2c_toggle_reaction;
 use user_canister::toggle_reaction::{Response::*, *};
 
-#[update]
+#[update(guard = "caller_is_owner")]
 #[trace]
 fn toggle_reaction(args: Args) -> Response {
     run_regular_jobs();
@@ -19,8 +20,6 @@ fn toggle_reaction(args: Args) -> Response {
 }
 
 fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.trap_if_caller_not_owner();
-
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = runtime_state.env.canister_id().into();
         let now = runtime_state.env.now();

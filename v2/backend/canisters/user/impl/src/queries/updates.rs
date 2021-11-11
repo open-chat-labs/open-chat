@@ -1,3 +1,4 @@
+use crate::guards::caller_is_owner;
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_canister::summary::Summary;
 use group_canister::summary_updates::SummaryUpdates;
@@ -13,7 +14,7 @@ use types::{
 use user_canister::{initial_state, updates, updates::UpdatesSince};
 use utils::range_set::convert_to_message_index_ranges;
 
-#[query]
+#[query(guard = "caller_is_owner")]
 async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
     let prepare_result = RUNTIME_STATE.with(|state| prepare(None, state.borrow().as_ref().unwrap()));
 
@@ -70,7 +71,7 @@ async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
     })
 }
 
-#[query]
+#[query(guard = "caller_is_owner")]
 async fn updates(args: updates::Args) -> updates::Response {
     let prepare_result = RUNTIME_STATE.with(|state| prepare(Some(&args.updates_since), state.borrow().as_ref().unwrap()));
 
@@ -135,8 +136,6 @@ struct PrepareResult {
 }
 
 fn prepare(updates_since_option: Option<&UpdatesSince>, runtime_state: &RuntimeState) -> PrepareResult {
-    runtime_state.trap_if_caller_not_owner();
-
     let now = runtime_state.env.now();
     if let Some(updates_since) = updates_since_option {
         let duration_since_last_sync = now.saturating_sub(updates_since.timestamp);

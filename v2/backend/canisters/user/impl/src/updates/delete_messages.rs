@@ -1,3 +1,4 @@
+use crate::guards::caller_is_owner;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use chat_events::DeleteMessageResult;
@@ -6,7 +7,7 @@ use types::{CanisterId, MessageId};
 use user_canister::c2c_delete_messages;
 use user_canister::delete_messages::{Response::*, *};
 
-#[update]
+#[update(guard = "caller_is_owner")]
 #[trace]
 fn delete_messages(args: Args) -> Response {
     run_regular_jobs();
@@ -15,8 +16,6 @@ fn delete_messages(args: Args) -> Response {
 }
 
 fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.trap_if_caller_not_owner();
-
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = runtime_state.env.canister_id().into();
         let now = runtime_state.env.now();
