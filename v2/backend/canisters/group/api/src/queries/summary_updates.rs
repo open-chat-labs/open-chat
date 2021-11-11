@@ -47,6 +47,7 @@ impl From<SummaryUpdates> for GroupChatSummaryUpdates {
             role: s.role,
             read_by_me: None,
             notifications_muted: None,
+            mentions: s.mentions,
         }
     }
 }
