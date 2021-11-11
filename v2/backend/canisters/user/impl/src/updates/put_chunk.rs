@@ -1,3 +1,4 @@
+use crate::guards::caller_is_owner;
 use crate::updates::put_chunk::Response::*;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
@@ -5,7 +6,7 @@ use ic_cdk_macros::update;
 use user_canister::put_chunk::*;
 use utils::blob_storage::PutChunkResult;
 
-#[update]
+#[update(guard = "caller_is_owner")]
 #[trace]
 fn put_chunk(args: Args) -> Response {
     run_regular_jobs();
@@ -14,8 +15,6 @@ fn put_chunk(args: Args) -> Response {
 }
 
 fn put_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.trap_if_caller_not_owner();
-
     let now = runtime_state.env.now();
 
     match runtime_state.data.blob_storage.put_chunk(

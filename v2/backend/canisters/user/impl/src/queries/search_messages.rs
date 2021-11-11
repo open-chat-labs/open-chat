@@ -1,3 +1,4 @@
+use crate::guards::caller_is_owner;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
 use types::EventIndex;
@@ -6,14 +7,12 @@ use user_canister::search_messages::{Response::*, *};
 const MIN_TERM_LENGTH: u8 = 3;
 const MAX_TERM_LENGTH: u8 = 30;
 
-#[query]
+#[query(guard = "caller_is_owner")]
 fn search_messages(args: Args) -> Response {
     RUNTIME_STATE.with(|state| search_messages_impl(args, state.borrow().as_ref().unwrap()))
 }
 
 fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    runtime_state.trap_if_caller_not_owner();
-
     let term_length = args.search_term.len() as u8;
 
     if term_length < MIN_TERM_LENGTH {

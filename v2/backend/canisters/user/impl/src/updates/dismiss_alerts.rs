@@ -1,3 +1,4 @@
+use crate::guards::caller_is_owner;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
@@ -5,7 +6,7 @@ use std::str::FromStr;
 use types::AlertId;
 use user_canister::dismiss_alerts::{Response::*, *};
 
-#[update]
+#[update(guard = "caller_is_owner")]
 #[trace]
 fn dismiss_alerts(args: Args) -> Response {
     run_regular_jobs();
@@ -14,8 +15,6 @@ fn dismiss_alerts(args: Args) -> Response {
 }
 
 fn dismiss_alerts_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.trap_if_caller_not_owner();
-
     let now = runtime_state.env.now();
 
     let mut not_found = Vec::new();

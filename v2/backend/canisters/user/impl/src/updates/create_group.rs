@@ -1,3 +1,4 @@
+use crate::guards::caller_is_owner;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
@@ -7,7 +8,7 @@ use tracing::error;
 use types::{CanisterId, ChatId, FieldTooLongResult, MAX_AVATAR_SIZE};
 use user_canister::create_group::{Response::*, *};
 
-#[update]
+#[update(guard = "caller_is_owner")]
 #[trace]
 async fn create_group(args: Args) -> Response {
     run_regular_jobs();
@@ -45,8 +46,6 @@ struct PrepareResult {
 }
 
 fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    runtime_state.trap_if_caller_not_owner();
-
     fn is_throttled() -> bool {
         // TODO check here that the user hasn't created too many groups in succession
         false

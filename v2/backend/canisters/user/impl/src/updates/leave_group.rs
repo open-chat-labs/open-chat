@@ -1,3 +1,4 @@
+use crate::guards::caller_is_owner;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use group_canister::c2c_leave_group;
@@ -5,14 +6,10 @@ use ic_cdk_macros::update;
 use types::ChatId;
 use user_canister::leave_group::{Response::*, *};
 
-#[update]
+#[update(guard = "caller_is_owner")]
 #[trace]
 async fn leave_group(args: Args) -> Response {
     run_regular_jobs();
-
-    if let Err(response) = RUNTIME_STATE.with(|state| prepare(state.borrow().as_ref().unwrap())) {
-        return response;
-    };
 
     let c2c_args = c2c_leave_group::Args {};
 
@@ -27,11 +24,6 @@ async fn leave_group(args: Args) -> Response {
         },
         Err(error) => InternalError(format!("{:?}", error)),
     }
-}
-
-fn prepare(runtime_state: &RuntimeState) -> Result<(), Response> {
-    runtime_state.trap_if_caller_not_owner();
-    Ok(())
 }
 
 fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {
