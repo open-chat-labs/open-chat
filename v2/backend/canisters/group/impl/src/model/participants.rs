@@ -42,6 +42,7 @@ impl Participants {
         now: TimestampMillis,
         min_visible_event_index: EventIndex,
         min_visible_message_index: MessageIndex,
+        as_super_admin: bool,
     ) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
@@ -51,7 +52,7 @@ impl Participants {
                     e.insert(ParticipantInternal {
                         user_id,
                         date_added: now,
-                        role: Role::Participant,
+                        role: if as_super_admin { Role::SuperAdmin } else { Role::Participant },
                         min_visible_event_index,
                         min_visible_message_index,
                         notifications_muted: false,
@@ -171,10 +172,26 @@ impl Participants {
         }
     }
 
+    pub fn make_super_admin(&mut self, user_id: &UserId) -> MakeSuperAdminResult {
+        match self.get_by_user_id_mut(user_id) {
+            Some(p) => {
+                if p.role.is_super_admin() {
+                    MakeSuperAdminResult::AlreadySuperAdmin
+                } else if p.role.is_owner() {
+                    MakeSuperAdminResult::AlreadyOwner
+                } else {
+                    p.role = Role::SuperAdmin;
+                    MakeSuperAdminResult::Success
+                }
+            }
+            None => MakeSuperAdminResult::NotInGroup,
+        }
+    }
+
     pub fn transfer_ownership(&mut self, caller_id: &UserId, user_id: &UserId) -> TransferOwnershipResult {
         match self.get_by_user_id(caller_id) {
             Some(caller) => {
-                if !caller.role.is_owner() {
+                if !caller.role.can_transfer_ownership() {
                     return TransferOwnershipResult::CallerNotOwner;
                 } else {
                     match self.get_by_user_id(user_id) {
@@ -222,6 +239,20 @@ impl Participants {
         }
     }
 
+    pub fn remove_super_admin(&mut self, user_id: &UserId) -> RemoveSuperAdminResult {
+        match self.get_by_user_id_mut(user_id) {
+            Some(p) => {
+                if p.role.is_super_admin() {
+                    p.role = Role::Participant;
+                    RemoveSuperAdminResult::Success
+                } else {
+                    RemoveSuperAdminResult::NotSuperAdmin
+                }
+            }
+            None => RemoveSuperAdminResult::NotInGroup,
+        }
+    }
+
     pub fn admin_count(&self) -> u32 {
         self.admin_count
     }
@@ -251,6 +282,13 @@ pub enum MakeAdminResult {
     AlreadyOwner,
 }
 
+pub enum MakeSuperAdminResult {
+    Success,
+    NotInGroup,
+    AlreadySuperAdmin,
+    AlreadyOwner,
+}
+
 pub enum TransferOwnershipResult {
     Success,
     UserNotInGroup,
@@ -265,16 +303,40 @@ pub enum RemoveAdminResult {
     NotAdmin,
 }
 
+pub enum RemoveSuperAdminResult {
+    Success,
+    NotInGroup,
+    NotSuperAdmin,
+}
+
 #[derive(CandidType, Serialize, Deserialize)]
 pub struct ParticipantInternal {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
     pub role: Role,
-    pub min_visible_event_index: EventIndex,
-    pub min_visible_message_index: MessageIndex,
     pub notifications_muted: bool,
-    #[serde(default)]
     pub mentions: Vec<MessageIndex>,
+
+    min_visible_event_index: EventIndex,
+    min_visible_message_index: MessageIndex,
+}
+
+impl ParticipantInternal {
+    pub fn min_visible_event_index(&self) -> EventIndex {
+        if self.role.can_view_full_message_history() {
+            EventIndex::default()
+        } else {
+            self.min_visible_event_index
+        }
+    }
+
+    pub fn min_visible_message_index(&self) -> MessageIndex {
+        if self.role.can_view_full_message_history() {
+            MessageIndex::default()
+        } else {
+            self.min_visible_message_index
+        }
+    }
 }
 
 impl From<ParticipantInternal> for Participant {

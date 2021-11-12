@@ -1,5 +1,5 @@
 use crate::utils::{build_ic_agent, build_identity};
-use crate::TestIdentity;
+use crate::{TestIdentity, USER1_DEFAULT_NAME, USER2_DEFAULT_NAME, USER3_DEFAULT_NAME};
 use types::{CanisterId, PhoneNumber, UserId};
 
 pub async fn register_user(
@@ -55,4 +55,56 @@ pub async fn register_user(
     } else {
         panic!("{:?}", create_canister_response);
     }
+}
+
+pub async fn register_default_user(url: String, user_index_canister_id: CanisterId) -> UserId {
+    register_user(
+        url,
+        TestIdentity::User1,
+        Some(USER1_DEFAULT_NAME.to_string()),
+        user_index_canister_id,
+    )
+    .await
+}
+
+pub async fn register_2_default_users(url: String, user_index_canister_id: CanisterId) -> (UserId, UserId) {
+    futures::future::join(
+        register_user(
+            url.clone(),
+            TestIdentity::User1,
+            Some(USER1_DEFAULT_NAME.to_string()),
+            user_index_canister_id,
+        ),
+        register_user(
+            url.clone(),
+            TestIdentity::User2,
+            Some(USER2_DEFAULT_NAME.to_string()),
+            user_index_canister_id,
+        ),
+    )
+    .await
+}
+
+pub async fn register_3_default_users(url: String, user_index_canister_id: CanisterId) -> (UserId, UserId, UserId) {
+    futures::future::join3(
+        register_user(
+            url.clone(),
+            TestIdentity::User1,
+            Some(USER1_DEFAULT_NAME.to_string()),
+            user_index_canister_id,
+        ),
+        register_user(
+            url.clone(),
+            TestIdentity::User2,
+            Some(USER2_DEFAULT_NAME.to_string()),
+            user_index_canister_id,
+        ),
+        register_user(
+            url.clone(),
+            TestIdentity::User3,
+            Some(USER3_DEFAULT_NAME.to_string()),
+            user_index_canister_id,
+        ),
+    )
+    .await
 }

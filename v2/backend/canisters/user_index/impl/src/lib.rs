@@ -5,12 +5,13 @@ use canister_logger::LogMessagesWrapper;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, CanisterWasm, ConfirmationCodeSms, Cycles, TimestampMillis, Version};
+use types::{CanisterId, CanisterWasm, ConfirmationCodeSms, Cycles, TimestampMillis, UserId, Version};
 use utils::canister::CanistersRequiringUpgrade;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 use utils::{canister, memory};
 
+mod guards;
 mod lifecycle;
 mod model;
 mod queries;
@@ -99,8 +100,9 @@ struct Data {
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub online_users_aggregator_canister_ids: HashSet<CanisterId>,
-    #[serde(default)]
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
+    #[serde(default)]
+    pub super_admins: HashSet<UserId>,
 }
 
 impl Data {
@@ -129,6 +131,7 @@ impl Data {
             test_mode,
             total_cycles_spent_on_canisters: 0,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
+            super_admins: HashSet::new(),
         }
     }
 }
@@ -150,6 +153,7 @@ impl Default for Data {
             test_mode: true,
             total_cycles_spent_on_canisters: 0,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
+            super_admins: HashSet::new(),
         }
     }
 }

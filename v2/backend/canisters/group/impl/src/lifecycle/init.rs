@@ -29,6 +29,7 @@ fn init(args: Args) {
         env.now(),
         args.mark_active_duration,
         group_index_canister_id,
+        args.user_index_canister_id,
         args.notification_canister_ids,
         args.wasm_version,
         args.test_mode,

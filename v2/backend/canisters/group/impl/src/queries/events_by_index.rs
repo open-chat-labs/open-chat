@@ -11,7 +11,7 @@ fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         let mut event_indexes = args.events;
-        event_indexes.retain(|e| *e >= participant.min_visible_event_index);
+        event_indexes.retain(|e| *e >= participant.min_visible_event_index());
 
         let events = runtime_state.data.events.get_by_index(event_indexes);
         let affected_events = runtime_state.data.events.affected_events(&events);

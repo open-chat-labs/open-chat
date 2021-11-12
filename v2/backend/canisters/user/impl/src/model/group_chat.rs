@@ -9,15 +9,17 @@ pub struct GroupChat {
     pub date_joined: TimestampMillis,
     pub read_by_me: Timestamped<RangeSet>,
     pub notifications_muted: Timestamped<bool>,
+    pub is_super_admin: bool,
 }
 
 impl GroupChat {
-    pub fn new(chat_id: ChatId, now: TimestampMillis) -> GroupChat {
+    pub fn new(chat_id: ChatId, is_super_admin: bool, now: TimestampMillis) -> GroupChat {
         GroupChat {
             chat_id,
             date_joined: now,
             read_by_me: Timestamped::new(RangeSet::new(), now),
             notifications_muted: Timestamped::new(false, now),
+            is_super_admin,
         }
     }
 
