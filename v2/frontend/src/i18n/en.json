@@ -38,7 +38,7 @@
     "groupCreationFailed": "Sorry we were unable to create your group",
     "groupUpdateFailed": "Sorry we were unable to update your group",
     "groupCreatedBy": "{username} created the group",
-    "groupChangedBy": "{changed} was changed by {changedBy}",
+    "groupChangedBy": "{changedBy} changed the {changed}",
     "groupName": "group name",
     "groupDesc": "group description",
     "groupAvatar": "group avatar",
