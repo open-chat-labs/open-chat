@@ -10,10 +10,7 @@ fn update_user_canister_wasm(args: Args) -> Response {
 }
 
 fn update_user_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    let permitted_callers = &runtime_state.data.service_principals;
-
-    if !permitted_callers.contains(&caller) {
+    if !runtime_state.is_caller_service_principal() {
         return NotAuthorized;
     }
 

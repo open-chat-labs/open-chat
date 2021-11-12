@@ -30,6 +30,10 @@ impl GroupChats {
         })
     }
 
+    pub fn get(&self, chat_id: &ChatId) -> Option<&GroupChat> {
+        self.group_chats.get(chat_id)
+    }
+
     pub fn get_mut(&mut self, chat_id: &ChatId) -> Option<&mut GroupChat> {
         self.group_chats.get_mut(chat_id)
     }
@@ -38,16 +42,16 @@ impl GroupChats {
         if self.groups_created >= MAX_GROUPS_PER_USER {
             false
         } else {
-            self.join(chat_id, now);
+            self.join(chat_id, false, now);
             self.groups_created += 1;
             true
         }
     }
 
-    pub fn join(&mut self, chat_id: ChatId, now: TimestampMillis) -> bool {
+    pub fn join(&mut self, chat_id: ChatId, as_super_admin: bool, now: TimestampMillis) -> bool {
         match self.group_chats.entry(chat_id) {
             Vacant(e) => {
-                e.insert(GroupChat::new(chat_id, now));
+                e.insert(GroupChat::new(chat_id, as_super_admin, now));
                 self.removed.retain(|g| g.chat_id != chat_id);
                 true
             }
@@ -65,6 +69,10 @@ impl GroupChats {
 
     pub fn iter(&self) -> impl Iterator<Item = &GroupChat> {
         self.group_chats.values()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut GroupChat> {
+        self.group_chats.values_mut()
     }
 
     pub fn removed_since(&self, timestamp: TimestampMillis) -> Vec<ChatId> {

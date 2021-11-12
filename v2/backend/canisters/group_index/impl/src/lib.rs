@@ -79,6 +79,8 @@ struct Data {
     pub service_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
     pub notifications_canister_id: CanisterId,
+    #[serde(default = "user_index_canister_id")]
+    pub user_index_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub test_mode: bool,
@@ -86,11 +88,16 @@ struct Data {
     pub cached_metrics: CachedMetrics,
 }
 
+fn user_index_canister_id() -> CanisterId {
+    Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap()
+}
+
 impl Data {
     fn new(
         service_principals: Vec<Principal>,
         group_canister_wasm: CanisterWasm,
         notifications_canister_id: CanisterId,
+        user_index_canister_id: CanisterId,
         canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Data {
@@ -101,6 +108,7 @@ impl Data {
             service_principals: service_principals.into_iter().collect(),
             group_canister_wasm,
             notifications_canister_id,
+            user_index_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             test_mode,
@@ -150,6 +158,7 @@ impl Default for Data {
             service_principals: HashSet::default(),
             group_canister_wasm: CanisterWasm::default(),
             notifications_canister_id: Principal::anonymous(),
+            user_index_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(0),
             test_mode: true,

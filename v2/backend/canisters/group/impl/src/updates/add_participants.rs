@@ -143,10 +143,14 @@ fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut R
             unblocked.push(user_id);
         }
 
-        runtime_state
-            .data
-            .participants
-            .add(user_id, principal, now, min_visible_event_index, min_visible_message_index);
+        runtime_state.data.participants.add(
+            user_id,
+            principal,
+            now,
+            min_visible_event_index,
+            min_visible_message_index,
+            false,
+        );
     }
 
     let event = ParticipantsAdded {

@@ -25,7 +25,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "make_admin" => role.can_make_admin(),
             "remove_admin" => role.can_remove_admin(),
             "remove_participant" => role.can_remove_participants(),
-            "transfer_ownership" => role.is_owner(),
+            "transfer_ownership" => role.can_transfer_ownership(),
             "unblock_user" => role.can_unblock_user(),
             "update_group" => role.can_update_group(),
             "delete_message" | "edit_message" | "put_chunk" | "send_message" | "toggle_reaction" => true,

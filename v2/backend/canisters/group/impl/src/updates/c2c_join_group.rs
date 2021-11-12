@@ -5,18 +5,45 @@ use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_join_group::{Response::*, *};
 use ic_cdk_macros::update;
-use types::{EventIndex, MessageIndex, ParticipantJoined};
+use types::{CanisterId, EventIndex, MessageIndex, ParticipantJoined, UserId};
+use user_index_canister::c2c_is_super_admin;
 
 // Called via the user's user canister
 #[update]
 #[trace]
-fn c2c_join_group(args: Args) -> Response {
+async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| c2c_join_group_impl(args, state.borrow_mut().as_mut().unwrap()))
+    let prepare_result = RUNTIME_STATE.with(|state| prepare(state.borrow_mut().as_mut().unwrap()));
+
+    if args.as_super_admin {
+        let canister_id = prepare_result.user_index_canister_id;
+        let is_super_admin_args = c2c_is_super_admin::Args {
+            user_id: prepare_result.user_id,
+        };
+        match user_index_canister_c2c_client::c2c_is_super_admin(canister_id, &is_super_admin_args).await {
+            Ok(user_index_canister::c2c_is_super_admin::Response::Yes) => (),
+            Ok(user_index_canister::c2c_is_super_admin::Response::No) => return NotSuperAdmin,
+            Err(error) => return InternalError(format!("Failed to call 'user_idex::c2c_is_super_admin': {:?}", error)),
+        };
+    }
+
+    RUNTIME_STATE.with(|state| commit(args, state.borrow_mut().as_mut().unwrap()))
 }
 
-fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+struct PrepareResult {
+    pub user_id: UserId,
+    pub user_index_canister_id: CanisterId,
+}
+
+fn prepare(runtime_state: &mut RuntimeState) -> PrepareResult {
+    PrepareResult {
+        user_id: runtime_state.env.caller().into(),
+        user_index_canister_id: runtime_state.data.user_index_canister_id,
+    }
+}
+
+fn commit(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.data.is_public {
         if let Some(limit) = runtime_state.data.participants.user_limit_reached(true) {
             return ParticipantLimitReached(limit);
@@ -40,9 +67,13 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
             now,
             min_visible_event_index,
             min_visible_message_index,
+            args.as_super_admin,
         ) {
             AddResult::Success => {
-                let event = ParticipantJoined { user_id };
+                let event = ParticipantJoined {
+                    user_id,
+                    as_super_admin: args.as_super_admin,
+                };
                 runtime_state
                     .data
                     .events

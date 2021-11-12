@@ -73,6 +73,7 @@ async fn install_service_canisters_impl(
         service_principals: vec![principal],
         group_canister_wasm,
         notifications_canister_id: canister_ids.notifications,
+        user_index_canister_id: canister_ids.user_index,
         test_mode,
     };
 

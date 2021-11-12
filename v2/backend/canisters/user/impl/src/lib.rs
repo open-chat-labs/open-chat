@@ -51,6 +51,10 @@ impl RuntimeState {
         self.env.caller() == self.data.owner
     }
 
+    pub fn is_caller_user_index(&self) -> bool {
+        self.env.caller() == self.data.user_index_canister_id
+    }
+
     pub fn metrics(&self) -> Metrics {
         let blob_metrics = self.data.blob_storage.metrics();
         let chat_metrics = self.data.direct_chats.metrics();
@@ -101,8 +105,9 @@ struct Data {
     pub test_mode: bool,
     pub user_preferences: UserPreferences,
     pub alerts: Alerts,
-    #[serde(default)]
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
+    #[serde(default)]
+    pub is_super_admin: bool,
 }
 
 impl Data {
@@ -132,6 +137,7 @@ impl Data {
             user_preferences: UserPreferences::default(),
             alerts: Alerts::default(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
+            is_super_admin: false,
         }
     }
 }
