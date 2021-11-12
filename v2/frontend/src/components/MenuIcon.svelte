@@ -39,15 +39,11 @@
 <svelte:window on:resize={closeMenu} />
 
 <style type="text/scss">
-    .menu-icon {
-        position: relative;
-    }
     .menu {
         position: absolute;
-        // display: none;
     }
 
     .blueprint {
-        visibility: hidden;
+        display: none;
     }
 </style>
