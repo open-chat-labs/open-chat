@@ -153,12 +153,13 @@
 
     function onScroll() {
         menuStore.hideMenu();
+        scrollHeight = messagesDiv.scrollHeight;
+        scrollTop = messagesDiv.scrollTop;
         if (!$loading) {
             if (
                 messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD &&
                 controller.morePreviousMessagesAvailable()
             ) {
-                scrollHeight = messagesDiv.scrollHeight;
                 controller.loadPreviousMessages();
             }
 
@@ -309,10 +310,6 @@
         if (controller.chatId !== currentChatId) {
             currentChatId = controller.chatId;
             initialised = false;
-        }
-
-        if (messagesDiv) {
-            scrollTop = messagesDiv.scrollTop;
         }
 
         if ($chatStore && $chatStore.chatId === controller.chatId) {
