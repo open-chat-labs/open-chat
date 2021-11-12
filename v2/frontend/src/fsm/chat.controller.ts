@@ -328,8 +328,6 @@ export class ChatController {
         this.loading.set(true);
         const criteria = this.previousMessagesCriteria();
 
-        console.log("Loading previous: ", criteria);
-
         const eventsResponse = criteria
             ? await this.loadEvents(criteria[0], criteria[1])
             : undefined;
@@ -896,7 +894,6 @@ export class ChatController {
         return this.api
             .unblockUserFromGroupChat(this.chatId, userId)
             .then((resp) => {
-                console.log(resp);
                 if (resp === "success") {
                     toastStore.showSuccessToast("unblockUserSucceeded");
                 } else {
