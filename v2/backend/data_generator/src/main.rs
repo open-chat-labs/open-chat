@@ -1,6 +1,6 @@
-use canister_client::operations::{create_group, send_direct_message, send_group_message};
+use canister_client::operations::{create_group, register_3_default_users, send_direct_message, send_group_message};
 use canister_client::utils::{build_ic_agent, build_identity};
-use canister_client::{CanisterIds, TestIdentity};
+use canister_client::{CanisterIds, TestIdentity, USER1_DEFAULT_NAME, USER2_DEFAULT_NAME, USER3_DEFAULT_NAME};
 use clap::{AppSettings, Clap};
 use ic_agent::Agent;
 use rand::rngs::StdRng;
@@ -126,31 +126,7 @@ async fn wait_for_target_user_to_be_registered(agent: &Agent, username: String, 
 }
 
 async fn register_test_users(url: String, user_index_canister_id: CanisterId) -> Vec<(Agent, UserId, String)> {
-    let username1 = "Andy".to_string();
-    let username2 = "Bob".to_string();
-    let username3 = "Charlie".to_string();
-
-    let (user1, user2, user3) = futures::future::join3(
-        canister_client::operations::register_user(
-            url.clone(),
-            TestIdentity::User1,
-            Some(username1.clone()),
-            user_index_canister_id,
-        ),
-        canister_client::operations::register_user(
-            url.clone(),
-            TestIdentity::User2,
-            Some(username2.clone()),
-            user_index_canister_id,
-        ),
-        canister_client::operations::register_user(
-            url.clone(),
-            TestIdentity::User3,
-            Some(username3.clone()),
-            user_index_canister_id,
-        ),
-    )
-    .await;
+    let (user1, user2, user3) = register_3_default_users(url.clone(), user_index_canister_id).await;
 
     let (user1_agent, user2_agent, user3_agent) = futures::future::join3(
         build_ic_agent(url.clone(), build_identity(TestIdentity::User1)),
@@ -160,9 +136,9 @@ async fn register_test_users(url: String, user_index_canister_id: CanisterId) ->
     .await;
 
     vec![
-        (user1_agent, user1, username1),
-        (user2_agent, user2, username2),
-        (user3_agent, user3, username3),
+        (user1_agent, user1, USER1_DEFAULT_NAME.to_string()),
+        (user2_agent, user2, USER2_DEFAULT_NAME.to_string()),
+        (user3_agent, user3, USER3_DEFAULT_NAME.to_string()),
     ]
 }
 

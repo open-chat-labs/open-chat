@@ -29,7 +29,7 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 
     let matches = runtime_state.data.events.search_messages(
         runtime_state.env.now(),
-        participant.min_visible_event_index,
+        participant.min_visible_event_index(),
         &args.search_term,
         args.max_results,
     );

@@ -164,6 +164,8 @@ type GroupChatEvent =
         ParticipantsRemoved: ParticipantsRemoved;
         ParticipantJoined: ParticipantJoined;
         ParticipantLeft: ParticipantLeft;
+        ParticipantAssumesSuperAdmin: ParticipantAssumesSuperAdmin;
+        ParticipantRelinquishesSuperAdmin: ParticipantRelinquishesSuperAdmin;
         ParticipantsPromotedToAdmin: ParticipantsPromotedToAdmin;
         ParticipantsDismissedAsAdmin: ParticipantsDismissedAsAdmin;
         MessageEdited: UpdatedMessage;
@@ -356,9 +358,20 @@ type Participant =
 type ParticipantJoined =
     record {
         user_id: UserId;
+        as_super_admin: bool;
     };
 
 type ParticipantLeft =
+    record {
+        user_id: UserId;
+    };
+
+type ParticipantAssumesSuperAdmin =
+    record {
+        user_id: UserId;
+    };
+
+type ParticipantRelinquishesSuperAdmin =
     record {
         user_id: UserId;
     };

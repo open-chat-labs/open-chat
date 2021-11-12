@@ -46,6 +46,10 @@ impl GroupChatEvents {
             ChatEventInternal::ParticipantsRemoved(p) => GroupChatEvent::ParticipantsRemoved(*p.clone()),
             ChatEventInternal::ParticipantJoined(p) => GroupChatEvent::ParticipantJoined(*p.clone()),
             ChatEventInternal::ParticipantLeft(p) => GroupChatEvent::ParticipantLeft(*p.clone()),
+            ChatEventInternal::ParticipantAssumesSuperAdmin(p) => GroupChatEvent::ParticipantAssumesSuperAdmin(*p.clone()),
+            ChatEventInternal::ParticipantRelinquishesSuperAdmin(p) => {
+                GroupChatEvent::ParticipantRelinquishesSuperAdmin(*p.clone())
+            }
             ChatEventInternal::ParticipantsPromotedToAdmin(p) => GroupChatEvent::ParticipantsPromotedToAdmin(*p.clone()),
             ChatEventInternal::ParticipantsDismissedAsAdmin(p) => GroupChatEvent::ParticipantsDismissedAsAdmin(*p.clone()),
             ChatEventInternal::UsersBlocked(u) => GroupChatEvent::UsersBlocked(*u.clone()),
