@@ -122,7 +122,6 @@
     }
 
     .photo-icon {
-        border: 1px solid #ccc;
         border-radius: 50%;
         width: 90px;
         height: 90px;
