@@ -19,10 +19,10 @@ export const menuStore = {
     showMenu: (menu: HTMLElement, pos: DOMRect): void =>
         update((currentMenu) => {
             close(currentMenu);
-            const l = get(rtlStore) ? 150 : -150;
+            const xoffset = get(rtlStore) ? 180 : -180;
             menuAnchor.appendChild(menu);
-            menu.style.setProperty("top", `${pos.y + 40}px`);
-            menu.style.setProperty("left", `${pos.x + l}px`);
+            menu.style.setProperty("top", `${pos.y + pos.height}px`);
+            menu.style.setProperty("left", `${pos.x + xoffset}px`);
             return menu;
         }),
     hideMenu: (): void =>

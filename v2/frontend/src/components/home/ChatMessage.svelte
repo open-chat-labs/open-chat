@@ -56,7 +56,7 @@
     let username = sender?.username;
     let metaData = messageMetaData(msg.content);
     let showEmojiPicker = false;
-    let debug = true;
+    let debug = false;
 
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);

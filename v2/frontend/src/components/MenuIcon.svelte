@@ -23,15 +23,15 @@
     }
 </script>
 
-<div class="menu-icon">
-    <span bind:this={menu} on:click|stopPropagation={showMenu}>
-        <slot name="icon" />
-    </span>
+<div class="menu-icon" bind:this={menu} on:click|stopPropagation={showMenu}>
+    <slot name="icon" />
 </div>
 
 <div class="blueprint">
     <span class="menu" bind:this={contextMenu} on:click|stopPropagation={closeMenu}>
-        <slot name="menu" />
+        {#if $menuStore === contextMenu}
+            <slot name="menu" />
+        {/if}
     </span>
 </div>
 
