@@ -22,9 +22,7 @@
         <span class="icon" class:rtl={$rtlStore}>
             <FileDownload size={"1.7em"} {color} />
         </span>
-        <span class="name">
-            {content.name}
-        </span>
+        {content.name}
     </a>
 {/if}
 
@@ -43,9 +41,5 @@
             margin-right: 0;
             margin-left: $sp3;
         }
-    }
-
-    .name {
-        @include font(bold, normal, fs-100);
     }
 </style>
