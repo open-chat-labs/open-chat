@@ -58,7 +58,13 @@ pub async fn register_user(
 }
 
 pub async fn register_default_user(url: String, user_index_canister_id: CanisterId) -> UserId {
-    register_user(url, TestIdentity::User1, Some(USER1_DEFAULT_NAME.to_string()), user_index_canister_id).await
+    register_user(
+        url,
+        TestIdentity::User1,
+        Some(USER1_DEFAULT_NAME.to_string()),
+        user_index_canister_id,
+    )
+    .await
 }
 
 pub async fn register_2_default_users(url: String, user_index_canister_id: CanisterId) -> (UserId, UserId) {
@@ -76,7 +82,7 @@ pub async fn register_2_default_users(url: String, user_index_canister_id: Canis
             user_index_canister_id,
         ),
     )
-        .await
+    .await
 }
 
 pub async fn register_3_default_users(url: String, user_index_canister_id: CanisterId) -> (UserId, UserId, UserId) {
@@ -100,7 +106,5 @@ pub async fn register_3_default_users(url: String, user_index_canister_id: Canis
             user_index_canister_id,
         ),
     )
-        .await
+    .await
 }
-
-
