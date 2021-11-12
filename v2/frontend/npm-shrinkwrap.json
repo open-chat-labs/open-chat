@@ -12344,9 +12344,9 @@
             }
         },
         "node_modules/svelte": {
-            "version": "3.38.3",
-            "resolved": "https://registry.npmjs.org/svelte/-/svelte-3.38.3.tgz",
-            "integrity": "sha512-N7bBZJH0iF24wsalFZF+fVYMUOigaAUQMIcEKHO3jstK/iL8VmP9xE+P0/a76+FkNcWt+TDv2Gx1taUoUscrvw==",
+            "version": "3.44.1",
+            "resolved": "https://registry.npmjs.org/svelte/-/svelte-3.44.1.tgz",
+            "integrity": "sha512-4DrCEJoBvdR689efHNSxIQn2pnFwB7E7j2yLEJtHE/P8hxwZWIphCtJ8are7bjl/iVMlcEf5uh5pJ68IwR09vQ==",
             "engines": {
                 "node": ">= 8"
             }
@@ -22949,9 +22949,9 @@
             }
         },
         "svelte": {
-            "version": "3.38.3",
-            "resolved": "https://registry.npmjs.org/svelte/-/svelte-3.38.3.tgz",
-            "integrity": "sha512-N7bBZJH0iF24wsalFZF+fVYMUOigaAUQMIcEKHO3jstK/iL8VmP9xE+P0/a76+FkNcWt+TDv2Gx1taUoUscrvw=="
+            "version": "3.44.1",
+            "resolved": "https://registry.npmjs.org/svelte/-/svelte-3.44.1.tgz",
+            "integrity": "sha512-4DrCEJoBvdR689efHNSxIQn2pnFwB7E7j2yLEJtHE/P8hxwZWIphCtJ8are7bjl/iVMlcEf5uh5pJ68IwR09vQ=="
         },
         "svelte-check": {
             "version": "1.6.0",

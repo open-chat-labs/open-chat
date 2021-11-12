@@ -1,7 +1,14 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { createEventDispatcher, onMount, setContext, tick } from "svelte";
+    import {
+        afterUpdate,
+        beforeUpdate,
+        createEventDispatcher,
+        onMount,
+        setContext,
+        tick,
+    } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
@@ -111,7 +118,6 @@
         const idx =
             unreadMessages > 0 ? firstUnreadMessageIndex : $chat.latestMessage?.event.messageIndex;
 
-        console.log("scrolling to message index: ", idx);
         if (idx !== undefined) {
             scrollToMessageIndex(idx);
         }
@@ -139,7 +145,6 @@
             if ($focusMessageIndex !== undefined) {
                 scrollToMessageIndex($focusMessageIndex);
             } else {
-                console.log("Scroll height reseting scroll:  ", messagesDiv.scrollHeight);
                 const extraHeight = messagesDiv.scrollHeight - scrollHeight;
                 messagesDiv.scrollTop = scrollTop + extraHeight;
             }
@@ -153,6 +158,12 @@
         }
     }
 
+    function trace() {
+        console.log("scroll after evts ", $events.length);
+        console.log("scroll after rendered ", document.querySelectorAll(".message-wrapper").length);
+        console.log("scroll height: ", messagesDiv.scrollHeight);
+    }
+
     function onScroll() {
         menuStore.hideMenu();
         if (!$loading) {
@@ -160,7 +171,6 @@
                 messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD &&
                 controller.morePreviousMessagesAvailable()
             ) {
-                console.log("Scroll height before loading more: ", messagesDiv.scrollHeight);
                 controller.loadPreviousMessages();
             }
 
@@ -307,6 +317,20 @@
     $: admin =
         $chat.kind === "group_chat" && ($chat.myRole === "admin" || $chat.myRole === "owner");
 
+    afterUpdate(() => {
+        const rendered = document.querySelectorAll(".message-wrapper");
+        console.log("Scroll before number of rendered msgs: ", rendered.length);
+        console.log(
+            "Scroll before number of real scroll height: ",
+            document.getElementById("chat-messages")!.scrollHeight
+        );
+        console.log("Scroll before number events: ", $events.length);
+
+        // if (rendered.length !== $events.length) {
+        //     console.log("Scroll content: ", messagesDiv.outerHTML);
+        // }
+    });
+
     $: {
         if (controller.chatId !== currentChatId) {
             currentChatId = controller.chatId;
@@ -320,17 +344,9 @@
 
         if ($chatStore && $chatStore.chatId === controller.chatId) {
             fromBottomVal = fromBottom();
-            console.log("Scroll height receiving chat event: ", messagesDiv.scrollHeight);
-            if (messagesDiv.scrollHeight > 12000) {
-                console.log("Scroll height is bizarrely wrong");
-            }
             switch ($chatStore.event.kind) {
                 case "loaded_previous_messages":
-                    console.log(
-                        "Scroll height receiving loaded_previous_messages: ",
-                        messagesDiv.scrollHeight
-                    );
-                    tick().then(resetScroll);
+                    tick().then(() => tick().then(() => tick().then(resetScroll)));
                     break;
                 case "loaded_new_messages":
                     if (fromBottomVal < FROM_BOTTOM_THRESHOLD) {
