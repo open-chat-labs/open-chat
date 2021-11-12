@@ -359,6 +359,10 @@
         background-color: var(--icon-inverted-hv);
     }
 
+    :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
+        background-color: var(--icon-hv);
+    }
+
     .message-wrapper {
         &.last {
             margin-bottom: $sp4;

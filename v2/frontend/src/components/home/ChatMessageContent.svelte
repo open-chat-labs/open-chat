@@ -37,7 +37,7 @@
 {:else if content.kind === "image_content"}
     <ImageContent {fill} {content} />
 {:else if content.kind === "video_content"}
-    <VideoContent {content} />
+    <VideoContent {fill} {content} />
 {:else if content.kind === "audio_content"}
     <AudioContent {content} />
 {:else if content.kind === "file_content"}
