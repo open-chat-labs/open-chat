@@ -169,7 +169,7 @@
             <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
-                        <EmoticonLolOutline size={"1.2em"} color={"#fff"} />
+                        <EmoticonLolOutline size={"1.4em"} color={"#fff"} />
                     </HoverIcon>
                 </div>
             </div>
@@ -253,8 +253,10 @@
                 <div class="menu" class:rtl={$rtlStore}>
                     <MenuIcon>
                         <div class="menu-icon" slot="icon">
-                            <HoverIcon>
-                                <ChevronDown size={"1.2em"} color={me ? "#fff" : "#aaa"} />
+                            <HoverIcon compact={true}>
+                                <ChevronDown
+                                    size={"1.4em"}
+                                    color={me ? "#fff" : "var(--icon-txt)"} />
                             </HoverIcon>
                         </div>
                         <div slot="menu">
@@ -300,7 +302,7 @@
             <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
-                        <EmoticonLolOutline size={"1.2em"} color={"#fff"} />
+                        <EmoticonLolOutline size={"1.4em"} color={"#fff"} />
                     </HoverIcon>
                 </div>
             </div>
@@ -343,6 +345,18 @@
 
     :global(.message-bubble .content ul) {
         margin: 0 $sp4;
+    }
+
+    :global(.message-bubble:hover .menu-icon .wrapper) {
+        background-color: var(--icon-hv);
+    }
+
+    :global(.message-bubble.me:hover .menu-icon .wrapper) {
+        background-color: var(--icon-inverted-hv);
+    }
+
+    :global(.me .menu-icon:hover .wrapper) {
+        background-color: var(--icon-inverted-hv);
     }
 
     .message-wrapper {
@@ -409,12 +423,13 @@
     }
 
     .menu {
+        $offset: -2px;
         position: absolute;
-        top: $sp1;
-        right: $sp1;
+        top: $offset;
+        right: $offset;
 
         &.rtl {
-            left: $sp1;
+            left: $offset;
             right: unset;
         }
     }
@@ -477,7 +492,6 @@
         }
 
         &:hover .actions {
-            // todo - need to consider how this works on mobile
             opacity: 1;
         }
     }
@@ -496,6 +510,7 @@
         border-radius: $radius;
         max-width: 90%;
         min-width: 90px;
+        overflow: hidden;
 
         .username {
             color: inherit;
@@ -503,9 +518,8 @@
         }
 
         &:hover {
-            box-shadow: 0 5px 10px var(--currentChat-msg-hv);
             .menu-icon {
-                opacity: 0.6;
+                opacity: 1;
             }
         }
 
@@ -527,10 +541,6 @@
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
             border-color: var(--currentChat-msg-me-bd);
-
-            &:hover {
-                background-color: var(--currentChat-msg-me-hv);
-            }
 
             &.last:not(.first) {
                 border-radius: $radius $inner-radius $radius $radius;

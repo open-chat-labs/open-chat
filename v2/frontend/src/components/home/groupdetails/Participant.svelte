@@ -69,16 +69,19 @@
             url={avatarUrl(participant)}
             status={getUserStatus($userStore, participant.userId)}
             size={AvatarSize.Small} />
-
-        {#if participant.role === "admin" || participant.role === "owner"}
-            <div class="admin">
-                <AccountLock size={"1.2em"} color={"#fff"} />
-            </div>
-        {/if}
     </span>
-    <h4 class="details" class:blocked={participant.kind === "blocked_participant"}>
-        {me ? $_("you") : participant.username ?? $_("unknownUser")}
-    </h4>
+    <div class="details">
+        <h4 class:blocked={participant.kind === "blocked_participant"}>
+            {me ? $_("you") : participant.username ?? $_("unknownUser")}
+        </h4>
+        <span class="role">
+            {#if participant.role === "owner"}
+                ({$_("owner")})
+            {:else if participant.role === "admin"}
+                ({$_("admin")})
+            {/if}
+        </span>
+    </div>
     {#if !me && (myRole === "admin" || myRole === "owner")}
         <span class="menu">
             <MenuIcon>
@@ -174,15 +177,15 @@
         position: relative;
     }
 
-    .admin {
-        position: absolute;
-        bottom: -3px;
-        right: 16px;
+    .role {
+        margin: 0 $sp3;
+        @include font(light, normal, fs-70);
     }
 
     .details {
         flex: 1;
         padding: 0 5px;
+        display: flex;
         @include ellipsis();
 
         &.blocked {

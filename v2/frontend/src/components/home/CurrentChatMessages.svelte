@@ -33,6 +33,7 @@
     import type { UserLookup } from "../../domain/user/user";
     import type { ChatController } from "../../fsm/chat.controller";
     import type { MessageReadState } from "../../stores/markRead";
+    import { menuStore } from "../../stores/menu";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -152,6 +153,7 @@
     }
 
     function onScroll() {
+        menuStore.hideMenu();
         if (!$loading) {
             if (
                 messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD &&

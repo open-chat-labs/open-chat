@@ -1,21 +1,24 @@
 <script lang="ts">
-    import { rtlStore } from "../stores/rtl";
     import { menuStore } from "../stores/menu";
+    import { onMount } from "svelte";
 
-    let pos: { x: number; y: number } | undefined;
     let menu: HTMLElement;
+    let contextMenu: HTMLElement;
 
     async function showMenu(_e: MouseEvent): Promise<void> {
-        if (pos) {
-            closeMenu();
+        if ($menuStore === contextMenu) {
+            menuStore.hideMenu();
+        } else {
+            const rect = menu.getBoundingClientRect();
+            menuStore.showMenu(contextMenu, rect);
         }
-        const l = $rtlStore ? 150 : -150;
-        pos = { x: menu.offsetLeft + l, y: menu.offsetTop + 40 };
-        menuStore.showMenu(menu);
     }
 
+    onMount(() => {
+        window.addEventListener("orientationchange", closeMenu);
+    });
+
     function closeMenu() {
-        pos = undefined;
         menuStore.hideMenu();
     }
 </script>
@@ -24,15 +27,12 @@
     <span bind:this={menu} on:click|stopPropagation={showMenu}>
         <slot name="icon" />
     </span>
+</div>
 
-    {#if pos && $menuStore === menu}
-        <span
-            class="menu"
-            style={`top: ${pos.y}px; left: ${pos.x}px`}
-            on:click|stopPropagation={closeMenu}>
-            <slot name="menu" />
-        </span>
-    {/if}
+<div class="blueprint">
+    <span class="menu" bind:this={contextMenu} on:click|stopPropagation={closeMenu}>
+        <slot name="menu" />
+    </span>
 </div>
 
 <svelte:body on:click={closeMenu} />
@@ -44,5 +44,10 @@
     }
     .menu {
         position: absolute;
+        // display: none;
+    }
+
+    .blueprint {
+        visibility: hidden;
     }
 </style>
