@@ -13,7 +13,7 @@ async fn register_user_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
     let identity = build_identity(TestIdentity::Controller);
-    let canister_ids = create_and_install_service_canisters(identity, url.clone()).await;
+    let canister_ids = create_and_install_service_canisters(identity, url.clone(), true).await;
 
     register_user(url, TestIdentity::User1, Some("Andy".to_string()), canister_ids.user_index).await;
 }
@@ -26,8 +26,8 @@ async fn register_existing_user_test_impl(handle: IcHandle, ctx: &fondue::pot::C
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
-
-    let canister_ids = create_and_install_service_canisters(url.clone()).await;
+    let identity = build_identity(TestIdentity::Controller);
+    let canister_ids = create_and_install_service_canisters(identity, url.clone(), true).await;
 
     register_user(
         url.clone(),
@@ -38,7 +38,7 @@ async fn register_existing_user_test_impl(handle: IcHandle, ctx: &fondue::pot::C
     .await;
 
     let submit_phone_number_args = user_index_canister::submit_phone_number::Args {
-        phone_number: user_index_canister::submit_phone_number::UnvalidatedPhoneNumber {
+        phone_number: types::PhoneNumber {
             country_code: 44,
             number: "07887123457".to_string(),
         },

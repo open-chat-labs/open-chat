@@ -15,7 +15,7 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
     let identity = build_identity(TestIdentity::Controller);
-    let canister_ids = create_and_install_service_canisters(identity, url.clone()).await;
+    let canister_ids = create_and_install_service_canisters(identity, url.clone(), true).await;
 
     let (user1_id, user2_id, user3_id) = futures::future::join3(
         register_user(
@@ -57,6 +57,7 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         is_public: false,
         name: name.clone(),
         description: description.clone(),
+        avatar: None,
         history_visible_to_new_joiners: false,
     };
 
@@ -68,7 +69,6 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
             assert_eq!(r.summary.name, name);
             assert_eq!(r.summary.description, description);
             assert!(!r.summary.is_public);
-            assert_eq!(r.summary.participants.len(), 3);
         }
         response => panic!("Summary returned an error: {:?}", response),
     }
@@ -82,16 +82,16 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 }
 
 async fn ensure_user_canister_links_to_group(agent: &Agent, user_id: UserId, chat_id: ChatId) {
-    let args = user_canister::updates::Args { updates_since: None };
-    match user_canister_client::updates(agent, &user_id.into(), &args).await {
-        user_canister::updates::Response::Success(r) => {
-            assert_eq!(r.chats_added.len(), 1);
-            if let ChatSummary::Group(g) = r.chats_added.first().unwrap() {
+    let args = user_canister::initial_state::Args { };
+    match user_canister_client::initial_state(agent, &user_id.into(), &args).await {
+        user_canister::initial_state::Response::Success(r) => {
+            assert_eq!(r.chats.len(), 1);
+            if let ChatSummary::Group(g) = r.chats.first().unwrap() {
                 assert_eq!(g.chat_id, chat_id);
             } else {
                 panic!("Group chat not found");
             }
         }
-        response => panic!("Updates returned an error: {:?}", response),
+        response => panic!("InitialState returned an error: {:?}", response),
     };
 }
