@@ -62,7 +62,7 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 }
 
 async fn ensure_user_canister_links_to_group(agent: &Agent, user_id: UserId, chat_id: ChatId) {
-    let args = user_canister::initial_state::Args { };
+    let args = user_canister::initial_state::Args {};
     match user_canister_client::initial_state(agent, &user_id.into(), &args).await {
         user_canister::initial_state::Response::Success(r) => {
             assert_eq!(r.chats.len(), 1);

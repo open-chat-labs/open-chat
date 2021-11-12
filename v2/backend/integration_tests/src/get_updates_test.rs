@@ -79,7 +79,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     };
     let result4 = send_group_message(&user2_agent, chat_id2, &group_message_args2).await;
 
-    let initial_state_args = user_canister::initial_state::Args { };
+    let initial_state_args = user_canister::initial_state::Args {};
     let initial_state_response = user_canister_client::initial_state(&user1_agent, &user1_id.into(), &initial_state_args).await;
 
     if let user_canister::initial_state::Response::Success(r) = initial_state_response {
