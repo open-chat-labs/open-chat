@@ -7,7 +7,6 @@
     import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
     import AccountArrowLeftOutline from "svelte-material-icons/AccountArrowLeftOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
-    import AccountLock from "svelte-material-icons/AccountLock.svelte";
     import { AvatarSize } from "../../../domain/user/user";
     import Avatar from "../../Avatar.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
@@ -188,9 +187,5 @@
         display: flex;
         align-items: center;
         @include ellipsis();
-
-        &.blocked {
-            text-decoration: line-through;
-        }
     }
 </style>

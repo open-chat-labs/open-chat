@@ -127,10 +127,6 @@
         &:hover,
         &.selected {
             background-color: var(--chatSummary-hv);
-
-            .icon {
-                opacity: 1;
-            }
         }
     }
     .avatar {
