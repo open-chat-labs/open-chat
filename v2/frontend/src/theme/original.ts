@@ -1,6 +1,7 @@
 import type { Theme } from "./themes";
 
-const accent = "#ff9505";
+// const accent = "#ff9505"; // orange
+const accent = "hotpink";
 
 export function originalTheme(defaultTheme: Theme): Theme {
     return {
@@ -10,8 +11,6 @@ export function originalTheme(defaultTheme: Theme): Theme {
         bg: "#41398b",
         mg: "20px auto",
 
-        // accent: "#32cd32",
-        // accent: "#f79031",
         accent: accent,
 
         panel: {
@@ -33,7 +32,6 @@ export function originalTheme(defaultTheme: Theme): Theme {
             ...defaultTheme.chatSummary,
             mb: "0",
             bd: "1px solid #ddd",
-            hv: "#efefef",
         },
 
         currentUser: {

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../domain/user/user";
+    import { rtlStore } from "../stores/rtl";
 
     export let url: string | undefined;
     export let status: UserStatus = UserStatus.Offline;
@@ -9,28 +10,44 @@
 
 <div
     class="avatar"
-    class:online={status === UserStatus.Online}
-    class:offline={status === UserStatus.Offline}
     class:tiny={size === AvatarSize.Tiny}
     class:small={size === AvatarSize.Small}
     class:medium={size === AvatarSize.Medium}
     class:large={size === AvatarSize.Large}
     class:blocked
-    style="background-image: url({url});" />
+    style="background-image: url({url});">
+    {#if status === UserStatus.Online}
+        <div class:rtl={$rtlStore} class="online" />
+    {/if}
+</div>
 
 <style type="text/scss">
+    $online: limegreen;
+    $status-size: 12px;
+
+    .online {
+        border-radius: 50%;
+        width: $status-size;
+        height: $status-size;
+        background-color: $online;
+        position: absolute;
+        bottom: 0;
+        box-shadow: rgb(255 255 255) 0px 0px 0px 2px;
+        &:not(.rtl) {
+            right: 0;
+        }
+        &.rtl {
+            left: 0;
+        }
+    }
+
     .avatar {
         background-color: var(--avatar-bg);
         background-position: center;
         background-repeat: no-repeat;
         background-size: cover;
         border-radius: 50%;
-        border: 2px solid var(--avatar-bd);
         position: relative;
-
-        &.online {
-            border: 2px solid limegreen;
-        }
 
         &.tiny {
             width: 35px;
