@@ -3,6 +3,7 @@ use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use group_canister::c2c_assume_super_admin;
 use ic_cdk_macros::update;
+use tracing::error;
 use types::ChatId;
 use user_canister::assume_group_super_admin::{Response::*, *};
 
@@ -23,10 +24,16 @@ async fn assume_group_super_admin(args: Args) -> Response {
                 Success
             }
             c2c_assume_super_admin::Response::CallerNotInGroup => {
-                InternalError("Caller has reference to group in user canister but group does not contain caller".to_owned())
+                let message = "INCONSISTENT: Caller has reference to group in user canister but group does not contain caller";
+                error!(message);
+                InternalError(message.to_owned())
             }
             c2c_assume_super_admin::Response::AlreadyOwner => AlreadyOwner,
-            c2c_assume_super_admin::Response::NotSuperAdmin => NotSuperAdmin,
+            c2c_assume_super_admin::Response::NotSuperAdmin => {
+                let message = "INCONSISTENT: User canister thinks user is_super_admin but group does not";
+                error!(message);
+                InternalError(message.to_owned())
+            }
             c2c_assume_super_admin::Response::InternalError(error) => {
                 InternalError(format!("Failed to call 'group::c2c_assume_super_admin': {:?}", error))
             }
@@ -36,6 +43,10 @@ async fn assume_group_super_admin(args: Args) -> Response {
 }
 
 fn prepare(group_id: &ChatId, runtime_state: &RuntimeState) -> Result<(), Response> {
+    if !runtime_state.data.is_super_admin {
+        return Err(NotSuperAdmin);
+    }
+
     match runtime_state.data.group_chats.get(group_id) {
         Some(group) => {
             if group.is_super_admin {

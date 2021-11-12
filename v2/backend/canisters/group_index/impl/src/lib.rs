@@ -79,12 +79,17 @@ struct Data {
     pub service_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
     pub notifications_canister_id: CanisterId,
+    #[serde(default = "user_index_canister_id")]
     pub user_index_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cached_metrics: CachedMetrics,
+}
+
+fn user_index_canister_id() -> CanisterId {
+    Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap()
 }
 
 impl Data {

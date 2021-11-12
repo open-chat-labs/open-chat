@@ -9,7 +9,7 @@ use user_index_canister::add_super_admin::{Response::*, *};
 #[update(guard = "caller_is_controller")]
 #[trace]
 async fn add_super_admin(args: Args) -> Response {
-    if RUNTIME_STATE.with(|state| is_already_super_admin(&args.user_id, state.borrow_mut().as_mut().unwrap())) {
+    if RUNTIME_STATE.with(|state| is_already_super_admin(&args.user_id, state.borrow().as_ref().unwrap())) {
         return AlreadySuperAdmin;
     }
 
@@ -23,7 +23,7 @@ async fn add_super_admin(args: Args) -> Response {
     }
 }
 
-fn is_already_super_admin(user_id: &UserId, runtime_state: &mut RuntimeState) -> bool {
+fn is_already_super_admin(user_id: &UserId, runtime_state: &RuntimeState) -> bool {
     runtime_state.data.super_admins.contains(user_id)
 }
 

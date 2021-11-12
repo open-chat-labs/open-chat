@@ -3,6 +3,7 @@ use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use group_canister::c2c_relinquish_super_admin;
 use ic_cdk_macros::update;
+use tracing::error;
 use types::ChatId;
 use user_canister::relinquish_group_super_admin::{Response::*, *};
 
@@ -23,7 +24,9 @@ async fn reinquish_group_super_admin(args: Args) -> Response {
                 Success
             }
             c2c_relinquish_super_admin::Response::CallerNotInGroup => {
-                InternalError("Caller has reference to group in user canister but group does not contain caller".to_owned())
+                let message = "INCONSISTENT: Caller has reference to group in user canister but group does not contain caller";
+                error!(message);
+                InternalError(message.to_owned())
             }
         },
         Err(error) => InternalError(format!("{:?}", error)),

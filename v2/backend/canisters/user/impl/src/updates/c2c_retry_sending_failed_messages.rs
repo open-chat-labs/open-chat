@@ -1,3 +1,4 @@
+use crate::guards::caller_is_user_index;
 use crate::updates::send_message::{send_to_recipients_canister, CyclesTransferDetails};
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
@@ -5,7 +6,7 @@ use ic_cdk_macros::update;
 use types::UserId;
 use user_canister::c2c_retry_sending_failed_messages::{Response::*, *};
 
-#[update]
+#[update(guard = "caller_is_user_index")]
 #[trace]
 fn c2c_retry_sending_failed_messages(args: Args) -> Response {
     run_regular_jobs();
@@ -14,10 +15,6 @@ fn c2c_retry_sending_failed_messages(args: Args) -> Response {
 }
 
 fn c2c_retry_sending_failed_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if !runtime_state.is_caller_user_index() {
-        panic!("'c2c_retry_sending_failed_messages' can only be called by the user_index");
-    }
-
     let messages_to_retry = runtime_state.data.failed_messages_pending_retry.take(&args.recipient);
     if !messages_to_retry.is_empty() {
         ic_cdk::block_on(retry_sending_messages(args.recipient, messages_to_retry));

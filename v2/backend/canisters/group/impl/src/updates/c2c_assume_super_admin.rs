@@ -20,12 +20,12 @@ async fn c2c_assume_super_admin(_args: Args) -> Response {
         user_id: prepare_result.user_id,
     };
     match user_index_canister_c2c_client::c2c_is_super_admin(canister_id, &is_super_admin_args).await {
-        Ok(user_index_canister::c2c_is_super_admin::Response::Yes) => (),
-        Ok(user_index_canister::c2c_is_super_admin::Response::No) => return NotSuperAdmin,
-        Err(error) => return InternalError(format!("Failed to call 'user_idex::c2c_is_super_admin': {:?}", error)),
-    };
-
-    RUNTIME_STATE.with(|state| commit(state.borrow_mut().as_mut().unwrap()))
+        Ok(user_index_canister::c2c_is_super_admin::Response::Yes) => {
+            RUNTIME_STATE.with(|state| commit(state.borrow_mut().as_mut().unwrap()))
+        }
+        Ok(user_index_canister::c2c_is_super_admin::Response::No) => NotSuperAdmin,
+        Err(error) => InternalError(format!("Failed to call 'user_idex::c2c_is_super_admin': {:?}", error)),
+    }
 }
 
 struct PrepareResult {

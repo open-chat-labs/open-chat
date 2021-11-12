@@ -88,12 +88,17 @@ struct Data {
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
+    #[serde(default = "user_index_canister_id")]
     pub user_index_canister_id: CanisterId,
     pub notification_canister_ids: Vec<CanisterId>,
     pub wasm_version: Version,
     pub activity_notification_state: ActivityNotificationState,
     pub blob_storage: BlobStorage,
     pub test_mode: bool,
+}
+
+fn user_index_canister_id() -> CanisterId {
+    Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap()
 }
 
 #[allow(clippy::too_many_arguments)]
