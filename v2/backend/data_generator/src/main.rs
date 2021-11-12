@@ -1,6 +1,6 @@
 use canister_client::operations::{create_group, register_3_default_users, send_direct_message, send_group_message};
 use canister_client::utils::{build_ic_agent, build_identity};
-use canister_client::{CanisterIds, TestIdentity};
+use canister_client::{CanisterIds, TestIdentity, USER1_DEFAULT_NAME, USER2_DEFAULT_NAME, USER3_DEFAULT_NAME};
 use clap::{AppSettings, Clap};
 use ic_agent::Agent;
 use rand::rngs::StdRng;
@@ -136,9 +136,9 @@ async fn register_test_users(url: String, user_index_canister_id: CanisterId) ->
     .await;
 
     vec![
-        (user1_agent, user1, username1),
-        (user2_agent, user2, username2),
-        (user3_agent, user3, username3),
+        (user1_agent, user1, USER1_DEFAULT_NAME.to_string()),
+        (user2_agent, user2, USER2_DEFAULT_NAME.to_string()),
+        (user3_agent, user3, USER3_DEFAULT_NAME.to_string()),
     ]
 }
 
