@@ -17,27 +17,7 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let identity = build_identity(TestIdentity::Controller);
     let canister_ids = create_and_install_service_canisters(identity, url.clone(), true).await;
 
-    let (user1_id, user2_id, user3_id) = futures::future::join3(
-        register_user(
-            url.clone(),
-            TestIdentity::User1,
-            Some("Andy".to_string()),
-            canister_ids.user_index,
-        ),
-        register_user(
-            url.clone(),
-            TestIdentity::User2,
-            Some("Bob".to_string()),
-            canister_ids.user_index,
-        ),
-        register_user(
-            url.clone(),
-            TestIdentity::User3,
-            Some("Charlie".to_string()),
-            canister_ids.user_index,
-        ),
-    )
-    .await;
+    let (user1_id, user2_id, user3_id) = register_3_default_users(url.clone(), canister_ids.user_index).await;
 
     let user1_identity = build_identity(TestIdentity::User1);
     let user2_identity = build_identity(TestIdentity::User2);
