@@ -23,7 +23,7 @@
 
 <style type="text/scss">
     $online: limegreen;
-    $status-size: 12px;
+    $status-size: 10px;
 
     .online {
         border-radius: 50%;
