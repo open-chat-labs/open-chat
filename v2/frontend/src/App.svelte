@@ -56,5 +56,3 @@
 {/if}
 
 <svelte:window on:resize={calculateHeight} />
-
-<div class="context-menu" />
