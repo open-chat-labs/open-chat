@@ -328,6 +328,8 @@ export class ChatController {
         this.loading.set(true);
         const criteria = this.previousMessagesCriteria();
 
+        console.log("Loading previous: ", criteria);
+
         const eventsResponse = criteria
             ? await this.loadEvents(criteria[0], criteria[1])
             : undefined;

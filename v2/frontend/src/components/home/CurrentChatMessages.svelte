@@ -139,6 +139,7 @@
             if ($focusMessageIndex !== undefined) {
                 scrollToMessageIndex($focusMessageIndex);
             } else {
+                console.log("Scroll height reseting scroll:  ", messagesDiv.scrollHeight);
                 const extraHeight = messagesDiv.scrollHeight - scrollHeight;
                 messagesDiv.scrollTop = scrollTop + extraHeight;
             }
@@ -159,6 +160,7 @@
                 messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD &&
                 controller.morePreviousMessagesAvailable()
             ) {
+                console.log("Scroll height before loading more: ", messagesDiv.scrollHeight);
                 controller.loadPreviousMessages();
             }
 
@@ -318,8 +320,16 @@
 
         if ($chatStore && $chatStore.chatId === controller.chatId) {
             fromBottomVal = fromBottom();
+            console.log("Scroll height receiving chat event: ", messagesDiv.scrollHeight);
+            if (messagesDiv.scrollHeight > 12000) {
+                console.log("Scroll height is bizarrely wrong");
+            }
             switch ($chatStore.event.kind) {
                 case "loaded_previous_messages":
+                    console.log(
+                        "Scroll height receiving loaded_previous_messages: ",
+                        messagesDiv.scrollHeight
+                    );
                     tick().then(resetScroll);
                     break;
                 case "loaded_new_messages":
