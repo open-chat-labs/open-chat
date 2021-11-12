@@ -1,7 +1,7 @@
 use crate::block_on;
 use canister_client::operations::*;
 use canister_client::utils::{build_ic_agent, build_identity};
-use canister_client::TestIdentity;
+use canister_client::{TestIdentity, USER2_DEFAULT_NAME};
 use ic_fondue::ic_manager::IcHandle;
 use types::{MessageContent, TextContent};
 
@@ -16,29 +16,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let identity = build_identity(TestIdentity::Controller);
     let canister_ids = create_and_install_service_canisters(identity, url.clone(), true).await;
 
-    let user2_name = "Bob".to_string();
-
-    let (user1_id, user2_id, user3_id) = futures::future::join3(
-        register_user(
-            url.clone(),
-            TestIdentity::User1,
-            Some("Andy".to_string()),
-            canister_ids.user_index,
-        ),
-        register_user(
-            url.clone(),
-            TestIdentity::User2,
-            Some(user2_name.clone()),
-            canister_ids.user_index,
-        ),
-        register_user(
-            url.clone(),
-            TestIdentity::User3,
-            Some("Charlie".to_string()),
-            canister_ids.user_index,
-        ),
-    )
-    .await;
+    let (user1_id, user2_id, user3_id) = register_3_default_users(url.clone(), canister_ids.user_index).await;
 
     let user1_identity = build_identity(TestIdentity::User1);
     let user2_identity = build_identity(TestIdentity::User2);
@@ -70,7 +48,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let direct_message_args1 = user_canister::send_message::Args {
         message_id: 1.into(),
         recipient: user1_id,
-        sender_name: user2_name.clone(),
+        sender_name: USER2_DEFAULT_NAME.to_string(),
         content: MessageContent::Text(TextContent { text: "1".to_string() }),
         replies_to: None,
     };
@@ -79,7 +57,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let direct_message_args2 = user_canister::send_message::Args {
         message_id: 2.into(),
         recipient: user1_id,
-        sender_name: user2_name.clone(),
+        sender_name: USER2_DEFAULT_NAME.to_string(),
         content: MessageContent::Text(TextContent { text: "2".to_string() }),
         replies_to: None,
     };
@@ -88,7 +66,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let group_message_args1 = group_canister::send_message::Args {
         message_id: 3.into(),
         content: MessageContent::Text(TextContent { text: "3".to_string() }),
-        sender_name: user2_name.clone(),
+        sender_name: USER2_DEFAULT_NAME.to_string(),
         replies_to: None,
     };
     let result3 = send_group_message(&user2_agent, chat_id1, &group_message_args1).await;
@@ -96,12 +74,12 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let group_message_args2 = group_canister::send_message::Args {
         message_id: 4.into(),
         content: MessageContent::Text(TextContent { text: "4".to_string() }),
-        sender_name: user2_name.clone(),
+        sender_name: USER2_DEFAULT_NAME.to_string(),
         replies_to: None,
     };
     let result4 = send_group_message(&user2_agent, chat_id2, &group_message_args2).await;
 
-    let initial_state_args = user_canister::initial_state::Args { };
+    let initial_state_args = user_canister::initial_state::Args {};
     let initial_state_response = user_canister_client::initial_state(&user1_agent, &user1_id.into(), &initial_state_args).await;
 
     if let user_canister::initial_state::Response::Success(r) = initial_state_response {

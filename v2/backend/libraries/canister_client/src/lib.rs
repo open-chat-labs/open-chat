@@ -13,6 +13,10 @@ pub enum TestIdentity {
     User3,
 }
 
+pub const USER1_DEFAULT_NAME: &str = "Andy";
+pub const USER2_DEFAULT_NAME: &str = "Bob";
+pub const USER3_DEFAULT_NAME: &str = "Charlie";
+
 #[derive(Debug)]
 pub enum CanisterName {
     Group,

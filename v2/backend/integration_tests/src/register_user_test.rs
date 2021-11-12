@@ -15,7 +15,7 @@ async fn register_user_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let identity = build_identity(TestIdentity::Controller);
     let canister_ids = create_and_install_service_canisters(identity, url.clone(), true).await;
 
-    register_user(url, TestIdentity::User1, Some("Andy".to_string()), canister_ids.user_index).await;
+    register_default_user(url, canister_ids.user_index).await;
 }
 
 pub fn register_existing_user_test(handle: IcHandle, ctx: &fondue::pot::Context) {
@@ -29,13 +29,7 @@ async fn register_existing_user_test_impl(handle: IcHandle, ctx: &fondue::pot::C
     let identity = build_identity(TestIdentity::Controller);
     let canister_ids = create_and_install_service_canisters(identity, url.clone(), true).await;
 
-    register_user(
-        url.clone(),
-        TestIdentity::User1,
-        Some("Andy".to_string()),
-        canister_ids.user_index,
-    )
-    .await;
+    register_default_user(url.clone(), canister_ids.user_index).await;
 
     let submit_phone_number_args = user_index_canister::submit_phone_number::Args {
         phone_number: types::PhoneNumber {
