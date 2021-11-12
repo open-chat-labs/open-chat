@@ -7,8 +7,8 @@ const MAX_LENGTH: usize = 15;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct PhoneNumber {
-    country_code: u16,
-    number: String,
+    pub country_code: u16,
+    pub number: String,
 }
 
 impl PhoneNumber {

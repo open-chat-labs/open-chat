@@ -155,7 +155,14 @@ ln -fs "${target}/nodemanager" local-bin/
 ln -fs "${target}/replica" local-bin/replica_base
 ln -fs "${target}/nodemanager" local-bin/nodemanager_base
 ln -fs "${target}/ic-rosetta-api" local-bin/
-cp ../../target/wasm32-unknown-unknown/release/*-opt.wasm local-bin/
+
+ln -fs ../../../target/wasm32-unknown-unknown/release/group_index_canister_impl-opt.wasm local-bin/
+ln -fs ../../../target/wasm32-unknown-unknown/release/notifications_canister_impl-opt.wasm local-bin/
+ln -fs ../../../target/wasm32-unknown-unknown/release/online_users_aggregator_canister_impl-opt.wasm local-bin/
+ln -fs ../../../target/wasm32-unknown-unknown/release/user_index_canister_impl-opt.wasm local-bin/
+
+ln -fs ../../../target/wasm32-unknown-unknown/release/group_canister_impl-opt.wasm.xz local-bin/
+ln -fs ../../../target/wasm32-unknown-unknown/release/user_canister_impl-opt.wasm.xz local-bin/
 
 ## Update path; because we must run this script from the integration_tests directory, we know local-bin is in here.
 PATH="$PWD/local-bin:$PATH"
