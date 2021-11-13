@@ -8,7 +8,7 @@ import type {
 } from "../domain/chat/chat";
 import { rollbar } from "./logging";
 
-export const MAX_MSGS = 20;
+export const MAX_MSGS = 30;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 

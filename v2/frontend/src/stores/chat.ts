@@ -1,5 +1,3 @@
-import { writable } from "svelte/store";
-
 export type ChatState = {
     chatId: string;
     event: ChatLifecycleEvent;
@@ -24,12 +22,3 @@ type SendingMessage = {
 type ChatUpdated = { kind: "chat_updated" };
 type LoadedPreviousMessages = { kind: "loaded_previous_messages" };
 type ScrollToMessageIndex = { kind: "scroll_to_message_index"; messageIndex: number };
-
-const { subscribe, set, update } = writable<ChatState | undefined>(undefined);
-
-export const chatStore = {
-    subscribe,
-    set,
-    clear: (): void =>
-        update((val) => (val ? { chatId: val.chatId, event: { kind: "nothing" } } : undefined)),
-};

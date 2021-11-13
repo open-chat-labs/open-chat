@@ -42,7 +42,7 @@ import { missingUserIds, userIsOnline } from "../domain/user/user.utils";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
-import { chatStore } from "../stores/chat";
+import type { ChatState } from "../stores/chat";
 import type { IMessageReadTracker } from "../stores/markRead";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
@@ -72,6 +72,7 @@ export class ChatController {
     private initialised = false;
     private pruneInterval: number | undefined;
     private groupDetails: GroupChatDetails | undefined;
+    private onEvent?: (evt: ChatState) => void;
 
     constructor(
         public api: ServiceContainer,
@@ -130,6 +131,10 @@ export class ChatController {
 
     get kind(): "direct_chat" | "group_chat" {
         return this.chatVal.kind;
+    }
+
+    subscribe(fn: (evt: ChatState) => void): void {
+        this.onEvent = fn;
     }
 
     async loadDetails(): Promise<void> {
@@ -302,6 +307,12 @@ export class ChatController {
         );
     }
 
+    private raiseEvent(evt: ChatState): void {
+        if (this.onEvent) {
+            this.onEvent(evt);
+        }
+    }
+
     public async loadNewMessages(): Promise<void> {
         this.loading.set(true);
         const criteria = this.newMessageCriteria();
@@ -317,7 +328,7 @@ export class ChatController {
 
         await this.handleEventsResponse(eventsResponse);
 
-        chatStore.set({
+        this.raiseEvent({
             chatId: this.chatId,
             event: { kind: "loaded_new_messages" },
         });
@@ -339,7 +350,7 @@ export class ChatController {
 
         await this.handleEventsResponse(eventsResponse);
 
-        chatStore.set({
+        this.raiseEvent({
             chatId: this.chatId,
             event: { kind: "loaded_previous_messages" },
         });
@@ -397,7 +408,7 @@ export class ChatController {
             this.chat.update((chat) =>
                 sentByMe ? setLastMessageOnChat(chat, messageEvent) : chat
             );
-            chatStore.set({
+            this.raiseEvent({
                 chatId: this.chatId,
                 event: {
                     kind: "sending_message",
@@ -515,7 +526,7 @@ export class ChatController {
     async goToMessageIndex(messageIndex: number): Promise<void> {
         this.focusMessageIndex.set(messageIndex);
         await this.loadEventWindow(messageIndex);
-        chatStore.set({
+        this.raiseEvent({
             chatId: this.chatId,
             event: { kind: "scroll_to_message_index", messageIndex: messageIndex },
         });
@@ -528,7 +539,7 @@ export class ChatController {
 
         this.updateDetails();
 
-        chatStore.set({
+        this.raiseEvent({
             chatId: this.chatId,
             event: { kind: "chat_updated" },
         });
