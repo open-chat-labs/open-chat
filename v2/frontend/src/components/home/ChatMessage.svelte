@@ -211,42 +211,36 @@
                 <pre>ReadByUs: {readByMe}</pre>
             {/if}
 
-            <div class:rtl={$rtlStore} class:fill class="meta-time-and-ticks">
-                <!-- {#if msg.edited}
-                    <span class="edited">{$_("edited")}</span>
-                {/if} -->
-                {#if metaData && !deleted}
+            {#if metaData && !deleted}
+                <span class="meta-wrapper">
                     {#await metaData then meta}
-                        <div class="meta">
-                            {meta}
-                        </div>
+                        {meta}
                     {/await}
-                {/if}
-                <div class="time-and-ticks">
-                    <span class="time">
-                        {toShortTimeString(new Date(Number(timestamp)))}
-                    </span>
-                    {#if me}
-                        {#if confirmed}
+                </span>
+            {/if}
+
+            <div class="time-and-ticks">
+                <span class="time">
+                    {toShortTimeString(new Date(Number(timestamp)))}
+                </span>
+                {#if me}
+                    {#if confirmed}
+                        <CheckCircle size={"0.9em"} color={"var(--currentChat-msg-me-txt)"} />
+                    {:else}
+                        <CheckCircleOutline
+                            size={"0.9em"}
+                            color={"var(--currentChat-msg-me-txt)"} />
+                    {/if}
+                    {#if chatType === "direct_chat"}
+                        {#if readByThem}
                             <CheckCircle size={"0.9em"} color={"var(--currentChat-msg-me-txt)"} />
                         {:else}
                             <CheckCircleOutline
                                 size={"0.9em"}
                                 color={"var(--currentChat-msg-me-txt)"} />
                         {/if}
-                        {#if chatType === "direct_chat"}
-                            {#if readByThem}
-                                <CheckCircle
-                                    size={"0.9em"}
-                                    color={"var(--currentChat-msg-me-txt)"} />
-                            {:else}
-                                <CheckCircleOutline
-                                    size={"0.9em"}
-                                    color={"var(--currentChat-msg-me-txt)"} />
-                            {/if}
-                        {/if}
                     {/if}
-                </div>
+                {/if}
             </div>
 
             {#if !deleted}
@@ -369,45 +363,40 @@
         }
     }
 
-    .meta-time-and-ticks {
+    .time-and-ticks {
+        @include font(light, normal, fs-60);
         display: flex;
         align-items: center;
-        justify-content: flex-end;
-        @include font(light, normal, fs-60);
-
-        &.fill {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            background-color: rgba(255, 255, 255, 0.5);
-            border-radius: $sp4 0 0 0;
-            padding: $sp2 $sp4;
-
-            &.rtl {
-                left: 0;
-                right: unset;
-                border-radius: 0 $sp4 0 0;
-            }
-        }
+        float: right;
+        margin-top: 6px;
 
         .time {
             margin: 0 $sp2;
         }
+    }
 
-        // .edited {
-        //     @include font(light, italic, fs-60);
-        // }
+    .message-bubble.fill .time-and-ticks {
+        position: absolute;
+        padding: $sp3;
+        bottom: 0;
+        right: 0;
+        background-color: rgba(0, 0, 0, 0.3);
+        color: #fff;
+        border-radius: $sp4 0 0 0;
+        padding: $sp3 $sp4;
 
-        .meta {
-            flex: 1;
-            @include font(light, normal, fs-60);
-            @include ellipsis();
+        &.rtl {
+            left: 0;
+            right: unset;
+            border-radius: 0 $sp4 0 0;
         }
+    }
 
-        .time-and-ticks {
-            display: flex;
-            align-items: center;
-        }
+    .meta-wrapper {
+        display: inline-block;
+        align-items: center;
+        @include font(light, normal, fs-60);
+        @include ellipsis();
     }
 
     .sender {
@@ -415,7 +404,8 @@
 
         &.fill {
             position: absolute;
-            background-color: rgba(255, 255, 255, 0.5);
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #fff;
             padding: $sp2 $sp4;
             border-radius: 0 0 $sp4 0;
 
@@ -486,7 +476,7 @@
             transition: opacity 200ms ease-in-out;
             display: flex;
             opacity: 0;
-            padding: $sp3;
+            // padding: $sp3;
             justify-content: center;
             align-items: center;
 
@@ -506,7 +496,7 @@
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
             border ease-in-out 300ms, transform ease-in-out 200ms;
         position: relative;
-        padding: $sp3 $sp3 $sp2 $sp3;
+        padding: 6px $sp3 6px $sp3;
         border: 1px solid var(--currentChat-msg-bd);
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
@@ -583,11 +573,6 @@
             .time-and-ticks {
                 right: unset;
                 left: $sp3;
-            }
-
-            .meta {
-                left: unset;
-                right: $sp4;
             }
         }
 

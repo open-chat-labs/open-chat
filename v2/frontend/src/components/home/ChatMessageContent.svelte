@@ -49,3 +49,9 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {/if}
+
+<style type="text/scss">
+    .text-content {
+        display: inline-block;
+    }
+</style>
