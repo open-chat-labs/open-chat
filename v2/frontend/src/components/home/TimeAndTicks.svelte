@@ -1,0 +1,88 @@
+<svelte:options immutable={true} />
+
+<script lang="ts">
+    import { toShortTimeString } from "../../utils/date";
+    import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
+    import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
+    import { rtlStore } from "../../stores/rtl";
+
+    export let timestamp: bigint;
+    export let confirmed: boolean;
+    export let chatType: "group_chat" | "direct_chat";
+    export let readByThem: boolean;
+    export let me: boolean;
+    export let fill: boolean;
+    export let inline: boolean = false;
+
+    let iconColor = fill ? "#fff" : "var(--currentChat-msg-me-txt)";
+</script>
+
+<div class="time-and-ticks" class:fill class:inline class:rtl={$rtlStore}>
+    <span class="time">
+        {toShortTimeString(new Date(Number(timestamp)))}
+    </span>
+    {#if me}
+        {#if confirmed}
+            <CheckCircle size={"0.9em"} color={iconColor} />
+        {:else}
+            <CheckCircleOutline size={"0.9em"} color={iconColor} />
+        {/if}
+        {#if chatType === "direct_chat"}
+            {#if readByThem}
+                <CheckCircle size={"0.9em"} color={iconColor} />
+            {:else}
+                <CheckCircleOutline size={"0.9em"} color={iconColor} />
+            {/if}
+        {/if}
+    {/if}
+</div>
+
+<style type="text/scss">
+    :global(.time-and-ticks > svg) {
+        width: 16px;
+        height: 16px;
+    }
+    .time-and-ticks {
+        @include font(light, normal, fs-50);
+        display: flex;
+        align-items: center;
+        float: right;
+        margin-top: 6px;
+
+        &.rtl {
+            clear: right;
+            float: left;
+        }
+
+        .time {
+            margin: 0 $sp2 0 $sp3;
+        }
+
+        &.rtl .time {
+            margin: 0 $sp3 0 $sp2;
+        }
+
+        &.inline {
+            align-items: flex-end;
+            shape-outside: inset(calc(100% - 10px) 0 0);
+            margin-top: 0;
+            height: 100%;
+        }
+
+        &.fill {
+            position: absolute;
+            padding: $sp3;
+            bottom: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            border-radius: $sp4 0 0 0;
+
+            &.rtl {
+                left: 0;
+                right: unset;
+                border-radius: 0 $sp4 0 0;
+            }
+        }
+    }
+</style>

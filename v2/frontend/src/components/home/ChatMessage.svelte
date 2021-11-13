@@ -19,16 +19,15 @@
     import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
-    import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import { toShortTimeString } from "../../utils/date";
     import { fillMessage, messageMetaData } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import TimeAndTicks from "./TimeAndTicks.svelte";
+    import { getContentAsText } from "../../domain/chat/chat.utils";
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -200,7 +199,23 @@
                 {/if}
             {/if}
 
-            <ChatMessageContent {fill} {me} content={msg.content} />
+            {#if msg.content.kind === "text_content"}
+                <ChatMessageContent {fill} {me} content={msg.content}>
+                    <TimeAndTicks
+                        inline={true}
+                        {fill}
+                        {timestamp}
+                        {me}
+                        {confirmed}
+                        {readByThem}
+                        {chatType} />
+                </ChatMessageContent>
+            {:else}
+                <ChatMessageContent {fill} {me} content={msg.content} />
+                {#if !deleted}
+                    <TimeAndTicks {fill} {timestamp} {me} {confirmed} {readByThem} {chatType} />
+                {/if}
+            {/if}
 
             {#if debug}
                 <pre>EventIdx: {eventIndex}</pre>
@@ -218,30 +233,6 @@
                     {/await}
                 </span>
             {/if}
-
-            <div class="time-and-ticks">
-                <span class="time">
-                    {toShortTimeString(new Date(Number(timestamp)))}
-                </span>
-                {#if me}
-                    {#if confirmed}
-                        <CheckCircle size={"0.9em"} color={"var(--currentChat-msg-me-txt)"} />
-                    {:else}
-                        <CheckCircleOutline
-                            size={"0.9em"}
-                            color={"var(--currentChat-msg-me-txt)"} />
-                    {/if}
-                    {#if chatType === "direct_chat"}
-                        {#if readByThem}
-                            <CheckCircle size={"0.9em"} color={"var(--currentChat-msg-me-txt)"} />
-                        {:else}
-                            <CheckCircleOutline
-                                size={"0.9em"}
-                                color={"var(--currentChat-msg-me-txt)"} />
-                        {/if}
-                    {/if}
-                {/if}
-            </div>
 
             {#if !deleted}
                 <div class="menu" class:rtl={$rtlStore}>
@@ -323,11 +314,6 @@
 <style type="text/scss">
     $size: 10px;
 
-    :global(.time-and-ticks > svg) {
-        width: 16px;
-        height: 16px;
-    }
-
     :global(.message .loading) {
         min-height: 100px;
         min-width: 250px;
@@ -360,35 +346,6 @@
     .message-wrapper {
         &.last {
             margin-bottom: $sp4;
-        }
-    }
-
-    .time-and-ticks {
-        @include font(light, normal, fs-60);
-        display: flex;
-        align-items: center;
-        float: right;
-        margin-top: 6px;
-
-        .time {
-            margin: 0 $sp2;
-        }
-    }
-
-    .message-bubble.fill .time-and-ticks {
-        position: absolute;
-        padding: $sp3;
-        bottom: 0;
-        right: 0;
-        background-color: rgba(0, 0, 0, 0.3);
-        color: #fff;
-        border-radius: $sp4 0 0 0;
-        padding: $sp3 $sp4;
-
-        &.rtl {
-            left: 0;
-            right: unset;
-            border-radius: 0 $sp4 0 0;
         }
     }
 
@@ -476,7 +433,7 @@
             transition: opacity 200ms ease-in-out;
             display: flex;
             opacity: 0;
-            // padding: $sp3;
+            padding: 0 $sp3;
             justify-content: center;
             align-items: center;
 
@@ -568,11 +525,6 @@
                 &:not(.first):not(.last) {
                     border-radius: $inner-radius $radius $radius $inner-radius;
                 }
-            }
-
-            .time-and-ticks {
-                right: unset;
-                left: $sp3;
             }
         }
 

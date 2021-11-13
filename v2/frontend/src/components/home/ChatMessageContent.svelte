@@ -32,7 +32,10 @@
 
 {#if content.kind === "text_content"}
     <div class="text-content">
-        <SvelteMarkdown source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} />
+        <div class="text-wrapper">
+            <slot />
+            <SvelteMarkdown source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} />
+        </div>
     </div>
 {:else if content.kind === "image_content"}
     <ImageContent {fill} {content} />
@@ -51,7 +54,11 @@
 {/if}
 
 <style type="text/scss">
+    :global(.text-wrapper > p) {
+        display: inline;
+    }
+
     .text-content {
-        display: inline-block;
+        display: flex;
     }
 </style>
