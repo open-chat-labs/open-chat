@@ -19,9 +19,12 @@
     import { notificationStatus } from "../../stores/notifications";
     import { askForNotificationPermission } from "../../utils/notifications";
     import { rtlStore } from "../../stores/rtl";
+    import { supported as notificationsSupported } from "../../utils/notifications";
     const dispatch = createEventDispatcher();
 
     export let user: PartialUserSummary;
+
+    let supportsNotifications = notificationsSupported();
 
     function newGroup() {
         dispatch("newGroup");
@@ -60,23 +63,25 @@
                         <Palette size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("changeTheme")}</span>
                     </MenuItem>
-                    {#if $notificationStatus !== "granted"}
-                        {#if $notificationStatus === "hard-denied"}
-                            <MenuItem>
-                                <BellOff size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
-                                <span slot="text">{$_("notificationsDisabled")}</span>
-                            </MenuItem>
+                    {#if supportsNotifications}
+                        {#if $notificationStatus !== "granted"}
+                            {#if $notificationStatus === "hard-denied"}
+                                <MenuItem>
+                                    <BellOff size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
+                                    <span slot="text">{$_("notificationsDisabled")}</span>
+                                </MenuItem>
+                            {:else}
+                                <MenuItem on:click={askForNotificationPermission}>
+                                    <Bell size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
+                                    <span slot="text">{$_("enableNotificationsMenu")}</span>
+                                </MenuItem>
+                            {/if}
                         {:else}
-                            <MenuItem on:click={askForNotificationPermission}>
-                                <Bell size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
-                                <span slot="text">{$_("enableNotificationsMenu")}</span>
+                            <MenuItem on:click={unsubscribeNotifications}>
+                                <BellOff size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
+                                <span slot="text">{$_("disableNotificationsMenu")}</span>
                             </MenuItem>
                         {/if}
-                    {:else}
-                        <MenuItem on:click={unsubscribeNotifications}>
-                            <BellOff size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
-                            <span slot="text">{$_("disableNotificationsMenu")}</span>
-                        </MenuItem>
                     {/if}
                     <MenuItem on:click={() => dispatch("logout")}>
                         <Logout size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />

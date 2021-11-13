@@ -29,11 +29,15 @@
     import type { Writable } from "svelte/store";
     import { toastStore } from "../../stores/toast";
     import Link from "../Link.svelte";
+    import { supported as notificationsSupported } from "../../utils/notifications";
+
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: Writable<ChatSummary>;
     export let blocked: boolean;
     export let unreadMessages: number;
+
+    let supportsNotifications = notificationsSupported();
 
     $: isGroup = $selectedChatSummary.kind === "group_chat";
 
@@ -252,16 +256,18 @@
                             </MenuItem>
                         {/if}
                     {/if}
-                    {#if $selectedChatSummary.notificationsMuted === true}
-                        <MenuItem on:click={toggleMuteNotifications}>
-                            <Bell size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
-                            <div slot="text">{$_("unmuteNotifications")}</div>
-                        </MenuItem>
-                    {:else}
-                        <MenuItem on:click={toggleMuteNotifications}>
-                            <BellOff size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
-                            <div slot="text">{$_("muteNotifications")}</div>
-                        </MenuItem>
+                    {#if supportsNotifications}
+                        {#if $selectedChatSummary.notificationsMuted === true}
+                            <MenuItem on:click={toggleMuteNotifications}>
+                                <Bell size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
+                                <div slot="text">{$_("unmuteNotifications")}</div>
+                            </MenuItem>
+                        {:else}
+                            <MenuItem on:click={toggleMuteNotifications}>
+                                <BellOff size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
+                                <div slot="text">{$_("muteNotifications")}</div>
+                            </MenuItem>
+                        {/if}
                     {/if}
                     {#if unreadMessages > 0}
                         <MenuItem on:click={markAllRead}>
