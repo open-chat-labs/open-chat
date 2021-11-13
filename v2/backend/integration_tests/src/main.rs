@@ -7,6 +7,7 @@ use tokio::runtime::Runtime as TRuntime;
 
 mod create_group_test;
 mod get_updates_test;
+mod make_admin_test;
 mod register_user_test;
 mod send_message_test;
 
@@ -33,11 +34,12 @@ fn tests_pot() -> pot::Pot<IcManager> {
         "Tests",
         configure(),
         steps! {
+            create_group_test::create_group_test,
+            get_updates_test::get_updates_test,
+            make_admin_test::make_admin_test,
             register_user_test::register_user_test,
             register_user_test::register_existing_user_test,
-            send_message_test::send_message_test,
-            create_group_test::create_group_test,
-            get_updates_test::get_updates_test
+            send_message_test::send_message_test
         }
     )
 }

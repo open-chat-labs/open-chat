@@ -5,7 +5,7 @@ macro_rules! generate_update_call {
             agent: &ic_agent::Agent,
             canister_id: &candid::Principal,
             args: &$method_name::Args,
-        ) -> $method_name::Response {
+        ) -> Result<$method_name::Response, ic_agent::AgentError> {
             use candid::{Decode, Encode};
 
             let method_name = stringify!($method_name);
@@ -13,11 +13,10 @@ macro_rules! generate_update_call {
                 .update(canister_id, method_name)
                 .with_arg(Encode!(args).expect(&format!("Failed to serialize '{}' args", method_name)))
                 .call_and_wait(delay())
-                .await
-                .expect(&format!("Failed to call '{}'", method_name));
+                .await?;
 
-            Decode!(response.as_slice(), $method_name::Response)
-                .expect(&format!("Failed to deserialize '{}' response", method_name))
+            Ok(Decode!(response.as_slice(), $method_name::Response)
+                .expect(&format!("Failed to deserialize '{}' response", method_name)))
         }
     };
 }
@@ -29,7 +28,7 @@ macro_rules! generate_query_call {
             agent: &ic_agent::Agent,
             canister_id: &candid::Principal,
             args: &$method_name::Args,
-        ) -> $method_name::Response {
+        ) -> Result<$method_name::Response, ic_agent::AgentError> {
             use candid::{Decode, Encode};
 
             let method_name = stringify!($method_name);
@@ -37,11 +36,10 @@ macro_rules! generate_query_call {
                 .query(canister_id, method_name)
                 .with_arg(Encode!(args).expect(&format!("Failed to serialize '{}' args", method_name)))
                 .call()
-                .await
-                .expect(&format!("Failed to call '{}'", method_name));
+                .await?;
 
-            Decode!(response.as_slice(), $method_name::Response)
-                .expect(&format!("Failed to deserialize '{}' response", method_name))
+            Ok(Decode!(response.as_slice(), $method_name::Response)
+                .expect(&format!("Failed to deserialize '{}' response", method_name)))
         }
     };
 }

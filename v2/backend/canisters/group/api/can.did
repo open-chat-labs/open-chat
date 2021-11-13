@@ -167,6 +167,7 @@ type RemoveAdminResponse =
         NotAuthorized;
         UserNotInGroup;
         CannotRemoveSelf;
+        CannotRemoveUser;
     };
 
 type PutChunkArgs =

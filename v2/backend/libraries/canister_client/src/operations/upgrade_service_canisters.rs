@@ -34,6 +34,7 @@ pub async fn upgrade_online_users_aggregator_canister(
         CanisterName::OnlineUsersAggregator,
     )
     .await;
+
     println!("Online users aggregator canister upgraded");
 }
 
@@ -53,7 +54,10 @@ pub async fn upgrade_group_canister(
         },
     };
 
-    let response = group_index_canister_client::update_group_canister_wasm(&agent, &group_index_canister_id, &args).await;
+    let response = group_index_canister_client::update_group_canister_wasm(&agent, &group_index_canister_id, &args)
+        .await
+        .unwrap();
+
     if !matches!(response, group_index_canister::update_group_canister_wasm::Response::Success) {
         panic!("{:?}", response);
     }
@@ -71,7 +75,10 @@ pub async fn upgrade_user_canister(identity: BasicIdentity, url: String, user_in
         },
     };
 
-    let response = user_index_canister_client::update_user_canister_wasm(&agent, &user_index_canister_id, &args).await;
+    let response = user_index_canister_client::update_user_canister_wasm(&agent, &user_index_canister_id, &args)
+        .await
+        .unwrap();
+
     if !matches!(response, user_index_canister::update_user_canister_wasm::Response::Success) {
         panic!("{:?}", response);
     }

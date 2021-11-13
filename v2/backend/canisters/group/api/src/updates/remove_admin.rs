@@ -14,4 +14,5 @@ pub enum Response {
     NotAuthorized,
     UserNotInGroup,
     CannotRemoveSelf,
+    CannotRemoveUser,
 }
