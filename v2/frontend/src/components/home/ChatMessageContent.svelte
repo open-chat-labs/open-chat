@@ -58,6 +58,10 @@
         display: inline;
     }
 
+    .text-wrapper {
+        width: 100%;
+    }
+
     .text-content {
         display: flex;
     }
