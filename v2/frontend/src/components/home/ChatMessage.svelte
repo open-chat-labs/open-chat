@@ -27,7 +27,6 @@
     import UnresolvedReply from "./UnresolvedReply.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import TimeAndTicks from "./TimeAndTicks.svelte";
-    import { getContentAsText } from "../../domain/chat/chat.utils";
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
