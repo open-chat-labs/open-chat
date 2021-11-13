@@ -8,6 +8,7 @@
     import Caption from "./Caption.svelte";
 
     export let content: VideoContent;
+    export let fill: boolean;
 
     let landscape = content.height < content.width;
     let height = 0;
@@ -30,6 +31,7 @@
         style={`height: ${height}px`}
         poster={content.imageData.blobUrl}
         class:landscape
+        class:fill
         controls>
         <track kind="captions" />
         {#if content.videoData.blobUrl}
@@ -51,6 +53,10 @@
             max-width: none;
             width: auto;
             display: block;
+
+            &:not(.fill) {
+                border-radius: $sp4;
+            }
 
             &.landscape {
                 max-width: calc(var(--vh, 1vh) * 50);

@@ -203,8 +203,12 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         icon: {
             color: dark25,
-            hv: dark25,
+            // hv: dark25,
+            hv: "rgba(255,255,255,0.2)",
             txt: dark60,
+            inverted: {
+                hv: "rgba(0,0,0,0.1)",
+            },
         },
         spinner: dark25,
 

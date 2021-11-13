@@ -33,6 +33,7 @@
     import type { UserLookup } from "../../domain/user/user";
     import type { ChatController } from "../../fsm/chat.controller";
     import type { MessageReadState } from "../../stores/markRead";
+    import { menuStore } from "../../stores/menu";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -110,7 +111,6 @@
         const idx =
             unreadMessages > 0 ? firstUnreadMessageIndex : $chat.latestMessage?.event.messageIndex;
 
-        console.log("scrolling to message index: ", idx);
         if (idx !== undefined) {
             scrollToMessageIndex(idx);
         }
@@ -152,6 +152,9 @@
     }
 
     function onScroll() {
+        menuStore.hideMenu();
+        scrollHeight = messagesDiv.scrollHeight;
+        scrollTop = messagesDiv.scrollTop;
         if (!$loading) {
             if (
                 messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD &&
@@ -307,11 +310,6 @@
         if (controller.chatId !== currentChatId) {
             currentChatId = controller.chatId;
             initialised = false;
-        }
-
-        if (messagesDiv) {
-            scrollHeight = messagesDiv.scrollHeight;
-            scrollTop = messagesDiv.scrollTop;
         }
 
         if ($chatStore && $chatStore.chatId === controller.chatId) {

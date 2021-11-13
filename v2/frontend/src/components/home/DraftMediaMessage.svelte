@@ -14,7 +14,7 @@
 
 <div class="msg-preview" class:rtl={$rtlStore}>
     {#if draft.kind === "video_content"}
-        <VideoContent content={draft} />
+        <VideoContent fill={false} content={draft} />
     {:else if draft.kind === "audio_content"}
         <AudioContent content={draft} />
     {:else if draft.kind === "image_content"}

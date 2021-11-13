@@ -10,6 +10,7 @@
 
     export let image: string | null | undefined;
     export let disabled: boolean = false;
+    export let small: boolean = false;
 
     let fileinput: HTMLInputElement;
     let avatar: string | null | undefined;
@@ -98,7 +99,7 @@
     bind:this={fileinput} />
 
 <div class="photo-section" on:click={addPhoto}>
-    <div class="photo-icon">
+    <div class:small class="photo-icon">
         {#if image}
             <div class="avatar" style={`background-image: url(${image})`} />
         {:else}
@@ -122,13 +123,17 @@
     }
 
     .photo-icon {
-        border: 1px solid #ccc;
         border-radius: 50%;
         width: 90px;
         height: 90px;
         display: flex;
         justify-content: center;
         align-items: center;
+
+        &.small {
+            width: 45px;
+            height: 45px;
+        }
 
         .avatar {
             width: 100%;

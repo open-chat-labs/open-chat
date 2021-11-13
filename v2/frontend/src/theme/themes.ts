@@ -1,6 +1,7 @@
 import { originalTheme } from "./original";
 import { darkTheme } from "./dark";
 import { lightTheme } from "./light";
+import { writable } from "svelte/store";
 
 // these are the gradients used in the logo (from light to dark)
 // const blueFrom = "#28aae2";
@@ -227,6 +228,9 @@ export interface Theme {
         color: string;
         hv: string;
         txt: string;
+        inverted: {
+            hv: string;
+        };
     };
 
     scrollbar: {
@@ -319,6 +323,7 @@ export function loadAndApplySavedTheme(): string {
     const themeName = localStorage.getItem("openchat_theme");
     const theme = themeByName(themeName);
     writeCssVars("--", theme);
+    themeStore.set(theme);
     return themeName ?? "light";
 }
 
@@ -326,4 +331,7 @@ export function saveSeletedTheme(themeName: string): void {
     const theme = themeByName(themeName);
     writeCssVars("--", theme);
     localStorage.setItem("openchat_theme", themeName);
+    themeStore.set(theme);
 }
+
+export const themeStore = writable<Theme>(themeByName("light"));

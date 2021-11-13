@@ -1,6 +1,4 @@
 <script lang="ts">
-    import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
-    import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { rtlStore } from "../../stores/rtl";
@@ -60,11 +58,12 @@
     class="chat-summary"
     class:first={index === 0}
     class:selected
+    class:rtl={$rtlStore}
     href={`/#/${chatSummary.chatId}`}>
     <div class="avatar">
         <Avatar {blocked} url={chat.avatarUrl} status={chat.userStatus} size={AvatarSize.Small} />
     </div>
-    <div class="details">
+    <div class="details" class:rtl={$rtlStore}>
         <div class="name-date">
             <h4 class="chat-name">{chat.name}</h4>
         </div>
@@ -73,25 +72,20 @@
         {:else}
             <div class="chat-msg">{lastMessage}</div>
         {/if}
-        {#if unreadMessages > 0}
-            <div
-                in:pop={{ duration: 1500 }}
-                title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
-                class:rtl={$rtlStore}
-                class="unread-msgs">
-                {unreadMessages > 9 ? "9+" : unreadMessages}
-            </div>
-        {/if}
     </div>
     <!-- this date formatting is OK for now but we might want to use something like this: 
     https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
     <div class:rtl={$rtlStore} class="chat-date">
         {formatMessageDate(new Date(Number(displayDate)))}
     </div>
-    {#if $rtlStore}
-        <div class="icon rtl"><ChevronLeft /></div>
-    {:else}
-        <div class="icon"><ChevronRight /></div>
+    {#if unreadMessages > 0}
+        <div
+            in:pop={{ duration: 1500 }}
+            title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
+            class:rtl={$rtlStore}
+            class="unread-msgs">
+            {unreadMessages > 9 ? "9+" : unreadMessages}
+        </div>
     {/if}
 </a>
 
@@ -117,32 +111,41 @@
         &.selected::before {
             content: "";
             position: absolute;
-            left: 0;
             height: 100%;
             width: $sp2;
             background-color: var(--chatSummary-bd-selected);
+            left: 0;
+            &.rtl {
+                right: 0;
+            }
+        }
+
+        &.selected.rtl::before {
+            right: 0;
         }
 
         &:hover,
         &.selected {
             background-color: var(--chatSummary-hv);
-
-            .icon {
-                opacity: 1;
-            }
         }
     }
     .avatar {
-        flex: 0 0 55px;
+        flex: 0 0 40px;
     }
     .details {
         flex: 1;
-        padding: 0 $sp2;
         display: flex;
         flex-direction: column;
         justify-content: center;
         height: $sp7;
         overflow: hidden;
+
+        &:not(.rtl) {
+            padding: 0 $sp4 0 $sp3;
+        }
+        &.rtl {
+            padding: 0 $sp3 0 $sp4;
+        }
 
         .name-date {
             display: flex;
@@ -175,20 +178,6 @@
         }
     }
 
-    .icon {
-        position: absolute;
-        top: calc(50% - 8px);
-        opacity: 0;
-        transition: opactity ease-in-out 300ms;
-        color: var(--button-bg);
-        &:not(.rtl) {
-            right: $sp3;
-        }
-        &.rtl {
-            left: $sp3;
-        }
-    }
-
     .unread-msgs {
         display: flex;
         justify-content: center;
@@ -202,14 +191,14 @@
         position: absolute;
         width: 18px;
         height: 18px;
-        bottom: 5px;
+        top: calc(50% - 4px);
 
         &:not(.rtl) {
-            left: 35px;
+            right: $sp3;
         }
 
         &.rtl {
-            right: 35px;
+            left: $sp3;
         }
     }
 </style>

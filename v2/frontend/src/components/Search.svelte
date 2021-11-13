@@ -9,12 +9,26 @@
     export let searching: boolean;
     export let placeholder: string = "searchPlaceholder";
 
+    let timer: number | undefined;
+
     function performSearch() {
         dispatch("searchEntered", searchTerm);
     }
     function clearSearch() {
         searchTerm = "";
         performSearch();
+    }
+    function keydown() {
+        if (timer !== undefined) {
+            window.clearTimeout(timer);
+        }
+        timer = window.setTimeout(() => {
+            if (searchTerm.length > 1) {
+                performSearch();
+            } else {
+                dispatch("searchCleared");
+            }
+        }, 300);
     }
 </script>
 
@@ -24,7 +38,12 @@
             <Magnify color={"#ccc"} />
         {/if}
     </span>
-    <input spellcheck="false" bind:value={searchTerm} type="text" placeholder={$_(placeholder)} />
+    <input
+        on:keydown={keydown}
+        spellcheck="false"
+        bind:value={searchTerm}
+        type="text"
+        placeholder={$_(placeholder)} />
     {#if searchTerm !== ""}
         <span on:click={clearSearch} class="icon close"><Close color={"#ccc"} /></span>
     {/if}

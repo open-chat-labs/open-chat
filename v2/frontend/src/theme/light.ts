@@ -3,6 +3,7 @@ import type { Theme } from "./themes";
 const sp3 = "8px";
 
 const orangeAccent = "#ff9505";
+const pinkAccent = "hotpink";
 
 export function lightTheme(): Theme {
     return {
@@ -13,7 +14,7 @@ export function lightTheme(): Theme {
         bg: "linear-gradient(#22A7F2, #5f2583)",
         txt: "#191919",
         error: "#CF6679",
-        accent: "hotpink",
+        accent: pinkAccent,
 
         notificationBar: {
             bg: orangeAccent,
@@ -126,11 +127,11 @@ export function lightTheme(): Theme {
 
         chatSummary: {
             bg: "white",
-            hv: "#efefef",
+            hv: "#ececec",
             txt1: "#191919",
             txt2: "#333",
             bd: "transparent",
-            "bd-selected": orangeAccent,
+            "bd-selected": pinkAccent,
             mb: sp3,
         },
 
@@ -140,9 +141,10 @@ export function lightTheme(): Theme {
             bg: "white",
             txt: "#191919",
             "disabled-txt": "#999999",
-            bd: "#cccccc",
+            // bd: "#cccccc",
+            bd: "rgba(0,0,0,0.05)",
             hv: "#efefef",
-            sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.5)",
+            sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.3)",
         },
 
         button: {
@@ -206,22 +208,30 @@ export function lightTheme(): Theme {
             msg: {
                 bg: "#ffffff",
                 txt: "#191919",
-                hv: "transparent",
+                hv: "#efefef",
                 bd: "transparent",
 
                 me: {
-                    bg: "#ff69b4",
+                    // bg: "#ff69b4",
+                    // hv: "#ff4fa7",
+                    // bd: "#ff69b4",
+
                     txt: "#ffffff",
-                    hv: "#ff4fa7",
-                    bd: "#ff69b4",
+                    bg: "#d62c7d",
+                    bd: "#d62c7d",
+                    hv: "#EA4091",
                 },
             },
         },
 
         icon: {
             color: "#cccccc",
-            hv: "#dddddd",
-            txt: "#aaa",
+            // hv: "#dddddd",
+            hv: "rgba(0,0,0,0.1)",
+            txt: "#888",
+            inverted: {
+                hv: "rgba(214,44,125,0.5)",
+            },
         },
 
         scrollbar: {

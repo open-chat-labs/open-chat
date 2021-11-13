@@ -8,6 +8,6 @@
 
 <style type="text/scss">
     .caption:not(:empty) {
-        margin-bottom: $sp3;
+        display: inline;
     }
 </style>

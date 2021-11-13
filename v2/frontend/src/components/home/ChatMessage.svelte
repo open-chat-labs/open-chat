@@ -19,16 +19,14 @@
     import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
-    import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import { toShortTimeString } from "../../utils/date";
     import { fillMessage, messageMetaData } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import TimeAndTicks from "./TimeAndTicks.svelte";
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -169,7 +167,7 @@
             <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
-                        <EmoticonLolOutline size={"1.2em"} color={"#fff"} />
+                        <EmoticonLolOutline size={"1.4em"} color={"#fff"} />
                     </HoverIcon>
                 </div>
             </div>
@@ -200,7 +198,23 @@
                 {/if}
             {/if}
 
-            <ChatMessageContent {fill} {me} content={msg.content} />
+            {#if msg.content.kind === "text_content"}
+                <ChatMessageContent {fill} {me} content={msg.content}>
+                    <TimeAndTicks
+                        inline={true}
+                        {fill}
+                        {timestamp}
+                        {me}
+                        {confirmed}
+                        {readByThem}
+                        {chatType} />
+                </ChatMessageContent>
+            {:else}
+                <ChatMessageContent {fill} {me} content={msg.content} />
+                {#if !deleted}
+                    <TimeAndTicks {fill} {timestamp} {me} {confirmed} {readByThem} {chatType} />
+                {/if}
+            {/if}
 
             {#if debug}
                 <pre>EventIdx: {eventIndex}</pre>
@@ -211,50 +225,22 @@
                 <pre>ReadByUs: {readByMe}</pre>
             {/if}
 
-            <div class:rtl={$rtlStore} class:fill class="meta-time-and-ticks">
-                <!-- {#if msg.edited}
-                    <span class="edited">{$_("edited")}</span>
-                {/if} -->
-                {#if metaData && !deleted}
+            {#if metaData && !deleted}
+                <span class="meta-wrapper">
                     {#await metaData then meta}
-                        <div class="meta">
-                            {meta}
-                        </div>
+                        {meta}
                     {/await}
-                {/if}
-                <div class="time-and-ticks">
-                    <span class="time">
-                        {toShortTimeString(new Date(Number(timestamp)))}
-                    </span>
-                    {#if me}
-                        {#if confirmed}
-                            <CheckCircle size={"0.9em"} color={"var(--currentChat-msg-me-txt)"} />
-                        {:else}
-                            <CheckCircleOutline
-                                size={"0.9em"}
-                                color={"var(--currentChat-msg-me-txt)"} />
-                        {/if}
-                        {#if chatType === "direct_chat"}
-                            {#if readByThem}
-                                <CheckCircle
-                                    size={"0.9em"}
-                                    color={"var(--currentChat-msg-me-txt)"} />
-                            {:else}
-                                <CheckCircleOutline
-                                    size={"0.9em"}
-                                    color={"var(--currentChat-msg-me-txt)"} />
-                            {/if}
-                        {/if}
-                    {/if}
-                </div>
-            </div>
+                </span>
+            {/if}
 
             {#if !deleted}
                 <div class="menu" class:rtl={$rtlStore}>
                     <MenuIcon>
                         <div class="menu-icon" slot="icon">
-                            <HoverIcon>
-                                <ChevronDown size={"1.2em"} color={me ? "#fff" : "#aaa"} />
+                            <HoverIcon compact={true}>
+                                <ChevronDown
+                                    size={"1.4em"}
+                                    color={me ? "#fff" : "var(--icon-txt)"} />
                             </HoverIcon>
                         </div>
                         <div slot="menu">
@@ -300,7 +286,7 @@
             <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
-                        <EmoticonLolOutline size={"1.2em"} color={"#fff"} />
+                        <EmoticonLolOutline size={"1.4em"} color={"#fff"} />
                     </HoverIcon>
                 </div>
             </div>
@@ -327,11 +313,6 @@
 <style type="text/scss">
     $size: 10px;
 
-    :global(.time-and-ticks > svg) {
-        width: 16px;
-        height: 16px;
-    }
-
     :global(.message .loading) {
         min-height: 100px;
         min-width: 250px;
@@ -345,51 +326,33 @@
         margin: 0 $sp4;
     }
 
+    :global(.message-bubble:hover .menu-icon .wrapper) {
+        background-color: var(--icon-hv);
+    }
+
+    :global(.message-bubble.me:hover .menu-icon .wrapper) {
+        background-color: var(--icon-inverted-hv);
+    }
+
+    :global(.me .menu-icon:hover .wrapper) {
+        background-color: var(--icon-inverted-hv);
+    }
+
+    :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
+        background-color: var(--icon-hv);
+    }
+
     .message-wrapper {
         &.last {
             margin-bottom: $sp4;
         }
     }
 
-    .meta-time-and-ticks {
-        display: flex;
+    .meta-wrapper {
+        display: inline-block;
         align-items: center;
-        justify-content: flex-end;
         @include font(light, normal, fs-60);
-
-        &.fill {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            background-color: rgba(255, 255, 255, 0.5);
-            border-radius: $sp4 0 0 0;
-            padding: $sp2 $sp4;
-
-            &.rtl {
-                left: 0;
-                right: unset;
-                border-radius: 0 $sp4 0 0;
-            }
-        }
-
-        .time {
-            margin: 0 $sp2;
-        }
-
-        // .edited {
-        //     @include font(light, italic, fs-60);
-        // }
-
-        .meta {
-            flex: 1;
-            @include font(light, normal, fs-60);
-            @include ellipsis();
-        }
-
-        .time-and-ticks {
-            display: flex;
-            align-items: center;
-        }
+        @include ellipsis();
     }
 
     .sender {
@@ -397,7 +360,8 @@
 
         &.fill {
             position: absolute;
-            background-color: rgba(255, 255, 255, 0.5);
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #fff;
             padding: $sp2 $sp4;
             border-radius: 0 0 $sp4 0;
 
@@ -409,12 +373,13 @@
     }
 
     .menu {
+        $offset: -2px;
         position: absolute;
-        top: $sp1;
-        right: $sp1;
+        top: $offset;
+        right: $offset;
 
         &.rtl {
-            left: $sp1;
+            left: $offset;
             right: unset;
         }
     }
@@ -467,7 +432,7 @@
             transition: opacity 200ms ease-in-out;
             display: flex;
             opacity: 0;
-            padding: $sp3;
+            padding: 0 $sp3;
             justify-content: center;
             align-items: center;
 
@@ -477,7 +442,6 @@
         }
 
         &:hover .actions {
-            // todo - need to consider how this works on mobile
             opacity: 1;
         }
     }
@@ -488,7 +452,7 @@
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
             border ease-in-out 300ms, transform ease-in-out 200ms;
         position: relative;
-        padding: $sp3 $sp3 $sp2 $sp3;
+        padding: 6px $sp3 6px $sp3;
         border: 1px solid var(--currentChat-msg-bd);
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
@@ -496,6 +460,7 @@
         border-radius: $radius;
         max-width: 90%;
         min-width: 90px;
+        overflow: hidden;
 
         .username {
             color: inherit;
@@ -503,9 +468,8 @@
         }
 
         &:hover {
-            box-shadow: 0 5px 10px var(--currentChat-msg-hv);
             .menu-icon {
-                opacity: 0.6;
+                opacity: 1;
             }
         }
 
@@ -527,10 +491,6 @@
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
             border-color: var(--currentChat-msg-me-bd);
-
-            &:hover {
-                background-color: var(--currentChat-msg-me-hv);
-            }
 
             &.last:not(.first) {
                 border-radius: $radius $inner-radius $radius $radius;
@@ -564,16 +524,6 @@
                 &:not(.first):not(.last) {
                     border-radius: $inner-radius $radius $radius $inner-radius;
                 }
-            }
-
-            .time-and-ticks {
-                right: unset;
-                left: $sp3;
-            }
-
-            .meta {
-                left: unset;
-                right: $sp4;
             }
         }
 

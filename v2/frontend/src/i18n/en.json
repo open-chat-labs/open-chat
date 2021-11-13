@@ -157,6 +157,8 @@
     "failedToLeaveGroup": "There was an error typing to remove you from the group",
     "lastAdmin": "You can't leave the group as you are the only admin",
     "ownerCantLeave": "You must transfer ownership before you can leave the group",
+    "owner": "owner",
+    "admin": "admin",
     "transferOwnership": "Transfer ownership to",
     "transferOwnershipSucceeded": "Ownership succcessfully transfered",
     "transferOwnershipFailed": "Transfer of ownership failed",

@@ -32,12 +32,15 @@
 
 {#if content.kind === "text_content"}
     <div class="text-content">
-        <SvelteMarkdown source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} />
+        <div class="text-wrapper">
+            <slot />
+            <SvelteMarkdown source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} />
+        </div>
     </div>
 {:else if content.kind === "image_content"}
     <ImageContent {fill} {content} />
 {:else if content.kind === "video_content"}
-    <VideoContent {content} />
+    <VideoContent {fill} {content} />
 {:else if content.kind === "audio_content"}
     <AudioContent {content} />
 {:else if content.kind === "file_content"}
@@ -49,3 +52,17 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {/if}
+
+<style type="text/scss">
+    :global(.text-wrapper > p) {
+        display: inline;
+    }
+
+    .text-wrapper {
+        width: 100%;
+    }
+
+    .text-content {
+        display: flex;
+    }
+</style>

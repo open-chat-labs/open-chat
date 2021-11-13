@@ -324,7 +324,7 @@ export class ChatController {
         this.loading.set(false);
     }
 
-    public async loadPreviousMessages(): Promise<void> {
+    public async loadPreviousMessages(): Promise<EventWrapper<ChatEvent>[]> {
         this.loading.set(true);
         const criteria = this.previousMessagesCriteria();
 
@@ -334,7 +334,7 @@ export class ChatController {
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
             this.loading.set(false);
-            return undefined;
+            return [];
         }
 
         await this.handleEventsResponse(eventsResponse);
@@ -345,6 +345,8 @@ export class ChatController {
         });
 
         this.loading.set(false);
+
+        return get(this.events);
     }
 
     async sendMessage(messageEvent: EventWrapper<Message>, userId: string): Promise<void> {
@@ -892,7 +894,6 @@ export class ChatController {
         return this.api
             .unblockUserFromGroupChat(this.chatId, userId)
             .then((resp) => {
-                console.log(resp);
                 if (resp === "success") {
                     toastStore.showSuccessToast("unblockUserSucceeded");
                 } else {

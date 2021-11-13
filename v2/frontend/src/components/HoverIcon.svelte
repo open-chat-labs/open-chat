@@ -1,4 +1,8 @@
-<div class="wrapper" role="button">
+<script lang="ts">
+    export let compact: boolean = false;
+</script>
+
+<div class="wrapper" class:compact role="button">
     <slot />
 </div>
 
@@ -12,6 +16,10 @@
         background-color: transparent;
         transition: background-color ease-in-out 100ms;
         cursor: pointer;
+
+        &.compact {
+            padding: $sp2;
+        }
 
         &:hover {
             background-color: var(--icon-hv);
