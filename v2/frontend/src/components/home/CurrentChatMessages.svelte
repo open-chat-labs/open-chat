@@ -55,7 +55,6 @@
     let initialised = false;
     let scrollingToMessage = false;
     let scrollTimer: number | undefined;
-    let scrollHeight = 0;
     let scrollTop = 0;
     let currentChatId = "";
     let observer: IntersectionObserver;
@@ -162,7 +161,6 @@
         if (!initialised) return;
 
         menuStore.hideMenu();
-        scrollHeight = messagesDiv.scrollHeight;
         scrollTop = messagesDiv.scrollTop;
         fromBottom = -messagesDiv.scrollTop;
         fromTop = calculateFromTop();
