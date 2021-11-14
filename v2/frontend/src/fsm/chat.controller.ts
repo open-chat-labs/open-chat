@@ -61,7 +61,6 @@ export class ChatController {
     public replyingTo: Writable<EnhancedReplyContext | undefined>;
     public fileToAttach: Writable<MessageContent | undefined>;
     public editingEvent: Writable<EventWrapper<Message> | undefined>;
-    public loading: Writable<boolean>;
     public chat: Writable<ChatSummary>;
     public chatId: string;
     public participants: Writable<Participant[]>;
@@ -73,6 +72,7 @@ export class ChatController {
     private pruneInterval: number | undefined;
     private groupDetails: GroupChatDetails | undefined;
     private onEvent?: (evt: ChatState) => void;
+    private maxLoadedEventIndex = 0;
 
     constructor(
         public api: ServiceContainer,
@@ -83,7 +83,6 @@ export class ChatController {
         private _focusMessageIndex: number | undefined
     ) {
         this.events = writable([]);
-        this.loading = writable(false);
         this.focusMessageIndex = writable(_focusMessageIndex);
         this.replyingTo = writable(_replyingTo);
         this.fileToAttach = writable(undefined);
@@ -95,6 +94,7 @@ export class ChatController {
         this.chatUserIds = new Set<string>();
 
         if (process.env.NODE_ENV !== "test") {
+            // todo - if focus index is set we should load the right window not previous messages
             this.loadPreviousMessages();
             this.pruneInterval = window.setInterval(() => {
                 this.localReactions = pruneLocalReactions(this.localReactions);
@@ -106,6 +106,7 @@ export class ChatController {
         if (this.pruneInterval !== undefined) {
             console.log("Stopping the local reactions pruner");
             window.clearInterval(this.pruneInterval);
+            this.events.set([]);
         }
     }
 
@@ -228,6 +229,10 @@ export class ChatController {
         await this.updateUserStore(userIds);
         this.makeRtcConnections(userIds);
         this.events.set(updated);
+        this.maxLoadedEventIndex = Math.max(
+            updated[updated.length - 1].index,
+            this.maxLoadedEventIndex
+        );
     }
 
     private makeRtcConnections(userIds: Set<string>): void {
@@ -248,7 +253,6 @@ export class ChatController {
     }
 
     private async loadEventWindow(messageIndex: number) {
-        this.loading.set(true);
         const range = indexRangeForChat(this.chatVal);
         const eventsPromise: Promise<EventsResponse<ChatEvent>> =
             this.chatVal.kind === "direct_chat"
@@ -261,7 +265,6 @@ export class ChatController {
         }
 
         await this.handleEventsResponse(eventsResponse);
-        this.loading.set(false);
     }
 
     newMessageCriteria(): [number, boolean] | undefined {
@@ -314,7 +317,6 @@ export class ChatController {
     }
 
     public async loadNewMessages(): Promise<void> {
-        this.loading.set(true);
         const criteria = this.newMessageCriteria();
 
         const eventsResponse = criteria
@@ -322,7 +324,6 @@ export class ChatController {
             : undefined;
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
-            this.loading.set(false);
             return undefined;
         }
 
@@ -332,11 +333,9 @@ export class ChatController {
             chatId: this.chatId,
             event: { kind: "loaded_new_messages" },
         });
-        this.loading.set(false);
     }
 
     public async loadPreviousMessages(): Promise<EventWrapper<ChatEvent>[]> {
-        this.loading.set(true);
         const criteria = this.previousMessagesCriteria();
 
         const eventsResponse = criteria
@@ -344,7 +343,6 @@ export class ChatController {
             : undefined;
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
-            this.loading.set(false);
             return [];
         }
 
@@ -354,8 +352,6 @@ export class ChatController {
             chatId: this.chatId,
             event: { kind: "loaded_previous_messages" },
         });
-
-        this.loading.set(false);
 
         return get(this.events);
     }
@@ -524,12 +520,7 @@ export class ChatController {
     }
 
     async goToMessageIndex(messageIndex: number): Promise<void> {
-        this.focusMessageIndex.set(messageIndex);
-        await this.loadEventWindow(messageIndex);
-        this.raiseEvent({
-            chatId: this.chatId,
-            event: { kind: "scroll_to_message_index", messageIndex: messageIndex },
-        });
+        return this.loadEventWindow(messageIndex);
     }
 
     async chatUpdated(chat: ChatSummary): Promise<void> {
@@ -650,6 +641,11 @@ export class ChatController {
     moreNewMessagesAvailable(): boolean {
         const lastLoaded = latestLoadedEventIndex(get(this.events), get(unconfirmed));
         return lastLoaded === undefined || lastLoaded < this.chatVal.latestEventIndex;
+    }
+
+    viewingEventWindow(): boolean {
+        const latestLoaded = latestLoadedEventIndex(get(this.events), get(unconfirmed));
+        return latestLoaded !== undefined && latestLoaded < this.maxLoadedEventIndex;
     }
 
     replyTo(context: EnhancedReplyContext): void {

@@ -87,6 +87,7 @@ export function lightTheme(): Theme {
             bg: "linear-gradient(#22A7F2, #5f2583)",
             left: {
                 bg: "rgba(255,255,255,0.15)",
+                xs: "transparent",
             },
             right: {
                 bg: "linear-gradient(#22A7F2, #5f2583)",

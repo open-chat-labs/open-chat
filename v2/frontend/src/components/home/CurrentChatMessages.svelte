@@ -45,7 +45,6 @@
     export let unreadMessages: number;
 
     $: events = controller.events;
-    $: loading = controller.loading;
     $: chat = controller.chat;
     $: focusMessageIndex = controller.focusMessageIndex;
     $: markRead = controller.markRead.store;
@@ -54,6 +53,8 @@
 
     let messagesDiv: HTMLDivElement;
     let initialised = false;
+    let scrollingToMessage = false;
+    let scrollTimer: number | undefined;
     let scrollHeight = 0;
     let scrollTop = 0;
     let currentChatId = "";
@@ -101,14 +102,6 @@
             top: 0,
             behavior,
         });
-        // setTimeout(() => {
-        //     if (messagesDiv) {
-        //         messagesDiv.scrollTo({
-        //             top: messagesDiv.scrollHeight - messagesDiv.offsetHeight,
-        //             behavior,
-        //         });
-        //     }
-        // }, 0);
     }
 
     function scrollToNew() {
@@ -124,27 +117,21 @@
         element?.scrollIntoView({ behavior, block: "center" });
     }
 
-    let suspend = false;
-
     function scrollToMessageIndex(index: number) {
+        // set a flag so that we can ignore subsequent scroll events temporarily
+        scrollingToMessage = true;
+        controller.setFocusMessageIndex(index);
         const element = document.querySelector(`[data-index='${index}']`);
         if (element) {
-            controller.setFocusMessageIndex(index);
-            // when we scroll to an element that is right at the top of the loaded events
-            // it is going to trigger the loading of the next chunk
-            // that *shouldn't* cause any more of a problem than normal scrolling but it does for some reason
-            // it seems to trigger a cascade that we need to short circuit somehow. First need to understand
-            // exactly what is happening.
-
-            // TODO this is the one thing that we still have problems with
-            suspend = true;
-            console.log("scroll suspending");
+            // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
-            setTimeout(() => controller.clearFocusMessageIndex(), 200);
+            setTimeout(() => {
+                controller.clearFocusMessageIndex();
+            }, 200);
         } else {
             // todo - this is a bit dangerous as it could cause an infinite recursion
             // if we are looking for a message that simply isn't there.
-            controller.goToMessageIndex(index);
+            controller.goToMessageIndex(index).then(() => scrollToMessageIndex(index));
         }
     }
 
@@ -153,44 +140,60 @@
             if ($focusMessageIndex !== undefined) {
                 scrollToMessageIndex($focusMessageIndex);
             } else {
-                // const extraHeight = messagesDiv.scrollHeight - scrollHeight;
-                // messagesDiv.scrollTop = scrollTop + extraHeight;
                 messagesDiv.scrollTop = scrollTop;
             }
         } else {
             if ($focusMessageIndex !== undefined) {
                 scrollToMessageIndex($focusMessageIndex);
-            } else {
-                scrollBottom();
             }
             initialised = true;
         }
     }
 
+    function shouldLoadPreviousMessages() {
+        return fromTop < MESSAGE_LOAD_THRESHOLD && controller.morePreviousMessagesAvailable();
+    }
+
+    function shouldLoadNewMessages() {
+        return fromBottom < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable();
+    }
+
     function onScroll() {
-        console.log("scroll onscroll");
-        if (suspend) {
-            suspend = false;
-            return;
-        }
+        if (!initialised) return;
+
         menuStore.hideMenu();
         scrollHeight = messagesDiv.scrollHeight;
         scrollTop = messagesDiv.scrollTop;
         fromBottom = -messagesDiv.scrollTop;
         fromTop = calculateFromTop();
-        console.log("Scroll: from bottom: ", fromBottom);
-        console.log("Scroll: from top: ", fromTop);
-        if (!$loading) {
-            if (fromTop < MESSAGE_LOAD_THRESHOLD && controller.morePreviousMessagesAvailable()) {
-                controller.loadPreviousMessages();
-            }
 
-            if (fromBottom < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable()) {
-                // Note - this fires even when we have entered our own message. This *seems* wrong but
-                // it is actually correct because we do want to load our own messages from the server
-                // so that any incorrect indexes are corrected and only the right thing goes in the cache
-                controller.loadNewMessages();
-            }
+        if (scrollingToMessage) {
+            // if we are in the middle of scrolling to a message we have to wait for the scroll to settle
+            // down before we start paying attention to the scroll again
+            // annoyingly there is no scrollEnd event or anything so this, hacky as it is, is the best we can do
+
+            window.clearTimeout(scrollTimer);
+            scrollTimer = window.setTimeout(() => {
+                scrollingToMessage = false;
+
+                // once the scrolling has settled we need to do a final check to see if we need to
+                // load any more previous messages
+                if (shouldLoadPreviousMessages()) {
+                    controller.loadPreviousMessages();
+                }
+            }, 300);
+            return;
+        }
+
+        if (shouldLoadPreviousMessages()) {
+            controller.loadPreviousMessages();
+        }
+
+        if (shouldLoadNewMessages()) {
+            // Note - this fires even when we have entered our own message. This *seems* wrong but
+            // it is actually correct because we do want to load our own messages from the server
+            // so that any incorrect indexes are corrected and only the right thing goes in the cache
+            controller.loadNewMessages();
         }
     }
 
@@ -302,7 +305,6 @@
             return e.event.messageId.toString();
         } else {
             return e.event;
-            //return e.index.toString();
         }
     }
 
@@ -331,6 +333,7 @@
         if (controller.chatId !== currentChatId) {
             currentChatId = controller.chatId;
             initialised = false;
+            fromBottom = 0;
 
             controller.subscribe((evt) => {
                 switch (evt.event.kind) {
@@ -341,9 +344,6 @@
                         if (fromBottom < FROM_BOTTOM_THRESHOLD) {
                             scrollBottom("smooth");
                         }
-                        break;
-                    case "scroll_to_message_index":
-                        scrollToMessageIndex(evt.event.messageIndex);
                         break;
                     case "sending_message":
                         // if we are within the from bottom threshold *or* if the new message
@@ -356,10 +356,9 @@
                         }
                         break;
                     case "chat_updated":
-                        if (
-                            fromBottom < MESSAGE_LOAD_THRESHOLD &&
-                            controller.moreNewMessagesAvailable()
-                        ) {
+                        // we don't want this to fire if we have loaded a previous window
+                        // but how do we know we are looking at a previous window
+                        if (shouldLoadNewMessages() && !controller.viewingEventWindow()) {
                             controller.loadNewMessages();
                         }
                         break;
