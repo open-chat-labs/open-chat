@@ -1,4 +1,4 @@
-use crate::model::participants::RemoveSuperAdminResult;
+use crate::model::participants::DismissSuperAdminResult;
 use crate::updates::handle_activity_notification;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
@@ -19,8 +19,8 @@ fn c2c_relinquish_super_admin_impl(runtime_state: &mut RuntimeState) -> Response
     let user_id = runtime_state.env.caller().into();
     let now = runtime_state.env.now();
 
-    match runtime_state.data.participants.remove_super_admin(&user_id) {
-        RemoveSuperAdminResult::Success => {
+    match runtime_state.data.participants.dismiss_super_admin(&user_id) {
+        DismissSuperAdminResult::Success => {
             let event = ParticipantRelinquishesSuperAdmin { user_id };
             runtime_state
                 .data
@@ -30,7 +30,7 @@ fn c2c_relinquish_super_admin_impl(runtime_state: &mut RuntimeState) -> Response
             handle_activity_notification(runtime_state);
             Success
         }
-        RemoveSuperAdminResult::NotInGroup => CallerNotInGroup,
-        RemoveSuperAdminResult::NotSuperAdmin => Success,
+        DismissSuperAdminResult::NotInGroup => CallerNotInGroup,
+        DismissSuperAdminResult::NotSuperAdmin => Success,
     }
 }

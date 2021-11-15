@@ -4,8 +4,8 @@ use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
-use types::{CanisterId, CanisterWasm, ConfirmationCodeSms, Cycles, TimestampMillis, Timestamped, UserId, Version};
+use std::collections::{HashSet, VecDeque};
+use types::{CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, TimestampMillis, UserId, Version};
 use utils::canister::CanistersRequiringUpgrade;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
@@ -83,6 +83,8 @@ impl RuntimeState {
             users_online_1_month: user_metrics.users_online_1_month,
             canister_upgrades_in_progress: user_metrics.canister_upgrades_in_progress,
             sms_messages_in_queue: self.data.sms_messages.len() as u32,
+            super_admins: self.data.super_admins.len() as u8,
+            super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
         }
     }
 }
@@ -102,8 +104,9 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub online_users_aggregator_canister_ids: HashSet<CanisterId>,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
-    #[serde(default)]
     pub super_admins: HashSet<UserId>,
+    #[serde(default)]
+    pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
 }
 
 impl Data {
@@ -132,7 +135,7 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
-            test_mode,
+            super_admins_to_dismiss: VecDeque::new(),
         }
     }
 }
@@ -155,6 +158,7 @@ impl Default for Data {
             total_cycles_spent_on_canisters: 0,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
+            super_admins_to_dismiss: VecDeque::new(),
         }
     }
 }
@@ -176,4 +180,6 @@ pub struct Metrics {
     pub canister_upgrades_in_progress: u32,
     pub user_wasm_version: Version,
     pub sms_messages_in_queue: u32,
+    pub super_admins: u8,
+    pub super_admins_to_dismiss: u32,
 }

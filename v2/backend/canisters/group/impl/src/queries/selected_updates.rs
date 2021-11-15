@@ -67,6 +67,9 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             ChatEventInternal::ParticipantRelinquishesSuperAdmin(p) => {
                 user_updates_handler.mark_participant_updated(&mut result, p.user_id, false);
             }
+            ChatEventInternal::ParticipantDismissedAsSuperAdmin(p) => {
+                user_updates_handler.mark_participant_updated(&mut result, p.user_id, false);
+            }
             ChatEventInternal::ParticipantsPromotedToAdmin(p) => {
                 for user_id in p.user_ids.iter() {
                     user_updates_handler.mark_participant_updated(&mut result, *user_id, false);

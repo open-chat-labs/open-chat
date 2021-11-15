@@ -240,17 +240,17 @@ impl Participants {
         DismissAdminResult::Success
     }
 
-    pub fn remove_super_admin(&mut self, user_id: &UserId) -> RemoveSuperAdminResult {
+    pub fn dismiss_super_admin(&mut self, user_id: &UserId) -> DismissSuperAdminResult {
         match self.get_by_user_id_mut(user_id) {
             Some(p) => {
                 if let Role::SuperAdmin(fallback_role) = p.role {
                     p.role = fallback_role.into();
-                    RemoveSuperAdminResult::Success
+                    DismissSuperAdminResult::Success
                 } else {
-                    RemoveSuperAdminResult::NotSuperAdmin
+                    DismissSuperAdminResult::NotSuperAdmin
                 }
             }
-            None => RemoveSuperAdminResult::NotInGroup,
+            None => DismissSuperAdminResult::NotInGroup,
         }
     }
 
@@ -305,7 +305,7 @@ pub enum DismissAdminResult {
     UserNotAdmin,
 }
 
-pub enum RemoveSuperAdminResult {
+pub enum DismissSuperAdminResult {
     Success,
     NotInGroup,
     NotSuperAdmin,

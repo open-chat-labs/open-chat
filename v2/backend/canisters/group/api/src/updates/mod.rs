@@ -1,6 +1,7 @@
 pub mod add_participants;
 pub mod block_user;
 pub mod c2c_assume_super_admin;
+pub mod c2c_dismiss_super_admin;
 pub mod c2c_join_group;
 pub mod c2c_leave_group;
 pub mod c2c_relinquish_super_admin;
