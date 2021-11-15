@@ -5,7 +5,7 @@ use canister_logger::LogMessagesWrapper;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
-use types::{CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, TimestampMillis, UserId, Version};
+use types::{CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, Timestamped, TimestampMillis, UserId, Version};
 use utils::canister::CanistersRequiringUpgrade;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
@@ -100,13 +100,13 @@ struct Data {
     pub notifications_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
-    pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub online_users_aggregator_canister_ids: HashSet<CanisterId>,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub super_admins: HashSet<UserId>,
     #[serde(default)]
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
+    pub test_mode: bool,
 }
 
 impl Data {
@@ -136,6 +136,7 @@ impl Data {
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),
+            test_mode,
         }
     }
 }
@@ -154,11 +155,11 @@ impl Default for Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             online_users_aggregator_canister_ids: HashSet::new(),
             canister_pool: canister::Pool::new(5),
-            test_mode: true,
             total_cycles_spent_on_canisters: 0,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),
+            test_mode: true,
         }
     }
 }
