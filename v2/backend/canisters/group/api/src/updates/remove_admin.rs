@@ -13,6 +13,6 @@ pub enum Response {
     CallerNotInGroup,
     NotAuthorized,
     UserNotInGroup,
+    UserNotAdmin,
     CannotRemoveSelf,
-    CannotRemoveUser,
 }

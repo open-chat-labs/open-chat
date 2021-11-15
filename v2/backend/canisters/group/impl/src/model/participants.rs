@@ -227,17 +227,15 @@ impl Participants {
     pub fn remove_admin(&mut self, user_id: &UserId) -> RemoveAdminResult {
         match self.get_by_user_id_mut(user_id) {
             Some(p) => {
-                if !p.role.can_be_removed_as_admin() {
-                    RemoveAdminResult::CannotRemoveUser
-                } else if p.role.is_admin() {
+                if p.role.is_admin() {
                     p.role = Role::Participant;
                     self.admin_count -= 1;
                     RemoveAdminResult::Success
                 } else {
-                    RemoveAdminResult::NotAdmin
+                    RemoveAdminResult::UserNotAdmin
                 }
             }
-            None => RemoveAdminResult::NotInGroup,
+            None => RemoveAdminResult::UserNotInGroup,
         }
     }
 
@@ -301,9 +299,8 @@ pub enum TransferOwnershipResult {
 
 pub enum RemoveAdminResult {
     Success,
-    NotInGroup,
-    NotAdmin,
-    CannotRemoveUser,
+    UserNotInGroup,
+    UserNotAdmin,
 }
 
 pub enum RemoveSuperAdminResult {

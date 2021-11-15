@@ -82,7 +82,7 @@ async fn make_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         .await
         .unwrap()
     {
-        group_canister::remove_admin::Response::CannotRemoveUser => {}
+        group_canister::remove_admin::Response::UserNotAdmin => {}
         response => panic!("RemoveAdmin returned an unexpected response: {:?}", response),
     };
     println!("Ok");

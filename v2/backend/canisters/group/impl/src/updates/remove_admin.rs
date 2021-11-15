@@ -38,9 +38,8 @@ fn remove_admin_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     handle_activity_notification(runtime_state);
                     Success
                 }
-                RemoveAdminResult::NotInGroup => UserNotInGroup,
-                RemoveAdminResult::NotAdmin => Success,
-                RemoveAdminResult::CannotRemoveUser => CannotRemoveUser,
+                RemoveAdminResult::UserNotInGroup => UserNotInGroup,
+                RemoveAdminResult::UserNotAdmin => UserNotAdmin,
             }
         } else {
             NotAuthorized
