@@ -13,4 +13,5 @@ pub enum Response {
     CallerNotInGroup,
     NotAuthorized,
     UserNotInGroup,
+    UserAlreadySuperAdmin,
 }

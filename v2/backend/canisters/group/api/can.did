@@ -231,6 +231,7 @@ type TransferOwnershipResponse =
         CallerNotInGroup;
         UserNotInGroup;
         NotAuthorized;
+        UserAlreadySuperAdmin;
     };
 
 type SelectedInitialArgs =
