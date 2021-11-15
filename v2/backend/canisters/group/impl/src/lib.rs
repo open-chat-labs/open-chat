@@ -11,6 +11,7 @@ use utils::env::Environment;
 use utils::memory;
 use utils::regular_jobs::RegularJobs;
 
+mod guards;
 mod lifecycle;
 mod model;
 mod queries;
@@ -44,6 +45,10 @@ impl RuntimeState {
 
     pub fn is_caller_participant(&self) -> bool {
         self.data.participants.get(self.env.caller()).is_some()
+    }
+
+    pub fn is_caller_user_index(&self) -> bool {
+        self.env.caller() == self.data.user_index_canister_id
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -89,16 +94,11 @@ struct Data {
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
-    #[serde(default = "user_index_canister_id")]
     pub user_index_canister_id: CanisterId,
     pub notification_canister_ids: Vec<CanisterId>,
     pub activity_notification_state: ActivityNotificationState,
     pub blob_storage: BlobStorage,
     pub test_mode: bool,
-}
-
-fn user_index_canister_id() -> CanisterId {
-    Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap()
 }
 
 #[allow(clippy::too_many_arguments)]

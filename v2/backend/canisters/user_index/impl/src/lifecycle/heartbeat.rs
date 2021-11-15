@@ -1,7 +1,9 @@
 use crate::updates::upgrade_canister::{initialize_upgrade, set_upgrade_complete};
 use crate::{RuntimeState, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
+use group_canister::c2c_dismiss_super_admin;
 use ic_cdk_macros::heartbeat;
-use types::{CanisterId, Cycles, UserId, Version};
+use tracing::error;
+use types::{CanisterId, ChatId, Cycles, UserId, Version};
 use utils::canister;
 use utils::canister::FailedUpgrade;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
@@ -15,6 +17,7 @@ fn heartbeat() {
     topup_canister_pool::run();
     retry_failed_messages::run();
     calculate_metrics::run();
+    dismiss_removed_super_admins::run();
 }
 
 mod upgrade_canisters {
@@ -161,5 +164,33 @@ mod calculate_metrics {
     fn calculate_metrics(runtime_state: &mut RuntimeState) {
         let now = runtime_state.env.now();
         runtime_state.data.users.calculate_metrics(now);
+    }
+}
+
+mod dismiss_removed_super_admins {
+    use super::*;
+
+    pub fn run() {
+        if let Some((user_id, group_id)) =
+            RUNTIME_STATE.with(|state| pop_super_admin_to_dismiss(state.borrow_mut().as_mut().unwrap()))
+        {
+            ic_cdk::block_on(dismiss_super_admin(user_id, group_id));
+        }
+    }
+
+    fn pop_super_admin_to_dismiss(runtime_state: &mut RuntimeState) -> Option<(UserId, ChatId)> {
+        runtime_state.data.super_admins_to_dismiss.pop_front()
+    }
+
+    fn push_super_admin_to_dismiss(user_id: UserId, group_id: ChatId, runtime_state: &mut RuntimeState) {
+        runtime_state.data.super_admins_to_dismiss.push_back((user_id, group_id));
+    }
+
+    async fn dismiss_super_admin(user_id: UserId, group_id: ChatId) {
+        let c2c_args = c2c_dismiss_super_admin::Args { user_id };
+        if let Err(error) = group_canister_c2c_client::c2c_dismiss_super_admin(group_id.into(), &c2c_args).await {
+            error!(?error, ?user_id, ?group_id, "Error calling group::c2c_dismiss_super_admin");
+            RUNTIME_STATE.with(|state| push_super_admin_to_dismiss(user_id, group_id, state.borrow_mut().as_mut().unwrap()));
+        }
     }
 }

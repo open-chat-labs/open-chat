@@ -50,6 +50,9 @@ impl GroupChatEvents {
             ChatEventInternal::ParticipantRelinquishesSuperAdmin(p) => {
                 GroupChatEvent::ParticipantRelinquishesSuperAdmin(*p.clone())
             }
+            ChatEventInternal::ParticipantDismissedAsSuperAdmin(p) => {
+                GroupChatEvent::ParticipantDismissedAsSuperAdmin(*p.clone())
+            }
             ChatEventInternal::ParticipantsPromotedToAdmin(p) => GroupChatEvent::ParticipantsPromotedToAdmin(*p.clone()),
             ChatEventInternal::ParticipantsDismissedAsAdmin(p) => GroupChatEvent::ParticipantsDismissedAsAdmin(*p.clone()),
             ChatEventInternal::UsersBlocked(u) => GroupChatEvent::UsersBlocked(*u.clone()),

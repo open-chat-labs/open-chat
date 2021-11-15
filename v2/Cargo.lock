@@ -4224,6 +4224,8 @@ dependencies = [
  "canister_logger",
  "cycles_utils",
  "futures",
+ "group_canister",
+ "group_canister_c2c_client",
  "http_request",
  "ic-cdk 0.3.2",
  "ic-cdk-macros 0.3.2",

@@ -106,7 +106,6 @@ struct Data {
     pub user_preferences: UserPreferences,
     pub alerts: Alerts,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
-    #[serde(default)]
     pub is_super_admin: bool,
 }
 

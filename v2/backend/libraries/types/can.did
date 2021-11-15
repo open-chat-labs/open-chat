@@ -165,6 +165,7 @@ type GroupChatEvent =
         ParticipantJoined: ParticipantJoined;
         ParticipantLeft: ParticipantLeft;
         ParticipantAssumesSuperAdmin: ParticipantAssumesSuperAdmin;
+        ParticipantDismissedAsSuperAdmin: ParticipantDismissedAsSuperAdmin;
         ParticipantRelinquishesSuperAdmin: ParticipantRelinquishesSuperAdmin;
         ParticipantsPromotedToAdmin: ParticipantsPromotedToAdmin;
         ParticipantsDismissedAsAdmin: ParticipantsDismissedAsAdmin;
