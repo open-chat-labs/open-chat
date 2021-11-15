@@ -374,6 +374,11 @@ type ParticipantAssumesSuperAdmin =
         user_id: UserId;
     };
 
+type ParticipantDismissedAsSuperAdmin =
+    record {
+        user_id: UserId;
+    };
+
 type ParticipantRelinquishesSuperAdmin =
     record {
         user_id: UserId;

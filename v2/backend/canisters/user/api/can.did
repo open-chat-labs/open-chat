@@ -163,7 +163,7 @@ type JoinGroupResponse =
         GroupNotPublic;
         ParticipantLimitReached: nat32;
         InternalError: text;
-        NotSuperAdmin,
+        NotSuperAdmin;
     };
 
 type LeaveGroupArgs =
