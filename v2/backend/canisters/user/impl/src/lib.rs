@@ -10,7 +10,7 @@ use canister_logger::LogMessagesWrapper;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{Avatar, CanisterId, Cycles, TimestampMillis, UserId, Version};
+use types::{Avatar, CanisterId, Cycles, TimestampMillis, Timestamped, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 use utils::memory;
@@ -34,6 +34,7 @@ enum StateVersion {
 thread_local! {
     static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 
 struct RuntimeState {
@@ -62,7 +63,7 @@ impl RuntimeState {
             memory_used: memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: self.data.wasm_version,
+            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             direct_chats: self.data.direct_chats.len() as u32,
             group_chats: self.data.group_chats.len() as u32,
             groups_created: self.data.group_chats.groups_created(),
@@ -97,7 +98,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notification_canister_ids: Vec<CanisterId>,
-    pub wasm_version: Version,
     pub blob_storage: BlobStorage,
     pub avatar: Option<Avatar>,
     pub user_cycles_balance: UserCyclesBalance,
@@ -116,7 +116,6 @@ impl Data {
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notification_canister_ids: Vec<CanisterId>,
-        wasm_version: Version,
         now: TimestampMillis,
         test_mode: bool,
     ) -> Data {
@@ -128,7 +127,6 @@ impl Data {
             user_index_canister_id,
             group_index_canister_id,
             notification_canister_ids,
-            wasm_version,
             blob_storage: BlobStorage::new(MAX_STORAGE),
             avatar: None,
             user_cycles_balance: UserCyclesBalance::new(now),

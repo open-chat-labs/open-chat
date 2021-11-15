@@ -201,6 +201,7 @@ type GroupChatSummary =
         participant_count: nat32;
         role: Role;
         mentions: vec Mention;
+        wasm_version: Version;
     };
 
 type GroupChatSummaryUpdates =
@@ -217,6 +218,7 @@ type GroupChatSummaryUpdates =
         participant_count: opt nat32;
         role: opt Role;
         mentions: vec Mention;
+        wasm_version: opt Version;
     };
 
 type GroupDescriptionChanged =

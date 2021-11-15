@@ -1,5 +1,5 @@
 use crate::model::participants::ParticipantInternal;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{RuntimeState, RUNTIME_STATE, WASM_VERSION};
 use group_canister::summary::{Response::*, *};
 use ic_cdk_macros::query;
 use types::{Avatar, Mention, MAX_RETURNED_MENTIONS};
@@ -30,6 +30,7 @@ fn summary_impl(runtime_state: &RuntimeState) -> Response {
             participant_count: data.participants.len(),
             role: participant.role,
             mentions,
+            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
         };
         Success(SuccessResult { summary })
     } else {

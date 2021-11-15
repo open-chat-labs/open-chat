@@ -2,6 +2,7 @@ use crate::TimestampMillis;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use std::ops::Deref;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Timestamped<T> {
@@ -29,6 +30,14 @@ impl<T: Default> Default for Timestamped<T> {
             value: T::default(),
             timestamp: TimestampMillis::default(),
         }
+    }
+}
+
+impl<T> Deref for Timestamped<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{RuntimeState, RUNTIME_STATE, WASM_VERSION};
 use chat_events::ChatEventInternal;
 use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
@@ -33,6 +33,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             },
             role: if updates_from_events.role_changed { Some(participant.role) } else { None },
             mentions: updates_from_events.mentions,
+            wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(args.updates_since).copied()),
         };
         Success(SuccessResult { updates })
     } else {

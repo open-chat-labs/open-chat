@@ -95,6 +95,7 @@ pub struct UsersUnblocked {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ParticipantJoined {
     pub user_id: UserId,
+    #[serde(default)]
     pub as_super_admin: bool,
 }
 

@@ -5,7 +5,7 @@ use canister_logger::LogMessagesWrapper;
 use chat_events::GroupChatEvents;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{Avatar, CanisterId, ChatId, Cycles, Milliseconds, TimestampMillis, UserId, Version};
+use types::{Avatar, CanisterId, ChatId, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 use utils::memory;
@@ -28,6 +28,7 @@ enum StateVersion {
 thread_local! {
     static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 
 struct RuntimeState {
@@ -52,7 +53,7 @@ impl RuntimeState {
             memory_used: memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: self.data.wasm_version,
+            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             participants: self.data.participants.len() as u32,
             admins: self.data.participants.admin_count(),
             events: chat_metrics.total_events,
@@ -91,7 +92,6 @@ struct Data {
     #[serde(default = "user_index_canister_id")]
     pub user_index_canister_id: CanisterId,
     pub notification_canister_ids: Vec<CanisterId>,
-    pub wasm_version: Version,
     pub activity_notification_state: ActivityNotificationState,
     pub blob_storage: BlobStorage,
     pub test_mode: bool,
@@ -117,7 +117,6 @@ impl Data {
         group_index_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
         notification_canister_ids: Vec<CanisterId>,
-        wasm_version: Version,
         test_mode: bool,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
@@ -136,7 +135,6 @@ impl Data {
             group_index_canister_id,
             user_index_canister_id,
             notification_canister_ids,
-            wasm_version,
             activity_notification_state: ActivityNotificationState::new(now),
             blob_storage: BlobStorage::new(MAX_STORAGE),
             test_mode,

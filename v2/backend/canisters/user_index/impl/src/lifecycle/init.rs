@@ -30,7 +30,7 @@ fn init(args: Args) {
         args.test_mode,
     );
 
-    init_state(env, data);
+    init_state(env, data, args.wasm_version);
 
     info!("Initialization complete");
 }

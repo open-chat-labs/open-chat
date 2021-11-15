@@ -31,11 +31,10 @@ fn init(args: Args) {
         group_index_canister_id,
         args.user_index_canister_id,
         args.notification_canister_ids,
-        args.wasm_version,
         args.test_mode,
     );
 
-    init_state(env, data);
+    init_state(env, data, args.wasm_version);
 
     info!("Initialization complete");
 }

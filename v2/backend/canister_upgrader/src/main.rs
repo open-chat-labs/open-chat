@@ -11,30 +11,16 @@ async fn main() {
     let identity = get_dfx_identity(&opts.controller);
 
     match opts.canister_to_upgrade {
-        CanisterName::Group => {
-            upgrade_group_canister(
-                identity,
-                opts.url,
-                opts.group_index,
-                opts.version.expect("'version' must be specified"),
-            )
-            .await
+        CanisterName::Group => upgrade_group_canister(identity, opts.url, opts.group_index, opts.version).await,
+        CanisterName::GroupIndex => upgrade_group_index_canister(identity, opts.url, opts.group_index, opts.version).await,
+        CanisterName::Notifications => {
+            upgrade_notifications_canister(identity, opts.url, opts.notifications, opts.version).await
         }
-        CanisterName::GroupIndex => upgrade_group_index_canister(identity, opts.url, opts.group_index).await,
-        CanisterName::Notifications => upgrade_notifications_canister(identity, opts.url, opts.notifications).await,
         CanisterName::OnlineUsersAggregator => {
-            upgrade_online_users_aggregator_canister(identity, opts.url, opts.online_users_aggregator).await
+            upgrade_online_users_aggregator_canister(identity, opts.url, opts.online_users_aggregator, opts.version).await
         }
-        CanisterName::User => {
-            upgrade_user_canister(
-                identity,
-                opts.url,
-                opts.user_index,
-                opts.version.expect("'version' must be specified"),
-            )
-            .await
-        }
-        CanisterName::UserIndex => upgrade_user_index_canister(identity, opts.url, opts.user_index).await,
+        CanisterName::User => upgrade_user_canister(identity, opts.url, opts.user_index, opts.version).await,
+        CanisterName::UserIndex => upgrade_user_index_canister(identity, opts.url, opts.user_index, opts.version).await,
     };
 }
 
@@ -48,5 +34,5 @@ struct Opts {
     notifications: CanisterId,
     online_users_aggregator: CanisterId,
     canister_to_upgrade: CanisterName,
-    version: Option<Version>,
+    version: Version,
 }

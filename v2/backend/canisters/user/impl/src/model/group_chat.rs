@@ -9,6 +9,7 @@ pub struct GroupChat {
     pub date_joined: TimestampMillis,
     pub read_by_me: Timestamped<RangeSet>,
     pub notifications_muted: Timestamped<bool>,
+    #[serde(default)]
     pub is_super_admin: bool,
 }
 
@@ -43,6 +44,7 @@ impl From<&GroupChat> for GroupChatSummaryUpdates {
             read_by_me: Some(convert_to_message_index_ranges(s.read_by_me.value.clone())),
             notifications_muted: Some(s.notifications_muted.value),
             mentions: Vec::new(),
+            wasm_version: None,
         }
     }
 }

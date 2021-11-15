@@ -16,7 +16,7 @@ fn init(args: Args) {
     let env = Box::new(CanisterEnv::new());
     let data = Data::new(args.push_service_principals, args.test_mode);
 
-    init_state(env, data);
+    init_state(env, data, args.wasm_version);
 
     info!("Initialization complete");
 }

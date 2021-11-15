@@ -274,6 +274,8 @@ type InitialStateResponse =
             transactions: vec TransactionWrapper;
             blocked_users: vec UserId;
             cycles_balance: Cycles;
+            upgrades_in_progress: vec ChatId;
+            user_canister_wasm_version: opt Version;
         }
     };
 
@@ -305,6 +307,8 @@ type UpdatesResponse =
             blocked_users: vec UserId;
             cycles_balance: opt Cycles;
             alerts: vec Alert;
+            upgrades_in_progress: vec ChatId;
+            user_canister_wasm_version: opt Version;
         }
     };
 

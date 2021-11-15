@@ -3,7 +3,7 @@ use candid::CandidType;
 use canister_logger::LogMessagesWrapper;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::CanisterId;
+use types::{CanisterId, Timestamped, Version};
 use utils::env::Environment;
 
 mod lifecycle;
@@ -20,6 +20,7 @@ enum StateVersion {
 thread_local! {
     static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 
 struct RuntimeState {

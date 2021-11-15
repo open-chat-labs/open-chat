@@ -17,7 +17,7 @@ fn init(args: Args) {
 
     let data = Data::new(args.user_index_canister_id, args.test_mode);
 
-    init_state(env, data);
+    init_state(env, data, args.wasm_version);
 
     info!("Initialization complete");
 }
