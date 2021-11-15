@@ -2,7 +2,7 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId};
+use types::{EventIndex, FallbackRole, MessageIndex, Participant, Role, TimestampMillis, UserId};
 
 const MAX_PARTICIPANTS_PER_PUBLIC_GROUP: u32 = 100_000;
 const MAX_PARTICIPANTS_PER_PRIVATE_GROUP: u32 = 200;
@@ -52,7 +52,7 @@ impl Participants {
                     e.insert(ParticipantInternal {
                         user_id,
                         date_added: now,
-                        role: if as_super_admin { Role::SuperAdmin } else { Role::Participant },
+                        role: if as_super_admin { Role::SuperAdmin(FallbackRole::Participant) } else { Role::Participant },
                         min_visible_event_index,
                         min_visible_message_index,
                         notifications_muted: false,
@@ -157,33 +157,33 @@ impl Participants {
 
     pub fn make_admin(&mut self, user_id: &UserId) -> MakeAdminResult {
         match self.get_by_user_id_mut(user_id) {
-            Some(p) => {
-                if p.role.is_admin() {
-                    MakeAdminResult::AlreadyAdmin
-                } else if p.role.is_owner() {
-                    MakeAdminResult::AlreadyOwner
-                } else {
-                    p.role = Role::Admin;
-                    self.admin_count += 1;
-                    MakeAdminResult::Success
-                }
-            }
-            None => MakeAdminResult::NotInGroup,
+            Some(p) => match p.role {
+                Role::Owner => return MakeAdminResult::AlreadyOwner,
+                Role::Admin | Role::SuperAdmin(FallbackRole::Admin) => return MakeAdminResult::AlreadyAdmin,
+                Role::Participant => p.role = Role::Admin,
+                Role::SuperAdmin(FallbackRole::Participant) => p.role = Role::SuperAdmin(FallbackRole::Admin),
+            },
+            None => return MakeAdminResult::NotInGroup,
         }
+
+        self.admin_count += 1;
+        MakeAdminResult::Success
     }
 
     pub fn make_super_admin(&mut self, user_id: &UserId) -> MakeSuperAdminResult {
         match self.get_by_user_id_mut(user_id) {
-            Some(p) => {
-                if p.role.is_super_admin() {
-                    MakeSuperAdminResult::AlreadySuperAdmin
-                } else if p.role.is_owner() {
-                    MakeSuperAdminResult::AlreadyOwner
-                } else {
-                    p.role = Role::SuperAdmin;
+            Some(p) => match p.role {
+                Role::SuperAdmin(_) => MakeSuperAdminResult::AlreadySuperAdmin,
+                Role::Owner => MakeSuperAdminResult::AlreadyOwner,
+                Role::Admin => {
+                    p.role = Role::SuperAdmin(FallbackRole::Admin);
                     MakeSuperAdminResult::Success
                 }
-            }
+                Role::Participant => {
+                    p.role = Role::SuperAdmin(FallbackRole::Participant);
+                    MakeSuperAdminResult::Success
+                }
+            },
             None => MakeSuperAdminResult::NotInGroup,
         }
     }
@@ -199,6 +199,8 @@ impl Participants {
                             if user.role.is_owner() {
                                 // Should not happen. Means > 1 owner!
                                 return TransferOwnershipResult::UserAlreadyOwner;
+                            } else if user.role.is_super_admin() {
+                                return TransferOwnershipResult::UserAlreadySuperAdmin;
                             }
                         }
                         None => return TransferOwnershipResult::UserNotInGroup,
@@ -226,24 +228,23 @@ impl Participants {
 
     pub fn dismiss_admin(&mut self, user_id: &UserId) -> DismissAdminResult {
         match self.get_by_user_id_mut(user_id) {
-            Some(p) => {
-                if p.role.is_admin() {
-                    p.role = Role::Participant;
-                    self.admin_count -= 1;
-                    DismissAdminResult::Success
-                } else {
-                    DismissAdminResult::UserNotAdmin
-                }
-            }
-            None => DismissAdminResult::UserNotInGroup,
+            Some(p) => match p.role {
+                Role::Admin => p.role = Role::Participant,
+                Role::SuperAdmin(FallbackRole::Admin) => p.role = Role::SuperAdmin(FallbackRole::Participant),
+                _ => return DismissAdminResult::UserNotAdmin,
+            },
+            None => return DismissAdminResult::UserNotInGroup,
         }
+
+        self.admin_count -= 1;
+        DismissAdminResult::Success
     }
 
     pub fn remove_super_admin(&mut self, user_id: &UserId) -> RemoveSuperAdminResult {
         match self.get_by_user_id_mut(user_id) {
             Some(p) => {
-                if p.role.is_super_admin() {
-                    p.role = Role::Participant;
+                if let Role::SuperAdmin(fallback_role) = p.role {
+                    p.role = fallback_role.into();
                     RemoveSuperAdminResult::Success
                 } else {
                     RemoveSuperAdminResult::NotSuperAdmin
@@ -293,6 +294,7 @@ pub enum TransferOwnershipResult {
     Success,
     UserNotInGroup,
     UserAlreadyOwner,
+    UserAlreadySuperAdmin,
     CallerNotInGroup,
     CallerNotOwner,
 }

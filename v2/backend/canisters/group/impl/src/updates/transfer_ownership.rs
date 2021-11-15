@@ -48,6 +48,7 @@ fn transfer_ownership_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
         TransferOwnershipResult::CallerNotInGroup => CallerNotInGroup,
         TransferOwnershipResult::CallerNotOwner => NotAuthorized,
         TransferOwnershipResult::UserNotInGroup => UserNotInGroup,
+        TransferOwnershipResult::UserAlreadySuperAdmin => UserAlreadySuperAdmin,
         TransferOwnershipResult::UserAlreadyOwner => Success,
     }
 }

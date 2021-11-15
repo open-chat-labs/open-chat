@@ -420,7 +420,14 @@ type UsersUnblocked =
 
 type Role =
     variant {
+        SuperAdmin: FallbackRole;
         Owner;
+        Admin;
+        Participant;
+    };
+
+type FallbackRole =
+    variant {
         Admin;
         Participant;
     };

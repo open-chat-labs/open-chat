@@ -3,10 +3,25 @@ use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
 pub enum Role {
-    SuperAdmin,
+    SuperAdmin(FallbackRole),
     Owner,
     Admin,
     Participant,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
+pub enum FallbackRole {
+    Admin,
+    Participant,
+}
+
+impl From<FallbackRole> for Role {
+    fn from(role: FallbackRole) -> Self {
+        match role {
+            FallbackRole::Participant => Role::Participant,
+            FallbackRole::Admin => Role::Admin,
+        }
+    }
 }
 
 impl Role {
@@ -15,11 +30,11 @@ impl Role {
     }
 
     pub fn is_admin(&self) -> bool {
-        matches!(self, Role::Admin)
+        matches!(self, Role::Admin | Role::SuperAdmin(FallbackRole::Admin))
     }
 
     pub fn is_super_admin(&self) -> bool {
-        matches!(self, Role::SuperAdmin)
+        matches!(self, Role::SuperAdmin(_))
     }
 
     pub fn can_add_participants(&self, is_public_group: bool) -> bool {
@@ -79,6 +94,6 @@ impl Role {
     }
 
     fn has_owner_rights(&self) -> bool {
-        matches!(self, Role::Owner | Role::SuperAdmin)
+        matches!(self, Role::Owner | Role::SuperAdmin(_))
     }
 }
