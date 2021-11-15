@@ -21,6 +21,7 @@ export function originalTheme(defaultTheme: Theme): Theme {
             left: {
                 ...defaultTheme.panel.left,
                 bg: "#f6f6f6",
+                xs: "#f6f6f6",
             },
             right: {
                 ...defaultTheme.panel.right,

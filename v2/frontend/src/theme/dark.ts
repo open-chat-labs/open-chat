@@ -84,6 +84,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bg: dark05,
             left: {
                 bg: "rgba(0,0,0,0.1)",
+                xs: "rgba(0,0,0,0.1)",
             },
             right: {
                 bg: dark10,
