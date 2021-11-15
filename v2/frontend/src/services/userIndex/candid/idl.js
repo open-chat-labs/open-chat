@@ -5,6 +5,14 @@ export const idlFactory = ({ IDL }) => {
     'sms_service_principals' : IDL.Vec(IDL.Principal),
     'service_principals' : IDL.Vec(IDL.Principal),
   });
+  const CanisterId = IDL.Principal;
+  const UserId = CanisterId;
+  const AddSuperAdminArgs = IDL.Record({ 'user_id' : UserId });
+  const AddSuperAdminResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'AlreadySuperAdmin' : IDL.Null,
+  });
   const ConfirmPhoneNumberArgs = IDL.Record({ 'confirmation_code' : IDL.Text });
   const ConfirmPhoneNumberResponse = IDL.Variant({
     'AlreadyClaimed' : IDL.Null,
@@ -14,7 +22,6 @@ export const idlFactory = ({ IDL }) => {
     'UserNotFound' : IDL.Null,
   });
   const CreateCanisterArgs = IDL.Record({});
-  const CanisterId = IDL.Principal;
   const CreateCanisterResponse = IDL.Variant({
     'UserAlreadyCreated' : IDL.Null,
     'Success' : CanisterId,
@@ -34,7 +41,6 @@ export const idlFactory = ({ IDL }) => {
     'Created' : IDL.Null,
     'Pending' : IDL.Null,
   });
-  const UserId = CanisterId;
   const Cryptocurrency = IDL.Variant({ 'ICP' : IDL.Null, 'Cycles' : IDL.Null });
   const CryptocurrencyAccount = IDL.Record({
     'currency' : Cryptocurrency,
@@ -73,6 +79,12 @@ export const idlFactory = ({ IDL }) => {
   const RemoveSmsMessagesResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
+  });
+  const RemoveSuperAdminArgs = IDL.Record({ 'user_id' : UserId });
+  const RemoveSuperAdminResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'NotSuperAdmin' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const ResendCodeArgs = IDL.Record({});
   const ResendCodeResponse = IDL.Variant({
@@ -124,6 +136,11 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'AlreadyRegisteredByOther' : IDL.Null,
     'InvalidPhoneNumber' : IDL.Null,
+  });
+  const SuperAdminsArgs = IDL.Record({});
+  const SuperAdminsResponse = IDL.Variant({
+    'NotController' : IDL.Null,
+    'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
   });
   const TransferCyclesArgs = IDL.Record({
     'recipient' : UserId,
@@ -189,6 +206,11 @@ export const idlFactory = ({ IDL }) => {
     }),
   });
   return IDL.Service({
+    'add_super_admin' : IDL.Func(
+        [AddSuperAdminArgs],
+        [AddSuperAdminResponse],
+        [],
+      ),
     'confirm_phone_number' : IDL.Func(
         [ConfirmPhoneNumberArgs],
         [ConfirmPhoneNumberResponse],
@@ -211,6 +233,11 @@ export const idlFactory = ({ IDL }) => {
         [RemoveSmsMessagesResponse],
         [],
       ),
+    'remove_super_admin' : IDL.Func(
+        [RemoveSuperAdminArgs],
+        [RemoveSuperAdminResponse],
+        [],
+      ),
     'resend_code' : IDL.Func([ResendCodeArgs], [ResendCodeResponse], []),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
     'set_username' : IDL.Func([SetUsernameArgs], [SetUsernameResponse], []),
@@ -223,6 +250,11 @@ export const idlFactory = ({ IDL }) => {
         [SubmitPhoneNumberArgs],
         [SubmitPhoneNumberResponse],
         [],
+      ),
+    'super_admins' : IDL.Func(
+        [SuperAdminsArgs],
+        [SuperAdminsResponse],
+        ['query'],
       ),
     'transfer_cycles' : IDL.Func(
         [TransferCyclesArgs],

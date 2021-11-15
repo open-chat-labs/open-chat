@@ -300,6 +300,7 @@ export class UserClient extends CandidService implements IUserClient {
     joinGroup(chatId: string): Promise<JoinGroupResponse> {
         return this.handleResponse(
             this.userService.join_group({
+                as_super_admin: false,
                 chat_id: Principal.fromText(chatId),
             }),
             joinGroupResponse

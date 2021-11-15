@@ -15,7 +15,7 @@ import type {
     EditMessageResponse,
     BlockUserResponse,
     MakeAdminResponse,
-    RemoveAdminResponse,
+    DismissAdminResponse,
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
@@ -34,7 +34,7 @@ import {
     deleteMessageResponse,
     editMessageResponse,
     blockUserResponse,
-    removeAdminResponse,
+    dismissAdminResponse,
     groupDetailsResponse,
     groupDetailsUpdatesResponse,
     unblockUserResponse,
@@ -158,12 +158,12 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
-    dismissAsAdmin(userId: string): Promise<RemoveAdminResponse> {
+    dismissAsAdmin(userId: string): Promise<DismissAdminResponse> {
         return this.handleResponse(
-            this.groupService.remove_admin({
+            this.groupService.dismiss_admin({
                 user_id: Principal.fromText(userId),
             }),
-            removeAdminResponse
+            dismissAdminResponse
         );
     }
 

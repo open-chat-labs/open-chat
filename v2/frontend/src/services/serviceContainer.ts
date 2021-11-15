@@ -42,7 +42,7 @@ import type {
     EditMessageResponse,
     MarkReadRequest,
     MakeAdminResponse,
-    RemoveAdminResponse,
+    DismissAdminResponse,
     GroupChatDetailsResponse,
     GroupChatDetails,
     TransferOwnershipResponse,
@@ -504,7 +504,7 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.getGroupClient(chatId).deleteGroup();
     }
 
-    dismissAsAdmin(chatId: string, userId: string): Promise<RemoveAdminResponse> {
+    dismissAsAdmin(chatId: string, userId: string): Promise<DismissAdminResponse> {
         return this.getGroupClient(chatId).dismissAsAdmin(userId);
     }
 

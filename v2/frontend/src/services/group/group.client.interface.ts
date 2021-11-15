@@ -13,7 +13,7 @@ import type {
     EditMessageResponse,
     BlockUserResponse,
     MakeAdminResponse,
-    RemoveAdminResponse,
+    DismissAdminResponse,
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
@@ -38,7 +38,7 @@ export interface IGroupClient {
     sendMessage(senderName: string, message: Message): Promise<SendMessageResponse>;
     editMessage(message: Message): Promise<EditMessageResponse>;
     makeAdmin(userId: string): Promise<MakeAdminResponse>;
-    dismissAsAdmin(userId: string): Promise<RemoveAdminResponse>;
+    dismissAsAdmin(userId: string): Promise<DismissAdminResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;

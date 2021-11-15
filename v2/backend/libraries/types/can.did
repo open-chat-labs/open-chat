@@ -379,6 +379,11 @@ type ParticipantRelinquishesSuperAdmin =
         user_id: UserId;
     };
 
+type ParticipantDismissedAsSuperAdmin =
+    record {
+        user_id: UserId;
+    };
+
 type ParticipantsAdded =
     record {
         user_ids: vec UserId;
