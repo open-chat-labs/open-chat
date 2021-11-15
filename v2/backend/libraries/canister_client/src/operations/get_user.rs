@@ -8,7 +8,10 @@ pub async fn get_user(
     user_index_canister_id: CanisterId,
 ) -> Option<UserSummary> {
     let args = user_index_canister::user::Args { user_id, username };
-    match user_index_canister_client::user(agent, &user_index_canister_id, &args).await {
+    match user_index_canister_client::user(agent, &user_index_canister_id, &args)
+        .await
+        .unwrap()
+    {
         user_index_canister::user::Response::Success(r) => Some(r),
         _ => None,
     }

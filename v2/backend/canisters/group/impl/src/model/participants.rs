@@ -232,10 +232,10 @@ impl Participants {
                     self.admin_count -= 1;
                     RemoveAdminResult::Success
                 } else {
-                    RemoveAdminResult::NotAdmin
+                    RemoveAdminResult::UserNotAdmin
                 }
             }
-            None => RemoveAdminResult::NotInGroup,
+            None => RemoveAdminResult::UserNotInGroup,
         }
     }
 
@@ -299,8 +299,8 @@ pub enum TransferOwnershipResult {
 
 pub enum RemoveAdminResult {
     Success,
-    NotInGroup,
-    NotAdmin,
+    UserNotInGroup,
+    UserNotAdmin,
 }
 
 pub enum RemoveSuperAdminResult {

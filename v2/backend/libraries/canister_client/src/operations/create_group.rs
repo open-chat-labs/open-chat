@@ -7,7 +7,9 @@ pub async fn create_group(
     args: &user_canister::create_group::Args,
     participants: Vec<UserId>,
 ) -> ChatId {
-    let create_group_response = user_canister_client::create_group(agent, &creator_id.into(), args).await;
+    let create_group_response = user_canister_client::create_group(agent, &creator_id.into(), args)
+        .await
+        .unwrap();
 
     if let user_canister::create_group::Response::Success(r) = create_group_response {
         let add_participants_args = group_canister::add_participants::Args {
@@ -15,7 +17,10 @@ pub async fn create_group(
             allow_blocked_users: false,
         };
         let add_participants_response =
-            group_canister_client::add_participants(agent, &r.chat_id.into(), &add_participants_args).await;
+            group_canister_client::add_participants(agent, &r.chat_id.into(), &add_participants_args)
+                .await
+                .unwrap();
+
         if !matches!(add_participants_response, group_canister::add_participants::Response::Success) {
             panic!("Add participants returned an error: {:?}", add_participants_response);
         }

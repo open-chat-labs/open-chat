@@ -166,6 +166,7 @@ type RemoveAdminResponse =
         CallerNotInGroup;
         NotAuthorized;
         UserNotInGroup;
+        UserNotAdmin;
         CannotRemoveSelf;
     };
 

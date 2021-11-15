@@ -80,7 +80,9 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let result4 = send_group_message(&user2_agent, chat_id2, &group_message_args2).await;
 
     let initial_state_args = user_canister::initial_state::Args {};
-    let initial_state_response = user_canister_client::initial_state(&user1_agent, &user1_id.into(), &initial_state_args).await;
+    let initial_state_response = user_canister_client::initial_state(&user1_agent, &user1_id.into(), &initial_state_args)
+        .await
+        .unwrap();
 
     if let user_canister::initial_state::Response::Success(r) = initial_state_response {
         assert_eq!(r.chats.len(), 3);
@@ -100,7 +102,9 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                 ],
             },
         };
-        let updates_response = user_canister_client::updates(&user1_agent, &user1_id.into(), &updates_args).await;
+        let updates_response = user_canister_client::updates(&user1_agent, &user1_id.into(), &updates_args)
+            .await
+            .unwrap();
 
         if let user_canister::updates::Response::Success(r) = updates_response {
             assert_eq!(r.chats_updated.len(), 2, "{:?}", r);
