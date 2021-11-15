@@ -1,11 +1,10 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{RuntimeState, RUNTIME_STATE, WASM_VERSION};
 use group_canister::summary::Summary;
 use group_canister::summary_updates::SummaryUpdates;
 use group_index_canister::c2c_filter_groups;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::query;
-use std::collections::hash_map::Entry::Occupied;
 use std::collections::{HashMap, HashSet};
 use types::{
     Alert, AlertDetails, AlertId, CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary,
@@ -68,6 +67,7 @@ async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
         blocked_users: result.blocked_users,
         cycles_balance: result.cycles_balance.unwrap_or(0),
         upgrades_in_progress: result.upgrades_in_progress,
+        user_canister_wasm_version: WASM_VERSION.with(|v| **v.borrow()),
     })
 }
 
@@ -104,7 +104,7 @@ async fn updates(args: updates::Args) -> updates::Response {
         let active_groups: HashSet<_> = filter_groups_result.active_groups.into_iter().collect();
 
         group_chats_added.retain(|id| !has_group_been_deleted(&deleted_groups, id) && !upgrades_in_progress.contains(id));
-        group_chats_to_check_for_updates.retain(|(id, _)| active_groups.contains(id));
+        group_chats_to_check_for_updates.retain(|(id, _)| active_groups.contains(id) && !upgrades_in_progress.contains(id));
 
         let summaries_future = get_group_chat_summaries(group_chats_added);
         let summary_updates_future = get_group_chat_summary_updates(group_chats_to_check_for_updates);
@@ -262,41 +262,37 @@ fn finalize(
     let mut group_chats_updated: HashMap<ChatId, GroupChatSummaryUpdates> =
         group_chats_updated.into_iter().map(|s| (s.chat_id, s.into())).collect();
 
-    let since = updates_since_option.as_ref().map(|s| s.timestamp);
-
-    for group_chat in runtime_state.data.group_chats.get_all(since) {
+    for group_chat in runtime_state.data.group_chats.get_all(Some(updates_since)) {
         if has_group_been_deleted(&groups_deleted, &group_chat.chat_id) {
             continue;
         }
 
-        if let Occupied(e) = group_chats_added.entry(group_chat.chat_id) {
-            let summary = e.into_mut();
+        if let Some(summary) = group_chats_added.get_mut(&group_chat.chat_id) {
             summary.notifications_muted = group_chat.notifications_muted.value;
             summary.read_by_me = convert_to_message_index_ranges(group_chat.read_by_me.value.clone());
-            continue;
+        } else {
+            group_chats_updated
+                .entry(group_chat.chat_id)
+                .and_modify(|su| {
+                    su.notifications_muted = if group_chat.notifications_muted.timestamp > updates_since {
+                        Some(group_chat.notifications_muted.value)
+                    } else {
+                        None
+                    };
+                    su.read_by_me = if group_chat.read_by_me.timestamp > updates_since {
+                        Some(convert_to_message_index_ranges(group_chat.read_by_me.value.clone()))
+                    } else {
+                        None
+                    };
+                })
+                .or_insert_with(|| group_chat.into());
         }
-
-        group_chats_updated
-            .entry(group_chat.chat_id)
-            .and_modify(|su| {
-                su.notifications_muted = if group_chat.notifications_muted.timestamp > updates_since {
-                    Some(group_chat.notifications_muted.value)
-                } else {
-                    None
-                };
-                su.read_by_me = if group_chat.read_by_me.timestamp > updates_since {
-                    Some(convert_to_message_index_ranges(group_chat.read_by_me.value.clone()))
-                } else {
-                    None
-                };
-            })
-            .or_insert_with(|| group_chat.into());
     }
 
     let mut chats_added: Vec<_> = group_chats_added.into_values().map(ChatSummary::Group).collect();
     let mut chats_updated: Vec<_> = group_chats_updated.into_values().map(ChatSummaryUpdates::Group).collect();
 
-    for direct_chat in runtime_state.data.direct_chats.get_all(since) {
+    for direct_chat in runtime_state.data.direct_chats.get_all(Some(updates_since)) {
         if direct_chat.date_created > updates_since {
             chats_added.push(ChatSummary::Direct(DirectChatSummary {
                 them: direct_chat.them,
@@ -347,7 +343,7 @@ fn finalize(
 
     // Combine the internal alerts with alerts based on deleted groups
     // and sort so the most recent alerts are at the top
-    let mut alerts = runtime_state.data.alerts.get_all(since, now);
+    let mut alerts = runtime_state.data.alerts.get_all(Some(updates_since), now);
     for group_deleted in groups_deleted {
         let alert = Alert {
             id: AlertId::GroupDeleted(group_deleted.id).to_string(),
@@ -371,6 +367,7 @@ fn finalize(
         cycles_balance,
         alerts,
         upgrades_in_progress,
+        user_canister_wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(updates_since).copied()),
     }
 }
 

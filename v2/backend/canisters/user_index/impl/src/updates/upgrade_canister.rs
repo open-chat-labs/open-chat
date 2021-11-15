@@ -19,7 +19,7 @@ async fn upgrade_canister(_args: Args) -> Response {
     let user_id = canister_id.into();
     let to_version = canister_to_upgrade.new_wasm.version;
 
-    match canister::upgrade(canister_id, canister_to_upgrade.new_wasm.module).await {
+    match canister::upgrade(canister_id, canister_to_upgrade.new_wasm.module, canister_to_upgrade.args).await {
         Ok(_) => {
             RUNTIME_STATE.with(|state| set_upgrade_complete(user_id, Some(to_version), state.borrow_mut().as_mut().unwrap()));
             Success
@@ -37,7 +37,7 @@ async fn upgrade_canister(_args: Args) -> Response {
 pub(crate) fn initialize_upgrade(
     user_id: Option<UserId>,
     runtime_state: &mut RuntimeState,
-) -> Result<CanisterToUpgrade, Response> {
+) -> Result<CanisterToUpgrade<user_canister::post_upgrade::Args>, Response> {
     let user = if let Some(user_id) = user_id {
         runtime_state.data.users.get_by_user_id(&user_id)
     } else {
@@ -63,6 +63,9 @@ pub(crate) fn initialize_upgrade(
                     canister_id,
                     current_wasm_version,
                     new_wasm: user_canister_wasm.clone(),
+                    args: user_canister::post_upgrade::Args {
+                        wasm_version: user_canister_wasm.version,
+                    },
                 }),
                 r => Err(InternalError(format!("{:?}", r))),
             }

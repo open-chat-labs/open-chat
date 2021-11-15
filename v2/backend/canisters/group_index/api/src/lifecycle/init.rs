@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::Deserialize;
-use types::{CanisterId, CanisterWasm};
+use types::{CanisterId, CanisterWasm, Version};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -10,5 +10,6 @@ pub struct Args {
     pub group_canister_wasm: CanisterWasm,
     pub notifications_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
+    pub wasm_version: Version,
     pub test_mode: bool,
 }

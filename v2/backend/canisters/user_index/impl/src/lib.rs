@@ -5,7 +5,7 @@ use canister_logger::LogMessagesWrapper;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, CanisterWasm, ConfirmationCodeSms, Cycles, TimestampMillis, UserId, Version};
+use types::{CanisterId, CanisterWasm, ConfirmationCodeSms, Cycles, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::CanistersRequiringUpgrade;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
@@ -31,6 +31,7 @@ enum StateVersion {
 thread_local! {
     static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
+    static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 
 struct RuntimeState {
@@ -128,10 +129,10 @@ impl Data {
             online_users_aggregator_canister_ids: HashSet::from([online_users_aggregator_canister_id]),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
-            test_mode,
             total_cycles_spent_on_canisters: 0,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
+            test_mode,
         }
     }
 }

@@ -60,7 +60,7 @@ pub fn build_management_canister(agent: &Agent) -> Canister<ManagementCanister> 
         .unwrap()
 }
 
-pub fn get_canister_wasm(canister_name: CanisterName, compressed: bool) -> CanisterWasm {
+pub fn get_canister_wasm(canister_name: CanisterName, version: Version, compressed: bool) -> CanisterWasm {
     let mut file_name = canister_name.to_string() + "_canister_impl-opt.wasm";
     if compressed {
         file_name += ".xz";
@@ -77,7 +77,7 @@ pub fn get_canister_wasm(canister_name: CanisterName, compressed: bool) -> Canis
     CanisterWasm {
         module: bytes,
         compressed,
-        version: Version::new(0, 0, 0),
+        version,
     }
 }
 

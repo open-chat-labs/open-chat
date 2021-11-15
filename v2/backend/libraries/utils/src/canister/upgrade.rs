@@ -6,13 +6,14 @@ use serde::Deserialize;
 use tracing::error;
 use types::{CanisterId, CanisterWasm, Version};
 
-pub struct CanisterToUpgrade {
+pub struct CanisterToUpgrade<A: CandidType> {
     pub canister_id: CanisterId,
     pub current_wasm_version: Version,
     pub new_wasm: CanisterWasm,
+    pub args: A,
 }
 
-pub async fn upgrade(canister_id: CanisterId, wasm_module: Vec<u8>) -> Result<(), canister::Error> {
+pub async fn upgrade<A: CandidType>(canister_id: CanisterId, wasm_module: Vec<u8>, args: A) -> Result<(), canister::Error> {
     #[derive(CandidType, Deserialize)]
     struct StartOrStopCanisterArgs {
         canister_id: Principal,
@@ -56,7 +57,7 @@ pub async fn upgrade(canister_id: CanisterId, wasm_module: Vec<u8>) -> Result<()
         mode: InstallMode::Upgrade,
         canister_id,
         wasm_module,
-        arg: b" ".to_vec(),
+        arg: candid::encode_one(args).unwrap(),
     };
     let install_code_response: CallResult<()> =
         api::call::call(Principal::management_canister(), "install_code", (install_code_args,)).await;

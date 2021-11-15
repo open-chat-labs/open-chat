@@ -1,7 +1,7 @@
 use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MIN_CYCLES_BALANCE, RUNTIME_STATE};
 use ic_cdk_macros::heartbeat;
 use types::{CanisterId, Cycles, Version};
-use utils::canister::{self, CanisterToUpgrade, FailedUpgrade};
+use utils::canister::{self, FailedUpgrade};
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 const MAX_CONCURRENT_CANISTER_UPGRADES: u32 = 5;
@@ -15,6 +15,7 @@ fn heartbeat() {
 
 mod upgrade_canisters {
     use super::*;
+    type CanisterToUpgrade = utils::canister::CanisterToUpgrade<group_canister::post_upgrade::Args>;
 
     pub fn run() {
         let chats_to_upgrade = RUNTIME_STATE.with(|state| get_next_batch(state.borrow_mut().as_mut().unwrap()));
@@ -48,10 +49,14 @@ mod upgrade_canisters {
             return None;
         }
 
+        let new_wasm = runtime_state.data.group_canister_wasm.clone();
+        let wasm_version = new_wasm.version;
+
         Some(CanisterToUpgrade {
             canister_id,
             current_wasm_version,
-            new_wasm: runtime_state.data.group_canister_wasm.clone(),
+            new_wasm,
+            args: group_canister::post_upgrade::Args { wasm_version },
         })
     }
 
@@ -66,7 +71,7 @@ mod upgrade_canisters {
         let from_version = canister_to_upgrade.current_wasm_version;
         let to_version = canister_to_upgrade.new_wasm.version;
 
-        match canister::upgrade(canister_id, canister_to_upgrade.new_wasm.module).await {
+        match canister::upgrade(canister_id, canister_to_upgrade.new_wasm.module, canister_to_upgrade.args).await {
             Ok(_) => {
                 RUNTIME_STATE.with(|state| on_success(canister_id, to_version, state.borrow_mut().as_mut().unwrap()));
             }
