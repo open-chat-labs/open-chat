@@ -62,6 +62,7 @@
         border: 1px solid var(--button-bg);
         margin-bottom: $sp3;
         margin-left: 7px;
+        overflow: hidden;
 
         &.rtl {
             box-shadow: 7px 0px 0px 0px var(--button-bg);

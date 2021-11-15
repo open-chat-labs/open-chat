@@ -96,6 +96,7 @@ export interface Theme {
         bg: string;
         left: {
             bg: string;
+            xs: string;
         };
         right: {
             bg: string;

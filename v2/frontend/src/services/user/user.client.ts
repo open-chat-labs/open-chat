@@ -116,7 +116,7 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.events_window({
                 user_id: Principal.fromText(userId),
-                max_messages: 20,
+                max_messages: 30,
                 max_events: 200,
                 mid_point: messageIndex,
             }),
@@ -135,7 +135,7 @@ export class UserClient extends CandidService implements IUserClient {
         const resp = await this.handleResponse(
             this.userService.events({
                 user_id: Principal.fromText(userId),
-                max_messages: 20,
+                max_messages: 30,
                 max_events: 50,
                 start_index: startIndex,
                 ascending,

@@ -45,6 +45,7 @@
             width: $left-width;
             position: relative;
             @include size-below(xs) {
+                background: var(--panel-left-xs);
                 width: 100%;
                 padding: 0;
                 flex: auto;

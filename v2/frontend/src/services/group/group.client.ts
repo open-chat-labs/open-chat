@@ -84,7 +84,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.handleResponse(
             this.groupService.events_window({
-                max_messages: 20,
+                max_messages: 30,
                 max_events: 200,
                 mid_point: messageIndex,
             }),
@@ -101,7 +101,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     ): Promise<EventsResponse<GroupChatEvent>> {
         const resp = await this.handleResponse(
             this.groupService.events({
-                max_messages: 20,
+                max_messages: 30,
                 max_events: 50,
                 ascending: ascending,
                 start_index: startIndex,

@@ -8,7 +8,6 @@
     import { fade } from "svelte/transition";
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { chatStore } from "../../stores/chat";
     import {
         addDays,
         getStartOfToday,
@@ -35,6 +34,7 @@
     import type { MessageReadState } from "../../stores/markRead";
     import { menuStore } from "../../stores/menu";
 
+    // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
     const MESSAGE_READ_THRESHOLD = 500;
@@ -45,22 +45,22 @@
     export let unreadMessages: number;
 
     $: events = controller.events;
-    $: loading = controller.loading;
     $: chat = controller.chat;
     $: focusMessageIndex = controller.focusMessageIndex;
     $: markRead = controller.markRead.store;
 
     setContext<UserLookup>("userLookup", $userStore);
 
-    // sucks that we can lie to the compiler like this so easily
     let messagesDiv: HTMLDivElement;
     let initialised = false;
-    let scrollHeight = 0;
+    let scrollingToMessage = false;
+    let scrollTimer: number | undefined;
     let scrollTop = 0;
     let currentChatId = "";
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
-    let fromBottomVal: number = 0;
+    let fromBottom: number = 0;
+    let fromTop: number = 0;
 
     onMount(() => {
         const options = {
@@ -97,14 +97,10 @@
     });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
-        setTimeout(() => {
-            if (messagesDiv) {
-                messagesDiv.scrollTo({
-                    top: messagesDiv.scrollHeight - messagesDiv.offsetHeight,
-                    behavior,
-                });
-            }
-        }, 0);
+        messagesDiv.scrollTo({
+            top: 0,
+            behavior,
+        });
     }
 
     function scrollToNew() {
@@ -121,15 +117,20 @@
     }
 
     function scrollToMessageIndex(index: number) {
+        // set a flag so that we can ignore subsequent scroll events temporarily
+        scrollingToMessage = true;
+        controller.setFocusMessageIndex(index);
         const element = document.querySelector(`[data-index='${index}']`);
         if (element) {
-            controller.setFocusMessageIndex(index);
+            // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
-            setTimeout(() => controller.clearFocusMessageIndex(), 200);
+            setTimeout(() => {
+                controller.clearFocusMessageIndex();
+            }, 200);
         } else {
             // todo - this is a bit dangerous as it could cause an infinite recursion
             // if we are looking for a message that simply isn't there.
-            controller.goToMessageIndex(index);
+            controller.goToMessageIndex(index).then(() => scrollToMessageIndex(index));
         }
     }
 
@@ -138,44 +139,65 @@
             if ($focusMessageIndex !== undefined) {
                 scrollToMessageIndex($focusMessageIndex);
             } else {
-                const extraHeight = messagesDiv.scrollHeight - scrollHeight;
-                messagesDiv.scrollTop = scrollTop + extraHeight;
+                messagesDiv.scrollTop = scrollTop;
             }
         } else {
             if ($focusMessageIndex !== undefined) {
                 scrollToMessageIndex($focusMessageIndex);
-            } else {
-                scrollBottom();
             }
             initialised = true;
         }
     }
 
-    function onScroll() {
-        menuStore.hideMenu();
-        scrollHeight = messagesDiv.scrollHeight;
-        scrollTop = messagesDiv.scrollTop;
-        if (!$loading) {
-            if (
-                messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD &&
-                controller.morePreviousMessagesAvailable()
-            ) {
-                controller.loadPreviousMessages();
-            }
+    function shouldLoadPreviousMessages() {
+        return fromTop < MESSAGE_LOAD_THRESHOLD && controller.morePreviousMessagesAvailable();
+    }
 
-            fromBottomVal = fromBottom();
-            if (fromBottomVal < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable()) {
-                // Note - this fires even when we have entered our own message. This *seems* wrong but
-                // it is actually correct because we do want to load our own messages from the server
-                // so that any incorrect indexes are corrected and only the right thing goes in the cache
-                controller.loadNewMessages();
-            }
+    function shouldLoadNewMessages() {
+        return fromBottom < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable();
+    }
+
+    function onScroll() {
+        if (!initialised) return;
+
+        menuStore.hideMenu();
+        scrollTop = messagesDiv.scrollTop;
+        fromBottom = -messagesDiv.scrollTop;
+        fromTop = calculateFromTop();
+
+        if (scrollingToMessage) {
+            // if we are in the middle of scrolling to a message we have to wait for the scroll to settle
+            // down before we start paying attention to the scroll again
+            // annoyingly there is no scrollEnd event or anything so this, hacky as it is, is the best we can do
+
+            window.clearTimeout(scrollTimer);
+            scrollTimer = window.setTimeout(() => {
+                scrollingToMessage = false;
+
+                // once the scrolling has settled we need to do a final check to see if we need to
+                // load any more previous messages
+                if (shouldLoadPreviousMessages()) {
+                    controller.loadPreviousMessages();
+                }
+            }, 300);
+            return;
+        }
+
+        if (shouldLoadPreviousMessages()) {
+            controller.loadPreviousMessages();
+        }
+
+        if (shouldLoadNewMessages()) {
+            // Note - this fires even when we have entered our own message. This *seems* wrong but
+            // it is actually correct because we do want to load our own messages from the server
+            // so that any incorrect indexes are corrected and only the right thing goes in the cache
+            controller.loadNewMessages();
         }
     }
 
-    function fromBottom(): number {
+    function calculateFromTop(): number {
         return messagesDiv
-            ? messagesDiv.scrollHeight - Math.abs(messagesDiv.scrollTop) - messagesDiv.clientHeight
+            ? messagesDiv.scrollHeight - messagesDiv.clientHeight + messagesDiv.scrollTop
             : 0;
     }
 
@@ -281,7 +303,6 @@
             return e.event.messageId.toString();
         } else {
             return e.event;
-            //return e.index.toString();
         }
     }
 
@@ -299,7 +320,7 @@
         return `${first.timestamp}_${first.index}`;
     }
 
-    $: groupedEvents = groupEvents($events);
+    $: groupedEvents = groupEvents($events).reverse();
 
     $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($chat);
 
@@ -310,41 +331,37 @@
         if (controller.chatId !== currentChatId) {
             currentChatId = controller.chatId;
             initialised = false;
-        }
+            fromBottom = 0;
 
-        if ($chatStore && $chatStore.chatId === controller.chatId) {
-            fromBottomVal = fromBottom();
-            switch ($chatStore.event.kind) {
-                case "loaded_previous_messages":
-                    tick().then(resetScroll);
-                    break;
-                case "loaded_new_messages":
-                    if (fromBottomVal < FROM_BOTTOM_THRESHOLD) {
-                        scrollBottom("smooth");
-                    }
-                    break;
-                case "scroll_to_message_index":
-                    scrollToMessageIndex($chatStore.event.messageIndex);
-                    break;
-                case "sending_message":
-                    // if we are within the from bottom threshold *or* if the new message
-                    // was sent by us, then scroll to the bottom
-                    if (fromBottomVal < FROM_BOTTOM_THRESHOLD || $chatStore.event.sentByMe) {
-                        // smooth scroll doesn't work here when we are leaping from the top
-                        // which means we are stuck with abrupt scroll which is disappointing
-                        scrollBottom($chatStore.event.scroll);
-                    }
-                    break;
-                case "chat_updated":
-                    if (
-                        fromBottomVal < MESSAGE_LOAD_THRESHOLD &&
-                        controller.moreNewMessagesAvailable()
-                    ) {
-                        controller.loadNewMessages();
-                    }
-                    break;
-            }
-            chatStore.clear();
+            controller.subscribe((evt) => {
+                switch (evt.event.kind) {
+                    case "loaded_previous_messages":
+                        tick().then(resetScroll);
+                        break;
+                    case "loaded_new_messages":
+                        if (fromBottom < FROM_BOTTOM_THRESHOLD) {
+                            scrollBottom("smooth");
+                        }
+                        break;
+                    case "sending_message":
+                        // if we are within the from bottom threshold *or* if the new message
+                        // was sent by us, then scroll to the bottom
+                        if (fromBottom < FROM_BOTTOM_THRESHOLD || evt.event.sentByMe) {
+                            // smooth scroll doesn't work here when we are leaping from the top
+                            // which means we are stuck with abrupt scroll which is disappointing
+                            const { scroll } = evt.event;
+                            tick().then(() => scrollBottom(scroll));
+                        }
+                        break;
+                    case "chat_updated":
+                        // we don't want this to fire if we have loaded a previous window
+                        // but how do we know we are looking at a previous window
+                        if (shouldLoadNewMessages() && !controller.viewingEventWindow()) {
+                            controller.loadNewMessages();
+                        }
+                        break;
+                }
+            });
         }
     }
 
@@ -427,7 +444,7 @@
     {/each}
 </div>
 
-{#if fromBottomVal > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
+{#if fromBottom > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
     <div transition:fade class="to-bottom" class:rtl={$rtlStore}>
         <Fab on:click={() => scrollToNew()}>
             {#if unreadMessages > 0}
@@ -508,6 +525,8 @@
         overflow-y: scroll;
         overflow-x: hidden;
         position: relative;
+        display: flex;
+        flex-direction: column-reverse;
 
         @include nice-scrollbar();
 
