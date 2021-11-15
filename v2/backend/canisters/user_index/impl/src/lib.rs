@@ -5,7 +5,7 @@ use canister_logger::LogMessagesWrapper;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
-use types::{CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, Timestamped, TimestampMillis, UserId, Version};
+use types::{CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::CanistersRequiringUpgrade;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
