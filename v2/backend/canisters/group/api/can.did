@@ -155,19 +155,19 @@ type MakeAdminResponse =
         UserNotInGroup;
     }; 
 
-type RemoveAdminArgs =
+type DismissAdminArgs =
     record {
         user_id: UserId;
     };
 
-type RemoveAdminResponse =
+type DismissAdminResponse =
     variant {
         Success;
         CallerNotInGroup;
         NotAuthorized;
         UserNotInGroup;
         UserNotAdmin;
-        CannotRemoveSelf;
+        CannotDismissSelf;
     };
 
 type PutChunkArgs =
@@ -366,7 +366,7 @@ service: {
     block_user: (BlockUserArgs) -> (BlockUserResponse); // public only
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
     make_admin: (MakeAdminArgs) -> (MakeAdminResponse);
-    remove_admin: (RemoveAdminArgs) -> (RemoveAdminResponse);
+    dismiss_admin: (DismissAdminArgs) -> (DismissAdminResponse);
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group: (UpdateGroupArgs) -> (UpdateGroupResponse);
 

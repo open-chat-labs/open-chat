@@ -34,7 +34,7 @@ impl Role {
         self.has_admin_rights()
     }
 
-    pub fn can_remove_admin(&self) -> bool {
+    pub fn can_dismiss_admin(&self) -> bool {
         self.has_admin_rights()
     }
 

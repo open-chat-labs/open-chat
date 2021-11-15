@@ -224,18 +224,18 @@ impl Participants {
         TransferOwnershipResult::Success
     }
 
-    pub fn remove_admin(&mut self, user_id: &UserId) -> RemoveAdminResult {
+    pub fn dismiss_admin(&mut self, user_id: &UserId) -> DismissAdminResult {
         match self.get_by_user_id_mut(user_id) {
             Some(p) => {
                 if p.role.is_admin() {
                     p.role = Role::Participant;
                     self.admin_count -= 1;
-                    RemoveAdminResult::Success
+                    DismissAdminResult::Success
                 } else {
-                    RemoveAdminResult::UserNotAdmin
+                    DismissAdminResult::UserNotAdmin
                 }
             }
-            None => RemoveAdminResult::UserNotInGroup,
+            None => DismissAdminResult::UserNotInGroup,
         }
     }
 
@@ -297,7 +297,7 @@ pub enum TransferOwnershipResult {
     CallerNotOwner,
 }
 
-pub enum RemoveAdminResult {
+pub enum DismissAdminResult {
     Success,
     UserNotInGroup,
     UserNotAdmin,

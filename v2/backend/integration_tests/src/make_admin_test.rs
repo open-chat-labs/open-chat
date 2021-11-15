@@ -76,39 +76,39 @@ async fn make_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     };
     println!("Ok");
 
-    print!("Check that an admin can't remove the owner as admin... ");
-    let remove_user1_as_admin_args = group_canister::remove_admin::Args { user_id: user1_id };
-    match group_canister_client::remove_admin(&user2_agent, &chat_id.into(), &remove_user1_as_admin_args)
+    print!("Check that an admin can't dismiss the owner as admin... ");
+    let dismiss_user1_as_admin_args = group_canister::dismiss_admin::Args { user_id: user1_id };
+    match group_canister_client::dismiss_admin(&user2_agent, &chat_id.into(), &dismiss_user1_as_admin_args)
         .await
         .unwrap()
     {
-        group_canister::remove_admin::Response::UserNotAdmin => {}
-        response => panic!("RemoveAdmin returned an unexpected response: {:?}", response),
+        group_canister::dismiss_admin::Response::UserNotAdmin => {}
+        response => panic!("DismissAdmin returned an unexpected response: {:?}", response),
     };
     println!("Ok");
 
-    print!("Check that an admin can't remove themselves as admin... ");
-    let remove_user2_as_admin_args = group_canister::remove_admin::Args { user_id: user2_id };
-    match group_canister_client::remove_admin(&user2_agent, &chat_id.into(), &remove_user2_as_admin_args)
+    print!("Check that an admin can't dismiss themselves as admin... ");
+    let dismiss_user2_as_admin_args = group_canister::dismiss_admin::Args { user_id: user2_id };
+    match group_canister_client::dismiss_admin(&user2_agent, &chat_id.into(), &dismiss_user2_as_admin_args)
         .await
         .unwrap()
     {
-        group_canister::remove_admin::Response::CannotRemoveSelf => {}
-        group_canister::remove_admin::Response::Success => {
-            panic!("User should not have been able to remove themselves as admin");
+        group_canister::dismiss_admin::Response::CannotDismissSelf => {}
+        group_canister::dismiss_admin::Response::Success => {
+            panic!("User should not have been able to dismiss themselves as admin");
         }
-        response => panic!("RemoveAdmin returned an error: {:?}", response),
+        response => panic!("DismissAdmin returned an error: {:?}", response),
     };
     println!("Ok");
 
-    print!("Check that an admin can remove another admin as admin... ");
-    let remove_user3_as_admin_args = group_canister::remove_admin::Args { user_id: user3_id };
-    match group_canister_client::remove_admin(&user2_agent, &chat_id.into(), &remove_user3_as_admin_args)
+    print!("Check that an admin can dismiss another admin as admin... ");
+    let dismiss_user3_as_admin_args = group_canister::dismiss_admin::Args { user_id: user3_id };
+    match group_canister_client::dismiss_admin(&user2_agent, &chat_id.into(), &dismiss_user3_as_admin_args)
         .await
         .unwrap()
     {
-        group_canister::remove_admin::Response::Success => {}
-        response => panic!("RemoveAdmin returned an error: {:?}", response),
+        group_canister::dismiss_admin::Response::Success => {}
+        response => panic!("DismissAdmin returned an error: {:?}", response),
     };
     println!("Ok");
 
@@ -122,14 +122,14 @@ async fn make_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     };
     println!("Ok");
 
-    print!("Check that the owner can remove another admin as admin... ");
-    let remove_user2_as_admin_args = group_canister::remove_admin::Args { user_id: user2_id };
-    match group_canister_client::remove_admin(&user1_agent, &chat_id.into(), &remove_user2_as_admin_args)
+    print!("Check that the owner can dismiss another admin as admin... ");
+    let dismiss_user2_as_admin_args = group_canister::dismiss_admin::Args { user_id: user2_id };
+    match group_canister_client::dismiss_admin(&user1_agent, &chat_id.into(), &dismiss_user2_as_admin_args)
         .await
         .unwrap()
     {
-        group_canister::remove_admin::Response::Success => {}
-        response => panic!("RemoveAdmin returned an error: {:?}", response),
+        group_canister::dismiss_admin::Response::Success => {}
+        response => panic!("DismissAdmin returned an error: {:?}", response),
     };
     println!("Ok");
 
