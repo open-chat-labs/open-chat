@@ -1,6 +1,6 @@
 use crate::model::participants::DismissAdminResult;
-use crate::updates::handle_activity_notification;
 use crate::updates::dismiss_admin::Response::*;
+use crate::updates::handle_activity_notification;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
