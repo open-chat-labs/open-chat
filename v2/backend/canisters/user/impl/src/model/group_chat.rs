@@ -9,7 +9,6 @@ pub struct GroupChat {
     pub date_joined: TimestampMillis,
     pub read_by_me: Timestamped<RangeSet>,
     pub notifications_muted: Timestamped<bool>,
-    #[serde(default)]
     pub is_super_admin: bool,
 }
 
