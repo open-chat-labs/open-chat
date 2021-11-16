@@ -5,7 +5,6 @@
     import ChatEvent from "./ChatEvent.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
-    import { fade } from "svelte/transition";
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
     import {
@@ -139,6 +138,7 @@
             if ($focusMessageIndex !== undefined) {
                 scrollToMessageIndex($focusMessageIndex);
             } else {
+                scrollingToMessage = true;
                 messagesDiv.scrollTop = scrollTop;
             }
         } else {
@@ -161,27 +161,26 @@
         if (!initialised) return;
 
         menuStore.hideMenu();
-        scrollTop = messagesDiv.scrollTop;
-        fromBottom = -messagesDiv.scrollTop;
-        fromTop = calculateFromTop();
 
         if (scrollingToMessage) {
             // if we are in the middle of scrolling to a message we have to wait for the scroll to settle
             // down before we start paying attention to the scroll again
             // annoyingly there is no scrollEnd event or anything so this, hacky as it is, is the best we can do
-
             window.clearTimeout(scrollTimer);
             scrollTimer = window.setTimeout(() => {
                 scrollingToMessage = false;
 
                 // once the scrolling has settled we need to do a final check to see if we need to
                 // load any more previous messages
-                if (shouldLoadPreviousMessages()) {
-                    controller.loadPreviousMessages();
-                }
-            }, 300);
+                // the easiest way to do this is to manually call onScroll
+                onScroll();
+            }, 300); // todo this is a magic number and that usually ends badly
             return;
         }
+
+        scrollTop = messagesDiv.scrollTop;
+        fromBottom = -messagesDiv.scrollTop;
+        fromTop = calculateFromTop();
 
         if (shouldLoadPreviousMessages()) {
             controller.loadPreviousMessages();
@@ -339,9 +338,15 @@
                         tick().then(resetScroll);
                         break;
                     case "loaded_new_messages":
-                        if (fromBottom < FROM_BOTTOM_THRESHOLD) {
-                            scrollBottom("smooth");
-                        }
+                        // wait until the events are rendered
+                        tick().then(() => {
+                            // recalculate fromBottom
+                            fromBottom = -messagesDiv.scrollTop;
+                            if (fromBottom < FROM_BOTTOM_THRESHOLD) {
+                                // only scroll if we are now within threshold from the bottom
+                                scrollBottom("smooth");
+                            }
+                        });
                         break;
                     case "sending_message":
                         // if we are within the from bottom threshold *or* if the new message
@@ -444,20 +449,21 @@
     {/each}
 </div>
 
-{#if fromBottom > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
-    <div transition:fade class="to-bottom" class:rtl={$rtlStore}>
-        <Fab on:click={() => scrollToNew()}>
-            {#if unreadMessages > 0}
-                <div in:pop={{ duration: 1500 }} class="unread">
-                    <div class="unread-count">{unreadMessages > 99 ? "99+" : unreadMessages}</div>
-                    <div class="unread-label">{$_("new")}</div>
-                </div>
-            {:else}
-                <ArrowDown size={"1.2em"} color={"#fff"} />
-            {/if}
-        </Fab>
-    </div>
-{/if}
+<div
+    class:show={fromBottom > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
+    class="to-bottom"
+    class:rtl={$rtlStore}>
+    <Fab on:click={() => scrollToNew()}>
+        {#if unreadMessages > 0}
+            <div in:pop={{ duration: 1500 }} class="unread">
+                <div class="unread-count">{unreadMessages > 99 ? "99+" : unreadMessages}</div>
+                <div class="unread-label">{$_("new")}</div>
+            </div>
+        {:else}
+            <ArrowDown size={"1.2em"} color={"#fff"} />
+        {/if}
+    </Fab>
+</div>
 
 <style type="text/scss">
     .new-msgs {
@@ -508,9 +514,15 @@
     }
 
     .to-bottom {
+        transition: opacity ease-in-out 300ms;
         position: absolute;
         bottom: 80px;
         right: 20px;
+        opacity: 0;
+
+        &.show {
+            opacity: 1;
+        }
 
         &.rtl {
             left: $sp6;

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { menuStore } from "../stores/menu";
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
 
     let menu: HTMLElement;
     let contextMenu: HTMLElement;
@@ -11,6 +11,7 @@
         } else {
             const rect = menu.getBoundingClientRect();
             menuStore.showMenu(contextMenu, rect);
+            tick().then(() => menuStore.position(rect));
         }
     }
 
@@ -27,7 +28,7 @@
     <slot name="icon" />
 </div>
 
-<div class="blueprint">
+<div class="menu-blueprint">
     <span class="menu" bind:this={contextMenu} on:click|stopPropagation={closeMenu}>
         {#if $menuStore === contextMenu}
             <slot name="menu" />
@@ -43,7 +44,7 @@
         position: absolute;
     }
 
-    .blueprint {
+    .menu-blueprint {
         display: none;
     }
 </style>

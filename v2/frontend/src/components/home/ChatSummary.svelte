@@ -84,7 +84,7 @@
             title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
             class:rtl={$rtlStore}
             class="unread-msgs">
-            {unreadMessages > 9 ? "9+" : unreadMessages}
+            {unreadMessages > 99 ? "99+" : unreadMessages}
         </div>
     {/if}
 </a>
@@ -141,10 +141,10 @@
         overflow: hidden;
 
         &:not(.rtl) {
-            padding: 0 $sp4 0 $sp3;
+            padding: 0 $sp5 0 $sp3;
         }
         &.rtl {
-            padding: 0 $sp3 0 $sp4;
+            padding: 0 $sp3 0 $sp5;
         }
 
         .name-date {
@@ -189,8 +189,8 @@
         font-size: 10px;
         color: #ffffff;
         position: absolute;
-        width: 18px;
-        height: 18px;
+        width: $sp5;
+        height: $sp5;
         top: calc(50% - 4px);
 
         &:not(.rtl) {

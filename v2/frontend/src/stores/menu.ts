@@ -16,13 +16,22 @@ function close(menu: HTMLElement | undefined): HTMLElement | undefined {
 
 export const menuStore = {
     subscribe,
-    showMenu: (menu: HTMLElement, pos: DOMRect): void =>
+    position: (pos: DOMRect): void =>
+        update((menu) => {
+            if (menu === undefined) return menu;
+            const xoffset = get(rtlStore) ? 180 : -180;
+            const items = menu.querySelectorAll(".menu-item").length;
+            const height = 37.2 * items;
+            const left = Math.max(10, pos.x + xoffset);
+            const top = pos.y > window.innerHeight / 2 ? pos.y - height : pos.y + pos.height;
+            menu.style.setProperty("top", `${top}px`);
+            menu.style.setProperty("left", `${left}px`);
+            return menu;
+        }),
+    showMenu: (menu: HTMLElement, _pos: DOMRect): void =>
         update((currentMenu) => {
             close(currentMenu);
-            const xoffset = get(rtlStore) ? 180 : -180;
             menuAnchor.appendChild(menu);
-            menu.style.setProperty("top", `${pos.y + pos.height}px`);
-            menu.style.setProperty("left", `${pos.x + xoffset}px`);
             return menu;
         }),
     hideMenu: (): void =>
