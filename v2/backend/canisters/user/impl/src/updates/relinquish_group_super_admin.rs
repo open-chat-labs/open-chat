@@ -9,18 +9,18 @@ use user_canister::relinquish_group_super_admin::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
-async fn reinquish_group_super_admin(args: Args) -> Response {
+async fn relinquish_group_super_admin(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(response) = RUNTIME_STATE.with(|state| prepare(&args.group_id, state.borrow().as_ref().unwrap())) {
+    if let Err(response) = RUNTIME_STATE.with(|state| prepare(&args.chat_id, state.borrow().as_ref().unwrap())) {
         return response;
     }
 
     let c2c_args = c2c_relinquish_super_admin::Args {};
-    match group_canister_c2c_client::c2c_relinquish_super_admin(args.group_id.into(), &c2c_args).await {
+    match group_canister_c2c_client::c2c_relinquish_super_admin(args.chat_id.into(), &c2c_args).await {
         Ok(response) => match response {
             c2c_relinquish_super_admin::Response::Success => {
-                RUNTIME_STATE.with(|state| commit(&args.group_id, state.borrow_mut().as_mut().unwrap()));
+                RUNTIME_STATE.with(|state| commit(&args.chat_id, state.borrow_mut().as_mut().unwrap()));
                 Success
             }
             c2c_relinquish_super_admin::Response::CallerNotInGroup => {

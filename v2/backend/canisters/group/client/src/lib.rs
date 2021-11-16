@@ -10,9 +10,12 @@ generate_query_call!(summary_updates);
 
 // Updates
 generate_update_call!(add_participants);
+generate_update_call!(block_user);
 generate_update_call!(delete_messages);
 generate_update_call!(dismiss_admin);
 generate_update_call!(edit_message);
 generate_update_call!(make_admin);
+generate_update_call!(remove_participant);
 generate_update_call!(send_message);
 generate_update_call!(toggle_reaction);
+generate_update_call!(transfer_ownership);

@@ -28,7 +28,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "transfer_ownership" => role.can_transfer_ownership(),
             "unblock_user" => role.can_unblock_user(),
             "update_group" => role.can_update_group(),
-            "delete_message" | "edit_message" | "put_chunk" | "send_message" | "toggle_reaction" => true,
+            "delete_messages" | "edit_message" | "put_chunk" | "send_message" | "toggle_reaction" => true,
             _ => false,
         };
 

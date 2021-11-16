@@ -2,7 +2,6 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
 use user_index_canister::c2c_is_super_admin::{Response::*, *};
 
-// TODO: This is a weakness until ServiceId concept is available. Any canister can call this and DoS OC
 #[query]
 fn c2c_is_super_admin(args: Args) -> Response {
     RUNTIME_STATE.with(|state| c2c_is_super_admin_impl(args, state.borrow().as_ref().unwrap()))

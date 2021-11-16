@@ -210,9 +210,13 @@ impl Participants {
             None => return TransferOwnershipResult::CallerNotInGroup,
         }
 
-        if let Some(caller) = self.get_by_user_id_mut(caller_id) {
-            caller.role = Role::Admin;
-            self.admin_count += 1;
+        let curr_owner_id = self.iter().find(|p| p.role.is_owner()).map(|p| p.user_id);
+
+        if let Some(curr_owner_id) = curr_owner_id {
+            if let Some(curr_owner) = self.get_by_user_id_mut(&curr_owner_id) {
+                curr_owner.role = Role::Admin;
+                self.admin_count += 1;
+            }
         }
 
         if let Some(user) = self.get_by_user_id_mut(user_id) {
@@ -223,7 +227,7 @@ impl Participants {
             }
         }
 
-        TransferOwnershipResult::Success
+        TransferOwnershipResult::Success(curr_owner_id)
     }
 
     pub fn dismiss_admin(&mut self, user_id: &UserId) -> DismissAdminResult {
@@ -291,7 +295,7 @@ pub enum MakeSuperAdminResult {
 }
 
 pub enum TransferOwnershipResult {
-    Success,
+    Success(Option<UserId>),
     UserNotInGroup,
     UserAlreadyOwner,
     UserAlreadySuperAdmin,

@@ -4,7 +4,7 @@ use types::ChatId;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub group_id: ChatId,
+    pub chat_id: ChatId,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

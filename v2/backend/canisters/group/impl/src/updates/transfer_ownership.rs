@@ -32,17 +32,19 @@ fn transfer_ownership_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
         .participants
         .transfer_ownership(&caller_id, &args.new_owner)
     {
-        TransferOwnershipResult::Success => {
-            let event = OwnershipTransferred {
-                old_owner: caller_id,
-                new_owner: args.new_owner,
-            };
-            runtime_state
-                .data
-                .events
-                .push_event(ChatEventInternal::OwnershipTransferred(Box::new(event)), now);
+        TransferOwnershipResult::Success(prev_owner) => {
+            if let Some(prev_owner) = prev_owner {
+                let event = OwnershipTransferred {
+                    old_owner: prev_owner,
+                    new_owner: args.new_owner,
+                };
+                runtime_state
+                    .data
+                    .events
+                    .push_event(ChatEventInternal::OwnershipTransferred(Box::new(event)), now);
 
-            handle_activity_notification(runtime_state);
+                handle_activity_notification(runtime_state);
+            }
             Success
         }
         TransferOwnershipResult::CallerNotInGroup => CallerNotInGroup,

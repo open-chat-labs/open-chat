@@ -15,12 +15,11 @@ async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
     let prepare_result = RUNTIME_STATE.with(|state| prepare(state.borrow_mut().as_mut().unwrap()));
+    let user_id = prepare_result.user_id;
 
     if args.as_super_admin {
         let canister_id = prepare_result.user_index_canister_id;
-        let is_super_admin_args = c2c_is_super_admin::Args {
-            user_id: prepare_result.user_id,
-        };
+        let is_super_admin_args = c2c_is_super_admin::Args { user_id };
         match user_index_canister_c2c_client::c2c_is_super_admin(canister_id, &is_super_admin_args).await {
             Ok(user_index_canister::c2c_is_super_admin::Response::Yes) => (),
             Ok(user_index_canister::c2c_is_super_admin::Response::No) => return NotSuperAdmin,
@@ -28,7 +27,7 @@ async fn c2c_join_group(args: Args) -> Response {
         };
     }
 
-    RUNTIME_STATE.with(|state| commit(args, state.borrow_mut().as_mut().unwrap()))
+    RUNTIME_STATE.with(|state| commit(args, user_id, state.borrow_mut().as_mut().unwrap()))
 }
 
 struct PrepareResult {
@@ -43,13 +42,12 @@ fn prepare(runtime_state: &mut RuntimeState) -> PrepareResult {
     }
 }
 
-fn commit(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_public {
+fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Response {
+    if runtime_state.data.is_public || args.as_super_admin {
         if let Some(limit) = runtime_state.data.participants.user_limit_reached(true) {
             return ParticipantLimitReached(limit);
         }
 
-        let user_id = runtime_state.env.caller().into();
         let now = runtime_state.env.now();
         let min_visible_event_index;
         let min_visible_message_index;
