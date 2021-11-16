@@ -18,6 +18,6 @@ jobs:
           name: 'didc'
           version: '1.27.4'
       - name: run validate-candid.sh
-        run: |
-          chmod +x "${GITHUB_WORKSPACE}/v2/validate-candid.sh"
-          "${GITHUB_WORKSPACE}/v2/validate-candid.sh"
+        working-directory: ./v2
+        run: ./validate-candid.sh
+        shell: bash
