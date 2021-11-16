@@ -11,11 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: install didc
+      - name: install didc 0.7.8
         uses: supplypike/setup-bin@v1
         with:
-          uri: 'https://github.com/dfinity/candid/releases/download/2021-09-30/didc-linux64'
-          name: 'didc'
+          uri: https://github.com/dfinity/candid/releases/download/2021-09-30/didc-linux64
+          name: didc
+          version: 0.7.8
       - name: run validate-candid.sh
         working-directory: ./v2
         run: ./validate-candid.sh
