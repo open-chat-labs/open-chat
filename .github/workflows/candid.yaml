@@ -9,15 +9,14 @@ jobs:
   candid:
     name: validate
     runs-on: ubuntu-latest
-    permissions:
-      actions: read
     steps:
-      - name: checkout repo
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
       - name: install didc
-        uses: jaxxstorm/action-install-gh-release@master
+        uses: supplypike/setup-bin@v1
         with:
-          repo: dfinity/candid
+          uri: 'https://github.com/dfinity/candid/releases/download/2021-09-30/didc-linux64'
+          name: 'didc'
+          version: '1.27.4'
       - name: run validate-candid.sh
         run: |
           chmod +x "${GITHUB_WORKSPACE}/v2/validate-candid.sh"
