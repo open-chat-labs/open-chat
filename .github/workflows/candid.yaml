@@ -10,7 +10,7 @@ jobs:
     name: validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - run: |
-        chmod +x ./v2/validate-candid.sh
-        ./v2/validate-candid.sh
+      - name: run validate-candid.sh
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/v2/validate-candid.sh"
+          "${GITHUB_WORKSPACE}/v2/validate-candid.sh"
