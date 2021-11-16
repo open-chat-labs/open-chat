@@ -9,6 +9,8 @@ jobs:
   candid:
     name: validate
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
     steps:
       - name: checkout repo
         uses: actions/checkout@v2
