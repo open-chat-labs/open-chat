@@ -22,9 +22,9 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         "confirm_phone_number" | "create_canister" | "mark_as_online" | "resend_code" | "set_username" | "upgrade_canister" => {
             is_user
         }
+        "add_super_admin" | "remove_super_admin" | "update_user_canister_wasm" => runtime_state.is_caller_service_principal(),
         "remove_sms_messages" => runtime_state.is_caller_sms_service(),
         "submit_phone_number" => true,
-        "update_user_canister_wasm" => runtime_state.is_caller_service_principal(),
         _ => false,
     };
 

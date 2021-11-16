@@ -236,7 +236,7 @@ type DismissAlertsResponse =
 
 type AssumeGroupSuperAdminArgs =
     record {
-        group_id: ChatId;
+        chat_id: ChatId;
     };
 
 type AssumeGroupSuperAdminResponse =
@@ -251,7 +251,7 @@ type AssumeGroupSuperAdminResponse =
 
 type RelinquishGroupSuperAdminArgs =
     record {
-        group_id: ChatId;
+        chat_id: ChatId;
     };
 
 type RelinquishGroupSuperAdminResponse =
