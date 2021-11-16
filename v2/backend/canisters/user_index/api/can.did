@@ -233,7 +233,7 @@ type AddSuperAdminArgs =
 type AddSuperAdminResponse =
     variant {
         Success;
-        AlreadySuperAdmin,
+        AlreadySuperAdmin;
         InternalError: text;
     };
 
@@ -245,7 +245,7 @@ type RemoveSuperAdminArgs =
 type RemoveSuperAdminResponse =
     variant {
         Success;
-        NotSuperAdmin,
+        NotSuperAdmin;
         InternalError: text;
     };
 

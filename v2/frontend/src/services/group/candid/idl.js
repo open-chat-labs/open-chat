@@ -29,13 +29,13 @@ export const idlFactory = ({ IDL }) => {
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({
     'GroupNotPublic' : IDL.Null,
-    'CannotBlockOwner' : IDL.Null,
     'UserNotInGroup' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
     'CannotBlockSelf' : IDL.Null,
+    'CannotBlockUser' : IDL.Null,
   });
   const DeleteGroupArgs = IDL.Record({});
   const DeleteGroupResponse = IDL.Variant({
@@ -47,6 +47,15 @@ export const idlFactory = ({ IDL }) => {
   const DeleteMessagesArgs = IDL.Record({ 'message_ids' : IDL.Vec(MessageId) });
   const DeleteMessagesResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
+    'Success' : IDL.Null,
+  });
+  const DismissAdminArgs = IDL.Record({ 'user_id' : UserId });
+  const DismissAdminResponse = IDL.Variant({
+    'UserNotAdmin' : IDL.Null,
+    'CannotDismissSelf' : IDL.Null,
+    'UserNotInGroup' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
   });
   const BlobReference = IDL.Record({
@@ -172,7 +181,11 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'event_index' : EventIndex,
   });
-  const ParticipantJoined = IDL.Record({ 'user_id' : UserId });
+  const ParticipantJoined = IDL.Record({
+    'user_id' : UserId,
+    'as_super_admin' : IDL.Bool,
+  });
+  const ParticipantAssumesSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupDescriptionChanged = IDL.Record({
     'new_description' : IDL.Text,
     'previous_description' : IDL.Text,
@@ -195,6 +208,7 @@ export const idlFactory = ({ IDL }) => {
     'user_ids' : IDL.Vec(UserId),
     'removed_by' : UserId,
   });
+  const ParticipantRelinquishesSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const ChatId = CanisterId;
   const ReplyContext = IDL.Record({
     'chat_id_if_other' : IDL.Opt(ChatId),
@@ -219,6 +233,7 @@ export const idlFactory = ({ IDL }) => {
     'unblocked_by' : UserId,
   });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
+  const ParticipantDismissedAsSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupNameChanged = IDL.Record({
     'changed_by' : UserId,
     'new_name' : IDL.Text,
@@ -240,17 +255,20 @@ export const idlFactory = ({ IDL }) => {
   const GroupChatEvent = IDL.Variant({
     'MessageReactionRemoved' : UpdatedMessage,
     'ParticipantJoined' : ParticipantJoined,
+    'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin,
     'GroupDescriptionChanged' : GroupDescriptionChanged,
     'GroupChatCreated' : GroupChatCreated,
     'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin,
     'UsersBlocked' : UsersBlocked,
     'MessageReactionAdded' : UpdatedMessage,
     'ParticipantsRemoved' : ParticipantsRemoved,
+    'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin,
     'Message' : Message,
     'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin,
     'UsersUnblocked' : UsersUnblocked,
     'ParticipantLeft' : ParticipantLeft,
     'MessageDeleted' : UpdatedMessage,
+    'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin,
     'GroupNameChanged' : GroupNameChanged,
     'OwnershipTransferred' : OwnershipTransferred,
     'MessageEdited' : UpdatedMessage,
@@ -302,22 +320,14 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'ChunkTooBig' : IDL.Null,
   });
-  const RemoveAdminArgs = IDL.Record({ 'user_id' : UserId });
-  const RemoveAdminResponse = IDL.Variant({
-    'UserNotInGroup' : IDL.Null,
-    'CallerNotInGroup' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-    'CannotRemoveSelf' : IDL.Null,
-  });
   const RemoveParticipantArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveParticipantResponse = IDL.Variant({
     'UserNotInGroup' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
-    'CannotRemoveOwner' : IDL.Null,
     'CannotRemoveSelf' : IDL.Null,
+    'CannotRemoveUser' : IDL.Null,
     'InternalError' : IDL.Text,
   });
   const SearchMessagesArgs = IDL.Record({
@@ -342,8 +352,13 @@ export const idlFactory = ({ IDL }) => {
     'InvalidTerm' : IDL.Null,
   });
   const SelectedInitialArgs = IDL.Record({});
+  const FallbackRole = IDL.Variant({
+    'Participant' : IDL.Null,
+    'Admin' : IDL.Null,
+  });
   const Role = IDL.Variant({
     'Participant' : IDL.Null,
+    'SuperAdmin' : FallbackRole,
     'Admin' : IDL.Null,
     'Owner' : IDL.Null,
   });
@@ -390,6 +405,11 @@ export const idlFactory = ({ IDL }) => {
     }),
   });
   const SummaryArgs = IDL.Record({});
+  const Version = IDL.Record({
+    'major' : IDL.Nat32,
+    'minor' : IDL.Nat32,
+    'patch' : IDL.Nat32,
+  });
   const MessageIndexRange = IDL.Record({
     'to' : MessageIndex,
     'from' : MessageIndex,
@@ -405,6 +425,7 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
     'role' : Role,
+    'wasm_version' : Version,
     'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
@@ -427,6 +448,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupChatSummaryUpdates = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
+    'wasm_version' : IDL.Opt(Version),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
@@ -463,6 +485,7 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
+    'UserAlreadySuperAdmin' : IDL.Null,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({
@@ -510,6 +533,7 @@ export const idlFactory = ({ IDL }) => {
         [DeleteMessagesResponse],
         [],
       ),
+    'dismiss_admin' : IDL.Func([DismissAdminArgs], [DismissAdminResponse], []),
     'edit_message' : IDL.Func([EditMessageArgs], [EditMessageResponse], []),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
@@ -521,7 +545,6 @@ export const idlFactory = ({ IDL }) => {
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
     'make_admin' : IDL.Func([MakeAdminArgs], [MakeAdminResponse], []),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
-    'remove_admin' : IDL.Func([RemoveAdminArgs], [RemoveAdminResponse], []),
     'remove_participant' : IDL.Func(
         [RemoveParticipantArgs],
         [RemoveParticipantResponse],

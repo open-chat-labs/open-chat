@@ -1,5 +1,9 @@
 import type { Principal } from '@dfinity/principal';
 export type AccountIdentifier = string;
+export interface AddSuperAdminArgs { 'user_id' : UserId }
+export type AddSuperAdminResponse = { 'Success' : null } |
+  { 'InternalError' : string } |
+  { 'AlreadySuperAdmin' : null };
 export interface Alert {
   'id' : string,
   'details' : AlertDetails,
@@ -212,6 +216,8 @@ export interface FailedICPWithdrawal {
   'fee_e8s' : bigint,
   'amount_e8s' : bigint,
 }
+export type FallbackRole = { 'Participant' : null } |
+  { 'Admin' : null };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -230,17 +236,20 @@ export interface GroupChatCreated {
 }
 export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
+  { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
+  { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'Message' : Message } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
+  { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'MessageEdited' : UpdatedMessage } |
@@ -256,6 +265,7 @@ export interface GroupChatSummary {
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
+  'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
@@ -272,6 +282,7 @@ export interface GroupChatSummary {
 export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
+  'wasm_version' : [] | [Version],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -412,8 +423,14 @@ export interface Participant {
   'user_id' : UserId,
   'date_added' : TimestampMillis,
 }
-export interface ParticipantJoined { 'user_id' : UserId }
+export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
+export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
+export interface ParticipantJoined {
+  'user_id' : UserId,
+  'as_super_admin' : boolean,
+}
 export interface ParticipantLeft { 'user_id' : UserId }
+export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
   'user_ids' : Array<UserId>,
   'added_by' : UserId,
@@ -454,6 +471,10 @@ export interface PhoneNumber { 'country_code' : number, 'number' : string }
 export interface RemoveSmsMessagesArgs { 'up_to_sms_index' : bigint }
 export type RemoveSmsMessagesResponse = { 'NotAuthorized' : null } |
   { 'Success' : null };
+export interface RemoveSuperAdminArgs { 'user_id' : UserId }
+export type RemoveSuperAdminResponse = { 'Success' : null } |
+  { 'NotSuperAdmin' : null } |
+  { 'InternalError' : string };
 export interface RemovedFromGroupAlert {
   'chat_id' : ChatId,
   'removed_by' : UserId,
@@ -467,6 +488,7 @@ export type ResendCodeResponse = { 'AlreadyClaimed' : null } |
   { 'Success' : null } |
   { 'UserNotFound' : null };
 export type Role = { 'Participant' : null } |
+  { 'SuperAdmin' : FallbackRole } |
   { 'Admin' : null } |
   { 'Owner' : null };
 export interface SearchArgs { 'max_results' : number, 'search_term' : string }
@@ -504,6 +526,9 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export type SuperAdminsArgs = {};
+export type SuperAdminsResponse = { 'NotController' : null } |
+  { 'Success' : { 'users' : Array<UserId> } };
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
@@ -647,6 +672,9 @@ export interface VideoContent {
   'width' : number,
 }
 export interface _SERVICE {
+  'add_super_admin' : (arg_0: AddSuperAdminArgs) => Promise<
+      AddSuperAdminResponse
+    >,
   'confirm_phone_number' : (arg_0: ConfirmPhoneNumberArgs) => Promise<
       ConfirmPhoneNumberResponse
     >,
@@ -659,6 +687,9 @@ export interface _SERVICE {
   'remove_sms_messages' : (arg_0: RemoveSmsMessagesArgs) => Promise<
       RemoveSmsMessagesResponse
     >,
+  'remove_super_admin' : (arg_0: RemoveSuperAdminArgs) => Promise<
+      RemoveSuperAdminResponse
+    >,
   'resend_code' : (arg_0: ResendCodeArgs) => Promise<ResendCodeResponse>,
   'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
   'set_username' : (arg_0: SetUsernameArgs) => Promise<SetUsernameResponse>,
@@ -666,6 +697,7 @@ export interface _SERVICE {
   'submit_phone_number' : (arg_0: SubmitPhoneNumberArgs) => Promise<
       SubmitPhoneNumberResponse
     >,
+  'super_admins' : (arg_0: SuperAdminsArgs) => Promise<SuperAdminsResponse>,
   'transfer_cycles' : (arg_0: TransferCyclesArgs) => Promise<
       TransferCyclesResponse
     >,

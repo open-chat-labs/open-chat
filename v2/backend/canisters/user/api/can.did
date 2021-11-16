@@ -163,7 +163,7 @@ type JoinGroupResponse =
         GroupNotPublic;
         ParticipantLimitReached: nat32;
         InternalError: text;
-        NotSuperAdmin,
+        NotSuperAdmin;
     };
 
 type LeaveGroupArgs =
@@ -275,7 +275,7 @@ type InitialStateResponse =
             blocked_users: vec UserId;
             cycles_balance: Cycles;
             upgrades_in_progress: vec ChatId;
-            user_canister_wasm_version: opt Version;
+            user_canister_wasm_version: Version;
         }
     };
 

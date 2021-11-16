@@ -283,6 +283,9 @@ export type GroupChatEvent =
     | UsersBlocked
     | UsersUnblocked
     | ParticipantsDismissedAsAdmin
+    | ParticipantAssumesSuperAdmin
+    | ParticipantRelinquishesSuperAdmin
+    | ParticipantDismissedAsSuperAdmin
     | OwnershipTransferred;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
@@ -375,6 +378,21 @@ export type OwnershipTransferred = {
     kind: "ownership_transferred";
     oldOwner: string;
     newOwner: string;
+};
+
+export type ParticipantAssumesSuperAdmin = {
+    kind: "participant_assumes_super_admin";
+    userId: string;
+};
+
+export type ParticipantRelinquishesSuperAdmin = {
+    kind: "participant_relinquishes_super_admin";
+    userId: string;
+};
+
+export type ParticipantDismissedAsSuperAdmin = {
+    kind: "participant_dismissed_as_super_admin";
+    userId: string;
 };
 
 export type ParticipantsPromotedToAdmin = {
@@ -498,7 +516,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     mentions: number[];
 };
 
-export type ParticipantRole = "admin" | "participant" | "owner";
+export type ParticipantRole = "admin" | "participant" | "owner" | "super_admin";
 
 export type Participant = {
     role: ParticipantRole;
@@ -743,15 +761,17 @@ export type TransferOwnershipResponse =
     | "user_not_in_group"
     | "caller_not_in_group"
     | "not_authorised"
+    | "user_already_super_admin"
     | "success";
 
 export type DeleteGroupResponse = "internal_error" | "not_authorised" | "success";
 
-export type RemoveAdminResponse =
+export type DismissAdminResponse =
     | "user_not_in_group"
     | "caller_not_in_group"
     | "not_authorised"
-    | "cannot_remove_self"
+    | "cannot_dismiss_self"
+    | "user_not_admin"
     | "success";
 
 export type RemoveParticipantResponse =
@@ -760,7 +780,7 @@ export type RemoveParticipantResponse =
     | "not_authorised"
     | "success"
     | "cannot_remove_self"
-    | "cannot_remove_owner"
+    | "cannot_remove_user"
     | "internal_error";
 
 export type BlockUserResponse =
@@ -771,7 +791,7 @@ export type BlockUserResponse =
     | "not_authorised"
     | "internal_error"
     | "cannot_block_self"
-    | "cannot_block_owner";
+    | "cannot_block_user";
 
 export type UnblockUserResponse =
     | "success"
@@ -794,6 +814,7 @@ export type JoinGroupResponse =
     | "group_not_found"
     | "group_not_public"
     | "already_in_group"
+    | "not_super_admin"
     | "participant_limit_reached"
     | "internal_error";
 
