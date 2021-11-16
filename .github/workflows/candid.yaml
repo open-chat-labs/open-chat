@@ -7,7 +7,7 @@ name: Validate candid files
 
 jobs:
   candid:
-    name: validate
+    name: validate syntax
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
