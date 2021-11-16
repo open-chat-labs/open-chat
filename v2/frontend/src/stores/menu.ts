@@ -28,7 +28,7 @@ export const menuStore = {
             menu.style.setProperty("left", `${left}px`);
             return menu;
         }),
-    showMenu: (menu: HTMLElement, _pos: DOMRect): void =>
+    showMenu: (menu: HTMLElement): void =>
         update((currentMenu) => {
             close(currentMenu);
             menuAnchor.appendChild(menu);

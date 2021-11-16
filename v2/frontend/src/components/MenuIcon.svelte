@@ -10,7 +10,7 @@
             menuStore.hideMenu();
         } else {
             const rect = menu.getBoundingClientRect();
-            menuStore.showMenu(contextMenu, rect);
+            menuStore.showMenu(contextMenu);
             tick().then(() => menuStore.position(rect));
         }
     }
