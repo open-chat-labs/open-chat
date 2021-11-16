@@ -16,7 +16,6 @@ jobs:
         with:
           uri: 'https://github.com/dfinity/candid/releases/download/2021-09-30/didc-linux64'
           name: 'didc'
-          version: '1.27.4'
       - name: run validate-candid.sh
         working-directory: ./v2
         run: ./validate-candid.sh
