@@ -8,7 +8,7 @@ type SendMessageArgs =
         replies_to: opt GroupReplyContext;
     };
 
-type GroupReplyContext =
+type GroupReplyContext =testtest
     record {
         event_index: EventIndex;
     };
