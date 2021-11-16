@@ -11,6 +11,13 @@ export type AlertDetails = { 'GroupDeleted' : GroupDeletedAlert } |
   { 'BlockedFromGroup' : RemovedFromGroupAlert };
 export type AlertId = { 'Internal' : number } |
   { 'GroupDeleted' : ChatId };
+export interface AssumeGroupSuperAdminArgs { 'group_id' : ChatId }
+export type AssumeGroupSuperAdminResponse = { 'AlreadyOwner' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'Success' : null } |
+  { 'NotSuperAdmin' : null } |
+  { 'InternalError' : string } |
+  { 'AlreadySuperAdmin' : null };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -242,6 +249,8 @@ export interface FailedICPWithdrawal {
   'fee_e8s' : bigint,
   'amount_e8s' : bigint,
 }
+export type FallbackRole = { 'Participant' : null } |
+  { 'Admin' : null };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -260,17 +269,20 @@ export interface GroupChatCreated {
 }
 export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
+  { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
+  { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'Message' : Message } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
+  { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'MessageEdited' : UpdatedMessage } |
@@ -286,6 +298,7 @@ export interface GroupChatSummary {
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
+  'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
@@ -302,6 +315,7 @@ export interface GroupChatSummary {
 export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
+  'wasm_version' : [] | [Version],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -362,18 +376,24 @@ export type InitialStateArgs = {};
 export type InitialStateResponse = {
     'Success' : {
       'cycles_balance' : Cycles,
+      'user_canister_wasm_version' : Version,
+      'upgrades_in_progress' : Array<ChatId>,
       'chats' : Array<ChatSummary>,
       'blocked_users' : Array<UserId>,
       'timestamp' : TimestampMillis,
       'transactions' : Array<TransactionWrapper>,
     }
   };
-export interface JoinGroupArgs { 'chat_id' : ChatId }
+export interface JoinGroupArgs {
+  'as_super_admin' : boolean,
+  'chat_id' : ChatId,
+}
 export type JoinGroupResponse = { 'Blocked' : null } |
   { 'GroupNotFound' : null } |
   { 'GroupNotPublic' : null } |
   { 'AlreadyInGroup' : null } |
   { 'Success' : null } |
+  { 'NotSuperAdmin' : null } |
   { 'ParticipantLimitReached' : number } |
   { 'InternalError' : string };
 export interface LeaveGroupArgs { 'chat_id' : ChatId }
@@ -469,8 +489,14 @@ export interface Participant {
   'user_id' : UserId,
   'date_added' : TimestampMillis,
 }
-export interface ParticipantJoined { 'user_id' : UserId }
+export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
+export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
+export interface ParticipantJoined {
+  'user_id' : UserId,
+  'as_super_admin' : boolean,
+}
 export interface ParticipantLeft { 'user_id' : UserId }
+export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
   'user_ids' : Array<UserId>,
   'added_by' : UserId,
@@ -520,6 +546,11 @@ export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
   { 'BlobAlreadyExists' : null } |
   { 'Success' : null } |
   { 'ChunkTooBig' : null };
+export interface RelinquishGroupSuperAdminArgs { 'group_id' : ChatId }
+export type RelinquishGroupSuperAdminResponse = { 'CallerNotInGroup' : null } |
+  { 'Success' : null } |
+  { 'NotSuperAdmin' : null } |
+  { 'InternalError' : string };
 export interface RemovedFromGroupAlert {
   'chat_id' : ChatId,
   'removed_by' : UserId,
@@ -529,6 +560,7 @@ export interface ReplyContext {
   'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |
+  { 'SuperAdmin' : FallbackRole } |
   { 'Admin' : null } |
   { 'Owner' : null };
 export interface SearchAllMessagesArgs {
@@ -630,6 +662,8 @@ export interface UpdatesArgs { 'updates_since' : UpdatesSince }
 export type UpdatesResponse = {
     'Success' : {
       'cycles_balance' : [] | [Cycles],
+      'user_canister_wasm_version' : [] | [Version],
+      'upgrades_in_progress' : Array<ChatId>,
       'alerts' : Array<Alert>,
       'chats_updated' : Array<ChatSummaryUpdates>,
       'blocked_users' : Array<UserId>,
@@ -731,6 +765,9 @@ export interface VideoContent {
   'width' : number,
 }
 export interface _SERVICE {
+  'assume_group_super_admin' : (arg_0: AssumeGroupSuperAdminArgs) => Promise<
+      AssumeGroupSuperAdminResponse
+    >,
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
   'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
   'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
@@ -752,6 +789,9 @@ export interface _SERVICE {
       MuteNotificationsResponse
     >,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
+  'relinquish_group_super_admin' : (
+      arg_0: RelinquishGroupSuperAdminArgs,
+    ) => Promise<RelinquishGroupSuperAdminResponse>,
   'search_all_messages' : (arg_0: SearchAllMessagesArgs) => Promise<
       SearchAllMessagesResponse
     >,

@@ -12,7 +12,7 @@ import type {
     EditMessageResponse,
     BlockUserResponse,
     MakeAdminResponse,
-    RemoveAdminResponse,
+    DismissAdminResponse,
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
@@ -108,7 +108,7 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.makeAdmin(userId);
     }
 
-    dismissAsAdmin(userId: string): Promise<RemoveAdminResponse> {
+    dismissAsAdmin(userId: string): Promise<DismissAdminResponse> {
         return this.client.dismissAsAdmin(userId);
     }
 

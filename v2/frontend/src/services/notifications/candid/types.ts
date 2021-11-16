@@ -173,6 +173,8 @@ export interface FailedICPWithdrawal {
   'fee_e8s' : bigint,
   'amount_e8s' : bigint,
 }
+export type FallbackRole = { 'Participant' : null } |
+  { 'Admin' : null };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -191,17 +193,20 @@ export interface GroupChatCreated {
 }
 export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
+  { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
+  { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'Message' : Message } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
+  { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'MessageEdited' : UpdatedMessage } |
@@ -217,6 +222,7 @@ export interface GroupChatSummary {
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
+  'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
@@ -233,6 +239,7 @@ export interface GroupChatSummary {
 export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
+  'wasm_version' : [] | [Version],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -371,8 +378,14 @@ export interface Participant {
   'user_id' : UserId,
   'date_added' : TimestampMillis,
 }
-export interface ParticipantJoined { 'user_id' : UserId }
+export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
+export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
+export interface ParticipantJoined {
+  'user_id' : UserId,
+  'as_super_admin' : boolean,
+}
 export interface ParticipantLeft { 'user_id' : UserId }
+export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
   'user_ids' : Array<UserId>,
   'added_by' : UserId,
@@ -457,6 +470,7 @@ export interface ReplyContext {
   'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |
+  { 'SuperAdmin' : FallbackRole } |
   { 'Admin' : null } |
   { 'Owner' : null };
 export interface Subscription {

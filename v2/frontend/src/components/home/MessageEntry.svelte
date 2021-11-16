@@ -91,7 +91,10 @@
     }
 
     function saveSelection() {
-        selectedRange = window.getSelection()?.getRangeAt(0);
+        try {
+            // seeing errors in the logs to do with this
+            selectedRange = window.getSelection()?.getRangeAt(0);
+        } catch (_err) {}
     }
 
     function restoreSelection() {

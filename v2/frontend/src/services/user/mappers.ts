@@ -188,6 +188,9 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
     if ("GroupNotFound" in candid) {
         return "group_not_found";
     }
+    if ("NotSuperAdmin" in candid) {
+        return "not_super_admin";
+    }
     throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
 }
 
@@ -509,6 +512,9 @@ function participantRole(candid: ApiRole): ParticipantRole {
     }
     if ("Owner" in candid) {
         return "owner";
+    }
+    if ("SuperAdmin" in candid) {
+        return "super_admin";
     }
     throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
 }

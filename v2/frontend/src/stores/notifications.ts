@@ -8,11 +8,15 @@ import {
     trySubscribe,
 } from "../utils/notifications";
 
-export const notificationsSupported = readable<boolean>(supported());
+const isSupported = supported();
+
+export const notificationsSupported = readable<boolean>(isSupported);
 
 export const notificationsSoftDisabled = writable<boolean>(false);
 
-export const notificationPermission = writable<NotificationPermission>("default");
+export const notificationPermission = writable<NotificationPermission>(
+    isSupported ? "default" : "denied"
+);
 
 function convertAndSubscribe(
     api: ServiceContainer,
@@ -27,6 +31,7 @@ function convertAndSubscribe(
 }
 
 export async function initNotificationStores(api: ServiceContainer, userId: string): Promise<void> {
+    if (!isSupported) return;
     const softDisabled = await getSoftDisabled();
     notificationsSoftDisabled.set(softDisabled);
     if (navigator.permissions) {

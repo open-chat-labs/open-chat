@@ -4,6 +4,16 @@ export const idlFactory = ({ IDL }) => {
     'owner' : IDL.Principal,
     'notification_canister_ids' : IDL.Vec(CanisterId),
   });
+  const ChatId = CanisterId;
+  const AssumeGroupSuperAdminArgs = IDL.Record({ 'group_id' : ChatId });
+  const AssumeGroupSuperAdminResponse = IDL.Variant({
+    'AlreadyOwner' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : IDL.Null,
+    'NotSuperAdmin' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'AlreadySuperAdmin' : IDL.Null,
+  });
   const UserId = CanisterId;
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
@@ -23,7 +33,6 @@ export const idlFactory = ({ IDL }) => {
     'length_provided' : IDL.Nat32,
     'max_length' : IDL.Nat32,
   });
-  const ChatId = CanisterId;
   const CreateGroupSuccessResult = IDL.Record({ 'chat_id' : ChatId });
   const CreateGroupResponse = IDL.Variant({
     'DescriptionTooLong' : FieldTooLongResult,
@@ -226,8 +235,18 @@ export const idlFactory = ({ IDL }) => {
     'max_events' : IDL.Nat32,
   });
   const InitialStateArgs = IDL.Record({});
+  const Version = IDL.Record({
+    'major' : IDL.Nat32,
+    'minor' : IDL.Nat32,
+    'patch' : IDL.Nat32,
+  });
+  const FallbackRole = IDL.Variant({
+    'Participant' : IDL.Null,
+    'Admin' : IDL.Null,
+  });
   const Role = IDL.Variant({
     'Participant' : IDL.Null,
+    'SuperAdmin' : FallbackRole,
     'Admin' : IDL.Null,
     'Owner' : IDL.Null,
   });
@@ -246,6 +265,7 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
     'role' : Role,
+    'wasm_version' : Version,
     'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
@@ -352,19 +372,25 @@ export const idlFactory = ({ IDL }) => {
   const InitialStateResponse = IDL.Variant({
     'Success' : IDL.Record({
       'cycles_balance' : Cycles,
+      'user_canister_wasm_version' : Version,
+      'upgrades_in_progress' : IDL.Vec(ChatId),
       'chats' : IDL.Vec(ChatSummary),
       'blocked_users' : IDL.Vec(UserId),
       'timestamp' : TimestampMillis,
       'transactions' : IDL.Vec(TransactionWrapper),
     }),
   });
-  const JoinGroupArgs = IDL.Record({ 'chat_id' : ChatId });
+  const JoinGroupArgs = IDL.Record({
+    'as_super_admin' : IDL.Bool,
+    'chat_id' : ChatId,
+  });
   const JoinGroupResponse = IDL.Variant({
     'Blocked' : IDL.Null,
     'GroupNotFound' : IDL.Null,
     'GroupNotPublic' : IDL.Null,
     'AlreadyInGroup' : IDL.Null,
     'Success' : IDL.Null,
+    'NotSuperAdmin' : IDL.Null,
     'ParticipantLimitReached' : IDL.Nat32,
     'InternalError' : IDL.Text,
   });
@@ -403,6 +429,13 @@ export const idlFactory = ({ IDL }) => {
     'BlobAlreadyExists' : IDL.Null,
     'Success' : IDL.Null,
     'ChunkTooBig' : IDL.Null,
+  });
+  const RelinquishGroupSuperAdminArgs = IDL.Record({ 'group_id' : ChatId });
+  const RelinquishGroupSuperAdminResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : IDL.Null,
+    'NotSuperAdmin' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const SearchAllMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
@@ -552,6 +585,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupChatSummaryUpdates = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
+    'wasm_version' : IDL.Opt(Version),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
@@ -578,6 +612,8 @@ export const idlFactory = ({ IDL }) => {
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({
       'cycles_balance' : IDL.Opt(Cycles),
+      'user_canister_wasm_version' : IDL.Opt(Version),
+      'upgrades_in_progress' : IDL.Vec(ChatId),
       'alerts' : IDL.Vec(Alert),
       'chats_updated' : IDL.Vec(ChatSummaryUpdates),
       'blocked_users' : IDL.Vec(UserId),
@@ -588,6 +624,11 @@ export const idlFactory = ({ IDL }) => {
     }),
   });
   return IDL.Service({
+    'assume_group_super_admin' : IDL.Func(
+        [AssumeGroupSuperAdminArgs],
+        [AssumeGroupSuperAdminResponse],
+        [],
+      ),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'create_group' : IDL.Func([CreateGroupArgs], [CreateGroupResponse], []),
     'delete_messages' : IDL.Func(
@@ -623,6 +664,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
+    'relinquish_group_super_admin' : IDL.Func(
+        [RelinquishGroupSuperAdminArgs],
+        [RelinquishGroupSuperAdminResponse],
+        [],
+      ),
     'search_all_messages' : IDL.Func(
         [SearchAllMessagesArgs],
         [SearchAllMessagesResponse],

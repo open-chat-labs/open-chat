@@ -58,13 +58,13 @@ export interface BlobReference {
 export type BlockHeight = bigint;
 export interface BlockUserArgs { 'user_id' : UserId }
 export type BlockUserResponse = { 'GroupNotPublic' : null } |
-  { 'CannotBlockOwner' : null } |
   { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'InternalError' : string } |
-  { 'CannotBlockSelf' : null };
+  { 'CannotBlockSelf' : null } |
+  { 'CannotBlockUser' : null };
 export type CanisterCreationStatus = { 'InProgress' : null } |
   { 'Created' : null } |
   { 'Pending' : null };
@@ -189,6 +189,13 @@ export interface DirectMessageNotification {
   'message' : Message,
   'sender_name' : string,
 }
+export interface DismissAdminArgs { 'user_id' : UserId }
+export type DismissAdminResponse = { 'UserNotAdmin' : null } |
+  { 'CannotDismissSelf' : null } |
+  { 'UserNotInGroup' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export interface EditMessageArgs {
   'content' : MessageContent,
   'message_id' : MessageId,
@@ -243,6 +250,8 @@ export interface FailedICPWithdrawal {
   'fee_e8s' : bigint,
   'amount_e8s' : bigint,
 }
+export type FallbackRole = { 'Participant' : null } |
+  { 'Admin' : null };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -261,17 +270,20 @@ export interface GroupChatCreated {
 }
 export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
+  { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
+  { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'Message' : Message } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
+  { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'MessageEdited' : UpdatedMessage } |
@@ -287,6 +299,7 @@ export interface GroupChatSummary {
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
+  'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
@@ -303,6 +316,7 @@ export interface GroupChatSummary {
 export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
+  'wasm_version' : [] | [Version],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -439,8 +453,14 @@ export interface Participant {
   'user_id' : UserId,
   'date_added' : TimestampMillis,
 }
-export interface ParticipantJoined { 'user_id' : UserId }
+export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
+export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
+export interface ParticipantJoined {
+  'user_id' : UserId,
+  'as_super_admin' : boolean,
+}
 export interface ParticipantLeft { 'user_id' : UserId }
+export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
   'user_ids' : Array<UserId>,
   'added_by' : UserId,
@@ -490,19 +510,13 @@ export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
   { 'BlobAlreadyExists' : null } |
   { 'Success' : null } |
   { 'ChunkTooBig' : null };
-export interface RemoveAdminArgs { 'user_id' : UserId }
-export type RemoveAdminResponse = { 'UserNotInGroup' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'CannotRemoveSelf' : null };
 export interface RemoveParticipantArgs { 'user_id' : UserId }
 export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
-  { 'CannotRemoveOwner' : null } |
   { 'CannotRemoveSelf' : null } |
+  { 'CannotRemoveUser' : null } |
   { 'InternalError' : string };
 export interface RemovedFromGroupAlert {
   'chat_id' : ChatId,
@@ -513,6 +527,7 @@ export interface ReplyContext {
   'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |
+  { 'SuperAdmin' : FallbackRole } |
   { 'Admin' : null } |
   { 'Owner' : null };
 export interface SearchMessagesArgs {
@@ -601,7 +616,8 @@ export interface TransferOwnershipArgs { 'new_owner' : UserId }
 export type TransferOwnershipResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'UserAlreadySuperAdmin' : null };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'GroupNotPublic' : null } |
   { 'CannotUnblockSelf' : null } |
@@ -724,6 +740,7 @@ export interface _SERVICE {
   'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
       DeleteMessagesResponse
     >,
+  'dismiss_admin' : (arg_0: DismissAdminArgs) => Promise<DismissAdminResponse>,
   'edit_message' : (arg_0: EditMessageArgs) => Promise<EditMessageResponse>,
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
@@ -731,7 +748,6 @@ export interface _SERVICE {
   'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
   'make_admin' : (arg_0: MakeAdminArgs) => Promise<MakeAdminResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
-  'remove_admin' : (arg_0: RemoveAdminArgs) => Promise<RemoveAdminResponse>,
   'remove_participant' : (arg_0: RemoveParticipantArgs) => Promise<
       RemoveParticipantResponse
     >,

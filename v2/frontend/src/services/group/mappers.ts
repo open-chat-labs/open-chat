@@ -11,7 +11,7 @@ import type {
     ApiToggleReactionResponse,
     ApiDeleteMessageResponse,
     ApiEditMessageResponse,
-    ApiRemoveAdminResponse,
+    ApiDismissAdminResponse,
     ApiSelectedInitialResponse,
     ApiParticipant,
     ApiSelectedUpdatesResponse,
@@ -33,7 +33,7 @@ import type {
     EditMessageResponse,
     BlockUserResponse,
     MakeAdminResponse,
-    RemoveAdminResponse,
+    DismissAdminResponse,
     Participant,
     GroupChatDetailsResponse,
     GroupChatDetailsUpdatesResponse,
@@ -60,6 +60,9 @@ function participantRole(candid: ApiRole): ParticipantRole {
     }
     if ("Owner" in candid) {
         return "owner";
+    }
+    if ("SuperAdmin" in candid) {
+        return "super_admin";
     }
     throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
 }
@@ -139,6 +142,9 @@ export function transferOwnershipResponse(
     if ("NotAuthorized" in candid) {
         return "not_authorised";
     }
+    if ("UserAlreadySuperAdmin" in candid) {
+        return "user_already_super_admin";
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiTransferOwnershipResponse type received",
         candid
@@ -186,8 +192,8 @@ export function blockUserResponse(candid: ApiBlockUserResponse): BlockUserRespon
     if ("CannotBlockSelf" in candid) {
         return "cannot_block_self";
     }
-    if ("CannotBlockOwner" in candid) {
-        return "cannot_block_owner";
+    if ("CannotBlockUser" in candid) {
+        return "cannot_block_user";
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
@@ -324,7 +330,7 @@ export function makeAdminResponse(candid: ApiMakeAdminResponse): MakeAdminRespon
     throw new UnsupportedValueError("Unexpected ApiMakeAdminResonse type received", candid);
 }
 
-export function removeAdminResponse(candid: ApiRemoveAdminResponse): RemoveAdminResponse {
+export function dismissAdminResponse(candid: ApiDismissAdminResponse): DismissAdminResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -337,8 +343,11 @@ export function removeAdminResponse(candid: ApiRemoveAdminResponse): RemoveAdmin
     if ("NotAuthorized" in candid) {
         return "not_authorised";
     }
-    if ("CannotRemoveSelf" in candid) {
-        return "cannot_remove_self";
+    if ("CannotDismissSelf" in candid) {
+        return "cannot_dismiss_self";
+    }
+    if ("UserNotAdmin" in candid) {
+        return "user_not_admin";
     }
     throw new UnsupportedValueError("Unexpected ApiMakeAdminResonse type received", candid);
 }
@@ -362,8 +371,8 @@ export function removeParticipantResponse(
     if ("CannotRemoveSelf" in candid) {
         return "cannot_remove_self";
     }
-    if ("CannotRemoveOwner" in candid) {
-        return "cannot_remove_owner";
+    if ("CannotRemoveUser" in candid) {
+        return "cannot_remove_user";
     }
     if ("InternalError" in candid) {
         return "internal_error";
@@ -563,6 +572,27 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "ownership_transferred",
             oldOwner: candid.OwnershipTransferred.old_owner.toString(),
             newOwner: candid.OwnershipTransferred.new_owner.toString(),
+        };
+    }
+
+    if ("ParticipantAssumesSuperAdmin" in candid) {
+        return {
+            kind: "participant_assumes_super_admin",
+            userId: candid.ParticipantAssumesSuperAdmin.user_id.toString(),
+        };
+    }
+
+    if ("ParticipantDismissedAsSuperAdmin" in candid) {
+        return {
+            kind: "participant_dismissed_as_super_admin",
+            userId: candid.ParticipantDismissedAsSuperAdmin.user_id.toString(),
+        };
+    }
+
+    if ("ParticipantRelinquishesSuperAdmin" in candid) {
+        return {
+            kind: "participant_relinquishes_super_admin",
+            userId: candid.ParticipantRelinquishesSuperAdmin.user_id.toString(),
         };
     }
 
