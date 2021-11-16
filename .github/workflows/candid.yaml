@@ -12,6 +12,10 @@ jobs:
     steps:
       - name: checkout repo
         uses: actions/checkout@v2
+      - name: install didc
+        uses: jaxxstorm/action-install-gh-release@master
+        with:
+          repo: dfinity/candid
       - name: run validate-candid.sh
         run: |
           chmod +x "${GITHUB_WORKSPACE}/v2/validate-candid.sh"
