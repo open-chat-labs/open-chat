@@ -2,9 +2,10 @@ use crate::block_on;
 use canister_client::operations::*;
 use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::TestIdentity;
+use ic_agent::Agent;
 use ic_fondue::ic_manager::IcHandle;
 use std::panic;
-use types::{GroupChatEvent, Role};
+use types::{ChatSummary, GroupChatEvent, Role, UserId};
 
 pub fn make_admin_test(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(make_admin_test_impl(handle, ctx));
@@ -55,14 +56,11 @@ async fn make_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     println!("Ok");
 
     print!("Check that user2 is now an admin... ");
-    let summary_args = group_canister::summary::Args {};
-    match group_canister_client::summary(&user2_agent, &chat_id.into(), &summary_args)
-        .await
-        .unwrap()
-    {
-        group_canister::summary::Response::Success(r) => assert!(matches!(r.summary.role, Role::Admin)),
-        response => panic!("Summary returned an error: {:?}", response),
-    };
+    if let Some(role) = user_role(user2_id, &user2_agent).await {
+        assert!(matches!(role, Role::Admin))
+    } else {
+        assert!(false);
+    }
     println!("Ok");
 
     print!("Check that an admin can make another user an admin... ");
@@ -113,13 +111,11 @@ async fn make_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     println!("Ok");
 
     print!("Check that user3 is no longer an admin... ");
-    match group_canister_client::summary(&user3_agent, &chat_id.into(), &summary_args)
-        .await
-        .unwrap()
-    {
-        group_canister::summary::Response::Success(r) => assert!(matches!(r.summary.role, Role::Participant)),
-        response => panic!("Summary returned an error: {:?}", response),
-    };
+    if let Some(role) = user_role(user3_id, &user3_agent).await {
+        assert!(matches!(role, Role::Participant))
+    } else {
+        assert!(false);
+    }
     println!("Ok");
 
     print!("Check that the owner can dismiss another admin as admin... ");
@@ -134,13 +130,11 @@ async fn make_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     println!("Ok");
 
     print!("Check that user2 is no longer an admin... ");
-    match group_canister_client::summary(&user2_agent, &chat_id.into(), &summary_args)
-        .await
-        .unwrap()
-    {
-        group_canister::summary::Response::Success(r) => assert!(matches!(r.summary.role, Role::Participant)),
-        response => panic!("Summary returned an error: {:?}", response),
-    };
+    if let Some(role) = user_role(user2_id, &user2_agent).await {
+        assert!(matches!(role, Role::Participant))
+    } else {
+        assert!(false);
+    }
     println!("Ok");
 
     print!("Check that a non-admin is not able to make another user an admin... ");
@@ -171,4 +165,21 @@ async fn make_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         response => panic!("EventsRange returned an error: {:?}", response),
     };
     println!("Ok");
+}
+
+async fn user_role(user_id: UserId, agent: &Agent) -> Option<Role> {
+    let args = user_canister::initial_state::Args {};
+    match user_canister_client::initial_state(agent, &user_id.into(), &args)
+        .await
+        .unwrap()
+    {
+        user_canister::initial_state::Response::Success(r) => {
+            if let ChatSummary::Group(group_chat_summary) = &r.chats[0] {
+                Some(group_chat_summary.role)
+            } else {
+                None
+            }
+        }
+        response => panic!("user::initial_state returned an error: {:?}", response),
+    }
 }

@@ -1,15 +1,15 @@
 use crate::model::participants::ParticipantInternal;
 use crate::{RuntimeState, RUNTIME_STATE, WASM_VERSION};
-use group_canister::summary::{Response::*, *};
+use group_canister::c2c_summary::{Response::*, *};
 use ic_cdk_macros::query;
 use types::{Avatar, Mention, MAX_RETURNED_MENTIONS};
 
 #[query]
-fn summary(_: Args) -> Response {
-    RUNTIME_STATE.with(|state| summary_impl(state.borrow().as_ref().unwrap()))
+fn c2c_summary(_: Args) -> Response {
+    RUNTIME_STATE.with(|state| c2c_summary_impl(state.borrow().as_ref().unwrap()))
 }
 
-fn summary_impl(runtime_state: &RuntimeState) -> Response {
+fn c2c_summary_impl(runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let data = &runtime_state.data;
     if let Some(participant) = data.participants.get(caller) {

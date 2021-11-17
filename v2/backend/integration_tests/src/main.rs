@@ -9,9 +9,9 @@ mod create_group_test;
 mod get_updates_test;
 mod make_admin_test;
 mod make_super_admin_test;
+mod mentions_test;
 mod register_user_test;
 mod send_message_test;
-mod mentions_test;
 
 fn main() {
     let fondue_config = fondue::pot::execution::Config::default().random_pot_rng_seed();
@@ -40,10 +40,10 @@ fn tests_pot() -> pot::Pot<IcManager> {
             get_updates_test::get_updates_test,
             make_admin_test::make_admin_test,
             make_super_admin_test::make_super_admin_test,
+            mentions_test::mentions_test
             register_user_test::register_user_test,
             register_user_test::register_existing_user_test,
             send_message_test::send_message_test,
-            mentions_test::mentions_test
         }
     )
 }

@@ -43,17 +43,22 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     let chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id, user3_id]).await;
 
-    match group_canister_client::summary(&user1_agent, &chat_id.into(), &group_canister::summary::Args {})
+    let args = user_canister::initial_state::Args {};
+    match user_canister_client::initial_state(&user1_agent, &user1_id.into(), &args)
         .await
         .unwrap()
     {
-        group_canister::summary::Response::Success(r) => {
-            assert_eq!(r.summary.chat_id, chat_id);
-            assert_eq!(r.summary.name, name);
-            assert_eq!(r.summary.description, description);
-            assert!(!r.summary.is_public);
+        user_canister::initial_state::Response::Success(r) => {
+            if let ChatSummary::Group(group_chat_summary) = &r.chats[0] {
+                assert_eq!(group_chat_summary.chat_id, chat_id);
+                assert_eq!(group_chat_summary.name, name);
+                assert_eq!(group_chat_summary.description, description);
+                assert!(!group_chat_summary.is_public);
+            } else {
+                assert!(false);
+            }
         }
-        response => panic!("Summary returned an error: {:?}", response),
+        response => panic!("user::initial_state returned an error: {:?}", response),
     }
 
     futures::future::join3(
