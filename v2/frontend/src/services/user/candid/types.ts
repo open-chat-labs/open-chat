@@ -11,7 +11,7 @@ export type AlertDetails = { 'GroupDeleted' : GroupDeletedAlert } |
   { 'BlockedFromGroup' : RemovedFromGroupAlert };
 export type AlertId = { 'Internal' : number } |
   { 'GroupDeleted' : ChatId };
-export interface AssumeGroupSuperAdminArgs { 'group_id' : ChatId }
+export interface AssumeGroupSuperAdminArgs { 'chat_id' : ChatId }
 export type AssumeGroupSuperAdminResponse = { 'AlreadyOwner' : null } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
@@ -47,7 +47,11 @@ export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'Required' : null } |
   { 'NotRequired' : null } |
   { 'InProgress' : null };
-export interface CanisterWasm { 'version' : Version, 'module' : Array<number> }
+export interface CanisterWasm {
+  'compressed' : boolean,
+  'version' : Version,
+  'module' : Array<number>,
+}
 export type ChatId = CanisterId;
 export interface ChatMessagesRead {
   'message_ranges' : Array<MessageIndexRange>,
@@ -195,7 +199,8 @@ export interface EditMessageArgs {
 }
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'UserBlocked' : null };
 export type EventIndex = number;
 export interface EventsArgs {
   'user_id' : UserId,
@@ -368,10 +373,6 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
-export interface InitArgs {
-  'owner' : Principal,
-  'notification_canister_ids' : Array<CanisterId>,
-}
 export type InitialStateArgs = {};
 export type InitialStateResponse = {
     'Success' : {
@@ -383,7 +384,8 @@ export type InitialStateResponse = {
       'timestamp' : TimestampMillis,
       'transactions' : Array<TransactionWrapper>,
     }
-  };
+  } |
+  { 'InternalError' : string };
 export interface JoinGroupArgs {
   'as_super_admin' : boolean,
   'chat_id' : ChatId,
@@ -398,6 +400,7 @@ export type JoinGroupResponse = { 'Blocked' : null } |
   { 'InternalError' : string };
 export interface LeaveGroupArgs { 'chat_id' : ChatId }
 export type LeaveGroupResponse = { 'GroupNotFound' : null } |
+  { 'GroupNotPublic' : null } |
   { 'OwnerCannotLeave' : null } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
@@ -499,6 +502,7 @@ export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
   'user_ids' : Array<UserId>,
+  'unblocked' : Array<UserId>,
   'added_by' : UserId,
 }
 export interface ParticipantsDismissedAsAdmin {
@@ -546,7 +550,7 @@ export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
   { 'BlobAlreadyExists' : null } |
   { 'Success' : null } |
   { 'ChunkTooBig' : null };
-export interface RelinquishGroupSuperAdminArgs { 'group_id' : ChatId }
+export interface RelinquishGroupSuperAdminArgs { 'chat_id' : ChatId }
 export type RelinquishGroupSuperAdminResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
   { 'NotSuperAdmin' : null } |
@@ -589,8 +593,8 @@ export interface SendMessageArgs {
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],
 }
-export type SendMessageResponse = { 'TransactionFailed' : string } |
-  { 'BalanceExceeded' : null } |
+export type SendMessageResponse = { 'TextTooLong' : number } |
+  { 'TransactionFailed' : string } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,
@@ -599,10 +603,9 @@ export type SendMessageResponse = { 'TransactionFailed' : string } |
       'message_index' : MessageIndex,
     }
   } |
+  { 'MessageEmpty' : null } |
   { 'RecipientBlocked' : null } |
-  { 'InvalidRequest' : string } |
-  { 'MessageTooLong' : number } |
-  { 'RecipientNotFound' : null };
+  { 'InvalidRequest' : string };
 export interface SetAvatarArgs { 'avatar' : Avatar }
 export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : bigint };
@@ -672,7 +675,8 @@ export type UpdatesResponse = {
       'timestamp' : TimestampMillis,
       'transactions' : Array<TransactionWrapper>,
     }
-  };
+  } |
+  { 'InternalError' : string };
 export interface UpdatesSince {
   'group_chats' : Array<GroupChatUpdatesSince>,
   'timestamp' : TimestampMillis,

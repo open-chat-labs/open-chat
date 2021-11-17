@@ -1,7 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const InitArgs = IDL.Record({
-    'push_service_principals' : IDL.Vec(IDL.Principal),
-  });
   const NotificationsArgs = IDL.Record({
     'from_notification_index' : IDL.Nat64,
   });
@@ -228,39 +225,11 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : NotificationsSuccessResult,
   });
-  const PushDirectMessageNotificationArgs = IDL.Record({
-    'recipient' : UserId,
-    'notification' : DirectMessageNotification,
-  });
-  const PushDirectMessageNotificationResponse = IDL.Variant({
-    'Success' : IDL.Null,
-  });
-  const PushGroupMessageNotificationArgs = IDL.Record({
-    'notification' : GroupMessageNotification,
-    'recipients' : IDL.Vec(UserId),
-  });
-  const PushGroupMessageNotificationResponse = IDL.Variant({
-    'Success' : IDL.Null,
-  });
   const PushSubscriptionArgs = IDL.Record({
     'subscription' : SubscriptionInfo,
     'user_id' : UserId,
   });
   const PushSubscriptionResponse = IDL.Variant({ 'Success' : IDL.Null });
-  const PushV1DirectMessageNotificationArgs = IDL.Record({
-    'recipient' : UserId,
-    'notification' : V1DirectMessageNotification,
-  });
-  const PushV1DirectMessageNotificationResponse = IDL.Variant({
-    'Success' : IDL.Null,
-  });
-  const PushV1GroupMessageNotificationArgs = IDL.Record({
-    'notification' : V1GroupMessageNotification,
-    'recipients' : IDL.Vec(UserId),
-  });
-  const PushV1GroupMessageNotificationResponse = IDL.Variant({
-    'Success' : IDL.Null,
-  });
   const RemoveNotificationsArgs = IDL.Record({
     'up_to_notification_index' : IDL.Nat64,
   });
@@ -297,29 +266,9 @@ export const idlFactory = ({ IDL }) => {
         [NotificationsResponse],
         ['query'],
       ),
-    'push_direct_message_notification' : IDL.Func(
-        [PushDirectMessageNotificationArgs],
-        [PushDirectMessageNotificationResponse],
-        [],
-      ),
-    'push_group_message_notification' : IDL.Func(
-        [PushGroupMessageNotificationArgs],
-        [PushGroupMessageNotificationResponse],
-        [],
-      ),
     'push_subscription' : IDL.Func(
         [PushSubscriptionArgs],
         [PushSubscriptionResponse],
-        [],
-      ),
-    'push_v1direct_message_notification' : IDL.Func(
-        [PushV1DirectMessageNotificationArgs],
-        [PushV1DirectMessageNotificationResponse],
-        [],
-      ),
-    'push_v1group_message_notification' : IDL.Func(
-        [PushV1GroupMessageNotificationArgs],
-        [PushV1GroupMessageNotificationResponse],
         [],
       ),
     'remove_notifications' : IDL.Func(
@@ -349,9 +298,4 @@ export const idlFactory = ({ IDL }) => {
       ),
   });
 };
-export const init = ({ IDL }) => {
-  const InitArgs = IDL.Record({
-    'push_service_principals' : IDL.Vec(IDL.Principal),
-  });
-  return [InitArgs];
-};
+export const init = ({ IDL }) => { return []; };

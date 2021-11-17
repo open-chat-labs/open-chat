@@ -38,7 +38,11 @@ export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'Required' : null } |
   { 'NotRequired' : null } |
   { 'InProgress' : null };
-export interface CanisterWasm { 'version' : Version, 'module' : Array<number> }
+export interface CanisterWasm {
+  'compressed' : boolean,
+  'version' : Version,
+  'module' : Array<number>,
+}
 export type ChatId = CanisterId;
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
@@ -294,12 +298,6 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
-export interface InitArgs {
-  'test_mode' : boolean,
-  'service_principals' : Array<Principal>,
-  'notifications_canister_id' : CanisterId,
-  'group_wasm_module' : Array<number>,
-}
 export interface Mention { 'message_index' : MessageIndex }
 export interface Message {
   'content' : MessageContent,
@@ -392,6 +390,7 @@ export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
   'user_ids' : Array<UserId>,
+  'unblocked' : Array<UserId>,
   'added_by' : UserId,
 }
 export interface ParticipantsDismissedAsAdmin {
@@ -465,13 +464,6 @@ export interface TransactionWrapper {
   'timestamp' : TimestampMillis,
   'index' : number,
 }
-export interface UpdateGroupCanisterWasmArgs {
-  'group_canister_wasm' : CanisterWasm,
-}
-export type UpdateGroupCanisterWasmResponse = { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'VersionNotHigher' : null } |
-  { 'InvalidVersion' : null };
 export interface UpdatedMessage {
   'message_id' : MessageId,
   'event_index' : EventIndex,
@@ -565,7 +557,4 @@ export interface VideoContent {
 }
 export interface _SERVICE {
   'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
-  'update_group_canister_wasm' : (
-      arg_0: UpdateGroupCanisterWasmArgs,
-    ) => Promise<UpdateGroupCanisterWasmResponse>,
 }

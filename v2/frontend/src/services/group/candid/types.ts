@@ -72,7 +72,11 @@ export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'Required' : null } |
   { 'NotRequired' : null } |
   { 'InProgress' : null };
-export interface CanisterWasm { 'version' : Version, 'module' : Array<number> }
+export interface CanisterWasm {
+  'compressed' : boolean,
+  'version' : Version,
+  'module' : Array<number>,
+}
 export type ChatId = CanisterId;
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
@@ -220,6 +224,7 @@ export type EventsResponse = { 'CallerNotInGroup' : null } |
 export interface EventsSuccessResult {
   'affected_events' : Array<GroupChatEventWrapper>,
   'events' : Array<GroupChatEventWrapper>,
+  'latest_event_index' : number,
 }
 export interface EventsWindowArgs {
   'mid_point' : MessageIndex,
@@ -463,6 +468,7 @@ export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
   'user_ids' : Array<UserId>,
+  'unblocked' : Array<UserId>,
   'added_by' : UserId,
 }
 export interface ParticipantsDismissedAsAdmin {
@@ -565,14 +571,16 @@ export interface SendMessageArgs {
   'message_id' : MessageId,
   'replies_to' : [] | [GroupReplyContext],
 }
-export type SendMessageResponse = { 'CallerNotInGroup' : null } |
+export type SendMessageResponse = { 'TextTooLong' : number } |
+  { 'CallerNotInGroup' : null } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'message_index' : MessageIndex,
     }
-  };
+  } |
+  { 'MessageEmpty' : null };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -582,15 +590,6 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
-export type SummaryArgs = {};
-export type SummaryResponse = { 'CallerNotInGroup' : null } |
-  { 'Success' : GroupChatSummary } |
-  { 'SuccessNoUpdates' : null };
-export interface SummaryUpdatesArgs { 'updates_since' : TimestampMillis }
-export type SummaryUpdatesResponse = { 'CallerNotInGroup' : null } |
-  { 'Success' : SummaryUpdatesSuccess } |
-  { 'SuccessNoUpdates' : null };
-export interface SummaryUpdatesSuccess { 'updates' : GroupChatSummaryUpdates }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
@@ -632,7 +631,6 @@ export interface UpdateGroupArgs {
 export type UpdateGroupResponse = {
     'DescriptionTooLong' : FieldTooLongResult
   } |
-  { 'Unchanged' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
@@ -761,10 +759,6 @@ export interface _SERVICE {
       SelectedUpdatesResponse
     >,
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
-  'summary' : (arg_0: SummaryArgs) => Promise<SummaryResponse>,
-  'summary_updates' : (arg_0: SummaryUpdatesArgs) => Promise<
-      SummaryUpdatesResponse
-    >,
   'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
       ToggleReactionResponse
     >,
