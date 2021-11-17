@@ -16,6 +16,7 @@ generate_update_call!(create_group);
 generate_update_call!(leave_group);
 generate_update_call!(join_group);
 generate_update_call!(mark_read);
+generate_update_call!(mute_notifications);
 generate_update_call!(put_chunk);
 generate_update_call!(relinquish_group_super_admin);
 generate_update_call!(send_message);
