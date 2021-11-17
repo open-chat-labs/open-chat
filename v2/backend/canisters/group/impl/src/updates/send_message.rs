@@ -8,7 +8,7 @@ use ic_cdk_macros::update;
 use lazy_static::lazy_static;
 use notifications_canister::push_group_message_notification;
 use regex::Regex;
-use types::{CanisterId, GroupMessageNotification, MessageContent, UserId};
+use types::{CanisterId, ContentValidationError, GroupMessageNotification, MessageContent, UserId};
 use utils::rand::get_random_item;
 
 #[update]
@@ -22,6 +22,13 @@ fn send_message(args: Args) -> Response {
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(&caller) {
+        if let Err(error) = args.content.validate() {
+            return match error {
+                ContentValidationError::Empty => MessageEmpty,
+                ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
+            };
+        }
+
         let now = runtime_state.env.now();
         let sender = participant.user_id;
         let mentioned_users = extract_mentioned_users(&args.content);

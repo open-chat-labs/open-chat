@@ -20,6 +20,8 @@ type SendMessageResponse =
             event_index: EventIndex;
             timestamp: TimestampMillis;
         };
+        MessageEmpty;
+        TextTooLong: nat32;
         CallerNotInGroup;
     };
 

@@ -15,7 +15,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     MessageEmpty,
-    MessageTooLong(u32),
+    TextTooLong(u32),
     RecipientBlocked,
     InvalidRequest(String),
     TransactionFailed(String),
