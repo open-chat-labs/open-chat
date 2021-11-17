@@ -134,17 +134,10 @@
     }
 
     function resetScroll() {
-        if (initialised) {
-            if ($focusMessageIndex !== undefined) {
-                scrollToMessageIndex($focusMessageIndex);
-            } else {
-                // scrollingToMessage = true;
-                messagesDiv.scrollTop = scrollTop;
-            }
-        } else {
-            if ($focusMessageIndex !== undefined) {
-                scrollToMessageIndex($focusMessageIndex);
-            }
+        if ($focusMessageIndex !== undefined) {
+            scrollToMessageIndex($focusMessageIndex);
+        }
+        if (!initialised) {
             initialised = true;
         }
     }
