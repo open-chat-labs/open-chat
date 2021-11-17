@@ -204,7 +204,6 @@ type UpdateGroupResponse =
         NameTooLong: FieldTooLongResult;
         DescriptionTooLong: FieldTooLongResult;
         AvatarTooBig: FieldTooLongResult;
-        Unchanged;
         NameTaken;
         InternalError;
     };
@@ -272,34 +271,6 @@ type SelectedUpdatesResponse =
         CallerNotInGroup;
     };
 
-type SummaryArgs =
-    record {
-    };
-
-type SummaryResponse =
-    variant {
-        Success: GroupChatSummary;
-        SuccessNoUpdates;
-        CallerNotInGroup;
-    };
-
-type SummaryUpdatesArgs =
-    record {
-        updates_since: TimestampMillis;
-    };
-
-type SummaryUpdatesSuccess =
-    record {
-        updates: GroupChatSummaryUpdates;
-    };
-
-type SummaryUpdatesResponse =
-    variant {
-        Success: SummaryUpdatesSuccess;
-        SuccessNoUpdates;
-        CallerNotInGroup;
-    };
-
 type EventsArgs =
     record {
         start_index: EventIndex;
@@ -330,6 +301,7 @@ type EventsSuccessResult =
     record {
         events: vec GroupChatEventWrapper;
         affected_events: vec GroupChatEventWrapper;
+        latest_event_index: nat32;
     };
 
 type EventsResponse =
@@ -383,8 +355,6 @@ service: {
 
     selected_initial: (SelectedInitialArgs) -> (SelectedInitialResponse) query;
     selected_updates: (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
-    summary: (SummaryArgs) -> (SummaryResponse) query;
-    summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;

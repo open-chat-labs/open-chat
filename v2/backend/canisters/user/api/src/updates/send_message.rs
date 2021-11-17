@@ -14,6 +14,9 @@ pub struct Args {
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
+    RecipientNotFound,
+    MessageEmpty,
+    MessageTooLong(u32),
     RecipientBlocked,
     InvalidRequest(String),
     TransactionFailed(String),

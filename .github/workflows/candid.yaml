@@ -6,8 +6,8 @@ on:
 name: Validate candid files
 
 jobs:
-  candid:
-    name: validate syntax
+  candid_syntax:
+    name: validate candid syntax
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -17,7 +17,23 @@ jobs:
           uri: https://github.com/dfinity/candid/releases/download/2021-09-30/didc-linux64
           name: didc
           version: 0.7.8
-      - name: run validate-candid.sh
+      - name: run validate-candid-syntax.sh
         working-directory: ./v2
-        run: ./validate-candid.sh
+        run: ./validate-candid-syntax.sh
+        shell: bash
+
+  candid_matches_rust:
+    name: validate candid matches rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: install didc 0.7.8
+        uses: supplypike/setup-bin@v1
+        with:
+          uri: https://github.com/dfinity/candid/releases/download/2021-09-30/didc-linux64
+          name: didc
+          version: 0.7.8
+      - name: run validate-candid-matches-rust.sh
+        working-directory: ./v2
+        run: ./validate-candid-matches-rust.sh
         shell: bash
