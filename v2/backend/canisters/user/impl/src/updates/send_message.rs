@@ -6,8 +6,9 @@ use ic_cdk_macros::update;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{
-    CanisterId, CompletedCyclesTransfer, CompletedICPTransfer, CryptocurrencyTransfer, CyclesTransfer, FailedCyclesTransfer,
-    ICPTransfer, MessageContent, MessageIndex, PendingCyclesTransfer, PendingICPTransfer, Transaction, UserId,
+    CanisterId, CompletedCyclesTransfer, CompletedICPTransfer, ContentValidationError, CryptocurrencyTransfer, CyclesTransfer,
+    FailedCyclesTransfer, ICPTransfer, MessageContent, MessageIndex, PendingCyclesTransfer, PendingICPTransfer, Transaction,
+    UserId,
 };
 use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
@@ -19,6 +20,13 @@ use utils::consts::{DEFAULT_MEMO, ICP_TRANSACTION_FEE_E8S};
 #[trace]
 async fn send_message(mut args: Args) -> Response {
     run_regular_jobs();
+
+    if let Err(error) = args.content.validate() {
+        return match error {
+            ContentValidationError::Empty => MessageEmpty,
+            ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
+        };
+    }
 
     if RUNTIME_STATE.with(|state| is_recipient_blocked(&args.recipient, state.borrow().as_ref().unwrap())) {
         return RecipientBlocked;

@@ -40,10 +40,10 @@ fn tests_pot() -> pot::Pot<IcManager> {
             get_updates_test::get_updates_test,
             make_admin_test::make_admin_test,
             make_super_admin_test::make_super_admin_test,
-            mentions_test::mentions_test
+            mentions_test::mentions_test,
             register_user_test::register_user_test,
             register_user_test::register_existing_user_test,
-            send_message_test::send_message_test,
+            send_message_test::send_message_test
         }
     )
 }
