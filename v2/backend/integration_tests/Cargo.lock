@@ -4287,6 +4287,7 @@ dependencies = [
  "ic-utils 0.5.0",
  "nodemanager",
  "notifications_canister",
+ "notifications_canister_client",
  "serde",
  "serde_bytes",
  "tokio",
@@ -5111,6 +5112,17 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "serde",
+ "types",
+]
+
+[[package]]
+name = "notifications_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client_macros",
+ "ic-agent",
+ "notifications_canister",
  "types",
 ]
 
