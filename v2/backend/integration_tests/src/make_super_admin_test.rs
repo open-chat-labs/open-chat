@@ -283,7 +283,7 @@ async fn make_super_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context
             from_index: 0.into(),
             to_index: 20.into(),
         };
-        match group_canister_client::events_range(&user1_agent, &chat_id.into(), &events_range_args)
+        match group_canister_client::events_range(&user2_agent, &chat_id.into(), &events_range_args)
             .await
             .unwrap()
         {

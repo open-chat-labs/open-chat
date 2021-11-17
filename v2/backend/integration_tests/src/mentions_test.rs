@@ -90,9 +90,7 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         {
             notifications_canister::notifications::Response::Success(result) => {
                 assert_eq!(result.notifications.len(), 1);
-                let recipients = &result.notifications[0].value.recipients;
-                assert_eq!(recipients.len(), 1);
-                assert_eq!(recipients[0], user3_id);
+                assert_eq!(result.notifications[0].value.recipients, vec![user3_id]);
             }
             response => panic!("notifications::notifications returned an error: {:?}", response),
         };
@@ -120,8 +118,7 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         {
             notifications_canister::notifications::Response::Success(result) => {
                 assert_eq!(result.notifications.len(), 1);
-                let recipients = &result.notifications[0].value.recipients;
-                assert_eq!(recipients.len(), 2);
+                assert_eq!(result.notifications[0].value.recipients, vec![user1_id, user3_id]);
             }
             response => panic!("notifications::notifications returned an error: {:?}", response),
         };
