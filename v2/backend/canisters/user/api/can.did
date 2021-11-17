@@ -18,7 +18,7 @@ type SendMessageResponse =
             timestamp: TimestampMillis;
         };
         MessageEmpty;
-        MessageTooLong: nat32;
+        TextTooLong: nat32;
         RecipientBlocked;
         InvalidRequest: text;
         TransactionFailed: text;

@@ -23,7 +23,7 @@ async fn send_message_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let agent = build_ic_agent(url, user1_identity).await;
 
     let send_message_args = user_canister::send_message::Args {
-        message_id: 123.into(),
+        message_id: 1.into(),
         recipient: user2_id,
         sender_name: "TEST!".to_string(),
         content: MessageContent::Text(TextContent { text: "abc".to_string() }),
@@ -43,5 +43,29 @@ async fn send_message_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         assert_eq!(r.events.len(), 1);
     } else {
         panic!("No events returned");
+    }
+
+    let send_message_args = user_canister::send_message::Args {
+        message_id: 2.into(),
+        recipient: user2_id,
+        sender_name: "TEST!".to_string(),
+        content: MessageContent::Text(TextContent { text: String::default() }),
+        replies_to: None,
+    };
+    let response = user_canister_client::send_message(&agent, &user1_id.into(), &send_message_args).await.unwrap();
+    if !matches!(response, user_canister::send_message::Response::MessageEmpty) {
+        panic!("SendMessage was expected to return MessageEmpty but did not: {:?}", response);
+    }
+
+    let send_message_args = user_canister::send_message::Args {
+        message_id: 3.into(),
+        recipient: user2_id,
+        sender_name: "TEST!".to_string(),
+        content: MessageContent::Text(TextContent { text: (0..5001).into_iter().map(|_| '1').collect() }),
+        replies_to: None,
+    };
+    let response = user_canister_client::send_message(&agent, &user1_id.into(), &send_message_args).await.unwrap();
+    if !matches!(response, user_canister::send_message::Response::TextTooLong(5000)) {
+        panic!("SendMessage was expected to return TextTooLong(5000) but did not: {:?}", response);
     }
 }

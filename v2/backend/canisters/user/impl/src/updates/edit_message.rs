@@ -16,7 +16,9 @@ fn edit_message(args: Args) -> Response {
 }
 
 fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
+    if runtime_state.data.blocked_users.contains(&args.user_id) {
+        UserBlocked
+    } else if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = runtime_state.env.canister_id().into();
         let now = runtime_state.env.now();
 

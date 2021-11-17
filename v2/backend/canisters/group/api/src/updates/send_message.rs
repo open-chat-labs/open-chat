@@ -27,6 +27,8 @@ impl From<GroupReplyContext> for ReplyContext {
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
+    MessageEmpty,
+    TextTooLong(u32),
     CallerNotInGroup,
 }
 

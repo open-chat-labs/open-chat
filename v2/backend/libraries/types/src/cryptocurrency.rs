@@ -123,6 +123,15 @@ pub enum CryptocurrencyTransfer {
     ICP(ICPTransfer),
 }
 
+impl CryptocurrencyTransfer {
+    pub fn is_zero(&self) -> bool {
+        match self {
+            CryptocurrencyTransfer::Cycles(c) => c.cycles() == 0,
+            CryptocurrencyTransfer::ICP(icp) => icp.amount_e8s() == 0,
+        }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CyclesTransfer {
     Pending(PendingCyclesTransfer),
