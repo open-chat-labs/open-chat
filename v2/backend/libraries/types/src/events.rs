@@ -1,11 +1,10 @@
-use crate::{DeletedMessage, EventIndex, Message, MessageId, UserId};
+use crate::{EventIndex, Message, MessageId, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum GroupChatEvent {
     Message(Message),
-    DeletedMessage(DeletedMessage),
     GroupChatCreated(GroupChatCreated),
     GroupNameChanged(GroupNameChanged),
     GroupDescriptionChanged(GroupDescriptionChanged),
@@ -146,7 +145,6 @@ pub struct UpdatedMessage {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum DirectChatEvent {
     Message(Message),
-    DeletedMessage(DeletedMessage),
     DirectChatCreated(DirectChatCreated),
     MessageEdited(UpdatedMessage),
     MessageDeleted(UpdatedMessage),
