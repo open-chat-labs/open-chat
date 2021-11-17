@@ -258,8 +258,8 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("InvalidRequest" in candid) {
         return { kind: "invalid_request" };
     }
-    if ("MessageTooLong" in candid) {
-        return { kind: "message_too_long" };
+    if ("TextTooLong" in candid) {
+        return { kind: "text_too_long" };
     }
     if ("MessageEmpty" in candid) {
         return { kind: "message_empty" };

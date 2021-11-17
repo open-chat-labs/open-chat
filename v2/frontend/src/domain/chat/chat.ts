@@ -727,7 +727,7 @@ export type SendMessageInvalidRequest = {
 };
 
 export type SendMessageTooLong = {
-    kind: "message_too_long";
+    kind: "text_too_long";
 };
 
 export type SendMessageEmpty = {

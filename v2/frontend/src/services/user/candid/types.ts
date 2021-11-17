@@ -593,7 +593,8 @@ export interface SendMessageArgs {
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],
 }
-export type SendMessageResponse = { 'TransactionFailed' : string } |
+export type SendMessageResponse = { 'TextTooLong' : number } |
+  { 'TransactionFailed' : string } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,
@@ -604,8 +605,7 @@ export type SendMessageResponse = { 'TransactionFailed' : string } |
   } |
   { 'MessageEmpty' : null } |
   { 'RecipientBlocked' : null } |
-  { 'InvalidRequest' : string } |
-  { 'MessageTooLong' : number };
+  { 'InvalidRequest' : string };
 export interface SetAvatarArgs { 'avatar' : Avatar }
 export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : bigint };

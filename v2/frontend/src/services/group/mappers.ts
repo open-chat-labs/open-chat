@@ -311,6 +311,12 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("CallerNotInGroup" in candid) {
         return { kind: "not_in_group" };
     }
+    if ("TextTooLong" in candid) {
+        return { kind: "text_too_long" };
+    }
+    if ("MessageEmpty" in candid) {
+        return { kind: "message_empty" };
+    }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 

@@ -399,12 +399,14 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(GroupReplyContext),
   });
   const SendMessageResponse = IDL.Variant({
+    'TextTooLong' : IDL.Nat32,
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'message_index' : MessageIndex,
     }),
+    'MessageEmpty' : IDL.Null,
   });
   const ToggleReactionArgs = IDL.Record({
     'message_id' : MessageId,

@@ -476,6 +476,7 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(ReplyContext),
   });
   const SendMessageResponse = IDL.Variant({
+    'TextTooLong' : IDL.Nat32,
     'TransactionFailed' : IDL.Text,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
@@ -486,7 +487,6 @@ export const idlFactory = ({ IDL }) => {
     'MessageEmpty' : IDL.Null,
     'RecipientBlocked' : IDL.Null,
     'InvalidRequest' : IDL.Text,
-    'MessageTooLong' : IDL.Nat32,
   });
   const SetAvatarArgs = IDL.Record({ 'avatar' : Avatar });
   const SetAvatarResponse = IDL.Variant({

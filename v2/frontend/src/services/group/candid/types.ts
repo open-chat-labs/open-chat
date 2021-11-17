@@ -571,14 +571,16 @@ export interface SendMessageArgs {
   'message_id' : MessageId,
   'replies_to' : [] | [GroupReplyContext],
 }
-export type SendMessageResponse = { 'CallerNotInGroup' : null } |
+export type SendMessageResponse = { 'TextTooLong' : number } |
+  { 'CallerNotInGroup' : null } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'message_index' : MessageIndex,
     }
-  };
+  } |
+  { 'MessageEmpty' : null };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
