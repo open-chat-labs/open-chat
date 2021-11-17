@@ -125,14 +125,15 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 
 fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
-    let min_visible_event_index;
-    let min_visible_message_index;
-    if runtime_state.data.history_visible_to_new_joiners {
-        min_visible_event_index = EventIndex::default();
-        min_visible_message_index = MessageIndex::default();
-    } else {
-        min_visible_event_index = runtime_state.data.events.last().index.incr();
-        min_visible_message_index = runtime_state.data.events.next_message_index();
+    let mut min_visible_event_index = EventIndex::default();
+    let mut min_visible_message_index = MessageIndex::default();
+    if !runtime_state.data.history_visible_to_new_joiners {
+        // If there is only an initial "group created" event then allow these initial
+        // participants to see the "group created" event by starting min_visible_* at zero
+        if runtime_state.data.events.len() > 1 {
+            min_visible_event_index = runtime_state.data.events.last().index.incr();
+            min_visible_message_index = runtime_state.data.events.next_message_index();
+        }
     };
 
     let mut unblocked = vec![];
