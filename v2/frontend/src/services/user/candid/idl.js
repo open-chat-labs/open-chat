@@ -1,11 +1,7 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterId = IDL.Principal;
-  const InitArgs = IDL.Record({
-    'owner' : IDL.Principal,
-    'notification_canister_ids' : IDL.Vec(CanisterId),
-  });
   const ChatId = CanisterId;
-  const AssumeGroupSuperAdminArgs = IDL.Record({ 'group_id' : ChatId });
+  const AssumeGroupSuperAdminArgs = IDL.Record({ 'chat_id' : ChatId });
   const AssumeGroupSuperAdminResponse = IDL.Variant({
     'AlreadyOwner' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
@@ -170,6 +166,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageNotFound' : IDL.Null,
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
+    'UserBlocked' : IDL.Null,
   });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
@@ -379,6 +376,7 @@ export const idlFactory = ({ IDL }) => {
       'timestamp' : TimestampMillis,
       'transactions' : IDL.Vec(TransactionWrapper),
     }),
+    'InternalError' : IDL.Text,
   });
   const JoinGroupArgs = IDL.Record({
     'as_super_admin' : IDL.Bool,
@@ -397,6 +395,7 @@ export const idlFactory = ({ IDL }) => {
   const LeaveGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const LeaveGroupResponse = IDL.Variant({
     'GroupNotFound' : IDL.Null,
+    'GroupNotPublic' : IDL.Null,
     'OwnerCannotLeave' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
@@ -430,7 +429,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'ChunkTooBig' : IDL.Null,
   });
-  const RelinquishGroupSuperAdminArgs = IDL.Record({ 'group_id' : ChatId });
+  const RelinquishGroupSuperAdminArgs = IDL.Record({ 'chat_id' : ChatId });
   const RelinquishGroupSuperAdminResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
@@ -478,17 +477,16 @@ export const idlFactory = ({ IDL }) => {
   });
   const SendMessageResponse = IDL.Variant({
     'TransactionFailed' : IDL.Text,
-    'BalanceExceeded' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
       'event_index' : EventIndex,
       'message_index' : MessageIndex,
     }),
+    'MessageEmpty' : IDL.Null,
     'RecipientBlocked' : IDL.Null,
     'InvalidRequest' : IDL.Text,
     'MessageTooLong' : IDL.Nat32,
-    'RecipientNotFound' : IDL.Null,
   });
   const SetAvatarArgs = IDL.Record({ 'avatar' : Avatar });
   const SetAvatarResponse = IDL.Variant({
@@ -622,6 +620,7 @@ export const idlFactory = ({ IDL }) => {
       'timestamp' : TimestampMillis,
       'transactions' : IDL.Vec(TransactionWrapper),
     }),
+    'InternalError' : IDL.Text,
   });
   return IDL.Service({
     'assume_group_super_admin' : IDL.Func(
@@ -705,11 +704,4 @@ export const idlFactory = ({ IDL }) => {
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
   });
 };
-export const init = ({ IDL }) => {
-  const CanisterId = IDL.Principal;
-  const InitArgs = IDL.Record({
-    'owner' : IDL.Principal,
-    'notification_canister_ids' : IDL.Vec(CanisterId),
-  });
-  return [InitArgs];
-};
+export const init = ({ IDL }) => { return []; };

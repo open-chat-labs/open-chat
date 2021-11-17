@@ -156,8 +156,8 @@ export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupRes
     if ("GroupNotFound" in candid) {
         return "group_not_found";
     }
-    if ("LastAdmin" in candid) {
-        return "last_admin";
+    if ("GroupNotPublic" in candid) {
+        return "group_not_public";
     }
     if ("OwnerCannotLeave" in candid) {
         return "owner_cannot_leave";
@@ -234,6 +234,9 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
     if ("MessageNotFound" in candid) {
         return "message_not_found";
     }
+    if ("UserBlocked" in candid) {
+        return "user_blocked";
+    }
     throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
 }
 
@@ -257,6 +260,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     }
     if ("MessageTooLong" in candid) {
         return { kind: "message_too_long" };
+    }
+    if ("MessageEmpty" in candid) {
+        return { kind: "message_empty" };
     }
     if ("RecipientNotFound" in candid) {
         return { kind: "recipient_not_found" };

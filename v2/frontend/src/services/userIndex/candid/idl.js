@@ -1,10 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const InitArgs = IDL.Record({
-    'test_mode' : IDL.Bool,
-    'user_wasm_module' : IDL.Vec(IDL.Nat8),
-    'sms_service_principals' : IDL.Vec(IDL.Principal),
-    'service_principals' : IDL.Vec(IDL.Principal),
-  });
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
   const AddSuperAdminArgs = IDL.Record({ 'user_id' : UserId });
@@ -74,12 +68,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserNotFound' : IDL.Null,
   });
-  const NotifyBalanceArgs = IDL.Record({ 'balance' : IDL.Nat });
-  const RemoveSmsMessagesArgs = IDL.Record({ 'up_to_sms_index' : IDL.Nat64 });
-  const RemoveSmsMessagesResponse = IDL.Variant({
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-  });
   const RemoveSuperAdminArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveSuperAdminResponse = IDL.Variant({
     'Success' : IDL.Null,
@@ -115,20 +103,6 @@ export const idlFactory = ({ IDL }) => {
     'UserUnconfirmed' : IDL.Null,
     'UserNotFound' : IDL.Null,
   });
-  const SmsMessagesArgs = IDL.Record({
-    'max_results' : IDL.Nat64,
-    'from_index' : IDL.Nat64,
-  });
-  const ConfirmationCodeSms = IDL.Record({
-    'confirmation_code' : IDL.Text,
-    'phone_number' : IDL.Text,
-  });
-  const SmsMessagesResponse = IDL.Variant({
-    'Success' : IDL.Record({
-      'notifications' : IDL.Vec(ConfirmationCodeSms),
-      'latest_index' : IDL.Nat64,
-    }),
-  });
   const SubmitPhoneNumberArgs = IDL.Record({ 'phone_number' : PhoneNumber });
   const SubmitPhoneNumberResponse = IDL.Variant({
     'AlreadyRegistered' : IDL.Null,
@@ -139,19 +113,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SuperAdminsArgs = IDL.Record({});
   const SuperAdminsResponse = IDL.Variant({
-    'NotController' : IDL.Null,
     'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
-  });
-  const TransferCyclesArgs = IDL.Record({
-    'recipient' : UserId,
-    'sender' : UserId,
-    'amount' : IDL.Nat,
-  });
-  const TransferCyclesResponse = IDL.Variant({
-    'BalanceExceeded' : IDL.Null,
-    'Success' : IDL.Record({ 'new_balance' : IDL.Nat }),
-    'UserNotFound' : IDL.Null,
-    'RecipientNotFound' : IDL.Null,
   });
   const Version = IDL.Record({
     'major' : IDL.Nat32,
@@ -159,6 +121,7 @@ export const idlFactory = ({ IDL }) => {
     'patch' : IDL.Nat32,
   });
   const CanisterWasm = IDL.Record({
+    'compressed' : IDL.Bool,
     'version' : Version,
     'module' : IDL.Vec(IDL.Nat8),
   });
@@ -169,7 +132,6 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'VersionNotHigher' : IDL.Null,
-    'InvalidVersion' : IDL.Null,
   });
   const UpgradeCanisterArgs = IDL.Record({});
   const UpgradeCanisterResponse = IDL.Variant({
@@ -227,12 +189,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'mark_as_online' : IDL.Func([MarkAsOnlineArgs], [MarkAsOnlineResponse], []),
-    'notify_balance' : IDL.Func([NotifyBalanceArgs], [], []),
-    'remove_sms_messages' : IDL.Func(
-        [RemoveSmsMessagesArgs],
-        [RemoveSmsMessagesResponse],
-        [],
-      ),
     'remove_super_admin' : IDL.Func(
         [RemoveSuperAdminArgs],
         [RemoveSuperAdminResponse],
@@ -241,11 +197,6 @@ export const idlFactory = ({ IDL }) => {
     'resend_code' : IDL.Func([ResendCodeArgs], [ResendCodeResponse], []),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
     'set_username' : IDL.Func([SetUsernameArgs], [SetUsernameResponse], []),
-    'sms_messages' : IDL.Func(
-        [SmsMessagesArgs],
-        [SmsMessagesResponse],
-        ['query'],
-      ),
     'submit_phone_number' : IDL.Func(
         [SubmitPhoneNumberArgs],
         [SubmitPhoneNumberResponse],
@@ -255,11 +206,6 @@ export const idlFactory = ({ IDL }) => {
         [SuperAdminsArgs],
         [SuperAdminsResponse],
         ['query'],
-      ),
-    'transfer_cycles' : IDL.Func(
-        [TransferCyclesArgs],
-        [TransferCyclesResponse],
-        [],
       ),
     'update_user_canister_wasm' : IDL.Func(
         [UpdateUserCanisterWasmArgs],
@@ -275,12 +221,4 @@ export const idlFactory = ({ IDL }) => {
     'users' : IDL.Func([UsersArgs], [UsersResponse], ['query']),
   });
 };
-export const init = ({ IDL }) => {
-  const InitArgs = IDL.Record({
-    'test_mode' : IDL.Bool,
-    'user_wasm_module' : IDL.Vec(IDL.Nat8),
-    'sms_service_principals' : IDL.Vec(IDL.Principal),
-    'service_principals' : IDL.Vec(IDL.Principal),
-  });
-  return [InitArgs];
-};
+export const init = ({ IDL }) => { return []; };

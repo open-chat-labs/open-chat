@@ -42,7 +42,11 @@ export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'Required' : null } |
   { 'NotRequired' : null } |
   { 'InProgress' : null };
-export interface CanisterWasm { 'version' : Version, 'module' : Array<number> }
+export interface CanisterWasm {
+  'compressed' : boolean,
+  'version' : Version,
+  'module' : Array<number>,
+}
 export type ChatId = CanisterId;
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
@@ -331,12 +335,6 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
-export interface InitArgs {
-  'test_mode' : boolean,
-  'user_wasm_module' : Array<number>,
-  'sms_service_principals' : Array<Principal>,
-  'service_principals' : Array<Principal>,
-}
 export type MarkAsOnlineArgs = {};
 export type MarkAsOnlineResponse = { 'Success' : null } |
   { 'UserNotFound' : null };
@@ -389,7 +387,6 @@ export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
 }
-export interface NotifyBalanceArgs { 'balance' : bigint }
 export interface OptionalUserPreferences {
   'large_emoji' : [] | [boolean],
   'notification_preferences' : [] | [
@@ -433,6 +430,7 @@ export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
   'user_ids' : Array<UserId>,
+  'unblocked' : Array<UserId>,
   'added_by' : UserId,
 }
 export interface ParticipantsDismissedAsAdmin {
@@ -468,9 +466,6 @@ export interface PendingICPWithdrawal {
   'amount_e8s' : bigint,
 }
 export interface PhoneNumber { 'country_code' : number, 'number' : string }
-export interface RemoveSmsMessagesArgs { 'up_to_sms_index' : bigint }
-export type RemoveSmsMessagesResponse = { 'NotAuthorized' : null } |
-  { 'Success' : null };
 export interface RemoveSuperAdminArgs { 'user_id' : UserId }
 export type RemoveSuperAdminResponse = { 'Success' : null } |
   { 'NotSuperAdmin' : null } |
@@ -501,16 +496,6 @@ export type SetUsernameResponse = { 'UsernameTaken' : null } |
   { 'Success' : null } |
   { 'UserUnconfirmed' : null } |
   { 'UserNotFound' : null };
-export interface SmsMessagesArgs {
-  'max_results' : bigint,
-  'from_index' : bigint,
-}
-export type SmsMessagesResponse = {
-    'Success' : {
-      'notifications' : Array<ConfirmationCodeSms>,
-      'latest_index' : bigint,
-    }
-  };
 export interface SubmitPhoneNumberArgs { 'phone_number' : PhoneNumber }
 export type SubmitPhoneNumberResponse = { 'AlreadyRegistered' : null } |
   { 'UserLimitReached' : null } |
@@ -527,8 +512,7 @@ export interface SubscriptionInfo {
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export type SuperAdminsArgs = {};
-export type SuperAdminsResponse = { 'NotController' : null } |
-  { 'Success' : { 'users' : Array<UserId> } };
+export type SuperAdminsResponse = { 'Success' : { 'users' : Array<UserId> } };
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
@@ -555,8 +539,7 @@ export interface UpdateUserCanisterWasmArgs {
 }
 export type UpdateUserCanisterWasmResponse = { 'NotAuthorized' : null } |
   { 'Success' : null } |
-  { 'VersionNotHigher' : null } |
-  { 'InvalidVersion' : null };
+  { 'VersionNotHigher' : null };
 export interface UpdatedMessage {
   'message_id' : MessageId,
   'event_index' : EventIndex,
@@ -683,24 +666,16 @@ export interface _SERVICE {
     >,
   'current_user' : (arg_0: CurrentUserArgs) => Promise<CurrentUserResponse>,
   'mark_as_online' : (arg_0: MarkAsOnlineArgs) => Promise<MarkAsOnlineResponse>,
-  'notify_balance' : (arg_0: NotifyBalanceArgs) => Promise<undefined>,
-  'remove_sms_messages' : (arg_0: RemoveSmsMessagesArgs) => Promise<
-      RemoveSmsMessagesResponse
-    >,
   'remove_super_admin' : (arg_0: RemoveSuperAdminArgs) => Promise<
       RemoveSuperAdminResponse
     >,
   'resend_code' : (arg_0: ResendCodeArgs) => Promise<ResendCodeResponse>,
   'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
   'set_username' : (arg_0: SetUsernameArgs) => Promise<SetUsernameResponse>,
-  'sms_messages' : (arg_0: SmsMessagesArgs) => Promise<SmsMessagesResponse>,
   'submit_phone_number' : (arg_0: SubmitPhoneNumberArgs) => Promise<
       SubmitPhoneNumberResponse
     >,
   'super_admins' : (arg_0: SuperAdminsArgs) => Promise<SuperAdminsResponse>,
-  'transfer_cycles' : (arg_0: TransferCyclesArgs) => Promise<
-      TransferCyclesResponse
-    >,
   'update_user_canister_wasm' : (arg_0: UpdateUserCanisterWasmArgs) => Promise<
       UpdateUserCanisterWasmResponse
     >,

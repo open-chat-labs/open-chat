@@ -693,6 +693,7 @@ export type EditMessageResponse =
     | "success"
     | "chat_not_found"
     | "message_not_found"
+    | "user_blocked"
     | "not_in_group";
 
 export type SendMessageResponse =
@@ -700,6 +701,7 @@ export type SendMessageResponse =
     | SendMessageRecipientBlocked
     | SendMessageInvalidRequest
     | SendMessageTooLong
+    | SendMessageEmpty
     | SendMessageBalanceExceeded
     | SendMessageRecipientNotFound
     | TransationFailed
@@ -726,6 +728,10 @@ export type SendMessageInvalidRequest = {
 
 export type SendMessageTooLong = {
     kind: "message_too_long";
+};
+
+export type SendMessageEmpty = {
+    kind: "message_empty";
 };
 
 export type SendMessageRecipientNotFound = {
@@ -806,7 +812,7 @@ export type LeaveGroupResponse =
     | "internal_error"
     | "not_in_group"
     | "owner_cannot_leave"
-    | "last_admin";
+    | "group_not_public";
 
 export type JoinGroupResponse =
     | "success"

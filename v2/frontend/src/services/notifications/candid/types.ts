@@ -38,7 +38,11 @@ export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'Required' : null } |
   { 'NotRequired' : null } |
   { 'InProgress' : null };
-export interface CanisterWasm { 'version' : Version, 'module' : Array<number> }
+export interface CanisterWasm {
+  'compressed' : boolean,
+  'version' : Version,
+  'module' : Array<number>,
+}
 export type ChatId = CanisterId;
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
@@ -288,7 +292,6 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
-export interface InitArgs { 'push_service_principals' : Array<Principal> }
 export interface Mention { 'message_index' : MessageIndex }
 export interface Message {
   'content' : MessageContent,
@@ -388,6 +391,7 @@ export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
   'user_ids' : Array<UserId>,
+  'unblocked' : Array<UserId>,
   'added_by' : UserId,
 }
 export interface ParticipantsDismissedAsAdmin {
@@ -422,31 +426,11 @@ export interface PendingICPWithdrawal {
   'fee_e8s' : [] | [bigint],
   'amount_e8s' : bigint,
 }
-export interface PushDirectMessageNotificationArgs {
-  'recipient' : UserId,
-  'notification' : DirectMessageNotification,
-}
-export type PushDirectMessageNotificationResponse = { 'Success' : null };
-export interface PushGroupMessageNotificationArgs {
-  'notification' : GroupMessageNotification,
-  'recipients' : Array<UserId>,
-}
-export type PushGroupMessageNotificationResponse = { 'Success' : null };
 export interface PushSubscriptionArgs {
   'subscription' : SubscriptionInfo,
   'user_id' : UserId,
 }
 export type PushSubscriptionResponse = { 'Success' : null };
-export interface PushV1DirectMessageNotificationArgs {
-  'recipient' : UserId,
-  'notification' : V1DirectMessageNotification,
-}
-export type PushV1DirectMessageNotificationResponse = { 'Success' : null };
-export interface PushV1GroupMessageNotificationArgs {
-  'notification' : V1GroupMessageNotification,
-  'recipients' : Array<UserId>,
-}
-export type PushV1GroupMessageNotificationResponse = { 'Success' : null };
 export interface RemoveNotificationsArgs { 'up_to_notification_index' : bigint }
 export type RemoveNotificationsResponse = { 'NotAuthorized' : null } |
   { 'Success' : null };
@@ -595,21 +579,9 @@ export interface _SERVICE {
   'notifications' : (arg_0: NotificationsArgs) => Promise<
       NotificationsResponse
     >,
-  'push_direct_message_notification' : (
-      arg_0: PushDirectMessageNotificationArgs,
-    ) => Promise<PushDirectMessageNotificationResponse>,
-  'push_group_message_notification' : (
-      arg_0: PushGroupMessageNotificationArgs,
-    ) => Promise<PushGroupMessageNotificationResponse>,
   'push_subscription' : (arg_0: PushSubscriptionArgs) => Promise<
       PushSubscriptionResponse
     >,
-  'push_v1direct_message_notification' : (
-      arg_0: PushV1DirectMessageNotificationArgs,
-    ) => Promise<PushV1DirectMessageNotificationResponse>,
-  'push_v1group_message_notification' : (
-      arg_0: PushV1GroupMessageNotificationArgs,
-    ) => Promise<PushV1GroupMessageNotificationResponse>,
   'remove_notifications' : (arg_0: RemoveNotificationsArgs) => Promise<
       RemoveNotificationsResponse
     >,
