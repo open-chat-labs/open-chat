@@ -14,14 +14,6 @@ pub struct Message {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct DeletedMessage {
-    pub message_index: MessageIndex,
-    pub message_id: MessageId,
-    pub sender: UserId,
-    pub deletion_event_index: EventIndex,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ReplyContext {
     pub chat_id_if_other: Option<ChatId>,
     pub event_index: EventIndex,

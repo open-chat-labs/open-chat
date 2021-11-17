@@ -421,6 +421,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "candid_gen"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "canister_api_macros"
 version = "0.1.0"
 dependencies = [
@@ -1159,6 +1167,7 @@ name = "group_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "serde",
  "serde_bytes",
  "types",
@@ -1225,6 +1234,7 @@ name = "group_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "serde",
  "types",
 ]
@@ -2143,6 +2153,7 @@ name = "notifications_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "serde",
  "types",
 ]
@@ -2280,6 +2291,7 @@ name = "online_users_aggregator_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "serde",
  "types",
 ]
@@ -4123,6 +4135,7 @@ name = "user_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "serde",
  "serde_bytes",
  "types",
@@ -4188,6 +4201,7 @@ name = "user_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "serde",
  "serde_bytes",
  "types",

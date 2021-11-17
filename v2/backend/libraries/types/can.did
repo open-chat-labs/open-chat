@@ -49,6 +49,7 @@ type CanisterWasm =
     record {
         module: vec nat8;
         version: Version;
+        compressed: bool;
     };
 
 type ChatSummary =
@@ -388,6 +389,7 @@ type ParticipantsAdded =
     record {
         user_ids: vec UserId;
         added_by: UserId;
+        unblocked: vec UserId;
     };
 
 type ParticipantsDismissedAsAdmin =

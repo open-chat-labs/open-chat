@@ -20,8 +20,13 @@ fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         );
 
         let affected_events = runtime_state.data.events.affected_events(&events);
+        let latest_event_index = runtime_state.data.events.last().index;
 
-        Success(SuccessResult { events, affected_events })
+        Success(SuccessResult {
+            events,
+            affected_events,
+            latest_event_index,
+        })
     } else {
         CallerNotInGroup
     }

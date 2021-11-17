@@ -11,50 +11,6 @@ type PushSubscriptionResponse =
         Success;
     };
 
-type PushDirectMessageNotificationArgs =
-    record {
-        recipient: UserId;
-        notification: DirectMessageNotification;
-    };
-
-type PushDirectMessageNotificationResponse =
-    variant {
-        Success;
-    };
-
-type PushGroupMessageNotificationArgs =
-    record {
-        recipients: vec UserId;
-        notification: GroupMessageNotification;
-    };
-
-type PushGroupMessageNotificationResponse =
-    variant {
-        Success;
-    };
-
-type PushV1GroupMessageNotificationArgs =
-    record {
-        recipients: vec UserId;
-        notification: V1GroupMessageNotification;
-    };
-
-type PushV1GroupMessageNotificationResponse =
-    variant {
-        Success;
-    };
-
-type PushV1DirectMessageNotificationArgs =
-    record {
-        recipient: UserId;
-        notification: V1DirectMessageNotification;
-    };
-
-type PushV1DirectMessageNotificationResponse =
-    variant {
-        Success;
-    };
-
 type NotificationsSuccessResult =
     record {
         notifications: vec IndexedNotification;
@@ -83,7 +39,7 @@ type RemoveNotificationsResponse =
         NotAuthorized;
     };
 
-type RemoveSubscriptionsArgs = 
+type RemoveSubscriptionsArgs =
     record {
         subscriptions_by_user: vec record {
             user_id: UserId;
@@ -128,22 +84,14 @@ type SubscriptionExistsResponse =
         No;
     };
 
-type InitArgs = 
-    record {
-        push_service_principals: vec principal;
-    };
-
-service: (InitArgs) -> {
+service: {
     push_subscription: (PushSubscriptionArgs) -> (PushSubscriptionResponse);
-    push_direct_message_notification: (PushDirectMessageNotificationArgs) -> (PushDirectMessageNotificationResponse);
-    push_group_message_notification: (PushGroupMessageNotificationArgs) -> (PushGroupMessageNotificationResponse);
-    push_v1direct_message_notification: (PushV1DirectMessageNotificationArgs) -> (PushV1DirectMessageNotificationResponse);
-    push_v1group_message_notification: (PushV1GroupMessageNotificationArgs) -> (PushV1GroupMessageNotificationResponse);
-    
+
     remove_notifications: (RemoveNotificationsArgs) -> (RemoveNotificationsResponse);
     remove_subscriptions: (RemoveSubscriptionsArgs) -> (RemoveSubscriptionsResponse);
     remove_subscription: (RemoveSubscriptionArgs) -> (RemoveSubscriptionResponse);
     remove_subscriptions_for_user: (RemoveSubscriptionsForUserArgs) -> (RemoveSubscriptionsForUserResponse);
+
     notifications: (NotificationsArgs) -> (NotificationsResponse) query;
     subscription_exists: (SubscriptionExistsArgs) -> (SubscriptionExistsResponse) query;
 }

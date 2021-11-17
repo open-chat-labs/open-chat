@@ -17,8 +17,7 @@ type SendMessageResponse =
             message_index: MessageIndex;
             timestamp: TimestampMillis;
         };
-        RecipientNotFound;
-        BalanceExceeded;
+        MessageEmpty;
         MessageTooLong: nat32;
         RecipientBlocked;
         InvalidRequest: text;
@@ -37,6 +36,7 @@ type EditMessageResponse =
         Success;
         MessageNotFound;
         ChatNotFound;
+        UserBlocked;
     };
 
 type DeleteMessagesArgs =
@@ -175,6 +175,7 @@ type LeaveGroupResponse =
     variant {
         Success;
         GroupNotFound;
+        GroupNotPublic;
         InternalError: text;
         CallerNotInGroup;
         OwnerCannotLeave;
@@ -276,7 +277,8 @@ type InitialStateResponse =
             cycles_balance: Cycles;
             upgrades_in_progress: vec ChatId;
             user_canister_wasm_version: Version;
-        }
+        };
+        InternalError: text;
     };
 
 type GroupChatUpdatesSince =
@@ -309,7 +311,8 @@ type UpdatesResponse =
             alerts: vec Alert;
             upgrades_in_progress: vec ChatId;
             user_canister_wasm_version: opt Version;
-        }
+        };
+        InternalError: text;
     };
 
 type EventsArgs =
@@ -407,13 +410,7 @@ type SearchAllMessagesResponse =
         InvalidTerm;
     }; 
 
-type InitArgs = 
-    record {
-        owner: principal;
-        notification_canister_ids: vec CanisterId;
-    };
-
-service: (InitArgs) -> {
+service: {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);

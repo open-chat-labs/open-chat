@@ -85,7 +85,6 @@ type UpdateUserCanisterWasmResponse =
     variant {
         Success;
         NotAuthorized;
-        InvalidVersion;
         VersionNotHigher;
     };
 
@@ -128,22 +127,6 @@ type TransferCyclesResponse =
         UserNotFound;
         RecipientNotFound;
         BalanceExceeded;
-    };
-
-type NotifyBalanceArgs =
-    record {
-        balance: nat;
-    };
-
-type RemoveSmsMessagesArgs =
-    record {
-        up_to_sms_index: nat64;
-    };
-
-type RemoveSmsMessagesResponse =
-    variant {
-        Success;
-        NotAuthorized;
     };
 
 type CurrentUserArgs = 
@@ -211,20 +194,6 @@ type SearchResponse =
         }
     };
 
-type SmsMessagesArgs =
-    record {
-        from_index: nat64;
-        max_results: nat64;
-    };
-
-type SmsMessagesResponse =
-    variant {
-        Success: record {
-            notifications: vec ConfirmationCodeSms;
-            latest_index: nat64;
-        };
-    };
-
 type AddSuperAdminArgs =
     record {
         user_id: UserId;
@@ -258,18 +227,9 @@ type SuperAdminsResponse =
         Success: record {
             users: vec UserId;
         };
-        NotController;
     };
 
-type InitArgs = 
-    record {
-        service_principals: vec principal;
-        sms_service_principals: vec principal;
-        user_wasm_module: blob;
-        test_mode: bool;
-    };
-
-service : (InitArgs) -> {
+service: {
     // If the current user does not exist, the phone number is valid, and not already in use 
     // then send an SMS with a confirmation code to this phone number
     submit_phone_number: (SubmitPhoneNumberArgs) -> (SubmitPhoneNumberResponse);
@@ -299,14 +259,6 @@ service : (InitArgs) -> {
     // Call this regularly to maintain the online status of the user
     mark_as_online: (MarkAsOnlineArgs) -> (MarkAsOnlineResponse);
 
-    // Called by a user canister - authorized based on caller
-    transfer_cycles: (TransferCyclesArgs) -> (TransferCyclesResponse);
-
-    // Called by a user canister when it is low on cycles
-    notify_balance: (NotifyBalanceArgs) -> ();
-
-    remove_sms_messages: (RemoveSmsMessagesArgs) -> (RemoveSmsMessagesResponse);
-
     // Gets the user based on the caller principal. The user can be in a variety of states
     current_user: (CurrentUserArgs) -> (CurrentUserResponse) query;
 
@@ -318,9 +270,6 @@ service : (InitArgs) -> {
 
     // Search for users matching some query
     search: (SearchArgs) -> (SearchResponse) query;
-
-    // Get a page of SMS messages
-    sms_messages: (SmsMessagesArgs) -> (SmsMessagesResponse) query;
 
     // Only callable by "service principals"
     add_super_admin: (AddSuperAdminArgs) -> (AddSuperAdminResponse);

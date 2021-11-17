@@ -9,13 +9,7 @@ type MarkAsOnlineResponse =
         Success;
     };
 
-type InitArgs =
-    record {
-        user_index_canister_id: CanisterId;
-        test_mode: bool;
-    };
-
-service : (InitArgs) -> {
+service : {
     // Call this regularly to maintain the online status of the user
     mark_as_online: (MarkAsOnlineArgs) -> (MarkAsOnlineResponse);
 }
