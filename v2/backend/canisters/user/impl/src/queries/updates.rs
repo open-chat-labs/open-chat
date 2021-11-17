@@ -1,7 +1,7 @@
 use crate::guards::caller_is_owner;
 use crate::{RuntimeState, RUNTIME_STATE, WASM_VERSION};
-use group_canister::summary::Summary;
-use group_canister::summary_updates::SummaryUpdates;
+use group_canister::c2c_summary::Summary;
+use group_canister::c2c_summary_updates::SummaryUpdates;
 use group_index_canister::c2c_filter_groups;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::query;
@@ -180,17 +180,17 @@ async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> Vec<Summary> {
         return Vec::new();
     }
 
-    let args = group_canister::summary::Args {};
+    let args = group_canister::c2c_summary::Args {};
     let futures: Vec<_> = chat_ids
         .into_iter()
-        .map(|chat_id| group_canister_c2c_client::summary(chat_id.into(), &args))
+        .map(|chat_id| group_canister_c2c_client::c2c_summary(chat_id.into(), &args))
         .collect();
 
     let responses = futures::future::join_all(futures).await;
 
     let mut summaries = Vec::new();
     for response in responses.into_iter().flatten() {
-        if let group_canister::summary::Response::Success(result) = response {
+        if let group_canister::c2c_summary::Response::Success(result) = response {
             summaries.push(result.summary);
         }
     }
@@ -205,15 +205,15 @@ async fn get_group_chat_summary_updates(group_chats: Vec<(ChatId, TimestampMilli
 
     async fn get_summary_updates(
         canister_id: CanisterId,
-        args: group_canister::summary_updates::Args,
-    ) -> CallResult<group_canister::summary_updates::Response> {
-        group_canister_c2c_client::summary_updates(canister_id, &args).await
+        args: group_canister::c2c_summary_updates::Args,
+    ) -> CallResult<group_canister::c2c_summary_updates::Response> {
+        group_canister_c2c_client::c2c_summary_updates(canister_id, &args).await
     }
 
     let futures: Vec<_> = group_chats
         .into_iter()
         .map(|(g, t)| {
-            let args = group_canister::summary_updates::Args { updates_since: t };
+            let args = group_canister::c2c_summary_updates::Args { updates_since: t };
             get_summary_updates(g.into(), args)
         })
         .collect();
@@ -222,7 +222,7 @@ async fn get_group_chat_summary_updates(group_chats: Vec<(ChatId, TimestampMilli
 
     let mut summary_updates = Vec::new();
     for response in responses.into_iter().flatten() {
-        if let group_canister::summary_updates::Response::Success(result) = response {
+        if let group_canister::c2c_summary_updates::Response::Success(result) = response {
             summary_updates.push(result.updates);
         }
     }

@@ -1,15 +1,15 @@
 use crate::{RuntimeState, RUNTIME_STATE, WASM_VERSION};
 use chat_events::ChatEventInternal;
-use group_canister::summary_updates::{Response::*, *};
+use group_canister::c2c_summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use types::{Avatar, EventIndex, EventWrapper, Mention, Message, MessageIndex, TimestampMillis, MAX_RETURNED_MENTIONS};
 
 #[query]
-fn summary_updates(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| summary_updates_impl(args, state.borrow().as_ref().unwrap()))
+fn c2c_summary_updates(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| c2c_summary_updates_impl(args, state.borrow().as_ref().unwrap()))
 }
 
-fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let participant = match runtime_state.data.participants.get(caller) {
         None => return CallerNotInGroup,

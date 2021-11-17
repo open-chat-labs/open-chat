@@ -5,7 +5,8 @@ use canister_client::TestIdentity;
 use ic_agent::Agent;
 use ic_fondue::ic_manager::IcHandle;
 use std::panic;
-use types::{CanisterId, GroupChatEvent, MessageContent, SubscriptionInfo, SubscriptionKeys, TextContent, UserId};
+use types::{CanisterId, ChatSummary, ChatSummaryUpdates, GroupChatEvent, MessageContent, SubscriptionInfo, SubscriptionKeys, TextContent, UserId};
+use user_canister::updates::{GroupChatUpdatesSince, UpdatesSince};
 
 pub fn mentions_test(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(mentions_test_impl(handle, ctx));
@@ -127,18 +128,23 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     let last_updated;
     {
-        print!("7. Confirm group::summary contains the mention... ");
-        let args = group_canister::summary::Args {};
-        match group_canister_client::summary(&user1_agent, &chat_id.into(), &args)
+        print!("7. Confirm user::initial_state contains the mention... ");
+        let args = user_canister::initial_state::Args {};
+        match user_canister_client::initial_state(&user1_agent, &user1_id.into(), &args)
             .await
             .unwrap()
         {
-            group_canister::summary::Response::Success(r) => {
-                assert_eq!(r.summary.mentions.len(), 1);
-                assert_eq!(r.summary.mentions[0].message_index, 1.into());
-                last_updated = Some(r.summary.last_updated);
+            user_canister::initial_state::Response::Success(r) => {
+                assert_eq!(r.chats.len(), 1);
+                last_updated = Some(r.timestamp);
+                if let ChatSummary::Group(group_chat_summary) = &r.chats[0] {
+                    assert_eq!(group_chat_summary.mentions.len(), 1);
+                    assert_eq!(group_chat_summary.mentions[0].message_index, 1.into());
+                } else {
+                    assert!(false);
+                }
             },
-            response => panic!("group::summary returned an error: {:?}", response),
+            response => panic!("user::initial_state returned an error: {:?}", response),
         };
         println!("Ok");
     }
@@ -156,19 +162,32 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     }
 
     {
-        print!("9. Confirm group::summary_updates contains the new mention only... ");
-        let args = group_canister::summary_updates::Args {
-            updates_since: last_updated.unwrap()
+        print!("9. Confirm user::updates contains the new mention only... ");
+        let last_updated = last_updated.unwrap();
+        let args = user_canister::updates::Args {
+            updates_since: UpdatesSince {
+                timestamp: last_updated,
+                group_chats: vec![GroupChatUpdatesSince {
+                    chat_id,
+                    updates_since: last_updated,
+                }],
+            }
         };
-        match group_canister_client::summary_updates(&user1_agent, &chat_id.into(), &args)
+        match user_canister_client::updates(&user1_agent, &user1_id.into(), &args)
             .await
             .unwrap()
         {
-            group_canister::summary_updates::Response::Success(r) => {
-                assert_eq!(r.updates.mentions.len(), 1);
-                assert_eq!(r.updates.mentions[0].message_index, 2.into());
+            user_canister::updates::Response::Success(r) => {
+                assert!(r.chats_added.is_empty());
+                assert_eq!(r.chats_updated.len(), 1);
+                if let ChatSummaryUpdates::Group(group_chat_summary) = &r.chats_updated[0] {
+                    assert_eq!(group_chat_summary.mentions.len(), 1);
+                    assert_eq!(group_chat_summary.mentions[0].message_index, 2.into());
+                } else {
+                    assert!(false);
+                }
             },
-            response => panic!("group::summary_updates returned an error: {:?}", response),
+            response => panic!("user::updates returned an error: {:?}", response),
         };
         println!("Ok");
     }

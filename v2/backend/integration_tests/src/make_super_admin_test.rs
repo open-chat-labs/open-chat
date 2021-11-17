@@ -5,7 +5,7 @@ use canister_client::TestIdentity;
 use ic_agent::AgentError::HttpError;
 use ic_fondue::ic_manager::IcHandle;
 use std::{panic, thread, time};
-use types::{GroupChatEvent, Role};
+use types::{ChatSummary, GroupChatEvent, Role};
 
 pub fn make_super_admin_test(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(make_super_admin_test_impl(handle, ctx));
@@ -110,13 +110,20 @@ async fn make_super_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context
 
     {
         print!("5. Confirm that user3 is now a super admin... ");
-        let args = group_canister::summary::Args {};
-        match group_canister_client::summary(&user3_agent, &chat_id.into(), &args)
+        let args = user_canister::initial_state::Args {};
+        match user_canister_client::initial_state(&user3_agent, &user3_id.into(), &args)
             .await
             .unwrap()
         {
-            group_canister::summary::Response::Success(r) => assert!(matches!(r.summary.role, Role::SuperAdmin(_))),
-            response => panic!("group::summary returned an error: {:?}", response),
+            user_canister::initial_state::Response::Success(r) => {
+                assert_eq!(r.chats.len(), 1);
+                if let ChatSummary::Group(group_chat_summary) = &r.chats[0] {
+                    assert!(matches!(group_chat_summary.role, Role::SuperAdmin(_)))
+                } else {
+                    assert!(false);
+                }
+            }
+            response => panic!("user::initial_state returned an error: {:?}", response),
         };
         println!("Ok");
     }
@@ -259,17 +266,22 @@ async fn make_super_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context
         let one_second = time::Duration::from_secs(1);
         for i in 0..20 {
             print!("{:?}... ", i);
-            let args = group_canister::summary::Args {};
-            match group_canister_client::summary(&user3_agent, &chat_id.into(), &args)
+
+            let args = user_canister::initial_state::Args {};
+            match user_canister_client::initial_state(&user3_agent, &user3_id.into(), &args)
                 .await
                 .unwrap()
             {
-                group_canister::summary::Response::Success(r) => {
-                    if !matches!(r.summary.role, Role::SuperAdmin(_)) {
-                        break;
+                user_canister::initial_state::Response::Success(r) => {
+                    if let ChatSummary::Group(group_chat_summary) = &r.chats[0] {
+                        if !matches!(group_chat_summary.role, Role::SuperAdmin(_)) {
+                            break;
+                        }                    
+                    } else {
+                        assert!(false);
                     }
-                },
-                response => panic!("group::summary returned an error: {:?}", response),
+                }
+                response => panic!("user::initial_state returned an error: {:?}", response),
             };
     
             thread::sleep(one_second);
