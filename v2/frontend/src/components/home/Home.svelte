@@ -182,8 +182,8 @@
                 if (resp === "success") {
                     toastStore.showSuccessToast("leftGroup");
                 } else {
-                    if (resp === "last_admin") {
-                        toastStore.showFailureToast("lastAdmin");
+                    if (resp === "owner_cannot_leave") {
+                        toastStore.showFailureToast("ownerCantLeave");
                     } else {
                         toastStore.showFailureToast("failedToLeaveGroup");
                     }
