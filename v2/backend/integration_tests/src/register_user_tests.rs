@@ -4,11 +4,11 @@ use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::TestIdentity;
 use ic_fondue::ic_manager::IcHandle;
 
-pub fn register_user_test(handle: IcHandle, ctx: &fondue::pot::Context) {
-    block_on(register_user_test_impl(handle, ctx));
+pub fn register_user_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+    block_on(register_user_tests_impl(handle, ctx));
 }
 
-async fn register_user_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn register_user_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
@@ -18,11 +18,11 @@ async fn register_user_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     register_default_user(url, canister_ids.user_index).await;
 }
 
-pub fn register_existing_user_test(handle: IcHandle, ctx: &fondue::pot::Context) {
+pub fn register_existing_user_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(register_existing_user_test_impl(handle, ctx));
 }
 
-async fn register_existing_user_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn register_existing_user_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();

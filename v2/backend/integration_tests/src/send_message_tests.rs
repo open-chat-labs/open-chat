@@ -5,11 +5,11 @@ use canister_client::TestIdentity;
 use ic_fondue::ic_manager::IcHandle;
 use types::{MessageContent, TextContent};
 
-pub fn send_message_test(handle: IcHandle, ctx: &fondue::pot::Context) {
-    block_on(send_message_test_impl(handle, ctx));
+pub fn send_message_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+    block_on(send_message_tests_impl(handle, ctx));
 }
 
-async fn send_message_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn send_message_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
