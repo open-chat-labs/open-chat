@@ -4289,6 +4289,7 @@ dependencies = [
  "group_canister",
  "group_canister_client",
  "group_index_canister",
+ "group_index_canister_client",
  "ic-agent",
  "ic-fondue",
  "ic-registry-subnet-type",
