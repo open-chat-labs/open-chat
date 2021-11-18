@@ -84,6 +84,7 @@ async fn install_service_canisters_impl(
     let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version, false);
     let notifications_init_args = notifications_canister::init::Args {
         push_service_principals: vec![principal],
+        user_index_canister_id: canister_ids.user_index,
         wasm_version: Version::min(),
         test_mode,
     };

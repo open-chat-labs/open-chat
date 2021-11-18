@@ -1,15 +1,14 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::Deserialize;
-use types::SubscriptionInfo;
+use types::UserId;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub subscription: SubscriptionInfo,
+    pub user_principal: Principal,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Success(UserId),
     UserNotFound,
-    InternalError(String),
 }

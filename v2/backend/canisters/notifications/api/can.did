@@ -2,55 +2,14 @@ import "../../../libraries/types/can.did";
 
 type PushSubscriptionArgs =
     record {
-        user_id: UserId;
         subscription: SubscriptionInfo;
     };
 
 type PushSubscriptionResponse =
     variant {
         Success;
-    };
-
-type NotificationsSuccessResult =
-    record {
-        notifications: vec IndexedNotification;
-        subscriptions: vec record { UserId; vec SubscriptionInfo }
-    };
-
-type NotificationsArgs =
-    record {
-        from_notification_index: nat64;
-    };
-
-type NotificationsResponse =
-    variant {
-        Success: NotificationsSuccessResult;
-        NotAuthorized;
-    };
-
-type RemoveNotificationsArgs =
-    record {
-        up_to_notification_index: nat64;
-    };
-
-type RemoveNotificationsResponse =
-    variant {
-        Success;
-        NotAuthorized;
-    };
-
-type RemoveSubscriptionsArgs =
-    record {
-        subscriptions_by_user: vec record {
-            user_id: UserId;
-            p256dh_keys: vec text;
-        };
-    };
-
-type RemoveSubscriptionsResponse =
-    variant {
-        Success;
-        NotAuthorized;
+        UserNotFound;
+        InternalError: text;
     };
 
 type RemoveSubscriptionArgs = 
@@ -87,11 +46,8 @@ type SubscriptionExistsResponse =
 service: {
     push_subscription: (PushSubscriptionArgs) -> (PushSubscriptionResponse);
 
-    remove_notifications: (RemoveNotificationsArgs) -> (RemoveNotificationsResponse);
-    remove_subscriptions: (RemoveSubscriptionsArgs) -> (RemoveSubscriptionsResponse);
     remove_subscription: (RemoveSubscriptionArgs) -> (RemoveSubscriptionResponse);
     remove_subscriptions_for_user: (RemoveSubscriptionsForUserArgs) -> (RemoveSubscriptionsForUserResponse);
 
-    notifications: (NotificationsArgs) -> (NotificationsResponse) query;
     subscription_exists: (SubscriptionExistsArgs) -> (SubscriptionExistsResponse) query;
 }
