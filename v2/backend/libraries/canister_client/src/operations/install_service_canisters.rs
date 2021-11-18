@@ -1,11 +1,11 @@
-use crate::utils::{build_ic_agent, build_management_canister, create_empty_canister, delay, get_canister_wasm, install_wasm};
+use crate::utils::{build_ic_agent, build_management_canister, create_empty_canister, get_canister_wasm, install_wasm};
 use crate::{CanisterIds, CanisterName};
-use candid::{CandidType, Principal};
+use candid::Principal;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::Identity;
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
-use types::{CanisterId, Version};
+use types::Version;
 
 pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: String, test_mode: bool) -> CanisterIds {
     let principal = identity.sender().unwrap();
