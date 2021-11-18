@@ -1,5 +1,5 @@
-use crate::{RuntimeState, RUNTIME_STATE};
 use crate::guards::caller_is_online_users_aggregator_canister;
+use crate::{RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use user_index_canister::c2c_mark_users_online::{Response::*, *};
