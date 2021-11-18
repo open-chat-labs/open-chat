@@ -17,6 +17,13 @@ impl ChatSummary {
             ChatSummary::Group(g) => g.display_date(),
         }
     }
+
+    pub fn chat_id(&self) -> ChatId {
+        match self {
+            ChatSummary::Direct(d) => d.them.into(),
+            ChatSummary::Group(g) => g.chat_id,
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
