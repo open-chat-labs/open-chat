@@ -89,10 +89,6 @@ impl Subscriptions {
         }
     }
 
-    pub fn users(&self) -> u64 {
-        self.subscriptions.len() as u64
-    }
-
     pub fn total(&self) -> u64 {
         self.total
     }

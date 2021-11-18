@@ -51,12 +51,8 @@ impl IcAgent {
             .call()
             .await?;
 
-        let result = match Decode!(&response, notifications::Response)? {
-            notifications::Response::Success(result) => Ok(result),
-            notifications::Response::NotAuthorized => Err("Not authorized".into()),
-        };
-
-        result
+        let notifications::Response::Success(result) = Decode!(&response, notifications::Response)?;
+        Ok(result)
     }
 
     pub async fn remove_notifications(&self, canister_id: CanisterId, up_to_notification_index: u64) -> Result<(), Error> {
@@ -72,14 +68,8 @@ impl IcAgent {
             .await?;
 
         let waiter = ThrottleWaiter::new(Duration::from_secs(1));
-        let response_bytes = self.agent.wait(request_id, &canister_id, waiter).await?;
-
-        let result = match Decode!(&response_bytes, remove_notifications::Response)? {
-            remove_notifications::Response::Success => Ok(()),
-            remove_notifications::Response::NotAuthorized => Err("Not authorized".into()),
-        };
-
-        result
+        self.agent.wait(request_id, &canister_id, waiter).await?;
+        Ok(())
     }
 
     pub async fn remove_subscriptions(
@@ -106,14 +96,8 @@ impl IcAgent {
             .await?;
 
         let waiter = ThrottleWaiter::new(Duration::from_secs(1));
-        let response_bytes = self.agent.wait(request_id, &canister_id, waiter).await?;
-
-        let result = match Decode!(&response_bytes, remove_subscriptions::Response)? {
-            remove_subscriptions::Response::Success => Ok(()),
-            remove_subscriptions::Response::NotAuthorized => Err("Not authorized".into()),
-        };
-
-        result
+        self.agent.wait(request_id, &canister_id, waiter).await?;
+        Ok(())
     }
 
     /// Returns an identity derived from the private key.

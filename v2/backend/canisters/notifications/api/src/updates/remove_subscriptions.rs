@@ -16,5 +16,4 @@ pub struct UserSubscriptions {
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success,
-    NotAuthorized,
 }

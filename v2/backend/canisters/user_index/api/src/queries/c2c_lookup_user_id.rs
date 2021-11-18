@@ -1,12 +1,14 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::Deserialize;
+use types::UserId;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub up_to_notification_index: u64,
+    pub user_principal: Principal,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Success(UserId),
+    UserNotFound,
 }
