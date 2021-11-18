@@ -45,13 +45,34 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let chat_id3 = create_and_validate_group("BBB PUBLIC".to_string(), true, &users).await;
 
     println!("Ensure only public groups are searchable");
-    search_groups(&users.user1_agent, canister_ids.group_index, "AAA".to_string(), 10, vec![chat_id2]).await;
+    search_groups(
+        &users.user1_agent,
+        canister_ids.group_index,
+        "AAA".to_string(),
+        10,
+        vec![chat_id2],
+    )
+    .await;
 
     println!("Ensure multiple matches can be found");
-    search_groups(&users.user1_agent, canister_ids.group_index, "PUBLIC".to_string(), 10, vec![chat_id2, chat_id3]).await;
+    search_groups(
+        &users.user1_agent,
+        canister_ids.group_index,
+        "PUBLIC".to_string(),
+        10,
+        vec![chat_id2, chat_id3],
+    )
+    .await;
 
     println!("Ensure max_results is honoured");
-    search_groups(&users.user1_agent, canister_ids.group_index, "PUBLIC".to_string(), 1, vec![chat_id2, chat_id3]).await;
+    search_groups(
+        &users.user1_agent,
+        canister_ids.group_index,
+        "PUBLIC".to_string(),
+        1,
+        vec![chat_id2, chat_id3],
+    )
+    .await;
 }
 
 async fn create_and_validate_group(name: String, is_public: bool, users: &Users) -> ChatId {
@@ -65,7 +86,13 @@ async fn create_and_validate_group(name: String, is_public: bool, users: &Users)
         history_visible_to_new_joiners: !is_public,
     };
 
-    let chat_id = create_group(&users.user1_agent, users.user1_id, &args, vec![users.user2_id, users.user3_id]).await;
+    let chat_id = create_group(
+        &users.user1_agent,
+        users.user1_id,
+        &args,
+        vec![users.user2_id, users.user3_id],
+    )
+    .await;
 
     let args = user_canister::initial_state::Args {};
     match user_canister_client::initial_state(&users.user1_agent, &users.user1_id.into(), &args)
@@ -95,13 +122,19 @@ async fn create_and_validate_group(name: String, is_public: bool, users: &Users)
     chat_id
 }
 
-async fn search_groups(agent: &Agent, group_index_canister_id: CanisterId, search_term: String, max_results: u8, all_matches: Vec<ChatId>) {
+async fn search_groups(
+    agent: &Agent,
+    group_index_canister_id: CanisterId,
+    search_term: String,
+    max_results: u8,
+    all_matches: Vec<ChatId>,
+) {
     let search_args = group_index_canister::search::Args {
         search_term,
         max_results,
     };
     if let Ok(group_index_canister::search::Response::Success(result)) =
-    group_index_canister_client::search(&agent, &group_index_canister_id, &search_args).await
+        group_index_canister_client::search(agent, &group_index_canister_id, &search_args).await
     {
         let matches: Vec<_> = result.matches.into_iter().map(|m| m.chat_id).collect();
         assert_eq!(matches.len(), min(max_results as usize, all_matches.len()));
