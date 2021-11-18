@@ -69,6 +69,11 @@ impl RuntimeState {
         self.data.notifications_canister_id == caller
     }
 
+    pub fn is_caller_online_users_aggregator_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.online_users_aggregator_canister_ids.contains(&caller)
+    }
+
     pub fn metrics(&self) -> Metrics {
         let user_metrics = self.data.users.metrics();
         Metrics {
