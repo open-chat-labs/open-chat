@@ -28,8 +28,11 @@ async fn send_cycles_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let user1_identity = build_identity(TestIdentity::User1);
     let user2_identity = build_identity(TestIdentity::User2);
 
-    let user1_agent = build_ic_agent(url.clone(), user1_identity).await;
-    let user2_agent = build_ic_agent(url, user2_identity).await;
+    let (user1_agent, user2_agent) = futures::future::join(
+        build_ic_agent(url.clone(), user1_identity),
+        build_ic_agent(url, user2_identity),
+    )
+    .await;
 
     let management_canister = build_management_canister(&user1_agent);
     print!("Creating cycles wallet... ");
