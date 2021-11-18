@@ -1,3 +1,4 @@
+use crate::guards::caller_is_push_service;
 use crate::{RuntimeState, MAX_SUBSCRIPTION_AGE, RUNTIME_STATE};
 use ic_cdk_macros::query;
 use notifications_canister::notifications::{Response::*, *};
@@ -6,23 +7,19 @@ use types::{IndexedEvent, NotificationEnvelope, SubscriptionInfo, UserId};
 
 const MAX_NOTIFICATIONS_PER_BATCH: u32 = 100;
 
-#[query]
+#[query(guard = "caller_is_push_service")]
 fn notifications(args: Args) -> Response {
     RUNTIME_STATE.with(|state| notifications_impl(args, state.borrow().as_ref().unwrap()))
 }
 
 fn notifications_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    if runtime_state.is_caller_push_service() {
-        let notifications = runtime_state
-            .data
-            .notifications
-            .get(args.from_notification_index, MAX_NOTIFICATIONS_PER_BATCH);
+    let notifications = runtime_state
+        .data
+        .notifications
+        .get(args.from_notification_index, MAX_NOTIFICATIONS_PER_BATCH);
 
-        let result = add_subscriptions(notifications, runtime_state);
-        Success(result)
-    } else {
-        NotAuthorized
-    }
+    let result = add_subscriptions(notifications, runtime_state);
+    Success(result)
 }
 
 fn add_subscriptions(notifications: Vec<IndexedEvent<NotificationEnvelope>>, runtime_state: &RuntimeState) -> SuccessResult {

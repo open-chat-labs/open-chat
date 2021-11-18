@@ -23,4 +23,6 @@ serde = "1.0.126"
 serializer = { path = "../../../libraries/serializer" }
 tracing = "0.1.29"
 types = { path = "../../../libraries/types" }
+user_index_canister = { path = "../../user_index/api" }
+user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }

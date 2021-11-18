@@ -5,7 +5,10 @@ use canister_client::TestIdentity;
 use ic_agent::Agent;
 use ic_fondue::ic_manager::IcHandle;
 use std::panic;
-use types::{CanisterId, ChatSummary, ChatSummaryUpdates, GroupChatEvent, MessageContent, SubscriptionInfo, SubscriptionKeys, TextContent, UserId};
+use types::{
+    CanisterId, ChatSummary, ChatSummaryUpdates, GroupChatEvent, MessageContent, SubscriptionInfo, SubscriptionKeys,
+    TextContent, UserId,
+};
 use user_canister::updates::{GroupChatUpdatesSince, UpdatesSince};
 
 pub fn mentions_test(handle: IcHandle, ctx: &fondue::pot::Context) {
@@ -27,11 +30,13 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let controller_identity = build_identity(TestIdentity::Controller);
     let user1_identity = build_identity(TestIdentity::User1);
     let user2_identity = build_identity(TestIdentity::User2);
+    let user3_identity = build_identity(TestIdentity::User3);
 
-    let (controller_agent, user1_agent, user2_agent) = futures::future::join3(
+    let (controller_agent, user1_agent, user2_agent, user3_agent) = futures::future::join4(
         build_ic_agent(url.clone(), controller_identity),
         build_ic_agent(url.clone(), user1_identity),
         build_ic_agent(url.clone(), user2_identity),
+        build_ic_agent(url.clone(), user3_identity),
     )
     .await;
 
@@ -51,9 +56,9 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     {
         print!("1. Subscribe all 3 users to receive notifications... ");
-        subscribe_to_notifications(user1_id, &controller_agent, &canister_ids.notifications).await;
-        subscribe_to_notifications(user2_id, &controller_agent, &canister_ids.notifications).await;
-        subscribe_to_notifications(user3_id, &controller_agent, &canister_ids.notifications).await;
+        subscribe_to_notifications(user1_id, &user1_agent, &canister_ids.notifications).await;
+        subscribe_to_notifications(user2_id, &user2_agent, &canister_ids.notifications).await;
+        subscribe_to_notifications(user3_id, &user3_agent, &canister_ids.notifications).await;
         println!("Ok");
     }
 
@@ -72,9 +77,11 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     {
         print!("3. User2 sends a group message... ");
-        let args = group_canister::send_message::Args { 
+        let args = group_canister::send_message::Args {
             message_id: 3546125412536152673_u128.into(),
-            content: MessageContent::Text(TextContent { text: "Hello world".to_owned() }),
+            content: MessageContent::Text(TextContent {
+                text: "Hello world".to_owned(),
+            }),
             sender_name: "user2".to_owned(),
             replies_to: None,
         };
@@ -84,25 +91,25 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     {
         print!("4. Confirm notification is generated in notifications canister for user3 only... ");
-        let args = notifications_canister::notifications::Args { from_notification_index: 0 };
-        match notifications_canister_client::notifications(&controller_agent, &canister_ids.notifications, &args)
-            .await
-            .unwrap()
-        {
-            notifications_canister::notifications::Response::Success(result) => {
-                assert_eq!(result.notifications.len(), 1);
-                assert_eq!(result.notifications[0].value.recipients, vec![user3_id]);
-            }
-            response => panic!("notifications::notifications returned an error: {:?}", response),
+        let args = notifications_canister::notifications::Args {
+            from_notification_index: 0,
         };
+        let response = notifications_canister_client::notifications(&controller_agent, &canister_ids.notifications, &args)
+            .await
+            .unwrap();
+        let notifications_canister::notifications::Response::Success(result) = response;
+        assert_eq!(result.notifications.len(), 1);
+        assert_eq!(result.notifications[0].value.recipients, vec![user3_id]);
         println!("Ok");
     }
 
     {
         print!("5. User2 sends a group message mentioning user1... ");
-        let args = group_canister::send_message::Args { 
+        let args = group_canister::send_message::Args {
             message_id: 734979238479237_u128.into(),
-            content: MessageContent::Text(TextContent { text: format!("Hello @UserId({})", user1_id) }),
+            content: MessageContent::Text(TextContent {
+                text: format!("Hello @UserId({})", user1_id),
+            }),
             sender_name: "user2".to_owned(),
             replies_to: None,
         };
@@ -112,17 +119,15 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     {
         print!("6. Confirm notification is generated in notifications canister for user1 and user3... ");
-        let args = notifications_canister::notifications::Args { from_notification_index: 2 };
-        match notifications_canister_client::notifications(&controller_agent, &canister_ids.notifications, &args)
-            .await
-            .unwrap()
-        {
-            notifications_canister::notifications::Response::Success(result) => {
-                assert_eq!(result.notifications.len(), 1);
-                assert_eq!(result.notifications[0].value.recipients, vec![user1_id, user3_id]);
-            }
-            response => panic!("notifications::notifications returned an error: {:?}", response),
+        let args = notifications_canister::notifications::Args {
+            from_notification_index: 2,
         };
+        let response = notifications_canister_client::notifications(&controller_agent, &canister_ids.notifications, &args)
+            .await
+            .unwrap();
+        let notifications_canister::notifications::Response::Success(result) = response;
+        assert_eq!(result.notifications.len(), 1);
+        assert_eq!(result.notifications[0].value.recipients, vec![user1_id, user3_id]);
         println!("Ok");
     }
 
@@ -143,7 +148,7 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                 } else {
                     assert!(false);
                 }
-            },
+            }
             response => panic!("user::initial_state returned an error: {:?}", response),
         };
         println!("Ok");
@@ -151,9 +156,11 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     {
         print!("8. User2 sends another group message mentioning user1... ");
-        let args = group_canister::send_message::Args { 
+        let args = group_canister::send_message::Args {
             message_id: 9723892378497238947_u128.into(),
-            content: MessageContent::Text(TextContent { text: format!("Hello again @UserId({})", user1_id) }),
+            content: MessageContent::Text(TextContent {
+                text: format!("Hello again @UserId({})", user1_id),
+            }),
             sender_name: "user2".to_owned(),
             replies_to: None,
         };
@@ -171,7 +178,7 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                     chat_id,
                     updates_since: last_updated,
                 }],
-            }
+            },
         };
         match user_canister_client::updates(&user1_agent, &user1_id.into(), &args)
             .await
@@ -186,7 +193,7 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                 } else {
                     assert!(false);
                 }
-            },
+            }
             response => panic!("user::updates returned an error: {:?}", response),
         };
         println!("Ok");
@@ -219,15 +226,16 @@ async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
 async fn subscribe_to_notifications(user_id: UserId, agent: &Agent, canister_id: &CanisterId) {
     let args = notifications_canister::push_subscription::Args {
-        user_id,
         subscription: SubscriptionInfo {
             endpoint: "endpoint".to_owned(),
             keys: SubscriptionKeys {
                 p256dh: format!("p256dh_{}", user_id),
                 auth: "auth".to_owned(),
             },
-        }
+        },
     };
 
-    notifications_canister_client::push_subscription(agent, canister_id, &args).await.unwrap();
+    notifications_canister_client::push_subscription(agent, canister_id, &args)
+        .await
+        .unwrap();
 }
