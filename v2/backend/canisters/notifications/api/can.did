@@ -8,7 +8,6 @@ type PushSubscriptionArgs =
 type PushSubscriptionResponse =
     variant {
         Success;
-        UserNotFound;
         InternalError: text;
     };
 
