@@ -7,11 +7,11 @@ use ic_fondue::ic_manager::IcHandle;
 use std::{panic, thread, time};
 use types::{ChatSummary, GroupChatEvent, Role};
 
-pub fn make_super_admin_test(handle: IcHandle, ctx: &fondue::pot::Context) {
-    block_on(make_super_admin_test_impl(handle, ctx));
+pub fn make_super_admin_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+    block_on(make_super_admin_tests_impl(handle, ctx));
 }
 
-async fn make_super_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();

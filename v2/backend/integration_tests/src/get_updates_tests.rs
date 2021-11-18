@@ -5,11 +5,11 @@ use canister_client::{TestIdentity, USER2_DEFAULT_NAME};
 use ic_fondue::ic_manager::IcHandle;
 use types::{MessageContent, TextContent};
 
-pub fn get_updates_test(handle: IcHandle, ctx: &fondue::pot::Context) {
-    block_on(get_updates_test_impl(handle, ctx));
+pub fn get_updates_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+    block_on(get_updates_tests_impl(handle, ctx));
 }
 
-async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn get_updates_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();

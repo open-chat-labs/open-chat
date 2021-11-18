@@ -7,11 +7,11 @@ use ic_fondue::ic_manager::IcHandle;
 use std::cmp::min;
 use types::{CanisterId, ChatId, ChatSummary, UserId};
 
-pub fn create_group_test(handle: IcHandle, ctx: &fondue::pot::Context) {
-    block_on(create_group_test_impl(handle, ctx));
+pub fn create_group_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+    block_on(create_group_tests_impl(handle, ctx));
 }
 
-async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn create_group_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();

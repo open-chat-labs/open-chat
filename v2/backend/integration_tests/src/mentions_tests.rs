@@ -11,11 +11,11 @@ use types::{
 };
 use user_canister::updates::{GroupChatUpdatesSince, UpdatesSince};
 
-pub fn mentions_test(handle: IcHandle, ctx: &fondue::pot::Context) {
-    block_on(mentions_test_impl(handle, ctx));
+pub fn mentions_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+    block_on(mentions_tests_impl(handle, ctx));
 }
 
-async fn mentions_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
