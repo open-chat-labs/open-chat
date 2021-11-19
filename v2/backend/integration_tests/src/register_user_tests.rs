@@ -19,7 +19,7 @@ async fn register_user_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) 
 }
 
 pub fn register_existing_user_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
-    block_on(register_existing_user_test_impl(handle, ctx));
+    block_on(register_existing_user_tests_impl(handle, ctx));
 }
 
 async fn register_existing_user_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {

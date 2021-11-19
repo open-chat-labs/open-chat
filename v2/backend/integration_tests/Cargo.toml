@@ -27,6 +27,8 @@ ic-utils = "0.5.0"
 nodemanager = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 notifications_canister = { path = "../canisters/notifications/api" }
 notifications_canister_client = { path = "../canisters/notifications/client" }
+online_users_aggregator_canister = { path = "../canisters/online_users_aggregator/api" }
+online_users_aggregator_canister_client = { path = "../canisters/online_users_aggregator/client" }
 serde = "1.0.126"
 serde_bytes = "0.11.5"
 tokio = { version = "1.10.0", features = ["full"] }

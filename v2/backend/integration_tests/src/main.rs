@@ -10,6 +10,7 @@ mod get_updates_tests;
 mod make_admin_tests;
 mod make_super_admin_tests;
 mod mentions_tests;
+mod online_users_aggregator_tests;
 mod register_user_tests;
 mod send_message_tests;
 
@@ -41,6 +42,7 @@ fn tests_pot() -> pot::Pot<IcManager> {
             make_admin_tests::make_admin_tests,
             make_super_admin_tests::make_super_admin_tests,
             mentions_tests::mentions_tests,
+            online_users_aggregator_tests::online_users_aggregator_tests,
             register_user_tests::register_user_tests,
             register_user_tests::register_existing_user_tests,
             send_message_tests::send_message_tests
