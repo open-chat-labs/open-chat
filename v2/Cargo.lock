@@ -333,6 +333,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
+name = "blob_storage"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ic-cdk 0.3.1",
+ "serde",
+ "serde_bytes",
+ "types",
+]
+
+[[package]]
 name = "block-buffer"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1200,6 +1211,7 @@ dependencies = [
 name = "group_canister_impl"
 version = "0.1.0"
 dependencies = [
+ "blob_storage",
  "candid",
  "canister_api_macros",
  "canister_logger",
@@ -1367,6 +1379,7 @@ dependencies = [
 name = "http_request"
 version = "0.1.0"
 dependencies = [
+ "blob_storage",
  "candid",
  "canister_logger",
  "num-traits",
@@ -1374,7 +1387,6 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "types",
- "utils",
 ]
 
 [[package]]
@@ -3326,9 +3338,9 @@ checksum = "2579985fda508104f7587689507983eadd6a6e84dd35d6d115361f530916fa0d"
 
 [[package]]
 name = "sha2"
-version = "0.9.6"
+version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9204c41a1597a8c5af23c82d1c921cb01ec0a4c59e07a9c7306062829a3903f3"
+checksum = "b69f9a4c9740d74c5baa3fd2e547f9525fa8088a8a958e0ca2409a514e33f5fa"
 dependencies = [
  "block-buffer",
  "cfg-if 1.0.0",
@@ -4169,6 +4181,7 @@ dependencies = [
 name = "user_canister_impl"
 version = "0.1.0"
 dependencies = [
+ "blob_storage",
  "candid",
  "canister_api_macros",
  "canister_logger",

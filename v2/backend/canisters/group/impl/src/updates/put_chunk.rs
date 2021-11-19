@@ -1,9 +1,9 @@
 use crate::updates::put_chunk::Response::*;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use blob_storage::PutChunkResult;
 use canister_api_macros::trace;
 use group_canister::put_chunk::*;
 use ic_cdk_macros::update;
-use utils::blob_storage::PutChunkResult;
 
 #[update]
 #[trace]

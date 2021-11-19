@@ -1,10 +1,10 @@
 use crate::{extract_route, Route};
+use blob_storage::BlobStorage;
 use candid::Func;
 use num_traits::ToPrimitive;
 use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 use types::{Avatar, CanisterId, HeaderField, HttpResponse, StreamingCallbackHttpResponse, StreamingStrategy, Token};
-use utils::blob_storage::BlobStorage;
 
 const CACHE_HEADER_VALUE: &str = "public, max-age=100000000, immutable";
 

@@ -1,10 +1,10 @@
 use crate::guards::caller_is_owner;
 use crate::updates::put_chunk::Response::*;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use blob_storage::PutChunkResult;
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use user_canister::put_chunk::*;
-use utils::blob_storage::PutChunkResult;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
