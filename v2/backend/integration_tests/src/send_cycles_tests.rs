@@ -35,7 +35,7 @@ async fn send_cycles_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     .await;
 
     let management_canister = build_management_canister(&user1_agent);
-    print!("Creating cycles wallet... ");
+    print!("Creating cycles wallet canister... ");
     let cycles_wallet_canister_id = create_empty_canister(&management_canister).await;
     println!("Ok. Canister id: {}", cycles_wallet_canister_id);
     let cycles_wallet_wasm = read_file_from_local_bin("cycles_wallet.wasm");
