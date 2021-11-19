@@ -12,5 +12,6 @@ fn mark_as_online(_args: Args) -> Response {
 fn mark_as_online_impl(runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     runtime_state.data.online_users.push(caller);
+    runtime_state.data.mark_as_online_count += 1;
     Success
 }
