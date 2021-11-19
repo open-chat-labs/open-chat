@@ -168,6 +168,8 @@ ln -fs ../../../target/wasm32-unknown-unknown/release/user_index_canister_impl-o
 ln -fs ../../../target/wasm32-unknown-unknown/release/group_canister_impl-opt.wasm.xz local-bin/
 ln -fs ../../../target/wasm32-unknown-unknown/release/user_canister_impl-opt.wasm.xz local-bin/
 
+cp cycles_wallet.wasm local-bin/
+
 ## Update path; because we must run this script from the integration_tests directory, we know local-bin is in here.
 PATH="$PWD/local-bin:$PATH"
 
