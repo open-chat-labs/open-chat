@@ -23,13 +23,16 @@ mod flush_online_users {
     }
 
     fn prepare(runtime_state: &mut RuntimeState) -> Option<PrepareResult> {
-        let now = runtime_state.env.now();
-        let online_users = runtime_state.data.online_users.take_if_due_for_sync(now)?;
+        let online_users = runtime_state.data.online_users.take();
 
-        Some(PrepareResult {
-            online_users,
-            user_index_canister_id: runtime_state.data.user_index_canister_id,
-        })
+        if online_users.is_empty() {
+            None
+        } else {
+            Some(PrepareResult {
+                online_users,
+                user_index_canister_id: runtime_state.data.user_index_canister_id,
+            })
+        }
     }
 
     async fn send_to_user_index(user_index_canister_id: CanisterId, users: Vec<Principal>) {

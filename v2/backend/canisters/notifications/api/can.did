@@ -32,7 +32,6 @@ type RemoveSubscriptionsForUserResponse =
 
 type SubscriptionExistsArgs =
     record {
-        user_id: UserId;
         p256dh_key: text;
     };
 
