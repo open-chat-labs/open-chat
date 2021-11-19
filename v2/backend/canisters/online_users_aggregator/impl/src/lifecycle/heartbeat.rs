@@ -37,6 +37,18 @@ mod flush_online_users {
 
     async fn send_to_user_index(user_index_canister_id: CanisterId, users: Vec<Principal>) {
         let args = user_index_canister::c2c_mark_users_online::Args { users };
-        let _ = user_index_canister_c2c_client::c2c_mark_users_online(user_index_canister_id, &args).await;
+        let response = user_index_canister_c2c_client::c2c_mark_users_online(user_index_canister_id, &args).await;
+
+        let success = matches!(response, Ok(user_index_canister::c2c_mark_users_online::Response::Success));
+
+        RUNTIME_STATE.with(|state| mark_batch_outcome(success, state.borrow_mut().as_mut().unwrap()));
+    }
+
+    fn mark_batch_outcome(success: bool, runtime_state: &mut RuntimeState) {
+        runtime_state.data.batches_sent_to_user_index += 1;
+
+        if !success {
+            runtime_state.data.failed_batches += 1;
+        }
     }
 }

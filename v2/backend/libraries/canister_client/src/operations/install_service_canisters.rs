@@ -1,11 +1,11 @@
-use crate::utils::{build_ic_agent, build_management_canister, delay, get_canister_wasm};
+use crate::utils::{build_ic_agent, build_management_canister, create_empty_canister, get_canister_wasm, install_wasm};
 use crate::{CanisterIds, CanisterName};
-use candid::{CandidType, Principal};
+use candid::Principal;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::Identity;
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
-use types::{CanisterId, Version};
+use types::Version;
 
 pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: String, test_mode: bool) -> CanisterIds {
     let principal = identity.sender().unwrap();
@@ -125,29 +125,4 @@ async fn install_service_canisters_impl(
     .await;
 
     println!("Canister wasms installed");
-}
-
-async fn create_empty_canister(management_canister: &Canister<'_, ManagementCanister>) -> CanisterId {
-    let (canister_id,) = management_canister
-        .create_canister()
-        .as_provisional_create_with_amount(None)
-        .call_and_wait(delay())
-        .await
-        .expect("Failed to create canister");
-
-    canister_id
-}
-
-async fn install_wasm<A: CandidType + Sync + Send>(
-    management_canister: &Canister<'_, ManagementCanister>,
-    canister_id: &CanisterId,
-    wasm_bytes: &[u8],
-    init_args: A,
-) {
-    management_canister
-        .install_code(canister_id, wasm_bytes)
-        .with_arg(init_args)
-        .call_and_wait(delay())
-        .await
-        .expect("Failed to install wasm");
 }
