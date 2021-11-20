@@ -66,6 +66,7 @@ export class ChatController {
     public participants: Writable<Participant[]>;
     public blockedUsers: Writable<Set<string>>;
     public chatUserIds: Set<string>;
+    public loading: Writable<boolean>;
 
     private localReactions: Record<string, LocalReaction[]> = {};
     private initialised = false;
@@ -83,6 +84,7 @@ export class ChatController {
         private _focusMessageIndex: number | undefined
     ) {
         this.events = writable([]);
+        this.loading = writable(false);
         this.focusMessageIndex = writable(_focusMessageIndex);
         this.replyingTo = writable(_replyingTo);
         this.fileToAttach = writable(undefined);
@@ -92,10 +94,14 @@ export class ChatController {
         this.chat = writable(_chat);
         this.chatId = _chat.chatId;
         this.chatUserIds = new Set<string>();
+        this.maxLoadedEventIndex = _chat.latestEventIndex;
 
         if (process.env.NODE_ENV !== "test") {
-            // todo - if focus index is set we should load the right window not previous messages
-            this.loadPreviousMessages();
+            if (_focusMessageIndex !== undefined) {
+                this.loadEventWindow(_focusMessageIndex);
+            } else {
+                this.loadPreviousMessages();
+            }
             this.pruneInterval = window.setInterval(() => {
                 this.localReactions = pruneLocalReactions(this.localReactions);
             }, PRUNE_LOCAL_REACTIONS_INTERVAL);
@@ -253,6 +259,8 @@ export class ChatController {
     }
 
     private async loadEventWindow(messageIndex: number) {
+        console.log("Loading event window: ", messageIndex);
+        this.loading.set(true);
         const range = indexRangeForChat(this.chatVal);
         const eventsPromise: Promise<EventsResponse<ChatEvent>> =
             this.chatVal.kind === "direct_chat"
@@ -265,6 +273,12 @@ export class ChatController {
         }
 
         await this.handleEventsResponse(eventsResponse);
+        this.loading.set(false);
+
+        this.raiseEvent({
+            chatId: this.chatId,
+            event: { kind: "loaded_event_window", messageIndex: messageIndex },
+        });
     }
 
     newMessageCriteria(): [number, boolean] | undefined {
@@ -317,13 +331,16 @@ export class ChatController {
     }
 
     public async loadNewMessages(): Promise<void> {
+        this.loading.set(true);
         const criteria = this.newMessageCriteria();
+        console.log("loading new messages", criteria);
 
         const eventsResponse = criteria
             ? await this.loadEvents(criteria[0], criteria[1])
             : undefined;
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
+            this.loading.set(false);
             return undefined;
         }
 
@@ -333,16 +350,20 @@ export class ChatController {
             chatId: this.chatId,
             event: { kind: "loaded_new_messages" },
         });
+        this.loading.set(false);
     }
 
     public async loadPreviousMessages(): Promise<EventWrapper<ChatEvent>[]> {
+        this.loading.set(true);
         const criteria = this.previousMessagesCriteria();
+        console.log("loading previous messages", criteria);
 
         const eventsResponse = criteria
             ? await this.loadEvents(criteria[0], criteria[1])
             : undefined;
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
+            this.loading.set(false);
             return [];
         }
 
@@ -353,6 +374,7 @@ export class ChatController {
             event: { kind: "loaded_previous_messages" },
         });
 
+        this.loading.set(false);
         return get(this.events);
     }
 
@@ -521,6 +543,15 @@ export class ChatController {
 
     async goToMessageIndex(messageIndex: number): Promise<void> {
         return this.loadEventWindow(messageIndex);
+    }
+
+    async externalGoToMessage(messageIndex: number): Promise<void> {
+        // we just want to raise the event which will trigger the data load
+        // *only* if it is actually necessary
+        this.raiseEvent({
+            chatId: this.chatId,
+            event: { kind: "loaded_event_window", messageIndex: messageIndex },
+        });
     }
 
     async chatUpdated(chat: ChatSummary): Promise<void> {
