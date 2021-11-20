@@ -146,16 +146,13 @@ export class ChatController {
 
     async loadDetails(): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
-        console.log("loading chat details");
         if (this.chatVal.kind === "group_chat") {
             if (this.groupDetails === undefined) {
-                console.log("loading chat details for the first time");
                 const resp = await this.api.getGroupDetails(this.chatId);
                 if (resp !== "caller_not_in_group") {
                     this.groupDetails = resp;
                     this.participants.set(resp.participants);
                     this.blockedUsers.set(resp.blockedUsers);
-                    console.log("Details: ", resp);
                 }
                 await this.updateUserStore(userIdsFromEvents(get(this.events)));
             } else {
@@ -170,7 +167,6 @@ export class ChatController {
                 this.groupDetails !== undefined &&
                 this.groupDetails.latestEventIndex < this.chatVal.latestEventIndex
             ) {
-                console.log("updating group chat details");
                 this.groupDetails = await this.api.getGroupDetailsUpdates(
                     this.chatId,
                     this.groupDetails
@@ -259,7 +255,6 @@ export class ChatController {
     }
 
     private async loadEventWindow(messageIndex: number) {
-        console.log("Loading event window: ", messageIndex);
         this.loading.set(true);
         const range = indexRangeForChat(this.chatVal);
         const eventsPromise: Promise<EventsResponse<ChatEvent>> =
@@ -333,7 +328,6 @@ export class ChatController {
     public async loadNewMessages(): Promise<void> {
         this.loading.set(true);
         const criteria = this.newMessageCriteria();
-        console.log("loading new messages", criteria);
 
         const eventsResponse = criteria
             ? await this.loadEvents(criteria[0], criteria[1])
@@ -356,7 +350,6 @@ export class ChatController {
     public async loadPreviousMessages(): Promise<EventWrapper<ChatEvent>[]> {
         this.loading.set(true);
         const criteria = this.previousMessagesCriteria();
-        console.log("loading previous messages", criteria);
 
         const eventsResponse = criteria
             ? await this.loadEvents(criteria[0], criteria[1])
