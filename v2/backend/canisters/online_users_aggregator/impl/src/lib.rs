@@ -51,8 +51,11 @@ impl RuntimeState {
 struct Data {
     pub online_users: OnlineUsers,
     pub user_index_canister_id: CanisterId,
+    #[serde(default)]
     pub mark_as_online_count: u64,
+    #[serde(default)]
     pub batches_sent_to_user_index: u64,
+    #[serde(default)]
     pub failed_batches: u64,
     pub test_mode: bool,
 }
