@@ -7,11 +7,11 @@ use ic_fondue::ic_manager::IcHandle;
 use std::{panic, thread, time};
 use types::{ChatSummary, GroupChatEvent, Role};
 
-pub fn make_super_admin_test(handle: IcHandle, ctx: &fondue::pot::Context) {
-    block_on(make_super_admin_test_impl(handle, ctx));
+pub fn make_super_admin_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+    block_on(make_super_admin_tests_impl(handle, ctx));
 }
 
-async fn make_super_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
@@ -156,9 +156,9 @@ async fn make_super_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context
 
     {
         print!("8. User2 add user3 back to group as a participant... ");
-        let args = group_canister::add_participants::Args { 
+        let args = group_canister::add_participants::Args {
             user_ids: vec![user3_id],
-            allow_blocked_users: false, 
+            allow_blocked_users: false,
         };
         match group_canister_client::add_participants(&user2_agent, &chat_id.into(), &args)
             .await
@@ -169,7 +169,7 @@ async fn make_super_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context
         };
         println!("Ok");
     }
-    
+
     {
         print!("9. User3 assume SuperAdmin role... ");
         let args = user_canister::assume_group_super_admin::Args { chat_id };
@@ -276,14 +276,14 @@ async fn make_super_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context
                     if let ChatSummary::Group(group_chat_summary) = &r.chats[0] {
                         if !matches!(group_chat_summary.role, Role::SuperAdmin(_)) {
                             break;
-                        }                    
+                        }
                     } else {
                         assert!(false);
                     }
                 }
                 response => panic!("user::initial_state returned an error: {:?}", response),
             };
-    
+
             thread::sleep(one_second);
         }
         println!("Ok");
@@ -309,9 +309,15 @@ async fn make_super_admin_test_impl(handle: IcHandle, ctx: &fondue::pot::Context
                 assert!(matches!(r.events[5].event, GroupChatEvent::ParticipantsAdded(_)));
                 assert!(matches!(r.events[6].event, GroupChatEvent::ParticipantAssumesSuperAdmin(_)));
                 assert!(matches!(r.events[7].event, GroupChatEvent::ParticipantsRemoved(_)));
-                assert!(matches!(r.events[8].event, GroupChatEvent::ParticipantRelinquishesSuperAdmin(_)));
+                assert!(matches!(
+                    r.events[8].event,
+                    GroupChatEvent::ParticipantRelinquishesSuperAdmin(_)
+                ));
                 assert!(matches!(r.events[9].event, GroupChatEvent::ParticipantAssumesSuperAdmin(_)));
-                assert!(matches!(r.events[10].event, GroupChatEvent::ParticipantDismissedAsSuperAdmin(_)));
+                assert!(matches!(
+                    r.events[10].event,
+                    GroupChatEvent::ParticipantDismissedAsSuperAdmin(_)
+                ));
             }
             response => panic!("EventsRange returned an error: {:?}", response),
         };

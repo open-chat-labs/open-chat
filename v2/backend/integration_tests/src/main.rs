@@ -5,13 +5,15 @@ use ic_registry_subnet_type::SubnetType;
 use std::future::Future;
 use tokio::runtime::Runtime as TRuntime;
 
-mod create_group_test;
-mod get_updates_test;
-mod make_admin_test;
-mod make_super_admin_test;
-mod mentions_test;
-mod register_user_test;
-mod send_message_test;
+mod create_group_tests;
+mod get_updates_tests;
+mod make_admin_tests;
+mod make_super_admin_tests;
+mod mentions_tests;
+mod online_users_aggregator_tests;
+mod register_user_tests;
+mod send_cycles_tests;
+mod send_message_tests;
 
 fn main() {
     let fondue_config = fondue::pot::execution::Config::default().random_pot_rng_seed();
@@ -36,14 +38,16 @@ fn tests_pot() -> pot::Pot<IcManager> {
         "Tests",
         configure(),
         steps! {
-            create_group_test::create_group_test,
-            get_updates_test::get_updates_test,
-            make_admin_test::make_admin_test,
-            make_super_admin_test::make_super_admin_test,
-            mentions_test::mentions_test,
-            register_user_test::register_user_test,
-            register_user_test::register_existing_user_test,
-            send_message_test::send_message_test
+            create_group_tests::create_group_tests,
+            get_updates_tests::get_updates_tests,
+            make_admin_tests::make_admin_tests,
+            make_super_admin_tests::make_super_admin_tests,
+            mentions_tests::mentions_tests,
+            online_users_aggregator_tests::online_users_aggregator_tests,
+            register_user_tests::register_user_tests,
+            register_user_tests::register_existing_user_tests,
+            send_cycles_tests::send_cycles_tests,
+            send_message_tests::send_message_tests
         }
     )
 }

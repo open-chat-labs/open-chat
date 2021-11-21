@@ -10,7 +10,9 @@ fn remove_subscription(args: Args) -> Response {
 }
 
 fn remove_subscription_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let user_id = runtime_state.env.caller().into();
-    runtime_state.data.subscriptions.remove(user_id, args.p256dh_key);
+    let caller = runtime_state.env.caller();
+    if let Some(user_id) = runtime_state.data.principal_to_user_id.get(&caller) {
+        runtime_state.data.subscriptions.remove(*user_id, args.p256dh_key);
+    }
     Success
 }

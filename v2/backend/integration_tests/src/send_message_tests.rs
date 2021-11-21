@@ -5,11 +5,11 @@ use canister_client::TestIdentity;
 use ic_fondue::ic_manager::IcHandle;
 use types::{MessageContent, TextContent};
 
-pub fn send_message_test(handle: IcHandle, ctx: &fondue::pot::Context) {
-    block_on(send_message_test_impl(handle, ctx));
+pub fn send_message_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
+    block_on(send_message_tests_impl(handle, ctx));
 }
 
-async fn send_message_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
+async fn send_message_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
@@ -52,7 +52,9 @@ async fn send_message_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         content: MessageContent::Text(TextContent { text: String::default() }),
         replies_to: None,
     };
-    let response = user_canister_client::send_message(&agent, &user1_id.into(), &send_message_args).await.unwrap();
+    let response = user_canister_client::send_message(&agent, &user1_id.into(), &send_message_args)
+        .await
+        .unwrap();
     if !matches!(response, user_canister::send_message::Response::MessageEmpty) {
         panic!("SendMessage was expected to return MessageEmpty but did not: {:?}", response);
     }
@@ -61,11 +63,18 @@ async fn send_message_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         message_id: 3.into(),
         recipient: user2_id,
         sender_name: "TEST!".to_string(),
-        content: MessageContent::Text(TextContent { text: (0..5001).into_iter().map(|_| '1').collect() }),
+        content: MessageContent::Text(TextContent {
+            text: (0..5001).into_iter().map(|_| '1').collect(),
+        }),
         replies_to: None,
     };
-    let response = user_canister_client::send_message(&agent, &user1_id.into(), &send_message_args).await.unwrap();
+    let response = user_canister_client::send_message(&agent, &user1_id.into(), &send_message_args)
+        .await
+        .unwrap();
     if !matches!(response, user_canister::send_message::Response::TextTooLong(5000)) {
-        panic!("SendMessage was expected to return TextTooLong(5000) but did not: {:?}", response);
+        panic!(
+            "SendMessage was expected to return TextTooLong(5000) but did not: {:?}",
+            response
+        );
     }
 }

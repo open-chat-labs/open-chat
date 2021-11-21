@@ -23,17 +23,32 @@ mod flush_online_users {
     }
 
     fn prepare(runtime_state: &mut RuntimeState) -> Option<PrepareResult> {
-        let now = runtime_state.env.now();
-        let online_users = runtime_state.data.online_users.take_if_due_for_sync(now)?;
+        let online_users = runtime_state.data.online_users.take();
 
-        Some(PrepareResult {
-            online_users,
-            user_index_canister_id: runtime_state.data.user_index_canister_id,
-        })
+        if online_users.is_empty() {
+            None
+        } else {
+            Some(PrepareResult {
+                online_users,
+                user_index_canister_id: runtime_state.data.user_index_canister_id,
+            })
+        }
     }
 
     async fn send_to_user_index(user_index_canister_id: CanisterId, users: Vec<Principal>) {
         let args = user_index_canister::c2c_mark_users_online::Args { users };
-        let _ = user_index_canister_c2c_client::c2c_mark_users_online(user_index_canister_id, &args).await;
+        let response = user_index_canister_c2c_client::c2c_mark_users_online(user_index_canister_id, &args).await;
+
+        let success = matches!(response, Ok(user_index_canister::c2c_mark_users_online::Response::Success));
+
+        RUNTIME_STATE.with(|state| mark_batch_outcome(success, state.borrow_mut().as_mut().unwrap()));
+    }
+
+    fn mark_batch_outcome(success: bool, runtime_state: &mut RuntimeState) {
+        runtime_state.data.batches_sent_to_user_index += 1;
+
+        if !success {
+            runtime_state.data.failed_batches += 1;
+        }
     }
 }

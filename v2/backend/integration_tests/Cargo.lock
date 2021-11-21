@@ -4289,6 +4289,7 @@ dependencies = [
  "group_canister",
  "group_canister_client",
  "group_index_canister",
+ "group_index_canister_client",
  "ic-agent",
  "ic-fondue",
  "ic-registry-subnet-type",
@@ -4298,6 +4299,8 @@ dependencies = [
  "nodemanager",
  "notifications_canister",
  "notifications_canister_client",
+ "online_users_aggregator_canister",
+ "online_users_aggregator_canister_client",
  "serde",
  "serde_bytes",
  "tokio",
@@ -5330,6 +5333,17 @@ dependencies = [
  "candid",
  "candid_gen",
  "serde",
+ "types",
+]
+
+[[package]]
+name = "online_users_aggregator_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client_macros",
+ "ic-agent",
+ "online_users_aggregator_canister",
  "types",
 ]
 

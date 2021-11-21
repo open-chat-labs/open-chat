@@ -531,7 +531,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
                 GO_TO_MESSAGE_INDEX: {
                     actions: pure((ctx, ev) => {
-                        ctx.selectedChat?.goToMessageIndex(ev.data);
+                        ctx.selectedChat?.externalGoToMessage(ev.data);
                         return undefined;
                     }),
                 },

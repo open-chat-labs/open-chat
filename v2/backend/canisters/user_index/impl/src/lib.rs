@@ -61,8 +61,17 @@ impl RuntimeState {
 
     pub fn is_caller_sms_service(&self) -> bool {
         let caller = self.env.caller();
-
         self.data.sms_service_principals.contains(&caller)
+    }
+
+    pub fn is_caller_notifications_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.notifications_canister_id == caller
+    }
+
+    pub fn is_caller_online_users_aggregator_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.online_users_aggregator_canister_ids.contains(&caller)
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -104,7 +113,6 @@ struct Data {
     pub online_users_aggregator_canister_ids: HashSet<CanisterId>,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub super_admins: HashSet<UserId>,
-    #[serde(default)]
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
 }

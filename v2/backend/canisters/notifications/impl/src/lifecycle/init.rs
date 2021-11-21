@@ -14,7 +14,7 @@ fn init(args: Args) {
     init_logger(args.test_mode);
 
     let env = Box::new(CanisterEnv::new());
-    let data = Data::new(args.push_service_principals, args.test_mode);
+    let data = Data::new(args.push_service_principals, args.user_index_canister_id, args.test_mode);
 
     init_state(env, data, args.wasm_version);
 

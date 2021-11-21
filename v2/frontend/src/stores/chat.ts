@@ -8,7 +8,7 @@ export type ChatLifecycleEvent =
     | LoadedNewMessages
     | SendingMessage
     | ChatUpdated
-    | ScrollToMessageIndex
+    | LoadedEventWindow
     | LoadedPreviousMessages;
 
 type Nothing = { kind: "nothing" };
@@ -21,4 +21,4 @@ type SendingMessage = {
 };
 type ChatUpdated = { kind: "chat_updated" };
 type LoadedPreviousMessages = { kind: "loaded_previous_messages" };
-type ScrollToMessageIndex = { kind: "scroll_to_message_index"; messageIndex: number };
+type LoadedEventWindow = { kind: "loaded_event_window"; messageIndex: number };

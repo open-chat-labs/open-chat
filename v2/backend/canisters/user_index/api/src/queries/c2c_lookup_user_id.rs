@@ -1,13 +1,14 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::Deserialize;
+use types::UserId;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub p256dh_key: String,
+    pub user_principal: Principal,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
-    Yes,
-    No,
+    Success(UserId),
+    UserNotFound,
 }
