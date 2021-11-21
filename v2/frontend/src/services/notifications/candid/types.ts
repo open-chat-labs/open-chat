@@ -341,13 +341,6 @@ export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
 }
-export interface NotificationsArgs { 'from_notification_index' : bigint }
-export type NotificationsResponse = { 'NotAuthorized' : null } |
-  { 'Success' : NotificationsSuccessResult };
-export interface NotificationsSuccessResult {
-  'subscriptions' : Array<[UserId, Array<SubscriptionInfo>]>,
-  'notifications' : Array<IndexedNotification>,
-}
 export interface OptionalUserPreferences {
   'large_emoji' : [] | [boolean],
   'notification_preferences' : [] | [
@@ -426,25 +419,13 @@ export interface PendingICPWithdrawal {
   'fee_e8s' : [] | [bigint],
   'amount_e8s' : bigint,
 }
-export interface PushSubscriptionArgs {
-  'subscription' : SubscriptionInfo,
-  'user_id' : UserId,
-}
-export type PushSubscriptionResponse = { 'Success' : null };
-export interface RemoveNotificationsArgs { 'up_to_notification_index' : bigint }
-export type RemoveNotificationsResponse = { 'NotAuthorized' : null } |
-  { 'Success' : null };
+export interface PushSubscriptionArgs { 'subscription' : SubscriptionInfo }
+export type PushSubscriptionResponse = { 'Success' : null } |
+  { 'InternalError' : string };
 export interface RemoveSubscriptionArgs { 'p256dh_key' : string }
 export type RemoveSubscriptionResponse = { 'Success' : null };
-export interface RemoveSubscriptionsArgs {
-  'subscriptions_by_user' : Array<
-    { 'user_id' : UserId, 'p256dh_keys' : Array<string> }
-  >,
-}
 export type RemoveSubscriptionsForUserArgs = {};
 export type RemoveSubscriptionsForUserResponse = { 'Success' : null };
-export type RemoveSubscriptionsResponse = { 'NotAuthorized' : null } |
-  { 'Success' : null };
 export interface RemovedFromGroupAlert {
   'chat_id' : ChatId,
   'removed_by' : UserId,
@@ -461,10 +442,7 @@ export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
 }
-export interface SubscriptionExistsArgs {
-  'p256dh_key' : string,
-  'user_id' : UserId,
-}
+export interface SubscriptionExistsArgs { 'p256dh_key' : string }
 export type SubscriptionExistsResponse = { 'No' : null } |
   { 'Yes' : null };
 export interface SubscriptionInfo {
@@ -576,20 +554,11 @@ export interface VideoContent {
   'width' : number,
 }
 export interface _SERVICE {
-  'notifications' : (arg_0: NotificationsArgs) => Promise<
-      NotificationsResponse
-    >,
   'push_subscription' : (arg_0: PushSubscriptionArgs) => Promise<
       PushSubscriptionResponse
     >,
-  'remove_notifications' : (arg_0: RemoveNotificationsArgs) => Promise<
-      RemoveNotificationsResponse
-    >,
   'remove_subscription' : (arg_0: RemoveSubscriptionArgs) => Promise<
       RemoveSubscriptionResponse
-    >,
-  'remove_subscriptions' : (arg_0: RemoveSubscriptionsArgs) => Promise<
-      RemoveSubscriptionsResponse
     >,
   'remove_subscriptions_for_user' : (
       arg_0: RemoveSubscriptionsForUserArgs,

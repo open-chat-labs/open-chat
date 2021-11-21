@@ -43,6 +43,7 @@
     export let controller: ChatController;
     export let unreadMessages: number;
 
+    $: loading = controller.loading;
     $: events = controller.events;
     $: chat = controller.chat;
     $: focusMessageIndex = controller.focusMessageIndex;
@@ -129,7 +130,8 @@
         } else {
             // todo - this is a bit dangerous as it could cause an infinite recursion
             // if we are looking for a message that simply isn't there.
-            controller.goToMessageIndex(index).then(() => scrollToMessageIndex(index));
+            // controller.goToMessageIndex(index).then(() => scrollToMessageIndex(index));
+            controller.goToMessageIndex(index);
         }
     }
 
@@ -182,15 +184,17 @@
         fromBottom = -messagesDiv.scrollTop;
         fromTop = calculateFromTop();
 
-        if (shouldLoadPreviousMessages()) {
-            controller.loadPreviousMessages();
-        }
+        if (!$loading) {
+            if (shouldLoadPreviousMessages()) {
+                controller.loadPreviousMessages();
+            }
 
-        if (shouldLoadNewMessages()) {
-            // Note - this fires even when we have entered our own message. This *seems* wrong but
-            // it is actually correct because we do want to load our own messages from the server
-            // so that any incorrect indexes are corrected and only the right thing goes in the cache
-            controller.loadNewMessages();
+            if (shouldLoadNewMessages()) {
+                // Note - this fires even when we have entered our own message. This *seems* wrong but
+                // it is actually correct because we do want to load our own messages from the server
+                // so that any incorrect indexes are corrected and only the right thing goes in the cache
+                controller.loadNewMessages();
+            }
         }
     }
 
@@ -336,6 +340,11 @@
                 switch (evt.event.kind) {
                     case "loaded_previous_messages":
                         tick().then(resetScroll);
+                        break;
+                    case "loaded_event_window":
+                        const index = evt.event.messageIndex;
+                        tick().then(() => scrollToMessageIndex(index));
+                        initialised = true;
                         break;
                     case "loaded_new_messages":
                         // wait until the events are rendered
