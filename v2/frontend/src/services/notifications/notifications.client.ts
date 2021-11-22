@@ -26,7 +26,6 @@ export class NotificationsClient extends CandidService implements INotifications
     subscriptionExists(userId: string, p256dh_key: string): Promise<boolean> {
         return this.handleResponse(
             this.service.subscription_exists({
-                user_id: Principal.fromText(userId),
                 p256dh_key: p256dh_key,
             }),
             subscriptionExistsResponse
@@ -51,7 +50,7 @@ export class NotificationsClient extends CandidService implements INotifications
     removeSubscription(userId: string, subscription: PushSubscription): Promise<void> {
         const json = subscription.toJSON();
         return this.handleResponse(
-            this.service.remove_subscriptions({
+            this.service.remove_subscriptions_for_user({
                 subscriptions_by_user: [
                     {
                         user_id: Principal.fromText(userId),
