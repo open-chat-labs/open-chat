@@ -420,7 +420,7 @@
             </div>
             {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
                 {#each userGroup as evt, i (eventKey(evt))}
-                    {#if evt.event.kind === "message" && evt.event.messageIndex === firstUnreadMessageIndex}
+                    {#if evt.event.kind === "message" && unreadMessages > 0 && evt.event.messageIndex === firstUnreadMessageIndex}
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}
                     <ChatEvent

@@ -147,6 +147,9 @@ export function messageIsReadByMe(chat: ChatSummary, { messageIndex }: Message):
     return indexIsInRanges(messageIndex, chat.readByMe);
 }
 
+// this gives us the index of the first message that the server does not have a record of us
+// having read. However it cannot account for messages that we have read locally. There is no
+// real way round this since the readByMe field only deals in message indexes and not message ids
 export function getFirstUnreadMessageIndex(chat: ChatSummary): number {
     const latestMessageIndex = chat.latestMessage?.event.messageIndex;
     const min = getMinVisibleMessageIndex(chat);
