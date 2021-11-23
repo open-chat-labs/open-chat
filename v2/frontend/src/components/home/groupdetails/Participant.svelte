@@ -22,6 +22,7 @@
         ParticipantRole,
     } from "../../../domain/chat/chat";
     import { userStore } from "../../../stores/user";
+    import { iconSize } from "../../../stores/iconSize";
     const dispatch = createEventDispatcher();
 
     export let me: boolean;
@@ -86,21 +87,21 @@
             <MenuIcon>
                 <span slot="icon">
                     <HoverIcon>
-                        <ChevronDown size={"1.2em"} color={"var(--icon-txt)"} />
+                        <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 </span>
                 <span slot="menu">
                     <Menu>
                         {#if participant.kind === "blocked_participant" && publicGroup}
                             <MenuItem on:click={unblockUser}>
-                                <Cancel size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
+                                <Cancel size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                                 <div slot="text">{$_("unblockUser")}</div>
                             </MenuItem>
                         {:else}
                             {#if participant.role === "admin"}
                                 <MenuItem on:click={dismissAsAdmin}>
                                     <AccountRemoveOutline
-                                        size={"1.2em"}
+                                        size={$iconSize}
                                         color={"var(--icon-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("dismissAsAdmin")}</div>
@@ -109,7 +110,7 @@
                             {#if participant.role === "participant"}
                                 <MenuItem on:click={makeAdmin}>
                                     <AccountPlusOutline
-                                        size={"1.2em"}
+                                        size={$iconSize}
                                         color={"var(--icon-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("makeAdmin")}</div>
@@ -119,7 +120,7 @@
                                 {#if publicGroup}
                                     <MenuItem on:click={blockUser}>
                                         <Cancel
-                                            size={"1.2em"}
+                                            size={$iconSize}
                                             color={"var(--icon-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("blockUser")}</div>
@@ -127,7 +128,7 @@
                                 {:else}
                                     <MenuItem on:click={removeUser}>
                                         <MinusCircleOutline
-                                            size={"1.2em"}
+                                            size={$iconSize}
                                             color={"var(--icon-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("remove")}</div>
@@ -137,7 +138,7 @@
                             {#if myRole === "owner"}
                                 <MenuItem on:click={transferOwnership}>
                                     <AccountArrowLeftOutline
-                                        size={"1.2em"}
+                                        size={$iconSize}
                                         color={"var(--icon-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("transferOwnership")}</div>

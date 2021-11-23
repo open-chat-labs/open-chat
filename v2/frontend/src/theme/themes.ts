@@ -232,6 +232,9 @@ export interface Theme {
         inverted: {
             hv: string;
         };
+        msg: {
+            hv: string;
+        };
     };
 
     scrollbar: {

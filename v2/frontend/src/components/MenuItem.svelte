@@ -36,7 +36,7 @@
         }
 
         .icon {
-            flex: 0 0 30px;
+            flex: 0 0 34px;
         }
 
         &.disabled {

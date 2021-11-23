@@ -150,6 +150,6 @@ export class CachingGroupClient implements IGroupClient {
     }
 
     deleteGroup(): Promise<DeleteGroupResponse> {
-        return this.deleteGroup();
+        return this.client.deleteGroup();
     }
 }

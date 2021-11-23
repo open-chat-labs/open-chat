@@ -32,6 +32,7 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import type { MessageReadState } from "../../stores/markRead";
     import { menuStore } from "../../stores/menu";
+    import { iconSize } from "../../stores/iconSize";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 300;
@@ -462,7 +463,7 @@
                 <div class="unread-label">{$_("new")}</div>
             </div>
         {:else}
-            <ArrowDown size={"1.2em"} color={"#fff"} />
+            <ArrowDown size={$iconSize} color={"#fff"} />
         {/if}
     </Fab>
 </div>

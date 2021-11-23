@@ -1,5 +1,4 @@
 <script lang="ts">
-    import EmoticonHappyOutline from "svelte-material-icons/EmoticonHappyOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Send from "svelte-material-icons/Send.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -11,12 +10,12 @@
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
-    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { iconSize } from "../../stores/iconSize";
+    import Smiley from "./Smiley.svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
 
-    $: iconSize = $screenWidth === ScreenWidth.ExtraSmall ? "1.2em" : "1.5em";
     $: editingEvent = controller.editingEvent;
     $: fileToAttach = controller.fileToAttach;
 
@@ -160,11 +159,11 @@
         <div class="emoji" on:click={toggleEmojiPicker}>
             {#if showEmojiPicker}
                 <HoverIcon>
-                    <Close size={iconSize} color={"var(--icon-txt)"} />
+                    <Close size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             {:else}
                 <HoverIcon>
-                    <EmoticonHappyOutline size={iconSize} color={"var(--icon-txt)"} />
+                    <Smiley />
                 </HoverIcon>
             {/if}
         </div>
@@ -200,7 +199,7 @@
         </div>
         <div class="send" on:click={sendMessage}>
             <HoverIcon>
-                <Send size={iconSize} color={"var(--icon-txt)"} />
+                <Send size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </div>
     {/if}

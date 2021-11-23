@@ -13,6 +13,7 @@
     import { avatarUrl } from "../../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
     import type { CandidateGroupChat } from "../../../domain/chat/chat";
+    import { iconSize } from "../../../stores/iconSize";
 
     const dispatch = createEventDispatcher();
     const MIN_LENGTH = 3;
@@ -50,7 +51,7 @@
 <SectionHeader>
     <span title={$_("close")} class="close" on:click={cancel}>
         <HoverIcon>
-            <Close size={"1.2em"} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
     <h4>{$_("createNewGroup")}</h4>

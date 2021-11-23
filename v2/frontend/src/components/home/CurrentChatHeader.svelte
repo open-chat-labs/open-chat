@@ -30,6 +30,7 @@
     import { toastStore } from "../../stores/toast";
     import Link from "../Link.svelte";
     import { supported as notificationsSupported } from "../../utils/notifications";
+    import { iconSize } from "../../stores/iconSize";
 
     const dispatch = createEventDispatcher();
 
@@ -163,9 +164,9 @@
         <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
             <HoverIcon>
                 {#if $rtlStore}
-                    <ArrowRight size={"1.2em"} color={"var(--icon-txt)"} />
+                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
                 {:else}
-                    <ArrowLeft size={"1.2em"} color={"var(--icon-txt)"} />
+                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
                 {/if}
             </HoverIcon>
         </div>
@@ -201,7 +202,7 @@
         <MenuIcon>
             <div slot="icon">
                 <HoverIcon>
-                    <DotsVertical size={"1.2em"} color={"var(--icon-txt)"} />
+                    <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
             <div slot="menu">
@@ -209,12 +210,12 @@
                     {#if $selectedChatSummary.kind === "direct_chat"}
                         {#if blocked}
                             <MenuItem on:click={unblockUser}>
-                                <Cancel size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
+                                <Cancel size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                                 <div slot="text">{$_("unblockUser")}</div>
                             </MenuItem>
                         {:else}
                             <MenuItem on:click={blockUser}>
-                                <Cancel size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
+                                <Cancel size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                                 <div slot="text">{$_("blockUser")}</div>
                             </MenuItem>
                         {/if}
@@ -222,7 +223,7 @@
                         {#if $selectedChatSummary.myRole === "owner"}
                             <MenuItem on:click={deleteGroup}>
                                 <DeleteAlertOutline
-                                    size={"1.2em"}
+                                    size={$iconSize}
                                     color={"var(--icon-txt)"}
                                     slot="icon" />
                                 <div slot="text">{$_("deleteGroup")}</div>
@@ -230,18 +231,18 @@
                         {/if}
                         <MenuItem on:click={showGroupDetails}>
                             <AccountMultiplePlus
-                                size={"1.2em"}
+                                size={$iconSize}
                                 color={"var(--icon-txt)"}
                                 slot="icon" />
                             <div slot="text">{$_("groupDetails")}</div>
                         </MenuItem>
                         <MenuItem on:click={leaveGroup}>
-                            <LocationExit size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
+                            <LocationExit size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                             <div slot="text">{$_("leaveGroup")}</div>
                         </MenuItem>
                         <MenuItem on:click={showParticipants}>
                             <AccountMultiplePlus
-                                size={"1.2em"}
+                                size={$iconSize}
                                 color={"var(--icon-txt)"}
                                 slot="icon" />
                             <div slot="text">{$_("participants")}</div>
@@ -249,7 +250,7 @@
                         {#if canAddParticipants($selectedChatSummary)}
                             <MenuItem on:click={addParticipants}>
                                 <AccountPlusOutline
-                                    size={"1.2em"}
+                                    size={$iconSize}
                                     color={"var(--icon-txt)"}
                                     slot="icon" />
                                 <div slot="text">{$_("addParticipants")}</div>
@@ -259,12 +260,12 @@
                     {#if supportsNotifications}
                         {#if $selectedChatSummary.notificationsMuted === true}
                             <MenuItem on:click={toggleMuteNotifications}>
-                                <Bell size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
+                                <Bell size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                                 <div slot="text">{$_("unmuteNotifications")}</div>
                             </MenuItem>
                         {:else}
                             <MenuItem on:click={toggleMuteNotifications}>
-                                <BellOff size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
+                                <BellOff size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                                 <div slot="text">{$_("muteNotifications")}</div>
                             </MenuItem>
                         {/if}
@@ -272,7 +273,7 @@
                     {#if unreadMessages > 0}
                         <MenuItem on:click={markAllRead}>
                             <CheckboxMultipleMarked
-                                size={"1.2em"}
+                                size={$iconSize}
                                 color={"var(--icon-txt)"}
                                 slot="icon" />
                             <div slot="text">{$_("markAllRead")}</div>
@@ -280,7 +281,7 @@
                     {:else}
                         <MenuItem disabled={true}>
                             <CheckboxMultipleMarked
-                                size={"1.2em"}
+                                size={$iconSize}
                                 color={"var(--icon-txt)"}
                                 slot="icon" />
                             <div slot="text">{$_("markAllRead")}</div>

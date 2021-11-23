@@ -1,10 +1,11 @@
 <script lang="ts">
     import HoverIcon from "../HoverIcon.svelte";
-    import Paperclip from "svelte-material-icons/Paperclip.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { toastStore } from "../../stores/toast";
     import { messageContentFromFile } from "../../utils/media";
     import { createEventDispatcher } from "svelte";
+    import { iconSize } from "../../stores/iconSize";
+    import Paperclip from "./Paperclip.svelte";
 
     export let open: boolean = false;
 
@@ -35,9 +36,9 @@
 <div on:click={click}>
     <HoverIcon>
         {#if open}
-            <Close size={"1.2em"} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         {:else}
-            <Paperclip size={"1.2em"} color={"var(--icon-txt)"} />
+            <Paperclip />
         {/if}
         <input bind:this={fileinput} hidden={true} type="file" on:change={onFileSelected} />
     </HoverIcon>

@@ -8,6 +8,7 @@
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import type { UserSummary } from "../../domain/user/user";
     import { fade } from "svelte/transition";
+    import { iconSize } from "../../stores/iconSize";
 
     const dispatch = createEventDispatcher();
 
@@ -27,7 +28,7 @@
     <div class="replying" class:me class:rtl={$rtlStore}>
         <div class="close-icon" on:click={cancelReply}>
             <HoverIcon>
-                <Close size={"1.2em"} color={me ? "#fff" : "#aaa"} />
+                <Close size={$iconSize} color={me ? "#fff" : "#aaa"} />
             </HoverIcon>
         </div>
         <h4 class="username">

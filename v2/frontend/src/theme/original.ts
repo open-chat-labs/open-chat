@@ -62,6 +62,7 @@ export function originalTheme(defaultTheme: Theme): Theme {
             ...defaultTheme.chatSearch,
             mg: "0 8px",
             bg: "#ffffff",
+            bd: "rgba(0,0,0,0.08)",
             section: {
                 txt: "#191919",
                 title: {
@@ -149,14 +150,6 @@ export function originalTheme(defaultTheme: Theme): Theme {
                 pill: {
                     txt: "#191919",
                 },
-            },
-        },
-
-        toast: {
-            ...defaultTheme.toast,
-            success: {
-                bg: "#ff9505",
-                txt: "#ffffff",
             },
         },
     };

@@ -59,7 +59,7 @@ import type { BlobReference, DataContent } from "../domain/data/data";
 import { UnsupportedValueError } from "../utils/error";
 import type { GroupSearchResponse, SearchAllMessagesResponse } from "../domain/search/search";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
-import type { IMessageReadTracker, MarkMessagesRead, MessageReadTracker } from "../stores/markRead";
+import type { IMessageReadTracker, MarkMessagesRead } from "../stores/markRead";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
 import type { ToggleMuteNotificationResponse } from "../domain/notifications";
@@ -409,9 +409,7 @@ export class ServiceContainer implements MarkMessagesRead {
             if (res.kind === "success") {
                 return {
                     ...res,
-                    matches: res.matches.map((match) =>
-                        this.rehydrateDataContent(match, "avatar", match.chatId)
-                    ),
+                    matches: res.matches.map((match) => this.rehydrateDataContent(match, "avatar")),
                 };
             }
             return res;
@@ -439,7 +437,7 @@ export class ServiceContainer implements MarkMessagesRead {
                 messagesRead.syncWithServer(chat.chatId, chat.readByMe);
                 return chat.kind === "direct_chat"
                     ? chat
-                    : this.rehydrateDataContent(chat, "avatar", chat.chatId);
+                    : this.rehydrateDataContent(chat, "avatar");
             }),
         };
     }

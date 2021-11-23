@@ -5,6 +5,7 @@
 
     import { fly } from "svelte/transition";
     import { toastStore, ToastType } from "../stores/toast";
+    import { iconSize } from "../stores/iconSize";
 </script>
 
 {#if $toastStore}
@@ -16,7 +17,7 @@
             <div class="text">{$_($toastStore.text, $toastStore.args)}</div>
             {#if $toastStore.type === ToastType.Failure}
                 <div class="close" on:click={toastStore.hideToast}>
-                    <Close size={"1.2em"} color={"var(--button-txt)"} />
+                    <Close size={$iconSize} color={"var(--button-txt)"} />
                 </div>
             {/if}
         </div>
