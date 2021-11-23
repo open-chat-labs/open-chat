@@ -148,8 +148,7 @@ export class MessageReadTracker implements IMessageReadTracker {
         const numWaiting = this.waiting[chatId] === undefined ? 0 : this.waiting[chatId].size;
 
         if (latestMessageIndex === undefined) {
-            // if we have no latestMessage then we can only have unconfirmed unread messages
-            return numWaiting;
+            return 0;
         }
 
         const merged = mergeMessageIndexRanges(
@@ -157,8 +156,9 @@ export class MessageReadTracker implements IMessageReadTracker {
             this.state[chatId] ?? []
         );
         if (merged.length === 0) {
-            // all messages are unread
-            return latestMessageIndex - firstMessageIndex + 1;
+            // this means we haven't officially read *any* messages so the whole range is
+            // unread (minus any that we have read only locally)
+            return latestMessageIndex - firstMessageIndex + 1 - numWaiting;
         }
 
         const [, unread, lastRead] = merged.reduce(
@@ -167,7 +167,6 @@ export class MessageReadTracker implements IMessageReadTracker {
             },
             [firstMessageIndex, 0, 0] // [firstIndex, unreadCount, lastReadIndex]
         );
-
         return latestMessageIndex - lastRead + unread - numWaiting;
     }
 

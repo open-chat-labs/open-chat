@@ -41,6 +41,12 @@ describe("mark messages read", () => {
 
     describe("unread message count", () => {
         describe("when all messages are confirmed", () => {
+            test("with no latest message + waiting local messages", () => {
+                markRead.waiting["abc"].add(BigInt(0));
+                markRead.waiting["abc"].add(BigInt(1));
+                markRead.waiting["abc"].add(BigInt(2));
+                expect(markRead.unreadMessageCount("abc", 0, undefined)).toEqual(0);
+            });
             test("with no latest message", () => {
                 expect(markRead.unreadMessageCount("abc", 0, undefined)).toEqual(0);
             });
