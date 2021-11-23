@@ -10,6 +10,7 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { createEventDispatcher } from "svelte";
     import type { ServiceContainer } from "../../../services/serviceContainer";
+    import { iconSize } from "../../../stores/iconSize";
 
     export let api: ServiceContainer;
     export let closeIcon: "close" | "back";
@@ -40,9 +41,9 @@
     <span title={$_("close")} class="close" on:click={cancelAddParticipant}>
         <HoverIcon>
             {#if closeIcon === "close"}
-                <Close size={"1.2em"} color={"var(--icon-txt)"} />
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
             {:else}
-                <ArrowLeft size={"1.2em"} color={"var(--icon-txt)"} />
+                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
             {/if}
         </HoverIcon>
     </span>

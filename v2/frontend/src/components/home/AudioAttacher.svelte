@@ -7,6 +7,7 @@
     import { toastStore } from "../../stores/toast";
     import { dataToBlobUrl } from "../../utils/blob";
     import type { AudioContent } from "../../domain/chat/chat";
+    import { iconSize } from "../../stores/iconSize";
 
     type EventMap = {
         audioCaptured: AudioContent;
@@ -98,9 +99,9 @@
     <div on:click={toggle}>
         <HoverIcon>
             {#if recording}
-                <RadioboxMarked size={"1.2em"} color={"red"} />
+                <RadioboxMarked size={$iconSize} color={"red"} />
             {:else}
-                <Microphone size={"1.2em"} color={"var(--icon-txt)"} />
+                <Microphone size={$iconSize} color={"var(--icon-txt)"} />
             {/if}
         </HoverIcon>
     </div>

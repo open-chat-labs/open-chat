@@ -110,7 +110,7 @@ export function lightTheme(): Theme {
         chatSearch: {
             bg: "#ffffff",
             txt: "#555555",
-            bd: "#dddddd",
+            bd: "transparent",
             mg: "0",
 
             section: {
@@ -232,6 +232,9 @@ export function lightTheme(): Theme {
             txt: "#888",
             inverted: {
                 hv: "rgba(214,44,125,0.5)",
+            },
+            msg: {
+                hv: "rgba(255,255,255,0.8)",
             },
         },
 

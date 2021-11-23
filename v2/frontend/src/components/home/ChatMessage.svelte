@@ -27,6 +27,7 @@
     import UnresolvedReply from "./UnresolvedReply.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import TimeAndTicks from "./TimeAndTicks.svelte";
+    import { iconSize } from "../../stores/iconSize";
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -137,7 +138,7 @@
                         class="close-emoji"
                         on:click={() => (showEmojiPicker = false)}>
                         <HoverIcon>
-                            <Close size={"1.2em"} color={"var(--icon-txt)"} />
+                            <Close size={$iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
                     </span>
                 </div>
@@ -167,7 +168,7 @@
             <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
-                        <EmoticonLolOutline size={"1.4em"} color={"#fff"} />
+                        <EmoticonLolOutline size={$iconSize} color={"#fff"} />
                     </HoverIcon>
                 </div>
             </div>
@@ -239,7 +240,7 @@
                         <div class="menu-icon" slot="icon">
                             <HoverIcon compact={true}>
                                 <ChevronDown
-                                    size={"1.4em"}
+                                    size={$iconSize}
                                     color={me ? "#fff" : "var(--icon-txt)"} />
                             </HoverIcon>
                         </div>
@@ -248,7 +249,7 @@
                                 {#if confirmed}
                                     <MenuItem on:click={reply}>
                                         <Reply
-                                            size={"1.2em"}
+                                            size={$iconSize}
                                             color={"var(--icon-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("reply")}</div>
@@ -257,7 +258,7 @@
                                 {#if confirmed && groupChat && !me}
                                     <MenuItem on:click={replyPrivately}>
                                         <ReplyOutline
-                                            size={"1.2em"}
+                                            size={$iconSize}
                                             color={"var(--icon-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("replyPrivately")}</div>
@@ -270,7 +271,7 @@
                                     </MenuItem> -->
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline
-                                            size={"1.2em"}
+                                            size={$iconSize}
                                             color={"var(--icon-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("deleteMessage")}</div>
@@ -286,7 +287,7 @@
             <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
-                        <EmoticonLolOutline size={"1.4em"} color={"#fff"} />
+                        <EmoticonLolOutline size={$iconSize} color={"#fff"} />
                     </HoverIcon>
                 </div>
             </div>
@@ -327,7 +328,7 @@
     }
 
     :global(.message-bubble:hover .menu-icon .wrapper) {
-        background-color: var(--icon-hv);
+        background-color: var(--icon-msg-hv);
     }
 
     :global(.message-bubble.me:hover .menu-icon .wrapper) {
@@ -478,7 +479,7 @@
         }
 
         &:not(.readByMe) {
-            box-shadow: 0 0 0 5px yellow;
+            box-shadow: 0 0 0 5px var(--toast-success-bg);
         }
 
         &.last:not(.first) {
@@ -539,8 +540,8 @@
         }
 
         &.focused {
-            transform: scale(0.9);
-            border: 4px solid yellow;
+            transform: scaleX(0.95);
+            border: 4px solid var(--toast-success-bg);
         }
 
         &.deleted {

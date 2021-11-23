@@ -210,6 +210,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
             inverted: {
                 hv: "rgba(0,0,0,0.1)",
             },
+            msg: {
+                hv: "rgba(255,255,255,0.2)",
+            },
         },
         spinner: dark25,
 

@@ -5,6 +5,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
+    import { iconSize } from "../../../stores/iconSize";
 
     export let saving: boolean;
 
@@ -24,13 +25,13 @@
 <SectionHeader>
     <span title={$_("participants")} class="participants" on:click={showParticipants}>
         <HoverIcon>
-            <AccountMultiplePlus size={"1.2em"} color={"var(--icon-txt)"} />
+            <AccountMultiplePlus size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
     <h4>{$_("groupDetails")}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
-            <Close size={"1.2em"} color={"var(--icon-txt)"} />
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>

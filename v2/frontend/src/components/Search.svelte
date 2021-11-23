@@ -3,6 +3,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
+    import { iconSize } from "../stores/iconSize";
 
     const dispatch = createEventDispatcher();
     export let searchTerm = "";
@@ -26,7 +27,9 @@
             if (searchTerm.length > 1) {
                 performSearch();
             } else {
-                dispatch("searchCleared");
+                if (searchTerm.length === 0) {
+                    performSearch();
+                }
             }
         }, 300);
     }
@@ -35,7 +38,7 @@
 <form on:submit|preventDefault={performSearch} class="wrapper">
     <span class="icon" class:searching>
         {#if !searching}
-            <Magnify color={"#ccc"} />
+            <Magnify size={$iconSize} color={"#ccc"} />
         {/if}
     </span>
     <input
@@ -45,7 +48,8 @@
         type="text"
         placeholder={$_(placeholder)} />
     {#if searchTerm !== ""}
-        <span on:click={clearSearch} class="icon close"><Close color={"#ccc"} /></span>
+        <span on:click={clearSearch} class="icon close"
+            ><Close size={$iconSize} color={"#ccc"} /></span>
     {/if}
 </form>
 

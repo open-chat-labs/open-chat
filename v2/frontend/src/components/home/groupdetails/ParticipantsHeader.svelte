@@ -7,6 +7,7 @@
     import { createEventDispatcher } from "svelte";
     import type { BlockedParticipant, FullParticipant } from "../../../domain/chat/chat";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import { iconSize } from "../../../stores/iconSize";
 
     export let me: FullParticipant | BlockedParticipant | undefined;
     export let publicGroup: boolean;
@@ -29,7 +30,7 @@
     {#if canAdd}
         <span title={$_("addParticipants")} class="add" on:click={addParticipants}>
             <HoverIcon>
-                <AccountPlusOutline size={"1.2em"} color={"var(--icon-txt)"} />
+                <AccountPlusOutline size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     {/if}
@@ -37,9 +38,9 @@
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             {#if closeIcon === "close"}
-                <Close size={"1.2em"} color={"var(--icon-txt)"} />
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
             {:else}
-                <ArrowLeft size={"1.2em"} color={"var(--icon-txt)"} />
+                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
             {/if}
         </HoverIcon>
     </span>
