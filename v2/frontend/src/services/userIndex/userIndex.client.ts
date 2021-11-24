@@ -55,10 +55,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    markAsOnline(): Promise<void> {
-        return this.handleResponse(this.userService.mark_as_online({}), toVoid);
-    }
-
     getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {
         if (userIds.length === 0) {
             return Promise.resolve({

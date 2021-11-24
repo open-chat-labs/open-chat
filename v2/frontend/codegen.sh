@@ -22,3 +22,8 @@ rm ./src/services/notifications/candid/types.ts
 rm ./src/services/notifications/candid/idl.js
 didc bind ../backend/canisters/notifications/api/can.did -t ts >> ./src/services/notifications/candid/types.ts
 didc bind ../backend/canisters/notifications/api/can.did -t js >> ./src/services/notifications/candid/idl.js
+
+rm ./src/services/online/candid/types.ts
+rm ./src/services/online/candid/idl.js
+didc bind ../backend/canisters/online_users_aggregator/api/can.did -t ts >> ./src/services/online/candid/types.ts
+didc bind ../backend/canisters/online_users_aggregator/api/can.did -t js >> ./src/services/online/candid/idl.js

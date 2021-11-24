@@ -21,5 +21,4 @@ export interface IUserIndexClient {
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse>;
     getUsers(userIds: string[], since: bigint): Promise<UsersResponse>;
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]>;
-    markAsOnline(): Promise<void>;
 }

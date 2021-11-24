@@ -63,6 +63,8 @@ import type { IMessageReadTracker, MarkMessagesRead } from "../stores/markRead";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
 import type { ToggleMuteNotificationResponse } from "../domain/notifications";
+import type { IOnlineClient } from "./online/online.client.interface";
+import { OnlineClient } from "./online/online.client";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -74,6 +76,7 @@ function buildIdenticonUrl(userId: string) {
 
 export class ServiceContainer implements MarkMessagesRead {
     private _userIndexClient: IUserIndexClient;
+    private _onlineClient: IOnlineClient;
     private _groupIndexClient: IGroupIndexClient;
     private _userClient?: IUserClient;
     private _notificationClient: INotificationsClient;
@@ -81,6 +84,7 @@ export class ServiceContainer implements MarkMessagesRead {
     private db?: Database;
 
     constructor(private identity: Identity) {
+        this._onlineClient = OnlineClient.create(identity);
         this._userIndexClient = UserIndexClient.create(identity);
         this._groupIndexClient = GroupIndexClient.create(identity);
         this._notificationClient = NotificationsClient.create(identity);
@@ -567,7 +571,8 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     markAsOnline(): Promise<void> {
-        return this._userIndexClient.markAsOnline();
+        console.log("Marking as online");
+        return this._onlineClient.markAsOnline();
     }
 
     subscriptionExists(userId: string, p256dh_key: string): Promise<boolean> {
