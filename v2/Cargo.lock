@@ -2134,6 +2134,7 @@ dependencies = [
  "shared",
  "tokio",
  "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
