@@ -11,4 +11,5 @@ ssh -i "~/Downloads/notification_pusher.pem" ubuntu@ec2-3-88-226-210.compute-1.a
 scp Dev/open-chat/v2/target/x86_64-unknown-linux-musl/release/notification_pusher_aws ubuntu@ec2-3-88-226-210.compute-1.amazonaws.com:~/v2/notification_pusher
 
 ### To run the service
-nohup ./v2/notification_pusher/notification_pusher_aws &
+cd ~/v2/notification_pusher
+nohup ./notification_pusher_aws &
