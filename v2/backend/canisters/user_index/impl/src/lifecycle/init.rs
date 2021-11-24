@@ -24,7 +24,7 @@ fn init(args: Args) {
         args.sms_service_principals,
         user_canister_wasm,
         args.group_index_canister_id,
-        args.notifications_canister_id,
+        args.notifications_canister_ids,
         args.online_users_aggregator_canister_id,
         canister_pool_target_size,
         args.test_mode,

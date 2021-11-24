@@ -6,7 +6,7 @@ use types::{CanisterId, Version};
 pub struct Args {
     pub owner: Principal,
     pub group_index_canister_id: CanisterId,
-    pub notification_canister_ids: Vec<CanisterId>,
+    pub notifications_canister_ids: Vec<CanisterId>,
     pub wasm_version: Version,
     pub test_mode: bool,
 }

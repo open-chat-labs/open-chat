@@ -64,7 +64,7 @@ async fn install_service_canisters_impl(
         sms_service_principals: Vec::new(),
         user_canister_wasm,
         group_index_canister_id: canister_ids.group_index,
-        notifications_canister_id: canister_ids.notifications,
+        notifications_canister_ids: vec![canister_ids.notifications],
         online_users_aggregator_canister_id: canister_ids.online_users_aggregator,
         wasm_version: Version::min(),
         test_mode,
@@ -75,7 +75,7 @@ async fn install_service_canisters_impl(
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![principal],
         group_canister_wasm,
-        notifications_canister_id: canister_ids.notifications,
+        notifications_canister_ids: vec![canister_ids.notifications],
         user_index_canister_id: canister_ids.user_index,
         wasm_version: Version::min(),
         test_mode,

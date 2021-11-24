@@ -87,7 +87,7 @@ fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut Runtime
         if !chat.notifications_muted.value {
             let random = runtime_state.env.random_u32() as usize;
 
-            if let Some(canister_id) = get_random_item(&runtime_state.data.notification_canister_ids, random) {
+            if let Some(canister_id) = get_random_item(&runtime_state.data.notifications_canister_ids, random) {
                 let notification = DirectMessageNotification {
                     sender,
                     sender_name: args.sender_name,

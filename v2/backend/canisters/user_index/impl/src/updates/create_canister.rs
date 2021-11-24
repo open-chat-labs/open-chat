@@ -99,7 +99,7 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                             let init_canister_args = InitUserCanisterArgs {
                                 owner: user_principal,
                                 group_index_canister_id: runtime_state.data.group_index_canister_id,
-                                notification_canister_ids: Vec::new(),
+                                notifications_canister_ids: runtime_state.data.notifications_canister_ids.clone(),
                                 wasm_version: canister_wasm.version,
                                 test_mode: runtime_state.data.test_mode,
                             };

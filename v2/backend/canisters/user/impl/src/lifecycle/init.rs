@@ -21,7 +21,7 @@ fn init(args: Args) {
         args.owner,
         user_index_canister_id,
         args.group_index_canister_id,
-        args.notification_canister_ids,
+        args.notifications_canister_ids,
         env.now(),
         args.test_mode,
     );

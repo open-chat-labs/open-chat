@@ -22,7 +22,7 @@ fn init(args: Args) {
     let data = Data::new(
         args.service_principals,
         group_canister_wasm,
-        args.notifications_canister_id,
+        args.notifications_canister_ids,
         args.user_index_canister_id,
         canister_pool_target_size,
         args.test_mode,
