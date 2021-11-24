@@ -13,7 +13,7 @@ pub struct Args {
     pub created_by_user_id: UserId,
     pub mark_active_duration: Milliseconds,
     pub user_index_canister_id: CanisterId,
-    pub notification_canister_ids: Vec<CanisterId>,
+    pub notifications_canister_ids: Vec<CanisterId>,
     pub wasm_version: Version,
     pub test_mode: bool,
 }

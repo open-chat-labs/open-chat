@@ -95,7 +95,7 @@ struct Data {
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
-    pub notification_canister_ids: Vec<CanisterId>,
+    pub notifications_canister_ids: Vec<CanisterId>,
     pub activity_notification_state: ActivityNotificationState,
     pub blob_storage: BlobStorage,
     pub test_mode: bool,
@@ -116,7 +116,7 @@ impl Data {
         mark_active_duration: Milliseconds,
         group_index_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
-        notification_canister_ids: Vec<CanisterId>,
+        notifications_canister_ids: Vec<CanisterId>,
         test_mode: bool,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
@@ -134,7 +134,7 @@ impl Data {
             mark_active_duration,
             group_index_canister_id,
             user_index_canister_id,
-            notification_canister_ids,
+            notifications_canister_ids,
             activity_notification_state: ActivityNotificationState::new(now),
             blob_storage: BlobStorage::new(MAX_STORAGE),
             test_mode,

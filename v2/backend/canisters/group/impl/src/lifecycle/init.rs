@@ -30,7 +30,7 @@ fn init(args: Args) {
         args.mark_active_duration,
         group_index_canister_id,
         args.user_index_canister_id,
-        args.notification_canister_ids,
+        args.notifications_canister_ids,
         args.test_mode,
     );
 

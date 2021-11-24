@@ -48,7 +48,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let random = runtime_state.env.random_u32() as usize;
         let message_index = message.message_index;
 
-        if let Some(canister_id) = get_random_item(&runtime_state.data.notification_canister_ids, random) {
+        if let Some(canister_id) = get_random_item(&runtime_state.data.notifications_canister_ids, random) {
             let notification = GroupMessageNotification {
                 chat_id: runtime_state.env.canister_id().into(),
                 group_name: runtime_state.data.name.clone(),
