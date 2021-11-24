@@ -571,7 +571,6 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     markAsOnline(): Promise<void> {
-        console.log("Marking as online");
         return this._onlineClient.markAsOnline();
     }
 
