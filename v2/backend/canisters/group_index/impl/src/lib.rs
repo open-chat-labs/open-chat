@@ -153,7 +153,7 @@ impl Default for Data {
             deleted_groups: DeletedGroups::default(),
             service_principals: HashSet::default(),
             group_canister_wasm: CanisterWasm::default(),
-            notifications_canister_ids: Principal::anonymous(),
+            notifications_canister_ids: vec![Principal::anonymous()],
             user_index_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(0),

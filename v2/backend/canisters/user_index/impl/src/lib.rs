@@ -159,7 +159,7 @@ impl Default for Data {
             sms_service_principals: HashSet::new(),
             sms_messages: EventStream::default(),
             group_index_canister_id: Principal::anonymous(),
-            notifications_canister_ids: Principal::anonymous(),
+            notifications_canister_ids: vec![Principal::anonymous()],
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             online_users_aggregator_canister_ids: HashSet::new(),
             canister_pool: canister::Pool::new(5),
