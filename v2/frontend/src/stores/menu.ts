@@ -1,5 +1,6 @@
 import { get, writable } from "svelte/store";
 import { rtlStore } from "./rtl";
+import { ScreenWidth, screenWidth } from "./screenWidth";
 
 const { subscribe, update } = writable<HTMLElement | undefined>(undefined);
 
@@ -21,7 +22,8 @@ export const menuStore = {
             if (menu === undefined) return menu;
             const xoffset = get(rtlStore) ? 180 : -180;
             const items = menu.querySelectorAll(".menu-item").length;
-            const height = 37.2 * items;
+            const itemHeight = get(screenWidth) === ScreenWidth.ExtraSmall ? 38 : 46;
+            const height = itemHeight * items;
             const left = Math.max(10, pos.x + xoffset);
             const top = pos.y > window.innerHeight / 2 ? pos.y - height : pos.y + pos.height;
             menu.style.setProperty("top", `${top}px`);
