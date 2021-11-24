@@ -183,22 +183,18 @@
                             {#if resp.kind === "success" && resp.matches.length > 0}
                                 <h3 class="search-subtitle">{$_("publicGroups")}</h3>
                                 {#each resp.matches as group, i (group.chatId)}
-                                    <div
-                                        animate:flip={{ duration: 600, easing: elasticOut }}
-                                        out:fade|local={{ duration: 150 }}>
-                                        <SearchResult
-                                            index={i}
-                                            avatarUrl={avatarUrl(group)}
-                                            showSpinner={joiningGroup === group.chatId}
-                                            on:click={() => joinGroup(group)}>
-                                            <h4 class="search-item-title">
-                                                {group.name}
-                                            </h4>
-                                            <p title={group.description} class="search-item-desc">
-                                                {group.description}
-                                            </p>
-                                        </SearchResult>
-                                    </div>
+                                    <SearchResult
+                                        index={i}
+                                        avatarUrl={avatarUrl(group, "../assets/group.svg")}
+                                        showSpinner={joiningGroup === group.chatId}
+                                        on:click={() => joinGroup(group)}>
+                                        <h4 class="search-item-title">
+                                            {group.name}
+                                        </h4>
+                                        <p title={group.description} class="search-item-desc">
+                                            {group.description}
+                                        </p>
+                                    </SearchResult>
                                 {/each}
                             {/if}
                         {/await}
@@ -210,18 +206,14 @@
                             {#if resp.length > 0}
                                 <h3 class="search-subtitle">{$_("users")}</h3>
                                 {#each resp as user, i (user.userId)}
-                                    <div
-                                        animate:flip={{ duration: 600, easing: elasticOut }}
-                                        out:fade|local={{ duration: 150 }}>
-                                        <SearchResult
-                                            index={i}
-                                            avatarUrl={avatarUrl(user)}
-                                            on:click={() => chatWith(user.userId)}>
-                                            <h4 class="search-item-title">
-                                                @{user.username}
-                                            </h4>
-                                        </SearchResult>
-                                    </div>
+                                    <SearchResult
+                                        index={i}
+                                        avatarUrl={avatarUrl(user)}
+                                        on:click={() => chatWith(user.userId)}>
+                                        <h4 class="search-item-title">
+                                            @{user.username}
+                                        </h4>
+                                    </SearchResult>
                                 {/each}
                             {/if}
                         {/await}
@@ -233,24 +225,23 @@
                             {#if resp.kind == "success" && resp.matches.length > 0}
                                 <h3 class="search-subtitle">{$_("messages")}</h3>
                                 {#each resp.matches as msg, i (`${msg.chatId}_${msg.messageIndex}`)}
-                                    <div
-                                        animate:flip={{ duration: 600, easing: elasticOut }}
-                                        out:fade|local={{ duration: 150 }}>
-                                        <SearchResult
-                                            index={i}
-                                            avatarUrl={avatarUrl(messageMatchDataContent(msg))}
-                                            showSpinner={false}
-                                            on:click={() => loadMessage(msg)}>
-                                            <h4 class="search-item-title">
-                                                {messageMatchTitle(msg)}
-                                            </h4>
-                                            <p
-                                                title={getContentAsText(msg.content)}
-                                                class="search-item-desc">
-                                                {getContentAsText(msg.content)}
-                                            </p>
-                                        </SearchResult>
-                                    </div>
+                                    <SearchResult
+                                        index={i}
+                                        avatarUrl={avatarUrl(
+                                            messageMatchDataContent(msg),
+                                            "../assets/group.svg"
+                                        )}
+                                        showSpinner={false}
+                                        on:click={() => loadMessage(msg)}>
+                                        <h4 class="search-item-title">
+                                            {messageMatchTitle(msg)}
+                                        </h4>
+                                        <p
+                                            title={getContentAsText(msg.content)}
+                                            class="search-item-desc">
+                                            {getContentAsText(msg.content)}
+                                        </p>
+                                    </SearchResult>
                                 {/each}
                             {/if}
                         {/await}
