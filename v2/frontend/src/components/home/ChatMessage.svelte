@@ -300,6 +300,7 @@
                 <div
                     in:pop={{ duration: 500 }}
                     on:click={() => toggleReaction(reaction)}
+                    class:me={user !== undefined ? userIds.has(user.userId) : false}
                     class="message-reaction">
                     {reaction}
                     <span class="reaction-count">
@@ -412,6 +413,11 @@
             margin-left: 1px;
             margin-right: 1px;
             margin-bottom: $sp2;
+            // border: 1px solid transparent;
+
+            &.me {
+                border: 2px solid var(--reaction-me);
+            }
 
             .reaction-count {
                 @include font(book, normal, fs-60);

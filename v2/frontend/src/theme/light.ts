@@ -24,6 +24,7 @@ export function lightTheme(): Theme {
         reaction: {
             bg: "#efefef",
             txt: "#191919",
+            me: pinkAccent,
         },
 
         timeline: {

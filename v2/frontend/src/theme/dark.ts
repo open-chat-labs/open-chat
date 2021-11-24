@@ -26,8 +26,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         reaction: {
+            ...defaultTheme.reaction,
             bg: dark25,
             txt: dark60,
+            me: "#085d8c",
         },
 
         timeline: {

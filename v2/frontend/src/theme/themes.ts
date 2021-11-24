@@ -33,6 +33,7 @@ export interface Theme {
     reaction: {
         bg: string;
         txt: string;
+        me: string;
     };
 
     timeline: {
