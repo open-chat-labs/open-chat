@@ -186,7 +186,7 @@
             class:rtl={$rtlStore}>
             {#if first && !me && groupChat && !deleted}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
-                    <Link on:click={chatWithUser}>
+                    <Link underline={"hover"} on:click={chatWithUser}>
                         <h4 class="username" class:fill>{username}</h4>
                     </Link>
                 </div>
@@ -466,6 +466,7 @@
         .username {
             color: inherit;
             color: var(--accent);
+            display: inline;
 
             &.fill {
                 color: #fff;
