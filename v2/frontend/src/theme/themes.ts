@@ -25,6 +25,8 @@ export interface Theme {
     error: string;
     accent: string;
 
+    placeholder: string;
+
     notificationBar: {
         bg: string;
         txt: string;
@@ -33,6 +35,7 @@ export interface Theme {
     reaction: {
         bg: string;
         txt: string;
+        me: string;
     };
 
     timeline: {

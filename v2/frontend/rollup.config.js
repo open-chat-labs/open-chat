@@ -36,10 +36,12 @@ if (process.env.DFX_NETWORK) {
         process.env.USER_INDEX_CANISTER = canisters.user_index[process.env.DFX_NETWORK];
         process.env.GROUP_INDEX_CANISTER = canisters.group_index[process.env.DFX_NETWORK];
         process.env.NOTIFICATIONS_CANISTER = canisters.notifications[process.env.DFX_NETWORK];
+        process.env.ONLINE_CANISTER = canisters.online_users_aggregator[process.env.DFX_NETWORK];
 
         console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
         console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);
         console.log("NotificationsCanisterId: ", process.env.NOTIFICATIONS_CANISTER);
+        console.log("OnlineCanisterId: ", process.env.ONLINE_CANISTER);
     } else {
         console.log(
             "Couldn't find canisters JSON at: ",
@@ -161,6 +163,7 @@ export default [
                 "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
                 "process.env.GROUP_INDEX_CANISTER": process.env.GROUP_INDEX_CANISTER,
                 "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
+                "process.env.ONLINE_CANISTER": process.env.ONLINE_CANISTER,
                 "process.env.BLOB_URL_PATTERN": process.env.BLOB_URL_PATTERN,
                 "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
                 "process.env.USERGEEK_APIKEY": process.env.USERGEEK_APIKEY,

@@ -172,7 +172,12 @@
         </div>
     {/if}
     <div class="avatar">
-        <Avatar {blocked} status={chat.userStatus} url={chat.avatarUrl} size={AvatarSize.Small} />
+        <Avatar
+            statusBorder={"var(--section-bg)"}
+            {blocked}
+            status={chat.userStatus}
+            url={chat.avatarUrl}
+            size={AvatarSize.Small} />
     </div>
     <div class="chat-details">
         <div class="chat-name" title={chat.name}>

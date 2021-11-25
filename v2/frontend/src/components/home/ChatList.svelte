@@ -6,7 +6,7 @@
     import { fade } from "svelte/transition";
     import { flip } from "svelte/animate";
     import { elasticOut } from "svelte/easing";
-    import { _ } from "svelte-i18n";
+    import { number, _ } from "svelte-i18n";
     import type { ActorRefFrom } from "xstate";
     import type { HomeMachine } from "../../fsm/home.machine";
     import { toastStore } from "../../stores/toast";
@@ -23,7 +23,7 @@
     import SearchResult from "./SearchResult.svelte";
     import { push } from "svelte-spa-router";
     import { avatarUrl } from "../../domain/user/user.utils";
-    import { getContentAsText } from "../../domain/chat/chat.utils";
+    import { getContentAsText, getMinVisibleMessageIndex } from "../../domain/chat/chat.utils";
     import type { DataContent } from "../../domain/data/data";
     import { userStore } from "../../stores/user";
     import NotificationsBar from "./NotificationsBar.svelte";
@@ -66,6 +66,22 @@
         searchTerm !== ""
             ? $machine.context.chatSummaries.filter(chatMatchesSearch)
             : $machine.context.chatSummaries;
+
+    $: chatsWithUnreadMsgs = chats.reduce(
+        (num, chat) =>
+            $machine.context.markRead.unreadMessageCount(
+                chat.chatId,
+                getMinVisibleMessageIndex(chat),
+                chat.latestMessage?.event.messageIndex
+            ) > 0
+                ? num + 1
+                : num,
+        0
+    );
+
+    $: {
+        document.title = chatsWithUnreadMsgs > 0 ? `OpenChat (${chatsWithUnreadMsgs})` : "OpenChat";
+    }
 
     $: chatLookup = $machine.context.chatSummaries.reduce((lookup, chat) => {
         lookup[chat.chatId] = chat;
@@ -183,22 +199,18 @@
                             {#if resp.kind === "success" && resp.matches.length > 0}
                                 <h3 class="search-subtitle">{$_("publicGroups")}</h3>
                                 {#each resp.matches as group, i (group.chatId)}
-                                    <div
-                                        animate:flip={{ duration: 600, easing: elasticOut }}
-                                        out:fade|local={{ duration: 150 }}>
-                                        <SearchResult
-                                            index={i}
-                                            avatarUrl={avatarUrl(group)}
-                                            showSpinner={joiningGroup === group.chatId}
-                                            on:click={() => joinGroup(group)}>
-                                            <h4 class="search-item-title">
-                                                {group.name}
-                                            </h4>
-                                            <p title={group.description} class="search-item-desc">
-                                                {group.description}
-                                            </p>
-                                        </SearchResult>
-                                    </div>
+                                    <SearchResult
+                                        index={i}
+                                        avatarUrl={avatarUrl(group, "../assets/group.svg")}
+                                        showSpinner={joiningGroup === group.chatId}
+                                        on:click={() => joinGroup(group)}>
+                                        <h4 class="search-item-title">
+                                            {group.name}
+                                        </h4>
+                                        <p title={group.description} class="search-item-desc">
+                                            {group.description}
+                                        </p>
+                                    </SearchResult>
                                 {/each}
                             {/if}
                         {/await}
@@ -210,18 +222,14 @@
                             {#if resp.length > 0}
                                 <h3 class="search-subtitle">{$_("users")}</h3>
                                 {#each resp as user, i (user.userId)}
-                                    <div
-                                        animate:flip={{ duration: 600, easing: elasticOut }}
-                                        out:fade|local={{ duration: 150 }}>
-                                        <SearchResult
-                                            index={i}
-                                            avatarUrl={avatarUrl(user)}
-                                            on:click={() => chatWith(user.userId)}>
-                                            <h4 class="search-item-title">
-                                                @{user.username}
-                                            </h4>
-                                        </SearchResult>
-                                    </div>
+                                    <SearchResult
+                                        index={i}
+                                        avatarUrl={avatarUrl(user)}
+                                        on:click={() => chatWith(user.userId)}>
+                                        <h4 class="search-item-title">
+                                            @{user.username}
+                                        </h4>
+                                    </SearchResult>
                                 {/each}
                             {/if}
                         {/await}
@@ -233,24 +241,23 @@
                             {#if resp.kind == "success" && resp.matches.length > 0}
                                 <h3 class="search-subtitle">{$_("messages")}</h3>
                                 {#each resp.matches as msg, i (`${msg.chatId}_${msg.messageIndex}`)}
-                                    <div
-                                        animate:flip={{ duration: 600, easing: elasticOut }}
-                                        out:fade|local={{ duration: 150 }}>
-                                        <SearchResult
-                                            index={i}
-                                            avatarUrl={avatarUrl(messageMatchDataContent(msg))}
-                                            showSpinner={false}
-                                            on:click={() => loadMessage(msg)}>
-                                            <h4 class="search-item-title">
-                                                {messageMatchTitle(msg)}
-                                            </h4>
-                                            <p
-                                                title={getContentAsText(msg.content)}
-                                                class="search-item-desc">
-                                                {getContentAsText(msg.content)}
-                                            </p>
-                                        </SearchResult>
-                                    </div>
+                                    <SearchResult
+                                        index={i}
+                                        avatarUrl={avatarUrl(
+                                            messageMatchDataContent(msg),
+                                            "../assets/group.svg"
+                                        )}
+                                        showSpinner={false}
+                                        on:click={() => loadMessage(msg)}>
+                                        <h4 class="search-item-title">
+                                            {messageMatchTitle(msg)}
+                                        </h4>
+                                        <p
+                                            title={getContentAsText(msg.content)}
+                                            class="search-item-desc">
+                                            {getContentAsText(msg.content)}
+                                        </p>
+                                    </SearchResult>
                                 {/each}
                             {/if}
                         {/await}

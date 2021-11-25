@@ -11,6 +11,7 @@ import { ServiceContainer } from "../services/serviceContainer";
 import { GroupIndexClient } from "../services/groupIndex/groupIndex.client";
 import { UserIndexClient } from "../services/userIndex/userIndex.client";
 import { NotificationsClient } from "../services/notifications/notifications.client";
+import { OnlineClient } from "../services/online/online.client";
 
 type Config = Partial<MachineOptions<IdentityContext, IdentityEvents>>;
 
@@ -29,6 +30,7 @@ const fakeIdentity: Identity = {
 GroupIndexClient.create = jest.fn();
 UserIndexClient.create = jest.fn();
 NotificationsClient.create = jest.fn();
+OnlineClient.create = jest.fn();
 const mockServiceContainer = new ServiceContainer(fakeIdentity);
 
 // create a test version of all of our side effects

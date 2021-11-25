@@ -15,6 +15,7 @@ export function lightTheme(): Theme {
         txt: "#191919",
         error: "#CF6679",
         accent: pinkAccent,
+        placeholder: "#aaaaaa",
 
         notificationBar: {
             bg: orangeAccent,
@@ -24,6 +25,7 @@ export function lightTheme(): Theme {
         reaction: {
             bg: "#efefef",
             txt: "#191919",
+            me: pinkAccent,
         },
 
         timeline: {

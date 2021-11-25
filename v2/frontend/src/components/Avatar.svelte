@@ -6,6 +6,7 @@
     export let status: UserStatus = UserStatus.Offline;
     export let size: AvatarSize = AvatarSize.Medium;
     export let blocked: boolean = false;
+    export let statusBorder = "white";
 </script>
 
 <div
@@ -17,7 +18,7 @@
     class:blocked
     style="background-image: url({url});">
     {#if status === UserStatus.Online}
-        <div class:rtl={$rtlStore} class="online" />
+        <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`} />
     {/if}
 </div>
 
@@ -32,7 +33,6 @@
         background-color: $online;
         position: absolute;
         bottom: 0;
-        box-shadow: rgb(255 255 255) 0px 0px 0px 2px;
         &:not(.rtl) {
             right: 0;
         }
