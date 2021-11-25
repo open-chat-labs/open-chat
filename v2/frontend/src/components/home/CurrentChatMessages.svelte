@@ -56,7 +56,6 @@
     let initialised = false;
     let scrollingToMessage = false;
     let scrollTimer: number | undefined;
-    let scrollTop = 0;
     let currentChatId = "";
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
@@ -174,7 +173,6 @@
             return;
         }
 
-        scrollTop = messagesDiv.scrollTop;
         fromBottom = -messagesDiv.scrollTop;
         fromTop = calculateFromTop();
 
