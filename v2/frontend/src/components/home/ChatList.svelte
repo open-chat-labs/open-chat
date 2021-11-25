@@ -6,7 +6,7 @@
     import { fade } from "svelte/transition";
     import { flip } from "svelte/animate";
     import { elasticOut } from "svelte/easing";
-    import { _ } from "svelte-i18n";
+    import { number, _ } from "svelte-i18n";
     import type { ActorRefFrom } from "xstate";
     import type { HomeMachine } from "../../fsm/home.machine";
     import { toastStore } from "../../stores/toast";
@@ -23,7 +23,7 @@
     import SearchResult from "./SearchResult.svelte";
     import { push } from "svelte-spa-router";
     import { avatarUrl } from "../../domain/user/user.utils";
-    import { getContentAsText } from "../../domain/chat/chat.utils";
+    import { getContentAsText, getMinVisibleMessageIndex } from "../../domain/chat/chat.utils";
     import type { DataContent } from "../../domain/data/data";
     import { userStore } from "../../stores/user";
     import NotificationsBar from "./NotificationsBar.svelte";
@@ -66,6 +66,22 @@
         searchTerm !== ""
             ? $machine.context.chatSummaries.filter(chatMatchesSearch)
             : $machine.context.chatSummaries;
+
+    $: chatsWithUnreadMsgs = chats.reduce(
+        (num, chat) =>
+            $machine.context.markRead.unreadMessageCount(
+                chat.chatId,
+                getMinVisibleMessageIndex(chat),
+                chat.latestMessage?.event.messageIndex
+            ) > 0
+                ? num + 1
+                : num,
+        0
+    );
+
+    $: {
+        document.title = chatsWithUnreadMsgs > 0 ? `OpenChat (${chatsWithUnreadMsgs})` : "OpenChat";
+    }
 
     $: chatLookup = $machine.context.chatSummaries.reduce((lookup, chat) => {
         lookup[chat.chatId] = chat;
