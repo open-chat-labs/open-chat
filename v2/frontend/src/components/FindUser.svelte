@@ -11,6 +11,7 @@
     import type { ServiceContainer } from "../services/serviceContainer";
     import { userStore } from "../stores/user";
     import { toastStore } from "../stores/toast";
+    import { iconSize } from "../stores/iconSize";
 
     export let api: ServiceContainer;
     export let mode: "add" | "edit";
@@ -21,6 +22,7 @@
     let searchTerm: string = "";
     let users: UserSummary[] = [];
     let searching: boolean = false;
+    let hovering = false;
 
     onMount(() => {
         // this focus seems to cause a problem with the animation of the right panel without
@@ -62,7 +64,7 @@
 </script>
 
 <div class="search-form" class:add={mode === "add"} class:edit={mode === "edit"}>
-    <span class="icon"><Magnify color={"#ccc"} /></span>
+    <span class="icon"><Magnify size={$iconSize} color={"#ccc"} /></span>
     <input
         bind:this={inp}
         bind:value={searchTerm}
@@ -80,9 +82,16 @@
         <Loading />
     {:else}
         {#each users as user, _i (user.userId)}
-            <div class="user" on:click={() => onSelect(user)}>
+            <div
+                class="user"
+                on:click={() => onSelect(user)}
+                on:mouseenter={() => (hovering = true)}
+                on:mouseleave={() => (hovering = false)}>
                 <span class="avatar">
                     <Avatar
+                        statusBorder={hovering
+                            ? "var(--participants-hv)"
+                            : "var(--participants-bg)"}
                         url={avatarUrl(user)}
                         status={userStatus(user)}
                         size={AvatarSize.Small} />
@@ -129,6 +138,10 @@
         border: none;
         width: 100%;
         @include font(book, normal, fs-100);
+
+        &::placeholder {
+            color: var(--placeholder);
+        }
     }
 
     .user {

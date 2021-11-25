@@ -89,5 +89,9 @@
         border: none;
         width: 100%;
         @include font(book, normal, fs-100);
+
+        &::placeholder {
+            color: var(--placeholder);
+        }
     }
 </style>

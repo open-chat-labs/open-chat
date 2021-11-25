@@ -242,7 +242,7 @@
 
         &:empty:before {
             content: attr(placeholder);
-            color: #ccc;
+            color: var(--placeholder);
             pointer-events: none;
             display: block; /* For Firefox */
         }

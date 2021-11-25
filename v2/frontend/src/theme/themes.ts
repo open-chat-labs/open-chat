@@ -25,6 +25,8 @@ export interface Theme {
     error: string;
     accent: string;
 
+    placeholder: string;
+
     notificationBar: {
         bg: string;
         txt: string;

@@ -23,6 +23,8 @@
     export let selected: boolean;
     export let messagesRead: IMessageReadTracker;
 
+    let hovering = false;
+
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
             return {
@@ -59,9 +61,16 @@
     class:first={index === 0}
     class:selected
     class:rtl={$rtlStore}
+    on:mouseenter={() => (hovering = true)}
+    on:mouseleave={() => (hovering = false)}
     href={`/#/${chatSummary.chatId}`}>
     <div class="avatar">
-        <Avatar {blocked} url={chat.avatarUrl} status={chat.userStatus} size={AvatarSize.Small} />
+        <Avatar
+            statusBorder={selected || hovering ? "var(--chatSummary-hv)" : "var(--chatSummary-bg)"}
+            {blocked}
+            url={chat.avatarUrl}
+            status={chat.userStatus}
+            size={AvatarSize.Small} />
     </div>
     <div class="details" class:rtl={$rtlStore}>
         <div class="name-date">

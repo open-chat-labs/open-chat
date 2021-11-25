@@ -30,6 +30,8 @@
     export let myRole: ParticipantRole;
     export let publicGroup: boolean;
 
+    let hovering = false;
+
     function removeUser() {
         dispatch("removeParticipant", participant.userId);
     }
@@ -62,9 +64,16 @@
     }
 </script>
 
-<div class="participant" class:me on:click={participantSelected} role="button">
+<div
+    class="participant"
+    class:me
+    on:click={participantSelected}
+    role="button"
+    on:mouseenter={() => (hovering = true)}
+    on:mouseleave={() => (hovering = false)}>
     <span class="avatar">
         <Avatar
+            statusBorder={hovering && !me ? "var(--participants-hv)" : "var(--participants-bg)"}
             blocked={participant.kind === "blocked_participant"}
             url={avatarUrl(participant)}
             status={getUserStatus($userStore, participant.userId)}
