@@ -102,16 +102,6 @@ type UpgradeCanisterResponse =
         InternalError: text;
     };
 
-type MarkAsOnlineArgs = 
-    record {
-    };
-
-type MarkAsOnlineResponse =
-    variant {
-        Success;
-        UserNotFound;
-    };
-
 type TransferCyclesArgs = 
     record {
         sender: UserId;
@@ -255,9 +245,6 @@ service: {
     // If the current user is "upgrade_required" then call this to upgrade the user canister
     // Will need to block in the app until this has completed
     upgrade_canister: (UpgradeCanisterArgs) -> (UpgradeCanisterResponse);
-
-    // Call this regularly to maintain the online status of the user
-    mark_as_online: (MarkAsOnlineArgs) -> (MarkAsOnlineResponse);
 
     // Gets the user based on the caller principal. The user can be in a variety of states
     current_user: (CurrentUserArgs) -> (CurrentUserResponse) query;
