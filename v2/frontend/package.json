@@ -74,6 +74,7 @@
         "@dfinity/principal": "^0.9.1",
         "@fortawesome/free-solid-svg-icons": "^5.15.3",
         "@sveltejs/svelte-virtual-list": "^3.0.1",
+        "@types/async": "^3.2.10",
         "@types/jest": "^27.0.2",
         "@xstate/inspect": "^0.4.1",
         "@xstate/svelte": "^0.1.0",

@@ -16,6 +16,7 @@
                 "@dfinity/principal": "^0.9.1",
                 "@fortawesome/free-solid-svg-icons": "^5.15.3",
                 "@sveltejs/svelte-virtual-list": "^3.0.1",
+                "@types/async": "^3.2.10",
                 "@types/jest": "^27.0.2",
                 "@xstate/inspect": "^0.4.1",
                 "@xstate/svelte": "^0.1.0",
@@ -2980,6 +2981,11 @@
             "resolved": "https://registry.npmjs.org/@types/aria-query/-/aria-query-4.2.1.tgz",
             "integrity": "sha512-S6oPal772qJZHoRZLFc/XoZW2gFvwXusYUmXPXkgxJLuEk2vOt7jc4Yo6z/vtI0EBkbPBVrJJ0B+prLIKiWqHg==",
             "dev": true
+        },
+        "node_modules/@types/async": {
+            "version": "3.2.10",
+            "resolved": "https://registry.npmjs.org/@types/async/-/async-3.2.10.tgz",
+            "integrity": "sha512-/bPr8eB1/00J14EGHrZiGqCal/zA0nE/8W1YCM3lGnUcfiWPW6liQwThgGzjt/3uIrYbLtLCPg3ZmpUe6YmFRw=="
         },
         "node_modules/@types/babel__core": {
             "version": "7.1.16",
@@ -15807,6 +15813,11 @@
             "resolved": "https://registry.npmjs.org/@types/aria-query/-/aria-query-4.2.1.tgz",
             "integrity": "sha512-S6oPal772qJZHoRZLFc/XoZW2gFvwXusYUmXPXkgxJLuEk2vOt7jc4Yo6z/vtI0EBkbPBVrJJ0B+prLIKiWqHg==",
             "dev": true
+        },
+        "@types/async": {
+            "version": "3.2.10",
+            "resolved": "https://registry.npmjs.org/@types/async/-/async-3.2.10.tgz",
+            "integrity": "sha512-/bPr8eB1/00J14EGHrZiGqCal/zA0nE/8W1YCM3lGnUcfiWPW6liQwThgGzjt/3uIrYbLtLCPg3ZmpUe6YmFRw=="
         },
         "@types/babel__core": {
             "version": "7.1.16",
