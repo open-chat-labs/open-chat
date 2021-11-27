@@ -11,7 +11,7 @@ export class OpenStorageAgent {
     private readonly agent: HttpAgent;
     private readonly indexClient: IIndexClient;
 
-    constructor(identity: Identity, indexCanisterId: Principal, fetchRootKey: boolean = false) {
+    constructor(identity: Identity, indexCanisterId: Principal, fetchRootKey = false) {
         const agent = new HttpAgent({ identity });
         if (fetchRootKey) {
             agent.fetchRootKey();

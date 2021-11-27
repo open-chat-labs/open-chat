@@ -14,7 +14,7 @@ export class DataClient implements IDataClient {
         if (process.env.MOCK_SERVICES) {
             return new DataClientMock();
         }
-        const openStorageAgent = OpenStorageAgent.createAgent(
+        const openStorageAgent = new OpenStorageAgent(
             identity,
             Principal.fromText("process.env.OPEN_STORAGE_INDEX_CANISTER"));
 
@@ -36,7 +36,7 @@ export class DataClient implements IDataClient {
             content.kind === "audio_content"
         ) {
             if (content.blobData && content.blobReference === undefined) {
-                const accessorIds = accessorCanisterIds.map(Principal.fromText);
+                const accessorIds = accessorCanisterIds.map(c => Principal.fromText(c));
 
                 content.blobReference = this.convertResponse(await this.openStorageAgent.uploadBlob(
                     content.mimeType,
@@ -53,7 +53,7 @@ export class DataClient implements IDataClient {
                 content.videoData.blobReference === undefined &&
                 content.imageData.blobReference === undefined
             ) {
-                const accessorIds = accessorCanisterIds.map(Principal.fromText);
+                const accessorIds = accessorCanisterIds.map(c => Principal.fromText(c));
 
                 await Promise.all([
                     this.openStorageAgent.uploadBlob(content.mimeType, accessorIds, content.videoData.blobData),
