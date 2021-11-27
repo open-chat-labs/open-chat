@@ -235,8 +235,8 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     editMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
-        return DataClient.create(this.identity, this.userId)
-            .uploadData(message.content)
+        return DataClient.create(this.identity)
+            .uploadData(message.content, [this.userId, recipientId])
             .then(() => {
                 const req = {
                     content: apiMessageContent(message.content),
@@ -253,8 +253,8 @@ export class UserClient extends CandidService implements IUserClient {
         message: Message,
         replyingToChatId?: string
     ): Promise<SendMessageResponse> {
-        return DataClient.create(this.identity, this.userId)
-            .uploadData(message.content)
+        return DataClient.create(this.identity)
+            .uploadData(message.content, [this.userId, recipientId])
             .then(() => {
                 const req: ApiSendMessageArgs = {
                     content: apiMessageContent(message.content),
