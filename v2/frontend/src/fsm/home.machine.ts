@@ -55,7 +55,6 @@ export interface HomeContext {
 
 export type HomeEvents =
     | { type: "SELECT_CHAT"; data: { chatId: string; messageIndex: string | undefined } }
-    | { type: "NEW_CHAT" }
     | {
           type: "REMOTE_USER_TOGGLED_REACTION";
           data: RemoteUserToggledReaction;
@@ -82,15 +81,10 @@ export type HomeEvents =
       }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
-    | { type: "CANCEL_NEW_CHAT" }
     | { type: "CREATE_CHAT_WITH_USER"; data: UserSummary }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "UPDATE_USER_AVATAR"; data: DataContent }
     | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext }
-    | {
-          type: "MESSAGE_READ_BY_ME";
-          data: { chatId: string; messageIndex: number; messageId: bigint };
-      }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
     | { type: "SYNC_WITH_RTC_HANDLER"; data: HomeContext }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
@@ -585,11 +579,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         selectedChat: (_ctx, _) => undefined,
                     }),
                 },
-                NEW_CHAT: {
-                    internal: true,
-                    target: ".new_chat",
-                    actions: log("received new chat"),
-                },
                 REPLY_PRIVATELY_TO: {
                     actions: assign((ctx, ev) => {
                         // let's see if we already have a direct chat with this user?
@@ -652,37 +641,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 no_chat_selected: {},
                 chat_selected: {
                     entry: log("entering the chat_selected state"),
-                },
-                new_chat: {
-                    entry: log("entering new chat"),
-                    on: {
-                        // todo - actually we would like to go back to where we were
-                        CANCEL_NEW_CHAT: "no_chat_selected",
-                        CREATE_CHAT_WITH_USER: {
-                            actions: [
-                                assign((ctx, ev) => {
-                                    const dummyChat: DirectChatSummary = {
-                                        kind: "direct_chat",
-                                        them: ev.data.userId,
-                                        chatId: ev.data.userId,
-                                        readByMe: [],
-                                        readByThem: [],
-                                        latestMessage: undefined,
-                                        latestEventIndex: 0,
-                                        dateCreated: BigInt(Date.now()),
-                                        notificationsMuted: false,
-                                    };
-                                    push(`/${dummyChat.chatId}`);
-                                    return {
-                                        chatSummaries: [dummyChat, ...ctx.chatSummaries],
-                                    };
-                                }),
-                                send((ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }), {
-                                    to: "updateChatsPoller",
-                                }),
-                            ],
-                        },
-                    },
                 },
             },
         },

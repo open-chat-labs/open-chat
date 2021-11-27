@@ -11,6 +11,7 @@ import { rollbar } from "../utils/logging";
 import { AuthError } from "../services/httpError";
 import { homeMachine } from "./home.machine";
 import { MessageReadTracker } from "../stores/markRead";
+import { HomeController } from "./home.controller";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -27,6 +28,7 @@ export interface IdentityContext {
     serviceContainer?: ServiceContainer;
     user?: User;
     registrationFailure?: string;
+    homeController?: HomeController;
 }
 
 type RegisterFailed = { kind: "failure" };
@@ -330,28 +332,31 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
             on: {
                 LOGOUT: "logging_out",
             },
+            entry: assign((ctx, _ev) => ({
+                homeController: new HomeController(ctx.serviceContainer!, ctx.user!),
+            })),
             invoke: [
-                {
-                    id: "homeMachine",
-                    src: "homeMachine",
-                    data: (ctx, _ev) => ({
-                        serviceContainer: ctx.serviceContainer,
-                        user: ctx.user,
-                        chatSummaries: [],
-                        selectedChat: undefined,
-                        userLookup: {},
-                        usersLastUpdate: BigInt(0),
-                        chatsIndex: {},
-                        markRead: new MessageReadTracker(ctx.serviceContainer!),
-                    }),
-                    onDone: "login",
-                    onError: {
-                        target: "unexpected_error",
-                        actions: assign({
-                            error: (_, ev) => ev.data,
-                        }),
-                    },
-                },
+                // {
+                //     id: "homeMachine",
+                //     src: "homeMachine",
+                //     data: (ctx, _ev) => ({
+                //         serviceContainer: ctx.serviceContainer,
+                //         user: ctx.user,
+                //         chatSummaries: [],
+                //         selectedChat: undefined,
+                //         userLookup: {},
+                //         usersLastUpdate: BigInt(0),
+                //         chatsIndex: {},
+                //         markRead: new MessageReadTracker(ctx.serviceContainer!),
+                //     }),
+                //     onDone: "login",
+                //     onError: {
+                //         target: "unexpected_error",
+                //         actions: assign({
+                //             error: (_, ev) => ev.data,
+                //         }),
+                //     },
+                // },
                 {
                     id: "startSession",
                     src: "startSession",
