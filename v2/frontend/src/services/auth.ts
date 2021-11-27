@@ -36,6 +36,7 @@ export function login(): Promise<Identity> {
                 identityProvider: IDENTITY_URL,
                 maxTimeToLive: SESSION_TIMEOUT_NANOS,
                 onSuccess: () => {
+                    console.log("My principal", c.getIdentity().getPrincipal().toString());
                     resolve(c.getIdentity());
                 },
                 onError: (err) => reject(err),
