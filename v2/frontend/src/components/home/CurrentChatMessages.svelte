@@ -48,7 +48,7 @@
     $: events = controller.events;
     $: chat = controller.chat;
     $: focusMessageIndex = controller.focusMessageIndex;
-    $: markRead = controller.markRead.store;
+    $: markRead = controller.markRead;
 
     setContext<UserLookup>("userLookup", $userStore);
 

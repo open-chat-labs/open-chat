@@ -1,4 +1,4 @@
-import { get, Writable, writable } from "svelte/store";
+import { get, Subscriber, Unsubscriber, Writable, writable } from "svelte/store";
 import type { MarkReadRequest, MarkReadResponse, MessageIndexRange } from "../domain/chat/chat";
 import {
     indexIsInRanges,
@@ -28,7 +28,7 @@ export interface IMessageReadTracker {
     ) => number;
     isRead: (chatId: string, messageIndex: number, messageId: bigint) => boolean;
     stop: () => void;
-    store: Writable<MessageReadState>;
+    subscribe(sub: Subscriber<MessageReadState>): Unsubscriber;
 }
 
 export type MessageReadState = {
@@ -42,12 +42,19 @@ export class MessageReadTracker implements IMessageReadTracker {
     public serverState: MessageRangesByChat = {};
     public waiting: Record<string, Set<bigint>> = {};
     public state: MessageRangesByChat = {};
+    private subscribers: Subscriber<MessageReadState>[] = [];
 
-    public store = writable<MessageReadState>({
-        serverState: {},
-        waiting: {},
-        state: {},
-    });
+    public subscribe(sub: Subscriber<MessageReadState>): Unsubscriber {
+        this.subscribers.push(sub);
+        sub({
+            serverState: this.serverState,
+            waiting: this.waiting,
+            state: this.state,
+        });
+        return () => {
+            this.subscribers = this.subscribers.filter((s) => s !== sub);
+        };
+    }
 
     constructor(private api: MarkMessagesRead) {
         if (process.env.NODE_ENV !== "test") {
@@ -82,12 +89,14 @@ export class MessageReadTracker implements IMessageReadTracker {
         }
     }
 
-    public syncStore(): void {
-        // the store is just required so that svelte can respond to changes
-        this.store.set({
-            serverState: this.serverState,
-            waiting: this.waiting,
-            state: this.state,
+    /** this will notify all subscribers that something that affects the unread message count has changed */
+    public publish(): void {
+        this.subscribers.forEach((sub) => {
+            sub({
+                serverState: this.serverState,
+                waiting: this.waiting,
+                state: this.state,
+            });
         });
     }
 
@@ -105,7 +114,7 @@ export class MessageReadTracker implements IMessageReadTracker {
             this.state[chatId] = insertIndexIntoRanges(messageIndex, this.state[chatId] ?? []);
         }
 
-        this.syncStore();
+        this.publish();
     }
 
     markRangeRead(chatId: string, range: MessageIndexRange): void {
@@ -113,7 +122,7 @@ export class MessageReadTracker implements IMessageReadTracker {
             this.state[chatId] = [];
         }
         this.state[chatId] = mergeMessageIndexRanges(this.state[chatId], [range]);
-        this.syncStore();
+        this.publish();
     }
 
     confirmMessage(chatId: string, messageIndex: number, messageId: bigint): boolean {
@@ -137,7 +146,7 @@ export class MessageReadTracker implements IMessageReadTracker {
         if (messageIndexRangesAreEqual(this.serverState[chatId], merged)) {
             this.state[chatId] = [];
         }
-        this.syncStore();
+        this.publish();
     }
 
     unreadMessageCount(
@@ -221,4 +230,8 @@ export class FakeMessageReadTracker implements IMessageReadTracker {
         state: {},
         serverState: {},
     });
+
+    subscribe(_sub: Subscriber<MessageReadState>): Unsubscriber {
+        return () => undefined;
+    }
 }

@@ -8,7 +8,6 @@
     import { elasticOut } from "svelte/easing";
     import { _ } from "svelte-i18n";
     import { toastStore } from "../../stores/toast";
-    import { rollbar } from "../../utils/logging";
     import type { ChatSummary as ChatSummaryType } from "../../domain/chat/chat";
     import type {
         GroupMatch,
@@ -17,7 +16,7 @@
         SearchAllMessagesResponse,
     } from "../../domain/search/search";
     import type { UserSummary } from "../../domain/user/user";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onDestroy } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import { push } from "svelte-spa-router";
     import { avatarUrl } from "../../domain/user/user.utils";
@@ -39,6 +38,7 @@
     const dispatch = createEventDispatcher();
 
     let joiningGroup: string | undefined = undefined;
+    let chatsWithUnreadMsgs: number;
 
     $: user = controller.user ? $userStore[controller.user?.userId] : undefined;
     $: api = controller.api;
@@ -64,17 +64,23 @@
 
     $: chats = searchTerm !== "" ? $chatsList.filter(chatMatchesSearch) : $chatsList;
 
-    $: chatsWithUnreadMsgs = chats.reduce(
-        (num, chat) =>
-            controller.messagesRead.unreadMessageCount(
-                chat.chatId,
-                getMinVisibleMessageIndex(chat),
-                chat.latestMessage?.event.messageIndex
-            ) > 0
-                ? num + 1
-                : num,
-        0
-    );
+    let unsub = controller.messagesRead.subscribe((_val) => {
+        chatsWithUnreadMsgs = chats
+            ? chats.reduce(
+                  (num, chat) =>
+                      controller.messagesRead.unreadMessageCount(
+                          chat.chatId,
+                          getMinVisibleMessageIndex(chat),
+                          chat.latestMessage?.event.messageIndex
+                      ) > 0
+                          ? num + 1
+                          : num,
+                  0
+              )
+            : 0;
+    });
+
+    onDestroy(unsub);
 
     $: {
         document.title = chatsWithUnreadMsgs > 0 ? `OpenChat (${chatsWithUnreadMsgs})` : "OpenChat";

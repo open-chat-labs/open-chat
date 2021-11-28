@@ -1,6 +1,21 @@
 import { MessageReadTracker } from "./markRead";
 import { unconfirmed } from "./unconfirmed";
 
+describe("unread unselected", () => {
+    /**
+     * Problem - if we have a chat that is *not* selected and we receive a message for that chat via webrtc
+     * it will go into unconfirmed set but it will not be in the readByUs range yet.
+     * The unread message count takes no account of this.
+     *
+     * Messages that are in unconfirmed but *not* in waiting are locally unread - that number should
+     * be added to the unread message count
+     *
+     * accounting for unconfirmed messages will also solve the reactivity problem because we can pass in the set
+     */
+
+    test.todo("placeholder");
+});
+
 describe("mark messages read", () => {
     const api = {
         markMessagesRead: jest.fn(),
@@ -15,7 +30,7 @@ describe("mark messages read", () => {
         }
         markRead.state["abc"] = [];
         markRead.serverState["abc"] = [];
-        markRead.syncStore();
+        markRead.publish();
     });
 
     test("mark unconfirmed message as read", () => {

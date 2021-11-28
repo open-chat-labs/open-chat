@@ -388,6 +388,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                     actions: assign((_, _ev) => ({
                         identity: undefined,
                         user: undefined,
+                        homeController: undefined,
                     })),
                 },
                 onError: {
@@ -395,6 +396,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                     actions: assign((_, _ev) => ({
                         identity: undefined,
                         user: undefined,
+                        homeController: undefined,
                     })),
                 },
             },

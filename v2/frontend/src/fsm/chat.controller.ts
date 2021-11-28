@@ -368,8 +368,6 @@ export class ChatController {
             event: { kind: "loaded_previous_messages" },
         });
 
-        console.log("loaded events: ", get(this.events));
-
         this.loading.set(false);
         return get(this.events);
     }

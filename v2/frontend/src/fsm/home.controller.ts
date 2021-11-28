@@ -1,28 +1,41 @@
 import { push } from "svelte-spa-router";
-import { derived, get, Unsubscriber, Writable, writable } from "svelte/store";
-import type { ChatSummary, EnhancedReplyContext } from "../domain/chat/chat";
+import { derived, get, Writable, writable } from "svelte/store";
+import type { ChatSummary, DirectChatSummary, EnhancedReplyContext } from "../domain/chat/chat";
 import { updateArgsFromChats } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
-import type { User } from "../domain/user/user";
+import type { User, UsersResponse } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
+import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
+import type {
+    WebRtcMessage,
+    RemoteUserToggledReaction,
+    RemoteUserDeletedMessage,
+    RemoteUserUndeletedMessage,
+    RemoteUserRemovedMessage,
+    RemoteUserReadMessage,
+    RemoteUserSentMessage,
+} from "../domain/webrtc/webrtc";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { background } from "../stores/background";
 import { blockedUsers } from "../stores/blockedUsers";
 import { IMessageReadTracker, MessageReadTracker } from "../stores/markRead";
 import { toastStore } from "../stores/toast";
+import { typing } from "../stores/typing";
+import { unconfirmed, unconfirmedReadByThem } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
 import { ChatController } from "./chat.controller";
+import { Poller } from "./poller";
 
 const ONE_MINUTE = 60 * 1000;
+const USER_UPDATE_INTERVAL = ONE_MINUTE;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
 
 export class HomeController {
     public messagesRead: IMessageReadTracker;
     private chatUpdatesSince?: bigint;
-    private usersLastUpdate?: bigint;
+    private usersLastUpdate = BigInt(0);
     private replyingTo?: EnhancedReplyContext;
     public chatSummaries: Writable<Record<string, ChatSummary>> = writable({});
     public chatSummariesList = derived([this.chatSummaries], ([$chatSummaries]) => {
@@ -31,8 +44,8 @@ export class HomeController {
     public initialised = false;
     public selectedChat: Writable<ChatController | undefined> = writable(undefined);
     public loading = writable(false);
-    private chatUpdateIntervalId: number | undefined;
-    private unsubscribeBackground: Unsubscriber | undefined;
+    private chatPoller: Poller | undefined;
+    private usersPoller: Poller | undefined;
 
     constructor(public api: ServiceContainer, public user: User) {
         if (process.env.NODE_ENV !== "test") {
@@ -40,34 +53,26 @@ export class HomeController {
         }
         this.messagesRead = new MessageReadTracker(api);
         this.loadChats().then(() => {
-            this.unsubscribeBackground = background.subscribe((hidden) => {
-                this.startPolling(hidden);
-            });
+            this.chatPoller = new Poller(
+                () => this.loadChats(),
+                CHAT_UPDATE_INTERVAL,
+                CHAT_UPDATE_IDLE_INTERVAL
+            );
+            this.usersPoller = new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL);
+            rtcConnectionsManager.subscribe((msg) => this.handleWebRtcMessage(msg));
         });
     }
 
-    private startChatUpdatesPoller(hidden: boolean) {
-        if (this.chatUpdateIntervalId !== undefined) {
-            window.clearInterval(this.chatUpdateIntervalId);
+    private async updateUsers() {
+        let usersResp: UsersResponse;
+        try {
+            usersResp = await this.api.getUsers(Object.keys(get(userStore)), this.usersLastUpdate);
+            console.log("sending updated users");
+            userStore.addMany(usersResp.users);
+            this.usersLastUpdate = usersResp.timestamp;
+        } catch (err) {
+            rollbar.error("Error updating users", err as Error);
         }
-        this.chatUpdateIntervalId = window.setInterval(
-            () => this.loadChats(),
-            hidden ? CHAT_UPDATE_IDLE_INTERVAL : CHAT_UPDATE_INTERVAL
-        );
-    }
-
-    private stopChatUpdatesPoller() {
-        if (this.chatUpdateIntervalId !== undefined) {
-            window.clearInterval(this.chatUpdateIntervalId);
-        }
-    }
-
-    private startPolling(hidden: boolean) {
-        this.startChatUpdatesPoller(hidden);
-    }
-
-    private stopPolling() {
-        this.stopChatUpdatesPoller();
     }
 
     private async loadChats() {
@@ -107,6 +112,7 @@ export class HomeController {
                 }, {})
             );
             this.initialised = true;
+            console.log("loaded chats");
         } catch (err) {
             toastStore.showFailureToast("errorLoadingChats");
             rollbar.error("Error loading chats", err as Error);
@@ -128,10 +134,14 @@ export class HomeController {
 
     public destroy(): void {
         this.messagesRead.stop();
-        this.stopPolling();
-        if (this.unsubscribeBackground !== undefined) {
-            this.unsubscribeBackground();
-        }
+        this.chatPoller?.stop();
+        this.usersPoller?.stop();
+        this.selectedChat.update((selectedChat) => {
+            if (selectedChat !== undefined) {
+                selectedChat.destroy();
+            }
+            return undefined;
+        });
     }
 
     updateUserAvatar(data: DataContent): void {
@@ -246,5 +256,137 @@ export class HomeController {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.createDirectChat(context.sender!.userId);
         }
+    }
+
+    private findDirectChatByUserId(userId: string): DirectChatSummary | undefined {
+        return get(this.chatSummariesList).find(
+            (c) => c.kind === "direct_chat" && c.them === userId
+        ) as DirectChatSummary | undefined;
+    }
+
+    private findChatById(chatId: string): ChatSummary | undefined {
+        return get(this.chatSummaries)[chatId];
+    }
+
+    private findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
+        return msg.chatType === "group_chat"
+            ? this.findChatById(msg.chatId)
+            : this.findDirectChatByUserId(msg.userId);
+    }
+
+    private handleWebRtcMessage(message: unknown): void {
+        const parsedMsg = message as WebRtcMessage;
+
+        const fromChat = this.findChatByChatType(parsedMsg);
+        const selectedChat = get(this.selectedChat);
+
+        // if the chat can't be found - ignore
+        if (fromChat === undefined) {
+            return;
+        }
+
+        if (
+            fromChat.chatId === selectedChat?.chatId &&
+            selectedChat?.isDirectChatWith(parsedMsg.userId) &&
+            selectedChat?.isBlockedUser()
+        ) {
+            console.log("ignoring webrtc message from blocked user");
+            return;
+        }
+
+        if (parsedMsg.kind === "remote_user_typing") {
+            typing.add(fromChat.chatId, parsedMsg.userId);
+        }
+        if (parsedMsg.kind === "remote_user_stopped_typing") {
+            typing.delete(fromChat.chatId, parsedMsg.userId);
+        }
+        if (parsedMsg.kind === "remote_user_toggled_reaction") {
+            this.remoteUserToggledReaction({
+                ...parsedMsg,
+                messageId: BigInt(parsedMsg.messageId),
+            });
+        }
+        if (parsedMsg.kind === "remote_user_deleted_message") {
+            this.remoteUserDeletedMessage({
+                ...parsedMsg,
+                messageId: BigInt(parsedMsg.messageId),
+            });
+        }
+        if (parsedMsg.kind === "remote_user_removed_message") {
+            this.remoteUserRemovedMessage({
+                ...parsedMsg,
+                messageId: BigInt(parsedMsg.messageId),
+            });
+        }
+        if (parsedMsg.kind === "remote_user_undeleted_message") {
+            this.remoteUserUndeletedMessage(parsedMsg);
+        }
+        if (parsedMsg.kind === "remote_user_sent_message") {
+            this.remoteUserSentMessage({
+                ...parsedMsg,
+                messageEvent: {
+                    ...parsedMsg.messageEvent,
+                    event: {
+                        ...parsedMsg.messageEvent.event,
+                        messageId: BigInt(parsedMsg.messageEvent.event.messageId),
+                    },
+                    timestamp: BigInt(parsedMsg.messageEvent.timestamp),
+                },
+            });
+        }
+        if (parsedMsg.kind === "remote_user_read_message") {
+            this.remoteUserReadMessage({
+                ...parsedMsg,
+                messageId: BigInt(parsedMsg.messageId),
+            });
+        }
+    }
+
+    remoteUserToggledReaction(message: RemoteUserToggledReaction): void {
+        this.delegateToChatController(message, (chat) =>
+            chat.toggleReaction(message.messageId, message.reaction, message.userId)
+        );
+    }
+
+    remoteUserDeletedMessage(message: RemoteUserDeletedMessage): void {
+        this.delegateToChatController(message, (chat) =>
+            chat.deleteMessage(message.messageId, message.userId)
+        );
+    }
+
+    remoteUserUndeletedMessage(message: RemoteUserUndeletedMessage): void {
+        this.delegateToChatController(message, (chat) =>
+            chat.undeleteMessage(message.message, message.userId)
+        );
+    }
+
+    remoteUserRemovedMessage(message: RemoteUserRemovedMessage): void {
+        this.delegateToChatController(message, (chat) =>
+            chat.removeMessage(message.messageId, message.userId)
+        );
+    }
+
+    remoteUserSentMessage(message: RemoteUserSentMessage): void {
+        console.log("remote user sent message");
+        unconfirmed.add(BigInt(message.messageEvent.event.messageId));
+        this.delegateToChatController(message, (chat) =>
+            chat.sendMessage(message.messageEvent, message.userId)
+        );
+    }
+
+    remoteUserReadMessage(message: RemoteUserReadMessage): void {
+        unconfirmedReadByThem.add(BigInt(message.messageId));
+    }
+
+    private delegateToChatController(
+        msg: WebRtcMessage,
+        fn: (selectedChat: ChatController) => void
+    ): void {
+        const chat = this.findChatByChatType(msg);
+        const selectedChat = get(this.selectedChat);
+        if (chat === undefined) return;
+        if (selectedChat === undefined) return;
+        if (chat.chatId !== selectedChat.chatId) return;
+        fn(selectedChat);
     }
 }
