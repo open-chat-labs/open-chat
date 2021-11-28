@@ -48,19 +48,18 @@ export class HomeController {
     private usersPoller: Poller | undefined;
 
     constructor(public api: ServiceContainer, public user: User) {
-        if (process.env.NODE_ENV !== "test") {
-            // some initialisation
-        }
         this.messagesRead = new MessageReadTracker(api);
-        this.loadChats().then(() => {
-            this.chatPoller = new Poller(
-                () => this.loadChats(),
-                CHAT_UPDATE_INTERVAL,
-                CHAT_UPDATE_IDLE_INTERVAL
-            );
-            this.usersPoller = new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL);
-            rtcConnectionsManager.subscribe((msg) => this.handleWebRtcMessage(msg));
-        });
+        if (process.env.NODE_ENV !== "test") {
+            this.loadChats().then(() => {
+                this.chatPoller = new Poller(
+                    () => this.loadChats(),
+                    CHAT_UPDATE_INTERVAL,
+                    CHAT_UPDATE_IDLE_INTERVAL
+                );
+                this.usersPoller = new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL);
+                rtcConnectionsManager.subscribe((msg) => this.handleWebRtcMessage(msg));
+            });
+        }
     }
 
     private async updateUsers() {
@@ -183,13 +182,14 @@ export class HomeController {
                 if (selectedChat !== undefined) {
                     selectedChat.destroy();
                 }
+
                 return new ChatController(
                     this.api,
                     user,
                     chat,
                     this.messagesRead,
                     this.replyingTo,
-                    messageIndex ? Number(messageIndex) : undefined
+                    messageIndex
                 );
             });
         } else {

@@ -17,7 +17,6 @@
     import { userStore } from "../../stores/user";
     import type { IMessageReadTracker } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
-    import { unconfirmed } from "../../stores/unconfirmed";
     import { onDestroy } from "svelte";
 
     export let index: number;
