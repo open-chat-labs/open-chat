@@ -73,7 +73,6 @@ export class HomeController {
     private async loadChats() {
         try {
             this.loading.set(!this.initialised);
-            console.log("loading chats");
             const chats = get(this.chatSummariesList);
             const chatsResponse =
                 this.chatUpdatesSince === undefined

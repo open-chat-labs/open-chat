@@ -350,6 +350,7 @@ export class ChatController {
     public async loadPreviousMessages(): Promise<EventWrapper<ChatEvent>[]> {
         this.loading.set(true);
         const criteria = this.previousMessagesCriteria();
+        console.log("loading previous messages: ", criteria);
 
         const eventsResponse = criteria
             ? await this.loadEvents(criteria[0], criteria[1])
@@ -366,6 +367,8 @@ export class ChatController {
             chatId: this.chatId,
             event: { kind: "loaded_previous_messages" },
         });
+
+        console.log("loaded events: ", get(this.events));
 
         this.loading.set(false);
         return get(this.events);
