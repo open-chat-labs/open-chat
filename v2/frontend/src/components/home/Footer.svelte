@@ -77,6 +77,7 @@
                     }
                 })
                 .catch((err) => {
+                    console.log(err);
                     toastStore.showFailureToast("errorSendingMessage");
                     controller.removeMessage(msg.messageId, controller.user.userId);
                     rollbar.error("Exception sending message", err);

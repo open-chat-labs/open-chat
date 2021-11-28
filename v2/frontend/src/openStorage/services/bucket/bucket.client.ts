@@ -13,7 +13,7 @@ export class BucketClient extends CandidService<BucketService> implements IBucke
 
     uploadChunk(
         blobId: bigint,
-        hash: bigint,
+        hash: Array<number>,
         mimeType: string,
         accessors: Array<Principal>,
         totalSize: bigint,

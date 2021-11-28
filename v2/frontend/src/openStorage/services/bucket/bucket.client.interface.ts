@@ -4,7 +4,7 @@ import type { DeleteBlobResponse, UploadChunkResponse } from "../../domain/bucke
 export interface IBucketClient {
     uploadChunk(
         blobId: bigint,
-        hash: bigint,
+        hash: Array<number>,
         mimeType: string,
         accessors: Array<Principal>,
         totalSize: bigint,

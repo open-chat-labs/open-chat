@@ -18,7 +18,7 @@ export interface AllocatedBucketResult {
 export type BlobId = bigint;
 export type CanisterId = Principal;
 export type Cycles = bigint;
-export type Hash = bigint;
+export type Hash = Array<number>;
 export type Milliseconds = bigint;
 export interface RemoveAccessorArgs { 'accessor_id' : AccessorId }
 export type RemoveAccessorResponse = { 'Success' : null };

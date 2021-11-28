@@ -6,7 +6,7 @@ import { toHttpError } from "./httpError";
 export abstract class CandidService<T> {
     protected service: T;
 
-    constructor(agent: HttpAgent, factory: IDL.InterfaceFactory, canisterId: Principal) {
+    protected constructor(agent: HttpAgent, factory: IDL.InterfaceFactory, canisterId: Principal) {
         this.service = Actor.createActor<T>(factory, {
             agent,
             canisterId,

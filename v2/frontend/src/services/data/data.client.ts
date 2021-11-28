@@ -1,11 +1,12 @@
+import { HttpAgent } from "@dfinity/agent";
+import type { Identity } from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
 import type { IDataClient } from "./data.client.interface";
 import { DataClientMock } from "./data.client.mock";
 import type { MessageContent } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
-import type { Identity } from "@dfinity/agent";
 import type { BlobReference } from "../../domain/data/data";
 import { OpenStorageAgent, UploadBlobResponse } from "../../openStorage/agent";
-import { Principal } from "@dfinity/principal";
 
 export class DataClient implements IDataClient {
     private openStorageAgent: OpenStorageAgent;
@@ -14,8 +15,12 @@ export class DataClient implements IDataClient {
         if (process.env.MOCK_SERVICES) {
             return new DataClientMock();
         }
+        const agent = new HttpAgent({ identity });
+        if (process.env.NODE_ENV !== "production") {
+            agent.fetchRootKey();
+        }
         const openStorageAgent = new OpenStorageAgent(
-            identity,
+            agent,
             Principal.fromText("process.env.OPEN_STORAGE_INDEX_CANISTER"));
 
         return new DataClient(openStorageAgent);

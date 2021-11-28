@@ -16,8 +16,6 @@
                 "@dfinity/principal": "^0.9.1",
                 "@fortawesome/free-solid-svg-icons": "^5.15.3",
                 "@sveltejs/svelte-virtual-list": "^3.0.1",
-                "@types/async": "^3.2.10",
-                "@types/jest": "^27.0.2",
                 "@xstate/inspect": "^0.4.1",
                 "@xstate/svelte": "^0.1.0",
                 "@xstate/test": "^0.4.2",
@@ -27,6 +25,7 @@
                 "idb": "^6.1.2",
                 "identicon.js": "^2.3.3",
                 "jest": "^27.2.5",
+                "js-sha3": "^0.8.0",
                 "md5": "^2.3.0",
                 "peerjs": "^1.3.2",
                 "rollbar": "^2.23.0",
@@ -53,8 +52,10 @@
                 "@testing-library/jest-dom": "^5.12.0",
                 "@testing-library/svelte": "^3.0.3",
                 "@tsconfig/svelte": "^1.0.0",
+                "@types/async": "^3.2.10",
                 "@types/dom-mediacapture-record": "^1.0.10",
                 "@types/identicon.js": "^2.3.1",
+                "@types/jest": "^27.0.2",
                 "@types/md5": "^2.3.1",
                 "@types/node": "^15.12.2",
                 "@typescript-eslint/eslint-plugin": "^4.27.0",
@@ -2985,7 +2986,8 @@
         "node_modules/@types/async": {
             "version": "3.2.10",
             "resolved": "https://registry.npmjs.org/@types/async/-/async-3.2.10.tgz",
-            "integrity": "sha512-/bPr8eB1/00J14EGHrZiGqCal/zA0nE/8W1YCM3lGnUcfiWPW6liQwThgGzjt/3uIrYbLtLCPg3ZmpUe6YmFRw=="
+            "integrity": "sha512-/bPr8eB1/00J14EGHrZiGqCal/zA0nE/8W1YCM3lGnUcfiWPW6liQwThgGzjt/3uIrYbLtLCPg3ZmpUe6YmFRw==",
+            "dev": true
         },
         "node_modules/@types/babel__core": {
             "version": "7.1.16",
@@ -3116,6 +3118,7 @@
             "version": "27.0.2",
             "resolved": "https://registry.npmjs.org/@types/jest/-/jest-27.0.2.tgz",
             "integrity": "sha512-4dRxkS/AFX0c5XW6IPMNOydLn2tEhNhJV7DnYK+0bjoJZ+QTmfucBlihX7aoEsh/ocYtkLC73UbnBXBXIxsULA==",
+            "devOptional": true,
             "dependencies": {
                 "jest-diff": "^27.0.0",
                 "pretty-format": "^27.0.0"
@@ -3125,6 +3128,7 @@
             "version": "5.2.0",
             "resolved": "https://registry.npmjs.org/ansi-styles/-/ansi-styles-5.2.0.tgz",
             "integrity": "sha512-Cxwpt2SfTzTtXcfOlzGEee8O+c+MmUgGrNiBcXnuWxuFJHe6a5Hz7qwhwe5OgaSYI0IJvkLqWX1ASG+cJOkEiA==",
+            "devOptional": true,
             "engines": {
                 "node": ">=10"
             },
@@ -3136,6 +3140,7 @@
             "version": "27.2.5",
             "resolved": "https://registry.npmjs.org/pretty-format/-/pretty-format-27.2.5.tgz",
             "integrity": "sha512-+nYn2z9GgicO9JiqmY25Xtq8SYfZ/5VCpEU3pppHHNAhd1y+ZXxmNPd1evmNcAd6Hz4iBV2kf0UpGth5A/VJ7g==",
+            "devOptional": true,
             "dependencies": {
                 "@jest/types": "^27.2.5",
                 "ansi-regex": "^5.0.1",
@@ -9248,6 +9253,11 @@
             "version": "0.9.0",
             "resolved": "https://registry.npmjs.org/js-sha256/-/js-sha256-0.9.0.tgz",
             "integrity": "sha512-sga3MHh9sgQN2+pJ9VYZ+1LPwXOxuBJBA5nrR5/ofPfuiJBE2hnjsaN8se8JznOmGLN2p49Pe5U/ttafcs/apA=="
+        },
+        "node_modules/js-sha3": {
+            "version": "0.8.0",
+            "resolved": "https://registry.npmjs.org/js-sha3/-/js-sha3-0.8.0.tgz",
+            "integrity": "sha512-gF1cRrHhIzNfToc802P800N8PpXS+evLLXfsVpowqmAFR9uwbi89WvXg2QspOmXL8QL86J4T1EpFu+yUkwJY3Q=="
         },
         "node_modules/js-tokens": {
             "version": "4.0.0",
@@ -15817,7 +15827,8 @@
         "@types/async": {
             "version": "3.2.10",
             "resolved": "https://registry.npmjs.org/@types/async/-/async-3.2.10.tgz",
-            "integrity": "sha512-/bPr8eB1/00J14EGHrZiGqCal/zA0nE/8W1YCM3lGnUcfiWPW6liQwThgGzjt/3uIrYbLtLCPg3ZmpUe6YmFRw=="
+            "integrity": "sha512-/bPr8eB1/00J14EGHrZiGqCal/zA0nE/8W1YCM3lGnUcfiWPW6liQwThgGzjt/3uIrYbLtLCPg3ZmpUe6YmFRw==",
+            "dev": true
         },
         "@types/babel__core": {
             "version": "7.1.16",
@@ -15948,6 +15959,7 @@
             "version": "27.0.2",
             "resolved": "https://registry.npmjs.org/@types/jest/-/jest-27.0.2.tgz",
             "integrity": "sha512-4dRxkS/AFX0c5XW6IPMNOydLn2tEhNhJV7DnYK+0bjoJZ+QTmfucBlihX7aoEsh/ocYtkLC73UbnBXBXIxsULA==",
+            "devOptional": true,
             "requires": {
                 "jest-diff": "^27.0.0",
                 "pretty-format": "^27.0.0"
@@ -15956,12 +15968,14 @@
                 "ansi-styles": {
                     "version": "5.2.0",
                     "resolved": "https://registry.npmjs.org/ansi-styles/-/ansi-styles-5.2.0.tgz",
-                    "integrity": "sha512-Cxwpt2SfTzTtXcfOlzGEee8O+c+MmUgGrNiBcXnuWxuFJHe6a5Hz7qwhwe5OgaSYI0IJvkLqWX1ASG+cJOkEiA=="
+                    "integrity": "sha512-Cxwpt2SfTzTtXcfOlzGEee8O+c+MmUgGrNiBcXnuWxuFJHe6a5Hz7qwhwe5OgaSYI0IJvkLqWX1ASG+cJOkEiA==",
+                    "devOptional": true
                 },
                 "pretty-format": {
                     "version": "27.2.5",
                     "resolved": "https://registry.npmjs.org/pretty-format/-/pretty-format-27.2.5.tgz",
                     "integrity": "sha512-+nYn2z9GgicO9JiqmY25Xtq8SYfZ/5VCpEU3pppHHNAhd1y+ZXxmNPd1evmNcAd6Hz4iBV2kf0UpGth5A/VJ7g==",
+                    "devOptional": true,
                     "requires": {
                         "@jest/types": "^27.2.5",
                         "ansi-regex": "^5.0.1",
@@ -20572,6 +20586,11 @@
             "version": "0.9.0",
             "resolved": "https://registry.npmjs.org/js-sha256/-/js-sha256-0.9.0.tgz",
             "integrity": "sha512-sga3MHh9sgQN2+pJ9VYZ+1LPwXOxuBJBA5nrR5/ofPfuiJBE2hnjsaN8se8JznOmGLN2p49Pe5U/ttafcs/apA=="
+        },
+        "js-sha3": {
+            "version": "0.8.0",
+            "resolved": "https://registry.npmjs.org/js-sha3/-/js-sha3-0.8.0.tgz",
+            "integrity": "sha512-gF1cRrHhIzNfToc802P800N8PpXS+evLLXfsVpowqmAFR9uwbi89WvXg2QspOmXL8QL86J4T1EpFu+yUkwJY3Q=="
         },
         "js-tokens": {
             "version": "4.0.0",

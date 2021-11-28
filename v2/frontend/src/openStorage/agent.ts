@@ -1,21 +1,17 @@
-import { HttpAgent, Identity } from "@dfinity/agent";
+import type { HttpAgent } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
 import async from "async";
 import { v1 as uuidv1 } from "uuid";
 import { BucketClient } from "./services/bucket/bucket.client";
 import { IndexClient } from "./services/index/index.client";
 import type { IIndexClient } from "./services/index/index.client.interface";
-import { hashBytes128 } from "./utils/hash";
+import { hashBytes } from "./utils/hash";
 
 export class OpenStorageAgent {
     private readonly agent: HttpAgent;
     private readonly indexClient: IIndexClient;
 
-    constructor(identity: Identity, indexCanisterId: Principal, fetchRootKey = false) {
-        const agent = new HttpAgent({ identity });
-        if (fetchRootKey) {
-            agent.fetchRootKey();
-        }
+    constructor(agent: HttpAgent, indexCanisterId: Principal) {
         this.agent = agent;
         this.indexClient = new IndexClient(agent, indexCanisterId);
     }
@@ -26,7 +22,7 @@ export class OpenStorageAgent {
         bytes: ArrayBuffer,
         onProgress?: (percentComplete: number) => void): Promise<UploadBlobResponse> {
 
-        const hash = hashBytes128(bytes);
+        const hash = Array.from(new Uint8Array(hashBytes(bytes)));
         const blobSize = bytes.byteLength;
 
         const allocatedBucketResponse = await this.indexClient.allocatedBucket(hash, BigInt(blobSize));

@@ -7,7 +7,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const AccessorId = IDL.Principal;
-  const Hash = IDL.Nat;
+  const Hash = IDL.Vec(IDL.Nat8);
   const UploadChunkArgs = IDL.Record({
     'accessors' : IDL.Vec(AccessorId),
     'chunk_index' : IDL.Nat32,

@@ -8,7 +8,7 @@ export const idlFactory = ({ IDL }) => {
     'UserAlreadyExists' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const Hash = IDL.Nat;
+  const Hash = IDL.Vec(IDL.Nat8);
   const AllocatedBucketArgs = IDL.Record({
     'blob_hash' : Hash,
     'blob_size' : IDL.Nat64,
