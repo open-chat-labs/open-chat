@@ -4,7 +4,7 @@ use search::*;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, CyclesTopUp, GroupMatch, TimestampMillis, Version};
+use types::{ChatId, Cycles, CyclesTopUp, GroupMatch, TimestampMillis, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct PublicGroups {
@@ -48,9 +48,10 @@ impl PublicGroups {
         avatar_id: Option<u128>,
         now: TimestampMillis,
         wasm_version: Version,
+        cycles: Cycles,
     ) -> bool {
         if self.groups_pending.remove(&name).is_some() {
-            let group_info = PublicGroupInfo::new(chat_id, name.clone(), description, avatar_id, now, wasm_version);
+            let group_info = PublicGroupInfo::new(chat_id, name.clone(), description, avatar_id, now, wasm_version, cycles);
 
             self.name_to_id_map.insert(name, chat_id);
             self.groups.insert(chat_id, group_info);
@@ -147,6 +148,7 @@ impl PublicGroupInfo {
         avatar_id: Option<u128>,
         now: TimestampMillis,
         wasm_version: Version,
+        cycles: Cycles,
     ) -> PublicGroupInfo {
         PublicGroupInfo {
             id,
@@ -156,7 +158,10 @@ impl PublicGroupInfo {
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             wasm_version,
-            cycle_top_ups: Vec::new(),
+            cycle_top_ups: vec![CyclesTopUp {
+                date: now,
+                amount: cycles,
+            }],
             upgrade_in_progress: false,
         }
     }
