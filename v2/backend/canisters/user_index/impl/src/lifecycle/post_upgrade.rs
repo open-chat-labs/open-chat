@@ -22,9 +22,9 @@ fn post_upgrade(args: Args) {
                 serializer::deserialize(&bytes).unwrap();
 
             // This is a 1 time job and will be removed in the next commit
-            for user_id in data.users.iter().filter_map(|u| u.get_user_id()) {
+            for principal in data.users.iter().map(|u| u.get_principal()) {
                 data.open_storage_user_sync_queue.push(UserConfig {
-                    user_id,
+                    user_id: principal,
                     byte_limit: 100 * 1024 * 1024,
                 });
             }

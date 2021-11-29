@@ -1,6 +1,5 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::UserId;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -9,7 +8,7 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UserConfig {
-    pub user_id: UserId,
+    pub user_id: Principal,
     pub byte_limit: u64,
 }
 
