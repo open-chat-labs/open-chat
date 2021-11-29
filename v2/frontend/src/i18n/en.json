@@ -18,6 +18,7 @@
     "groupDetails": "Group details",
     "theInternetComputer": "The Internet Computer",
     "unexpectedError": "Unexpected Error",
+    "errorLoadingChats": "Unable to load your chats",
     "errorBlurb": "Sorry, we encountered an unexpected error. Please try reloading OpenChat.",
     "sessionExpired": "Session Expired",
     "sessionExpiredBlurb": "Please sign in again",

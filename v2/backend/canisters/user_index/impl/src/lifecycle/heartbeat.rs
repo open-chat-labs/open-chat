@@ -16,6 +16,7 @@ fn heartbeat() {
     upgrade_canisters::run();
     topup_canister_pool::run();
     retry_failed_messages::run();
+    sync_users_to_open_storage::run();
     calculate_metrics::run();
     dismiss_removed_super_admins::run();
 }
@@ -151,6 +152,43 @@ mod retry_failed_messages {
     async fn send_to_canister(sender: UserId, recipient: UserId) {
         let args = user_canister::c2c_retry_sending_failed_messages::Args { recipient };
         let _ = user_canister_c2c_client::c2c_retry_sending_failed_messages(sender.into(), &args).await;
+    }
+}
+
+mod sync_users_to_open_storage {
+    use super::*;
+    use open_storage_index_canister::add_or_update_users::UserConfig;
+
+    pub fn run() {
+        if let Some((canister_id, users)) = RUNTIME_STATE.with(|state| next_batch(state.borrow_mut().as_mut().unwrap())) {
+            ic_cdk::block_on(sync_users(canister_id, users));
+        }
+    }
+
+    fn next_batch(runtime_state: &mut RuntimeState) -> Option<(CanisterId, Vec<UserConfig>)> {
+        let users = runtime_state.data.open_storage_user_sync_queue.try_start_sync()?;
+
+        Some((runtime_state.data.open_storage_index_canister_id, users))
+    }
+
+    async fn sync_users(open_storage_index_canister_id: CanisterId, users: Vec<UserConfig>) {
+        let args = open_storage_index_canister::add_or_update_users::Args { users: users.clone() };
+        match open_storage_index_canister_c2c_client::add_or_update_users(open_storage_index_canister_id, &args).await {
+            Ok(_) => {
+                RUNTIME_STATE.with(|state| on_success(state.borrow_mut().as_mut().unwrap()));
+            }
+            Err(_) => {
+                RUNTIME_STATE.with(|state| on_failure(users, state.borrow_mut().as_mut().unwrap()));
+            }
+        }
+    }
+
+    fn on_success(runtime_state: &mut RuntimeState) {
+        runtime_state.data.open_storage_user_sync_queue.mark_sync_completed();
+    }
+
+    fn on_failure(users: Vec<UserConfig>, runtime_state: &mut RuntimeState) {
+        runtime_state.data.open_storage_user_sync_queue.mark_sync_failed(users);
     }
 }
 

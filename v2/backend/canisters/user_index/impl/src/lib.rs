@@ -1,4 +1,5 @@
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
+use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
@@ -20,6 +21,7 @@ mod updates;
 const MIN_CYCLES_BALANCE: Cycles = 5_000_000_000_000; // 5T
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 500_000_000_000; // 0.5T cycles
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
+const DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT: u64 = 100 * 1024 * 1024; // 100 MB
 const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 60 * 60 * 1000; // 1 hour
 const STATE_VERSION: StateVersion = StateVersion::V1;
 
@@ -111,10 +113,18 @@ struct Data {
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub online_users_aggregator_canister_ids: HashSet<CanisterId>,
+    #[serde(default = "open_storage_index_canister_id")]
+    pub open_storage_index_canister_id: CanisterId,
+    #[serde(default)]
+    pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub super_admins: HashSet<UserId>,
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
+}
+
+fn open_storage_index_canister_id() -> CanisterId {
+    Principal::from_text("rturd-qaaaa-aaaaf-aabaq-cai").unwrap()
 }
 
 impl Data {
@@ -126,6 +136,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         online_users_aggregator_canister_id: CanisterId,
+        open_storage_index_canister_id: CanisterId,
         canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Self {
@@ -141,6 +152,8 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
+            open_storage_index_canister_id,
+            open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),
@@ -164,6 +177,8 @@ impl Default for Data {
             online_users_aggregator_canister_ids: HashSet::new(),
             canister_pool: canister::Pool::new(5),
             total_cycles_spent_on_canisters: 0,
+            open_storage_index_canister_id: Principal::anonymous(),
+            open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),

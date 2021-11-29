@@ -94,7 +94,7 @@
                     id="is-public"
                     toggle={true}
                     on:change={toggleScope}
-                    label={$_("isPublic")}
+                    label={$_("public")}
                     checked={candidateGroup.isPublic} />
 
                 <span

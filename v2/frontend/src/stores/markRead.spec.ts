@@ -15,7 +15,7 @@ describe("mark messages read", () => {
         }
         markRead.state["abc"] = [];
         markRead.serverState["abc"] = [];
-        markRead.syncStore();
+        markRead.publish();
     });
 
     test("mark unconfirmed message as read", () => {

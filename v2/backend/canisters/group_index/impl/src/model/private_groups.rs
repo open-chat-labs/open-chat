@@ -3,7 +3,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, CyclesTopUp, TimestampMillis, Version};
+use types::{ChatId, Cycles, CyclesTopUp, TimestampMillis, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct PrivateGroups {
@@ -23,11 +23,17 @@ impl PrivateGroups {
         self.groups.get_mut(chat_id)
     }
 
-    pub fn handle_group_created(&mut self, chat_id: ChatId, now: TimestampMillis, wasm_version: Version) -> bool {
+    pub fn handle_group_created(
+        &mut self,
+        chat_id: ChatId,
+        now: TimestampMillis,
+        wasm_version: Version,
+        cycles: Cycles,
+    ) -> bool {
         match self.groups.entry(chat_id) {
             Occupied(_) => false,
             Vacant(e) => {
-                let group_info = PrivateGroupInfo::new(chat_id, now, wasm_version);
+                let group_info = PrivateGroupInfo::new(chat_id, now, wasm_version, cycles);
                 e.insert(group_info);
                 true
             }
@@ -54,13 +60,16 @@ pub struct PrivateGroupInfo {
 }
 
 impl PrivateGroupInfo {
-    pub fn new(id: ChatId, now: TimestampMillis, wasm_version: Version) -> PrivateGroupInfo {
+    pub fn new(id: ChatId, now: TimestampMillis, wasm_version: Version, cycles: Cycles) -> PrivateGroupInfo {
         PrivateGroupInfo {
             id,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             wasm_version,
-            cycle_top_ups: Vec::new(),
+            cycle_top_ups: vec![CyclesTopUp {
+                date: now,
+                amount: cycles,
+            }],
             upgrade_in_progress: false,
         }
     }

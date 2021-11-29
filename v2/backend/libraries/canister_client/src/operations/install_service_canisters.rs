@@ -5,9 +5,14 @@ use ic_agent::identity::BasicIdentity;
 use ic_agent::Identity;
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
-use types::Version;
+use types::{CanisterId, Version};
 
-pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: String, test_mode: bool) -> CanisterIds {
+pub async fn create_and_install_service_canisters(
+    identity: BasicIdentity,
+    url: String,
+    open_storage_index_canister_id: CanisterId,
+    test_mode: bool,
+) -> CanisterIds {
     let principal = identity.sender().unwrap();
     let agent = build_ic_agent(url, identity).await;
     let management_canister = build_management_canister(&agent);
@@ -34,6 +39,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
         group_index: group_index_canister_id,
         notifications: notifications_canister_id,
         online_users_aggregator: online_users_aggregator_canister_id,
+        open_storage_index: open_storage_index_canister_id,
     };
 
     install_service_canisters_impl(principal, &canister_ids, &management_canister, test_mode).await;
@@ -66,6 +72,7 @@ async fn install_service_canisters_impl(
         group_index_canister_id: canister_ids.group_index,
         notifications_canister_ids: vec![canister_ids.notifications],
         online_users_aggregator_canister_id: canister_ids.online_users_aggregator,
+        open_storage_index_canister_id: canister_ids.open_storage_index,
         wasm_version: Version::min(),
         test_mode,
     };

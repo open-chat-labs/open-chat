@@ -2338,6 +2338,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
+name = "open_storage_index_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "open_storage_index_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "canister_client_macros",
+ "ic-cdk 0.3.2",
+ "open_storage_index_canister",
+ "tracing",
+ "types",
+]
+
+[[package]]
 name = "openssl"
 version = "0.10.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4248,6 +4269,8 @@ dependencies = [
  "ic-cdk-macros 0.3.2",
  "itertools 0.10.1",
  "ledger_utils",
+ "open_storage_index_canister",
+ "open_storage_index_canister_c2c_client",
  "serde",
  "serializer",
  "tracing",

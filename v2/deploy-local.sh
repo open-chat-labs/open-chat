@@ -2,9 +2,10 @@
 
 IDENTITY=$1
 TEST_MODE=true
+OPEN_STORAGE_INDEX_CANISTER_ID=$2
 
-# Pass in the dfx identity name
-# eg './deploy-local openchat'
+# Pass in the dfx identity name and the OpenStorage index canisterId
+# eg './deploy-local openchat rturd-qaaaa-aaaaf-aabaq-cai'
 ./generate-wasm.sh group_canister_impl
 ./generate-wasm.sh group_index_canister_impl
 ./generate-wasm.sh notifications_canister_impl
@@ -34,3 +35,4 @@ cargo run \
   $GROUP_INDEX_CANISTER_ID \
   $NOTIFICATIONS_INDEX_CANISTER_ID \
   $ONLINE_USERS_AGGREGATOR \
+  $OPEN_STORAGE_INDEX_CANISTER_ID \
