@@ -177,6 +177,8 @@ impl Default for Data {
             online_users_aggregator_canister_ids: HashSet::new(),
             canister_pool: canister::Pool::new(5),
             total_cycles_spent_on_canisters: 0,
+            open_storage_index_canister_id: Principal::anonymous(),
+            open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),
