@@ -1,7 +1,7 @@
 use crate::model::user::{CreatedUser, User};
 use crate::model::user_map::UpdateUserResult;
 use crate::{
-    RuntimeState, DEFAULT_OPEN_STORAGE_BYTE_LIMIT, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE,
+    RuntimeState, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE,
 };
 use candid::Principal;
 use canister_api_macros::trace;
@@ -174,7 +174,7 @@ fn commit(
                 runtime_state.data.users.update(user_to_update);
                 runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
                     user_id: canister_id.into(),
-                    byte_limit: DEFAULT_OPEN_STORAGE_BYTE_LIMIT,
+                    byte_limit: DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT,
                 });
             }
         }
