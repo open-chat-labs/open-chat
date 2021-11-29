@@ -44,7 +44,6 @@ async fn c2c_create_group(args: Args) -> Response {
                         description,
                         avatar_id,
                         wasm_version,
-                        cycles: cycles_to_use,
                     },
                     state.borrow_mut().as_mut().unwrap(),
                 )
@@ -121,7 +120,6 @@ struct CommitArgs {
     description: String,
     avatar_id: Option<u128>,
     wasm_version: Version,
-    cycles: Cycles,
 }
 
 fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
@@ -134,13 +132,15 @@ fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
             avatar_id: args.avatar_id,
             now,
             wasm_version: args.wasm_version,
-            cycles: args.cycles,
+            cycles: GROUP_CANISTER_INITIAL_CYCLES_BALANCE,
         });
     } else {
-        runtime_state
-            .data
-            .private_groups
-            .handle_group_created(args.chat_id, now, args.wasm_version, args.cycles);
+        runtime_state.data.private_groups.handle_group_created(
+            args.chat_id,
+            now,
+            args.wasm_version,
+            GROUP_CANISTER_INITIAL_CYCLES_BALANCE,
+        );
     }
 }
 
