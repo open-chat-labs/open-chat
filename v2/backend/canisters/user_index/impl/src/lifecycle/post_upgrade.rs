@@ -3,6 +3,7 @@ use crate::{Data, StateVersion, LOG_MESSAGES};
 use canister_api_macros::trace;
 use canister_logger::{set_panic_hook, LogMessage, LogMessagesWrapper};
 use ic_cdk_macros::post_upgrade;
+use open_storage_index_canister::add_or_update_users::UserConfig;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
 use utils::env::canister::CanisterEnv;
@@ -17,8 +18,16 @@ fn post_upgrade(args: Args) {
 
     match version {
         StateVersion::V1 => {
-            let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
+            let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
                 serializer::deserialize(&bytes).unwrap();
+
+            // This is a 1 time job and will be removed in the next commit
+            for principal in data.users.iter().map(|u| u.get_principal()) {
+                data.open_storage_user_sync_queue.push(UserConfig {
+                    user_id: principal,
+                    byte_limit: 100 * 1024 * 1024,
+                });
+            }
 
             init_logger(data.test_mode);
             init_state(env, data, args.wasm_version);

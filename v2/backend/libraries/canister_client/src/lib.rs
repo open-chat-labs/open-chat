@@ -64,4 +64,5 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub notifications: CanisterId,
     pub online_users_aggregator: CanisterId,
+    pub open_storage_index: CanisterId,
 }
