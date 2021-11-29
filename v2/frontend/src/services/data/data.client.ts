@@ -1,12 +1,12 @@
 import { HttpAgent } from "@dfinity/agent";
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
+import { OpenStorageAgent, UploadBlobResponse } from "@open-ic/open-storage-agent";
 import type { IDataClient } from "./data.client.interface";
 import { DataClientMock } from "./data.client.mock";
 import type { MessageContent } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
 import type { BlobReference } from "../../domain/data/data";
-import { OpenStorageAgent, UploadBlobResponse } from "../../openStorage/agent";
 
 export class DataClient implements IDataClient {
     private openStorageAgent: OpenStorageAgent;

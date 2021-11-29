@@ -79,7 +79,7 @@ export class OpenStorageAgent {
         }
     }
 
-    static newBlobId(): bigint {
+    private static newBlobId(): bigint {
         return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
     }
 }
