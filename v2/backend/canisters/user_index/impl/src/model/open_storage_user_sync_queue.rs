@@ -8,6 +8,8 @@ const MAX_USERS_PER_BATCH: usize = 1000;
 pub struct OpenStorageUserSyncQueue {
     users: Vec<UserConfig>,
     sync_in_progress: bool,
+    // If any batches fail, retry that batch rather than taking new users.
+    // This ensures that updates are always synced in order.
     users_to_retry: Option<Vec<UserConfig>>,
 }
 
