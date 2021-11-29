@@ -3,8 +3,8 @@ use crate::{Data, StateVersion, LOG_MESSAGES};
 use canister_api_macros::trace;
 use canister_logger::{set_panic_hook, LogMessage, LogMessagesWrapper};
 use ic_cdk_macros::post_upgrade;
-use tracing::info;
 use open_storage_index_canister::add_or_update_users::UserConfig;
+use tracing::info;
 use user_index_canister::post_upgrade::Args;
 use utils::env::canister::CanisterEnv;
 
@@ -25,7 +25,7 @@ fn post_upgrade(args: Args) {
             for user_id in data.users.iter().filter_map(|u| u.get_user_id()) {
                 data.open_storage_user_sync_queue.push(UserConfig {
                     user_id,
-                    byte_limit: 100 * 1024 * 1024
+                    byte_limit: 100 * 1024 * 1024,
                 });
             }
 
