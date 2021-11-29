@@ -174,14 +174,15 @@ fn commit(
                 runtime_state.data.users.update(user_to_update);
             }
         }
-    }
 
-    if canister_created {
-        runtime_state.data.total_cycles_spent_on_canisters += cycles;
         runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
             user_id: caller,
             byte_limit: DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT,
         });
+    }
+
+    if canister_created {
+        runtime_state.data.total_cycles_spent_on_canisters += cycles;
     }
 }
 
