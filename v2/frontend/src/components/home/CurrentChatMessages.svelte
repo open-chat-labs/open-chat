@@ -520,9 +520,11 @@
         bottom: 80px;
         right: 20px;
         opacity: 0;
+        pointer-events: none;
 
         &.show {
             opacity: 1;
+            pointer-events: all;
         }
 
         &.rtl {
