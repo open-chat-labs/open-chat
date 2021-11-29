@@ -8,6 +8,7 @@ const MAX_USERS_PER_BATCH: usize = 1000;
 pub struct OpenStorageUserSyncQueue {
     users: Vec<UserConfig>,
     sync_in_progress: bool,
+    users_to_retry: Option<Vec<UserConfig>>,
 }
 
 impl OpenStorageUserSyncQueue {
@@ -16,7 +17,12 @@ impl OpenStorageUserSyncQueue {
     }
 
     pub fn try_start_sync(&mut self) -> Option<Vec<UserConfig>> {
-        if self.sync_in_progress || self.users.is_empty() {
+        if self.sync_in_progress {
+            None
+        } else if let Some(users) = self.users_to_retry.take() {
+            self.sync_in_progress = true;
+            Some(users)
+        } else if self.users.is_empty() {
             None
         } else {
             self.sync_in_progress = true;
@@ -34,7 +40,7 @@ impl OpenStorageUserSyncQueue {
     }
 
     pub fn mark_sync_failed(&mut self, users: Vec<UserConfig>) {
+        self.users_to_retry = Some(users);
         self.sync_in_progress = false;
-        self.users.extend(users);
     }
 }
