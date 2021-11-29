@@ -29,6 +29,7 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::public_groups::GroupCreatedArgs;
     use crate::Data;
     use candid::Principal;
     use types::Version;
@@ -124,14 +125,15 @@ mod tests {
         for (id, name, description) in groups_raw {
             let chat_id = Principal::from_slice(&[id]).into();
             data.public_groups.reserve_name(name, env.now);
-            data.public_groups.handle_group_created(
+            data.public_groups.handle_group_created(GroupCreatedArgs {
                 chat_id,
-                name.to_string(),
-                description.to_string(),
-                None,
-                env.now,
-                Version::new(1, 0, 0),
-            );
+                name: name.to_string(),
+                description: description.to_string(),
+                avatar_id: None,
+                now: env.now,
+                wasm_version: Version::new(1, 0, 0),
+                cycles: 0,
+            });
         }
 
         RuntimeState::new(Box::new(env), data)
