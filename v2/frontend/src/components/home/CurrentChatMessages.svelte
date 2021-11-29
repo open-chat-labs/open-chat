@@ -48,7 +48,7 @@
     $: events = controller.events;
     $: chat = controller.chat;
     $: focusMessageIndex = controller.focusMessageIndex;
-    $: markRead = controller.markRead.store;
+    $: markRead = controller.markRead;
 
     setContext<UserLookup>("userLookup", $userStore);
 
@@ -520,9 +520,11 @@
         bottom: 80px;
         right: 20px;
         opacity: 0;
+        pointer-events: none;
 
         &.show {
             opacity: 1;
+            pointer-events: all;
         }
 
         &.rtl {

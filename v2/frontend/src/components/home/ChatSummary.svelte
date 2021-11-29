@@ -17,6 +17,7 @@
     import { userStore } from "../../stores/user";
     import type { IMessageReadTracker } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
+    import { onDestroy } from "svelte";
 
     export let index: number;
     export let chatSummary: ChatSummary;
@@ -24,6 +25,7 @@
     export let messagesRead: IMessageReadTracker;
 
     let hovering = false;
+    let unreadMessages: number;
 
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
@@ -44,11 +46,17 @@
 
     $: chat = normaliseChatSummary(chatSummary);
     $: lastMessage = latestMessageText(chatSummary);
-    $: unreadMessages = messagesRead.unreadMessageCount(
-        chatSummary.chatId,
-        getMinVisibleMessageIndex(chatSummary),
-        chatSummary.latestMessage?.event.messageIndex
-    );
+
+    let unsub = messagesRead.subscribe((_val) => {
+        unreadMessages = messagesRead.unreadMessageCount(
+            chatSummary.chatId,
+            getMinVisibleMessageIndex(chatSummary),
+            chatSummary.latestMessage?.event.messageIndex
+        );
+    });
+
+    onDestroy(unsub);
+
     $: displayDate = getDisplayDate(chatSummary);
     $: isTyping =
         chatSummary.kind === "direct_chat" && $typing[chatSummary.chatId]?.has(chatSummary.them);

@@ -6,11 +6,8 @@
     import { fade } from "svelte/transition";
     import { flip } from "svelte/animate";
     import { elasticOut } from "svelte/easing";
-    import { number, _ } from "svelte-i18n";
-    import type { ActorRefFrom } from "xstate";
-    import type { HomeMachine } from "../../fsm/home.machine";
+    import { _ } from "svelte-i18n";
     import { toastStore } from "../../stores/toast";
-    import { rollbar } from "../../utils/logging";
     import type { ChatSummary as ChatSummaryType } from "../../domain/chat/chat";
     import type {
         GroupMatch,
@@ -19,7 +16,7 @@
         SearchAllMessagesResponse,
     } from "../../domain/search/search";
     import type { UserSummary } from "../../domain/user/user";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onDestroy } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import { push } from "svelte-spa-router";
     import { avatarUrl } from "../../domain/user/user.utils";
@@ -28,8 +25,9 @@
     import { userStore } from "../../stores/user";
     import NotificationsBar from "./NotificationsBar.svelte";
     import { unsubscribeNotifications } from "../../utils/notifications";
+    import type { HomeController } from "../../fsm/home.controller";
 
-    export let machine: ActorRefFrom<HomeMachine>;
+    export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     export let messageSearchResults: Promise<SearchAllMessagesResponse> | undefined = undefined;
@@ -40,12 +38,14 @@
     const dispatch = createEventDispatcher();
 
     let joiningGroup: string | undefined = undefined;
+    let chatsWithUnreadMsgs: number;
 
-    $: user = $machine.context.user ? $userStore[$machine.context.user?.userId] : undefined;
-
-    $: api = $machine.context.serviceContainer!;
-
-    $: userId = $machine.context.user!.userId;
+    $: user = controller.user ? $userStore[controller.user?.userId] : undefined;
+    $: api = controller.api;
+    $: userId = controller.user!.userId;
+    $: chatsList = controller.chatSummariesList;
+    $: selectedChat = controller.selectedChat;
+    $: chatsLoading = controller.loading;
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat") {
@@ -62,48 +62,37 @@
         return false;
     }
 
-    $: chats =
-        searchTerm !== ""
-            ? $machine.context.chatSummaries.filter(chatMatchesSearch)
-            : $machine.context.chatSummaries;
+    $: chats = searchTerm !== "" ? $chatsList.filter(chatMatchesSearch) : $chatsList;
 
-    $: chatsWithUnreadMsgs = chats.reduce(
-        (num, chat) =>
-            $machine.context.markRead.unreadMessageCount(
-                chat.chatId,
-                getMinVisibleMessageIndex(chat),
-                chat.latestMessage?.event.messageIndex
-            ) > 0
-                ? num + 1
-                : num,
-        0
-    );
+    let unsub = controller.messagesRead.subscribe((_val) => {
+        chatsWithUnreadMsgs = chats
+            ? chats.reduce(
+                  (num, chat) =>
+                      controller.messagesRead.unreadMessageCount(
+                          chat.chatId,
+                          getMinVisibleMessageIndex(chat),
+                          chat.latestMessage?.event.messageIndex
+                      ) > 0
+                          ? num + 1
+                          : num,
+                  0
+              )
+            : 0;
+    });
+
+    onDestroy(unsub);
 
     $: {
         document.title = chatsWithUnreadMsgs > 0 ? `OpenChat (${chatsWithUnreadMsgs})` : "OpenChat";
     }
 
-    $: chatLookup = $machine.context.chatSummaries.reduce((lookup, chat) => {
-        lookup[chat.chatId] = chat;
-        return lookup;
-    }, {} as Record<string, ChatSummaryType>);
+    $: chatLookup = controller.chatSummaries;
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
-        // optimistic update
-        machine.send({
-            type: "UPDATE_USER_AVATAR",
-            data: {
-                blobData: ev.detail.data,
-                blobUrl: ev.detail.url,
-            },
+        controller.updateUserAvatar({
+            blobData: ev.detail.data,
+            blobUrl: ev.detail.url,
         });
-        $machine.context.serviceContainer
-            ?.setUserAvatar(ev.detail.data)
-            .then((_resp) => toastStore.showSuccessToast("avatarUpdated"))
-            .catch((err) => {
-                rollbar.error("Failed to update user's avatar", err);
-                toastStore.showFailureToast("avatarUpdateFailed");
-            });
     }
 
     function chatWith(userId: string): void {
@@ -130,8 +119,7 @@
             joiningGroup = undefined;
         } else {
             joiningGroup = group.chatId;
-            $machine.context
-                .serviceContainer!.joinGroup(group.chatId)
+            api.joinGroup(group.chatId)
                 .then((resp) => {
                     if (resp === "success" || resp === "already_in_group") {
                         selectJoinedChat(group.chatId);
@@ -148,7 +136,7 @@
     }
 
     function messageMatchDataContent({ chatId, sender }: MessageMatch): DataContent {
-        const chat = chatLookup[chatId];
+        const chat = $chatLookup[chatId];
         if (chat === undefined) {
             return { blobUrl: undefined };
         }
@@ -156,7 +144,7 @@
     }
 
     function messageMatchTitle({ chatId, sender }: MessageMatch): string {
-        const chat = chatLookup[chatId];
+        const chat = $chatLookup[chatId];
         if (chat === undefined) {
             return "";
         }
@@ -173,7 +161,7 @@
         on:newGroup />
     <Search {searching} {searchTerm} on:searchEntered />
     <div class="body">
-        {#if $machine.matches("loading_chats")}
+        {#if $chatsLoading}
             <Loading />
         {:else}
             <div class="chat-summaries">
@@ -186,10 +174,9 @@
                         out:fade|local={{ duration: 150 }}>
                         <ChatSummary
                             index={i}
-                            messagesRead={$machine.context.markRead}
+                            messagesRead={controller.messagesRead}
                             {chatSummary}
-                            selected={$machine.context.selectedChat?.chatId ===
-                                chatSummary.chatId} />
+                            selected={$selectedChat?.chatId === chatSummary.chatId} />
                     </div>
                 {/each}
 

@@ -9,15 +9,20 @@
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Button from "../Button.svelte";
+    import { onDestroy } from "svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
 
     let confirmDelete = false;
     let deleting = false;
+    let unreadMessages = 0;
 
-    // todo - I suspect this is not going to be reactive in the way that we want
-    $: unreadMessages = controller.unreadMessageCount;
+    let unsub = controller.markRead.subscribe(() => {
+        unreadMessages = controller.unreadMessageCount;
+    });
+
+    onDestroy(unsub);
 
     function toggleMuteNotifications() {
         const op = controller.notificationsMuted ? "unmuted" : "muted";
