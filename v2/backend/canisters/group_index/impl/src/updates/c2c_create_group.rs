@@ -1,3 +1,4 @@
+use crate::model::public_groups::GroupCreatedArgs;
 use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE, RUNTIME_STATE};
 use canister_api_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
@@ -126,15 +127,15 @@ struct CommitArgs {
 fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
     if args.is_public {
-        runtime_state.data.public_groups.handle_group_created(
-            args.chat_id,
-            args.name,
-            args.description,
-            args.avatar_id,
+        runtime_state.data.public_groups.handle_group_created(GroupCreatedArgs {
+            chat_id: args.chat_id,
+            name: args.name,
+            description: args.description,
+            avatar_id: args.avatar_id,
             now,
-            args.wasm_version,
-            args.cycles,
-        );
+            wasm_version: args.wasm_version,
+            cycles: args.cycles,
+        });
     } else {
         runtime_state
             .data
