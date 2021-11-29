@@ -1,9 +1,12 @@
 use crate::model::user::{CreatedUser, User};
 use crate::model::user_map::UpdateUserResult;
-use crate::{RuntimeState, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
+use crate::{
+    RuntimeState, DEFAULT_OPEN_STORAGE_BYTE_LIMIT, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE,
+};
 use candid::Principal;
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
+use open_storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterCreationStatus, CanisterCreationStatusInternal, CanisterId, CanisterWasm, Cycles, CyclesTopUp, Version};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_index_canister::create_canister::{Response::*, *};
@@ -169,6 +172,10 @@ fn commit(
                     }
                 };
                 runtime_state.data.users.update(user_to_update);
+                runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
+                    user_id: canister_id.into(),
+                    byte_limit: DEFAULT_OPEN_STORAGE_BYTE_LIMIT,
+                });
             }
         }
     }

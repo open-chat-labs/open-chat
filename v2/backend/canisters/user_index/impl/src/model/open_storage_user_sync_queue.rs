@@ -1,0 +1,40 @@
+use open_storage_index_canister::add_or_update_users::UserConfig;
+use serde::{Deserialize, Serialize};
+use std::mem;
+
+const MAX_USERS_PER_BATCH: usize = 1000;
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct OpenStorageUserSyncQueue {
+    users: Vec<UserConfig>,
+    sync_in_progress: bool,
+}
+
+impl OpenStorageUserSyncQueue {
+    pub fn push(&mut self, user: UserConfig) {
+        self.users.push(user);
+    }
+
+    pub fn try_start_sync(&mut self) -> Option<Vec<UserConfig>> {
+        if self.sync_in_progress || self.users.is_empty() {
+            None
+        } else {
+            self.sync_in_progress = true;
+            let users = if self.users.len() <= MAX_USERS_PER_BATCH {
+                mem::take(&mut self.users)
+            } else {
+                self.users.drain(..MAX_USERS_PER_BATCH).collect()
+            };
+            Some(users)
+        }
+    }
+
+    pub fn mark_sync_completed(&mut self) {
+        self.sync_in_progress = false;
+    }
+
+    pub fn mark_sync_failed(&mut self, users: Vec<UserConfig>) {
+        self.sync_in_progress = false;
+        self.users.extend(users);
+    }
+}
