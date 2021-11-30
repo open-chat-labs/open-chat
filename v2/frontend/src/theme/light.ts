@@ -15,6 +15,7 @@ export function lightTheme(): Theme {
         txt: "#191919",
         error: "#CF6679",
         accent: pinkAccent,
+        accentDarker: "rgba(150, 50, 50, 0.8)",
         placeholder: "#aaaaaa",
 
         notificationBar: {
@@ -112,9 +113,9 @@ export function lightTheme(): Theme {
         chatSearch: {
             bg: "#ffffff",
             txt: "#555555",
-            bd: "transparent",
             mg: "0",
-
+            pd: "4px 16px",
+            
             section: {
                 txt: "#ffffff",
                 title: {
@@ -132,7 +133,7 @@ export function lightTheme(): Theme {
             bg: "white",
             hv: "#ececec",
             txt1: "#191919",
-            txt2: "#333",
+            txt2: "rgba(0, 0, 0, 0.6)",
             bd: "transparent",
             "bd-selected": pinkAccent,
             mb: sp3,

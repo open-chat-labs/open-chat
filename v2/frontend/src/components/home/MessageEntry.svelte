@@ -224,7 +224,7 @@
     .textbox {
         flex: 1;
         margin: 0 $sp3;
-        padding: $sp3 $sp4;
+        padding: 6px $sp4;
         background-color: var(--entry-input-bg);
         color: var(--entry-input-txt);
         border-radius: 20px;
