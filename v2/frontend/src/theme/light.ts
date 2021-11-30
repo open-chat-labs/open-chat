@@ -4,6 +4,7 @@ const sp3 = "8px";
 
 const orangeAccent = "#ff9505";
 const pinkAccent = "hotpink";
+const blueAccent = "#22A7F2";
 
 export function lightTheme(): Theme {
     return {
@@ -72,7 +73,8 @@ export function lightTheme(): Theme {
                 pd: "0 8px",
             },
             panel: {
-                bg: "#fff",
+                // bg: "#fff",
+                bg: "transparent",
             },
         },
 
@@ -115,7 +117,8 @@ export function lightTheme(): Theme {
             txt: "#555555",
             mg: "0",
             pd: "4px 16px",
-            
+            bd: "transparent",
+
             section: {
                 txt: "#ffffff",
                 title: {
@@ -152,7 +155,7 @@ export function lightTheme(): Theme {
         },
 
         button: {
-            bg: "#22A7F2",
+            bg: blueAccent,
             hv: "#52baf5",
             txt: "#ffffff",
             bd: "transparent",
@@ -214,6 +217,7 @@ export function lightTheme(): Theme {
                 txt: "#191919",
                 hv: "#efefef",
                 bd: "transparent",
+                "reply-accent": blueAccent,
 
                 me: {
                     // bg: "#ff69b4",
@@ -271,7 +275,7 @@ export function lightTheme(): Theme {
                 },
             },
             add: {
-                pd: "8px",
+                pd: "0",
                 pdxs: "8px",
                 search: {
                     mg: "0 0 8px 0",

@@ -24,6 +24,7 @@ export interface Theme {
 
     error: string;
     accent: string;
+    accentDarker: string;
 
     placeholder: string;
 
@@ -124,6 +125,7 @@ export interface Theme {
         txt: string;
         bd: string;
         mg: string;
+        pd: string;
 
         section: {
             txt: string;
@@ -218,6 +220,7 @@ export interface Theme {
             txt: string;
             hv: string;
             bd: string;
+            "reply-accent": string;
 
             me: {
                 bg: string;

@@ -335,9 +335,6 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
-export type MarkAsOnlineArgs = {};
-export type MarkAsOnlineResponse = { 'Success' : null } |
-  { 'UserNotFound' : null };
 export interface Mention { 'message_index' : MessageIndex }
 export interface Message {
   'content' : MessageContent,
@@ -665,7 +662,6 @@ export interface _SERVICE {
       CreateCanisterResponse
     >,
   'current_user' : (arg_0: CurrentUserArgs) => Promise<CurrentUserResponse>,
-  'mark_as_online' : (arg_0: MarkAsOnlineArgs) => Promise<MarkAsOnlineResponse>,
   'remove_super_admin' : (arg_0: RemoveSuperAdminArgs) => Promise<
       RemoveSuperAdminResponse
     >,
