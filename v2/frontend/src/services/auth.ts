@@ -4,6 +4,7 @@ import { AuthClient } from "@dfinity/auth-client";
 import { DelegationIdentity } from "@dfinity/identity";
 import { unregister } from "../utils/notifications";
 import { Usergeek } from "usergeek-ic-js"
+import { closeDb, initDb } from "../utils/caching";
 
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const ONE_MINUTE_MILLIS = 60 * 1000;
@@ -51,6 +52,7 @@ export async function logout(): Promise<void> {
         if (isProd) {
             Usergeek.setPrincipal(Principal.anonymous());
         }
+        closeDb();
     });
 }
 
@@ -59,6 +61,7 @@ export function startSession(identity: Identity): Promise<void> {
         Usergeek.setPrincipal(identity.getPrincipal());
         Usergeek.trackSession();
     }
+    initDb(identity.getPrincipal().toString());
 
     return new Promise((resolve) => {
         const durationUntilSessionExpireMS = getTimeUntilSessionExpiryMs(identity);
