@@ -67,12 +67,12 @@
                 .then((resp) => {
                     if (resp.kind === "success") {
                         controller.updateMessage(msg, resp);
-                        unconfirmed.delete(msg.messageId);
                     } else {
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
                         controller.removeMessage(msg.messageId, controller.user.userId);
                     }
+                    unconfirmed.delete(msg.messageId);
                 })
                 .catch((err) => {
                     toastStore.showFailureToast("errorSendingMessage");
