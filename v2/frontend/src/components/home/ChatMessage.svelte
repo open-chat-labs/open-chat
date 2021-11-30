@@ -344,6 +344,10 @@
         background-color: var(--icon-hv);
     }
 
+    :global(.actions .reaction .wrapper) {
+        padding: 6px;
+    }
+
     .message-wrapper {
         &.last {
             margin-bottom: $sp4;
@@ -405,7 +409,7 @@
             background-color: var(--reaction-bg);
             color: var(--reaction-txt);
             cursor: pointer;
-            height: $sp5;
+            height: 30px;
             padding: $sp2;
             display: flex;
             justify-content: center;
@@ -413,6 +417,7 @@
             margin-left: 1px;
             margin-right: 1px;
             margin-bottom: $sp2;
+            font-size: 120%;
             // border: 1px solid transparent;
 
             &.me {
@@ -465,7 +470,7 @@
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
         border-radius: $radius;
-        max-width: 90%;
+        max-width: 80%;
         min-width: 90px;
         overflow: hidden;
 

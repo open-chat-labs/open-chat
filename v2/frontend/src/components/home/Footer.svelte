@@ -189,7 +189,13 @@
 
     :global(.footer-overlay emoji-picker) {
         --num-columns: 15 !important;
-        @include size-below(xs) {
+        @include size-below(md) {
+            --num-columns: 11 !important;
+        }
+        @include size-below(sm) {
+            --num-columns: 9 !important;
+        }
+        @include size-below(xxs) {
             --num-columns: 7 !important;
         }
     }
