@@ -399,4 +399,14 @@ export async function getSoftDisabled(): Promise<boolean> {
     return false;
 }
 
-export const db = (principal: string) => openCache(principal);
+let db: Database | undefined;
+
+export function getDb(): Database | undefined {
+    return db;
+}
+export function initDb(principal: string): void {
+    db = openCache(principal);
+}
+export function closeDb(): void {
+    db = undefined;
+}
