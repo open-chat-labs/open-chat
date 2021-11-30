@@ -246,6 +246,7 @@ export class ChatController {
         // we also need to disconnect when the chat is unselected
         const lookup = get(userStore);
         [...userIds]
+            .filter((u) => u !== this.user.userId)
             .map((u) => lookup[u])
             .filter((user) => user && userIsOnline(lookup, user.userId))
             .sort((a, b) => b.lastOnline - a.lastOnline)
