@@ -167,7 +167,7 @@
         {#if me && !deleted}
             <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
-                    <HoverIcon semiCompact={true}>
+                    <HoverIcon>
                         <EmoticonLolOutline size={$iconSize} color={"#fff"} />
                     </HoverIcon>
                 </div>
@@ -286,7 +286,7 @@
         {#if !me && !deleted}
             <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
-                    <HoverIcon semiCompact={true}>
+                    <HoverIcon>
                         <EmoticonLolOutline size={$iconSize} color={"#fff"} />
                     </HoverIcon>
                 </div>
@@ -342,6 +342,10 @@
 
     :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
         background-color: var(--icon-hv);
+    }
+
+    :global(.actions .reaction .wrapper) {
+        padding: 6px;
     }
 
     .message-wrapper {
