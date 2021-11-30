@@ -227,7 +227,10 @@ export class ChatController {
             this.localReactions
         );
 
-        const userIds = userIdsFromEvents(updated);
+        const userIds = this._chat.kind === "direct_chat"
+            ? new Set([this._chat.them])
+            : userIdsFromEvents(updated);
+
         await this.updateUserStore(userIds);
         this.makeRtcConnections(userIds);
         this.events.set(updated);
@@ -243,6 +246,7 @@ export class ChatController {
         // we also need to disconnect when the chat is unselected
         const lookup = get(userStore);
         [...userIds]
+            .filter((u) => u !== this.user.userId)
             .map((u) => lookup[u])
             .filter((user) => user && userIsOnline(lookup, user.userId))
             .sort((a, b) => b.lastOnline - a.lastOnline)

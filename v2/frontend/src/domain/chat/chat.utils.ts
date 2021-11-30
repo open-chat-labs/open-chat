@@ -68,44 +68,54 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
         if ("userIds" in e.event) {
             e.event.userIds.forEach((u) => userIds.add(u));
         }
-        if (e.event.kind === "message") {
-            userIds.add(e.event.sender);
-        }
-        if (e.event.kind === "group_chat_created") {
-            userIds.add(e.event.created_by);
-        }
-        if (e.event.kind === "participants_added") {
-            userIds.add(e.event.addedBy);
-        }
-        if (e.event.kind === "participant_joined") {
-            userIds.add(e.event.userId);
-        }
-        if (e.event.kind === "participants_promoted_to_admin") {
-            userIds.add(e.event.promotedBy);
-        }
-        if (e.event.kind === "participants_dismissed_as_admin") {
-            userIds.add(e.event.dismissedBy);
-        }
-        if (e.event.kind === "participants_removed") {
-            userIds.add(e.event.removedBy);
-        }
-        if (e.event.kind === "participant_left") {
-            userIds.add(e.event.userId);
-        }
-        if (e.event.kind === "name_changed") {
-            userIds.add(e.event.changedBy);
-        }
-        if (e.event.kind === "avatar_changed") {
-            userIds.add(e.event.changedBy);
-        }
-        if (e.event.kind === "desc_changed") {
-            userIds.add(e.event.changedBy);
-        }
-        if (e.event.kind === "users_blocked") {
-            userIds.add(e.event.blockedBy);
-        }
-        if (e.event.kind === "users_unblocked") {
-            userIds.add(e.event.unblockedBy);
+        switch (e.event.kind) {
+            case "message":
+                userIds.add(e.event.sender);
+                break;
+            case "participant_joined":
+            case "participant_left":
+            case "participant_assumes_super_admin":
+            case "participant_relinquishes_super_admin":
+            case "participant_dismissed_as_super_admin":
+                userIds.add(e.event.userId);
+                break;
+            case "name_changed":
+            case "desc_changed":
+            case "avatar_changed":
+                userIds.add(e.event.changedBy);
+                break;
+            case "group_chat_created":
+                userIds.add(e.event.created_by);
+                break;
+            case "participants_added":
+                userIds.add(e.event.addedBy);
+                break;
+            case "participants_promoted_to_admin":
+                userIds.add(e.event.promotedBy);
+                break;
+            case "participants_dismissed_as_admin":
+                userIds.add(e.event.dismissedBy);
+                break;
+            case "participants_removed":
+                userIds.add(e.event.removedBy);
+                break;
+            case "users_blocked":
+                userIds.add(e.event.blockedBy);
+                break;
+            case "users_unblocked":
+                userIds.add(e.event.unblockedBy);
+                break;
+            case "ownership_transferred":
+                userIds.add(e.event.oldOwner);
+                break;
+            case "message_deleted":
+            case "message_edited":
+            case "reaction_added":
+            case "reaction_removed":
+            case "direct_chat_created":
+                break;
+            default:
+                throw new UnsupportedValueError("Unexpected ChatEvent type received", e.event);
         }
         return userIds;
     }, new Set<string>());
