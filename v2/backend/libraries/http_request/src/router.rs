@@ -49,11 +49,6 @@ mod tests {
     }
 
     #[test]
-    fn blob() {
-        assert!(matches!(extract_route("/blobs/78278371289379212398"), Route::Blob(_)));
-    }
-
-    #[test]
     fn logs() {
         assert!(matches!(extract_route("/logs/1633649663014109000"), Route::Logs(_)));
     }
