@@ -6,6 +6,7 @@
     import { _ } from "svelte-i18n";
     import { getParticipantsString } from "../../domain/chat/chat.utils";
     import { userStore } from "../../stores/user";
+    import { now } from "../../stores/now";
 
     export let user: UserSummary | undefined;
     export let changedBy: string;
@@ -16,6 +17,7 @@
     $: me = changedBy === user?.userId;
     $: changedByStr = me ? $_("you") : $userStore[changedBy]?.username ?? $_("unknownUser");
     $: participants = getParticipantsString(
+        $now,
         user!,
         $userStore,
         changed,

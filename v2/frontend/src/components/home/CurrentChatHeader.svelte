@@ -31,6 +31,7 @@
     import Link from "../Link.svelte";
     import { supported as notificationsSupported } from "../../utils/notifications";
     import { iconSize } from "../../stores/iconSize";
+    import { now } from "../../stores/now";
 
     const dispatch = createEventDispatcher();
 
@@ -98,12 +99,12 @@
         }
     }
 
-    function formatLastOnlineDate(lastOnline: number | undefined): string {
+    function formatLastOnlineDate(now: number, lastOnline: number | undefined): string {
         if (lastOnline === undefined) {
             return "";
         }
 
-        const secondsSinceLastOnline = (Date.now() - lastOnline) / 1000;
+        const secondsSinceLastOnline = (now - lastOnline) / 1000;
 
         const minutesSinceLastOnline = Math.floor(secondsSinceLastOnline / 60);
 
@@ -136,8 +137,8 @@
             return {
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
-                userStatus: getUserStatus($userStore, chatSummary.them),
-                subtext: formatLastOnlineDate($userStore[chatSummary.them]?.lastOnline),
+                userStatus: getUserStatus($now, $userStore, chatSummary.them),
+                subtext: formatLastOnlineDate($now, $userStore[chatSummary.them]?.lastOnline),
                 typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
             };
         }

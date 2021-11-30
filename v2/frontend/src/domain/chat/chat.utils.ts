@@ -187,6 +187,7 @@ export function compareByDate(a: ChatSummary, b: ChatSummary): number {
 }
 
 export function getParticipantsString(
+    now: number,
     user: UserSummary,
     userLookup: UserLookup,
     participantIds: string[],
@@ -194,12 +195,12 @@ export function getParticipantsString(
     you: string
 ): string {
     if (participantIds.length > 5) {
-        const numberOnline = participantIds.map((id) => userIsOnline(userLookup, id)).length;
+        const numberOnline = participantIds.map((id) => userIsOnline(now, userLookup, id)).length;
         return `${participantIds.length} members (${numberOnline} online)`;
     }
     return participantIds
         .map((id) => userLookup[id] ?? nullUser(unknownUser))
-        .sort(compareUsersOnlineFirst)
+        .sort((a, b) => compareUsersOnlineFirst(now, a, b))
         .map((p) => (p.userId === user.userId ? you : p.username))
         .join(", ");
 }

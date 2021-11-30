@@ -12,6 +12,7 @@
     import { userStore } from "../stores/user";
     import { toastStore } from "../stores/toast";
     import { iconSize } from "../stores/iconSize";
+    import { now } from "../stores/now";
 
     export let api: ServiceContainer;
     export let mode: "add" | "edit";
@@ -93,7 +94,7 @@
                             ? "var(--participants-hv)"
                             : "var(--participants-bg)"}
                         url={avatarUrl(user)}
-                        status={userStatus(user)}
+                        status={userStatus($now, user)}
                         size={AvatarSize.Small} />
                 </span>
                 <h4 class="details">

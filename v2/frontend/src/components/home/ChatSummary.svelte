@@ -18,6 +18,7 @@
     import type { IMessageReadTracker } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
     import { onDestroy } from "svelte";
+    import { now } from "../../stores/now";
 
     export let index: number;
     export let chatSummary: ChatSummary;
@@ -32,7 +33,7 @@
             return {
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
-                userStatus: getUserStatus($userStore, chatSummary.them),
+                userStatus: getUserStatus($now, $userStore, chatSummary.them),
                 typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
             };
         }

@@ -19,6 +19,8 @@ import {
     newMessageId,
 } from "./chat.utils";
 
+const now = Date.now();
+
 const defaultDirectChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "a",
@@ -343,6 +345,7 @@ describe("get participants string for group chat", () => {
 
     test("up to five participants get listed", () => {
         const participants = getParticipantsString(
+            now,
             user,
             lookup,
             withFewerThanSix,
@@ -353,6 +356,7 @@ describe("get participants string for group chat", () => {
     });
     test("with unknown users", () => {
         const participants = getParticipantsString(
+            now,
             user,
             lookup,
             withUnknown,
@@ -363,6 +367,7 @@ describe("get participants string for group chat", () => {
     });
     test("with more than 5 participants", () => {
         const participants = getParticipantsString(
+            now,
             user,
             lookup,
             withMoreThanSix,
