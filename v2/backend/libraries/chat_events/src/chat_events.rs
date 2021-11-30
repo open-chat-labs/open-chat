@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
@@ -28,10 +28,10 @@ enum ChatType {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatEventInternal {
     Message(Box<MessageInternal>),
-    MessageEdited(Box<MessageId>),
-    MessageDeleted(Box<MessageId>),
-    MessageReactionAdded(Box<MessageId>),
-    MessageReactionRemoved(Box<MessageId>),
+    MessageEdited(Box<UpdatedMessageInternal>),
+    MessageDeleted(Box<UpdatedMessageInternal>),
+    MessageReactionAdded(Box<UpdatedMessageInternal>),
+    MessageReactionRemoved(Box<UpdatedMessageInternal>),
     DirectChatCreated(DirectChatCreated),
     GroupChatCreated(Box<GroupChatCreated>),
     GroupNameChanged(Box<GroupNameChanged>),
@@ -101,6 +101,22 @@ pub struct MessageInternal {
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
     pub last_updated: Option<TimestampMillis>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "MessageId")]
+pub struct UpdatedMessageInternal {
+    pub updated_by: UserId,
+    pub message_id: MessageId,
+}
+
+impl From<MessageId> for UpdatedMessageInternal {
+    fn from(message_id: MessageId) -> Self {
+        UpdatedMessageInternal {
+            message_id,
+            updated_by: Principal::anonymous().into(),
+        }
+    }
 }
 
 pub struct PushMessageArgs {
@@ -202,6 +218,38 @@ impl ChatEvents {
         events
     }
 
+    // This is a one time job which sets the updated_by field on UpdatedMessageInternal events
+    pub fn set_updated_message_details(&mut self) {
+        let message_ids: HashSet<_> = self
+            .events
+            .iter()
+            .filter_map(|e| match &e.event {
+                ChatEventInternal::MessageDeleted(um)
+                | ChatEventInternal::MessageEdited(um)
+                | ChatEventInternal::MessageReactionAdded(um)
+                | ChatEventInternal::MessageReactionRemoved(um) => Some(um.message_id),
+                _ => None,
+            })
+            .collect();
+
+        let senders_map: HashMap<_, _> = message_ids
+            .into_iter()
+            .map(|m| (m, self.get_message_sender_unchecked(m)))
+            .collect();
+
+        for e in self.events.iter_mut() {
+            match &mut e.event {
+                ChatEventInternal::MessageDeleted(um)
+                | ChatEventInternal::MessageEdited(um)
+                | ChatEventInternal::MessageReactionAdded(um)
+                | ChatEventInternal::MessageReactionRemoved(um) => {
+                    um.updated_by = *senders_map.get(&um.message_id).unwrap();
+                }
+                _ => {}
+            }
+        }
+    }
+
     pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, Message) {
         let message_index = self.next_message_index();
         let message_internal = MessageInternal {
@@ -272,7 +320,13 @@ impl ChatEvents {
                     message.content = args.content;
                     message.last_updated = Some(args.now);
                     self.metrics.total_edits += 1;
-                    self.push_event(ChatEventInternal::MessageEdited(Box::new(args.message_id)), args.now);
+                    self.push_event(
+                        ChatEventInternal::MessageEdited(Box::new(UpdatedMessageInternal {
+                            updated_by: args.sender,
+                            message_id: args.message_id,
+                        })),
+                        args.now,
+                    );
                     EditMessageResult::Success
                 }
             } else {
@@ -301,7 +355,13 @@ impl ChatEvents {
                     });
                     message.last_updated = Some(now);
                     self.metrics.deleted_messages += 1;
-                    self.push_event(ChatEventInternal::MessageDeleted(Box::new(message_id)), now);
+                    self.push_event(
+                        ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
+                            updated_by: caller,
+                            message_id,
+                        })),
+                        now,
+                    );
                     DeleteMessageResult::Success
                 }
             } else {
@@ -343,11 +403,23 @@ impl ChatEvents {
 
                 return if added {
                     self.metrics.total_reactions += 1;
-                    let new_event_index = self.push_event(ChatEventInternal::MessageReactionAdded(Box::new(message_id)), now);
+                    let new_event_index = self.push_event(
+                        ChatEventInternal::MessageReactionAdded(Box::new(UpdatedMessageInternal {
+                            updated_by: user_id,
+                            message_id,
+                        })),
+                        now,
+                    );
                     ToggleReactionResult::Added(new_event_index)
                 } else {
                     self.metrics.total_reactions -= 1;
-                    let new_event_index = self.push_event(ChatEventInternal::MessageReactionRemoved(Box::new(message_id)), now);
+                    let new_event_index = self.push_event(
+                        ChatEventInternal::MessageReactionRemoved(Box::new(UpdatedMessageInternal {
+                            updated_by: user_id,
+                            message_id,
+                        })),
+                        now,
+                    );
                     ToggleReactionResult::Removed(new_event_index)
                 };
             }
@@ -427,10 +499,14 @@ impl ChatEvents {
         }
     }
 
-    pub fn hydrate_updated_message(&self, message_id: MessageId) -> UpdatedMessage {
+    pub fn hydrate_updated_message(&self, message: &UpdatedMessageInternal) -> UpdatedMessage {
         UpdatedMessage {
-            event_index: self.message_id_map.get(&message_id).map_or(EventIndex::default(), |e| *e),
-            message_id,
+            updated_by: message.updated_by,
+            event_index: self
+                .message_id_map
+                .get(&message.message_id)
+                .map_or(EventIndex::default(), |e| *e),
+            message_id: message.message_id,
         }
     }
 
@@ -665,6 +741,21 @@ impl ChatEvents {
         self.events.get_mut(index)
     }
 
+    fn get_message_sender_unchecked(&self, message_id: MessageId) -> UserId {
+        self.get_message_internal(message_id).unwrap().sender
+    }
+
+    fn get_message_internal(&self, message_id: MessageId) -> Option<&MessageInternal> {
+        if let Some(&event_index) = self.message_id_map.get(&message_id) {
+            if let Some(event) = self.get_internal(event_index) {
+                if let ChatEventInternal::Message(message) = &event.event {
+                    return Some(message);
+                };
+            }
+        }
+        None
+    }
+
     fn get_message_internal_mut(&mut self, message_id: MessageId) -> Option<&mut MessageInternal> {
         if let Some(&event_index) = self.message_id_map.get(&message_id) {
             if let Some(event) = self.get_internal_mut(event_index) {
@@ -863,7 +954,13 @@ mod tests {
                 replies_to: None,
                 now: i as u64,
             });
-            events.push_event(ChatEventInternal::MessageReactionAdded(Box::new(message_id)), i as u64);
+            events.push_event(
+                ChatEventInternal::MessageReactionAdded(Box::new(UpdatedMessageInternal {
+                    updated_by: user_id,
+                    message_id,
+                })),
+                i as u64,
+            );
         }
 
         events
