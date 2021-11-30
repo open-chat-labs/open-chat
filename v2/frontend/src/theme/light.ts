@@ -26,7 +26,7 @@ export function lightTheme(): Theme {
         reaction: {
             bg: "#efefef",
             txt: "#191919",
-            me: "#ff69b4",
+            me: pinkAccent,
         },
 
         timeline: {
@@ -155,7 +155,7 @@ export function lightTheme(): Theme {
             bg: "#22A7F2",
             hv: "#52baf5",
             txt: "#ffffff",
-            bd: "",
+            bd: "transparent",
             disabled: "#cccccc",
             spinner: "#ffffff",
             "disabled-txt": "#999999",

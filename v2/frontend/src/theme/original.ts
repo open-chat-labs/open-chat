@@ -1,9 +1,6 @@
 import type { Theme } from "./themes";
 
-// const accent = "#ff9505"; // orange
-//const accent = "#84e184";
-const accent = "#32cd32";
-//const accentDarker = "rgba(100, 180, 100, 0.8)";
+const accent = "#59df59";
 const accentDarker = "rgba(4, 104, 4, 0.8)";
 
 export function originalTheme(defaultTheme: Theme): Theme {

@@ -196,7 +196,7 @@
         justify-content: center;
         align-items: center;
         background-color: var(--accent);
-        text-shadow: 1px 1px 1px var(--accentShadow);
+        text-shadow: 1px 1px 1px var(--accentDarker);
         border-radius: 50%;
         font-weight: bold;
         font-size: 10px;
