@@ -9,7 +9,7 @@
 </section>
 
 <style type="text/scss">
-    $left-width: 400px;
+    $left-width: 40%;
     $right-width: 400px;
     $trans: ease-in-out 200ms;
 
@@ -41,8 +41,8 @@
             background: var(--panel-left-bg);
             display: flex;
             flex-direction: column;
-            min-width: 320px;
-            width: $left-width;
+            min-width: 236px;
+            max-width: 450px;
             position: relative;
             @include size-below(xs) {
                 background: var(--panel-left-xs);

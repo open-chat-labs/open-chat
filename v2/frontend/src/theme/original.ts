@@ -1,7 +1,10 @@
 import type { Theme } from "./themes";
 
 // const accent = "#ff9505"; // orange
-const accent = "hotpink";
+//const accent = "#84e184";
+const accent = "#32cd32";
+//const accentDarker = "rgba(100, 180, 100, 0.8)";
+const accentDarker = "rgba(4, 104, 4, 0.8)";
 
 export function originalTheme(defaultTheme: Theme): Theme {
     return {
@@ -12,6 +15,12 @@ export function originalTheme(defaultTheme: Theme): Theme {
         mg: "20px auto",
 
         accent: accent,
+        accentDarker: accentDarker,
+
+        notificationBar: {
+            ...defaultTheme.notificationBar,
+            bg: accent,
+        },
 
         panel: {
             ...defaultTheme.panel,
@@ -26,6 +35,14 @@ export function originalTheme(defaultTheme: Theme): Theme {
             right: {
                 ...defaultTheme.panel.right,
                 bg: "#f6f6f6",
+            },
+        },
+
+        toast: {
+            ...defaultTheme.toast,
+            success: {
+                ...defaultTheme.toast.success,
+                bg: accent,
             },
         },
 
@@ -78,10 +95,8 @@ export function originalTheme(defaultTheme: Theme): Theme {
 
         button: {
             ...defaultTheme.button,
-            bg: "rgb(132, 225, 132)",
-            hv: "#053d5c",
-            // bg: "#f79031",
-            // hv: "#E37C1D",
+            bg: accent,
+            hv: accentDarker,
         },
 
         section: {

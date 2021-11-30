@@ -15,6 +15,7 @@ export function lightTheme(): Theme {
         txt: "#191919",
         error: "#CF6679",
         accent: pinkAccent,
+        accentDarker: "rgba(150, 50, 50, 0.8)",
         placeholder: "#aaaaaa",
 
         notificationBar: {
