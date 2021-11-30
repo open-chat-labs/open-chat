@@ -17,13 +17,8 @@ fn post_upgrade(args: Args) {
 
     match version {
         StateVersion::V1 => {
-            let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
+            let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
                 serializer::deserialize(&bytes).unwrap();
-
-            // HACK ALERT!
-            // This is a 1 time job to populate the new events. I'll remove this as soon as this
-            // upgrade has been run.
-            data.events.set_updated_message_details();
 
             init_logger(data.test_mode);
             init_state(env, data, args.wasm_version);

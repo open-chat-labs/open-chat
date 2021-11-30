@@ -4,7 +4,6 @@ use canister_api_macros::trace;
 use canister_logger::{set_panic_hook, LogMessage, LogMessagesWrapper};
 use ic_cdk_macros::post_upgrade;
 use tracing::info;
-use types::ChatId;
 use user_canister::post_upgrade::Args;
 use utils::env::canister::CanisterEnv;
 
@@ -18,17 +17,8 @@ fn post_upgrade(args: Args) {
 
     match version {
         StateVersion::V1 => {
-            let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
+            let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
                 serializer::deserialize(&bytes).unwrap();
-
-            // HACK ALERT!
-            // This is a 1 time job to populate the new events. I'll remove this as soon as this
-            // upgrade has been run.
-            let chat_ids: Vec<ChatId> = data.direct_chats.get_all(None).map(|c| c.them.into()).collect();
-            for chat_id in chat_ids {
-                let chat_mut = data.direct_chats.get_mut(&chat_id).unwrap();
-                chat_mut.events.set_updated_message_details();
-            }
 
             init_logger(data.test_mode);
             init_state(env, data, args.wasm_version);

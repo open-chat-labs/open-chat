@@ -1,4 +1,4 @@
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
@@ -104,19 +104,9 @@ pub struct MessageInternal {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "MessageId")]
 pub struct UpdatedMessageInternal {
     pub updated_by: UserId,
     pub message_id: MessageId,
-}
-
-impl From<MessageId> for UpdatedMessageInternal {
-    fn from(message_id: MessageId) -> Self {
-        UpdatedMessageInternal {
-            message_id,
-            updated_by: Principal::anonymous().into(),
-        }
-    }
 }
 
 pub struct PushMessageArgs {
@@ -216,38 +206,6 @@ impl ChatEvents {
         );
 
         events
-    }
-
-    // This is a one time job which sets the updated_by field on UpdatedMessageInternal events
-    pub fn set_updated_message_details(&mut self) {
-        let message_ids: HashSet<_> = self
-            .events
-            .iter()
-            .filter_map(|e| match &e.event {
-                ChatEventInternal::MessageDeleted(um)
-                | ChatEventInternal::MessageEdited(um)
-                | ChatEventInternal::MessageReactionAdded(um)
-                | ChatEventInternal::MessageReactionRemoved(um) => Some(um.message_id),
-                _ => None,
-            })
-            .collect();
-
-        let senders_map: HashMap<_, _> = message_ids
-            .into_iter()
-            .map(|m| (m, self.get_message_sender_unchecked(m)))
-            .collect();
-
-        for e in self.events.iter_mut() {
-            match &mut e.event {
-                ChatEventInternal::MessageDeleted(um)
-                | ChatEventInternal::MessageEdited(um)
-                | ChatEventInternal::MessageReactionAdded(um)
-                | ChatEventInternal::MessageReactionRemoved(um) => {
-                    um.updated_by = *senders_map.get(&um.message_id).unwrap();
-                }
-                _ => {}
-            }
-        }
     }
 
     pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, Message) {
@@ -739,21 +697,6 @@ impl ChatEvents {
         let index = self.get_index(event_index)?;
 
         self.events.get_mut(index)
-    }
-
-    fn get_message_sender_unchecked(&self, message_id: MessageId) -> UserId {
-        self.get_message_internal(message_id).unwrap().sender
-    }
-
-    fn get_message_internal(&self, message_id: MessageId) -> Option<&MessageInternal> {
-        if let Some(&event_index) = self.message_id_map.get(&message_id) {
-            if let Some(event) = self.get_internal(event_index) {
-                if let ChatEventInternal::Message(message) = &event.event {
-                    return Some(message);
-                };
-            }
-        }
-        None
     }
 
     fn get_message_internal_mut(&mut self, message_id: MessageId) -> Option<&mut MessageInternal> {
