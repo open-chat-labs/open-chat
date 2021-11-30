@@ -89,7 +89,7 @@ export class ServiceContainer implements MarkMessagesRead {
         this._groupIndexClient = GroupIndexClient.create(identity);
         this._notificationClient = NotificationsClient.create(identity);
         this._groupClients = {};
-        this.db = db;
+        this.db = db(identity.getPrincipal().toString());
     }
 
     createUserClient(userId: string): ServiceContainer {

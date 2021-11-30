@@ -50,12 +50,12 @@ export function createCacheKey(chatId: string, index: number): string {
     return `${chatId}_${padMessageIndex(index)}`;
 }
 
-export function openMessageCache(): Database | undefined {
+export function openCache(principal: string): Database | undefined {
     if (process.env.NODE_ENV === "test") {
         return undefined;
     }
     try {
-        return openDB<ChatSchema>("openchat_db", 10, {
+        return openDB<ChatSchema>(`openchat_db_${principal}`, 10, {
             upgrade(db, _oldVersion, _newVersion) {
                 try {
                     if (db.objectStoreNames.contains("chat_messages")) {
@@ -399,4 +399,4 @@ export async function getSoftDisabled(): Promise<boolean> {
     return false;
 }
 
-export const db = openMessageCache();
+export const db = (principal: string) => openCache(principal);
