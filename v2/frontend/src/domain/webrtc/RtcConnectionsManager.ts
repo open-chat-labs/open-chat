@@ -89,7 +89,9 @@ export class RtcConnectionsManager {
         userIds.forEach((userId) => {
             const conn = this.connections.get(userId);
             if (conn && conn.open) {
-                conn.send(message);
+                try {
+                    conn.send(message);
+                } catch {}
             }
         });
     };
