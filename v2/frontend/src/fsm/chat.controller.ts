@@ -93,7 +93,7 @@ export class ChatController {
         this.blockedUsers = writable(new Set<string>());
         this.chat = writable(_chat);
         this.chatId = _chat.chatId;
-        this.chatUserIds = new Set<string>();
+        this.chatUserIds = new Set<string>(_chat.kind === "direct_chat" ? [_chat.them] : []);
         this.maxLoadedEventIndex = _chat.latestEventIndex;
 
         if (process.env.NODE_ENV !== "test") {
