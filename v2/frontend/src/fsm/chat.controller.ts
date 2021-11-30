@@ -93,7 +93,7 @@ export class ChatController {
         this.blockedUsers = writable(new Set<string>());
         this.chat = writable(_chat);
         this.chatId = _chat.chatId;
-        this.chatUserIds = new Set<string>(_chat.kind === "direct_chat" ? [_chat.them] : []);
+        this.chatUserIds = new Set<string>();
         this.maxLoadedEventIndex = _chat.latestEventIndex;
 
         if (process.env.NODE_ENV !== "test") {
@@ -227,7 +227,10 @@ export class ChatController {
             this.localReactions
         );
 
-        const userIds = userIdsFromEvents(updated);
+        const userIds = this._chat.kind === "direct_chat"
+            ? new Set([this._chat.them])
+            : userIdsFromEvents(updated);
+
         await this.updateUserStore(userIds);
         this.makeRtcConnections(userIds);
         this.events.set(updated);
