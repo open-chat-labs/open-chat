@@ -79,7 +79,7 @@
                     toastStore.showFailureToast("errorSendingMessage");
                     controller.removeMessage(msg.messageId, controller.user.userId);
                     rollbar.error("Exception sending message", err);
-                    // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
+                    unconfirmed.delete(msg.messageId);
                 });
 
             const event = { event: msg!, index: nextEventIndex, timestamp: BigInt(Date.now()) };
