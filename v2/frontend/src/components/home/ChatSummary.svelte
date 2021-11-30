@@ -121,10 +121,6 @@
         position: relative;
         border-bottom: var(--chatSummary-bd);
 
-        &.first {
-            border-top: var(--chatSummary-bd);
-        }
-
         &.selected::before {
             content: "";
             position: absolute;
@@ -158,15 +154,15 @@
         overflow: hidden;
 
         &:not(.rtl) {
-            padding: 0 $sp5 0 $sp3;
+            padding: 0 0 0 12px;
         }
         &.rtl {
-            padding: 0 $sp3 0 $sp5;
+            padding: 0 12px 0 0;
         }
 
         .name-date {
             display: flex;
-            margin-bottom: $sp2;
+            margin-bottom: $sp1;
             .chat-name {
                 @include font(book, normal, fs-100);
                 color: var(--chatSummary-txt1);
@@ -177,16 +173,16 @@
 
         .chat-msg {
             @include ellipsis();
-            @include font(light, normal, fs-70);
+            @include font(book, normal, fs-80);
             color: var(--chatSummary-txt2);
         }
     }
 
     .chat-date {
         position: absolute;
-        @include font(light, normal, fs-60);
+        @include font(book, normal, fs-60);
         color: var(--chatSummary-txt2);
-        top: $sp2;
+        top: $sp3;
         &:not(.rtl) {
             right: $sp3;
         }
@@ -200,15 +196,15 @@
         justify-content: center;
         align-items: center;
         background-color: var(--accent);
-        text-shadow: 1px 1px 1px rgba(150, 50, 50, 0.8);
+        text-shadow: 1px 1px 1px var(--accentDarker);
         border-radius: 50%;
         font-weight: bold;
         font-size: 10px;
         color: #ffffff;
-        position: absolute;
         width: $sp5;
         height: $sp5;
-        top: calc(50% - 4px);
+        margin-top: 18px;
+        margin-left: 2px;
 
         &:not(.rtl) {
             right: $sp3;
