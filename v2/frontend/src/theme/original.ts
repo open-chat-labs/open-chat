@@ -31,13 +31,14 @@ export function originalTheme(defaultTheme: Theme): Theme {
 
         chatSummary: {
             ...defaultTheme.chatSummary,
+            txt2: "rgba(0, 0, 0, 0.6)",
             mb: "0",
             bd: "1px solid #ddd",
+            "bd-selected": "transparent",
         },
 
         currentUser: {
             ...defaultTheme.currentUser,
-            bd: "1px solid #ddd",
             bg: "#ededed",
         },
 
@@ -60,9 +61,9 @@ export function originalTheme(defaultTheme: Theme): Theme {
 
         chatSearch: {
             ...defaultTheme.chatSearch,
-            mg: "0 8px",
             bg: "#ffffff",
-            bd: "rgba(0,0,0,0.08)",
+            mg: "0 8px",
+            pd: "0 16px",
             section: {
                 txt: "#191919",
                 title: {
@@ -77,7 +78,7 @@ export function originalTheme(defaultTheme: Theme): Theme {
 
         button: {
             ...defaultTheme.button,
-            bg: "#085d8c",
+            bg: "rgb(132, 225, 132)",
             hv: "#053d5c",
             // bg: "#f79031",
             // hv: "#E37C1D",
@@ -86,11 +87,6 @@ export function originalTheme(defaultTheme: Theme): Theme {
         section: {
             ...defaultTheme.section,
             bg: "#ededed",
-        },
-
-        icon: {
-            ...defaultTheme.icon,
-            txt: "#666",
         },
 
         scrollbar: {

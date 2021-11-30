@@ -25,7 +25,7 @@ export function lightTheme(): Theme {
         reaction: {
             bg: "#efefef",
             txt: "#191919",
-            me: pinkAccent,
+            me: "#ff69b4",
         },
 
         timeline: {
@@ -112,9 +112,9 @@ export function lightTheme(): Theme {
         chatSearch: {
             bg: "#ffffff",
             txt: "#555555",
-            bd: "transparent",
             mg: "0",
-
+            pd: "4px 16px",
+            
             section: {
                 txt: "#ffffff",
                 title: {
@@ -132,7 +132,7 @@ export function lightTheme(): Theme {
             bg: "white",
             hv: "#ececec",
             txt1: "#191919",
-            txt2: "#333",
+            txt2: "rgba(0, 0, 0, 0.6)",
             bd: "transparent",
             "bd-selected": pinkAccent,
             mb: sp3,
@@ -154,7 +154,7 @@ export function lightTheme(): Theme {
             bg: "#22A7F2",
             hv: "#52baf5",
             txt: "#ffffff",
-            bd: "transparent",
+            bd: "",
             disabled: "#cccccc",
             spinner: "#ffffff",
             "disabled-txt": "#999999",

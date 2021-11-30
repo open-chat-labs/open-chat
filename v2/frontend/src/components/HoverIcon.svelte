@@ -1,8 +1,9 @@
 <script lang="ts">
     export let compact: boolean = false;
+    export let semiCompact: boolean = false;
 </script>
 
-<div class="wrapper" class:compact role="button">
+<div class="wrapper" class:compact class:semiCompact role="button">
     <slot />
 </div>
 
@@ -19,6 +20,10 @@
 
         &.compact {
             padding: $sp2;
+        }
+
+        &.semiCompact {
+            padding: 6px;
         }
 
         &:hover {
