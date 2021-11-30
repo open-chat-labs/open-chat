@@ -64,6 +64,7 @@ export function originalTheme(defaultTheme: Theme): Theme {
             },
             msg: {
                 ...defaultTheme.currentChat.msg,
+                "reply-accent": accent,
                 me: {
                     ...defaultTheme.currentChat.msg.me,
                     bg: "#d62c7d",
@@ -92,8 +93,10 @@ export function originalTheme(defaultTheme: Theme): Theme {
 
         button: {
             ...defaultTheme.button,
-            bg: accent,
-            hv: accentDarker,
+            bg: "#085d8c",
+            // bg: accent,
+            hv: "#053d5c",
+            // hv: accentDarker,
         },
 
         section: {

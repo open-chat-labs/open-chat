@@ -1,86 +1,53 @@
-import { idlFactory, UserService } from "../user/candid/idl";
-import { CandidService } from "../candidService";
-import { putChunkResponse } from "../user/mappers";
+import { HttpAgent } from "@dfinity/agent";
+import type { Identity } from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
+import { OpenStorageAgent, UploadBlobResponse } from "@open-ic/open-storage-agent";
 import type { IDataClient } from "./data.client.interface";
 import { DataClientMock } from "./data.client.mock";
-import type { MessageContent, PutChunkResponse } from "../../domain/chat/chat";
+import type { MessageContent } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
-import type { Identity } from "@dfinity/agent";
 import type { BlobReference } from "../../domain/data/data";
 
-const CHUNK_SIZE_BYTES = 1024 * 500; // 500KB
+export class DataClient implements IDataClient {
+    private openStorageAgent: OpenStorageAgent;
 
-export class DataClient extends CandidService implements IDataClient {
-    private dataService: UserService;
-
-    static create(identity: Identity, canisterId: string): IDataClient {
+    static create(identity: Identity): IDataClient {
         if (process.env.MOCK_SERVICES) {
             return new DataClientMock();
         }
-        return new DataClient(identity, canisterId);
+        const agent = new HttpAgent({ identity });
+        if (process.env.NODE_ENV !== "production") {
+            agent.fetchRootKey();
+        }
+        const openStorageAgent = new OpenStorageAgent(
+            agent,
+            Principal.fromText("process.env.OPEN_STORAGE_INDEX_CANISTER"));
+
+        return new DataClient(openStorageAgent);
     }
 
-    constructor(identity: Identity, private canisterId: string) {
-        super(identity);
-        this.dataService = this.createServiceClient<UserService>(idlFactory, canisterId);
-    }
-
-    putChunk(
-        blobId: bigint,
-        bytes: Uint8Array,
-        totalChunks: number,
-        mimeType: string,
-        index: number
-    ): Promise<PutChunkResponse> {
-        return this.handleResponse(
-            this.dataService.put_chunk({
-                blob_id: blobId,
-                bytes: Array.from(bytes),
-                mime_type: mimeType,
-                total_chunks: totalChunks,
-                index: index,
-            }),
-            putChunkResponse
-        );
+    constructor(openStorageAgent: OpenStorageAgent) {
+        this.openStorageAgent = openStorageAgent;
     }
 
     static newBlobId(): bigint {
         return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
     }
 
-    private async uploadBlobData(mimeType: string, data: Uint8Array): Promise<BlobReference> {
-        const blobId = DataClient.newBlobId();
-        const size = data.byteLength;
-        const chunks = [];
-        for (let byteStart = 0; byteStart < size; byteStart += CHUNK_SIZE_BYTES) {
-            const byteEnd = Math.min(size, byteStart + CHUNK_SIZE_BYTES);
-            const slice = data.slice(byteStart, byteEnd);
-            chunks.push(slice);
-        }
-
-        const blobReference = {
-            blobId,
-            canisterId: this.canisterId,
-        };
-
-        await Promise.all(
-            chunks.map((chunk, i) => this.putChunk(blobId, chunk, chunks.length, mimeType, i))
-        );
-
-        return blobReference;
-    }
-
-    async uploadData(content: MessageContent): Promise<boolean> {
+    async uploadData(content: MessageContent, accessorCanisterIds: string[]): Promise<boolean> {
         if (
             content.kind === "file_content" ||
             content.kind === "image_content" ||
             content.kind === "audio_content"
         ) {
             if (content.blobData && content.blobReference === undefined) {
-                content.blobReference = await this.uploadBlobData(
+                const accessorIds = accessorCanisterIds.map(c => Principal.fromText(c));
+
+                content.blobReference = this.convertResponse(await this.openStorageAgent.uploadBlob(
                     content.mimeType,
+                    accessorIds,
                     content.blobData
-                );
+                ));
             }
         }
 
@@ -91,16 +58,25 @@ export class DataClient extends CandidService implements IDataClient {
                 content.videoData.blobReference === undefined &&
                 content.imageData.blobReference === undefined
             ) {
+                const accessorIds = accessorCanisterIds.map(c => Principal.fromText(c));
+
                 await Promise.all([
-                    this.uploadBlobData(content.mimeType, content.videoData.blobData),
-                    this.uploadBlobData("image/jpg", content.imageData.blobData),
+                    this.openStorageAgent.uploadBlob(content.mimeType, accessorIds, content.videoData.blobData),
+                    this.openStorageAgent.uploadBlob("image/jpg", accessorIds, content.imageData.blobData),
                 ]).then(([video, image]) => {
-                    content.videoData.blobReference = video;
-                    content.imageData.blobReference = image;
+                    content.videoData.blobReference = this.convertResponse(video);
+                    content.imageData.blobReference = this.convertResponse(image);
                 });
             }
         }
 
         return Promise.resolve(true);
+    }
+
+    convertResponse(response: UploadBlobResponse): BlobReference {
+        return {
+            canisterId: response.canisterId.toString(),
+            blobId: response.blobId
+        };
     }
 }
