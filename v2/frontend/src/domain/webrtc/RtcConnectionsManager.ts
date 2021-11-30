@@ -91,7 +91,9 @@ export class RtcConnectionsManager {
             if (conn && conn.open) {
                 try {
                     conn.send(message);
-                } catch {}
+                } catch(e) {
+                    console.debug("Error sending WebRTC message to " + userId, e);
+                }
             }
         });
     };
