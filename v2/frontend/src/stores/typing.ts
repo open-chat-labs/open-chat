@@ -4,7 +4,7 @@ type TypersByChat = Record<string, Set<string>>;
 
 type UserTyping = {
     chatId: string,
-    timeout: NodeJS.Timeout
+    timeout: number
 };
 
 const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -19,12 +19,12 @@ export const typing = {
         store.update((chats) => {
             // Start a timeout which will mark the user as having stopped typing if no further 'user typing' events are
             // received within MARK_TYPING_STOPPED_INTERVAL_MS.
-            const timeout = setTimeout(() => _delete(userId), MARK_TYPING_STOPPED_INTERVAL_MS);
+            const timeout = window.setTimeout(() => _delete(userId), MARK_TYPING_STOPPED_INTERVAL_MS);
 
             const existingEntry = usersTyping.get(userId);
             if (existingEntry) {
                 // Clear the existing timeout since it is no longer relevant.
-                clearTimeout(existingEntry.timeout);
+                window.clearTimeout(existingEntry.timeout);
 
                 // Users can only be typing in a single chat at a time, so if this user is now typing in a different
                 // chat to before, then we should mark that they have stopped typing in the previous one.
@@ -56,7 +56,7 @@ export const typing = {
 function _delete(userId: string): void {
     const existingEntry = usersTyping.get(userId);
     if (existingEntry) {
-        clearTimeout(existingEntry.timeout);
+        window.clearTimeout(existingEntry.timeout);
         usersTyping.delete(userId);
 
         store.update((chats) => {
