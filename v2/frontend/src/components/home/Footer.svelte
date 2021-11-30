@@ -7,10 +7,9 @@
     import type { EventWrapper, Message, MessageContent } from "../../domain/chat/chat";
     import { getMessageContent } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
-    import { createEventDispatcher } from "svelte";
     import Loading from "../Loading.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
-    const dispatch = createEventDispatcher();
+    import { unconfirmed } from "../../stores/unconfirmed";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -68,12 +67,11 @@
                 .then((resp) => {
                     if (resp.kind === "success") {
                         controller.updateMessage(msg, resp);
+                        unconfirmed.delete(msg.messageId);
                     } else {
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
                         controller.removeMessage(msg.messageId, controller.user.userId);
-                        // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
-                        dispatch("messageConfirmed", msg!.messageId);
                     }
                 })
                 .catch((err) => {
