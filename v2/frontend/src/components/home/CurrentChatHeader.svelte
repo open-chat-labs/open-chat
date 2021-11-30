@@ -306,8 +306,9 @@
     }
 
     .chat-subtext {
-        @include font(light, normal, fs-100);
+        @include font(book, normal, fs-80);
         @include ellipsis();
+        color: var(--chatSummary-txt2);
     }
 
     .avatar {

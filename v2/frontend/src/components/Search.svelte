@@ -61,9 +61,8 @@
         display: flex;
         align-items: center;
         position: relative;
-        padding: $sp2 $sp4;
+        padding: var(--chatSearch-pd);
         border-radius: $sp5;
-        border: 1px solid var(--chatSearch-bd);
 
         @include size-below(xs) {
             margin: var(--chatSearch-xs-mg);

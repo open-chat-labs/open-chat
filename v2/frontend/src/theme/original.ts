@@ -1,7 +1,7 @@
 import type { Theme } from "./themes";
 
-// const accent = "#ff9505"; // orange
-const accent = "hotpink";
+const accent = "#59df59";
+const accentDarker = "rgba(4, 104, 4, 0.8)";
 
 export function originalTheme(defaultTheme: Theme): Theme {
     return {
@@ -12,6 +12,12 @@ export function originalTheme(defaultTheme: Theme): Theme {
         mg: "20px auto",
 
         accent: accent,
+        accentDarker: accentDarker,
+
+        notificationBar: {
+            ...defaultTheme.notificationBar,
+            bg: accent,
+        },
 
         panel: {
             ...defaultTheme.panel,
@@ -29,15 +35,24 @@ export function originalTheme(defaultTheme: Theme): Theme {
             },
         },
 
+        toast: {
+            ...defaultTheme.toast,
+            success: {
+                ...defaultTheme.toast.success,
+                bg: accent,
+            },
+        },
+
         chatSummary: {
             ...defaultTheme.chatSummary,
+            txt2: "rgba(0, 0, 0, 0.6)",
             mb: "0",
             bd: "1px solid #ddd",
+            "bd-selected": "transparent",
         },
 
         currentUser: {
             ...defaultTheme.currentUser,
-            bd: "1px solid #ddd",
             bg: "#ededed",
         },
 
@@ -49,6 +64,7 @@ export function originalTheme(defaultTheme: Theme): Theme {
             },
             msg: {
                 ...defaultTheme.currentChat.msg,
+                "reply-accent": accent,
                 me: {
                     ...defaultTheme.currentChat.msg.me,
                     bg: "#d62c7d",
@@ -60,9 +76,9 @@ export function originalTheme(defaultTheme: Theme): Theme {
 
         chatSearch: {
             ...defaultTheme.chatSearch,
-            mg: "0 8px",
             bg: "#ffffff",
-            bd: "rgba(0,0,0,0.08)",
+            mg: "0 8px",
+            pd: "0 16px",
             section: {
                 txt: "#191919",
                 title: {
@@ -78,19 +94,14 @@ export function originalTheme(defaultTheme: Theme): Theme {
         button: {
             ...defaultTheme.button,
             bg: "#085d8c",
+            // bg: accent,
             hv: "#053d5c",
-            // bg: "#f79031",
-            // hv: "#E37C1D",
+            // hv: accentDarker,
         },
 
         section: {
             ...defaultTheme.section,
             bg: "#ededed",
-        },
-
-        icon: {
-            ...defaultTheme.icon,
-            txt: "#666",
         },
 
         scrollbar: {

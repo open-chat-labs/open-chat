@@ -113,18 +113,12 @@ struct Data {
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub online_users_aggregator_canister_ids: HashSet<CanisterId>,
-    #[serde(default = "open_storage_index_canister_id")]
     pub open_storage_index_canister_id: CanisterId,
-    #[serde(default)]
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub super_admins: HashSet<UserId>,
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
-}
-
-fn open_storage_index_canister_id() -> CanisterId {
-    Principal::from_text("rturd-qaaaa-aaaaf-aabaq-cai").unwrap()
 }
 
 impl Data {
