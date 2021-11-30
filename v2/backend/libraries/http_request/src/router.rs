@@ -3,7 +3,6 @@ use types::TimestampMillis;
 
 pub enum Route {
     Avatar(Option<u128>),
-    Blob(u128),
     Logs(Option<TimestampMillis>),
     Traces(Option<TimestampMillis>),
     Metrics,
@@ -22,13 +21,6 @@ pub fn extract_route(path: &str) -> Route {
         "avatar" => {
             let blob_id = parts.get(1).map(|p| u128::from_str(p).ok()).flatten();
             Route::Avatar(blob_id)
-        }
-        "blobs" if parts.len() > 1 => {
-            if let Ok(blob_id) = u128::from_str(parts[1]) {
-                Route::Blob(blob_id)
-            } else {
-                Route::Other
-            }
         }
         "logs" => {
             let since = parts.get(1).map(|p| u64::from_str(p).ok()).flatten();
