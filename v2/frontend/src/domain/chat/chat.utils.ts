@@ -1,4 +1,4 @@
-import type { UserLookup, UserSummary } from "../user/user";
+import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
 import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.utils";
 import type {
     ChatSummary,
@@ -201,17 +201,21 @@ export function getParticipantsString(
     userLookup: UserLookup,
     participantIds: string[],
     unknownUser: string,
-    you: string
+    you: string,
+    compareUsersFn?: ((u1: PartialUserSummary, u2: PartialUserSummary) => number)
 ): string {
     if (participantIds.length > 5) {
-        const numberOnline = participantIds.map((id) => userIsOnline(userLookup, id)).length;
-        return `${participantIds.length} members (${numberOnline} online)`;
+        return `${participantIds.length} members`;
     }
-    return participantIds
+    const sorted = participantIds
         .map((id) => userLookup[id] ?? nullUser(unknownUser))
-        .sort(compareUsersOnlineFirst)
-        .map((p) => (p.userId === user.userId ? you : p.username))
-        .join(", ");
+        .sort(compareUsersFn ?? compareUsersOnlineFirst)
+        .map((p) => (p.userId === user.userId ? you : p.username));
+
+    // TODO Improve i18n, don't hardcode 'and'
+    return sorted.length > 1
+        ? `${sorted.slice(0, -1).join(", ")} and ${sorted[sorted.length - 1]}`
+        : sorted.join();
 }
 
 function addCaption(caption: string | undefined, content: MessageContent): MessageContent {

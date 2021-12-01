@@ -138,6 +138,7 @@ pub struct ParticipantRelinquishesSuperAdmin {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpdatedMessage {
+    pub updated_by: UserId,
     pub event_index: EventIndex,
     pub message_id: MessageId,
 }
