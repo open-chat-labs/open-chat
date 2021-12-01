@@ -28,10 +28,10 @@ enum ChatType {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatEventInternal {
     Message(Box<MessageInternal>),
-    MessageEdited(Box<MessageId>),
-    MessageDeleted(Box<MessageId>),
-    MessageReactionAdded(Box<MessageId>),
-    MessageReactionRemoved(Box<MessageId>),
+    MessageEdited(Box<UpdatedMessageInternal>),
+    MessageDeleted(Box<UpdatedMessageInternal>),
+    MessageReactionAdded(Box<UpdatedMessageInternal>),
+    MessageReactionRemoved(Box<UpdatedMessageInternal>),
     DirectChatCreated(DirectChatCreated),
     GroupChatCreated(Box<GroupChatCreated>),
     GroupNameChanged(Box<GroupNameChanged>),
@@ -101,6 +101,12 @@ pub struct MessageInternal {
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
     pub last_updated: Option<TimestampMillis>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct UpdatedMessageInternal {
+    pub updated_by: UserId,
+    pub message_id: MessageId,
 }
 
 pub struct PushMessageArgs {
@@ -272,7 +278,13 @@ impl ChatEvents {
                     message.content = args.content;
                     message.last_updated = Some(args.now);
                     self.metrics.total_edits += 1;
-                    self.push_event(ChatEventInternal::MessageEdited(Box::new(args.message_id)), args.now);
+                    self.push_event(
+                        ChatEventInternal::MessageEdited(Box::new(UpdatedMessageInternal {
+                            updated_by: args.sender,
+                            message_id: args.message_id,
+                        })),
+                        args.now,
+                    );
                     EditMessageResult::Success
                 }
             } else {
@@ -301,7 +313,13 @@ impl ChatEvents {
                     });
                     message.last_updated = Some(now);
                     self.metrics.deleted_messages += 1;
-                    self.push_event(ChatEventInternal::MessageDeleted(Box::new(message_id)), now);
+                    self.push_event(
+                        ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
+                            updated_by: caller,
+                            message_id,
+                        })),
+                        now,
+                    );
                     DeleteMessageResult::Success
                 }
             } else {
@@ -343,11 +361,23 @@ impl ChatEvents {
 
                 return if added {
                     self.metrics.total_reactions += 1;
-                    let new_event_index = self.push_event(ChatEventInternal::MessageReactionAdded(Box::new(message_id)), now);
+                    let new_event_index = self.push_event(
+                        ChatEventInternal::MessageReactionAdded(Box::new(UpdatedMessageInternal {
+                            updated_by: user_id,
+                            message_id,
+                        })),
+                        now,
+                    );
                     ToggleReactionResult::Added(new_event_index)
                 } else {
                     self.metrics.total_reactions -= 1;
-                    let new_event_index = self.push_event(ChatEventInternal::MessageReactionRemoved(Box::new(message_id)), now);
+                    let new_event_index = self.push_event(
+                        ChatEventInternal::MessageReactionRemoved(Box::new(UpdatedMessageInternal {
+                            updated_by: user_id,
+                            message_id,
+                        })),
+                        now,
+                    );
                     ToggleReactionResult::Removed(new_event_index)
                 };
             }
@@ -427,10 +457,14 @@ impl ChatEvents {
         }
     }
 
-    pub fn hydrate_updated_message(&self, message_id: MessageId) -> UpdatedMessage {
+    pub fn hydrate_updated_message(&self, message: &UpdatedMessageInternal) -> UpdatedMessage {
         UpdatedMessage {
-            event_index: self.message_id_map.get(&message_id).map_or(EventIndex::default(), |e| *e),
-            message_id,
+            updated_by: message.updated_by,
+            event_index: self
+                .message_id_map
+                .get(&message.message_id)
+                .map_or(EventIndex::default(), |e| *e),
+            message_id: message.message_id,
         }
     }
 
@@ -863,7 +897,13 @@ mod tests {
                 replies_to: None,
                 now: i as u64,
             });
-            events.push_event(ChatEventInternal::MessageReactionAdded(Box::new(message_id)), i as u64);
+            events.push_event(
+                ChatEventInternal::MessageReactionAdded(Box::new(UpdatedMessageInternal {
+                    updated_by: user_id,
+                    message_id,
+                })),
+                i as u64,
+            );
         }
 
         events
