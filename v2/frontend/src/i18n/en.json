@@ -47,7 +47,7 @@
     "deleteGroupSuccess": "Group successfully deleted",
     "deleteGroupFailure": "Unable to delete group",
     "irreversible": "Do you definitely want to delete this group? This cannot be undone!",
-    "directChatCreatedAt": "chat created at",
+    "directChatCreatedAt": "chat started",
     "skip": "Skip",
     "userLeft": "{username} left the group",
     "userJoined": "{username} joined the group",
