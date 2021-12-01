@@ -418,9 +418,7 @@ export type NightMode = { 'On' : null } |
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
-  { 'GroupMessageNotification' : GroupMessageNotification } |
-  { 'V1GroupMessageNotification' : V1GroupMessageNotification } |
-  { 'V1DirectMessageNotification' : V1DirectMessageNotification };
+  { 'GroupMessageNotification' : GroupMessageNotification };
 export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
@@ -645,64 +643,6 @@ export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
 }
-export type V1ChatId = bigint;
-export interface V1CyclesContent {
-  'caption' : [] | [string],
-  'amount' : Cycles,
-}
-export interface V1DirectMessageNotification {
-  'sender' : UserId,
-  'message' : V1Message,
-  'sender_name' : string,
-  'chat_id' : string,
-}
-export interface V1FileContent {
-  'blob_size' : number,
-  'blob_id' : string,
-  'name' : string,
-  'mime_type' : string,
-  'caption' : [] | [string],
-  'chunk_size' : number,
-  'blob_deleted' : boolean,
-}
-export type V1GroupId = bigint;
-export interface V1GroupMessageNotification {
-  'sender' : UserId,
-  'message' : V1Message,
-  'sender_name' : string,
-  'chat_id' : string,
-  'group_name' : string,
-}
-export interface V1MediaContent {
-  'height' : number,
-  'blob_size' : number,
-  'blob_id' : string,
-  'mime_type' : string,
-  'thumbnail_data' : string,
-  'caption' : [] | [string],
-  'width' : number,
-  'chunk_size' : number,
-  'blob_deleted' : boolean,
-}
-export interface V1Message {
-  'id' : number,
-  'content' : V1MessageContent,
-  'sender' : UserId,
-  'timestamp' : TimestampMillis,
-  'replies_to' : [] | [V1ReplyContext],
-  'client_message_id' : string,
-}
-export type V1MessageContent = { 'File' : V1FileContent } |
-  { 'Text' : V1TextContent } |
-  { 'Media' : V1MediaContent } |
-  { 'Cycles' : V1CyclesContent };
-export interface V1ReplyContext {
-  'content' : V1MessageContent,
-  'user_id' : UserId,
-  'chat_id' : V1ChatId,
-  'message_id' : number,
-}
-export interface V1TextContent { 'text' : string }
 export interface Version {
   'major' : number,
   'minor' : number,

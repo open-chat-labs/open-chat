@@ -59,17 +59,11 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub push_service_principals: HashSet<Principal>,
-    #[serde(default = "user_index_canister_id")]
     pub user_index_canister_id: CanisterId,
-    #[serde(default)]
     pub principal_to_user_id: HashMap<Principal, UserId>,
     pub notifications: EventStream<NotificationEnvelope>,
     pub subscriptions: Subscriptions,
     pub test_mode: bool,
-}
-
-fn user_index_canister_id() -> CanisterId {
-    Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap()
 }
 
 impl Data {
