@@ -74,8 +74,6 @@ pub use user_preferences::*;
 pub use user_summary::*;
 pub use version::*;
 
-pub mod v1_message;
-
 pub type BlockHeight = u64;
 pub type CanisterId = Principal;
 pub type Milliseconds = u64;
