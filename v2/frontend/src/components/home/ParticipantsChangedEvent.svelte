@@ -5,6 +5,7 @@
     import type { UserSummary } from "../../domain/user/user";
     import { _ } from "svelte-i18n";
     import { getParticipantsString } from "../../domain/chat/chat.utils";
+    import { compareIsNotYouThenUsername } from "../../domain/user/user.utils";
     import { userStore } from "../../stores/user";
 
     export let user: UserSummary | undefined;
@@ -20,7 +21,8 @@
         $userStore,
         changed,
         $_("unknownUser"),
-        $_("you")
+        $_("you"),
+        compareIsNotYouThenUsername(user?.userId)
     );
 
     $: text = $_(resourceKey, {
