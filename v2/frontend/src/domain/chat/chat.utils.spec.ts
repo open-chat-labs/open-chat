@@ -349,7 +349,7 @@ describe("get participants string for group chat", () => {
             "Unknown User",
             "You"
         );
-        expect(participants).toEqual("Mr B, Mr C, Mr D, You, Mr A");
+        expect(participants).toEqual("Mr B, Mr C, Mr D, You and Mr A");
     });
     test("with unknown users", () => {
         const participants = getParticipantsString(
@@ -359,7 +359,7 @@ describe("get participants string for group chat", () => {
             "Unknown User",
             "You"
         );
-        expect(participants).toEqual("Mr B, Mr D, You, Mr A, Unknown User");
+        expect(participants).toEqual("Mr B, Mr D, You, Mr A and Unknown User");
     });
     test("with more than 5 participants", () => {
         const participants = getParticipantsString(
@@ -369,7 +369,7 @@ describe("get participants string for group chat", () => {
             "Unknown User",
             "You"
         );
-        expect(participants).toEqual("8 members (8 online)");
+        expect(participants).toEqual("8 members");
     });
 });
 
