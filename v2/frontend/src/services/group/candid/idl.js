@@ -178,6 +178,7 @@ export const idlFactory = ({ IDL }) => {
     'start_index' : EventIndex,
   });
   const UpdatedMessage = IDL.Record({
+    'updated_by' : UserId,
     'message_id' : MessageId,
     'event_index' : EventIndex,
   });
@@ -306,21 +307,6 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
-  });
-  const PutChunkArgs = IDL.Record({
-    'total_chunks' : IDL.Nat32,
-    'blob_id' : IDL.Nat,
-    'mime_type' : IDL.Text,
-    'bytes' : IDL.Vec(IDL.Nat8),
-    'index' : IDL.Nat32,
-  });
-  const PutChunkResponse = IDL.Variant({
-    'ChunkAlreadyExists' : IDL.Null,
-    'Full' : IDL.Null,
-    'CallerNotInGroup' : IDL.Null,
-    'BlobAlreadyExists' : IDL.Null,
-    'Success' : IDL.Null,
-    'ChunkTooBig' : IDL.Null,
   });
   const RemoveParticipantArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveParticipantResponse = IDL.Variant({
@@ -483,7 +469,6 @@ export const idlFactory = ({ IDL }) => {
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
     'make_admin' : IDL.Func([MakeAdminArgs], [MakeAdminResponse], []),
-    'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
     'remove_participant' : IDL.Func(
         [RemoveParticipantArgs],
         [RemoveParticipantResponse],

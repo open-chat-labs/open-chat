@@ -746,15 +746,6 @@ export type SendMessageNotInGroup = {
     kind: "not_in_group";
 };
 
-export type PutChunkResponse =
-    | "put_chunk_success"
-    | "put_chunk_full"
-    | "put_chunk_too_big"
-    | "chunk_already_exists"
-    | "caller_not_in_group"
-    | "blob_too_big"
-    | "blob_already_exists";
-
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error";
 
 export type MakeAdminResponse =

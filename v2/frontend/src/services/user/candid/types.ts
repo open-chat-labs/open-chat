@@ -537,19 +537,6 @@ export interface PendingICPWithdrawal {
   'fee_e8s' : [] | [bigint],
   'amount_e8s' : bigint,
 }
-export interface PutChunkArgs {
-  'total_chunks' : number,
-  'blob_id' : bigint,
-  'mime_type' : string,
-  'bytes' : Array<number>,
-  'index' : number,
-}
-export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
-  { 'BlobTooBig' : null } |
-  { 'Full' : null } |
-  { 'BlobAlreadyExists' : null } |
-  { 'Success' : null } |
-  { 'ChunkTooBig' : null };
 export interface RelinquishGroupSuperAdminArgs { 'chat_id' : ChatId }
 export type RelinquishGroupSuperAdminResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
@@ -658,6 +645,7 @@ export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
 export type UnmuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
 export interface UpdatedMessage {
+  'updated_by' : UserId,
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }
@@ -792,7 +780,6 @@ export interface _SERVICE {
   'mute_notifications' : (arg_0: MuteNotificationsArgs) => Promise<
       MuteNotificationsResponse
     >,
-  'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'relinquish_group_super_admin' : (
       arg_0: RelinquishGroupSuperAdminArgs,
     ) => Promise<RelinquishGroupSuperAdminResponse>,
