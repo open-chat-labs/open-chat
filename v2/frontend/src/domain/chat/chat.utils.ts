@@ -112,6 +112,8 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "message_edited":
             case "reaction_added":
             case "reaction_removed":
+                userIds.add(e.event.message.updatedBy)
+                break;
             case "direct_chat_created":
                 break;
             default:
