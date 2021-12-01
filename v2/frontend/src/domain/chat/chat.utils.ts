@@ -204,15 +204,17 @@ export function getParticipantsString(
     you: string,
     compareUsersFn?: ((u1: PartialUserSummary, u2: PartialUserSummary) => number)
 ): string {
+    if (participantIds.length > 5) {
+        return `${participantIds.length} members`;
+    }
     const sorted = participantIds
         .map((id) => userLookup[id] ?? nullUser(unknownUser))
         .sort(compareUsersFn ?? compareUsersOnlineFirst)
         .map((p) => (p.userId === user.userId ? you : p.username));
 
-
     // TODO Improve i18n, don't hardcode 'and'
     return sorted.length > 1
-        ? sorted.slice(0, -1).join(", ") + " and " + sorted[sorted.length - 1]
+        ? `${sorted.slice(0, -1).join(", ")} and ${sorted[sorted.length - 1]}`
         : sorted.join();
 }
 
