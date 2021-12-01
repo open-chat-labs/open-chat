@@ -103,25 +103,6 @@ type UnblockUserResponse =
         Success;
     }; 
 
-type PutChunkArgs =
-    record {
-        blob_id: nat;
-        mime_type: text;
-        total_chunks: nat32;
-        index: nat32;
-        bytes: vec nat8;
-    };
-
-type PutChunkResponse =
-    variant {
-        Success;
-        BlobAlreadyExists;
-        ChunkAlreadyExists;
-        ChunkTooBig;
-        BlobTooBig;
-        Full;
-    }; 
-
 type CreateGroupArgs =
     record {
         is_public: bool;
@@ -418,7 +399,6 @@ service: {
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
-    put_chunk: (PutChunkArgs) -> (PutChunkResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);

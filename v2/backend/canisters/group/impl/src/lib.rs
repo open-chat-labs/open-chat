@@ -6,7 +6,6 @@ use chat_events::GroupChatEvents;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{Avatar, CanisterId, ChatId, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
-use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 use utils::memory;
 use utils::regular_jobs::RegularJobs;
@@ -18,7 +17,6 @@ mod queries;
 mod regular_jobs;
 mod updates;
 
-const MAX_STORAGE: u64 = 2 * 1024 * 1024 * 1024; // 2GB
 const STATE_VERSION: StateVersion = StateVersion::V1;
 
 #[derive(CandidType, Serialize, Deserialize)]
@@ -52,7 +50,6 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
-        let blob_metrics = self.data.blob_storage.metrics();
         let chat_metrics = self.data.events.metrics();
         Metrics {
             memory_used: memory::used(),
@@ -73,11 +70,6 @@ impl RuntimeState {
             replies: chat_metrics.replies,
             total_reactions: chat_metrics.total_reactions,
             last_active: chat_metrics.last_active,
-            image_bytes: blob_metrics.image_bytes,
-            video_bytes: blob_metrics.video_bytes,
-            audio_bytes: blob_metrics.audio_bytes,
-            total_blobs: blob_metrics.blob_count,
-            total_blob_bytes: blob_metrics.total_bytes,
         }
     }
 }
@@ -97,7 +89,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub activity_notification_state: ActivityNotificationState,
-    pub blob_storage: BlobStorage,
     pub test_mode: bool,
 }
 
@@ -136,7 +127,6 @@ impl Data {
             user_index_canister_id,
             notifications_canister_ids,
             activity_notification_state: ActivityNotificationState::new(now),
-            blob_storage: BlobStorage::new(MAX_STORAGE),
             test_mode,
         }
     }
@@ -162,11 +152,6 @@ pub struct Metrics {
     pub replies: u64,
     pub total_reactions: u64,
     pub last_active: TimestampMillis,
-    pub total_blobs: u32,
-    pub total_blob_bytes: u64,
-    pub image_bytes: u64,
-    pub video_bytes: u64,
-    pub audio_bytes: u64,
 }
 
 fn run_regular_jobs() {

@@ -172,25 +172,6 @@ type DismissAdminResponse =
         CannotDismissSelf;
     };
 
-type PutChunkArgs =
-    record {
-        blob_id: nat;
-        mime_type: text;
-        total_chunks: nat32;
-        index: nat32;
-        bytes: blob;
-    };
-
-type PutChunkResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-        BlobAlreadyExists;
-        ChunkAlreadyExists;
-        ChunkTooBig;
-        Full;
-    };
-
 type UpdateGroupArgs =
     record {
         name: text;
@@ -353,7 +334,6 @@ service: {
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
-    put_chunk: (PutChunkArgs) -> (PutChunkResponse);
 
     selected_initial: (SelectedInitialArgs) -> (SelectedInitialResponse) query;
     selected_updates: (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;

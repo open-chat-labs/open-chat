@@ -11,7 +11,6 @@ pub mod delete_messages;
 pub mod dismiss_admin;
 pub mod edit_message;
 pub mod make_admin;
-pub mod put_chunk;
 pub mod remove_participant;
 pub mod send_message;
 pub mod toggle_reaction;
