@@ -6,7 +6,6 @@ import type {
     ApiChatSummaryUpdates,
     ApiDirectChatEventWrapper,
     ApiSendMessageResponse,
-    ApiPutChunkResponse,
     ApiBlockUserResponse,
     ApiUnblockUserResponse,
     ApiLeaveGroupResponse,
@@ -34,7 +33,6 @@ import type {
     CreateGroupResponse,
     DirectChatEvent,
     SendMessageResponse,
-    PutChunkResponse,
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
@@ -192,28 +190,6 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
         return "not_super_admin";
     }
     throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
-}
-
-export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse {
-    if ("Full" in candid) {
-        return "put_chunk_full";
-    }
-    if ("ChunkTooBig" in candid) {
-        return "put_chunk_too_big";
-    }
-    if ("Success" in candid) {
-        return "put_chunk_success";
-    }
-    if ("ChunkAlreadyExists" in candid) {
-        return "chunk_already_exists";
-    }
-    if ("BlobAlreadyExists" in candid) {
-        return "blob_already_exists";
-    }
-    if ("BlobTooBig" in candid) {
-        return "blob_too_big";
-    }
-    throw new UnsupportedValueError("Unexpected ApiPutChunkResponse type received", candid);
 }
 
 export function blockResponse(_candid: ApiBlockUserResponse): BlockUserResponse {

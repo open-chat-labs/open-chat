@@ -538,6 +538,7 @@ export type UpdateUserCanisterWasmResponse = { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'VersionNotHigher' : null };
 export interface UpdatedMessage {
+  'updated_by' : UserId,
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }

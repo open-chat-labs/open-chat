@@ -465,6 +465,7 @@ export interface TransactionWrapper {
   'index' : number,
 }
 export interface UpdatedMessage {
+  'updated_by' : UserId,
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }

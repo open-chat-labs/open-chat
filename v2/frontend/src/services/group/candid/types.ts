@@ -503,19 +503,6 @@ export interface PendingICPWithdrawal {
   'fee_e8s' : [] | [bigint],
   'amount_e8s' : bigint,
 }
-export interface PutChunkArgs {
-  'total_chunks' : number,
-  'blob_id' : bigint,
-  'mime_type' : string,
-  'bytes' : Array<number>,
-  'index' : number,
-}
-export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
-  { 'Full' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'BlobAlreadyExists' : null } |
-  { 'Success' : null } |
-  { 'ChunkTooBig' : null };
 export interface RemoveParticipantArgs { 'user_id' : UserId }
 export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
@@ -639,6 +626,7 @@ export type UpdateGroupResponse = {
   { 'NameTaken' : null } |
   { 'InternalError' : null };
 export interface UpdatedMessage {
+  'updated_by' : UserId,
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }
@@ -745,7 +733,6 @@ export interface _SERVICE {
   'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
   'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
   'make_admin' : (arg_0: MakeAdminArgs) => Promise<MakeAdminResponse>,
-  'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'remove_participant' : (arg_0: RemoveParticipantArgs) => Promise<
       RemoveParticipantResponse
     >,

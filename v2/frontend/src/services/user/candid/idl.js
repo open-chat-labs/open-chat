@@ -177,6 +177,7 @@ export const idlFactory = ({ IDL }) => {
     'start_index' : EventIndex,
   });
   const UpdatedMessage = IDL.Record({
+    'updated_by' : UserId,
     'message_id' : MessageId,
     'event_index' : EventIndex,
   });
@@ -414,21 +415,6 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const PutChunkArgs = IDL.Record({
-    'total_chunks' : IDL.Nat32,
-    'blob_id' : IDL.Nat,
-    'mime_type' : IDL.Text,
-    'bytes' : IDL.Vec(IDL.Nat8),
-    'index' : IDL.Nat32,
-  });
-  const PutChunkResponse = IDL.Variant({
-    'ChunkAlreadyExists' : IDL.Null,
-    'BlobTooBig' : IDL.Null,
-    'Full' : IDL.Null,
-    'BlobAlreadyExists' : IDL.Null,
-    'Success' : IDL.Null,
-    'ChunkTooBig' : IDL.Null,
-  });
   const RelinquishGroupSuperAdminArgs = IDL.Record({ 'chat_id' : ChatId });
   const RelinquishGroupSuperAdminResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
@@ -662,7 +648,6 @@ export const idlFactory = ({ IDL }) => {
         [MuteNotificationsResponse],
         [],
       ),
-    'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
     'relinquish_group_super_admin' : IDL.Func(
         [RelinquishGroupSuperAdminArgs],
         [RelinquishGroupSuperAdminResponse],
