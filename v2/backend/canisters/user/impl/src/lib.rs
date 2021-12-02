@@ -7,12 +7,14 @@ use crate::model::user_cycles_balance::UserCyclesBalance;
 use crate::model::user_preferences::UserPreferences;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
+use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{Avatar, CanisterId, Cycles, TimestampMillis, Timestamped, UserId, Version};
+use types::{Avatar, CanisterId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
+use utils::rand::get_random_item;
 use utils::regular_jobs::RegularJobs;
 
 mod guards;
@@ -52,6 +54,22 @@ impl RuntimeState {
 
     pub fn is_caller_user_index(&self) -> bool {
         self.env.caller() == self.data.user_index_canister_id
+    }
+
+    pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
+        let random = self.env.random_u32() as usize;
+
+        if let Some(canister_id) = get_random_item(&self.data.notifications_canister_ids, random) {
+            let args = c2c_push_notification::Args {
+                recipients,
+                notification,
+            };
+            ic_cdk::block_on(push_notification_inner(*canister_id, args));
+        }
+
+        async fn push_notification_inner(canister_id: CanisterId, args: notifications_canister::c2c_push_notification::Args) {
+            let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
+        }
     }
 
     pub fn metrics(&self) -> Metrics {

@@ -2,13 +2,11 @@ use crate::{run_regular_jobs, Data, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
-use notifications_canister::c2c_push_notification;
 use types::{
     CanisterId, CompletedCyclesTransfer, CryptocurrencyTransfer, Cycles, CyclesTransfer, DirectMessageNotification,
     MessageContent, Notification, TimestampMillis, UserId,
 };
 use user_canister::c2c_send_message::{Response::*, *};
-use utils::rand::get_random_item;
 
 #[update]
 #[trace]
@@ -85,32 +83,19 @@ fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut Runtime
 
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
         if !chat.notifications_muted.value {
-            let random = runtime_state.env.random_u32() as usize;
+            let notification = Notification::DirectMessageNotification(DirectMessageNotification {
+                sender,
+                sender_name: args.sender_name,
+                message,
+            });
 
-            if let Some(canister_id) = get_random_item(&runtime_state.data.notifications_canister_ids, random) {
-                let notification = DirectMessageNotification {
-                    sender,
-                    sender_name: args.sender_name,
-                    message,
-                };
+            let recipient = runtime_state.env.canister_id().into();
 
-                let recipient = runtime_state.env.canister_id().into();
-
-                let push_notification_future = push_notification(*canister_id, recipient, notification);
-                ic_cdk::block_on(push_notification_future);
-            }
+            runtime_state.push_notification(vec![recipient], notification);
         }
     }
 
     Success
-}
-
-async fn push_notification(canister_id: CanisterId, recipient: UserId, notification: DirectMessageNotification) {
-    let args = c2c_push_notification::Args {
-        recipients: vec![recipient],
-        notification: Notification::DirectMessageNotification(notification),
-    };
-    let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
 }
 
 fn accept_cycles(transfer: &CompletedCyclesTransfer, now: TimestampMillis, data: &mut Data) {
