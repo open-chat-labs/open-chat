@@ -5,6 +5,7 @@
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";
     import AudioContent from "./AudioContent.svelte";
+    import ChatMessageLink from "./ChatMessageLink.svelte";
 
     import FileContent from "./FileContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
@@ -20,6 +21,10 @@
 
     $: textContent = getContentAsText(content);
 
+    const overriddenRenderers = {
+        link: ChatMessageLink,
+    }
+
     // todo - we might be able to do something nicer than this with pure css, but we just need to do
     // *something* to make sure there a limit to the size of this box
     function truncateTo(n: number, str: string): string {
@@ -34,7 +39,10 @@
     <div class="text-content">
         <div class="text-wrapper">
             <slot />
-            <SvelteMarkdown source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} />
+            <SvelteMarkdown 
+                source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} 
+                renderers={overriddenRenderers}
+                options={{gfm: true, breaks: true}} />
         </div>
     </div>
 {:else if content.kind === "image_content"}
