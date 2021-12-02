@@ -1,6 +1,4 @@
-pub mod c2c_push_added_to_group_notification;
-pub mod c2c_push_direct_message_notification;
-pub mod c2c_push_group_message_notification;
+pub mod c2c_push_notification;
 pub mod push_subscription;
 pub mod remove_notifications;
 pub mod remove_subscription;

@@ -6,9 +6,9 @@ use chat_events::PushMessageArgs;
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
 use lazy_static::lazy_static;
-use notifications_canister::c2c_push_group_message_notification;
+use notifications_canister::c2c_push_notification;
 use regex::Regex;
-use types::{CanisterId, ContentValidationError, GroupMessageNotification, MessageContent, UserId};
+use types::{CanisterId, ContentValidationError, GroupMessageNotification, MessageContent, Notification, UserId};
 use utils::rand::get_random_item;
 
 #[update]
@@ -84,9 +84,9 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 }
 
 async fn push_notification(canister_id: CanisterId, recipients: Vec<UserId>, notification: GroupMessageNotification) {
-    let args = c2c_push_group_message_notification::Args {
+    let args = c2c_push_notification::Args {
         recipients,
-        notification,
+        notification: Notification::GroupMessageNotification(notification),
     };
     let _ = notifications_canister_c2c_client::c2c_push_group_message_notification(canister_id, &args).await;
 }

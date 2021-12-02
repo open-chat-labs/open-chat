@@ -3,7 +3,7 @@ export type AccountIdentifier = string;
 export interface AddParticipantsArgs {
   'allow_blocked_users' : boolean,
   'user_ids' : Array<UserId>,
-  'current_user_username' : string,
+  'added_by_name' : string,
 }
 export interface AddParticipantsFailedResult {
   'errors' : Array<UserId>,

@@ -143,7 +143,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         return this.handleResponse(
             this.groupService.add_participants({
                 user_ids: userIds.map((u) => Principal.fromText(u)),
-                current_user_username: myUsername,
+                added_by_name: myUsername,
                 allow_blocked_users: allowBlocked,
             }),
             addParticipantsResponse

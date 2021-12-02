@@ -2,10 +2,10 @@ use crate::{run_regular_jobs, Data, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
-use notifications_canister::c2c_push_direct_message_notification;
+use notifications_canister::c2c_push_notification;
 use types::{
     CanisterId, CompletedCyclesTransfer, CryptocurrencyTransfer, Cycles, CyclesTransfer, DirectMessageNotification,
-    MessageContent, TimestampMillis, UserId,
+    MessageContent, Notification, TimestampMillis, UserId,
 };
 use user_canister::c2c_send_message::{Response::*, *};
 use utils::rand::get_random_item;
@@ -106,7 +106,10 @@ fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut Runtime
 }
 
 async fn push_notification(canister_id: CanisterId, recipient: UserId, notification: DirectMessageNotification) {
-    let args = c2c_push_direct_message_notification::Args { recipient, notification };
+    let args = c2c_push_notification::Args {
+        recipients: vec![recipient],
+        notification: Notification::DirectMessageNotification(notification),
+    };
     let _ = notifications_canister_c2c_client::c2c_push_direct_message_notification(canister_id, &args).await;
 }
 

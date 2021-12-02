@@ -4,7 +4,7 @@ export const idlFactory = ({ IDL }) => {
   const AddParticipantsArgs = IDL.Record({
     'allow_blocked_users' : IDL.Bool,
     'user_ids' : IDL.Vec(UserId),
-    'current_user_username' : IDL.Text,
+    'added_by_name' : IDL.Text,
   });
   const AddParticipantsFailedResult = IDL.Record({
     'errors' : IDL.Vec(UserId),

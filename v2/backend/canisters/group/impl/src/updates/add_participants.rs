@@ -5,8 +5,8 @@ use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
-use notifications_canister::c2c_push_added_to_group_notification;
-use types::{AddedToGroupNotification, CanisterId, EventIndex, MessageIndex, ParticipantsAdded, UserId};
+use notifications_canister::c2c_push_notification;
+use types::{AddedToGroupNotification, CanisterId, EventIndex, MessageIndex, Notification, ParticipantsAdded, UserId};
 use user_canister::c2c_try_add_to_group;
 use utils::rand::get_random_item;
 
@@ -51,11 +51,11 @@ async fn add_participants(args: Args) -> Response {
     }
 
     if !users_added.is_empty() {
-        let added_by_username = args.current_user_username;
+        let added_by_name = args.added_by_name;
         RUNTIME_STATE.with(|state| {
             commit(
                 prepare_result.added_by,
-                added_by_username,
+                added_by_name,
                 &users_added,
                 state.borrow_mut().as_mut().unwrap(),
             )
@@ -195,9 +195,9 @@ async fn push_notification(
     recipients: Vec<UserId>,
     notification: AddedToGroupNotification,
 ) {
-    let args = c2c_push_added_to_group_notification::Args {
+    let args = c2c_push_notification::Args {
         recipients,
-        notification,
+        notification: Notification::AddedToGroupNotification(notification),
     };
     let _ = notifications_canister_c2c_client::c2c_push_added_to_group_notification(notifications_canister_id, &args).await;
 }

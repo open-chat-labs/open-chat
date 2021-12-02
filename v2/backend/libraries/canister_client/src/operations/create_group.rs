@@ -14,7 +14,7 @@ pub async fn create_group(
     if let user_canister::create_group::Response::Success(r) = create_group_response {
         let add_participants_args = group_canister::add_participants::Args {
             user_ids: participants,
-            current_user_username: String::default(),
+            added_by_name: String::default(),
             allow_blocked_users: false,
         };
         let add_participants_response =
