@@ -346,6 +346,7 @@ export type ReactionRemoved = {
 };
 
 export type StaleMessage = {
+    updatedBy: string,
     eventIndex: number;
     messageId: bigint;
 };
