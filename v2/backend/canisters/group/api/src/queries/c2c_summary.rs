@@ -5,6 +5,8 @@ use types::*;
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {}
 
+// Allow the large size difference because essentially all responses are the large variant anyway
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
