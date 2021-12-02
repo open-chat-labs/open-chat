@@ -9,6 +9,7 @@
     import type { UserSummary } from "../../domain/user/user";
     import { fade } from "svelte/transition";
     import { iconSize } from "../../stores/iconSize";
+    import { toTitleCase } from "../../utils/string";
 
     const dispatch = createEventDispatcher();
 
@@ -17,7 +18,7 @@
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
-    $: username = replyingTo.sender?.username ?? "unknownUser";
+    $: username = me ? toTitleCase($_("you")) : replyingTo.sender?.username ?? "unknownUser";
 
     function cancelReply() {
         dispatch("cancelReply");

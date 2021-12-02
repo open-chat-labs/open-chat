@@ -11,6 +11,7 @@
     import { push } from "svelte-spa-router";
     import type { UserSummary } from "../../domain/user/user";
     import { userStore } from "../../stores/user";
+    import { toTitleCase } from "../../utils/string";
 
     export let chatId: string;
     export let user: UserSummary | undefined;
@@ -29,7 +30,7 @@
     }
 
     function getUsernameFromReplyContext(replyContext: RehydratedReplyContext): string {
-        return $userStore[replyContext.senderId]?.username ?? $_("unknownUser");
+        return me ? toTitleCase($_("you")) : $userStore[replyContext.senderId]?.username ?? $_("unknownUser");
     }
 </script>
 
