@@ -1,16 +1,16 @@
 use crate::{RuntimeState, MAX_SUBSCRIPTION_AGE, RUNTIME_STATE};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use notifications_canister::push_group_message_notification::{Response::*, *};
+use notifications_canister::c2c_push_group_message_notification::{Response::*, *};
 use types::{Notification, NotificationEnvelope};
 
 #[update]
 #[trace]
-fn push_group_message_notification(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| push_group_message_notification_impl(args, state.borrow_mut().as_mut().unwrap()))
+fn c2c_push_group_message_notification(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| c2c_push_group_message_notification_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
-fn push_group_message_notification_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn c2c_push_group_message_notification_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
     if runtime_state
         .data
