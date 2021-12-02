@@ -1,9 +1,12 @@
+import { IDL } from "@dfinity/candid";
 import type { ApiNotification } from "../services/notifications/candid/idl";
+import { Notification as NotificationIdl } from "../services/notifications/candid/notification";
 import type { MessageContent } from "../domain/chat/chat";
 import type { Notification } from "../domain/notifications";
 import { UnsupportedValueError } from "../utils/error";
 import { notification } from "../services/notifications/mappers";
 import { getSoftDisabled } from "../utils/caching";
+import { toUint8Array } from "../utils/base64";
 
 export {};
 declare const self: ServiceWorkerGlobalScope;
@@ -25,10 +28,12 @@ self.addEventListener("fetch", () => {
 });
 
 async function handlePushNotification(event: PushEvent): Promise<void> {
-    if (await getSoftDisabled()) return;
+    if (await getSoftDisabled() || !event.data) return;
+
+    const bytes = toUint8Array(event.data.text());
 
     // Try to extract the typed notification from the event
-    const candid = event.data?.json() as ApiNotification;
+    const candid = IDL.decode([NotificationIdl], bytes)[0] as unknown as ApiNotification;
     if (!candid) {
         return;
     }
@@ -90,8 +95,8 @@ async function showNotification(notification: Notification): Promise<void> {
         path = notification.chatId;
     } else if (notification.kind === "added_to_group_notification") {
         // TODO Multi language support
-        title += `${notification.addedByUsername} added you to the group "${notification.groupName}`;
-        body = "";
+        title += notification.groupName;
+        body = `${notification.addedByUsername} added you to the group "${notification.groupName}"`;
         path = notification.chatId;
     } else {
         throw new UnsupportedValueError("Unexpected notification type received", notification);

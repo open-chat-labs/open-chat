@@ -6,6 +6,10 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "notification_candid_gen"
+path = "src/notification_candid_gen.rs"
+
 [dependencies]
 candid = "0.7.7"
 candid_gen = { path = "../../../libraries/candid_gen" }

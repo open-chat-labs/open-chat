@@ -9,7 +9,7 @@ export const SOFT_DISABLE_KEY = "openchat_notifications_soft_disabled";
 
 // https://datatracker.ietf.org/doc/html/draft-thomson-webpush-vapid
 export const PUBLIC_VAPID_KEY =
-    "BD8RU5tDBbFTDFybDoWhFzlL5-mYptojI6qqqqiit68KSt17-vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv-iV3A=";
+    "BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=";
 
 export function permissionToStatus(permission: NotificationPermission): NotificationStatus {
     switch (permission) {
