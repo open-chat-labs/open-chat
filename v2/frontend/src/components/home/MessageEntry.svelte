@@ -86,6 +86,7 @@
     function sendMessage() {
         dispatch("sendMessage", inp.textContent?.trim());
         inp.textContent = "";
+        inp.focus();
         isInputEmpty = true;
         showEmojiPicker = false;
     }
@@ -134,17 +135,6 @@
             }
         }
     }
-
-    // TODO - do we even want to focus the input - it's quite distracting on mobile
-    // $: {
-    //     if (
-    //         $machine.changed &&
-    //         ($machine.context.replyingTo !== undefined ||
-    //             $machine.context.fileToAttach !== undefined)
-    //     ) {
-    //         inp.focus();
-    //     }
-    // }
 
     // todo - doubt this will react properly
     $: placeholder =
