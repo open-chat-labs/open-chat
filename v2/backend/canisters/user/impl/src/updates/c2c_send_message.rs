@@ -110,7 +110,7 @@ async fn push_notification(canister_id: CanisterId, recipient: UserId, notificat
         recipients: vec![recipient],
         notification: Notification::DirectMessageNotification(notification),
     };
-    let _ = notifications_canister_c2c_client::c2c_push_direct_message_notification(canister_id, &args).await;
+    let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
 }
 
 fn accept_cycles(transfer: &CompletedCyclesTransfer, now: TimestampMillis, data: &mut Data) {

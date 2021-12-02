@@ -1,4 +1,3 @@
-use crate::updates::c2c_push_notification_impl;
 use crate::{RuntimeState, MAX_SUBSCRIPTION_AGE, RUNTIME_STATE};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;

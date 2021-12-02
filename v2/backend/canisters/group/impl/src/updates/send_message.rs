@@ -88,7 +88,7 @@ async fn push_notification(canister_id: CanisterId, recipients: Vec<UserId>, not
         recipients,
         notification: Notification::GroupMessageNotification(notification),
     };
-    let _ = notifications_canister_c2c_client::c2c_push_group_message_notification(canister_id, &args).await;
+    let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
 }
 
 fn extract_mentioned_users(content: &MessageContent) -> Vec<UserId> {

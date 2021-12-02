@@ -199,5 +199,5 @@ async fn push_notification(
         recipients,
         notification: Notification::AddedToGroupNotification(notification),
     };
-    let _ = notifications_canister_c2c_client::c2c_push_added_to_group_notification(notifications_canister_id, &args).await;
+    let _ = notifications_canister_c2c_client::c2c_push_notification(notifications_canister_id, &args).await;
 }
