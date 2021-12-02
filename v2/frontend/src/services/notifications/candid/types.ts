@@ -1,5 +1,11 @@
 import type { Principal } from '@dfinity/principal';
 export type AccountIdentifier = string;
+export interface AddedToGroupNotification {
+  'added_by_name' : string,
+  'added_by' : UserId,
+  'chat_id' : ChatId,
+  'group_name' : string,
+}
 export interface Alert {
   'id' : string,
   'details' : AlertDetails,
@@ -334,7 +340,8 @@ export type NightMode = { 'On' : null } |
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
-  { 'GroupMessageNotification' : GroupMessageNotification };
+  { 'GroupMessageNotification' : GroupMessageNotification } |
+  { 'AddedToGroupNotification' : AddedToGroupNotification };
 export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,

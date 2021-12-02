@@ -34,7 +34,7 @@ export interface IGroupClient {
         previouslyLoadedEvents?: EventWrapper<GroupChatEvent>[],
         iterations?: number
     ): Promise<EventsResponse<GroupChatEvent>>;
-    addParticipants(userIds: string[], allowBlocked: boolean): Promise<AddParticipantsResponse>;
+    addParticipants(userIds: string[], myUsername: string, allowBlocked: boolean): Promise<AddParticipantsResponse>;
     sendMessage(senderName: string, message: Message): Promise<SendMessageResponse>;
     editMessage(message: Message): Promise<EditMessageResponse>;
     makeAdmin(userId: string): Promise<MakeAdminResponse>;

@@ -1,11 +1,11 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{DirectMessageNotification, UserId};
+use types::{Notification, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub recipient: UserId,
-    pub notification: DirectMessageNotification,
+    pub recipients: Vec<UserId>,
+    pub notification: Notification,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

@@ -98,6 +98,7 @@ type UnblockUserResponse =
 type AddParticipantsArgs =
     record {
         user_ids: vec UserId;
+        added_by_name: text;
         allow_blocked_users: bool;
     };
 

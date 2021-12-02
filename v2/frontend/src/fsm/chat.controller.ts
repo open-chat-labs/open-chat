@@ -907,6 +907,7 @@ export class ChatController {
             .addParticipants(
                 this.chatId,
                 users.map((u) => u.userId),
+                this.user.username,
                 viaUnblock
             )
             .then((resp) => {

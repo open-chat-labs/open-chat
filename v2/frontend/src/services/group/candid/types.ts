@@ -3,6 +3,7 @@ export type AccountIdentifier = string;
 export interface AddParticipantsArgs {
   'allow_blocked_users' : boolean,
   'user_ids' : Array<UserId>,
+  'added_by_name' : string,
 }
 export interface AddParticipantsFailedResult {
   'errors' : Array<UserId>,
@@ -25,6 +26,12 @@ export type AddParticipantsResponse = {
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'ParticipantLimitReached' : number };
+export interface AddedToGroupNotification {
+  'added_by_name' : string,
+  'added_by' : UserId,
+  'chat_id' : ChatId,
+  'group_name' : string,
+}
 export interface Alert {
   'id' : string,
   'details' : AlertDetails,
@@ -418,7 +425,8 @@ export type NightMode = { 'On' : null } |
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
-  { 'GroupMessageNotification' : GroupMessageNotification };
+  { 'GroupMessageNotification' : GroupMessageNotification } |
+  { 'AddedToGroupNotification' : AddedToGroupNotification };
 export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,

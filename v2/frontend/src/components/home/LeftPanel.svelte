@@ -18,6 +18,7 @@
     export let searchResultsAvailable: boolean = false;
 
     $: api = controller.api;
+    $: currentUser = controller.user;
 
     let addingGroup: boolean = false;
 </script>
@@ -26,6 +27,7 @@
     {#if addingGroup}
         <NewGroup
             {api}
+            {currentUser}
             on:cancelNewGroup={() => (addingGroup = false)}
             on:groupCreated={() => (addingGroup = false)} />
     {:else}

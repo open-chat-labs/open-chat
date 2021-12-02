@@ -6,10 +6,8 @@ use chat_events::PushMessageArgs;
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
 use lazy_static::lazy_static;
-use notifications_canister::c2c_push_group_message_notification;
 use regex::Regex;
-use types::{CanisterId, ContentValidationError, GroupMessageNotification, MessageContent, UserId};
-use utils::rand::get_random_item;
+use types::{ContentValidationError, GroupMessageNotification, MessageContent, Notification, UserId};
 
 #[update]
 #[trace]
@@ -45,33 +43,26 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         handle_activity_notification(runtime_state);
 
-        let random = runtime_state.env.random_u32() as usize;
         let message_index = message.message_index;
 
-        if let Some(canister_id) = get_random_item(&runtime_state.data.notifications_canister_ids, random) {
-            let notification = GroupMessageNotification {
-                chat_id: runtime_state.env.canister_id().into(),
-                group_name: runtime_state.data.name.clone(),
-                sender,
-                sender_name: args.sender_name,
-                message,
-            };
+        let notification = Notification::GroupMessageNotification(GroupMessageNotification {
+            chat_id: runtime_state.env.canister_id().into(),
+            group_name: runtime_state.data.name.clone(),
+            sender,
+            sender_name: args.sender_name,
+            message,
+        });
 
-            let mut notification_recipients = runtime_state.data.participants.users_to_notify(sender);
+        let mut notification_recipients = runtime_state.data.participants.users_to_notify(sender);
 
-            // Also notify any mentioned participants regardless of whether they have muted notifications for the group
-            for u in mentioned_users.into_iter() {
-                if runtime_state.data.participants.add_mention(&u, message_index) {
-                    notification_recipients.insert(u);
-                }
+        // Also notify any mentioned participants regardless of whether they have muted notifications for the group
+        for u in mentioned_users.into_iter() {
+            if runtime_state.data.participants.add_mention(&u, message_index) {
+                notification_recipients.insert(u);
             }
-
-            ic_cdk::block_on(push_notification(
-                *canister_id,
-                notification_recipients.into_iter().collect(),
-                notification,
-            ));
         }
+
+        runtime_state.push_notification(notification_recipients.into_iter().collect(), notification);
 
         Success(SuccessResult {
             event_index,
@@ -81,14 +72,6 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     } else {
         CallerNotInGroup
     }
-}
-
-async fn push_notification(canister_id: CanisterId, recipients: Vec<UserId>, notification: GroupMessageNotification) {
-    let args = c2c_push_group_message_notification::Args {
-        recipients,
-        notification,
-    };
-    let _ = notifications_canister_c2c_client::c2c_push_group_message_notification(canister_id, &args).await;
 }
 
 fn extract_mentioned_users(content: &MessageContent) -> Vec<UserId> {

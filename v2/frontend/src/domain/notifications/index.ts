@@ -1,6 +1,14 @@
 import type { Message } from "../chat/chat";
 
-export type Notification = DirectNotification | GroupNotification;
+export type Notification = AddedToGroupNotification | DirectNotification | GroupNotification;
+
+export type AddedToGroupNotification = {
+    kind: "added_to_group_notification";
+    chatId: string;
+    groupName: string;
+    addedBy: string;
+    addedByUsername: string;
+};
 
 export type DirectNotification = {
     kind: "direct_notification";
