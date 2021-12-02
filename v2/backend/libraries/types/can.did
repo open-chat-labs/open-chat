@@ -11,6 +11,14 @@ type TimestampMillis = nat64;
 type TimestampNanos = nat64;
 type UserId = CanisterId;
 
+type AddedToGroupNotification =
+    record {
+        chat_id: ChatId;
+        group_name: text;
+        added_by: UserId;
+        added_by_name: text;
+    };
+
 type AudioContent =
     record {
         caption: opt text;
@@ -333,6 +341,7 @@ type MessageMatch =
 
 type Notification =
     variant {
+        AddedToGroupNotification: AddedToGroupNotification;
         DirectMessageNotification: DirectMessageNotification;
         GroupMessageNotification: GroupMessageNotification;
     };

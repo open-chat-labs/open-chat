@@ -92,8 +92,8 @@ export class CachingGroupClient implements IGroupClient {
         );
     }
 
-    addParticipants(userIds: string[], allowBlocked: boolean): Promise<AddParticipantsResponse> {
-        return this.client.addParticipants(userIds, allowBlocked);
+    addParticipants(userIds: string[], myUsername: string, allowBlocked: boolean): Promise<AddParticipantsResponse> {
+        return this.client.addParticipants(userIds, myUsername, allowBlocked);
     }
 
     sendMessage(senderName: string, message: Message): Promise<SendMessageResponse> {

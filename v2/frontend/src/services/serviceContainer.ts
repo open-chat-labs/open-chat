@@ -178,9 +178,10 @@ export class ServiceContainer implements MarkMessagesRead {
     addParticipants(
         chatId: string,
         userIds: string[],
+        myUsername: string,
         allowBlocked: boolean
     ): Promise<AddParticipantsResponse> {
-        return this.getGroupClient(chatId).addParticipants(userIds, allowBlocked);
+        return this.getGroupClient(chatId).addParticipants(userIds, myUsername, allowBlocked);
     }
 
     directChatEventsWindow(

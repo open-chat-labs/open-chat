@@ -5,8 +5,10 @@ use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
-use types::{EventIndex, MessageIndex, ParticipantsAdded, UserId};
+use notifications_canister::c2c_push_added_to_group_notification;
+use types::{AddedToGroupNotification, CanisterId, EventIndex, MessageIndex, ParticipantsAdded, UserId};
 use user_canister::c2c_try_add_to_group;
+use utils::rand::get_random_item;
 
 #[update]
 #[trace]
@@ -49,7 +51,15 @@ async fn add_participants(args: Args) -> Response {
     }
 
     if !users_added.is_empty() {
-        RUNTIME_STATE.with(|state| commit(prepare_result.added_by, &users_added, state.borrow_mut().as_mut().unwrap()));
+        let added_by_username = args.current_user_username;
+        RUNTIME_STATE.with(|state| {
+            commit(
+                prepare_result.added_by,
+                added_by_username,
+                &users_added,
+                state.borrow_mut().as_mut().unwrap(),
+            )
+        });
     }
 
     if users_added.len() == args.user_ids.len() {
@@ -123,7 +133,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut RuntimeState) {
+fn commit(added_by: UserId, added_by_name: String, users: &[(UserId, Principal)], runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
     let mut min_visible_event_index = EventIndex::default();
     let mut min_visible_message_index = MessageIndex::default();
@@ -138,7 +148,7 @@ fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut R
 
     let mut unblocked = vec![];
 
-    for (user_id, principal) in users.iter().cloned() {
+    for (user_id, principal) in users.iter().copied() {
         // Ensure any users added are first unblocked
         if runtime_state.data.participants.unblock(&user_id) {
             unblocked.push(user_id);
@@ -154,8 +164,9 @@ fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut R
         );
     }
 
+    let user_ids: Vec<_> = users.iter().map(|(u, _)| u).copied().collect();
     let event = ParticipantsAdded {
-        user_ids: users.iter().map(|(u, _)| u).cloned().collect(),
+        user_ids: user_ids.clone(),
         added_by,
         unblocked,
     };
@@ -165,4 +176,28 @@ fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut R
         .push_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), now);
 
     handle_activity_notification(runtime_state);
+
+    let random = runtime_state.env.random_u32() as usize;
+
+    if let Some(canister_id) = get_random_item(&runtime_state.data.notifications_canister_ids, random) {
+        let notification = AddedToGroupNotification {
+            chat_id: runtime_state.env.canister_id().into(),
+            group_name: runtime_state.data.name.clone(),
+            added_by,
+            added_by_name,
+        };
+        ic_cdk::block_on(push_notification(*canister_id, user_ids, notification));
+    }
+}
+
+async fn push_notification(
+    notifications_canister_id: CanisterId,
+    recipients: Vec<UserId>,
+    notification: AddedToGroupNotification,
+) {
+    let args = c2c_push_added_to_group_notification::Args {
+        recipients,
+        notification,
+    };
+    let _ = notifications_canister_c2c_client::c2c_push_added_to_group_notification(notifications_canister_id, &args).await;
 }

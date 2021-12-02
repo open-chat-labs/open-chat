@@ -10,8 +10,17 @@ pub struct NotificationEnvelope {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum Notification {
+    AddedToGroupNotification(AddedToGroupNotification),
     DirectMessageNotification(DirectMessageNotification),
     GroupMessageNotification(GroupMessageNotification),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct AddedToGroupNotification {
+    pub chat_id: ChatId,
+    pub group_name: String,
+    pub added_by: UserId,
+    pub added_by_name: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
