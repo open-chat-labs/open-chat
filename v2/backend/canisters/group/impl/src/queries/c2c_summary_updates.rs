@@ -35,7 +35,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             mentions: updates_from_events.mentions,
             wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(args.updates_since).copied()),
         };
-        Success(SuccessResult { updates })
+        Success(Box::new(SuccessResult { updates }))
     } else {
         SuccessNoUpdates
     }
