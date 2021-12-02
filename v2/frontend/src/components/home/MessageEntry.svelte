@@ -32,6 +32,7 @@
     let initialisedEdit: boolean = false;
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
+    let isInputEmpty: boolean = true;
 
     $: {
         if ($editingEvent && !initialisedEdit) {
@@ -54,6 +55,7 @@
     });
 
     function onInput() {
+        isInputEmpty = (inp.textContent?.trim().length ?? 0) === 0;
         requestAnimationFrame(() => {
             const now = Date.now();
             if (now - lastTypingUpdate > USER_TYPING_EVENT_MIN_INTERVAL_MS) {
@@ -73,15 +75,18 @@
 
     function keyPress(e: KeyboardEvent) {
         if (e.key === "Enter" && !e.shiftKey) {
-            sendMessage();
-            controller.stopTyping();
+            if (!isInputEmpty) {
+                sendMessage();
+                controller.stopTyping();
+            }
             e.preventDefault();
         }
     }
 
     function sendMessage() {
-        dispatch("sendMessage", inp.textContent);
+        dispatch("sendMessage", inp.textContent?.trim());
         inp.textContent = "";
+        isInputEmpty = true;
         showEmojiPicker = false;
     }
 
@@ -194,14 +199,17 @@
             on:drop={onDrop}
             on:input={onInput}
             on:keypress={keyPress} />
-        <div class="record">
-            <AudioAttacher bind:percentRecorded bind:recording on:audioCaptured />
-        </div>
-        <div class="send" on:click={sendMessage}>
-            <HoverIcon>
-                <Send size={$iconSize} color={"var(--icon-txt)"} />
-            </HoverIcon>
-        </div>
+        {#if isInputEmpty}
+            <div class="record">
+                <AudioAttacher bind:percentRecorded bind:recording on:audioCaptured />
+            </div>
+        {:else}
+            <div class="send" on:click={sendMessage}>
+                <HoverIcon>
+                    <Send size={$iconSize} color={"var(--icon-txt)"} />
+                </HoverIcon>
+            </div>
+        {/if}
     {/if}
 </div>
 
