@@ -33,6 +33,8 @@ CLIENT_CACHING=false
 USER_INDEX_CANISTER=naxa5-eyaaa-aaaaa-aacda-cai
 GROUP_INDEX_CANISTER=nhwgj-jaaaa-aaaaa-aacdq-cai
 NOTIFICATIONS_CANISTER=mkych-giaaa-aaaaa-aacea-cai
+ONLINE_CANISTER=3vlw6-fiaaa-aaaaf-aaa3a-cai
+OPEN_STORAGE_INDEX_CANISTER=rturd-qaaaa-aaaaf-aabaq-cai
 BLOB_URL_PATTERN=http://{canisterId}.localhost:8000/blobs/
 USERGEEK_APIKEY=042386876AB899A32FF13323DEA23098
 ```
