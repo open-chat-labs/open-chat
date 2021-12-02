@@ -52,6 +52,7 @@ export function message(candid: ApiMessage): Message {
 
 export function updatedMessage(candid: ApiUpdatedMessage): StaleMessage {
     return {
+        updatedBy: candid.updated_by.toString(),
         messageId: candid.message_id,
         eventIndex: candid.event_index,
     };
