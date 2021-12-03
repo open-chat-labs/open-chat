@@ -478,10 +478,10 @@ export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): num
 
 export function getNextMessageIndex(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): number {
     // first get the next index according to the chat
-    const chatIdx = (chat.latestMessage?.event.messageIndex ?? 0) + 1;
+    const chatIdx = (chat.latestMessage?.event.messageIndex ?? -1) + 1;
 
     // then get the next index according to the loaded events
-    const loadedIdx = (latestLoadedMessageIndex(events) ?? 0) + 1;
+    const loadedIdx = (latestLoadedMessageIndex(events) ?? -1) + 1;
 
     // pick the max
     return Math.max(chatIdx, loadedIdx);
