@@ -18,6 +18,7 @@
         title={$_("downloadFile", { values: { name: content.name } })}
         download={content.name}
         role="button"
+        target="_blank"
         class="file-content">
         <span class="icon" class:rtl={$rtlStore}>
             <FileDownload size={"1.7em"} {color} />
