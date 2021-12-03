@@ -2,11 +2,13 @@ use crate::error::Error;
 use crate::ic_agent::IcAgent;
 use crate::ic_agent::IcAgentConfig;
 use crate::store::Store;
+use candid::Encode;
 use futures::future;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use std::rc::Rc;
 use tracing::error;
-use types::{CanisterId, IndexedEvent, Notification, NotificationEnvelope, UserId};
+use types::{CanisterId, IndexedEvent, NotificationEnvelope, UserId};
 use web_push::*;
 
 pub async fn run<'a>(
@@ -92,25 +94,23 @@ async fn handle_notifications(
     subscriptions_to_remove_by_user
 }
 
-fn group_notifications_by_user(envelopes: Vec<IndexedEvent<NotificationEnvelope>>) -> HashMap<UserId, Vec<Notification>> {
-    let mut grouped_by_user: HashMap<UserId, Vec<Notification>> = HashMap::new();
+fn group_notifications_by_user(envelopes: Vec<IndexedEvent<NotificationEnvelope>>) -> HashMap<UserId, Vec<Rc<String>>> {
+    let mut grouped_by_user: HashMap<UserId, Vec<Rc<String>>> = HashMap::new();
 
-    fn assign_notification_to_user(
-        map: &mut HashMap<UserId, Vec<Notification>>,
-        user_id: UserId,
-        envelope: NotificationEnvelope,
-    ) {
+    fn assign_notification_to_user(map: &mut HashMap<UserId, Vec<Rc<String>>>, user_id: UserId, payload: Rc<String>) {
         match map.entry(user_id) {
-            Occupied(e) => e.into_mut().push(envelope.notification),
+            Occupied(e) => e.into_mut().push(payload),
             Vacant(e) => {
-                e.insert(vec![envelope.notification]);
+                e.insert(vec![payload]);
             }
         };
     }
 
     for n in envelopes.into_iter() {
-        for u in n.value.recipients.iter() {
-            assign_notification_to_user(&mut grouped_by_user, *u, n.value.clone());
+        let notification_bytes = Encode!(&n.value.notification).unwrap();
+        let base64 = Rc::new(base64::encode(notification_bytes));
+        for u in n.value.recipients.into_iter() {
+            assign_notification_to_user(&mut grouped_by_user, u, base64.clone());
         }
     }
 
@@ -121,17 +121,16 @@ async fn push_notifications_to_user(
     user_id: UserId,
     client: &WebPushClient,
     vapid_private_pem: &str,
-    notifications: Vec<Notification>,
+    notifications: Vec<Rc<String>>,
     subscriptions: Vec<SubscriptionInfo>,
 ) -> Result<(UserId, Vec<String>), Error> {
     let mut messages = Vec::with_capacity(subscriptions.len());
     for subscription in subscriptions.iter() {
         for notification in &notifications {
-            let serialized = serde_json::to_string(&notification)?;
             let sig_builder = VapidSignatureBuilder::from_pem(vapid_private_pem.as_bytes(), subscription)?;
             let vapid_signature = sig_builder.build()?;
             let mut builder = WebPushMessageBuilder::new(subscription)?;
-            builder.set_payload(ContentEncoding::AesGcm, serialized.as_bytes());
+            builder.set_payload(ContentEncoding::AesGcm, notification.as_bytes());
             builder.set_vapid_signature(vapid_signature);
             messages.push(builder.build()?);
         }

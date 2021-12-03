@@ -3,8 +3,13 @@ name = "notifications_canister"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2018"
+default-run = "notifications_canister"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "notification_candid_gen"
+path = "src/notification_candid_gen.rs"
 
 [dependencies]
 candid = "0.7.7"
