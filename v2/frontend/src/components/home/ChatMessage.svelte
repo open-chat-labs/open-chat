@@ -548,7 +548,6 @@
             padding: 0;
             overflow: hidden;
             border: none;
-            min-width: 0;
         }
 
         &.focused {

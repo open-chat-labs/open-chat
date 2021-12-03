@@ -8,6 +8,7 @@
     export let fill: boolean;
     let imgElement: HTMLImageElement;
 
+    let landscape = content.height < content.width;
     let withCaption = content.caption !== undefined;
 </script>
 
@@ -15,6 +16,7 @@
     <img
         bind:this={imgElement}
         on:error={() => (imgElement.src = content.thumbnailData)}
+        class:landscape
         class:fill
         class:withCaption
         src={content.blobUrl}
@@ -28,8 +30,12 @@
 <style type="text/scss">
     img {
         width: 100%;
-        height: 100%;
         display: block;
+
+        &:not(.landscape) {
+            min-height: 90px;
+            min-width: 0px;
+        }
 
         &:not(.fill) {
             border-radius: $sp4;

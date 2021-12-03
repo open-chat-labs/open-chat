@@ -8,6 +8,7 @@
     export let content: VideoContent;
     export let fill: boolean;
 
+    let landscape = content.height < content.width;
     let withCaption = content.caption !== undefined;
 </script>
 
@@ -36,8 +37,12 @@
 
         video {
             width: 100%;
-            height: 100%;
             display: block;
+
+            &:not(.landscape) {
+                min-height: 90px;
+                min-width: 0px;
+            }
 
             &:not(.fill) {
                 border-radius: $sp4;
