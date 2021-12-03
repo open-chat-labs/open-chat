@@ -32,7 +32,8 @@
     let initialisedEdit: boolean = false;
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
-    let isInputEmpty: boolean = true;
+    let inputIsEmpty: boolean = true;
+    let messageIsEmpty: boolean = true;
 
     $: {
         if ($editingEvent && !initialisedEdit) {
@@ -48,6 +49,10 @@
         }
     }
 
+    $: {
+        messageIsEmpty = inputIsEmpty && $fileToAttach === undefined;
+    }
+
     onMount(() => {
         if (inp) {
             inp.focus();
@@ -55,7 +60,7 @@
     });
 
     function onInput() {
-        isInputEmpty = (inp.textContent?.trim().length ?? 0) === 0;
+        inputIsEmpty = (inp.textContent?.trim().length ?? 0) === 0;
         requestAnimationFrame(() => {
             const now = Date.now();
             if (now - lastTypingUpdate > USER_TYPING_EVENT_MIN_INTERVAL_MS) {
@@ -75,7 +80,7 @@
 
     function keyPress(e: KeyboardEvent) {
         if (e.key === "Enter" && !e.shiftKey) {
-            if (!isInputEmpty) {
+            if (!messageIsEmpty) {
                 sendMessage();
                 controller.stopTyping();
             }
@@ -87,7 +92,7 @@
         dispatch("sendMessage", inp.textContent?.trim());
         inp.textContent = "";
         inp.focus();
-        isInputEmpty = true;
+        inputIsEmpty = true;
         showEmojiPicker = false;
     }
 
@@ -189,7 +194,7 @@
             on:drop={onDrop}
             on:input={onInput}
             on:keypress={keyPress} />
-        {#if isInputEmpty}
+        {#if messageIsEmpty}
             <div class="record">
                 <AudioAttacher bind:percentRecorded bind:recording on:audioCaptured />
             </div>
