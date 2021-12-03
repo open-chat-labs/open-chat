@@ -703,6 +703,7 @@ export function replaceLocal(
     userId: string,
     chatId: string,
     messageReadTracker: IMessageReadTracker,
+    readByMe: MessageIndexRange[],
     onClient: EventWrapper<ChatEvent>[],
     fromServer: EventWrapper<ChatEvent>[]
 ): EventWrapper<ChatEvent>[] {
@@ -718,13 +719,13 @@ export function replaceLocal(
         const idNum = BigInt(id);
         unconfirmed.delete(idNum);
         if (e.event.kind === "message") {
-            const confirmed = messageReadTracker.confirmMessage(
+            messageReadTracker.confirmMessage(
                 chatId,
                 e.event.messageIndex,
                 idNum
             );
-            if (e.event.sender === userId && !confirmed) {
-                // make double sure that our own messages are marked read
+            // If this message was sent by us and is not currently marked as read, mark it as read
+            if (e.event.sender === userId && !indexIsInRanges(e.event.messageIndex, readByMe)) {
                 messageReadTracker.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
             }
         }
