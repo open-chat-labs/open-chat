@@ -220,6 +220,7 @@ export class ChatController {
                 this.user.userId,
                 this.chatId,
                 this.markRead,
+                this._chat.readByMe,
                 get(this.focusMessageIndex) === undefined ? events : [],
                 resp.events
             ),
