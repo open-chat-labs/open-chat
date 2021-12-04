@@ -492,7 +492,7 @@ export function getNextEventIndex(chat: ChatSummary, events: EventWrapper<ChatEv
     const chatIdx = chat.latestEventIndex + 1;
 
     // then get the next index according to the loaded events
-    const loadedIdx = (latestLoadedEventIndex(events) ?? 0) + 1;
+    const loadedIdx = (latestLoadedEventIndex(events) ?? -1) + 1;
 
     // pick the max
     return Math.max(chatIdx, loadedIdx);
