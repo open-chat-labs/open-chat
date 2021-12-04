@@ -483,6 +483,7 @@ export class ChatController {
             });
         }
         unconfirmed.delete(messageId);
+        this.markRead.removeUnconfirmedMessage(this.chatId, messageId);
         this.events.update((events) =>
             events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
         );
@@ -600,22 +601,25 @@ export class ChatController {
         );
     }
 
-    updateMessage(candidate: Message, resp: SendMessageSuccess): void {
-        this.events.update((events) =>
-            events.map((e) => {
-                if (e.event === candidate) {
-                    return {
-                        event: {
-                            ...e.event,
-                            messageIndex: resp.messageIndex,
-                        },
-                        index: resp.eventIndex,
-                        timestamp: resp.timestamp,
-                    };
-                }
-                return e;
-            })
-        );
+    confirmMessage(candidate: Message, resp: SendMessageSuccess): void {
+        if (unconfirmed.delete(candidate.messageId)) {
+            this.markRead.confirmMessage(this.chatId, resp.messageIndex, candidate.messageId);
+            this.events.update((events) =>
+                events.map((e) => {
+                    if (e.event === candidate) {
+                        return {
+                            event: {
+                                ...e.event,
+                                messageIndex: resp.messageIndex,
+                            },
+                            index: resp.eventIndex,
+                            timestamp: resp.timestamp,
+                        };
+                    }
+                    return e;
+                })
+            );
+        }
     }
 
     attachFile(content: MessageContent): void {
