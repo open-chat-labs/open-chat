@@ -212,6 +212,10 @@ export class FakeMessageReadTracker implements IMessageReadTracker {
         return false;
     }
 
+    removeUnconfirmedMessage(chatId: string, messageId: bigint): boolean {
+        return false;
+    }
+
     syncWithServer(_chatId: string, _ranges: MessageIndexRange[]): void {
         return undefined;
     }
