@@ -46,7 +46,7 @@ export class HomeController {
     public loading = writable(false);
     private chatPoller: Poller | undefined;
     private usersPoller: Poller | undefined;
-    private chatSubscription: Unsubscriber | undefined;
+    private chatUnsubscriber: Unsubscriber | undefined;
 
     constructor(public api: ServiceContainer, public user: User) {
         this.messagesRead = new MessageReadTracker(api);
@@ -183,21 +183,23 @@ export class HomeController {
                 if (selectedChat !== undefined) {
                     selectedChat.destroy();
                 }
-                this.chatSubscription?.();
 
-                const chatController = new ChatController(
+                const chatStore = writable(chat);
+                
+                this.chatUnsubscriber?.();
+                this.chatUnsubscriber = chatStore.subscribe(c => this.chatSummaries.update(summaries => {
+                    summaries[c.chatId] = c;
+                    return summaries;
+                }));
+
+                return new ChatController(
                     this.api,
                     user,
-                    chat,
+                    chatStore,
                     this.messagesRead,
                     this.replyingTo,
                     messageIndex
                 );
-                this.chatSubscription = chatController.chat.subscribe(c => this.chatSummaries.update(summaries => {
-                    summaries[c.chatId] = c;
-                    return summaries;
-                }));
-                return chatController;
             });
         } else {
             this.selectedChat.set(undefined);
