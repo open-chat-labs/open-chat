@@ -33,8 +33,8 @@
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         cursor: pointer;
-        box-shadow: -7px 0px 0px 0px var(--button-bg);
-        border: 1px solid var(--button-bg);
+        box-shadow: -7px 0px 0px 0px var(--currentChat-msg-reply-accent);
+        border: 2px solid var(--currentChat-msg-reply-accent);
         margin-bottom: $sp3;
 
         &.rtl {

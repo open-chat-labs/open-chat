@@ -137,19 +137,21 @@
 
 <div class="footer">
     <div class="footer-overlay">
-        {#if $replyingTo}
-            <ReplyingTo
-                on:cancelReply={cancelReply}
-                user={controller.user}
-                replyingTo={$replyingTo} />
-        {/if}
-        {#if $fileToAttach !== undefined}
-            {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content"}
-                <DraftMediaMessage draft={$fileToAttach} />
-            {:else if $fileToAttach.kind === "crypto_content"}
-                <div>Crypto transfer preview</div>
+        <div class="draft-container">
+            {#if $replyingTo}
+                <ReplyingTo
+                    on:cancelReply={cancelReply}
+                    user={controller.user}
+                    replyingTo={$replyingTo} />
             {/if}
-        {/if}
+            {#if $fileToAttach !== undefined}
+                {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content"}
+                    <DraftMediaMessage content={$fileToAttach} />
+                {:else if $fileToAttach.kind === "crypto_content"}
+                    <div>Crypto transfer preview</div>
+                {/if}
+            {/if}
+        </div>
         {#if showEmojiPicker}
             {#await import("./EmojiPicker.svelte")}
                 <div class="loading-emoji"><Loading /></div>
@@ -182,6 +184,18 @@
         width: 100%;
         display: flex;
         flex-direction: column;
+        justify-content: center;
+        align-content: center;
+        align-items: center;
+        background-color: var(--entry-bg);
+    }
+
+    .draft-container {
+        max-width: 80%;
+
+        &:last-child {
+            margin-bottom: $sp3;
+        }
     }
 
     :global(.footer-overlay emoji-picker) {

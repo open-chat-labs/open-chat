@@ -25,38 +25,30 @@
     }
 </script>
 
-<div in:fade={{ duration: 200 }} class="replying-wrapper" class:rtl={$rtlStore}>
-    <div class="replying" class:me class:rtl={$rtlStore}>
-        <div class="close-icon" on:click={cancelReply}>
-            <HoverIcon>
-                <Close size={$iconSize} color={me ? "#fff" : "#aaa"} />
-            </HoverIcon>
-        </div>
-        <h4 class="username">
-            {username}
-        </h4>
-        <ChatMessageContent fill={false} {me} truncate={true} content={replyingTo.content} />
+<div class="replying" class:me class:rtl={$rtlStore}>
+    <div class="close-icon" on:click={cancelReply}>
+        <HoverIcon>
+            <Close size={$iconSize} color={me ? "#fff" : "#aaa"} />
+        </HoverIcon>
     </div>
+    <h4 class="username">
+        {username}
+    </h4>
+    <ChatMessageContent fill={false} {me} truncate={true} content={replyingTo.content} />
 </div>
 
 <style type="text/scss">
-    .replying-wrapper {
-        border-radius: $sp4 $sp4 0 0;
-        padding: 0 0 0 7px;
-        box-shadow: 0 -6px 10px 0 rgba(25, 25, 25, 0.25);
-
-        &.rtl {
-            padding: 0 7px 0 0;
-        }
-    }
-
     .replying {
         @include font(book, normal, fs-100);
-        border-radius: inherit;
+        margin-top: $sp4;
+        margin-left: 7px;
+        min-width: 120px;
+        border-radius: $sp4;
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
-        box-shadow: -7px 0px 0px 0px var(--button-bg);
+        box-shadow: -7px 0px 0px 0px var(--currentChat-msg-reply-accent);
+        border: 2px solid var(--currentChat-msg-reply-accent);
         position: relative;
 
         .close-icon {
@@ -77,7 +69,6 @@
         &.me {
             background-color: var(--currentChat-msg-me-hv);
             color: var(--currentChat-msg-me-txt);
-            border-color: var(--currentChat-msg-me-bd);
         }
     }
 
