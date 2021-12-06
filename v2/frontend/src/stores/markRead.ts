@@ -20,6 +20,7 @@ export interface IMessageReadTracker {
     markRangeRead: (chatId: string, range: MessageIndexRange) => void;
     markMessageRead: (chatId: string, messageIndex: number, messageId: bigint) => void;
     confirmMessage: (chatId: string, messageIndex: number, messageId: bigint) => boolean;
+    removeUnconfirmedMessage: (chatId: string, messageId: bigint) => boolean;
     syncWithServer: (chatId: string, ranges: MessageIndexRange[]) => void;
     unreadMessageCount: (
         chatId: string,
@@ -129,10 +130,16 @@ export class MessageReadTracker implements IMessageReadTracker {
         // this is called when a message is confirmed so that we can move it from
         // the unconfirmed read to the confirmed read. This means that it will get
         // marked as read on the back end
-        if (this.waiting[chatId] !== undefined && this.waiting[chatId].has(messageId)) {
-            this.waiting[chatId].delete(messageId);
+        if (this.removeUnconfirmedMessage(chatId, messageId)) {
             this.markMessageRead(chatId, messageIndex, messageId);
             return true;
+        }
+        return false;
+    }
+
+    removeUnconfirmedMessage(chatId: string, messageId: bigint): boolean {
+        if (this.waiting[chatId] !== undefined && this.waiting[chatId].has(messageId)) {
+            return this.waiting[chatId].delete(messageId);
         }
         return false;
     }
@@ -202,6 +209,10 @@ export class FakeMessageReadTracker implements IMessageReadTracker {
     }
 
     confirmMessage(_chatId: string, _messageIndex: number, _messageId: bigint): boolean {
+        return false;
+    }
+
+    removeUnconfirmedMessage(chatId: string, messageId: bigint): boolean {
         return false;
     }
 

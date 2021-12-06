@@ -478,10 +478,10 @@ export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): num
 
 export function getNextMessageIndex(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): number {
     // first get the next index according to the chat
-    const chatIdx = (chat.latestMessage?.event.messageIndex ?? 0) + 1;
+    const chatIdx = (chat.latestMessage?.event.messageIndex ?? -1) + 1;
 
     // then get the next index according to the loaded events
-    const loadedIdx = (latestLoadedMessageIndex(events) ?? 0) + 1;
+    const loadedIdx = (latestLoadedMessageIndex(events) ?? -1) + 1;
 
     // pick the max
     return Math.max(chatIdx, loadedIdx);
@@ -715,22 +715,22 @@ export function replaceLocal(
 
     // overwrite any local msgs with their server counterpart to correct any index errors
     Object.entries(serverMsgs).forEach(([id, e]) => {
-        // only now do we consider this message confirmed
-        const idNum = BigInt(id);
-        unconfirmed.delete(idNum);
         if (e.event.kind === "message") {
-            messageReadTracker.confirmMessage(
-                chatId,
-                e.event.messageIndex,
-                idNum
-            );
-            // If this message was sent by us and is not currently marked as read, mark it as read
-            if (e.event.sender === userId && !indexIsInRanges(e.event.messageIndex, readByMe)) {
+            // only now do we consider this message confirmed
+            const idNum = BigInt(id);
+            if (unconfirmed.delete(idNum)) {
+                messageReadTracker.confirmMessage(
+                    chatId,
+                    e.event.messageIndex,
+                    idNum
+                );
+            } else if (e.event.sender === userId && !indexIsInRanges(e.event.messageIndex, readByMe)) {
+                // If this message was sent by us and is not currently marked as read, mark it as read
                 messageReadTracker.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
             }
+            revokeObjectUrls(clientMsgs[id]);
+            clientMsgs[id] = e;
         }
-        revokeObjectUrls(clientMsgs[id]);
-        clientMsgs[id] = e;
     });
 
     // concat and dedupe the two lists of non-message events

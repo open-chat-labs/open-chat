@@ -63,26 +63,24 @@
 
             const msg = controller.createMessage(textContent, fileToAttach);
             controller.api
-                .sendMessage($chat, controller.user, msg!)
+                .sendMessage($chat, controller.user, msg)
                 .then((resp) => {
                     if (resp.kind === "success") {
-                        controller.updateMessage(msg, resp);
+                        controller.confirmMessage(msg, resp);
                     } else {
+                        controller.removeMessage(msg.messageId, controller.user.userId);
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
-                        controller.removeMessage(msg.messageId, controller.user.userId);
                     }
-                    unconfirmed.delete(msg.messageId);
                 })
                 .catch((err) => {
+                    controller.removeMessage(msg.messageId, controller.user.userId);
                     console.log(err);
                     toastStore.showFailureToast("errorSendingMessage");
-                    controller.removeMessage(msg.messageId, controller.user.userId);
                     rollbar.error("Exception sending message", err);
-                    unconfirmed.delete(msg.messageId);
                 });
 
-            const event = { event: msg!, index: nextEventIndex, timestamp: BigInt(Date.now()) };
+            const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
             controller.sendMessage(event, controller.user.userId);
         }
     }
