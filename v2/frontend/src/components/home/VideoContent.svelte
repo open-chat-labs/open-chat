@@ -10,7 +10,7 @@
     export let draft: boolean = false;
 
     let landscape = content.height < content.width;
-    let withCaption = content.caption !== undefined;
+    let withCaption = content.caption !== undefined && content.caption !== "";
 </script>
 
 <div class="video">

@@ -7,7 +7,6 @@
     import Close from "svelte-material-icons/Close.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import type { UserSummary } from "../../domain/user/user";
-    import { fade } from "svelte/transition";
     import { iconSize } from "../../stores/iconSize";
     import { toTitleCase } from "../../utils/string";
 
