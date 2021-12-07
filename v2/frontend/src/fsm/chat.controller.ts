@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { get, Readable, Writable } from "svelte/store";
+import { derived, get, readable, Readable, Writable } from "svelte/store";
 import type {
     AddParticipantsResponse,
     ChatEvent,
@@ -42,6 +42,7 @@ import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
 import type { ChatState } from "../stores/chat";
+import { draftMessages } from "../stores/draftMessages";
 import type { IMessageReadTracker } from "../stores/markRead";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
@@ -57,9 +58,10 @@ const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 export class ChatController {
     public events: Writable<EventWrapper<ChatEvent>[]>;
     public focusMessageIndex: Writable<number | undefined>;
-    public replyingTo: Writable<EnhancedReplyContext | undefined>;
-    public fileToAttach: Writable<MessageContent | undefined>;
-    public editingEvent: Writable<EventWrapper<Message> | undefined>;
+    public textContent: Readable<string | undefined>;
+    public replyingTo: Readable<EnhancedReplyContext | undefined>;
+    public fileToAttach: Readable<MessageContent | undefined>;
+    public editingEvent: Readable<EventWrapper<Message> | undefined>;
     public chatId: string;
     public participants: Writable<Participant[]>;
     public blockedUsers: Writable<Set<string>>;
@@ -78,21 +80,22 @@ export class ChatController {
         public user: UserSummary,
         public chat: Readable<ChatSummary>,
         public markRead: IMessageReadTracker,
-        private _replyingTo: EnhancedReplyContext | undefined,
         private _focusMessageIndex: number | undefined,
         private _updateChat: (updateChatFn: (chat: ChatSummary) => ChatSummary) => void
     ) {
         this.events = writable([]);
         this.loading = writable(false);
         this.focusMessageIndex = writable(_focusMessageIndex);
-        this.replyingTo = writable(_replyingTo);
-        this.fileToAttach = writable(undefined);
-        this.editingEvent = writable(undefined);
         this.participants = writable([]);
         this.blockedUsers = writable(new Set<string>());
         this.chatUserIds = new Set<string>();
         const { chatId, latestEventIndex } = get(chat);
         this.chatId = chatId;
+        const draftMessage = readable(draftMessages.get(chatId), set => draftMessages.subscribe(p => set(p[chatId] ?? {})));
+        this.textContent = derived(draftMessage, d => d.textContent);
+        this.replyingTo = derived(draftMessage, d => d.replyingTo);
+        this.fileToAttach = derived(draftMessage, d => d.attachment);
+        this.editingEvent = derived(draftMessage, d => d.editingEvent);
         this.maxLoadedEventIndex = latestEventIndex;
 
         if (process.env.NODE_ENV !== "test") {
@@ -384,9 +387,7 @@ export class ChatController {
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
         }
 
-        this.replyingTo.set(undefined);
-        this.fileToAttach.set(undefined);
-        this.editingEvent.set(undefined);
+        draftMessages.delete(this.chatId);
         this.focusMessageIndex.set(undefined);
 
         if (get(this.editingEvent)) {
@@ -576,8 +577,12 @@ export class ChatController {
         }
     }
 
+    setTextContent(text: string | undefined): void {
+        draftMessages.setTextContent(this.chatId, text);
+    }
+
     cancelReply(): void {
-        this.replyingTo.set(undefined);
+        draftMessages.setReplyingTo(this.chatId, undefined);
     }
 
     getNextMessageIndex(): number {
@@ -622,7 +627,7 @@ export class ChatController {
     }
 
     attachFile(content: MessageContent): void {
-        this.fileToAttach.set(content);
+        draftMessages.setAttachment(this.chatId, content);
     }
 
     startTyping(): void {
@@ -644,7 +649,7 @@ export class ChatController {
     }
 
     clearAttachment(): void {
-        this.fileToAttach.set(undefined);
+        draftMessages.setAttachment(this.chatId, undefined);
     }
 
     isRead(messageIndex: number, messageId: bigint): boolean {
@@ -682,22 +687,19 @@ export class ChatController {
     }
 
     replyTo(context: EnhancedReplyContext): void {
-        this.replyingTo.set(context);
+        draftMessages.setReplyingTo(this.chatId, context);
     }
 
     editEvent(event: EventWrapper<Message>): void {
-        this.editingEvent.set(event);
-        this.fileToAttach.set(
-            event.event.content.kind !== "text_content" ? event.event.content : undefined
-        );
-        this.replyingTo.set(
-            event.event.repliesTo && event.event.repliesTo.kind === "rehydrated_reply_context"
-                ? {
-                      ...event.event.repliesTo,
-                      content: event.event.content,
-                      sender: get(userStore)[event.event.sender],
-                  }
-                : undefined
+        draftMessages.setEditingEvent(this.chatId, event);
+        draftMessages.setAttachment(this.chatId, event.event.content.kind !== "text_content" ? event.event.content : undefined);
+        draftMessages.setReplyingTo(this.chatId, event.event.repliesTo && event.event.repliesTo.kind === "rehydrated_reply_context"
+            ? {
+                  ...event.event.repliesTo,
+                  content: event.event.content,
+                  sender: get(userStore)[event.event.sender],
+              }
+            : undefined
         );
     }
 

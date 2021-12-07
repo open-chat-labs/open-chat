@@ -16,6 +16,7 @@
     export let controller: ChatController;
     export let blocked: boolean;
 
+    $: textContent = controller.textContent;
     $: editingEvent = controller.editingEvent;
     $: fileToAttach = controller.fileToAttach;
 
@@ -43,6 +44,8 @@
                 restoreSelection();
                 initialisedEdit = true;
             }
+        } else if (inp) {
+            inp.textContent = $textContent;
         }
         if ($editingEvent === undefined) {
             initialisedEdit = false;
@@ -67,6 +70,8 @@
 
     function onInput() {
         inputIsEmpty = (inp.textContent?.trim().length ?? 0) === 0;
+        controller.setTextContent(inp.textContent);
+
         requestAnimationFrame(() => {
             const now = Date.now();
             if (now - lastTypingUpdate > USER_TYPING_EVENT_MIN_INTERVAL_MS) {
