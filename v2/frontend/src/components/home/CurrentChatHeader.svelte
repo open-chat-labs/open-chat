@@ -26,7 +26,7 @@
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
-    import type { Writable } from "svelte/store";
+    import type { Readable } from "svelte/store";
     import { toastStore } from "../../stores/toast";
     import Link from "../Link.svelte";
     import { supported as notificationsSupported } from "../../utils/notifications";
@@ -34,7 +34,7 @@
 
     const dispatch = createEventDispatcher();
 
-    export let selectedChatSummary: Writable<ChatSummary>;
+    export let selectedChatSummary: Readable<ChatSummary>;
     export let blocked: boolean;
     export let unreadMessages: number;
 

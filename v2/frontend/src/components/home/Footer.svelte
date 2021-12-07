@@ -9,7 +9,6 @@
     import { rollbar } from "../../utils/logging";
     import Loading from "../Loading.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
-    import { unconfirmed } from "../../stores/unconfirmed";
 
     export let controller: ChatController;
     export let blocked: boolean;
