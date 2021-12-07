@@ -1,5 +1,5 @@
 import { push } from "svelte-spa-router";
-import { derived, get, Unsubscriber, Writable, writable } from "svelte/store";
+import { derived, get, Writable, writable } from "svelte/store";
 import type { ChatSummary, DirectChatSummary, EnhancedReplyContext } from "../domain/chat/chat";
 import { compareChats, updateArgsFromChats } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
@@ -46,7 +46,6 @@ export class HomeController {
     public loading = writable(false);
     private chatPoller: Poller | undefined;
     private usersPoller: Poller | undefined;
-    private chatUnsubscriber: Unsubscriber | undefined;
 
     constructor(public api: ServiceContainer, public user: User) {
         this.messagesRead = new MessageReadTracker(api);
