@@ -74,7 +74,6 @@
         &.me {
             background-color: var(--currentChat-msg-me-hv);
             color: var(--currentChat-msg-me-txt);
-            //border-color: var(--currentChat-msg-me-bd);
         }
     }
 
