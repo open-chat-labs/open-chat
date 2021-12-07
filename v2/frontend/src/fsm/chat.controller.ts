@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { get, Writable } from "svelte/store";
+import { get, Readable, Writable } from "svelte/store";
 import type {
     AddParticipantsResponse,
     ChatEvent,
@@ -33,7 +33,6 @@ import {
     replaceLocal,
     replaceMessageContent,
     serialiseMessageForRtc,
-    setLastMessageOnChat,
     toggleReaction,
     userIdsFromEvents,
 } from "../domain/chat/chat.utils";
@@ -61,7 +60,6 @@ export class ChatController {
     public replyingTo: Writable<EnhancedReplyContext | undefined>;
     public fileToAttach: Writable<MessageContent | undefined>;
     public editingEvent: Writable<EventWrapper<Message> | undefined>;
-    public chat: Writable<ChatSummary>;
     public chatId: string;
     public participants: Writable<Participant[]>;
     public blockedUsers: Writable<Set<string>>;
@@ -78,10 +76,11 @@ export class ChatController {
     constructor(
         public api: ServiceContainer,
         public user: UserSummary,
-        private _chat: ChatSummary,
+        public chat: Readable<ChatSummary>,
         public markRead: IMessageReadTracker,
         private _replyingTo: EnhancedReplyContext | undefined,
-        private _focusMessageIndex: number | undefined
+        private _focusMessageIndex: number | undefined,
+        private _updateChat: (updateChatFn: (chat: ChatSummary) => ChatSummary) => void
     ) {
         this.events = writable([]);
         this.loading = writable(false);
@@ -91,10 +90,10 @@ export class ChatController {
         this.editingEvent = writable(undefined);
         this.participants = writable([]);
         this.blockedUsers = writable(new Set<string>());
-        this.chat = writable(_chat);
-        this.chatId = _chat.chatId;
         this.chatUserIds = new Set<string>();
-        this.maxLoadedEventIndex = _chat.latestEventIndex;
+        const { chatId, latestEventIndex } = get(chat);
+        this.chatId = chatId;
+        this.maxLoadedEventIndex = latestEventIndex;
 
         if (process.env.NODE_ENV !== "test") {
             if (_focusMessageIndex !== undefined) {
@@ -214,13 +213,14 @@ export class ChatController {
 
         this.initialised = true;
         const events = get(this.events);
+        const chat = get(this.chat);
         const updated = replaceAffected(
             this.chatId,
             replaceLocal(
                 this.user.userId,
                 this.chatId,
                 this.markRead,
-                this._chat.readByMe,
+                chat.readByMe,
                 get(this.focusMessageIndex) === undefined ? events : [],
                 resp.events
             ),
@@ -228,8 +228,8 @@ export class ChatController {
             this.localReactions
         );
 
-        const userIds = this._chat.kind === "direct_chat"
-            ? new Set([this._chat.them])
+        const userIds = chat.kind === "direct_chat"
+            ? new Set([chat.them])
             : userIdsFromEvents(updated);
 
         await this.updateUserStore(userIds);
@@ -422,9 +422,12 @@ export class ChatController {
                 );
             }
             this.events.update((events) => [...events, messageEvent]);
-            this.chat.update((chat) =>
-                sentByMe ? setLastMessageOnChat(chat, messageEvent) : chat
-            );
+            if (sentByMe) {
+                this._updateChat(chat => {
+                    chat.latestMessage = messageEvent;
+                    return chat;
+                })
+            }
             this.raiseEvent({
                 chatId: this.chatId,
                 event: {
@@ -555,10 +558,6 @@ export class ChatController {
     }
 
     async chatUpdated(chat: ChatSummary): Promise<void> {
-        this.chat.set({
-            ...chat,
-        });
-
         this.updateDetails();
 
         this.raiseEvent({

@@ -276,9 +276,10 @@ function mergeUpdatedDirectChat(
         ? mergeMessageIndexRanges(chat.readByMe, updatedChat.readByMe)
         : chat.readByMe;
     chat.readByThem = updatedChat.readByThem ?? chat.readByThem;
-    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
+    mergeLatestMessage(chat, updatedChat);
+
     return chat;
 }
 
@@ -408,14 +409,30 @@ function mergeUpdatedGroupChat(
     chat.readByMe = updatedChat.readByMe
         ? mergeMessageIndexRanges(chat.readByMe, updatedChat.readByMe)
         : chat.readByMe;
-    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
     chat.myRole = updatedChat.myRole ?? chat.myRole;
+    mergeLatestMessage(chat, updatedChat);
+
     return chat;
+}
+
+function mergeLatestMessage(chat: ChatSummary, updatedChat: ChatSummaryUpdates) {
+    // We only update the latest message if the new messageIndex from the server is higher than what we have locally.
+    // This is because locally we may have messages which are not yet confirmed which will eventually have higher
+    // message indexes than the message we just got back from the server.
+    // For example, if locally the latest confirmed messageIndex is 100, then you send a message, it’ll be assigned 101
+    // (which is the lowest possible messageIndex it could have), then in updates if you get 101 back but its a
+    // different message, your message must now end up with a messageIndex of at least 102 and therefore should stay as
+    // the latest message.
+    if (updatedChat.latestMessage !== undefined &&
+        (chat.latestMessage === undefined || updatedChat.latestMessage.event.messageIndex > chat.latestMessage.event.messageIndex))
+    {
+        chat.latestMessage = updatedChat.latestMessage;
+    }
 }
 
 function toLookup<T>(keyFn: (t: T) => string, things: T[]): Record<string, T> {
@@ -539,15 +556,6 @@ export function latestAvailableEventIndex(chatSummary: ChatSummary): number | un
 
 export function identity<T>(x: T): T {
     return x;
-}
-
-export function setLastMessageOnChat(chat: ChatSummary, ev: EventWrapper<Message>): ChatSummary {
-    // we cannot update this index when we send a message because it will cause us to attempt to
-    // load messages from the server before they have even been committed to the server
-    // chat.latestEventIndex = ev.index;
-    chat.latestMessage = ev;
-    chat.readByMe = insertIndexIntoRanges(ev.event.messageIndex, chat.readByMe);
-    return chat;
 }
 
 function sameDate(a: { timestamp: bigint }, b: { timestamp: bigint }): boolean {

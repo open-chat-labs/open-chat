@@ -1,7 +1,7 @@
 import { push } from "svelte-spa-router";
 import { derived, get, Writable, writable } from "svelte/store";
 import type { ChatSummary, DirectChatSummary, EnhancedReplyContext } from "../domain/chat/chat";
-import { updateArgsFromChats } from "../domain/chat/chat.utils";
+import { compareChats, updateArgsFromChats } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
 import type { User, UsersResponse } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -39,7 +39,7 @@ export class HomeController {
     private replyingTo?: EnhancedReplyContext;
     public chatSummaries: Writable<Record<string, ChatSummary>> = writable({});
     public chatSummariesList = derived([this.chatSummaries], ([$chatSummaries]) => {
-        return Object.values($chatSummaries);
+        return Object.values($chatSummaries).sort(compareChats);
     });
     public initialised = false;
     public selectedChat: Writable<ChatController | undefined> = writable(undefined);
@@ -186,10 +186,11 @@ export class HomeController {
                 return new ChatController(
                     this.api,
                     user,
-                    chat,
+                    derived(this.chatSummaries, summaries => summaries[chatId]),
                     this.messagesRead,
                     this.replyingTo,
-                    messageIndex
+                    messageIndex,
+                    updateChatFn => this.updateChat(chatId, updateChatFn)
                 );
             });
         } else {
@@ -388,5 +389,14 @@ export class HomeController {
         if (selectedChat === undefined) return;
         if (chat.chatId !== selectedChat.chatId) return;
         fn(selectedChat);
+    }
+
+    private updateChat(chatId: string, updateFn: (chat: ChatSummary) => ChatSummary) {
+        this.chatSummaries.update(updates => {
+            return {
+                ...updates,
+                [chatId]: updateFn(updates[chatId])
+            };
+        })
     }
 }
