@@ -6,10 +6,11 @@
 
     export let content: ImageContent;
     export let fill: boolean;
+    export let draft: boolean = false;
     let imgElement: HTMLImageElement;
 
     let landscape = content.height < content.width;
-    let withCaption = content.caption !== undefined;
+    let withCaption = content.caption !== undefined && content.caption !== "";
 </script>
 
 {#if content.blobUrl !== undefined}
@@ -19,6 +20,7 @@
         class:landscape
         class:fill
         class:withCaption
+        class:draft
         src={content.blobUrl}
         alt={content.caption} />
 {/if}
@@ -43,6 +45,19 @@
 
         &.withCaption {
             margin-bottom: $sp2;
+        }
+
+        &.draft {
+            max-width: calc(var(--vh, 1vh) * 50);
+            max-height: none;
+            height: auto;
+        }
+
+        &:not(.landscape).draft {
+            max-width: none;
+            max-height: calc(var(--vh, 1vh) * 50);
+            width: auto;
+            height: 100%;
         }
     }
 </style>

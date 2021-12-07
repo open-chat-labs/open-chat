@@ -60,7 +60,7 @@
         color: var(--currentChat-msg-txt);
         cursor: pointer;
         box-shadow: -7px 0px 0px 0px var(--currentChat-msg-reply-accent);
-        border: 1px solid var(--currentChat-msg-reply-accent);
+        border: 2px solid var(--currentChat-msg-reply-accent);
         margin-bottom: $sp3;
         margin-left: 7px;
         overflow: hidden;
@@ -74,7 +74,7 @@
         &.me {
             background-color: var(--currentChat-msg-me-hv);
             color: var(--currentChat-msg-me-txt);
-            border-color: var(--currentChat-msg-me-bd);
+            //border-color: var(--currentChat-msg-me-bd);
         }
     }
 

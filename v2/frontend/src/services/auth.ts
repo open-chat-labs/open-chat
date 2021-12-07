@@ -17,9 +17,9 @@ const IDENTITY_URL = process.env.INTERNET_IDENTITY_URL || "https://identity.ic0.
 const authClient = AuthClient.create();
 
 if (isProd) {
-    Usergeek.init({
-        apiKey: "process.env.USERGEEK_APIKEY",
-    });
+    const apiKey = "process.env.USERGEEK_APIKEY";
+    console.log(`Usergeek.init API key: ${apiKey}`)
+    Usergeek.init({ apiKey });
 }
 
 export function getIdentity(): Promise<Identity> {

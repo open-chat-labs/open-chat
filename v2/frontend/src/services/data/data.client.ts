@@ -49,9 +49,7 @@ export class DataClient implements IDataClient {
                     content.blobData
                 ));
             }
-        }
-
-        if (content.kind === "video_content") {
+        } else if (content.kind === "video_content") {
             if (
                 content.videoData.blobData &&
                 content.imageData.blobData &&
