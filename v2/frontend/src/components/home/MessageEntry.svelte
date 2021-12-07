@@ -45,7 +45,7 @@
                 initialisedEdit = true;
             }
         } else if (inp) {
-            inp.textContent = $textContent;
+            inp.textContent = $textContent ?? "";
         }
         if ($editingEvent === undefined) {
             initialisedEdit = false;
@@ -70,7 +70,7 @@
 
     function onInput() {
         inputIsEmpty = (inp.textContent?.trim().length ?? 0) === 0;
-        controller.setTextContent(inp.textContent);
+        controller.setTextContent(inp.textContent ?? undefined);
 
         requestAnimationFrame(() => {
             const now = Date.now();
