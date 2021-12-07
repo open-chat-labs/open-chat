@@ -2,16 +2,29 @@
 
 <script lang="ts">
     import { _ } from "svelte-i18n";
+    import { onMount } from "svelte";
     import type { VideoContent } from "../../domain/chat/chat";
+    import { calculateHeight } from "../../utils/layout";
     import Caption from "./Caption.svelte";
 
     export let content: VideoContent;
     export let fill: boolean;
     export let draft: boolean = false;
 
-    let landscape = content.height < content.width;
     let withCaption = content.caption !== undefined && content.caption !== "";
+    let landscape = content.height < content.width;
+    let height = 0;
+
+    function recalculateHeight() {
+        height = calculateHeight(
+            document.getElementById("chat-messages")?.offsetWidth ?? 0,
+            content
+        );
+    }
+    onMount(recalculateHeight);
 </script>
+
+<svelte:window on:resize={recalculateHeight} />
 
 <div class="video">
     <video
@@ -21,6 +34,7 @@
         class:fill
         class:withCaption
         class:draft
+        style={`height: ${height}px`}
         controls>
         <track kind="captions" />
         {#if content.videoData.blobUrl}

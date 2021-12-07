@@ -1,7 +1,9 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import { onMount } from "svelte";
     import type { ImageContent } from "../../domain/chat/chat";
+    import { calculateHeight } from "../../utils/layout";
     import Caption from "./Caption.svelte";
 
     export let content: ImageContent;
@@ -9,9 +11,20 @@
     export let draft: boolean = false;
     let imgElement: HTMLImageElement;
 
-    let landscape = content.height < content.width;
     let withCaption = content.caption !== undefined && content.caption !== "";
+    let landscape = content.height < content.width;
+    let height = 0;
+
+    function recalculateHeight() {
+        height = calculateHeight(
+            document.getElementById("chat-messages")?.offsetWidth ?? 0,
+            content
+        );
+    }
+    onMount(recalculateHeight);
 </script>
+
+<svelte:window on:resize={recalculateHeight} />
 
 {#if content.blobUrl !== undefined}
     <img
@@ -21,6 +34,7 @@
         class:fill
         class:withCaption
         class:draft
+        style={`height: ${height}px`}
         src={content.blobUrl}
         alt={content.caption} />
 {/if}
