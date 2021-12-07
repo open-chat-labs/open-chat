@@ -53,6 +53,12 @@
         messageIsEmpty = inputIsEmpty && $fileToAttach === undefined;
     }
 
+    $: {
+        if ($fileToAttach !== undefined) {
+            inp.focus();
+        }
+    }
+
     onMount(() => {
         if (inp) {
             inp.focus();
@@ -216,7 +222,6 @@
         justify-content: space-between;
         align-items: center;
         background-color: var(--entry-bg);
-        border-top: 1px solid var(--entry-bd);
         padding: $sp3;
     }
     .emoji,
