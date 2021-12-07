@@ -26,7 +26,7 @@
 
 <div class="replying" class:me class:rtl={$rtlStore}>
     <div class="close-icon" on:click={cancelReply}>
-        <HoverIcon>
+        <HoverIcon compact={true}>
             <Close size={$iconSize} color={me ? "#fff" : "#aaa"} />
         </HoverIcon>
     </div>
@@ -58,6 +58,8 @@
 
         &.rtl {
             box-shadow: 7px 0px 0px 0px var(--button-bg);
+            margin-left: 0;
+            margin-right: 7px;
 
             .close-icon {
                 right: unset;
