@@ -64,6 +64,7 @@
 <style type="text/scss">
     :global(.text-wrapper > p) {
         display: inline;
+        word-wrap: break-word;
     }
 
     .text-wrapper {
