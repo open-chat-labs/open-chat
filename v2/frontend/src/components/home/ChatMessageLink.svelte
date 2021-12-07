@@ -11,5 +11,6 @@
     a {
         cursor: pointer;
         text-decoration: underline;
+        word-break: break-all;
     }
 </style>
