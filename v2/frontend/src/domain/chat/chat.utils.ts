@@ -276,9 +276,15 @@ function mergeUpdatedDirectChat(
         ? mergeMessageIndexRanges(chat.readByMe, updatedChat.readByMe)
         : chat.readByMe;
     chat.readByThem = updatedChat.readByThem ?? chat.readByThem;
-    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
+
+    if (updatedChat.latestMessage !== undefined &&
+        (chat.latestMessage === undefined || updatedChat.latestMessage.event.messageIndex > chat.latestMessage.event.messageIndex))
+    {
+        chat.latestMessage = updatedChat.latestMessage;
+    }
+
     return chat;
 }
 
@@ -408,13 +414,19 @@ function mergeUpdatedGroupChat(
     chat.readByMe = updatedChat.readByMe
         ? mergeMessageIndexRanges(chat.readByMe, updatedChat.readByMe)
         : chat.readByMe;
-    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
     chat.myRole = updatedChat.myRole ?? chat.myRole;
+
+    if (updatedChat.latestMessage !== undefined &&
+        (chat.latestMessage === undefined || updatedChat.latestMessage.event.messageIndex > chat.latestMessage.event.messageIndex))
+    {
+        chat.latestMessage = updatedChat.latestMessage;
+    }
+
     return chat;
 }
 

@@ -187,10 +187,10 @@ export class HomeController {
                 const chatStore = writable(chat);
                 
                 this.chatUnsubscriber?.();
-                this.chatUnsubscriber = chatStore.subscribe(c => this.chatSummaries.update(summaries => {
-                    summaries[c.chatId] = c;
-                    return summaries;
-                }));
+                this.chatUnsubscriber = chatStore.subscribe(c => this.chatSummaries.update(summaries => ({
+                    ...summaries,
+                    [c.chatId]: c
+                })));
 
                 return new ChatController(
                     this.api,
