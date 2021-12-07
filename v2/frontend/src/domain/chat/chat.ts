@@ -496,12 +496,12 @@ type ChatSummaryUpdatesCommon = {
     chatId: string;
     readByMe?: MessageIndexRange[];
     latestEventIndex?: number;
+    latestMessage?: EventWrapper<Message>;
     notificationsMuted?: boolean;
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "direct_chat";
-    latestMessage?: EventWrapper<Message>;
     readByThem?: MessageIndexRange[];
 };
 
@@ -510,7 +510,6 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     lastUpdated: bigint;
     name?: string;
     description?: string;
-    latestMessage?: EventWrapper<Message>;
     avatarBlobReference?: BlobReference;
     participantCount?: number;
     myRole?: ParticipantRole;
@@ -559,6 +558,7 @@ type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
     readByMe: MessageIndexRange[];
     latestEventIndex: number;
+    latestMessage?: EventWrapper<Message>;
     notificationsMuted: boolean;
 };
 
@@ -567,7 +567,6 @@ export type DirectChatSummary = ChatSummaryCommon & {
     them: string;
     readByThem: MessageIndexRange[];
     dateCreated: bigint;
-    latestMessage?: EventWrapper<Message>;
 };
 
 export type GroupChatSummary = DataContent &
@@ -582,7 +581,6 @@ export type GroupChatSummary = DataContent &
         lastUpdated: bigint;
         participantCount: number;
         myRole: ParticipantRole;
-        latestMessage?: EventWrapper<Message>;
         mentions: number[];
     };
 
