@@ -184,21 +184,14 @@ export class HomeController {
                     selectedChat.destroy();
                 }
 
-                const chatStore = writable(chat);
-                
-                this.chatUnsubscriber?.();
-                this.chatUnsubscriber = chatStore.subscribe(c => this.chatSummaries.update(summaries => ({
-                    ...summaries,
-                    [c.chatId]: c
-                })));
-
                 return new ChatController(
                     this.api,
                     user,
-                    chatStore,
+                    derived(this.chatSummaries, summaries => summaries[chatId]),
                     this.messagesRead,
                     this.replyingTo,
-                    messageIndex
+                    messageIndex,
+                    updateChatFn => this.updateChat(chatId, updateChatFn)
                 );
             });
         } else {
@@ -397,5 +390,14 @@ export class HomeController {
         if (selectedChat === undefined) return;
         if (chat.chatId !== selectedChat.chatId) return;
         fn(selectedChat);
+    }
+
+    private updateChat(chatId: string, updateFn: (chat: ChatSummary) => ChatSummary) {
+        this.chatSummaries.update(updates => {
+            return {
+                ...updates,
+                [chatId]: updateFn(updates[chatId])
+            };
+        })
     }
 }

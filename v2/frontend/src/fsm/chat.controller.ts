@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { get, Writable } from "svelte/store";
+import { get, Readable, Writable } from "svelte/store";
 import type {
     AddParticipantsResponse,
     ChatEvent,
@@ -33,7 +33,6 @@ import {
     replaceLocal,
     replaceMessageContent,
     serialiseMessageForRtc,
-    setLastMessageOnChat,
     toggleReaction,
     userIdsFromEvents,
 } from "../domain/chat/chat.utils";
@@ -77,10 +76,11 @@ export class ChatController {
     constructor(
         public api: ServiceContainer,
         public user: UserSummary,
-        public chat: Writable<ChatSummary>,
+        public chat: Readable<ChatSummary>,
         public markRead: IMessageReadTracker,
         private _replyingTo: EnhancedReplyContext | undefined,
-        private _focusMessageIndex: number | undefined
+        private _focusMessageIndex: number | undefined,
+        private _updateChat: (updateChatFn: (chat: ChatSummary) => ChatSummary) => void
     ) {
         this.events = writable([]);
         this.loading = writable(false);
@@ -422,9 +422,12 @@ export class ChatController {
                 );
             }
             this.events.update((events) => [...events, messageEvent]);
-            this.chat.update((chat) =>
-                sentByMe ? setLastMessageOnChat(chat, messageEvent) : chat
-            );
+            if (sentByMe) {
+                this._updateChat(chat => {
+                    chat.latestMessage = messageEvent;
+                    return chat;
+                })
+            }
             this.raiseEvent({
                 chatId: this.chatId,
                 event: {
@@ -555,10 +558,6 @@ export class ChatController {
     }
 
     async chatUpdated(chat: ChatSummary): Promise<void> {
-        this.chat.set({
-            ...chat,
-        });
-
         this.updateDetails();
 
         this.raiseEvent({
