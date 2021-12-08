@@ -51,6 +51,7 @@
     export let admin: boolean;
 
     let msgElement: HTMLElement;
+    let msgBubbleElement: HTMLElement;
     let userLookup = getContext<UserLookup>("userLookup");
     let sender = userLookup[senderId];
 
@@ -59,10 +60,10 @@
     let metaData = messageMetaData(msg.content);
     let showEmojiPicker = false;
     let debug = false;
-    let mediaDimensions: Dimensions | undefined = extractDimensions(msg.content);
-    let targetMediaDimensions: Dimensions | undefined = undefined;
-    let msgBubbleWidth: number | undefined = undefined;
-
+    
+    $: mediaDimensions = extractDimensions(msg.content);
+    $: mediaCalculatedHeight = undefined as (Dimensions | undefined);
+    $: msgBubbleCalculatedWidth = undefined as (number | undefined);
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
 
@@ -148,25 +149,42 @@
         return undefined;
     }
 
-    const MSG_BUBBLE_PADDING_WIDTH = 8;
-    const MSG_BUBBLE_BORDER_WIDTH = 1;
-    $: msgBubbleTotalPadding = fill ? 0 : (2 * (MSG_BUBBLE_PADDING_WIDTH + MSG_BUBBLE_BORDER_WIDTH));
-
     function recalculateMediaDimensions() {
         if (mediaDimensions === undefined) {
             return;
         }
 
+        let msgBubblePaddingWidth = 0;
+        if (!fill) {
+            let msgBubbleStyle = getComputedStyle(msgBubbleElement);
+            msgBubblePaddingWidth = 
+                parseFloat(msgBubbleStyle.paddingLeft) + 
+                parseFloat(msgBubbleStyle.paddingRight) + 
+                parseFloat(msgBubbleStyle.getPropertyValue("border-right-width")) +
+                parseFloat(msgBubbleStyle.getPropertyValue("border-left-width"));
+            console.log(msgBubblePaddingWidth);
+        }
+
         const parentWidth = document.getElementById("chat-messages")?.offsetWidth ?? 0;
-        targetMediaDimensions = calculateMediaDimensions(mediaDimensions, parentWidth);
-        msgBubbleWidth = targetMediaDimensions.width + msgBubbleTotalPadding
+        let targetMediaDimensions = calculateMediaDimensions(
+            mediaDimensions, 
+            parentWidth, 
+            msgBubblePaddingWidth, 
+            window.innerHeight);
+        mediaCalculatedHeight = targetMediaDimensions.height;
+        msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth
     }
 
-    function calculateMediaDimensions(content: Dimensions, parentWidth: number) : Dimensions {
+    function calculateMediaDimensions(
+        content: Dimensions, 
+        parentWidth: number, 
+        containerPaddingWidth: number, 
+        windowHeight: number) 
+    : Dimensions {
         const landscape = content.height < content.width;
         const ratio = content.height / content.width;
-        const availWidth = (parentWidth * 0.8) - msgBubbleTotalPadding;
-        const availHeight = 2 * window.innerHeight / 3;
+        const availWidth = (parentWidth * 0.8) - containerPaddingWidth;
+        const availHeight = 2 * windowHeight / 3;
 
         let width = Math.min(availWidth, Math.max(200, content.width));
         let height = width * ratio;
@@ -174,7 +192,7 @@
         if (height > availHeight) {
             height = availHeight;
             // Allow the image to be stretched in this rare case
-            width = Math.max(90 - msgBubbleTotalPadding, height / ratio);
+            width = Math.max(90 - containerPaddingWidth, height / ratio);
         }
 
         return {
@@ -236,7 +254,8 @@
         {/if}
 
         <div
-            style={msgBubbleWidth !== undefined ? `width: ${msgBubbleWidth}px` : undefined}
+            bind:this={msgBubbleElement}
+            style={msgBubbleCalculatedWidth !== undefined ? `width: ${msgBubbleCalculatedWidth}px` : undefined}
             class="message-bubble"
             class:focused
             class:fill={fill && !deleted}
@@ -262,7 +281,7 @@
             {/if}
 
             {#if msg.content.kind === "text_content"}
-                <ChatMessageContent {fill} {me} content={msg.content} height={targetMediaDimensions?.height} >
+                <ChatMessageContent {fill} {me} content={msg.content} height={mediaCalculatedHeight} >
                     <TimeAndTicks
                         inline={true}
                         {fill}
@@ -273,7 +292,7 @@
                         {chatType} />
                 </ChatMessageContent>
             {:else}
-                <ChatMessageContent {fill} {me} content={msg.content} height={targetMediaDimensions?.height} />
+                <ChatMessageContent {fill} {me} content={msg.content} height={mediaCalculatedHeight} />
                 {#if !deleted}
                     <TimeAndTicks {fill} {timestamp} {me} {confirmed} {readByThem} {chatType} />
                 {/if}
@@ -480,7 +499,6 @@
             margin-right: 1px;
             margin-bottom: $sp2;
             font-size: 120%;
-            // border: 1px solid transparent;
 
             &.me {
                 border: 2px solid var(--reaction-me);
