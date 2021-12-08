@@ -6,6 +6,7 @@ import type {
     EventWrapper,
     IndexRange,
     MergedUpdatesResponse,
+    SerializableMergedUpdatesResponse,
 } from "../domain/chat/chat";
 import { rollbar } from "./logging";
 
@@ -18,7 +19,7 @@ const blobbyContentTypes = ["file_content", "image_content", "video_content", "a
 export interface ChatSchema extends DBSchema {
     chats: {
         key: string;
-        value: MergedUpdatesResponse;
+        value: SerializableMergedUpdatesResponse;
     };
 
     chat_messages: {
@@ -91,16 +92,26 @@ export async function getCachedChats(
     db: Database,
     userId: string
 ): Promise<MergedUpdatesResponse | undefined> {
-    const fromCache = await (await db).get("chats", userId) as MergedUpdatesResponse | undefined;
-    if (fromCache) {
-        fromCache.chatSummaries.forEach(c => {
-            c.readByMe = Object.create(DRange.prototype, Object.getOwnPropertyDescriptors(c.readByMe));
-            if (c.kind === "direct_chat") {
-                c.readByThem = Object.create(DRange.prototype, Object.getOwnPropertyDescriptors(c.readByThem));
-            }
-        });
-    }
-    return fromCache;
+    const fromCache = await (await db).get("chats", userId) as SerializableMergedUpdatesResponse | undefined;
+    return fromCache
+        ? {
+            ...fromCache,
+            chatSummaries: fromCache.chatSummaries.map(c => {
+                if (c.kind === "direct_chat") {
+                    return {
+                        ...c,
+                        readByMe: indexRangesToDRange(c.readByMe),
+                        readByThem: indexRangesToDRange(c.readByThem)
+                    };
+                } else {
+                    return {
+                        ...c,
+                        readByMe: indexRangesToDRange(c.readByMe)
+                    };
+                }
+            })
+        }
+        : undefined;
 }
 
 export function setCachedChats(
@@ -113,12 +124,15 @@ export function setCachedChats(
             if (c.kind === "direct_chat") {
                 return {
                     ...c,
+                    readByMe: drangeToIndexRanges(c.readByMe),
+                    readByThem: drangeToIndexRanges(c.readByMe),
                     latestMessage: c.latestMessage ? makeSerialisable(c.latestMessage) : undefined,
                 };
             }
             if (c.kind === "group_chat") {
                 return {
                     ...c,
+                    readByMe: drangeToIndexRanges(c.readByMe),
                     latestMessage: c.latestMessage ? makeSerialisable(c.latestMessage) : undefined,
                 };
             }
@@ -347,6 +361,16 @@ function makeSerialisable<T extends ChatEvent>(ev: EventWrapper<T>): EventWrappe
         };
     }
     return ev;
+}
+
+function drangeToIndexRanges(drange: DRange): IndexRange[] {
+    return drange.subranges().map(r => [r.low, r.high]);
+}
+
+function indexRangesToDRange(ranges: IndexRange[]): DRange {
+    const drange = new DRange();
+    ranges.forEach(r => drange.add(r[0], r[1]));
+    return drange;
 }
 
 export function setCachedMessages<T extends ChatEvent>(
