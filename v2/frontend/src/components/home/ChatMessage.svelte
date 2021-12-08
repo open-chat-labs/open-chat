@@ -30,7 +30,8 @@
     import { iconSize } from "../../stores/iconSize";
     import type { Dimensions } from "../../utils/media";
     import type { MessageContent } from "../../domain/chat/chat";
-    
+    import { calculateMediaDimensions } from "../../utils/layout";
+
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -62,7 +63,7 @@
     let debug = false;
     
     $: mediaDimensions = extractDimensions(msg.content);
-    $: mediaCalculatedHeight = undefined as (Dimensions | undefined);
+    $: mediaCalculatedHeight = undefined as (number | undefined);
     $: msgBubbleCalculatedWidth = undefined as (number | undefined);
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
@@ -173,32 +174,6 @@
             window.innerHeight);
         mediaCalculatedHeight = targetMediaDimensions.height;
         msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth
-    }
-
-    function calculateMediaDimensions(
-        content: Dimensions, 
-        parentWidth: number, 
-        containerPaddingWidth: number, 
-        windowHeight: number) 
-    : Dimensions {
-        const landscape = content.height < content.width;
-        const ratio = content.height / content.width;
-        const availWidth = (parentWidth * 0.8) - containerPaddingWidth;
-        const availHeight = 2 * windowHeight / 3;
-
-        let width = Math.min(availWidth, Math.max(200, content.width));
-        let height = width * ratio;
-
-        if (height > availHeight) {
-            height = availHeight;
-            // Allow the image to be stretched in this rare case
-            width = Math.max(90 - containerPaddingWidth, height / ratio);
-        }
-
-        return {
-            width,
-            height
-        };
     }
 
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
