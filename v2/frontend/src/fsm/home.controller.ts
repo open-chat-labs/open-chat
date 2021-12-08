@@ -17,6 +17,7 @@ import type {
 } from "../domain/webrtc/webrtc";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
+import { draftMessages } from "../stores/draftMessages";
 import { IMessageReadTracker, MessageReadTracker } from "../stores/markRead";
 import { toastStore } from "../stores/toast";
 import { typing } from "../stores/typing";
@@ -36,7 +37,6 @@ export class HomeController {
     public messagesRead: IMessageReadTracker;
     private chatUpdatesSince?: bigint;
     private usersLastUpdate = BigInt(0);
-    private replyingTo?: EnhancedReplyContext;
     public chatSummaries: Writable<Record<string, ChatSummary>> = writable({});
     public chatSummariesList = derived([this.chatSummaries], ([$chatSummaries]) => {
         return Object.values($chatSummaries).sort(compareChats);
@@ -188,7 +188,6 @@ export class HomeController {
                     user,
                     derived(this.chatSummaries, summaries => summaries[chatId]),
                     this.messagesRead,
-                    this.replyingTo,
                     messageIndex,
                     updateChatFn => this.updateChat(chatId, updateChatFn)
                 );
@@ -250,7 +249,9 @@ export class HomeController {
         const chat = get(this.chatSummariesList).find((c) => {
             return c.kind === "direct_chat" && c.them === context.sender?.userId;
         });
-        this.replyingTo = context;
+        const chatId = chat?.chatId ?? context.sender!.userId;
+        draftMessages.delete(chatId);
+        draftMessages.setReplyingTo(chatId, context);
         if (chat) {
             push(`/${chat.chatId}`);
         } else {
