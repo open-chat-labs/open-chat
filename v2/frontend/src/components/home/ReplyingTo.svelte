@@ -71,6 +71,12 @@
             background-color: var(--currentChat-msg-me-hv);
             color: var(--currentChat-msg-me-txt);
         }
+
+        &:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
     }
 
     .username {

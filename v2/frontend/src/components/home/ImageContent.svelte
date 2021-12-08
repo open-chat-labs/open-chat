@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import { rtlStore } from "../../stores/rtl";
     import type { ImageContent } from "../../domain/chat/chat";
     import Caption from "./Caption.svelte";
 
@@ -25,6 +26,7 @@
         class:withCaption
         class:draft
         class:reply
+        class:rtl={$rtlStore}
         style={height === undefined ? undefined : `height: ${height}px`}
         src={content.blobUrl}
         alt={content.caption} />
@@ -71,6 +73,13 @@
             height: auto;
             float: right;
             margin-left: $sp3;
+            margin-right: 0;
+        }
+
+        &.rtl.reply {
+            float: left;
+            margin-left: 0;
+            margin-right: $sp3;
         }
 
         &:not(.landscape).reply {

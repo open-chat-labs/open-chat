@@ -29,6 +29,8 @@
     import TimeAndTicks from "./TimeAndTicks.svelte";
     import { iconSize } from "../../stores/iconSize";
     import type { Dimensions } from "../../utils/media";
+    import type { MessageContent } from "../../domain/chat/chat";
+    
     const dispatch = createEventDispatcher();
 
     export let chatId: string;

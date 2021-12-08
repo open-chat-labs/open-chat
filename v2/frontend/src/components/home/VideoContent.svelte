@@ -2,6 +2,7 @@
 
 <script lang="ts">
     import { _ } from "svelte-i18n";
+    import { rtlStore } from "../../stores/rtl";
     import type { VideoContent } from "../../domain/chat/chat";
     import Caption from "./Caption.svelte";
 
@@ -15,7 +16,7 @@
     let landscape = content.height < content.width;
 </script>
 
-<div class="video" class:reply>
+<div class="video" class:reply class:rtl={$rtlStore}>
     <video
         preload="none"
         poster={content.imageData.blobUrl}
@@ -44,6 +45,14 @@
 
         &.reply {
             float: right;
+            margin-left: $sp3;
+            margin-right: 0;
+        }
+
+        &.rtl.reply {
+            float: left;
+            margin-left: 0;
+            margin-right: $sp3;
         }
 
         video {
@@ -80,7 +89,6 @@
                 max-width: 90px;
                 max-height: none;
                 height: auto;
-                margin-left: $sp3;
             }
 
             &:not(.landscape).reply {
