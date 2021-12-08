@@ -50,7 +50,7 @@ import type {
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
-import { message, messageContent, updatedMessage } from "../common/chatMappers";
+import { apiMessageIndexRanges, message, messageContent, updatedMessage } from "../common/chatMappers";
 import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
 
 export function searchAllMessageResponse(
@@ -447,7 +447,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             kind: "group_chat",
             chatId,
             lastUpdated: candid.Group.last_updated,
-            readByMe: optional(candid.Group.read_by_me, identity),
+            readByMe: optional(candid.Group.read_by_me, apiMessageIndexRanges),
             latestMessage: optional(candid.Group.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
@@ -471,8 +471,8 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
         return {
             kind: "direct_chat",
             chatId,
-            readByMe: optional(candid.Direct.read_by_me, identity),
-            readByThem: optional(candid.Direct.read_by_them, identity),
+            readByMe: optional(candid.Direct.read_by_me, apiMessageIndexRanges),
+            readByThem: optional(candid.Direct.read_by_them, apiMessageIndexRanges),
             latestMessage: optional(candid.Direct.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
@@ -513,7 +513,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
                     event: message(ev.event),
                 };
             }),
-            readByMe: candid.Group.read_by_me,
+            readByMe: apiMessageIndexRanges(candid.Group.read_by_me),
             name: candid.Group.name,
             description: candid.Group.description,
             public: candid.Group.is_public,
@@ -543,8 +543,8 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             },
             them: candid.Direct.them.toString(),
             latestEventIndex: candid.Direct.latest_event_index,
-            readByMe: candid.Direct.read_by_me,
-            readByThem: candid.Direct.read_by_them,
+            readByMe: apiMessageIndexRanges(candid.Direct.read_by_me),
+            readByThem: apiMessageIndexRanges(candid.Direct.read_by_them),
             dateCreated: candid.Direct.date_created,
             notificationsMuted: candid.Direct.notifications_muted,
         };

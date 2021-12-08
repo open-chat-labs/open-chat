@@ -1,3 +1,4 @@
+import type DRange from "drange";
 import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 
@@ -494,7 +495,7 @@ export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpda
 
 type ChatSummaryUpdatesCommon = {
     chatId: string;
-    readByMe?: MessageIndexRange[];
+    readByMe?: DRange;
     latestEventIndex?: number;
     latestMessage?: EventWrapper<Message>;
     notificationsMuted?: boolean;
@@ -502,7 +503,7 @@ type ChatSummaryUpdatesCommon = {
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "direct_chat";
-    readByThem?: MessageIndexRange[];
+    readByThem?: DRange;
 };
 
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
@@ -549,14 +550,9 @@ export type GroupChatDetailsUpdates = {
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
 
-export type MessageIndexRange = {
-    from: number;
-    to: number;
-};
-
 type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
-    readByMe: MessageIndexRange[];
+    readByMe: DRange;
     latestEventIndex: number;
     latestMessage?: EventWrapper<Message>;
     notificationsMuted: boolean;
@@ -565,7 +561,7 @@ type ChatSummaryCommon = {
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
-    readByThem: MessageIndexRange[];
+    readByThem: DRange;
     dateCreated: bigint;
 };
 
@@ -815,7 +811,7 @@ export type JoinGroupResponse =
     | "internal_error";
 
 export type MarkReadRequest = {
-    ranges: MessageIndexRange[];
+    ranges: DRange;
     chatId: string;
 }[];
 

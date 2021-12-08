@@ -68,6 +68,7 @@ import {
     CryptocurrencyDeposit,
     Role,
     Mention,
+    MessageIndexRange,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -138,6 +139,7 @@ export {
     CryptocurrencyDeposit as ApiCryptocurrencyDeposit,
     Role as ApiRole,
     Mention as ApiMention,
+    MessageIndexRange as ApiMessageIndexRange,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

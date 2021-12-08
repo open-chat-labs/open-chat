@@ -1,5 +1,6 @@
 import { push } from "svelte-spa-router";
 import { derived, get, Writable, writable } from "svelte/store";
+import DRange from "drange";
 import type { ChatSummary, DirectChatSummary, EnhancedReplyContext } from "../domain/chat/chat";
 import { compareChats, updateArgsFromChats } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
@@ -233,8 +234,8 @@ export class HomeController {
                 kind: "direct_chat",
                 them: chatId,
                 chatId,
-                readByMe: [],
-                readByThem: [],
+                readByMe: new DRange(),
+                readByThem: new DRange(),
                 latestMessage: undefined,
                 latestEventIndex: 0,
                 dateCreated: BigInt(Date.now()),

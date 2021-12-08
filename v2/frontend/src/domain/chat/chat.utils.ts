@@ -1,3 +1,4 @@
+import type DRange from "drange";
 import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
 import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.utils";
 import type {
@@ -15,7 +16,6 @@ import type {
     ChatEvent,
     ReplyContext,
     UpdateArgs,
-    MessageIndexRange,
     Reaction,
     Message,
     IndexRange,
@@ -133,59 +133,17 @@ export function getMinVisibleEventIndex(chat: ChatSummary): number {
     return chat.minVisibleEventIndex;
 }
 
-export function indexIsInRanges(index: number, ranges: MessageIndexRange[]): boolean {
-    return ranges.reduce<boolean>((agg, { from, to }) => {
-        if (!agg && index >= from && index <= to) return true;
-        return agg;
-    }, false);
-}
-
-export function insertIndexIntoRanges(
-    index: number,
-    ranges: MessageIndexRange[]
-): MessageIndexRange[] {
-    // todo this could be simpler actually. We know will be either creating a new range or
-    // extending an existing one, so we could just iterate through all the ranges and
-    // see if we find one to extend. If not, add a new one.
-    return mergeMessageIndexRanges(ranges, [{ from: index, to: index }]);
+export function indexIsInRanges(index: number, ranges: DRange): boolean {
+    for (const range of ranges.subranges()) {
+        if (range.low <= index && index <= range.high) return true;
+        if (range.low > index) break;
+    }
+    return false;
 }
 
 export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message): boolean {
     if (chat.kind === "group_chat") return true;
     return indexIsInRanges(messageIndex, chat.readByThem);
-}
-
-export function messageIsReadByMe(chat: ChatSummary, { messageIndex }: Message): boolean {
-    return indexIsInRanges(messageIndex, chat.readByMe);
-}
-
-// this gives us the index of the first message that the server does not have a record of us
-// having read. However it cannot account for messages that we have read locally. There is no
-// real way round this since the readByMe field only deals in message indexes and not message ids
-export function getFirstUnreadMessageIndex(chat: ChatSummary): number {
-    const latestMessageIndex = chat.latestMessage?.event.messageIndex;
-    const min = getMinVisibleMessageIndex(chat);
-
-    if (latestMessageIndex === undefined) {
-        return Number.MAX_VALUE;
-    }
-
-    if (chat.readByMe.length === 0) {
-        return min;
-    }
-
-    const [unreadIndex, finalRange] = chat.readByMe.reduce(
-        ([index, prev], range) => {
-            return range.from > min
-                ? prev === undefined
-                    ? [min, range]
-                    : [Math.min(index, prev.to + 1), range]
-                : [index, range];
-        },
-        [Number.MAX_VALUE, undefined as MessageIndexRange | undefined]
-    );
-
-    return Math.min(unreadIndex, finalRange ? finalRange.to + 1 : Number.MAX_VALUE);
 }
 
 export function latestMessageText({ latestMessage }: ChatSummary): string {
@@ -272,10 +230,8 @@ function mergeUpdatedDirectChat(
     chat: DirectChatSummary,
     updatedChat: DirectChatSummaryUpdates
 ): DirectChatSummary {
-    chat.readByMe = updatedChat.readByMe
-        ? mergeMessageIndexRanges(chat.readByMe, updatedChat.readByMe)
-        : chat.readByMe;
-    chat.readByThem = updatedChat.readByThem ?? chat.readByThem;
+    if (updatedChat.readByMe) chat.readByMe.add(updatedChat.readByMe);
+    if (updatedChat.readByThem) chat.readByThem.add(updatedChat.readByThem);
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     mergeLatestMessage(chat, updatedChat);
@@ -340,64 +296,20 @@ function mergeParticipants(_: Participant | undefined, updated: Participant) {
     return updated;
 }
 
-export function compareMessageRange(a: MessageIndexRange, b: MessageIndexRange): number {
-    if (a.from === b.from) {
-        return a.to - b.to;
-    }
-    return a.from - b.from;
-}
-
-// Note that this function assumes that the ranges have already been optimally collapsed to the
-// minimun number of ranges
-export function messageIndexRangesAreEqual(
-    a: MessageIndexRange[],
-    b: MessageIndexRange[]
-): boolean {
+export function rangesAreEqual(a: DRange, b: DRange): boolean {
     if (a.length !== b.length) return false;
 
-    a.sort(compareMessageRange);
-    b.sort(compareMessageRange);
+    const rangesA = a.subranges();
+    const rangesB = b.subranges();
+    if (rangesA.length !== rangesB.length) return false;
 
-    return zip(a, b).reduce<boolean>((same, [rangeA, rangeB]) => {
-        return same && compareMessageRange(rangeA, rangeB) === 0;
-    }, true);
-}
-
-export function mergeMessageIndexRanges(
-    current: MessageIndexRange[],
-    inbound: MessageIndexRange[]
-): MessageIndexRange[] {
-    const merged = [...current, ...inbound];
-    merged.sort(compareMessageRange);
-
-    if (merged.length === 0) return merged;
-
-    const stack = [merged[0]];
-
-    for (let i = 1; i < merged.length; i++) {
-        const top = stack[0];
-
-        if (top.to < merged[i].from) {
-            stack.push(merged[i]);
-        } else if (top.to < merged[i].to) {
-            top.to = merged[i].to;
-            stack.pop();
-            stack.push(top);
-        }
+    for (let i = 0; i < rangesA.length; i++) {
+        const rangeA = rangesA[i];
+        const rangeB = rangesB[i];
+        if (rangeA.low !== rangeB.low || rangeA.high !== rangeB.high) return false;
     }
 
-    // we may still need to collapse any contiguous ranges
-    const reduced = stack.reduce<MessageIndexRange[]>((agg, range) => {
-        const prev = agg[agg.length - 1];
-        if (prev !== undefined && range.from === prev.to + 1) {
-            prev.to = range.to;
-        } else {
-            agg.push(range);
-        }
-        return agg;
-    }, []);
-
-    return reduced;
+    return true;
 }
 
 function mergeUpdatedGroupChat(
@@ -406,9 +318,7 @@ function mergeUpdatedGroupChat(
 ): GroupChatSummary {
     chat.name = updatedChat.name ?? chat.name;
     chat.description = updatedChat.description ?? chat.description;
-    chat.readByMe = updatedChat.readByMe
-        ? mergeMessageIndexRanges(chat.readByMe, updatedChat.readByMe)
-        : chat.readByMe;
+    if (updatedChat.readByMe) chat.readByMe.add(updatedChat.readByMe);
     chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
@@ -711,7 +621,7 @@ export function replaceLocal(
     userId: string,
     chatId: string,
     messageReadTracker: IMessageReadTracker,
-    readByMe: MessageIndexRange[],
+    readByMe: DRange,
     onClient: EventWrapper<ChatEvent>[],
     fromServer: EventWrapper<ChatEvent>[]
 ): EventWrapper<ChatEvent>[] {
