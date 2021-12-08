@@ -1,6 +1,6 @@
 import type DRange from "drange";
 import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
-import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.utils";
+import { compareUsersOnlineFirst, nullUser } from "../user/user.utils";
 import type {
     ChatSummary,
     DirectChatSummary,
@@ -23,7 +23,7 @@ import type {
     GroupChatDetails,
     GroupChatDetailsUpdates,
 } from "./chat";
-import { dedupe, groupWhile, zip } from "../../utils/list";
+import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";

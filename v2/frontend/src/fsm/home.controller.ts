@@ -106,7 +106,7 @@ export class HomeController {
                 chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
                     rec[chat.chatId] = chat;
                     if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
-                        selectedChat.chatUpdated(chat);
+                        selectedChat.chatUpdated();
                     }
                     return rec;
                 }, {})

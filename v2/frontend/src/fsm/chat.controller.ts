@@ -558,7 +558,7 @@ export class ChatController {
         });
     }
 
-    async chatUpdated(chat: ChatSummary): Promise<void> {
+    async chatUpdated(): Promise<void> {
         this.updateDetails();
 
         this.raiseEvent({

@@ -19,8 +19,8 @@ export const draftMessages = {
     },
     setTextContent: (chatId: string, textContent: string | undefined): void => set(chatId, { textContent }),
     setAttachment: (chatId: string, attachment: MessageContent | undefined): void => set(chatId, { attachment }),
-    setEditingEvent: (chatId: string, editingEvent: EventWrapper<Message> | undefined) => set(chatId, { editingEvent }),
-    setReplyingTo: (chatId: string, replyingTo: EnhancedReplyContext | undefined) => set(chatId, { replyingTo }),
+    setEditingEvent: (chatId: string, editingEvent: EventWrapper<Message> | undefined): void => set(chatId, { editingEvent }),
+    setReplyingTo: (chatId: string, replyingTo: EnhancedReplyContext | undefined): void => set(chatId, { replyingTo }),
     delete: (chatId: string): void =>
         store.update((draftMessages) => {
             delete draftMessages[chatId];

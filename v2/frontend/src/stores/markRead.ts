@@ -213,7 +213,7 @@ export class FakeMessageReadTracker implements IMessageReadTracker {
         return false;
     }
 
-    removeUnconfirmedMessage(chatId: string, messageId: bigint): boolean {
+    removeUnconfirmedMessage(_chatId: string, _messageId: bigint): boolean {
         return false;
     }
 
@@ -221,11 +221,11 @@ export class FakeMessageReadTracker implements IMessageReadTracker {
         return undefined;
     }
 
-    unreadMessageCount(chatId: string, firstMessageIndex: number, latestMessageIndex: number | undefined): number {
+    unreadMessageCount(_chatId: string, _firstMessageIndex: number, _latestMessageIndex: number | undefined): number {
         return 0;
     }
 
-    getFirstUnreadMessageIndex(chatId: string, firstMessageIndex: number, latestMessageIndex: number | undefined): number {
+    getFirstUnreadMessageIndex(_chatId: string, _firstMessageIndex: number, _latestMessageIndex: number | undefined): number {
         return 0;
     }
 
