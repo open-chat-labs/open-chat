@@ -61,7 +61,6 @@ export function startSession(identity: Identity): Promise<void> {
         Usergeek.setPrincipal(identity.getPrincipal());
         Usergeek.trackSession();
     }
-    initDb(identity.getPrincipal().toString());
 
     return new Promise((resolve) => {
         const durationUntilSessionExpireMS = getTimeUntilSessionExpiryMs(identity);

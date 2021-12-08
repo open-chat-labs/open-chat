@@ -51,7 +51,7 @@ export function createCacheKey(chatId: string, index: number): string {
 }
 
 export function openCache(principal: string): Database | undefined {
-    if (process.env.NODE_ENV === "test") {
+    if (process.env.NODE_ENV === "test" || !process.env.CLIENT_CACHING) {
         return undefined;
     }
     try {
@@ -404,9 +404,12 @@ let db: Database | undefined;
 export function getDb(): Database | undefined {
     return db;
 }
-export function initDb(principal: string): void {
+
+export function initDb(principal: string): Database | undefined {
     db = openCache(principal);
+    return db;
 }
+
 export function closeDb(): void {
     db = undefined;
 }
