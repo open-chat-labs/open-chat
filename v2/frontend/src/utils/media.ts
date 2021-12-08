@@ -8,7 +8,7 @@ const MAX_VIDEO_SIZE = 1024 * 1024 * 5;
 export const MAX_AUDIO_SIZE = 1024 * 1024;
 const MAX_FILE_SIZE = 1024 * 1024;
 
-type Dimensions = {
+export type Dimensions = {
     width: number;
     height: number;
 };

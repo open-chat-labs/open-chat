@@ -2,31 +2,21 @@
 
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { onMount } from "svelte";
+    import { rtlStore } from "../../stores/rtl";
     import type { VideoContent } from "../../domain/chat/chat";
-    import { calculateHeight } from "../../utils/layout";
     import Caption from "./Caption.svelte";
 
     export let content: VideoContent;
     export let fill: boolean;
     export let draft: boolean = false;
+    export let reply: boolean = false;
+    export let height: number | undefined = undefined;
 
     let withCaption = content.caption !== undefined && content.caption !== "";
     let landscape = content.height < content.width;
-    let height = 0;
-
-    function recalculateHeight() {
-        height = calculateHeight(
-            document.getElementById("chat-messages")?.offsetWidth ?? 0,
-            content
-        );
-    }
-    onMount(recalculateHeight);
 </script>
 
-<svelte:window on:resize={recalculateHeight} />
-
-<div class="video">
+<div class="video" class:reply class:rtl={$rtlStore}>
     <video
         preload="none"
         poster={content.imageData.blobUrl}
@@ -34,7 +24,8 @@
         class:fill
         class:withCaption
         class:draft
-        style={`height: ${height}px`}
+        class:reply
+        style={height === undefined ? undefined : `height: ${height}px`}
         controls>
         <track kind="captions" />
         {#if content.videoData.blobUrl}
@@ -44,13 +35,25 @@
 </div>
 
 {#if content.caption !== undefined}
-    <Caption caption={content.caption} />
+    <Caption caption={content.caption} reply={reply} />
 {/if}
 
 <style type="text/scss">
     .video {
         position: relative;
         cursor: pointer;
+
+        &.reply {
+            float: right;
+            margin-left: $sp3;
+            margin-right: 0;
+        }
+
+        &.rtl.reply {
+            float: left;
+            margin-left: 0;
+            margin-right: $sp3;
+        }
 
         video {
             width: 100%;
@@ -80,6 +83,18 @@
                 max-height: calc(var(--vh, 1vh) * 50);
                 width: auto;
                 height: 100%;
+            }
+
+            &.reply {
+                max-width: 90px;
+                max-height: none;
+                height: auto;
+            }
+
+            &:not(.landscape).reply {
+                max-width: none;
+                max-height: 90px;
+                width: auto;
             }
         }
     }
