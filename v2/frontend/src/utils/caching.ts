@@ -94,9 +94,9 @@ export async function getCachedChats(
     const fromCache = await (await db).get("chats", userId) as MergedUpdatesResponse | undefined;
     if (fromCache) {
         fromCache.chatSummaries.forEach(c => {
-            Object.setPrototypeOf(c.readByMe, DRange.prototype);
+            c.readByMe = Object.create(new DRange(), Object.getOwnPropertyDescriptors(c.readByMe));
             if (c.kind === "direct_chat") {
-                Object.setPrototypeOf(c.readByThem, DRange.prototype);
+                c.readByThem = Object.create(new DRange(), Object.getOwnPropertyDescriptors(c.readByThem));
             }
         });
     }
