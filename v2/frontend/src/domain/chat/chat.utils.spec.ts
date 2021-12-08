@@ -9,8 +9,10 @@ import type {
 } from "./chat";
 import {
     getParticipantsString,
+    indexIsInRanges,
     mergeChatUpdates,
     newMessageId,
+    rangesAreEqual,
 } from "./chat.utils";
 
 const defaultDirectChat: DirectChatSummary = {
@@ -284,4 +286,44 @@ describe("merging updates", () => {
     });
 
     test.todo("chats end up in the right order");
+});
+
+describe("message ranges are equal", () => {
+    test("ranges are not equal length", () => {
+        const a = new DRange(0, 10);
+        const b = new DRange(0, 10).add(12, 20);
+        expect(rangesAreEqual(a, b)).toBe(false);
+    });
+    test("ranges are equal length but not equal", () => {
+        const a = new DRange(0, 10).add(12, 20);
+        const b = new DRange(0, 10).add(12, 21);
+        expect(rangesAreEqual(a, b)).toBe(false);
+    });
+    test("ranges are equal", () => {
+        const a = new DRange(0, 10).add(12, 20);
+        const b = new DRange(0, 10).add(12, 20);
+        expect(rangesAreEqual(a, b)).toBe(true);
+    });
+    test("ranges are equal again", () => {
+        const a = new DRange(0, 10).add(12, 20).add(100, 250);
+        const b = new DRange(0, 10).add(12, 20).add(100, 250);
+        expect(rangesAreEqual(a, b)).toBe(true);
+    });
+    test("ranges differ only in the 'to' property", () => {
+        const a = new DRange(0, 10).add(12, 20).add(100, 250);
+        const b = new DRange(0, 10).add(12, 20).add(100, 260);
+        expect(rangesAreEqual(a, b)).toBe(false);
+    });
+});
+
+describe("index is in ranges", () => {
+    test("where index is not in ranges", () => {
+        expect(indexIsInRanges(15, new DRange(11, 13))).toEqual(false);
+    });
+    test("where index is in ranges", () => {
+        expect(indexIsInRanges(15, new DRange(11, 13).add(15, 20))).toEqual(true);
+    });
+    test("where there are no ranges", () => {
+        expect(indexIsInRanges(15, new DRange())).toEqual(false);
+    });
 });
