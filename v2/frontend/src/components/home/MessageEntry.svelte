@@ -70,7 +70,7 @@
 
     function onInput() {
         inputIsEmpty = (inp.textContent?.trim().length ?? 0) === 0;
-        controller.setTextContent(inp.textContent ?? undefined);
+        controller.setTextContent(inputIsEmpty ? undefined : inp.textContent);
 
         requestAnimationFrame(() => {
             const now = Date.now();
