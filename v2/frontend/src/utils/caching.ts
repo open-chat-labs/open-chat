@@ -1,3 +1,4 @@
+import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
@@ -90,7 +91,16 @@ export async function getCachedChats(
     db: Database,
     userId: string
 ): Promise<MergedUpdatesResponse | undefined> {
-    return (await db).get("chats", userId) as Promise<MergedUpdatesResponse | undefined>;
+    const fromCache = await (await db).get("chats", userId) as MergedUpdatesResponse | undefined;
+    if (fromCache) {
+        fromCache.chatSummaries.forEach(c => {
+            Object.setPrototypeOf(c.readByMe, DRange.prototype);
+            if (c.kind === "direct_chat") {
+                Object.setPrototypeOf(c.readByThem, DRange.prototype);
+            }
+        });
+    }
+    return fromCache;
 }
 
 export function setCachedChats(
