@@ -161,9 +161,8 @@
             msgBubblePaddingWidth = 
                 parseFloat(msgBubbleStyle.paddingLeft) + 
                 parseFloat(msgBubbleStyle.paddingRight) + 
-                parseFloat(msgBubbleStyle.getPropertyValue("border-right-width")) +
-                parseFloat(msgBubbleStyle.getPropertyValue("border-left-width"));
-            console.log(msgBubblePaddingWidth);
+                parseFloat(msgBubbleStyle.borderRightWidth) +
+                parseFloat(msgBubbleStyle.borderLeftWidth);
         }
 
         const parentWidth = document.getElementById("chat-messages")?.offsetWidth ?? 0;
