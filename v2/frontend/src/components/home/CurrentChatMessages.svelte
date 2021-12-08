@@ -17,10 +17,11 @@
         EventWrapper,
         EnhancedReplyContext,
         ChatEvent as ChatEventType,
+        ChatSummary,
         Message,
     } from "../../domain/chat/chat";
     import {
-        getFirstUnreadMessageIndex,
+        getMinVisibleMessageIndex,
         groupEvents,
         messageIsReadByThem,
     } from "../../domain/chat/chat.utils";
@@ -313,6 +314,13 @@
             return `${first.event.created_by}_${first.index}`;
         }
         return `${first.timestamp}_${first.index}`;
+    }
+
+    function getFirstUnreadMessageIndex(chat: ChatSummary): number {
+        return markRead.getFirstUnreadMessageIndex(
+            chat.chatId,
+            getMinVisibleMessageIndex(chat),
+            chat.latestMessage?.event.messageIndex);
     }
 
     $: groupedEvents = groupEvents($events).reverse();

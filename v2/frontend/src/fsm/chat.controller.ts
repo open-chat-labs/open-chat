@@ -91,7 +91,7 @@ export class ChatController {
         this.chatUserIds = new Set<string>();
         const { chatId, latestEventIndex } = get(chat);
         this.chatId = chatId;
-        const draftMessage = readable(draftMessages.get(chatId), set => draftMessages.subscribe(p => set(p[chatId] ?? {})));
+        const draftMessage = readable(draftMessages.get(chatId), set => draftMessages.subscribe(d => set(d[chatId] ?? {})));
         this.textContent = derived(draftMessage, d => d.textContent);
         this.replyingTo = derived(draftMessage, d => d.replyingTo);
         this.fileToAttach = derived(draftMessage, d => d.attachment);
@@ -558,7 +558,7 @@ export class ChatController {
         });
     }
 
-    async chatUpdated(chat: ChatSummary): Promise<void> {
+    async chatUpdated(): Promise<void> {
         this.updateDetails();
 
         this.raiseEvent({
@@ -570,10 +570,7 @@ export class ChatController {
     markAllRead(): void {
         const latestMessageIndex = this.chatVal.latestMessage?.event.messageIndex;
         if (latestMessageIndex) {
-            this.markRead.markRangeRead(this.chatId, {
-                from: getMinVisibleMessageIndex(this.chatVal),
-                to: latestMessageIndex,
-            });
+            this.markRead.markRangeRead(this.chatId, getMinVisibleMessageIndex(this.chatVal), latestMessageIndex);
         }
     }
 

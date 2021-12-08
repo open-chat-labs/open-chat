@@ -1,4 +1,5 @@
 import { Principal } from "@dfinity/principal";
+import DRange from "drange";
 import type {
     FileContent,
     ImageContent,
@@ -35,6 +36,7 @@ import type {
     ApiCryptocurrencyTransfer,
     ApiICPTransfer,
     ApiCyclesTransfer,
+    ApiMessageIndexRange,
 } from "../user/candid/idl";
 
 export function message(candid: ApiMessage): Message {
@@ -56,6 +58,12 @@ export function updatedMessage(candid: ApiUpdatedMessage): StaleMessage {
         messageId: candid.message_id,
         eventIndex: candid.event_index,
     };
+}
+
+export function apiMessageIndexRanges(ranges: ApiMessageIndexRange[]): DRange {
+    const drange = new DRange();
+    ranges.forEach(r => drange.add(r.from, r.to));
+    return drange;
 }
 
 export function messageContent(candid: ApiMessageContent): MessageContent {

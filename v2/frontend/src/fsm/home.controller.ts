@@ -1,5 +1,6 @@
 import { push } from "svelte-spa-router";
 import { derived, get, Writable, writable } from "svelte/store";
+import DRange from "drange";
 import type { ChatSummary, DirectChatSummary, EnhancedReplyContext } from "../domain/chat/chat";
 import { compareChats, updateArgsFromChats } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
@@ -105,7 +106,7 @@ export class HomeController {
                 chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
                     rec[chat.chatId] = chat;
                     if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
-                        selectedChat.chatUpdated(chat);
+                        selectedChat.chatUpdated();
                     }
                     return rec;
                 }, {})
@@ -233,8 +234,8 @@ export class HomeController {
                 kind: "direct_chat",
                 them: chatId,
                 chatId,
-                readByMe: [],
-                readByThem: [],
+                readByMe: new DRange(),
+                readByThem: new DRange(),
                 latestMessage: undefined,
                 latestEventIndex: 0,
                 dateCreated: BigInt(Date.now()),
