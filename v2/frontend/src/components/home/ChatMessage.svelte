@@ -28,6 +28,7 @@
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import TimeAndTicks from "./TimeAndTicks.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import type { Dimensions } from "../../utils/media";
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -56,6 +57,9 @@
     let metaData = messageMetaData(msg.content);
     let showEmojiPicker = false;
     let debug = false;
+    let mediaDimensions: Dimensions | undefined = extractDimensions(msg.content);
+    let targetMediaDimensions: Dimensions | undefined = undefined;
+    let msgBubbleWidth: number | undefined = undefined;
 
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
@@ -75,6 +79,8 @@
             observer.observe(msgElement);
         } else {
         }
+
+        recalculateMediaDimensions();
     });
 
     onDestroy(() => observer.unobserve(msgElement));
@@ -124,8 +130,61 @@
         showEmojiPicker = false;
     }
 
+    function extractDimensions(content: MessageContent) : Dimensions | undefined {
+        if (content.kind === "image_content") {
+            return {
+                width: content.width,
+                height: content.height,
+            };
+        } else if (content.kind === "video_content") {
+            return {
+                width: content.width,
+                height: content.height,
+            };
+        }
+
+        return undefined;
+    }
+
+    const MSG_BUBBLE_PADDING_WIDTH = 8;
+    const MSG_BUBBLE_BORDER_WIDTH = 1;
+    $: msgBubbleTotalPadding = fill ? 0 : (2 * (MSG_BUBBLE_PADDING_WIDTH + MSG_BUBBLE_BORDER_WIDTH));
+
+    function recalculateMediaDimensions() {
+        if (mediaDimensions === undefined) {
+            return;
+        }
+
+        const parentWidth = document.getElementById("chat-messages")?.offsetWidth ?? 0;
+        targetMediaDimensions = calculateMediaDimensions(mediaDimensions, parentWidth);
+        msgBubbleWidth = targetMediaDimensions.width + msgBubbleTotalPadding
+    }
+
+    function calculateMediaDimensions(content: Dimensions, parentWidth: number) : Dimensions {
+        const landscape = content.height < content.width;
+        const ratio = content.height / content.width;
+        const availWidth = (parentWidth * 0.8) - msgBubbleTotalPadding;
+        const availHeight = 2 * window.innerHeight / 3;
+
+        let width = Math.min(availWidth, Math.max(200, content.width));
+        let height = width * ratio;
+
+        if (height > availHeight) {
+            height = availHeight;
+            // Allow the image to be stretched in this rare case
+            width = Math.max(90 - msgBubbleTotalPadding, height / ratio);
+        }
+
+        return {
+            width,
+            height
+        };
+    }
+
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 </script>
+
+<svelte:window on:resize={recalculateMediaDimensions} />
 
 {#if showEmojiPicker}
     <Overlay dismissible={true} bind:active={showEmojiPicker}>
@@ -175,6 +234,7 @@
         {/if}
 
         <div
+            style={msgBubbleWidth !== undefined ? `width: ${msgBubbleWidth}px` : undefined}
             class="message-bubble"
             class:focused
             class:fill={fill && !deleted}
@@ -200,7 +260,7 @@
             {/if}
 
             {#if msg.content.kind === "text_content"}
-                <ChatMessageContent {fill} {me} content={msg.content}>
+                <ChatMessageContent {fill} {me} content={msg.content} height={targetMediaDimensions?.height} >
                     <TimeAndTicks
                         inline={true}
                         {fill}
@@ -211,7 +271,7 @@
                         {chatType} />
                 </ChatMessageContent>
             {:else}
-                <ChatMessageContent {fill} {me} content={msg.content} />
+                <ChatMessageContent {fill} {me} content={msg.content} height={targetMediaDimensions?.height} />
                 {#if !deleted}
                     <TimeAndTicks {fill} {timestamp} {me} {confirmed} {readByThem} {chatType} />
                 {/if}

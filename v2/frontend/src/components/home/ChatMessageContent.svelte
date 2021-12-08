@@ -18,6 +18,8 @@
     export let me: boolean = false;
     export let truncate: boolean = false;
     export let fill: boolean;
+    export let reply: boolean = false;
+    export let height: number | undefined = undefined;
 
     $: textContent = getContentAsText(content);
 
@@ -46,9 +48,9 @@
         </div>
     </div>
 {:else if content.kind === "image_content"}
-    <ImageContent {fill} {content} />
+    <ImageContent {fill} {content} {reply} {height} />
 {:else if content.kind === "video_content"}
-    <VideoContent {fill} {content} />
+    <VideoContent {fill} {content} {reply} {height} />
 {:else if content.kind === "audio_content"}
     <AudioContent {content} />
 {:else if content.kind === "file_content"}

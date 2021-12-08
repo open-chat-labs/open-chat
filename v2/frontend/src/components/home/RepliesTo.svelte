@@ -40,7 +40,7 @@
             {getUsernameFromReplyContext(repliesTo)}
         </h4>
         {#if repliesTo.content !== undefined}
-            <ChatMessageContent fill={false} content={repliesTo.content} />
+            <ChatMessageContent fill={false} reply={true} content={repliesTo.content} />
             {#if debug}
                 <pre>EventIdx: {repliesTo.eventIndex}</pre>
                 <pre>MsgId: {repliesTo.messageId}</pre>
@@ -80,6 +80,7 @@
     .username {
         margin: 0;
         margin-bottom: $sp2;
+        display: inline;
         @include font(bold, normal, fs-100);
     }
 </style>
