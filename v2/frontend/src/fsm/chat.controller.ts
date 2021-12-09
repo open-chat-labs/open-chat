@@ -386,10 +386,8 @@ export class ChatController {
 
         // this message may have come in via webrtc
         const sentByMe = userId === this.user.userId;
-
         if (sentByMe) {
             draftMessages.delete(this.chatId);
-            this.focusMessageIndex.set(undefined);
         }
 
         if (get(this.editingEvent)) {
