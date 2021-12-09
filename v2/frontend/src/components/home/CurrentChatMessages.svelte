@@ -370,7 +370,7 @@
                     case "chat_updated":
                         // we don't want this to fire if we have loaded a previous window
                         // but how do we know we are looking at a previous window
-                        if (shouldLoadNewMessages() && !controller.viewingEventWindow()) {
+                        if (shouldLoadNewMessages()) {
                             controller.loadNewMessages();
                         }
                         break;

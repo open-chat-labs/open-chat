@@ -838,6 +838,20 @@ export type ToggleReactionResponse =
 
 export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";
 
+export type LocalChatUpdates = LocalDirectChatUpdates | LocalGroupChatUpdates;
+
+export type LocalDirectChatUpdates = LocalChatUpdatesCommon & {
+    kind: "direct_chat",
+}
+
+export type LocalGroupChatUpdates = LocalChatUpdatesCommon & {
+    kind: "group_chat",
+}
+
+type LocalChatUpdatesCommon = {
+    unconfirmedMessages: EventWrapper<Message>[],
+}
+
 export type SerializableMergedUpdatesResponse = Omit<MergedUpdatesResponse, "chatSummaries"> & { chatSummaries: SerializableChatSummary[] };
 export type SerializableChatSummary = SerializableDirectChatSummary | SerializableGroupChatSummary;
 export type SerializableDirectChatSummary = Omit<DirectChatSummary, "readByMe" | "readByThem"> & { readByMe: IndexRange[], readByThem: IndexRange[] };

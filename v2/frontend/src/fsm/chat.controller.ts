@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
+import DRange from "drange";
 import { derived, get, readable, Readable, Writable } from "svelte/store";
 import type {
     AddParticipantsResponse,
@@ -10,6 +10,7 @@ import type {
     EventWrapper,
     FullParticipant,
     GroupChatDetails,
+    LocalChatUpdates,
     LocalReaction,
     Message,
     MessageContent,
@@ -21,13 +22,11 @@ import type {
 import {
     containsReaction,
     createMessage,
-    earliestLoadedEventIndex,
-    getMinVisibleEventIndex,
     getMinVisibleMessageIndex,
     getNextEventIndex,
     getNextMessageIndex,
     indexRangeForChat,
-    latestLoadedEventIndex,
+    mergeLocalUpdatesIntoSummary,
     pruneLocalReactions,
     replaceAffected,
     replaceLocal,
@@ -56,6 +55,7 @@ const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 
 export class ChatController {
+    public chat: Readable<ChatSummary>;
     public events: Writable<EventWrapper<ChatEvent>[]>;
     public focusMessageIndex: Writable<number | undefined>;
     public textContent: Readable<string | undefined>;
@@ -73,30 +73,34 @@ export class ChatController {
     private pruneInterval: number | undefined;
     private groupDetails: GroupChatDetails | undefined;
     private onEvent?: (evt: ChatState) => void;
-    private maxLoadedEventIndex = 0;
+    private confirmedEventIndexesLoaded = new DRange();
 
     constructor(
         public api: ServiceContainer,
         public user: UserSummary,
-        public chat: Readable<ChatSummary>,
+        private serverChatSummary: Readable<ChatSummary>,
+        private localChatUpdates: Readable<LocalChatUpdates>,
         public markRead: IMessageReadTracker,
         private _focusMessageIndex: number | undefined,
-        private _updateChat: (updateChatFn: (chat: ChatSummary) => ChatSummary) => void
+        private _updateChatLocally: (updateChatFn: (chat: LocalChatUpdates) => LocalChatUpdates) => void
     ) {
+        this.chat = derived(
+            [serverChatSummary, localChatUpdates],
+            ([summary, localUpdates]) => mergeLocalUpdatesIntoSummary(summary, localUpdates));
+
         this.events = writable([]);
         this.loading = writable(false);
         this.focusMessageIndex = writable(_focusMessageIndex);
         this.participants = writable([]);
         this.blockedUsers = writable(new Set<string>());
         this.chatUserIds = new Set<string>();
-        const { chatId, latestEventIndex } = get(chat);
+        const { chatId } = get(this.chat);
         this.chatId = chatId;
         const draftMessage = readable(draftMessages.get(chatId), set => draftMessages.subscribe(d => set(d[chatId] ?? {})));
         this.textContent = derived(draftMessage, d => d.textContent);
         this.replyingTo = derived(draftMessage, d => d.replyingTo);
         this.fileToAttach = derived(draftMessage, d => d.attachment);
         this.editingEvent = derived(draftMessage, d => d.editingEvent);
-        this.maxLoadedEventIndex = latestEventIndex;
 
         if (process.env.NODE_ENV !== "test") {
             if (_focusMessageIndex !== undefined) {
@@ -235,10 +239,17 @@ export class ChatController {
         await this.updateUserStore(userIds);
         this.makeRtcConnections(userIds);
         this.events.set(updated);
-        this.maxLoadedEventIndex = Math.max(
-            updated[updated.length - 1].index,
-            this.maxLoadedEventIndex
-        );
+
+        if (resp.events.length > 0) {
+            resp.events.forEach(e => this.confirmedEventIndexesLoaded.add(e.index));
+            const messageIds = resp.events.reduce<bigint[]>((result, e) => {
+                if (e.event.kind === "message") {
+                    result.push(e.event.messageId);
+                }
+                return result;
+            }, []);
+            this.removeMessagesFromLocalUpdates(messageIds);
+        }
     }
 
     private makeRtcConnections(userIds: Set<string>): void {
@@ -282,29 +293,23 @@ export class ChatController {
     }
 
     newMessageCriteria(): [number, boolean] | undefined {
-        const lastLoaded = latestLoadedEventIndex(get(this.events), get(unconfirmed));
-        if (lastLoaded !== undefined && lastLoaded < this.chatVal.latestEventIndex) {
-            const from = lastLoaded + 1;
-            return [from, true];
-        } else {
-            // this implies that we have not loaded any messages which should never happen
-            return undefined;
-        }
-    }
+        const maxServerEventIndex = this.latestServerEventIndex();
+        const loadedUpTo = this.confirmedUpToEventIndex();
 
-    highestUnloadedEventIndex(): number {
-        const earliestLoaded = earliestLoadedEventIndex(get(this.events));
-        if (earliestLoaded !== undefined) {
-            return earliestLoaded - 1; // the one before the first one we *have* loaded
-        } else {
-            return this.chatVal.latestEventIndex; //or the latest index if we haven't loaded *any*
-        }
+        return loadedUpTo < maxServerEventIndex
+            ? [loadedUpTo + 1, true]
+            : undefined;
     }
 
     previousMessagesCriteria(): [number, boolean] | undefined {
-        const start = this.highestUnloadedEventIndex();
-        const min = getMinVisibleEventIndex(this.chatVal);
-        return start >= min ? [start, false] : undefined;
+        const minLoadedEventIndex = this.earliestLoadedIndex();
+        if (minLoadedEventIndex === undefined) {
+            return [this.latestServerEventIndex(), false];
+        }
+        const minVisibleEventIndex = this.earliestAvailableEventIndex();
+        return minLoadedEventIndex !== undefined && minLoadedEventIndex > minVisibleEventIndex
+            ? [minLoadedEventIndex - 1, false]
+            : undefined;
     }
 
     loadEvents(startIndex: number, ascending: boolean): Promise<EventsResponse<ChatEvent>> {
@@ -420,8 +425,8 @@ export class ChatController {
                 );
             }
             this.events.update((events) => [...events, messageEvent]);
-            this._updateChat(chat => {
-                chat.latestMessage = messageEvent;
+            this._updateChatLocally(chat => {
+                chat.unconfirmedMessages.push(messageEvent);
                 return chat;
             });
             this.raiseEvent({
@@ -578,11 +583,11 @@ export class ChatController {
     }
 
     getNextMessageIndex(): number {
-        return getNextMessageIndex(this.chatVal, get(this.events));
+        return getNextMessageIndex(get(this.serverChatSummary), get(this.localChatUpdates));
     }
 
     getNextEventIndex(): number {
-        return getNextEventIndex(this.chatVal, get(this.events));
+        return getNextEventIndex(get(this.serverChatSummary), get(this.localChatUpdates));
     }
 
     createMessage(textContent: string | null, fileToAttach: MessageContent | undefined): Message {
@@ -615,6 +620,18 @@ export class ChatController {
                     return e;
                 })
             );
+            this.removeMessagesFromLocalUpdates([candidate.messageId]);
+            this.confirmedEventIndexesLoaded.add(resp.eventIndex);
+        }
+    }
+
+    removeMessagesFromLocalUpdates(messageIds: bigint[]): void {
+        const localChatUpdates = get(this.localChatUpdates);
+        if (localChatUpdates !== undefined && localChatUpdates.unconfirmedMessages.length > 0 && messageIds.length > 0) {
+            this._updateChatLocally(updates => {
+                updates.unconfirmedMessages = updates.unconfirmedMessages.filter(m => !messageIds.includes(m.event.messageId));
+                return updates;
+            });
         }
     }
 
@@ -656,12 +673,22 @@ export class ChatController {
         this.focusMessageIndex.set(undefined);
     }
 
-    earliestIndex(): number {
-        return earliestLoadedEventIndex(get(this.events)) ?? this.chatVal.latestEventIndex;
+    earliestLoadedIndex(): number | undefined {
+        return this.confirmedEventIndexesLoaded.length > 0
+            ? this.confirmedEventIndexesLoaded.index(0)
+            : undefined;
+    }
+
+    confirmedUpToEventIndex(): number {
+        const ranges = this.confirmedEventIndexesLoaded.subranges();
+        if (ranges.length > 0) {
+            return ranges[0].high;
+        }
+        return -1;
     }
 
     morePreviousMessagesAvailable(): boolean {
-        return this.earliestIndex() > this.earliestAvailableEventIndex();
+        return (this.earliestLoadedIndex() ?? Number.MAX_VALUE) > this.earliestAvailableEventIndex();
     }
 
     earliestAvailableEventIndex(): number {
@@ -669,13 +696,11 @@ export class ChatController {
     }
 
     moreNewMessagesAvailable(): boolean {
-        const lastLoaded = latestLoadedEventIndex(get(this.events), get(unconfirmed));
-        return lastLoaded === undefined || lastLoaded < this.chatVal.latestEventIndex;
+        return this.confirmedUpToEventIndex() < this.latestServerEventIndex();
     }
 
-    viewingEventWindow(): boolean {
-        const latestLoaded = latestLoadedEventIndex(get(this.events), get(unconfirmed));
-        return latestLoaded !== undefined && latestLoaded < this.maxLoadedEventIndex;
+    latestServerEventIndex(): number {
+        return get(this.serverChatSummary).latestEventIndex;
     }
 
     replyTo(context: EnhancedReplyContext): void {

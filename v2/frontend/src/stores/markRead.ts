@@ -82,7 +82,7 @@ export class MessageReadTracker implements IMessageReadTracker {
         }, [] as MarkReadRequest);
 
         if (req.length > 0) {
-            console.log("Sending messages read to the server: ", req);
+            console.log("Sending messages read to the server: ", JSON.stringify(req));
             this.api.markMessagesRead(req);
         }
     }
