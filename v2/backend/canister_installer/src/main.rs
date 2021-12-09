@@ -1,7 +1,7 @@
 use canister_client::operations::install_service_canisters;
 use canister_client::utils::get_dfx_identity;
 use canister_client::CanisterIds;
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use types::CanisterId;
 
 #[tokio::main]
@@ -21,8 +21,7 @@ async fn main() {
     install_service_canisters(identity, opts.url, canister_ids, opts.test_mode).await;
 }
 
-#[derive(Clap)]
-#[clap(setting = AppSettings::ColoredHelp)]
+#[derive(Parser)]
 struct Opts {
     url: String,
     #[clap(parse(try_from_str))]
