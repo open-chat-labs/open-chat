@@ -2,7 +2,7 @@
     "background_color": "#22A7F2",
     "theme_color": "#22A7F2",
     "description": "Chat application running end-to-end on the Internet Computer",
-    "display": "fullscreen",
+    "display": "standalone",
     "icons": [
         {
             "src": "_/raw/apple-touch-icon.png",
