@@ -218,6 +218,11 @@ export class ChatController {
         this.initialised = true;
         const events = get(this.events);
         const chat = get(this.chat);
+        const keepCurrentEvents = get(this.focusMessageIndex) === undefined;
+        if (!keepCurrentEvents) {
+            this.confirmedEventIndexesLoaded = new DRange();
+        }
+
         const updated = replaceAffected(
             this.chatId,
             replaceLocal(
@@ -225,7 +230,7 @@ export class ChatController {
                 this.chatId,
                 this.markRead,
                 chat.readByMe,
-                get(this.focusMessageIndex) === undefined ? events : [],
+                keepCurrentEvents ? events : [],
                 resp.events
             ),
             resp.affectedEvents,
