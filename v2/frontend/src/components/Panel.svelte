@@ -22,10 +22,6 @@
         overflow: auto;
         overflow-x: hidden;
 
-        @include size-below(xs) {
-            @include fullHeight();
-        }
-
         &.middle {
             flex: auto;
             width: 100%;
