@@ -1,7 +1,7 @@
 use canister_client::operations::*;
 use canister_client::utils::get_dfx_identity;
 use canister_client::CanisterName;
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use types::{CanisterId, Version};
 
 #[tokio::main]
@@ -24,8 +24,7 @@ async fn main() {
     };
 }
 
-#[derive(Clap)]
-#[clap(setting = AppSettings::ColoredHelp)]
+#[derive(Parser)]
 struct Opts {
     url: String,
     controller: String,
