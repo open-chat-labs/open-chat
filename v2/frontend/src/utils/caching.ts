@@ -1,3 +1,4 @@
+import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
@@ -5,6 +6,7 @@ import type {
     EventWrapper,
     IndexRange,
     MergedUpdatesResponse,
+    SerializableMergedUpdatesResponse,
 } from "../domain/chat/chat";
 import { rollbar } from "./logging";
 
@@ -17,7 +19,7 @@ const blobbyContentTypes = ["file_content", "image_content", "video_content", "a
 export interface ChatSchema extends DBSchema {
     chats: {
         key: string;
-        value: MergedUpdatesResponse;
+        value: SerializableMergedUpdatesResponse;
     };
 
     chat_messages: {
@@ -51,11 +53,11 @@ export function createCacheKey(chatId: string, index: number): string {
 }
 
 export function openCache(principal: string): Database | undefined {
-    if (process.env.NODE_ENV === "test") {
+    if (process.env.NODE_ENV === "test" || !process.env.CLIENT_CACHING) {
         return undefined;
     }
     try {
-        return openDB<ChatSchema>(`openchat_db_${principal}`, 10, {
+        return openDB<ChatSchema>(`openchat_db_${principal}`, 11, {
             upgrade(db, _oldVersion, _newVersion) {
                 try {
                     if (db.objectStoreNames.contains("chat_messages")) {
@@ -90,7 +92,26 @@ export async function getCachedChats(
     db: Database,
     userId: string
 ): Promise<MergedUpdatesResponse | undefined> {
-    return (await db).get("chats", userId) as Promise<MergedUpdatesResponse | undefined>;
+    const fromCache = await (await db).get("chats", userId) as SerializableMergedUpdatesResponse | undefined;
+    return fromCache
+        ? {
+            ...fromCache,
+            chatSummaries: fromCache.chatSummaries.map(c => {
+                if (c.kind === "direct_chat") {
+                    return {
+                        ...c,
+                        readByMe: indexRangesToDRange(c.readByMe),
+                        readByThem: indexRangesToDRange(c.readByThem)
+                    };
+                } else {
+                    return {
+                        ...c,
+                        readByMe: indexRangesToDRange(c.readByMe)
+                    };
+                }
+            })
+        }
+        : undefined;
 }
 
 export function setCachedChats(
@@ -103,12 +124,15 @@ export function setCachedChats(
             if (c.kind === "direct_chat") {
                 return {
                     ...c,
+                    readByMe: drangeToIndexRanges(c.readByMe),
+                    readByThem: drangeToIndexRanges(c.readByMe),
                     latestMessage: c.latestMessage ? makeSerialisable(c.latestMessage) : undefined,
                 };
             }
             if (c.kind === "group_chat") {
                 return {
                     ...c,
+                    readByMe: drangeToIndexRanges(c.readByMe),
                     latestMessage: c.latestMessage ? makeSerialisable(c.latestMessage) : undefined,
                 };
             }
@@ -339,6 +363,16 @@ function makeSerialisable<T extends ChatEvent>(ev: EventWrapper<T>): EventWrappe
     return ev;
 }
 
+function drangeToIndexRanges(drange: DRange): IndexRange[] {
+    return drange.subranges().map(r => [r.low, r.high]);
+}
+
+function indexRangesToDRange(ranges: IndexRange[]): DRange {
+    const drange = new DRange();
+    ranges.forEach(r => drange.add(r[0], r[1]));
+    return drange;
+}
+
 export function setCachedMessages<T extends ChatEvent>(
     db: Database,
     chatId: string
@@ -404,9 +438,12 @@ let db: Database | undefined;
 export function getDb(): Database | undefined {
     return db;
 }
-export function initDb(principal: string): void {
+
+export function initDb(principal: string): Database | undefined {
     db = openCache(principal);
+    return db;
 }
+
 export function closeDb(): void {
     db = undefined;
 }
