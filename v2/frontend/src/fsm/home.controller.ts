@@ -387,8 +387,8 @@ export class HomeController {
         fn: (selectedChat: ChatController) => void
     ): void {
         const chat = this.findChatByChatType(msg);
-        const selectedChat = get(this.selectedChat);
         if (chat === undefined) return;
+        const selectedChat = get(this.selectedChat);
         if (selectedChat === undefined) return;
         if (chat.chatId !== selectedChat.chatId) return;
         fn(selectedChat);

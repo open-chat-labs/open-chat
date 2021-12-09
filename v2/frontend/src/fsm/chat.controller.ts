@@ -204,11 +204,8 @@ export class ChatController {
 
     private upToDate(): boolean {
         const events = get(this.events);
-        return (
-            (events[events.length - 1]?.index >= this.chatVal.latestEventIndex &&
-                this.chatVal.latestMessage !== undefined) ||
-            this.chatVal.latestMessage === undefined
-        );
+        return this.chatVal.latestMessage === undefined ||
+            events[events.length - 1]?.index >= this.chatVal.latestEventIndex;
     }
 
     private async handleEventsResponse(resp: EventsResponse<ChatEvent>): Promise<void> {
@@ -387,8 +384,11 @@ export class ChatController {
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
         }
 
-        draftMessages.delete(this.chatId);
-        this.focusMessageIndex.set(undefined);
+        // this message may have come in via webrtc
+        const sentByMe = userId === this.user.userId;
+        if (sentByMe) {
+            draftMessages.delete(this.chatId);
+        }
 
         if (get(this.editingEvent)) {
             this.events.update((events) => {
@@ -404,9 +404,6 @@ export class ChatController {
             });
         } else {
             unconfirmed.add(messageEvent.event.messageId);
-
-            // this message may have come in via webrtc
-            const sentByMe = userId === this.user.userId;
             if (sentByMe) {
                 rtcConnectionsManager.sendMessage([...this.chatUserIds], {
                     kind: "remote_user_sent_message",
@@ -423,12 +420,10 @@ export class ChatController {
                 );
             }
             this.events.update((events) => [...events, messageEvent]);
-            if (sentByMe) {
-                this._updateChat(chat => {
-                    chat.latestMessage = messageEvent;
-                    return chat;
-                })
-            }
+            this._updateChat(chat => {
+                chat.latestMessage = messageEvent;
+                return chat;
+            });
             this.raiseEvent({
                 chatId: this.chatId,
                 event: {
