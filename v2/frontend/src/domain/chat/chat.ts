@@ -837,3 +837,8 @@ export type ToggleReactionResponse =
     | "chat_not_found";
 
 export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";
+
+export type SerializableMergedUpdatesResponse = Omit<MergedUpdatesResponse, "chatSummaries"> & { chatSummaries: SerializableChatSummary[] };
+export type SerializableChatSummary = SerializableDirectChatSummary | SerializableGroupChatSummary;
+export type SerializableDirectChatSummary = Omit<DirectChatSummary, "readByMe" | "readByThem"> & { readByMe: IndexRange[], readByThem: IndexRange[] };
+export type SerializableGroupChatSummary = Omit<GroupChatSummary, "readByMe"> & { readByMe: IndexRange[] };
