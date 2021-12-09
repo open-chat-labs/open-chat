@@ -3,7 +3,6 @@
     import Send from "svelte-material-icons/Send.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import { onMount } from "svelte";
-    import { get } from "svelte/store";
     import FileAttacher from "./FileAttacher.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import { emojiStore } from "../../stores/emoji";
@@ -17,6 +16,7 @@
     export let controller: ChatController;
     export let blocked: boolean;
 
+    $: textContent = controller.textContent;
     $: editingEvent = controller.editingEvent;
     $: fileToAttach = controller.fileToAttach;
 
@@ -45,11 +45,11 @@
                 initialisedEdit = true;
             }
         } else if (inp) {
-            const textContent = get(controller.textContent) ?? "";
+            const text = $textContent ?? "";
             // Only set the textbox text when required rather than every time, because doing so sets the focus back to
             // the start of the textbox on some devices.
-            if (inp.textContent !== textContent) {
-                inp.textContent = textContent;
+            if (inp.textContent !== text) {
+                inp.textContent = text;
             }
         }
         if ($editingEvent === undefined) {
