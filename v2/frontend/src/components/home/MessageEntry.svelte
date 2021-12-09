@@ -11,6 +11,7 @@
     import Progress from "../Progress.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
     import { iconSize } from "../../stores/iconSize";
+    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import Smiley from "./Smiley.svelte";
 
     export let controller: ChatController;
@@ -67,11 +68,11 @@
         }
     }
 
-    onMount(() => {
-        if (inp) {
-            inp.focus();
+    $: {
+        if (controller && $screenWidth === ScreenWidth.Large) {
+            inp?.focus();
         }
-    });
+    }
 
     function onInput() {
         inputIsEmpty = (inp.textContent?.trim().length ?? 0) === 0;
