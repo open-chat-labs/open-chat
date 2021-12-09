@@ -284,7 +284,6 @@
     main {
         transition: margin ease-in-out 300ms;
         position: relative;
-        // @include fullHeight();
         width: 100%;
         max-width: 1200px;
         display: flex;
