@@ -1,17 +1,19 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import SvelteMarkdown from "svelte-markdown";
+    import he from "he";
+    // import SvelteMarkdown from "svelte-markdown";
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";
     import AudioContent from "./AudioContent.svelte";
-    import ChatMessageLink from "./ChatMessageLink.svelte";
+    // import ChatMessageLink from "./ChatMessageLink.svelte";
 
     import FileContent from "./FileContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
     import type { MessageContent } from "../../domain/chat/chat";
     import { getContentAsText } from "../../domain/chat/chat.utils";
+    import { replaceNewlinesWithBrTags, wrapURLsInAnchorTags } from "../../utils/markup";
 
     const SIZE_LIMIT = 1000;
     export let content: MessageContent;
@@ -23,17 +25,27 @@
 
     $: textContent = getContentAsText(content);
 
-    const overriddenRenderers = {
-        link: ChatMessageLink,
-    }
+    // const overriddenRenderers = {
+    //     link: ChatMessageLink,
+    // }
 
-    // todo - we might be able to do something nicer than this with pure css, but we just need to do
-    // *something* to make sure there a limit to the size of this box
-    function truncateTo(n: number, str: string): string {
-        if (str.length > n) {
-            return str.slice(0, n) + "...";
+    function renderTextContent(): string {
+        let str = textContent;
+
+        // todo - we might be able to do something nicer than this with pure css, but we just need to do
+        // *something* to make sure there a limit to the size of this box
+        if (truncate && str.length > SIZE_LIMIT) {
+            str = str.slice(0, SIZE_LIMIT) + "...";
         }
-        return str;
+
+        // HTML encode the text
+        str = he.encode(str);
+
+        // Try to wrap links in <a> tags
+        str = wrapURLsInAnchorTags(str, true);
+
+        // Replace newlines with <br> tags
+        return replaceNewlinesWithBrTags(str);
     }
 </script>
 
@@ -41,10 +53,11 @@
     <div class="text-content">
         <div class="text-wrapper">
             <slot />
-            <SvelteMarkdown 
+            <p>{@html renderTextContent()}</p>
+            <!-- <SvelteMarkdown 
                 source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} 
                 renderers={overriddenRenderers}
-                options={{gfm: true, breaks: true}} />
+                options={{gfm: true, breaks: true}} /> -->
         </div>
     </div>
 {:else if content.kind === "image_content"}
@@ -67,6 +80,11 @@
     :global(.text-wrapper > p) {
         display: inline;
         word-wrap: break-word;
+    }
+
+    :global(.text-wrapper > p > a) {
+        text-decoration: underline;
+        word-break: break-all;
     }
 
     .text-wrapper {

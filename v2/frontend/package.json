@@ -82,6 +82,7 @@
         "country-telephone-data": "^0.6.3",
         "drange": "^2.0.1",
         "emoji-picker-element": "^1.8.1",
+        "he": "^1.2.0",
         "idb": "^6.1.2",
         "identicon.js": "^2.3.3",
         "jest": "^27.2.5",
