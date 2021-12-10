@@ -2,7 +2,7 @@
     import Panel from "../Panel.svelte";
     import Loading from "../Loading.svelte";
     import { fade } from "svelte/transition";
-    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import NoChatSelected from "./NoChatSelected.svelte";
     import CurrentChat from "./CurrentChat.svelte";
     import type { ChatController } from "../../fsm/chat.controller";

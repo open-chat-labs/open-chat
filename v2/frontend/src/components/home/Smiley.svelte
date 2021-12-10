@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     $: size = $screenWidth === ScreenWidth.ExtraSmall ? 20 : 24;
 </script>
 

@@ -25,7 +25,7 @@
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { fillMessage, messageMetaData } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
-    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import TimeAndTicks from "./TimeAndTicks.svelte";
     import { iconSize } from "../../stores/iconSize";
     import type { Dimensions } from "../../utils/media";

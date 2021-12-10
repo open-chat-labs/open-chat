@@ -48,6 +48,7 @@ export interface Theme {
         bg: string;
         txt: string;
         bd: string;
+        "bd-start": string;
     };
 
     "sub-section": {

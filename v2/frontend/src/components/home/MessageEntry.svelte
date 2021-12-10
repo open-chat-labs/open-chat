@@ -10,7 +10,7 @@
     import Progress from "../Progress.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
     import { iconSize } from "../../stores/iconSize";
-    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import Smiley from "./Smiley.svelte";
     import { audioRecordingMimeType } from "../../utils/media";
 

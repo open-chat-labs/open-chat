@@ -13,7 +13,7 @@
     import { _ } from "svelte-i18n";
     import { modalStore, ModalType } from "../../stores/modal";
     import { avatarUrl } from "../../domain/user/user.utils";
-    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { ScreenHeight, screenHeight, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import type { PartialUserSummary } from "../../domain/user/user";
     import { createEventDispatcher } from "svelte";
     import { notificationStatus } from "../../stores/notifications";
@@ -39,15 +39,15 @@
         dispatch("userAvatarSelected", ev.detail);
     }
 
-    $: small = $screenWidth === ScreenWidth.ExtraSmall;
+    $: small = $screenWidth === ScreenWidth.ExtraSmall || $screenHeight === ScreenHeight.Small;
 </script>
 
-<div class="current-user-box" class:rtl={$rtlStore}>
-    <div class="current-user" class:small class:rtl={$rtlStore}>
+<div class="current-user-box" class:small class:rtl={$rtlStore}>
+    <div class="current-user" class:rtl={$rtlStore} class:small>
         <EditableAvatar {small} image={avatarUrl(user)} on:imageSelected={userAvatarSelected} />
-        <h4 class="name">{user.username}</h4>
+        <h4 class="name" class:small>{user.username}</h4>
     </div>
-    <span class="menu">
+    <span class="menu" class:small>
         <MenuIcon>
             <span slot="icon">
                 <HoverIcon>
@@ -101,18 +101,14 @@
 </div>
 
 <style type="text/scss">
-    :global(.current-user .photo-section) {
-        @include size-below(xs) {
-            flex: 0 0 45px;
-            margin-right: $sp4;
-        }
+    :global(.current-user.small .photo-section) {
+        flex: 0 0 45px;
+        margin-right: $sp4;
     }
 
-    :global(.current-user.rtl .photo-section) {
-        @include size-below(xs) {
-            margin-left: $sp4;
-            margin-right: 0;
-        }
+    :global(.current-user.small.rtl .photo-section) {
+        margin-left: $sp4;
+        margin-right: 0;
     }
 
     .current-user-box {
@@ -123,7 +119,7 @@
         margin-bottom: $sp3;
         position: relative;
 
-        @include size-below(xs) {
+        &.small {
             padding: $sp3 $sp3;
             height: 60px;
             border-right: none;
@@ -133,7 +129,7 @@
             border-right: none;
             border-left: var(--currentUser-bd);
 
-            @include size-below(xs) {
+            &.small {
                 border-left: none;
             }
         }
@@ -146,17 +142,17 @@
         justify-content: center;
         align-items: center;
 
-        @include size-below(xs) {
+        &.small {
             flex-direction: row;
             justify-content: unset;
         }
     }
 
     .name {
-        @include font(bold, normal, fs-120);
+        @include font(mediumBold, normal, fs-120);
         color: var(--currentUser-txt);
         margin-top: $sp4;
-        @include size-below(xs) {
+        &.small {
             margin: 0;
         }
     }
@@ -168,19 +164,14 @@
         flex: 0 0 40px;
         cursor: pointer;
         padding: $sp3;
-        @include size-below(xs) {
+        &.small {
             top: 5px;
+            padding: $sp3;
         }
     }
 
     .current-user-box.rtl .menu {
         right: unset;
         left: 0;
-    }
-
-    @include size-below(xs) {
-        .menu {
-            padding: $sp3;
-        }
     }
 </style>
