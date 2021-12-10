@@ -25,7 +25,7 @@
 
     const overriddenRenderers = {
         link: ChatMessageLink,
-    }
+    };
 
     // todo - we might be able to do something nicer than this with pure css, but we just need to do
     // *something* to make sure there a limit to the size of this box
@@ -41,10 +41,10 @@
     <div class="text-content">
         <div class="text-wrapper">
             <slot />
-            <SvelteMarkdown 
-                source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} 
+            <SvelteMarkdown
+                source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent}
                 renderers={overriddenRenderers}
-                options={{gfm: true, breaks: true}} />
+                options={{ gfm: true, breaks: true }} />
         </div>
     </div>
 {:else if content.kind === "image_content"}

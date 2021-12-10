@@ -188,10 +188,10 @@ export class HomeController {
                 return new ChatController(
                     this.api,
                     user,
-                    derived(this.chatSummaries, summaries => summaries[chatId]),
+                    derived(this.chatSummaries, (summaries) => summaries[chatId]),
                     this.messagesRead,
                     messageIndex,
-                    updateChatFn => this.updateChat(chatId, updateChatFn)
+                    (updateChatFn) => this.updateChat(chatId, updateChatFn)
                 );
             });
         } else {
@@ -251,6 +251,7 @@ export class HomeController {
         const chat = get(this.chatSummariesList).find((c) => {
             return c.kind === "direct_chat" && c.them === context.sender?.userId;
         });
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const chatId = chat?.chatId ?? context.sender!.userId;
         draftMessages.delete(chatId);
         draftMessages.setReplyingTo(chatId, context);
@@ -395,11 +396,11 @@ export class HomeController {
     }
 
     private updateChat(chatId: string, updateFn: (chat: ChatSummary) => ChatSummary) {
-        this.chatSummaries.update(updates => {
+        this.chatSummaries.update((updates) => {
             return {
                 ...updates,
-                [chatId]: updateFn(updates[chatId])
+                [chatId]: updateFn(updates[chatId]),
             };
-        })
+        });
     }
 }
