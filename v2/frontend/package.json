@@ -76,6 +76,7 @@
         "@fortawesome/free-solid-svg-icons": "^5.15.3",
         "@open-ic/open-storage-agent": "file:src/openStorage",
         "@sveltejs/svelte-virtual-list": "^3.0.1",
+        "@types/he": "^1.1.2",
         "@xstate/inspect": "^0.4.1",
         "@xstate/svelte": "^0.1.0",
         "@xstate/test": "^0.4.2",
