@@ -268,7 +268,7 @@ export class ChatController {
 
     private async loadEventWindow(messageIndex: number) {
         this.loading.set(true);
-        const range = indexRangeForChat(this.chatVal);
+        const range = indexRangeForChat(get(this.serverChatSummary));
         const eventsPromise: Promise<EventsResponse<ChatEvent>> =
             this.chatVal.kind === "direct_chat"
                 ? this.api.directChatEventsWindow(range, this.chatVal.them, messageIndex)
@@ -311,14 +311,14 @@ export class ChatController {
     loadEvents(startIndex: number, ascending: boolean): Promise<EventsResponse<ChatEvent>> {
         if (this.chatVal.kind === "direct_chat") {
             return this.api.directChatEvents(
-                indexRangeForChat(this.chatVal),
+                indexRangeForChat(get(this.serverChatSummary)),
                 this.chatVal.them,
                 startIndex,
                 ascending
             );
         }
         return this.api.groupChatEvents(
-            indexRangeForChat(this.chatVal),
+            indexRangeForChat(get(this.serverChatSummary)),
             this.chatVal.chatId,
             startIndex,
             ascending
