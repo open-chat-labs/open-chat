@@ -86,6 +86,7 @@
                             blobData: new Uint8Array(data),
                             blobUrl: dataToBlobUrl(data, mimeType),
                         });
+                        stream.getTracks().forEach((track) => track.stop());
                     });
 
                     mediaRecorder.start(200);
