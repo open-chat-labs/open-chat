@@ -80,6 +80,7 @@ export class ChatController {
         private serverChatSummary: Readable<ChatSummary>,
         public markRead: IMessageReadTracker,
         private _focusMessageIndex: number | undefined,
+        private _onConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
         this.chat = derived(
             [serverChatSummary, unconfirmed],
@@ -601,22 +602,24 @@ export class ChatController {
     confirmMessage(candidate: Message, resp: SendMessageSuccess): void {
         if (unconfirmed.delete(this.chatId, candidate.messageId)) {
             this.markRead.confirmMessage(this.chatId, resp.messageIndex, candidate.messageId);
+            const confirmed = {
+                event: {
+                    ...candidate,
+                    messageIndex: resp.messageIndex
+                },
+                index: resp.eventIndex,
+                timestamp: resp.timestamp,
+            };
             this.events.update((events) =>
                 events.map((e) => {
                     if (e.event === candidate) {
-                        return {
-                            event: {
-                                ...e.event,
-                                messageIndex: resp.messageIndex,
-                            },
-                            index: resp.eventIndex,
-                            timestamp: resp.timestamp,
-                        };
+                        return confirmed;
                     }
                     return e;
                 })
             );
             this.confirmedEventIndexesLoaded.add(resp.eventIndex);
+            this._onConfirmedMessage(confirmed);
         }
     }
 

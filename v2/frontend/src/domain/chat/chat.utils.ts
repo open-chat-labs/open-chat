@@ -232,8 +232,8 @@ function mergeUpdatedDirectChat(
 ): DirectChatSummary {
     if (updatedChat.readByMe) chat.readByMe.add(updatedChat.readByMe);
     if (updatedChat.readByThem) chat.readByThem.add(updatedChat.readByThem);
-    chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
-    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
+    chat.latestEventIndex = getLatestEventIndex(chat, updatedChat);
+    chat.latestMessage = getLatestMessage(chat, updatedChat);
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
 
     return chat;
@@ -320,8 +320,8 @@ function mergeUpdatedGroupChat(
     chat.description = updatedChat.description ?? chat.description;
     if (updatedChat.readByMe) chat.readByMe.add(updatedChat.readByMe);
     chat.lastUpdated = updatedChat.lastUpdated;
-    chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
-    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
+    chat.latestEventIndex = getLatestEventIndex(chat, updatedChat);
+    chat.latestMessage = getLatestMessage(chat, updatedChat);
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
@@ -717,4 +717,16 @@ export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): Eve
         };
     }
     return messageEvent;
+}
+
+function getLatestEventIndex(chat: ChatSummary, updatedChat: ChatSummaryUpdates): number {
+    return updatedChat.latestEventIndex !== undefined && updatedChat.latestEventIndex > chat.latestEventIndex
+        ? updatedChat.latestEventIndex
+        : chat.latestEventIndex;
+}
+
+function getLatestMessage(chat: ChatSummary, updatedChat: ChatSummaryUpdates): EventWrapper<Message> | undefined {
+    return (updatedChat.latestMessage?.index ?? -1) > (chat.latestMessage?.index ?? -1)
+        ? updatedChat.latestMessage
+        : chat.latestMessage;
 }
