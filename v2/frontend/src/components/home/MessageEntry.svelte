@@ -35,8 +35,7 @@
     let initialisedEdit: boolean = false;
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
-    let inputIsEmpty: boolean = true;
-    let messageIsEmpty: boolean = true;
+    let messageIsEmpty = true;
 
     $: {
         if ($editingEvent && !initialisedEdit) {
@@ -60,10 +59,6 @@
     }
 
     $: {
-        messageIsEmpty = inputIsEmpty && $fileToAttach === undefined;
-    }
-
-    $: {
         if ($fileToAttach !== undefined) {
             inp.focus();
         }
@@ -76,7 +71,8 @@
     }
 
     function onInput() {
-        inputIsEmpty = (inp.textContent?.trim().length ?? 0) === 0;
+        let inputIsEmpty = (inp.textContent?.trim().length ?? 0) === 0;
+        messageIsEmpty = inputIsEmpty && $fileToAttach === undefined;
         controller.setTextContent(inputIsEmpty ? undefined : inp.textContent!);
 
         requestAnimationFrame(() => {
@@ -110,7 +106,7 @@
         dispatch("sendMessage", inp.textContent?.trim());
         inp.textContent = "";
         inp.focus();
-        inputIsEmpty = true;
+        messageIsEmpty = true;
         showEmojiPicker = false;
     }
 
