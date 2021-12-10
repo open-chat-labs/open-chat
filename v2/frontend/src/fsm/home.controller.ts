@@ -1,7 +1,7 @@
 import { push } from "svelte-spa-router";
 import { derived, get, Readable, Writable, writable } from "svelte/store";
 import DRange from "drange";
-import type { ChatSummary, DirectChatSummary, EnhancedReplyContext } from "../domain/chat/chat";
+import type { ChatSummary, DirectChatSummary, EnhancedReplyContext, EventWrapper, Message } from "../domain/chat/chat";
 import {
     compareChats,
     mergeUnconfirmedIntoSummary,
@@ -199,6 +199,7 @@ export class HomeController {
                     derived(this.serverChatSummaries, summaries => summaries[chatId]),
                     this.messagesRead,
                     messageIndex,
+                    message => this.onConfirmedMessage(chatId, message)
                 );
             });
         } else {
@@ -400,5 +401,26 @@ export class HomeController {
         if (selectedChat === undefined) return;
         if (chat.chatId !== selectedChat.chatId) return;
         fn(selectedChat);
+    }
+
+    private onConfirmedMessage(chatId: string, message: EventWrapper<Message>): void {
+        this.serverChatSummaries.update(summaries => {
+            const summary = summaries[chatId];
+            if (summary === undefined) return summaries;
+
+            const latestEventIndex = Math.max(message.index, summary.latestEventIndex);
+            const latestMessage = message.index > (summary.latestMessage?.index ?? -1)
+                ? message
+                : summary.latestMessage;
+
+            return {
+                ...summaries,
+                [chatId]: {
+                    ...summary,
+                    latestEventIndex,
+                    latestMessage,
+                }
+            };
+        });
     }
 }
