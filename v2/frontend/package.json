@@ -11,7 +11,8 @@
         "test:watch": "jest --watch --detectOpenHandles --runInBand",
         "lint": "eslint ./src --fix",
         "format": "prettier --config .prettierrc './src/**/*.ts' --write",
-        "codegen": "sh ./codegen.sh"
+        "codegen": "sh ./codegen.sh",
+        "typecheck": "tsc --noEmit"
     },
     "devDependencies": {
         "@babel/core": "^7.14.6",
