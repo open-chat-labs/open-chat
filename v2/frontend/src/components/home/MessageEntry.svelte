@@ -60,6 +60,7 @@
 
     $: {
         if ($fileToAttach !== undefined) {
+            messageIsEmpty = false;
             inp.focus();
         }
     }
