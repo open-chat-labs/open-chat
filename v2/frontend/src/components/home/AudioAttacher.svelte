@@ -16,6 +16,7 @@
 
     export let recording: boolean = false;
     export let percentRecorded: number = 0;
+    export let mimeType: string;
 
     let mediaRecorder: MediaRecorder | undefined;
     let supported = "mediaDevices" in navigator;
@@ -55,7 +56,6 @@
                 .getUserMedia({ audio: true, video: false })
                 .then((stream) => {
                     recording = true;
-                    const mimeType = "audio/webm";
                     const recordedChunks: Blob[] = [];
                     let totalSize = 0;
                     let truncated = false;

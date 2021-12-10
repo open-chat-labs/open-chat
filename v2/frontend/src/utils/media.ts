@@ -146,6 +146,16 @@ export function resizeImage(blobUrl: string, mimeType: string): Promise<MediaExt
     });
 }
 
+export function audioRecordingMimeType(): "audio/webm" | "audio/mp4" | undefined {
+    if (MediaRecorder.isTypeSupported("audio/webm")) {
+        return "audio/webm";
+    } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+        // this is need for iOS I think
+        return "audio/mp4";
+    }
+    return undefined;
+}
+
 export async function messageContentFromFile(file: File): Promise<MessageContent> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
