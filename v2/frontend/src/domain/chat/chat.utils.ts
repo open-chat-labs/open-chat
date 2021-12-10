@@ -22,7 +22,6 @@ import type {
     LocalReaction,
     GroupChatDetails,
     GroupChatDetailsUpdates,
-    LocalChatUpdates,
 } from "./chat";
 import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -331,18 +330,18 @@ function mergeUpdatedGroupChat(
     return chat;
 }
 
-export function mergeLocalUpdatesIntoSummary(chatSummary: ChatSummary, localUpdates?: LocalChatUpdates): ChatSummary {
-    if (localUpdates === undefined) return chatSummary;
+export function mergeUnconfirmedIntoSummary(chatSummary: ChatSummary, unconfirmedMessages?: EventWrapper<Message>[]): ChatSummary {
+    if (unconfirmedMessages === undefined) return chatSummary;
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
-    if (localUpdates.unconfirmedMessages.length > 0) {
-        const latestLocalMessage = localUpdates.unconfirmedMessages[localUpdates.unconfirmedMessages.length - 1];
-        if (latestMessage === undefined || latestLocalMessage.event.messageIndex > latestMessage.event.messageIndex) {
-            latestMessage = latestLocalMessage;
+    if (unconfirmedMessages.length > 0) {
+        const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
+        if (latestMessage === undefined || latestUnconfirmedMessage.event.messageIndex > latestMessage.event.messageIndex) {
+            latestMessage = latestUnconfirmedMessage;
         }
-        if (latestLocalMessage.index > latestEventIndex) {
-            latestEventIndex = latestLocalMessage.index;
+        if (latestUnconfirmedMessage.index > latestEventIndex) {
+            latestEventIndex = latestUnconfirmedMessage.index;
         }
     }
     return {
@@ -406,10 +405,10 @@ export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
     return groupWhile(sameDate, events.filter(eventIsVisible)).map(groupBySender);
 }
 
-export function getNextMessageIndex(chat: ChatSummary, localUpdates: LocalChatUpdates | undefined): number {
+export function getNextMessageIndex(chat: ChatSummary, unconfirmedMessages: EventWrapper<Message>[]): number {
     let current = chat.latestMessage?.event.messageIndex ?? -1;
-    if (localUpdates !== undefined && localUpdates.unconfirmedMessages.length > 0) {
-        const messageIndex = localUpdates.unconfirmedMessages[localUpdates.unconfirmedMessages.length - 1].event.messageIndex;
+    if (unconfirmedMessages.length > 0) {
+        const messageIndex = unconfirmedMessages[unconfirmedMessages.length - 1].event.messageIndex;
         if (messageIndex > current) {
             current = messageIndex;
         }
@@ -417,10 +416,10 @@ export function getNextMessageIndex(chat: ChatSummary, localUpdates: LocalChatUp
     return current + 1;
 }
 
-export function getNextEventIndex(chat: ChatSummary, localUpdates: LocalChatUpdates | undefined): number {
+export function getNextEventIndex(chat: ChatSummary, unconfirmedMessages: EventWrapper<Message>[]): number {
     let current = chat.latestEventIndex;
-    if (localUpdates !== undefined && localUpdates.unconfirmedMessages.length > 0) {
-        const eventIndex = localUpdates.unconfirmedMessages[localUpdates.unconfirmedMessages.length - 1].index;
+    if (unconfirmedMessages.length > 0) {
+        const eventIndex = unconfirmedMessages[unconfirmedMessages.length - 1].index;
         if (eventIndex > current) {
             current = eventIndex;
         }
@@ -616,7 +615,7 @@ export function replaceLocal(
         if (e.event.kind === "message") {
             // only now do we consider this message confirmed
             const idNum = BigInt(id);
-            if (unconfirmed.delete(idNum)) {
+            if (unconfirmed.delete(chatId, idNum)) {
                 messageReadTracker.confirmMessage(
                     chatId,
                     e.event.messageIndex,

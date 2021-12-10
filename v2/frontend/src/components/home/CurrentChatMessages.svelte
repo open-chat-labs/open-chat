@@ -389,9 +389,9 @@
         return false;
     }
 
-    function isConfirmed(unconfirmed: Set<bigint>, evt: EventWrapper<ChatEventType>): boolean {
+    function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return !unconfirmed.has(evt.event.messageId);
+            return !unconfirmed.contains(controller.chatId, evt.event.messageId);
         }
         return true;
     }
@@ -434,7 +434,7 @@
                         {observer}
                         focused={evt.event.kind === "message" &&
                             evt.event.messageIndex === $focusMessageIndex}
-                        confirmed={isConfirmed($unconfirmed, evt)}
+                        confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem($unconfirmedReadByThem, evt)}
                         readByMe={isReadByMe($markRead, evt)}
                         chatId={controller.chatId}

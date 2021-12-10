@@ -2,12 +2,32 @@ import DRange from "drange";
 import { MessageReadTracker } from "./markRead";
 import { unconfirmed } from "./unconfirmed";
 import { rangesAreEqual } from "../domain/chat/chat.utils";
+import type { EventWrapper, Message } from "../domain/chat/chat";
 
 describe("mark messages read", () => {
     const api = {
         markMessagesRead: jest.fn(),
     };
     const markRead = new MessageReadTracker(api);
+
+    function createDummyMessage(messageId: bigint): EventWrapper<Message> {
+        return {
+            event: {
+                kind: "message",
+                messageId,
+                messageIndex: 0,
+                sender: "",
+                content: {
+                    kind: "text_content",
+                    text: ""
+                },
+                reactions: [],
+                edited: false
+            },
+            index: 0,
+            timestamp: BigInt(0),
+        }
+    }
 
     beforeEach(() => {
         jest.useFakeTimers();
@@ -21,7 +41,7 @@ describe("mark messages read", () => {
     });
 
     test("mark unconfirmed message as read", () => {
-        unconfirmed.add(BigInt(100));
+        unconfirmed.add("abc", createDummyMessage(BigInt(100)));
         markRead.markMessageRead("abc", 200, BigInt(100));
         expect(markRead.waiting["abc"].has(BigInt(100))).toBe(true);
     });

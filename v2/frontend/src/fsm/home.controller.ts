@@ -2,7 +2,11 @@ import { push } from "svelte-spa-router";
 import { derived, get, Readable, Writable, writable } from "svelte/store";
 import DRange from "drange";
 import type { ChatSummary, DirectChatSummary, EnhancedReplyContext, LocalChatUpdates } from "../domain/chat/chat";
-import { compareChats, mergeLocalUpdatesIntoSummary, updateArgsFromChats } from "../domain/chat/chat.utils";
+import {
+    compareChats,
+    mergeUnconfirmedIntoSummary,
+    updateArgsFromChats
+} from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
 import type { User, UsersResponse } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -39,10 +43,9 @@ export class HomeController {
     private chatUpdatesSince?: bigint;
     private usersLastUpdate = BigInt(0);
     private serverChatSummaries: Writable<Record<string, ChatSummary>> = writable({});
-    private localChatUpdates: Writable<Record<string, LocalChatUpdates>> = writable({});
-    public chatSummaries: Readable<Record<string, ChatSummary>> = derived([this.serverChatSummaries, this.localChatUpdates], ([summaries, updates]) => {
+    public chatSummaries: Readable<Record<string, ChatSummary>> = derived([this.serverChatSummaries, unconfirmed], ([summaries, unconfirmed]) => {
         return Object.entries(summaries).reduce<Record<string, ChatSummary>>((result, [chatId, summary]) => {
-            result[chatId] = mergeLocalUpdatesIntoSummary(summary, updates[chatId]);
+            result[chatId] = mergeUnconfirmedIntoSummary(summary, unconfirmed[chatId]?.messages);
             return result;
         }, {});
     })
@@ -194,10 +197,8 @@ export class HomeController {
                     this.api,
                     user,
                     derived(this.serverChatSummaries, summaries => summaries[chatId]),
-                    derived(this.localChatUpdates, localUpdates => localUpdates[chatId]),
                     this.messagesRead,
                     messageIndex,
-                    updateChatFn => this.updateChatLocally(chatId, chat.kind, updateChatFn)
                 );
             });
         } else {
@@ -214,10 +215,6 @@ export class HomeController {
         this.serverChatSummaries.update((chatSummaries) => {
             delete chatSummaries[chatId];
             return chatSummaries;
-        });
-        this.localChatUpdates.update((localUpdates) => {
-            delete localUpdates[chatId];
-            return localUpdates;
         });
         this.api
             .leaveGroup(chatId)
@@ -382,7 +379,7 @@ export class HomeController {
 
     remoteUserSentMessage(message: RemoteUserSentMessage): void {
         console.log("remote user sent message");
-        unconfirmed.add(BigInt(message.messageEvent.event.messageId));
+        unconfirmed.add(message.chatId, message.messageEvent);
         this.delegateToChatController(message, (chat) =>
             chat.sendMessage(message.messageEvent, message.userId)
         );
@@ -402,20 +399,5 @@ export class HomeController {
         if (selectedChat === undefined) return;
         if (chat.chatId !== selectedChat.chatId) return;
         fn(selectedChat);
-    }
-
-    private updateChatLocally(chatId: string, kind: "direct_chat" | "group_chat", updateFn: (updates: LocalChatUpdates) => LocalChatUpdates) {
-        this.localChatUpdates.update(updates => {
-            if (updates[chatId] === undefined) {
-                updates[chatId] = {
-                    kind,
-                    unconfirmedMessages: []
-                };
-            }
-            return {
-                ...updates,
-                [chatId]: updateFn(updates[chatId])
-            };
-        })
     }
 }

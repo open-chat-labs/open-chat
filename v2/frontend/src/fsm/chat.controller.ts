@@ -26,7 +26,7 @@ import {
     getNextEventIndex,
     getNextMessageIndex,
     indexRangeForChat,
-    mergeLocalUpdatesIntoSummary,
+    mergeUnconfirmedIntoSummary,
     pruneLocalReactions,
     replaceAffected,
     replaceLocal,
@@ -79,14 +79,12 @@ export class ChatController {
         public api: ServiceContainer,
         public user: UserSummary,
         private serverChatSummary: Readable<ChatSummary>,
-        private localChatUpdates: Readable<LocalChatUpdates>,
         public markRead: IMessageReadTracker,
         private _focusMessageIndex: number | undefined,
-        private _updateChatLocally: (updateChatFn: (chat: LocalChatUpdates) => LocalChatUpdates) => void
     ) {
         this.chat = derived(
-            [serverChatSummary, localChatUpdates],
-            ([summary, localUpdates]) => mergeLocalUpdatesIntoSummary(summary, localUpdates));
+            [serverChatSummary, unconfirmed],
+            ([summary, unconfirmed]) => mergeUnconfirmedIntoSummary(summary, unconfirmed[summary.chatId]?.messages));
 
         this.events = writable([]);
         this.loading = writable(false);
@@ -247,13 +245,6 @@ export class ChatController {
 
         if (resp.events.length > 0) {
             resp.events.forEach(e => this.confirmedEventIndexesLoaded.add(e.index));
-            const messageIds = resp.events.reduce<bigint[]>((result, e) => {
-                if (e.event.kind === "message") {
-                    result.push(e.event.messageId);
-                }
-                return result;
-            }, []);
-            this.removeMessagesFromLocalUpdates(messageIds);
         }
     }
 
@@ -413,7 +404,7 @@ export class ChatController {
                 });
             });
         } else {
-            unconfirmed.add(messageEvent.event.messageId);
+            unconfirmed.add(this.chatId, messageEvent);
             if (sentByMe) {
                 rtcConnectionsManager.sendMessage([...this.chatUserIds], {
                     kind: "remote_user_sent_message",
@@ -430,10 +421,6 @@ export class ChatController {
                 );
             }
             this.events.update((events) => [...events, messageEvent]);
-            this._updateChatLocally(chat => {
-                chat.unconfirmedMessages.push(messageEvent);
-                return chat;
-            });
             this.raiseEvent({
                 chatId: this.chatId,
                 event: {
@@ -491,7 +478,7 @@ export class ChatController {
                 userId: userId,
             });
         }
-        unconfirmed.delete(messageId);
+        unconfirmed.delete(this.chatId, messageId);
         this.markRead.removeUnconfirmedMessage(this.chatId, messageId);
         this.events.update((events) =>
             events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
@@ -588,11 +575,11 @@ export class ChatController {
     }
 
     getNextMessageIndex(): number {
-        return getNextMessageIndex(get(this.serverChatSummary), get(this.localChatUpdates));
+        return getNextMessageIndex(get(this.serverChatSummary), unconfirmed.getMessages(this.chatId));
     }
 
     getNextEventIndex(): number {
-        return getNextEventIndex(get(this.serverChatSummary), get(this.localChatUpdates));
+        return getNextEventIndex(get(this.serverChatSummary), unconfirmed.getMessages(this.chatId));
     }
 
     createMessage(textContent: string | null, fileToAttach: MessageContent | undefined): Message {
@@ -608,7 +595,7 @@ export class ChatController {
     }
 
     confirmMessage(candidate: Message, resp: SendMessageSuccess): void {
-        if (unconfirmed.delete(candidate.messageId)) {
+        if (unconfirmed.delete(this.chatId, candidate.messageId)) {
             this.markRead.confirmMessage(this.chatId, resp.messageIndex, candidate.messageId);
             this.events.update((events) =>
                 events.map((e) => {
@@ -625,18 +612,7 @@ export class ChatController {
                     return e;
                 })
             );
-            this.removeMessagesFromLocalUpdates([candidate.messageId]);
             this.confirmedEventIndexesLoaded.add(resp.eventIndex);
-        }
-    }
-
-    removeMessagesFromLocalUpdates(messageIds: bigint[]): void {
-        const localChatUpdates = get(this.localChatUpdates);
-        if (localChatUpdates !== undefined && localChatUpdates.unconfirmedMessages.length > 0 && messageIds.length > 0) {
-            this._updateChatLocally(updates => {
-                updates.unconfirmedMessages = updates.unconfirmedMessages.filter(m => !messageIds.includes(m.event.messageId));
-                return updates;
-            });
         }
     }
 

@@ -102,7 +102,7 @@ export class MessageReadTracker implements IMessageReadTracker {
         if (!this.state[chatId]) {
             this.state[chatId] = new DRange();
         }
-        if (get(unconfirmed).has(messageId)) {
+        if (unconfirmed.contains(chatId, messageId)) {
             // if a message is unconfirmed we will just tuck it away until we are told it has been confirmed
             if (this.waiting[chatId] === undefined) {
                 this.waiting[chatId] = new Map<bigint, number>();
@@ -188,7 +188,7 @@ export class MessageReadTracker implements IMessageReadTracker {
     }
 
     isRead(chatId: string, messageIndex: number, messageId: bigint): boolean {
-        if (get(unconfirmed).has(messageId)) {
+        if (unconfirmed.contains(chatId, messageId)) {
             return this.waiting[chatId] !== undefined && this.waiting[chatId].has(messageId);
         } else {
             const serverState = this.serverState[chatId];
