@@ -10,8 +10,9 @@
     import Progress from "../Progress.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
     import { iconSize } from "../../stores/iconSize";
-    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import Smiley from "./Smiley.svelte";
+    import { audioRecordingMimeType } from "../../utils/media";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -25,6 +26,7 @@
 
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
+    let audioMimeType = audioRecordingMimeType();
     export let showEmojiPicker = false;
     let selectedRange: Range | undefined;
     let dragging: boolean = false;
@@ -210,9 +212,13 @@
             on:drop={onDrop}
             on:input={onInput}
             on:keypress={keyPress} />
-        {#if messageIsEmpty}
+        {#if messageIsEmpty && audioMimeType !== undefined}
             <div class="record">
-                <AudioAttacher bind:percentRecorded bind:recording on:audioCaptured />
+                <AudioAttacher
+                    mimeType={audioMimeType}
+                    bind:percentRecorded
+                    bind:recording
+                    on:audioCaptured />
             </div>
         {:else}
             <div class="send" on:click={sendMessage}>

@@ -11,7 +11,7 @@
     import { createEventDispatcher, onDestroy, onMount } from "svelte";
     const dispatch = createEventDispatcher();
     import { rtlStore } from "../../stores/rtl";
-    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { push, replace } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";

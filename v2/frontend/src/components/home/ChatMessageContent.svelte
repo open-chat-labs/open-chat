@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import {encode} from 'html-entities';
+    import { encode } from "html-entities";
     // import SvelteMarkdown from "svelte-markdown";
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";

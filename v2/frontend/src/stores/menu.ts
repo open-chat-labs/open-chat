@@ -1,6 +1,6 @@
 import { get, writable } from "svelte/store";
 import { rtlStore } from "./rtl";
-import { ScreenWidth, screenWidth } from "./screenWidth";
+import { ScreenWidth, screenWidth } from "./screenDimensions";
 
 const { subscribe, update } = writable<HTMLElement | undefined>(undefined);
 

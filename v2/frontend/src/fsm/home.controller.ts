@@ -258,6 +258,7 @@ export class HomeController {
         const chat = get(this.chatSummariesList).find((c) => {
             return c.kind === "direct_chat" && c.them === context.sender?.userId;
         });
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const chatId = chat?.chatId ?? context.sender!.userId;
         draftMessages.delete(chatId);
         draftMessages.setReplyingTo(chatId, context);
