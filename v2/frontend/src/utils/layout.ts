@@ -6,7 +6,6 @@ export function calculateMediaDimensions(
     containerPaddingWidth: number, 
     windowHeight: number) 
 : Dimensions {
-    const landscape = content.height < content.width;
     const ratio = content.height / content.width;
     const availWidth = (parentWidth * 0.8) - containerPaddingWidth;
     const availHeight = 2 * windowHeight / 3;
