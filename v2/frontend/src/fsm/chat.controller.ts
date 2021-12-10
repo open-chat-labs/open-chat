@@ -379,14 +379,17 @@ export class ChatController {
     }
 
     async sendMessage(messageEvent: EventWrapper<Message>, userId: string): Promise<void> {
+        // this message may have come in via webrtc
+        const sentByMe = userId === this.user.userId;
+        const upToDate = this.upToDate();
+        const appendMessage = sentByMe || upToDate;
+
         let jumping = false;
-        if (!this.upToDate()) {
+        if (sentByMe && !upToDate) {
             jumping = true;
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
         }
 
-        // this message may have come in via webrtc
-        const sentByMe = userId === this.user.userId;
         if (sentByMe) {
             draftMessages.delete(this.chatId);
         }
@@ -420,7 +423,9 @@ export class ChatController {
                     messageEvent.event.messageId
                 );
             }
-            this.events.update((events) => [...events, messageEvent]);
+            if (appendMessage) {
+                this.events.update((events) => [...events, messageEvent]);
+            }
             this.raiseEvent({
                 chatId: this.chatId,
                 event: {
@@ -660,6 +665,12 @@ export class ChatController {
             : undefined;
     }
 
+    latestLoadedIndex(): number | undefined {
+        return this.confirmedEventIndexesLoaded.length > 0
+            ? this.confirmedEventIndexesLoaded.index(this.confirmedEventIndexesLoaded.length - 1)
+            : undefined;
+    }
+
     confirmedUpToEventIndex(): number {
         const ranges = this.confirmedEventIndexesLoaded.subranges();
         if (ranges.length > 0) {
@@ -678,6 +689,11 @@ export class ChatController {
 
     moreNewMessagesAvailable(): boolean {
         return this.confirmedUpToEventIndex() < this.latestServerEventIndex();
+    }
+
+    viewingEventWindow(): boolean {
+        const latestLoaded = this.latestLoadedIndex();
+        return latestLoaded !== undefined && latestLoaded < this.chatVal.latestEventIndex;
     }
 
     latestServerEventIndex(): number {
