@@ -125,7 +125,7 @@ export function setCachedChats(
                 return {
                     ...c,
                     readByMe: drangeToIndexRanges(c.readByMe),
-                    readByThem: drangeToIndexRanges(c.readByMe),
+                    readByThem: drangeToIndexRanges(c.readByThem),
                     latestMessage: c.latestMessage ? makeSerialisable(c.latestMessage) : undefined,
                 };
             }
