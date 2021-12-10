@@ -1,8 +1,12 @@
 import { push } from "svelte-spa-router";
-import { derived, get, Writable, writable } from "svelte/store";
+import { derived, get, Readable, Writable, writable } from "svelte/store";
 import DRange from "drange";
 import type { ChatSummary, DirectChatSummary, EnhancedReplyContext } from "../domain/chat/chat";
-import { compareChats, updateArgsFromChats } from "../domain/chat/chat.utils";
+import {
+    compareChats,
+    mergeUnconfirmedIntoSummary,
+    updateArgsFromChats
+} from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
 import type { User, UsersResponse } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -38,10 +42,14 @@ export class HomeController {
     public messagesRead: IMessageReadTracker;
     private chatUpdatesSince?: bigint;
     private usersLastUpdate = BigInt(0);
-    public chatSummaries: Writable<Record<string, ChatSummary>> = writable({});
-    public chatSummariesList = derived([this.chatSummaries], ([$chatSummaries]) => {
-        return Object.values($chatSummaries).sort(compareChats);
-    });
+    private serverChatSummaries: Writable<Record<string, ChatSummary>> = writable({});
+    public chatSummaries: Readable<Record<string, ChatSummary>> = derived([this.serverChatSummaries, unconfirmed], ([summaries, unconfirmed]) => {
+        return Object.entries(summaries).reduce<Record<string, ChatSummary>>((result, [chatId, summary]) => {
+            result[chatId] = mergeUnconfirmedIntoSummary(summary, unconfirmed[chatId]?.messages);
+            return result;
+        }, {});
+    })
+    public chatSummariesList = derived(this.chatSummaries, summaries => Object.values(summaries).sort(compareChats));
     public initialised = false;
     public selectedChat: Writable<ChatController | undefined> = writable(undefined);
     public loading = writable(false);
@@ -78,7 +86,7 @@ export class HomeController {
     private async loadChats() {
         try {
             this.loading.set(!this.initialised);
-            const chats = get(this.chatSummariesList);
+            const chats = Object.values(get(this.serverChatSummaries));
             const chatsResponse =
                 this.chatUpdatesSince === undefined
                     ? await this.api.getInitialState(this.messagesRead)
@@ -102,7 +110,7 @@ export class HomeController {
 
             const selectedChat = get(this.selectedChat);
 
-            this.chatSummaries.set(
+            this.serverChatSummaries.set(
                 chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
                     rec[chat.chatId] = chat;
                     if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
@@ -172,7 +180,7 @@ export class HomeController {
     selectChat(chatId: string, messageIndex?: number): void {
         closeNotificationsForChat(chatId);
 
-        const chat = get(this.chatSummaries)[chatId];
+        const chat = get(this.serverChatSummaries)[chatId];
         if (chat !== undefined) {
             const user = {
                 userId: this.user.userId,
@@ -188,10 +196,9 @@ export class HomeController {
                 return new ChatController(
                     this.api,
                     user,
-                    derived(this.chatSummaries, (summaries) => summaries[chatId]),
+                    derived(this.serverChatSummaries, summaries => summaries[chatId]),
                     this.messagesRead,
                     messageIndex,
-                    (updateChatFn) => this.updateChat(chatId, updateChatFn)
                 );
             });
         } else {
@@ -205,7 +212,7 @@ export class HomeController {
 
     leaveGroup(chatId: string): void {
         this.clearSelectedChat();
-        this.chatSummaries.update((chatSummaries) => {
+        this.serverChatSummaries.update((chatSummaries) => {
             delete chatSummaries[chatId];
             return chatSummaries;
         });
@@ -230,7 +237,7 @@ export class HomeController {
     }
 
     createDirectChat(chatId: string): void {
-        this.chatSummaries.update((chatSummaries) => {
+        this.serverChatSummaries.update((chatSummaries) => {
             chatSummaries[chatId] = {
                 kind: "direct_chat",
                 them: chatId,
@@ -373,7 +380,7 @@ export class HomeController {
 
     remoteUserSentMessage(message: RemoteUserSentMessage): void {
         console.log("remote user sent message");
-        unconfirmed.add(BigInt(message.messageEvent.event.messageId));
+        unconfirmed.add(message.chatId, message.messageEvent);
         this.delegateToChatController(message, (chat) =>
             chat.sendMessage(message.messageEvent, message.userId)
         );
@@ -393,14 +400,5 @@ export class HomeController {
         if (selectedChat === undefined) return;
         if (chat.chatId !== selectedChat.chatId) return;
         fn(selectedChat);
-    }
-
-    private updateChat(chatId: string, updateFn: (chat: ChatSummary) => ChatSummary) {
-        this.chatSummaries.update((updates) => {
-            return {
-                ...updates,
-                [chatId]: updateFn(updates[chatId]),
-            };
-        });
     }
 }

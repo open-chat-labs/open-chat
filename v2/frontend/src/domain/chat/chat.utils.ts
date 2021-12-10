@@ -233,8 +233,8 @@ function mergeUpdatedDirectChat(
     if (updatedChat.readByMe) chat.readByMe.add(updatedChat.readByMe);
     if (updatedChat.readByThem) chat.readByThem.add(updatedChat.readByThem);
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
+    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
-    mergeLatestMessage(chat, updatedChat);
 
     return chat;
 }
@@ -321,28 +321,34 @@ function mergeUpdatedGroupChat(
     if (updatedChat.readByMe) chat.readByMe.add(updatedChat.readByMe);
     chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
+    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
     chat.myRole = updatedChat.myRole ?? chat.myRole;
-    mergeLatestMessage(chat, updatedChat);
 
     return chat;
 }
 
-function mergeLatestMessage(chat: ChatSummary, updatedChat: ChatSummaryUpdates) {
-    // We only update the latest message if the new messageIndex from the server is higher than what we have locally.
-    // This is because locally we may have messages which are not yet confirmed which will eventually have higher
-    // message indexes than the message we just got back from the server.
-    // For example, if locally the latest confirmed messageIndex is 100, then you send a message, it’ll be assigned 101
-    // (which is the lowest possible messageIndex it could have), then in updates if you get 101 back but its a
-    // different message, your message must now end up with a messageIndex of at least 102 and therefore should stay as
-    // the latest message.
-    if (updatedChat.latestMessage !== undefined &&
-        (chat.latestMessage === undefined || updatedChat.latestMessage.event.messageIndex > chat.latestMessage.event.messageIndex))
-    {
-        chat.latestMessage = updatedChat.latestMessage;
+export function mergeUnconfirmedIntoSummary(chatSummary: ChatSummary, unconfirmedMessages?: EventWrapper<Message>[]): ChatSummary {
+    if (unconfirmedMessages === undefined) return chatSummary;
+
+    let latestMessage = chatSummary.latestMessage;
+    let latestEventIndex = chatSummary.latestEventIndex;
+    if (unconfirmedMessages.length > 0) {
+        const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
+        if (latestMessage === undefined || latestUnconfirmedMessage.event.messageIndex > latestMessage.event.messageIndex) {
+            latestMessage = latestUnconfirmedMessage;
+        }
+        if (latestUnconfirmedMessage.index > latestEventIndex) {
+            latestEventIndex = latestUnconfirmedMessage.index;
+        }
     }
+    return {
+        ...chatSummary,
+        latestMessage,
+        latestEventIndex
+    };
 }
 
 function toLookup<T>(keyFn: (t: T) => string, things: T[]): Record<string, T> {
@@ -399,30 +405,26 @@ export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
     return groupWhile(sameDate, events.filter(eventIsVisible)).map(groupBySender);
 }
 
-export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
-    return events[0]?.index;
+export function getNextMessageIndex(chat: ChatSummary, unconfirmedMessages: EventWrapper<Message>[]): number {
+    let current = chat.latestMessage?.event.messageIndex ?? -1;
+    if (unconfirmedMessages.length > 0) {
+        const messageIndex = unconfirmedMessages[unconfirmedMessages.length - 1].event.messageIndex;
+        if (messageIndex > current) {
+            current = messageIndex;
+        }
+    }
+    return current + 1;
 }
 
-export function getNextMessageIndex(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): number {
-    // first get the next index according to the chat
-    const chatIdx = (chat.latestMessage?.event.messageIndex ?? -1) + 1;
-
-    // then get the next index according to the loaded events
-    const loadedIdx = (latestLoadedMessageIndex(events) ?? -1) + 1;
-
-    // pick the max
-    return Math.max(chatIdx, loadedIdx);
-}
-
-export function getNextEventIndex(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): number {
-    // first get the next index according to the chat
-    const chatIdx = chat.latestEventIndex + 1;
-
-    // then get the next index according to the loaded events
-    const loadedIdx = (latestLoadedEventIndex(events) ?? 0) + 1;
-
-    // pick the max
-    return Math.max(chatIdx, loadedIdx);
+export function getNextEventIndex(chat: ChatSummary, unconfirmedMessages: EventWrapper<Message>[]): number {
+    let current = chat.latestEventIndex;
+    if (unconfirmedMessages.length > 0) {
+        const eventIndex = unconfirmedMessages[unconfirmedMessages.length - 1].index;
+        if (eventIndex > current) {
+            current = eventIndex;
+        }
+    }
+    return current + 1;
 }
 
 export function latestLoadedMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
@@ -431,29 +433,6 @@ export function latestLoadedMessageIndex(events: EventWrapper<ChatEvent>[]): num
         const e = events[i].event;
         if (e.kind === "message") {
             idx = e.messageIndex;
-            break;
-        }
-    }
-    return idx;
-}
-
-// todo - this needs to return the last idx that we actually loaded from the server
-// at the moment it will return the latest confirmed idx which may be later than messages
-// other people have added - that's why we are missing messages
-// to solution is to only remove things from the unconfirmed set when we load them from the
-// server - easy
-export function latestLoadedEventIndex(
-    events: EventWrapper<ChatEvent>[],
-    unconfirmed?: Set<bigint>
-): number | undefined {
-    if (unconfirmed === undefined) {
-        return events[events.length - 1]?.index;
-    }
-    let idx = undefined;
-    for (let i = events.length - 1; i >= 0; i--) {
-        const e = events[i].event;
-        if (e.kind !== "message" || (e.kind === "message" && !unconfirmed.has(e.messageId))) {
-            idx = events[i].index;
             break;
         }
     }
@@ -636,7 +615,7 @@ export function replaceLocal(
         if (e.event.kind === "message") {
             // only now do we consider this message confirmed
             const idNum = BigInt(id);
-            if (unconfirmed.delete(idNum)) {
+            if (unconfirmed.delete(chatId, idNum)) {
                 messageReadTracker.confirmMessage(
                     chatId,
                     e.event.messageIndex,

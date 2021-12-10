@@ -1,5 +1,5 @@
 import DRange from "drange";
-import { get, Subscriber, Unsubscriber, writable } from "svelte/store";
+import { Subscriber, Unsubscriber, writable } from "svelte/store";
 import type { MarkReadRequest, MarkReadResponse } from "../domain/chat/chat";
 import { indexIsInRanges } from "../domain/chat/chat.utils";
 import { unconfirmed } from "./unconfirmed";
@@ -82,7 +82,7 @@ export class MessageReadTracker implements IMessageReadTracker {
         }, [] as MarkReadRequest);
 
         if (req.length > 0) {
-            console.log("Sending messages read to the server: ", req);
+            console.log("Sending messages read to the server: ", JSON.stringify(req));
             this.api.markMessagesRead(req);
         }
     }
@@ -102,7 +102,7 @@ export class MessageReadTracker implements IMessageReadTracker {
         if (!this.state[chatId]) {
             this.state[chatId] = new DRange();
         }
-        if (get(unconfirmed).has(messageId)) {
+        if (unconfirmed.contains(chatId, messageId)) {
             // if a message is unconfirmed we will just tuck it away until we are told it has been confirmed
             if (this.waiting[chatId] === undefined) {
                 this.waiting[chatId] = new Map<bigint, number>();
@@ -188,7 +188,7 @@ export class MessageReadTracker implements IMessageReadTracker {
     }
 
     isRead(chatId: string, messageIndex: number, messageId: bigint): boolean {
-        if (get(unconfirmed).has(messageId)) {
+        if (unconfirmed.contains(chatId, messageId)) {
             return this.waiting[chatId] !== undefined && this.waiting[chatId].has(messageId);
         } else {
             const serverState = this.serverState[chatId];
