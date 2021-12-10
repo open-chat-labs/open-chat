@@ -17,7 +17,6 @@
                 "@fortawesome/free-solid-svg-icons": "^5.15.3",
                 "@open-ic/open-storage-agent": "file:src/openStorage",
                 "@sveltejs/svelte-virtual-list": "^3.0.1",
-                "@types/html-entities": "^1.3.4",
                 "@xstate/inspect": "^0.4.1",
                 "@xstate/svelte": "^0.1.0",
                 "@xstate/test": "^0.4.2",
@@ -55,6 +54,7 @@
                 "@testing-library/svelte": "^3.0.3",
                 "@tsconfig/svelte": "^1.0.0",
                 "@types/dom-mediacapture-record": "^1.0.10",
+                "@types/html-entities": "^1.3.4",
                 "@types/identicon.js": "^2.3.1",
                 "@types/jest": "^27.0.2",
                 "@types/md5": "^2.3.1",
@@ -3091,6 +3091,7 @@
             "resolved": "https://registry.npmjs.org/@types/html-entities/-/html-entities-1.3.4.tgz",
             "integrity": "sha512-Ut62LV90H9tgXwyhmfR8U6yCw/6xeo26IlsbAJJfqPomaqDN2zoLb2Z+cbmy5AycJFhwNJDdH0zqjQp7Ox/eXg==",
             "deprecated": "This is a stub types definition. html-entities provides its own type definitions, so you do not need this installed.",
+            "dev": true,
             "dependencies": {
                 "html-entities": "*"
             }
@@ -16164,6 +16165,7 @@
             "version": "1.3.4",
             "resolved": "https://registry.npmjs.org/@types/html-entities/-/html-entities-1.3.4.tgz",
             "integrity": "sha512-Ut62LV90H9tgXwyhmfR8U6yCw/6xeo26IlsbAJJfqPomaqDN2zoLb2Z+cbmy5AycJFhwNJDdH0zqjQp7Ox/eXg==",
+            "dev": true,
             "requires": {
                 "html-entities": "*"
             }

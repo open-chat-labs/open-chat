@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import he from "he";
+    import {encode} from 'html-entities';
     // import SvelteMarkdown from "svelte-markdown";
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";
@@ -39,7 +39,7 @@
         }
 
         // HTML encode the text
-        str = he.encode(str);
+        str = encode(str);
 
         // Try to wrap links in <a> tags
         str = wrapURLsInAnchorTags(str, true);
