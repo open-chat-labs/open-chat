@@ -10,7 +10,6 @@ import type {
     EventWrapper,
     FullParticipant,
     GroupChatDetails,
-    LocalChatUpdates,
     LocalReaction,
     Message,
     MessageContent,

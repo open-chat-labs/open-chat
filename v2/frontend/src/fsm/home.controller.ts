@@ -1,7 +1,7 @@
 import { push } from "svelte-spa-router";
 import { derived, get, Readable, Writable, writable } from "svelte/store";
 import DRange from "drange";
-import type { ChatSummary, DirectChatSummary, EnhancedReplyContext, LocalChatUpdates } from "../domain/chat/chat";
+import type { ChatSummary, DirectChatSummary, EnhancedReplyContext } from "../domain/chat/chat";
 import {
     compareChats,
     mergeUnconfirmedIntoSummary,
