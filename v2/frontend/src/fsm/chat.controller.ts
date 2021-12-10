@@ -381,13 +381,13 @@ export class ChatController {
     async sendMessage(messageEvent: EventWrapper<Message>, userId: string): Promise<void> {
         // this message may have come in via webrtc
         const sentByMe = userId === this.user.userId;
-        const upToDate = this.upToDate();
-        const appendMessage = sentByMe || upToDate;
+        let upToDate = this.upToDate();
 
         let jumping = false;
         if (sentByMe && !upToDate) {
             jumping = true;
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
+            upToDate = true;
         }
 
         if (sentByMe) {
@@ -423,7 +423,7 @@ export class ChatController {
                     messageEvent.event.messageId
                 );
             }
-            if (appendMessage) {
+            if (upToDate) {
                 this.events.update((events) => [...events, messageEvent]);
             }
             this.raiseEvent({
