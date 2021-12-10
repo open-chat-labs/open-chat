@@ -102,6 +102,7 @@ export function originalTheme(defaultTheme: Theme): Theme {
         section: {
             ...defaultTheme.section,
             bg: "#ededed",
+            bd: "#e0e0e0",
         },
 
         scrollbar: {
