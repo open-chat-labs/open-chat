@@ -1,9 +1,11 @@
 <script lang="ts">
+    import { rtlStore } from "../stores/rtl";
+
     export let flush: boolean = false;
     export let shadow: boolean = false;
 </script>
 
-<div class="section-header" class:flush class:shadow>
+<div class="section-header" class:flush class:shadow class:rtl={$rtlStore}>
     <slot />
 </div>
 
@@ -25,7 +27,12 @@
 
         &.flush {
             margin-bottom: 0;
-            border-left: 1px solid var(--section-bdLeft);
+            border-left: 1px solid var(--section-bd-start);
+        }
+
+        &.flush.rtl {
+            border-left: inherit;
+            border-right: 1px solid var(--section-bd-start);
         }
 
         &.shadow {

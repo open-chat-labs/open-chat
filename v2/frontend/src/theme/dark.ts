@@ -51,7 +51,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bg: dark20,
             txt: dark60,
             bd: dark15,
-            bdLeft: dark15,
+            "bd-start": dark15,
         },
 
         "sub-section": {

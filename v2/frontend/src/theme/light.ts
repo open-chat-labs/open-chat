@@ -50,7 +50,7 @@ export function lightTheme(): Theme {
             bg: "white",
             txt: "#191919",
             bd: "transparent",
-            bdLeft: "transparent",
+            "bd-start": "transparent",
         },
 
         "sub-section": {
