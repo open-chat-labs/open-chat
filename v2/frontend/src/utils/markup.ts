@@ -4,7 +4,7 @@
 // Blacklisted from end
 // . , ( ) [ ] { } ! @ + : %
 export function wrapURLsInAnchorTags(text: string, new_window: boolean) : string {
-    const url_pattern = /(ftp|http|https):\/\/[^\"<\s]+[^\"<\s.,\(\)\[\]\{\}!@+:%]/g;
+    const url_pattern = /(ftp|http|https):\/\/[^"<\s]+[^"<\s.,()[]{}!@+:%]/g;
     const target = (new_window === true || new_window == null) ? '_blank' : '';    
     return text.replace(url_pattern, function (url) {
         return '<a href="' + url + '" target="' + target + '">' + url + '</a>';
