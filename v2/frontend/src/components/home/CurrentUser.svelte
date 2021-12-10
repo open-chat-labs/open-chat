@@ -13,7 +13,7 @@
     import { _ } from "svelte-i18n";
     import { modalStore, ModalType } from "../../stores/modal";
     import { avatarUrl } from "../../domain/user/user.utils";
-    import { ScreenHeight, screenHeight, ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { ScreenHeight, screenHeight, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import type { PartialUserSummary } from "../../domain/user/user";
     import { createEventDispatcher } from "svelte";
     import { notificationStatus } from "../../stores/notifications";

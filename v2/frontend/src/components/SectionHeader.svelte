@@ -18,13 +18,14 @@
         height: 60px;
         margin-bottom: $sp3;
         background-color: var(--section-bg);
+        border: 1px solid var(--section-bd);
         color: var(--section-txt);
         @include z-index("section-header");
         flex: 0 0 60px;
 
         &.flush {
             margin-bottom: 0;
-            border-left: 1px solid var(--section-bd);
+            border-left: 1px solid var(--section-bdLeft);
         }
 
         &.shadow {
