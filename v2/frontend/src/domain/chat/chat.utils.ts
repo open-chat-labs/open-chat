@@ -150,12 +150,6 @@ export function latestMessageText({ latestMessage }: ChatSummary): string {
     return latestMessage?.event ? getContentAsText(latestMessage.event.content) : "";
 }
 
-export function compareByDate(a: ChatSummary, b: ChatSummary): number {
-    const dateA = getDisplayDate(a);
-    const dateB = getDisplayDate(b);
-    return Number(dateB - dateA);
-}
-
 export function getParticipantsString(
     user: UserSummary,
     userLookup: UserLookup,
@@ -220,10 +214,13 @@ export function createMessage(
 }
 
 export function getDisplayDate(chat: ChatSummary): bigint {
-    return (
-        chat.latestMessage?.timestamp ??
-        (chat.kind === "group_chat" ? chat.joined : BigInt(Date.now()))
-    );
+    const started = chat.kind === "direct_chat"
+        ? chat.dateCreated
+        : chat.joined;
+
+    return chat.latestMessage && chat.latestMessage.timestamp > started
+        ? chat.latestMessage.timestamp
+        : started;
 }
 
 function mergeUpdatedDirectChat(
@@ -452,15 +449,7 @@ function sameDate(a: { timestamp: bigint }, b: { timestamp: bigint }): boolean {
 }
 
 export function compareChats(a: ChatSummary, b: ChatSummary): number {
-    return latestActivity(b) - latestActivity(a);
-}
-
-function latestActivity(chat: ChatSummary): number {
-    if (chat.latestMessage) {
-        return Number(chat.latestMessage.timestamp);
-    } else {
-        return Number(chat.kind === "direct_chat" ? chat.dateCreated : chat.joined);
-    }
+    return Number(getDisplayDate(b) - getDisplayDate(a));
 }
 
 export function updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummary[]): UpdateArgs {
