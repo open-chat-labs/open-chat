@@ -693,11 +693,6 @@ export class ChatController {
         return this.confirmedUpToEventIndex() < this.latestServerEventIndex();
     }
 
-    viewingEventWindow(): boolean {
-        const latestLoaded = this.latestLoadedIndex();
-        return latestLoaded !== undefined && latestLoaded < this.chatVal.latestEventIndex;
-    }
-
     latestServerEventIndex(): number {
         return get(this.serverChatSummary).latestEventIndex;
     }

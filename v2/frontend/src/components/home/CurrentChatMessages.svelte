@@ -360,7 +360,7 @@
                     case "sending_message":
                         // if we are within the from bottom threshold *or* if the new message
                         // was sent by us, then scroll to the bottom
-                        if (evt.event.sentByMe || (!controller.viewingEventWindow() && fromBottom < FROM_BOTTOM_THRESHOLD)) {
+                        if (evt.event.sentByMe || fromBottom < FROM_BOTTOM_THRESHOLD) {
                             // smooth scroll doesn't work here when we are leaping from the top
                             // which means we are stuck with abrupt scroll which is disappointing
                             const { scroll } = evt.event;
@@ -368,9 +368,7 @@
                         }
                         break;
                     case "chat_updated":
-                        // we don't want this to fire if we have loaded a previous window
-                        // but how do we know we are looking at a previous window
-                        if (shouldLoadNewMessages() && !controller.viewingEventWindow()) {
+                        if (fromBottom < FROM_BOTTOM_THRESHOLD && shouldLoadNewMessages()) {
                             controller.loadNewMessages();
                         }
                         break;
