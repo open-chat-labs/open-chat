@@ -23,11 +23,11 @@ import type { IUserClient } from "./user.client.interface";
 import {
     ChatSchema,
     getCachedChats,
-    getCachedMessages,
-    getCachedMessagesByIndex,
-    getCachedMessagesWindow,
+    getCachedEvents,
+    getCachedEventsByIndex,
+    getCachedEventsWindow,
     setCachedChats,
-    setCachedMessages,
+    setCachedEvents, setCachedMessage,
 } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
 import { updateArgsFromChats } from "../../domain/chat/chat.utils";
@@ -51,16 +51,16 @@ export class CachingUserClient implements IUserClient {
         eventIndexes: number[],
         userId: string
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const cachedMsgs = await getCachedMessagesByIndex<DirectChatEvent>(
+        const cachedEvents = await getCachedEventsByIndex<DirectChatEvent>(
             this.db,
             eventIndexes,
             userId
         );
         return (
-            cachedMsgs ??
+            cachedEvents ??
             this.client
                 .chatEventsByIndex(eventIndexes, userId)
-                .then(setCachedMessages(this.db, userId))
+                .then(setCachedEvents(this.db, userId))
         );
     }
 
@@ -69,17 +69,17 @@ export class CachingUserClient implements IUserClient {
         userId: string,
         messageIndex: number
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const cachedMsgs = await getCachedMessagesWindow<DirectChatEvent>(
+        const cachedEvents = await getCachedEventsWindow<DirectChatEvent>(
             this.db,
             eventIndexRange,
             userId,
             messageIndex
         );
         return (
-            cachedMsgs ??
+            cachedEvents ??
             this.client
                 .chatEventsWindow(eventIndexRange, userId, messageIndex)
-                .then(setCachedMessages(this.db, userId))
+                .then(setCachedEvents(this.db, userId))
         );
     }
 
@@ -89,7 +89,7 @@ export class CachingUserClient implements IUserClient {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const cachedMsgs = await getCachedMessages<DirectChatEvent>(
+        const cachedEvents = await getCachedEvents<DirectChatEvent>(
             this.db,
             eventIndexRange,
             userId,
@@ -97,10 +97,10 @@ export class CachingUserClient implements IUserClient {
             ascending
         );
         return (
-            cachedMsgs ??
+            cachedEvents ??
             this.client
                 .chatEvents(eventIndexRange, userId, startIndex, ascending)
-                .then(setCachedMessages(this.db, userId))
+                .then(setCachedEvents(this.db, userId))
         );
     }
 
@@ -142,7 +142,9 @@ export class CachingUserClient implements IUserClient {
         message: Message,
         replyingToChatId?: string
     ): Promise<SendMessageResponse> {
-        return this.client.sendMessage(recipientId, sender, message, replyingToChatId);
+        return this.client
+            .sendMessage(recipientId, sender, message, replyingToChatId)
+            .then(setCachedMessage(this.db, this.userId, message));
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {
