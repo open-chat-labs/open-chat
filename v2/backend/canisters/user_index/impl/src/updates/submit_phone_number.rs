@@ -137,7 +137,7 @@ mod tests {
             .get_by_principal(&runtime_state.env.caller())
             .unwrap();
         assert!(matches!(user, User::Unconfirmed(_)));
-        assert_eq!(user.get_phone_number().to_string(), "+44 2222222222");
+        assert_eq!(user.get_phone_number().unwrap().to_string(), "+44 2222222222");
     }
 
     #[test]
