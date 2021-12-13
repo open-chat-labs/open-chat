@@ -8,6 +8,7 @@ import type {
     MergedUpdatesResponse,
     Message,
     SendMessageResponse,
+    SendMessageSuccess,
     SerializableMergedUpdatesResponse,
 } from "../domain/chat/chat";
 import { rollbar } from "./logging";
@@ -384,12 +385,12 @@ export function setCachedEvents<T extends ChatEvent>(
         const tx = (await db).transaction(["chat_events", "message_index_event_index"], "readwrite");
         const eventStore = tx.objectStore("chat_events");
         const mapStore = tx.objectStore("message_index_event_index");
-        for (const event of resp.events) {
+        await Promise.all(resp.events.map(async (event) => {
             await eventStore.put(makeSerialisable<T>(event), createCacheKey(chatId, event.index));
             if (event.event.kind === "message") {
                 await mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`);
             }
-        }
+        }));
         await tx.done;
 
         return resp;
@@ -403,24 +404,30 @@ export function setCachedMessage(
 ): (resp: SendMessageResponse) => Promise<SendMessageResponse> {
     return async (resp: SendMessageResponse) => {
         if (resp.kind !== "success") return Promise.resolve(resp);
-        
-        const event: EventWrapper<Message> = {
-            event: {
-                ...message,
-                messageIndex: resp.messageIndex,
-            },
-            index: resp.eventIndex,
-            timestamp: resp.timestamp,
-        };
+
+        const event = messageToEvent(message, resp);
 
         const tx = (await db).transaction(["chat_events", "message_index_event_index"], "readwrite");
         const eventStore = tx.objectStore("chat_events");
         const mapStore = tx.objectStore("message_index_event_index");
-        await eventStore.put(makeSerialisable(event), createCacheKey(chatId, event.index));
-        await mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`);
+        await Promise.all([
+            eventStore.put(makeSerialisable(event), createCacheKey(chatId, event.index)),
+            mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`)
+        ]);
         await tx.done;
 
         return resp;
+    };
+}
+
+function messageToEvent(message: Message, resp: SendMessageSuccess): EventWrapper<Message> {
+    return {
+        event: {
+            ...message,
+            messageIndex: resp.messageIndex,
+        },
+        index: resp.eventIndex,
+        timestamp: resp.timestamp,
     };
 }
 
@@ -435,9 +442,7 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
     }
     const tx = (await db).transaction("chat_events", "readwrite");
     const store = tx.objectStore("chat_events");
-    events.forEach(async (event) => {
-        await store.put(makeSerialisable<T>(event), createCacheKey(chatId, event.index));
-    });
+    await Promise.all(events.map((event) => store.put(makeSerialisable<T>(event), createCacheKey(chatId, event.index))));
     await tx.done;
 }
 
