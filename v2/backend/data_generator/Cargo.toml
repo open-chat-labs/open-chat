@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 canister_client = { path = "../libraries/canister_client" }
-clap = "3.0.0-beta.5"
+clap = { version = "=3.0.0-rc.4", features = ["derive"] }
 futures = "0.3.16"
 group_canister = { path = "../canisters/group/api" }
 ic-agent = "0.7.0"
