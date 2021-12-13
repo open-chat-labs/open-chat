@@ -35,17 +35,19 @@ pub struct Metrics {
 impl UserMap {
     pub fn add(&mut self, user: User) -> AddUserResult {
         let principal = user.get_principal();
-        let phone_number = user.get_phone_number();
+        let maybe_phone_number = user.get_phone_number();
         let maybe_username = user.get_username();
         let maybe_user_id = user.get_user_id();
 
         if let Vacant(principal_entry) = self.users_by_principal.entry(principal) {
-            if self.phone_number_to_principal.contains_key(phone_number) {
+            if maybe_phone_number.is_some() && self.phone_number_to_principal.contains_key(maybe_phone_number.unwrap()) {
                 AddUserResult::PhoneNumberTaken
             } else if maybe_username.is_some() && self.username_to_principal.contains_key(maybe_username.unwrap()) {
                 AddUserResult::UsernameTaken
             } else {
-                self.phone_number_to_principal.insert(phone_number.clone(), principal);
+                if let Some(phone_number) = maybe_phone_number {
+                    self.phone_number_to_principal.insert(phone_number.clone(), principal);
+                }
                 if let Some(username) = maybe_username {
                     self.username_to_principal.insert(username, principal);
                 }
@@ -77,16 +79,25 @@ impl UserMap {
             let user_id = user.get_user_id();
             let user_id_changed = previous_user_id != user_id;
 
-            if phone_number_changed && self.phone_number_to_principal.contains_key(phone_number) {
-                return UpdateUserResult::PhoneNumberTaken;
+            if phone_number_changed {
+                if let Some(phone_number) = phone_number {
+                    if self.phone_number_to_principal.contains_key(phone_number) {
+                        return UpdateUserResult::PhoneNumberTaken;
+                    }
+                }
             }
+
             if username_case_insensitive_changed && self.username_to_principal.contains_key(username.unwrap()) {
                 return UpdateUserResult::UsernameTaken;
             }
 
             if phone_number_changed {
-                self.phone_number_to_principal.remove(previous_phone_number);
-                self.phone_number_to_principal.insert(phone_number.clone(), principal);
+                if let Some(previous_phone_number) = previous_phone_number {
+                    self.phone_number_to_principal.remove(previous_phone_number);
+                }
+                if let Some(phone_number) = phone_number {
+                    self.phone_number_to_principal.insert(phone_number.clone(), principal);
+                }
             }
 
             if username_case_insensitive_changed {
@@ -155,7 +166,9 @@ impl UserMap {
 
     pub fn remove_by_principal(&mut self, principal: &Principal) -> Option<User> {
         if let Some(user) = self.users_by_principal.remove(principal) {
-            self.phone_number_to_principal.remove(user.get_phone_number());
+            if let Some(phone_number) = user.get_phone_number() {
+                self.phone_number_to_principal.remove(phone_number);
+            }
 
             if let Some(username) = user.get_username() {
                 self.username_to_principal.remove(username);
@@ -265,7 +278,7 @@ pub enum UpdateUserResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedUser};
+    use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedPhoneNumber, UnconfirmedUser};
     use itertools::Itertools;
     use types::CanisterCreationStatusInternal;
 
@@ -288,16 +301,19 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            phone_number: phone_number1.clone(),
-            confirmation_code: "1".to_string(),
-            date_generated: 1,
-            sms_messages_sent: 1,
+            phone_number: Some(UnconfirmedPhoneNumber {
+                phone_number: phone_number1.clone(),
+                confirmation_code: "1".to_string(),
+                date_generated: 1,
+                sms_messages_sent: 1,
+            }),
+            wallet: None,
         });
         user_map.add(unconfirmed.clone());
 
         let confirmed = User::Confirmed(ConfirmedUser {
             principal: principal2,
-            phone_number: phone_number2.clone(),
+            phone_number: Some(phone_number2.clone()),
             username: Some(username2.clone()),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id2.into())),
             upgrade_in_progress: false,
@@ -307,7 +323,7 @@ mod tests {
 
         let created = User::Created(CreatedUser {
             principal: principal3,
-            phone_number: phone_number3.clone(),
+            phone_number: Some(phone_number3.clone()),
             user_id: user_id3,
             username: username3.clone(),
             date_created: 3,
@@ -366,16 +382,19 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal,
-            phone_number: phone_number1.clone(),
-            confirmation_code: "1".to_string(),
-            date_generated: 1,
-            sms_messages_sent: 1,
+            phone_number: Some(UnconfirmedPhoneNumber {
+                phone_number: phone_number1.clone(),
+                confirmation_code: "1".to_string(),
+                date_generated: 1,
+                sms_messages_sent: 1,
+            }),
+            wallet: None,
         });
         user_map.add(unconfirmed);
 
         let confirmed = User::Confirmed(ConfirmedUser {
             principal,
-            phone_number: phone_number2.clone(),
+            phone_number: Some(phone_number2.clone()),
             username: Some("2".to_string()),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id.into())),
             upgrade_in_progress: false,
@@ -397,16 +416,19 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            phone_number: phone_number.clone(),
-            confirmation_code: "1".to_string(),
-            date_generated: 1,
-            sms_messages_sent: 1,
+            phone_number: Some(UnconfirmedPhoneNumber {
+                phone_number: phone_number.clone(),
+                confirmation_code: "1".to_string(),
+                date_generated: 1,
+                sms_messages_sent: 1,
+            }),
+            wallet: None,
         });
         user_map.add(unconfirmed);
 
         let confirmed = User::Confirmed(ConfirmedUser {
             principal: principal2,
-            phone_number,
+            phone_number: Some(phone_number),
             username: Some("2".to_string()),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id).into()),
             upgrade_in_progress: false,
@@ -432,7 +454,7 @@ mod tests {
 
         let confirmed = User::Confirmed(ConfirmedUser {
             principal: principal1,
-            phone_number: phone_number1,
+            phone_number: Some(phone_number1),
             username: Some(username.clone()),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id1).into()),
             upgrade_in_progress: false,
@@ -442,7 +464,7 @@ mod tests {
 
         let created = User::Created(CreatedUser {
             principal: principal2,
-            phone_number: phone_number2,
+            phone_number: Some(phone_number2),
             user_id: user_id2,
             username,
             date_created: 3,
@@ -471,7 +493,7 @@ mod tests {
 
         let confirmed = User::Confirmed(ConfirmedUser {
             principal: principal1,
-            phone_number: phone_number1,
+            phone_number: Some(phone_number1),
             username: Some(username1),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id1).into()),
             upgrade_in_progress: false,
@@ -481,7 +503,7 @@ mod tests {
 
         let created = User::Created(CreatedUser {
             principal: principal2,
-            phone_number: phone_number2,
+            phone_number: Some(phone_number2),
             user_id: user_id2,
             username: username2,
             date_created: 3,
@@ -508,7 +530,7 @@ mod tests {
 
         let original = CreatedUser {
             principal,
-            phone_number: phone_number1.clone(),
+            phone_number: Some(phone_number1.clone()),
             user_id,
             username: username1.clone(),
             date_created: 1,
@@ -519,7 +541,7 @@ mod tests {
 
         let mut updated = original.clone();
         updated.username = username2.clone();
-        updated.phone_number = phone_number2.clone();
+        updated.phone_number = Some(phone_number2.clone());
 
         user_map.add(User::Created(original));
         assert!(matches!(user_map.update(User::Created(updated)), UpdateUserResult::Success));
@@ -548,7 +570,7 @@ mod tests {
 
         let original = CreatedUser {
             principal: principal1,
-            phone_number: phone_number1,
+            phone_number: Some(phone_number1),
             user_id: user_id1,
             username: username1.clone(),
             date_created: 1,
@@ -559,7 +581,7 @@ mod tests {
 
         let other = CreatedUser {
             principal: principal2,
-            phone_number: phone_number2.clone(),
+            phone_number: Some(phone_number2.clone()),
             user_id: user_id2,
             username: username2.clone(),
             date_created: 2,
@@ -569,7 +591,7 @@ mod tests {
         };
 
         let mut updated = original.clone();
-        updated.phone_number = phone_number2;
+        updated.phone_number = Some(phone_number2);
 
         user_map.add(User::Created(original));
         user_map.add(User::Created(other));
@@ -596,7 +618,7 @@ mod tests {
 
         let original = CreatedUser {
             principal: principal1,
-            phone_number: phone_number1,
+            phone_number: Some(phone_number1),
             user_id: user_id1,
             username: username1.clone(),
             date_created: 1,
@@ -607,7 +629,7 @@ mod tests {
 
         let other = CreatedUser {
             principal: principal2,
-            phone_number: phone_number2.clone(),
+            phone_number: Some(phone_number2.clone()),
             user_id: user_id2,
             username: username2.clone(),
             date_created: 2,
@@ -636,8 +658,8 @@ mod tests {
         let user_id = Principal::from_slice(&[1, 1]).into();
 
         let original = CreatedUser {
-            principal: principal,
-            phone_number: phone_number,
+            principal,
+            phone_number: Some(phone_number),
             user_id: user_id,
             username: username.clone(),
             date_created: 1,
@@ -673,16 +695,19 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            phone_number: phone_number1.clone(),
-            confirmation_code: "1".to_string(),
-            date_generated: 1,
-            sms_messages_sent: 1,
+            phone_number: Some(UnconfirmedPhoneNumber {
+                phone_number: phone_number1.clone(),
+                confirmation_code: "1".to_string(),
+                date_generated: 1,
+                sms_messages_sent: 1,
+            }),
+            wallet: None,
         });
         user_map.add(unconfirmed.clone());
 
         let confirmed = User::Confirmed(ConfirmedUser {
             principal: principal2,
-            phone_number: phone_number2.clone(),
+            phone_number: Some(phone_number2.clone()),
             username: Some(username2.clone()),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id2).into()),
             upgrade_in_progress: false,
@@ -692,7 +717,7 @@ mod tests {
 
         let created = User::Created(CreatedUser {
             principal: principal3,
-            phone_number: phone_number3.clone(),
+            phone_number: Some(phone_number3.clone()),
             user_id: user_id3,
             username: username3.clone(),
             date_created: 3,
