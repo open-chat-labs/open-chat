@@ -316,18 +316,21 @@ export class HomeController {
         if (parsedMsg.kind === "remote_user_toggled_reaction") {
             this.remoteUserToggledReaction({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageId: BigInt(parsedMsg.messageId),
             });
         }
         if (parsedMsg.kind === "remote_user_deleted_message") {
             this.remoteUserDeletedMessage({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageId: BigInt(parsedMsg.messageId),
             });
         }
         if (parsedMsg.kind === "remote_user_removed_message") {
             this.remoteUserRemovedMessage({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageId: BigInt(parsedMsg.messageId),
             });
         }
@@ -337,19 +340,21 @@ export class HomeController {
         if (parsedMsg.kind === "remote_user_sent_message") {
             this.remoteUserSentMessage({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageEvent: {
                     ...parsedMsg.messageEvent,
                     event: {
                         ...parsedMsg.messageEvent.event,
                         messageId: BigInt(parsedMsg.messageEvent.event.messageId),
                     },
-                    timestamp: BigInt(parsedMsg.messageEvent.timestamp),
+                    timestamp: BigInt(Date.now()),
                 },
             });
         }
         if (parsedMsg.kind === "remote_user_read_message") {
             this.remoteUserReadMessage({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageId: BigInt(parsedMsg.messageId),
             });
         }
@@ -409,9 +414,13 @@ export class HomeController {
             if (summary === undefined) return summaries;
 
             const latestEventIndex = Math.max(message.index, summary.latestEventIndex);
-            const latestMessage = message.index > (summary.latestMessage?.index ?? -1)
-                ? message
-                : summary.latestMessage;
+            const overwriteLatestMessage =
+                summary.latestMessage === undefined ||
+                message.index > summary.latestMessage.index ||
+                // If they are the same message, take the confirmed one since it'll have the correct timestamp
+                message.event.messageId === summary.latestMessage.event.messageId;
+
+            const latestMessage = overwriteLatestMessage ? message : summary.latestMessage;
 
             return {
                 ...summaries,
