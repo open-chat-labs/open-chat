@@ -344,18 +344,21 @@ export class HomeController {
         if (parsedMsg.kind === "remote_user_toggled_reaction") {
             this.remoteUserToggledReaction({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageId: BigInt(parsedMsg.messageId),
             });
         }
         if (parsedMsg.kind === "remote_user_deleted_message") {
             this.remoteUserDeletedMessage({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageId: BigInt(parsedMsg.messageId),
             });
         }
         if (parsedMsg.kind === "remote_user_removed_message") {
             this.remoteUserRemovedMessage({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageId: BigInt(parsedMsg.messageId),
             });
         }
@@ -365,19 +368,21 @@ export class HomeController {
         if (parsedMsg.kind === "remote_user_sent_message") {
             this.remoteUserSentMessage({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageEvent: {
                     ...parsedMsg.messageEvent,
                     event: {
                         ...parsedMsg.messageEvent.event,
                         messageId: BigInt(parsedMsg.messageEvent.event.messageId),
                     },
-                    timestamp: BigInt(parsedMsg.messageEvent.timestamp),
+                    timestamp: BigInt(Date.now()),
                 },
             });
         }
         if (parsedMsg.kind === "remote_user_read_message") {
             this.remoteUserReadMessage({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageId: BigInt(parsedMsg.messageId),
             });
         }
@@ -409,10 +414,13 @@ export class HomeController {
 
     remoteUserSentMessage(message: RemoteUserSentMessage): void {
         console.log("remote user sent message");
-        unconfirmed.add(message.chatId, message.messageEvent);
-        this.delegateToChatController(message, (chat) =>
-            chat.sendMessage(message.messageEvent, message.userId)
-        );
+        if (
+            !this.delegateToChatController(message, (chat) =>
+                chat.sendMessage(message.messageEvent, message.userId)
+            )
+        ) {
+            unconfirmed.add(message.chatId, message.messageEvent);
+        }
     }
 
     remoteUserReadMessage(message: RemoteUserReadMessage): void {
@@ -422,13 +430,14 @@ export class HomeController {
     private delegateToChatController(
         msg: WebRtcMessage,
         fn: (selectedChat: ChatController) => void
-    ): void {
+    ): boolean {
         const chat = this.findChatByChatType(msg);
-        if (chat === undefined) return;
+        if (chat === undefined) return false;
         const selectedChat = get(this.selectedChat);
-        if (selectedChat === undefined) return;
-        if (chat.chatId !== selectedChat.chatId) return;
+        if (selectedChat === undefined) return false;
+        if (chat.chatId !== selectedChat.chatId) return false;
         fn(selectedChat);
+        return true;
     }
 
     private onConfirmedMessage(chatId: string, message: EventWrapper<Message>): void {
@@ -437,10 +446,13 @@ export class HomeController {
             if (summary === undefined) return summaries;
 
             const latestEventIndex = Math.max(message.index, summary.latestEventIndex);
-            const latestMessage =
-                message.index > (summary.latestMessage?.index ?? -1)
-                    ? message
-                    : summary.latestMessage;
+            const overwriteLatestMessage =
+                summary.latestMessage === undefined ||
+                message.index > summary.latestMessage.index ||
+                // If they are the same message, take the confirmed one since it'll have the correct timestamp
+                message.event.messageId === summary.latestMessage.event.messageId;
+
+            const latestMessage = overwriteLatestMessage ? message : summary.latestMessage;
 
             return {
                 ...summaries,
