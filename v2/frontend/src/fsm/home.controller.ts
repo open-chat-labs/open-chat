@@ -234,11 +234,6 @@ export class HomeController {
     }
 
     leaveGroup(chatId: string): Promise<void> {
-        // this.clearSelectedChat();
-        // this.serverChatSummaries.update((chatSummaries) => {
-        //     delete chatSummaries[chatId];
-        //     return chatSummaries;
-        // });
         return this.api
             .leaveGroup(chatId)
             .then((resp) => {
