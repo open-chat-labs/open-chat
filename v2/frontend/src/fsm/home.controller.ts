@@ -1,11 +1,17 @@
 import { push } from "svelte-spa-router";
 import { derived, get, Readable, Writable, writable } from "svelte/store";
 import DRange from "drange";
-import type { ChatSummary, DirectChatSummary, EnhancedReplyContext, EventWrapper, Message } from "../domain/chat/chat";
+import type {
+    ChatSummary,
+    DirectChatSummary,
+    EnhancedReplyContext,
+    EventWrapper,
+    Message,
+} from "../domain/chat/chat";
 import {
     compareChats,
     mergeUnconfirmedIntoSummary,
-    updateArgsFromChats
+    updateArgsFromChats,
 } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
 import type { User, UsersResponse } from "../domain/user/user";
@@ -43,13 +49,24 @@ export class HomeController {
     private chatUpdatesSince?: bigint;
     private usersLastUpdate = BigInt(0);
     private serverChatSummaries: Writable<Record<string, ChatSummary>> = writable({});
-    public chatSummaries: Readable<Record<string, ChatSummary>> = derived([this.serverChatSummaries, unconfirmed], ([summaries, unconfirmed]) => {
-        return Object.entries(summaries).reduce<Record<string, ChatSummary>>((result, [chatId, summary]) => {
-            result[chatId] = mergeUnconfirmedIntoSummary(summary, unconfirmed[chatId]?.messages);
-            return result;
-        }, {});
-    })
-    public chatSummariesList = derived(this.chatSummaries, summaries => Object.values(summaries).sort(compareChats));
+    public chatSummaries: Readable<Record<string, ChatSummary>> = derived(
+        [this.serverChatSummaries, unconfirmed],
+        ([summaries, unconfirmed]) => {
+            return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
+                (result, [chatId, summary]) => {
+                    result[chatId] = mergeUnconfirmedIntoSummary(
+                        summary,
+                        unconfirmed[chatId]?.messages
+                    );
+                    return result;
+                },
+                {}
+            );
+        }
+    );
+    public chatSummariesList = derived(this.chatSummaries, (summaries) =>
+        Object.values(summaries).sort(compareChats)
+    );
     public initialised = false;
     public selectedChat: Writable<ChatController | undefined> = writable(undefined);
     public loading = writable(false);
@@ -196,32 +213,42 @@ export class HomeController {
                 return new ChatController(
                     this.api,
                     user,
-                    derived(this.serverChatSummaries, summaries => summaries[chatId]),
+                    derived(this.serverChatSummaries, (summaries) => summaries[chatId]),
                     this.messagesRead,
                     messageIndex,
-                    message => this.onConfirmedMessage(chatId, message)
+                    (message) => this.onConfirmedMessage(chatId, message)
                 );
             });
         } else {
-            this.selectedChat.set(undefined);
+            this.clearSelectedChat();
         }
     }
 
     clearSelectedChat(): void {
-        this.selectedChat.set(undefined);
+        this.selectedChat.update((selectedChat) => {
+            if (selectedChat !== undefined) {
+                selectedChat.destroy();
+            }
+            return undefined;
+        });
     }
 
-    leaveGroup(chatId: string): void {
-        this.clearSelectedChat();
-        this.serverChatSummaries.update((chatSummaries) => {
-            delete chatSummaries[chatId];
-            return chatSummaries;
-        });
-        this.api
+    leaveGroup(chatId: string): Promise<void> {
+        // this.clearSelectedChat();
+        // this.serverChatSummaries.update((chatSummaries) => {
+        //     delete chatSummaries[chatId];
+        //     return chatSummaries;
+        // });
+        return this.api
             .leaveGroup(chatId)
             .then((resp) => {
                 if (resp === "success") {
                     toastStore.showSuccessToast("leftGroup");
+                    this.clearSelectedChat();
+                    this.serverChatSummaries.update((chatSummaries) => {
+                        delete chatSummaries[chatId];
+                        return chatSummaries;
+                    });
                 } else {
                     if (resp === "owner_cannot_leave") {
                         toastStore.showFailureToast("ownerCantLeave");
@@ -229,6 +256,7 @@ export class HomeController {
                         toastStore.showFailureToast("failedToLeaveGroup");
                     }
                 }
+                return;
             })
             .catch((_err) => toastStore.showFailureToast("failedToLeaveGroup"));
     }
@@ -404,14 +432,15 @@ export class HomeController {
     }
 
     private onConfirmedMessage(chatId: string, message: EventWrapper<Message>): void {
-        this.serverChatSummaries.update(summaries => {
+        this.serverChatSummaries.update((summaries) => {
             const summary = summaries[chatId];
             if (summary === undefined) return summaries;
 
             const latestEventIndex = Math.max(message.index, summary.latestEventIndex);
-            const latestMessage = message.index > (summary.latestMessage?.index ?? -1)
-                ? message
-                : summary.latestMessage;
+            const latestMessage =
+                message.index > (summary.latestMessage?.index ?? -1)
+                    ? message
+                    : summary.latestMessage;
 
             return {
                 ...summaries,
@@ -419,7 +448,7 @@ export class HomeController {
                     ...summary,
                     latestEventIndex,
                     latestMessage,
-                }
+                },
             };
         });
     }
