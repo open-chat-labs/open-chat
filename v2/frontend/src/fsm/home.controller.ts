@@ -247,7 +247,6 @@ export class HomeController {
                         toastStore.showFailureToast("failedToLeaveGroup");
                     }
                 }
-                return;
             })
             .catch((_err) => toastStore.showFailureToast("failedToLeaveGroup"));
     }
