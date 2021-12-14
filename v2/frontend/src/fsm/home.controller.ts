@@ -386,10 +386,11 @@ export class HomeController {
 
     remoteUserSentMessage(message: RemoteUserSentMessage): void {
         console.log("remote user sent message");
-        unconfirmed.add(message.chatId, message.messageEvent);
-        this.delegateToChatController(message, (chat) =>
+        if (!this.delegateToChatController(message, (chat) =>
             chat.sendMessage(message.messageEvent, message.userId)
-        );
+        )) {
+            unconfirmed.add(message.chatId, message.messageEvent);
+        }
     }
 
     remoteUserReadMessage(message: RemoteUserReadMessage): void {
@@ -399,13 +400,14 @@ export class HomeController {
     private delegateToChatController(
         msg: WebRtcMessage,
         fn: (selectedChat: ChatController) => void
-    ): void {
+    ): boolean {
         const chat = this.findChatByChatType(msg);
-        if (chat === undefined) return;
+        if (chat === undefined) return false;
         const selectedChat = get(this.selectedChat);
-        if (selectedChat === undefined) return;
-        if (chat.chatId !== selectedChat.chatId) return;
+        if (selectedChat === undefined) return false;
+        if (chat.chatId !== selectedChat.chatId) return false;
         fn(selectedChat);
+        return true;
     }
 
     private onConfirmedMessage(chatId: string, message: EventWrapper<Message>): void {
