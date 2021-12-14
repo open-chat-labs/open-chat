@@ -112,7 +112,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "message_edited":
             case "reaction_added":
             case "reaction_removed":
-                userIds.add(e.event.message.updatedBy)
+                userIds.add(e.event.message.updatedBy);
                 break;
             case "direct_chat_created":
                 break;
@@ -156,7 +156,7 @@ export function getParticipantsString(
     participantIds: string[],
     unknownUser: string,
     you: string,
-    compareUsersFn?: ((u1: PartialUserSummary, u2: PartialUserSummary) => number)
+    compareUsersFn?: (u1: PartialUserSummary, u2: PartialUserSummary) => number
 ): string {
     if (participantIds.length > 5) {
         return `${participantIds.length} members`;
@@ -214,9 +214,7 @@ export function createMessage(
 }
 
 export function getDisplayDate(chat: ChatSummary): bigint {
-    const started = chat.kind === "direct_chat"
-        ? chat.dateCreated
-        : chat.joined;
+    const started = chat.kind === "direct_chat" ? chat.dateCreated : chat.joined;
 
     return chat.latestMessage && chat.latestMessage.timestamp > started
         ? chat.latestMessage.timestamp
@@ -327,14 +325,20 @@ function mergeUpdatedGroupChat(
     return chat;
 }
 
-export function mergeUnconfirmedIntoSummary(chatSummary: ChatSummary, unconfirmedMessages?: EventWrapper<Message>[]): ChatSummary {
+export function mergeUnconfirmedIntoSummary(
+    chatSummary: ChatSummary,
+    unconfirmedMessages?: EventWrapper<Message>[]
+): ChatSummary {
     if (unconfirmedMessages === undefined) return chatSummary;
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
     if (unconfirmedMessages.length > 0) {
         const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
-        if (latestMessage === undefined || latestUnconfirmedMessage.event.messageIndex > latestMessage.event.messageIndex) {
+        if (
+            latestMessage === undefined ||
+            latestUnconfirmedMessage.event.messageIndex > latestMessage.event.messageIndex
+        ) {
             latestMessage = latestUnconfirmedMessage;
         }
         if (latestUnconfirmedMessage.index > latestEventIndex) {
@@ -344,7 +348,7 @@ export function mergeUnconfirmedIntoSummary(chatSummary: ChatSummary, unconfirme
     return {
         ...chatSummary,
         latestMessage,
-        latestEventIndex
+        latestEventIndex,
     };
 }
 
@@ -402,7 +406,10 @@ export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
     return groupWhile(sameDate, events.filter(eventIsVisible)).map(groupBySender);
 }
 
-export function getNextMessageIndex(chat: ChatSummary, unconfirmedMessages: EventWrapper<Message>[]): number {
+export function getNextMessageIndex(
+    chat: ChatSummary,
+    unconfirmedMessages: EventWrapper<Message>[]
+): number {
     let current = chat.latestMessage?.event.messageIndex ?? -1;
     if (unconfirmedMessages.length > 0) {
         const messageIndex = unconfirmedMessages[unconfirmedMessages.length - 1].event.messageIndex;
@@ -413,7 +420,10 @@ export function getNextMessageIndex(chat: ChatSummary, unconfirmedMessages: Even
     return current + 1;
 }
 
-export function getNextEventIndex(chat: ChatSummary, unconfirmedMessages: EventWrapper<Message>[]): number {
+export function getNextEventIndex(
+    chat: ChatSummary,
+    unconfirmedMessages: EventWrapper<Message>[]
+): number {
     let current = chat.latestEventIndex;
     if (unconfirmedMessages.length > 0) {
         const eventIndex = unconfirmedMessages[unconfirmedMessages.length - 1].index;
@@ -605,12 +615,11 @@ export function replaceLocal(
             // only now do we consider this message confirmed
             const idNum = BigInt(id);
             if (unconfirmed.delete(chatId, idNum)) {
-                messageReadTracker.confirmMessage(
-                    chatId,
-                    e.event.messageIndex,
-                    idNum
-                );
-            } else if (e.event.sender === userId && !indexIsInRanges(e.event.messageIndex, readByMe)) {
+                messageReadTracker.confirmMessage(chatId, e.event.messageIndex, idNum);
+            } else if (
+                e.event.sender === userId &&
+                !indexIsInRanges(e.event.messageIndex, readByMe)
+            ) {
                 // If this message was sent by us and is not currently marked as read, mark it as read
                 messageReadTracker.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
             }
@@ -709,12 +718,16 @@ export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): Eve
 }
 
 function getLatestEventIndex(chat: ChatSummary, updatedChat: ChatSummaryUpdates): number {
-    return updatedChat.latestEventIndex !== undefined && updatedChat.latestEventIndex > chat.latestEventIndex
+    return updatedChat.latestEventIndex !== undefined &&
+        updatedChat.latestEventIndex > chat.latestEventIndex
         ? updatedChat.latestEventIndex
         : chat.latestEventIndex;
 }
 
-function getLatestMessage(chat: ChatSummary, updatedChat: ChatSummaryUpdates): EventWrapper<Message> | undefined {
+function getLatestMessage(
+    chat: ChatSummary,
+    updatedChat: ChatSummaryUpdates
+): EventWrapper<Message> | undefined {
     return (updatedChat.latestMessage?.index ?? -1) > (chat.latestMessage?.index ?? -1)
         ? updatedChat.latestMessage
         : chat.latestMessage;

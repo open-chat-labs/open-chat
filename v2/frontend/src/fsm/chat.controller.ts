@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import DRange from "drange";
 import { derived, get, readable, Readable, Writable } from "svelte/store";
-import type {
+import {
     AddParticipantsResponse,
     ChatEvent,
     ChatSummary,
@@ -13,6 +13,7 @@ import type {
     LocalReaction,
     Message,
     MessageContent,
+    nullChat,
     Participant,
     ParticipantRole,
     SendMessageSuccess,
@@ -82,9 +83,10 @@ export class ChatController {
         private _focusMessageIndex: number | undefined,
         private _onConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
-        this.chat = derived(
-            [serverChatSummary, unconfirmed],
-            ([summary, unconfirmed]) => mergeUnconfirmedIntoSummary(summary, unconfirmed[summary.chatId]?.messages));
+        this.chat = derived([serverChatSummary, unconfirmed], ([summary, unconfirmed]) => {
+            if (summary === undefined) return nullChat;
+            return mergeUnconfirmedIntoSummary(summary, unconfirmed[summary.chatId]?.messages);
+        });
 
         this.events = writable([]);
         this.loading = writable(false);
@@ -94,11 +96,13 @@ export class ChatController {
         this.chatUserIds = new Set<string>();
         const { chatId } = get(this.chat);
         this.chatId = chatId;
-        const draftMessage = readable(draftMessages.get(chatId), set => draftMessages.subscribe(d => set(d[chatId] ?? {})));
-        this.textContent = derived(draftMessage, d => d.textContent);
-        this.replyingTo = derived(draftMessage, d => d.replyingTo);
-        this.fileToAttach = derived(draftMessage, d => d.attachment);
-        this.editingEvent = derived(draftMessage, d => d.editingEvent);
+        const draftMessage = readable(draftMessages.get(chatId), (set) =>
+            draftMessages.subscribe((d) => set(d[chatId] ?? {}))
+        );
+        this.textContent = derived(draftMessage, (d) => d.textContent);
+        this.replyingTo = derived(draftMessage, (d) => d.replyingTo);
+        this.fileToAttach = derived(draftMessage, (d) => d.attachment);
+        this.editingEvent = derived(draftMessage, (d) => d.editingEvent);
 
         if (process.env.NODE_ENV !== "test") {
             if (_focusMessageIndex !== undefined) {
@@ -206,8 +210,10 @@ export class ChatController {
 
     private upToDate(): boolean {
         const events = get(this.events);
-        return this.chatVal.latestMessage === undefined ||
-            events[events.length - 1]?.index >= this.chatVal.latestEventIndex;
+        return (
+            this.chatVal.latestMessage === undefined ||
+            events[events.length - 1]?.index >= this.chatVal.latestEventIndex
+        );
     }
 
     private async handleEventsResponse(resp: EventsResponse<ChatEvent>): Promise<void> {
@@ -235,16 +241,15 @@ export class ChatController {
             this.localReactions
         );
 
-        const userIds = chat.kind === "direct_chat"
-            ? new Set([chat.them])
-            : userIdsFromEvents(updated);
+        const userIds =
+            chat.kind === "direct_chat" ? new Set([chat.them]) : userIdsFromEvents(updated);
 
         await this.updateUserStore(userIds);
         this.makeRtcConnections(userIds);
         this.events.set(updated);
 
         if (resp.events.length > 0) {
-            resp.events.forEach(e => this.confirmedEventIndexesLoaded.add(e.index));
+            resp.events.forEach((e) => this.confirmedEventIndexesLoaded.add(e.index));
         }
     }
 
@@ -292,9 +297,7 @@ export class ChatController {
         const maxServerEventIndex = this.latestServerEventIndex();
         const loadedUpTo = this.confirmedUpToEventIndex();
 
-        return loadedUpTo < maxServerEventIndex
-            ? [loadedUpTo + 1, true]
-            : undefined;
+        return loadedUpTo < maxServerEventIndex ? [loadedUpTo + 1, true] : undefined;
     }
 
     previousMessagesCriteria(): [number, boolean] | undefined {
@@ -567,7 +570,11 @@ export class ChatController {
     markAllRead(): void {
         const latestMessageIndex = this.chatVal.latestMessage?.event.messageIndex;
         if (latestMessageIndex) {
-            this.markRead.markRangeRead(this.chatId, getMinVisibleMessageIndex(this.chatVal), latestMessageIndex);
+            this.markRead.markRangeRead(
+                this.chatId,
+                getMinVisibleMessageIndex(this.chatVal),
+                latestMessageIndex
+            );
         }
     }
 
@@ -580,7 +587,10 @@ export class ChatController {
     }
 
     getNextMessageIndex(): number {
-        return getNextMessageIndex(get(this.serverChatSummary), unconfirmed.getMessages(this.chatId));
+        return getNextMessageIndex(
+            get(this.serverChatSummary),
+            unconfirmed.getMessages(this.chatId)
+        );
     }
 
     getNextEventIndex(): number {
@@ -605,7 +615,7 @@ export class ChatController {
             const confirmed = {
                 event: {
                     ...candidate,
-                    messageIndex: resp.messageIndex
+                    messageIndex: resp.messageIndex,
                 },
                 index: resp.eventIndex,
                 timestamp: resp.timestamp,
@@ -682,7 +692,9 @@ export class ChatController {
     }
 
     morePreviousMessagesAvailable(): boolean {
-        return (this.earliestLoadedIndex() ?? Number.MAX_VALUE) > this.earliestAvailableEventIndex();
+        return (
+            (this.earliestLoadedIndex() ?? Number.MAX_VALUE) > this.earliestAvailableEventIndex()
+        );
     }
 
     earliestAvailableEventIndex(): number {
@@ -703,14 +715,19 @@ export class ChatController {
 
     editEvent(event: EventWrapper<Message>): void {
         draftMessages.setEditingEvent(this.chatId, event);
-        draftMessages.setAttachment(this.chatId, event.event.content.kind !== "text_content" ? event.event.content : undefined);
-        draftMessages.setReplyingTo(this.chatId, event.event.repliesTo && event.event.repliesTo.kind === "rehydrated_reply_context"
-            ? {
-                  ...event.event.repliesTo,
-                  content: event.event.content,
-                  sender: get(userStore)[event.event.sender],
-              }
-            : undefined
+        draftMessages.setAttachment(
+            this.chatId,
+            event.event.content.kind !== "text_content" ? event.event.content : undefined
+        );
+        draftMessages.setReplyingTo(
+            this.chatId,
+            event.event.repliesTo && event.event.repliesTo.kind === "rehydrated_reply_context"
+                ? {
+                      ...event.event.repliesTo,
+                      content: event.event.content,
+                      sender: get(userStore)[event.event.sender],
+                  }
+                : undefined
         );
     }
 
