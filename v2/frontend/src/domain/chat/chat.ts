@@ -1,4 +1,4 @@
-import type DRange from "drange";
+import DRange from "drange";
 import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 
@@ -347,7 +347,7 @@ export type ReactionRemoved = {
 };
 
 export type StaleMessage = {
-    updatedBy: string,
+    updatedBy: string;
     eventIndex: number;
     messageId: bigint;
 };
@@ -546,6 +546,18 @@ export type GroupChatDetailsUpdates = {
     blockedUsersAdded: Set<string>;
     blockedUsersRemoved: Set<string>;
     latestEventIndex: number;
+};
+
+export const nullChat: ChatSummary = {
+    chatId: "",
+    readByMe: new DRange(),
+    latestEventIndex: 0,
+    latestMessage: undefined,
+    notificationsMuted: true,
+    kind: "direct_chat",
+    them: "",
+    readByThem: new DRange(),
+    dateCreated: BigInt(0),
 };
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
@@ -838,7 +850,14 @@ export type ToggleReactionResponse =
 
 export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";
 
-export type SerializableMergedUpdatesResponse = Omit<MergedUpdatesResponse, "chatSummaries"> & { chatSummaries: SerializableChatSummary[] };
+export type SerializableMergedUpdatesResponse = Omit<MergedUpdatesResponse, "chatSummaries"> & {
+    chatSummaries: SerializableChatSummary[];
+};
 export type SerializableChatSummary = SerializableDirectChatSummary | SerializableGroupChatSummary;
-export type SerializableDirectChatSummary = Omit<DirectChatSummary, "readByMe" | "readByThem"> & { readByMe: IndexRange[], readByThem: IndexRange[] };
-export type SerializableGroupChatSummary = Omit<GroupChatSummary, "readByMe"> & { readByMe: IndexRange[] };
+export type SerializableDirectChatSummary = Omit<DirectChatSummary, "readByMe" | "readByThem"> & {
+    readByMe: IndexRange[];
+    readByThem: IndexRange[];
+};
+export type SerializableGroupChatSummary = Omit<GroupChatSummary, "readByMe"> & {
+    readByMe: IndexRange[];
+};
