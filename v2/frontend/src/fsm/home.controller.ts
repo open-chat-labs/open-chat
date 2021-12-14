@@ -240,10 +240,6 @@ export class HomeController {
                 if (resp === "success") {
                     toastStore.showSuccessToast("leftGroup");
                     this.clearSelectedChat();
-                    this.serverChatSummaries.update((chatSummaries) => {
-                        delete chatSummaries[chatId];
-                        return chatSummaries;
-                    });
                 } else {
                     if (resp === "owner_cannot_leave") {
                         toastStore.showFailureToast("ownerCantLeave");
