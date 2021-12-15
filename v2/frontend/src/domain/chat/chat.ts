@@ -1,4 +1,4 @@
-import DRange from "drange";
+import type DRange from "drange";
 import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 
@@ -546,18 +546,6 @@ export type GroupChatDetailsUpdates = {
     blockedUsersAdded: Set<string>;
     blockedUsersRemoved: Set<string>;
     latestEventIndex: number;
-};
-
-export const nullChat: ChatSummary = {
-    chatId: "",
-    readByMe: new DRange(),
-    latestEventIndex: 0,
-    latestMessage: undefined,
-    notificationsMuted: true,
-    kind: "direct_chat",
-    them: "",
-    readByThem: new DRange(),
-    dateCreated: BigInt(0),
 };
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import DRange from "drange";
 import { derived, get, readable, Readable, Writable } from "svelte/store";
-import {
+import type {
     AddParticipantsResponse,
     ChatEvent,
     ChatSummary,
@@ -13,7 +13,6 @@ import {
     LocalReaction,
     Message,
     MessageContent,
-    nullChat,
     Participant,
     ParticipantRole,
     SendMessageSuccess,
@@ -83,10 +82,9 @@ export class ChatController {
         private _focusMessageIndex: number | undefined,
         private _onConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
-        this.chat = derived([serverChatSummary, unconfirmed], ([summary, unconfirmed]) => {
-            if (summary === undefined) return nullChat;
-            return mergeUnconfirmedIntoSummary(summary, unconfirmed[summary.chatId]?.messages);
-        });
+        this.chat = derived([serverChatSummary, unconfirmed], ([summary, unconfirmed]) =>
+            mergeUnconfirmedIntoSummary(summary, unconfirmed[summary.chatId]?.messages)
+        );
 
         this.events = writable([]);
         this.loading = writable(false);
