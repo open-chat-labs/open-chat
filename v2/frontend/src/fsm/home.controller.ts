@@ -113,30 +113,33 @@ export class HomeController {
                           this.messagesRead
                       );
 
-            const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
-            userIds.add(this.user.userId);
-            const usersResponse = await this.api.getUsers(
-                missingUserIds(get(userStore), userIds),
-                BigInt(0)
-            );
-
-            userStore.addMany(usersResponse.users);
-            blockedUsers.set(chatsResponse.blockedUsers);
             this.chatUpdatesSince = chatsResponse.timestamp;
-            this.usersLastUpdate = usersResponse.timestamp;
 
-            const selectedChat = get(this.selectedChat);
+            if (chatsResponse.wasUpdated) {
+                const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
+                userIds.add(this.user.userId);
+                const usersResponse = await this.api.getUsers(
+                    missingUserIds(get(userStore), userIds),
+                    BigInt(0)
+                );
 
-            this.serverChatSummaries.set(
-                chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
-                    rec[chat.chatId] = chat;
-                    if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
-                        selectedChat.chatUpdated();
-                    }
-                    return rec;
-                }, {})
-            );
-            this.initialised = true;
+                userStore.addMany(usersResponse.users);
+                blockedUsers.set(chatsResponse.blockedUsers);
+                this.usersLastUpdate = usersResponse.timestamp;
+
+                const selectedChat = get(this.selectedChat);
+
+                this.serverChatSummaries.set(
+                    chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
+                        rec[chat.chatId] = chat;
+                        if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
+                            selectedChat.chatUpdated();
+                        }
+                        return rec;
+                    }, {})
+                );
+                this.initialised = true;
+            }
             toastStore.hideToast();
             console.log("loaded chats");
         } catch (err) {
@@ -164,12 +167,7 @@ export class HomeController {
         this.messagesRead.stop();
         this.chatPoller?.stop();
         this.usersPoller?.stop();
-        this.selectedChat.update((selectedChat) => {
-            if (selectedChat !== undefined) {
-                selectedChat.destroy();
-            }
-            return undefined;
-        });
+        this.clearSelectedChat();
     }
 
     updateUserAvatar(data: DataContent): void {
@@ -251,6 +249,10 @@ export class HomeController {
                 if (resp === "success") {
                     toastStore.showSuccessToast("leftGroup");
                     this.clearSelectedChat();
+                    this.serverChatSummaries.update((summaries) => {
+                        delete summaries[chatId];
+                        return summaries;
+                    });
                 } else {
                     if (resp === "owner_cannot_leave") {
                         toastStore.showFailureToast("ownerCantLeave");
