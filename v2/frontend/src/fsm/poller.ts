@@ -37,5 +37,6 @@ export class Poller {
         if (this.unsubscribeBackground) {
             this.unsubscribeBackground();
         }
+        this.stopped = true;
     }
 }
