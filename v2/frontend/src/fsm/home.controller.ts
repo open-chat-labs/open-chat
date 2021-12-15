@@ -1,5 +1,5 @@
 import { push } from "svelte-spa-router";
-import { derived, get, Readable, Writable, writable } from "svelte/store";
+import { derived, get, readable, Readable, Writable, writable } from "svelte/store";
 import DRange from "drange";
 import type {
     ChatSummary,
@@ -210,10 +210,18 @@ export class HomeController {
                     selectedChat.destroy();
                 }
 
+                const readableChatSummary = readable(chat, (set) =>
+                    this.serverChatSummaries.subscribe((summaries) => {
+                        if (summaries[chatId] !== undefined) {
+                            set(summaries[chatId]);
+                        }
+                    })
+                );
+
                 return new ChatController(
                     this.api,
                     user,
-                    derived(this.serverChatSummaries, (summaries) => summaries[chatId]),
+                    readableChatSummary,
                     this.messagesRead,
                     messageIndex,
                     (message) => this.onConfirmedMessage(chatId, message)
@@ -228,6 +236,7 @@ export class HomeController {
         this.selectedChat.update((selectedChat) => {
             if (selectedChat !== undefined) {
                 selectedChat.destroy();
+                push("/");
             }
             return undefined;
         });
