@@ -19,7 +19,8 @@ export class BucketClient extends CandidService<BucketService> implements IBucke
         totalSize: bigint,
         chunkSize: number,
         chunkIndex: number,
-        bytes: Array<number>): Promise<UploadChunkResponse> {
+        bytes: Array<number>
+    ): Promise<UploadChunkResponse> {
         return this.handleResponse(
             this.service.upload_chunk({
                 accessors,

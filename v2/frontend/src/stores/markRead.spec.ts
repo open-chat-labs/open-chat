@@ -19,14 +19,14 @@ describe("mark messages read", () => {
                 sender: "",
                 content: {
                     kind: "text_content",
-                    text: ""
+                    text: "",
                 },
                 reactions: [],
-                edited: false
+                edited: false,
             },
             index: 0,
             timestamp: BigInt(0),
-        }
+        };
     }
 
     beforeEach(() => {
@@ -116,7 +116,9 @@ describe("mark messages read", () => {
             expect(markRead.getFirstUnreadMessageIndex("abc", 0, 100)).toEqual(Number.MAX_VALUE);
         });
         test("where we have no messages", () => {
-            expect(markRead.getFirstUnreadMessageIndex("abc", 0, undefined)).toEqual(Number.MAX_VALUE);
+            expect(markRead.getFirstUnreadMessageIndex("abc", 0, undefined)).toEqual(
+                Number.MAX_VALUE
+            );
         });
         test("where we have read nothing", () => {
             expect(markRead.getFirstUnreadMessageIndex("abc", 0, 100)).toEqual(0);

@@ -21,7 +21,8 @@ export class DataClient implements IDataClient {
         }
         const openStorageAgent = new OpenStorageAgent(
             agent,
-            Principal.fromText("process.env.OPEN_STORAGE_INDEX_CANISTER"));
+            Principal.fromText("process.env.OPEN_STORAGE_INDEX_CANISTER")
+        );
 
         return new DataClient(openStorageAgent);
     }
@@ -41,13 +42,15 @@ export class DataClient implements IDataClient {
             content.kind === "audio_content"
         ) {
             if (content.blobData && content.blobReference === undefined) {
-                const accessorIds = accessorCanisterIds.map(c => Principal.fromText(c));
+                const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
 
-                content.blobReference = this.convertResponse(await this.openStorageAgent.uploadBlob(
-                    content.mimeType,
-                    accessorIds,
-                    content.blobData
-                ));
+                content.blobReference = this.convertResponse(
+                    await this.openStorageAgent.uploadBlob(
+                        content.mimeType,
+                        accessorIds,
+                        content.blobData
+                    )
+                );
             }
         } else if (content.kind === "video_content") {
             if (
@@ -56,11 +59,19 @@ export class DataClient implements IDataClient {
                 content.videoData.blobReference === undefined &&
                 content.imageData.blobReference === undefined
             ) {
-                const accessorIds = accessorCanisterIds.map(c => Principal.fromText(c));
+                const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
 
                 await Promise.all([
-                    this.openStorageAgent.uploadBlob(content.mimeType, accessorIds, content.videoData.blobData),
-                    this.openStorageAgent.uploadBlob("image/jpg", accessorIds, content.imageData.blobData),
+                    this.openStorageAgent.uploadBlob(
+                        content.mimeType,
+                        accessorIds,
+                        content.videoData.blobData
+                    ),
+                    this.openStorageAgent.uploadBlob(
+                        "image/jpg",
+                        accessorIds,
+                        content.imageData.blobData
+                    ),
                 ]).then(([video, image]) => {
                     content.videoData.blobReference = this.convertResponse(video);
                     content.imageData.blobReference = this.convertResponse(image);
@@ -74,7 +85,7 @@ export class DataClient implements IDataClient {
     convertResponse(response: UploadBlobResponse): BlobReference {
         return {
             canisterId: response.canisterId.toString(),
-            blobId: response.blobId
+            blobId: response.blobId,
         };
     }
 }

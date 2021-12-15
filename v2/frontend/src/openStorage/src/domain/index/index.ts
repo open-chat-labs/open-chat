@@ -7,19 +7,19 @@ export type AllocatedBucketResponse =
     | AllocatedBucketBucketUnavailable;
 
 export type AllocatedBucketSuccess = {
-    kind: "success",
-    canisterId: Principal,
-    chunkSize: number,
-}
+    kind: "success";
+    canisterId: Principal;
+    chunkSize: number;
+};
 
 export type AllocatedBucketAllowanceReached = {
-    kind: "allowance_reached",
-}
+    kind: "allowance_reached";
+};
 
 export type AllocatedBucketUserNotFound = {
-    kind: "user_not_found",
-}
+    kind: "user_not_found";
+};
 
 export type AllocatedBucketBucketUnavailable = {
-    kind: "bucket_unavailable",
-}
+    kind: "bucket_unavailable";
+};

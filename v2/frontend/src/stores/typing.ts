@@ -3,8 +3,8 @@ import { writable } from "svelte/store";
 type TypersByChat = Record<string, Set<string>>;
 
 type UserTyping = {
-    chatId: string,
-    timeout: number
+    chatId: string;
+    timeout: number;
 };
 
 const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -19,7 +19,10 @@ export const typing = {
         store.update((chats) => {
             // Start a timeout which will mark the user as having stopped typing if no further 'user typing' events are
             // received within MARK_TYPING_STOPPED_INTERVAL_MS.
-            const timeout = window.setTimeout(() => _delete(userId), MARK_TYPING_STOPPED_INTERVAL_MS);
+            const timeout = window.setTimeout(
+                () => _delete(userId),
+                MARK_TYPING_STOPPED_INTERVAL_MS
+            );
 
             const existingEntry = usersTyping.get(userId);
             if (existingEntry) {
