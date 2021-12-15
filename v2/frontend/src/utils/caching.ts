@@ -146,6 +146,7 @@ export function setCachedChats(
         (await db).put(
             "chats",
             {
+                wasUpdated: true,
                 chatSummaries: serialisable,
                 timestamp: data.timestamp,
                 blockedUsers: data.blockedUsers,

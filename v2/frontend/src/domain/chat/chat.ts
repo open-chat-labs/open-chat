@@ -436,6 +436,7 @@ export type UpdateArgs = {
 };
 
 export type MergedUpdatesResponse = {
+    wasUpdated: boolean;
     chatSummaries: ChatSummary[];
     blockedUsers: Set<string>;
     timestamp: bigint;
