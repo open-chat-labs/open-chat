@@ -1,0 +1,20 @@
+[package]
+name = "sms_sender_core"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1.51"
+candid = "0.7.6"
+futures = "0.3.17"
+garcon = "0.2.3"
+ic-agent = "0.6.0"
+index_store = { path = "../../libraries/index_store" }
+user_index_canister = { path = "../../canisters/user_index/api" }
+log = "0.4.14"
+openssl = { version = "0.10.35", features = ["vendored"] }
+serde = "1.0.130"
+tokio = "1.11.0"
+types = { path = "../../libraries/types" }

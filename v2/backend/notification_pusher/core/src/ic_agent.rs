@@ -1,4 +1,3 @@
-use crate::error::Error;
 use candid::{Decode, Encode};
 use garcon::ThrottleWaiter;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
@@ -8,16 +7,18 @@ use notifications_canister::{notifications, remove_notifications, remove_subscri
 use std::collections::HashMap;
 use std::time::Duration;
 use tracing::trace;
-use types::{CanisterId, UserId};
+use types::{CanisterId, Error, UserId};
 
 pub struct IcAgentConfig {
     pub ic_url: String,
     pub ic_identity_pem: String,
     pub fetch_root_key: bool,
+    pub canister_id: CanisterId,
 }
 
 pub struct IcAgent {
     agent: Agent,
+    canister_id: CanisterId,
 }
 
 impl IcAgent {
@@ -35,21 +36,20 @@ impl IcAgent {
             agent.fetch_root_key().await?;
         }
 
-        Ok(IcAgent { agent })
+        Ok(IcAgent {
+            agent,
+            canister_id: config.canister_id,
+        })
     }
 
-    pub async fn get_notifications(
-        &self,
-        canister_id: CanisterId,
-        from_notification_index: u64,
-    ) -> Result<notifications::SuccessResult, Error> {
+    pub async fn get_notifications(&self, from_notification_index: u64) -> Result<notifications::SuccessResult, Error> {
         let args = notifications::Args { from_notification_index };
 
         trace!(?args, "notifications::args");
 
         let response = self
             .agent
-            .query(&canister_id, "notifications")
+            .query(&self.canister_id, "notifications")
             .with_arg(Encode!(&args)?)
             .call()
             .await?;
@@ -61,7 +61,7 @@ impl IcAgent {
         Ok(result)
     }
 
-    pub async fn remove_notifications(&self, canister_id: CanisterId, up_to_notification_index: u64) -> Result<(), Error> {
+    pub async fn remove_notifications(&self, up_to_notification_index: u64) -> Result<(), Error> {
         let args = remove_notifications::Args {
             up_to_notification_index,
         };
@@ -70,21 +70,17 @@ impl IcAgent {
 
         let request_id = self
             .agent
-            .update(&canister_id, "remove_notifications")
+            .update(&self.canister_id, "remove_notifications")
             .with_arg(Encode!(&args)?)
             .call()
             .await?;
 
         let waiter = ThrottleWaiter::new(Duration::from_secs(1));
-        self.agent.wait(request_id, &canister_id, waiter).await?;
+        self.agent.wait(request_id, &self.canister_id, waiter).await?;
         Ok(())
     }
 
-    pub async fn remove_subscriptions(
-        &self,
-        canister_id: CanisterId,
-        subscriptions_by_user: HashMap<UserId, Vec<String>>,
-    ) -> Result<(), Error> {
+    pub async fn remove_subscriptions(&self, subscriptions_by_user: HashMap<UserId, Vec<String>>) -> Result<(), Error> {
         if subscriptions_by_user.is_empty() {
             return Ok(());
         }
@@ -100,13 +96,13 @@ impl IcAgent {
 
         let request_id = self
             .agent
-            .update(&canister_id, "remove_subscriptions")
+            .update(&self.canister_id, "remove_subscriptions")
             .with_arg(Encode!(&args)?)
             .call()
             .await?;
 
         let waiter = ThrottleWaiter::new(Duration::from_secs(1));
-        self.agent.wait(request_id, &canister_id, waiter).await?;
+        self.agent.wait(request_id, &self.canister_id, waiter).await?;
         Ok(())
     }
 

@@ -34,7 +34,9 @@ members = [
     "backend/libraries/canister_logger",
     "backend/libraries/chat_events",
     "backend/libraries/cycles_utils",
+    "backend/libraries/dynamodb_index_store",
     "backend/libraries/http_request",
+    "backend/libraries/index_store",
     "backend/libraries/ledger_utils",
     "backend/libraries/search",
     "backend/libraries/serializer",
@@ -42,8 +44,9 @@ members = [
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
-    "backend/notification_pusher/shared",
-    "backend/sms_service"
+    "backend/notification_pusher/core",
+    "backend/sms_sender/aws",
+    "backend/sms_sender/core"
 ]
 
 [profile.release]
