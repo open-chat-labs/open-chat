@@ -11,7 +11,7 @@ mod sns;
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     dotenv::dotenv()?;
-    tracing::subscriber::set_global_default(tracing_subscriber::fmt::Subscriber::default())?;
+    tracing_subscriber::fmt::init();
 
     info!("Starting...");
 
