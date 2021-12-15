@@ -60,7 +60,7 @@
 
         const user = chatSummary.latestMessage.event.sender === userId
             ? toTitleCase($_("you"))
-            : users[chatSummary.latestMessage.event.sender].username ?? "";
+            : users[chatSummary.latestMessage.event.sender]?.username ?? $_("unknownUser");
 
         return `${user}: ${latestMessageText}`;
     }

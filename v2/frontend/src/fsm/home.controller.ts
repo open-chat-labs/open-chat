@@ -113,7 +113,7 @@ export class HomeController {
                           this.messagesRead
                       );
 
-            const userIds = this.userIdsFromDirectChatSummaries(chatsResponse.chatSummaries);
+            const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
             userIds.add(this.user.userId);
             const usersResponse = await this.api.getUsers(
                 missingUserIds(get(userStore), userIds),
@@ -148,11 +148,13 @@ export class HomeController {
         }
     }
 
-    private userIdsFromDirectChatSummaries(chats: ChatSummary[]): Set<string> {
+    private userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
         const userIds = new Set<string>();
         chats.forEach((chat) => {
             if (chat.kind === "direct_chat") {
                 userIds.add(chat.them);
+            } else if (chat.latestMessage !== undefined) {
+                userIds.add(chat.latestMessage.event.sender);
             }
         });
         return userIds;
