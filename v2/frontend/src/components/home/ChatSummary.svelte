@@ -1,14 +1,15 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
+    import type { UserLookup } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { formatMessageDate } from "../../utils/date";
     import { _ } from "svelte-i18n";
     import {
+        getContentAsText,
         getDisplayDate,
         getMinVisibleMessageIndex,
-        latestMessageText,
     } from "../../domain/chat/chat.utils";
     import type { ChatSummary } from "../../domain/chat/chat";
     import { pop } from "../../utils/transition";
@@ -18,9 +19,11 @@
     import type { IMessageReadTracker } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
     import { onDestroy } from "svelte";
+    import { toTitleCase } from "../../utils/string";
 
     export let index: number;
     export let chatSummary: ChatSummary;
+    export let userId: string;
     export let selected: boolean;
     export let messagesRead: IMessageReadTracker;
 
@@ -44,8 +47,26 @@
         };
     }
 
+    function formatLatestMessage(chatSummary: ChatSummary, users: UserLookup): string {
+        if (chatSummary.latestMessage === undefined) {
+            return "";
+        }
+
+        const latestMessageText = getContentAsText(chatSummary.latestMessage.event.content);
+
+        if (chatSummary.kind === "direct_chat") {
+            return latestMessageText;
+        }
+
+        const user = chatSummary.latestMessage.event.sender === userId
+            ? toTitleCase($_("you"))
+            : users[chatSummary.latestMessage.event.sender].username ?? "";
+
+        return `${user}: ${latestMessageText}`;
+    }
+
     $: chat = normaliseChatSummary(chatSummary);
-    $: lastMessage = latestMessageText(chatSummary);
+    $: lastMessage = formatLatestMessage(chatSummary, $userStore);
 
     let unsub = messagesRead.subscribe((_val) => {
         unreadMessages = messagesRead.unreadMessageCount(
