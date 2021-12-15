@@ -1,16 +1,19 @@
 import { readable, derived } from "svelte/store";
 
-const dimensions = readable({ width: window.innerWidth, height: window.innerHeight }, function start(set) {
-    function resize() {
-        set({ width: window.innerWidth, height: window.innerHeight });
+const dimensions = readable(
+    { width: window.innerWidth, height: window.innerHeight },
+    function start(set) {
+        function resize() {
+            set({ width: window.innerWidth, height: window.innerHeight });
+        }
+
+        window.addEventListener("resize", resize);
+
+        return function stop() {
+            window.removeEventListener("resize", resize);
+        };
     }
-
-    window.addEventListener("resize", resize);
-
-    return function stop() {
-        window.removeEventListener("resize", resize);
-    };
-});
+);
 
 export const enum ScreenWidth {
     ExtraSmall = "ExtraSmall",
@@ -38,7 +41,7 @@ export const screenWidth = derived(dimensions, ($dimensions) => {
 
 export const screenHeight = derived(dimensions, ($dimensions) => {
     if ($dimensions.height < 768) {
-        return ScreenHeight.Small
+        return ScreenHeight.Small;
     } else {
         return ScreenHeight.Large;
     }

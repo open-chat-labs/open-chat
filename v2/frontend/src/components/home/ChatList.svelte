@@ -260,6 +260,7 @@
 <style type="text/scss">
     .body {
         overflow: auto;
+        @include nice-scrollbar();
         @include size-below(xs) {
             padding: var(--chatSearch-xs-pd);
         }

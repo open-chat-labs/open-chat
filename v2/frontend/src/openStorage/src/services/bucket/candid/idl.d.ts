@@ -1,9 +1,5 @@
 import type { IDL } from "@dfinity/candid";
-import {
-    _SERVICE,
-    UploadChunkResponse,
-    DeleteBlobResponse,
-} from "./types";
+import { _SERVICE, UploadChunkResponse, DeleteBlobResponse } from "./types";
 export {
     _SERVICE as BucketService,
     UploadChunkResponse as ApiUploadChunkResponse,

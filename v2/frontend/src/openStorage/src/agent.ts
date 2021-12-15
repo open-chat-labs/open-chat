@@ -20,12 +20,15 @@ export class OpenStorageAgent {
         mimeType: string,
         accessors: Array<Principal>,
         bytes: ArrayBuffer,
-        onProgress?: (percentComplete: number) => void): Promise<UploadBlobResponse> {
-
+        onProgress?: (percentComplete: number) => void
+    ): Promise<UploadBlobResponse> {
         const hash = Array.from(new Uint8Array(hashBytes(bytes)));
         const blobSize = bytes.byteLength;
 
-        const allocatedBucketResponse = await this.indexClient.allocatedBucket(hash, BigInt(blobSize));
+        const allocatedBucketResponse = await this.indexClient.allocatedBucket(
+            hash,
+            BigInt(blobSize)
+        );
 
         if (allocatedBucketResponse.kind !== "success") {
             // TODO make this better!
@@ -58,14 +61,15 @@ export class OpenStorageAgent {
                         BigInt(blobSize),
                         chunkSize,
                         chunkIndex,
-                        chunkBytes);
+                        chunkBytes
+                    );
 
                     if (chunkResponse === "success") {
                         chunksCompleted++;
-                        onProgress?.(100 * chunksCompleted / chunkCount);
+                        onProgress?.((100 * chunksCompleted) / chunkCount);
                         return;
                     }
-                } catch(e) {
+                } catch (e) {
                     console.log("Error uploading chunk " + chunkIndex, e);
                 }
             }
@@ -76,7 +80,7 @@ export class OpenStorageAgent {
             canisterId: bucketCanisterId,
             blobId,
             pathPrefix: "/blobs/",
-        }
+        };
     }
 
     private static newBlobId(): bigint {
@@ -85,7 +89,7 @@ export class OpenStorageAgent {
 }
 
 export interface UploadBlobResponse {
-    canisterId: Principal,
-    blobId: bigint,
-    pathPrefix: string,
+    canisterId: Principal;
+    blobId: bigint;
+    pathPrefix: string;
 }

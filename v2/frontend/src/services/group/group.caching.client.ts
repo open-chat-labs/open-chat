@@ -26,7 +26,8 @@ import {
     getCachedEvents,
     getCachedEventsByIndex,
     getCachedEventsWindow,
-    setCachedEvents, setCachedMessage,
+    setCachedEvents,
+    setCachedMessage,
 } from "../../utils/caching";
 
 /**
@@ -48,9 +49,7 @@ export class CachingGroupClient implements IGroupClient {
         );
         return (
             cachedEvents ??
-            this.client
-                .chatEventsByIndex(eventIndexes)
-                .then(setCachedEvents(this.db, this.chatId))
+            this.client.chatEventsByIndex(eventIndexes).then(setCachedEvents(this.db, this.chatId))
         );
     }
 
@@ -92,7 +91,11 @@ export class CachingGroupClient implements IGroupClient {
         );
     }
 
-    addParticipants(userIds: string[], myUsername: string, allowBlocked: boolean): Promise<AddParticipantsResponse> {
+    addParticipants(
+        userIds: string[],
+        myUsername: string,
+        allowBlocked: boolean
+    ): Promise<AddParticipantsResponse> {
         return this.client.addParticipants(userIds, myUsername, allowBlocked);
     }
 

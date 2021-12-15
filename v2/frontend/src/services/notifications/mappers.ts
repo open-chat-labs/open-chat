@@ -63,7 +63,9 @@ export function notification(candid: ApiNotification): Notification {
     throw new Error(`Unexpected ApiNotification type received, ${candid}`);
 }
 
-export function addedToGroupNotification(candid: ApiAddedToGroupNotification): AddedToGroupNotification {
+export function addedToGroupNotification(
+    candid: ApiAddedToGroupNotification
+): AddedToGroupNotification {
     return {
         kind: "added_to_group_notification",
         chatId: candid.chat_id.toString(),

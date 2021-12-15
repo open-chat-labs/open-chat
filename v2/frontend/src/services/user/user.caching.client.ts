@@ -27,7 +27,8 @@ import {
     getCachedEventsByIndex,
     getCachedEventsWindow,
     setCachedChats,
-    setCachedEvents, setCachedMessage,
+    setCachedEvents,
+    setCachedMessage,
 } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
 import { updateArgsFromChats } from "../../domain/chat/chat.utils";
