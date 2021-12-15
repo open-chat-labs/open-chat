@@ -167,12 +167,7 @@ export class HomeController {
         this.messagesRead.stop();
         this.chatPoller?.stop();
         this.usersPoller?.stop();
-        this.selectedChat.update((selectedChat) => {
-            if (selectedChat !== undefined) {
-                selectedChat.destroy();
-            }
-            return undefined;
-        });
+        this.clearSelectedChat();
     }
 
     updateUserAvatar(data: DataContent): void {
@@ -254,6 +249,10 @@ export class HomeController {
                 if (resp === "success") {
                     toastStore.showSuccessToast("leftGroup");
                     this.clearSelectedChat();
+                    this.serverChatSummaries.update((summaries) => {
+                        delete summaries[chatId];
+                        return summaries;
+                    });
                 } else {
                     if (resp === "owner_cannot_leave") {
                         toastStore.showFailureToast("ownerCantLeave");
