@@ -23,7 +23,11 @@ export interface IMessageReadTracker {
         firstMessageIndex: number,
         latestMessageIndex: number | undefined
     ) => number;
-    getFirstUnreadMessageIndex: (chatId: string, firstMessageIndex: number, latestMessageIndex: number | undefined) => number;
+    getFirstUnreadMessageIndex: (
+        chatId: string,
+        firstMessageIndex: number,
+        latestMessageIndex: number | undefined
+    ) => number;
     isRead: (chatId: string, messageIndex: number, messageId: bigint) => boolean;
     stop: () => void;
     subscribe(sub: Subscriber<MessageReadState>): Unsubscriber;
@@ -138,17 +142,28 @@ export class MessageReadTracker implements IMessageReadTracker {
         return this.waiting[chatId] !== undefined && this.waiting[chatId].delete(messageId);
     }
 
-    unreadMessageCount(chatId: string, firstMessageIndex: number, latestMessageIndex: number | undefined): number {
+    unreadMessageCount(
+        chatId: string,
+        firstMessageIndex: number,
+        latestMessageIndex: number | undefined
+    ): number {
         if (latestMessageIndex === undefined) {
             return 0;
         }
 
         const total = latestMessageIndex - firstMessageIndex + 1;
-        const read = (this.serverState[chatId]?.length ?? 0) + (this.state[chatId]?.length ?? 0) + (this.waiting[chatId]?.size ?? 0);
+        const read =
+            (this.serverState[chatId]?.length ?? 0) +
+            (this.state[chatId]?.length ?? 0) +
+            (this.waiting[chatId]?.size ?? 0);
         return Math.max(total - read, 0);
     }
 
-    getFirstUnreadMessageIndex(chatId: string, firstMessageIndex: number, latestMessageIndex: number | undefined): number {
+    getFirstUnreadMessageIndex(
+        chatId: string,
+        firstMessageIndex: number,
+        latestMessageIndex: number | undefined
+    ): number {
         if (this.unreadMessageCount(chatId, firstMessageIndex, latestMessageIndex) === 0) {
             return Number.MAX_VALUE;
         }
@@ -172,9 +187,7 @@ export class MessageReadTracker implements IMessageReadTracker {
             }
         }
 
-        return unreadMessageIndexes.length > 0
-            ? unreadMessageIndexes.index(0)
-            : Number.MAX_VALUE;
+        return unreadMessageIndexes.length > 0 ? unreadMessageIndexes.index(0) : Number.MAX_VALUE;
     }
 
     syncWithServer(chatId: string, ranges: DRange): void {
@@ -221,11 +234,19 @@ export class FakeMessageReadTracker implements IMessageReadTracker {
         return undefined;
     }
 
-    unreadMessageCount(_chatId: string, _firstMessageIndex: number, _latestMessageIndex: number | undefined): number {
+    unreadMessageCount(
+        _chatId: string,
+        _firstMessageIndex: number,
+        _latestMessageIndex: number | undefined
+    ): number {
         return 0;
     }
 
-    getFirstUnreadMessageIndex(_chatId: string, _firstMessageIndex: number, _latestMessageIndex: number | undefined): number {
+    getFirstUnreadMessageIndex(
+        _chatId: string,
+        _firstMessageIndex: number,
+        _latestMessageIndex: number | undefined
+    ): number {
         return 0;
     }
 

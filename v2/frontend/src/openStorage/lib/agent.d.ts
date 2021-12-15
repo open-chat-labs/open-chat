@@ -4,7 +4,12 @@ export declare class OpenStorageAgent {
     private readonly agent;
     private readonly indexClient;
     constructor(agent: HttpAgent, indexCanisterId: Principal);
-    uploadBlob(mimeType: string, accessors: Array<Principal>, bytes: ArrayBuffer, onProgress?: (percentComplete: number) => void): Promise<UploadBlobResponse>;
+    uploadBlob(
+        mimeType: string,
+        accessors: Array<Principal>,
+        bytes: ArrayBuffer,
+        onProgress?: (percentComplete: number) => void
+    ): Promise<UploadBlobResponse>;
     private static newBlobId;
 }
 export interface UploadBlobResponse {

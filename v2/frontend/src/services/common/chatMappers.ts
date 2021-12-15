@@ -62,7 +62,7 @@ export function updatedMessage(candid: ApiUpdatedMessage): StaleMessage {
 
 export function apiMessageIndexRanges(ranges: ApiMessageIndexRange[]): DRange {
     const drange = new DRange();
-    ranges.forEach(r => drange.add(r.from, r.to));
+    ranges.forEach((r) => drange.add(r.from, r.to));
     return drange;
 }
 

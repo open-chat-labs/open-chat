@@ -28,7 +28,7 @@ self.addEventListener("fetch", () => {
 });
 
 async function handlePushNotification(event: PushEvent): Promise<void> {
-    if (await getSoftDisabled() || !event.data) return;
+    if ((await getSoftDisabled()) || !event.data) return;
 
     const bytes = toUint8Array(event.data.text());
 
@@ -107,7 +107,7 @@ async function showNotification(notification: Notification): Promise<void> {
         icon,
         tag: path,
         data: {
-            path
+            path,
         },
     });
 }

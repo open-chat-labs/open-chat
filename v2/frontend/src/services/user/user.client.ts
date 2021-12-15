@@ -312,9 +312,9 @@ export class UserClient extends CandidService implements IUserClient {
             this.userService.mark_read({
                 messages_read: request.map(({ chatId, ranges }) => ({
                     chat_id: Principal.fromText(chatId),
-                    message_ranges: ranges.subranges().map(r => ({
-                       from: r.low,
-                       to: r.high
+                    message_ranges: ranges.subranges().map((r) => ({
+                        from: r.low,
+                        to: r.high,
                     })),
                 })),
             }),
