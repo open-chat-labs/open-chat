@@ -69,10 +69,10 @@ impl SmsReader for IcAgent {
             .call()
             .await?;
 
-        match Decode!(&response, user_index_canister::sms_messages::Response)? {
-            user_index_canister::sms_messages::Response::Success(result) => Ok(result),
-            user_index_canister::sms_messages::Response::NotAuthorized => Err("Not authorized".into()),
-        }
+        let user_index_canister::sms_messages::Response::Success(result) =
+            Decode!(&response, user_index_canister::sms_messages::Response)?;
+
+        Ok(result)
     }
 
     async fn remove(&self, up_to_index: u64) -> Result<(), Error> {
@@ -88,9 +88,9 @@ impl SmsReader for IcAgent {
         let waiter = ThrottleWaiter::new(Duration::from_secs(1));
         let response_bytes = self.agent.wait(request_id, &self.canister_id, waiter).await?;
 
-        match Decode!(&response_bytes, user_index_canister::remove_sms_messages::Response)? {
-            user_index_canister::remove_sms_messages::Response::Success => Ok(()),
-            user_index_canister::remove_sms_messages::Response::NotAuthorized => Err("Not authorized".into()),
-        }
+        let user_index_canister::remove_sms_messages::Response::Success =
+            Decode!(&response_bytes, user_index_canister::remove_sms_messages::Response)?;
+
+        Ok(())
     }
 }
