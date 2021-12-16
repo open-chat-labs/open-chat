@@ -38,7 +38,9 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         } else if let Some(user) = runtime_state.data.users.get_by_phone_number(&phone_number) {
             match user {
                 User::Unconfirmed(u) => {
-                    if !u.has_code_expired(now) {
+                    if u.has_code_expired(now) {
+                        runtime_state.data.users.remove_by_principal(&u.principal);
+                    } else {
                         return AlreadyRegisteredByOther;
                     }
                 }
