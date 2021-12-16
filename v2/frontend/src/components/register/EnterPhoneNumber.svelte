@@ -19,7 +19,7 @@
 
     onMount(() => {
         iti = intlTelInput(phoneElement, {
-            preferredCountries: ["us", "gb", "cn"],
+            preferredCountries: ["gb"],
         });
 
         phoneElement.addEventListener("countrychange", () => {
