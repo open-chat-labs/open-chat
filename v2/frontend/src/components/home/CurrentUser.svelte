@@ -13,12 +13,7 @@
     import { _ } from "svelte-i18n";
     import { modalStore, ModalType } from "../../stores/modal";
     import { avatarUrl } from "../../domain/user/user.utils";
-    import {
-        ScreenHeight,
-        screenHeight,
-        ScreenWidth,
-        screenWidth,
-    } from "../../stores/screenDimensions";
+    import { ScreenHeight, screenHeight, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import type { PartialUserSummary } from "../../domain/user/user";
     import { createEventDispatcher } from "svelte";
     import { notificationStatus } from "../../stores/notifications";
@@ -121,7 +116,7 @@
         background-color: var(--currentUser-bg);
         border-bottom: var(--currentUser-bd);
         border-right: var(--currentUser-bd);
-        margin: var(--currentUser-mg);
+        margin-bottom: $sp3;
         position: relative;
 
         &.small {

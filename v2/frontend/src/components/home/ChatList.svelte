@@ -260,12 +260,13 @@
 <style type="text/scss">
     .body {
         overflow: auto;
-        overflow-y: overlay;
         @include nice-scrollbar();
-        padding: var(--chatSearch-xs-pd);
         @include size-below(xs) {
             padding: var(--chatSearch-xs-pd);
         }
+    }
+    .chat-summaries {
+        overflow: auto;
     }
 
     .search-subtitle {

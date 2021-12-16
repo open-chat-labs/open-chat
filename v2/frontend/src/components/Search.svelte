@@ -56,7 +56,7 @@
 <style type="text/scss">
     .wrapper {
         margin: var(--chatSearch-mg);
-        margin: 0 $sp3 $sp3 $sp3;
+        margin-bottom: $sp3;
         background-color: var(--chatSearch-bg);
         display: flex;
         align-items: center;
