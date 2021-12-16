@@ -20,7 +20,6 @@
     onMount(() => {
         iti = intlTelInput(phoneElement, {
             preferredCountries: ["us", "gb", "cn"],
-            separateDialCode: true,
         });
 
         phoneElement.addEventListener("countrychange", () => {
@@ -76,15 +75,6 @@
 
     .phone-number {
         display: flex;
-        .country {
-            flex: 2;
-            margin-right: $sp3;
-
-            &.rtl {
-                margin-right: 0;
-                margin-left: $sp3;
-            }
-        }
         .number {
             flex: 4;
             margin-bottom: $sp4;
@@ -96,10 +86,6 @@
 
         @include size-below(xs) {
             flex-wrap: wrap;
-            .country {
-                flex-basis: 100%;
-                margin-right: 0;
-            }
             .number {
                 flex-basis: 100%;
             }
