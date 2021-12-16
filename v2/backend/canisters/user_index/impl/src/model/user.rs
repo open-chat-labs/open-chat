@@ -1,3 +1,4 @@
+use crate::CONFIRMATION_CODE_EXPIRY_MILLIS;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
@@ -134,6 +135,12 @@ pub struct UnconfirmedUser {
     pub confirmation_code: String,
     pub date_generated: TimestampMillis,
     pub sms_messages_sent: u16,
+}
+
+impl UnconfirmedUser {
+    pub fn has_code_expired(&self, now: TimestampMillis) -> bool {
+        now > self.date_generated + CONFIRMATION_CODE_EXPIRY_MILLIS
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]

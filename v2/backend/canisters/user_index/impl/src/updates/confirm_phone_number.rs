@@ -1,5 +1,5 @@
 use crate::model::user::{ConfirmedUser, User};
-use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
+use crate::{RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::{CanisterCreationStatusInternal, PhoneNumber};
@@ -20,9 +20,7 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         match user {
             User::Unconfirmed(u) => {
-                let code_expires_at = u.date_generated + CONFIRMATION_CODE_EXPIRY_MILLIS;
-                let has_code_expired = now > code_expires_at;
-                if has_code_expired {
+                if u.has_code_expired(now) {
                     return ConfirmationCodeExpired;
                 } else if (args.confirmation_code == u.confirmation_code) || (test_mode && args.confirmation_code == "123456") {
                     phone_number = u.phone_number.clone();
@@ -53,7 +51,7 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
 mod tests {
     use super::*;
     use crate::model::user::UnconfirmedUser;
-    use crate::Data;
+    use crate::{Data, CONFIRMATION_CODE_EXPIRY_MILLIS};
     use utils::env::test::TestEnv;
 
     #[test]

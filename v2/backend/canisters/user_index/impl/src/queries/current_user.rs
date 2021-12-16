@@ -15,9 +15,16 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
 
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         match user {
-            User::Unconfirmed(u) => Unconfirmed(UnconfirmedResult {
-                phone_number: u.phone_number.clone(),
-            }),
+            User::Unconfirmed(u) => {
+                let now = runtime_state.env.now();
+                if u.has_code_expired(now) {
+                    UserNotFound
+                } else {
+                    Unconfirmed(UnconfirmedResult {
+                        phone_number: u.phone_number.clone(),
+                    })
+                }
+            }
             User::Confirmed(u) => {
                 if u.username.is_none() {
                     ConfirmedPendingUsername(ConfirmedPendingUsernameResult {

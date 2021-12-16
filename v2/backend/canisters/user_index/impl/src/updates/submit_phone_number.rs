@@ -1,6 +1,6 @@
 use crate::model::user::{UnconfirmedUser, User};
 use crate::model::user_map::AddUserResult;
-use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
+use crate::{RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::ConfirmationCodeSms;
@@ -38,9 +38,7 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         } else if let Some(user) = runtime_state.data.users.get_by_phone_number(&phone_number) {
             match user {
                 User::Unconfirmed(u) => {
-                    let code_expires_at = u.date_generated + CONFIRMATION_CODE_EXPIRY_MILLIS;
-                    let has_code_expired = now > code_expires_at;
-                    if !has_code_expired {
+                    if !u.has_code_expired(now) {
                         return AlreadyRegisteredByOther;
                     }
                 }
