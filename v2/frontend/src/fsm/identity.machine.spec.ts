@@ -155,7 +155,7 @@ describe("identity machine transitions", () => {
         testTransition(
             identityMachine,
             "requesting_identity",
-            "done.invoke.getIdentity",
+            { type: "done.invoke.getIdentity", data: fakeIdentity },
             "loading_user",
             testConfig()
         );
@@ -181,7 +181,7 @@ describe("identity machine transitions", () => {
         testTransition(
             identityMachine,
             "logging_in",
-            "done.invoke.login",
+            { type: "done.invoke.login", data: fakeIdentity },
             "loading_user",
             testConfig()
         );

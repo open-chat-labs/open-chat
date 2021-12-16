@@ -17,6 +17,7 @@ pub async fn create_and_install(
     wasm_module: Vec<u8>,
     wasm_arg: Vec<u8>,
     cycles_to_use: Cycles,
+    on_canister_created: fn(Cycles) -> (),
 ) -> Result<CanisterId, CreateAndInstallError> {
     let canister_id = match existing_canister_id {
         Some(id) => id,
@@ -24,7 +25,10 @@ pub async fn create_and_install(
             Err(error) => {
                 return Err(CreateAndInstallError::CreateFailed(error));
             }
-            Ok(id) => id,
+            Ok(id) => {
+                on_canister_created(cycles_to_use);
+                id
+            }
         },
     };
 

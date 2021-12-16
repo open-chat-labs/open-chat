@@ -28,14 +28,14 @@ impl GroupChatEvents {
 
     fn hydrate_event(&self, event: &EventWrapper<ChatEventInternal>) -> EventWrapper<GroupChatEvent> {
         let event_data = match &event.event {
-            ChatEventInternal::Message(m) => GroupChatEvent::Message(self.inner.hydrate_message(m)),
-            ChatEventInternal::MessageEdited(m) => GroupChatEvent::MessageEdited(self.inner.hydrate_updated_message(**m)),
-            ChatEventInternal::MessageDeleted(m) => GroupChatEvent::MessageDeleted(self.inner.hydrate_updated_message(**m)),
+            ChatEventInternal::Message(m) => GroupChatEvent::Message(Box::new(self.inner.hydrate_message(m))),
+            ChatEventInternal::MessageEdited(m) => GroupChatEvent::MessageEdited(self.inner.hydrate_updated_message(m)),
+            ChatEventInternal::MessageDeleted(m) => GroupChatEvent::MessageDeleted(self.inner.hydrate_updated_message(m)),
             ChatEventInternal::MessageReactionAdded(m) => {
-                GroupChatEvent::MessageReactionAdded(self.inner.hydrate_updated_message(**m))
+                GroupChatEvent::MessageReactionAdded(self.inner.hydrate_updated_message(m))
             }
             ChatEventInternal::MessageReactionRemoved(m) => {
-                GroupChatEvent::MessageReactionRemoved(self.inner.hydrate_updated_message(**m))
+                GroupChatEvent::MessageReactionRemoved(self.inner.hydrate_updated_message(m))
             }
             ChatEventInternal::GroupChatCreated(g) => GroupChatEvent::GroupChatCreated(*g.clone()),
             ChatEventInternal::GroupNameChanged(g) => GroupChatEvent::GroupNameChanged(*g.clone()),

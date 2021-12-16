@@ -11,6 +11,14 @@ type TimestampMillis = nat64;
 type TimestampNanos = nat64;
 type UserId = CanisterId;
 
+type AddedToGroupNotification =
+    record {
+        chat_id: ChatId;
+        group_name: text;
+        added_by: UserId;
+        added_by_name: text;
+    };
+
 type AudioContent =
     record {
         caption: opt text;
@@ -317,6 +325,7 @@ type MessageIndexRange =
 
 type UpdatedMessage =
     record {
+        updated_by: UserId;
         event_index: EventIndex;
         message_id: MessageId;
     };
@@ -332,10 +341,9 @@ type MessageMatch =
 
 type Notification =
     variant {
+        AddedToGroupNotification: AddedToGroupNotification;
         DirectMessageNotification: DirectMessageNotification;
         GroupMessageNotification: GroupMessageNotification;
-        V1DirectMessageNotification: V1DirectMessageNotification;
-        V1GroupMessageNotification: V1GroupMessageNotification;
     };
 
 type NotificationEnvelope =
@@ -740,90 +748,6 @@ type AlertId =
     variant {
         Internal: nat32;
         GroupDeleted: ChatId;
-    };
-
-
-// TODO Delete the V1 stuff below
-
-type V1GroupId = nat;
-type V1ChatId = nat;
-
-type V1TextContent =
-    record {
-        text: text;
-    };
-
-type V1MediaContent =
-    record {
-        caption: opt text;
-        mime_type: text;
-        width: nat32;
-        height: nat32;
-        blob_id: text;
-        blob_size: nat32;
-        chunk_size: nat32;
-        thumbnail_data: text;
-        blob_deleted: bool;
-    };
-
-type V1FileContent =
-    record {
-        caption: opt text;
-        name: text;
-        mime_type: text;
-        blob_id: text;
-        blob_size: nat32;
-        chunk_size: nat32;
-        blob_deleted: bool;
-    };
-
-type V1CyclesContent =
-    record {
-        amount: Cycles;
-        caption: opt text;
-    };
-
-type V1MessageContent =
-    variant {
-        Text: V1TextContent;
-        Media: V1MediaContent;
-        File: V1FileContent;
-        Cycles: V1CyclesContent;
-    };
-
-type V1ReplyContext =
-    record {
-        chat_id: V1ChatId;
-        user_id: UserId;
-        message_id: nat32;
-        content: V1MessageContent;
-    };
-
-type V1Message =
-    record {
-        id: nat32;
-        client_message_id: text;
-        timestamp: TimestampMillis;
-        sender: UserId;
-        content: V1MessageContent;
-        replies_to: opt V1ReplyContext;
-    };
-
-type V1DirectMessageNotification =
-    record {
-        chat_id: text;
-        sender: UserId;
-        sender_name: text;
-        message: V1Message;
-    };
-
-type V1GroupMessageNotification =
-    record {
-        chat_id: text;
-        group_name: text;
-        sender: UserId;
-        sender_name: text;
-        message: V1Message;
     };
 
 type VideoContent =

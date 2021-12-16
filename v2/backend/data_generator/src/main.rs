@@ -1,7 +1,7 @@
 use canister_client::operations::{create_group, register_3_default_users, send_direct_message, send_group_message};
 use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::{CanisterIds, TestIdentity, USER1_DEFAULT_NAME, USER2_DEFAULT_NAME, USER3_DEFAULT_NAME};
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use ic_agent::Agent;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
@@ -18,6 +18,7 @@ async fn main() {
         group_index: opts.group_index,
         notifications: opts.notifications,
         online_users_aggregator: opts.online_users_aggregator,
+        open_storage_index: opts.open_storage_index,
     };
 
     run_data_generator(opts.url, canister_ids, opts.username, opts.seed, opts.max_groups).await;
@@ -154,14 +155,14 @@ fn build_rng(seed: Option<u32>) -> StdRng {
     StdRng::from_seed(seed_bytes)
 }
 
-#[derive(Clap)]
-#[clap(setting = AppSettings::ColoredHelp)]
+#[derive(Parser)]
 struct Opts {
     pub url: String,
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub notifications: CanisterId,
     pub online_users_aggregator: CanisterId,
+    pub open_storage_index: CanisterId,
     pub username: String,
     pub seed: Option<u32>,
     pub max_groups: Option<u32>,

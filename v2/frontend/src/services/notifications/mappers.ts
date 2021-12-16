@@ -1,4 +1,5 @@
 import type {
+    AddedToGroupNotification,
     DirectNotification,
     GroupNotification,
     Notification,
@@ -12,6 +13,7 @@ import type {
     ApiUnmuteNotificationsResponse,
 } from "../user/candid/idl";
 import type {
+    ApiAddedToGroupNotification,
     ApiDirectMessageNotification,
     ApiGroupMessageNotification,
     ApiNotification,
@@ -49,6 +51,9 @@ export function subscriptionExistsResponse(
 }
 
 export function notification(candid: ApiNotification): Notification {
+    if ("AddedToGroupNotification" in candid) {
+        return addedToGroupNotification(candid.AddedToGroupNotification);
+    }
     if ("GroupMessageNotification" in candid) {
         return groupNotification(candid.GroupMessageNotification);
     }
@@ -56,6 +61,18 @@ export function notification(candid: ApiNotification): Notification {
         return directNotification(candid.DirectMessageNotification);
     }
     throw new Error(`Unexpected ApiNotification type received, ${candid}`);
+}
+
+export function addedToGroupNotification(
+    candid: ApiAddedToGroupNotification
+): AddedToGroupNotification {
+    return {
+        kind: "added_to_group_notification",
+        chatId: candid.chat_id.toString(),
+        groupName: candid.group_name,
+        addedBy: candid.added_by.toString(),
+        addedByUsername: candid.added_by_name,
+    };
 }
 
 export function groupNotification(candid: ApiGroupMessageNotification): GroupNotification {

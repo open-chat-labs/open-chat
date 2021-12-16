@@ -54,6 +54,21 @@ export function compareUsername(u1: PartialUserSummary, u2: PartialUserSummary):
     return u1.username === u2.username ? 0 : u2.username < u1.username ? 1 : -1;
 }
 
+export function compareIsNotYouThenUsername(
+    yourUserId: string
+): (u1: PartialUserSummary, u2: PartialUserSummary) => number {
+    return (u1: PartialUserSummary, u2: PartialUserSummary) => {
+        const u1IsYou = u1.userId === yourUserId;
+        const u2IsYou = u2.userId === yourUserId;
+        if (u1IsYou !== u2IsYou) {
+            return u1IsYou ? 1 : -1;
+        }
+        if (u2.username === undefined) return -1;
+        if (u1.username === undefined) return 1;
+        return u1.username === u2.username ? 0 : u2.username < u1.username ? 1 : -1;
+    };
+}
+
 export function nullUser(username: string): UserSummary {
     return {
         userId: "null_user", // this might cause problems if we try to create a Principal from it

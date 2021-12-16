@@ -1,3 +1,4 @@
+import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
@@ -5,6 +6,10 @@ import type {
     EventWrapper,
     IndexRange,
     MergedUpdatesResponse,
+    Message,
+    SendMessageResponse,
+    SendMessageSuccess,
+    SerializableMergedUpdatesResponse,
 } from "../domain/chat/chat";
 import { rollbar } from "./logging";
 
@@ -17,10 +22,10 @@ const blobbyContentTypes = ["file_content", "image_content", "video_content", "a
 export interface ChatSchema extends DBSchema {
     chats: {
         key: string;
-        value: MergedUpdatesResponse;
+        value: SerializableMergedUpdatesResponse;
     };
 
-    chat_messages: {
+    chat_events: {
         key: string;
         value: EventWrapper<ChatEvent>;
     };
@@ -50,16 +55,16 @@ export function createCacheKey(chatId: string, index: number): string {
     return `${chatId}_${padMessageIndex(index)}`;
 }
 
-export function openMessageCache(): Database | undefined {
-    if (process.env.NODE_ENV === "test") {
+export function openCache(principal: string): Database | undefined {
+    if (process.env.NODE_ENV === "test" || !process.env.CLIENT_CACHING) {
         return undefined;
     }
     try {
-        return openDB<ChatSchema>("openchat_db", 10, {
+        return openDB<ChatSchema>(`openchat_db_${principal}`, 12, {
             upgrade(db, _oldVersion, _newVersion) {
                 try {
-                    if (db.objectStoreNames.contains("chat_messages")) {
-                        db.deleteObjectStore("chat_messages");
+                    if (db.objectStoreNames.contains("chat_events")) {
+                        db.deleteObjectStore("chat_events");
                     }
                     if (db.objectStoreNames.contains("media_data")) {
                         db.deleteObjectStore("media_data");
@@ -70,7 +75,7 @@ export function openMessageCache(): Database | undefined {
                     if (db.objectStoreNames.contains("message_index_event_index")) {
                         db.deleteObjectStore("message_index_event_index");
                     }
-                    db.createObjectStore("chat_messages");
+                    db.createObjectStore("chat_events");
                     db.createObjectStore("chats");
                     db.createObjectStore("message_index_event_index");
                     if (!db.objectStoreNames.contains("soft_disabled")) {
@@ -90,7 +95,28 @@ export async function getCachedChats(
     db: Database,
     userId: string
 ): Promise<MergedUpdatesResponse | undefined> {
-    return (await db).get("chats", userId) as Promise<MergedUpdatesResponse | undefined>;
+    const fromCache = (await (await db).get("chats", userId)) as
+        | SerializableMergedUpdatesResponse
+        | undefined;
+    return fromCache
+        ? {
+              ...fromCache,
+              chatSummaries: fromCache.chatSummaries.map((c) => {
+                  if (c.kind === "direct_chat") {
+                      return {
+                          ...c,
+                          readByMe: indexRangesToDRange(c.readByMe),
+                          readByThem: indexRangesToDRange(c.readByThem),
+                      };
+                  } else {
+                      return {
+                          ...c,
+                          readByMe: indexRangesToDRange(c.readByMe),
+                      };
+                  }
+              }),
+          }
+        : undefined;
 }
 
 export function setCachedChats(
@@ -103,12 +129,15 @@ export function setCachedChats(
             if (c.kind === "direct_chat") {
                 return {
                     ...c,
+                    readByMe: drangeToIndexRanges(c.readByMe),
+                    readByThem: drangeToIndexRanges(c.readByThem),
                     latestMessage: c.latestMessage ? makeSerialisable(c.latestMessage) : undefined,
                 };
             }
             if (c.kind === "group_chat") {
                 return {
                     ...c,
+                    readByMe: drangeToIndexRanges(c.readByMe),
                     latestMessage: c.latestMessage ? makeSerialisable(c.latestMessage) : undefined,
                 };
             }
@@ -117,6 +146,7 @@ export function setCachedChats(
         (await db).put(
             "chats",
             {
+                wasUpdated: true,
                 chatSummaries: serialisable,
                 timestamp: data.timestamp,
                 blockedUsers: data.blockedUsers,
@@ -127,7 +157,7 @@ export function setCachedChats(
     };
 }
 
-export async function getCachedMessagesWindow<T extends ChatEvent>(
+export async function getCachedEventsWindow<T extends ChatEvent>(
     db: Database,
     eventIndexRange: IndexRange,
     chatId: string,
@@ -158,7 +188,7 @@ async function loadEventByIndex<T extends ChatEvent>(
     idx: number
 ): Promise<EventWrapper<T> | undefined> {
     const key = createCacheKey(chatId, idx);
-    return db.get("chat_messages", key) as Promise<EventWrapper<T> | undefined>;
+    return db.get("chat_events", key) as Promise<EventWrapper<T> | undefined>;
 }
 
 async function aggregateEventsWindow<T extends ChatEvent>(
@@ -252,7 +282,7 @@ async function aggregateEvents<T extends ChatEvent>(
         }
 
         const key = createCacheKey(chatId, currentIndex);
-        const evt = await resolvedDb.get("chat_messages", key);
+        const evt = await resolvedDb.get("chat_events", key);
         if (evt) {
             if (evt.event.kind === "message") {
                 numMessages += 1;
@@ -280,10 +310,10 @@ export async function getCachedMessageByIndex<T extends ChatEvent>(
     chatId: string
 ): Promise<EventWrapper<T> | undefined> {
     const key = createCacheKey(chatId, eventIndex);
-    return (await db).get("chat_messages", key) as Promise<EventWrapper<T> | undefined>;
+    return (await db).get("chat_events", key) as Promise<EventWrapper<T> | undefined>;
 }
 
-export async function getCachedMessagesByIndex<T extends ChatEvent>(
+export async function getCachedEventsByIndex<T extends ChatEvent>(
     db: Database,
     eventIndexes: number[],
     chatId: string
@@ -295,7 +325,7 @@ export async function getCachedMessagesByIndex<T extends ChatEvent>(
     return events.length === eventIndexes.length ? { events, affectedEvents: [] } : undefined;
 }
 
-export async function getCachedMessages<T extends ChatEvent>(
+export async function getCachedEvents<T extends ChatEvent>(
     db: Database,
     eventIndexRange: IndexRange,
     chatId: string,
@@ -339,29 +369,79 @@ function makeSerialisable<T extends ChatEvent>(ev: EventWrapper<T>): EventWrappe
     return ev;
 }
 
-export function setCachedMessages<T extends ChatEvent>(
+function drangeToIndexRanges(drange: DRange): IndexRange[] {
+    return drange.subranges().map((r) => [r.low, r.high]);
+}
+
+function indexRangesToDRange(ranges: IndexRange[]): DRange {
+    const drange = new DRange();
+    ranges.forEach((r) => drange.add(r[0], r[1]));
+    return drange;
+}
+
+export function setCachedEvents<T extends ChatEvent>(
     db: Database,
     chatId: string
 ): (resp: EventsResponse<T>) => Promise<EventsResponse<T>> {
     return async (resp: EventsResponse<T>) => {
         if (resp === "events_failed") return Promise.resolve(resp);
-        const messageTx = (await db).transaction("chat_messages", "readwrite");
-        const messageStore = messageTx.objectStore("chat_messages");
-        resp.events.forEach(async (event) => {
-            await messageStore.put(makeSerialisable<T>(event), createCacheKey(chatId, event.index));
-        });
-        await messageTx.done;
-
-        const mapTx = (await db).transaction("message_index_event_index", "readwrite");
-        const mapStore = mapTx.objectStore("message_index_event_index");
-        resp.events.forEach(async (event) => {
-            if (event.event.kind === "message") {
-                await mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`);
-            }
-        });
-        await mapTx.done;
+        const tx = (await db).transaction(
+            ["chat_events", "message_index_event_index"],
+            "readwrite"
+        );
+        const eventStore = tx.objectStore("chat_events");
+        const mapStore = tx.objectStore("message_index_event_index");
+        await Promise.all(
+            resp.events.map(async (event) => {
+                await eventStore.put(
+                    makeSerialisable<T>(event),
+                    createCacheKey(chatId, event.index)
+                );
+                if (event.event.kind === "message") {
+                    await mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`);
+                }
+            })
+        );
+        await tx.done;
 
         return resp;
+    };
+}
+
+export function setCachedMessage(
+    db: Database,
+    chatId: string,
+    message: Message
+): (resp: SendMessageResponse) => Promise<SendMessageResponse> {
+    return async (resp: SendMessageResponse) => {
+        if (resp.kind !== "success") return Promise.resolve(resp);
+
+        const event = messageToEvent(message, resp);
+
+        const tx = (await db).transaction(
+            ["chat_events", "message_index_event_index"],
+            "readwrite"
+        );
+        const eventStore = tx.objectStore("chat_events");
+        const mapStore = tx.objectStore("message_index_event_index");
+        await Promise.all([
+            eventStore.put(makeSerialisable(event), createCacheKey(chatId, event.index)),
+            mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`),
+        ]);
+        await tx.done;
+
+        return resp;
+    };
+}
+
+function messageToEvent(message: Message, resp: SendMessageSuccess): EventWrapper<Message> {
+    return {
+        event: {
+            ...message,
+            messageIndex: resp.messageIndex,
+        },
+        index: resp.eventIndex,
+        timestamp: resp.timestamp,
     };
 }
 
@@ -374,11 +454,13 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
     if (db === undefined) {
         throw new Error("Unable to open indexDB, cannot overwrite cache entries");
     }
-    const tx = (await db).transaction("chat_messages", "readwrite");
-    const store = tx.objectStore("chat_messages");
-    events.forEach(async (event) => {
-        await store.put(makeSerialisable<T>(event), createCacheKey(chatId, event.index));
-    });
+    const tx = (await db).transaction("chat_events", "readwrite");
+    const store = tx.objectStore("chat_events");
+    await Promise.all(
+        events.map((event) =>
+            store.put(makeSerialisable<T>(event), createCacheKey(chatId, event.index))
+        )
+    );
     await tx.done;
 }
 
@@ -399,4 +481,17 @@ export async function getSoftDisabled(): Promise<boolean> {
     return false;
 }
 
-export const db = openMessageCache();
+let db: Database | undefined;
+
+export function getDb(): Database | undefined {
+    return db;
+}
+
+export function initDb(principal: string): Database | undefined {
+    db = openCache(principal);
+    return db;
+}
+
+export function closeDb(): void {
+    db = undefined;
+}

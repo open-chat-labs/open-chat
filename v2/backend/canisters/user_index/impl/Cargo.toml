@@ -2,7 +2,7 @@
 name = "user_index_canister_impl"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -23,6 +23,9 @@ ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
 itertools = "0.10.1"
 ledger_utils = { path = "../../../libraries/ledger_utils" }
+open_storage_index_canister = { path = "../../open_storage_index/api" }
+open_storage_index_canister_c2c_client = { path = "../../open_storage_index/c2c_client" }
+rand = "0.7.3"
 serde = "1.0.126"
 serializer = { path = "../../../libraries/serializer" }
 tracing = "0.1.29"

@@ -7,10 +7,8 @@
     import type { EventWrapper, Message, MessageContent } from "../../domain/chat/chat";
     import { getMessageContent } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
-    import { createEventDispatcher } from "svelte";
     import Loading from "../Loading.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
-    const dispatch = createEventDispatcher();
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -64,26 +62,24 @@
 
             const msg = controller.createMessage(textContent, fileToAttach);
             controller.api
-                .sendMessage($chat, controller.user, msg!)
+                .sendMessage($chat, controller.user, msg)
                 .then((resp) => {
                     if (resp.kind === "success") {
-                        controller.updateMessage(msg, resp);
+                        controller.confirmMessage(msg, resp);
                     } else {
+                        controller.removeMessage(msg.messageId, controller.user.userId);
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
-                        controller.removeMessage(msg.messageId, controller.user.userId);
-                        // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
-                        dispatch("messageConfirmed", msg!.messageId);
                     }
                 })
                 .catch((err) => {
-                    toastStore.showFailureToast("errorSendingMessage");
                     controller.removeMessage(msg.messageId, controller.user.userId);
+                    console.log(err);
+                    toastStore.showFailureToast("errorSendingMessage");
                     rollbar.error("Exception sending message", err);
-                    // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
                 });
 
-            const event = { event: msg!, index: nextEventIndex, timestamp: BigInt(Date.now()) };
+            const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
             controller.sendMessage(event, controller.user.userId);
         }
     }
@@ -140,18 +136,22 @@
 
 <div class="footer">
     <div class="footer-overlay">
-        {#if $replyingTo}
-            <ReplyingTo
-                on:cancelReply={cancelReply}
-                user={controller.user}
-                replyingTo={$replyingTo} />
-        {/if}
-        {#if $fileToAttach !== undefined}
-            {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content"}
-                <DraftMediaMessage draft={$fileToAttach} />
-            {:else if $fileToAttach.kind === "crypto_content"}
-                <div>Crypto transfer preview</div>
-            {/if}
+        {#if $replyingTo || $fileToAttach !== undefined}
+            <div class="draft-container">
+                {#if $replyingTo}
+                    <ReplyingTo
+                        on:cancelReply={cancelReply}
+                        user={controller.user}
+                        replyingTo={$replyingTo} />
+                {/if}
+                {#if $fileToAttach !== undefined}
+                    {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content"}
+                        <DraftMediaMessage content={$fileToAttach} />
+                    {:else if $fileToAttach.kind === "crypto_content"}
+                        <div>Crypto transfer preview</div>
+                    {/if}
+                {/if}
+            </div>
         {/if}
         {#if showEmojiPicker}
             {#await import("./EmojiPicker.svelte")}
@@ -185,11 +185,26 @@
         width: 100%;
         display: flex;
         flex-direction: column;
+        justify-content: center;
+        align-content: center;
+        align-items: center;
+        background-color: var(--entry-bg);
+    }
+
+    .draft-container {
+        max-width: 80%;
+        padding-bottom: 8px;
     }
 
     :global(.footer-overlay emoji-picker) {
         --num-columns: 15 !important;
-        @include size-below(xs) {
+        @include size-below(md) {
+            --num-columns: 11 !important;
+        }
+        @include size-below(sm) {
+            --num-columns: 9 !important;
+        }
+        @include size-below(xxs) {
             --num-columns: 7 !important;
         }
     }

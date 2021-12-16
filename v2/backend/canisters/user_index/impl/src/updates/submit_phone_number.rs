@@ -7,7 +7,6 @@ use types::ConfirmationCodeSms;
 use user_index_canister::submit_phone_number::{Response::*, *};
 
 const USER_LIMIT: usize = 100;
-const TEST_USER_LIMIT: usize = 3;
 
 #[update]
 #[trace]
@@ -16,8 +15,7 @@ fn submit_phone_number(args: Args) -> Response {
 }
 
 fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let test_mode = runtime_state.data.test_mode;
-    if runtime_state.data.users.len() >= if test_mode { TEST_USER_LIMIT } else { USER_LIMIT } {
+    if runtime_state.data.users.len() >= USER_LIMIT {
         return UserLimitReached;
     }
 
@@ -58,7 +56,7 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         }
 
         let phone_number_string = phone_number.to_string();
-        let confirmation_code = format!("{:0>6}", runtime_state.env.random_u32());
+        let confirmation_code = convert_to_confirmation_code(runtime_state.env.random_u32());
 
         let user = UnconfirmedUser {
             principal: caller,
@@ -83,12 +81,17 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
     }
 }
 
+fn convert_to_confirmation_code(random: u32) -> String {
+    format!("{:0>6}", random % 1000000)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::model::user::ConfirmedUser;
     use crate::Data;
     use candid::Principal;
+    use rand::RngCore;
     use types::PhoneNumber;
     use utils::env::test::TestEnv;
 
@@ -185,5 +188,14 @@ mod tests {
         };
         let result = submit_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::InvalidPhoneNumber));
+    }
+
+    #[test]
+    fn confirmation_code_is_always_6_digts() {
+        let mut rand = rand::thread_rng();
+        for _ in 0..100 {
+            let confirmation_code = convert_to_confirmation_code(rand.next_u32());
+            assert_eq!(confirmation_code.len(), 6);
+        }
     }
 }

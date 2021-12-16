@@ -181,6 +181,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
 
         return {
+            wasUpdated: true,
             chatSummaries: resp.chats.sort(compareChats),
             timestamp: resp.timestamp,
             blockedUsers: resp.blockedUsers,
@@ -205,8 +206,20 @@ export class UserClient extends CandidService implements IUserClient {
             args
         );
 
+        const anyUpdates =
+            updatesResponse.blockedUsers.size > 0 ||
+            updatesResponse.chatsUpdated.length > 0 ||
+            updatesResponse.chatsAdded.length > 0 ||
+            updatesResponse.chatsRemoved.size > 0 ||
+            updatesResponse.cyclesBalance !== undefined ||
+            updatesResponse.transactions.length > 0 ||
+            updatesResponse.alerts.length > 0;
+
         return {
-            chatSummaries: mergeChatUpdates(chatSummaries, updatesResponse),
+            wasUpdated: anyUpdates,
+            chatSummaries: anyUpdates
+                ? mergeChatUpdates(chatSummaries, updatesResponse)
+                : chatSummaries,
             timestamp: updatesResponse.timestamp,
             blockedUsers: updatesResponse.blockedUsers,
         };
@@ -235,8 +248,8 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     editMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
-        return DataClient.create(this.identity, this.userId)
-            .uploadData(message.content)
+        return DataClient.create(this.identity)
+            .uploadData(message.content, [this.userId, recipientId])
             .then(() => {
                 const req = {
                     content: apiMessageContent(message.content),
@@ -253,8 +266,8 @@ export class UserClient extends CandidService implements IUserClient {
         message: Message,
         replyingToChatId?: string
     ): Promise<SendMessageResponse> {
-        return DataClient.create(this.identity, this.userId)
-            .uploadData(message.content)
+        return DataClient.create(this.identity)
+            .uploadData(message.content, [this.userId, recipientId])
             .then(() => {
                 const req: ApiSendMessageArgs = {
                     content: apiMessageContent(message.content),
@@ -312,7 +325,10 @@ export class UserClient extends CandidService implements IUserClient {
             this.userService.mark_read({
                 messages_read: request.map(({ chatId, ranges }) => ({
                     chat_id: Principal.fromText(chatId),
-                    message_ranges: ranges,
+                    message_ranges: ranges.subranges().map((r) => ({
+                        from: r.low,
+                        to: r.high,
+                    })),
                 })),
             }),
             markReadResponse

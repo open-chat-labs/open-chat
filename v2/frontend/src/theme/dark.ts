@@ -9,6 +9,8 @@ const dark25 = "#525252";
 const dark45 = "#666666";
 const dark60 = "#ababab";
 
+const blueAccent = "#085d8c";
+
 export function darkTheme(defaultTheme: Theme): Theme {
     return {
         ...defaultTheme,
@@ -49,6 +51,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bg: dark20,
             txt: dark60,
             bd: dark15,
+            "bd-start": dark15,
         },
 
         "sub-section": {
@@ -68,7 +71,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             hv: dark15,
             bd: `1px solid ${dark15}`,
             panel: {
-                bg: dark20,
+                bg: dark10,
             },
         },
 
@@ -138,7 +141,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         button: {
-            bg: "#085d8c",
+            bg: blueAccent,
             hv: "#053d5c",
             txt: "#ffffff",
             bd: "transparent",
@@ -194,6 +197,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 txt: dark60,
                 hv: dark10,
                 bd: dark15,
+                "reply-accent": blueAccent,
 
                 me: {
                     bg: "#820041",
@@ -222,6 +226,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             ...defaultTheme.findUser,
             add: {
                 ...defaultTheme.findUser.add,
+                pd: "8px",
                 pill: {
                     txt: "#fff",
                 },

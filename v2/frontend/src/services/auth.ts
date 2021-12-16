@@ -3,7 +3,8 @@ import { Principal } from "@dfinity/principal";
 import { AuthClient } from "@dfinity/auth-client";
 import { DelegationIdentity } from "@dfinity/identity";
 import { unregister } from "../utils/notifications";
-import { Usergeek } from "usergeek-ic-js"
+import { Usergeek } from "usergeek-ic-js";
+import { closeDb } from "../utils/caching";
 
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const ONE_MINUTE_MILLIS = 60 * 1000;
@@ -16,9 +17,9 @@ const IDENTITY_URL = process.env.INTERNET_IDENTITY_URL || "https://identity.ic0.
 const authClient = AuthClient.create();
 
 if (isProd) {
-    Usergeek.init({
-        apiKey: "process.env.USERGEEK_APIKEY",
-    });
+    const apiKey = "process.env.USERGEEK_APIKEY";
+    console.log(`Usergeek.init API key: ${apiKey}`);
+    Usergeek.init({ apiKey });
 }
 
 export function getIdentity(): Promise<Identity> {
@@ -51,6 +52,7 @@ export async function logout(): Promise<void> {
         if (isProd) {
             Usergeek.setPrincipal(Principal.anonymous());
         }
+        closeDb();
     });
 }
 

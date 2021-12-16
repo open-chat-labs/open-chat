@@ -139,10 +139,15 @@ export class GroupClient extends CandidService implements IGroupClient {
         }
     }
 
-    addParticipants(userIds: string[], allowBlocked: boolean): Promise<AddParticipantsResponse> {
+    addParticipants(
+        userIds: string[],
+        myUsername: string,
+        allowBlocked: boolean
+    ): Promise<AddParticipantsResponse> {
         return this.handleResponse(
             this.groupService.add_participants({
                 user_ids: userIds.map((u) => Principal.fromText(u)),
+                added_by_name: myUsername,
                 allow_blocked_users: allowBlocked,
             }),
             addParticipantsResponse
@@ -177,8 +182,8 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     editMessage(message: Message): Promise<EditMessageResponse> {
-        return DataClient.create(this.identity, this.chatId)
-            .uploadData(message.content)
+        return DataClient.create(this.identity)
+            .uploadData(message.content, [this.chatId])
             .then(() => {
                 return this.handleResponse(
                     this.groupService.edit_message({
@@ -190,8 +195,8 @@ export class GroupClient extends CandidService implements IGroupClient {
             });
     }
     sendMessage(senderName: string, message: Message): Promise<SendMessageResponse> {
-        return DataClient.create(this.identity, this.chatId)
-            .uploadData(message.content)
+        return DataClient.create(this.identity)
+            .uploadData(message.content, [this.chatId])
             .then(() => {
                 return this.handleResponse(
                     this.groupService.send_message({

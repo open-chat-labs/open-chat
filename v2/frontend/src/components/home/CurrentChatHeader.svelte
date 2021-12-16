@@ -1,7 +1,7 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
-    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
@@ -26,7 +26,7 @@
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
-    import type { Writable } from "svelte/store";
+    import type { Readable } from "svelte/store";
     import { toastStore } from "../../stores/toast";
     import Link from "../Link.svelte";
     import { supported as notificationsSupported } from "../../utils/notifications";
@@ -34,7 +34,7 @@
 
     const dispatch = createEventDispatcher();
 
-    export let selectedChatSummary: Writable<ChatSummary>;
+    export let selectedChatSummary: Readable<ChatSummary>;
     export let blocked: boolean;
     export let unreadMessages: number;
 
@@ -306,8 +306,9 @@
     }
 
     .chat-subtext {
-        @include font(light, normal, fs-100);
+        @include font(book, normal, fs-80);
         @include ellipsis();
+        color: var(--chatSummary-txt2);
     }
 
     .avatar {

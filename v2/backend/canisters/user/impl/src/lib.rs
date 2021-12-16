@@ -7,13 +7,14 @@ use crate::model::user_cycles_balance::UserCyclesBalance;
 use crate::model::user_preferences::UserPreferences;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
+use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{Avatar, CanisterId, Cycles, TimestampMillis, Timestamped, UserId, Version};
-use utils::blob_storage::BlobStorage;
+use types::{Avatar, CanisterId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
+use utils::rand::get_random_item;
 use utils::regular_jobs::RegularJobs;
 
 mod guards;
@@ -23,7 +24,6 @@ mod queries;
 mod regular_jobs;
 mod updates;
 
-const MAX_STORAGE: u64 = 2 * 1024 * 1024 * 1024; // 2GB
 const STATE_VERSION: StateVersion = StateVersion::V1;
 
 #[derive(CandidType, Serialize, Deserialize)]
@@ -56,8 +56,23 @@ impl RuntimeState {
         self.env.caller() == self.data.user_index_canister_id
     }
 
+    pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
+        let random = self.env.random_u32() as usize;
+
+        if let Some(canister_id) = get_random_item(&self.data.notifications_canister_ids, random) {
+            let args = c2c_push_notification::Args {
+                recipients,
+                notification,
+            };
+            ic_cdk::block_on(push_notification_inner(*canister_id, args));
+        }
+
+        async fn push_notification_inner(canister_id: CanisterId, args: notifications_canister::c2c_push_notification::Args) {
+            let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
-        let blob_metrics = self.data.blob_storage.metrics();
         let chat_metrics = self.data.direct_chats.metrics();
         Metrics {
             memory_used: memory::used(),
@@ -80,11 +95,6 @@ impl RuntimeState {
             replies: chat_metrics.replies,
             total_reactions: chat_metrics.total_reactions,
             last_active: chat_metrics.last_active,
-            image_bytes: blob_metrics.image_bytes,
-            video_bytes: blob_metrics.video_bytes,
-            audio_bytes: blob_metrics.audio_bytes,
-            total_blobs: blob_metrics.blob_count,
-            total_blob_bytes: blob_metrics.total_bytes,
         }
     }
 }
@@ -98,7 +108,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
-    pub blob_storage: BlobStorage,
     pub avatar: Option<Avatar>,
     pub user_cycles_balance: UserCyclesBalance,
     pub transactions: Transactions,
@@ -126,7 +135,6 @@ impl Data {
             user_index_canister_id,
             group_index_canister_id,
             notifications_canister_ids,
-            blob_storage: BlobStorage::new(MAX_STORAGE),
             avatar: None,
             user_cycles_balance: UserCyclesBalance::new(now),
             transactions: Transactions::default(),
@@ -161,11 +169,6 @@ pub struct Metrics {
     pub replies: u64,
     pub total_reactions: u64,
     pub last_active: TimestampMillis,
-    pub total_blobs: u32,
-    pub total_blob_bytes: u64,
-    pub image_bytes: u64,
-    pub video_bytes: u64,
-    pub audio_bytes: u64,
 }
 
 fn run_regular_jobs() {

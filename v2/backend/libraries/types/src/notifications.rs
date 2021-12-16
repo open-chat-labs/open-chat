@@ -1,4 +1,4 @@
-use crate::{v1_message, ChatId, Message, UserId};
+use crate::{ChatId, Message, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -10,10 +10,17 @@ pub struct NotificationEnvelope {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum Notification {
+    AddedToGroupNotification(AddedToGroupNotification),
     DirectMessageNotification(DirectMessageNotification),
     GroupMessageNotification(GroupMessageNotification),
-    V1DirectMessageNotification(V1DirectMessageNotification),
-    V1GroupMessageNotification(V1GroupMessageNotification),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct AddedToGroupNotification {
+    pub chat_id: ChatId,
+    pub group_name: String,
+    pub added_by: UserId,
+    pub added_by_name: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -30,21 +37,4 @@ pub struct GroupMessageNotification {
     pub sender: UserId,
     pub sender_name: String,
     pub message: Message,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct V1DirectMessageNotification {
-    pub chat_id: String,
-    pub sender: UserId,
-    pub sender_name: String,
-    pub message: v1_message::Message,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct V1GroupMessageNotification {
-    pub chat_id: String,
-    pub group_name: String,
-    pub sender: UserId,
-    pub sender_name: String,
-    pub message: v1_message::Message,
 }

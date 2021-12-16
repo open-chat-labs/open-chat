@@ -25,6 +25,8 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
         Cantarell, "Helvetica Neue", sans-serif;
     display: flex;
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
 }
 
 textarea {

@@ -45,6 +45,10 @@
     function debounce(value: string) {
         if (timer) clearTimeout(timer);
         timer = setTimeout(() => {
+            if (value === "") {
+                users = [];
+                return;
+            }
             searching = true;
             api.searchUsers(value)
                 .then((u) => (users = u))

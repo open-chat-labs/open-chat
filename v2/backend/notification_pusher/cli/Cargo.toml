@@ -2,7 +2,7 @@
 name = "notification_pusher_cli"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 async-trait = "0.1.51"

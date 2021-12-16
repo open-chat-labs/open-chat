@@ -8,7 +8,7 @@ const MAX_VIDEO_SIZE = 1024 * 1024 * 5;
 export const MAX_AUDIO_SIZE = 1024 * 1024;
 const MAX_FILE_SIZE = 1024 * 1024;
 
-type Dimensions = {
+export type Dimensions = {
     width: number;
     height: number;
 };
@@ -144,6 +144,16 @@ export function resizeImage(blobUrl: string, mimeType: string): Promise<MediaExt
         };
         img.src = blobUrl;
     });
+}
+
+export function audioRecordingMimeType(): "audio/webm" | "audio/mp4" | undefined {
+    // prefer mp4 since it works on iOS and desktop, fallback to webm just in case
+    if (MediaRecorder.isTypeSupported("audio/mp4")) {
+        return "audio/mp4";
+    } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+        return "audio/webm";
+    }
+    return undefined;
 }
 
 export async function messageContentFromFile(file: File): Promise<MessageContent> {

@@ -4,7 +4,6 @@ import type {
     ApiEventWrapper,
     ApiGroupChatEvent,
     ApiMakeAdminResponse,
-    ApiPutChunkResponse,
     ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
     ApiUpdateGroupResponse,
@@ -25,7 +24,6 @@ import type {
     GroupChatEvent,
     AddParticipantsResponse,
     SendMessageResponse,
-    PutChunkResponse,
     RemoveParticipantResponse,
     UpdateGroupResponse,
     ToggleReactionResponse,
@@ -259,28 +257,6 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
         return "avatar_too_big";
     }
     throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
-}
-
-export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse {
-    if ("Full" in candid) {
-        return "put_chunk_full";
-    }
-    if ("ChunkTooBig" in candid) {
-        return "put_chunk_too_big";
-    }
-    if ("Success" in candid) {
-        return "put_chunk_success";
-    }
-    if ("ChunkAlreadyExists" in candid) {
-        return "chunk_already_exists";
-    }
-    if ("BlobAlreadyExists" in candid) {
-        return "blob_already_exists";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    throw new UnsupportedValueError("Unexpected ApiPutChunkResponse type received", candid);
 }
 
 export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {

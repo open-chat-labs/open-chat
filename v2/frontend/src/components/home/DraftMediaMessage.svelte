@@ -1,7 +1,6 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { rtlStore } from "../../stores/rtl";
     import type { VideoContent as VideoContentType } from "../../domain/chat/chat";
     import type { ImageContent as ImageContentType } from "../../domain/chat/chat";
     import type { AudioContent as AudioContentType } from "../../domain/chat/chat";
@@ -9,31 +8,23 @@
     import ImageContent from "./ImageContent.svelte";
     import AudioContent from "./AudioContent.svelte";
 
-    export let draft: VideoContentType | ImageContentType | AudioContentType;
+    export let content: VideoContentType | ImageContentType | AudioContentType;
 </script>
 
-<div class="msg-preview" class:rtl={$rtlStore}>
-    {#if draft.kind === "video_content"}
-        <VideoContent fill={false} content={draft} />
-    {:else if draft.kind === "audio_content"}
-        <AudioContent content={draft} />
-    {:else if draft.kind === "image_content"}
-        <ImageContent fill={false} content={draft} />
+<div class="msg-preview">
+    {#if content.kind === "video_content"}
+        <VideoContent fill={false} content={content} draft={true} />
+    {:else if content.kind === "audio_content"}
+        <AudioContent content={content} />
+    {:else if content.kind === "image_content"}
+        <ImageContent fill={false} content={content} draft={true} />
     {/if}
 </div>
 
 <style type="text/scss">
     .msg-preview {
         border-radius: $sp4 $sp4 0 0;
-        padding: $sp3;
-        background-color: var(--section-bg);
-        border-bottom: var(--section-bd);
-        box-shadow: 0 -6px 10px 0 rgba(25, 25, 25, 0.25);
-        border-left: 7px solid var(--button-bg);
-
-        &.rtl {
-            border-left: none;
-            border-right: 7px solid var(--button-bg);
-        }
+        min-width: 90px;
+        margin-top: $sp4;
     }
 </style>

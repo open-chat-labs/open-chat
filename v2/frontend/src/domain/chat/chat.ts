@@ -1,3 +1,4 @@
+import type DRange from "drange";
 import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 
@@ -346,6 +347,7 @@ export type ReactionRemoved = {
 };
 
 export type StaleMessage = {
+    updatedBy: string;
     eventIndex: number;
     messageId: bigint;
 };
@@ -434,6 +436,7 @@ export type UpdateArgs = {
 };
 
 export type MergedUpdatesResponse = {
+    wasUpdated: boolean;
     chatSummaries: ChatSummary[];
     blockedUsers: Set<string>;
     timestamp: bigint;
@@ -493,15 +496,15 @@ export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpda
 
 type ChatSummaryUpdatesCommon = {
     chatId: string;
-    readByMe?: MessageIndexRange[];
+    readByMe?: DRange;
     latestEventIndex?: number;
+    latestMessage?: EventWrapper<Message>;
     notificationsMuted?: boolean;
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "direct_chat";
-    latestMessage?: EventWrapper<Message>;
-    readByThem?: MessageIndexRange[];
+    readByThem?: DRange;
 };
 
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
@@ -509,7 +512,6 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     lastUpdated: bigint;
     name?: string;
     description?: string;
-    latestMessage?: EventWrapper<Message>;
     avatarBlobReference?: BlobReference;
     participantCount?: number;
     myRole?: ParticipantRole;
@@ -549,24 +551,19 @@ export type GroupChatDetailsUpdates = {
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
 
-export type MessageIndexRange = {
-    from: number;
-    to: number;
-};
-
 type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
-    readByMe: MessageIndexRange[];
+    readByMe: DRange;
     latestEventIndex: number;
+    latestMessage?: EventWrapper<Message>;
     notificationsMuted: boolean;
 };
 
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
-    readByThem: MessageIndexRange[];
+    readByThem: DRange;
     dateCreated: bigint;
-    latestMessage?: EventWrapper<Message>;
 };
 
 export type GroupChatSummary = DataContent &
@@ -581,7 +578,6 @@ export type GroupChatSummary = DataContent &
         lastUpdated: bigint;
         participantCount: number;
         myRole: ParticipantRole;
-        latestMessage?: EventWrapper<Message>;
         mentions: number[];
     };
 
@@ -746,15 +742,6 @@ export type SendMessageNotInGroup = {
     kind: "not_in_group";
 };
 
-export type PutChunkResponse =
-    | "put_chunk_success"
-    | "put_chunk_full"
-    | "put_chunk_too_big"
-    | "chunk_already_exists"
-    | "caller_not_in_group"
-    | "blob_too_big"
-    | "blob_already_exists";
-
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error";
 
 export type MakeAdminResponse =
@@ -825,7 +812,7 @@ export type JoinGroupResponse =
     | "internal_error";
 
 export type MarkReadRequest = {
-    ranges: MessageIndexRange[];
+    ranges: DRange;
     chatId: string;
 }[];
 
@@ -851,3 +838,15 @@ export type ToggleReactionResponse =
     | "chat_not_found";
 
 export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";
+
+export type SerializableMergedUpdatesResponse = Omit<MergedUpdatesResponse, "chatSummaries"> & {
+    chatSummaries: SerializableChatSummary[];
+};
+export type SerializableChatSummary = SerializableDirectChatSummary | SerializableGroupChatSummary;
+export type SerializableDirectChatSummary = Omit<DirectChatSummary, "readByMe" | "readByThem"> & {
+    readByMe: IndexRange[];
+    readByThem: IndexRange[];
+};
+export type SerializableGroupChatSummary = Omit<GroupChatSummary, "readByMe"> & {
+    readByMe: IndexRange[];
+};

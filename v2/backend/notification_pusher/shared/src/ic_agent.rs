@@ -7,6 +7,7 @@ use ic_agent::{Agent, Identity};
 use notifications_canister::{notifications, remove_notifications, remove_subscriptions};
 use std::collections::HashMap;
 use std::time::Duration;
+use tracing::trace;
 use types::{CanisterId, UserId};
 
 pub struct IcAgentConfig {
@@ -44,6 +45,8 @@ impl IcAgent {
     ) -> Result<notifications::SuccessResult, Error> {
         let args = notifications::Args { from_notification_index };
 
+        trace!(?args, "notifications::args");
+
         let response = self
             .agent
             .query(&canister_id, "notifications")
@@ -52,6 +55,9 @@ impl IcAgent {
             .await?;
 
         let notifications::Response::Success(result) = Decode!(&response, notifications::Response)?;
+
+        trace!(?result, "notifications::result");
+
         Ok(result)
     }
 
@@ -59,6 +65,8 @@ impl IcAgent {
         let args = remove_notifications::Args {
             up_to_notification_index,
         };
+
+        trace!(?args, "remove_notifications::args");
 
         let request_id = self
             .agent
@@ -87,6 +95,8 @@ impl IcAgent {
             .collect();
 
         let args = remove_subscriptions::Args { subscriptions_by_user };
+
+        trace!(?args, "remove_subscriptions::args");
 
         let request_id = self
             .agent

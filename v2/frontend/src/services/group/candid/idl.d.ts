@@ -25,8 +25,6 @@ import {
     SendMessageArgs,
     SendMessageResponse,
     EditMessageResponse,
-    PutChunkArgs,
-    PutChunkResponse,
     MakeAdminResponse,
     DismissAdminResponse,
     RemoveParticipantResponse,
@@ -45,8 +43,6 @@ import {
 } from "./types";
 export {
     _SERVICE as GroupService,
-    PutChunkArgs as ApiPutChunkArgs,
-    PutChunkResponse as ApiPutChunkResponse,
     SendMessageArgs as ApiSendMessageArgs,
     SendMessageResponse as ApiSendMessageResponse,
     EditMessageResponse as ApiEditMessageResponse,

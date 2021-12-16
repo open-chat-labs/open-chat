@@ -2,10 +2,11 @@
 name = "shared"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 async-trait = "0.1.51"
+base64 = "0.13.0"
 candid = "0.7.7"
 futures = "0.3.16"
 garcon = "0.2.3"

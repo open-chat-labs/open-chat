@@ -18,7 +18,6 @@ pub mod join_group;
 pub mod leave_group;
 pub mod mark_read;
 pub mod mute_notifications;
-pub mod put_chunk;
 pub mod relinquish_group_super_admin;
 pub mod send_message;
 pub mod set_avatar;

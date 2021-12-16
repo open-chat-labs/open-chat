@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum GroupChatEvent {
-    Message(Message),
+    Message(Box<Message>),
     GroupChatCreated(GroupChatCreated),
     GroupNameChanged(GroupNameChanged),
     GroupDescriptionChanged(GroupDescriptionChanged),
@@ -138,13 +138,14 @@ pub struct ParticipantRelinquishesSuperAdmin {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpdatedMessage {
+    pub updated_by: UserId,
     pub event_index: EventIndex,
     pub message_id: MessageId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum DirectChatEvent {
-    Message(Message),
+    Message(Box<Message>),
     DirectChatCreated(DirectChatCreated),
     MessageEdited(UpdatedMessage),
     MessageDeleted(UpdatedMessage),

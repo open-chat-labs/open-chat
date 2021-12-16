@@ -1,8 +1,5 @@
-pub mod push_direct_message_notification;
-pub mod push_group_message_notification;
+pub mod c2c_push_notification;
 pub mod push_subscription;
-pub mod push_v1direct_message_notification;
-pub mod push_v1group_message_notification;
 pub mod remove_notifications;
 pub mod remove_subscription;
 pub mod remove_subscriptions;

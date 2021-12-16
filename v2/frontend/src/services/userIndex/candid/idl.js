@@ -63,11 +63,6 @@ export const idlFactory = ({ IDL }) => {
     }),
     'UserNotFound' : IDL.Null,
   });
-  const MarkAsOnlineArgs = IDL.Record({});
-  const MarkAsOnlineResponse = IDL.Variant({
-    'Success' : IDL.Null,
-    'UserNotFound' : IDL.Null,
-  });
   const RemoveSuperAdminArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveSuperAdminResponse = IDL.Variant({
     'Success' : IDL.Null,
@@ -188,7 +183,6 @@ export const idlFactory = ({ IDL }) => {
         [CurrentUserResponse],
         ['query'],
       ),
-    'mark_as_online' : IDL.Func([MarkAsOnlineArgs], [MarkAsOnlineResponse], []),
     'remove_super_admin' : IDL.Func(
         [RemoveSuperAdminArgs],
         [RemoveSuperAdminResponse],

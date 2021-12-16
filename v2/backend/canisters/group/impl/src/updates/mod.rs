@@ -15,7 +15,6 @@ mod delete_messages;
 mod dismiss_admin;
 mod edit_message;
 mod make_admin;
-mod put_chunk;
 mod remove_participant;
 mod send_message;
 mod toggle_reaction;

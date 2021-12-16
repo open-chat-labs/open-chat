@@ -25,9 +25,13 @@
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { fillMessage, messageMetaData } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
-    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import TimeAndTicks from "./TimeAndTicks.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import type { Dimensions } from "../../utils/media";
+    import type { MessageContent } from "../../domain/chat/chat";
+    import { calculateMediaDimensions } from "../../utils/layout";
+
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -48,6 +52,7 @@
     export let admin: boolean;
 
     let msgElement: HTMLElement;
+    let msgBubbleElement: HTMLElement;
     let userLookup = getContext<UserLookup>("userLookup");
     let sender = userLookup[senderId];
 
@@ -56,7 +61,10 @@
     let metaData = messageMetaData(msg.content);
     let showEmojiPicker = false;
     let debug = false;
-
+    
+    $: mediaDimensions = extractDimensions(msg.content);
+    $: mediaCalculatedHeight = undefined as (number | undefined);
+    $: msgBubbleCalculatedWidth = undefined as (number | undefined);
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
 
@@ -75,6 +83,8 @@
             observer.observe(msgElement);
         } else {
         }
+
+        recalculateMediaDimensions();
     });
 
     onDestroy(() => observer.unobserve(msgElement));
@@ -124,8 +134,51 @@
         showEmojiPicker = false;
     }
 
+    function extractDimensions(content: MessageContent) : Dimensions | undefined {
+        if (content.kind === "image_content") {
+            return {
+                width: content.width,
+                height: content.height,
+            };
+        } else if (content.kind === "video_content") {
+            return {
+                width: content.width,
+                height: content.height,
+            };
+        }
+
+        return undefined;
+    }
+
+    function recalculateMediaDimensions() {
+        if (mediaDimensions === undefined) {
+            return;
+        }
+
+        let msgBubblePaddingWidth = 0;
+        if (!fill) {
+            let msgBubbleStyle = getComputedStyle(msgBubbleElement);
+            msgBubblePaddingWidth = 
+                parseFloat(msgBubbleStyle.paddingLeft) + 
+                parseFloat(msgBubbleStyle.paddingRight) + 
+                parseFloat(msgBubbleStyle.borderRightWidth) +
+                parseFloat(msgBubbleStyle.borderLeftWidth);
+        }
+
+        const parentWidth = document.getElementById("chat-messages")?.offsetWidth ?? 0;
+        let targetMediaDimensions = calculateMediaDimensions(
+            mediaDimensions, 
+            parentWidth, 
+            msgBubblePaddingWidth, 
+            window.innerHeight);
+        mediaCalculatedHeight = targetMediaDimensions.height;
+        msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth
+    }
+
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 </script>
+
+<svelte:window on:resize={recalculateMediaDimensions} />
 
 {#if showEmojiPicker}
     <Overlay dismissible={true} bind:active={showEmojiPicker}>
@@ -175,6 +228,8 @@
         {/if}
 
         <div
+            bind:this={msgBubbleElement}
+            style={msgBubbleCalculatedWidth !== undefined ? `width: ${msgBubbleCalculatedWidth}px` : undefined}
             class="message-bubble"
             class:focused
             class:fill={fill && !deleted}
@@ -200,7 +255,7 @@
             {/if}
 
             {#if msg.content.kind === "text_content"}
-                <ChatMessageContent {fill} {me} content={msg.content}>
+                <ChatMessageContent {fill} {me} content={msg.content} height={mediaCalculatedHeight} >
                     <TimeAndTicks
                         inline={true}
                         {fill}
@@ -211,7 +266,7 @@
                         {chatType} />
                 </ChatMessageContent>
             {:else}
-                <ChatMessageContent {fill} {me} content={msg.content} />
+                <ChatMessageContent {fill} {me} content={msg.content} height={mediaCalculatedHeight} />
                 {#if !deleted}
                     <TimeAndTicks {fill} {timestamp} {me} {confirmed} {readByThem} {chatType} />
                 {/if}
@@ -344,6 +399,10 @@
         background-color: var(--icon-hv);
     }
 
+    :global(.actions .reaction .wrapper) {
+        padding: 6px;
+    }
+
     .message-wrapper {
         &.last {
             margin-bottom: $sp4;
@@ -405,7 +464,7 @@
             background-color: var(--reaction-bg);
             color: var(--reaction-txt);
             cursor: pointer;
-            height: $sp5;
+            height: 30px;
             padding: $sp2;
             display: flex;
             justify-content: center;
@@ -413,7 +472,7 @@
             margin-left: 1px;
             margin-right: 1px;
             margin-bottom: $sp2;
-            // border: 1px solid transparent;
+            font-size: 120%;
 
             &.me {
                 border: 2px solid var(--reaction-me);
@@ -465,7 +524,7 @@
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
         border-radius: $radius;
-        max-width: 90%;
+        max-width: 80%;
         min-width: 90px;
         overflow: hidden;
 
@@ -543,7 +602,6 @@
             padding: 0;
             overflow: hidden;
             border: none;
-            min-width: 0;
         }
 
         &.focused {

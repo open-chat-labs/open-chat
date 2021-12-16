@@ -23,15 +23,16 @@ import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
 import {
     ChatSchema,
-    getCachedMessages,
-    getCachedMessagesByIndex,
-    getCachedMessagesWindow,
-    setCachedMessages,
+    getCachedEvents,
+    getCachedEventsByIndex,
+    getCachedEventsWindow,
+    setCachedEvents,
+    setCachedMessage,
 } from "../../utils/caching";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
- * indexDB for holding chat messages
+ * indexDB for holding chat events
  */
 export class CachingGroupClient implements IGroupClient {
     constructor(
@@ -41,16 +42,14 @@ export class CachingGroupClient implements IGroupClient {
     ) {}
 
     async chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>> {
-        const cachedMsgs = await getCachedMessagesByIndex<GroupChatEvent>(
+        const cachedEvents = await getCachedEventsByIndex<GroupChatEvent>(
             this.db,
             eventIndexes,
             this.chatId
         );
         return (
-            cachedMsgs ??
-            this.client
-                .chatEventsByIndex(eventIndexes)
-                .then(setCachedMessages(this.db, this.chatId))
+            cachedEvents ??
+            this.client.chatEventsByIndex(eventIndexes).then(setCachedEvents(this.db, this.chatId))
         );
     }
 
@@ -58,17 +57,17 @@ export class CachingGroupClient implements IGroupClient {
         eventIndexRange: IndexRange,
         messageIndex: number
     ): Promise<EventsResponse<GroupChatEvent>> {
-        const cachedMsgs = await getCachedMessagesWindow<GroupChatEvent>(
+        const cachedEvents = await getCachedEventsWindow<GroupChatEvent>(
             this.db,
             eventIndexRange,
             this.chatId,
             messageIndex
         );
         return (
-            cachedMsgs ??
+            cachedEvents ??
             this.client
                 .chatEventsWindow(eventIndexRange, messageIndex)
-                .then(setCachedMessages(this.db, this.chatId))
+                .then(setCachedEvents(this.db, this.chatId))
         );
     }
 
@@ -77,7 +76,7 @@ export class CachingGroupClient implements IGroupClient {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<GroupChatEvent>> {
-        const cachedMsgs = await getCachedMessages<GroupChatEvent>(
+        const cachedEvents = await getCachedEvents<GroupChatEvent>(
             this.db,
             eventIndexRange,
             this.chatId,
@@ -85,19 +84,25 @@ export class CachingGroupClient implements IGroupClient {
             ascending
         );
         return (
-            cachedMsgs ??
+            cachedEvents ??
             this.client
                 .chatEvents(eventIndexRange, startIndex, ascending)
-                .then(setCachedMessages(this.db, this.chatId))
+                .then(setCachedEvents(this.db, this.chatId))
         );
     }
 
-    addParticipants(userIds: string[], allowBlocked: boolean): Promise<AddParticipantsResponse> {
-        return this.client.addParticipants(userIds, allowBlocked);
+    addParticipants(
+        userIds: string[],
+        myUsername: string,
+        allowBlocked: boolean
+    ): Promise<AddParticipantsResponse> {
+        return this.client.addParticipants(userIds, myUsername, allowBlocked);
     }
 
     sendMessage(senderName: string, message: Message): Promise<SendMessageResponse> {
-        return this.client.sendMessage(senderName, message);
+        return this.client
+            .sendMessage(senderName, message)
+            .then(setCachedMessage(this.db, this.chatId, message));
     }
 
     editMessage(message: Message): Promise<EditMessageResponse> {

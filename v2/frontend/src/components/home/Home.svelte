@@ -11,7 +11,7 @@
     import { createEventDispatcher, onDestroy, onMount } from "svelte";
     const dispatch = createEventDispatcher();
     import { rtlStore } from "../../stores/rtl";
-    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { push, replace } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
@@ -30,6 +30,9 @@
     import type { EnhancedReplyContext, GroupChatSummary } from "../../domain/chat/chat";
     import type { Writable } from "svelte/store";
     import type { HomeController } from "../../fsm/home.controller";
+    import ModalContent from "../ModalContent.svelte";
+    import { _ } from "svelte-i18n";
+    import Button from "../Button.svelte";
 
     export let controller: HomeController;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
@@ -43,6 +46,9 @@
     let searchTerm: string = "";
     let searching: boolean = false;
     let searchResultsAvailable: boolean = false;
+    let confirmingLeaveGroup = false;
+    let leavingGroupId: string | undefined;
+    let leavingGroup = false;
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -162,7 +168,18 @@
     }
 
     function leaveGroup(ev: CustomEvent<string>) {
-        controller.leaveGroup(ev.detail);
+        confirmingLeaveGroup = true;
+        leavingGroupId = ev.detail;
+    }
+
+    function confirmLeaveGroup() {
+        if (leavingGroupId === undefined) return;
+        leavingGroup = true;
+        controller.leaveGroup(leavingGroupId).finally(() => {
+            confirmingLeaveGroup = false;
+            leavingGroupId = undefined;
+            leavingGroup = false;
+        });
     }
 
     function chatWith(ev: CustomEvent<string>) {
@@ -278,13 +295,40 @@
     {/if}
 </Overlay>
 
+<Overlay bind:active={confirmingLeaveGroup}>
+    <ModalContent fill={true}>
+        <span slot="header">{$_("areYouSure")}</span>
+        <span slot="body">
+            <p class="confirm-msg">
+                {$_("confirmLeaveGroup")}
+            </p>
+        </span>
+        <span slot="footer">
+            <div class="buttons">
+                <Button
+                    loading={leavingGroup}
+                    disabled={leavingGroup}
+                    small={true}
+                    on:click={confirmLeaveGroup}>{$_("yesPlease")}</Button>
+                <Button
+                    disabled={leavingGroup}
+                    small={true}
+                    on:click={() => {
+                        confirmingLeaveGroup = false;
+                        leavingGroupId = undefined;
+                    }}
+                    secondary={true}>{$_("noThanks")}</Button>
+            </div>
+        </span>
+    </ModalContent>
+</Overlay>
+
 <Toast />
 
 <style type="text/scss">
     main {
         transition: margin ease-in-out 300ms;
         position: relative;
-        // @include fullHeight();
         width: 100%;
         max-width: 1200px;
         display: flex;
@@ -300,6 +344,17 @@
         --text-color: var(--theme-text);
         color: var(--theme-text);
     }
+
+    .confirm-msg {
+        padding: $sp5;
+    }
+
+    .buttons {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
     .right-wrapper {
         position: absolute;
         top: 0;

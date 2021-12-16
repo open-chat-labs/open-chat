@@ -11,6 +11,7 @@
     import { push } from "svelte-spa-router";
     import type { UserSummary } from "../../domain/user/user";
     import { userStore } from "../../stores/user";
+    import { toTitleCase } from "../../utils/string";
 
     export let chatId: string;
     export let user: UserSummary | undefined;
@@ -29,7 +30,7 @@
     }
 
     function getUsernameFromReplyContext(replyContext: RehydratedReplyContext): string {
-        return $userStore[replyContext.senderId]?.username ?? $_("unknownUser");
+        return me ? toTitleCase($_("you")) : $userStore[replyContext.senderId]?.username ?? $_("unknownUser");
     }
 </script>
 
@@ -39,7 +40,7 @@
             {getUsernameFromReplyContext(repliesTo)}
         </h4>
         {#if repliesTo.content !== undefined}
-            <ChatMessageContent fill={false} content={repliesTo.content} />
+            <ChatMessageContent fill={false} reply={true} content={repliesTo.content} />
             {#if debug}
                 <pre>EventIdx: {repliesTo.eventIndex}</pre>
                 <pre>MsgId: {repliesTo.messageId}</pre>
@@ -58,14 +59,14 @@
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         cursor: pointer;
-        box-shadow: -7px 0px 0px 0px var(--button-bg);
-        border: 1px solid var(--button-bg);
+        box-shadow: -7px 0px 0px 0px var(--currentChat-msg-reply-accent);
+        border: 2px solid var(--currentChat-msg-reply-accent);
         margin-bottom: $sp3;
         margin-left: 7px;
         overflow: hidden;
 
         &.rtl {
-            box-shadow: 7px 0px 0px 0px var(--button-bg);
+            box-shadow: 7px 0px 0px 0px var(--currentChat-msg-reply-accent);
             margin-left: 0;
             margin-right: 7px;
         }
@@ -73,13 +74,19 @@
         &.me {
             background-color: var(--currentChat-msg-me-hv);
             color: var(--currentChat-msg-me-txt);
-            border-color: var(--currentChat-msg-me-bd);
+        }
+
+        &:after {
+            content: "";
+            display: table;
+            clear: both;
         }
     }
 
     .username {
         margin: 0;
         margin-bottom: $sp2;
+        display: inline;
         @include font(bold, normal, fs-100);
     }
 </style>

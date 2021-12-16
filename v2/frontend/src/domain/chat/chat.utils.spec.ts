@@ -1,30 +1,26 @@
+import DRange from "drange";
 import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
 import type {
     DirectChatSummary,
     GroupChatSummary,
     DirectChatSummaryUpdates,
     GroupChatSummaryUpdates,
-    MessageIndexRange,
     UpdatesResponse,
 } from "./chat";
 import {
-    compareMessageRange,
-    getFirstUnreadMessageIndex,
     getParticipantsString,
     indexIsInRanges,
-    insertIndexIntoRanges,
     mergeChatUpdates,
-    mergeMessageIndexRanges,
-    messageIndexRangesAreEqual,
     newMessageId,
+    rangesAreEqual,
 } from "./chat.utils";
 
 const defaultDirectChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "a",
     chatId: "abc",
-    readByMe: [],
-    readByThem: [],
+    readByMe: new DRange(),
+    readByThem: new DRange(),
     latestMessage: {
         event: {
             kind: "message",
@@ -52,7 +48,7 @@ const defaultGroupChat: GroupChatSummary = {
     description: "whatever",
     chatId: "abc",
     lastUpdated: BigInt(0),
-    readByMe: [],
+    readByMe: new DRange(),
     latestMessage: undefined,
     public: true,
     joined: BigInt(0),
@@ -78,242 +74,6 @@ function groupChatId(id: number): GroupChatSummary {
         chatId: String(id),
     };
 }
-
-describe("inserting into index ranges", () => {
-    test("real example which wasn't working", () => {
-        let ranges: MessageIndexRange[] = [];
-        ranges = insertIndexIntoRanges(313, ranges);
-        ranges = insertIndexIntoRanges(312, ranges);
-        ranges = insertIndexIntoRanges(311, ranges);
-        ranges = insertIndexIntoRanges(305, ranges);
-        ranges = insertIndexIntoRanges(306, ranges);
-        ranges = insertIndexIntoRanges(307, ranges);
-        ranges = insertIndexIntoRanges(308, ranges);
-        ranges = insertIndexIntoRanges(310, ranges);
-        expect(ranges.length).toEqual(2);
-        expect(ranges).toEqual([
-            { from: 305, to: 308 },
-            { from: 310, to: 313 },
-        ]);
-    });
-});
-
-describe("sorting message index ranges", () => {
-    test("sort by from first", () => {
-        expect(
-            [
-                { from: 10, to: 100 },
-                { from: 5, to: 100 },
-                { from: 3, to: 100 },
-            ].sort(compareMessageRange)
-        ).toEqual([
-            { from: 3, to: 100 },
-            { from: 5, to: 100 },
-            { from: 10, to: 100 },
-        ]);
-    });
-    test("sort by to if from are equal", () => {
-        expect(
-            [
-                { from: 10, to: 80 },
-                { from: 10, to: 60 },
-                { from: 10, to: 40 },
-            ].sort(compareMessageRange)
-        ).toEqual([
-            { from: 10, to: 40 },
-            { from: 10, to: 60 },
-            { from: 10, to: 80 },
-        ]);
-    });
-});
-
-describe("merging message index ranges", () => {
-    test("with no ranges", () => {
-        expect(mergeMessageIndexRanges([], [])).toEqual([]);
-    });
-    test("a single value range", () => {
-        expect(mergeMessageIndexRanges([{ from: 10, to: 10 }], [{ from: 11, to: 11 }])).toEqual([
-            { from: 10, to: 11 },
-        ]);
-    });
-    test("with no overlaps", () => {
-        expect(
-            mergeMessageIndexRanges(
-                [
-                    { from: 25, to: 30 },
-                    { from: 0, to: 20 },
-                ],
-                [{ from: 40, to: 50 }]
-            )
-        ).toEqual([
-            { from: 0, to: 20 },
-            { from: 25, to: 30 },
-            { from: 40, to: 50 },
-        ]);
-    });
-    test("with overlaps", () => {
-        expect(
-            mergeMessageIndexRanges(
-                [
-                    { from: 25, to: 30 },
-                    { from: 0, to: 20 },
-                ],
-                [
-                    { from: 40, to: 50 },
-                    { from: 10, to: 28 },
-                    { from: 29, to: 35 },
-                ]
-            )
-        ).toEqual([
-            { from: 0, to: 35 },
-            { from: 40, to: 50 },
-        ]);
-    });
-});
-
-describe("message ranges are equal", () => {
-    test("ranges are not equal length", () => {
-        const a = [{ from: 0, to: 10 }];
-        const b = [
-            { from: 0, to: 10 },
-            { from: 11, to: 20 },
-        ];
-        expect(messageIndexRangesAreEqual(a, b)).toBe(false);
-    });
-    test("ranges are equal length but not equal", () => {
-        const a = [
-            { from: 0, to: 10 },
-            { from: 11, to: 20 },
-        ];
-        const b = [
-            { from: 0, to: 10 },
-            { from: 11, to: 21 },
-        ];
-        expect(messageIndexRangesAreEqual(a, b)).toBe(false);
-    });
-    test("ranges are equal", () => {
-        const a = [
-            { from: 0, to: 10 },
-            { from: 11, to: 20 },
-        ];
-        const b = [
-            { from: 0, to: 10 },
-            { from: 11, to: 20 },
-        ];
-        expect(messageIndexRangesAreEqual(a, b)).toBe(true);
-    });
-    test("ranges are equal again", () => {
-        const a = [
-            { from: 0, to: 10 },
-            { from: 11, to: 20 },
-            { from: 100, to: 250 },
-        ];
-        const b = [
-            { from: 0, to: 10 },
-            { from: 11, to: 20 },
-            { from: 100, to: 250 },
-        ];
-        expect(messageIndexRangesAreEqual(a, b)).toBe(true);
-    });
-    test("ranges differ only in the 'to' property", () => {
-        const a = [
-            { from: 0, to: 10 },
-            { from: 11, to: 20 },
-            { from: 100, to: 250 },
-        ];
-        const b = [
-            { from: 0, to: 10 },
-            { from: 11, to: 20 },
-            { from: 100, to: 260 },
-        ];
-        expect(messageIndexRangesAreEqual(a, b)).toBe(false);
-    });
-});
-
-describe("index is in ranges", () => {
-    test("where index is not in ranges", () => {
-        expect(indexIsInRanges(16, [{ from: 11, to: 13 }])).toEqual(false);
-    });
-    test("where index is in ranges", () => {
-        expect(
-            indexIsInRanges(16, [
-                { from: 11, to: 13 },
-                { from: 15, to: 20 },
-            ])
-        ).toEqual(true);
-    });
-    test("where there are no ranges", () => {
-        expect(indexIsInRanges(16, [])).toEqual(false);
-    });
-});
-
-describe("getting first unread message index", () => {
-    test("where we have read everything", () => {
-        expect(
-            getFirstUnreadMessageIndex({
-                ...defaultDirectChat,
-                readByMe: [{ from: 0, to: 100 }],
-            })
-        ).toEqual(101);
-    });
-    test("where we have no messages", () => {
-        expect(
-            getFirstUnreadMessageIndex({
-                ...defaultDirectChat,
-                latestMessage: undefined,
-                readByMe: [],
-            })
-        ).toEqual(Number.MAX_VALUE);
-    });
-    test("where we have read nothing", () => {
-        expect(
-            getFirstUnreadMessageIndex({
-                ...defaultDirectChat,
-                readByMe: [],
-            })
-        ).toEqual(0);
-    });
-    test("where we are missing messages at the end", () => {
-        expect(
-            getFirstUnreadMessageIndex({
-                ...defaultDirectChat,
-                readByMe: [{ from: 0, to: 80 }],
-            })
-        ).toEqual(81);
-    });
-    test("where we are missing messages at the beginning", () => {
-        expect(
-            getFirstUnreadMessageIndex({
-                ...defaultDirectChat,
-                readByMe: [{ from: 20, to: 80 }],
-            })
-        ).toEqual(0);
-    });
-    test("where we have multiple gaps including the beginning", () => {
-        expect(
-            getFirstUnreadMessageIndex({
-                ...defaultDirectChat,
-                readByMe: [
-                    { from: 20, to: 40 },
-                    { from: 50, to: 60 },
-                    { from: 70, to: 80 },
-                ],
-            })
-        ).toEqual(0);
-    });
-    test("where we have multiple gaps after the beginning", () => {
-        expect(
-            getFirstUnreadMessageIndex({
-                ...defaultDirectChat,
-                readByMe: [
-                    { from: 0, to: 40 },
-                    { from: 50, to: 60 },
-                    { from: 70, to: 80 },
-                ],
-            })
-        ).toEqual(41);
-    });
-});
 
 function createUser(userId: string, username: string, seconds: number): PartialUserSummary {
     const now = Date.now();
@@ -349,7 +109,7 @@ describe("get participants string for group chat", () => {
             "Unknown User",
             "You"
         );
-        expect(participants).toEqual("Mr B, Mr C, Mr D, You, Mr A");
+        expect(participants).toEqual("Mr B, Mr C, Mr D, You and Mr A");
     });
     test("with unknown users", () => {
         const participants = getParticipantsString(
@@ -359,7 +119,7 @@ describe("get participants string for group chat", () => {
             "Unknown User",
             "You"
         );
-        expect(participants).toEqual("Mr B, Mr D, You, Mr A, Unknown User");
+        expect(participants).toEqual("Mr B, Mr D, You, Mr A and Unknown User");
     });
     test("with more than 5 participants", () => {
         const participants = getParticipantsString(
@@ -369,7 +129,7 @@ describe("get participants string for group chat", () => {
             "Unknown User",
             "You"
         );
-        expect(participants).toEqual("8 members (8 online)");
+        expect(participants).toEqual("8 members");
     });
 });
 
@@ -416,9 +176,9 @@ describe("merging updates", () => {
     describe("updated chats get merged correctly", () => {
         const updatedDirect: DirectChatSummaryUpdates = {
             kind: "direct_chat",
-            readByMe: [],
+            readByMe: new DRange(),
             chatId: "4",
-            readByThem: [],
+            readByThem: new DRange(),
             latestEventIndex: 300,
             latestMessage: {
                 event: {
@@ -443,7 +203,7 @@ describe("merging updates", () => {
             kind: "group_chat",
             chatId: "2",
             lastUpdated: BigInt(1000),
-            readByMe: [],
+            readByMe: new DRange(),
             latestMessage: {
                 event: {
                     kind: "message",
@@ -494,8 +254,8 @@ describe("merging updates", () => {
             const updated = merged.find((c) => c.chatId === "4");
             if (updated && updated.kind === "direct_chat") {
                 expect(merged.length).toEqual(5);
-                expect(updated.readByThem).toEqual([]);
-                expect(updated.readByMe).toEqual([]);
+                expect(updated.readByThem.length).toEqual(0);
+                expect(updated.readByMe.length).toEqual(0);
                 expect(updated?.latestMessage).not.toBe(undefined);
             } else {
                 fail("updated chat not found or was not a direct chat");
@@ -516,7 +276,7 @@ describe("merging updates", () => {
             const updated = merged.find((c) => c.chatId === "2");
             if (updated && updated.kind === "group_chat") {
                 expect(merged.length).toEqual(5);
-                expect(updated.readByMe).toEqual([]);
+                expect(updated.readByMe.length).toEqual(0);
                 expect(updated?.lastUpdated).toEqual(BigInt(1000));
                 expect(updated?.latestMessage).not.toBe(undefined);
             } else {
@@ -526,4 +286,44 @@ describe("merging updates", () => {
     });
 
     test.todo("chats end up in the right order");
+});
+
+describe("message ranges are equal", () => {
+    test("ranges are not equal length", () => {
+        const a = new DRange(0, 10);
+        const b = new DRange(0, 10).add(12, 20);
+        expect(rangesAreEqual(a, b)).toBe(false);
+    });
+    test("ranges are equal length but not equal", () => {
+        const a = new DRange(0, 10).add(12, 20);
+        const b = new DRange(0, 10).add(12, 21);
+        expect(rangesAreEqual(a, b)).toBe(false);
+    });
+    test("ranges are equal", () => {
+        const a = new DRange(0, 10).add(12, 20);
+        const b = new DRange(0, 10).add(12, 20);
+        expect(rangesAreEqual(a, b)).toBe(true);
+    });
+    test("ranges are equal again", () => {
+        const a = new DRange(0, 10).add(12, 20).add(100, 250);
+        const b = new DRange(0, 10).add(12, 20).add(100, 250);
+        expect(rangesAreEqual(a, b)).toBe(true);
+    });
+    test("ranges differ only in the 'to' property", () => {
+        const a = new DRange(0, 10).add(12, 20).add(100, 250);
+        const b = new DRange(0, 10).add(12, 20).add(100, 260);
+        expect(rangesAreEqual(a, b)).toBe(false);
+    });
+});
+
+describe("index is in ranges", () => {
+    test("where index is not in ranges", () => {
+        expect(indexIsInRanges(15, new DRange(11, 13))).toEqual(false);
+    });
+    test("where index is in ranges", () => {
+        expect(indexIsInRanges(15, new DRange(11, 13).add(15, 20))).toEqual(true);
+    });
+    test("where there are no ranges", () => {
+        expect(indexIsInRanges(15, new DRange())).toEqual(false);
+    });
 });

@@ -3,6 +3,7 @@
     import ChooseParticipants from "./ChooseParticipants.svelte";
     import type { NewGroupState } from "../../../fsm/newGroup";
     import type { CandidateGroupChat, CreateGroupResponse } from "../../../domain/chat/chat";
+    import type { User } from "../../../domain/user/user";
     import type { ServiceContainer } from "../../../services/serviceContainer";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
@@ -12,6 +13,7 @@
     const dispatch = createEventDispatcher();
 
     export let api: ServiceContainer;
+    export let currentUser: User;
 
     let newGroupState: NewGroupState = "group_form";
     let creatingCanister = false;
@@ -65,6 +67,7 @@
             api.addParticipants(
                 canisterId,
                 candidateGroup.participants.map((p) => p.user.userId),
+                currentUser.username,
                 false
             )
                 .then((resp) => {

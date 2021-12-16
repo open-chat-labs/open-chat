@@ -26,7 +26,6 @@ import {
     createCanisterResponse,
 } from "./mappers";
 import type { IUserIndexClient } from "./userIndex.client.interface";
-import { toVoid } from "../../utils/mapping";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userService: UserIndexService;

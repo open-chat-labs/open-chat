@@ -22,14 +22,14 @@ impl DirectChatEvents {
 
     fn hydrate_event(&self, event: &EventWrapper<ChatEventInternal>) -> EventWrapper<DirectChatEvent> {
         let event_data = match &event.event {
-            ChatEventInternal::Message(m) => DirectChatEvent::Message(self.inner.hydrate_message(m)),
-            ChatEventInternal::MessageEdited(m) => DirectChatEvent::MessageEdited(self.inner.hydrate_updated_message(**m)),
-            ChatEventInternal::MessageDeleted(m) => DirectChatEvent::MessageDeleted(self.inner.hydrate_updated_message(**m)),
+            ChatEventInternal::Message(m) => DirectChatEvent::Message(Box::new(self.inner.hydrate_message(m))),
+            ChatEventInternal::MessageEdited(m) => DirectChatEvent::MessageEdited(self.inner.hydrate_updated_message(m)),
+            ChatEventInternal::MessageDeleted(m) => DirectChatEvent::MessageDeleted(self.inner.hydrate_updated_message(m)),
             ChatEventInternal::MessageReactionAdded(m) => {
-                DirectChatEvent::MessageReactionAdded(self.inner.hydrate_updated_message(**m))
+                DirectChatEvent::MessageReactionAdded(self.inner.hydrate_updated_message(m))
             }
             ChatEventInternal::MessageReactionRemoved(m) => {
-                DirectChatEvent::MessageReactionRemoved(self.inner.hydrate_updated_message(**m))
+                DirectChatEvent::MessageReactionRemoved(self.inner.hydrate_updated_message(m))
             }
             ChatEventInternal::DirectChatCreated(d) => DirectChatEvent::DirectChatCreated(*d),
             _ => panic!("Unrecognised event type"),

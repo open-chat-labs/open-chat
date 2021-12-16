@@ -50,7 +50,7 @@ import type {
     MessageContent,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
-import { Database, db } from "../utils/caching";
+import { Database, initDb } from "../utils/caching";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
@@ -89,7 +89,7 @@ export class ServiceContainer implements MarkMessagesRead {
         this._groupIndexClient = GroupIndexClient.create(identity);
         this._notificationClient = NotificationsClient.create(identity);
         this._groupClients = {};
-        this.db = db;
+        this.db = initDb(identity.getPrincipal().toString());
     }
 
     createUserClient(userId: string): ServiceContainer {
@@ -178,9 +178,13 @@ export class ServiceContainer implements MarkMessagesRead {
     addParticipants(
         chatId: string,
         userIds: string[],
+        myUsername: string,
         allowBlocked: boolean
     ): Promise<AddParticipantsResponse> {
-        return this.getGroupClient(chatId).addParticipants(userIds, allowBlocked);
+        if (!userIds.length) {
+            return Promise.resolve<AddParticipantsResponse>({ kind: "add_participants_success" });
+        }
+        return this.getGroupClient(chatId).addParticipants(userIds, myUsername, allowBlocked);
     }
 
     directChatEventsWindow(

@@ -17,10 +17,11 @@
         EventWrapper,
         EnhancedReplyContext,
         ChatEvent as ChatEventType,
+        ChatSummary,
         Message,
     } from "../../domain/chat/chat";
     import {
-        getFirstUnreadMessageIndex,
+        getMinVisibleMessageIndex,
         groupEvents,
         messageIsReadByThem,
     } from "../../domain/chat/chat.utils";
@@ -315,6 +316,14 @@
         return `${first.timestamp}_${first.index}`;
     }
 
+    function getFirstUnreadMessageIndex(chat: ChatSummary): number {
+        return markRead.getFirstUnreadMessageIndex(
+            chat.chatId,
+            getMinVisibleMessageIndex(chat),
+            chat.latestMessage?.event.messageIndex
+        );
+    }
+
     $: groupedEvents = groupEvents($events).reverse();
 
     $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($chat);
@@ -352,7 +361,7 @@
                     case "sending_message":
                         // if we are within the from bottom threshold *or* if the new message
                         // was sent by us, then scroll to the bottom
-                        if (fromBottom < FROM_BOTTOM_THRESHOLD || evt.event.sentByMe) {
+                        if (evt.event.sentByMe || fromBottom < FROM_BOTTOM_THRESHOLD) {
                             // smooth scroll doesn't work here when we are leaping from the top
                             // which means we are stuck with abrupt scroll which is disappointing
                             const { scroll } = evt.event;
@@ -360,9 +369,7 @@
                         }
                         break;
                     case "chat_updated":
-                        // we don't want this to fire if we have loaded a previous window
-                        // but how do we know we are looking at a previous window
-                        if (shouldLoadNewMessages() && !controller.viewingEventWindow()) {
+                        if (fromBottom < FROM_BOTTOM_THRESHOLD && shouldLoadNewMessages()) {
                             controller.loadNewMessages();
                         }
                         break;
@@ -381,9 +388,9 @@
         return false;
     }
 
-    function isConfirmed(unconfirmed: Set<bigint>, evt: EventWrapper<ChatEventType>): boolean {
+    function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return !unconfirmed.has(evt.event.messageId);
+            return !unconfirmed.contains(controller.chatId, evt.event.messageId);
         }
         return true;
     }
@@ -426,7 +433,7 @@
                         {observer}
                         focused={evt.event.kind === "message" &&
                             evt.event.messageIndex === $focusMessageIndex}
-                        confirmed={isConfirmed($unconfirmed, evt)}
+                        confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem($unconfirmedReadByThem, evt)}
                         readByMe={isReadByMe($markRead, evt)}
                         chatId={controller.chatId}
@@ -537,7 +544,6 @@
         flex: auto;
         background-color: var(--currentChat-msgs-bg);
         padding: $sp3 $sp3;
-        overflow-y: scroll;
         overflow-x: hidden;
         position: relative;
         display: flex;

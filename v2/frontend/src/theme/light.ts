@@ -4,6 +4,7 @@ const sp3 = "8px";
 
 const orangeAccent = "#ff9505";
 const pinkAccent = "hotpink";
+const blueAccent = "#22A7F2";
 
 export function lightTheme(): Theme {
     return {
@@ -15,6 +16,7 @@ export function lightTheme(): Theme {
         txt: "#191919",
         error: "#CF6679",
         accent: pinkAccent,
+        accentDarker: "rgba(150, 50, 50, 0.8)",
         placeholder: "#aaaaaa",
 
         notificationBar: {
@@ -48,6 +50,7 @@ export function lightTheme(): Theme {
             bg: "white",
             txt: "#191919",
             bd: "transparent",
+            "bd-start": "transparent",
         },
 
         "sub-section": {
@@ -71,7 +74,8 @@ export function lightTheme(): Theme {
                 pd: "0 8px",
             },
             panel: {
-                bg: "#fff",
+                // bg: "#fff",
+                bg: "transparent",
             },
         },
 
@@ -88,7 +92,7 @@ export function lightTheme(): Theme {
             pd: sp3,
             bg: "linear-gradient(#22A7F2, #5f2583)",
             left: {
-                bg: "rgba(255,255,255,0.15)",
+                bg: "linear-gradient(transparent, rgba(255,255,255,0.15))",
                 xs: "transparent",
             },
             right: {
@@ -112,8 +116,9 @@ export function lightTheme(): Theme {
         chatSearch: {
             bg: "#ffffff",
             txt: "#555555",
-            bd: "transparent",
             mg: "0",
+            pd: "4px 16px",
+            bd: "transparent",
 
             section: {
                 txt: "#ffffff",
@@ -132,7 +137,7 @@ export function lightTheme(): Theme {
             bg: "white",
             hv: "#ececec",
             txt1: "#191919",
-            txt2: "#333",
+            txt2: "rgba(0, 0, 0, 0.6)",
             bd: "transparent",
             "bd-selected": pinkAccent,
             mb: sp3,
@@ -151,7 +156,7 @@ export function lightTheme(): Theme {
         },
 
         button: {
-            bg: "#22A7F2",
+            bg: blueAccent,
             hv: "#52baf5",
             txt: "#ffffff",
             bd: "transparent",
@@ -213,6 +218,7 @@ export function lightTheme(): Theme {
                 txt: "#191919",
                 hv: "#efefef",
                 bd: "transparent",
+                "reply-accent": blueAccent,
 
                 me: {
                     // bg: "#ff69b4",
@@ -270,7 +276,7 @@ export function lightTheme(): Theme {
                 },
             },
             add: {
-                pd: "8px",
+                pd: "0",
                 pdxs: "8px",
                 search: {
                     mg: "0 0 8px 0",

@@ -1,5 +1,6 @@
-import type { UserLookup, UserSummary } from "../user/user";
-import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.utils";
+import type DRange from "drange";
+import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
+import { compareUsersOnlineFirst, nullUser } from "../user/user.utils";
 import type {
     ChatSummary,
     DirectChatSummary,
@@ -15,7 +16,6 @@ import type {
     ChatEvent,
     ReplyContext,
     UpdateArgs,
-    MessageIndexRange,
     Reaction,
     Message,
     IndexRange,
@@ -23,7 +23,7 @@ import type {
     GroupChatDetails,
     GroupChatDetailsUpdates,
 } from "./chat";
-import { dedupe, groupWhile, zip } from "../../utils/list";
+import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
@@ -68,44 +68,56 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
         if ("userIds" in e.event) {
             e.event.userIds.forEach((u) => userIds.add(u));
         }
-        if (e.event.kind === "message") {
-            userIds.add(e.event.sender);
-        }
-        if (e.event.kind === "group_chat_created") {
-            userIds.add(e.event.created_by);
-        }
-        if (e.event.kind === "participants_added") {
-            userIds.add(e.event.addedBy);
-        }
-        if (e.event.kind === "participant_joined") {
-            userIds.add(e.event.userId);
-        }
-        if (e.event.kind === "participants_promoted_to_admin") {
-            userIds.add(e.event.promotedBy);
-        }
-        if (e.event.kind === "participants_dismissed_as_admin") {
-            userIds.add(e.event.dismissedBy);
-        }
-        if (e.event.kind === "participants_removed") {
-            userIds.add(e.event.removedBy);
-        }
-        if (e.event.kind === "participant_left") {
-            userIds.add(e.event.userId);
-        }
-        if (e.event.kind === "name_changed") {
-            userIds.add(e.event.changedBy);
-        }
-        if (e.event.kind === "avatar_changed") {
-            userIds.add(e.event.changedBy);
-        }
-        if (e.event.kind === "desc_changed") {
-            userIds.add(e.event.changedBy);
-        }
-        if (e.event.kind === "users_blocked") {
-            userIds.add(e.event.blockedBy);
-        }
-        if (e.event.kind === "users_unblocked") {
-            userIds.add(e.event.unblockedBy);
+        switch (e.event.kind) {
+            case "message":
+                userIds.add(e.event.sender);
+                break;
+            case "participant_joined":
+            case "participant_left":
+            case "participant_assumes_super_admin":
+            case "participant_relinquishes_super_admin":
+            case "participant_dismissed_as_super_admin":
+                userIds.add(e.event.userId);
+                break;
+            case "name_changed":
+            case "desc_changed":
+            case "avatar_changed":
+                userIds.add(e.event.changedBy);
+                break;
+            case "group_chat_created":
+                userIds.add(e.event.created_by);
+                break;
+            case "participants_added":
+                userIds.add(e.event.addedBy);
+                break;
+            case "participants_promoted_to_admin":
+                userIds.add(e.event.promotedBy);
+                break;
+            case "participants_dismissed_as_admin":
+                userIds.add(e.event.dismissedBy);
+                break;
+            case "participants_removed":
+                userIds.add(e.event.removedBy);
+                break;
+            case "users_blocked":
+                userIds.add(e.event.blockedBy);
+                break;
+            case "users_unblocked":
+                userIds.add(e.event.unblockedBy);
+                break;
+            case "ownership_transferred":
+                userIds.add(e.event.oldOwner);
+                break;
+            case "message_deleted":
+            case "message_edited":
+            case "reaction_added":
+            case "reaction_removed":
+                userIds.add(e.event.message.updatedBy);
+                break;
+            case "direct_chat_created":
+                break;
+            default:
+                throw new UnsupportedValueError("Unexpected ChatEvent type received", e.event);
         }
         return userIds;
     }, new Set<string>());
@@ -121,21 +133,12 @@ export function getMinVisibleEventIndex(chat: ChatSummary): number {
     return chat.minVisibleEventIndex;
 }
 
-export function indexIsInRanges(index: number, ranges: MessageIndexRange[]): boolean {
-    return ranges.reduce<boolean>((agg, { from, to }) => {
-        if (!agg && index >= from && index <= to) return true;
-        return agg;
-    }, false);
-}
-
-export function insertIndexIntoRanges(
-    index: number,
-    ranges: MessageIndexRange[]
-): MessageIndexRange[] {
-    // todo this could be simpler actually. We know will be either creating a new range or
-    // extending an existing one, so we could just iterate through all the ranges and
-    // see if we find one to extend. If not, add a new one.
-    return mergeMessageIndexRanges(ranges, [{ from: index, to: index }]);
+export function indexIsInRanges(index: number, ranges: DRange): boolean {
+    for (const range of ranges.subranges()) {
+        if (range.low <= index && index <= range.high) return true;
+        if (range.low > index) break;
+    }
+    return false;
 }
 
 export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message): boolean {
@@ -143,47 +146,8 @@ export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message
     return indexIsInRanges(messageIndex, chat.readByThem);
 }
 
-export function messageIsReadByMe(chat: ChatSummary, { messageIndex }: Message): boolean {
-    return indexIsInRanges(messageIndex, chat.readByMe);
-}
-
-// this gives us the index of the first message that the server does not have a record of us
-// having read. However it cannot account for messages that we have read locally. There is no
-// real way round this since the readByMe field only deals in message indexes and not message ids
-export function getFirstUnreadMessageIndex(chat: ChatSummary): number {
-    const latestMessageIndex = chat.latestMessage?.event.messageIndex;
-    const min = getMinVisibleMessageIndex(chat);
-
-    if (latestMessageIndex === undefined) {
-        return Number.MAX_VALUE;
-    }
-
-    if (chat.readByMe.length === 0) {
-        return min;
-    }
-
-    const [unreadIndex, finalRange] = chat.readByMe.reduce(
-        ([index, prev], range) => {
-            return range.from > min
-                ? prev === undefined
-                    ? [min, range]
-                    : [Math.min(index, prev.to + 1), range]
-                : [index, range];
-        },
-        [Number.MAX_VALUE, undefined as MessageIndexRange | undefined]
-    );
-
-    return Math.min(unreadIndex, finalRange ? finalRange.to + 1 : Number.MAX_VALUE);
-}
-
 export function latestMessageText({ latestMessage }: ChatSummary): string {
     return latestMessage?.event ? getContentAsText(latestMessage.event.content) : "";
-}
-
-export function compareByDate(a: ChatSummary, b: ChatSummary): number {
-    const dateA = getDisplayDate(a);
-    const dateB = getDisplayDate(b);
-    return Number(dateB - dateA);
 }
 
 export function getParticipantsString(
@@ -191,17 +155,21 @@ export function getParticipantsString(
     userLookup: UserLookup,
     participantIds: string[],
     unknownUser: string,
-    you: string
+    you: string,
+    compareUsersFn?: (u1: PartialUserSummary, u2: PartialUserSummary) => number
 ): string {
     if (participantIds.length > 5) {
-        const numberOnline = participantIds.map((id) => userIsOnline(userLookup, id)).length;
-        return `${participantIds.length} members (${numberOnline} online)`;
+        return `${participantIds.length} members`;
     }
-    return participantIds
+    const sorted = participantIds
         .map((id) => userLookup[id] ?? nullUser(unknownUser))
-        .sort(compareUsersOnlineFirst)
-        .map((p) => (p.userId === user.userId ? you : p.username))
-        .join(", ");
+        .sort(compareUsersFn ?? compareUsersOnlineFirst)
+        .map((p) => (p.userId === user.userId ? you : p.username));
+
+    // TODO Improve i18n, don't hardcode 'and'
+    return sorted.length > 1
+        ? `${sorted.slice(0, -1).join(", ")} and ${sorted[sorted.length - 1]}`
+        : sorted.join();
 }
 
 function addCaption(caption: string | undefined, content: MessageContent): MessageContent {
@@ -246,23 +214,23 @@ export function createMessage(
 }
 
 export function getDisplayDate(chat: ChatSummary): bigint {
-    return (
-        chat.latestMessage?.timestamp ??
-        (chat.kind === "group_chat" ? chat.joined : BigInt(Date.now()))
-    );
+    const started = chat.kind === "direct_chat" ? chat.dateCreated : chat.joined;
+
+    return chat.latestMessage && chat.latestMessage.timestamp > started
+        ? chat.latestMessage.timestamp
+        : started;
 }
 
 function mergeUpdatedDirectChat(
     chat: DirectChatSummary,
     updatedChat: DirectChatSummaryUpdates
 ): DirectChatSummary {
-    chat.readByMe = updatedChat.readByMe
-        ? mergeMessageIndexRanges(chat.readByMe, updatedChat.readByMe)
-        : chat.readByMe;
-    chat.readByThem = updatedChat.readByThem ?? chat.readByThem;
-    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
-    chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
+    if (updatedChat.readByMe) chat.readByMe.add(updatedChat.readByMe);
+    if (updatedChat.readByThem) chat.readByThem.add(updatedChat.readByThem);
+    chat.latestEventIndex = getLatestEventIndex(chat, updatedChat);
+    chat.latestMessage = getLatestMessage(chat, updatedChat);
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
+
     return chat;
 }
 
@@ -323,64 +291,20 @@ function mergeParticipants(_: Participant | undefined, updated: Participant) {
     return updated;
 }
 
-export function compareMessageRange(a: MessageIndexRange, b: MessageIndexRange): number {
-    if (a.from === b.from) {
-        return a.to - b.to;
-    }
-    return a.from - b.from;
-}
-
-// Note that this function assumes that the ranges have already been optimally collapsed to the
-// minimun number of ranges
-export function messageIndexRangesAreEqual(
-    a: MessageIndexRange[],
-    b: MessageIndexRange[]
-): boolean {
+export function rangesAreEqual(a: DRange, b: DRange): boolean {
     if (a.length !== b.length) return false;
 
-    a.sort(compareMessageRange);
-    b.sort(compareMessageRange);
+    const rangesA = a.subranges();
+    const rangesB = b.subranges();
+    if (rangesA.length !== rangesB.length) return false;
 
-    return zip(a, b).reduce<boolean>((same, [rangeA, rangeB]) => {
-        return same && compareMessageRange(rangeA, rangeB) === 0;
-    }, true);
-}
-
-export function mergeMessageIndexRanges(
-    current: MessageIndexRange[],
-    inbound: MessageIndexRange[]
-): MessageIndexRange[] {
-    const merged = [...current, ...inbound];
-    merged.sort(compareMessageRange);
-
-    if (merged.length === 0) return merged;
-
-    const stack = [merged[0]];
-
-    for (let i = 1; i < merged.length; i++) {
-        const top = stack[0];
-
-        if (top.to < merged[i].from) {
-            stack.push(merged[i]);
-        } else if (top.to < merged[i].to) {
-            top.to = merged[i].to;
-            stack.pop();
-            stack.push(top);
-        }
+    for (let i = 0; i < rangesA.length; i++) {
+        const rangeA = rangesA[i];
+        const rangeB = rangesB[i];
+        if (rangeA.low !== rangeB.low || rangeA.high !== rangeB.high) return false;
     }
 
-    // we may still need to collapse any contiguous ranges
-    const reduced = stack.reduce<MessageIndexRange[]>((agg, range) => {
-        const prev = agg[agg.length - 1];
-        if (prev !== undefined && range.from === prev.to + 1) {
-            prev.to = range.to;
-        } else {
-            agg.push(range);
-        }
-        return agg;
-    }, []);
-
-    return reduced;
+    return true;
 }
 
 function mergeUpdatedGroupChat(
@@ -389,17 +313,43 @@ function mergeUpdatedGroupChat(
 ): GroupChatSummary {
     chat.name = updatedChat.name ?? chat.name;
     chat.description = updatedChat.description ?? chat.description;
-    chat.readByMe = updatedChat.readByMe
-        ? mergeMessageIndexRanges(chat.readByMe, updatedChat.readByMe)
-        : chat.readByMe;
-    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
+    if (updatedChat.readByMe) chat.readByMe.add(updatedChat.readByMe);
     chat.lastUpdated = updatedChat.lastUpdated;
-    chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
+    chat.latestEventIndex = getLatestEventIndex(chat, updatedChat);
+    chat.latestMessage = getLatestMessage(chat, updatedChat);
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
     chat.myRole = updatedChat.myRole ?? chat.myRole;
+
     return chat;
+}
+
+export function mergeUnconfirmedIntoSummary(
+    chatSummary: ChatSummary,
+    unconfirmedMessages?: EventWrapper<Message>[]
+): ChatSummary {
+    if (unconfirmedMessages === undefined) return chatSummary;
+
+    let latestMessage = chatSummary.latestMessage;
+    let latestEventIndex = chatSummary.latestEventIndex;
+    if (unconfirmedMessages.length > 0) {
+        const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
+        if (
+            latestMessage === undefined ||
+            latestUnconfirmedMessage.event.messageIndex > latestMessage.event.messageIndex
+        ) {
+            latestMessage = latestUnconfirmedMessage;
+        }
+        if (latestUnconfirmedMessage.index > latestEventIndex) {
+            latestEventIndex = latestUnconfirmedMessage.index;
+        }
+    }
+    return {
+        ...chatSummary,
+        latestMessage,
+        latestEventIndex,
+    };
 }
 
 function toLookup<T>(keyFn: (t: T) => string, things: T[]): Record<string, T> {
@@ -456,30 +406,32 @@ export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
     return groupWhile(sameDate, events.filter(eventIsVisible)).map(groupBySender);
 }
 
-export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
-    return events[0]?.index;
+export function getNextMessageIndex(
+    chat: ChatSummary,
+    unconfirmedMessages: EventWrapper<Message>[]
+): number {
+    let current = chat.latestMessage?.event.messageIndex ?? -1;
+    if (unconfirmedMessages.length > 0) {
+        const messageIndex = unconfirmedMessages[unconfirmedMessages.length - 1].event.messageIndex;
+        if (messageIndex > current) {
+            current = messageIndex;
+        }
+    }
+    return current + 1;
 }
 
-export function getNextMessageIndex(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): number {
-    // first get the next index according to the chat
-    const chatIdx = (chat.latestMessage?.event.messageIndex ?? 0) + 1;
-
-    // then get the next index according to the loaded events
-    const loadedIdx = (latestLoadedMessageIndex(events) ?? 0) + 1;
-
-    // pick the max
-    return Math.max(chatIdx, loadedIdx);
-}
-
-export function getNextEventIndex(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): number {
-    // first get the next index according to the chat
-    const chatIdx = chat.latestEventIndex + 1;
-
-    // then get the next index according to the loaded events
-    const loadedIdx = (latestLoadedEventIndex(events) ?? 0) + 1;
-
-    // pick the max
-    return Math.max(chatIdx, loadedIdx);
+export function getNextEventIndex(
+    chat: ChatSummary,
+    unconfirmedMessages: EventWrapper<Message>[]
+): number {
+    let current = chat.latestEventIndex;
+    if (unconfirmedMessages.length > 0) {
+        const eventIndex = unconfirmedMessages[unconfirmedMessages.length - 1].index;
+        if (eventIndex > current) {
+            current = eventIndex;
+        }
+    }
+    return current + 1;
 }
 
 export function latestLoadedMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
@@ -494,29 +446,6 @@ export function latestLoadedMessageIndex(events: EventWrapper<ChatEvent>[]): num
     return idx;
 }
 
-// todo - this needs to return the last idx that we actually loaded from the server
-// at the moment it will return the latest confirmed idx which may be later than messages
-// other people have added - that's why we are missing messages
-// to solution is to only remove things from the unconfirmed set when we load them from the
-// server - easy
-export function latestLoadedEventIndex(
-    events: EventWrapper<ChatEvent>[],
-    unconfirmed?: Set<bigint>
-): number | undefined {
-    if (unconfirmed === undefined) {
-        return events[events.length - 1]?.index;
-    }
-    let idx = undefined;
-    for (let i = events.length - 1; i >= 0; i--) {
-        const e = events[i].event;
-        if (e.kind !== "message" || (e.kind === "message" && !unconfirmed.has(e.messageId))) {
-            idx = events[i].index;
-            break;
-        }
-    }
-    return idx;
-}
-
 export function latestAvailableEventIndex(chatSummary: ChatSummary): number | undefined {
     return chatSummary.latestEventIndex;
 }
@@ -525,29 +454,12 @@ export function identity<T>(x: T): T {
     return x;
 }
 
-export function setLastMessageOnChat(chat: ChatSummary, ev: EventWrapper<Message>): ChatSummary {
-    // we cannot update this index when we send a message because it will cause us to attempt to
-    // load messages from the server before they have even been committed to the server
-    // chat.latestEventIndex = ev.index;
-    chat.latestMessage = ev;
-    chat.readByMe = insertIndexIntoRanges(ev.event.messageIndex, chat.readByMe);
-    return chat;
-}
-
 function sameDate(a: { timestamp: bigint }, b: { timestamp: bigint }): boolean {
     return areOnSameDay(new Date(Number(a.timestamp)), new Date(Number(b.timestamp)));
 }
 
 export function compareChats(a: ChatSummary, b: ChatSummary): number {
-    return latestActivity(b) - latestActivity(a);
-}
-
-function latestActivity(chat: ChatSummary): number {
-    if (chat.latestMessage) {
-        return Number(chat.latestMessage.timestamp);
-    } else {
-        return Number(chat.kind === "direct_chat" ? chat.dateCreated : chat.joined);
-    }
+    return Number(getDisplayDate(b) - getDisplayDate(a));
 }
 
 export function updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummary[]): UpdateArgs {
@@ -687,6 +599,7 @@ export function replaceLocal(
     userId: string,
     chatId: string,
     messageReadTracker: IMessageReadTracker,
+    readByMe: DRange,
     onClient: EventWrapper<ChatEvent>[],
     fromServer: EventWrapper<ChatEvent>[]
 ): EventWrapper<ChatEvent>[] {
@@ -698,22 +611,21 @@ export function replaceLocal(
 
     // overwrite any local msgs with their server counterpart to correct any index errors
     Object.entries(serverMsgs).forEach(([id, e]) => {
-        // only now do we consider this message confirmed
-        const idNum = BigInt(id);
-        unconfirmed.delete(idNum);
         if (e.event.kind === "message") {
-            const confirmed = messageReadTracker.confirmMessage(
-                chatId,
-                e.event.messageIndex,
-                idNum
-            );
-            if (e.event.sender === userId && !confirmed) {
-                // make double sure that our own messages are marked read
+            // only now do we consider this message confirmed
+            const idNum = BigInt(id);
+            if (unconfirmed.delete(chatId, idNum)) {
+                messageReadTracker.confirmMessage(chatId, e.event.messageIndex, idNum);
+            } else if (
+                e.event.sender === userId &&
+                !indexIsInRanges(e.event.messageIndex, readByMe)
+            ) {
+                // If this message was sent by us and is not currently marked as read, mark it as read
                 messageReadTracker.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
             }
+            revokeObjectUrls(clientMsgs[id]);
+            clientMsgs[id] = e;
         }
-        revokeObjectUrls(clientMsgs[id]);
-        clientMsgs[id] = e;
     });
 
     // concat and dedupe the two lists of non-message events
@@ -803,4 +715,20 @@ export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): Eve
         };
     }
     return messageEvent;
+}
+
+function getLatestEventIndex(chat: ChatSummary, updatedChat: ChatSummaryUpdates): number {
+    return updatedChat.latestEventIndex !== undefined &&
+        updatedChat.latestEventIndex > chat.latestEventIndex
+        ? updatedChat.latestEventIndex
+        : chat.latestEventIndex;
+}
+
+function getLatestMessage(
+    chat: ChatSummary,
+    updatedChat: ChatSummaryUpdates
+): EventWrapper<Message> | undefined {
+    return (updatedChat.latestMessage?.index ?? -1) > (chat.latestMessage?.index ?? -1)
+        ? updatedChat.latestMessage
+        : chat.latestMessage;
 }

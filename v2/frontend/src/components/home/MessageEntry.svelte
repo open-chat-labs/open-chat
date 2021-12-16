@@ -2,7 +2,6 @@
     import Close from "svelte-material-icons/Close.svelte";
     import Send from "svelte-material-icons/Send.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import { onMount } from "svelte";
     import FileAttacher from "./FileAttacher.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import { emojiStore } from "../../stores/emoji";
@@ -11,11 +10,14 @@
     import Progress from "../Progress.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
     import { iconSize } from "../../stores/iconSize";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import Smiley from "./Smiley.svelte";
+    import { audioRecordingMimeType } from "../../utils/media";
 
     export let controller: ChatController;
     export let blocked: boolean;
 
+    $: textContent = controller.textContent;
     $: editingEvent = controller.editingEvent;
     $: fileToAttach = controller.fileToAttach;
 
@@ -24,6 +26,7 @@
 
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
+    let audioMimeType = audioRecordingMimeType();
     export let showEmojiPicker = false;
     let selectedRange: Range | undefined;
     let dragging: boolean = false;
@@ -32,6 +35,7 @@
     let initialisedEdit: boolean = false;
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
+    let messageIsEmpty = true;
 
     $: {
         if ($editingEvent && !initialisedEdit) {
@@ -41,19 +45,37 @@
                 restoreSelection();
                 initialisedEdit = true;
             }
+        } else if (inp) {
+            const text = $textContent ?? "";
+            // Only set the textbox text when required rather than every time, because doing so sets the focus back to
+            // the start of the textbox on some devices.
+            if (inp.textContent !== text) {
+                inp.textContent = text;
+            }
         }
         if ($editingEvent === undefined) {
             initialisedEdit = false;
         }
     }
 
-    onMount(() => {
-        if (inp) {
+    $: {
+        if ($fileToAttach !== undefined) {
+            messageIsEmpty = false;
             inp.focus();
         }
-    });
+    }
+
+    $: {
+        if (controller && $screenWidth === ScreenWidth.Large) {
+            inp?.focus();
+        }
+    }
 
     function onInput() {
+        let inputIsEmpty = (inp.textContent?.trim().length ?? 0) === 0;
+        messageIsEmpty = inputIsEmpty && $fileToAttach === undefined;
+        controller.setTextContent(inputIsEmpty ? undefined : inp.textContent!);
+
         requestAnimationFrame(() => {
             const now = Date.now();
             if (now - lastTypingUpdate > USER_TYPING_EVENT_MIN_INTERVAL_MS) {
@@ -73,15 +95,19 @@
 
     function keyPress(e: KeyboardEvent) {
         if (e.key === "Enter" && !e.shiftKey) {
-            sendMessage();
-            controller.stopTyping();
+            if (!messageIsEmpty) {
+                sendMessage();
+                controller.stopTyping();
+            }
             e.preventDefault();
         }
     }
 
     function sendMessage() {
-        dispatch("sendMessage", inp.textContent);
+        dispatch("sendMessage", inp.textContent?.trim());
         inp.textContent = "";
+        inp.focus();
+        messageIsEmpty = true;
         showEmojiPicker = false;
     }
 
@@ -129,17 +155,6 @@
             }
         }
     }
-
-    // TODO - do we even want to focus the input - it's quite distracting on mobile
-    // $: {
-    //     if (
-    //         $machine.changed &&
-    //         ($machine.context.replyingTo !== undefined ||
-    //             $machine.context.fileToAttach !== undefined)
-    //     ) {
-    //         inp.focus();
-    //     }
-    // }
 
     // todo - doubt this will react properly
     $: placeholder =
@@ -194,14 +209,21 @@
             on:drop={onDrop}
             on:input={onInput}
             on:keypress={keyPress} />
-        <div class="record">
-            <AudioAttacher bind:percentRecorded bind:recording on:audioCaptured />
-        </div>
-        <div class="send" on:click={sendMessage}>
-            <HoverIcon>
-                <Send size={$iconSize} color={"var(--icon-txt)"} />
-            </HoverIcon>
-        </div>
+        {#if messageIsEmpty && audioMimeType !== undefined}
+            <div class="record">
+                <AudioAttacher
+                    mimeType={audioMimeType}
+                    bind:percentRecorded
+                    bind:recording
+                    on:audioCaptured />
+            </div>
+        {:else}
+            <div class="send" on:click={sendMessage}>
+                <HoverIcon>
+                    <Send size={$iconSize} color={"var(--icon-txt)"} />
+                </HoverIcon>
+            </div>
+        {/if}
     {/if}
 </div>
 
@@ -213,7 +235,6 @@
         justify-content: space-between;
         align-items: center;
         background-color: var(--entry-bg);
-        border-top: 1px solid var(--entry-bd);
         padding: $sp3;
     }
     .emoji,
@@ -224,7 +245,7 @@
     .textbox {
         flex: 1;
         margin: 0 $sp3;
-        padding: $sp3 $sp4;
+        padding: 6px $sp4;
         background-color: var(--entry-input-bg);
         color: var(--entry-input-txt);
         border-radius: 20px;

@@ -2,54 +2,13 @@
     "background_color": "#22A7F2",
     "theme_color": "#22A7F2",
     "description": "Chat application running end-to-end on the Internet Computer",
-    "display": "fullscreen",
+    "display": "standalone",
     "icons": [
         {
-            "src": "_/raw/apple-touch-icon.png",
+            "src": "apple-touch-icon.png",
+            "purpose": "any",
             "sizes": "192x192",
             "type": "image/png"
-        },
-        {
-            "src": "_/raw/oc-logo.png",
-            "purpose": "any",
-            "type": "image/png",
-            "sizes": "500x500"
-        },
-        {
-            "src": "_/raw/oc-logo-512.png",
-            "purpose": "any",
-            "type": "image/png",
-            "sizes": "512x512"
-        },
-        {
-            "src": "_/raw/oc-logo-48.png",
-            "purpose": "any",
-            "type": "image/png",
-            "sizes": "48x48"
-        },
-        {
-            "src": "_/raw/oc-logo-72.png",
-            "purpose": "any",
-            "type": "image/png",
-            "sizes": "72x72"
-        },
-        {
-            "src": "_/raw/oc-logo-96.png",
-            "purpose": "any",
-            "type": "image/png",
-            "sizes": "96x96"
-        },
-        {
-            "src": "_/raw/oc-logo-128.png",
-            "purpose": "any",
-            "type": "image/png",
-            "sizes": "128x128"
-        },
-        {
-            "src": "_/raw/oc-logo-256.png",
-            "purpose": "any",
-            "type": "image/png",
-            "sizes": "256x256"
         }
     ],
     "name": "OpenChat",

@@ -46,8 +46,6 @@ import {
     EventsResponse,
     EventsSuccessResult,
     EventsArgs,
-    PutChunkArgs,
-    PutChunkResponse,
     SendMessageArgs,
     SendMessageResponse,
     EditMessageResponse,
@@ -70,6 +68,7 @@ import {
     CryptocurrencyDeposit,
     Role,
     Mention,
+    MessageIndexRange,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -121,8 +120,6 @@ export {
     EventsResponse as ApiEventsResponse,
     EventsSuccessResult as ApiEventsSuccessResult,
     EventsArgs as ApiEventsArgs,
-    PutChunkArgs as ApiPutChunkArgs,
-    PutChunkResponse as ApiPutChunkResponse,
     BlockUserResponse as ApiBlockUserResponse,
     UnblockUserResponse as ApiUnblockUserResponse,
     LeaveGroupResponse as ApiLeaveGroupResponse,
@@ -142,6 +139,7 @@ export {
     CryptocurrencyDeposit as ApiCryptocurrencyDeposit,
     Role as ApiRole,
     Mention as ApiMention,
+    MessageIndexRange as ApiMessageIndexRange,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
