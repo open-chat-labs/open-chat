@@ -1,5 +1,5 @@
 [package]
-name = "sms_service"
+name = "sms_sender_aws"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
@@ -13,7 +13,7 @@ dotenv = "0.15.0"
 dynamodb_index_store = { path = "../../libraries/dynamodb_index_store" }
 index_store = { path = "../../libraries/index_store" }
 sms_sender_core = { path = "../core" }
-tokio = "1.10.0"
+tokio = { version = "1.10.0", features = ["macros"] }
 tracing = "0.1.29"
 tracing-subscriber = "0.2.25"
 types = { path = "../../libraries/types" }

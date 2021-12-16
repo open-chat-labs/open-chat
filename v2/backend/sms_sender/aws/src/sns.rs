@@ -30,7 +30,7 @@ impl SmsSender for SnsClient {
         self.client
             .publish()
             .phone_number(phone_number)
-            .message(format!("Confirmation code: {}", code))
+            .message(format!("OpenChat confirmation code: {}", code))
             .set_message_attributes(Some(message_attributes.clone()))
             .send()
             .await?;
