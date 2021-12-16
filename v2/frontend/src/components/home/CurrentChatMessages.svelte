@@ -320,7 +320,8 @@
         return markRead.getFirstUnreadMessageIndex(
             chat.chatId,
             getMinVisibleMessageIndex(chat),
-            chat.latestMessage?.event.messageIndex);
+            chat.latestMessage?.event.messageIndex
+        );
     }
 
     $: groupedEvents = groupEvents($events).reverse();
@@ -543,7 +544,6 @@
         flex: auto;
         background-color: var(--currentChat-msgs-bg);
         padding: $sp3 $sp3;
-        overflow-y: scroll;
         overflow-x: hidden;
         position: relative;
         display: flex;
