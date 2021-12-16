@@ -113,6 +113,7 @@ export interface Theme {
         bg: string;
         txt: string;
         ic: string;
+        mg: string;
     };
 
     avatar: {
