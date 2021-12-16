@@ -107,7 +107,7 @@ export function originalTheme(defaultTheme: Theme): Theme {
 
         scrollbar: {
             ...defaultTheme.scrollbar,
-            bg: "rgba(255,255,255, 0.5)",
+            bg: "rgba(0, 0, 0, 0.15)",
         },
 
         groupForm: {
