@@ -20,7 +20,6 @@
                 "@xstate/inspect": "^0.4.1",
                 "@xstate/svelte": "^0.1.0",
                 "@xstate/test": "^0.4.2",
-                "country-telephone-data": "^0.6.3",
                 "drange": "^2.0.1",
                 "emoji-picker-element": "^1.8.1",
                 "html-entities": "^2.3.2",
@@ -5009,11 +5008,6 @@
             "resolved": "https://registry.npmjs.org/core-util-is/-/core-util-is-1.0.2.tgz",
             "integrity": "sha1-tf1UIgqivFq1eqtxQMlAdUUDwac=",
             "dev": true
-        },
-        "node_modules/country-telephone-data": {
-            "version": "0.6.3",
-            "resolved": "https://registry.npmjs.org/country-telephone-data/-/country-telephone-data-0.6.3.tgz",
-            "integrity": "sha512-3tQLA0vec+NDVlcaHhXGqILq/oQRsv4fRi4EedCfJqUuJUjQGdcSPM8r2IJIT2kZ5yWbiOCkXMgy7YTo8FNS2w=="
         },
         "node_modules/cross-spawn": {
             "version": "7.0.3",
@@ -17696,11 +17690,6 @@
             "resolved": "https://registry.npmjs.org/core-util-is/-/core-util-is-1.0.2.tgz",
             "integrity": "sha1-tf1UIgqivFq1eqtxQMlAdUUDwac=",
             "dev": true
-        },
-        "country-telephone-data": {
-            "version": "0.6.3",
-            "resolved": "https://registry.npmjs.org/country-telephone-data/-/country-telephone-data-0.6.3.tgz",
-            "integrity": "sha512-3tQLA0vec+NDVlcaHhXGqILq/oQRsv4fRi4EedCfJqUuJUjQGdcSPM8r2IJIT2kZ5yWbiOCkXMgy7YTo8FNS2w=="
         },
         "cross-spawn": {
             "version": "7.0.3",

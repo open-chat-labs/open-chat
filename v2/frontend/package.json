@@ -81,7 +81,6 @@
         "@xstate/inspect": "^0.4.1",
         "@xstate/svelte": "^0.1.0",
         "@xstate/test": "^0.4.2",
-        "country-telephone-data": "^0.6.3",
         "drange": "^2.0.1",
         "emoji-picker-element": "^1.8.1",
         "html-entities": "^2.3.2",
