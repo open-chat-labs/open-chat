@@ -176,7 +176,7 @@
                             index={i}
                             messagesRead={controller.messagesRead}
                             {chatSummary}
-                            userId={userId}
+                            {userId}
                             selected={$selectedChat?.chatId === chatSummary.chatId} />
                     </div>
                 {/each}
