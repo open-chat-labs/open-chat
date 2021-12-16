@@ -798,22 +798,6 @@ export class ChatController {
             });
     }
 
-    deleteGroup(): Promise<boolean> {
-        return this.api
-            .deleteGroup(this.chatId)
-            .then((resp) => {
-                if (resp !== "success") {
-                    rollbar.warn("Unable to delete group", resp);
-                    return false;
-                }
-                return true;
-            })
-            .catch((err) => {
-                rollbar.error("Unable to delete group", err);
-                return false;
-            });
-    }
-
     makeAdmin(userId: string): Promise<void> {
         this.participants.update((ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: "admin" } : p))

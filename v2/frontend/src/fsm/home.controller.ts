@@ -129,15 +129,23 @@ export class HomeController {
 
                 const selectedChat = get(this.selectedChat);
 
+                let selectedChatInvalid = true;
+
                 this.serverChatSummaries.set(
                     chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
                         rec[chat.chatId] = chat;
                         if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
+                            selectedChatInvalid = false;
                             selectedChat.chatUpdated();
                         }
                         return rec;
                     }, {})
                 );
+
+                if (selectedChatInvalid) {
+                    this.clearSelectedChat();
+                }
+
                 this.initialised = true;
             }
             toastStore.hideToast();
@@ -242,6 +250,30 @@ export class HomeController {
         });
     }
 
+    deleteGroup(chatId: string): Promise<boolean> {
+        return this.api
+            .deleteGroup(chatId)
+            .then((resp) => {
+                if (resp === "success") {
+                    toastStore.showSuccessToast("deleteGroupSuccess");
+                    this.clearSelectedChat();
+                    this.serverChatSummaries.update((summaries) => {
+                        delete summaries[chatId];
+                        return summaries;
+                    });
+                } else {
+                    rollbar.warn("Unable to delete group", resp);
+                    toastStore.showFailureToast("deleteGroupFailure");
+                }
+                return true;
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("deleteGroupFailure");
+                rollbar.error("Unable to delete group", err);
+                return false;
+            });
+    }
+
     leaveGroup(chatId: string): Promise<void> {
         return this.api
             .leaveGroup(chatId)
@@ -261,7 +293,10 @@ export class HomeController {
                     }
                 }
             })
-            .catch((_err) => toastStore.showFailureToast("failedToLeaveGroup"));
+            .catch((err) => {
+                toastStore.showFailureToast("failedToLeaveGroup");
+                rollbar.error("Unable to leave group", err);
+            });
     }
 
     goToMessageIndex(messageIndex: number): void {
