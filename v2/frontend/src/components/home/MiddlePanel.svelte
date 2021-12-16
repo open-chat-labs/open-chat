@@ -30,6 +30,7 @@
             on:clearSelection
             on:blockUser
             on:leaveGroup
+            on:deleteGroup
             on:replyPrivatelyTo
             on:addParticipants
             on:showGroupDetails
