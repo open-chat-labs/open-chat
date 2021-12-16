@@ -54,6 +54,7 @@ export function originalTheme(defaultTheme: Theme): Theme {
         currentUser: {
             ...defaultTheme.currentUser,
             bg: "#ededed",
+            mg: "0 0 8px 0",
         },
 
         currentChat: {
@@ -107,7 +108,7 @@ export function originalTheme(defaultTheme: Theme): Theme {
 
         scrollbar: {
             ...defaultTheme.scrollbar,
-            bg: "rgba(255,255,255, 0.5)",
+            bg: "rgba(0,0,0, 0.15)",
         },
 
         groupForm: {

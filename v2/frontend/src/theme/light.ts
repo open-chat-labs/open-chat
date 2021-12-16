@@ -105,6 +105,7 @@ export function lightTheme(): Theme {
             bg: "white",
             txt: "#191919",
             ic: "#aaa",
+            mg: "0 8px 8px 8px",
         },
 
         avatar: {

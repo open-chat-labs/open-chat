@@ -40,10 +40,10 @@
             min-width: 236px;
             max-width: 450px;
             position: relative;
+            padding: var(--panel-pd) 0;
             @include size-below(xs) {
                 background: var(--panel-left-xs);
                 width: 100%;
-                padding: 0;
                 flex: auto;
             }
         }

@@ -97,6 +97,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         currentUser: {
+            ...defaultTheme.currentUser,
             bd: `1px solid ${dark15}`,
             bg: dark20,
             txt: dark60,
