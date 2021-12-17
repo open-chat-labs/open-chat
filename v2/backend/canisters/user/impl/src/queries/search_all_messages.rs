@@ -114,7 +114,7 @@ async fn search_all_group_chats(
     let mut successes = Vec::new();
     let mut failures = Vec::new();
 
-    for response in responses.into_iter() {
+    for response in responses {
         match response {
             Ok(result) => {
                 if let group_canister::c2c_search_messages::Response::Success(r) = result {

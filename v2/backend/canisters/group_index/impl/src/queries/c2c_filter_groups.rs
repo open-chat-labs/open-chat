@@ -15,7 +15,7 @@ fn c2c_active_and_deleted_groups_impl(args: Args, runtime_state: &RuntimeState) 
 
     let mut active_groups = Vec::new();
     let mut upgrades_in_progress = Vec::new();
-    for chat_id in args.chat_ids.into_iter() {
+    for chat_id in args.chat_ids {
         if let Some(g) = runtime_state.data.private_groups.get(&chat_id) {
             if g.upgrade_in_progress() {
                 upgrades_in_progress.push(g.id());
