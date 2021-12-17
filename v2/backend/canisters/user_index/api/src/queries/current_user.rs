@@ -16,8 +16,7 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct UnconfirmedResult {
-    pub phone_number: PhoneNumber,
-    pub phone_number2: Option<PhoneNumber>,
+    pub phone_number: Option<PhoneNumber>,
     pub wallet: Option<CanisterId>,
 }
 

@@ -1,7 +1,7 @@
 use crate::model::user::User;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use types::{CanisterUpgradeStatus, Cryptocurrency, CryptocurrencyAccount, PhoneNumber};
+use types::{CanisterUpgradeStatus, Cryptocurrency, CryptocurrencyAccount};
 use user_index_canister::current_user::{Response::*, *};
 
 #[query]
@@ -16,11 +16,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         match user {
             User::Unconfirmed(u) => Unconfirmed(UnconfirmedResult {
-                phone_number: u
-                    .phone_number
-                    .as_ref()
-                    .map_or(PhoneNumber::new(0, "".to_string()), |p| p.phone_number.clone()),
-                phone_number2: u.phone_number.as_ref().map(|p| p.phone_number.clone()),
+                phone_number: u.phone_number.as_ref().map(|p| p.phone_number.clone()),
                 wallet: u.wallet,
             }),
             User::Confirmed(u) => {
