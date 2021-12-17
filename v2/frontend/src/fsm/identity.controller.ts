@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import { Writable, writable } from "svelte/store";
-import type { CurrentUserResponse, User } from "../domain/user/user";
+import type { CreatedUser, CurrentUserResponse, User } from "../domain/user/user";
 import { getIdentity, login, logout, startSession } from "../services/auth";
 import { ServiceContainer } from "../services/serviceContainer";
 import { HomeController } from "./home.controller";
@@ -69,7 +69,7 @@ export class IdentityController {
         });
     }
 
-    private onCreatedUser(id: Identity, user: CurrentUserResponse): void {
+    private onCreatedUser(id: Identity, user: CreatedUser): void {
         if (user.kind === "created_user") {
             if (user.canisterUpgradeStatus === "required") {
                 this.state.set("upgrade_user");

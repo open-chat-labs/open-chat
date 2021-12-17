@@ -181,7 +181,7 @@ export default [
             // instead of npm run dev), minify
             production && terser(),
 
-            production && analyze({ summaryOnly: true }),
+            production && analyze({ summaryOnly: false }),
 
             production && filesize(),
         ],

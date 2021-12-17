@@ -1,5 +1,5 @@
 import { Writable, writable } from "svelte/store";
-import type { CurrentUserResponse, PhoneNumber } from "../domain/user/user";
+import type { CreatedUser, CurrentUserResponse, PhoneNumber } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
 
 export type RegisterState =
@@ -15,11 +15,12 @@ export class RegisterController {
     public error: Writable<string | undefined> = writable(undefined);
     public username: Writable<string | undefined> = writable(undefined);
     public phoneNumber: Writable<PhoneNumber | undefined> = writable(undefined);
+    private _createdUser?: CreatedUser;
 
     constructor(
         private _api: ServiceContainer,
         private currentUser: CurrentUserResponse,
-        private _onComplete: (user: CurrentUserResponse) => void,
+        private _onComplete: (user: CreatedUser) => void,
         private _phoneNumber?: PhoneNumber
     ) {
         this.phoneNumber = writable(_phoneNumber);
@@ -119,13 +120,15 @@ export class RegisterController {
                 });
             } else if (resp.kind === "created_user") {
                 this.state.set("awaiting_completion");
-                this.currentUser = resp;
+                this._createdUser = resp;
             }
         });
     }
 
     complete(): void {
-        this._onComplete(this.currentUser);
+        if (this._createdUser !== undefined) {
+            this._onComplete(this._createdUser);
+        }
     }
 
     resendRegistrationCode(): void {
