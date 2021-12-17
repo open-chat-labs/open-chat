@@ -227,7 +227,7 @@ impl UserMap {
     // This will only execute once every 15 minutes.
     // Returns true if the process ran, else false
     pub fn remove_expired_phone_numbers_if_required(&mut self, now: TimestampMillis) -> bool {
-        if now - self.expired_phone_numbers_last_removed > REMOVE_EXPIRED_PHONE_NUMBERS_INTERVAL_MS {
+        if now.saturating_sub(self.expired_phone_numbers_last_removed) > REMOVE_EXPIRED_PHONE_NUMBERS_INTERVAL_MS {
             // Find all the users with expired phone numbers
             let to_remove: Vec<_> = self
                 .users_with_unconfirmed_phone_numbers
