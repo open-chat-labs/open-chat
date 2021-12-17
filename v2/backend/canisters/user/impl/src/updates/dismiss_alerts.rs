@@ -18,7 +18,7 @@ fn dismiss_alerts_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
     let now = runtime_state.env.now();
 
     let mut not_found = Vec::new();
-    for ext_id in args.alert_ids.into_iter() {
+    for ext_id in args.alert_ids {
         match AlertId::from_str(&ext_id) {
             Ok(AlertId::Internal(id)) => {
                 if runtime_state.data.alerts.remove(id).is_some() {

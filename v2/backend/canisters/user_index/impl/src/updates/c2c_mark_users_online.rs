@@ -13,7 +13,7 @@ fn c2c_mark_users_online(args: Args) -> Response {
 fn c2c_mark_users_online_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
     let users = &mut runtime_state.data.users;
-    for user in args.users.into_iter() {
+    for user in args.users {
         users.mark_online(&user, now);
     }
     Success
