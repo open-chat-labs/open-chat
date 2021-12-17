@@ -27,6 +27,7 @@ import type {
 } from "./candid/idl";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
+import { Principal } from "@dfinity/candid/lib/cjs/idl";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {
@@ -101,6 +102,9 @@ export function confirmPhoneNumber(
     if ("AlreadyClaimed" in candid) return "already_claimed";
     if ("ConfirmationCodeExpired" in candid) return "code_expired";
     if ("ConfirmationCodeIncorrect" in candid) return "code_incorrect";
+    if ("PhoneNumberNotSubmitted" in candid) {
+        return "phone_number_not_submitted";
+    }
 
     throw new UnsupportedValueError(
         "Unexpected ApiConfirmPhoneNumberResponse type received",
@@ -144,7 +148,8 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
     if ("Unconfirmed" in candid) {
         return {
             kind: "unconfirmed_user",
-            phoneNumber: phoneNumber(candid.Unconfirmed.phone_number),
+            phoneNumber: optional(candid.Unconfirmed.phone_number, phoneNumber),
+            wallet: optional(candid.Unconfirmed.wallet, (p) => p.toString()),
         };
     }
 
@@ -229,6 +234,9 @@ export function resendCodeResponse(candid: ApiResendCodeResponse): ResendCodeRes
     }
     if ("UserNotFound" in candid) {
         return "user_not_found";
+    }
+    if ("PhoneNumberNotSubmitted" in candid) {
+        return "phone_number_not_submitted";
     }
     throw new UnsupportedValueError("Unexpected ApiResendCodeResponse type received", candid);
 }

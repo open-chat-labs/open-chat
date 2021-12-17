@@ -157,7 +157,6 @@ export default [
                 "process.env.NODE_ENV": process.env.NODE_ENV,
                 "process.env.ROLLBAR_ENV": production ? "production" : "development",
                 "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
-                "process.env.SHOW_XSTATE_INSPECTOR": process.env.SHOW_XSTATE_INSPECTOR,
                 "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
                 "process.env.MOCK_SERVICES": !production && process.env.MOCK_SERVICES, // make double sure we don't release with mock data
                 "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
@@ -182,7 +181,7 @@ export default [
             // instead of npm run dev), minify
             production && terser(),
 
-            production && analyze({ summaryOnly: true }),
+            production && analyze({ summaryOnly: false }),
 
             production && filesize(),
         ],

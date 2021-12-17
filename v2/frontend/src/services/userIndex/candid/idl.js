@@ -9,6 +9,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ConfirmPhoneNumberArgs = IDL.Record({ 'confirmation_code' : IDL.Text });
   const ConfirmPhoneNumberResponse = IDL.Variant({
+    'PhoneNumberNotSubmitted' : IDL.Null,
     'AlreadyClaimed' : IDL.Null,
     'Success' : IDL.Null,
     'ConfirmationCodeExpired' : IDL.Null,
@@ -46,7 +47,10 @@ export const idlFactory = ({ IDL }) => {
     'InProgress' : IDL.Null,
   });
   const CurrentUserResponse = IDL.Variant({
-    'Unconfirmed' : IDL.Record({ 'phone_number' : PhoneNumber }),
+    'Unconfirmed' : IDL.Record({
+      'wallet' : IDL.Opt(CanisterId),
+      'phone_number' : IDL.Opt(PhoneNumber),
+    }),
     'Confirmed' : IDL.Record({
       'username' : IDL.Text,
       'canister_creation_status' : CanisterCreationStatus,
@@ -71,6 +75,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ResendCodeArgs = IDL.Record({});
   const ResendCodeResponse = IDL.Variant({
+    'PhoneNumberNotSubmitted' : IDL.Null,
     'AlreadyClaimed' : IDL.Null,
     'Success' : IDL.Null,
     'UserNotFound' : IDL.Null,

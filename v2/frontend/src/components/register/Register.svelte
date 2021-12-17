@@ -6,8 +6,9 @@
     import Complete from "./Complete.svelte";
     import EnterUsername from "./EnterUsername.svelte";
     import EnterCode from "./EnterCode.svelte";
-    import type { RegisterState } from "./Register.types";
     import type { PhoneNumber } from "../../domain/user/user";
+    import type { RegisterState } from "../../fsm/register.controller";
+
     export let state: RegisterState;
     export let username: string = "";
     export let phoneNumber: PhoneNumber | undefined;
@@ -15,8 +16,8 @@
     let bgClass: "underwater" | "sunset" = "underwater";
     $: {
         switch (state) {
-            case "awaitingCanister":
-            case "awaitingCompletion":
+            case "awaiting_canister":
+            case "awaiting_completion":
                 bgClass = "sunset";
                 break;
             default:
@@ -26,28 +27,28 @@
 </script>
 
 <ModalPage {bgClass} minHeight="380px">
-    {#if state === "awaitingCompletion"}
+    {#if state === "awaiting_completion"}
         <Complete on:complete />
     {:else}
         <h4 class="subtitle">{$_("register.tellUsWho")}</h4>
         <Logo />
         <h1 class="title">
-            {#if state === "awaitingCanister"}
+            {#if state === "awaiting_canister"}
                 {$_("register.preparingUser")}
             {:else}
                 {$_("register.registerAs")}
             {/if}
         </h1>
 
-        {#if state === "awaitingPhoneNumber"}
+        {#if state === "awaiting_phone_number"}
             <EnterPhoneNumber {error} on:submitPhoneNumber />
-        {:else if state === "awaitingCode" && phoneNumber}
+        {:else if state === "awaiting_code" && phoneNumber}
             <EnterCode {phoneNumber} {error} on:submitCode on:resendCode on:changePhoneNumber />
         {:else if state === "verifying"}
             <div class="spinner" />
-        {:else if state === "awaitingCanister"}
+        {:else if state === "awaiting_canister"}
             <div class="spinner" />
-        {:else if state === "awaitingUsername"}
+        {:else if state === "awaiting_username"}
             <EnterUsername {username} {error} on:submitUsername />
         {/if}
     {/if}
