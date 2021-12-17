@@ -37,11 +37,11 @@ fn rehydrate_log_messages(
     trace_messages: Vec<LogMessage>,
     messages_container: &LogMessagesWrapper,
 ) {
-    for message in log_messages.into_iter() {
+    for message in log_messages {
         messages_container.logs.push(message);
     }
 
-    for message in trace_messages.into_iter() {
+    for message in trace_messages {
         messages_container.traces.push(message);
     }
 }

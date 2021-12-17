@@ -27,7 +27,6 @@ INTERNET_IDENTITY_URL=http://localhost:8000?canisterId=rwlgt-iiaaa-aaaaa-aaaaa-c
 DFX_NETWORK=local
 MOCK_SERVICES=false
 DEV_PORT=5001
-SHOW_XSTATE_INSPECTOR=false
 ROLLBAR_ACCESS_TOKEN=...
 CLIENT_CACHING=false
 USER_INDEX_CANISTER=naxa5-eyaaa-aaaaa-aacda-cai
@@ -116,7 +115,7 @@ Themes are provided via css variables. When defining colours within the svelte c
 
 ## State Handling
 
-There are a number of options within svelte and we should use the most appropriate tool for each case. Simple local state can just be handled with local variables. If state is simple and self-contained but required globally, then it can be provided using svelte stores. If state is complex and governed by important rules then it should be managed using xstate state machines.
+There are a number of options within svelte and we should use the most appropriate tool for each case. Simple local state can just be handled with local variables. If state is simple and self-contained but required globally, then it can be provided using svelte stores.
 
 ## Storybook
 

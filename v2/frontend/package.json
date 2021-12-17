@@ -78,9 +78,6 @@
         "@fortawesome/free-solid-svg-icons": "^5.15.3",
         "@open-ic/open-storage-agent": "file:src/openStorage",
         "@sveltejs/svelte-virtual-list": "^3.0.1",
-        "@xstate/inspect": "^0.4.1",
-        "@xstate/svelte": "^0.1.0",
-        "@xstate/test": "^0.4.2",
         "drange": "^2.0.1",
         "emoji-picker-element": "^1.8.1",
         "html-entities": "^2.3.2",
@@ -99,8 +96,7 @@
         "svelte-material-icons": "^1.0.3",
         "svelte-spa-router": "^3.1.0",
         "ts-jest": "^27.0.5",
-        "uuid": "^3.4.0",
-        "xstate": "^4.20.0"
+        "uuid": "^3.4.0"
     },
     "jest": {
         "timers": "fake",

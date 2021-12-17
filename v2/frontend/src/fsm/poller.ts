@@ -47,7 +47,10 @@ export class Poller {
             window.clearTimeout(this.timeoutId);
         }
         if (this.unsubscribeBackground) {
-            this.unsubscribeBackground();
+            try {
+                this.unsubscribeBackground();
+                // eslint-disable-next-line no-empty
+            } catch (_err) {}
         }
         this.stopped = true;
     }

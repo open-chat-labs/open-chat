@@ -9,7 +9,7 @@ pub fn insert_ranges(range_set: &mut RangeSet, message_ranges: &[MessageIndexRan
     for range in message_ranges.iter().map(|r| r.from.into()..=r.to.into()) {
         added.insert_range(range.clone());
         if let Some(intersection) = range_set.insert_range(range) {
-            for r in intersection.into_smallvec().into_iter() {
+            for r in intersection.into_smallvec() {
                 added.remove_range(r);
             }
         }
