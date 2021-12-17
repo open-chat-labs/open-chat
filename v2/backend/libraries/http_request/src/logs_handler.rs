@@ -7,7 +7,7 @@ use types::{HeaderField, HttpResponse};
 pub fn encode_logs(messages: Vec<LogMessage>) -> HttpResponse {
     let mut body = Vec::new();
 
-    for message in messages.into_iter() {
+    for message in messages {
         writeln!(&mut body, "{}", message.json).unwrap();
     }
 

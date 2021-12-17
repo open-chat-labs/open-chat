@@ -28,7 +28,7 @@ fn add_subscriptions(notifications: Vec<IndexedEvent<NotificationEnvelope>>, run
     let mut active_notifications: Vec<IndexedEvent<NotificationEnvelope>> = Vec::new();
     let mut subscriptions: HashMap<UserId, Vec<SubscriptionInfo>> = HashMap::new();
 
-    for n in notifications.into_iter() {
+    for n in notifications {
         let mut has_subscriptions = false;
 
         for u in n.value.recipients.iter() {

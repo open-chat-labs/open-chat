@@ -56,7 +56,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let mut notification_recipients = runtime_state.data.participants.users_to_notify(sender);
 
         // Also notify any mentioned participants regardless of whether they have muted notifications for the group
-        for u in mentioned_users.into_iter() {
+        for u in mentioned_users {
             if runtime_state.data.participants.add_mention(&u, message_index) {
                 notification_recipients.insert(u);
             }
