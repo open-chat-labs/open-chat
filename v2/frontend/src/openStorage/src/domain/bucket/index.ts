@@ -10,7 +10,4 @@ export type UploadChunkResponse =
     | "hash_mismatch"
     | "full";
 
-export type DeleteBlobResponse =
-    | "success"
-    | "not_authorized"
-    | "not_found";
+export type DeleteBlobResponse = "success" | "not_authorized" | "not_found";

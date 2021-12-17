@@ -347,7 +347,7 @@ export type ReactionRemoved = {
 };
 
 export type StaleMessage = {
-    updatedBy: string,
+    updatedBy: string;
     eventIndex: number;
     messageId: bigint;
 };
@@ -436,6 +436,7 @@ export type UpdateArgs = {
 };
 
 export type MergedUpdatesResponse = {
+    wasUpdated: boolean;
     chatSummaries: ChatSummary[];
     blockedUsers: Set<string>;
     timestamp: bigint;
@@ -838,7 +839,14 @@ export type ToggleReactionResponse =
 
 export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";
 
-export type SerializableMergedUpdatesResponse = Omit<MergedUpdatesResponse, "chatSummaries"> & { chatSummaries: SerializableChatSummary[] };
+export type SerializableMergedUpdatesResponse = Omit<MergedUpdatesResponse, "chatSummaries"> & {
+    chatSummaries: SerializableChatSummary[];
+};
 export type SerializableChatSummary = SerializableDirectChatSummary | SerializableGroupChatSummary;
-export type SerializableDirectChatSummary = Omit<DirectChatSummary, "readByMe" | "readByThem"> & { readByMe: IndexRange[], readByThem: IndexRange[] };
-export type SerializableGroupChatSummary = Omit<GroupChatSummary, "readByMe"> & { readByMe: IndexRange[] };
+export type SerializableDirectChatSummary = Omit<DirectChatSummary, "readByMe" | "readByThem"> & {
+    readByMe: IndexRange[];
+    readByThem: IndexRange[];
+};
+export type SerializableGroupChatSummary = Omit<GroupChatSummary, "readByMe"> & {
+    readByMe: IndexRange[];
+};

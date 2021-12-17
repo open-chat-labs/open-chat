@@ -55,7 +55,7 @@
     }
 
     function deleteGroup() {
-        dispatch("deleteGroup");
+        dispatch("deleteGroup", $selectedChatSummary.chatId);
     }
 
     function blockUser() {

@@ -2,7 +2,10 @@ import { get, writable } from "svelte/store";
 import { createSetStore } from "./setStore";
 import type { EventWrapper, Message } from "../domain/chat/chat";
 
-type UnconfirmedMessagesByChat = Record<string, { messages: EventWrapper<Message>[], messageIds: Set<bigint> }>;
+type UnconfirmedMessagesByChat = Record<
+    string,
+    { messages: EventWrapper<Message>[]; messageIds: Set<bigint> }
+>;
 
 const store = writable<UnconfirmedMessagesByChat>({});
 
@@ -13,12 +16,12 @@ export const unconfirmed = {
         return get(store)[chatId]?.messages ?? [];
     },
     add: (chatId: string, message: EventWrapper<Message>): void => {
-        store.update(state => {
+        store.update((state) => {
             let chatEvents = state[chatId];
             if (chatEvents === undefined) {
                 chatEvents = {
                     messages: [],
-                    messageIds: new Set<bigint>()
+                    messageIds: new Set<bigint>(),
                 };
                 state[chatId] = chatEvents;
             }
@@ -26,7 +29,7 @@ export const unconfirmed = {
             chatEvents.messageIds.add(message.event.messageId);
             return {
                 ...state,
-                [chatId]: chatEvents
+                [chatId]: chatEvents,
             };
         });
     },
@@ -35,22 +38,24 @@ export const unconfirmed = {
     },
     delete: (chatId: string, messageId: bigint): boolean => {
         if (get(store)[chatId]?.messageIds.has(messageId)) {
-            store.update(state => {
+            store.update((state) => {
                 const chatEvents = state[chatId];
                 if (chatEvents?.messageIds.delete(messageId)) {
                     return {
                         ...state,
                         [chatId]: {
-                            messages: chatEvents.messages.filter(e => e.event.messageId !== messageId),
-                            messageIds: chatEvents.messageIds
-                        }
+                            messages: chatEvents.messages.filter(
+                                (e) => e.event.messageId !== messageId
+                            ),
+                            messageIds: chatEvents.messageIds,
+                        },
                     };
                 }
                 return state;
-            })
+            });
             return true;
         }
         return false;
     },
-    clear: (): void => store.set({})
+    clear: (): void => store.set({}),
 };

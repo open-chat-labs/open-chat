@@ -1,11 +1,17 @@
 import { push } from "svelte-spa-router";
-import { derived, get, Readable, Writable, writable } from "svelte/store";
+import { derived, get, readable, Readable, Writable, writable } from "svelte/store";
 import DRange from "drange";
-import type { ChatSummary, DirectChatSummary, EnhancedReplyContext, EventWrapper, Message } from "../domain/chat/chat";
+import type {
+    ChatSummary,
+    DirectChatSummary,
+    EnhancedReplyContext,
+    EventWrapper,
+    Message,
+} from "../domain/chat/chat";
 import {
     compareChats,
     mergeUnconfirmedIntoSummary,
-    updateArgsFromChats
+    updateArgsFromChats,
 } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
 import type { User, UsersResponse } from "../domain/user/user";
@@ -43,13 +49,24 @@ export class HomeController {
     private chatUpdatesSince?: bigint;
     private usersLastUpdate = BigInt(0);
     private serverChatSummaries: Writable<Record<string, ChatSummary>> = writable({});
-    public chatSummaries: Readable<Record<string, ChatSummary>> = derived([this.serverChatSummaries, unconfirmed], ([summaries, unconfirmed]) => {
-        return Object.entries(summaries).reduce<Record<string, ChatSummary>>((result, [chatId, summary]) => {
-            result[chatId] = mergeUnconfirmedIntoSummary(summary, unconfirmed[chatId]?.messages);
-            return result;
-        }, {});
-    })
-    public chatSummariesList = derived(this.chatSummaries, summaries => Object.values(summaries).sort(compareChats));
+    public chatSummaries: Readable<Record<string, ChatSummary>> = derived(
+        [this.serverChatSummaries, unconfirmed],
+        ([summaries, unconfirmed]) => {
+            return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
+                (result, [chatId, summary]) => {
+                    result[chatId] = mergeUnconfirmedIntoSummary(
+                        summary,
+                        unconfirmed[chatId]?.messages
+                    );
+                    return result;
+                },
+                {}
+            );
+        }
+    );
+    public chatSummariesList = derived(this.chatSummaries, (summaries) =>
+        Object.values(summaries).sort(compareChats)
+    );
     public initialised = false;
     public selectedChat: Writable<ChatController | undefined> = writable(undefined);
     public loading = writable(false);
@@ -96,30 +113,41 @@ export class HomeController {
                           this.messagesRead
                       );
 
-            const userIds = this.userIdsFromDirectChatSummaries(chatsResponse.chatSummaries);
-            userIds.add(this.user.userId);
-            const usersResponse = await this.api.getUsers(
-                missingUserIds(get(userStore), userIds),
-                BigInt(0)
-            );
-
-            userStore.addMany(usersResponse.users);
-            blockedUsers.set(chatsResponse.blockedUsers);
             this.chatUpdatesSince = chatsResponse.timestamp;
-            this.usersLastUpdate = usersResponse.timestamp;
 
-            const selectedChat = get(this.selectedChat);
+            if (chatsResponse.wasUpdated) {
+                const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
+                userIds.add(this.user.userId);
+                const usersResponse = await this.api.getUsers(
+                    missingUserIds(get(userStore), userIds),
+                    BigInt(0)
+                );
 
-            this.serverChatSummaries.set(
-                chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
-                    rec[chat.chatId] = chat;
-                    if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
-                        selectedChat.chatUpdated();
-                    }
-                    return rec;
-                }, {})
-            );
-            this.initialised = true;
+                userStore.addMany(usersResponse.users);
+                blockedUsers.set(chatsResponse.blockedUsers);
+                this.usersLastUpdate = usersResponse.timestamp;
+
+                const selectedChat = get(this.selectedChat);
+
+                let selectedChatInvalid = true;
+
+                this.serverChatSummaries.set(
+                    chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
+                        rec[chat.chatId] = chat;
+                        if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
+                            selectedChatInvalid = false;
+                            selectedChat.chatUpdated();
+                        }
+                        return rec;
+                    }, {})
+                );
+
+                if (selectedChatInvalid) {
+                    this.clearSelectedChat();
+                }
+
+                this.initialised = true;
+            }
             toastStore.hideToast();
             console.log("loaded chats");
         } catch (err) {
@@ -131,11 +159,13 @@ export class HomeController {
         }
     }
 
-    private userIdsFromDirectChatSummaries(chats: ChatSummary[]): Set<string> {
+    private userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
         const userIds = new Set<string>();
         chats.forEach((chat) => {
             if (chat.kind === "direct_chat") {
                 userIds.add(chat.them);
+            } else if (chat.latestMessage !== undefined) {
+                userIds.add(chat.latestMessage.event.sender);
             }
         });
         return userIds;
@@ -145,12 +175,7 @@ export class HomeController {
         this.messagesRead.stop();
         this.chatPoller?.stop();
         this.usersPoller?.stop();
-        this.selectedChat.update((selectedChat) => {
-            if (selectedChat !== undefined) {
-                selectedChat.destroy();
-            }
-            return undefined;
-        });
+        this.clearSelectedChat();
     }
 
     updateUserAvatar(data: DataContent): void {
@@ -193,35 +218,73 @@ export class HomeController {
                     selectedChat.destroy();
                 }
 
+                const readableChatSummary = readable(chat, (set) =>
+                    this.serverChatSummaries.subscribe((summaries) => {
+                        if (summaries[chatId] !== undefined) {
+                            set(summaries[chatId]);
+                        }
+                    })
+                );
+
                 return new ChatController(
                     this.api,
                     user,
-                    derived(this.serverChatSummaries, summaries => summaries[chatId]),
+                    readableChatSummary,
                     this.messagesRead,
                     messageIndex,
-                    message => this.onConfirmedMessage(chatId, message)
+                    (message) => this.onConfirmedMessage(chatId, message)
                 );
             });
         } else {
-            this.selectedChat.set(undefined);
+            this.clearSelectedChat();
         }
     }
 
     clearSelectedChat(): void {
-        this.selectedChat.set(undefined);
+        this.selectedChat.update((selectedChat) => {
+            if (selectedChat !== undefined) {
+                selectedChat.destroy();
+                push("/");
+            }
+            return undefined;
+        });
     }
 
-    leaveGroup(chatId: string): void {
-        this.clearSelectedChat();
-        this.serverChatSummaries.update((chatSummaries) => {
-            delete chatSummaries[chatId];
-            return chatSummaries;
-        });
-        this.api
+    deleteGroup(chatId: string): Promise<boolean> {
+        return this.api
+            .deleteGroup(chatId)
+            .then((resp) => {
+                if (resp === "success") {
+                    toastStore.showSuccessToast("deleteGroupSuccess");
+                    this.clearSelectedChat();
+                    this.serverChatSummaries.update((summaries) => {
+                        delete summaries[chatId];
+                        return summaries;
+                    });
+                } else {
+                    rollbar.warn("Unable to delete group", resp);
+                    toastStore.showFailureToast("deleteGroupFailure");
+                }
+                return true;
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("deleteGroupFailure");
+                rollbar.error("Unable to delete group", err);
+                return false;
+            });
+    }
+
+    leaveGroup(chatId: string): Promise<void> {
+        return this.api
             .leaveGroup(chatId)
             .then((resp) => {
                 if (resp === "success") {
                     toastStore.showSuccessToast("leftGroup");
+                    this.clearSelectedChat();
+                    this.serverChatSummaries.update((summaries) => {
+                        delete summaries[chatId];
+                        return summaries;
+                    });
                 } else {
                     if (resp === "owner_cannot_leave") {
                         toastStore.showFailureToast("ownerCantLeave");
@@ -230,7 +293,10 @@ export class HomeController {
                     }
                 }
             })
-            .catch((_err) => toastStore.showFailureToast("failedToLeaveGroup"));
+            .catch((err) => {
+                toastStore.showFailureToast("failedToLeaveGroup");
+                rollbar.error("Unable to leave group", err);
+            });
     }
 
     goToMessageIndex(messageIndex: number): void {
@@ -316,18 +382,21 @@ export class HomeController {
         if (parsedMsg.kind === "remote_user_toggled_reaction") {
             this.remoteUserToggledReaction({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageId: BigInt(parsedMsg.messageId),
             });
         }
         if (parsedMsg.kind === "remote_user_deleted_message") {
             this.remoteUserDeletedMessage({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageId: BigInt(parsedMsg.messageId),
             });
         }
         if (parsedMsg.kind === "remote_user_removed_message") {
             this.remoteUserRemovedMessage({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageId: BigInt(parsedMsg.messageId),
             });
         }
@@ -337,19 +406,21 @@ export class HomeController {
         if (parsedMsg.kind === "remote_user_sent_message") {
             this.remoteUserSentMessage({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageEvent: {
                     ...parsedMsg.messageEvent,
                     event: {
                         ...parsedMsg.messageEvent.event,
                         messageId: BigInt(parsedMsg.messageEvent.event.messageId),
                     },
-                    timestamp: BigInt(parsedMsg.messageEvent.timestamp),
+                    timestamp: BigInt(Date.now()),
                 },
             });
         }
         if (parsedMsg.kind === "remote_user_read_message") {
             this.remoteUserReadMessage({
                 ...parsedMsg,
+                chatId: fromChat.chatId,
                 messageId: BigInt(parsedMsg.messageId),
             });
         }
@@ -381,10 +452,13 @@ export class HomeController {
 
     remoteUserSentMessage(message: RemoteUserSentMessage): void {
         console.log("remote user sent message");
-        unconfirmed.add(message.chatId, message.messageEvent);
-        this.delegateToChatController(message, (chat) =>
-            chat.sendMessage(message.messageEvent, message.userId)
-        );
+        if (
+            !this.delegateToChatController(message, (chat) =>
+                chat.sendMessage(message.messageEvent, message.userId)
+            )
+        ) {
+            unconfirmed.add(message.chatId, message.messageEvent);
+        }
     }
 
     remoteUserReadMessage(message: RemoteUserReadMessage): void {
@@ -394,24 +468,29 @@ export class HomeController {
     private delegateToChatController(
         msg: WebRtcMessage,
         fn: (selectedChat: ChatController) => void
-    ): void {
+    ): boolean {
         const chat = this.findChatByChatType(msg);
-        if (chat === undefined) return;
+        if (chat === undefined) return false;
         const selectedChat = get(this.selectedChat);
-        if (selectedChat === undefined) return;
-        if (chat.chatId !== selectedChat.chatId) return;
+        if (selectedChat === undefined) return false;
+        if (chat.chatId !== selectedChat.chatId) return false;
         fn(selectedChat);
+        return true;
     }
 
     private onConfirmedMessage(chatId: string, message: EventWrapper<Message>): void {
-        this.serverChatSummaries.update(summaries => {
+        this.serverChatSummaries.update((summaries) => {
             const summary = summaries[chatId];
             if (summary === undefined) return summaries;
 
             const latestEventIndex = Math.max(message.index, summary.latestEventIndex);
-            const latestMessage = message.index > (summary.latestMessage?.index ?? -1)
-                ? message
-                : summary.latestMessage;
+            const overwriteLatestMessage =
+                summary.latestMessage === undefined ||
+                message.index > summary.latestMessage.index ||
+                // If they are the same message, take the confirmed one since it'll have the correct timestamp
+                message.event.messageId === summary.latestMessage.event.messageId;
+
+            const latestMessage = overwriteLatestMessage ? message : summary.latestMessage;
 
             return {
                 ...summaries,
@@ -419,7 +498,7 @@ export class HomeController {
                     ...summary,
                     latestEventIndex,
                     latestMessage,
-                }
+                },
             };
         });
     }

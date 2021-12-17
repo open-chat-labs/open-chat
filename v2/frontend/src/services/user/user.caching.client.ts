@@ -27,7 +27,8 @@ import {
     getCachedEventsByIndex,
     getCachedEventsWindow,
     setCachedChats,
-    setCachedEvents, setCachedMessage,
+    setCachedEvents,
+    setCachedMessage,
 } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
 import { updateArgsFromChats } from "../../domain/chat/chat.utils";
@@ -113,6 +114,10 @@ export class CachingUserClient implements IUserClient {
                     cachedChats.chatSummaries,
                     updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries)
                 )
+                .then((resp) => {
+                    resp.wasUpdated = true;
+                    return resp;
+                })
                 .then(setCachedChats(this.db, this.userId));
         } else {
             return this.client.getInitialState().then(setCachedChats(this.db, this.userId));

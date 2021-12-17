@@ -15,6 +15,7 @@
     import { push, replace } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
+    import RemovingGroup from "./RemovingGroup.svelte";
     import type {
         GroupSearchResponse,
         MessageMatch,
@@ -30,6 +31,7 @@
     import type { EnhancedReplyContext, GroupChatSummary } from "../../domain/chat/chat";
     import type { Writable } from "svelte/store";
     import type { HomeController } from "../../fsm/home.controller";
+    import { _ } from "svelte-i18n";
 
     export let controller: HomeController;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
@@ -43,6 +45,9 @@
     let searchTerm: string = "";
     let searching: boolean = false;
     let searchResultsAvailable: boolean = false;
+
+    let removingOperation: "leave" | "delete" = "delete";
+    let removingChatId: string | undefined;
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -162,7 +167,13 @@
     }
 
     function leaveGroup(ev: CustomEvent<string>) {
-        controller.leaveGroup(ev.detail);
+        removingOperation = "leave";
+        removingChatId = ev.detail;
+    }
+
+    function deleteGroup(ev: CustomEvent<string>) {
+        removingOperation = "delete";
+        removingChatId = ev.detail;
     }
 
     function chatWith(ev: CustomEvent<string>) {
@@ -239,6 +250,7 @@
                 on:blockUser={blockUser}
                 on:unblockUser={unblockUser}
                 on:leaveGroup={leaveGroup}
+                on:deleteGroup={deleteGroup}
                 on:chatWith={chatWith}
                 on:replyPrivatelyTo={replyPrivatelyTo}
                 on:addParticipants={addParticipants}
@@ -278,6 +290,12 @@
     {/if}
 </Overlay>
 
+<RemovingGroup
+    operation={removingOperation}
+    {controller}
+    on:removed={() => (removingChatId = undefined)}
+    bind:chatId={removingChatId} />
+
 <Toast />
 
 <style type="text/scss">
@@ -299,6 +317,7 @@
         --text-color: var(--theme-text);
         color: var(--theme-text);
     }
+
     .right-wrapper {
         position: absolute;
         top: 0;

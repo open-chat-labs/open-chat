@@ -50,7 +50,12 @@ import type {
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
-import { apiMessageIndexRanges, message, messageContent, updatedMessage } from "../common/chatMappers";
+import {
+    apiMessageIndexRanges,
+    message,
+    messageContent,
+    updatedMessage,
+} from "../common/chatMappers";
 import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
 
 export function searchAllMessageResponse(

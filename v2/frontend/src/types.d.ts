@@ -1,15 +1,5 @@
 declare module "remount/es5";
 
-declare module "country-telephone-data" {
-    type Country = {
-        name: string;
-        dialCode: string;
-        format: string;
-        iso2: string;
-    };
-    declare const allCountries: Country[];
-}
-
 declare module "uuid" {
     export function v1(): string;
 }
@@ -30,3 +20,5 @@ declare module "svelte-easy-crop" {
     }
     export default class Cropper extends SvelteComponentTyped<CropperProps, CropperEvents> {}
 }
+
+declare module "intl-tel-input/build/js/utils";

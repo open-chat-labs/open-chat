@@ -1,6 +1,4 @@
-import type {
-    ApiAllocatedBucketResponse,
-} from "./candid/idl";
+import type { ApiAllocatedBucketResponse } from "./candid/idl";
 import type { AllocatedBucketResponse } from "../../domain/index";
 import { UnsupportedValueError } from "../../utils/error";
 
