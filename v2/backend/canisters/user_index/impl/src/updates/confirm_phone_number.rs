@@ -31,7 +31,11 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
             _ => return AlreadyClaimed,
         }
     } else {
-        return UserNotFound;
+        // We remove unconfirmed users once their confirmation codes expire, so if we are unable to
+        // find the user that either means the user never registered, or they registered but
+        // subsequently were removed due to their code expiring. Since we can't differentiate
+        // between these 2 cases, we simply return ConfirmationCodeExpired for both.
+        return ConfirmationCodeExpired;
     }
 
     let user = ConfirmedUser {
@@ -140,7 +144,9 @@ mod tests {
     }
 
     #[test]
-    fn no_user_returns_user_not_found() {
+    // This is because we can't tell the difference between a user who never existed and a user
+    // whose code expired and was subsequently removed.
+    fn no_user_returns_confirmation_code_expired() {
         let env = TestEnv::default();
         let data = Data::default();
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -149,6 +155,6 @@ mod tests {
             confirmation_code: "123456".to_string(),
         };
         let result = confirm_phone_number_impl(args, &mut runtime_state);
-        assert!(matches!(result, Response::UserNotFound));
+        assert!(matches!(result, Response::ConfirmationCodeExpired));
     }
 }

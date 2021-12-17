@@ -31,7 +31,6 @@ type ConfirmPhoneNumberResponse =
         ConfirmationCodeIncorrect;
         ConfirmationCodeExpired;
         AlreadyClaimed;
-        UserNotFound;
     };
 
 type ResendCodeArgs = 

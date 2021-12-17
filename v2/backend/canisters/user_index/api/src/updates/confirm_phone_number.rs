@@ -12,5 +12,4 @@ pub enum Response {
     ConfirmationCodeIncorrect,
     ConfirmationCodeExpired,
     AlreadyClaimed,
-    UserNotFound,
 }

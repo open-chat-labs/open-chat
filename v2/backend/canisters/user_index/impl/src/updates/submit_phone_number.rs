@@ -35,25 +35,9 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
                 }
                 _ => return AlreadyRegistered,
             }
-        } else if let Some(user) = runtime_state.data.users.get_by_phone_number(&phone_number) {
-            match user {
-                User::Unconfirmed(u) => {
-                    if u.has_code_expired(now) {
-                        let principal = u.principal;
-                        runtime_state.data.users.remove_by_principal(&principal);
-                    } else {
-                        return AlreadyRegisteredByOther;
-                    }
-                }
-                _ => {
-                    return if user.get_principal() == caller {
-                        AlreadyRegistered
-                    } else {
-                        // TODO we should support the case where a phone number is recycled
-                        AlreadyRegisteredByOther
-                    };
-                }
-            }
+        } else if runtime_state.data.users.get_by_phone_number(&phone_number).is_some() {
+            // TODO we should support the case where a phone number is recycled
+            return AlreadyRegisteredByOther;
         }
 
         let phone_number_string = phone_number.to_string();

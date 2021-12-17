@@ -2,21 +2,25 @@ use crate::model::user::User;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::HashMap;
-use types::{CyclesTopUp, PhoneNumber, TimestampMillis, Timestamped, UserId};
+use std::collections::{HashMap, HashSet};
+use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
 
-const FIVE_MINUTES_IN_MS: u64 = MINUTE_IN_MS * 5;
-const THIRTY_DAYS_IN_MS: u64 = DAY_IN_MS * 30;
+const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
+const THIRTY_DAYS_IN_MS: Milliseconds = DAY_IN_MS * 30;
+const PRUNE_UNCONFIRMED_USERS_INTERVAL_MS: Milliseconds = MINUTE_IN_MS * 15;
 
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct UserMap {
     users_by_principal: HashMap<Principal, User>,
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,
     username_to_principal: CaseInsensitiveHashMap<Principal>,
     user_id_to_principal: HashMap<UserId, Principal>,
+    unconfirmed_users: HashSet<Principal>,
     cached_metrics: Timestamped<Metrics>,
+    #[serde(default)]
+    unconfirmed_users_last_pruned: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Default, Debug)]
@@ -51,6 +55,10 @@ impl UserMap {
                 }
                 if let Some(user_id) = maybe_user_id {
                     self.user_id_to_principal.insert(user_id, principal);
+                }
+
+                if matches!(user, User::Unconfirmed(_)) {
+                    self.unconfirmed_users.insert(principal);
                 }
                 principal_entry.insert(user);
                 AddUserResult::Success
@@ -107,6 +115,11 @@ impl UserMap {
                 }
             }
 
+            if matches!(user, User::Unconfirmed(_)) {
+                self.unconfirmed_users.insert(principal);
+            } else if matches!(previous, User::Unconfirmed(_)) {
+                self.unconfirmed_users.remove(&principal);
+            }
             self.users_by_principal.insert(principal, user);
             UpdateUserResult::Success
         } else {
@@ -194,6 +207,37 @@ impl UserMap {
             .filter_map(move |p| self.users_by_principal.get(p))
     }
 
+    // Remove unconfirmed user records whose confirmation codes have expired, this frees up memory
+    // and also allows their phone numbers to be reused.
+    // This will only execute once every 15 minutes.
+    pub fn prune_unconfirmed_users_if_required(&mut self, now: TimestampMillis) -> Option<usize> {
+        if now - self.unconfirmed_users_last_pruned > PRUNE_UNCONFIRMED_USERS_INTERVAL_MS {
+            let to_remove: Vec<_> = self
+                .unconfirmed_users
+                .iter()
+                .filter_map(|u| self.users_by_principal.get(u))
+                .filter_map(|u| {
+                    if let User::Unconfirmed(user) = u {
+                        if user.has_code_expired(now) {
+                            return Some(user.principal);
+                        }
+                    }
+                    None
+                })
+                .collect();
+
+            let count = to_remove.len();
+            for principal in to_remove {
+                self.unconfirmed_users.remove(&principal);
+                self.remove_by_principal(&principal);
+            }
+            self.unconfirmed_users_last_pruned = now;
+            Some(count)
+        } else {
+            None
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         self.cached_metrics.value.clone()
     }
@@ -266,6 +310,7 @@ pub enum UpdateUserResult {
 mod tests {
     use super::*;
     use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedUser};
+    use crate::CONFIRMATION_CODE_EXPIRY_MILLIS;
     use itertools::Itertools;
     use types::CanisterCreationStatusInternal;
 
@@ -710,5 +755,55 @@ mod tests {
         assert_eq!(user_map.phone_number_to_principal.len(), 0);
         assert_eq!(user_map.username_to_principal.len(), 0);
         assert_eq!(user_map.user_id_to_principal.len(), 0);
+    }
+
+    #[test]
+    fn prune_unconfirmed_users_runs_once_every_specified_interval() {
+        let mut now = 1_000_000;
+        let mut user_map = UserMap::default();
+        assert_eq!(user_map.prune_unconfirmed_users_if_required(now), Some(0));
+        now += PRUNE_UNCONFIRMED_USERS_INTERVAL_MS;
+        assert_eq!(user_map.prune_unconfirmed_users_if_required(now), None);
+        now += 1;
+        assert_eq!(user_map.prune_unconfirmed_users_if_required(now), Some(0));
+    }
+
+    #[test]
+    fn prune_unconfirmed_users_only_removes_users_with_expired_codes() {
+        let mut now = 1_000_000;
+        let mut user_map = UserMap::default();
+        assert_eq!(user_map.prune_unconfirmed_users_if_required(now), Some(0));
+
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+
+        let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
+        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
+
+        let user1 = User::Unconfirmed(UnconfirmedUser {
+            principal: principal1,
+            phone_number: phone_number1,
+            confirmation_code: "1".to_string(),
+            date_generated: now,
+            sms_messages_sent: 0,
+        });
+
+        now += 1;
+
+        let user2 = User::Unconfirmed(UnconfirmedUser {
+            principal: principal2,
+            phone_number: phone_number2,
+            confirmation_code: "2".to_string(),
+            date_generated: now,
+            sms_messages_sent: 0,
+        });
+
+        user_map.add(user1);
+        user_map.add(user2);
+
+        now += CONFIRMATION_CODE_EXPIRY_MILLIS;
+
+        assert_eq!(user_map.prune_unconfirmed_users_if_required(now), Some(1));
+        assert_eq!(user_map.users_by_principal.len(), 1);
     }
 }
