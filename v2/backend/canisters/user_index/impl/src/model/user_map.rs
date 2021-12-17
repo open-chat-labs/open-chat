@@ -840,6 +840,10 @@ mod tests {
 
         assert!(user_map.remove_expired_phone_numbers_if_required(now));
         assert_eq!(user_map.users_by_principal.into_keys().collect_vec(), vec![principal2]);
+        assert_eq!(
+            user_map.users_with_unconfirmed_phone_numbers.into_iter().collect_vec(),
+            vec![principal2]
+        );
     }
 
     #[test]
@@ -885,6 +889,7 @@ mod tests {
 
         assert!(user_map.remove_expired_phone_numbers_if_required(now));
         assert_eq!(user_map.users_by_principal.into_keys().collect_vec(), vec![principal1]);
+        assert!(user_map.users_with_unconfirmed_phone_numbers.is_empty());
     }
 
     #[test]
@@ -916,6 +921,7 @@ mod tests {
             upgrade_in_progress: false,
         });
         assert!(matches!(user_map.update(confirmed), UpdateUserResult::Success));
+        assert_eq!(user_map.users_by_principal.into_keys().collect_vec(), vec![principal]);
         assert!(user_map.users_with_unconfirmed_phone_numbers.is_empty());
     }
 }
