@@ -1,13 +1,3 @@
-// export interface RegisterContext {
-//     currentUser?: CurrentUserResponse;
-//     serviceContainer?: ServiceContainer;
-//     error?: Error;
-//     phoneNumber?: PhoneNumber;
-//     registrationCode?: string;
-//     userCanister?: Principal;
-//     username?: string;
-// }
-
 import { Writable, writable } from "svelte/store";
 import type { CurrentUserResponse, PhoneNumber } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";

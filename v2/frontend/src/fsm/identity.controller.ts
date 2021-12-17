@@ -21,7 +21,6 @@ const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 
 export class IdentityController {
-    // TODO might make this some sort of state store
     public state: Writable<IdentityState> = writable("requires_login");
     private _identity?: Identity;
     private _api?: ServiceContainer;
