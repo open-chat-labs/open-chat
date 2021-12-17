@@ -129,7 +129,6 @@ impl User {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-#[serde(from = "UnconfirmedUserPrevious")]
 pub struct UnconfirmedUser {
     pub principal: Principal,
     pub phone_number: Option<UnconfirmedPhoneNumber>,
@@ -137,31 +136,6 @@ pub struct UnconfirmedUser {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct UnconfirmedUserPrevious {
-    pub principal: Principal,
-    pub phone_number: PhoneNumber,
-    pub confirmation_code: String,
-    pub date_generated: TimestampMillis,
-    pub sms_messages_sent: u16,
-}
-
-impl From<UnconfirmedUserPrevious> for UnconfirmedUser {
-    fn from(u: UnconfirmedUserPrevious) -> Self {
-        UnconfirmedUser {
-            principal: u.principal,
-            phone_number: Some(UnconfirmedPhoneNumber {
-                phone_number: u.phone_number,
-                confirmation_code: u.confirmation_code,
-                date_generated: u.date_generated,
-                sms_messages_sent: u.sms_messages_sent,
-            }),
-            wallet: None,
-        }
-    }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-#[serde(from = "ConfirmedUserPrevious")]
 pub struct ConfirmedUser {
     pub principal: Principal,
     pub phone_number: Option<PhoneNumber>,
@@ -172,30 +146,6 @@ pub struct ConfirmedUser {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct ConfirmedUserPrevious {
-    pub principal: Principal,
-    pub phone_number: PhoneNumber,
-    pub username: Option<String>,
-    pub date_confirmed: TimestampMillis,
-    pub canister_creation_status: CanisterCreationStatusInternal,
-    pub upgrade_in_progress: bool,
-}
-
-impl From<ConfirmedUserPrevious> for ConfirmedUser {
-    fn from(u: ConfirmedUserPrevious) -> Self {
-        ConfirmedUser {
-            principal: u.principal,
-            phone_number: Some(u.phone_number),
-            username: u.username,
-            date_confirmed: u.date_confirmed,
-            canister_creation_status: u.canister_creation_status,
-            upgrade_in_progress: u.upgrade_in_progress,
-        }
-    }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-#[serde(from = "CreatedUserPrevious")]
 pub struct CreatedUser {
     pub principal: Principal,
     pub phone_number: Option<PhoneNumber>,
@@ -208,39 +158,6 @@ pub struct CreatedUser {
     pub upgrade_in_progress: bool,
     pub cycle_top_ups: Vec<CyclesTopUp>,
     pub avatar_id: Option<u128>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct CreatedUserPrevious {
-    pub principal: Principal,
-    pub phone_number: PhoneNumber,
-    pub user_id: UserId,
-    pub username: String,
-    pub date_created: TimestampMillis,
-    pub date_updated: TimestampMillis,
-    pub last_online: TimestampMillis,
-    pub wasm_version: Version,
-    pub upgrade_in_progress: bool,
-    pub cycle_top_ups: Vec<CyclesTopUp>,
-    pub avatar_id: Option<u128>,
-}
-
-impl From<CreatedUserPrevious> for CreatedUser {
-    fn from(u: CreatedUserPrevious) -> Self {
-        CreatedUser {
-            principal: u.principal,
-            phone_number: Some(u.phone_number),
-            user_id: u.user_id,
-            username: u.username,
-            date_created: u.date_created,
-            date_updated: u.date_updated,
-            last_online: u.last_online,
-            wasm_version: u.wasm_version,
-            upgrade_in_progress: u.upgrade_in_progress,
-            cycle_top_ups: u.cycle_top_ups,
-            avatar_id: u.avatar_id,
-        }
-    }
 }
 
 impl CreatedUser {
