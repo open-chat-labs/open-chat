@@ -1,4 +1,4 @@
-use crate::model::user::{UnconfirmedUser, User};
+use crate::model::user::{UnconfirmedPhoneNumber, UnconfirmedUser, User};
 use crate::model::user_map::AddUserResult;
 use crate::{RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
@@ -30,7 +30,7 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
             match user {
                 User::Unconfirmed(u) => {
-                    sms_messages_sent = u.sms_messages_sent;
+                    sms_messages_sent = u.phone_number.as_ref().map_or(0, |p| p.sms_messages_sent);
                     runtime_state.data.users.remove_by_principal(&caller);
                 }
                 _ => return AlreadyRegistered,
@@ -45,10 +45,13 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
 
         let user = UnconfirmedUser {
             principal: caller,
-            phone_number,
-            confirmation_code: confirmation_code.clone(),
-            date_generated: now,
-            sms_messages_sent: sms_messages_sent + 1,
+            phone_number: Some(UnconfirmedPhoneNumber {
+                phone_number,
+                confirmation_code: confirmation_code.clone(),
+                date_generated: now,
+                sms_messages_sent: sms_messages_sent + 1,
+            }),
+            wallet: None,
         };
 
         if matches!(runtime_state.data.users.add(User::Unconfirmed(user)), AddUserResult::Success) {
@@ -122,7 +125,7 @@ mod tests {
             .get_by_principal(&runtime_state.env.caller())
             .unwrap();
         assert!(matches!(user, User::Unconfirmed(_)));
-        assert_eq!(user.get_phone_number().to_string(), "+44 2222222222");
+        assert_eq!(user.get_phone_number().unwrap().to_string(), "+44 2222222222");
     }
 
     #[test]
@@ -131,7 +134,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Confirmed(ConfirmedUser {
             principal: env.caller,
-            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
+            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             date_confirmed: env.now,
             ..Default::default()
         }));
@@ -150,7 +153,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Confirmed(ConfirmedUser {
             principal: Principal::from_slice(&[2]),
-            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
+            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             date_confirmed: env.now,
             ..Default::default()
         }));

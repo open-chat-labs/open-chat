@@ -31,6 +31,8 @@ type ConfirmPhoneNumberResponse =
         ConfirmationCodeIncorrect;
         ConfirmationCodeExpired;
         AlreadyClaimed;
+        PhoneNumberNotSubmitted;
+        UserNotFound;
     };
 
 type ResendCodeArgs = 
@@ -41,6 +43,7 @@ type ResendCodeResponse =
     variant {
         Success;
         AlreadyClaimed;
+        PhoneNumberNotSubmitted;
         UserNotFound;
     };
 
@@ -126,7 +129,8 @@ type CurrentUserResponse =
     variant {
         UserNotFound;
         Unconfirmed: record {
-            phone_number: PhoneNumber;
+            phone_number: opt PhoneNumber;
+            wallet: opt CanisterId;
         };
         ConfirmedPendingUsername: record {
             canister_creation_status: CanisterCreationStatus;
