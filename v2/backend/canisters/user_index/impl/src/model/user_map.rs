@@ -17,6 +17,7 @@ pub struct UserMap {
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,
     username_to_principal: CaseInsensitiveHashMap<Principal>,
     user_id_to_principal: HashMap<UserId, Principal>,
+    #[serde(default)]
     users_with_unconfirmed_phone_numbers: HashSet<Principal>,
     cached_metrics: Timestamped<Metrics>,
     #[serde(default)]
