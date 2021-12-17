@@ -1,7 +1,9 @@
 <script lang="ts">
     import Home from "./Home.svelte";
-    import { identityService } from "../../fsm/identity.machine";
-    const { state, send } = identityService;
+    import type { IdentityController } from "../../fsm/identity.controller";
+    import { getContext } from "svelte";
+
+    let controller: IdentityController = getContext("identityController");
 
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
@@ -9,12 +11,10 @@
     };
 
     function logout() {
-        send({ type: "LOGOUT" });
+        controller.logout();
     }
-
-    $: controller = $state.context.homeController;
 </script>
 
-{#if controller !== undefined}
-    <Home {controller} {params} on:logout={logout} />
+{#if controller.homeController !== undefined}
+    <Home controller={controller.homeController} {params} on:logout={logout} />
 {/if}

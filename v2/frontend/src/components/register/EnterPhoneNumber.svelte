@@ -12,7 +12,7 @@
 
     let phoneElement: HTMLInputElement;
     let phoneNumberStr: string = "";
-    let countryCode = 1;
+    let countryCode = 44;
     let valid = false;
 
     let iti: Plugin;
