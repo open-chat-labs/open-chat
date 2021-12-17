@@ -19,7 +19,7 @@ fn heartbeat() {
     sync_users_to_open_storage::run();
     calculate_metrics::run();
     dismiss_removed_super_admins::run();
-    prune_unconfirmed_users::run();
+    remove_expired_phone_numbers::run();
 }
 
 mod upgrade_canisters {
@@ -234,15 +234,15 @@ mod dismiss_removed_super_admins {
     }
 }
 
-mod prune_unconfirmed_users {
+mod remove_expired_phone_numbers {
     use super::*;
 
     pub fn run() {
-        RUNTIME_STATE.with(|state| prune_unconfirmed_users_impl(state.borrow_mut().as_mut().unwrap()));
+        RUNTIME_STATE.with(|state| remove_expired_phone_numbers_impl(state.borrow_mut().as_mut().unwrap()));
     }
 
-    fn prune_unconfirmed_users_impl(runtime_state: &mut RuntimeState) {
+    fn remove_expired_phone_numbers_impl(runtime_state: &mut RuntimeState) {
         let now = runtime_state.env.now();
-        runtime_state.data.users.prune_unconfirmed_users_if_required(now);
+        runtime_state.data.users.remove_expired_phone_numbers_if_required(now);
     }
 }

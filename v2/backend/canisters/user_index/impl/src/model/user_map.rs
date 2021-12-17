@@ -9,7 +9,7 @@ use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
 
 const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
 const THIRTY_DAYS_IN_MS: Milliseconds = DAY_IN_MS * 30;
-const PRUNE_UNCONFIRMED_USERS_INTERVAL_MS: Milliseconds = MINUTE_IN_MS * 15;
+const REMOVE_EXPIRED_PHONE_NUMBERS_INTERVAL_MS: Milliseconds = MINUTE_IN_MS * 15;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserMap {
@@ -17,10 +17,10 @@ pub struct UserMap {
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,
     username_to_principal: CaseInsensitiveHashMap<Principal>,
     user_id_to_principal: HashMap<UserId, Principal>,
-    unconfirmed_users: HashSet<Principal>,
+    users_with_unconfirmed_phone_numbers: HashSet<Principal>,
     cached_metrics: Timestamped<Metrics>,
     #[serde(default)]
-    unconfirmed_users_last_pruned: TimestampMillis,
+    expired_phone_numbers_last_removed: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Default, Debug)]
@@ -59,8 +59,8 @@ impl UserMap {
                     self.user_id_to_principal.insert(user_id, principal);
                 }
 
-                if matches!(user, User::Unconfirmed(_)) {
-                    self.unconfirmed_users.insert(principal);
+                if maybe_phone_number.is_some() && matches!(user, User::Unconfirmed(_)) {
+                    self.users_with_unconfirmed_phone_numbers.insert(principal);
                 }
                 principal_entry.insert(user);
                 AddUserResult::Success
@@ -126,10 +126,10 @@ impl UserMap {
                 }
             }
 
-            if matches!(user, User::Unconfirmed(_)) {
-                self.unconfirmed_users.insert(principal);
-            } else if matches!(previous, User::Unconfirmed(_)) {
-                self.unconfirmed_users.remove(&principal);
+            if phone_number.is_some() && matches!(user, User::Unconfirmed(_)) {
+                self.users_with_unconfirmed_phone_numbers.insert(principal);
+            } else if previous_phone_number.is_some() && matches!(previous, User::Unconfirmed(_)) {
+                self.users_with_unconfirmed_phone_numbers.remove(&principal);
             }
             self.users_by_principal.insert(principal, user);
             UpdateUserResult::Success
@@ -220,31 +220,37 @@ impl UserMap {
             .filter_map(move |p| self.users_by_principal.get(p))
     }
 
-    // Remove unconfirmed user records whose confirmation codes have expired, this frees up memory
-    // and also allows their phone numbers to be reused.
+    // Remove phone numbers whose confirmation codes have expired, if that leaves a user record
+    // empty, remove the user record. This frees up memory and also allows phone numbers to be
+    // reused.
     // This will only execute once every 15 minutes.
-    pub fn prune_unconfirmed_users_if_required(&mut self, now: TimestampMillis) -> Option<usize> {
-        if now - self.unconfirmed_users_last_pruned > PRUNE_UNCONFIRMED_USERS_INTERVAL_MS {
-            // Find all the users who have not set a wallet and have expired phone numbers
+    // Returns true if the process ran, else false
+    pub fn remove_expired_phone_numbers_if_required(&mut self, now: TimestampMillis) -> bool {
+        if now - self.expired_phone_numbers_last_removed > REMOVE_EXPIRED_PHONE_NUMBERS_INTERVAL_MS {
+            // Find all the users with expired phone numbers
             let to_remove: Vec<_> = self
-                .unconfirmed_users
+                .users_with_unconfirmed_phone_numbers
                 .iter()
                 .filter_map(|u| self.users_by_principal.get(u))
                 .filter_map(|u| if let User::Unconfirmed(user) = u { Some(user) } else { None })
-                .filter(|u| u.wallet.is_none())
                 .filter(|u| u.phone_number.as_ref().map_or(true, |p| p.has_code_expired(now)))
-                .map(|u| u.principal)
+                .cloned()
                 .collect();
 
-            let count = to_remove.len();
-            for principal in to_remove {
-                self.unconfirmed_users.remove(&principal);
-                self.remove_by_principal(&principal);
+            for mut user in to_remove {
+                self.users_with_unconfirmed_phone_numbers.remove(&user.principal);
+
+                if user.wallet.is_none() {
+                    self.remove_by_principal(&user.principal);
+                } else {
+                    user.phone_number = None;
+                    self.update(User::Unconfirmed(user));
+                }
             }
-            self.unconfirmed_users_last_pruned = now;
-            Some(count)
+            self.expired_phone_numbers_last_removed = now;
+            true
         } else {
-            None
+            false
         }
     }
 
@@ -780,21 +786,21 @@ mod tests {
     }
 
     #[test]
-    fn prune_unconfirmed_users_runs_once_every_specified_interval() {
+    fn remove_expired_phone_numbers_runs_once_every_specified_interval() {
         let mut now = 1_000_000;
         let mut user_map = UserMap::default();
-        assert_eq!(user_map.prune_unconfirmed_users_if_required(now), Some(0));
-        now += PRUNE_UNCONFIRMED_USERS_INTERVAL_MS;
-        assert_eq!(user_map.prune_unconfirmed_users_if_required(now), None);
+        assert!(user_map.remove_expired_phone_numbers_if_required(now));
+        now += REMOVE_EXPIRED_PHONE_NUMBERS_INTERVAL_MS;
+        assert!(!user_map.remove_expired_phone_numbers_if_required(now));
         now += 1;
-        assert_eq!(user_map.prune_unconfirmed_users_if_required(now), Some(0));
+        assert!(user_map.remove_expired_phone_numbers_if_required(now));
     }
 
     #[test]
-    fn prune_unconfirmed_users_only_removes_users_with_expired_codes() {
+    fn remove_expired_phone_numbers_only_removes_users_with_expired_codes() {
         let mut now = 1_000_000;
         let mut user_map = UserMap::default();
-        assert_eq!(user_map.prune_unconfirmed_users_if_required(now), Some(0));
+        assert!(user_map.remove_expired_phone_numbers_if_required(now));
 
         let principal1 = Principal::from_slice(&[1]);
         let principal2 = Principal::from_slice(&[2]);
@@ -804,20 +810,26 @@ mod tests {
 
         let user1 = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            phone_number: phone_number1,
-            confirmation_code: "1".to_string(),
-            date_generated: now,
-            sms_messages_sent: 0,
+            phone_number: Some(UnconfirmedPhoneNumber {
+                phone_number: phone_number1,
+                confirmation_code: "1".to_string(),
+                date_generated: now,
+                sms_messages_sent: 0,
+            }),
+            wallet: None,
         });
 
         now += 1;
 
         let user2 = User::Unconfirmed(UnconfirmedUser {
             principal: principal2,
-            phone_number: phone_number2,
-            confirmation_code: "2".to_string(),
-            date_generated: now,
-            sms_messages_sent: 0,
+            phone_number: Some(UnconfirmedPhoneNumber {
+                phone_number: phone_number2,
+                confirmation_code: "2".to_string(),
+                date_generated: now,
+                sms_messages_sent: 0,
+            }),
+            wallet: None,
         });
 
         user_map.add(user1);
@@ -825,7 +837,84 @@ mod tests {
 
         now += CONFIRMATION_CODE_EXPIRY_MILLIS;
 
-        assert_eq!(user_map.prune_unconfirmed_users_if_required(now), Some(1));
-        assert_eq!(user_map.users_by_principal.len(), 1);
+        assert!(user_map.remove_expired_phone_numbers_if_required(now));
+        assert_eq!(user_map.users_by_principal.into_keys().collect_vec(), vec![principal2]);
+    }
+
+    #[test]
+    fn remove_expired_phone_numbers_retains_users_with_wallets_set() {
+        let mut now = 1_000_000;
+        let mut user_map = UserMap::default();
+        assert!(user_map.remove_expired_phone_numbers_if_required(now));
+
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+
+        let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
+        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
+
+        let wallet1 = Principal::from_slice(&[1, 1]);
+
+        let user1 = User::Unconfirmed(UnconfirmedUser {
+            principal: principal1,
+            phone_number: Some(UnconfirmedPhoneNumber {
+                phone_number: phone_number1,
+                confirmation_code: "1".to_string(),
+                date_generated: now,
+                sms_messages_sent: 0,
+            }),
+            wallet: Some(wallet1),
+        });
+
+        let user2 = User::Unconfirmed(UnconfirmedUser {
+            principal: principal2,
+            phone_number: Some(UnconfirmedPhoneNumber {
+                phone_number: phone_number2,
+                confirmation_code: "2".to_string(),
+                date_generated: now,
+                sms_messages_sent: 0,
+            }),
+            wallet: None,
+        });
+
+        user_map.add(user1);
+        user_map.add(user2);
+
+        now += CONFIRMATION_CODE_EXPIRY_MILLIS + 1;
+
+        assert!(user_map.remove_expired_phone_numbers_if_required(now));
+        assert_eq!(user_map.users_by_principal.into_keys().collect_vec(), vec![principal1]);
+    }
+
+    #[test]
+    fn confirming_a_user_removes_principal_from_unconfirmed_phone_numbers_set() {
+        let mut user_map = UserMap::default();
+        let principal = Principal::from_slice(&[1]);
+        let phone_number = PhoneNumber::new(44, "1111 111 111".to_owned());
+
+        let unconfirmed = User::Unconfirmed(UnconfirmedUser {
+            principal,
+            phone_number: Some(UnconfirmedPhoneNumber {
+                phone_number: phone_number.clone(),
+                confirmation_code: "1".to_string(),
+                date_generated: 1,
+                sms_messages_sent: 1,
+            }),
+            wallet: None,
+        });
+        user_map.add(unconfirmed);
+
+        assert_eq!(user_map.users_with_unconfirmed_phone_numbers.len(), 1);
+
+        let confirmed = User::Confirmed(ConfirmedUser {
+            principal,
+            phone_number: Some(phone_number),
+            username: None,
+            date_confirmed: 1,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
+            upgrade_in_progress: false,
+        });
+        assert!(matches!(user_map.update(confirmed), UpdateUserResult::Success));
+        assert!(user_map.users_with_unconfirmed_phone_numbers.is_empty());
     }
 }

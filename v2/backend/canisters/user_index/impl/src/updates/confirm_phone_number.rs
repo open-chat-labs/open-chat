@@ -61,7 +61,7 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
 mod tests {
     use super::*;
     use crate::model::user::{UnconfirmedPhoneNumber, UnconfirmedUser};
-    use crate::Data;
+    use crate::{Data, CONFIRMATION_CODE_EXPIRY_MILLIS};
     use utils::env::test::TestEnv;
 
     #[test]
