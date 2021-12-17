@@ -70,23 +70,21 @@ export class IdentityController {
     }
 
     private onCreatedUser(id: Identity, user: CreatedUser): void {
-        if (user.kind === "created_user") {
-            if (user.canisterUpgradeStatus === "required") {
-                this.state.set("upgrade_user");
-                this._api?.upgradeUser().then(() => this.loadUser(id));
-            } else if (user.canisterUpgradeStatus === "in_progress") {
-                this.state.set("upgrading_user");
-                window.setTimeout(() => this.loadUser(id), UPGRADE_POLL_INTERVAL);
-            } else {
-                this.state.set("logged_in");
-                this._api?.createUserClient(user.userId);
-                this._user = { ...user };
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.homeController = new HomeController(this._api!, user);
+        if (user.canisterUpgradeStatus === "required") {
+            this.state.set("upgrade_user");
+            this._api?.upgradeUser().then(() => this.loadUser(id));
+        } else if (user.canisterUpgradeStatus === "in_progress") {
+            this.state.set("upgrading_user");
+            window.setTimeout(() => this.loadUser(id), UPGRADE_POLL_INTERVAL);
+        } else {
+            this.state.set("logged_in");
+            this._api?.createUserClient(user.userId);
+            this._user = { ...user };
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.homeController = new HomeController(this._api!, user);
 
-                this.startOnlinePoller();
-                this.startSession(id);
-            }
+            this.startOnlinePoller();
+            this.startSession(id);
         }
     }
 
