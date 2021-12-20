@@ -29,6 +29,8 @@ fn try_confirm_user(cycles: Cycles, runtime_state: &mut RuntimeState) {
         .get_by_registration_fee_cycles(&cycles)
         .map(|u| u.get_principal())
     {
+        accept_cycles();
+
         let user = User::Confirmed(ConfirmedUser {
             principal,
             phone_number: None,
