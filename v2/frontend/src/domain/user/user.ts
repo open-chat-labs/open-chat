@@ -81,7 +81,8 @@ export type UpgradeInProgress = {
 
 export type UnconfirmedUser = {
     kind: "unconfirmed_user";
-    phoneNumber: PhoneNumber;
+    phoneNumber?: PhoneNumber;
+    wallet?: string;
 };
 
 export type ConfirmedUser = {
@@ -134,6 +135,11 @@ export type ConfirmPhoneNumberResponse =
     | "already_claimed"
     | "code_incorrect"
     | "code_expired"
-    | "not_found";
+    | "not_found"
+    | "phone_number_not_submitted";
 
-export type ResendCodeResponse = "success" | "already_claimed" | "user_not_found";
+export type ResendCodeResponse =
+    | "success"
+    | "already_claimed"
+    | "user_not_found"
+    | "phone_number_not_submitted";

@@ -8,5 +8,6 @@ pub struct Args {}
 pub enum Response {
     Success,
     AlreadyClaimed,
+    PhoneNumberNotSubmitted,
     UserNotFound,
 }

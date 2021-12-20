@@ -15,6 +15,7 @@
     import { push, replace } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
+    import RemovingGroup from "./RemovingGroup.svelte";
     import type {
         GroupSearchResponse,
         MessageMatch,
@@ -30,9 +31,7 @@
     import type { EnhancedReplyContext, GroupChatSummary } from "../../domain/chat/chat";
     import type { Writable } from "svelte/store";
     import type { HomeController } from "../../fsm/home.controller";
-    import ModalContent from "../ModalContent.svelte";
     import { _ } from "svelte-i18n";
-    import Button from "../Button.svelte";
 
     export let controller: HomeController;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
@@ -46,9 +45,9 @@
     let searchTerm: string = "";
     let searching: boolean = false;
     let searchResultsAvailable: boolean = false;
-    let confirmingLeaveGroup = false;
-    let leavingGroupId: string | undefined;
-    let leavingGroup = false;
+
+    let removingOperation: "leave" | "delete" = "delete";
+    let removingChatId: string | undefined;
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -168,18 +167,13 @@
     }
 
     function leaveGroup(ev: CustomEvent<string>) {
-        confirmingLeaveGroup = true;
-        leavingGroupId = ev.detail;
+        removingOperation = "leave";
+        removingChatId = ev.detail;
     }
 
-    function confirmLeaveGroup() {
-        if (leavingGroupId === undefined) return;
-        leavingGroup = true;
-        controller.leaveGroup(leavingGroupId).finally(() => {
-            confirmingLeaveGroup = false;
-            leavingGroupId = undefined;
-            leavingGroup = false;
-        });
+    function deleteGroup(ev: CustomEvent<string>) {
+        removingOperation = "delete";
+        removingChatId = ev.detail;
     }
 
     function chatWith(ev: CustomEvent<string>) {
@@ -256,6 +250,7 @@
                 on:blockUser={blockUser}
                 on:unblockUser={unblockUser}
                 on:leaveGroup={leaveGroup}
+                on:deleteGroup={deleteGroup}
                 on:chatWith={chatWith}
                 on:replyPrivatelyTo={replyPrivatelyTo}
                 on:addParticipants={addParticipants}
@@ -295,33 +290,11 @@
     {/if}
 </Overlay>
 
-<Overlay bind:active={confirmingLeaveGroup}>
-    <ModalContent fill={true}>
-        <span slot="header">{$_("areYouSure")}</span>
-        <span slot="body">
-            <p class="confirm-msg">
-                {$_("confirmLeaveGroup")}
-            </p>
-        </span>
-        <span slot="footer">
-            <div class="buttons">
-                <Button
-                    loading={leavingGroup}
-                    disabled={leavingGroup}
-                    small={true}
-                    on:click={confirmLeaveGroup}>{$_("yesPlease")}</Button>
-                <Button
-                    disabled={leavingGroup}
-                    small={true}
-                    on:click={() => {
-                        confirmingLeaveGroup = false;
-                        leavingGroupId = undefined;
-                    }}
-                    secondary={true}>{$_("noThanks")}</Button>
-            </div>
-        </span>
-    </ModalContent>
-</Overlay>
+<RemovingGroup
+    operation={removingOperation}
+    {controller}
+    on:removed={() => (removingChatId = undefined)}
+    bind:chatId={removingChatId} />
 
 <Toast />
 
@@ -343,16 +316,6 @@
         --background-color: var(--theme-background);
         --text-color: var(--theme-text);
         color: var(--theme-text);
-    }
-
-    .confirm-msg {
-        padding: $sp5;
-    }
-
-    .buttons {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
     }
 
     .right-wrapper {

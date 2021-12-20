@@ -168,7 +168,7 @@ mod tests {
 
             data.users.add(User::Created(CreatedUser {
                 principal: p,
-                phone_number: PhoneNumber::new(44, format!("+44 1111 111 11{}", index)),
+                phone_number: Some(PhoneNumber::new(44, format!("+44 1111 111 11{}", index))),
                 user_id: p.into(),
                 username: usernames[index].to_string(),
                 date_created: env.now,

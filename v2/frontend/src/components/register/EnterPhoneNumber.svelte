@@ -1,48 +1,59 @@
 <script lang="ts">
     import Button from "../Button.svelte";
-    import Input from "../Input.svelte";
-    import Select from "../Select.svelte";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onDestroy, onMount } from "svelte";
     import { fade } from "svelte/transition";
-    import { allCountries } from "country-telephone-data";
-    const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../stores/rtl";
+    import "intl-tel-input/build/css/intlTelInput.css";
+    import "intl-tel-input/build/js/utils";
+    import intlTelInput, { Plugin } from "intl-tel-input";
+
+    const dispatch = createEventDispatcher();
     export let error: string | undefined = undefined;
 
+    let phoneElement: HTMLInputElement;
     let phoneNumberStr: string = "";
-    let countryCodeStr: string = "";
+    let countryCode = 44;
+    let valid = false;
+
+    let iti: Plugin;
+
+    onMount(() => {
+        iti = intlTelInput(phoneElement, {
+            initialCountry: "gb",
+            preferredCountries: [],
+        });
+
+        phoneElement.addEventListener("countrychange", () => {
+            countryCode = parseInt(iti.getSelectedCountryData().dialCode, 10);
+            valid = iti.isValidNumber();
+        });
+
+        phoneElement.addEventListener("input", () => {
+            valid = iti.isValidNumber();
+        });
+    });
+
+    onDestroy(() => iti?.destroy());
 
     function submitPhoneNumber() {
         if (valid) {
-            dispatch("submitPhoneNumber", { countryCode, number: phoneNumber });
+            dispatch("submitPhoneNumber", { countryCode, number: phoneNumberStr });
         }
     }
-
-    $: phoneNumber = phoneNumberStr.replace(/\D/g, "");
-    $: countryCode = parseInt(countryCodeStr, 10);
-    $: valid = !isNaN(parseInt(phoneNumber, 10)) && !isNaN(countryCode);
 </script>
 
 <p class="enter-phone">{$_("register.enterPhone")}</p>
 
 <form class="phone-number" on:submit|preventDefault={submitPhoneNumber}>
-    <div class="country" class:rtl={$rtlStore}>
-        <Select invalid={error !== undefined} bind:value={countryCodeStr}>
-            <option disabled={true} selected value="0">{$_("register.countryCode")}</option>
-            {#each allCountries as country}
-                <option value={country.dialCode}>(+{country.dialCode}) {country.name}</option>
-            {/each}
-        </Select>
-    </div>
     <div class="number">
-        <Input
-            invalid={error !== undefined}
+        <input
             autofocus={true}
-            bind:value={phoneNumberStr}
             minlength={3}
             maxlength={25}
-            placeholder={$_("register.enterPhonePlaceholder")} />
+            class="textbox"
+            bind:value={phoneNumberStr}
+            bind:this={phoneElement}
+            type="tel" />
     </div>
 </form>
 
@@ -65,25 +76,17 @@
 
     .phone-number {
         display: flex;
-        .country {
-            flex: 2;
-            margin-right: $sp3;
-
-            &.rtl {
-                margin-right: 0;
-                margin-left: $sp3;
-            }
-        }
         .number {
             flex: 4;
+            margin-bottom: $sp4;
+
+            @include size-below(xs) {
+                margin-bottom: $sp3;
+            }
         }
 
         @include size-below(xs) {
             flex-wrap: wrap;
-            .country {
-                flex-basis: 100%;
-                margin-right: 0;
-            }
             .number {
                 flex-basis: 100%;
             }
@@ -93,5 +96,21 @@
     .enter-phone {
         @include font(light, normal, fs-100);
         margin-bottom: $sp5;
+    }
+
+    .textbox {
+        display: block;
+        width: 100%;
+        height: 40px;
+        line-height: 24px;
+        @include font(book, normal, fs-100);
+        color: var(--input-txt);
+        background-color: var(--input-bg);
+        border: 1px solid var(--input-bd);
+        outline: none;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border-radius: $sp2;
     }
 </style>

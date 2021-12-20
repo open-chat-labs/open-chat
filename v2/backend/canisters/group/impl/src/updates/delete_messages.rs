@@ -17,7 +17,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         let now = runtime_state.env.now();
 
-        for message_id in args.message_ids.into_iter() {
+        for message_id in args.message_ids {
             runtime_state.data.events.delete_message(
                 participant.user_id,
                 participant.role.can_delete_messages(),

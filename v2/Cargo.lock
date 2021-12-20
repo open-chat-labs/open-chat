@@ -4221,6 +4221,7 @@ dependencies = [
  "ledger_utils",
  "open_storage_index_canister",
  "open_storage_index_canister_c2c_client",
+ "rand 0.7.3",
  "serde",
  "serializer",
  "tracing",

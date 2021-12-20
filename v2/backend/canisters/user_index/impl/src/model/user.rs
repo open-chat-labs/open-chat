@@ -1,7 +1,8 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    CanisterCreationStatusInternal, CyclesTopUp, PartialUserSummary, PhoneNumber, TimestampMillis, UserId, UserSummary, Version,
+    CanisterCreationStatusInternal, CanisterId, CyclesTopUp, PartialUserSummary, PhoneNumber, TimestampMillis, UserId,
+    UserSummary, Version,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -20,11 +21,11 @@ impl User {
         }
     }
 
-    pub fn get_phone_number(&self) -> &PhoneNumber {
+    pub fn get_phone_number(&self) -> Option<&PhoneNumber> {
         match self {
-            User::Unconfirmed(u) => &u.phone_number,
-            User::Confirmed(u) => &u.phone_number,
-            User::Created(u) => &u.phone_number,
+            User::Unconfirmed(u) => u.phone_number.as_ref().map(|p| &p.phone_number),
+            User::Confirmed(u) => u.phone_number.as_ref(),
+            User::Created(u) => u.phone_number.as_ref(),
         }
     }
 
@@ -130,16 +131,14 @@ impl User {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UnconfirmedUser {
     pub principal: Principal,
-    pub phone_number: PhoneNumber,
-    pub confirmation_code: String,
-    pub date_generated: TimestampMillis,
-    pub sms_messages_sent: u16,
+    pub phone_number: Option<UnconfirmedPhoneNumber>,
+    pub wallet: Option<CanisterId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ConfirmedUser {
     pub principal: Principal,
-    pub phone_number: PhoneNumber,
+    pub phone_number: Option<PhoneNumber>,
     pub username: Option<String>,
     pub date_confirmed: TimestampMillis,
     pub canister_creation_status: CanisterCreationStatusInternal,
@@ -149,7 +148,7 @@ pub struct ConfirmedUser {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CreatedUser {
     pub principal: Principal,
-    pub phone_number: PhoneNumber,
+    pub phone_number: Option<PhoneNumber>,
     pub user_id: UserId,
     pub username: String,
     pub date_created: TimestampMillis,
@@ -187,12 +186,20 @@ impl CreatedUser {
     }
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct UnconfirmedPhoneNumber {
+    pub phone_number: PhoneNumber,
+    pub confirmation_code: String,
+    pub date_generated: TimestampMillis,
+    pub sms_messages_sent: u16,
+}
+
 #[cfg(test)]
 impl Default for ConfirmedUser {
     fn default() -> Self {
         ConfirmedUser {
             principal: Principal::anonymous(),
-            phone_number: PhoneNumber::new(44, "000".to_owned()),
+            phone_number: Some(PhoneNumber::new(44, "000".to_owned())),
             username: None,
             canister_creation_status: CanisterCreationStatusInternal::Pending(None),
             upgrade_in_progress: false,
@@ -206,7 +213,7 @@ impl Default for CreatedUser {
     fn default() -> Self {
         CreatedUser {
             principal: Principal::anonymous(),
-            phone_number: PhoneNumber::new(44, "000".to_owned()),
+            phone_number: Some(PhoneNumber::new(44, "000".to_owned())),
             user_id: Principal::anonymous().into(),
             username: String::new(),
             date_created: 0,

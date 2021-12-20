@@ -56,7 +56,7 @@ async fn handle_notifications(
     let client = WebPushClient::new();
 
     let mut futures = Vec::new();
-    for (user_id, notifications) in grouped_by_user.into_iter() {
+    for (user_id, notifications) in grouped_by_user {
         if let Some(s) = subscriptions.remove(&user_id) {
             futures.push(push_notifications_to_user(
                 user_id,
@@ -100,10 +100,10 @@ fn group_notifications_by_user(envelopes: Vec<IndexedEvent<NotificationEnvelope>
         };
     }
 
-    for n in envelopes.into_iter() {
+    for n in envelopes {
         let notification_bytes = Encode!(&n.value.notification).unwrap();
         let base64 = Rc::new(base64::encode(notification_bytes));
-        for u in n.value.recipients.into_iter() {
+        for u in n.value.recipients {
             assign_notification_to_user(&mut grouped_by_user, u, base64.clone());
         }
     }

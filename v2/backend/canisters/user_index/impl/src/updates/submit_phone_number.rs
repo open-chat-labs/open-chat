@@ -1,4 +1,4 @@
-use crate::model::user::{UnconfirmedUser, User};
+use crate::model::user::{UnconfirmedPhoneNumber, UnconfirmedUser, User};
 use crate::model::user_map::AddUserResult;
 use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
 use canister_api_macros::trace;
@@ -30,7 +30,7 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
             match user {
                 User::Unconfirmed(u) => {
-                    sms_messages_sent = u.sms_messages_sent;
+                    sms_messages_sent = u.phone_number.as_ref().map_or(0, |p| p.sms_messages_sent);
                     runtime_state.data.users.remove_by_principal(&caller);
                 }
                 _ => return AlreadyRegistered,
@@ -38,10 +38,12 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         } else if let Some(user) = runtime_state.data.users.get_by_phone_number(&phone_number) {
             match user {
                 User::Unconfirmed(u) => {
-                    let code_expires_at = u.date_generated + CONFIRMATION_CODE_EXPIRY_MILLIS;
-                    let has_code_expired = now > code_expires_at;
-                    if !has_code_expired {
-                        return AlreadyRegisteredByOther;
+                    if let Some(unconfirmed_phone_number) = &u.phone_number {
+                        let code_expires_at = unconfirmed_phone_number.date_generated + CONFIRMATION_CODE_EXPIRY_MILLIS;
+                        let has_code_expired = now > code_expires_at;
+                        if !has_code_expired {
+                            return AlreadyRegisteredByOther;
+                        }
                     }
                 }
                 _ => {
@@ -56,14 +58,17 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         }
 
         let phone_number_string = phone_number.to_string();
-        let confirmation_code = format!("{:0>6}", runtime_state.env.random_u32());
+        let confirmation_code = convert_to_confirmation_code(runtime_state.env.random_u32());
 
         let user = UnconfirmedUser {
             principal: caller,
-            phone_number,
-            confirmation_code: confirmation_code.clone(),
-            date_generated: now,
-            sms_messages_sent: sms_messages_sent + 1,
+            phone_number: Some(UnconfirmedPhoneNumber {
+                phone_number,
+                confirmation_code: confirmation_code.clone(),
+                date_generated: now,
+                sms_messages_sent: sms_messages_sent + 1,
+            }),
+            wallet: None,
         };
 
         if matches!(runtime_state.data.users.add(User::Unconfirmed(user)), AddUserResult::Success) {
@@ -81,12 +86,17 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
     }
 }
 
+fn convert_to_confirmation_code(random: u32) -> String {
+    format!("{:0>6}", random % 1000000)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::model::user::ConfirmedUser;
     use crate::Data;
     use candid::Principal;
+    use rand::RngCore;
     use types::PhoneNumber;
     use utils::env::test::TestEnv;
 
@@ -132,7 +142,7 @@ mod tests {
             .get_by_principal(&runtime_state.env.caller())
             .unwrap();
         assert!(matches!(user, User::Unconfirmed(_)));
-        assert_eq!(user.get_phone_number().to_string(), "+44 2222222222");
+        assert_eq!(user.get_phone_number().unwrap().to_string(), "+44 2222222222");
     }
 
     #[test]
@@ -141,7 +151,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Confirmed(ConfirmedUser {
             principal: env.caller,
-            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
+            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             date_confirmed: env.now,
             ..Default::default()
         }));
@@ -160,7 +170,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Confirmed(ConfirmedUser {
             principal: Principal::from_slice(&[2]),
-            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
+            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             date_confirmed: env.now,
             ..Default::default()
         }));
@@ -183,5 +193,14 @@ mod tests {
         };
         let result = submit_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::InvalidPhoneNumber));
+    }
+
+    #[test]
+    fn confirmation_code_is_always_6_digts() {
+        let mut rand = rand::thread_rng();
+        for _ in 0..100 {
+            let confirmation_code = convert_to_confirmation_code(rand.next_u32());
+            assert_eq!(confirmation_code.len(), 6);
+        }
     }
 }

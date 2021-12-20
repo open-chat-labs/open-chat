@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{CanisterCreationStatus, CanisterUpgradeStatus, CryptocurrencyAccount, PhoneNumber, UserId};
+use types::{CanisterCreationStatus, CanisterId, CanisterUpgradeStatus, CryptocurrencyAccount, PhoneNumber, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {}
@@ -16,7 +16,8 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct UnconfirmedResult {
-    pub phone_number: PhoneNumber,
+    pub phone_number: Option<PhoneNumber>,
+    pub wallet: Option<CanisterId>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
