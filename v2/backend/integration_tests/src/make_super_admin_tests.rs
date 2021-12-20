@@ -1,7 +1,7 @@
 use crate::block_on;
 use canister_client::operations::*;
 use canister_client::utils::{build_ic_agent, build_identity};
-use canister_client::TestIdentity;
+use canister_client::{TestIdentity, USER2_DEFAULT_NAME};
 use ic_agent::AgentError::HttpError;
 use ic_fondue::ic_manager::IcHandle;
 use std::{panic, thread, time};
@@ -158,6 +158,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
         print!("8. User2 add user3 back to group as a participant... ");
         let args = group_canister::add_participants::Args {
             user_ids: vec![user3_id],
+            added_by_name: USER2_DEFAULT_NAME.to_string(),
             allow_blocked_users: false,
         };
         match group_canister_client::add_participants(&user2_agent, &chat_id.into(), &args)

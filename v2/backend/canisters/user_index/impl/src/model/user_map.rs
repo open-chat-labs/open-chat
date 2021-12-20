@@ -3,7 +3,7 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
-use types::{CyclesTopUp, PhoneNumber, TimestampMillis, Timestamped, UserId};
+use types::{Cycles, CyclesTopUp, PhoneNumber, TimestampMillis, Timestamped, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
 
@@ -16,6 +16,8 @@ pub struct UserMap {
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,
     username_to_principal: CaseInsensitiveHashMap<Principal>,
     user_id_to_principal: HashMap<UserId, Principal>,
+    #[serde(default)]
+    registration_fee_cycles_to_principal: HashMap<Cycles, Principal>,
     cached_metrics: Timestamped<Metrics>,
 }
 
@@ -38,12 +40,19 @@ impl UserMap {
         let maybe_phone_number = user.get_phone_number();
         let maybe_username = user.get_username();
         let maybe_user_id = user.get_user_id();
+        let maybe_fee_cycles = user.get_registration_fee_cycles();
 
         if let Vacant(principal_entry) = self.users_by_principal.entry(principal) {
             if maybe_phone_number.is_some() && self.phone_number_to_principal.contains_key(maybe_phone_number.unwrap()) {
                 AddUserResult::PhoneNumberTaken
             } else if maybe_username.is_some() && self.username_to_principal.contains_key(maybe_username.unwrap()) {
                 AddUserResult::UsernameTaken
+            } else if maybe_fee_cycles.is_some()
+                && self
+                    .registration_fee_cycles_to_principal
+                    .contains_key(&maybe_fee_cycles.unwrap())
+            {
+                AddUserResult::RegistrationFeeCyclesTaken
             } else {
                 if let Some(phone_number) = maybe_phone_number {
                     self.phone_number_to_principal.insert(phone_number.clone(), principal);
@@ -53,6 +62,9 @@ impl UserMap {
                 }
                 if let Some(user_id) = maybe_user_id {
                     self.user_id_to_principal.insert(user_id, principal);
+                }
+                if let Some(fee_cycles) = maybe_fee_cycles {
+                    self.registration_fee_cycles_to_principal.insert(fee_cycles, principal);
                 }
                 principal_entry.insert(user);
                 AddUserResult::Success
@@ -79,6 +91,10 @@ impl UserMap {
             let user_id = user.get_user_id();
             let user_id_changed = previous_user_id != user_id;
 
+            let previous_fee_cycles = previous.get_registration_fee_cycles();
+            let fee_cycles = user.get_registration_fee_cycles();
+            let fee_cycles_changed = previous_fee_cycles != fee_cycles;
+
             if phone_number_changed {
                 if let Some(phone_number) = phone_number {
                     if self.phone_number_to_principal.contains_key(phone_number) {
@@ -90,6 +106,16 @@ impl UserMap {
             if username_case_insensitive_changed && self.username_to_principal.contains_key(username.unwrap()) {
                 return UpdateUserResult::UsernameTaken;
             }
+
+            if fee_cycles_changed {
+                if let Some(fee_cycles) = fee_cycles {
+                    if self.registration_fee_cycles_to_principal.contains_key(&fee_cycles) {
+                        return UpdateUserResult::RegistrationFeeCyclesTaken;
+                    }
+                }
+            }
+
+            // Checks are complete, now update the data
 
             if phone_number_changed {
                 if let Some(previous_phone_number) = previous_phone_number {
@@ -115,6 +141,15 @@ impl UserMap {
                 }
                 if let Some(val) = user_id {
                     self.user_id_to_principal.insert(val, principal);
+                }
+            }
+
+            if fee_cycles_changed {
+                if let Some(previous_fee_cycles) = previous_fee_cycles {
+                    self.registration_fee_cycles_to_principal.remove(&previous_fee_cycles);
+                }
+                if let Some(fee_cycles) = fee_cycles {
+                    self.registration_fee_cycles_to_principal.insert(fee_cycles, principal);
                 }
             }
 
@@ -160,6 +195,13 @@ impl UserMap {
             .flatten()
     }
 
+    pub fn get_by_registration_fee_cycles(&self, fee: &Cycles) -> Option<&User> {
+        self.registration_fee_cycles_to_principal
+            .get(fee)
+            .map(|p| self.users_by_principal.get(p))
+            .flatten()
+    }
+
     pub fn is_valid_caller(&self, caller: Principal) -> bool {
         self.users_by_principal.contains_key(&caller) || self.user_id_to_principal.contains_key(&caller.into())
     }
@@ -175,6 +217,9 @@ impl UserMap {
             }
             if let Some(user_id) = user.get_user_id() {
                 self.user_id_to_principal.remove(&user_id);
+            }
+            if let Some(fee_cycles) = user.get_registration_fee_cycles() {
+                self.registration_fee_cycles_to_principal.remove(&fee_cycles);
             }
             Some(user)
         } else {
@@ -265,6 +310,7 @@ pub enum AddUserResult {
     AlreadyExists,
     PhoneNumberTaken,
     UsernameTaken,
+    RegistrationFeeCyclesTaken,
 }
 
 #[derive(Debug)]
@@ -273,12 +319,15 @@ pub enum UpdateUserResult {
     PhoneNumberTaken,
     UsernameTaken,
     UserNotFound,
+    RegistrationFeeCyclesTaken,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedPhoneNumber, UnconfirmedUser};
+    use crate::model::user::{
+        ConfirmedUser, CreatedUser, CyclesRegistrationFee, RegistrationState, UnconfirmedPhoneNumber, UnconfirmedUser,
+    };
     use itertools::Itertools;
     use types::CanisterCreationStatusInternal;
 
@@ -301,13 +350,12 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            phone_number: Some(UnconfirmedPhoneNumber {
+            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number1.clone(),
                 confirmation_code: "1".to_string(),
-                date_generated: 1,
+                valid_until: 1,
                 sms_messages_sent: 1,
             }),
-            wallet: None,
         });
         user_map.add(unconfirmed.clone());
 
@@ -318,6 +366,7 @@ mod tests {
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id2.into())),
             upgrade_in_progress: false,
             date_confirmed: 2,
+            registration_fee: None,
         });
         user_map.add(confirmed.clone());
 
@@ -382,13 +431,12 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal,
-            phone_number: Some(UnconfirmedPhoneNumber {
+            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number1.clone(),
                 confirmation_code: "1".to_string(),
-                date_generated: 1,
+                valid_until: 1,
                 sms_messages_sent: 1,
             }),
-            wallet: None,
         });
         user_map.add(unconfirmed);
 
@@ -399,6 +447,7 @@ mod tests {
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id.into())),
             upgrade_in_progress: false,
             date_confirmed: 2,
+            registration_fee: None,
         });
         assert!(matches!(user_map.add(confirmed), AddUserResult::AlreadyExists));
         assert_eq!(user_map.users_by_principal.len(), 1);
@@ -416,13 +465,12 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            phone_number: Some(UnconfirmedPhoneNumber {
+            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number.clone(),
                 confirmation_code: "1".to_string(),
-                date_generated: 1,
+                valid_until: 1,
                 sms_messages_sent: 1,
             }),
-            wallet: None,
         });
         user_map.add(unconfirmed);
 
@@ -433,6 +481,7 @@ mod tests {
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id).into()),
             upgrade_in_progress: false,
             date_confirmed: 2,
+            registration_fee: None,
         });
         assert!(matches!(user_map.add(confirmed), AddUserResult::PhoneNumberTaken));
         assert_eq!(user_map.users_by_principal.len(), 1);
@@ -459,6 +508,7 @@ mod tests {
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id1).into()),
             upgrade_in_progress: false,
             date_confirmed: 2,
+            registration_fee: None,
         });
         user_map.add(confirmed);
 
@@ -498,6 +548,7 @@ mod tests {
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id1).into()),
             upgrade_in_progress: false,
             date_confirmed: 2,
+            registration_fee: None,
         });
         user_map.add(confirmed);
 
@@ -677,63 +728,147 @@ mod tests {
     }
 
     #[test]
+    fn add_with_clashing_registration_fee_cycles() {
+        let mut user_map = UserMap::default();
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+
+        let fee = 1_000_000;
+
+        let user1 = UnconfirmedUser {
+            principal: principal1,
+            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+                amount: fee,
+                valid_until: 1000,
+            }),
+        };
+
+        let user2 = UnconfirmedUser {
+            principal: principal2,
+            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+                amount: fee,
+                valid_until: 1000,
+            }),
+        };
+
+        user_map.add(User::Unconfirmed(user1));
+        assert!(matches!(
+            user_map.add(User::Unconfirmed(user2)),
+            AddUserResult::RegistrationFeeCyclesTaken
+        ));
+    }
+
+    #[test]
+    fn update_with_clashing_registration_fee_cycles() {
+        let mut user_map = UserMap::default();
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+
+        let fee1 = 1_000_000;
+        let fee2 = 2_000_000;
+
+        let original = UnconfirmedUser {
+            principal: principal1,
+            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+                amount: fee1,
+                valid_until: 1000,
+            }),
+        };
+
+        let other = UnconfirmedUser {
+            principal: principal2,
+            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+                amount: fee2,
+                valid_until: 1000,
+            }),
+        };
+
+        let mut updated = original.clone();
+        updated.state = RegistrationState::CyclesFee(CyclesRegistrationFee {
+            amount: fee2,
+            valid_until: 1000,
+        });
+
+        user_map.add(User::Unconfirmed(original));
+        user_map.add(User::Unconfirmed(other));
+        assert!(matches!(
+            user_map.update(User::Unconfirmed(updated)),
+            UpdateUserResult::RegistrationFeeCyclesTaken
+        ));
+    }
+
+    #[test]
     fn remove() {
         let mut user_map = UserMap::default();
         let principal1 = Principal::from_slice(&[1]);
         let principal2 = Principal::from_slice(&[2]);
         let principal3 = Principal::from_slice(&[3]);
+        let principal4 = Principal::from_slice(&[4]);
 
         let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
-        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
         let phone_number3 = PhoneNumber::new(44, "3333 333 333".to_owned());
+        let phone_number4 = PhoneNumber::new(44, "4444 444 444".to_owned());
 
-        let username2 = "2".to_string();
         let username3 = "3".to_string();
+        let username4 = "4".to_string();
 
-        let user_id2 = Principal::from_slice(&[2, 2]).into();
-        let user_id3 = Principal::from_slice(&[3, 3]).into();
+        let user_id3 = Principal::from_slice(&[3]).into();
+        let user_id4 = Principal::from_slice(&[4]).into();
 
-        let unconfirmed = User::Unconfirmed(UnconfirmedUser {
+        let unconfirmed1 = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            phone_number: Some(UnconfirmedPhoneNumber {
+            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number1.clone(),
                 confirmation_code: "1".to_string(),
-                date_generated: 1,
+                valid_until: 1,
                 sms_messages_sent: 1,
             }),
-            wallet: None,
         });
-        user_map.add(unconfirmed.clone());
+        user_map.add(unconfirmed1.clone());
+
+        let unconfirmed2 = User::Unconfirmed(UnconfirmedUser {
+            principal: principal2,
+            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+                amount: 1000,
+                valid_until: 2,
+            }),
+        });
+        user_map.add(unconfirmed2.clone());
 
         let confirmed = User::Confirmed(ConfirmedUser {
-            principal: principal2,
-            phone_number: Some(phone_number2.clone()),
-            username: Some(username2.clone()),
-            canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id2).into()),
+            principal: principal3,
+            phone_number: Some(phone_number3.clone()),
+            username: Some(username3.clone()),
+            canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id3).into()),
             upgrade_in_progress: false,
-            date_confirmed: 2,
+            date_confirmed: 3,
+            registration_fee: None,
         });
         user_map.add(confirmed.clone());
 
         let created = User::Created(CreatedUser {
-            principal: principal3,
-            phone_number: Some(phone_number3.clone()),
-            user_id: user_id3,
-            username: username3.clone(),
-            date_created: 3,
-            date_updated: 3,
-            last_online: 3,
+            principal: principal4,
+            phone_number: Some(phone_number4.clone()),
+            user_id: user_id4,
+            username: username4.clone(),
+            date_created: 4,
+            date_updated: 4,
+            last_online: 4,
             ..Default::default()
         });
         user_map.add(created.clone());
 
+        assert_eq!(user_map.users_by_principal.len(), 4);
+
         user_map.remove_by_principal(&principal1);
         user_map.remove_by_principal(&principal2);
         user_map.remove_by_principal(&principal3);
+        user_map.remove_by_principal(&principal4);
 
-        assert_eq!(user_map.users_by_principal.len(), 0);
-        assert_eq!(user_map.phone_number_to_principal.len(), 0);
-        assert_eq!(user_map.username_to_principal.len(), 0);
-        assert_eq!(user_map.user_id_to_principal.len(), 0);
+        assert!(user_map.users_by_principal.is_empty());
+        assert!(user_map.phone_number_to_principal.is_empty());
+        assert!(user_map.username_to_principal.is_empty());
+        assert!(user_map.user_id_to_principal.is_empty());
+        assert!(user_map.registration_fee_cycles_to_principal.is_empty());
     }
 }

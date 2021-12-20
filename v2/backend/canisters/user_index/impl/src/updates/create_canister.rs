@@ -149,6 +149,7 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
                                 date: now,
                             }],
                             avatar_id: None,
+                            registration_fee: confirmed_user.registration_fee,
                         };
                         User::Created(created_user)
                     }

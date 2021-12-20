@@ -76,6 +76,11 @@ impl RuntimeState {
         self.data.online_users_aggregator_canister_ids.contains(&caller)
     }
 
+    pub fn generate_6_digit_code(&mut self) -> String {
+        let random = self.env.random_u32();
+        format!("{:0>6}", random % 1000000)
+    }
+
     pub fn metrics(&self) -> Metrics {
         let user_metrics = self.data.users.metrics();
         Metrics {

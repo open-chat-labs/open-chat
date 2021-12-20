@@ -1,14 +1,10 @@
 use crate::block_on;
-use candid::CandidType;
 use canister_client::operations::*;
-use canister_client::utils::{
-    build_ic_agent, build_identity, build_management_canister, create_empty_canister, delay, install_wasm,
-    read_file_from_local_bin,
-};
+use canister_client::utils::{build_ic_agent, build_identity, build_management_canister};
 use canister_client::TestIdentity;
 use ic_fondue::ic_manager::IcHandle;
 use types::{
-    CanisterId, CryptocurrencyContent, CryptocurrencyDeposit, CryptocurrencyTransaction, CryptocurrencyTransfer, CyclesDeposit,
+    CryptocurrencyContent, CryptocurrencyDeposit, CryptocurrencyTransaction, CryptocurrencyTransfer, CyclesDeposit,
     CyclesTransfer, MessageContent, PendingCyclesTransfer, Transaction,
 };
 
@@ -35,30 +31,13 @@ async fn send_cycles_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     .await;
 
     let management_canister = build_management_canister(&user1_agent);
-    print!("Creating cycles wallet canister... ");
-    let cycles_wallet_canister_id = create_empty_canister(&management_canister).await;
-    println!("Ok. Canister id: {}", cycles_wallet_canister_id);
-    let cycles_wallet_wasm = read_file_from_local_bin("cycles_wallet.wasm");
-    print!("Installing cycles wallet... ");
-    install_wasm(&management_canister, &cycles_wallet_canister_id, &cycles_wallet_wasm, ()).await;
-    println!("Ok");
+    let cycles_wallet_canister_id = create_cycles_wallet(&management_canister).await;
 
     const ONE_HUNDRED_BILLION: u128 = 100_000_000_000;
     const ONE_TRILLION: u128 = 1_000_000_000_000;
 
     print!("Depositing cycles into user1's canister... ");
-    user1_agent
-        .update(&cycles_wallet_canister_id, "wallet_send")
-        .with_arg(
-            candid::encode_one(SendCyclesArgs {
-                amount: ONE_TRILLION as u64,
-                canister: user1_id.into(),
-            })
-            .unwrap(),
-        )
-        .call_and_wait(delay())
-        .await
-        .unwrap();
+    send_cycles(&user1_agent, &cycles_wallet_canister_id, user1_id.into(), ONE_TRILLION).await;
     println!("Ok");
 
     print!("Checking user1's cycles balance + deposit is in list of transactions... ");
@@ -157,10 +136,4 @@ async fn send_cycles_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         response => panic!("InitialState returned an error: {:?}", response),
     };
     println!("Ok");
-}
-
-#[derive(CandidType)]
-struct SendCyclesArgs {
-    canister: CanisterId,
-    amount: u64,
 }

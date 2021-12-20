@@ -1,5 +1,5 @@
-use crate::model::user::User;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::model::user::{RegistrationState, UnconfirmedPhoneNumber, User};
+use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::ConfirmationCodeSms;
@@ -14,13 +14,25 @@ fn resend_code(_args: Args) -> Response {
 fn resend_code_impl(runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
 
-    if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
-        match user {
+    if let Some(user) = runtime_state.data.users.get_by_principal(&caller).cloned() {
+        match &user {
             User::Unconfirmed(u) => {
-                if let Some(unconfirmed_phone_number) = &u.phone_number {
+                if let RegistrationState::PhoneNumber(p) = &u.state {
+                    let now = runtime_state.env.now();
+                    let confirmation_code = runtime_state.generate_6_digit_code();
+
+                    let mut clone = u.clone();
+                    clone.state = RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+                        phone_number: p.phone_number.clone(),
+                        confirmation_code: confirmation_code.clone(),
+                        valid_until: now + CONFIRMATION_CODE_EXPIRY_MILLIS,
+                        sms_messages_sent: p.sms_messages_sent + 1,
+                    });
+                    runtime_state.data.users.update(User::Unconfirmed(clone));
+
                     let sms = ConfirmationCodeSms {
-                        phone_number: unconfirmed_phone_number.phone_number.to_string(),
-                        confirmation_code: unconfirmed_phone_number.confirmation_code.to_string(),
+                        phone_number: p.phone_number.to_string(),
+                        confirmation_code,
                     };
                     runtime_state.data.sms_messages.add(sms);
                     Success
@@ -49,13 +61,12 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Unconfirmed(UnconfirmedUser {
             principal: env.caller,
-            phone_number: Some(UnconfirmedPhoneNumber {
+            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
                 confirmation_code: "123456".to_string(),
-                date_generated: env.now,
+                valid_until: env.now + 1000,
                 sms_messages_sent: 1,
             }),
-            wallet: None,
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 

@@ -1,4 +1,4 @@
-use crate::model::user::{UnconfirmedPhoneNumber, UnconfirmedUser, User};
+use crate::model::user::{RegistrationState, UnconfirmedPhoneNumber, UnconfirmedUser, User};
 use crate::model::user_map::AddUserResult;
 use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
 use canister_api_macros::trace;
@@ -30,45 +30,29 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
             match user {
                 User::Unconfirmed(u) => {
-                    sms_messages_sent = u.phone_number.as_ref().map_or(0, |p| p.sms_messages_sent);
+                    if let RegistrationState::PhoneNumber(p) = &u.state {
+                        sms_messages_sent = p.sms_messages_sent;
+                    }
                     runtime_state.data.users.remove_by_principal(&caller);
                 }
                 _ => return AlreadyRegistered,
             }
-        } else if let Some(user) = runtime_state.data.users.get_by_phone_number(&phone_number) {
-            match user {
-                User::Unconfirmed(u) => {
-                    if let Some(unconfirmed_phone_number) = &u.phone_number {
-                        let code_expires_at = unconfirmed_phone_number.date_generated + CONFIRMATION_CODE_EXPIRY_MILLIS;
-                        let has_code_expired = now > code_expires_at;
-                        if !has_code_expired {
-                            return AlreadyRegisteredByOther;
-                        }
-                    }
-                }
-                _ => {
-                    return if user.get_principal() == caller {
-                        AlreadyRegistered
-                    } else {
-                        // TODO we should support the case where a phone number is recycled
-                        AlreadyRegisteredByOther
-                    };
-                }
-            }
+        } else if runtime_state.data.users.get_by_phone_number(&phone_number).is_some() {
+            // TODO we should support the case where a phone number is recycled
+            return AlreadyRegisteredByOther;
         }
 
         let phone_number_string = phone_number.to_string();
-        let confirmation_code = convert_to_confirmation_code(runtime_state.env.random_u32());
+        let confirmation_code = runtime_state.generate_6_digit_code();
 
         let user = UnconfirmedUser {
             principal: caller,
-            phone_number: Some(UnconfirmedPhoneNumber {
+            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number,
                 confirmation_code: confirmation_code.clone(),
-                date_generated: now,
+                valid_until: now + CONFIRMATION_CODE_EXPIRY_MILLIS,
                 sms_messages_sent: sms_messages_sent + 1,
             }),
-            wallet: None,
         };
 
         if matches!(runtime_state.data.users.add(User::Unconfirmed(user)), AddUserResult::Success) {
@@ -86,17 +70,12 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
     }
 }
 
-fn convert_to_confirmation_code(random: u32) -> String {
-    format!("{:0>6}", random % 1000000)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::model::user::ConfirmedUser;
     use crate::Data;
     use candid::Principal;
-    use rand::RngCore;
     use types::PhoneNumber;
     use utils::env::test::TestEnv;
 
@@ -193,14 +172,5 @@ mod tests {
         };
         let result = submit_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::InvalidPhoneNumber));
-    }
-
-    #[test]
-    fn confirmation_code_is_always_6_digts() {
-        let mut rand = rand::thread_rng();
-        for _ in 0..100 {
-            let confirmation_code = convert_to_confirmation_code(rand.next_u32());
-            assert_eq!(confirmation_code.len(), 6);
-        }
     }
 }
