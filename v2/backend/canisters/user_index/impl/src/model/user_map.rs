@@ -364,6 +364,7 @@ mod tests {
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id2.into())),
             upgrade_in_progress: false,
             date_confirmed: 2,
+            registration_fee: None,
         });
         user_map.add(confirmed.clone());
 
@@ -444,6 +445,7 @@ mod tests {
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id.into())),
             upgrade_in_progress: false,
             date_confirmed: 2,
+            registration_fee: None,
         });
         assert!(matches!(user_map.add(confirmed), AddUserResult::AlreadyExists));
         assert_eq!(user_map.users_by_principal.len(), 1);
@@ -477,6 +479,7 @@ mod tests {
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id).into()),
             upgrade_in_progress: false,
             date_confirmed: 2,
+            registration_fee: None,
         });
         assert!(matches!(user_map.add(confirmed), AddUserResult::PhoneNumberTaken));
         assert_eq!(user_map.users_by_principal.len(), 1);
@@ -503,6 +506,7 @@ mod tests {
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id1).into()),
             upgrade_in_progress: false,
             date_confirmed: 2,
+            registration_fee: None,
         });
         user_map.add(confirmed);
 
@@ -542,6 +546,7 @@ mod tests {
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id1).into()),
             upgrade_in_progress: false,
             date_confirmed: 2,
+            registration_fee: None,
         });
         user_map.add(confirmed);
 
@@ -755,6 +760,7 @@ mod tests {
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id2).into()),
             upgrade_in_progress: false,
             date_confirmed: 2,
+            registration_fee: None,
         });
         user_map.add(confirmed.clone());
 

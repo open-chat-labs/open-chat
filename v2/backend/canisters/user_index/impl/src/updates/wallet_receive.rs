@@ -22,11 +22,11 @@ fn wallet_receive() {
     }
 }
 
-fn try_confirm_user(cycles: Cycles, runtime_state: &mut RuntimeState) {
+fn try_confirm_user(cycles_available: Cycles, runtime_state: &mut RuntimeState) {
     if let Some(principal) = runtime_state
         .data
         .users
-        .get_by_registration_fee_cycles(&cycles)
+        .get_by_registration_fee_cycles(&cycles_available)
         .map(|u| u.get_principal())
     {
         accept_cycles();
@@ -38,6 +38,7 @@ fn try_confirm_user(cycles: Cycles, runtime_state: &mut RuntimeState) {
             date_confirmed: runtime_state.env.now(),
             canister_creation_status: CanisterCreationStatusInternal::Pending(None),
             upgrade_in_progress: false,
+            registration_fee: Some(cycles_available),
         });
         runtime_state.data.users.update(user);
     }

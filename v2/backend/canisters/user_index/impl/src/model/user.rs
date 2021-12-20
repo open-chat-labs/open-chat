@@ -161,6 +161,8 @@ pub struct ConfirmedUser {
     pub date_confirmed: TimestampMillis,
     pub canister_creation_status: CanisterCreationStatusInternal,
     pub upgrade_in_progress: bool,
+    #[serde(default)]
+    pub registration_fee: Option<Cycles>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -176,6 +178,7 @@ pub struct CreatedUser {
     pub upgrade_in_progress: bool,
     pub cycle_top_ups: Vec<CyclesTopUp>,
     pub avatar_id: Option<u128>,
+    pub registration_fee: Option<Cycles>,
 }
 
 impl CreatedUser {
@@ -252,6 +255,7 @@ impl Default for ConfirmedUser {
             canister_creation_status: CanisterCreationStatusInternal::Pending(None),
             upgrade_in_progress: false,
             date_confirmed: 0,
+            registration_fee: None,
         }
     }
 }
@@ -271,6 +275,7 @@ impl Default for CreatedUser {
             upgrade_in_progress: false,
             cycle_top_ups: Vec::new(),
             avatar_id: None,
+            registration_fee: None,
         }
     }
 }

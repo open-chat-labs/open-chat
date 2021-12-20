@@ -76,7 +76,6 @@ mod tests {
     use crate::model::user::ConfirmedUser;
     use crate::Data;
     use candid::Principal;
-    use rand::RngCore;
     use types::PhoneNumber;
     use utils::env::test::TestEnv;
 
