@@ -35,7 +35,8 @@
     let initialisedEdit: boolean = false;
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
-    let messageIsEmpty = true;
+    let inputIsEmpty = true;
+    $: messageIsEmpty = true;
 
     $: {
         if ($editingEvent && !initialisedEdit) {
@@ -60,7 +61,6 @@
 
     $: {
         if ($fileToAttach !== undefined) {
-            messageIsEmpty = false;
             inp.focus();
         }
     }
@@ -71,9 +71,32 @@
         }
     }
 
-    function onInput() {
-        let inputIsEmpty = (inp.textContent?.trim().length ?? 0) === 0;
+    $: {
         messageIsEmpty = inputIsEmpty && $fileToAttach === undefined;
+    }
+
+    $: {
+        if ($emojiStore !== undefined) {
+            if (inp) {
+                restoreSelection();
+                document.execCommand("insertText", false, $emojiStore);
+                inputIsEmpty = false;
+                saveSelection();
+                emojiStore.set(undefined);
+            }
+        }
+    }
+
+    // todo - doubt this will react properly
+    $: placeholder =
+        $fileToAttach !== undefined
+            ? $_("enterCaption")
+            : dragging
+            ? $_("dropFile")
+            : $_("enterMessage");
+
+    function onInput() {
+        inputIsEmpty = (inp.textContent?.trim().length ?? 0) === 0;
         controller.setTextContent(inputIsEmpty ? undefined : inp.textContent!);
 
         requestAnimationFrame(() => {
@@ -144,25 +167,6 @@
     function clearAttachment() {
         controller.clearAttachment();
     }
-
-    $: {
-        if ($emojiStore !== undefined) {
-            if (inp) {
-                restoreSelection();
-                document.execCommand("insertText", false, $emojiStore);
-                saveSelection();
-                emojiStore.set(undefined);
-            }
-        }
-    }
-
-    // todo - doubt this will react properly
-    $: placeholder =
-        $fileToAttach !== undefined
-            ? $_("enterCaption")
-            : dragging
-            ? $_("dropFile")
-            : $_("enterMessage");
 </script>
 
 <div class="message-entry">
