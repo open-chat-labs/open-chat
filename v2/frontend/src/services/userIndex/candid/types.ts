@@ -549,7 +549,10 @@ export type TransferCyclesResponse = { 'BalanceExceeded' : null } |
   { 'Success' : { 'new_balance' : bigint } } |
   { 'UserNotFound' : null } |
   { 'RecipientNotFound' : null };
-export interface UnconfirmedPhoneNumberState { 'valid_until' : TimestampMillis }
+export interface UnconfirmedPhoneNumberState {
+  'valid_until' : TimestampMillis,
+  'phone_number' : PhoneNumber,
+}
 export interface UpdateUserCanisterWasmArgs {
   'user_canister_wasm' : CanisterWasm,
 }

@@ -28,8 +28,13 @@ export const idlFactory = ({ IDL }) => {
   });
   const CurrentUserArgs = IDL.Record({});
   const TimestampMillis = IDL.Nat64;
+  const PhoneNumber = IDL.Record({
+    'country_code' : IDL.Nat16,
+    'number' : IDL.Text,
+  });
   const UnconfirmedPhoneNumberState = IDL.Record({
     'valid_until' : TimestampMillis,
+    'phone_number' : PhoneNumber,
   });
   const Cycles = IDL.Nat;
   const CyclesFeeState = IDL.Record({
@@ -116,10 +121,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserUnconfirmed' : IDL.Null,
     'UserNotFound' : IDL.Null,
-  });
-  const PhoneNumber = IDL.Record({
-    'country_code' : IDL.Nat16,
-    'number' : IDL.Text,
   });
   const SubmitPhoneNumberArgs = IDL.Record({ 'phone_number' : PhoneNumber });
   const SubmitPhoneNumberResponse = IDL.Variant({

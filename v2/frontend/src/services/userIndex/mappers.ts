@@ -152,8 +152,8 @@ function registrationState(candid: ApiRegistrationState): RegistrationState {
         return {
             kind: "phone_registration",
             phoneNumber: {
-                countryCode: 44,
-                number: "64646444",
+                countryCode: candid.PhoneNumber.phone_number.country_code,
+                number: candid.PhoneNumber.phone_number.number,
             },
         };
     }
