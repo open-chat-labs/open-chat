@@ -166,6 +166,7 @@ type RegistrationState =
 
 type UnconfirmedPhoneNumberState =
     record {
+        phone_number: PhoneNumber;
         valid_until: TimestampMillis;
     };
 

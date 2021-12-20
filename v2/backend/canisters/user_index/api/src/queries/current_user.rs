@@ -1,6 +1,8 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{CanisterCreationStatus, CanisterUpgradeStatus, CryptocurrencyAccount, Cycles, TimestampMillis, UserId};
+use types::{
+    CanisterCreationStatus, CanisterUpgradeStatus, CryptocurrencyAccount, Cycles, PhoneNumber, TimestampMillis, UserId,
+};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {}
@@ -27,6 +29,7 @@ pub enum RegistrationState {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct UnconfirmedPhoneNumberState {
+    pub phone_number: PhoneNumber,
     pub valid_until: TimestampMillis,
 }
 
