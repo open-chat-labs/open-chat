@@ -178,9 +178,10 @@
         "signIn": "Sign in"
     },
     "register": {
+        "failedToGetFee": "Failed to generate a registration fee",
         "startAgain": "Start again",
         "confirmTransfer": "Confirm transfer",
-        "confirmTransferText": "Please confirm below when you have made a transfer of {transfer} cycles from the cycles wallet to the OpenChat wallet below",
+        "confirmTransferText": "Please confirm below when you have made a transfer of {amount} cycles from the cycles wallet to the OpenChat wallet below",
         "confirmed": "Confirmed",
         "sms": "SMS code",
         "transfer": "Transfer",

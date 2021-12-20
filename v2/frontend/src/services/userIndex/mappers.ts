@@ -10,13 +10,17 @@ import type {
     PartialUserSummary,
     UpgradeCanisterResponse,
     CreateCanisterResponse,
+    RegistrationState,
+    RegistrationFeeResponse,
 } from "../../domain/user/user";
 import type {
     ApiConfirmPhoneNumberResponse,
     ApiCreateCanisterResponse,
     ApiCurrentUserResponse,
+    ApiGenerateRegistrationFeeResponse,
     ApiPartialUserSummary,
     ApiPhoneNumber,
+    ApiRegistrationState,
     ApiResendCodeResponse,
     ApiSearchResponse,
     ApiSetUsernameResponse,
@@ -143,19 +147,51 @@ export function upgradeCanisterResponse(
     throw new UnsupportedValueError("Unexpected ApiUpgradeCanisterResponse type received", candid);
 }
 
+function registrationState(candid: ApiRegistrationState): RegistrationState {
+    if ("PhoneNumber" in candid) {
+        return {
+            kind: "phone_registration",
+            phoneNumber: {
+                countryCode: 44,
+                number: "64646444",
+            },
+        };
+    }
+    if ("CyclesFee" in candid) {
+        return {
+            kind: "cycles_fee_registration",
+            amount: candid.CyclesFee.amount,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiRegistrationState type received", candid);
+}
+
+export function generateRegistrationFeeResponse(
+    candid: ApiGenerateRegistrationFeeResponse
+): RegistrationFeeResponse {
+    if ("AlreadyRegistered" in candid) {
+        return {
+            kind: "already_registered",
+        };
+    }
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            validUntil: candid.Success.valid_until,
+            amount: candid.Success.amount,
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiGenerateRegistrationFeeResponse type received",
+        candid
+    );
+}
+
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
     if ("Unconfirmed" in candid) {
         return {
             kind: "unconfirmed_user",
-            registrationState: {
-                kind: "phone_registration",
-                phoneNumber: {
-                    countryCode: 44,
-                    number: "64646444",
-                },
-            },
-            // phoneNumber: optional(candid.Unconfirmed.phone_number, phoneNumber),
-            // wallet: optional(candid.Unconfirmed.wallet, (p) => p.toString()),
+            registrationState: registrationState(candid.Unconfirmed.state),
         };
     }
 

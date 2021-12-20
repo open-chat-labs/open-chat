@@ -79,16 +79,16 @@ export type UpgradeInProgress = {
     kind: "upgrade_in_progress";
 };
 
-export type RegistrationState = PhoneRegistration | TransferRegistration;
+export type RegistrationState = PhoneRegistration | CyclesFeeRegistration;
 
 export type PhoneRegistration = {
     kind: "phone_registration";
     phoneNumber: PhoneNumber;
 };
 
-export type TransferRegistration = {
-    kind: "transfer_registration";
-    requiredTransfer: number;
+export type CyclesFeeRegistration = {
+    kind: "cycles_fee_registration";
+    amount: bigint;
 };
 
 export type UnconfirmedUser = {
@@ -154,3 +154,11 @@ export type ResendCodeResponse =
     | "already_claimed"
     | "user_not_found"
     | "phone_number_not_submitted";
+
+export type RegistrationFeeResponse = AlreadyRegistered | RegistrationFeeSuccess;
+
+export type RegistrationFeeSuccess = {
+    kind: "success";
+    validUntil: bigint;
+    amount: bigint;
+};

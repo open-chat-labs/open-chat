@@ -6,13 +6,14 @@ import type {
     RegistrationState,
 } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
+import { toastStore } from "../stores/toast";
 
 export type ChooseRegistrationPath = { kind: "choose_registration_path" };
 export type AwaitingPhoneNumber = { kind: "awaiting_phone_number" };
 export type AwaitingCode = { kind: "awaiting_code"; phoneNumber: PhoneNumber };
 export type AwaitingTransferConfirmation = {
     kind: "awaiting_transfer_confirmation";
-    requiredTransfer: number;
+    amount: bigint;
 };
 export type Verifying = { kind: "verifying" };
 export type AwaitingUsername = { kind: "awaiting_username" };
@@ -58,7 +59,7 @@ export class RegisterController {
             } else {
                 this.state.set({
                     kind: "awaiting_transfer_confirmation",
-                    requiredTransfer: user.registrationState.requiredTransfer,
+                    amount: user.registrationState.amount,
                 });
             }
         } else if (user.kind === "confirmed_pending_username") {
@@ -88,14 +89,18 @@ export class RegisterController {
     }
 
     chooseCyclesTransfer(): void {
-        // todo - we need to make an api call here so that we can get hold of the required transfer amount
         this.state.set({ kind: "verifying" });
-        setTimeout(() => {
-            this.state.set({
-                kind: "awaiting_transfer_confirmation",
-                requiredTransfer: 1.0012345,
-            });
-        }, 2000);
+        this._api.generateRegistrationFee().then((resp) => {
+            if (resp.kind === "success") {
+                this.state.set({
+                    kind: "awaiting_transfer_confirmation",
+                    amount: resp.amount,
+                });
+            } else {
+                this.state.set({ kind: "choose_registration_path" });
+                toastStore.showFailureToast("register.failedToGetFee");
+            }
+        });
     }
 
     submitRegistrationCode(phoneNumber: PhoneNumber, code: string): void {

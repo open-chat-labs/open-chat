@@ -133,10 +133,7 @@ export type CryptocurrencyWithdrawal = { 'ICP' : ICPWithdrawal } |
   { 'Cycles' : CyclesWithdrawal };
 export type CurrentUserArgs = {};
 export type CurrentUserResponse = {
-    'Unconfirmed' : {
-      'wallet' : [] | [CanisterId],
-      'phone_number' : [] | [PhoneNumber],
-    }
+    'Unconfirmed' : { 'state' : RegistrationState }
   } |
   {
     'Confirmed' : {
@@ -161,6 +158,10 @@ export type CurrentUserResponse = {
   { 'UserNotFound' : null };
 export type Cycles = bigint;
 export type CyclesDeposit = { 'Completed' : CompletedCyclesDeposit };
+export interface CyclesFeeState {
+  'valid_until' : TimestampMillis,
+  'amount' : Cycles,
+}
 export type CyclesTransfer = { 'Failed' : FailedCyclesTransfer } |
   { 'Completed' : CompletedCyclesTransfer } |
   { 'Pending' : PendingCyclesTransfer };
@@ -243,6 +244,9 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export type GenerateRegistrationFeeArgs = {};
+export type GenerateRegistrationFeeResponse = { 'AlreadyRegistered' : null } |
+  { 'Success' : { 'valid_until' : TimestampMillis, 'amount' : Cycles } };
 export interface GroupChatCreated {
   'name' : string,
   'description' : string,
@@ -472,6 +476,10 @@ export interface PendingICPWithdrawal {
   'amount_e8s' : bigint,
 }
 export interface PhoneNumber { 'country_code' : number, 'number' : string }
+export type RegistrationState = {
+    'PhoneNumber' : UnconfirmedPhoneNumberState
+  } |
+  { 'CyclesFee' : CyclesFeeState };
 export interface RemoveSuperAdminArgs { 'user_id' : UserId }
 export type RemoveSuperAdminResponse = { 'Success' : null } |
   { 'NotSuperAdmin' : null } |
@@ -541,11 +549,11 @@ export type TransferCyclesResponse = { 'BalanceExceeded' : null } |
   { 'Success' : { 'new_balance' : bigint } } |
   { 'UserNotFound' : null } |
   { 'RecipientNotFound' : null };
+export interface UnconfirmedPhoneNumberState { 'valid_until' : TimestampMillis }
 export interface UpdateUserCanisterWasmArgs {
   'user_canister_wasm' : CanisterWasm,
 }
-export type UpdateUserCanisterWasmResponse = { 'NotAuthorized' : null } |
-  { 'Success' : null } |
+export type UpdateUserCanisterWasmResponse = { 'Success' : null } |
   { 'VersionNotHigher' : null };
 export interface UpdatedMessage {
   'updated_by' : UserId,
@@ -615,6 +623,9 @@ export interface _SERVICE {
       CreateCanisterResponse
     >,
   'current_user' : (arg_0: CurrentUserArgs) => Promise<CurrentUserResponse>,
+  'generate_registration_fee' : (arg_0: GenerateRegistrationFeeArgs) => Promise<
+      GenerateRegistrationFeeResponse
+    >,
   'remove_super_admin' : (arg_0: RemoveSuperAdminArgs) => Promise<
       RemoveSuperAdminResponse
     >,

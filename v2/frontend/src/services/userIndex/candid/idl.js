@@ -27,9 +27,18 @@ export const idlFactory = ({ IDL }) => {
     'CyclesBalanceTooLow' : IDL.Null,
   });
   const CurrentUserArgs = IDL.Record({});
-  const PhoneNumber = IDL.Record({
-    'country_code' : IDL.Nat16,
-    'number' : IDL.Text,
+  const TimestampMillis = IDL.Nat64;
+  const UnconfirmedPhoneNumberState = IDL.Record({
+    'valid_until' : TimestampMillis,
+  });
+  const Cycles = IDL.Nat;
+  const CyclesFeeState = IDL.Record({
+    'valid_until' : TimestampMillis,
+    'amount' : Cycles,
+  });
+  const RegistrationState = IDL.Variant({
+    'PhoneNumber' : UnconfirmedPhoneNumberState,
+    'CyclesFee' : CyclesFeeState,
   });
   const CanisterCreationStatus = IDL.Variant({
     'InProgress' : IDL.Null,
@@ -47,10 +56,7 @@ export const idlFactory = ({ IDL }) => {
     'InProgress' : IDL.Null,
   });
   const CurrentUserResponse = IDL.Variant({
-    'Unconfirmed' : IDL.Record({
-      'wallet' : IDL.Opt(CanisterId),
-      'phone_number' : IDL.Opt(PhoneNumber),
-    }),
+    'Unconfirmed' : IDL.Record({ 'state' : RegistrationState }),
     'Confirmed' : IDL.Record({
       'username' : IDL.Text,
       'canister_creation_status' : CanisterCreationStatus,
@@ -66,6 +72,14 @@ export const idlFactory = ({ IDL }) => {
       'canister_upgrade_status' : CanisterUpgradeStatus,
     }),
     'UserNotFound' : IDL.Null,
+  });
+  const GenerateRegistrationFeeArgs = IDL.Record({});
+  const GenerateRegistrationFeeResponse = IDL.Variant({
+    'AlreadyRegistered' : IDL.Null,
+    'Success' : IDL.Record({
+      'valid_until' : TimestampMillis,
+      'amount' : Cycles,
+    }),
   });
   const RemoveSuperAdminArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveSuperAdminResponse = IDL.Variant({
@@ -103,6 +117,10 @@ export const idlFactory = ({ IDL }) => {
     'UserUnconfirmed' : IDL.Null,
     'UserNotFound' : IDL.Null,
   });
+  const PhoneNumber = IDL.Record({
+    'country_code' : IDL.Nat16,
+    'number' : IDL.Text,
+  });
   const SubmitPhoneNumberArgs = IDL.Record({ 'phone_number' : PhoneNumber });
   const SubmitPhoneNumberResponse = IDL.Variant({
     'AlreadyRegistered' : IDL.Null,
@@ -129,7 +147,6 @@ export const idlFactory = ({ IDL }) => {
     'user_canister_wasm' : CanisterWasm,
   });
   const UpdateUserCanisterWasmResponse = IDL.Variant({
-    'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'VersionNotHigher' : IDL.Null,
   });
@@ -150,7 +167,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : UserSummary,
     'UserNotFound' : IDL.Null,
   });
-  const TimestampMillis = IDL.Nat64;
   const UsersArgs = IDL.Record({
     'users' : IDL.Vec(UserId),
     'updated_since' : IDL.Opt(TimestampMillis),
@@ -187,6 +203,11 @@ export const idlFactory = ({ IDL }) => {
         [CurrentUserArgs],
         [CurrentUserResponse],
         ['query'],
+      ),
+    'generate_registration_fee' : IDL.Func(
+        [GenerateRegistrationFeeArgs],
+        [GenerateRegistrationFeeResponse],
+        [],
       ),
     'remove_super_admin' : IDL.Func(
         [RemoveSuperAdminArgs],

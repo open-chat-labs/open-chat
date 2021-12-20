@@ -45,7 +45,7 @@
         {:else if state.kind === "choose_registration_path"}
             <ChoosePath on:choosePhoneVerification on:chooseTransfer />
         {:else if state.kind === "awaiting_transfer_confirmation"}
-            <ConfirmTransfer on:transferConfirmed />
+            <ConfirmTransfer on:transferConfirmed amount={state.amount} />
         {/if}
 
         {#if state.kind === "awaiting_phone_number"}

@@ -3,6 +3,8 @@
     import Button from "../Button.svelte";
     import { createEventDispatcher } from "svelte";
 
+    export let amount: bigint;
+
     const dispatch = createEventDispatcher();
 </script>
 
@@ -11,7 +13,7 @@
 </h3>
 <p class="options">
     {$_("register.confirmTransferText", {
-        values: { transfer: 1.001234 },
+        values: { amount: amount.toString() },
     })}
 </p>
 <p class="canister">
