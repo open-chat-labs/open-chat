@@ -1,29 +1,24 @@
-use crate::error::Error;
 use crate::ic_agent::IcAgent;
 use crate::ic_agent::IcAgentConfig;
-use crate::store::Store;
 use candid::Encode;
 use futures::future;
+use index_store::IndexStore;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use std::rc::Rc;
 use tracing::error;
-use types::{CanisterId, IndexedEvent, NotificationEnvelope, UserId};
+use types::{Error, IndexedEvent, NotificationEnvelope, UserId};
 use web_push::*;
 
 pub async fn run<'a>(
     config: &'a IcAgentConfig,
-    canister_id: CanisterId,
-    store: &'a mut Box<dyn Store + Send + Sync>,
+    index_store: &'a dyn IndexStore,
     vapid_private_pem: &'a str,
 ) -> Result<(), Error> {
     let ic_agent = IcAgent::build(config).await?;
-    let from_notification_index = store
-        .get_notification_index_processed_up_to(canister_id)
-        .await?
-        .map_or(0, |i| i + 1);
+    let from_notification_index = index_store.get().await?.map_or(0, |i| i + 1);
 
-    let ic_response = ic_agent.get_notifications(canister_id, from_notification_index).await?;
+    let ic_response = ic_agent.get_notifications(from_notification_index).await?;
 
     if let Some(latest_notification_index) = ic_response.notifications.last().map(|e| e.index) {
         let subscriptions_map = ic_response
@@ -35,9 +30,8 @@ pub async fn run<'a>(
         let subscriptions_to_remove =
             handle_notifications(ic_response.notifications, subscriptions_map, vapid_private_pem).await;
 
-        let future1 = store.set_notification_index_processed_up_to(canister_id, latest_notification_index);
-
-        let future2 = ic_agent.remove_subscriptions(canister_id, subscriptions_to_remove);
+        let future1 = index_store.set(latest_notification_index);
+        let future2 = ic_agent.remove_subscriptions(subscriptions_to_remove);
 
         let (result1, result2) = futures::future::join(future1, future2).await;
 

@@ -1,5 +1,5 @@
 [package]
-name = "shared"
+name = "notification_pusher_core"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
@@ -11,6 +11,7 @@ candid = "0.7.7"
 futures = "0.3.16"
 garcon = "0.2.3"
 ic-agent = "0.6.0"
+index_store = { path = "../../libraries/index_store" }
 notifications_canister = { path = "../../canisters/notifications/api" }
 openssl = { version = "0.10.35", features = ["vendored"] }
 serde = "1.0.126"

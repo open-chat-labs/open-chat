@@ -16,6 +16,14 @@ pub fn caller_is_notifications_canister() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_sms_sender() -> Result<(), String> {
+    if RUNTIME_STATE.with(|state| state.borrow().as_ref().unwrap().is_caller_sms_service()) {
+        Ok(())
+    } else {
+        Err("Caller is not the sms sender".to_owned())
+    }
+}
+
 pub fn caller_is_online_users_aggregator_canister() -> Result<(), String> {
     if RUNTIME_STATE.with(|state| state.borrow().as_ref().unwrap().is_caller_online_users_aggregator_canister()) {
         Ok(())

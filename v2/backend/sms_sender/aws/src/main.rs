@@ -1,10 +1,12 @@
+use crate::sns::SnsClient;
 use candid::Principal;
 use dynamodb_index_store::DynamoDbIndexStore;
-use notification_pusher_core::ic_agent::IcAgentConfig;
-use notification_pusher_core::runner;
+use sms_sender_core::{run, IcAgent, IcAgentConfig};
 use std::str::FromStr;
 use tracing::info;
 use types::Error;
+
+mod sns;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -13,18 +15,14 @@ async fn main() -> Result<(), Error> {
 
     info!("Starting...");
 
-    let vapid_private_pem = dotenv::var("VAPID_PRIVATE_PEM")?;
-    let canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_CANISTER_ID")?).unwrap();
+    let canister_id = Principal::from_text(dotenv::var("USER_INDEX_CANISTER_ID")?).unwrap();
     let ic_url = dotenv::var("IC_URL")?;
     let ic_identity_pem = dotenv::var("IC_IDENTITY_PEM")?;
     let is_production = bool::from_str(&dotenv::var("IS_PRODUCTION")?).unwrap();
 
     let aws_config = aws_config::load_from_env().await;
-    let dynamodb_index_store = DynamoDbIndexStore::build(
-        (&aws_config).into(),
-        "push_notification_stream_indexes".to_string(),
-        canister_id,
-    );
+    let dynamodb_index_store = DynamoDbIndexStore::build((&aws_config).into(), "sms_stream_indexes".to_string(), canister_id);
+    let sns_client = SnsClient::build((&aws_config).into());
 
     info!("DynamoDbClient created");
 
@@ -34,8 +32,9 @@ async fn main() -> Result<(), Error> {
         fetch_root_key: !is_production,
         canister_id,
     };
+    let ic_agent = IcAgent::build(&ic_agent_config).await?;
 
     info!("Configuration complete");
 
-    runner::run(ic_agent_config, &dynamodb_index_store, &vapid_private_pem).await
+    run(&ic_agent, &dynamodb_index_store, &sns_client).await
 }
