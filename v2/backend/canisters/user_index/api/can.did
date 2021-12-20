@@ -47,6 +47,18 @@ type ResendCodeResponse =
         UserNotFound;
     };
 
+type GenerateRegistrationFeeArgs =
+    record {};
+
+type GenerateRegistrationFeeResponse =
+    variant {
+        Success: record {
+            amount: Cycles;
+            valid_until: TimestampMillis;
+        };
+        AlreadyRegistered;
+    };
+
 type CreateCanisterArgs =
     record {
     };
@@ -128,8 +140,7 @@ type CurrentUserResponse =
     variant {
         UserNotFound;
         Unconfirmed: record {
-            phone_number: opt PhoneNumber;
-            wallet: opt CanisterId;
+            state: RegistrationState;
         };
         ConfirmedPendingUsername: record {
             canister_creation_status: CanisterCreationStatus;
@@ -145,6 +156,23 @@ type CurrentUserResponse =
             avatar_id: opt nat;
             cryptocurrency_accounts: vec CryptocurrencyAccount;
         };
+    };
+
+type RegistrationState =
+    variant {
+        PhoneNumber: UnconfirmedPhoneNumberState;
+        CyclesFee: CyclesFeeState;
+    };
+
+type UnconfirmedPhoneNumberState =
+    record {
+        valid_until: TimestampMillis;
+    };
+
+type CyclesFeeState =
+    record {
+        amount: Cycles;
+        valid_until: TimestampMillis;
     };
 
 type UserArgs = 
@@ -233,6 +261,10 @@ service: {
     // If the user did not receive or enter the confirmation code before it expired then
     // call this to resend the code
     resend_code: (ResendCodeArgs) -> (ResendCodeResponse);
+
+    // If the user wants to register by paying a small fee in cycles, they should call this endpoint to generate a new
+    // fee amount which is unique to them
+    generate_registration_fee: (GenerateRegistrationFeeArgs) -> (GenerateRegistrationFeeResponse);
 
     // Once the confirm_phone_number call has succeeded (user is in one of the "confirmed" states)
     // then call this to create a canister for the user

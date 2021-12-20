@@ -5,26 +5,27 @@ use ic_agent::identity::BasicIdentity;
 use ic_agent::Identity;
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
-use types::{CanisterId, Version};
+use types::Version;
 
-pub async fn create_and_install_service_canisters(
-    identity: BasicIdentity,
-    url: String,
-    open_storage_index_canister_id: CanisterId,
-    test_mode: bool,
-) -> CanisterIds {
+pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: String, test_mode: bool) -> CanisterIds {
     let principal = identity.sender().unwrap();
     let agent = build_ic_agent(url, identity).await;
     let management_canister = build_management_canister(&agent);
 
-    let (user_index_canister_id, group_index_canister_id, notifications_canister_id, online_users_aggregator_canister_id) =
-        futures::future::join4(
-            create_empty_canister(&management_canister),
-            create_empty_canister(&management_canister),
-            create_empty_canister(&management_canister),
-            create_empty_canister(&management_canister),
-        )
-        .await;
+    let (
+        user_index_canister_id,
+        group_index_canister_id,
+        notifications_canister_id,
+        online_users_aggregator_canister_id,
+        open_storage_index_canister_id,
+    ) = futures::future::join5(
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+    )
+    .await;
 
     println!("user_index canister id: {}", user_index_canister_id.to_string());
     println!("group_index canister id: {}", group_index_canister_id.to_string());
@@ -32,6 +33,10 @@ pub async fn create_and_install_service_canisters(
     println!(
         "users online aggregator canister id: {}",
         online_users_aggregator_canister_id.to_string()
+    );
+    println!(
+        "open_storage_index canister id: {}",
+        open_storage_index_canister_id.to_string()
     );
 
     let canister_ids = CanisterIds {
