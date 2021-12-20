@@ -225,7 +225,6 @@ impl UserMap {
             if let Some(phone_number) = user.get_phone_number() {
                 self.phone_number_to_principal.remove(phone_number);
             }
-
             if let Some(username) = user.get_username() {
                 self.username_to_principal.remove(username);
             }
@@ -930,38 +929,62 @@ mod tests {
     fn prune_unconfirmed_users_only_removes_users_with_expired_codes() {
         let mut now = 1_000_000;
         let mut user_map = UserMap::default();
-        assert_eq!(user_map.prune_unconfirmed_users_if_required(now), Some(0));
 
         let principal1 = Principal::from_slice(&[1]);
         let principal2 = Principal::from_slice(&[2]);
+        let principal3 = Principal::from_slice(&[3]);
+        let principal4 = Principal::from_slice(&[4]);
 
         let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
         let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
 
         let user1 = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            phone_number: phone_number1,
-            confirmation_code: "1".to_string(),
-            date_generated: now,
-            sms_messages_sent: 0,
+            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+                phone_number: phone_number1,
+                confirmation_code: "1".to_string(),
+                valid_until: now + 1000,
+                sms_messages_sent: 0,
+            }),
         });
-
-        now += 1;
 
         let user2 = User::Unconfirmed(UnconfirmedUser {
             principal: principal2,
-            phone_number: phone_number2,
-            confirmation_code: "2".to_string(),
-            date_generated: now,
-            sms_messages_sent: 0,
+            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+                phone_number: phone_number2,
+                confirmation_code: "2".to_string(),
+                valid_until: now + 1001,
+                sms_messages_sent: 0,
+            }),
+        });
+
+        let user3 = User::Unconfirmed(UnconfirmedUser {
+            principal: principal3,
+            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+                amount: 3,
+                valid_until: now + 1000,
+            }),
+        });
+
+        let user4 = User::Unconfirmed(UnconfirmedUser {
+            principal: principal4,
+            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+                amount: 4,
+                valid_until: now + 1001,
+            }),
         });
 
         user_map.add(user1);
         user_map.add(user2);
+        user_map.add(user3);
+        user_map.add(user4);
 
-        now += CONFIRMATION_CODE_EXPIRY_MILLIS;
+        now += 1001;
 
-        assert_eq!(user_map.prune_unconfirmed_users_if_required(now), Some(1));
-        assert_eq!(user_map.users_by_principal.len(), 1);
+        assert_eq!(user_map.prune_unconfirmed_users_if_required(now), Some(2));
+        assert_eq!(
+            user_map.users_by_principal.into_keys().sorted().collect_vec(),
+            vec![principal2, principal4]
+        );
     }
 }
