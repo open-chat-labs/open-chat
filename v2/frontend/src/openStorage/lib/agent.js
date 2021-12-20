@@ -1,4 +1,4 @@
-import async from "async";
+import pLimit from "p-limit";
 import { v1 as uuidv1 } from "uuid";
 import { BucketClient } from "./services/bucket/bucket.client";
 import { IndexClient } from "./services/index/index.client";
@@ -22,27 +22,31 @@ export class OpenStorageAgent {
         const chunkCount = Math.ceil(blobSize / chunkSize);
         const chunkIndexes = [...Array(chunkCount).keys()];
         const bucketClient = new BucketClient(this.agent, bucketCanisterId);
+        const limit = pLimit(10);
         let chunksCompleted = 0;
-        await async.eachOfLimit(chunkIndexes, 10, async (chunkIndex) => {
+        const promises = chunkIndexes.map((chunkIndex) => {
             const start = chunkIndex * chunkSize;
             const end = Math.min(start + chunkSize, blobSize);
             const chunkBytes = Array.from(new Uint8Array(bytes.slice(start, end)));
-            let attempt = 0;
-            while (attempt++ < 5) {
-                try {
-                    const chunkResponse = await bucketClient.uploadChunk(blobId, hash, mimeType, accessors, BigInt(blobSize), chunkSize, chunkIndex, chunkBytes);
-                    if (chunkResponse === "success") {
-                        chunksCompleted++;
-                        onProgress === null || onProgress === void 0 ? void 0 : onProgress(100 * chunksCompleted / chunkCount);
-                        return;
+            return limit(async () => {
+                let attempt = 0;
+                while (attempt++ < 5) {
+                    try {
+                        const chunkResponse = await bucketClient.uploadChunk(blobId, hash, mimeType, accessors, BigInt(blobSize), chunkSize, chunkIndex, chunkBytes);
+                        if (chunkResponse === "success") {
+                            chunksCompleted++;
+                            onProgress === null || onProgress === void 0 ? void 0 : onProgress(100 * chunksCompleted / chunkCount);
+                            return;
+                        }
+                    }
+                    catch (e) {
+                        console.log("Error uploading chunk " + chunkIndex, e);
                     }
                 }
-                catch (e) {
-                    console.log("Error uploading chunk " + chunkIndex, e);
-                }
-            }
-            throw new Error("Failed to upload chunk");
+                throw new Error("Failed to upload chunk");
+            });
         });
+        await Promise.all(promises);
         return {
             canisterId: bucketCanisterId,
             blobId,
