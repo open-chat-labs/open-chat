@@ -325,7 +325,9 @@ pub enum UpdateUserResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{ConfirmedUser, CreatedUser, RegistrationState, UnconfirmedPhoneNumber, UnconfirmedUser};
+    use crate::model::user::{
+        ConfirmedUser, CreatedUser, CyclesRegistrationFee, RegistrationState, UnconfirmedPhoneNumber, UnconfirmedUser,
+    };
     use itertools::Itertools;
     use types::CanisterCreationStatusInternal;
 
@@ -726,23 +728,94 @@ mod tests {
     }
 
     #[test]
+    fn add_with_clashing_registration_fee_cycles() {
+        let mut user_map = UserMap::default();
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+
+        let fee = 1_000_000;
+
+        let user1 = UnconfirmedUser {
+            principal: principal1,
+            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+                amount: fee,
+                valid_until: 1000,
+            }),
+        };
+
+        let user2 = UnconfirmedUser {
+            principal: principal2,
+            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+                amount: fee,
+                valid_until: 1000,
+            }),
+        };
+
+        user_map.add(User::Unconfirmed(user1));
+        assert!(matches!(
+            user_map.add(User::Unconfirmed(user2)),
+            AddUserResult::RegistrationFeeCyclesTaken
+        ));
+    }
+
+    #[test]
+    fn update_with_clashing_registration_fee_cycles() {
+        let mut user_map = UserMap::default();
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+
+        let fee1 = 1_000_000;
+        let fee2 = 2_000_000;
+
+        let original = UnconfirmedUser {
+            principal: principal1,
+            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+                amount: fee1,
+                valid_until: 1000,
+            }),
+        };
+
+        let other = UnconfirmedUser {
+            principal: principal2,
+            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+                amount: fee2,
+                valid_until: 1000,
+            }),
+        };
+
+        let mut updated = original.clone();
+        updated.state = RegistrationState::CyclesFee(CyclesRegistrationFee {
+            amount: fee2,
+            valid_until: 1000,
+        });
+
+        user_map.add(User::Unconfirmed(original));
+        user_map.add(User::Unconfirmed(other));
+        assert!(matches!(
+            user_map.update(User::Unconfirmed(updated)),
+            UpdateUserResult::RegistrationFeeCyclesTaken
+        ));
+    }
+
+    #[test]
     fn remove() {
         let mut user_map = UserMap::default();
         let principal1 = Principal::from_slice(&[1]);
         let principal2 = Principal::from_slice(&[2]);
         let principal3 = Principal::from_slice(&[3]);
+        let principal4 = Principal::from_slice(&[4]);
 
         let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
-        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
         let phone_number3 = PhoneNumber::new(44, "3333 333 333".to_owned());
+        let phone_number4 = PhoneNumber::new(44, "4444 444 444".to_owned());
 
-        let username2 = "2".to_string();
         let username3 = "3".to_string();
+        let username4 = "4".to_string();
 
-        let user_id2 = Principal::from_slice(&[2, 2]).into();
-        let user_id3 = Principal::from_slice(&[3, 3]).into();
+        let user_id3 = Principal::from_slice(&[3]).into();
+        let user_id4 = Principal::from_slice(&[4]).into();
 
-        let unconfirmed = User::Unconfirmed(UnconfirmedUser {
+        let unconfirmed1 = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
             state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number1.clone(),
@@ -751,38 +824,51 @@ mod tests {
                 sms_messages_sent: 1,
             }),
         });
-        user_map.add(unconfirmed.clone());
+        user_map.add(unconfirmed1.clone());
+
+        let unconfirmed2 = User::Unconfirmed(UnconfirmedUser {
+            principal: principal2,
+            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+                amount: 1000,
+                valid_until: 2,
+            }),
+        });
+        user_map.add(unconfirmed2.clone());
 
         let confirmed = User::Confirmed(ConfirmedUser {
-            principal: principal2,
-            phone_number: Some(phone_number2.clone()),
-            username: Some(username2.clone()),
-            canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id2).into()),
+            principal: principal3,
+            phone_number: Some(phone_number3.clone()),
+            username: Some(username3.clone()),
+            canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id3).into()),
             upgrade_in_progress: false,
-            date_confirmed: 2,
+            date_confirmed: 3,
             registration_fee: None,
         });
         user_map.add(confirmed.clone());
 
         let created = User::Created(CreatedUser {
-            principal: principal3,
-            phone_number: Some(phone_number3.clone()),
-            user_id: user_id3,
-            username: username3.clone(),
-            date_created: 3,
-            date_updated: 3,
-            last_online: 3,
+            principal: principal4,
+            phone_number: Some(phone_number4.clone()),
+            user_id: user_id4,
+            username: username4.clone(),
+            date_created: 4,
+            date_updated: 4,
+            last_online: 4,
             ..Default::default()
         });
         user_map.add(created.clone());
 
+        assert_eq!(user_map.users_by_principal.len(), 4);
+
         user_map.remove_by_principal(&principal1);
         user_map.remove_by_principal(&principal2);
         user_map.remove_by_principal(&principal3);
+        user_map.remove_by_principal(&principal4);
 
-        assert_eq!(user_map.users_by_principal.len(), 0);
-        assert_eq!(user_map.phone_number_to_principal.len(), 0);
-        assert_eq!(user_map.username_to_principal.len(), 0);
-        assert_eq!(user_map.user_id_to_principal.len(), 0);
+        assert!(user_map.users_by_principal.is_empty());
+        assert!(user_map.phone_number_to_principal.is_empty());
+        assert!(user_map.username_to_principal.is_empty());
+        assert!(user_map.user_id_to_principal.is_empty());
+        assert!(user_map.registration_fee_cycles_to_principal.is_empty());
     }
 }
