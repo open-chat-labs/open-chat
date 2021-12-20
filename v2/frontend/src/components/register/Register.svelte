@@ -13,20 +13,9 @@
     export let username: string = "";
     export let phoneNumber: PhoneNumber | undefined;
     export let error: string | undefined = undefined;
-    let bgClass: "underwater" | "sunset" = "underwater";
-    $: {
-        switch (state) {
-            case "awaiting_canister":
-            case "awaiting_completion":
-                bgClass = "sunset";
-                break;
-            default:
-                bgClass = "underwater";
-        }
-    }
 </script>
 
-<ModalPage {bgClass} minHeight="380px">
+<ModalPage bgClass="particles" minHeight="380px">
     {#if state === "awaiting_completion"}
         <Complete on:complete />
     {:else}

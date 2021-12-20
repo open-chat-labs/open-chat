@@ -2,13 +2,14 @@
     export let minHeight: string | undefined = undefined;
     export let bgClass:
         | "none"
+        | "particles"
         | "underwater"
         | "woods"
         | "sunset"
         | "error"
         | "expired"
         | "upgrade"
-        | "empty" = "underwater";
+        | "empty" = "particles";
 </script>
 
 <div class={`modal-page ${bgClass}`}>
@@ -26,6 +27,10 @@
 
         &.underwater {
             @include fullScreenImg("../assets/underwater.jpg");
+        }
+
+        &.particles {
+            @include fullScreenImg("../assets/particles.jpg");
         }
 
         &.woods {
