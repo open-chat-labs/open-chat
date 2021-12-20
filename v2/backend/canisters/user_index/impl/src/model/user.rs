@@ -1,8 +1,8 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    CanisterCreationStatusInternal, CanisterId, CyclesTopUp, PartialUserSummary, PhoneNumber, TimestampMillis, UserId,
-    UserSummary, Version,
+    CanisterCreationStatusInternal, Cycles, CyclesTopUp, PartialUserSummary, PhoneNumber, TimestampMillis, UserId, UserSummary,
+    Version,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -23,7 +23,13 @@ impl User {
 
     pub fn get_phone_number(&self) -> Option<&PhoneNumber> {
         match self {
-            User::Unconfirmed(u) => u.phone_number.as_ref().map(|p| &p.phone_number),
+            User::Unconfirmed(u) => {
+                if let RegistrationState::PhoneNumber(p) = &u.state {
+                    Some(&p.phone_number)
+                } else {
+                    None
+                }
+            }
             User::Confirmed(u) => u.phone_number.as_ref(),
             User::Created(u) => u.phone_number.as_ref(),
         }
@@ -46,6 +52,19 @@ impl User {
                 _ => None,
             },
             User::Created(u) => Some(u.user_id),
+        }
+    }
+
+    pub fn get_registration_fee_cycles(&self) -> Option<Cycles> {
+        match self {
+            User::Unconfirmed(u) => {
+                if let RegistrationState::CyclesFee(fee) = &u.state {
+                    Some(fee.amount)
+                } else {
+                    None
+                }
+            }
+            _ => None,
         }
     }
 
@@ -131,8 +150,7 @@ impl User {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UnconfirmedUser {
     pub principal: Principal,
-    pub phone_number: Option<UnconfirmedPhoneNumber>,
-    pub wallet: Option<CanisterId>,
+    pub state: RegistrationState,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -187,11 +205,41 @@ impl CreatedUser {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub enum RegistrationState {
+    PhoneNumber(UnconfirmedPhoneNumber),
+    CyclesFee(CyclesRegistrationFee),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UnconfirmedPhoneNumber {
     pub phone_number: PhoneNumber,
     pub confirmation_code: String,
-    pub date_generated: TimestampMillis,
+    pub valid_until: TimestampMillis,
     pub sms_messages_sent: u16,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct CyclesRegistrationFee {
+    pub amount: Cycles,
+    pub valid_until: TimestampMillis,
+}
+
+impl From<&RegistrationState> for user_index_canister::current_user::RegistrationState {
+    fn from(state: &RegistrationState) -> Self {
+        match state {
+            RegistrationState::PhoneNumber(p) => user_index_canister::current_user::RegistrationState::PhoneNumber(
+                user_index_canister::current_user::UnconfirmedPhoneNumberState {
+                    valid_until: p.valid_until,
+                },
+            ),
+            RegistrationState::CyclesFee(c) => user_index_canister::current_user::RegistrationState::CyclesFee(
+                user_index_canister::current_user::CyclesFeeState {
+                    amount: c.amount,
+                    valid_until: c.valid_until,
+                },
+            ),
+        }
+    }
 }
 
 #[cfg(test)]

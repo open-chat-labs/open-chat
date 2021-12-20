@@ -27,7 +27,7 @@ async fn online_users_aggregator_tests_impl(handle: IcHandle, ctx: &fondue::pot:
     )
     .await;
 
-    let one_second = time::Duration::from_secs(5);
+    let one_second = time::Duration::from_secs(1);
     thread::sleep(5 * one_second);
 
     print!("Mark user1 online in online_users_aggregator... ");
@@ -60,7 +60,7 @@ async fn online_users_aggregator_tests_impl(handle: IcHandle, ctx: &fondue::pot:
                 response => panic!("User returned an error: {:?}", response),
             };
 
-        if seconds_since_last_online < 3 {
+        if seconds_since_last_online < 5 {
             success = true;
             break;
         }

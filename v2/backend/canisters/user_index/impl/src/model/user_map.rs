@@ -3,7 +3,7 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
-use types::{CyclesTopUp, PhoneNumber, TimestampMillis, Timestamped, UserId};
+use types::{Cycles, CyclesTopUp, PhoneNumber, TimestampMillis, Timestamped, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
 
@@ -16,6 +16,8 @@ pub struct UserMap {
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,
     username_to_principal: CaseInsensitiveHashMap<Principal>,
     user_id_to_principal: HashMap<UserId, Principal>,
+    #[serde(default)]
+    registration_fee_cycles_to_principal: HashMap<Cycles, Principal>,
     cached_metrics: Timestamped<Metrics>,
 }
 
@@ -38,12 +40,19 @@ impl UserMap {
         let maybe_phone_number = user.get_phone_number();
         let maybe_username = user.get_username();
         let maybe_user_id = user.get_user_id();
+        let maybe_fee_cycles = user.get_registration_fee_cycles();
 
         if let Vacant(principal_entry) = self.users_by_principal.entry(principal) {
             if maybe_phone_number.is_some() && self.phone_number_to_principal.contains_key(maybe_phone_number.unwrap()) {
                 AddUserResult::PhoneNumberTaken
             } else if maybe_username.is_some() && self.username_to_principal.contains_key(maybe_username.unwrap()) {
                 AddUserResult::UsernameTaken
+            } else if maybe_fee_cycles.is_some()
+                && self
+                    .registration_fee_cycles_to_principal
+                    .contains_key(&maybe_fee_cycles.unwrap())
+            {
+                AddUserResult::RegistrationFeeCyclesTaken
             } else {
                 if let Some(phone_number) = maybe_phone_number {
                     self.phone_number_to_principal.insert(phone_number.clone(), principal);
@@ -53,6 +62,9 @@ impl UserMap {
                 }
                 if let Some(user_id) = maybe_user_id {
                     self.user_id_to_principal.insert(user_id, principal);
+                }
+                if let Some(fee_cycles) = maybe_fee_cycles {
+                    self.registration_fee_cycles_to_principal.insert(fee_cycles, principal);
                 }
                 principal_entry.insert(user);
                 AddUserResult::Success
@@ -79,6 +91,10 @@ impl UserMap {
             let user_id = user.get_user_id();
             let user_id_changed = previous_user_id != user_id;
 
+            let previous_fee_cycles = previous.get_registration_fee_cycles();
+            let fee_cycles = user.get_registration_fee_cycles();
+            let fee_cycles_changed = previous_fee_cycles != fee_cycles;
+
             if phone_number_changed {
                 if let Some(phone_number) = phone_number {
                     if self.phone_number_to_principal.contains_key(phone_number) {
@@ -90,6 +106,16 @@ impl UserMap {
             if username_case_insensitive_changed && self.username_to_principal.contains_key(username.unwrap()) {
                 return UpdateUserResult::UsernameTaken;
             }
+
+            if fee_cycles_changed {
+                if let Some(fee_cycles) = fee_cycles {
+                    if self.registration_fee_cycles_to_principal.contains_key(&fee_cycles) {
+                        return UpdateUserResult::RegistrationFeeCyclesTaken;
+                    }
+                }
+            }
+
+            // Checks are complete, now update the data
 
             if phone_number_changed {
                 if let Some(previous_phone_number) = previous_phone_number {
@@ -115,6 +141,15 @@ impl UserMap {
                 }
                 if let Some(val) = user_id {
                     self.user_id_to_principal.insert(val, principal);
+                }
+            }
+
+            if fee_cycles_changed {
+                if let Some(previous_fee_cycles) = previous_fee_cycles {
+                    self.registration_fee_cycles_to_principal.remove(&previous_fee_cycles);
+                }
+                if let Some(fee_cycles) = fee_cycles {
+                    self.registration_fee_cycles_to_principal.insert(fee_cycles, principal);
                 }
             }
 
@@ -160,6 +195,13 @@ impl UserMap {
             .flatten()
     }
 
+    pub fn get_by_registration_fee_cycles(&self, fee: &Cycles) -> Option<&User> {
+        self.registration_fee_cycles_to_principal
+            .get(fee)
+            .map(|p| self.users_by_principal.get(p))
+            .flatten()
+    }
+
     pub fn is_valid_caller(&self, caller: Principal) -> bool {
         self.users_by_principal.contains_key(&caller) || self.user_id_to_principal.contains_key(&caller.into())
     }
@@ -175,6 +217,9 @@ impl UserMap {
             }
             if let Some(user_id) = user.get_user_id() {
                 self.user_id_to_principal.remove(&user_id);
+            }
+            if let Some(fee_cycles) = user.get_registration_fee_cycles() {
+                self.registration_fee_cycles_to_principal.remove(&fee_cycles);
             }
             Some(user)
         } else {
@@ -265,6 +310,7 @@ pub enum AddUserResult {
     AlreadyExists,
     PhoneNumberTaken,
     UsernameTaken,
+    RegistrationFeeCyclesTaken,
 }
 
 #[derive(Debug)]
@@ -273,12 +319,13 @@ pub enum UpdateUserResult {
     PhoneNumberTaken,
     UsernameTaken,
     UserNotFound,
+    RegistrationFeeCyclesTaken,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedPhoneNumber, UnconfirmedUser};
+    use crate::model::user::{ConfirmedUser, CreatedUser, RegistrationState, UnconfirmedPhoneNumber, UnconfirmedUser};
     use itertools::Itertools;
     use types::CanisterCreationStatusInternal;
 
@@ -301,13 +348,12 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            phone_number: Some(UnconfirmedPhoneNumber {
+            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number1.clone(),
                 confirmation_code: "1".to_string(),
-                date_generated: 1,
+                valid_until: 1,
                 sms_messages_sent: 1,
             }),
-            wallet: None,
         });
         user_map.add(unconfirmed.clone());
 
@@ -382,13 +428,12 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal,
-            phone_number: Some(UnconfirmedPhoneNumber {
+            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number1.clone(),
                 confirmation_code: "1".to_string(),
-                date_generated: 1,
+                valid_until: 1,
                 sms_messages_sent: 1,
             }),
-            wallet: None,
         });
         user_map.add(unconfirmed);
 
@@ -416,13 +461,12 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            phone_number: Some(UnconfirmedPhoneNumber {
+            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number.clone(),
                 confirmation_code: "1".to_string(),
-                date_generated: 1,
+                valid_until: 1,
                 sms_messages_sent: 1,
             }),
-            wallet: None,
         });
         user_map.add(unconfirmed);
 
@@ -695,13 +739,12 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            phone_number: Some(UnconfirmedPhoneNumber {
+            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number1.clone(),
                 confirmation_code: "1".to_string(),
-                date_generated: 1,
+                valid_until: 1,
                 sms_messages_sent: 1,
             }),
-            wallet: None,
         });
         user_map.add(unconfirmed.clone());
 

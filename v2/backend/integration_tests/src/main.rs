@@ -46,6 +46,7 @@ fn tests_pot() -> pot::Pot<IcManager> {
             online_users_aggregator_tests::online_users_aggregator_tests,
             register_user_tests::register_user_tests,
             register_user_tests::register_existing_user_tests,
+            register_user_tests::register_user_by_paying_cycles_tests,
             send_cycles_tests::send_cycles_tests,
             send_message_tests::send_message_tests
         }
