@@ -27,7 +27,6 @@ import type {
 } from "./candid/idl";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
-import { Principal } from "@dfinity/candid/lib/cjs/idl";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {
@@ -148,8 +147,15 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
     if ("Unconfirmed" in candid) {
         return {
             kind: "unconfirmed_user",
-            phoneNumber: optional(candid.Unconfirmed.phone_number, phoneNumber),
-            wallet: optional(candid.Unconfirmed.wallet, (p) => p.toString()),
+            registrationState: {
+                kind: "phone_registration",
+                phoneNumber: {
+                    countryCode: 44,
+                    number: "64646444",
+                },
+            },
+            // phoneNumber: optional(candid.Unconfirmed.phone_number, phoneNumber),
+            // wallet: optional(candid.Unconfirmed.wallet, (p) => p.toString()),
         };
     }
 

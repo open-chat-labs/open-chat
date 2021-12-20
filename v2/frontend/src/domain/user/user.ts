@@ -79,10 +79,21 @@ export type UpgradeInProgress = {
     kind: "upgrade_in_progress";
 };
 
+export type RegistrationState = PhoneRegistration | TransferRegistration;
+
+export type PhoneRegistration = {
+    kind: "phone_registration";
+    phoneNumber: PhoneNumber;
+};
+
+export type TransferRegistration = {
+    kind: "transfer_registration";
+    requiredTransfer: number;
+};
+
 export type UnconfirmedUser = {
     kind: "unconfirmed_user";
-    phoneNumber?: PhoneNumber;
-    wallet?: string;
+    registrationState: RegistrationState;
 };
 
 export type ConfirmedUser = {

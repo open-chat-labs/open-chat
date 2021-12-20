@@ -16,12 +16,12 @@
 
     function submitCode() {
         if (valid) {
-            dispatch("submitCode", { code: codeValue });
+            dispatch("submitCode", { code: codeValue, phoneNumber });
         }
     }
 
     function resendCode() {
-        dispatch("resendCode");
+        dispatch("resendCode", { phoneNumber });
     }
 
     function changePhoneNumber() {
@@ -30,6 +30,10 @@
 
     $: valid = codeValue.length === 6;
 </script>
+
+<h3 class="title">
+    {$_("register.pleaseEnterCode")}
+</h3>
 
 <p class="enter-code">
     <span>
@@ -65,7 +69,11 @@
 <style type="text/scss">
     .actions {
         display: flex;
-        gap: 10px;
+        gap: $sp3;
+
+        @include size-below(xs) {
+            flex-direction: column;
+        }
     }
 
     .error {
@@ -76,7 +84,7 @@
 
     .enter-code {
         @include font(light, normal, fs-100);
-        margin-bottom: $sp5;
+        margin-bottom: $sp4;
     }
 
     .phone-number {
@@ -85,5 +93,12 @@
 
     .code-wrapper {
         max-width: 200px;
+    }
+
+    .title {
+        @include font(bold, normal, fs-160);
+        margin: $sp3 $sp4;
+        text-align: center;
+        text-shadow: var(--modalPage-txt-sh);
     }
 </style>

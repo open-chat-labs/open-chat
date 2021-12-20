@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import { Writable, writable } from "svelte/store";
-import type { CreatedUser, CurrentUserResponse, User } from "../domain/user/user";
+import type { CreatedUser, User } from "../domain/user/user";
 import { getIdentity, login, logout, startSession } from "../services/auth";
 import { ServiceContainer } from "../services/serviceContainer";
 import { HomeController } from "./home.controller";
@@ -47,7 +47,7 @@ export class IdentityController {
             this._api = new ServiceContainer(id);
         }
         this._api.getCurrentUser().then((user) => {
-            const phoneNumber = user.kind === "unconfirmed_user" ? user.phoneNumber : undefined;
+            const regState = user.kind === "unconfirmed_user" ? user.registrationState : undefined;
             switch (user.kind) {
                 case "confirmed_user":
                 case "unknown_user":
@@ -59,7 +59,7 @@ export class IdentityController {
                         this._api!,
                         user,
                         (registeredUser) => this.onCreatedUser(id, registeredUser),
-                        phoneNumber
+                        regState
                     );
                     break;
                 case "created_user":

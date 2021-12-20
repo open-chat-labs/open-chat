@@ -42,7 +42,9 @@
     }
 </script>
 
-<p class="enter-phone">{$_("register.enterPhone")}</p>
+<h3 class="title">
+    {$_("register.enterPhone")}
+</h3>
 
 <form class="phone-number" on:submit|preventDefault={submitPhoneNumber}>
     <div class="number">
@@ -78,10 +80,10 @@
         display: flex;
         .number {
             flex: 4;
-            margin-bottom: $sp4;
+            margin-bottom: $sp5;
 
             @include size-below(xs) {
-                margin-bottom: $sp3;
+                margin-bottom: $sp4;
             }
         }
 
@@ -91,11 +93,6 @@
                 flex-basis: 100%;
             }
         }
-    }
-
-    .enter-phone {
-        @include font(light, normal, fs-100);
-        margin-bottom: $sp5;
     }
 
     .textbox {
@@ -112,5 +109,12 @@
         overflow: hidden;
         text-overflow: ellipsis;
         border-radius: $sp2;
+    }
+
+    .title {
+        @include font(bold, normal, fs-160);
+        margin: $sp4 $sp4;
+        text-align: center;
+        text-shadow: var(--modalPage-txt-sh);
     }
 </style>

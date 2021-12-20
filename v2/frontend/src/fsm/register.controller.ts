@@ -1,49 +1,107 @@
 import { Writable, writable } from "svelte/store";
-import type { CreatedUser, CurrentUserResponse, PhoneNumber } from "../domain/user/user";
+import type {
+    CreatedUser,
+    CurrentUserResponse,
+    PhoneNumber,
+    RegistrationState,
+} from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
 
+export type ChooseRegistrationPath = { kind: "choose_registration_path" };
+export type AwaitingPhoneNumber = { kind: "awaiting_phone_number" };
+export type AwaitingCode = { kind: "awaiting_code"; phoneNumber: PhoneNumber };
+export type AwaitingTransferConfirmation = {
+    kind: "awaiting_transfer_confirmation";
+    requiredTransfer: number;
+};
+export type Verifying = { kind: "verifying" };
+export type AwaitingUsername = { kind: "awaiting_username" };
+export type AwaitingCompletion = { kind: "awaiting_completion" };
+export type AwaitingCanister = { kind: "awaiting_canister" };
+
 export type RegisterState =
-    | "awaiting_phone_number"
-    | "awaiting_code"
-    | "verifying"
-    | "awaiting_username"
-    | "awaiting_completion"
-    | "awaiting_canister";
+    | ChooseRegistrationPath
+    | AwaitingPhoneNumber
+    | AwaitingCode
+    | AwaitingTransferConfirmation
+    | Verifying
+    | AwaitingUsername
+    | AwaitingCompletion
+    | AwaitingCanister;
 
 export class RegisterController {
-    public state: Writable<RegisterState> = writable("awaiting_phone_number");
+    public state: Writable<RegisterState> = writable({ kind: "awaiting_phone_number" });
     public error: Writable<string | undefined> = writable(undefined);
     public username: Writable<string | undefined> = writable(undefined);
-    public phoneNumber: Writable<PhoneNumber | undefined> = writable(undefined);
+    public registrationState: Writable<RegistrationState | undefined> = writable(undefined);
     private _createdUser?: CreatedUser;
 
     constructor(
         private _api: ServiceContainer,
         private currentUser: CurrentUserResponse,
         private _onComplete: (user: CreatedUser) => void,
-        private _phoneNumber?: PhoneNumber
+        private _regState?: RegistrationState
     ) {
-        this.phoneNumber = writable(_phoneNumber);
-        if (currentUser.kind === "unknown_user") {
-            this.state.set("awaiting_phone_number");
-        } else if (currentUser.kind === "unconfirmed_user") {
-            this.state.set("awaiting_code");
-        } else if (currentUser.kind === "confirmed_pending_username") {
-            this.state.set("awaiting_username");
-        } else if (currentUser.kind === "confirmed_user") {
-            if (currentUser.canisterCreationStatus === "in_progress") {
-                this.state.set("awaiting_canister");
-            } else if (currentUser.canisterCreationStatus === "pending") {
-                this.state.set("awaiting_canister");
+        this.registrationState = writable(_regState);
+        this.deriveStateFromUser(currentUser);
+    }
+
+    private deriveStateFromUser(user: CurrentUserResponse): void {
+        if (user.kind === "unknown_user") {
+            this.state.set({ kind: "choose_registration_path" });
+        } else if (user.kind === "unconfirmed_user") {
+            if (user.registrationState.kind === "phone_registration") {
+                this.state.set({
+                    kind: "awaiting_code",
+                    phoneNumber: user.registrationState.phoneNumber,
+                });
+            } else {
+                this.state.set({
+                    kind: "awaiting_transfer_confirmation",
+                    requiredTransfer: user.registrationState.requiredTransfer,
+                });
+            }
+        } else if (user.kind === "confirmed_pending_username") {
+            this.state.set({ kind: "awaiting_username" });
+        } else if (user.kind === "confirmed_user") {
+            if (user.canisterCreationStatus === "in_progress") {
+                this.state.set({ kind: "awaiting_canister" });
+            } else if (user.canisterCreationStatus === "pending") {
+                this.state.set({ kind: "awaiting_canister" });
                 this.loadUser();
             }
         }
     }
 
-    submitRegistrationCode(code: string): void {
-        this.state.set("verifying");
+    async transferConfirmed(): Promise<void> {
+        this.state.set({ kind: "verifying" });
+        this.currentUser = await this.loadUser();
+        this.deriveStateFromUser(this.currentUser);
+    }
+
+    reset(): void {
+        this.state.set({ kind: "choose_registration_path" });
+    }
+
+    choosePhoneVerification(): void {
+        this.state.set({ kind: "awaiting_phone_number" });
+    }
+
+    chooseCyclesTransfer(): void {
+        // todo - we need to make an api call here so that we can get hold of the required transfer amount
+        this.state.set({ kind: "verifying" });
+        setTimeout(() => {
+            this.state.set({
+                kind: "awaiting_transfer_confirmation",
+                requiredTransfer: 1.0012345,
+            });
+        }, 2000);
+    }
+
+    submitRegistrationCode(phoneNumber: PhoneNumber, code: string): void {
+        this.state.set({ kind: "verifying" });
         this._api.confirmPhoneNumber(code).then((resp) => {
-            this.state.set("awaiting_code");
+            this.state.set({ kind: "awaiting_code", phoneNumber });
             if (resp === "already_claimed") {
                 this.error.set("register.confirmAlreadyClaimed");
             } else if (resp === "code_expired") {
@@ -54,20 +112,23 @@ export class RegisterController {
                 this.error.set("register.codeNotFound");
             } else if (resp === "success") {
                 this.error.set(undefined);
-                this.state.set("awaiting_username");
+                this.state.set({ kind: "awaiting_username" });
             }
         });
     }
 
     changePhoneNumber(): void {
-        this.state.set("awaiting_phone_number");
+        this.state.set({ kind: "awaiting_phone_number" });
     }
 
     requestRegistrationCode(phoneNumber: PhoneNumber): void {
-        this.phoneNumber.set(phoneNumber);
-        this.state.set("verifying");
+        this.registrationState.set({
+            kind: "phone_registration",
+            phoneNumber,
+        });
+        this.state.set({ kind: "verifying" });
         this._api.submitPhoneNumber(phoneNumber).then((resp) => {
-            this.state.set("awaiting_phone_number");
+            this.state.set({ kind: "awaiting_phone_number" });
             if (resp.kind === "already_registered") {
                 this.error.set("register.phoneAlreadyRegistered");
             } else if (resp.kind === "already_registered_by_other") {
@@ -78,16 +139,16 @@ export class RegisterController {
                 this.error.set("register.userLimitReached");
             } else if (resp.kind === "success") {
                 this.error.set(undefined);
-                this.state.set("awaiting_code");
+                this.state.set({ kind: "awaiting_code", phoneNumber });
             }
         });
     }
 
     registerUser(username: string): void {
-        this.state.set("verifying");
+        this.state.set({ kind: "verifying" });
         this.username.set(username);
         this._api.setUsername(username).then((resp) => {
-            this.state.set("awaiting_username");
+            this.state.set({ kind: "awaiting_username" });
             if (resp === "username_taken") {
                 this.error.set("register.usernameTaken");
             } else if (resp === "user_not_found") {
@@ -100,28 +161,30 @@ export class RegisterController {
                 this.error.set("register.usernameInvalid");
             } else if (resp === "success") {
                 this.error.set(undefined);
-                this.state.set("awaiting_canister");
+                this.state.set({ kind: "awaiting_canister" });
                 this.loadUser();
             }
         });
     }
 
-    private loadUser() {
-        this._api.getCurrentUser().then((resp) => {
+    private loadUser(): Promise<CurrentUserResponse> {
+        return this._api.getCurrentUser().then((resp) => {
             if (
                 (resp.kind === "confirmed_user" || resp.kind === "confirmed_pending_username") &&
                 resp.canisterCreationStatus === "pending"
             ) {
-                this._api.createCanister().then((canisterResp) => {
+                return this._api.createCanister().then((canisterResp) => {
                     if (canisterResp !== "success") {
                         console.log("Create use canister failed: ", canisterResp);
                     }
-                    this.loadUser();
+                    return this.loadUser();
                 });
             } else if (resp.kind === "created_user") {
-                this.state.set("awaiting_completion");
+                this.state.set({ kind: "awaiting_completion" });
                 this._createdUser = resp;
+                return resp;
             }
+            return resp;
         });
     }
 
@@ -131,8 +194,8 @@ export class RegisterController {
         }
     }
 
-    resendRegistrationCode(): void {
-        this.state.set("verifying");
+    resendRegistrationCode(phoneNumber: PhoneNumber): void {
+        this.state.set({ kind: "verifying" });
         this._api.resendRegistrationCode().then((resp) => {
             if (resp === "already_claimed") {
                 this.error.set("register.resendAlreadyClaimed");
@@ -141,7 +204,7 @@ export class RegisterController {
             } else {
                 this.error.set(undefined);
             }
-            this.state.set("awaiting_code");
+            this.state.set({ kind: "awaiting_code", phoneNumber });
         });
     }
 }
