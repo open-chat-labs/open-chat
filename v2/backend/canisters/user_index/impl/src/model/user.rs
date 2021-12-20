@@ -233,6 +233,7 @@ impl From<&RegistrationState> for user_index_canister::current_user::Registratio
         match state {
             RegistrationState::PhoneNumber(p) => user_index_canister::current_user::RegistrationState::PhoneNumber(
                 user_index_canister::current_user::UnconfirmedPhoneNumberState {
+                    phone_number: p.phone_number.clone(),
                     valid_until: p.valid_until,
                 },
             ),
