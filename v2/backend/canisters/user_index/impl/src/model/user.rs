@@ -178,6 +178,7 @@ pub struct CreatedUser {
     pub upgrade_in_progress: bool,
     pub cycle_top_ups: Vec<CyclesTopUp>,
     pub avatar_id: Option<u128>,
+    #[serde(default)]
     pub registration_fee: Option<Cycles>,
 }
 
