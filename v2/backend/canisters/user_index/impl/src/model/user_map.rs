@@ -19,9 +19,7 @@ pub struct UserMap {
     user_id_to_principal: HashMap<UserId, Principal>,
     registration_fee_cycles_to_principal: HashMap<Cycles, Principal>,
     unconfirmed_users: HashSet<Principal>,
-    #[serde(default)]
     users_confirmed_via_phone: u64,
-    #[serde(default)]
     users_confirmed_via_cycles: u64,
     cached_metrics: Timestamped<Metrics>,
     unconfirmed_users_last_pruned: TimestampMillis,
@@ -37,9 +35,7 @@ pub struct Metrics {
     pub users_online_1_hour: u32,
     pub users_online_1_week: u32,
     pub users_online_1_month: u32,
-    #[serde(default)]
     pub users_confirmed_via_phone: u64,
-    #[serde(default)]
     pub users_confirmed_via_cycles: u64,
     pub canister_upgrades_in_progress: u32,
 }
@@ -341,21 +337,6 @@ impl UserMap {
         }
 
         self.cached_metrics = Timestamped::new(metrics, now);
-    }
-
-    pub fn set_users_confirmed_counters(&mut self) {
-        self.users_confirmed_via_phone = 0;
-        self.users_confirmed_via_cycles = 0;
-
-        for user in self.users_by_principal.values() {
-            if !matches!(user, User::Unconfirmed(_)) {
-                if user.get_phone_number().is_some() {
-                    self.users_confirmed_via_phone += 1;
-                } else {
-                    self.users_confirmed_via_cycles += 1;
-                }
-            }
-        }
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &User> {
