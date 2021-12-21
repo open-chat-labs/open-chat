@@ -612,6 +612,12 @@
         &.deleted {
             opacity: 0.8;
         }
+
+        &:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
     }
 
     .username {

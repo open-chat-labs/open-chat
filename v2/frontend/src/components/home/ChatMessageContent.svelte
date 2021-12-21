@@ -52,12 +52,12 @@
 {#if content.kind === "text_content"}
     <div class="text-content">
         <div class="text-wrapper">
-            <slot />
             <p>{@html renderTextContent()}</p>
             <!-- <SvelteMarkdown 
                 source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} 
                 renderers={overriddenRenderers}
                 options={{gfm: true, breaks: true}} /> -->
+            <slot />
         </div>
     </div>
 {:else if content.kind === "image_content"}
