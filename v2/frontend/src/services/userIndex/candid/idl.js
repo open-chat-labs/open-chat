@@ -36,18 +36,22 @@ export const idlFactory = ({ IDL }) => {
     'phone_number' : PhoneNumber,
   });
   const Cycles = IDL.Nat;
-  const CyclesFeeState = IDL.Record({
+  const UnconfirmedCyclesFeeState = IDL.Record({
     'valid_until' : TimestampMillis,
     'amount' : Cycles,
   });
-  const RegistrationState = IDL.Variant({
+  const UnconfirmedUserState = IDL.Variant({
     'PhoneNumber' : UnconfirmedPhoneNumberState,
-    'CyclesFee' : CyclesFeeState,
+    'CyclesFee' : UnconfirmedCyclesFeeState,
   });
   const CanisterCreationStatus = IDL.Variant({
     'InProgress' : IDL.Null,
     'Created' : IDL.Null,
     'Pending' : IDL.Null,
+  });
+  const ConfirmationState = IDL.Variant({
+    'PhoneNumber' : PhoneNumber,
+    'CyclesFee' : Cycles,
   });
   const Cryptocurrency = IDL.Variant({ 'ICP' : IDL.Null, 'Cycles' : IDL.Null });
   const CryptocurrencyAccount = IDL.Record({
@@ -60,13 +64,15 @@ export const idlFactory = ({ IDL }) => {
     'InProgress' : IDL.Null,
   });
   const CurrentUserResponse = IDL.Variant({
-    'Unconfirmed' : IDL.Record({ 'state' : RegistrationState }),
+    'Unconfirmed' : IDL.Record({ 'state' : UnconfirmedUserState }),
     'Confirmed' : IDL.Record({
       'username' : IDL.Text,
       'canister_creation_status' : CanisterCreationStatus,
+      'confirmation_state' : ConfirmationState,
     }),
     'ConfirmedPendingUsername' : IDL.Record({
       'canister_creation_status' : CanisterCreationStatus,
+      'confirmation_state' : ConfirmationState,
     }),
     'Created' : IDL.Record({
       'username' : IDL.Text,

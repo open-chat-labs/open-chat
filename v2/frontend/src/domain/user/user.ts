@@ -100,11 +100,13 @@ export type ConfirmedUser = {
     kind: "confirmed_user";
     canisterCreationStatus: "in_progress" | "pending";
     username: string;
+    registrationState: RegistrationState;
 };
 
 export type ConfirmedPendingUsername = {
     kind: "confirmed_pending_username";
     canisterCreationStatus: "in_progress" | "pending" | "created";
+    registrationState: RegistrationState;
 };
 
 export type CreatedUser = {

@@ -5,8 +5,10 @@
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
+    import type { RegistrationState } from "../../domain/user/user";
     export let error: string | undefined = undefined;
     export let username: string = "";
+    export let regState: RegistrationState;
 
     function submitUsername() {
         if (valid) {
@@ -17,9 +19,15 @@
     $: valid = username.length >= 3;
 </script>
 
-<h3 class="title">
-    {$_("register.enterUsername")}
-</h3>
+{#if regState.kind === "phone_registration"}
+    <h3 class="title">
+        {$_("register.codeAccepted")}
+    </h3>
+{:else if regState.kind === "cycles_fee_registration"}
+    <h3 class="title">
+        {$_("register.cyclesTransferred", { values: { fee: regState.amount.toString() } })}
+    </h3>
+{/if}
 
 <p class="enter-username">{$_("register.usernameRules")}</p>
 

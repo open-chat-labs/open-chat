@@ -10,21 +10,22 @@ import type {
     PartialUserSummary,
     UpgradeCanisterResponse,
     CreateCanisterResponse,
-    RegistrationState,
     RegistrationFeeResponse,
+    RegistrationState,
 } from "../../domain/user/user";
 import type {
+    ApiConfirmationState,
     ApiConfirmPhoneNumberResponse,
     ApiCreateCanisterResponse,
     ApiCurrentUserResponse,
     ApiGenerateRegistrationFeeResponse,
     ApiPartialUserSummary,
     ApiPhoneNumber,
-    ApiRegistrationState,
     ApiResendCodeResponse,
     ApiSearchResponse,
     ApiSetUsernameResponse,
     ApiSubmitPhoneNumberResponse,
+    ApiUnconfirmedUserState,
     ApiUpgradeCanisterResponse,
     ApiUsersResponse,
     ApiUserSummary,
@@ -147,7 +148,7 @@ export function upgradeCanisterResponse(
     throw new UnsupportedValueError("Unexpected ApiUpgradeCanisterResponse type received", candid);
 }
 
-function registrationState(candid: ApiRegistrationState): RegistrationState {
+function registrationState(candid: ApiUnconfirmedUserState): RegistrationState {
     if ("PhoneNumber" in candid) {
         return {
             kind: "phone_registration",
@@ -187,6 +188,25 @@ export function generateRegistrationFeeResponse(
     );
 }
 
+export function confirmationState(candid: ApiConfirmationState): RegistrationState {
+    if ("PhoneNumber" in candid) {
+        return {
+            kind: "phone_registration",
+            phoneNumber: {
+                countryCode: candid.PhoneNumber.country_code,
+                number: candid.PhoneNumber.number,
+            },
+        };
+    }
+    if ("CyclesFee" in candid) {
+        return {
+            kind: "cycles_fee_registration",
+            amount: candid.CyclesFee,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiConfirmationState type received", candid);
+}
+
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
     if ("Unconfirmed" in candid) {
         return {
@@ -203,6 +223,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                     ? "in_progress"
                     : "pending",
             username: candid.Confirmed.username,
+            registrationState: confirmationState(candid.Confirmed.confirmation_state),
         };
     }
 
@@ -215,6 +236,9 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                     : "Created" in candid.ConfirmedPendingUsername.canister_creation_status
                     ? "created"
                     : "pending",
+            registrationState: confirmationState(
+                candid.ConfirmedPendingUsername.confirmation_state
+            ),
         };
     }
 

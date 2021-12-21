@@ -1,4 +1,4 @@
-import { Writable, writable } from "svelte/store";
+import { get, Writable, writable } from "svelte/store";
 import type {
     CreatedUser,
     CurrentUserResponse,
@@ -16,7 +16,7 @@ export type AwaitingTransferConfirmation = {
     amount: bigint;
 };
 export type Verifying = { kind: "verifying" };
-export type AwaitingUsername = { kind: "awaiting_username" };
+export type AwaitingUsername = { kind: "awaiting_username"; regState: RegistrationState };
 export type AwaitingCompletion = { kind: "awaiting_completion" };
 export type AwaitingCanister = { kind: "awaiting_canister" };
 
@@ -34,16 +34,14 @@ export class RegisterController {
     public state: Writable<RegisterState> = writable({ kind: "awaiting_phone_number" });
     public error: Writable<string | undefined> = writable(undefined);
     public username: Writable<string | undefined> = writable(undefined);
-    public registrationState: Writable<RegistrationState | undefined> = writable(undefined);
     private _createdUser?: CreatedUser;
 
     constructor(
         private _api: ServiceContainer,
         private currentUser: CurrentUserResponse,
-        private _onComplete: (user: CreatedUser) => void,
-        private _regState?: RegistrationState
+        private _onComplete: (user: CreatedUser) => void
     ) {
-        this.registrationState = writable(_regState);
+        console.log("User: ", currentUser);
         this.deriveStateFromUser(currentUser);
     }
 
@@ -63,7 +61,7 @@ export class RegisterController {
                 });
             }
         } else if (user.kind === "confirmed_pending_username") {
-            this.state.set({ kind: "awaiting_username" });
+            this.state.set({ kind: "awaiting_username", regState: user.registrationState });
         } else if (user.kind === "confirmed_user") {
             if (user.canisterCreationStatus === "in_progress") {
                 this.state.set({ kind: "awaiting_canister" });
@@ -117,7 +115,13 @@ export class RegisterController {
                 this.error.set("register.codeNotFound");
             } else if (resp === "success") {
                 this.error.set(undefined);
-                this.state.set({ kind: "awaiting_username" });
+                this.state.set({
+                    kind: "awaiting_username",
+                    regState: {
+                        kind: "phone_registration",
+                        phoneNumber,
+                    },
+                });
             }
         });
     }
@@ -127,10 +131,6 @@ export class RegisterController {
     }
 
     requestRegistrationCode(phoneNumber: PhoneNumber): void {
-        this.registrationState.set({
-            kind: "phone_registration",
-            phoneNumber,
-        });
         this.state.set({ kind: "verifying" });
         this._api.submitPhoneNumber(phoneNumber).then((resp) => {
             this.state.set({ kind: "awaiting_phone_number" });
@@ -150,10 +150,11 @@ export class RegisterController {
     }
 
     registerUser(username: string): void {
+        const currentState = get(this.state);
         this.state.set({ kind: "verifying" });
         this.username.set(username);
         this._api.setUsername(username).then((resp) => {
-            this.state.set({ kind: "awaiting_username" });
+            this.state.set(currentState);
             if (resp === "username_taken") {
                 this.error.set("register.usernameTaken");
             } else if (resp === "user_not_found") {

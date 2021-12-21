@@ -23,6 +23,8 @@ import {
     UnconfirmedPhoneNumberState,
     CyclesFeeState,
     GenerateRegistrationFeeResponse,
+    UnconfirmedUserState,
+    ConfirmationState,
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -48,6 +50,8 @@ export {
     UnconfirmedPhoneNumberState as ApiUnconfirmedPhoneNumberState,
     CyclesFeeState as ApiCyclesFeeState,
     GenerateRegistrationFeeResponse as ApiGenerateRegistrationFeeResponse,
+    UnconfirmedUserState as ApiUnconfirmedUserState,
+    ConfirmationState as ApiConfirmationState,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

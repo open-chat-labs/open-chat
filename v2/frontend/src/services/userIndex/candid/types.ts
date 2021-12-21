@@ -103,6 +103,8 @@ export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
+export type ConfirmationState = { 'PhoneNumber' : PhoneNumber } |
+  { 'CyclesFee' : Cycles };
 export type CreateCanisterArgs = {};
 export type CreateCanisterResponse = { 'UserAlreadyCreated' : null } |
   { 'Success' : CanisterId } |
@@ -132,17 +134,19 @@ export type CryptocurrencyWithdrawal = { 'ICP' : ICPWithdrawal } |
   { 'Cycles' : CyclesWithdrawal };
 export type CurrentUserArgs = {};
 export type CurrentUserResponse = {
-    'Unconfirmed' : { 'state' : RegistrationState }
+    'Unconfirmed' : { 'state' : UnconfirmedUserState }
   } |
   {
     'Confirmed' : {
       'username' : string,
       'canister_creation_status' : CanisterCreationStatus,
+      'confirmation_state' : ConfirmationState,
     }
   } |
   {
     'ConfirmedPendingUsername' : {
       'canister_creation_status' : CanisterCreationStatus,
+      'confirmation_state' : ConfirmationState,
     }
   } |
   {
@@ -157,10 +161,6 @@ export type CurrentUserResponse = {
   { 'UserNotFound' : null };
 export type Cycles = bigint;
 export type CyclesDeposit = { 'Completed' : CompletedCyclesDeposit };
-export interface CyclesFeeState {
-  'valid_until' : TimestampMillis,
-  'amount' : Cycles,
-}
 export type CyclesTransfer = { 'Failed' : FailedCyclesTransfer } |
   { 'Completed' : CompletedCyclesTransfer } |
   { 'Pending' : PendingCyclesTransfer };
@@ -475,10 +475,6 @@ export interface PendingICPWithdrawal {
   'amount_e8s' : bigint,
 }
 export interface PhoneNumber { 'country_code' : number, 'number' : string }
-export type RegistrationState = {
-    'PhoneNumber' : UnconfirmedPhoneNumberState
-  } |
-  { 'CyclesFee' : CyclesFeeState };
 export interface RemoveSuperAdminArgs { 'user_id' : UserId }
 export type RemoveSuperAdminResponse = { 'Success' : null } |
   { 'NotSuperAdmin' : null } |
@@ -548,10 +544,18 @@ export type TransferCyclesResponse = { 'BalanceExceeded' : null } |
   { 'Success' : { 'new_balance' : bigint } } |
   { 'UserNotFound' : null } |
   { 'RecipientNotFound' : null };
+export interface UnconfirmedCyclesFeeState {
+  'valid_until' : TimestampMillis,
+  'amount' : Cycles,
+}
 export interface UnconfirmedPhoneNumberState {
   'valid_until' : TimestampMillis,
   'phone_number' : PhoneNumber,
 }
+export type UnconfirmedUserState = {
+    'PhoneNumber' : UnconfirmedPhoneNumberState
+  } |
+  { 'CyclesFee' : UnconfirmedCyclesFeeState };
 export interface UpdateUserCanisterWasmArgs {
   'user_canister_wasm' : CanisterWasm,
 }

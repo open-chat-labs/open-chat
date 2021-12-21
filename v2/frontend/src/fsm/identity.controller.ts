@@ -47,7 +47,6 @@ export class IdentityController {
             this._api = new ServiceContainer(id);
         }
         this._api.getCurrentUser().then((user) => {
-            const regState = user.kind === "unconfirmed_user" ? user.registrationState : undefined;
             switch (user.kind) {
                 case "confirmed_user":
                 case "unknown_user":
@@ -58,8 +57,7 @@ export class IdentityController {
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         this._api!,
                         user,
-                        (registeredUser) => this.onCreatedUser(id, registeredUser),
-                        regState
+                        (registeredUser) => this.onCreatedUser(id, registeredUser)
                     );
                     break;
                 case "created_user":

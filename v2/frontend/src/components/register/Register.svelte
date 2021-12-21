@@ -4,7 +4,6 @@
     import ModalPage from "../ModalPage.svelte";
     import EnterPhoneNumber from "./EnterPhoneNumber.svelte";
     import Complete from "./Complete.svelte";
-    import Refresh from "svelte-material-icons/Refresh.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import EnterUsername from "./EnterUsername.svelte";
     import EnterCode from "./EnterCode.svelte";
@@ -13,8 +12,6 @@
     import Link from "../Link.svelte";
     import ChoosePath from "./ChoosePath.svelte";
     import ConfirmTransfer from "./ConfirmTransfer.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import HoverIcon from "../HoverIcon.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -74,7 +71,7 @@
         {:else if state.kind === "awaiting_canister"}
             <div class="spinner" />
         {:else if state.kind === "awaiting_username"}
-            <EnterUsername {username} {error} on:submitUsername />
+            <EnterUsername {username} {error} on:submitUsername regState={state.regState} />
         {/if}
     {/if}
 </ModalPage>
