@@ -1,4 +1,4 @@
-use crate::model::user::{UnconfirmedUserState, User};
+use crate::model::user::{UnconfirmedUser, UnconfirmedUserState, User};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -19,6 +19,10 @@ pub struct UserMap {
     user_id_to_principal: HashMap<UserId, Principal>,
     registration_fee_cycles_to_principal: HashMap<Cycles, Principal>,
     unconfirmed_users: HashSet<Principal>,
+    #[serde(default)]
+    users_confirmed_via_phone: u64,
+    #[serde(default)]
+    users_confirmed_via_cycles: u64,
     cached_metrics: Timestamped<Metrics>,
     unconfirmed_users_last_pruned: TimestampMillis,
 }
@@ -33,22 +37,26 @@ pub struct Metrics {
     pub users_online_1_hour: u32,
     pub users_online_1_week: u32,
     pub users_online_1_month: u32,
+    #[serde(default)]
+    pub users_confirmed_via_phone: u64,
+    #[serde(default)]
+    pub users_confirmed_via_cycles: u64,
     pub canister_upgrades_in_progress: u32,
 }
 
 impl UserMap {
-    pub fn add(&mut self, user: User) -> AddUserResult {
-        let principal = user.get_principal();
-        let maybe_phone_number = user.get_phone_number();
-        let maybe_username = user.get_username();
-        let maybe_user_id = user.get_user_id();
-        let maybe_fee_cycles = user.get_registration_fee_cycles();
+    pub fn add(&mut self, user: UnconfirmedUser) -> AddUserResult {
+        let principal = user.principal;
+        let mut maybe_phone_number = None;
+        let mut maybe_fee_cycles = None;
+        match &user.state {
+            UnconfirmedUserState::PhoneNumber(p) => maybe_phone_number = Some(&p.phone_number),
+            UnconfirmedUserState::CyclesFee(c) => maybe_fee_cycles = Some(c.amount),
+        };
 
         if let Vacant(principal_entry) = self.users_by_principal.entry(principal) {
             if maybe_phone_number.is_some() && self.phone_number_to_principal.contains_key(maybe_phone_number.unwrap()) {
                 AddUserResult::PhoneNumberTaken
-            } else if maybe_username.is_some() && self.username_to_principal.contains_key(maybe_username.unwrap()) {
-                AddUserResult::UsernameTaken
             } else if maybe_fee_cycles.is_some()
                 && self
                     .registration_fee_cycles_to_principal
@@ -59,20 +67,12 @@ impl UserMap {
                 if let Some(phone_number) = maybe_phone_number {
                     self.phone_number_to_principal.insert(phone_number.clone(), principal);
                 }
-                if let Some(username) = maybe_username {
-                    self.username_to_principal.insert(username, principal);
-                }
-                if let Some(user_id) = maybe_user_id {
-                    self.user_id_to_principal.insert(user_id, principal);
-                }
                 if let Some(fee_cycles) = maybe_fee_cycles {
                     self.registration_fee_cycles_to_principal.insert(fee_cycles, principal);
                 }
 
-                if matches!(user, User::Unconfirmed(_)) {
-                    self.unconfirmed_users.insert(principal);
-                }
-                principal_entry.insert(user);
+                self.unconfirmed_users.insert(principal);
+                principal_entry.insert(User::Unconfirmed(user));
                 AddUserResult::Success
             }
         } else {
@@ -161,8 +161,12 @@ impl UserMap {
 
             if matches!(user, User::Unconfirmed(_)) {
                 self.unconfirmed_users.insert(principal);
-            } else if matches!(previous, User::Unconfirmed(_)) {
+            } else if let User::Unconfirmed(previous) = previous {
                 self.unconfirmed_users.remove(&principal);
+                match previous.state {
+                    UnconfirmedUserState::PhoneNumber(_) => self.users_confirmed_via_phone += 1,
+                    UnconfirmedUserState::CyclesFee(_) => self.users_confirmed_via_cycles += 1,
+                };
             }
             self.users_by_principal.insert(principal, user);
             UpdateUserResult::Success
@@ -303,6 +307,9 @@ impl UserMap {
 
         let mut metrics = Metrics::default();
 
+        metrics.users_confirmed_via_phone = self.users_confirmed_via_phone;
+        metrics.users_confirmed_via_cycles = self.users_confirmed_via_cycles;
+
         for user in self.users_by_principal.values() {
             match user {
                 User::Unconfirmed(_) => {
@@ -335,6 +342,21 @@ impl UserMap {
         self.cached_metrics = Timestamped::new(metrics, now);
     }
 
+    pub fn set_users_confirmed_counters(&mut self) {
+        self.users_confirmed_via_phone = 0;
+        self.users_confirmed_via_cycles = 0;
+
+        for user in self.users_by_principal.values() {
+            if !matches!(user, User::Unconfirmed(_)) {
+                if user.get_phone_number().is_some() {
+                    self.users_confirmed_via_phone += 1;
+                } else {
+                    self.users_confirmed_via_cycles += 1;
+                }
+            }
+        }
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &User> {
         self.users_by_principal.values()
     }
@@ -342,13 +364,30 @@ impl UserMap {
     pub fn len(&self) -> usize {
         self.users_by_principal.len()
     }
+
+    #[cfg(test)]
+    pub fn add_test_user(&mut self, user: User) {
+        use crate::model::user::UnconfirmedCyclesRegistrationFee;
+
+        if let User::Unconfirmed(u) = user {
+            self.add(u);
+        } else {
+            self.add(UnconfirmedUser {
+                principal: user.get_principal(),
+                state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
+                    amount: 0,
+                    valid_until: 0,
+                }),
+            });
+            self.update(user);
+        }
+    }
 }
 
 pub enum AddUserResult {
     Success,
     AlreadyExists,
     PhoneNumberTaken,
-    UsernameTaken,
     RegistrationFeeCyclesTaken,
 }
 
@@ -396,7 +435,7 @@ mod tests {
                 sms_messages_sent: 1,
             }),
         });
-        user_map.add(unconfirmed.clone());
+        user_map.add_test_user(unconfirmed.clone());
 
         let confirmed = User::Confirmed(ConfirmedUser {
             principal: principal2,
@@ -407,7 +446,7 @@ mod tests {
             date_confirmed: 2,
             registration_fee: None,
         });
-        user_map.add(confirmed.clone());
+        user_map.add_test_user(confirmed.clone());
 
         let created = User::Created(CreatedUser {
             principal: principal3,
@@ -419,7 +458,7 @@ mod tests {
             last_online: 1,
             ..Default::default()
         });
-        user_map.add(created.clone());
+        user_map.add_test_user(created.clone());
 
         let users_by_principal: Vec<_> = user_map
             .users_by_principal
@@ -468,27 +507,28 @@ mod tests {
 
         let user_id: UserId = Principal::from_slice(&[1, 1]).into();
 
-        let unconfirmed = User::Unconfirmed(UnconfirmedUser {
-            principal,
-            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
-                phone_number: phone_number1.clone(),
-                confirmation_code: "1".to_string(),
-                valid_until: 1,
-                sms_messages_sent: 1,
-            }),
-        });
-        user_map.add(unconfirmed);
-
         let confirmed = User::Confirmed(ConfirmedUser {
             principal,
-            phone_number: Some(phone_number2.clone()),
-            username: Some("2".to_string()),
+            phone_number: Some(phone_number1),
+            username: Some("1".to_string()),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id.into())),
             upgrade_in_progress: false,
-            date_confirmed: 2,
+            date_confirmed: 1,
             registration_fee: None,
         });
-        assert!(matches!(user_map.add(confirmed), AddUserResult::AlreadyExists));
+        user_map.add_test_user(confirmed);
+
+        let unconfirmed = UnconfirmedUser {
+            principal,
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
+                phone_number: phone_number2,
+                confirmation_code: "2".to_string(),
+                valid_until: 2,
+                sms_messages_sent: 2,
+            }),
+        };
+
+        assert!(matches!(user_map.add(unconfirmed), AddUserResult::AlreadyExists));
         assert_eq!(user_map.users_by_principal.len(), 1);
     }
 
@@ -502,106 +542,28 @@ mod tests {
 
         let user_id = Principal::from_slice(&[2, 2]).into();
 
-        let unconfirmed = User::Unconfirmed(UnconfirmedUser {
-            principal: principal1,
-            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
-                phone_number: phone_number.clone(),
-                confirmation_code: "1".to_string(),
-                valid_until: 1,
-                sms_messages_sent: 1,
-            }),
-        });
-        user_map.add(unconfirmed);
-
         let confirmed = User::Confirmed(ConfirmedUser {
-            principal: principal2,
-            phone_number: Some(phone_number),
-            username: Some("2".to_string()),
+            principal: principal1,
+            phone_number: Some(phone_number.clone()),
+            username: Some("1".to_string()),
             canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id).into()),
             upgrade_in_progress: false,
-            date_confirmed: 2,
+            date_confirmed: 1,
             registration_fee: None,
         });
-        assert!(matches!(user_map.add(confirmed), AddUserResult::PhoneNumberTaken));
-        assert_eq!(user_map.users_by_principal.len(), 1);
-    }
+        user_map.add_test_user(confirmed);
 
-    #[test]
-    fn add_with_clashing_username() {
-        let mut user_map = UserMap::default();
-        let principal1 = Principal::from_slice(&[1]);
-        let principal2 = Principal::from_slice(&[2]);
-
-        let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
-        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
-
-        let user_id1 = Principal::from_slice(&[1, 1]).into();
-        let user_id2 = Principal::from_slice(&[2, 2]).into();
-
-        let username = "1".to_string();
-
-        let confirmed = User::Confirmed(ConfirmedUser {
-            principal: principal1,
-            phone_number: Some(phone_number1),
-            username: Some(username.clone()),
-            canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id1).into()),
-            upgrade_in_progress: false,
-            date_confirmed: 2,
-            registration_fee: None,
-        });
-        user_map.add(confirmed);
-
-        let created = User::Created(CreatedUser {
+        let unconfirmed = UnconfirmedUser {
             principal: principal2,
-            phone_number: Some(phone_number2),
-            user_id: user_id2,
-            username,
-            date_created: 3,
-            date_updated: 3,
-            last_online: 3,
-            ..Default::default()
-        });
-        assert!(matches!(user_map.add(created), AddUserResult::UsernameTaken));
-        assert_eq!(user_map.users_by_principal.len(), 1);
-    }
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
+                phone_number: phone_number,
+                confirmation_code: "2".to_string(),
+                valid_until: 2,
+                sms_messages_sent: 2,
+            }),
+        };
 
-    #[test]
-    fn add_with_case_insensitive_clashing_username() {
-        let mut user_map = UserMap::default();
-        let principal1 = Principal::from_slice(&[1]);
-        let principal2 = Principal::from_slice(&[2]);
-
-        let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
-        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
-
-        let user_id1 = Principal::from_slice(&[1, 1]).into();
-        let user_id2 = Principal::from_slice(&[2, 2]).into();
-
-        let username1 = "abc".to_string();
-        let username2 = "ABC".to_string();
-
-        let confirmed = User::Confirmed(ConfirmedUser {
-            principal: principal1,
-            phone_number: Some(phone_number1),
-            username: Some(username1),
-            canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id1).into()),
-            upgrade_in_progress: false,
-            date_confirmed: 2,
-            registration_fee: None,
-        });
-        user_map.add(confirmed);
-
-        let created = User::Created(CreatedUser {
-            principal: principal2,
-            phone_number: Some(phone_number2),
-            user_id: user_id2,
-            username: username2,
-            date_created: 3,
-            date_updated: 3,
-            last_online: 3,
-            ..Default::default()
-        });
-        assert!(matches!(user_map.add(created), AddUserResult::UsernameTaken));
+        assert!(matches!(user_map.add(unconfirmed), AddUserResult::PhoneNumberTaken));
         assert_eq!(user_map.users_by_principal.len(), 1);
     }
 
@@ -633,7 +595,7 @@ mod tests {
         updated.username = username2.clone();
         updated.phone_number = Some(phone_number2.clone());
 
-        user_map.add(User::Created(original));
+        user_map.add_test_user(User::Created(original));
         assert!(matches!(user_map.update(User::Created(updated)), UpdateUserResult::Success));
 
         assert_eq!(user_map.users_by_principal.keys().collect_vec(), vec!(&principal));
@@ -683,8 +645,8 @@ mod tests {
         let mut updated = original.clone();
         updated.phone_number = Some(phone_number2);
 
-        user_map.add(User::Created(original));
-        user_map.add(User::Created(other));
+        user_map.add_test_user(User::Created(original));
+        user_map.add_test_user(User::Created(other));
         assert!(matches!(
             user_map.update(User::Created(updated)),
             UpdateUserResult::PhoneNumberTaken
@@ -731,8 +693,8 @@ mod tests {
         let mut updated = original.clone();
         updated.username = username2;
 
-        user_map.add(User::Created(original));
-        user_map.add(User::Created(other));
+        user_map.add_test_user(User::Created(original));
+        user_map.add_test_user(User::Created(other));
         assert!(matches!(
             user_map.update(User::Created(updated)),
             UpdateUserResult::UsernameTaken
@@ -760,7 +722,7 @@ mod tests {
 
         let mut updated = original.clone();
 
-        user_map.add(User::Created(original));
+        user_map.add_test_user(User::Created(original));
         updated.username = "ABC".to_string();
 
         assert!(matches!(user_map.update(User::Created(updated)), UpdateUserResult::Success));
@@ -790,11 +752,8 @@ mod tests {
             }),
         };
 
-        user_map.add(User::Unconfirmed(user1));
-        assert!(matches!(
-            user_map.add(User::Unconfirmed(user2)),
-            AddUserResult::RegistrationFeeCyclesTaken
-        ));
+        user_map.add(user1);
+        assert!(matches!(user_map.add(user2), AddUserResult::RegistrationFeeCyclesTaken));
     }
 
     #[test]
@@ -828,8 +787,8 @@ mod tests {
             valid_until: 1000,
         });
 
-        user_map.add(User::Unconfirmed(original));
-        user_map.add(User::Unconfirmed(other));
+        user_map.add(original);
+        user_map.add(other);
         assert!(matches!(
             user_map.update(User::Unconfirmed(updated)),
             UpdateUserResult::RegistrationFeeCyclesTaken
@@ -854,7 +813,7 @@ mod tests {
         let user_id3 = Principal::from_slice(&[3]).into();
         let user_id4 = Principal::from_slice(&[4]).into();
 
-        let unconfirmed1 = User::Unconfirmed(UnconfirmedUser {
+        let unconfirmed1 = UnconfirmedUser {
             principal: principal1,
             state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number1.clone(),
@@ -862,16 +821,16 @@ mod tests {
                 valid_until: 1,
                 sms_messages_sent: 1,
             }),
-        });
+        };
         user_map.add(unconfirmed1.clone());
 
-        let unconfirmed2 = User::Unconfirmed(UnconfirmedUser {
+        let unconfirmed2 = UnconfirmedUser {
             principal: principal2,
             state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
                 amount: 1000,
                 valid_until: 2,
             }),
-        });
+        };
         user_map.add(unconfirmed2.clone());
 
         let confirmed = User::Confirmed(ConfirmedUser {
@@ -883,7 +842,7 @@ mod tests {
             date_confirmed: 3,
             registration_fee: None,
         });
-        user_map.add(confirmed.clone());
+        user_map.add_test_user(confirmed.clone());
 
         let created = User::Created(CreatedUser {
             principal: principal4,
@@ -895,7 +854,7 @@ mod tests {
             last_online: 4,
             ..Default::default()
         });
-        user_map.add(created.clone());
+        user_map.add_test_user(created.clone());
 
         assert_eq!(user_map.users_by_principal.len(), 4);
 
@@ -935,7 +894,7 @@ mod tests {
         let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
         let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
 
-        let user1 = User::Unconfirmed(UnconfirmedUser {
+        let user1 = UnconfirmedUser {
             principal: principal1,
             state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number1,
@@ -943,9 +902,9 @@ mod tests {
                 valid_until: now + 1000,
                 sms_messages_sent: 0,
             }),
-        });
+        };
 
-        let user2 = User::Unconfirmed(UnconfirmedUser {
+        let user2 = UnconfirmedUser {
             principal: principal2,
             state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number2,
@@ -953,23 +912,23 @@ mod tests {
                 valid_until: now + 1001,
                 sms_messages_sent: 0,
             }),
-        });
+        };
 
-        let user3 = User::Unconfirmed(UnconfirmedUser {
+        let user3 = UnconfirmedUser {
             principal: principal3,
             state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
                 amount: 3,
                 valid_until: now + 1000,
             }),
-        });
+        };
 
-        let user4 = User::Unconfirmed(UnconfirmedUser {
+        let user4 = UnconfirmedUser {
             principal: principal4,
             state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
                 amount: 4,
                 valid_until: now + 1001,
             }),
-        });
+        };
 
         user_map.add(user1);
         user_map.add(user2);
@@ -983,5 +942,67 @@ mod tests {
             user_map.users_by_principal.into_keys().sorted().collect_vec(),
             vec![principal2, principal4]
         );
+    }
+
+    #[test]
+    fn confirming_users_updates_the_counters() {
+        let mut user_map = UserMap::default();
+
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+
+        let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
+
+        let user1 = UnconfirmedUser {
+            principal: principal1,
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
+                phone_number: phone_number1.clone(),
+                confirmation_code: "1".to_string(),
+                valid_until: 1,
+                sms_messages_sent: 1,
+            }),
+        };
+
+        let user2 = UnconfirmedUser {
+            principal: principal2,
+            state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
+                amount: 2,
+                valid_until: 2,
+            }),
+        };
+
+        user_map.add(user1);
+        user_map.add(user2);
+
+        let confirmed1 = User::Confirmed(ConfirmedUser {
+            principal: principal1,
+            phone_number: Some(phone_number1),
+            username: None,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
+            upgrade_in_progress: false,
+            date_confirmed: 1,
+            registration_fee: None,
+        });
+
+        let confirmed2 = User::Confirmed(ConfirmedUser {
+            principal: principal2,
+            phone_number: None,
+            username: None,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
+            upgrade_in_progress: false,
+            date_confirmed: 2,
+            registration_fee: Some(2),
+        });
+
+        assert_eq!(user_map.users_confirmed_via_phone, 0);
+        assert_eq!(user_map.users_confirmed_via_cycles, 0);
+
+        user_map.update(confirmed1);
+        assert_eq!(user_map.users_confirmed_via_phone, 1);
+        assert_eq!(user_map.users_confirmed_via_cycles, 0);
+
+        user_map.update(confirmed2);
+        assert_eq!(user_map.users_confirmed_via_phone, 1);
+        assert_eq!(user_map.users_confirmed_via_cycles, 1);
     }
 }
