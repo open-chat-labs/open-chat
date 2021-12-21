@@ -17,12 +17,9 @@ pub struct UserMap {
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,
     username_to_principal: CaseInsensitiveHashMap<Principal>,
     user_id_to_principal: HashMap<UserId, Principal>,
-    #[serde(default)]
     registration_fee_cycles_to_principal: HashMap<Cycles, Principal>,
-    #[serde(default)]
     unconfirmed_users: HashSet<Principal>,
     cached_metrics: Timestamped<Metrics>,
-    #[serde(default)]
     unconfirmed_users_last_pruned: TimestampMillis,
 }
 
