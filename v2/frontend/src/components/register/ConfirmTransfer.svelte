@@ -19,7 +19,7 @@
 <p class="canister">
     {"process.env.USER_INDEX_CANISTER"}
 </p>
-<div>
+<div class="cta">
     <Button on:click={() => dispatch("transferConfirmed")}>
         {$_("register.confirmed")}
     </Button>
@@ -41,5 +41,9 @@
         margin: $sp3 $sp4;
         text-align: center;
         text-shadow: var(--modalPage-txt-sh);
+    }
+
+    .cta {
+        margin-top: auto;
     }
 </style>

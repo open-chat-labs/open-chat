@@ -30,6 +30,7 @@
         justify-content: center;
         align-items: center;
         gap: $sp3;
+        margin-top: auto;
 
         @include size-below(xs) {
             flex-direction: column;

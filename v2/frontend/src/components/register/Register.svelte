@@ -5,6 +5,7 @@
     import EnterPhoneNumber from "./EnterPhoneNumber.svelte";
     import Complete from "./Complete.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import EnterUsername from "./EnterUsername.svelte";
     import EnterCode from "./EnterCode.svelte";
     import type { RegisterState } from "../../fsm/register.controller";
@@ -13,6 +14,7 @@
     import ChoosePath from "./ChoosePath.svelte";
     import ConfirmTransfer from "./ConfirmTransfer.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import HoverIcon from "../HoverIcon.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -30,13 +32,23 @@
                 bgClass = "underwater";
         }
     }
+
+    $: canGoBack =
+        state.kind === "awaiting_phone_number" ||
+        state.kind === "awaiting_transfer_confirmation" ||
+        state.kind === "awaiting_code";
 </script>
 
 <ModalPage {bgClass} minHeight="380px">
     {#if state.kind === "awaiting_completion"}
         <Complete on:complete />
     {:else}
-        <h4 class="subtitle">{$_("register.tellUsWho")}</h4>
+        {#if canGoBack}
+            <div class="back" title={$_("register.goBack")} on:click={() => dispatch("reset")}>
+                <ArrowLeft size={"1.2em"} color={"var(--modalPage-txt"} />
+            </div>
+        {/if}
+        <h4 class="subtitle">{$_("register.registerUser")}</h4>
         <Logo />
         {#if state.kind === "awaiting_canister"}
             <h3 class="title">
@@ -64,11 +76,6 @@
         {:else if state.kind === "awaiting_username"}
             <EnterUsername {username} {error} on:submitUsername />
         {/if}
-    {/if}
-    {#if state.kind !== "choose_registration_path"}
-        <div class="reset" title={$_("register.startAgain")} on:click={() => dispatch("reset")}>
-            <Refresh size={$iconSize} color={"var(--accent)"} />
-        </div>
     {/if}
 </ModalPage>
 
@@ -98,10 +105,15 @@
         text-shadow: var(--modalPage-txt-sh);
     }
 
-    .reset {
+    .back {
+        padding: 1px;
+        border-radius: 50%;
+        border: 1px solid var(--modalPage-txt);
         position: absolute;
-        bottom: $sp3;
-        right: $sp3;
+        top: $sp4;
+        left: $sp4;
+        width: $sp5;
+        height: $sp5;
         cursor: pointer;
     }
 

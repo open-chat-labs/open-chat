@@ -17,7 +17,11 @@
     $: valid = username.length >= 3;
 </script>
 
-<p class="enter-username">{$_("register.enterUsername")}</p>
+<h3 class="title">
+    {$_("register.enterUsername")}
+</h3>
+
+<p class="enter-username">{$_("register.usernameRules")}</p>
 
 <form class="username-wrapper" on:submit|preventDefault={submitUsername}>
     <Input
@@ -47,12 +51,21 @@
 
     .enter-username {
         @include font(light, normal, fs-100);
-        margin-bottom: $sp5;
+        margin-bottom: $sp4;
     }
     .username-wrapper {
         width: 80%;
         @include size-below(xs) {
             width: 100%;
         }
+    }
+    .actions {
+        margin-top: auto;
+    }
+    .title {
+        @include font(bold, normal, fs-160);
+        margin: $sp4 0 0 0;
+        text-align: center;
+        text-shadow: var(--modalPage-txt-sh);
     }
 </style>
