@@ -1,4 +1,4 @@
-use crate::model::user::{RegistrationState, UnconfirmedPhoneNumber, UnconfirmedUser, User};
+use crate::model::user::{UnconfirmedPhoneNumber, UnconfirmedUser, UnconfirmedUserState, User};
 use crate::model::user_map::AddUserResult;
 use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
 use canister_api_macros::trace;
@@ -30,7 +30,7 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
             match user {
                 User::Unconfirmed(u) => {
-                    if let RegistrationState::PhoneNumber(p) = &u.state {
+                    if let UnconfirmedUserState::PhoneNumber(p) = &u.state {
                         sms_messages_sent = p.sms_messages_sent;
                     }
                     runtime_state.data.users.remove_by_principal(&caller);
@@ -47,7 +47,7 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
 
         let user = UnconfirmedUser {
             principal: caller,
-            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number,
                 confirmation_code: confirmation_code.clone(),
                 valid_until: now + CONFIRMATION_CODE_EXPIRY_MILLIS,

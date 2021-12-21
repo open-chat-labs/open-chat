@@ -4,6 +4,7 @@ use types::{
     CanisterCreationStatusInternal, Cycles, CyclesTopUp, PartialUserSummary, PhoneNumber, TimestampMillis, UserId, UserSummary,
     Version,
 };
+use user_index_canister::current_user::ConfirmationState;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum User {
@@ -24,7 +25,7 @@ impl User {
     pub fn get_phone_number(&self) -> Option<&PhoneNumber> {
         match self {
             User::Unconfirmed(u) => {
-                if let RegistrationState::PhoneNumber(p) = &u.state {
+                if let UnconfirmedUserState::PhoneNumber(p) = &u.state {
                     Some(&p.phone_number)
                 } else {
                     None
@@ -58,7 +59,7 @@ impl User {
     pub fn get_registration_fee_cycles(&self) -> Option<Cycles> {
         match self {
             User::Unconfirmed(u) => {
-                if let RegistrationState::CyclesFee(fee) = &u.state {
+                if let UnconfirmedUserState::CyclesFee(fee) = &u.state {
                     Some(fee.amount)
                 } else {
                     None
@@ -150,7 +151,7 @@ impl User {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UnconfirmedUser {
     pub principal: Principal,
-    pub state: RegistrationState,
+    pub state: UnconfirmedUserState,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -209,9 +210,9 @@ impl CreatedUser {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub enum RegistrationState {
+pub enum UnconfirmedUserState {
     PhoneNumber(UnconfirmedPhoneNumber),
-    CyclesFee(CyclesRegistrationFee),
+    CyclesFee(UnconfirmedCyclesRegistrationFee),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -223,22 +224,34 @@ pub struct UnconfirmedPhoneNumber {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct CyclesRegistrationFee {
+pub struct UnconfirmedCyclesRegistrationFee {
     pub amount: Cycles,
     pub valid_until: TimestampMillis,
 }
 
-impl From<&RegistrationState> for user_index_canister::current_user::RegistrationState {
-    fn from(state: &RegistrationState) -> Self {
+impl ConfirmedUser {
+    pub fn confirmation_state(&self) -> ConfirmationState {
+        if let Some(p) = &self.phone_number {
+            ConfirmationState::PhoneNumber(p.clone())
+        } else if let Some(c) = self.registration_fee {
+            ConfirmationState::CyclesFee(c)
+        } else {
+            panic!("Exactly one of 'phone_number' and 'registration_fee' should be set");
+        }
+    }
+}
+
+impl From<&UnconfirmedUserState> for user_index_canister::current_user::UnconfirmedUserState {
+    fn from(state: &UnconfirmedUserState) -> Self {
         match state {
-            RegistrationState::PhoneNumber(p) => user_index_canister::current_user::RegistrationState::PhoneNumber(
+            UnconfirmedUserState::PhoneNumber(p) => user_index_canister::current_user::UnconfirmedUserState::PhoneNumber(
                 user_index_canister::current_user::UnconfirmedPhoneNumberState {
                     phone_number: p.phone_number.clone(),
                     valid_until: p.valid_until,
                 },
             ),
-            RegistrationState::CyclesFee(c) => user_index_canister::current_user::RegistrationState::CyclesFee(
-                user_index_canister::current_user::CyclesFeeState {
+            UnconfirmedUserState::CyclesFee(c) => user_index_canister::current_user::UnconfirmedUserState::CyclesFee(
+                user_index_canister::current_user::UnconfirmedCyclesFeeState {
                     amount: c.amount,
                     valid_until: c.valid_until,
                 },

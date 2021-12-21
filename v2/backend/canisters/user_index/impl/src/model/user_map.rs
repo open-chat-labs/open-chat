@@ -1,4 +1,4 @@
-use crate::model::user::{RegistrationState, User};
+use crate::model::user::{UnconfirmedUserState, User};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -277,8 +277,8 @@ impl UserMap {
                 .filter_map(|u| self.users_by_principal.get(u))
                 .filter_map(|u| if let User::Unconfirmed(user) = u { Some(user) } else { None })
                 .filter(|u| match &u.state {
-                    RegistrationState::PhoneNumber(p) => now > p.valid_until,
-                    RegistrationState::CyclesFee(c) => now > c.valid_until,
+                    UnconfirmedUserState::PhoneNumber(p) => now > p.valid_until,
+                    UnconfirmedUserState::CyclesFee(c) => now > c.valid_until,
                 })
                 .map(|u| u.principal)
                 .collect();
@@ -367,9 +367,7 @@ pub enum UpdateUserResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{
-        ConfirmedUser, CreatedUser, CyclesRegistrationFee, RegistrationState, UnconfirmedPhoneNumber, UnconfirmedUser,
-    };
+    use crate::model::user::{ConfirmedUser, CreatedUser, CyclesRegistrationFee, UnconfirmedPhoneNumber, UnconfirmedUser};
     use itertools::Itertools;
     use types::CanisterCreationStatusInternal;
 
@@ -392,7 +390,7 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number1.clone(),
                 confirmation_code: "1".to_string(),
                 valid_until: 1,
@@ -473,7 +471,7 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal,
-            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number1.clone(),
                 confirmation_code: "1".to_string(),
                 valid_until: 1,
@@ -507,7 +505,7 @@ mod tests {
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number.clone(),
                 confirmation_code: "1".to_string(),
                 valid_until: 1,
@@ -779,7 +777,7 @@ mod tests {
 
         let user1 = UnconfirmedUser {
             principal: principal1,
-            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+            state: UnconfirmedUserState::CyclesFee(CyclesRegistrationFee {
                 amount: fee,
                 valid_until: 1000,
             }),
@@ -787,7 +785,7 @@ mod tests {
 
         let user2 = UnconfirmedUser {
             principal: principal2,
-            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+            state: UnconfirmedUserState::CyclesFee(CyclesRegistrationFee {
                 amount: fee,
                 valid_until: 1000,
             }),
@@ -811,7 +809,7 @@ mod tests {
 
         let original = UnconfirmedUser {
             principal: principal1,
-            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+            state: UnconfirmedUserState::CyclesFee(CyclesRegistrationFee {
                 amount: fee1,
                 valid_until: 1000,
             }),
@@ -819,14 +817,14 @@ mod tests {
 
         let other = UnconfirmedUser {
             principal: principal2,
-            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+            state: UnconfirmedUserState::CyclesFee(CyclesRegistrationFee {
                 amount: fee2,
                 valid_until: 1000,
             }),
         };
 
         let mut updated = original.clone();
-        updated.state = RegistrationState::CyclesFee(CyclesRegistrationFee {
+        updated.state = UnconfirmedUserState::CyclesFee(CyclesRegistrationFee {
             amount: fee2,
             valid_until: 1000,
         });
@@ -859,7 +857,7 @@ mod tests {
 
         let unconfirmed1 = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number1.clone(),
                 confirmation_code: "1".to_string(),
                 valid_until: 1,
@@ -870,7 +868,7 @@ mod tests {
 
         let unconfirmed2 = User::Unconfirmed(UnconfirmedUser {
             principal: principal2,
-            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+            state: UnconfirmedUserState::CyclesFee(CyclesRegistrationFee {
                 amount: 1000,
                 valid_until: 2,
             }),
@@ -940,7 +938,7 @@ mod tests {
 
         let user1 = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
-            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number1,
                 confirmation_code: "1".to_string(),
                 valid_until: now + 1000,
@@ -950,7 +948,7 @@ mod tests {
 
         let user2 = User::Unconfirmed(UnconfirmedUser {
             principal: principal2,
-            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: phone_number2,
                 confirmation_code: "2".to_string(),
                 valid_until: now + 1001,
@@ -960,7 +958,7 @@ mod tests {
 
         let user3 = User::Unconfirmed(UnconfirmedUser {
             principal: principal3,
-            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+            state: UnconfirmedUserState::CyclesFee(CyclesRegistrationFee {
                 amount: 3,
                 valid_until: now + 1000,
             }),
@@ -968,7 +966,7 @@ mod tests {
 
         let user4 = User::Unconfirmed(UnconfirmedUser {
             principal: principal4,
-            state: RegistrationState::CyclesFee(CyclesRegistrationFee {
+            state: UnconfirmedUserState::CyclesFee(CyclesRegistrationFee {
                 amount: 4,
                 valid_until: now + 1001,
             }),

@@ -22,11 +22,13 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                 if u.username.is_none() {
                     ConfirmedPendingUsername(ConfirmedPendingUsernameResult {
                         canister_creation_status: u.canister_creation_status.into(),
+                        confirmation_state: u.confirmation_state(),
                     })
                 } else {
                     Confirmed(ConfirmedResult {
                         canister_creation_status: u.canister_creation_status.into(),
                         username: u.username.as_ref().unwrap().clone(),
+                        confirmation_state: u.confirmation_state(),
                     })
                 }
             }
