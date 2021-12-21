@@ -41,7 +41,6 @@ export class RegisterController {
         private currentUser: CurrentUserResponse,
         private _onComplete: (user: CreatedUser) => void
     ) {
-        console.log("User: ", currentUser);
         this.deriveStateFromUser(currentUser);
     }
 
