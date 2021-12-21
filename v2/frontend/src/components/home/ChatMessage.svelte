@@ -13,7 +13,6 @@
     import MenuIcon from "../MenuIcon.svelte";
     import type { Message, EnhancedReplyContext } from "../../domain/chat/chat";
     import RepliesTo from "./RepliesTo.svelte";
-    import { pop } from "../../utils/transition";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
@@ -61,10 +60,10 @@
     let metaData = messageMetaData(msg.content);
     let showEmojiPicker = false;
     let debug = false;
-    
+
     $: mediaDimensions = extractDimensions(msg.content);
-    $: mediaCalculatedHeight = undefined as (number | undefined);
-    $: msgBubbleCalculatedWidth = undefined as (number | undefined);
+    $: mediaCalculatedHeight = undefined as number | undefined;
+    $: msgBubbleCalculatedWidth = undefined as number | undefined;
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
 
@@ -134,7 +133,7 @@
         showEmojiPicker = false;
     }
 
-    function extractDimensions(content: MessageContent) : Dimensions | undefined {
+    function extractDimensions(content: MessageContent): Dimensions | undefined {
         if (content.kind === "image_content") {
             return {
                 width: content.width,
@@ -158,21 +157,22 @@
         let msgBubblePaddingWidth = 0;
         if (!fill) {
             let msgBubbleStyle = getComputedStyle(msgBubbleElement);
-            msgBubblePaddingWidth = 
-                parseFloat(msgBubbleStyle.paddingLeft) + 
-                parseFloat(msgBubbleStyle.paddingRight) + 
+            msgBubblePaddingWidth =
+                parseFloat(msgBubbleStyle.paddingLeft) +
+                parseFloat(msgBubbleStyle.paddingRight) +
                 parseFloat(msgBubbleStyle.borderRightWidth) +
                 parseFloat(msgBubbleStyle.borderLeftWidth);
         }
 
         const parentWidth = document.getElementById("chat-messages")?.offsetWidth ?? 0;
         let targetMediaDimensions = calculateMediaDimensions(
-            mediaDimensions, 
-            parentWidth, 
-            msgBubblePaddingWidth, 
-            window.innerHeight);
+            mediaDimensions,
+            parentWidth,
+            msgBubblePaddingWidth,
+            window.innerHeight
+        );
         mediaCalculatedHeight = targetMediaDimensions.height;
-        msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth
+        msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
     }
 
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
@@ -229,7 +229,9 @@
 
         <div
             bind:this={msgBubbleElement}
-            style={msgBubbleCalculatedWidth !== undefined ? `width: ${msgBubbleCalculatedWidth}px` : undefined}
+            style={msgBubbleCalculatedWidth !== undefined
+                ? `width: ${msgBubbleCalculatedWidth}px`
+                : undefined}
             class="message-bubble"
             class:focused
             class:fill={fill && !deleted}
@@ -255,7 +257,11 @@
             {/if}
 
             {#if msg.content.kind === "text_content"}
-                <ChatMessageContent {fill} {me} content={msg.content} height={mediaCalculatedHeight} >
+                <ChatMessageContent
+                    {fill}
+                    {me}
+                    content={msg.content}
+                    height={mediaCalculatedHeight}>
                     <TimeAndTicks
                         inline={true}
                         {fill}
@@ -266,7 +272,11 @@
                         {chatType} />
                 </ChatMessageContent>
             {:else}
-                <ChatMessageContent {fill} {me} content={msg.content} height={mediaCalculatedHeight} />
+                <ChatMessageContent
+                    {fill}
+                    {me}
+                    content={msg.content}
+                    height={mediaCalculatedHeight} />
                 {#if !deleted}
                     <TimeAndTicks {fill} {timestamp} {me} {confirmed} {readByThem} {chatType} />
                 {/if}
@@ -353,7 +363,6 @@
         <div class="message-reactions" class:me>
             {#each msg.reactions as { reaction, userIds }}
                 <div
-                    in:pop={{ duration: 500 }}
                     on:click={() => toggleReaction(reaction)}
                     class:me={user !== undefined ? userIds.has(user.userId) : false}
                     class="message-reaction">
@@ -460,6 +469,7 @@
         }
 
         .message-reaction {
+            @include pop();
             border-radius: $sp4;
             background-color: var(--reaction-bg);
             color: var(--reaction-txt);
@@ -605,7 +615,6 @@
         }
 
         &.focused {
-            transform: scaleX(0.95);
             border: 4px solid var(--toast-success-bg);
         }
 
