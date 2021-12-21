@@ -14,7 +14,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'ConfirmationCodeExpired' : IDL.Null,
     'ConfirmationCodeIncorrect' : IDL.Null,
-    'UserNotFound' : IDL.Null,
   });
   const CreateCanisterArgs = IDL.Record({});
   const CreateCanisterResponse = IDL.Variant({
