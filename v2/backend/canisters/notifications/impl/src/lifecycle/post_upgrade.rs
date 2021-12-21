@@ -29,7 +29,7 @@ fn post_upgrade(args: Args) {
         }
     };
 
-    info!("Post-upgrade complete");
+    info!("Post-upgrade complete. New wasm version: {}", args.wasm_version);
 }
 
 fn rehydrate_log_messages(

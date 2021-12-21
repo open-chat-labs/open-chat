@@ -83,13 +83,14 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         let user_metrics = self.data.users.metrics();
+        let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         Metrics {
             memory_used: memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
+            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             canisters_in_pool: self.data.canister_pool.len() as u16,
-            user_wasm_version: self.data.user_canister_wasm.version,
             users_unconfirmed: user_metrics.users_unconfirmed,
             users_confirmed: user_metrics.users_confirmed,
             users_created: user_metrics.users_created,
@@ -99,10 +100,14 @@ impl RuntimeState {
             users_online_1_month: user_metrics.users_online_1_month,
             users_confirmed_via_phone: user_metrics.users_confirmed_via_phone,
             users_confirmed_via_cycles: user_metrics.users_confirmed_via_cycles,
-            canister_upgrades_in_progress: user_metrics.canister_upgrades_in_progress,
+            canister_upgrades_completed: canister_upgrades_metrics.completed as u64,
+            canister_upgrades_failed: canister_upgrades_metrics.failed as u64,
+            canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
+            canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             sms_messages_in_queue: self.data.sms_messages.len() as u32,
             super_admins: self.data.super_admins.len() as u8,
             super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
+            user_wasm_version: self.data.user_canister_wasm.version,
         }
     }
 }
@@ -193,6 +198,7 @@ pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
+    pub wasm_version: Version,
     pub total_cycles_spent_on_canisters: Cycles,
     pub users_unconfirmed: u32,
     pub users_confirmed: u32,
@@ -204,7 +210,10 @@ pub struct Metrics {
     pub users_confirmed_via_phone: u64,
     pub users_confirmed_via_cycles: u64,
     pub canisters_in_pool: u16,
-    pub canister_upgrades_in_progress: u32,
+    pub canister_upgrades_completed: u64,
+    pub canister_upgrades_failed: u64,
+    pub canister_upgrades_pending: u64,
+    pub canister_upgrades_in_progress: u64,
     pub user_wasm_version: Version,
     pub sms_messages_in_queue: u32,
     pub super_admins: u8,

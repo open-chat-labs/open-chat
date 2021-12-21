@@ -56,6 +56,7 @@ impl RuntimeState {
             memory_used: memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
+            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             public_groups: self.data.public_groups.len() as u32,
             private_groups: self.data.private_groups.len() as u64,
@@ -64,9 +65,10 @@ impl RuntimeState {
             deleted_public_groups: 0,
             deleted_private_groups: 0,
             canisters_in_pool: self.data.canister_pool.len() as u16,
+            canister_upgrades_completed: canister_upgrades_metrics.completed as u64,
+            canister_upgrades_failed: canister_upgrades_metrics.failed as u64,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
-            canister_upgrades_failed: canister_upgrades_metrics.failed as u64,
             group_wasm_version: self.data.group_canister_wasm.version,
         }
     }
@@ -169,6 +171,7 @@ pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
+    pub wasm_version: Version,
     pub total_cycles_spent_on_canisters: Cycles,
     pub public_groups: u32,
     pub private_groups: u64,
@@ -177,9 +180,10 @@ pub struct Metrics {
     pub deleted_public_groups: u32,
     pub deleted_private_groups: u64,
     pub canisters_in_pool: u16,
+    pub canister_upgrades_completed: u64,
+    pub canister_upgrades_failed: u64,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
-    pub canister_upgrades_failed: u64,
     pub group_wasm_version: Version,
 }
 
