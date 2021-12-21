@@ -43,7 +43,10 @@
 {#if $identityState === "requires_login" || $identityState === "logging_in"}
     <Login loading={$identityState === "logging_in"} on:login={() => controller.login()} />
 {:else if $identityState === "registering" && controller.registerController !== undefined}
-    <Lazy component={Register} controller={controller.registerController} />
+    <Lazy
+        component={Register}
+        identityController={controller}
+        controller={controller.registerController} />
 {:else if $identityState === "logged_in"}
     <Router {routes} />
 {:else if $identityState == "expired"}

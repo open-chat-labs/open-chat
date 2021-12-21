@@ -12,6 +12,7 @@ import type {
     UserSummary,
     UpgradeCanisterResponse,
     CreateCanisterResponse,
+    RegistrationFeeResponse,
 } from "../../domain/user/user";
 import { CandidService } from "../candidService";
 import {
@@ -24,6 +25,7 @@ import {
     userSearchResponse,
     upgradeCanisterResponse,
     createCanisterResponse,
+    generateRegistrationFeeResponse,
 } from "./mappers";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
@@ -82,6 +84,13 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
 
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this.handleResponse(this.userService.current_user({}), currentUserResponse);
+    }
+
+    generateRegistrationFee(): Promise<RegistrationFeeResponse> {
+        return this.handleResponse(
+            this.userService.generate_registration_fee({}),
+            generateRegistrationFeeResponse
+        );
     }
 
     resendRegistrationCode(): Promise<ResendCodeResponse> {

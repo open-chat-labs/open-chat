@@ -1,16 +1,18 @@
 <script lang="ts">
     import Register from "./Register.svelte";
     import type { RegisterController } from "../../fsm/register.controller";
+    import type { PhoneNumber } from "../../domain/user/user";
+    import type { IdentityController } from "../../fsm/identity.controller";
 
     export let controller: RegisterController;
+    export let identityController: IdentityController;
 
     $: uiState = controller.state;
     $: username = controller.username;
-    $: phoneNumber = controller.phoneNumber;
     $: error = controller.error;
 
-    function resendCode() {
-        controller.resendRegistrationCode();
+    function resendCode(ev: CustomEvent<{ phoneNumber: PhoneNumber }>) {
+        controller.resendRegistrationCode(ev.detail.phoneNumber);
     }
 
     function submitUsername(ev: CustomEvent<{ username: string }>) {
@@ -25,12 +27,28 @@
         controller.changePhoneNumber();
     }
 
-    function submitCode(ev: CustomEvent<{ code: string }>) {
-        controller.submitRegistrationCode(ev.detail.code);
+    function submitCode(ev: CustomEvent<{ code: string; phoneNumber: PhoneNumber }>) {
+        controller.submitRegistrationCode(ev.detail.phoneNumber, ev.detail.code);
     }
 
     function complete() {
         controller.complete();
+    }
+
+    function choosePhoneVerification() {
+        controller.choosePhoneVerification();
+    }
+
+    function chooseTransfer() {
+        controller.chooseCyclesTransfer();
+    }
+
+    function reset() {
+        controller.reset();
+    }
+
+    function transferConfirmed() {
+        controller.transferConfirmed();
     }
 </script>
 
@@ -38,10 +56,14 @@
     error={$error}
     state={$uiState}
     username={$username}
-    phoneNumber={$phoneNumber}
+    on:reset={reset}
+    on:transferConfirmed={transferConfirmed}
+    on:choosePhoneVerification={choosePhoneVerification}
+    on:chooseTransfer={chooseTransfer}
     on:submitPhoneNumber={submitPhoneNumber}
     on:changePhoneNumber={changePhoneNumber}
     on:submitUsername={submitUsername}
     on:resendCode={resendCode}
     on:complete={complete}
+    on:logout={() => identityController.logout()}
     on:submitCode={submitCode} />

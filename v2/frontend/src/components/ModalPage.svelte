@@ -74,6 +74,7 @@
         @include size-below(md) {
             width: 100%;
             margin: 0 $sp4;
+            padding: $sp4 $sp4;
         }
     }
 </style>

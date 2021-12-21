@@ -10,6 +10,7 @@ import type {
     UserSummary,
     UpgradeCanisterResponse,
     CreateCanisterResponse,
+    RegistrationFeeResponse,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -606,5 +607,9 @@ export class ServiceContainer implements MarkMessagesRead {
         previous: GroupChatDetails
     ): Promise<GroupChatDetails> {
         return this.getGroupClient(chatId).getGroupDetailsUpdates(previous);
+    }
+
+    generateRegistrationFee(): Promise<RegistrationFeeResponse> {
+        return this._userIndexClient.generateRegistrationFee();
     }
 }

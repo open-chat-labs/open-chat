@@ -19,6 +19,12 @@ import {
     SearchResponse,
     UpgradeCanisterResponse,
     CreateCanisterResponse,
+    RegistrationState,
+    UnconfirmedPhoneNumberState,
+    CyclesFeeState,
+    GenerateRegistrationFeeResponse,
+    UnconfirmedUserState,
+    ConfirmationState,
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -40,6 +46,12 @@ export {
     SearchResponse as ApiSearchResponse,
     UpgradeCanisterResponse as ApiUpgradeCanisterResponse,
     CreateCanisterResponse as ApiCreateCanisterResponse,
+    RegistrationState as ApiRegistrationState,
+    UnconfirmedPhoneNumberState as ApiUnconfirmedPhoneNumberState,
+    CyclesFeeState as ApiCyclesFeeState,
+    GenerateRegistrationFeeResponse as ApiGenerateRegistrationFeeResponse,
+    UnconfirmedUserState as ApiUnconfirmedUserState,
+    ConfirmationState as ApiConfirmationState,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

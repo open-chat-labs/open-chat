@@ -9,6 +9,7 @@ import type {
     UserSummary,
     UpgradeCanisterResponse,
     CreateCanisterResponse,
+    RegistrationFeeResponse,
 } from "../../domain/user/user";
 
 export interface IUserIndexClient {
@@ -21,4 +22,5 @@ export interface IUserIndexClient {
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse>;
     getUsers(userIds: string[], since: bigint): Promise<UsersResponse>;
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]>;
+    generateRegistrationFee(): Promise<RegistrationFeeResponse>;
 }

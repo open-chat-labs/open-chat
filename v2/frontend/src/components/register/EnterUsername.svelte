@@ -5,8 +5,10 @@
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
+    import type { RegistrationState } from "../../domain/user/user";
     export let error: string | undefined = undefined;
     export let username: string = "";
+    export let regState: RegistrationState;
 
     function submitUsername() {
         if (valid) {
@@ -17,7 +19,17 @@
     $: valid = username.length >= 3;
 </script>
 
-<p class="enter-username">{$_("register.enterUsername")}</p>
+{#if regState.kind === "phone_registration"}
+    <h3 class="title">
+        {$_("register.codeAccepted")}
+    </h3>
+{:else if regState.kind === "cycles_fee_registration"}
+    <h3 class="title">
+        {$_("register.cyclesTransferred", { values: { fee: regState.amount.toString() } })}
+    </h3>
+{/if}
+
+<p class="enter-username">{$_("register.usernameRules")}</p>
 
 <form class="username-wrapper" on:submit|preventDefault={submitUsername}>
     <Input
@@ -47,12 +59,21 @@
 
     .enter-username {
         @include font(light, normal, fs-100);
-        margin-bottom: $sp5;
+        margin-bottom: $sp4;
     }
     .username-wrapper {
         width: 80%;
         @include size-below(xs) {
             width: 100%;
         }
+    }
+    .actions {
+        margin-top: auto;
+    }
+    .title {
+        @include font(bold, normal, fs-160);
+        margin: $sp4 0 0 0;
+        text-align: center;
+        text-shadow: var(--modalPage-txt-sh);
     }
 </style>
