@@ -270,7 +270,7 @@ impl UserMap {
     // and also allows their phone numbers to be reused.
     // This will only execute once every 15 minutes.
     pub fn prune_unconfirmed_users_if_required(&mut self, now: TimestampMillis) -> Option<usize> {
-        if now - self.unconfirmed_users_last_pruned > PRUNE_UNCONFIRMED_USERS_INTERVAL_MS {
+        if now > self.unconfirmed_users_last_pruned + PRUNE_UNCONFIRMED_USERS_INTERVAL_MS {
             let to_remove: Vec<_> = self
                 .unconfirmed_users
                 .iter()
