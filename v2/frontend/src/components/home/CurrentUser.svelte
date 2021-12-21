@@ -161,11 +161,11 @@
         position: absolute;
         top: 0;
         right: 0;
+        margin-top: 2px;
         flex: 0 0 40px;
         cursor: pointer;
         padding: $sp3;
         &.small {
-            top: 5px;
             padding: $sp3;
         }
     }
