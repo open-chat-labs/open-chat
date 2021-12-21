@@ -10,24 +10,28 @@ import type {
     PartialUserSummary,
     UpgradeCanisterResponse,
     CreateCanisterResponse,
+    RegistrationFeeResponse,
+    RegistrationState,
 } from "../../domain/user/user";
 import type {
+    ApiConfirmationState,
     ApiConfirmPhoneNumberResponse,
     ApiCreateCanisterResponse,
     ApiCurrentUserResponse,
+    ApiGenerateRegistrationFeeResponse,
     ApiPartialUserSummary,
     ApiPhoneNumber,
     ApiResendCodeResponse,
     ApiSearchResponse,
     ApiSetUsernameResponse,
     ApiSubmitPhoneNumberResponse,
+    ApiUnconfirmedUserState,
     ApiUpgradeCanisterResponse,
     ApiUsersResponse,
     ApiUserSummary,
 } from "./candid/idl";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
-import { Principal } from "@dfinity/candid/lib/cjs/idl";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {
@@ -144,12 +148,70 @@ export function upgradeCanisterResponse(
     throw new UnsupportedValueError("Unexpected ApiUpgradeCanisterResponse type received", candid);
 }
 
+function registrationState(candid: ApiUnconfirmedUserState): RegistrationState {
+    if ("PhoneNumber" in candid) {
+        return {
+            kind: "phone_registration",
+            phoneNumber: {
+                countryCode: candid.PhoneNumber.phone_number.country_code,
+                number: candid.PhoneNumber.phone_number.number,
+            },
+        };
+    }
+    if ("CyclesFee" in candid) {
+        return {
+            kind: "cycles_fee_registration",
+            amount: candid.CyclesFee.amount,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiRegistrationState type received", candid);
+}
+
+export function generateRegistrationFeeResponse(
+    candid: ApiGenerateRegistrationFeeResponse
+): RegistrationFeeResponse {
+    if ("AlreadyRegistered" in candid) {
+        return {
+            kind: "already_registered",
+        };
+    }
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            validUntil: candid.Success.valid_until,
+            amount: candid.Success.amount,
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiGenerateRegistrationFeeResponse type received",
+        candid
+    );
+}
+
+export function confirmationState(candid: ApiConfirmationState): RegistrationState {
+    if ("PhoneNumber" in candid) {
+        return {
+            kind: "phone_registration",
+            phoneNumber: {
+                countryCode: candid.PhoneNumber.country_code,
+                number: candid.PhoneNumber.number,
+            },
+        };
+    }
+    if ("CyclesFee" in candid) {
+        return {
+            kind: "cycles_fee_registration",
+            amount: candid.CyclesFee,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiConfirmationState type received", candid);
+}
+
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
     if ("Unconfirmed" in candid) {
         return {
             kind: "unconfirmed_user",
-            phoneNumber: optional(candid.Unconfirmed.phone_number, phoneNumber),
-            wallet: optional(candid.Unconfirmed.wallet, (p) => p.toString()),
+            registrationState: registrationState(candid.Unconfirmed.state),
         };
     }
 
@@ -161,6 +223,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                     ? "in_progress"
                     : "pending",
             username: candid.Confirmed.username,
+            registrationState: confirmationState(candid.Confirmed.confirmation_state),
         };
     }
 
@@ -173,6 +236,9 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                     : "Created" in candid.ConfirmedPendingUsername.canister_creation_status
                     ? "created"
                     : "pending",
+            registrationState: confirmationState(
+                candid.ConfirmedPendingUsername.confirmation_state
+            ),
         };
     }
 

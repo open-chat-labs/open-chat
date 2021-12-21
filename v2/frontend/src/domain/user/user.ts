@@ -79,21 +79,34 @@ export type UpgradeInProgress = {
     kind: "upgrade_in_progress";
 };
 
+export type RegistrationState = PhoneRegistration | CyclesFeeRegistration;
+
+export type PhoneRegistration = {
+    kind: "phone_registration";
+    phoneNumber: PhoneNumber;
+};
+
+export type CyclesFeeRegistration = {
+    kind: "cycles_fee_registration";
+    amount: bigint;
+};
+
 export type UnconfirmedUser = {
     kind: "unconfirmed_user";
-    phoneNumber?: PhoneNumber;
-    wallet?: string;
+    registrationState: RegistrationState;
 };
 
 export type ConfirmedUser = {
     kind: "confirmed_user";
     canisterCreationStatus: "in_progress" | "pending";
     username: string;
+    registrationState: RegistrationState;
 };
 
 export type ConfirmedPendingUsername = {
     kind: "confirmed_pending_username";
     canisterCreationStatus: "in_progress" | "pending" | "created";
+    registrationState: RegistrationState;
 };
 
 export type CreatedUser = {
@@ -143,3 +156,11 @@ export type ResendCodeResponse =
     | "already_claimed"
     | "user_not_found"
     | "phone_number_not_submitted";
+
+export type RegistrationFeeResponse = AlreadyRegistered | RegistrationFeeSuccess;
+
+export type RegistrationFeeSuccess = {
+    kind: "success";
+    validUntil: bigint;
+    amount: bigint;
+};
