@@ -1,6 +1,5 @@
 import type { HttpAgent } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
-import async from "async";
 import { v1 as uuidv1 } from "uuid";
 import { BucketClient } from "./services/bucket/bucket.client";
 import { IndexClient } from "./services/index/index.client";
@@ -40,15 +39,15 @@ export class OpenStorageAgent {
         const chunkSize = allocatedBucketResponse.chunkSize;
         const chunkCount = Math.ceil(blobSize / chunkSize);
         const chunkIndexes = [...Array(chunkCount).keys()];
-
         const bucketClient = new BucketClient(this.agent, bucketCanisterId);
 
         let chunksCompleted = 0;
 
-        await async.eachOfLimit(chunkIndexes, 10, async (chunkIndex) => {
+        const promises = chunkIndexes.map(async (chunkIndex) => {
             const start = chunkIndex * chunkSize;
             const end = Math.min(start + chunkSize, blobSize);
             const chunkBytes = Array.from(new Uint8Array(bytes.slice(start, end)));
+
             let attempt = 0;
 
             while (attempt++ < 5) {
@@ -75,6 +74,8 @@ export class OpenStorageAgent {
             }
             throw new Error("Failed to upload chunk");
         });
+
+        await Promise.all(promises);
 
         return {
             canisterId: bucketCanisterId,
