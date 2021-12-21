@@ -305,10 +305,11 @@ impl UserMap {
             return;
         }
 
-        let mut metrics = Metrics::default();
-
-        metrics.users_confirmed_via_phone = self.users_confirmed_via_phone;
-        metrics.users_confirmed_via_cycles = self.users_confirmed_via_cycles;
+        let mut metrics = Metrics {
+            users_confirmed_via_phone: self.users_confirmed_via_phone,
+            users_confirmed_via_cycles: self.users_confirmed_via_cycles,
+            ..Default::default()
+        };
 
         for user in self.users_by_principal.values() {
             match user {
