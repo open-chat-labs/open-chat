@@ -151,7 +151,15 @@ impl User {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UnconfirmedUser {
     pub principal: Principal,
+    #[serde(default = "default_unconfirmed_user_state")]
     pub state: UnconfirmedUserState,
+}
+
+fn default_unconfirmed_user_state() -> UnconfirmedUserState {
+    UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
+        amount: 0,
+        valid_until: 0,
+    })
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
