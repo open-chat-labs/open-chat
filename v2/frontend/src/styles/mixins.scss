@@ -147,6 +147,10 @@ $sp11: 192px;
     animation: loading-spinner 0.8s linear infinite;
 }
 
+@mixin pop() {
+    animation: pop 150ms ease-out;
+}
+
 @mixin loading-spinner(
     $size: 1.2em,
     $offset: 0.6em,
@@ -193,6 +197,18 @@ $sp11: 192px;
 @keyframes loading-spinner {
     to {
         transform: rotate(360deg);
+    }
+}
+
+@keyframes pop {
+    0% {
+        transform: scale(0.7);
+    }
+    60% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
     }
 }
 
