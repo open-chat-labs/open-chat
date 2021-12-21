@@ -130,6 +130,7 @@
         dispatch("sendMessage", inp.textContent?.trim());
         inp.textContent = "";
         inp.focus();
+        inputIsEmpty = true;
         messageIsEmpty = true;
         showEmojiPicker = false;
     }

@@ -47,7 +47,7 @@
         display: flex;
         align-items: center;
         float: right;
-        margin-top: 6px;
+        margin-top: 8px;
 
         &.rtl {
             clear: right;
@@ -55,18 +55,11 @@
         }
 
         .time {
-            margin: 0 $sp2 0 $sp3;
+            margin: $sp1 $sp2 0 $sp3;
         }
 
         &.rtl .time {
-            margin: 0 $sp3 0 $sp2;
-        }
-
-        &.inline {
-            align-items: flex-end;
-            shape-outside: inset(calc(100% - 10px) 0 0);
-            margin-top: 0;
-            height: 100%;
+            margin: $sp1 $sp3 0 $sp2;
         }
 
         &.fill {
