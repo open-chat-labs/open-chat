@@ -1,4 +1,4 @@
-use crate::model::user::{RegistrationState, UnconfirmedPhoneNumber, User};
+use crate::model::user::{UnconfirmedPhoneNumber, UnconfirmedUserState, User};
 use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
@@ -17,12 +17,12 @@ fn resend_code_impl(runtime_state: &mut RuntimeState) -> Response {
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller).cloned() {
         match &user {
             User::Unconfirmed(u) => {
-                if let RegistrationState::PhoneNumber(p) = &u.state {
+                if let UnconfirmedUserState::PhoneNumber(p) = &u.state {
                     let now = runtime_state.env.now();
                     let confirmation_code = runtime_state.generate_6_digit_code();
 
                     let mut clone = u.clone();
-                    clone.state = RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+                    clone.state = UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                         phone_number: p.phone_number.clone(),
                         confirmation_code: confirmation_code.clone(),
                         valid_until: now + CONFIRMATION_CODE_EXPIRY_MILLIS,
@@ -61,7 +61,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Unconfirmed(UnconfirmedUser {
             principal: env.caller,
-            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
                 confirmation_code: "123456".to_string(),
                 valid_until: env.now + 1000,

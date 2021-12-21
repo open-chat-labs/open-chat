@@ -139,14 +139,16 @@ type CurrentUserResponse =
     variant {
         UserNotFound;
         Unconfirmed: record {
-            state: RegistrationState;
+            state: UnconfirmedUserState;
         };
         ConfirmedPendingUsername: record {
             canister_creation_status: CanisterCreationStatus;
+            confirmation_state: ConfirmationState;
         };
         Confirmed: record {
             username: text;
             canister_creation_status: CanisterCreationStatus;
+            confirmation_state: ConfirmationState;
         };
         Created: record {
             user_id: UserId;
@@ -157,10 +159,10 @@ type CurrentUserResponse =
         };
     };
 
-type RegistrationState =
+type UnconfirmedUserState =
     variant {
         PhoneNumber: UnconfirmedPhoneNumberState;
-        CyclesFee: CyclesFeeState;
+        CyclesFee: UnconfirmedCyclesFeeState;
     };
 
 type UnconfirmedPhoneNumberState =
@@ -169,10 +171,16 @@ type UnconfirmedPhoneNumberState =
         valid_until: TimestampMillis;
     };
 
-type CyclesFeeState =
+type UnconfirmedCyclesFeeState =
     record {
         amount: Cycles;
         valid_until: TimestampMillis;
+    };
+
+type ConfirmationState =
+    variant {
+        PhoneNumber: PhoneNumber;
+        CyclesFee: Cycles;
     };
 
 type UserArgs = 

@@ -1,4 +1,4 @@
-use crate::model::user::{ConfirmedUser, RegistrationState, User};
+use crate::model::user::{ConfirmedUser, UnconfirmedUserState, User};
 use crate::{RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
@@ -20,7 +20,7 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         match user {
             User::Unconfirmed(u) => {
-                if let RegistrationState::PhoneNumber(p) = &u.state {
+                if let UnconfirmedUserState::PhoneNumber(p) = &u.state {
                     if now > p.valid_until {
                         return ConfirmationCodeExpired;
                     } else if (args.confirmation_code == p.confirmation_code)
@@ -72,7 +72,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Unconfirmed(UnconfirmedUser {
             principal: env.caller,
-            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
                 confirmation_code: confirmation_code.clone(),
                 valid_until: env.now + 1000,
@@ -99,7 +99,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Unconfirmed(UnconfirmedUser {
             principal: env.caller,
-            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
                 confirmation_code: "123456".to_string(),
                 valid_until: env.now + 1000,
@@ -122,7 +122,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Unconfirmed(UnconfirmedUser {
             principal: env.caller,
-            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
                 confirmation_code: confirmation_code.clone(),
                 valid_until: env.now + 1000,
