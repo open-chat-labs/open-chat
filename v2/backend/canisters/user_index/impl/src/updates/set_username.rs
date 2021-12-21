@@ -111,7 +111,7 @@ fn validate_username(username: &str) -> UsernameValidationResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{CreatedUser, RegistrationState, UnconfirmedPhoneNumber, UnconfirmedUser, User};
+    use crate::model::user::{CreatedUser, UnconfirmedPhoneNumber, UnconfirmedUser, UnconfirmedUserState, User};
     use crate::Data;
     use candid::Principal;
     use types::PhoneNumber;
@@ -206,7 +206,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Unconfirmed(UnconfirmedUser {
             principal: env.caller,
-            state: RegistrationState::PhoneNumber(UnconfirmedPhoneNumber {
+            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
                 confirmation_code: "123456".to_string(),
                 valid_until: env.now + 1000,

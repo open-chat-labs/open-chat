@@ -18,13 +18,13 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct UnconfirmedResult {
-    pub state: RegistrationState,
+    pub state: UnconfirmedUserState,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
-pub enum RegistrationState {
+pub enum UnconfirmedUserState {
     PhoneNumber(UnconfirmedPhoneNumberState),
-    CyclesFee(CyclesFeeState),
+    CyclesFee(UnconfirmedCyclesFeeState),
 }
 
 #[derive(CandidType, Deserialize, Debug)]
@@ -34,7 +34,7 @@ pub struct UnconfirmedPhoneNumberState {
 }
 
 #[derive(CandidType, Deserialize, Debug)]
-pub struct CyclesFeeState {
+pub struct UnconfirmedCyclesFeeState {
     pub amount: Cycles,
     pub valid_until: TimestampMillis,
 }
@@ -42,12 +42,20 @@ pub struct CyclesFeeState {
 #[derive(CandidType, Deserialize, Debug)]
 pub struct ConfirmedPendingUsernameResult {
     pub canister_creation_status: CanisterCreationStatus,
+    pub confirmation_state: ConfirmationState,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct ConfirmedResult {
     pub username: String,
     pub canister_creation_status: CanisterCreationStatus,
+    pub confirmation_state: ConfirmationState,
+}
+
+#[derive(CandidType, Deserialize, Debug)]
+pub enum ConfirmationState {
+    PhoneNumber(PhoneNumber),
+    CyclesFee(Cycles),
 }
 
 #[derive(CandidType, Deserialize, Debug)]

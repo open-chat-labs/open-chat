@@ -1,4 +1,4 @@
-use crate::model::user::{CyclesRegistrationFee, RegistrationState, UnconfirmedUser, User};
+use crate::model::user::{UnconfirmedCyclesRegistrationFee, UnconfirmedUser, UnconfirmedUserState, User};
 use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
@@ -21,7 +21,7 @@ fn generate_registration_fee_impl(runtime_state: &mut RuntimeState) -> Response 
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller).cloned() {
         match &user {
             User::Unconfirmed(u) => {
-                if let RegistrationState::CyclesFee(p) = &u.state {
+                if let UnconfirmedUserState::CyclesFee(p) = &u.state {
                     cycles_amount = Some(p.amount);
                 }
                 runtime_state.data.users.remove_by_principal(&user.get_principal());
@@ -35,7 +35,7 @@ fn generate_registration_fee_impl(runtime_state: &mut RuntimeState) -> Response 
 
     let user = User::Unconfirmed(UnconfirmedUser {
         principal: caller,
-        state: RegistrationState::CyclesFee(CyclesRegistrationFee { amount, valid_until }),
+        state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee { amount, valid_until }),
     });
     runtime_state.data.users.add(user);
     Success(SuccessResult { amount, valid_until })
