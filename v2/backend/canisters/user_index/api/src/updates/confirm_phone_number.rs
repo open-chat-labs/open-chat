@@ -13,5 +13,4 @@ pub enum Response {
     ConfirmationCodeExpired,
     AlreadyClaimed,
     PhoneNumberNotSubmitted,
-    UserNotFound,
 }

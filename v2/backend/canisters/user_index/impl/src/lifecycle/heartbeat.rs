@@ -19,6 +19,7 @@ fn heartbeat() {
     sync_users_to_open_storage::run();
     calculate_metrics::run();
     dismiss_removed_super_admins::run();
+    prune_unconfirmed_users::run();
 }
 
 mod upgrade_canisters {
@@ -230,5 +231,18 @@ mod dismiss_removed_super_admins {
             error!(?error, ?user_id, ?group_id, "Error calling group::c2c_dismiss_super_admin");
             RUNTIME_STATE.with(|state| push_super_admin_to_dismiss(user_id, group_id, state.borrow_mut().as_mut().unwrap()));
         }
+    }
+}
+
+mod prune_unconfirmed_users {
+    use super::*;
+
+    pub fn run() {
+        RUNTIME_STATE.with(|state| prune_unconfirmed_users_impl(state.borrow_mut().as_mut().unwrap()));
+    }
+
+    fn prune_unconfirmed_users_impl(runtime_state: &mut RuntimeState) {
+        let now = runtime_state.env.now();
+        runtime_state.data.users.prune_unconfirmed_users_if_required(now);
     }
 }
