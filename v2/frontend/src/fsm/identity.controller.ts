@@ -95,7 +95,11 @@ export class IdentityController {
     }
 
     private startSession(id: Identity) {
-        startSession(id).then(() => this.logout().then(() => this.state.set("expired")));
+        startSession(id).then(() => this.endSession());
+    }
+
+    public endSession(): void {
+        this.logout().then(() => this.state.set("expired"));
     }
 
     public logout(): Promise<void> {

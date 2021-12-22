@@ -24,7 +24,7 @@ export abstract class CandidService {
             response = await service;
         } catch (e) {
             console.log(e, args);
-            throw toHttpError(e as Error);
+            throw toHttpError(e as Error, this.identity);
         }
         return mapper(response);
     }
