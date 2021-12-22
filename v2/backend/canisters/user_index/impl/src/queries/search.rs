@@ -166,7 +166,7 @@ mod tests {
             let bytes = vec![index as u8, 1];
             let p = Principal::from_slice(&bytes[..]);
 
-            data.users.add(User::Created(CreatedUser {
+            data.users.add_test_user(User::Created(CreatedUser {
                 principal: p,
                 phone_number: Some(PhoneNumber::new(44, format!("+44 1111 111 11{}", index))),
                 user_id: p.into(),

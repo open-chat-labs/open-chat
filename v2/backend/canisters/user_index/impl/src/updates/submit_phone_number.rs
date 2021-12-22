@@ -55,7 +55,7 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
             }),
         };
 
-        if matches!(runtime_state.data.users.add(User::Unconfirmed(user)), AddUserResult::Success) {
+        if matches!(runtime_state.data.users.add(user), AddUserResult::Success) {
             let sms = ConfirmationCodeSms {
                 phone_number: phone_number_string,
                 confirmation_code,
@@ -128,7 +128,7 @@ mod tests {
     fn existing_confirmed_user_returns_already_registered() {
         let env = Box::new(TestEnv::default());
         let mut data = Data::default();
-        data.users.add(User::Confirmed(ConfirmedUser {
+        data.users.add_test_user(User::Confirmed(ConfirmedUser {
             principal: env.caller,
             phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             date_confirmed: env.now,
@@ -147,7 +147,7 @@ mod tests {
     fn phone_number_taken_returns_already_taken_by_other() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add(User::Confirmed(ConfirmedUser {
+        data.users.add_test_user(User::Confirmed(ConfirmedUser {
             principal: Principal::from_slice(&[2]),
             phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             date_confirmed: env.now,

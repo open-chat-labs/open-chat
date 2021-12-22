@@ -47,7 +47,7 @@ mod tests {
         let user_id2 = Principal::from_slice(&[2, 2]).into();
         let user_id3 = Principal::from_slice(&[3, 3]).into();
 
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[1]),
             phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: user_id1,
@@ -58,7 +58,7 @@ mod tests {
             ..Default::default()
         }));
         env.now += 1000;
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
             phone_number: Some(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: user_id2,
@@ -69,7 +69,7 @@ mod tests {
             ..Default::default()
         }));
         env.now += 1000;
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[3]),
             phone_number: Some(PhoneNumber::new(44, "3333 333 333".to_owned())),
             user_id: user_id3,
@@ -111,7 +111,7 @@ mod tests {
         let user_id2 = Principal::from_slice(&[2, 2]).into();
         let user_id3 = Principal::from_slice(&[3, 3]).into();
 
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[1]),
             phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: user_id1,
@@ -122,7 +122,7 @@ mod tests {
             ..Default::default()
         }));
         env.now += 1000;
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
             phone_number: Some(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: user_id2,
@@ -133,7 +133,7 @@ mod tests {
             ..Default::default()
         }));
         env.now += 1000;
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[3]),
             phone_number: Some(PhoneNumber::new(44, "3333 333 333".to_owned())),
             user_id: user_id3,
@@ -175,7 +175,7 @@ mod tests {
         let start = env.now;
         env.now += 10000;
 
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[1]),
             phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: user_id1,
@@ -186,7 +186,7 @@ mod tests {
             ..Default::default()
         }));
         env.now += 1000;
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
             phone_number: Some(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: user_id2,
@@ -197,7 +197,7 @@ mod tests {
             ..Default::default()
         }));
         env.now += 1000;
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[3]),
             phone_number: Some(PhoneNumber::new(44, "3333 333 333".to_owned())),
             user_id: user_id3,

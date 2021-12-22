@@ -121,7 +121,7 @@ mod tests {
     fn valid_username_succeeds() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: env.caller,
             phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -148,7 +148,7 @@ mod tests {
     fn no_change_to_username_succeeds() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: env.caller,
             phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -171,7 +171,7 @@ mod tests {
     fn username_taken() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[1]),
             phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -181,7 +181,7 @@ mod tests {
             last_online: env.now,
             ..Default::default()
         }));
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
             phone_number: Some(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: Principal::from_slice(&[2]).into(),
@@ -204,7 +204,7 @@ mod tests {
     fn unconfirmed_user() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add(User::Unconfirmed(UnconfirmedUser {
+        data.users.add(UnconfirmedUser {
             principal: env.caller,
             state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
@@ -212,7 +212,7 @@ mod tests {
                 valid_until: env.now + 1000,
                 sms_messages_sent: 1,
             }),
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
@@ -226,7 +226,7 @@ mod tests {
     fn invalid_username() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: env.caller,
             phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -249,7 +249,7 @@ mod tests {
     fn username_too_short() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: env.caller,
             phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -272,7 +272,7 @@ mod tests {
     fn username_too_long() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add(User::Created(CreatedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: env.caller,
             phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),

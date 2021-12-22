@@ -33,10 +33,10 @@ fn generate_registration_fee_impl(runtime_state: &mut RuntimeState) -> Response 
     let amount = cycles_amount.unwrap_or_else(|| generate_new_fee_amount(runtime_state));
     let valid_until = now + CONFIRMATION_CODE_EXPIRY_MILLIS;
 
-    let user = User::Unconfirmed(UnconfirmedUser {
+    let user = UnconfirmedUser {
         principal: caller,
         state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee { amount, valid_until }),
-    });
+    };
     runtime_state.data.users.add(user);
     Success(SuccessResult { amount, valid_until })
 }
