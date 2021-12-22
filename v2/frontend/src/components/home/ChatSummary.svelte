@@ -20,6 +20,7 @@
     import { blockedUsers } from "../../stores/blockedUsers";
     import { onDestroy } from "svelte";
     import { toTitleCase } from "../../utils/string";
+    import { now } from "../../stores/time";
 
     export let index: number;
     export let chatSummary: ChatSummary;
@@ -30,12 +31,12 @@
     let hovering = false;
     let unreadMessages: number;
 
-    function normaliseChatSummary(chatSummary: ChatSummary) {
+    function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
-                userStatus: getUserStatus($userStore, chatSummary.them),
+                userStatus: getUserStatus(now, $userStore, chatSummary.them),
                 typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
             };
         }
@@ -58,14 +59,15 @@
             return latestMessageText;
         }
 
-        const user = chatSummary.latestMessage.event.sender === userId
-            ? toTitleCase($_("you"))
-            : users[chatSummary.latestMessage.event.sender]?.username ?? $_("unknownUser");
+        const user =
+            chatSummary.latestMessage.event.sender === userId
+                ? toTitleCase($_("you"))
+                : users[chatSummary.latestMessage.event.sender]?.username ?? $_("unknownUser");
 
         return `${user}: ${latestMessageText}`;
     }
 
-    $: chat = normaliseChatSummary(chatSummary);
+    $: chat = normaliseChatSummary($now, chatSummary);
     $: lastMessage = formatLatestMessage(chatSummary, $userStore);
 
     let unsub = messagesRead.subscribe((_val) => {

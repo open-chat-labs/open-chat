@@ -19,15 +19,15 @@ const lookup: UserLookup = {
 
 describe("get user status", () => {
     test("user is online", () => {
-        expect(userIsOnline(lookup, "a")).toBe(true);
+        expect(userIsOnline(now, lookup, "a")).toBe(true);
     });
 
     test("user is offline", () => {
-        expect(userIsOnline(lookup, "b")).toBe(false);
+        expect(userIsOnline(now, lookup, "b")).toBe(false);
     });
 
     test("unknown user is considered offline", () => {
-        expect(userIsOnline(lookup, "c")).toBe(false);
+        expect(userIsOnline(now, lookup, "c")).toBe(false);
     });
 });
 
