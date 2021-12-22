@@ -44,6 +44,10 @@ impl CanistersRequiringUpgrade {
         self.in_progress.contains(canister_id)
     }
 
+    pub fn count_pending(&self) -> u64 {
+        self.pending.len() as u64
+    }
+
     pub fn count_in_progress(&self) -> u32 {
         self.in_progress.len() as u32
     }

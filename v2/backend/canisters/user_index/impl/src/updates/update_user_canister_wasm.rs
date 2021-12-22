@@ -21,8 +21,8 @@ fn update_user_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState) 
         for user_id in runtime_state.data.users.iter().filter_map(|u| u.get_user_id()) {
             runtime_state.data.canisters_requiring_upgrade.enqueue(user_id.into())
         }
-        let canisters_enqueued_for_upgrade = runtime_state.data.users.len();
-        info!(%version, canisters_enqueued_for_upgrade, "User canister wasm upgraded");
+        let canisters_queued_for_upgrade = runtime_state.data.canisters_requiring_upgrade.count_pending();
+        info!(%version, canisters_queued_for_upgrade, "User canister wasm upgraded");
         Success
     }
 }
