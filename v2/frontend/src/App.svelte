@@ -14,6 +14,7 @@
     import SessionExpired from "./components/sessionExpired/SessionExpired.svelte";
     import Lazy from "./components/Lazy.svelte";
     import { IdentityController } from "./fsm/identity.controller";
+    import { SessionExpiryError } from "./services/httpError";
 
     let controller: IdentityController = new IdentityController();
     setContext("identityController", controller);
@@ -24,6 +25,7 @@
         loadAndApplySavedTheme();
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
+        window.addEventListener("unhandledrejection", unhandledError);
     });
 
     function calculateHeight() {
@@ -32,11 +34,16 @@
         document.documentElement.style.setProperty("--vh", `${vh}px`);
     }
 
-    // $: regMachine = $state.children.registerMachine as ActorRefFrom<RegisterMachine>;
-
     $: {
         // subscribe to the rtl store so that we can set the overall page direction at the right time
         document.dir = $rtlStore ? "rtl" : "ltr";
+    }
+
+    function unhandledError(ev: Event) {
+        if (ev instanceof PromiseRejectionEvent && ev.reason instanceof SessionExpiryError) {
+            controller.endSession();
+            ev.preventDefault();
+        }
     }
 </script>
 
@@ -57,4 +64,4 @@
     <Loading />
 {/if}
 
-<svelte:window on:resize={calculateHeight} />
+<svelte:window on:resize={calculateHeight} on:error={unhandledError} />

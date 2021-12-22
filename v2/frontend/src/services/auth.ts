@@ -36,9 +36,7 @@ export function login(): Promise<Identity> {
             c.login({
                 identityProvider: IDENTITY_URL,
                 maxTimeToLive: SESSION_TIMEOUT_NANOS,
-                onSuccess: () => {
-                    resolve(c.getIdentity());
-                },
+                onSuccess: () => resolve(c.getIdentity()),
                 onError: (err) => reject(err),
             });
         });

@@ -58,10 +58,12 @@ if (process.env.DFX_NETWORK) {
 // todo - we should add some code here to validate that the env vars we are expecting are actually present
 
 const production = !process.env.ROLLUP_WATCH;
+const env = process.env.NODE_ENV ?? (production ? "production" : "development");
 
 const WEBPUSH_SERVICE_WORKER_PATH = "_/raw/sw.js";
 
 console.log("PROD", production);
+console.log("ENV", env);
 console.log("URL", process.env.INTERNET_IDENTITY_URL);
 
 function serve() {
@@ -103,7 +105,7 @@ export default [
             }),
             replace({
                 preventAssignment: true,
-                "process.env.NODE_ENV": process.env.NODE_ENV,
+                "process.env.NODE_ENV": env,
             }),
 
             production && terser(),
@@ -154,7 +156,7 @@ export default [
                 "process.env.INTERNET_IDENTITY_URL": JSON.stringify(
                     process.env.INTERNET_IDENTITY_URL
                 ),
-                "process.env.NODE_ENV": process.env.NODE_ENV,
+                "process.env.NODE_ENV": JSON.stringify(env),
                 "process.env.ROLLBAR_ENV": production ? "production" : "development",
                 "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
                 "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,

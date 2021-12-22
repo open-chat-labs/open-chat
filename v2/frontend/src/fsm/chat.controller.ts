@@ -256,10 +256,11 @@ export class ChatController {
         // does not exceed MAX.
         // we also need to disconnect when the chat is unselected
         const lookup = get(userStore);
+        const now = Date.now();
         [...userIds]
             .filter((u) => u !== this.user.userId)
             .map((u) => lookup[u])
-            .filter((user) => user && userIsOnline(lookup, user.userId))
+            .filter((user) => user && userIsOnline(now, lookup, user.userId))
             .sort((a, b) => b.lastOnline - a.lastOnline)
             .slice(0, MAX_RTC_CONNECTIONS_PER_CHAT)
             .filter((user) => !rtcConnectionsManager.exists(user.userId))
