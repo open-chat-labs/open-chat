@@ -37,7 +37,6 @@ pub struct Metrics {
     pub users_online_1_month: u32,
     pub users_confirmed_via_phone: u64,
     pub users_confirmed_via_cycles: u64,
-    pub canister_upgrades_in_progress: u32,
 }
 
 impl UserMap {
@@ -328,9 +327,6 @@ impl UserMap {
                     }
                     if u.last_online > now - THIRTY_DAYS_IN_MS {
                         metrics.users_online_1_month += 1;
-                    }
-                    if u.upgrade_in_progress {
-                        metrics.canister_upgrades_in_progress += 1;
                     }
                 }
             }

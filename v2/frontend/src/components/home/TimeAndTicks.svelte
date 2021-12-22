@@ -47,7 +47,7 @@
         display: flex;
         align-items: center;
         float: right;
-        margin-top: 8px;
+        margin-top: 7px;
 
         &.rtl {
             clear: right;

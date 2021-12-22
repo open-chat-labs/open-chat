@@ -2,6 +2,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use group_index_canister::update_group_canister_wasm::{Response::*, *};
 use ic_cdk_macros::update;
+use tracing::info;
 
 #[update]
 #[trace]
@@ -17,7 +18,9 @@ fn update_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState)
         return NotAuthorized;
     }
 
-    if args.group_canister_wasm.version <= runtime_state.data.group_canister_wasm.version {
+    let version = args.group_canister_wasm.version;
+
+    if version <= runtime_state.data.group_canister_wasm.version {
         VersionNotHigher
     } else {
         runtime_state.data.group_canister_wasm = args.group_canister_wasm.decompress();
@@ -31,6 +34,9 @@ fn update_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState)
         {
             runtime_state.data.canisters_requiring_upgrade.enqueue(chat_id.into());
         }
+
+        let canisters_queued_for_upgrade = runtime_state.data.canisters_requiring_upgrade.count_pending();
+        info!(%version, canisters_queued_for_upgrade, "Group canister wasm upgraded");
         Success
     }
 }

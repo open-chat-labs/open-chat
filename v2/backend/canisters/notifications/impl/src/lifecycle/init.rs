@@ -18,5 +18,5 @@ fn init(args: Args) {
 
     init_state(env, data, args.wasm_version);
 
-    info!("Initialization complete");
+    info!(version = %args.wasm_version, "Initialization complete");
 }
