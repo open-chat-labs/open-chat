@@ -1,3 +1,6 @@
+import type { Identity } from "@dfinity/agent";
+import { getTimeUntilSessionExpiryMs } from "./auth";
+
 export class HttpError extends Error {
     constructor(public code: number, error: Error) {
         super(error.message);
@@ -13,7 +16,14 @@ export class AuthError extends HttpError {
     }
 }
 
-export function toHttpError(error: Error): HttpError {
+export class SessionExpiryError extends HttpError {
+    constructor(public code: number, error: Error) {
+        super(code, error);
+        this.name = "SessionExpiryError";
+    }
+}
+
+export function toHttpError(error: Error, identity: Identity): HttpError {
     let code = 500;
 
     const statusLine = error.message
@@ -34,6 +44,11 @@ export function toHttpError(error: Error): HttpError {
                 code = 500;
             }
         }
+    }
+
+    // if we make an api after the session has expired (which should not happen) it will manifest as a 400 error
+    if (code === 400 && getTimeUntilSessionExpiryMs(identity) < 0) {
+        return new SessionExpiryError(code, error);
     }
 
     return code === 401 || code === 403 ? new AuthError(code, error) : new HttpError(code, error);
