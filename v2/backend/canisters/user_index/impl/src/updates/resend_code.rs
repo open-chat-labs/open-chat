@@ -59,7 +59,7 @@ mod tests {
     fn unconfirmed_user_succeeds() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add(User::Unconfirmed(UnconfirmedUser {
+        data.users.add(UnconfirmedUser {
             principal: env.caller,
             state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
@@ -67,7 +67,7 @@ mod tests {
                 valid_until: env.now + 1000,
                 sms_messages_sent: 1,
             }),
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let result = resend_code_impl(&mut runtime_state);
@@ -79,7 +79,7 @@ mod tests {
     fn confirmed_user_returns_already_claimed() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add(User::Confirmed(ConfirmedUser {
+        data.users.add_test_user(User::Confirmed(ConfirmedUser {
             principal: env.caller,
             phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
             date_confirmed: env.now,
