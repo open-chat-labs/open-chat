@@ -89,7 +89,7 @@ pub async fn upgrade_group_canister(
 ) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::Group, version, true);
-    let args = group_index_canister::update_group_canister_wasm::Args {
+    let args = group_index_canister::upgrade_group_canister_wasm::Args {
         group_canister_wasm: CanisterWasm {
             version,
             compressed: canister_wasm.compressed,
@@ -97,11 +97,11 @@ pub async fn upgrade_group_canister(
         },
     };
 
-    let response = group_index_canister_client::update_group_canister_wasm(&agent, &group_index_canister_id, &args)
+    let response = group_index_canister_client::upgrade_group_canister_wasm(&agent, &group_index_canister_id, &args)
         .await
         .unwrap();
 
-    if !matches!(response, group_index_canister::update_group_canister_wasm::Response::Success) {
+    if !matches!(response, group_index_canister::upgrade_group_canister_wasm::Response::Success) {
         panic!("{:?}", response);
     }
     println!("Group canister wasm upgraded to version {}", version);
@@ -110,7 +110,7 @@ pub async fn upgrade_group_canister(
 pub async fn upgrade_user_canister(identity: BasicIdentity, url: String, user_index_canister_id: CanisterId, version: Version) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::User, version, true);
-    let args = user_index_canister::update_user_canister_wasm::Args {
+    let args = user_index_canister::upgrade_user_canister_wasm::Args {
         user_canister_wasm: CanisterWasm {
             version,
             compressed: canister_wasm.compressed,
@@ -118,11 +118,11 @@ pub async fn upgrade_user_canister(identity: BasicIdentity, url: String, user_in
         },
     };
 
-    let response = user_index_canister_client::update_user_canister_wasm(&agent, &user_index_canister_id, &args)
+    let response = user_index_canister_client::upgrade_user_canister_wasm(&agent, &user_index_canister_id, &args)
         .await
         .unwrap();
 
-    if !matches!(response, user_index_canister::update_user_canister_wasm::Response::Success) {
+    if !matches!(response, user_index_canister::upgrade_user_canister_wasm::Response::Success) {
         panic!("{:?}", response);
     }
     println!("User canister wasm upgraded to version {}", version);
