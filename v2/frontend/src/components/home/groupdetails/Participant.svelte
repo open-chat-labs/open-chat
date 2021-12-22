@@ -23,6 +23,7 @@
     } from "../../../domain/chat/chat";
     import { userStore } from "../../../stores/user";
     import { iconSize } from "../../../stores/iconSize";
+    import { now } from "../../../stores/time";
     const dispatch = createEventDispatcher();
 
     export let me: boolean;
@@ -76,7 +77,7 @@
             statusBorder={hovering && !me ? "var(--participants-hv)" : "var(--participants-bg)"}
             blocked={participant.kind === "blocked_participant"}
             url={avatarUrl(participant)}
-            status={getUserStatus($userStore, participant.userId)}
+            status={getUserStatus($now, $userStore, participant.userId)}
             size={AvatarSize.Small} />
     </span>
     <div class="details">

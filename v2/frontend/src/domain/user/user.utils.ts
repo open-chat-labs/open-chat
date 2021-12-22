@@ -20,18 +20,18 @@ export function phoneNumberToString({ countryCode, number }: PhoneNumber): strin
     return `(+${countryCode}) ${number}`;
 }
 
-export function userStatus(user?: UserLastOnline): UserStatus {
+export function userStatus(now: number, user?: UserLastOnline): UserStatus {
     if (user === undefined) return UserStatus.Offline;
-    const secondsSinceOnline = (Date.now() - user.lastOnline) / 1000;
+    const secondsSinceOnline = (now - user.lastOnline) / 1000;
     return secondsSinceOnline < ONLINE_THRESHOLD ? UserStatus.Online : UserStatus.Offline;
 }
 
-export function getUserStatus(users: UserLookup, userId: string): UserStatus {
-    return userStatus(users[userId]);
+export function getUserStatus(now: number, users: UserLookup, userId: string): UserStatus {
+    return userStatus(now, users[userId]);
 }
 
-export function userIsOnline(users: UserLookup, userId: string): boolean {
-    return getUserStatus(users, userId) === UserStatus.Online;
+export function userIsOnline(now: number, users: UserLookup, userId: string): boolean {
+    return getUserStatus(now, users, userId) === UserStatus.Online;
 }
 
 export function missingUserIds(userLookup: UserLookup, userIds: Set<string>): string[] {
@@ -39,8 +39,9 @@ export function missingUserIds(userLookup: UserLookup, userIds: Set<string>): st
 }
 
 export function compareUsersOnlineFirst(u1: PartialUserSummary, u2: PartialUserSummary): number {
-    const u1Online = userStatus(u1) === UserStatus.Online;
-    const u2Online = userStatus(u2) === UserStatus.Online;
+    const now = Date.now();
+    const u1Online = userStatus(now, u1) === UserStatus.Online;
+    const u2Online = userStatus(now, u2) === UserStatus.Online;
 
     if (u1Online !== u2Online) {
         return u1Online ? -1 : 1;
