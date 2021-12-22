@@ -15,6 +15,8 @@ pub struct CanistersRequiringUpgrade {
     pending: VecDeque<CanisterId>,
     in_progress: HashSet<CanisterId>,
     failed: VecDeque<FailedUpgrade>,
+    #[serde(default)]
+    completed: u64,
 }
 
 impl CanistersRequiringUpgrade {
@@ -30,6 +32,7 @@ impl CanistersRequiringUpgrade {
 
     pub fn mark_success(&mut self, canister_id: &CanisterId) {
         self.in_progress.remove(canister_id);
+        self.completed += 1;
     }
 
     pub fn mark_failure(&mut self, failed_upgrade: FailedUpgrade) {
@@ -41,6 +44,10 @@ impl CanistersRequiringUpgrade {
         self.in_progress.contains(canister_id)
     }
 
+    pub fn count_pending(&self) -> u64 {
+        self.pending.len() as u64
+    }
+
     pub fn count_in_progress(&self) -> u32 {
         self.in_progress.len() as u32
     }
@@ -50,6 +57,7 @@ impl CanistersRequiringUpgrade {
             pending: self.pending.len(),
             in_progress: self.in_progress.len(),
             failed: self.failed.len(),
+            completed: self.completed,
         }
     }
 
@@ -61,7 +69,8 @@ impl CanistersRequiringUpgrade {
 }
 
 pub struct Metrics {
+    pub completed: u64,
+    pub failed: usize,
     pub pending: usize,
     pub in_progress: usize,
-    pub failed: usize,
 }
