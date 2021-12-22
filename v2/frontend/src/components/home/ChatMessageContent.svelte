@@ -1,19 +1,17 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { encode } from "html-entities";
-    // import SvelteMarkdown from "svelte-markdown";
+    import SvelteMarkdown from "svelte-markdown";
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";
     import AudioContent from "./AudioContent.svelte";
-    // import ChatMessageLink from "./ChatMessageLink.svelte";
+    import ChatMessageLink from "./ChatMessageLink.svelte";
 
     import FileContent from "./FileContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
     import type { MessageContent } from "../../domain/chat/chat";
     import { getContentAsText } from "../../domain/chat/chat.utils";
-    import { replaceNewlinesWithBrTags, wrapURLsInAnchorTags } from "../../utils/markup";
 
     const SIZE_LIMIT = 1000;
     export let content: MessageContent;
@@ -25,12 +23,11 @@
 
     $: textContent = getContentAsText(content);
 
-    // const overriddenRenderers = {
-    //     link: ChatMessageLink,
-    // }
-
-    function renderTextContent(): string {
+    function preprocessText(): string {
         let str = textContent;
+
+        // Replace single line breaks with double line breaks so that markdown treats a line break as a new <p>
+        str = str.replace(/(?:\r\n|\r|\n)/g, "\r\n\r\n");
 
         // todo - we might be able to do something nicer than this with pure css, but we just need to do
         // *something* to make sure there a limit to the size of this box
@@ -38,25 +35,14 @@
             str = str.slice(0, SIZE_LIMIT) + "...";
         }
 
-        // HTML encode the text
-        str = encode(str);
-
-        // Try to wrap links in <a> tags
-        str = wrapURLsInAnchorTags(str, true);
-
-        // Replace newlines with <br> tags
-        return replaceNewlinesWithBrTags(str);
+        return str;
     }
 </script>
 
 {#if content.kind === "text_content"}
     <div class="text-content">
         <div class="text-wrapper">
-            <p>{@html renderTextContent()}</p>
-            <!-- <SvelteMarkdown 
-                source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} 
-                renderers={overriddenRenderers}
-                options={{gfm: true, breaks: true}} /> -->
+            <SvelteMarkdown source={preprocessText()} renderers={{ link: ChatMessageLink }} />
             <slot />
         </div>
     </div>
@@ -78,8 +64,10 @@
 
 <style type="text/scss">
     :global(.text-wrapper > p) {
-        display: inline;
         word-wrap: break-word;
+        &:last-of-type {
+            display: inline;
+        }
     }
 
     :global(.text-wrapper > p > a) {

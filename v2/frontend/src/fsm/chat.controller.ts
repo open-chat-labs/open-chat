@@ -259,7 +259,7 @@ export class ChatController {
         [...userIds]
             .filter((u) => u !== this.user.userId)
             .map((u) => lookup[u])
-            .filter((user) => user && userIsOnline(lookup, user.userId))
+            .filter((user) => user && userIsOnline(Date.now(), lookup, user.userId))
             .sort((a, b) => b.lastOnline - a.lastOnline)
             .slice(0, MAX_RTC_CONNECTIONS_PER_CHAT)
             .filter((user) => !rtcConnectionsManager.exists(user.userId))
