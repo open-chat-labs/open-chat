@@ -4,7 +4,7 @@ use types::{CanisterId, CanisterWasm, Version};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    // Only these principals can call update_group_canister_wasm
+    // Only these principals can call upgrade_group_canister_wasm
     pub service_principals: Vec<Principal>,
 
     pub group_canister_wasm: CanisterWasm,
