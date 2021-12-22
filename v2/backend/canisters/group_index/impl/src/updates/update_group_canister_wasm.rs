@@ -34,11 +34,9 @@ fn update_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState)
         {
             runtime_state.data.canisters_requiring_upgrade.enqueue(chat_id.into());
         }
-        info!(
-            "Group canister wasm updated to version {}. {} canisters queued to be updated",
-            version,
-            runtime_state.data.public_groups.len() + runtime_state.data.private_groups.len()
-        );
+
+        let canisters_enqueued_for_upgrade = runtime_state.data.public_groups.len() + runtime_state.data.private_groups.len();
+        info!(%version, canisters_enqueued_for_upgrade, "Group canister wasm upgraded");
         Success
     }
 }
