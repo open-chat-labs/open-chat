@@ -40,7 +40,7 @@
     <div class="text-content">
         <div class="text-wrapper">
             <SvelteMarkdown
-                options={{ break: true, sanitize: true }}
+                options={{ breaks: true, sanitize: true }}
                 isInline={true}
                 source={preprocessText()}
                 renderers={{ link: ChatMessageLink }} />
