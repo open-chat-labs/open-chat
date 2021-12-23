@@ -89,17 +89,6 @@ type SetUsernameResponse =
         UsernameTooLong: nat16;
     };
 
-type UpdateUserCanisterWasmArgs =
-    record {
-        user_canister_wasm: CanisterWasm;
-    };
-
-type UpdateUserCanisterWasmResponse =
-    variant {
-        Success;
-        VersionNotHigher;
-    };
-
 type UpgradeCanisterArgs =
     record {
     };
@@ -280,9 +269,6 @@ service: {
 
     // This is used to set the initial username and subsequently to change it
     set_username: (SetUsernameArgs) -> (SetUsernameResponse);
-
-    // Update the stored user canister WASM module
-    update_user_canister_wasm: (UpdateUserCanisterWasmArgs) -> (UpdateUserCanisterWasmResponse);
 
     // If the current user is "upgrade_required" then call this to upgrade the user canister
     // Will need to block in the app until this has completed
