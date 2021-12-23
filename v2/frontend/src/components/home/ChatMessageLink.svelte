@@ -6,11 +6,3 @@
 </script>
   
 <a {target} {href} {title}><slot></slot></a>
-
-<style type="text/scss">
-    a {
-        cursor: pointer;
-        text-decoration: underline;
-        word-break: break-all;
-    }
-</style>

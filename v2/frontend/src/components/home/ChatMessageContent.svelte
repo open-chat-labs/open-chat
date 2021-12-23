@@ -26,9 +26,6 @@
     function preprocessText(): string {
         let str = textContent;
 
-        // Replace single line breaks with double line breaks so that markdown treats a line break as a new <p>
-        str = str.replace(/(?:\r\n|\r|\n)/g, "\r\n\r\n");
-
         // todo - we might be able to do something nicer than this with pure css, but we just need to do
         // *something* to make sure there a limit to the size of this box
         if (truncate && str.length > SIZE_LIMIT) {
@@ -42,7 +39,11 @@
 {#if content.kind === "text_content"}
     <div class="text-content">
         <div class="text-wrapper">
-            <SvelteMarkdown source={preprocessText()} renderers={{ link: ChatMessageLink }} />
+            <SvelteMarkdown 
+                source={preprocessText()} 
+                renderers={{ link: ChatMessageLink }} 
+                isInline 
+                options={{ breaks: true, sanitize: true }} />
             <slot />
         </div>
     </div>
@@ -63,20 +64,14 @@
 {/if}
 
 <style type="text/scss">
-    :global(.text-wrapper > p) {
-        word-wrap: break-word;
-        &:last-of-type {
-            display: inline;
-        }
-    }
-
-    :global(.text-wrapper > p > a) {
+    :global(.text-wrapper a) {
         text-decoration: underline;
         word-break: break-all;
     }
 
     .text-wrapper {
         width: 100%;
+        word-wrap: break-word;
     }
 
     .text-content {
