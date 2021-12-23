@@ -27,15 +27,10 @@ const dfxNetwork = process.env.DFX_NETWORK;
 console.log("DFX_NETWORK: ", dfxNetwork);
 
 if (dfxNetwork) {
-    const canisterPath = dfxNetwork === "ic"
-        ? path.join(__dirname, "..", "canister_ids.json")
-        : path.join(
-        __dirname,
-        "..",
-        ".dfx",
-        dfxNetwork,
-        "canister_ids.json"
-    );
+    const canisterPath =
+        dfxNetwork === "ic"
+            ? path.join(__dirname, "..", "canister_ids.json")
+            : path.join(__dirname, "..", ".dfx", dfxNetwork, "canister_ids.json");
 
     if (fs.existsSync(canisterPath)) {
         const canisters = JSON.parse(fs.readFileSync(canisterPath));
@@ -111,7 +106,7 @@ export default [
             }),
             replace({
                 preventAssignment: true,
-                "process.env.NODE_ENV": env,
+                "process.env.NODE_ENV": JSON.stringify(env),
             }),
 
             production && terser(),
