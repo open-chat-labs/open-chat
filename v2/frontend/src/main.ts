@@ -5,7 +5,6 @@ BigInt.prototype.toJSON = function () {
 };
 
 import "svelte";
-import { rollbar } from "utils/logging";
 import App from "./App.svelte";
 
 const app = new App({
@@ -13,5 +12,3 @@ const app = new App({
 });
 
 export default app;
-
-rollbar.error("yo yo yo this is a test");
