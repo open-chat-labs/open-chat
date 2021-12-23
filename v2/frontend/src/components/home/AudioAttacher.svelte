@@ -17,21 +17,28 @@
     export let recording: boolean = false;
     export let percentRecorded: number = 0;
     export let mimeType: string;
+    export let supported: boolean;
 
     let mediaRecorder: MediaRecorder | undefined;
-    let supported = "mediaDevices" in navigator;
 
     onMount(() => {
         if (supported) {
             // TODO - there are problems with this whole thing on safari.
             // in particular, there is no access to the permissions api
             if ("permissions" in navigator) {
-                navigator.permissions.query({ name: "microphone" }).then(function (result) {
-                    if (result.state === "denied") {
-                        // if they already said no, don't be rude
-                        supported = false;
-                    }
-                });
+                navigator.permissions
+                    .query({ name: "microphone" })
+                    .then(function (result) {
+                        if (result.state === "denied") {
+                            // if they already said no, don't be rude
+                            supported = false;
+                        }
+                    })
+                    .catch((_err) => {
+                        console.log(
+                            "unable to check microphone permissions (probably unsupported)"
+                        );
+                    });
             }
         }
     });

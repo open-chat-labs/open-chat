@@ -35,6 +35,7 @@
     let initialisedEdit: boolean = false;
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
+    let audioSupported: boolean = "mediaDevices" in navigator;
     let inputIsEmpty = true;
     $: messageIsEmpty = true;
 
@@ -214,12 +215,13 @@
             on:drop={onDrop}
             on:input={onInput}
             on:keypress={keyPress} />
-        {#if messageIsEmpty && audioMimeType !== undefined}
+        {#if messageIsEmpty && audioMimeType !== undefined && audioSupported}
             <div class="record">
                 <AudioAttacher
                     mimeType={audioMimeType}
                     bind:percentRecorded
                     bind:recording
+                    bind:supported={audioSupported}
                     on:audioCaptured />
             </div>
         {:else}
