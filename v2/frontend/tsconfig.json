@@ -7,7 +7,9 @@
         "module": "es2020",
         "strict": true,
         "types": ["jest", "node", "@types/dom-mediacapture-record"],
-        "paths": {},
+        "paths": {
+            "*": ["./src/*", "./declarations/*"]
+        },
         "lib": ["es2020", "webworker", "DOM", "DOM.Iterable"]
     }
 }

@@ -88,7 +88,7 @@ export class IdentityController {
 
     private startOnlinePoller() {
         this.markOnlinePoller = new Poller(
-            () => this._api!.markAsOnline(),
+            () => this._api?.markAsOnline() ?? Promise.resolve(),
             MARK_ONLINE_INTERVAL,
             MARK_ONLINE_INTERVAL
         );
