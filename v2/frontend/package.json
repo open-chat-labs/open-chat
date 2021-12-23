@@ -87,6 +87,7 @@
         "peerjs": "^1.3.2",
         "rollbar": "^2.23.0",
         "sirv-cli": "^1.0.0",
+        "smoothscroll": "^0.4.0",
         "svelte-easy-crop": "^1.0.4",
         "svelte-i18n": "^3.3.9",
         "svelte-jester": "^2.1.5",
