@@ -17,12 +17,14 @@
                 "@fortawesome/free-solid-svg-icons": "^5.15.3",
                 "@open-ic/open-storage-agent": "file:src/openStorage",
                 "@sveltejs/svelte-virtual-list": "^3.0.1",
+                "@types/marked": "^4.0.1",
                 "drange": "^2.0.1",
                 "emoji-picker-element": "^1.8.1",
                 "idb": "^6.1.2",
                 "identicon.js": "^2.3.3",
                 "intl-tel-input": "^17.0.15",
                 "jest": "^27.2.5",
+                "marked": "^4.0.8",
                 "md5": "^2.3.0",
                 "peerjs": "^1.3.2",
                 "rollbar": "^2.23.0",
@@ -30,7 +32,7 @@
                 "svelte-easy-crop": "^1.0.4",
                 "svelte-i18n": "^3.3.9",
                 "svelte-jester": "^2.1.5",
-                "svelte-markdown": "^0.1.10",
+                "svelte-markdown": "^0.2.0",
                 "svelte-material-icons": "^1.0.3",
                 "svelte-spa-router": "^3.1.0",
                 "ts-jest": "^27.0.5",
@@ -3169,9 +3171,9 @@
             "dev": true
         },
         "node_modules/@types/marked": {
-            "version": "2.0.4",
-            "resolved": "https://registry.npmjs.org/@types/marked/-/marked-2.0.4.tgz",
-            "integrity": "sha512-L9VRSe0Id8xbPL99mUo/4aKgD7ZoRwFZqUQScNKHi2pFjF9ZYSMNShUHD6VlMT6J/prQq0T1mxuU25m3R7dFzg=="
+            "version": "4.0.1",
+            "resolved": "https://registry.npmjs.org/@types/marked/-/marked-4.0.1.tgz",
+            "integrity": "sha512-ZigEmCWdNUU7IjZEuQ/iaimYdDHWHfTe3kg8ORfKjyGYd9RWumPoOJRQXB0bO+XLkNwzCthW3wUIQtANaEZ1ag=="
         },
         "node_modules/@types/md5": {
             "version": "2.3.1",
@@ -9677,14 +9679,14 @@
             }
         },
         "node_modules/marked": {
-            "version": "2.1.3",
-            "resolved": "https://registry.npmjs.org/marked/-/marked-2.1.3.tgz",
-            "integrity": "sha512-/Q+7MGzaETqifOMWYEA7HVMaZb4XbcRfaOzcSsHZEith83KGlvaSG33u0SKu89Mj5h+T8V2hM+8O45Qc5XTgwA==",
+            "version": "4.0.8",
+            "resolved": "https://registry.npmjs.org/marked/-/marked-4.0.8.tgz",
+            "integrity": "sha512-dkpJMIlJpc833hbjjg8jraw1t51e/eKDoG8TFOgc5O0Z77zaYKigYekTDop5AplRoKFGIaoazhYEhGkMtU3IeA==",
             "bin": {
-                "marked": "bin/marked"
+                "marked": "bin/marked.js"
             },
             "engines": {
-                "node": ">= 10"
+                "node": ">= 12"
             }
         },
         "node_modules/md5": {
@@ -12564,12 +12566,12 @@
             }
         },
         "node_modules/svelte-markdown": {
-            "version": "0.1.10",
-            "resolved": "https://registry.npmjs.org/svelte-markdown/-/svelte-markdown-0.1.10.tgz",
-            "integrity": "sha512-2GLYBJ0jsBDXNJIxoTRgETzbX/OivtqFrykrAHuVVvfQQFkFcJfbVgMbjBEHIC+iWZdTiA4BHdBxxaIAHPfCXw==",
+            "version": "0.2.0",
+            "resolved": "https://registry.npmjs.org/svelte-markdown/-/svelte-markdown-0.2.0.tgz",
+            "integrity": "sha512-Xi1j89UhcOUQN0YRpsGxXVH9p4Wszc7PRMrVralLB6r7AEH0fIAA6Zu0VfpumcFtxhCWF5z3mKBZjLgA3lOX0Q==",
             "dependencies": {
-                "@types/marked": "^2.0.0",
-                "marked": "^2.0.0"
+                "@types/marked": "^4.0.1",
+                "marked": "^4.0.7"
             },
             "peerDependencies": {
                 "svelte": "^3.0.0"
@@ -16182,9 +16184,9 @@
             "dev": true
         },
         "@types/marked": {
-            "version": "2.0.4",
-            "resolved": "https://registry.npmjs.org/@types/marked/-/marked-2.0.4.tgz",
-            "integrity": "sha512-L9VRSe0Id8xbPL99mUo/4aKgD7ZoRwFZqUQScNKHi2pFjF9ZYSMNShUHD6VlMT6J/prQq0T1mxuU25m3R7dFzg=="
+            "version": "4.0.1",
+            "resolved": "https://registry.npmjs.org/@types/marked/-/marked-4.0.1.tgz",
+            "integrity": "sha512-ZigEmCWdNUU7IjZEuQ/iaimYdDHWHfTe3kg8ORfKjyGYd9RWumPoOJRQXB0bO+XLkNwzCthW3wUIQtANaEZ1ag=="
         },
         "@types/md5": {
             "version": "2.3.1",
@@ -21129,9 +21131,9 @@
             }
         },
         "marked": {
-            "version": "2.1.3",
-            "resolved": "https://registry.npmjs.org/marked/-/marked-2.1.3.tgz",
-            "integrity": "sha512-/Q+7MGzaETqifOMWYEA7HVMaZb4XbcRfaOzcSsHZEith83KGlvaSG33u0SKu89Mj5h+T8V2hM+8O45Qc5XTgwA=="
+            "version": "4.0.8",
+            "resolved": "https://registry.npmjs.org/marked/-/marked-4.0.8.tgz",
+            "integrity": "sha512-dkpJMIlJpc833hbjjg8jraw1t51e/eKDoG8TFOgc5O0Z77zaYKigYekTDop5AplRoKFGIaoazhYEhGkMtU3IeA=="
         },
         "md5": {
             "version": "2.3.0",
@@ -23326,12 +23328,12 @@
             "requires": {}
         },
         "svelte-markdown": {
-            "version": "0.1.10",
-            "resolved": "https://registry.npmjs.org/svelte-markdown/-/svelte-markdown-0.1.10.tgz",
-            "integrity": "sha512-2GLYBJ0jsBDXNJIxoTRgETzbX/OivtqFrykrAHuVVvfQQFkFcJfbVgMbjBEHIC+iWZdTiA4BHdBxxaIAHPfCXw==",
+            "version": "0.2.0",
+            "resolved": "https://registry.npmjs.org/svelte-markdown/-/svelte-markdown-0.2.0.tgz",
+            "integrity": "sha512-Xi1j89UhcOUQN0YRpsGxXVH9p4Wszc7PRMrVralLB6r7AEH0fIAA6Zu0VfpumcFtxhCWF5z3mKBZjLgA3lOX0Q==",
             "requires": {
-                "@types/marked": "^2.0.0",
-                "marked": "^2.0.0"
+                "@types/marked": "^4.0.1",
+                "marked": "^4.0.7"
             }
         },
         "svelte-material-icons": {
