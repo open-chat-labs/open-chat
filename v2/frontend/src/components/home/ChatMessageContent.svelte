@@ -64,20 +64,14 @@
 {/if}
 
 <style type="text/scss">
-    :global(.text-wrapper > p) {
-        word-wrap: break-word;
-        &:last-of-type {
-            display: inline;
-        }
-    }
-
-    :global(.text-wrapper > p > a) {
+    :global(.text-wrapper > a) {
         text-decoration: underline;
         word-break: break-all;
     }
 
     .text-wrapper {
         width: 100%;
+        word-wrap: break-word;
     }
 
     .text-content {
