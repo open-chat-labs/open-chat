@@ -6,6 +6,7 @@ export const rollbar = Rollbar.init({
     autoInstrument: false,
     logLevel: "error",
     environment: process.env.NODE_ENV,
+    enabled: process.env.NODE_ENV === "production",
     captureUnhandledRejections: true,
 });
 
