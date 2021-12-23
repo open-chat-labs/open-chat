@@ -163,7 +163,6 @@ export default [
                     process.env.INTERNET_IDENTITY_URL
                 ),
                 "process.env.NODE_ENV": JSON.stringify(env),
-                "process.env.ROLLBAR_ENV": production ? "production" : "development",
                 "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
                 "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
                 "process.env.MOCK_SERVICES": !production && process.env.MOCK_SERVICES, // make double sure we don't release with mock data
