@@ -22,21 +22,27 @@ import * as rimraf from "rimraf";
 
 dotenv.config();
 
-if (process.env.DFX_NETWORK) {
-    const canisterPath = path.join(
+const dfxNetwork = process.env.DFX_NETWORK;
+
+console.log("DFX_NETWORK: ", dfxNetwork);
+
+if (dfxNetwork) {
+    const canisterPath = dfxNetwork === "ic"
+        ? path.join(__dirname, "..", "canister_ids.json")
+        : path.join(
         __dirname,
         "..",
         ".dfx",
-        process.env.DFX_NETWORK,
+        dfxNetwork,
         "canister_ids.json"
     );
 
     if (fs.existsSync(canisterPath)) {
         const canisters = JSON.parse(fs.readFileSync(canisterPath));
-        process.env.USER_INDEX_CANISTER = canisters.user_index[process.env.DFX_NETWORK];
-        process.env.GROUP_INDEX_CANISTER = canisters.group_index[process.env.DFX_NETWORK];
-        process.env.NOTIFICATIONS_CANISTER = canisters.notifications[process.env.DFX_NETWORK];
-        process.env.ONLINE_CANISTER = canisters.online_users_aggregator[process.env.DFX_NETWORK];
+        process.env.USER_INDEX_CANISTER = canisters.user_index[dfxNetwork];
+        process.env.GROUP_INDEX_CANISTER = canisters.group_index[dfxNetwork];
+        process.env.NOTIFICATIONS_CANISTER = canisters.notifications[dfxNetwork];
+        process.env.ONLINE_CANISTER = canisters.online_users_aggregator[dfxNetwork];
 
         console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
         console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);
