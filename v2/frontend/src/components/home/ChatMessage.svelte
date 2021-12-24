@@ -256,30 +256,14 @@
                 {/if}
             {/if}
 
-            {#if msg.content.kind === "text_content"}
-                <ChatMessageContent
-                    {fill}
-                    {me}
-                    content={msg.content}
-                    height={mediaCalculatedHeight}>
-                    <TimeAndTicks
-                        inline={true}
-                        {fill}
-                        {timestamp}
-                        {me}
-                        {confirmed}
-                        {readByThem}
-                        {chatType} />
-                </ChatMessageContent>
-            {:else}
-                <ChatMessageContent
-                    {fill}
-                    {me}
-                    content={msg.content}
-                    height={mediaCalculatedHeight} />
-                {#if !deleted}
-                    <TimeAndTicks {fill} {timestamp} {me} {confirmed} {readByThem} {chatType} />
-                {/if}
+            <ChatMessageContent
+                {fill}
+                {me}
+                content={msg.content}
+                height={mediaCalculatedHeight} />
+
+            {#if !deleted}
+                <TimeAndTicks {fill} {timestamp} {me} {confirmed} {readByThem} {chatType} />
             {/if}
 
             {#if debug}
