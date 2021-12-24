@@ -4,6 +4,7 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import type { FileContent } from "../../domain/chat/chat";
+    import format from "../../utils/fileSize";
     import FileDownload from "svelte-material-icons/FileDownload.svelte";
     import Markdown from "./Markdown.svelte";
 
@@ -25,14 +26,14 @@
         class:rtl={$rtlStore}
         class:draft
         class="file-content">
-        <span class="icon">
+        <div class="link-contents">
             <FileDownload size={"1.7em"} {color} />
-        </span>
-        {content.name}
+            {content.name}    
+        </div>
     </a>
 
     <div class="meta-wrapper" class:caption={content.caption !== undefined}>
-        {`${content.mimeType}-${(content.fileSize / 1000).toFixed(2)}kb`}
+        {`${content.mimeType}-${format(content.fileSize)}`}
     </div>
 {/if}
 
@@ -46,16 +47,32 @@
         display: block;
         cursor: pointer;
         @include ellipsis();
-        margin-right: $sp1;
+        margin-right: $sp2;
 
         &.rtl {
             margin-right: 0;
-            margin-left: $sp1;
+            margin-left: $sp2;
+        }
+
+        &:hover {
+            text-decoration: underline;
         }
     }
 
-    .icon {
-        vertical-align: top;
+    .link-contents {
+        display: flex;
+        flex-direction: row;        
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    :global(.link-contents > svg) {
+        margin-right: $sp2;
+    }
+
+    :global(.link-contents.rtl > svg) {
+        margin-right: 0;
+        margin-left: $sp2;
     }
 
     .meta-wrapper {
