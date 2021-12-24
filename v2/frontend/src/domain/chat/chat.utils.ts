@@ -43,13 +43,13 @@ export function getContentAsText(content: MessageContent): string {
     if (content.kind === "text_content") {
         text = content.text;
     } else if (content.kind === "image_content") {
-        text = "image";
+        text = content.caption ?? "image";
     } else if (content.kind === "video_content") {
-        text = "video";
+        text = content.caption ?? "video";
     } else if (content.kind === "audio_content") {
-        text = "audio";
+        text = content.caption ?? "audio";
     } else if (content.kind === "file_content") {
-        text = content.name;
+        text = content.caption ?? content.name;
     } else if (content.kind === "crypto_content") {
         // todo - format crypto
         text = "crypto_content";
@@ -144,10 +144,6 @@ export function indexIsInRanges(index: number, ranges: DRange): boolean {
 export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message): boolean {
     if (chat.kind === "group_chat") return true;
     return indexIsInRanges(messageIndex, chat.readByThem);
-}
-
-export function latestMessageText({ latestMessage }: ChatSummary): string {
-    return latestMessage?.event ? getContentAsText(latestMessage.event.content) : "";
 }
 
 export function getParticipantsString(
