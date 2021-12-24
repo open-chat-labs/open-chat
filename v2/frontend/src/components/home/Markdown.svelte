@@ -6,11 +6,12 @@
 
     export let text: string;
     export let inline: boolean = true;
+    export let oneLine: boolean = false;
 </script>
 
-<p class="markdown-wrapper" class:inline>
+<p class="markdown-wrapper" class:inline class:oneLine>
     <SvelteMarkdown
-        options={{ breaks: true, sanitize: true }}
+        options={{ breaks: !oneLine, sanitize: true }}
         isInline={true}
         source={text}
         renderers={{ link: ChatMessageLink }} />
@@ -24,9 +25,6 @@
 
     .markdown-wrapper {
         word-wrap: break-word;
-        &.inline {
-            display: inline;
-        }
     }
 
     .markdown-wrapper:not(:empty) {
@@ -34,6 +32,11 @@
 
         &:not(.inline) {
             display: block;
+        }
+
+        &.oneLine {
+            display: block;
+            @include ellipsis();
         }
     }
 </style>

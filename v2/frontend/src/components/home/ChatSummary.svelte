@@ -12,6 +12,7 @@
         getMinVisibleMessageIndex,
     } from "../../domain/chat/chat.utils";
     import type { ChatSummary } from "../../domain/chat/chat";
+    import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
@@ -110,7 +111,9 @@
         {#if isTyping}
             <Typing />
         {:else}
-            <div class="chat-msg">{lastMessage}</div>
+            <div class="chat-msg">
+                <Markdown text={lastMessage} oneLine={true} inline={false} />
+            </div>
         {/if}
     </div>
     <!-- this date formatting is OK for now but we might want to use something like this: 
@@ -195,7 +198,6 @@
         }
 
         .chat-msg {
-            @include ellipsis();
             @include font(book, normal, fs-80);
             color: var(--chatSummary-txt2);
         }
