@@ -43,13 +43,13 @@ export function getContentAsText(content: MessageContent): string {
     if (content.kind === "text_content") {
         text = content.text;
     } else if (content.kind === "image_content") {
-        text = content.caption ?? "image";
+        text = captionedContent("image", content.caption);
     } else if (content.kind === "video_content") {
-        text = content.caption ?? "video";
+        text = captionedContent("video", content.caption);
     } else if (content.kind === "audio_content") {
-        text = content.caption ?? "audio";
+        text = captionedContent("audio", content.caption);
     } else if (content.kind === "file_content") {
-        text = content.caption ?? content.name;
+        text = captionedContent(content.name, content.caption);
     } else if (content.kind === "crypto_content") {
         // todo - format crypto
         text = "crypto_content";
@@ -61,6 +61,14 @@ export function getContentAsText(content: MessageContent): string {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
     return text.trim();
+}
+
+function captionedContent(type: string, caption?: string): string {
+    if (caption) {
+        return type + " - " + caption; 
+    } else {
+        return type;
+    }
 }
 
 export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string> {
