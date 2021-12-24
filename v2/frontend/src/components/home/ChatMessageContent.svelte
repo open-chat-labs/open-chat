@@ -39,7 +39,7 @@
 {:else if content.kind === "audio_content"}
     <AudioContent {content} />
 {:else if content.kind === "file_content"}
-    <FileContent {me} {content} />
+    <FileContent {me} {content} {reply} />
 {:else if content.kind === "deleted_content"}
     <DeletedContent {content} />
 {:else if content.kind === "crypto_content"}

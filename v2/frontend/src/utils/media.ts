@@ -121,12 +121,6 @@ export function fillMessage(msg: Message): boolean {
     return false;
 }
 
-export function messageMetaData(content: MessageContent): string | undefined {
-    if (content.kind === "file_content") {
-        return `${content.mimeType}-${(content.fileSize / 1000).toFixed(2)}kb`;
-    }
-}
-
 export function resizeImage(blobUrl: string, mimeType: string): Promise<MediaExtract> {
     // if our image is too big, we'll just create a new version with fixed dimensions
     // there's no very easy way to reduce it to a specific file size

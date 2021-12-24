@@ -22,7 +22,7 @@
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import { fillMessage, messageMetaData } from "../../utils/media";
+    import { fillMessage } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import TimeAndTicks from "./TimeAndTicks.svelte";
@@ -57,7 +57,6 @@
 
     let groupChat = chatType === "group_chat";
     let username = sender?.username;
-    let metaData = messageMetaData(msg.content);
     let showEmojiPicker = false;
     let debug = false;
 
@@ -275,14 +274,6 @@
                 <pre>ReadByUs: {readByMe}</pre>
             {/if}
 
-            {#if metaData && !deleted}
-                <span class="meta-wrapper">
-                    {#await metaData then meta}
-                        {meta}
-                    {/await}
-                </span>
-            {/if}
-
             {#if !deleted}
                 <div class="menu" class:rtl={$rtlStore}>
                     <MenuIcon>
@@ -400,13 +391,6 @@
         &.last {
             margin-bottom: $sp4;
         }
-    }
-
-    .meta-wrapper {
-        display: inline-block;
-        align-items: center;
-        @include font(light, normal, fs-60);
-        @include ellipsis();
     }
 
     .sender {
