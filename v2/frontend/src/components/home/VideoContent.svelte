@@ -4,7 +4,7 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import type { VideoContent } from "../../domain/chat/chat";
-    import Caption from "./Caption.svelte";
+    import Markdown from "./Markdown.svelte";
 
     export let content: VideoContent;
     export let fill: boolean;
@@ -35,7 +35,7 @@
 </div>
 
 {#if content.caption !== undefined}
-    <Caption caption={content.caption} reply={reply} />
+    <Markdown text={content.caption} inline={!reply} />
 {/if}
 
 <style type="text/scss">
