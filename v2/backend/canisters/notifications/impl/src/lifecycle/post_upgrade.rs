@@ -17,8 +17,11 @@ fn post_upgrade(args: Args) {
 
     match version {
         StateVersion::V1 => {
-            let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
+            let (mut data, log_messages, _): (Data, Vec<LogMessage>, Vec<LogMessage>) =
                 serializer::deserialize(&bytes).unwrap();
+
+            data.test_mode = false;
+            let trace_messages = Vec::new();
 
             init_logger(data.test_mode);
             init_state(env, data, args.wasm_version);
