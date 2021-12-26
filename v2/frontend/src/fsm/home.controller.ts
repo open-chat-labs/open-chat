@@ -261,6 +261,10 @@ export class HomeController {
         }
     }
 
+    refreshChats(): void {
+        this.chatPoller?.triggerExecution();
+    }
+
     clearSelectedChat(): void {
         this.selectedChat.update((selectedChat) => {
             if (selectedChat !== undefined) {

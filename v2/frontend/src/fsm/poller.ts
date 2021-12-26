@@ -1,4 +1,4 @@
-import type { Unsubscriber } from "svelte/store";
+import { get, Unsubscriber } from "svelte/store";
 import { background } from "../stores/background";
 
 export class Poller {
@@ -13,11 +13,17 @@ export class Poller {
         private idleInterval: number = interval
     ) {
         this.unsubscribeBackground = background.subscribe((hidden) => {
-            this.start(hidden);
+            this.start(hidden, undefined);
         });
     }
 
-    private start(hidden: boolean): void {
+    triggerExecution(): void {
+        if (!this.stopped) {
+            this.start(get(background), 0);
+        }
+    }
+
+    private start(hidden: boolean, firstIntervalOverride: number | undefined): void {
         if (this.timeoutId !== undefined) {
             window.clearTimeout(this.timeoutId);
         }
@@ -26,10 +32,10 @@ export class Poller {
 
         // The first interval after toggling 'hidden' can be shorter so that if the job is now due based on the new
         // interval then it will run immediately.
-        const firstInterval =
-            this.lastExecutionTimestamp !== undefined
+        const firstInterval = firstIntervalOverride ??
+            (this.lastExecutionTimestamp !== undefined
                 ? Math.max(0, this.lastExecutionTimestamp + interval - Date.now())
-                : interval;
+                : interval);
 
         const runThenLoop = () => {
             if (this.stopped) return;

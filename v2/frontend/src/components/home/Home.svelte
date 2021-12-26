@@ -63,7 +63,7 @@
     onMount(() => {
         // bootstrap anything that needs a service container here
         rtcConnectionsManager.init(controller.user.userId);
-        initNotificationStores(api, controller.user!.userId);
+        initNotificationStores(api, controller.user.userId, () => controller.refreshChats());
     });
 
     onDestroy(() => {

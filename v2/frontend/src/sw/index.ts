@@ -28,6 +28,16 @@ self.addEventListener("fetch", () => {
 });
 
 async function handlePushNotification(event: PushEvent): Promise<void> {
+    const windowClients = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+    });
+    windowClients.forEach((window) => {
+        window.postMessage({
+            type: "NOTIFICATION_RECEIVED"
+        });
+    });
+
     if ((await getSoftDisabled()) || !event.data) return;
 
     const bytes = toUint8Array(event.data.text());

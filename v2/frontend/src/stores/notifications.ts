@@ -21,24 +21,25 @@ export const notificationPermission = writable<NotificationPermission>(
 function convertAndSubscribe(
     api: ServiceContainer,
     userId: string,
-    perm: PermissionState
+    perm: PermissionState,
+    refreshChatsFunc: () => void
 ): NotificationPermission {
     const notifPerm = permissionStateToNotificationPermission(perm);
     if (notifPerm === "granted") {
-        trySubscribe(api, userId);
+        trySubscribe(api, userId, refreshChatsFunc);
     }
     return notifPerm;
 }
 
-export async function initNotificationStores(api: ServiceContainer, userId: string): Promise<void> {
+export async function initNotificationStores(api: ServiceContainer, userId: string, refreshChatsFunc: () => void): Promise<void> {
     if (!isSupported) return;
     const softDisabled = await getSoftDisabled();
     notificationsSoftDisabled.set(softDisabled);
     if (navigator.permissions) {
         navigator.permissions.query({ name: "notifications" }).then((perm) => {
-            notificationPermission.set(convertAndSubscribe(api, userId, perm.state));
+            notificationPermission.set(convertAndSubscribe(api, userId, perm.state, refreshChatsFunc));
             perm.onchange = () => {
-                notificationPermission.set(convertAndSubscribe(api, userId, perm.state));
+                notificationPermission.set(convertAndSubscribe(api, userId, perm.state, refreshChatsFunc));
             };
         });
     } else {

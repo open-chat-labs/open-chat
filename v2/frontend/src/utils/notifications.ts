@@ -78,7 +78,7 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
     }
 }
 
-export async function trySubscribe(api: ServiceContainer, userId: string): Promise<boolean> {
+export async function trySubscribe(api: ServiceContainer, userId: string, refreshChatsFunc: () => void): Promise<boolean> {
     if (process.env.NODE_ENV === "test") {
         return Promise.resolve(false);
     }
@@ -92,7 +92,15 @@ export async function trySubscribe(api: ServiceContainer, userId: string): Promi
     // Ensure the service worker is updated to the latest version
     registration.update();
 
-    // When a notifcation is clicked the service worker sends us a message
+    // When a notification is received we refresh the chats from the server,
+    // we could optimise this to only refresh the affected chat
+    navigator.serviceWorker.addEventListener("message", (event) => {
+        if (event.data.type === "NOTIFICATION_RECEIVED") {
+            refreshChatsFunc();
+        }
+    });
+
+    // When a notification is clicked the service worker sends us a message
     // with the chat to select
     navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data.type === "NOTIFICATION_CLICKED") {
