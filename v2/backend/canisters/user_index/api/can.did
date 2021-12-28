@@ -210,6 +210,7 @@ type SearchResponse =
     variant {
         Success: record {
             users: vec UserSummary;
+            timestamp: TimestampMillis;
         }
     };
 

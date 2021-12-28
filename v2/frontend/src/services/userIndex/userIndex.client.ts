@@ -8,6 +8,7 @@ import type {
     SetUsernameResponse,
     PhoneNumber,
     ResendCodeResponse,
+    UsersArgs,
     UsersResponse,
     UserSummary,
     UpgradeCanisterResponse,
@@ -56,8 +57,10 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {
-        if (userIds.length === 0) {
+    getUsers(users: UsersArgs): Promise<UsersResponse> {
+        const userGroups = users.userGroups.filter((g) => g.users.length > 0);
+
+        if (userGroups.length === 0) {
             return Promise.resolve({
                 timestamp: BigInt(Date.now()),
                 users: [],
@@ -65,12 +68,10 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         }
         return this.handleResponse(
             this.userService.users({
-                user_groups: [
-                    {
-                        users: userIds.map(Principal.fromText),
-                        updated_since: since,
-                    },
-                ],
+                user_groups: userGroups.map(({ users, updatedSince }) => ({
+                    users: users.map((u) => Principal.fromText(u)),
+                    updated_since: updatedSince,
+                })),
             }),
             usersResponse
         );

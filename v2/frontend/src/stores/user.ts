@@ -22,4 +22,15 @@ export const userStore = {
             return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), users);
         });
     },
+    setUpdated: (userIds: string[], timestamp: bigint): void => {
+        update((users) => {
+            for (const userId of userIds) {
+                const user = users[userId];
+                if (user !== undefined) {
+                    user.updated = timestamp;
+                }
+            }
+            return users;
+        })
+    }
 };

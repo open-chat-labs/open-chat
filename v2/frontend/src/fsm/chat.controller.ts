@@ -162,7 +162,7 @@ export class ChatController {
                 }
                 await this.updateUserStore(userIdsFromEvents(get(this.events)));
             } else {
-                this.updateDetails();
+                await this.updateDetails();
             }
         }
     }
@@ -198,10 +198,12 @@ export class ChatController {
             }
         });
 
-        const resp = await this.api.getUsers(
-            missingUserIds(get(userStore), new Set<string>(allUserIds)),
-            BigInt(0)
-        );
+        const resp = await this.api.getUsers({
+            userGroups: [{
+                users: missingUserIds(get(userStore), new Set<string>(allUserIds)),
+                updatedSince: BigInt(0),
+            }]
+        });
 
         userStore.addMany(resp.users);
     }

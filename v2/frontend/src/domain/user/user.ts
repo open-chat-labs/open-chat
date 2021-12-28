@@ -3,6 +3,7 @@ import type { DataContent } from "../data/data";
 export type UserLastOnline = {
     userId: string;
     lastOnline: number; // timestamp calculated from server response in seconds
+    updated: bigint;
 };
 
 export type UserSummary = UserLastOnline &
@@ -24,8 +25,10 @@ export type User = {
 };
 
 export type UsersArgs = {
-    users: string[];
-    updatedSince?: bigint;
+    userGroups: {
+        users: string[],
+        updatedSince: bigint
+    }[];
 };
 
 export type UsersResponse = {

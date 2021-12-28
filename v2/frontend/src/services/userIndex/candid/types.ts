@@ -497,7 +497,9 @@ export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
   { 'Owner' : null };
 export interface SearchArgs { 'max_results' : number, 'search_term' : string }
-export type SearchResponse = { 'Success' : { 'users' : Array<UserSummary> } };
+export type SearchResponse = {
+    'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }
+  };
 export interface SetUsernameArgs { 'username' : string }
 export type SetUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |

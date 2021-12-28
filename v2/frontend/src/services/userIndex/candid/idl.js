@@ -115,7 +115,10 @@ export const idlFactory = ({ IDL }) => {
     'seconds_since_last_online' : IDL.Nat32,
   });
   const SearchResponse = IDL.Variant({
-    'Success' : IDL.Record({ 'users' : IDL.Vec(UserSummary) }),
+    'Success' : IDL.Record({
+      'timestamp' : TimestampMillis,
+      'users' : IDL.Vec(UserSummary),
+    }),
   });
   const SetUsernameArgs = IDL.Record({ 'username' : IDL.Text });
   const SetUsernameResponse = IDL.Variant({
