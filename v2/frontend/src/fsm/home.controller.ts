@@ -34,6 +34,7 @@ import { toastStore } from "../stores/toast";
 import { typing } from "../stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
+import { groupBy } from "../utils/list";
 import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
 import { ChatController } from "./chat.controller";
@@ -98,17 +99,9 @@ export class HomeController {
             }
 
             const allUsers = get(userStore);
-            const userGroups = new Map<bigint, string[]>();
-
-            for (const userId of usersToUpdate) {
-                const user = allUsers[userId];
-                const updated = user?.updated ?? 0;
-                if (userGroups.has(updated)) {
-                    userGroups.get(updated)!.push(userId);
-                } else {
-                    userGroups.set(updated, [userId]);
-                }
-            }
+            const userGroups = groupBy<string, bigint>(Array.from(usersToUpdate), (u) => {
+                return allUsers[u]?.updated ?? BigInt(0);
+            });
 
             usersResp = await this.api.getUsers({
                 userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
