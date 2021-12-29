@@ -1,7 +1,11 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserLookup } from "../../domain/user/user";
-    import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import {
+        avatarUrl as getAvatarUrl,
+        getUserStatus,
+        parseMentions,
+    } from "../../domain/user/user.utils";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { formatMessageDate } from "../../utils/date";
@@ -54,7 +58,11 @@
             return "";
         }
 
-        const latestMessageText = getContentAsText(chatSummary.latestMessage.event.content);
+        const latestMessageText = parseMentions(
+            users,
+            getContentAsText(chatSummary.latestMessage.event.content),
+            $_("unknown")
+        );
 
         if (chatSummary.kind === "direct_chat") {
             return latestMessageText;

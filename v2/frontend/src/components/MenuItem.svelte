@@ -1,5 +1,6 @@
 <script lang="ts">
     export let disabled: boolean = false;
+    export let selected: boolean = false;
 </script>
 
 {#if disabled}
@@ -10,7 +11,7 @@
         <slot name="text" />
     </div>
 {:else}
-    <div class="menu-item" on:click role="menuitem">
+    <div class="menu-item" on:click role="menuitem" class:selected>
         <span class="icon">
             <slot name="icon" />
         </span>
@@ -25,13 +26,15 @@
         cursor: pointer;
         border-bottom: 1px solid var(--menu-bd);
         color: var(--menu-txt);
+        align-items: center;
         @include font(book, normal, fs-90);
 
         &:last-child {
             border-bottom: none;
         }
 
-        &:hover {
+        &:hover,
+        &.selected {
             background-color: var(--menu-hv);
         }
 

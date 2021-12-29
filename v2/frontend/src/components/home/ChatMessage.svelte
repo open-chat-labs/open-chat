@@ -244,7 +244,7 @@
             {#if first && !me && groupChat && !deleted}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"hover"} on:click={chatWithUser}>
-                        <h4 class="username" class:fill>{username} {msg.sender}</h4>
+                        <h4 class="username" class:fill>{username}</h4>
                     </Link>
                 </div>
             {/if}

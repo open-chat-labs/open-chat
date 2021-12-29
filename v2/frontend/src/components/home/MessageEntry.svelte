@@ -27,7 +27,8 @@
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
-    const mentionRegex = /@([.\S]*)$/;
+    const reverseUserLookup: Record<string, string> = {};
+    const mentionRegex = /@([\d\w_]*)$/;
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
     let audioMimeType = audioRecordingMimeType();
@@ -116,7 +117,7 @@
 
         const matches = inputContent.match(mentionRegex);
         if (matches !== null) {
-            mentionPrefix = matches[1] || undefined;
+            mentionPrefix = matches[1].toLowerCase() || undefined;
             controller.loadDetails().then(() => {
                 console.log("Participants: ", $participants);
                 showMentionPicker = true;
@@ -156,8 +157,21 @@
         }
     }
 
+    // replace anything of the form @username with @UserId(xyz) where xyz is the userId
+    // if we don't have the mapping, just leave it as is (we *will* have the mapping)
+    function expandMentions(text?: string): string | undefined {
+        return text?.replace(/@([\w\d_]*)/g, (match, p1) => {
+            console.log(match, p1);
+            const userId = reverseUserLookup[p1];
+            if (userId !== undefined) {
+                return `@UserId(${userId})`;
+            }
+            return match;
+        });
+    }
+
     function sendMessage() {
-        dispatch("sendMessage", inp.textContent?.trim());
+        dispatch("sendMessage", expandMentions(inp.textContent?.trim()));
         inp.textContent = "";
         inp.focus();
         inputIsEmpty = true;
@@ -209,18 +223,16 @@
     }
 
     function mention(ev: CustomEvent<string>): void {
-        // TODO this is not really good enough. Where does the raw mention live? @UserId(xxxx)?
-        // + it only works with mentions at the end of the message string. What if we go back and edit a mention earlier in the message
-        // + it doesn't handle deleting mentions very well
-        // + it needs to be generalised to emoji lookup too (: prefix)
-        // + it needs to be generalised to group lookup too (# prefix)
-        const username = $userStore[ev.detail]?.username ?? $_("unknown");
+        const user = $userStore[ev.detail];
+        const username = user?.username ?? $_("unknown");
         inp.textContent = inp.textContent?.replace(mentionRegex, `@${username}`) || null;
         controller.setTextContent(inp.textContent || undefined);
         showMentionPicker = false;
-
-        // This should really set the caret to the end of the current mention, not the end of the whole message
         setCaretToEnd();
+
+        if (user !== undefined) {
+            reverseUserLookup[username] = user.userId;
+        }
     }
 </script>
 

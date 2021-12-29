@@ -77,3 +77,10 @@ export function nullUser(username: string): UserSummary {
         lastOnline: 0,
     };
 }
+
+export function parseMentions(userLookup: UserLookup, text: string, unknown: string): string {
+    return text.replace(/@UserId\(([\d\w-]+)\)/g, (_match, p1) => {
+        const username = userLookup[p1]?.username ?? unknown;
+        return `**@${username}**`;
+    });
+}

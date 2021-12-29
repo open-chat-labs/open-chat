@@ -1,8 +1,16 @@
 <script lang="ts">
+    import MenuItem from "../MenuItem.svelte";
+    import Menu from "../Menu.svelte";
+    import At from "svelte-material-icons/At.svelte";
+
     import type { Participant } from "domain/chat/chat";
     import { userStore } from "stores/user";
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
+    import { iconSize } from "stores/iconSize";
+    import Avatar from "../Avatar.svelte";
+    import { AvatarSize } from "domain/user/user";
+    import { avatarUrl } from "domain/user/user.utils";
 
     export let participants: Participant[];
     export let prefix: string | undefined;
@@ -53,43 +61,29 @@
 </script>
 
 <div class="mention-picker">
-    {#each filtered as participant, i (participant.userId)}
-        <div
-            class:current={i === index}
-            class="mention"
-            on:click={() => mention(participant.userId)}>
-            {`@${$userStore[participant.userId]?.username ?? $_("unknown")}`}
-        </div>
-    {/each}
+    <Menu>
+        {#each filtered as participant, i (participant.userId)}
+            <MenuItem selected={index === i} on:click={() => mention(participant.userId)}>
+                <div class="avatar" slot="icon">
+                    <Avatar
+                        url={avatarUrl($userStore[participant.userId])}
+                        size={AvatarSize.Tiny} />
+                </div>
+                <!-- <At size={$iconSize} color={"var(--icon-txt)"} slot="icon" /> -->
+                <div slot="text">{$userStore[participant.userId]?.username ?? $_("unknown")}</div>
+            </MenuItem>
+        {/each}
+    </Menu>
 </div>
 
 <svelte:body on:keydown={onKeyDown} />
 
 <style type="text/scss">
-    .mention-picker {
-        position: absolute;
-        bottom: 50px;
-        background-color: var(--entry-bg);
+    :global(.mention-picker .menu) {
+        bottom: 100px;
     }
 
-    .mention {
-        cursor: pointer;
-        padding: $sp4;
-        border-bottom: 1px solid var(--menu-bd);
-        min-width: 200px;
-        color: var(--menu-txt);
-        @include font(book, normal, fs-90);
-
-        &:last-child {
-            border-bottom: none;
-        }
-
-        &:hover {
-            background-color: var(--menu-hv);
-        }
-
-        &.current {
-            background-color: red;
-        }
+    .avatar {
+        margin-right: $sp4;
     }
 </style>
