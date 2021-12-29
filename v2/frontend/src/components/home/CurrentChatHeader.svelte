@@ -1,5 +1,6 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
+    import type { PartialUserSummary } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -99,12 +100,13 @@
         }
     }
 
-    function formatLastOnlineDate(now: number, lastOnline: number | undefined): string {
-        if (lastOnline === undefined) {
+    function formatLastOnlineDate(now: number, user: PartialUserSummary | undefined): string {
+        const TWO_MINUTES_MS = 120 * 1000;
+        if (user === undefined || now - Number(user.updated) > TWO_MINUTES_MS) {
             return "";
         }
 
-        const secondsSinceLastOnline = (now - lastOnline) / 1000;
+        const secondsSinceLastOnline = (now - user.lastOnline) / 1000;
 
         const minutesSinceLastOnline = Math.floor(secondsSinceLastOnline / 60);
 
@@ -138,7 +140,7 @@
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus(now, $userStore, chatSummary.them),
-                subtext: formatLastOnlineDate(now, $userStore[chatSummary.them]?.lastOnline),
+                subtext: formatLastOnlineDate(now, $userStore[chatSummary.them]),
                 typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
             };
         }
