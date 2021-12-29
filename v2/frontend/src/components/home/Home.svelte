@@ -217,13 +217,15 @@
     $: chat = $selectedChat?.chat;
 
     $: groupChat =
-        chat && $chat.kind === "group_chat" ? (chat as Writable<GroupChatSummary>) : undefined;
+        chat && $chat && $chat.kind === "group_chat"
+            ? (chat as Writable<GroupChatSummary>)
+            : undefined;
 
     $: x = $rtlStore ? -300 : 300;
 
     let editGroupHistory: EditGroupState[] = [];
 
-    $: blocked = chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
+    $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
 </script>
 
 {#if controller.user}

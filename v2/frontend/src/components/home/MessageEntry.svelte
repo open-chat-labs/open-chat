@@ -13,6 +13,7 @@
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import Smiley from "./Smiley.svelte";
     import { audioRecordingMimeType } from "../../utils/media";
+    import MentionPicker from "./MentionPicker.svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -20,10 +21,12 @@
     $: textContent = controller.textContent;
     $: editingEvent = controller.editingEvent;
     $: fileToAttach = controller.fileToAttach;
+    $: participants = controller.participants;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
+    const mentionRegex = /@([.\S]*)$/;
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
     let audioMimeType = audioRecordingMimeType();
@@ -37,6 +40,8 @@
     let typingTimer: number | undefined = undefined;
     let audioSupported: boolean = "mediaDevices" in navigator;
     let inputIsEmpty = true;
+    let showMentionPicker = false;
+    let mentionPrefix: string | undefined;
     $: messageIsEmpty = true;
 
     $: {
@@ -97,9 +102,31 @@
             : $_("enterMessage");
 
     function onInput() {
-        inputIsEmpty = (inp.textContent?.trim().length ?? 0) === 0;
-        controller.setTextContent(inputIsEmpty ? undefined : inp.textContent!);
+        const content = inp.textContent;
+        const trimmedContent = content?.trim();
+        inputIsEmpty = (trimmedContent?.length ?? 0) === 0;
+        controller.setTextContent(inputIsEmpty ? undefined : content!);
+        triggerMentionLookup(content);
+        triggerTypingTimer();
+    }
 
+    function triggerMentionLookup(inputContent: string | null): void {
+        if (inputContent === null) return;
+
+        const matches = inputContent.match(mentionRegex);
+        if (matches !== null) {
+            mentionPrefix = matches[1] || undefined;
+            controller.loadDetails().then(() => {
+                console.log("Participants: ", $participants);
+                showMentionPicker = true;
+            });
+        } else {
+            showMentionPicker = false;
+            mentionPrefix = undefined;
+        }
+    }
+
+    function triggerTypingTimer() {
         requestAnimationFrame(() => {
             const now = Date.now();
             if (now - lastTypingUpdate > USER_TYPING_EVENT_MIN_INTERVAL_MS) {
@@ -169,7 +196,20 @@
     function clearAttachment() {
         controller.clearAttachment();
     }
+
+    function mention(ev: CustomEvent<string>): void {
+        console.log("Mentioned: ", ev.detail);
+        showMentionPicker = false;
+    }
 </script>
+
+{#if showMentionPicker}
+    <MentionPicker
+        on:close={() => (showMentionPicker = false)}
+        on:mention={mention}
+        prefix={mentionPrefix}
+        participants={$participants} />
+{/if}
 
 <div class="message-entry">
     {#if blocked}

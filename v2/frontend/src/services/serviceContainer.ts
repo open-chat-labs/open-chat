@@ -453,6 +453,7 @@ export class ServiceContainer implements MarkMessagesRead {
 
     getInitialState(messagesRead: IMessageReadTracker): Promise<MergedUpdatesResponse> {
         return this.userClient.getInitialState().then((resp) => {
+            console.log("Initial state: ", resp);
             return this.handleMergedUpdatesResponse(messagesRead, resp);
         });
     }

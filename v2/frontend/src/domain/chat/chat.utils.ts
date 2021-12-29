@@ -65,7 +65,7 @@ export function getContentAsText(content: MessageContent): string {
 
 function captionedContent(type: string, caption?: string): string {
     if (caption) {
-        return type + " - " + caption; 
+        return type + " - " + caption;
     } else {
         return type;
     }
@@ -325,6 +325,7 @@ function mergeUpdatedGroupChat(
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
     chat.myRole = updatedChat.myRole ?? chat.myRole;
+    chat.mentions = [...chat.mentions, ...updatedChat.mentions];
 
     return chat;
 }
