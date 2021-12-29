@@ -14,6 +14,7 @@
     import Smiley from "./Smiley.svelte";
     import { audioRecordingMimeType } from "../../utils/media";
     import MentionPicker from "./MentionPicker.svelte";
+    import { userStore } from "stores/user";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -119,6 +120,7 @@
             controller.loadDetails().then(() => {
                 console.log("Participants: ", $participants);
                 showMentionPicker = true;
+                saveSelection();
             });
         } else {
             showMentionPicker = false;
@@ -188,6 +190,15 @@
         selection.addRange(selectedRange);
     }
 
+    function setCaretToEnd() {
+        const range = document.createRange();
+        range.selectNodeContents(inp);
+        range.collapse(false);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+    }
+
     function onDrop(e: DragEvent) {
         dragging = false;
         dispatch("drop", e);
@@ -198,8 +209,18 @@
     }
 
     function mention(ev: CustomEvent<string>): void {
-        console.log("Mentioned: ", ev.detail);
+        // TODO this is not really good enough. Where does the raw mention live? @UserId(xxxx)?
+        // + it only works with mentions at the end of the message string. What if we go back and edit a mention earlier in the message
+        // + it doesn't handle deleting mentions very well
+        // + it needs to be generalised to emoji lookup too (: prefix)
+        // + it needs to be generalised to group lookup too (# prefix)
+        const username = $userStore[ev.detail]?.username ?? $_("unknown");
+        inp.textContent = inp.textContent?.replace(mentionRegex, `@${username}`) || null;
+        controller.setTextContent(inp.textContent || undefined);
         showMentionPicker = false;
+
+        // This should really set the caret to the end of the current mention, not the end of the whole message
+        setCaretToEnd();
     }
 </script>
 
