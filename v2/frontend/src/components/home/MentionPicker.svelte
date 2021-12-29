@@ -1,6 +1,7 @@
 <script lang="ts">
     import MenuItem from "../MenuItem.svelte";
     import Menu from "../Menu.svelte";
+    import VirtualList from "../VirtualList.svelte";
 
     import type { Participant } from "domain/chat/chat";
     import { userStore } from "stores/user";
@@ -23,15 +24,12 @@
 
     const dispatch = createEventDispatcher();
 
-    // todo - this should use the virtual list
-    // todo - the styling here is going to be very similar to a context menu. Is there something more generic to be extracted?
     // todo - we should either filter out blocked users or show that they are blocked via the avatar
     function mention(userId: string) {
         dispatch("mention", userId);
     }
 
     function onKeyDown(ev: KeyboardEvent): void {
-        console.log("Key: ", ev.key);
         switch (ev.key) {
             case "ArrowDown":
                 index = (index + 1) % filtered.length;
@@ -60,18 +58,18 @@
     }
 </script>
 
-<div class="mention-picker" style={`bottom: ${offset}px`}>
+<div class="mention-picker" style={`bottom: ${offset}px; height: ${filtered.length * 50}px`}>
     <Menu>
-        {#each filtered as participant, i (participant.userId)}
-            <MenuItem selected={index === i} on:click={() => mention(participant.userId)}>
+        <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
+            <MenuItem selected={itemIndex === index} on:click={() => mention(item.userId)}>
                 <div class="avatar" slot="icon">
-                    <Avatar
-                        url={avatarUrl($userStore[participant.userId])}
-                        size={AvatarSize.Tiny} />
+                    <Avatar url={avatarUrl($userStore[item.userId])} size={AvatarSize.Tiny} />
                 </div>
-                <div slot="text">{$userStore[participant.userId]?.username ?? $_("unknown")}</div>
+                <div slot="text">
+                    {$userStore[item.userId]?.username ?? $_("unknown")}
+                </div>
             </MenuItem>
-        {/each}
+        </VirtualList>
     </Menu>
 </div>
 
@@ -82,12 +80,15 @@
         box-shadow: none;
         position: relative;
         width: 100%;
+        height: 100%;
         @include z-index("footer-overlay");
     }
 
     .mention-picker {
         position: absolute;
         width: 100%;
+        max-height: calc(var(--vh, 1vh) * 50);
+        overflow: auto;
     }
     .avatar {
         margin-right: $sp4;
