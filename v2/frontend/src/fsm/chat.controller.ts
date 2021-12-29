@@ -199,10 +199,12 @@ export class ChatController {
         });
 
         const resp = await this.api.getUsers({
-            userGroups: [{
-                users: missingUserIds(get(userStore), new Set<string>(allUserIds)),
-                updatedSince: BigInt(0),
-            }]
+            userGroups: [
+                {
+                    users: missingUserIds(get(userStore), new Set<string>(allUserIds)),
+                    updatedSince: BigInt(0),
+                },
+            ],
         });
 
         userStore.addMany(resp.users);

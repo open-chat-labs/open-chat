@@ -31,6 +31,6 @@ export const userStore = {
                 }
             }
             return users;
-        })
-    }
+        });
+    },
 };

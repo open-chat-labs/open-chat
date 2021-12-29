@@ -52,7 +52,10 @@ export function usersResponse(candid: ApiUsersResponse): UsersResponse {
     throw new Error(`Unknown UserIndex.UsersResponse of ${candid}`);
 }
 
-export function partialUserSummary(candid: ApiPartialUserSummary, timestamp: bigint): PartialUserSummary {
+export function partialUserSummary(
+    candid: ApiPartialUserSummary,
+    timestamp: bigint
+): PartialUserSummary {
     return {
         userId: candid.user_id.toString(),
         username: optional(candid.username, identity),

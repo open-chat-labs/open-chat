@@ -1,12 +1,6 @@
-const unitTypes = [
-    "Bytes",
-    "KB",
-    "MB",
-    "GB",
-    "TB",
-];
+const unitTypes = ["Bytes", "KB", "MB", "GB", "TB"];
 
-export default function format(bytes: number) : string {
+export default function format(bytes: number): string {
     let value: number = Math.ceil(bytes);
     let unitType = 0;
     while (value >= 1024 && unitType < unitTypes.length - 1) {

@@ -65,7 +65,7 @@ export function getContentAsText(content: MessageContent): string {
 
 function captionedContent(type: string, caption?: string): string {
     if (caption) {
-        return type + " - " + caption; 
+        return type + " - " + caption;
     } else {
         return type;
     }

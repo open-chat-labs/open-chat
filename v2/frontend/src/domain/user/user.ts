@@ -26,8 +26,8 @@ export type User = {
 
 export type UsersArgs = {
     userGroups: {
-        users: string[],
-        updatedSince: bigint
+        users: string[];
+        updatedSince: bigint;
     }[];
 };
 

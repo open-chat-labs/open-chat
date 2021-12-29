@@ -113,8 +113,8 @@ export class HomeController {
             usersResp = await this.api.getUsers({
                 userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
                     users,
-                    updatedSince
-                }))
+                    updatedSince,
+                })),
             });
             console.log("sending updated users");
             userStore.addMany(usersResp.users);
@@ -143,10 +143,12 @@ export class HomeController {
                 const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
                 userIds.add(this.user.userId);
                 const usersResponse = await this.api.getUsers({
-                    userGroups: [{
-                        users: missingUserIds(get(userStore), userIds),
-                        updatedSince: BigInt(0)
-                    }]
+                    userGroups: [
+                        {
+                            users: missingUserIds(get(userStore), userIds),
+                            updatedSince: BigInt(0),
+                        },
+                    ],
                 });
 
                 userStore.addMany(usersResponse.users);
@@ -236,7 +238,7 @@ export class HomeController {
                 userId: this.user.userId,
                 username: this.user.username,
                 lastOnline: Date.now(),
-                updated: BigInt(Date.now())
+                updated: BigInt(Date.now()),
             };
 
             this.selectedChat.update((selectedChat) => {
