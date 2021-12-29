@@ -1,19 +1,18 @@
 <script lang="ts">
     import MenuItem from "../MenuItem.svelte";
     import Menu from "../Menu.svelte";
-    import At from "svelte-material-icons/At.svelte";
 
     import type { Participant } from "domain/chat/chat";
     import { userStore } from "stores/user";
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
-    import { iconSize } from "stores/iconSize";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "domain/user/user";
     import { avatarUrl } from "domain/user/user.utils";
 
     export let participants: Participant[];
     export let prefix: string | undefined;
+    export let offset: number;
 
     let index = 0;
 
@@ -26,6 +25,7 @@
 
     // todo - this should use the virtual list
     // todo - the styling here is going to be very similar to a context menu. Is there something more generic to be extracted?
+    // todo - we should either filter out blocked users or show that they are blocked via the avatar
     function mention(userId: string) {
         dispatch("mention", userId);
     }
@@ -60,7 +60,7 @@
     }
 </script>
 
-<div class="mention-picker">
+<div class="mention-picker" style={`bottom: ${offset}px`}>
     <Menu>
         {#each filtered as participant, i (participant.userId)}
             <MenuItem selected={index === i} on:click={() => mention(participant.userId)}>
@@ -69,7 +69,6 @@
                         url={avatarUrl($userStore[participant.userId])}
                         size={AvatarSize.Tiny} />
                 </div>
-                <!-- <At size={$iconSize} color={"var(--icon-txt)"} slot="icon" /> -->
                 <div slot="text">{$userStore[participant.userId]?.username ?? $_("unknown")}</div>
             </MenuItem>
         {/each}
@@ -80,9 +79,16 @@
 
 <style type="text/scss">
     :global(.mention-picker .menu) {
-        bottom: 100px;
+        box-shadow: none;
+        position: relative;
+        width: 100%;
+        @include z-index("footer-overlay");
     }
 
+    .mention-picker {
+        position: absolute;
+        width: 100%;
+    }
     .avatar {
         margin-right: $sp4;
     }

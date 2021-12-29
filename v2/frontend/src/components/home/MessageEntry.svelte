@@ -44,6 +44,8 @@
     let inputIsEmpty = true;
     let showMentionPicker = false;
     let mentionPrefix: string | undefined;
+    let messageEntry: HTMLDivElement;
+
     $: messageIsEmpty = true;
 
     $: {
@@ -121,6 +123,7 @@
             controller.loadDetails().then(() => {
                 console.log("Participants: ", $participants);
                 showMentionPicker = true;
+                console.log(messageEntry.clientHeight);
                 saveSelection();
             });
         } else {
@@ -238,13 +241,14 @@
 
 {#if showMentionPicker}
     <MentionPicker
+        offset={messageEntry.clientHeight}
         on:close={() => (showMentionPicker = false)}
         on:mention={mention}
         prefix={mentionPrefix}
         participants={$participants} />
 {/if}
 
-<div class="message-entry">
+<div class="message-entry" bind:this={messageEntry}>
     {#if blocked}
         <div class="blocked">
             {$_("userIsBlocked")}
