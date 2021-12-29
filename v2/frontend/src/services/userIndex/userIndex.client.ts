@@ -65,10 +65,12 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         }
         return this.handleResponse(
             this.userService.users({
-                users: userIds.map((u) => {
-                    return Principal.fromText(u);
-                }),
-                updated_since: [since],
+                user_groups: [
+                    {
+                        users: userIds.map(Principal.fromText),
+                        updated_since: since,
+                    },
+                ],
             }),
             usersResponse
         );

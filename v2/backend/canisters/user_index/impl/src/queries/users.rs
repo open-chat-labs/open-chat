@@ -11,18 +11,23 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     runtime_state.trap_if_caller_not_open_chat_user();
 
     let now = runtime_state.env.now();
-    let updated_since = args.updated_since.unwrap_or(0);
 
     let users = args
-        .users
-        .iter()
-        .filter_map(|user_id| runtime_state.data.users.get_by_user_id(user_id))
-        .filter_map(|u| u.created_user())
-        .filter(|u| u.date_updated > updated_since || u.last_online > updated_since)
-        .map(|u| {
-            let include_username = u.date_updated > updated_since;
-            u.to_partial_summary(include_username, now)
+        .user_groups
+        .into_iter()
+        .map(|g| {
+            let updated_since = g.updated_since;
+            g.users
+                .into_iter()
+                .filter_map(|user_id| runtime_state.data.users.get_by_user_id(&user_id))
+                .filter_map(|u| u.created_user())
+                .filter(move |u| u.date_updated > updated_since || u.last_online > updated_since)
+                .map(move |u| {
+                    let include_username = u.date_updated > updated_since;
+                    u.to_partial_summary(include_username, now)
+                })
         })
+        .flatten()
         .collect();
 
     Success(Result { users, timestamp: now })
@@ -83,8 +88,10 @@ mod tests {
         let runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
-            users: vec![user_id1, user_id3],
-            updated_since: None,
+            user_groups: vec![UserGroup {
+                users: vec![user_id1, user_id3],
+                updated_since: 0,
+            }],
         };
 
         let Success(result) = users_impl(args, &runtime_state);
@@ -148,8 +155,10 @@ mod tests {
         let runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
-            users: vec![user_id1, user_id3],
-            updated_since: Some(now - 1500),
+            user_groups: vec![UserGroup {
+                users: vec![user_id1, user_id3],
+                updated_since: now - 1500,
+            }],
         };
 
         let Success(result) = users_impl(args, &runtime_state);
@@ -211,8 +220,10 @@ mod tests {
         let runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
-            users: vec![user_id1, user_id2, user_id3],
-            updated_since: Some(start),
+            user_groups: vec![UserGroup {
+                users: vec![user_id1, user_id2, user_id3],
+                updated_since: start,
+            }],
         };
 
         let Success(result) = users_impl(args, &runtime_state);
