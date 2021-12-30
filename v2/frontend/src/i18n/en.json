@@ -179,6 +179,12 @@
         "blurbPartTwo": " - the world's first internet-scale blockchain.",
         "signIn": "Sign in"
     },
+    "reactions": {
+        "greaterThan99People": "99+ people",
+        "youClickToRemove": "You (click to remove)",
+        "andYou": ", and you",
+        "reactedWith": "reacted with"
+    },
     "register": {
         "failedToGetFee": "Failed to generate a registration fee",
         "goBack": "Go back",

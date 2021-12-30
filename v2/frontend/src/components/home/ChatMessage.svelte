@@ -30,6 +30,7 @@
     import type { Dimensions } from "../../utils/media";
     import type { MessageContent } from "../../domain/chat/chat";
     import { calculateMediaDimensions } from "../../utils/layout";
+    import MessageReaction from "./MessageReaction.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -332,16 +333,13 @@
 
     {#if msg.reactions.length > 0 && !deleted}
         <div class="message-reactions" class:me>
-            {#each msg.reactions as { reaction, userIds }}
-                <div
-                    on:click={() => toggleReaction(reaction)}
-                    class:me={user !== undefined ? userIds.has(user.userId) : false}
-                    class="message-reaction">
-                    {reaction}
-                    <span class="reaction-count">
-                        {userIds.size > 9 ? "9+" : userIds.size}
-                    </span>
-                </div>
+            {#each msg.reactions as { reaction, userIds } (reaction)}
+                <MessageReaction 
+                    on:click={() => toggleReaction(reaction)} 
+                    {reaction} 
+                    {userIds}
+                    {me} 
+                    myUserId = {user?.userId}/>
             {/each}
         </div>
     {/if}
@@ -430,32 +428,6 @@
 
         &.me {
             justify-content: flex-end;
-        }
-
-        .message-reaction {
-            @include pop();
-            border-radius: $sp4;
-            background-color: var(--reaction-bg);
-            color: var(--reaction-txt);
-            cursor: pointer;
-            height: 30px;
-            padding: $sp2;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-left: 1px;
-            margin-right: 1px;
-            margin-bottom: $sp2;
-            font-size: 120%;
-
-            &.me {
-                border: 2px solid var(--reaction-me);
-            }
-
-            .reaction-count {
-                @include font(book, normal, fs-60);
-                margin-left: $sp2;
-            }
         }
     }
 

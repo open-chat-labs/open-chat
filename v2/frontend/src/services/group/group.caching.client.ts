@@ -26,7 +26,9 @@ import {
     getCachedEvents,
     getCachedEventsByIndex,
     getCachedEventsWindow,
+    getCachedGroupDetails,
     setCachedEvents,
+    setCachedGroupDetails,
     setCachedMessage,
 } from "../../utils/caching";
 
@@ -141,13 +143,25 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.unblockUser(userId);
     }
 
-    getGroupDetails(): Promise<GroupChatDetailsResponse> {
-        // FIXME - need to check the cache here ideally
-        return this.client.getGroupDetails();
+    async getGroupDetails(): Promise<GroupChatDetailsResponse> {
+        const fromCache = await getCachedGroupDetails(this.db, this.chatId);
+        if (fromCache !== undefined) {
+            return this.getGroupDetailsUpdates(fromCache);
+        }
+
+        const response = await this.client.getGroupDetails();
+        if (response !== "caller_not_in_group") {
+            await setCachedGroupDetails(this.db, this.chatId, response);
+        }
+        return response;
     }
 
-    getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
-        return this.client.getGroupDetailsUpdates(previous);
+    async getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
+        const response = await this.client.getGroupDetailsUpdates(previous);
+        if (response.latestEventIndex > previous.latestEventIndex) {
+            await setCachedGroupDetails(this.db, this.chatId, response);
+        }
+        return response;
     }
 
     transferOwnership(userId: string): Promise<TransferOwnershipResponse> {

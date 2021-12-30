@@ -4,6 +4,7 @@ import type {
     ChatEvent,
     EventsResponse,
     EventWrapper,
+    GroupChatDetails,
     IndexRange,
     MergedUpdatesResponse,
     Message,
@@ -11,12 +12,7 @@ import type {
     SendMessageSuccess,
     SerializableMergedUpdatesResponse,
 } from "../domain/chat/chat";
-import type {
-    UserSummary,
-    UsersArgs,
-    UsersResponse,
-    PartialUserSummary,
-} from "../domain/user/user";
+import type { UserSummary, UsersResponse } from "../domain/user/user";
 import { rollbar } from "./logging";
 
 export const MAX_MSGS = 30;
@@ -34,6 +30,11 @@ export interface ChatSchema extends DBSchema {
     chat_events: {
         key: string;
         value: EventWrapper<ChatEvent>;
+    };
+
+    group_details: {
+        key: string;
+        value: GroupChatDetails;
     };
 
     message_index_event_index: {
@@ -71,17 +72,20 @@ export function openCache(principal: string): Database | undefined {
         return undefined;
     }
     try {
-        return openDB<ChatSchema>(`openchat_db_${principal}`, 13, {
+        return openDB<ChatSchema>(`openchat_db_${principal}`, 14, {
             upgrade(db, _oldVersion, _newVersion) {
                 try {
                     if (db.objectStoreNames.contains("chat_events")) {
                         db.deleteObjectStore("chat_events");
                     }
-                    if (db.objectStoreNames.contains("media_data")) {
-                        db.deleteObjectStore("media_data");
-                    }
                     if (db.objectStoreNames.contains("chats")) {
                         db.deleteObjectStore("chats");
+                    }
+                    if (db.objectStoreNames.contains("group_details")) {
+                        db.deleteObjectStore("group_details");
+                    }
+                    if (db.objectStoreNames.contains("media_data")) {
+                        db.deleteObjectStore("media_data");
                     }
                     if (db.objectStoreNames.contains("message_index_event_index")) {
                         db.deleteObjectStore("message_index_event_index");
@@ -91,6 +95,7 @@ export function openCache(principal: string): Database | undefined {
                     }
                     db.createObjectStore("chat_events");
                     db.createObjectStore("chats");
+                    db.createObjectStore("group_details");
                     db.createObjectStore("message_index_event_index");
                     db.createObjectStore("users");
                     if (!db.objectStoreNames.contains("soft_disabled")) {
@@ -477,6 +482,21 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
         )
     );
     await tx.done;
+}
+
+export async function getCachedGroupDetails(
+    db: Database,
+    chatId: string
+): Promise<GroupChatDetails | undefined> {
+    return (await db).get("group_details", chatId);
+}
+
+export async function setCachedGroupDetails(
+    db: Database,
+    chatId: string,
+    groupDetails: GroupChatDetails
+): Promise<void> {
+    await (await db).put("group_details", groupDetails, chatId);
 }
 
 export async function storeSoftDisabled(value: boolean): Promise<void> {
