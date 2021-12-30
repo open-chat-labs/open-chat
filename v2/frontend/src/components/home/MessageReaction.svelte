@@ -5,6 +5,7 @@
     import { getContext } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
     import { rtlStore } from "../../stores/rtl";
+    import type { NativeEmoji } from "emoji-picker-element/shared";
 
     export let reaction: string;
     export let userIds: Set<string>;
@@ -33,21 +34,33 @@
             : "");
     }
 
-    async function buildReactionSuffix(reaction: string): Promise<string | undefined> {
-        const emoji = (await emojiDatabase.getEmojiByUnicodeOrName(reaction)) as any;
-        return emoji ? `${$_("reactions.reactedWith")} :${emoji.shortcodes[emoji.shortcodes.length - 1]}:` : undefined;
+    async function buildReactionCode(reaction: string): Promise<string | undefined> {
+        const emoji = (await emojiDatabase.getEmojiByUnicodeOrName(reaction)) as NativeEmoji | undefined ;
+        let code = emoji?.shortcodes !== undefined 
+            ? `:${emoji.shortcodes[emoji.shortcodes.length - 1]}:` 
+            : `"${emoji?.annotation}"`;
+        return code ?? ":unknown:";
     }
 
     function calculateMaxWidth(numChars: number): number {
         return Math.min(300, Math.max(136, Math.sqrt(numChars) * 12.5));
     }
+
+    function startHover() {
+        hover = true;
+    }
+
+    function endHover() {
+        hover = false;
+    }
 </script>
 
 <div
     on:click
-    on:mouseenter={() => { hover = true; }} 
-    on:mouseleave={() => { hover = false; }}
-    on:contextmenu|preventDefault={() => {}}
+    on:mouseenter={startHover} 
+    on:mouseleave={endHover}
+    on:blur={endHover}
+    on:contextmenu|preventDefault={startHover}
     class:selected
     class="message-reaction">
     {reaction}
@@ -63,12 +76,14 @@
         >
             <div class="reaction-tooltip-emoji">{reaction}</div>
             <div>
-                <span class="usernames">{usernames}</span>
-                {#await buildReactionSuffix(reaction) then value}
-                {value}
-                {/await}                
+                <span class="reaction_usernames">{usernames}</span>
+                {$_("reactions.reactedWith")}
+                <span class="reaction_code">
+                    {#await buildReactionCode(reaction) then value}
+                        {value}
+                    {/await}                    
+                </span>
             </div>
-            <div class="diamond"></div>
         </div>
     {/if}
 </div>
@@ -112,32 +127,34 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            word-break: break-all;
             position: absolute;
             left: -4px;
             bottom: 34px;
             font-size: 9px;
             width: max-content;
             max-width: 300px;
-            padding: $sp3;
+            padding: $sp2 $sp3 $sp3 $sp3;
             border-radius: $sp3;
             pointer-events: none;
+            word-wrap: break-word;
 
             &.right {
                 left: auto;
                 right: -4px;  
                 
-                .diamond {
+                &:after {
                     right: 18px;
                     left: auto;
                 }                
             }
 
             .reaction-tooltip-emoji {
-                font-size: 32px;
+                @include font-size(fs-180);
+                margin-bottom: $sp1;
             }
 
-            .diamond {
+            &:after {
+                display: block;
                 position: absolute;
                 background-color: inherit;
                 width: 8px;
@@ -147,11 +164,16 @@
                 transform: rotate(45deg);
                 border-right: 1px solid inherit;
                 border-bottom: 1px solid inherit;
+                content: "";
             }
         }
 
-        .usernames {
+        .reaction_usernames {
             font-weight: bold;
+        }
+
+        .reaction_code {
+            word-break: break-all;
         }
     }
 </style>
