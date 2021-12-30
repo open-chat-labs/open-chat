@@ -4,6 +4,7 @@ import type {
     ChatEvent,
     EventsResponse,
     EventWrapper,
+    GroupChatDetails,
     IndexRange,
     MergedUpdatesResponse,
     Message,
@@ -11,6 +12,7 @@ import type {
     SendMessageSuccess,
     SerializableMergedUpdatesResponse,
 } from "../domain/chat/chat";
+import type { UserSummary, UsersResponse } from "../domain/user/user";
 import { rollbar } from "./logging";
 
 export const MAX_MSGS = 30;
@@ -30,6 +32,11 @@ export interface ChatSchema extends DBSchema {
         value: EventWrapper<ChatEvent>;
     };
 
+    group_details: {
+        key: string;
+        value: GroupChatDetails;
+    };
+
     message_index_event_index: {
         key: string; // chatId_messageIndex
         value: number;
@@ -44,6 +51,11 @@ export interface ChatSchema extends DBSchema {
     soft_disabled: {
         key: string;
         value: boolean;
+    };
+
+    users: {
+        key: string;
+        value: UserSummary;
     };
 }
 
@@ -60,24 +72,32 @@ export function openCache(principal: string): Database | undefined {
         return undefined;
     }
     try {
-        return openDB<ChatSchema>(`openchat_db_${principal}`, 12, {
+        return openDB<ChatSchema>(`openchat_db_${principal}`, 14, {
             upgrade(db, _oldVersion, _newVersion) {
                 try {
                     if (db.objectStoreNames.contains("chat_events")) {
                         db.deleteObjectStore("chat_events");
                     }
-                    if (db.objectStoreNames.contains("media_data")) {
-                        db.deleteObjectStore("media_data");
-                    }
                     if (db.objectStoreNames.contains("chats")) {
                         db.deleteObjectStore("chats");
+                    }
+                    if (db.objectStoreNames.contains("group_details")) {
+                        db.deleteObjectStore("group_details");
+                    }
+                    if (db.objectStoreNames.contains("media_data")) {
+                        db.deleteObjectStore("media_data");
                     }
                     if (db.objectStoreNames.contains("message_index_event_index")) {
                         db.deleteObjectStore("message_index_event_index");
                     }
+                    if (db.objectStoreNames.contains("users")) {
+                        db.deleteObjectStore("users");
+                    }
                     db.createObjectStore("chat_events");
                     db.createObjectStore("chats");
+                    db.createObjectStore("group_details");
                     db.createObjectStore("message_index_event_index");
+                    db.createObjectStore("users");
                     if (!db.objectStoreNames.contains("soft_disabled")) {
                         db.createObjectStore("soft_disabled");
                     }
@@ -464,6 +484,21 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
     await tx.done;
 }
 
+export async function getCachedGroupDetails(
+    db: Database,
+    chatId: string
+): Promise<GroupChatDetails | undefined> {
+    return (await db).get("group_details", chatId);
+}
+
+export async function setCachedGroupDetails(
+    db: Database,
+    chatId: string,
+    groupDetails: GroupChatDetails
+): Promise<void> {
+    await (await db).put("group_details", groupDetails, chatId);
+}
+
 export async function storeSoftDisabled(value: boolean): Promise<void> {
     if (db !== undefined) {
         const tx = (await db).transaction("soft_disabled", "readwrite");
@@ -479,6 +514,38 @@ export async function getSoftDisabled(): Promise<boolean> {
         return res ?? false;
     }
     return false;
+}
+
+export async function getCachedUsers(db: Database, userIds: string[]): Promise<UserSummary[]> {
+    const resolvedDb = await db;
+
+    const fromCache = await Promise.all(userIds.map((u) => resolvedDb.get("users", u)));
+
+    return fromCache.reduce((users, next) => {
+        if (next !== undefined) users.push(next);
+        return users;
+    }, [] as UserSummary[]);
+}
+
+export async function setCachedUsers(db: Database, response: UsersResponse): Promise<void> {
+    const tx = (await db).transaction("users", "readwrite");
+    const store = tx.objectStore("users");
+
+    await Promise.all(
+        response.users
+            .filter((u) => u.username !== undefined)
+            .map((u) => {
+                store.put(
+                    {
+                        userId: u.userId,
+                        username: u.username!,
+                        lastOnline: u.lastOnline,
+                        updated: u.updated,
+                    },
+                    u.userId
+                );
+            })
+    );
 }
 
 let db: Database | undefined;

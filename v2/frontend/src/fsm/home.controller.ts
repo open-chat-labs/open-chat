@@ -34,6 +34,7 @@ import { toastStore } from "../stores/toast";
 import { typing } from "../stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
+import { groupBy } from "../utils/list";
 import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
 import { ChatController } from "./chat.controller";
@@ -47,7 +48,6 @@ const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
 export class HomeController {
     public messagesRead: IMessageReadTracker;
     private chatUpdatesSince?: bigint;
-    private usersLastUpdate = BigInt(0);
     private serverChatSummaries: Writable<Record<string, ChatSummary>> = writable({});
     public chatSummaries: Readable<Record<string, ChatSummary>> = derived(
         [this.serverChatSummaries, unconfirmed],
@@ -91,10 +91,27 @@ export class HomeController {
     private async updateUsers() {
         let usersResp: UsersResponse;
         try {
-            usersResp = await this.api.getUsers(Object.keys(get(userStore)), this.usersLastUpdate);
+            const usersToUpdate = new Set<string>();
+            for (const chat of Object.values(get(this.chatSummaries))) {
+                if (chat.kind == "direct_chat") {
+                    usersToUpdate.add(chat.them);
+                }
+            }
+
+            const allUsers = get(userStore);
+            const userGroups = groupBy<string, bigint>(Array.from(usersToUpdate), (u) => {
+                return allUsers[u]?.updated ?? BigInt(0);
+            });
+
+            usersResp = await this.api.getUsers({
+                userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
+                    users,
+                    updatedSince,
+                })),
+            });
             console.log("sending updated users");
             userStore.addMany(usersResp.users);
-            this.usersLastUpdate = usersResp.timestamp;
+            userStore.setUpdated(Array.from(usersToUpdate), usersResp.timestamp);
         } catch (err) {
             rollbar.error("Error updating users", err as Error);
         }
@@ -118,14 +135,17 @@ export class HomeController {
             if (chatsResponse.wasUpdated) {
                 const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
                 userIds.add(this.user.userId);
-                const usersResponse = await this.api.getUsers(
-                    missingUserIds(get(userStore), userIds),
-                    BigInt(0)
-                );
+                const usersResponse = await this.api.getUsers({
+                    userGroups: [
+                        {
+                            users: missingUserIds(get(userStore), userIds),
+                            updatedSince: BigInt(0),
+                        },
+                    ],
+                });
 
                 userStore.addMany(usersResponse.users);
                 blockedUsers.set(chatsResponse.blockedUsers);
-                this.usersLastUpdate = usersResponse.timestamp;
 
                 const selectedChat = get(this.selectedChat);
 
@@ -211,6 +231,7 @@ export class HomeController {
                 userId: this.user.userId,
                 username: this.user.username,
                 lastOnline: Date.now(),
+                updated: BigInt(Date.now()),
             };
 
             this.selectedChat.update((selectedChat) => {

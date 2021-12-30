@@ -18,7 +18,6 @@
 
 <style type="text/scss">
     .deleted {
-        margin-bottom: $sp2;
         @include font(light, italic, fs-90);
     }
 </style>

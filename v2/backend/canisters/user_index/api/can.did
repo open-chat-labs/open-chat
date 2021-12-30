@@ -186,8 +186,10 @@ type UserResponse =
 
 type UsersArgs =
     record {
-        users: vec UserId;
-        updated_since: opt TimestampMillis;
+        user_groups: vec record {
+            users: vec UserId;
+            updated_since: TimestampMillis;
+        };
     };
 
 type UsersResponse =
@@ -208,6 +210,7 @@ type SearchResponse =
     variant {
         Success: record {
             users: vec UserSummary;
+            timestamp: TimestampMillis;
         }
     };
 

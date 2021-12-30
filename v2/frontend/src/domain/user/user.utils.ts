@@ -75,5 +75,6 @@ export function nullUser(username: string): UserSummary {
         userId: "null_user", // this might cause problems if we try to create a Principal from it
         username,
         lastOnline: 0,
+        updated: BigInt(0),
     };
 }

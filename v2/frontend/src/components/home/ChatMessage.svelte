@@ -22,7 +22,7 @@
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import { fillMessage, messageMetaData } from "../../utils/media";
+    import { fillMessage } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import TimeAndTicks from "./TimeAndTicks.svelte";
@@ -30,6 +30,7 @@
     import type { Dimensions } from "../../utils/media";
     import type { MessageContent } from "../../domain/chat/chat";
     import { calculateMediaDimensions } from "../../utils/layout";
+    import MessageReaction from "./MessageReaction.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -57,7 +58,6 @@
 
     let groupChat = chatType === "group_chat";
     let username = sender?.username;
-    let metaData = messageMetaData(msg.content);
     let showEmojiPicker = false;
     let debug = false;
 
@@ -256,30 +256,14 @@
                 {/if}
             {/if}
 
-            {#if msg.content.kind === "text_content"}
-                <ChatMessageContent
-                    {fill}
-                    {me}
-                    content={msg.content}
-                    height={mediaCalculatedHeight}>
-                    <TimeAndTicks
-                        inline={true}
-                        {fill}
-                        {timestamp}
-                        {me}
-                        {confirmed}
-                        {readByThem}
-                        {chatType} />
-                </ChatMessageContent>
-            {:else}
-                <ChatMessageContent
-                    {fill}
-                    {me}
-                    content={msg.content}
-                    height={mediaCalculatedHeight} />
-                {#if !deleted}
-                    <TimeAndTicks {fill} {timestamp} {me} {confirmed} {readByThem} {chatType} />
-                {/if}
+            <ChatMessageContent
+                {fill}
+                {me}
+                content={msg.content}
+                height={mediaCalculatedHeight} />
+
+            {#if !deleted}
+                <TimeAndTicks {fill} {timestamp} {me} {confirmed} {readByThem} {chatType} />
             {/if}
 
             {#if debug}
@@ -289,14 +273,6 @@
                 <pre>Confirmed: {confirmed}</pre>
                 <pre>ReadByThem: {readByThem}</pre>
                 <pre>ReadByUs: {readByMe}</pre>
-            {/if}
-
-            {#if metaData && !deleted}
-                <span class="meta-wrapper">
-                    {#await metaData then meta}
-                        {meta}
-                    {/await}
-                </span>
             {/if}
 
             {#if !deleted}
@@ -361,16 +337,13 @@
 
     {#if msg.reactions.length > 0 && !deleted}
         <div class="message-reactions" class:me>
-            {#each msg.reactions as { reaction, userIds }}
-                <div
-                    on:click={() => toggleReaction(reaction)}
-                    class:me={user !== undefined ? userIds.has(user.userId) : false}
-                    class="message-reaction">
-                    {reaction}
-                    <span class="reaction-count">
-                        {userIds.size > 9 ? "9+" : userIds.size}
-                    </span>
-                </div>
+            {#each msg.reactions as { reaction, userIds } (reaction)}
+                <MessageReaction 
+                    on:click={() => toggleReaction(reaction)} 
+                    {reaction} 
+                    {userIds}
+                    {me} 
+                    myUserId = {user?.userId}/>
             {/each}
         </div>
     {/if}
@@ -418,13 +391,6 @@
         }
     }
 
-    .meta-wrapper {
-        display: inline-block;
-        align-items: center;
-        @include font(light, normal, fs-60);
-        @include ellipsis();
-    }
-
     .sender {
         margin-bottom: $sp1;
 
@@ -466,32 +432,6 @@
 
         &.me {
             justify-content: flex-end;
-        }
-
-        .message-reaction {
-            @include pop();
-            border-radius: $sp4;
-            background-color: var(--reaction-bg);
-            color: var(--reaction-txt);
-            cursor: pointer;
-            height: 30px;
-            padding: $sp2;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-left: 1px;
-            margin-right: 1px;
-            margin-bottom: $sp2;
-            font-size: 120%;
-
-            &.me {
-                border: 2px solid var(--reaction-me);
-            }
-
-            .reaction-count {
-                @include font(book, normal, fs-60);
-                margin-left: $sp2;
-            }
         }
     }
 

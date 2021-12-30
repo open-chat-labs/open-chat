@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::UserSummary;
+use types::{TimestampMillis, UserSummary};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -16,4 +16,5 @@ pub enum Response {
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Result {
     pub users: Vec<UserSummary>,
+    pub timestamp: TimestampMillis,
 }

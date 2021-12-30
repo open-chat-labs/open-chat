@@ -93,15 +93,7 @@
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
-        if (ev.detail.kind === "file_content") {
-            if ($editingEvent !== undefined) {
-                editMessageWithAttachment(null, $fileToAttach, $editingEvent);
-            } else {
-                sendMessageWithAttachment(null, ev.detail);
-            }
-        } else {
-            controller.attachFile(ev.detail);
-        }
+        controller.attachFile(ev.detail);
     }
 
     function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
@@ -145,7 +137,7 @@
                         replyingTo={$replyingTo} />
                 {/if}
                 {#if $fileToAttach !== undefined}
-                    {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content"}
+                    {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content" || $fileToAttach.kind === "file_content"}
                         <DraftMediaMessage content={$fileToAttach} />
                     {:else if $fileToAttach.kind === "crypto_content"}
                         <div>Crypto transfer preview</div>

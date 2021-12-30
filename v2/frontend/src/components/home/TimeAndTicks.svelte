@@ -12,12 +12,11 @@
     export let readByThem: boolean;
     export let me: boolean;
     export let fill: boolean;
-    export let inline: boolean = false;
 
     let iconColor = fill ? "#fff" : "var(--currentChat-msg-me-txt)";
 </script>
 
-<div class="time-and-ticks" class:fill class:inline class:rtl={$rtlStore}>
+<div class="time-and-ticks" class:fill class:rtl={$rtlStore}>
     <span class="time">
         {toShortTimeString(new Date(Number(timestamp)))}
     </span>

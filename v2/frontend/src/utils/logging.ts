@@ -5,10 +5,9 @@ export const rollbar = Rollbar.init({
     captureUncaught: true,
     autoInstrument: false,
     logLevel: "error",
+    environment: process.env.NODE_ENV,
+    enabled: process.env.NODE_ENV === "production",
     captureUnhandledRejections: true,
-    payload: {
-        environment: "process.env.ROLLBAR_ENV",
-    },
 });
 
 export function debug<T>(data: T, msg?: string): T {
