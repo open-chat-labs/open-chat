@@ -28,7 +28,9 @@ import {
     createCanisterResponse,
     generateRegistrationFeeResponse,
 } from "./mappers";
+import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
+import type { Database } from "../../utils/caching";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userService: UserIndexService;
@@ -43,8 +45,10 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    static create(identity: Identity): IUserIndexClient {
-        return new UserIndexClient(identity);
+    static create(identity: Identity, db?: Database): IUserIndexClient {
+        return db && process.env.CLIENT_CACHING
+            ? new CachingUserIndexClient(db, new UserIndexClient(identity))
+            : new UserIndexClient(identity);
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
