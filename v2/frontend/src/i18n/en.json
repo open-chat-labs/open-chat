@@ -170,7 +170,8 @@
     "errorSendingMessage": "An unexpected error occurred sending your message",
     "errorEditingMessage": "An unexpected error occurred editing your message",
     "chatSummary": {
-        "unread": "{count} unread message(s)"
+        "unread": "{count} unread message(s)",
+        "mentions": "{count} unread mentions(s)"
     },
     "login": {
         "welcomeTo": "Welcome to ...",

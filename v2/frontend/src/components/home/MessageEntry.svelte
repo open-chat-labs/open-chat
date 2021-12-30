@@ -23,6 +23,7 @@
     $: editingEvent = controller.editingEvent;
     $: fileToAttach = controller.fileToAttach;
     $: participants = controller.participants;
+    $: blockedUsers = controller.blockedUsers;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -241,6 +242,7 @@
 
 {#if showMentionPicker}
     <MentionPicker
+        blockedUsers={$blockedUsers}
         offset={messageEntry.clientHeight}
         on:close={() => (showMentionPicker = false)}
         on:mention={mention}

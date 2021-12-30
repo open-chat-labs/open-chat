@@ -11,20 +11,22 @@
     import { AvatarSize } from "domain/user/user";
     import { avatarUrl } from "domain/user/user.utils";
 
+    export let blockedUsers: Set<string>;
     export let participants: Participant[];
     export let prefix: string | undefined;
     export let offset: number;
 
     let index = 0;
 
-    $: filtered = participants.filter(
+    $: unblocked = participants.filter((p) => !blockedUsers.has(p.userId));
+
+    $: filtered = unblocked.filter(
         (p) =>
             prefix === undefined || $userStore[p.userId]?.username?.toLowerCase().startsWith(prefix)
     );
 
     const dispatch = createEventDispatcher();
 
-    // todo - we should either filter out blocked users or show that they are blocked via the avatar
     function mention(userId: string) {
         dispatch("mention", userId);
     }

@@ -35,6 +35,7 @@
 
     let hovering = false;
     let unreadMessages: number;
+    let unreadMentions: number;
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
@@ -51,6 +52,11 @@
             avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
             typing: false,
         };
+    }
+
+    function getUnreadMentionCount(chat: ChatSummary): number {
+        if (chat.kind === "direct_chat") return 0;
+        return chat.mentions.filter((m) => !messagesRead.isRead(chat.chatId, m, BigInt(0))).length;
     }
 
     function formatLatestMessage(chatSummary: ChatSummary, users: UserLookup): string {
@@ -85,6 +91,7 @@
             getMinVisibleMessageIndex(chatSummary),
             chatSummary.latestMessage?.event.messageIndex
         );
+        unreadMentions = getUnreadMentionCount(chatSummary);
     });
 
     onDestroy(unsub);
@@ -129,12 +136,21 @@
     <div class:rtl={$rtlStore} class="chat-date">
         {formatMessageDate(new Date(Number(displayDate)))}
     </div>
+    {#if unreadMentions > 0}
+        <div
+            in:pop={{ duration: 1500 }}
+            title={$_("chatSummary.mentions", { values: { count: unreadMentions.toString() } })}
+            class:rtl={$rtlStore}
+            class="notification mention">
+            @
+        </div>
+    {/if}
     {#if unreadMessages > 0}
         <div
             in:pop={{ duration: 1500 }}
             title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
             class:rtl={$rtlStore}
-            class="unread-msgs">
+            class="notification">
             {unreadMessages > 99 ? "99+" : unreadMessages}
         </div>
     {/if}
@@ -224,15 +240,14 @@
         }
     }
 
-    .unread-msgs {
+    .notification {
         display: flex;
         justify-content: center;
         align-items: center;
         background-color: var(--accent);
         text-shadow: 1px 1px 1px var(--accentDarker);
         border-radius: 50%;
-        font-weight: bold;
-        font-size: 10px;
+        @include font(bold, normal, fs-50);
         color: #ffffff;
         width: $sp5;
         height: $sp5;
@@ -245,6 +260,15 @@
 
         &.rtl {
             left: $sp3;
+            margin-right: 2px;
+            margin-left: 0;
+        }
+    }
+
+    .mention {
+        margin-right: 2px;
+        &.rtl {
+            margin-left: 2px;
         }
     }
 </style>

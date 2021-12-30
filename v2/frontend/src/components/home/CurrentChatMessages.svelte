@@ -17,14 +17,9 @@
         EventWrapper,
         EnhancedReplyContext,
         ChatEvent as ChatEventType,
-        ChatSummary,
         Message,
     } from "../../domain/chat/chat";
-    import {
-        getMinVisibleMessageIndex,
-        groupEvents,
-        messageIsReadByThem,
-    } from "../../domain/chat/chat.utils";
+    import { groupEvents, messageIsReadByThem } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { toastStore } from "../../stores/toast";
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
@@ -44,6 +39,8 @@
 
     export let controller: ChatController;
     export let unreadMessages: number;
+    export let firstUnreadMention: number | undefined;
+    export let firstUnreadMessage: number | undefined;
 
     $: loading = controller.loading;
     $: events = controller.events;
@@ -105,8 +102,7 @@
     }
 
     function scrollToNew() {
-        const idx =
-            unreadMessages > 0 ? firstUnreadMessageIndex : $chat.latestMessage?.event.messageIndex;
+        const idx = firstUnreadMessage ?? $chat.latestMessage?.event.messageIndex;
 
         if (idx !== undefined) {
             scrollToMessageIndex(idx);
@@ -115,6 +111,12 @@
 
     function scrollToElement(element: Element | null, behavior: ScrollBehavior = "auto") {
         element?.scrollIntoView({ behavior, block: "center" });
+    }
+
+    function scrollToMention(index: number | undefined) {
+        if (index !== undefined) {
+            scrollToMessageIndex(index);
+        }
     }
 
     function scrollToMessageIndex(index: number) {
@@ -316,17 +318,7 @@
         return `${first.timestamp}_${first.index}`;
     }
 
-    function getFirstUnreadMessageIndex(chat: ChatSummary): number {
-        return markRead.getFirstUnreadMessageIndex(
-            chat.chatId,
-            getMinVisibleMessageIndex(chat),
-            chat.latestMessage?.event.messageIndex
-        );
-    }
-
     $: groupedEvents = groupEvents($events).reverse();
-
-    $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($chat);
 
     $: admin =
         $chat.kind === "group_chat" && ($chat.myRole === "admin" || $chat.myRole === "owner");
@@ -426,7 +418,7 @@
             </div>
             {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
                 {#each userGroup as evt, i (eventKey(evt))}
-                    {#if evt.event.kind === "message" && unreadMessages > 0 && evt.event.messageIndex === firstUnreadMessageIndex}
+                    {#if evt.event.kind === "message" && unreadMessages > 0 && evt.event.messageIndex === firstUnreadMessage}
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}
                     <ChatEvent
@@ -457,9 +449,17 @@
     {/each}
 </div>
 
+<div class:show={firstUnreadMention !== undefined} class="fab mentions" class:rtl={$rtlStore}>
+    <Fab on:click={() => scrollToMention(firstUnreadMention)}>
+        <div title={firstUnreadMention?.toString()} in:pop={{ duration: 1500 }} class="unread">
+            <div class="mention-count">@</div>
+        </div>
+    </Fab>
+</div>
+
 <div
     class:show={fromBottom > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
-    class="to-bottom"
+    class="fab to-bottom"
     class:rtl={$rtlStore}>
     <Fab on:click={() => scrollToNew()}>
         {#if unreadMessages > 0}
@@ -521,10 +521,9 @@
         }
     }
 
-    .to-bottom {
+    .fab {
         transition: opacity ease-in-out 300ms;
         position: absolute;
-        bottom: 80px;
         right: 20px;
         opacity: 0;
         pointer-events: none;
@@ -538,6 +537,18 @@
             left: $sp6;
             right: unset;
         }
+    }
+
+    .mentions {
+        bottom: 140px;
+
+        .mention-count {
+            @include font(bold, normal, fs-140);
+        }
+    }
+
+    .to-bottom {
+        bottom: 80px;
     }
 
     .chat-messages {
