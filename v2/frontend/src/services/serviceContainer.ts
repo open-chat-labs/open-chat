@@ -86,12 +86,12 @@ export class ServiceContainer implements MarkMessagesRead {
     private db?: Database;
 
     constructor(private identity: Identity) {
+        this.db = initDb(identity.getPrincipal().toString());
         this._onlineClient = OnlineClient.create(identity);
-        this._userIndexClient = UserIndexClient.create(identity);
+        this._userIndexClient = UserIndexClient.create(identity, this.db);
         this._groupIndexClient = GroupIndexClient.create(identity);
         this._notificationClient = NotificationsClient.create(identity);
         this._groupClients = {};
-        this.db = initDb(identity.getPrincipal().toString());
     }
 
     createUserClient(userId: string): ServiceContainer {
