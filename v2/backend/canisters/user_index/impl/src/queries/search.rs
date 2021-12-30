@@ -37,7 +37,10 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         .map(|&u| u.to_summary(now))
         .collect();
 
-    Success(Result { users: results })
+    Success(Result {
+        users: results,
+        timestamp: now,
+    })
 }
 
 fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {

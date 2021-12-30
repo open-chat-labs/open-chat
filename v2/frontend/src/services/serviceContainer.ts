@@ -6,6 +6,7 @@ import type {
     ConfirmPhoneNumberResponse,
     PhoneNumber,
     ResendCodeResponse,
+    UsersArgs,
     UsersResponse,
     UserSummary,
     UpgradeCanisterResponse,
@@ -429,8 +430,8 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.userClient.searchAllMessages(searchTerm, maxResults);
     }
 
-    getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {
-        return this._userIndexClient.getUsers(userIds, since).then((resp) => ({
+    getUsers(users: UsersArgs): Promise<UsersResponse> {
+        return this._userIndexClient.getUsers(users).then((resp) => ({
             timestamp: resp.timestamp,
             users: resp.users.map((u) => this.rehydrateDataContent(u, "avatar", u.userId)),
         }));
