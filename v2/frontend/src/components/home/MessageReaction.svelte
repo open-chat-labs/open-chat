@@ -91,7 +91,6 @@
         margin-bottom: $sp2;
         font-size: 120%;
         position: relative;
-        word-break: break-all;
 
         &.selected {
             border: 2px solid var(--reaction-me);
@@ -107,15 +106,13 @@
 
         .reaction-tooltip {
             background-color: var(--menu-bg);
-            @include z-index("popup-menu");
             border: 1px solid var(--menu-bd);
             box-shadow: var(--menu-sh);
 
             display: flex;
             flex-direction: column;
             align-items: center;
-            word-wrap: normal;
-            word-break: normal;
+            word-break: break-all;
             position: absolute;
             left: -4px;
             bottom: 34px;
