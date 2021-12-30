@@ -24,7 +24,7 @@ export function groupBy<T, K>(items: T[], keySelector: (item: T) => K): Map<K, T
     const grouped = new Map<K, T[]>();
     for (const item of items) {
         const key = keySelector(item);
-        const existing = grouped[key];
+        const existing = grouped.get(key);
         if (existing !== undefined) {
             existing.push(item);
         } else {
