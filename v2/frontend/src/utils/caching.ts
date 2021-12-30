@@ -507,21 +507,25 @@ export async function getCachedUsers(db: Database, userIds: string[]): Promise<U
     }, [] as UserSummary[]);
 }
 
-export async function setCachedUsers(
-    db: Database,
-    response: UsersResponse
-): Promise<void> {
+export async function setCachedUsers(db: Database, response: UsersResponse): Promise<void> {
     const tx = (await db).transaction("users", "readwrite");
     const store = tx.objectStore("users");
 
-    await Promise.all(response.users.filter((u) => u.username !== undefined).map((u) => {
-        store.put({
-            userId: u.userId,
-            username: u.username!,
-            lastOnline: u.lastOnline,
-            updated: u.updated
-        }, u.userId)
-    }));
+    await Promise.all(
+        response.users
+            .filter((u) => u.username !== undefined)
+            .map((u) => {
+                store.put(
+                    {
+                        userId: u.userId,
+                        username: u.username!,
+                        lastOnline: u.lastOnline,
+                        updated: u.updated,
+                    },
+                    u.userId
+                );
+            })
+    );
 }
 
 let db: Database | undefined;

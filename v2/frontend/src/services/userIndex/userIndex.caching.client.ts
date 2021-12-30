@@ -30,9 +30,8 @@ export class CachingUserIndexClient implements IUserIndexClient {
             .filter((g) => g.updatedSince === BigInt(0))
             .flatMap((g) => g.users);
 
-        const fromCache = unknownUsers.length > 0
-            ? await getCachedUsers(this.db, unknownUsers)
-            : [];
+        const fromCache =
+            unknownUsers.length > 0 ? await getCachedUsers(this.db, unknownUsers) : [];
 
         const args = this.buildGetUsersArgs(users, fromCache);
 
@@ -133,13 +132,19 @@ export class CachingUserIndexClient implements IUserIndexClient {
     }
 
     // Merges the cached values into the response
-    private mergeGetUsersResponse(args: UsersArgs, response: UsersResponse, fromCache: UserSummary[]): UsersResponse {
+    private mergeGetUsersResponse(
+        args: UsersArgs,
+        response: UsersResponse,
+        fromCache: UserSummary[]
+    ): UsersResponse {
         if (fromCache.length === 0) {
             return response;
         }
 
         const fromCacheMap = new Map<string, UserSummary>(fromCache.map((u) => [u.userId, u]));
-        const responseMap = new Map<string, PartialUserSummary>(response.users.map((u) => [u.userId, u]));
+        const responseMap = new Map<string, PartialUserSummary>(
+            response.users.map((u) => [u.userId, u])
+        );
 
         const users: PartialUserSummary[] = [];
 
@@ -153,13 +158,13 @@ export class CachingUserIndexClient implements IUserIndexClient {
                         userId,
                         username: userResponse.username ?? cached?.username,
                         lastOnline: userResponse.lastOnline,
-                        updated: userResponse.updated
+                        updated: userResponse.updated,
                     });
                 } else if (cached !== undefined) {
                     users.push({
                         ...cached,
-                        updated: response.timestamp
-                    })
+                        updated: response.timestamp,
+                    });
                 }
             }
         }
