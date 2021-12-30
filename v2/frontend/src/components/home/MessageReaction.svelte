@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import { fade } from "svelte/transition";
     import type { UserLookup } from "../../domain/user/user";
     import { getContext } from "svelte";
@@ -23,18 +24,18 @@
                 .filter(([uid, username]) => (username !== undefined) && (uid !== myUserId))
                 .map(([_, username]) => username)
                 .join(", ")
-            : "99+ people" ;
+            : $_("reactions.greaterThan99People") ;
 
         return usernames + (selected 
             ? usernames.length === 0 
-            ? "You (click to remove)" 
-            : ", and you" 
+            ? $_("reactions.youClickToRemove") 
+            : $_("reactions.andYou") 
             : "");
     }
 
     async function buildReactionSuffix(reaction: string): Promise<string | undefined> {
         const emoji = (await emojiDatabase.getEmojiByUnicodeOrName(reaction)) as any;
-        return emoji ? `reacted with :${emoji.shortcodes[emoji.shortcodes.length - 1]}:` : undefined;
+        return emoji ? `${$_("reactions.reactedWith")} :${emoji.shortcodes[emoji.shortcodes.length - 1]}:` : undefined;
     }
 
     function calculateMaxWidth(numChars: number): number {
@@ -90,6 +91,7 @@
         margin-bottom: $sp2;
         font-size: 120%;
         position: relative;
+        word-break: break-all;
 
         &.selected {
             border: 2px solid var(--reaction-me);
