@@ -9,11 +9,13 @@ const lookup: UserLookup = {
         userId: "a",
         username: "a",
         lastOnline: now - 119 * 1000,
+        updated: BigInt(0),
     },
     b: {
         userId: "b",
         username: "b",
         lastOnline: now - 200 * 1000,
+        updated: BigInt(0),
     },
 };
 
@@ -40,7 +42,7 @@ describe("missing userIds", () => {
 
 describe("compare username", () => {
     function toUser(username: string | undefined) {
-        return { userId: "a", username, lastOnline: now };
+        return { userId: "a", username, lastOnline: now, updated: BigInt(0) };
     }
     test("works with non-null usernames", () => {
         const users = ["zulu", "yanky", "foxtrot", "lima"].map(toUser);

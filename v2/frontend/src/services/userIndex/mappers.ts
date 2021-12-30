@@ -35,22 +35,27 @@ import { UnsupportedValueError } from "../../utils/error";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {
-        return candid.Success.users.map(userSummary);
+        const timestamp = candid.Success.timestamp;
+        return candid.Success.users.map((u) => userSummary(u, timestamp));
     }
     throw new Error(`Unknown UserIndex.SearchResponse of ${candid}`);
 }
 
 export function usersResponse(candid: ApiUsersResponse): UsersResponse {
     if ("Success" in candid) {
+        const timestamp = candid.Success.timestamp;
         return {
-            timestamp: candid.Success.timestamp,
-            users: candid.Success.users.map(partialUserSummary),
+            timestamp,
+            users: candid.Success.users.map((u) => partialUserSummary(u, timestamp)),
         };
     }
     throw new Error(`Unknown UserIndex.UsersResponse of ${candid}`);
 }
 
-export function partialUserSummary(candid: ApiPartialUserSummary): PartialUserSummary {
+export function partialUserSummary(
+    candid: ApiPartialUserSummary,
+    timestamp: bigint
+): PartialUserSummary {
     return {
         userId: candid.user_id.toString(),
         username: optional(candid.username, identity),
@@ -59,10 +64,11 @@ export function partialUserSummary(candid: ApiPartialUserSummary): PartialUserSu
             canisterId: candid.user_id.toString(),
         })),
         lastOnline: Date.now() - candid.seconds_since_last_online * 1000,
+        updated: timestamp,
     };
 }
 
-export function userSummary(candid: ApiUserSummary): UserSummary {
+export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSummary {
     return {
         userId: candid.user_id.toString(),
         username: candid.username,
@@ -71,6 +77,7 @@ export function userSummary(candid: ApiUserSummary): UserSummary {
             blobId: id,
             canisterId: candid.user_id.toString(),
         })),
+        updated: timestamp,
     };
 }
 

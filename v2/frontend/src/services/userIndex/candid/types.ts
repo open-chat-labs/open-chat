@@ -497,7 +497,9 @@ export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
   { 'Owner' : null };
 export interface SearchArgs { 'max_results' : number, 'search_term' : string }
-export type SearchResponse = { 'Success' : { 'users' : Array<UserSummary> } };
+export type SearchResponse = {
+    'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }
+  };
 export interface SetUsernameArgs { 'username' : string }
 export type SetUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |
@@ -556,11 +558,6 @@ export type UnconfirmedUserState = {
     'PhoneNumber' : UnconfirmedPhoneNumberState
   } |
   { 'CyclesFee' : UnconfirmedCyclesFeeState };
-export interface UpdateUserCanisterWasmArgs {
-  'user_canister_wasm' : CanisterWasm,
-}
-export type UpdateUserCanisterWasmResponse = { 'Success' : null } |
-  { 'VersionNotHigher' : null };
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,
@@ -587,8 +584,9 @@ export interface UserSummary {
   'seconds_since_last_online' : number,
 }
 export interface UsersArgs {
-  'users' : Array<UserId>,
-  'updated_since' : [] | [TimestampMillis],
+  'user_groups' : Array<
+    { 'users' : Array<UserId>, 'updated_since' : TimestampMillis }
+  >,
 }
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
@@ -642,9 +640,6 @@ export interface _SERVICE {
       SubmitPhoneNumberResponse
     >,
   'super_admins' : (arg_0: SuperAdminsArgs) => Promise<SuperAdminsResponse>,
-  'update_user_canister_wasm' : (arg_0: UpdateUserCanisterWasmArgs) => Promise<
-      UpdateUserCanisterWasmResponse
-    >,
   'upgrade_canister' : (arg_0: UpgradeCanisterArgs) => Promise<
       UpgradeCanisterResponse
     >,

@@ -115,7 +115,10 @@ export const idlFactory = ({ IDL }) => {
     'seconds_since_last_online' : IDL.Nat32,
   });
   const SearchResponse = IDL.Variant({
-    'Success' : IDL.Record({ 'users' : IDL.Vec(UserSummary) }),
+    'Success' : IDL.Record({
+      'timestamp' : TimestampMillis,
+      'users' : IDL.Vec(UserSummary),
+    }),
   });
   const SetUsernameArgs = IDL.Record({ 'username' : IDL.Text });
   const SetUsernameResponse = IDL.Variant({
@@ -139,23 +142,6 @@ export const idlFactory = ({ IDL }) => {
   const SuperAdminsResponse = IDL.Variant({
     'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
   });
-  const Version = IDL.Record({
-    'major' : IDL.Nat32,
-    'minor' : IDL.Nat32,
-    'patch' : IDL.Nat32,
-  });
-  const CanisterWasm = IDL.Record({
-    'compressed' : IDL.Bool,
-    'version' : Version,
-    'module' : IDL.Vec(IDL.Nat8),
-  });
-  const UpdateUserCanisterWasmArgs = IDL.Record({
-    'user_canister_wasm' : CanisterWasm,
-  });
-  const UpdateUserCanisterWasmResponse = IDL.Variant({
-    'Success' : IDL.Null,
-    'VersionNotHigher' : IDL.Null,
-  });
   const UpgradeCanisterArgs = IDL.Record({});
   const UpgradeCanisterResponse = IDL.Variant({
     'UpgradeInProgress' : IDL.Null,
@@ -174,8 +160,12 @@ export const idlFactory = ({ IDL }) => {
     'UserNotFound' : IDL.Null,
   });
   const UsersArgs = IDL.Record({
-    'users' : IDL.Vec(UserId),
-    'updated_since' : IDL.Opt(TimestampMillis),
+    'user_groups' : IDL.Vec(
+      IDL.Record({
+        'users' : IDL.Vec(UserId),
+        'updated_since' : TimestampMillis,
+      })
+    ),
   });
   const PartialUserSummary = IDL.Record({
     'username' : IDL.Opt(IDL.Text),
@@ -232,11 +222,6 @@ export const idlFactory = ({ IDL }) => {
         [SuperAdminsArgs],
         [SuperAdminsResponse],
         ['query'],
-      ),
-    'update_user_canister_wasm' : IDL.Func(
-        [UpdateUserCanisterWasmArgs],
-        [UpdateUserCanisterWasmResponse],
-        [],
       ),
     'upgrade_canister' : IDL.Func(
         [UpgradeCanisterArgs],

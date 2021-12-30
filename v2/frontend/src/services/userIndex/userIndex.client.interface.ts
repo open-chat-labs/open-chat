@@ -5,6 +5,7 @@ import type {
     SubmitPhoneNumberResponse,
     PhoneNumber,
     ResendCodeResponse,
+    UsersArgs,
     UsersResponse,
     UserSummary,
     UpgradeCanisterResponse,
@@ -20,7 +21,7 @@ export interface IUserIndexClient {
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse>;
     resendRegistrationCode(): Promise<ResendCodeResponse>;
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse>;
-    getUsers(userIds: string[], since: bigint): Promise<UsersResponse>;
+    getUsers(users: UsersArgs): Promise<UsersResponse>;
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]>;
     generateRegistrationFee(): Promise<RegistrationFeeResponse>;
 }

@@ -8,6 +8,7 @@ import type {
     SetUsernameResponse,
     PhoneNumber,
     ResendCodeResponse,
+    UsersArgs,
     UsersResponse,
     UserSummary,
     UpgradeCanisterResponse,
@@ -27,7 +28,9 @@ import {
     createCanisterResponse,
     generateRegistrationFeeResponse,
 } from "./mappers";
+import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
+import type { Database } from "../../utils/caching";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userService: UserIndexService;
@@ -42,8 +45,10 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    static create(identity: Identity): IUserIndexClient {
-        return new UserIndexClient(identity);
+    static create(identity: Identity, db?: Database): IUserIndexClient {
+        return db && process.env.CLIENT_CACHING
+            ? new CachingUserIndexClient(db, new UserIndexClient(identity))
+            : new UserIndexClient(identity);
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
@@ -56,8 +61,10 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {
-        if (userIds.length === 0) {
+    getUsers(users: UsersArgs): Promise<UsersResponse> {
+        const userGroups = users.userGroups.filter((g) => g.users.length > 0);
+
+        if (userGroups.length === 0) {
             return Promise.resolve({
                 timestamp: BigInt(Date.now()),
                 users: [],
@@ -65,10 +72,10 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         }
         return this.handleResponse(
             this.userService.users({
-                users: userIds.map((u) => {
-                    return Principal.fromText(u);
-                }),
-                updated_since: [since],
+                user_groups: userGroups.map(({ users, updatedSince }) => ({
+                    users: users.map((u) => Principal.fromText(u)),
+                    updated_since: updatedSince,
+                })),
             }),
             usersResponse
         );
