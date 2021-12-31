@@ -140,7 +140,7 @@
             @include z-index("reaction-tooltip");
             left: -4px;
             bottom: 34px;
-            font-size: 9px;
+            @include font-size(fs-50);
             width: max-content;
             max-width: 300px;
             padding: $sp2 $sp3 $sp3 $sp3;
