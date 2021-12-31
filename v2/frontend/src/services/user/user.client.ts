@@ -206,8 +206,6 @@ export class UserClient extends CandidService implements IUserClient {
             args
         );
 
-        console.log("Updates Resp: ", updatesResponse);
-
         const anyUpdates =
             updatesResponse.blockedUsers.size > 0 ||
             updatesResponse.chatsUpdated.length > 0 ||

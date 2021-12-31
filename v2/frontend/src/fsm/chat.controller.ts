@@ -83,7 +83,7 @@ export class ChatController {
         private _onConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
         this.chat = derived([serverChatSummary, unconfirmed], ([summary, unconfirmed]) =>
-            mergeUnconfirmedIntoSummary(summary, unconfirmed[summary.chatId]?.messages)
+            mergeUnconfirmedIntoSummary(user.userId, summary, unconfirmed[summary.chatId]?.messages)
         );
 
         this.events = writable([]);

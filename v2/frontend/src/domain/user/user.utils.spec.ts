@@ -1,5 +1,5 @@
 import type { UserLookup } from "./user";
-import { compareUsername, missingUserIds, userIsOnline } from "./user.utils";
+import { compareUsername, missingUserIds, parseMentions, userIsOnline } from "./user.utils";
 
 const now = Date.now();
 jest.setSystemTime(now);
@@ -17,7 +17,39 @@ const lookup: UserLookup = {
         lastOnline: now - 200 * 1000,
         updated: BigInt(0),
     },
+    xyz: {
+        userId: "xyz",
+        username: "julian_jelfs",
+        lastOnline: 0,
+        updated: BigInt(0),
+    },
 };
+
+describe("parse mentions", () => {
+    test("replace a single mention", () => {
+        const parsed = parseMentions(lookup, "hello there @UserId(xyz), how are you?", "unknown");
+        expect(parsed).toEqual("hello there **@julian_jelfs**, how are you?");
+    });
+
+    test("text is unchanged where there are no mentions", () => {
+        const parsed = parseMentions(lookup, "hello there, how are you?", "unknown");
+        expect(parsed).toEqual("hello there, how are you?");
+    });
+
+    test("mention of an unknown user", () => {
+        const parsed = parseMentions(lookup, "hello there @UserId(abc), how are you?", "unknown");
+        expect(parsed).toEqual("hello there **@unknown**, how are you?");
+    });
+
+    test("replace multiple mentions", () => {
+        const parsed = parseMentions(
+            lookup,
+            "hello there @UserId(xyz), how are you @UserId(xyz)?",
+            "unknown"
+        );
+        expect(parsed).toEqual("hello there **@julian_jelfs**, how are you **@julian_jelfs**?");
+    });
+});
 
 describe("get user status", () => {
     test("user is online", () => {
