@@ -75,18 +75,18 @@ fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut Runtime
         now,
     };
 
-    let (chat_id, _, message) =
+    let message_event =
         runtime_state
             .data
             .direct_chats
             .push_message(false, sender, Some(args.sender_message_index), push_message_args);
 
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
+    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&sender.into()) {
         if !chat.notifications_muted.value {
             let notification = Notification::DirectMessageNotification(DirectMessageNotification {
                 sender,
                 sender_name: args.sender_name,
-                message,
+                message: message_event,
             });
 
             let recipient = runtime_state.env.canister_id().into();

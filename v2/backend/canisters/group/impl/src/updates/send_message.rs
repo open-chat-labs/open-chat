@@ -39,18 +39,19 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             now,
         };
 
-        let (event_index, message) = runtime_state.data.events.push_message(push_message_args);
+        let message_event = runtime_state.data.events.push_message(push_message_args);
 
         handle_activity_notification(runtime_state);
 
-        let message_index = message.message_index;
+        let event_index = message_event.index;
+        let message_index = message_event.event.message_index;
 
         let notification = Notification::GroupMessageNotification(GroupMessageNotification {
             chat_id: runtime_state.env.canister_id().into(),
             group_name: runtime_state.data.name.clone(),
             sender,
             sender_name: args.sender_name,
-            message,
+            message: message_event,
         });
 
         let mut notification_recipients = runtime_state.data.participants.users_to_notify(sender);

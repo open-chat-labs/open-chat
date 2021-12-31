@@ -79,7 +79,11 @@ export function groupNotification(candid: ApiGroupMessageNotification): GroupNot
     return {
         kind: "group_notification",
         sender: candid.sender.toString(),
-        message: message(candid.message),
+        message: {
+            index: candid.message.index,
+            timestamp: candid.message.timestamp,
+            event: message(candid.message.event),
+        },
         senderName: candid.sender_name,
         chatId: candid.chat_id.toString(),
         groupName: candid.group_name,
@@ -90,7 +94,11 @@ export function directNotification(candid: ApiDirectMessageNotification): Direct
     return {
         kind: "direct_notification",
         sender: candid.sender.toString(),
-        message: message(candid.message),
+        message: {
+            index: candid.message.index,
+            timestamp: candid.message.timestamp,
+            event: message(candid.message.event),
+        },
         senderName: candid.sender_name,
     };
 }
