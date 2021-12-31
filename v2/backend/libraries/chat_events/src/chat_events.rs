@@ -677,6 +677,23 @@ impl ChatEvents {
         None
     }
 
+    pub fn hydrate_mention(&self, message_index: &MessageIndex) -> Option<Mention> {
+        if let Some(&event_index) = self.message_index_map.get(message_index) {
+            if let Some(event) = self.get_internal(event_index) {
+                if let ChatEventInternal::Message(message) = &event.event {
+                    return Some(Mention {
+                        message_id: message.message_id,
+                        message_index: message.message_index,
+                        event_index: event.index,
+                        mentioned_by: message.sender,
+                    });
+                }
+            }
+        }
+
+        None
+    }
+
     pub fn metrics(&self) -> Metrics {
         let mut metrics = self.metrics.clone();
         metrics.last_active = self.last().timestamp;

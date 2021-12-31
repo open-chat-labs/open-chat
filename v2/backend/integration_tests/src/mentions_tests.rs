@@ -127,7 +127,9 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
             .unwrap();
         let notifications_canister::notifications::Response::Success(result) = response;
         assert_eq!(result.notifications.len(), 1);
-        assert_eq!(result.notifications[0].value.recipients, vec![user1_id, user3_id]);
+        let recipients = &result.notifications[0].value.recipients;
+        assert!(recipients.contains(&user1_id));
+        assert!(recipients.contains(&user3_id));
         println!("Ok");
     }
 
