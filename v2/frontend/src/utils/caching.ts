@@ -537,11 +537,8 @@ export async function setCachedUsers(db: Database, response: UsersResponse): Pro
             .map((u) => {
                 store.put(
                     {
-                        userId: u.userId,
+                        ...u,
                         username: u.username!,
-                        lastOnline: u.lastOnline,
-                        updated: u.updated,
-                        blobReference: u.blobReference,
                     },
                     u.userId
                 );
