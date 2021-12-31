@@ -155,10 +155,9 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
                 if (userResponse !== undefined) {
                     users.push({
-                        userId,
+                        ...userResponse,
                         username: userResponse.username ?? cached?.username,
-                        lastOnline: userResponse.lastOnline,
-                        updated: userResponse.updated,
+                        blobReference: userResponse.blobReference ?? cached?.blobReference,
                     });
                 } else if (cached !== undefined) {
                     users.push({
