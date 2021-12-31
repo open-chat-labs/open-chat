@@ -13,4 +13,5 @@ index_store = { path = "../../libraries/index_store" }
 notification_pusher_core = { path = "../core" }
 tokio = { version = "1.10.0", features = ["macros", "time"] }
 tracing = "0.1.29"
+tracing-subscriber = "0.2.25"
 types = { path = "../../libraries/types" }
