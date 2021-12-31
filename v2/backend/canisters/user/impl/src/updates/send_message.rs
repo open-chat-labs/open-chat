@@ -81,19 +81,18 @@ fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>,
         now,
     };
 
-    let (chat_id, event_index, message) =
-        runtime_state
-            .data
-            .direct_chats
-            .push_message(true, recipient, None, push_message_args);
+    let message_event = runtime_state
+        .data
+        .direct_chats
+        .push_message(true, recipient, None, push_message_args);
 
-    let c2c_args = build_c2c_args(args, message.message_index);
+    let c2c_args = build_c2c_args(args, message_event.event.message_index);
     ic_cdk::block_on(send_to_recipients_canister(recipient, c2c_args, cycles_transfer, false));
 
     Success(SuccessResult {
-        chat_id,
-        event_index,
-        message_index: message.message_index,
+        chat_id: recipient.into(),
+        event_index: message_event.index,
+        message_index: message_event.event.message_index,
         timestamp: now,
     })
 }

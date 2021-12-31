@@ -136,7 +136,7 @@ type DirectMessageNotification =
     record {
         sender: UserId;
         sender_name: text;
-        message: Message;
+        message: MessageEventWrapper;
     };
 
 type FieldTooLongResult =
@@ -274,7 +274,7 @@ type GroupMessageNotification =
         group_name: text;
         sender: UserId;
         sender_name: text;
-        message: Message;
+        message: MessageEventWrapper;
     };
 
 type GroupNameChanged =
