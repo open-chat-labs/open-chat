@@ -10,6 +10,9 @@
     import DeletedContent from "./DeletedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
     import type { MessageContent } from "../../domain/chat/chat";
+    import { userStore } from "stores/user";
+    import { _ } from "svelte-i18n";
+    import { parseMentions } from "domain/user/user.utils";
 
     const SIZE_LIMIT = 1000;
     export let content: MessageContent;
@@ -31,7 +34,7 @@
 </script>
 
 {#if content.kind === "text_content"}
-    <Markdown text={truncateText(content.text)} />
+    <Markdown text={truncateText(parseMentions($userStore, content.text, $_("unknown")))} />
 {:else if content.kind === "image_content"}
     <ImageContent {fill} {content} {reply} {height} />
 {:else if content.kind === "video_content"}

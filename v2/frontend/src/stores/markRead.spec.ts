@@ -113,12 +113,10 @@ describe("mark messages read", () => {
     describe("getting first unread message index", () => {
         test("where we have read everything", () => {
             markRead.markRangeRead("abc", 0, 100);
-            expect(markRead.getFirstUnreadMessageIndex("abc", 0, 100)).toEqual(Number.MAX_VALUE);
+            expect(markRead.getFirstUnreadMessageIndex("abc", 0, 100)).toEqual(undefined);
         });
         test("where we have no messages", () => {
-            expect(markRead.getFirstUnreadMessageIndex("abc", 0, undefined)).toEqual(
-                Number.MAX_VALUE
-            );
+            expect(markRead.getFirstUnreadMessageIndex("abc", 0, undefined)).toEqual(undefined);
         });
         test("where we have read nothing", () => {
             expect(markRead.getFirstUnreadMessageIndex("abc", 0, 100)).toEqual(0);

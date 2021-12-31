@@ -515,7 +515,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     avatarBlobReference?: BlobReference;
     participantCount?: number;
     myRole?: ParticipantRole;
-    mentions: number[];
+    mentions: Mention[];
 };
 
 export type ParticipantRole = "admin" | "participant" | "owner" | "super_admin";
@@ -578,8 +578,15 @@ export type GroupChatSummary = DataContent &
         lastUpdated: bigint;
         participantCount: number;
         myRole: ParticipantRole;
-        mentions: number[];
+        mentions: Mention[];
     };
+
+export type Mention = {
+    messageId: bigint;
+    eventIndex: number;
+    mentionedBy: string;
+    messageIndex: number;
+};
 
 export type CandidateParticipant = {
     role: ParticipantRole;

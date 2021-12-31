@@ -413,7 +413,12 @@ export type LeaveGroupResponse = { 'GroupNotFound' : null } |
   { 'InternalError' : string };
 export interface MarkReadArgs { 'messages_read' : Array<ChatMessagesRead> }
 export type MarkReadResponse = { 'Success' : null };
-export interface Mention { 'message_index' : MessageIndex }
+export interface Mention {
+  'message_id' : MessageId,
+  'event_index' : EventIndex,
+  'mentioned_by' : UserId,
+  'message_index' : MessageIndex,
+}
 export interface Message {
   'content' : MessageContent,
   'edited' : boolean,

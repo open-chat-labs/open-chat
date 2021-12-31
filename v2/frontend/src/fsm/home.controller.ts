@@ -56,6 +56,7 @@ export class HomeController {
             return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
                 (result, [chatId, summary]) => {
                     result[chatId] = mergeUnconfirmedIntoSummary(
+                        this.user.userId,
                         summary,
                         unconfirmed[chatId]?.messages
                     );

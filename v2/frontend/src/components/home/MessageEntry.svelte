@@ -13,6 +13,8 @@
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import Smiley from "./Smiley.svelte";
     import { audioRecordingMimeType } from "../../utils/media";
+    import MentionPicker from "./MentionPicker.svelte";
+    import { userStore } from "stores/user";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -20,10 +22,14 @@
     $: textContent = controller.textContent;
     $: editingEvent = controller.editingEvent;
     $: fileToAttach = controller.fileToAttach;
+    $: participants = controller.participants;
+    $: blockedUsers = controller.blockedUsers;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
+    const reverseUserLookup: Record<string, string> = {};
+    const mentionRegex = /@([\d\w_]*)$/;
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
     let audioMimeType = audioRecordingMimeType();
@@ -37,6 +43,10 @@
     let typingTimer: number | undefined = undefined;
     let audioSupported: boolean = "mediaDevices" in navigator;
     let inputIsEmpty = true;
+    let showMentionPicker = false;
+    let mentionPrefix: string | undefined;
+    let messageEntry: HTMLDivElement;
+
     $: messageIsEmpty = true;
 
     $: {
@@ -97,9 +107,31 @@
             : $_("enterMessage");
 
     function onInput() {
-        inputIsEmpty = (inp.textContent?.trim().length ?? 0) === 0;
-        controller.setTextContent(inputIsEmpty ? undefined : inp.textContent!);
+        const content = inp.textContent;
+        const trimmedContent = content?.trim();
+        inputIsEmpty = (trimmedContent?.length ?? 0) === 0;
+        controller.setTextContent(inputIsEmpty ? undefined : content!);
+        triggerMentionLookup(content);
+        triggerTypingTimer();
+    }
 
+    function triggerMentionLookup(inputContent: string | null): void {
+        if (inputContent === null) return;
+
+        const matches = inputContent.match(mentionRegex);
+        if (matches !== null) {
+            mentionPrefix = matches[1].toLowerCase() || undefined;
+            controller.loadDetails().then(() => {
+                showMentionPicker = true;
+                saveSelection();
+            });
+        } else {
+            showMentionPicker = false;
+            mentionPrefix = undefined;
+        }
+    }
+
+    function triggerTypingTimer() {
         requestAnimationFrame(() => {
             const now = Date.now();
             if (now - lastTypingUpdate > USER_TYPING_EVENT_MIN_INTERVAL_MS) {
@@ -127,8 +159,20 @@
         }
     }
 
+    // replace anything of the form @username with @UserId(xyz) where xyz is the userId
+    // if we don't have the mapping, just leave it as is (we *will* have the mapping)
+    function expandMentions(text?: string): string | undefined {
+        return text?.replace(/@([\w\d_]*)/g, (match, p1) => {
+            const userId = reverseUserLookup[p1];
+            if (userId !== undefined) {
+                return `@UserId(${userId})`;
+            }
+            return match;
+        });
+    }
+
     function sendMessage() {
-        dispatch("sendMessage", inp.textContent?.trim());
+        dispatch("sendMessage", expandMentions(inp.textContent?.trim()));
         inp.textContent = "";
         inp.focus();
         inputIsEmpty = true;
@@ -161,6 +205,15 @@
         selection.addRange(selectedRange);
     }
 
+    function setCaretToEnd() {
+        const range = document.createRange();
+        range.selectNodeContents(inp);
+        range.collapse(false);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+    }
+
     function onDrop(e: DragEvent) {
         dragging = false;
         dispatch("drop", e);
@@ -169,9 +222,32 @@
     function clearAttachment() {
         controller.clearAttachment();
     }
+
+    function mention(ev: CustomEvent<string>): void {
+        const user = $userStore[ev.detail];
+        const username = user?.username ?? $_("unknown");
+        inp.textContent = inp.textContent?.replace(mentionRegex, `@${username}`) || null;
+        controller.setTextContent(inp.textContent || undefined);
+        showMentionPicker = false;
+        setCaretToEnd();
+
+        if (user !== undefined) {
+            reverseUserLookup[username] = user.userId;
+        }
+    }
 </script>
 
-<div class="message-entry">
+{#if showMentionPicker}
+    <MentionPicker
+        blockedUsers={$blockedUsers}
+        offset={messageEntry.clientHeight}
+        on:close={() => (showMentionPicker = false)}
+        on:mention={mention}
+        prefix={mentionPrefix}
+        participants={$participants} />
+{/if}
+
+<div class="message-entry" bind:this={messageEntry}>
     {#if blocked}
         <div class="blocked">
             {$_("userIsBlocked")}

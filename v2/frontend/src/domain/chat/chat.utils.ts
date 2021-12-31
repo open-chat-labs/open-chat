@@ -22,6 +22,7 @@ import type {
     LocalReaction,
     GroupChatDetails,
     GroupChatDetailsUpdates,
+    Mention,
 } from "./chat";
 import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -325,11 +326,40 @@ function mergeUpdatedGroupChat(
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
     chat.myRole = updatedChat.myRole ?? chat.myRole;
-
+    chat.mentions = mergeMentions(chat.mentions, updatedChat.mentions);
     return chat;
 }
 
+function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {
+    return [
+        ...existing,
+        ...incoming.filter(
+            (m1) => existing.find((m2) => m1.messageId === m2.messageId) === undefined
+        ),
+    ];
+}
+
+function messageMentionsUser(userId: string, msg: EventWrapper<Message>): boolean {
+    const txt = getContentAsText(msg.event.content);
+    return txt.indexOf(`@UserId(${userId})`) >= 0;
+}
+
+function mentionsFromMessages(userId: string, messages: EventWrapper<Message>[]): Mention[] {
+    return messages.reduce((mentions, msg) => {
+        if (messageMentionsUser(userId, msg)) {
+            mentions.push({
+                messageId: msg.event.messageId,
+                messageIndex: msg.event.messageIndex,
+                eventIndex: msg.index,
+                mentionedBy: msg.event.sender,
+            });
+        }
+        return mentions;
+    }, [] as Mention[]);
+}
+
 export function mergeUnconfirmedIntoSummary(
+    userId: string,
     chatSummary: ChatSummary,
     unconfirmedMessages?: EventWrapper<Message>[]
 ): ChatSummary {
@@ -337,7 +367,10 @@ export function mergeUnconfirmedIntoSummary(
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
+    let mentions = chatSummary.kind === "group_chat" ? chatSummary.mentions : [];
     if (unconfirmedMessages.length > 0) {
+        const incomingMentions = mentionsFromMessages(userId, unconfirmedMessages);
+        mentions = mergeMentions(mentions, incomingMentions);
         const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
         if (
             latestMessage === undefined ||
@@ -349,11 +382,19 @@ export function mergeUnconfirmedIntoSummary(
             latestEventIndex = latestUnconfirmedMessage.index;
         }
     }
-    return {
-        ...chatSummary,
-        latestMessage,
-        latestEventIndex,
-    };
+
+    return chatSummary.kind === "group_chat"
+        ? {
+              ...chatSummary,
+              latestMessage,
+              latestEventIndex,
+              mentions,
+          }
+        : {
+              ...chatSummary,
+              latestMessage,
+              latestEventIndex,
+          };
 }
 
 function toLookup<T>(keyFn: (t: T) => string, things: T[]): Record<string, T> {

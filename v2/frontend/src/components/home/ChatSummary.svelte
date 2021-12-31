@@ -1,7 +1,11 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserLookup } from "../../domain/user/user";
-    import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import {
+        avatarUrl as getAvatarUrl,
+        getUserStatus,
+        parseMentions,
+    } from "../../domain/user/user.utils";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { formatMessageDate } from "../../utils/date";
@@ -31,6 +35,7 @@
 
     let hovering = false;
     let unreadMessages: number;
+    let unreadMentions: number;
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
@@ -49,12 +54,23 @@
         };
     }
 
+    function getUnreadMentionCount(chat: ChatSummary): number {
+        if (chat.kind === "direct_chat") return 0;
+        return chat.mentions.filter(
+            (m) => !messagesRead.isRead(chat.chatId, m.messageIndex, m.messageId)
+        ).length;
+    }
+
     function formatLatestMessage(chatSummary: ChatSummary, users: UserLookup): string {
         if (chatSummary.latestMessage === undefined) {
             return "";
         }
 
-        const latestMessageText = getContentAsText(chatSummary.latestMessage.event.content);
+        const latestMessageText = parseMentions(
+            users,
+            getContentAsText(chatSummary.latestMessage.event.content),
+            $_("unknown")
+        );
 
         if (chatSummary.kind === "direct_chat") {
             return latestMessageText;
@@ -68,16 +84,29 @@
         return `${user}: ${latestMessageText}`;
     }
 
-    $: chat = normaliseChatSummary($now, chatSummary);
-    $: lastMessage = formatLatestMessage(chatSummary, $userStore);
-
-    let unsub = messagesRead.subscribe((_val) => {
+    /***
+     * This needs to be called both when the chatSummary changes (because that may have changed the latestMessage)
+     * and when the internal state of the MessageReadTracker changes. Both are necessary to get the right value
+     * at all times.
+     */
+    function updateUnreadCounts(chatSummary: ChatSummary) {
         unreadMessages = messagesRead.unreadMessageCount(
             chatSummary.chatId,
             getMinVisibleMessageIndex(chatSummary),
             chatSummary.latestMessage?.event.messageIndex
         );
-    });
+        unreadMentions = getUnreadMentionCount(chatSummary);
+    }
+
+    $: chat = normaliseChatSummary($now, chatSummary);
+    $: lastMessage = formatLatestMessage(chatSummary, $userStore);
+
+    $: {
+        // we are passing chatSummary into the function to force a reaction
+        updateUnreadCounts(chatSummary);
+    }
+
+    const unsub = messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
 
     onDestroy(unsub);
 
@@ -93,6 +122,7 @@
     class:first={index === 0}
     class:selected
     class:rtl={$rtlStore}
+    title={JSON.stringify(unreadMentions)}
     on:mouseenter={() => (hovering = true)}
     on:mouseleave={() => (hovering = false)}
     href={`/#/${chatSummary.chatId}`}>
@@ -121,12 +151,21 @@
     <div class:rtl={$rtlStore} class="chat-date">
         {formatMessageDate(new Date(Number(displayDate)))}
     </div>
+    {#if unreadMentions > 0}
+        <div
+            in:pop={{ duration: 1500 }}
+            title={$_("chatSummary.mentions", { values: { count: unreadMentions.toString() } })}
+            class:rtl={$rtlStore}
+            class="notification mention">
+            @
+        </div>
+    {/if}
     {#if unreadMessages > 0}
         <div
             in:pop={{ duration: 1500 }}
             title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
             class:rtl={$rtlStore}
-            class="unread-msgs">
+            class="notification">
             {unreadMessages > 99 ? "99+" : unreadMessages}
         </div>
     {/if}
@@ -216,15 +255,14 @@
         }
     }
 
-    .unread-msgs {
+    .notification {
         display: flex;
         justify-content: center;
         align-items: center;
         background-color: var(--accent);
         text-shadow: 1px 1px 1px var(--accentDarker);
         border-radius: 50%;
-        font-weight: bold;
-        font-size: 10px;
+        @include font(bold, normal, fs-50);
         color: #ffffff;
         width: $sp5;
         height: $sp5;
@@ -237,6 +275,15 @@
 
         &.rtl {
             left: $sp3;
+            margin-right: 2px;
+            margin-left: 0;
+        }
+    }
+
+    .mention {
+        margin-right: 2px;
+        &.rtl {
+            margin-left: 2px;
         }
     }
 </style>

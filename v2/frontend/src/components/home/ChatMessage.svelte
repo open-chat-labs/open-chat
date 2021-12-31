@@ -256,11 +256,7 @@
                 {/if}
             {/if}
 
-            <ChatMessageContent
-                {fill}
-                {me}
-                content={msg.content}
-                height={mediaCalculatedHeight} />
+            <ChatMessageContent {fill} {me} content={msg.content} height={mediaCalculatedHeight} />
 
             {#if !deleted}
                 <TimeAndTicks {fill} {timestamp} {me} {confirmed} {readByThem} {chatType} />
