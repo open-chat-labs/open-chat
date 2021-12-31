@@ -247,7 +247,10 @@ type AvatarChanged =
 
 type Mention =
     record {
+        message_id: MessageId;
         message_index: MessageIndex;
+        event_index: EventIndex;
+        mentioned_by: UserId;
     };
 
 type Message =
