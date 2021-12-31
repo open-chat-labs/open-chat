@@ -6,6 +6,8 @@ export class Poller {
     private unsubscribeBackground: Unsubscriber | undefined;
     private lastExecutionTimestamp: number | undefined;
     private stopped = false;
+    // Used to ensure each Poller instance runs exactly one instance of its task
+    private runnerId: symbol | undefined;
 
     constructor(
         private fn: () => Promise<void>,
@@ -18,6 +20,9 @@ export class Poller {
     }
 
     private start(hidden: boolean): void {
+        const runnerId = Symbol();
+        this.runnerId = runnerId;
+
         if (this.timeoutId !== undefined) {
             window.clearTimeout(this.timeoutId);
         }
@@ -32,7 +37,7 @@ export class Poller {
                 : interval;
 
         const runThenLoop = () => {
-            if (this.stopped) return;
+            if (this.stopped || this.runnerId !== runnerId) return;
             this.fn().finally(() => {
                 this.lastExecutionTimestamp = Date.now();
                 this.timeoutId = window.setTimeout(runThenLoop, interval);
