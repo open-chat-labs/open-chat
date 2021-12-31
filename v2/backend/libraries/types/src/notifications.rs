@@ -1,4 +1,4 @@
-use crate::{ChatId, Message, UserId};
+use crate::{ChatId, EventWrapper, Message, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -27,7 +27,7 @@ pub struct AddedToGroupNotification {
 pub struct DirectMessageNotification {
     pub sender: UserId,
     pub sender_name: String,
-    pub message: Message,
+    pub message: EventWrapper<Message>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -36,5 +36,5 @@ pub struct GroupMessageNotification {
     pub group_name: String,
     pub sender: UserId,
     pub sender_name: String,
-    pub message: Message,
+    pub message: EventWrapper<Message>,
 }

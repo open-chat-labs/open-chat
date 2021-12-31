@@ -192,7 +192,7 @@ export interface DirectChatSummaryUpdates {
 }
 export interface DirectMessageNotification {
   'sender' : UserId,
-  'message' : Message,
+  'message' : MessageEventWrapper,
   'sender_name' : string,
 }
 export interface DismissAlertsArgs { 'alert_ids' : Array<string> }
@@ -350,7 +350,7 @@ export interface GroupDescriptionChanged {
 }
 export interface GroupMessageNotification {
   'sender' : UserId,
-  'message' : Message,
+  'message' : MessageEventWrapper,
   'sender_name' : string,
   'chat_id' : ChatId,
   'group_name' : string,
