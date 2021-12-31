@@ -122,9 +122,7 @@
         if (matches !== null) {
             mentionPrefix = matches[1].toLowerCase() || undefined;
             controller.loadDetails().then(() => {
-                console.log("Participants: ", $participants);
                 showMentionPicker = true;
-                console.log(messageEntry.clientHeight);
                 saveSelection();
             });
         } else {
@@ -165,7 +163,6 @@
     // if we don't have the mapping, just leave it as is (we *will* have the mapping)
     function expandMentions(text?: string): string | undefined {
         return text?.replace(/@([\w\d_]*)/g, (match, p1) => {
-            console.log(match, p1);
             const userId = reverseUserLookup[p1];
             if (userId !== undefined) {
                 return `@UserId(${userId})`;
