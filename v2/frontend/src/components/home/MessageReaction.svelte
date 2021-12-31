@@ -11,34 +11,43 @@
     export let userIds: Set<string>;
     export let me: boolean;
     export let myUserId: string | undefined;
-    
+
+    const TOOLTIP_DELAY = 350;
     let hover = false;
     let userLookup = getContext<UserLookup>("userLookup");
+    let tooltipTimer: number | undefined;
 
     $: selected = myUserId !== undefined ? userIds.has(myUserId) : false;
     $: usernames = hover ? buildReactionUsernames(userIds) : "";
     $: maxWidth = calculateMaxWidth(usernames.length);
 
     function buildReactionUsernames(userIds: Set<string>): string {
-        let usernames = userIds.size < 100 
-            ? Array.from(userIds, uid => [uid, userLookup[uid]?.username])
-                .filter(([uid, username]) => (username !== undefined) && (uid !== myUserId))
-                .map(([_, username]) => username)
-                .join(", ")
-            : $_("reactions.greaterThan99People") ;
+        let usernames =
+            userIds.size < 100
+                ? Array.from(userIds, (uid) => [uid, userLookup[uid]?.username])
+                      .filter(([uid, username]) => username !== undefined && uid !== myUserId)
+                      .map(([_, username]) => username)
+                      .join(", ")
+                : $_("reactions.greaterThan99People");
 
-        return usernames + (selected 
-            ? usernames.length === 0 
-            ? $_("reactions.youClickToRemove") 
-            : $_("reactions.andYou") 
-            : "");
+        return (
+            usernames +
+            (selected
+                ? usernames.length === 0
+                    ? $_("reactions.youClickToRemove")
+                    : $_("reactions.andYou")
+                : "")
+        );
     }
 
     async function buildReactionCode(reaction: string): Promise<string | undefined> {
-        const emoji = (await emojiDatabase.getEmojiByUnicodeOrName(reaction)) as NativeEmoji | undefined ;
-        let code = emoji?.shortcodes !== undefined 
-            ? `:${emoji.shortcodes[emoji.shortcodes.length - 1]}:` 
-            : `"${emoji?.annotation}"`;
+        const emoji = (await emojiDatabase.getEmojiByUnicodeOrName(reaction)) as
+            | NativeEmoji
+            | undefined;
+        let code =
+            emoji?.shortcodes !== undefined
+                ? `:${emoji.shortcodes[emoji.shortcodes.length - 1]}:`
+                : `"${emoji?.annotation}"`;
         return code ?? ":unknown:";
     }
 
@@ -47,17 +56,18 @@
     }
 
     function startHover() {
-        hover = true;
+        tooltipTimer = window.setTimeout(() => (hover = true), TOOLTIP_DELAY);
     }
 
     function endHover() {
+        window.clearTimeout(tooltipTimer);
         hover = false;
     }
 </script>
 
 <div
     on:click
-    on:mouseenter={startHover} 
+    on:mouseenter={startHover}
     on:mouseleave={endHover}
     on:blur={endHover}
     on:contextmenu|preventDefault={startHover}
@@ -68,12 +78,11 @@
         {userIds.size > 99 ? "99+" : userIds.size}
     </span>
     {#if hover}
-        <div 
-            transition:fade={{ duration: 100 }} 
-            class="reaction-tooltip" 
-            class:right={me != $rtlStore} 
-            style={`max-width: ${maxWidth}px`}
-        >
+        <div
+            transition:fade={{ duration: 100 }}
+            class="reaction-tooltip"
+            class:right={me != $rtlStore}
+            style={`max-width: ${maxWidth}px`}>
             <div class="reaction-tooltip-emoji">{reaction}</div>
             <div>
                 <span class="reaction_usernames">{usernames}</span>
@@ -81,7 +90,7 @@
                 <span class="reaction_code">
                     {#await buildReactionCode(reaction) then value}
                         {value}
-                    {/await}                    
+                    {/await}
                 </span>
             </div>
         </div>
@@ -128,6 +137,7 @@
             flex-direction: column;
             align-items: center;
             position: absolute;
+            @include z-index("reaction-tooltip");
             left: -4px;
             bottom: 34px;
             font-size: 9px;
@@ -140,12 +150,12 @@
 
             &.right {
                 left: auto;
-                right: -4px;  
-                
+                right: -4px;
+
                 &:after {
                     right: 18px;
                     left: auto;
-                }                
+                }
             }
 
             .reaction-tooltip-emoji {
