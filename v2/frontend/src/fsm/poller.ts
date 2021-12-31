@@ -7,7 +7,7 @@ export class Poller {
     private lastExecutionTimestamp: number | undefined;
     private stopped = false;
     // Used to ensure each Poller instance runs exactly one instance of its task
-    private runnerId: number | undefined;
+    private runnerId: symbol | undefined;
 
     constructor(
         private fn: () => Promise<void>,
@@ -20,7 +20,7 @@ export class Poller {
     }
 
     private start(hidden: boolean): void {
-        const runnerId = Math.random();
+        const runnerId = Symbol();
         this.runnerId = runnerId;
 
         if (this.timeoutId !== undefined) {
