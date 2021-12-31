@@ -27,6 +27,7 @@
                 "peerjs": "^1.3.2",
                 "rollbar": "^2.23.0",
                 "sirv-cli": "^1.0.0",
+                "smoothscroll": "^0.4.0",
                 "svelte-easy-crop": "^1.0.4",
                 "svelte-i18n": "^3.3.9",
                 "svelte-jester": "^2.1.5",
@@ -12084,6 +12085,11 @@
                 "npm": ">= 3.0.0"
             }
         },
+        "node_modules/smoothscroll": {
+            "version": "0.4.0",
+            "resolved": "https://registry.npmjs.org/smoothscroll/-/smoothscroll-0.4.0.tgz",
+            "integrity": "sha512-sggQ3U2Un38b3+q/j1P4Y4fCboCtoUIaBYoge+Lb6Xg1H8RTIif/hugVr+ErMtIDpvBbhQfTjtiTeYAfbw1ZGQ=="
+        },
         "node_modules/socks": {
             "version": "2.6.1",
             "resolved": "https://registry.npmjs.org/socks/-/socks-2.6.1.tgz",
@@ -22961,6 +22967,11 @@
             "resolved": "https://registry.npmjs.org/smart-buffer/-/smart-buffer-4.1.0.tgz",
             "integrity": "sha512-iVICrxOzCynf/SNaBQCw34eM9jROU/s5rzIhpOvzhzuYHfJR/DhZfDkXiZSgKXfgv26HT3Yni3AV/DGw0cGnnw==",
             "dev": true
+        },
+        "smoothscroll": {
+            "version": "0.4.0",
+            "resolved": "https://registry.npmjs.org/smoothscroll/-/smoothscroll-0.4.0.tgz",
+            "integrity": "sha512-sggQ3U2Un38b3+q/j1P4Y4fCboCtoUIaBYoge+Lb6Xg1H8RTIif/hugVr+ErMtIDpvBbhQfTjtiTeYAfbw1ZGQ=="
         },
         "socks": {
             "version": "2.6.1",
