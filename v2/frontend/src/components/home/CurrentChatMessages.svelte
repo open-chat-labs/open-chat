@@ -18,6 +18,7 @@
         EnhancedReplyContext,
         ChatEvent as ChatEventType,
         Message,
+        Mention,
     } from "../../domain/chat/chat";
     import { groupEvents, messageIsReadByThem } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
@@ -39,7 +40,7 @@
 
     export let controller: ChatController;
     export let unreadMessages: number;
-    export let firstUnreadMention: number | undefined;
+    export let firstUnreadMention: Mention | undefined;
     export let firstUnreadMessage: number | undefined;
 
     $: loading = controller.loading;
@@ -113,9 +114,9 @@
         element?.scrollIntoView({ behavior, block: "center" });
     }
 
-    function scrollToMention(index: number | undefined) {
-        if (index !== undefined) {
-            scrollToMessageIndex(index);
+    function scrollToMention(mention: Mention | undefined) {
+        if (mention !== undefined) {
+            scrollToMessageIndex(mention.messageIndex);
         }
     }
 
@@ -451,7 +452,7 @@
 
 <div class:show={firstUnreadMention !== undefined} class="fab mentions" class:rtl={$rtlStore}>
     <Fab on:click={() => scrollToMention(firstUnreadMention)}>
-        <div title={firstUnreadMention?.toString()} in:pop={{ duration: 1500 }} class="unread">
+        <div in:pop={{ duration: 1500 }} class="unread">
             <div class="mention-count">@</div>
         </div>
     </Fab>

@@ -56,7 +56,9 @@
 
     function getUnreadMentionCount(chat: ChatSummary): number {
         if (chat.kind === "direct_chat") return 0;
-        return chat.mentions.filter((m) => !messagesRead.isRead(chat.chatId, m, BigInt(0))).length;
+        return chat.mentions.filter(
+            (m) => !messagesRead.isRead(chat.chatId, m.messageIndex, m.messageId)
+        ).length;
     }
 
     function formatLatestMessage(chatSummary: ChatSummary, users: UserLookup): string {
@@ -82,17 +84,29 @@
         return `${user}: ${latestMessageText}`;
     }
 
-    $: chat = normaliseChatSummary($now, chatSummary);
-    $: lastMessage = formatLatestMessage(chatSummary, $userStore);
-
-    let unsub = messagesRead.subscribe((_val) => {
+    /***
+     * This needs to be called both when the chatSummary changes (because that may have changed the latestMessage)
+     * and when the internal state of the MessageReadTracker changes. Both are necessary to get the right value
+     * at all times.
+     */
+    function updateUnreadCounts(chatSummary: ChatSummary) {
         unreadMessages = messagesRead.unreadMessageCount(
             chatSummary.chatId,
             getMinVisibleMessageIndex(chatSummary),
             chatSummary.latestMessage?.event.messageIndex
         );
         unreadMentions = getUnreadMentionCount(chatSummary);
-    });
+    }
+
+    $: chat = normaliseChatSummary($now, chatSummary);
+    $: lastMessage = formatLatestMessage(chatSummary, $userStore);
+
+    $: {
+        // we are passing chatSummary into the function to force a reaction
+        updateUnreadCounts(chatSummary);
+    }
+
+    const unsub = messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
 
     onDestroy(unsub);
 
@@ -108,6 +122,7 @@
     class:first={index === 0}
     class:selected
     class:rtl={$rtlStore}
+    title={JSON.stringify(unreadMentions)}
     on:mouseenter={() => (hovering = true)}
     on:mouseleave={() => (hovering = false)}
     href={`/#/${chatSummary.chatId}`}>

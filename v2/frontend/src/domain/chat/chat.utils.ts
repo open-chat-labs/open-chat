@@ -352,7 +352,12 @@ export function mergeUnconfirmedIntoSummary(
             latestUnconfirmedMessage.event.messageIndex > latestMessage.event.messageIndex
         ) {
             if (messageMentionsUser(userId, latestUnconfirmedMessage)) {
-                mentions.push(latestUnconfirmedMessage.event.messageIndex);
+                mentions.push({
+                    messageId: latestUnconfirmedMessage.event.messageId,
+                    messageIndex: latestUnconfirmedMessage.event.messageIndex,
+                    eventIndex: latestUnconfirmedMessage.index,
+                    mentionedBy: latestUnconfirmedMessage.event.sender,
+                });
             }
             latestMessage = latestUnconfirmedMessage;
         }

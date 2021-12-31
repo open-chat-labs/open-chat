@@ -304,7 +304,12 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
-export interface Mention { 'message_index' : MessageIndex }
+export interface Mention {
+  'message_id' : MessageId,
+  'event_index' : EventIndex,
+  'mentioned_by' : UserId,
+  'message_index' : MessageIndex,
+}
 export interface Message {
   'content' : MessageContent,
   'edited' : boolean,

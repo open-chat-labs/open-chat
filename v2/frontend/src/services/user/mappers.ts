@@ -23,6 +23,7 @@ import type {
     ApiAlertDetails,
     ApiCryptocurrencyDeposit,
     ApiRole,
+    ApiMention,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -47,6 +48,7 @@ import type {
     AlertDetails,
     CryptocurrencyDeposit,
     ParticipantRole,
+    Mention,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -468,7 +470,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             notificationsMuted: optional(candid.Group.notifications_muted, identity),
             participantCount: optional(candid.Group.participant_count, identity),
             myRole: optional(candid.Group.role, participantRole),
-            mentions: candid.Group.mentions.map((m) => m.message_index),
+            mentions: candid.Group.mentions.map(mention),
         };
     }
     if ("Direct" in candid) {
@@ -506,6 +508,15 @@ function participantRole(candid: ApiRole): ParticipantRole {
     throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
 }
 
+function mention(candid: ApiMention): Mention {
+    return {
+        messageId: candid.message_id,
+        messageIndex: candid.message_index,
+        eventIndex: candid.event_index,
+        mentionedBy: candid.mentioned_by.toString(),
+    };
+}
+
 function chatSummary(candid: ApiChatSummary): ChatSummary {
     if ("Group" in candid) {
         return {
@@ -534,7 +545,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             notificationsMuted: candid.Group.notifications_muted,
             participantCount: candid.Group.participant_count,
             myRole: participantRole(candid.Group.role),
-            mentions: candid.Group.mentions.map((m) => m.message_index),
+            mentions: candid.Group.mentions.map(mention),
         };
     }
     if ("Direct" in candid) {

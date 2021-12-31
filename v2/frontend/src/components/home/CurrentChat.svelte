@@ -8,6 +8,7 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import { onDestroy } from "svelte";
     import { getMinVisibleMessageIndex } from "domain/chat/chat.utils";
+    import type { Mention } from "domain/chat/chat";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -15,7 +16,7 @@
     let chatId = controller.chatId;
     let unreadMessages = 0;
     let firstUnreadMessage: number | undefined;
-    let firstUnreadMention: number | undefined;
+    let firstUnreadMention: Mention | undefined;
 
     $: {
         if (chatId !== controller.chatId) {
@@ -32,10 +33,12 @@
         firstUnreadMessage = getFirstUnreadMessageIndex();
     });
 
-    function getFirstUnreadMention(): number | undefined {
+    function getFirstUnreadMention(): Mention | undefined {
         const chat = controller.chatVal;
         if (chat.kind === "direct_chat") return undefined;
-        return chat.mentions.find((m) => !controller.markRead.isRead(chat.chatId, m, BigInt(0)));
+        return chat.mentions.find(
+            (m) => !controller.markRead.isRead(chat.chatId, m.messageIndex, m.messageId)
+        );
     }
 
     function getFirstUnreadMessageIndex(): number | undefined {
