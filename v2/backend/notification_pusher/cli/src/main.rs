@@ -9,6 +9,7 @@ use types::Error;
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     dotenv::dotenv()?;
+    tracing_subscriber::fmt::init();
 
     let args: Vec<String> = std::env::args().collect();
     let command: &str = &args[1];
