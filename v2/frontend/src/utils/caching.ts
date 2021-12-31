@@ -541,6 +541,7 @@ export async function setCachedUsers(db: Database, response: UsersResponse): Pro
                         username: u.username!,
                         lastOnline: u.lastOnline,
                         updated: u.updated,
+                        blobReference: u.blobReference,
                     },
                     u.userId
                 );
