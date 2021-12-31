@@ -1,11 +1,9 @@
 import { push } from "svelte-spa-router";
-import type { NotificationStatus } from "../domain/notifications";
+import type { Notification, NotificationStatus } from "../domain/notifications";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { notificationsSoftDisabled } from "../stores/notifications";
 import { toUint8Array } from "./base64";
 import { storeSoftDisabled } from "./caching";
-
-export const SOFT_DISABLE_KEY = "openchat_notifications_soft_disabled";
 
 // https://datatracker.ietf.org/doc/html/draft-thomson-webpush-vapid
 export const PUBLIC_VAPID_KEY =
@@ -78,7 +76,7 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
     }
 }
 
-export async function trySubscribe(api: ServiceContainer, userId: string): Promise<boolean> {
+export async function trySubscribe(api: ServiceContainer, userId: string, onNotification: (notification: Notification) => void): Promise<boolean> {
     if (process.env.NODE_ENV === "test") {
         return Promise.resolve(false);
     }
@@ -92,7 +90,14 @@ export async function trySubscribe(api: ServiceContainer, userId: string): Promi
     // Ensure the service worker is updated to the latest version
     registration.update();
 
-    // When a notifcation is clicked the service worker sends us a message
+    // When a notification is received, if it contains a message, update the relevant chat
+    navigator.serviceWorker.addEventListener("message", (event) => {
+        if (event.data.type === "NOTIFICATION_RECEIVED") {
+            onNotification(event.data.data as Notification);
+        }
+    });
+
+    // When a notification is clicked the service worker sends us a message
     // with the chat to select
     navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data.type === "NOTIFICATION_CLICKED") {
