@@ -208,7 +208,7 @@ impl ChatEvents {
         events
     }
 
-    pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, Message) {
+    pub fn push_message(&mut self, args: PushMessageArgs) -> EventWrapper<Message> {
         let message_index = self.next_message_index();
         let message_internal = MessageInternal {
             message_index,
@@ -221,7 +221,12 @@ impl ChatEvents {
         };
         let message = self.hydrate_message(&message_internal);
         let event_index = self.push_event(ChatEventInternal::Message(Box::new(message_internal)), args.now);
-        (event_index, message)
+
+        EventWrapper {
+            index: event_index,
+            timestamp: args.now,
+            event: message,
+        }
     }
 
     pub fn push_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> EventIndex {

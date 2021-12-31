@@ -82,13 +82,13 @@ async function showNotification(notification: Notification): Promise<void> {
     let body: string;
     let path: string;
     if (notification.kind === "direct_notification") {
-        const content = extractMessageContent(notification.message.content);
+        const content = extractMessageContent(notification.message.event.content);
         title += notification.senderName;
         body = content.text;
         icon = content.image ?? icon;
         path = notification.sender;
     } else if (notification.kind === "group_notification") {
-        const content = extractMessageContent(notification.message.content);
+        const content = extractMessageContent(notification.message.event.content);
         title += notification.groupName;
         body = `${notification.senderName}: ${content.text}`;
         icon = content.image ?? icon;
