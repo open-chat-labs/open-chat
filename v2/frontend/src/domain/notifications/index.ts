@@ -1,4 +1,4 @@
-import type { Message } from "../chat/chat";
+import type { EventWrapper, Message } from "../chat/chat";
 
 export type Notification = AddedToGroupNotification | DirectNotification | GroupNotification;
 
@@ -13,14 +13,14 @@ export type AddedToGroupNotification = {
 export type DirectNotification = {
     kind: "direct_notification";
     sender: string;
-    message: Message;
+    message: EventWrapper<Message>;
     senderName: string;
 };
 
 export type GroupNotification = {
     kind: "group_notification";
     sender: string;
-    message: Message;
+    message: EventWrapper<Message>;
     senderName: string;
     chatId: string;
     groupName: string;

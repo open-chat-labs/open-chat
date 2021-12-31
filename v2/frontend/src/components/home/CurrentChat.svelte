@@ -7,15 +7,48 @@
     import { _ } from "svelte-i18n";
     import type { ChatController } from "../../fsm/chat.controller";
     import { onDestroy } from "svelte";
+    import { getMinVisibleMessageIndex } from "domain/chat/chat.utils";
+    import type { Mention } from "domain/chat/chat";
 
     export let controller: ChatController;
     export let blocked: boolean;
 
+    let chatId = controller.chatId;
     let unreadMessages = 0;
+    let firstUnreadMessage: number | undefined;
+    let firstUnreadMention: Mention | undefined;
+
+    $: {
+        if (chatId !== controller.chatId) {
+            chatId = controller.chatId;
+            unreadMessages = controller.unreadMessageCount;
+            firstUnreadMention = getFirstUnreadMention();
+            firstUnreadMessage = getFirstUnreadMessageIndex();
+        }
+    }
 
     let unsub = controller.markRead.subscribe(() => {
         unreadMessages = controller.unreadMessageCount;
+        firstUnreadMention = getFirstUnreadMention();
+        firstUnreadMessage = getFirstUnreadMessageIndex();
     });
+
+    function getFirstUnreadMention(): Mention | undefined {
+        const chat = controller.chatVal;
+        if (chat.kind === "direct_chat") return undefined;
+        return chat.mentions.find(
+            (m) => !controller.markRead.isRead(chat.chatId, m.messageIndex, m.messageId)
+        );
+    }
+
+    function getFirstUnreadMessageIndex(): number | undefined {
+        const chat = controller.chatVal;
+        return controller.markRead.getFirstUnreadMessageIndex(
+            chat.chatId,
+            getMinVisibleMessageIndex(chat),
+            chat.latestMessage?.event.messageIndex
+        );
+    }
 
     onDestroy(unsub);
 
@@ -75,6 +108,8 @@
         on:messageRead={messageRead}
         on:chatWith
         {controller}
+        {firstUnreadMention}
+        {firstUnreadMessage}
         {unreadMessages} />
     <Footer {blocked} {controller} />
 </div>

@@ -63,7 +63,7 @@
     onMount(() => {
         // bootstrap anything that needs a service container here
         rtcConnectionsManager.init(controller.user.userId);
-        initNotificationStores(api, controller.user!.userId);
+        initNotificationStores(api, controller.user!.userId, (n) => controller.notificationReceived(n));
     });
 
     onDestroy(() => {
@@ -217,13 +217,15 @@
     $: chat = $selectedChat?.chat;
 
     $: groupChat =
-        chat && $chat.kind === "group_chat" ? (chat as Writable<GroupChatSummary>) : undefined;
+        chat && $chat && $chat.kind === "group_chat"
+            ? (chat as Writable<GroupChatSummary>)
+            : undefined;
 
     $: x = $rtlStore ? -300 : 300;
 
     let editGroupHistory: EditGroupState[] = [];
 
-    $: blocked = chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
+    $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
 </script>
 
 {#if controller.user}

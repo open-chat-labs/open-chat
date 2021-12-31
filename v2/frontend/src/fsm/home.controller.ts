@@ -14,6 +14,7 @@ import {
     updateArgsFromChats,
 } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
+import type { Notification } from "../domain/notifications";
 import type { User, UsersResponse } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
@@ -55,6 +56,7 @@ export class HomeController {
             return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
                 (result, [chatId, summary]) => {
                     result[chatId] = mergeUnconfirmedIntoSummary(
+                        this.user.userId,
                         summary,
                         unconfirmed[chatId]?.messages
                     );
@@ -484,6 +486,21 @@ export class HomeController {
 
     remoteUserReadMessage(message: RemoteUserReadMessage): void {
         unconfirmedReadByThem.add(BigInt(message.messageId));
+    }
+
+    notificationReceived(notification: Notification): void {
+        switch (notification.kind) {
+            case "direct_notification": {
+                this.onConfirmedMessage(notification.sender, notification.message);
+                return;
+            }
+            case "group_notification": {
+                this.onConfirmedMessage(notification.chatId, notification.message);
+                return;
+            }
+            case "added_to_group_notification":
+                return;
+        }
     }
 
     private delegateToChatController(

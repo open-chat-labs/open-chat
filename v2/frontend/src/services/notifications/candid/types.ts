@@ -155,7 +155,7 @@ export interface DirectChatSummaryUpdates {
 }
 export interface DirectMessageNotification {
   'sender' : UserId,
-  'message' : Message,
+  'message' : MessageEventWrapper,
   'sender_name' : string,
 }
 export type EventIndex = number;
@@ -269,7 +269,7 @@ export interface GroupDescriptionChanged {
 }
 export interface GroupMessageNotification {
   'sender' : UserId,
-  'message' : Message,
+  'message' : MessageEventWrapper,
   'sender_name' : string,
   'chat_id' : ChatId,
   'group_name' : string,
@@ -298,7 +298,12 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
-export interface Mention { 'message_index' : MessageIndex }
+export interface Mention {
+  'message_id' : MessageId,
+  'event_index' : EventIndex,
+  'mentioned_by' : UserId,
+  'message_index' : MessageIndex,
+}
 export interface Message {
   'content' : MessageContent,
   'edited' : boolean,

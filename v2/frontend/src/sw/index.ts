@@ -4,7 +4,7 @@ import { Notification as NotificationIdl } from "../services/notifications/candi
 import type { MessageContent } from "../domain/chat/chat";
 import type { Notification } from "../domain/notifications";
 import { UnsupportedValueError } from "../utils/error";
-import { notification } from "../services/notifications/mappers";
+import { notification as toNotification } from "../services/notifications/mappers";
 import { getSoftDisabled } from "../utils/caching";
 import { toUint8Array } from "../utils/base64";
 
@@ -28,7 +28,7 @@ self.addEventListener("fetch", () => {
 });
 
 async function handlePushNotification(event: PushEvent): Promise<void> {
-    if ((await getSoftDisabled()) || !event.data) return;
+    if (!event.data) return;
 
     const bytes = toUint8Array(event.data.text());
 
@@ -38,11 +38,24 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
         return;
     }
 
-    // If an OC browser window already has the focus then don't show a notification
-    if (await isClientFocused()) {
+    const notification = toNotification(candid);
+
+    const windowClients = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+    });
+    windowClients.forEach((window) => {
+        window.postMessage({
+            type: "NOTIFICATION_RECEIVED",
+            data: notification,
+        });
+    });
+
+    // If notifications are disabled or an OC browser window already has the focus then don't show a notification
+    if (await getSoftDisabled() || await isClientFocused()) {
         return;
     }
-    await showNotification(notification(candid));
+    await showNotification(notification);
 }
 
 async function handleNotificationClick(event: NotificationEvent): Promise<void> {
@@ -82,13 +95,13 @@ async function showNotification(notification: Notification): Promise<void> {
     let body: string;
     let path: string;
     if (notification.kind === "direct_notification") {
-        const content = extractMessageContent(notification.message.content);
+        const content = extractMessageContent(notification.message.event.content);
         title += notification.senderName;
         body = content.text;
         icon = content.image ?? icon;
         path = notification.sender;
     } else if (notification.kind === "group_notification") {
-        const content = extractMessageContent(notification.message.content);
+        const content = extractMessageContent(notification.message.event.content);
         title += notification.groupName;
         body = `${notification.senderName}: ${content.text}`;
         icon = content.image ?? icon;

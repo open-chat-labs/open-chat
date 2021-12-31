@@ -1,4 +1,5 @@
 use crate::model::participants::ParticipantInternal;
+use crate::GroupChatEvents;
 use crate::{RuntimeState, RUNTIME_STATE, WASM_VERSION};
 use group_canister::c2c_summary::{Response::*, *};
 use ic_cdk_macros::query;
@@ -33,7 +34,7 @@ fn c2c_summary_impl(runtime_state: &RuntimeState) -> Response {
             joined: participant.date_added,
             participant_count: data.participants.len(),
             role: participant.role,
-            mentions: get_most_recent_mentions(participant),
+            mentions: get_most_recent_mentions(participant, &runtime_state.data.events),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
         };
         Success(SuccessResult { summary })
@@ -42,14 +43,12 @@ fn c2c_summary_impl(runtime_state: &RuntimeState) -> Response {
     }
 }
 
-fn get_most_recent_mentions(participant: &ParticipantInternal) -> Vec<Mention> {
+fn get_most_recent_mentions(participant: &ParticipantInternal, events: &GroupChatEvents) -> Vec<Mention> {
     participant
         .mentions
         .iter()
         .rev()
+        .filter_map(|message_index| events.hydrate_mention(message_index))
         .take(MAX_RETURNED_MENTIONS)
-        .map(|message_index| Mention {
-            message_index: *message_index,
-        })
         .collect()
 }

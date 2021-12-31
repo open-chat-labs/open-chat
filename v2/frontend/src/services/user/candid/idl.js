@@ -252,7 +252,12 @@ export const idlFactory = ({ IDL }) => {
     'to' : MessageIndex,
     'from' : MessageIndex,
   });
-  const Mention = IDL.Record({ 'message_index' : MessageIndex });
+  const Mention = IDL.Record({
+    'message_id' : MessageId,
+    'event_index' : EventIndex,
+    'mentioned_by' : UserId,
+    'message_index' : MessageIndex,
+  });
   const MessageEventWrapper = IDL.Record({
     'event' : Message,
     'timestamp' : TimestampMillis,

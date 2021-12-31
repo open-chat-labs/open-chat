@@ -114,8 +114,8 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
         .iter()
         .rev()
         .filter(|m| **m >= lowest_message_index)
+        .filter_map(|message_index| runtime_state.data.events.hydrate_mention(message_index))
         .take(MAX_RETURNED_MENTIONS)
-        .map(|m| Mention { message_index: *m })
         .collect();
 
     updates.mentions.reverse();

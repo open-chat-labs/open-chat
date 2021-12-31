@@ -3,7 +3,7 @@ use chat_events::{Metrics, PushMessageArgs};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, EventIndex, Message, MessageIndex, TimestampMillis, UserId};
+use types::{ChatId, EventWrapper, Message, MessageIndex, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
@@ -40,7 +40,7 @@ impl DirectChats {
         their_user_id: UserId,
         their_message_index: Option<MessageIndex>,
         args: PushMessageArgs,
-    ) -> (ChatId, EventIndex, Message) {
+    ) -> EventWrapper<Message> {
         let chat_id = ChatId::from(their_user_id);
         let now = args.now;
 
@@ -49,22 +49,23 @@ impl DirectChats {
             Vacant(e) => e.insert(DirectChat::new(their_user_id, args.now)),
         };
 
-        let (event_index, message) = chat.events.push_message(args);
+        let message_event = chat.events.push_message(args);
 
         if sent_by_me {
-            if chat.read_by_me.value.insert(message.message_index.into()) {
+            if chat.read_by_me.value.insert(message_event.event.message_index.into()) {
                 chat.read_by_me.timestamp = now;
             }
         } else {
-            if chat.read_by_them.value.insert(message.message_index.into()) {
+            if chat.read_by_them.value.insert(message_event.event.message_index.into()) {
                 chat.read_by_them.timestamp = now;
             }
             if let Some(their_message_index) = their_message_index {
-                chat.unread_message_index_map.add(message.message_index, their_message_index);
+                chat.unread_message_index_map
+                    .add(message_event.event.message_index, their_message_index);
             }
         }
 
-        (chat_id, event_index, message)
+        message_event
     }
 
     pub fn aggregate_metrics(&mut self) {

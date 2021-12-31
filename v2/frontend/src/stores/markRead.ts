@@ -27,7 +27,7 @@ export interface IMessageReadTracker {
         chatId: string,
         firstMessageIndex: number,
         latestMessageIndex: number | undefined
-    ) => number;
+    ) => number | undefined;
     isRead: (chatId: string, messageIndex: number, messageId: bigint) => boolean;
     stop: () => void;
     subscribe(sub: Subscriber<MessageReadState>): Unsubscriber;
@@ -163,9 +163,9 @@ export class MessageReadTracker implements IMessageReadTracker {
         chatId: string,
         firstMessageIndex: number,
         latestMessageIndex: number | undefined
-    ): number {
+    ): number | undefined {
         if (this.unreadMessageCount(chatId, firstMessageIndex, latestMessageIndex) === 0) {
-            return Number.MAX_VALUE;
+            return undefined;
         }
 
         // Start with all visible messages
@@ -187,7 +187,7 @@ export class MessageReadTracker implements IMessageReadTracker {
             }
         }
 
-        return unreadMessageIndexes.length > 0 ? unreadMessageIndexes.index(0) : Number.MAX_VALUE;
+        return unreadMessageIndexes.length > 0 ? unreadMessageIndexes.index(0) : undefined;
     }
 
     syncWithServer(chatId: string, ranges: DRange): void {
@@ -246,7 +246,7 @@ export class FakeMessageReadTracker implements IMessageReadTracker {
         _chatId: string,
         _firstMessageIndex: number,
         _latestMessageIndex: number | undefined
-    ): number {
+    ): number | undefined {
         return 0;
     }
 

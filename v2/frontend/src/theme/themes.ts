@@ -160,6 +160,7 @@ export interface Theme {
         bd: string;
         hv: string;
         sh: string;
+        "inverted-sh": string;
     };
 
     button: {
