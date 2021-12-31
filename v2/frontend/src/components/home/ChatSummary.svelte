@@ -56,9 +56,11 @@
 
     function getUnreadMentionCount(chat: ChatSummary): number {
         if (chat.kind === "direct_chat") return 0;
-        return chat.mentions.filter(
+        const unread = chat.mentions.filter(
             (m) => !messagesRead.isRead(chat.chatId, m.messageIndex, m.messageId)
-        ).length;
+        );
+        console.log("Unread mentions: ", unread);
+        return unread.length;
     }
 
     function formatLatestMessage(chatSummary: ChatSummary, users: UserLookup): string {

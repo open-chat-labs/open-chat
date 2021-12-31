@@ -138,6 +138,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bd: dark20,
             hv: "#424242",
             sh: "-10px 10px 10px 0px rgba(8,93,140,0.3)",
+            "inverted-sh": "0px -10px 10px 0px rgba(8,93,140,0.3)",
         },
 
         button: {

@@ -450,7 +450,11 @@
     {/each}
 </div>
 
-<div class:show={firstUnreadMention !== undefined} class="fab mentions" class:rtl={$rtlStore}>
+<div
+    title={$_("goToFirstMention")}
+    class:show={firstUnreadMention !== undefined}
+    class="fab mentions"
+    class:rtl={$rtlStore}>
     <Fab on:click={() => scrollToMention(firstUnreadMention)}>
         <div in:pop={{ duration: 1500 }} class="unread">
             <div class="mention-count">@</div>
@@ -459,6 +463,7 @@
 </div>
 
 <div
+    title={$_("goToFirstMessage")}
     class:show={fromBottom > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
     class="fab to-bottom"
     class:rtl={$rtlStore}>

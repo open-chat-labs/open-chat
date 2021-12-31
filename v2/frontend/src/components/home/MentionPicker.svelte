@@ -91,6 +91,7 @@
         width: 100%;
         max-height: calc(var(--vh, 1vh) * 50);
         overflow: auto;
+        box-shadow: var(--menu-inverted-sh);
     }
     .avatar {
         margin-right: $sp4;

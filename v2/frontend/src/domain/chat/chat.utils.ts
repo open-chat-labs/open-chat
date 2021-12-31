@@ -325,7 +325,14 @@ function mergeUpdatedGroupChat(
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
     chat.myRole = updatedChat.myRole ?? chat.myRole;
-    chat.mentions = [...chat.mentions, ...updatedChat.mentions];
+    chat.mentions = [
+        ...chat.mentions,
+        ...updatedChat.mentions.filter(
+            (incoming) =>
+                chat.mentions.find((existing) => existing.messageId === incoming.messageId) ===
+                undefined
+        ),
+    ];
 
     return chat;
 }
@@ -352,12 +359,18 @@ export function mergeUnconfirmedIntoSummary(
             latestUnconfirmedMessage.event.messageIndex > latestMessage.event.messageIndex
         ) {
             if (messageMentionsUser(userId, latestUnconfirmedMessage)) {
-                mentions.push({
-                    messageId: latestUnconfirmedMessage.event.messageId,
-                    messageIndex: latestUnconfirmedMessage.event.messageIndex,
-                    eventIndex: latestUnconfirmedMessage.index,
-                    mentionedBy: latestUnconfirmedMessage.event.sender,
-                });
+                if (
+                    mentions.find(
+                        (m) => m.messageId === latestUnconfirmedMessage.event.messageId
+                    ) === undefined
+                ) {
+                    mentions.push({
+                        messageId: latestUnconfirmedMessage.event.messageId,
+                        messageIndex: latestUnconfirmedMessage.event.messageIndex,
+                        eventIndex: latestUnconfirmedMessage.index,
+                        mentionedBy: latestUnconfirmedMessage.event.sender,
+                    });
+                }
             }
             latestMessage = latestUnconfirmedMessage;
         }

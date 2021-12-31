@@ -162,6 +162,8 @@
     "ownerCantLeave": "You must transfer ownership before you can leave the group",
     "owner": "owner",
     "admin": "admin",
+    "goToFirstMention": "Go to the first unread mention",
+    "goToFirstMessage": "Go to the first unread message",
     "transferOwnership": "Transfer ownership to",
     "transferOwnershipSucceeded": "Ownership succcessfully transfered",
     "transferOwnershipFailed": "Transfer of ownership failed",
@@ -171,7 +173,7 @@
     "errorEditingMessage": "An unexpected error occurred editing your message",
     "chatSummary": {
         "unread": "{count} unread message(s)",
-        "mentions": "{count} unread mentions(s)"
+        "mentions": "{count} unread mention(s)"
     },
     "login": {
         "welcomeTo": "Welcome to ...",
