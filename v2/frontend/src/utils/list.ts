@@ -63,3 +63,16 @@ export function zip<A, B>(a: A[], b: B[]): [A, B][] {
     }
     return res;
 }
+
+export function chunk<T>(array: T[], size: number): T[][] {
+    const chunkCount = Math.floor((array.length - 1) / size) + 1;
+    const chunks: T[][] = [];
+
+    for (let chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+        const start = chunkIndex * size;
+        const end = start + size;
+        chunks.push(array.slice(start, end));
+    }
+
+    return chunks;
+}

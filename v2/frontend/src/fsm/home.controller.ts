@@ -35,16 +35,18 @@ import { toastStore } from "../stores/toast";
 import { typing } from "../stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
-import { groupBy } from "../utils/list";
+import { chunk, groupBy } from "../utils/list";
 import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
 import { ChatController } from "./chat.controller";
 import { Poller } from "./poller";
 
 const ONE_MINUTE = 60 * 1000;
+const ONE_HOUR = 60 * ONE_MINUTE;
 const USER_UPDATE_INTERVAL = ONE_MINUTE;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
+const MAX_USERS_TO_UPDATE_PER_BATCH = 1000;
 
 export class HomeController {
     public messagesRead: IMessageReadTracker;
@@ -91,29 +93,41 @@ export class HomeController {
     }
 
     private async updateUsers() {
-        let usersResp: UsersResponse;
         try {
+            const allUsers = get(userStore);
             const usersToUpdate = new Set<string>();
+
+            // Update all users we have direct chats with
             for (const chat of Object.values(get(this.chatSummaries))) {
                 if (chat.kind == "direct_chat") {
                     usersToUpdate.add(chat.them);
                 }
             }
 
-            const allUsers = get(userStore);
-            const userGroups = groupBy<string, bigint>(Array.from(usersToUpdate), (u) => {
-                return allUsers[u]?.updated ?? BigInt(0);
-            });
+            // Also update any users who haven't been updated for at least an hour
+            const now = BigInt(Date.now());
+            for (const user of Object.values(allUsers)) {
+                if (now - user.updated > ONE_HOUR) {
+                    usersToUpdate.add(user.userId);
+                }
+            }
 
-            usersResp = await this.api.getUsers({
-                userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
-                    users,
-                    updatedSince,
-                })),
-            });
-            console.log("sending updated users");
-            userStore.addMany(usersResp.users);
-            userStore.setUpdated(Array.from(usersToUpdate), usersResp.timestamp);
+            console.log(`getting updates for ${usersToUpdate.size} user(s)`);
+            for (const batch of chunk(Array.from(usersToUpdate), MAX_USERS_TO_UPDATE_PER_BATCH)) {
+                const userGroups = groupBy<string, bigint>(batch, (u) => {
+                    return allUsers[u]?.updated ?? BigInt(0);
+                });
+
+                const usersResp = await this.api.getUsers({
+                    userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
+                        users,
+                        updatedSince,
+                    })),
+                });
+                userStore.addMany(usersResp.users);
+                userStore.setUpdated(batch, usersResp.timestamp);
+            }
+            console.log("users updated");
         } catch (err) {
             rollbar.error("Error updating users", err as Error);
         }
