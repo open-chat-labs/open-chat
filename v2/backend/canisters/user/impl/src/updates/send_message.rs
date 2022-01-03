@@ -3,6 +3,9 @@ use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
+use ic_ledger_types::{
+    AccountIdentifier, Memo, Tokens, TransferArgs, DEFAULT_FEE, DEFAULT_SUBACCOUNT, MAINNET_LEDGER_CANISTER_ID,
+};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{
@@ -12,7 +15,7 @@ use types::{
 };
 use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
-use utils::consts::{DEFAULT_MEMO, ICP_TRANSACTION_FEE_E8S};
+use utils::consts::DEFAULT_MEMO;
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
@@ -184,13 +187,20 @@ async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> 
         )
     });
 
-    let address = ledger_utils::calculate_address(pending_transfer.recipient);
-    let fee_e8s = pending_transfer.fee_e8s.unwrap_or(ICP_TRANSACTION_FEE_E8S);
-    let memo = pending_transfer.memo.unwrap_or(DEFAULT_MEMO);
+    let memo = Memo(pending_transfer.memo.unwrap_or(DEFAULT_MEMO));
+    let fee = pending_transfer.fee_e8s.map_or(DEFAULT_FEE, Tokens::from_e8s);
 
-    match ledger_utils::send(address, pending_transfer.amount_e8s, fee_e8s, memo).await {
-        Ok(block_height) => {
-            let completed_transfer = pending_transfer.completed(my_user_id, fee_e8s, memo, block_height);
+    let transfer_args = TransferArgs {
+        memo,
+        amount: Tokens::from_e8s(pending_transfer.amount_e8s),
+        fee,
+        from_subaccount: None,
+        to: AccountIdentifier::new(&pending_transfer.recipient.into(), &DEFAULT_SUBACCOUNT),
+        created_at_time: None,
+    };
+    match ic_ledger_types::transfer(MAINNET_LEDGER_CANISTER_ID, transfer_args).await {
+        Ok(Ok(block_height)) => {
+            let completed_transfer = pending_transfer.completed(my_user_id, fee.e8s(), memo.0, block_height);
             RUNTIME_STATE.with(|state| {
                 update_transaction(
                     index,
@@ -200,8 +210,9 @@ async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> 
             });
             Ok(completed_transfer)
         }
-        Err(error) => {
-            let failed_transfer = pending_transfer.failed(fee_e8s, memo, error.clone());
+        Ok(Err(transfer_error)) => {
+            let error_message = format!("Transfer failed. {:?}", transfer_error);
+            let failed_transfer = pending_transfer.failed(fee.e8s(), memo.0, error_message.clone());
             RUNTIME_STATE.with(|state| {
                 update_transaction(
                     index,
@@ -209,7 +220,19 @@ async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> 
                     state.borrow_mut().as_mut().unwrap(),
                 )
             });
-            Err(error)
+            Err(error_message)
+        }
+        Err((code, msg)) => {
+            let error_message = format!("Transfer failed. {:?}: {}", code, msg);
+            let failed_transfer = pending_transfer.failed(fee.e8s(), memo.0, error_message.clone());
+            RUNTIME_STATE.with(|state| {
+                update_transaction(
+                    index,
+                    CryptocurrencyTransfer::ICP(ICPTransfer::Failed(failed_transfer)),
+                    state.borrow_mut().as_mut().unwrap(),
+                )
+            });
+            Err(error_message)
         }
     }
 }
@@ -269,11 +292,11 @@ fn handle_failed_cycles_transfer(index: u32, failed_transfer: FailedCyclesTransf
     );
 }
 
-fn record_transaction<T: Into<Transaction>>(transaction: T, runtime_state: &mut RuntimeState) -> u32 {
+fn record_transaction(transaction: impl Into<Transaction>, runtime_state: &mut RuntimeState) -> u32 {
     let now = runtime_state.env.now();
     runtime_state.data.transactions.add(transaction, now)
 }
 
-fn update_transaction<T: Into<Transaction>>(index: u32, transaction: T, runtime_state: &mut RuntimeState) {
+fn update_transaction(index: u32, transaction: impl Into<Transaction>, runtime_state: &mut RuntimeState) {
     runtime_state.data.transactions.update(index, transaction);
 }

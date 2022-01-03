@@ -1,6 +1,7 @@
 use crate::model::user::User;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
+use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use types::{CanisterUpgradeStatus, Cryptocurrency, CryptocurrencyAccount};
 use user_index_canister::current_user::{Response::*, *};
 
@@ -42,7 +43,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                 };
                 let icp_account = CryptocurrencyAccount {
                     currency: Cryptocurrency::ICP,
-                    address: ledger_utils::calculate_address(u.user_id).to_hex(),
+                    address: AccountIdentifier::new(&u.user_id.into(), &DEFAULT_SUBACCOUNT).to_string(),
                 };
 
                 Created(CreatedResult {
