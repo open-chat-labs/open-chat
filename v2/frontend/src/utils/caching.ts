@@ -12,7 +12,7 @@ import type {
     SendMessageSuccess,
     SerializableMergedUpdatesResponse,
 } from "../domain/chat/chat";
-import type { UserSummary, PartialUserSummary } from "../domain/user/user";
+import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 
 export const MAX_MSGS = 30;
@@ -527,19 +527,12 @@ export async function getCachedUsers(db: Database, userIds: string[]): Promise<U
     }, [] as UserSummary[]);
 }
 
-export async function setCachedUsers(db: Database, users: PartialUserSummary[]): Promise<void> {
+export async function setCachedUsers(db: Database, users: UserSummary[]): Promise<void> {
     const tx = (await db).transaction("users", "readwrite");
     const store = tx.objectStore("users");
 
-    await Promise.all(users
-        .filter(isUserSummary)
-        .map((u) => store.put(u, u.userId)));
-
+    await Promise.all(users.map((u) => store.put(u, u.userId)));
     await tx.done;
-
-    function isUserSummary(user: PartialUserSummary): user is UserSummary {
-        return user.username !== undefined;
-    }
 }
 
 let db: Database | undefined;

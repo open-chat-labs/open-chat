@@ -17,6 +17,7 @@ import type {
     UserSummary,
 } from "../../domain/user/user";
 import { groupBy } from "../../utils/list";
+import { isUserSummary } from "../../utils/user";
 
 /**
  * This exists to decorate the user index client so that we can provide a write through cache to
@@ -39,7 +40,7 @@ export class CachingUserIndexClient implements IUserIndexClient {
         // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
         const mergedResponse = this.mergeGetUsersResponse(args, response, fromCache);
 
-        await setCachedUsers(this.db, mergedResponse.users);
+        await setCachedUsers(this.db, mergedResponse.users.filter(isUserSummary));
 
         return mergedResponse;
     }
