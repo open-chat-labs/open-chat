@@ -93,7 +93,6 @@ export class HomeController {
     }
 
     private async updateUsers() {
-        let usersResp: UsersResponse;
         try {
             const allUsers = get(userStore);
             const usersToUpdate = new Set<string>();
@@ -119,7 +118,7 @@ export class HomeController {
                     return allUsers[u]?.updated ?? BigInt(0);
                 });
 
-                usersResp = await this.api.getUsers({
+                const usersResp = await this.api.getUsers({
                     userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
                         users,
                         updatedSince,
