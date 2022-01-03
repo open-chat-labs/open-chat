@@ -1,4 +1,4 @@
-import { dedupe, flatMap, groupWhile } from "./list";
+import { chunk, dedupe, flatMap, groupWhile } from "./list";
 
 describe("list utils", () => {
     describe("group by", () => {
@@ -79,5 +79,11 @@ describe("list utils", () => {
         expect(deduped[0].a).toEqual(1);
         expect(deduped[1].a).toEqual(2);
         expect(deduped[2].a).toEqual(3);
+    });
+
+    describe("chunk", () => {
+        const array = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        expect(chunk(array, 2)).toEqual([[1, 2], [3, 4], [5, 6], [7, 8], [9]]);
+        expect(chunk(array, 3)).toEqual([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
     });
 });

@@ -26,20 +26,20 @@ export class CachingUserIndexClient implements IUserIndexClient {
     constructor(private db: Promise<IDBPDatabase<ChatSchema>>, private client: IUserIndexClient) {}
 
     async getUsers(users: UsersArgs): Promise<UsersResponse> {
-        const unknownUsers = users.userGroups
-            .filter((g) => g.updatedSince === BigInt(0))
-            .flatMap((g) => g.users);
+        const allUsers = users.userGroups.flatMap((g) => g.users);
 
-        const fromCache =
-            unknownUsers.length > 0 ? await getCachedUsers(this.db, unknownUsers) : [];
+        const fromCache = await getCachedUsers(this.db, allUsers);
 
-        const args = this.buildGetUsersArgs(users, fromCache);
+        // We throw away all of the updatedSince values passed in and instead use the values from the cache, this
+        // ensures the cache is always correct and doesn't miss any updates
+        const args = this.buildGetUsersArgs(allUsers, fromCache);
 
         const response = await this.client.getUsers(args);
 
+        // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
         const mergedResponse = this.mergeGetUsersResponse(args, response, fromCache);
 
-        await setCachedUsers(this.db, mergedResponse);
+        await setCachedUsers(this.db, mergedResponse.users);
 
         return mergedResponse;
     }
@@ -80,11 +80,7 @@ export class CachingUserIndexClient implements IUserIndexClient {
         return this.client.submitPhoneNumber(phoneNumber);
     }
 
-    private buildGetUsersArgs(original: UsersArgs, fromCache: UserSummary[]): UsersArgs {
-        if (fromCache.length === 0) {
-            return original;
-        }
-
+    private buildGetUsersArgs(users: string[], fromCache: UserSummary[]): UsersArgs {
         const fromCacheGrouped = groupBy(fromCache, (u) => u.updated);
         const fromCacheSet = new Set<string>(fromCache.map((u) => u.userId));
 
@@ -92,39 +88,20 @@ export class CachingUserIndexClient implements IUserIndexClient {
             userGroups: [],
         };
 
-        for (const group of original.userGroups) {
-            if (group.updatedSince === BigInt(0)) {
-                // These are the users which we attempted to read from the cache, any found in the cache should be
-                // removed from the 'updatedSince = 0' group and added to new groups according to their 'updated' dates.
-                const unknownUsers = group.users.filter((u) => !fromCacheSet.has(u));
-                if (unknownUsers.length > 0) {
-                    args.userGroups.push({
-                        users: unknownUsers,
-                        updatedSince: BigInt(0),
-                    });
-                }
-            } else if (fromCacheGrouped.has(group.updatedSince)) {
-                // If any users from the cache have matching 'updated' dates, append them to this existing group.
-                args.userGroups.push({
-                    users: [
-                        ...group.users,
-                        ...fromCacheGrouped.get(group.updatedSince)!.map((u) => u.userId),
-                    ],
-                    updatedSince: group.updatedSince,
-                });
-                // After adding the group of users from the cache we delete it so that after we have iterated over the
-                // original groups we can detect which users from the cache have not yet been added.
-                fromCacheGrouped.delete(group.updatedSince);
-            } else {
-                args.userGroups.push(group);
-            }
+        // Add the users not found in the cache and ask for all updates
+        const notFoundInCache = users.filter((u) => !fromCacheSet.has(u));
+        if (notFoundInCache.length > 0) {
+            args.userGroups.push({
+                users: notFoundInCache,
+                updatedSince: BigInt(0)
+            });
         }
 
-        // Now iterate over the users from the cache who have not yet been added to the args.
+        // Add the users found in the cache but only ask for updates since the date they were last updated in the cache
         for (const [updatedSince, users] of fromCacheGrouped) {
             args.userGroups.push({
                 users: users.map((u) => u.userId),
-                updatedSince: updatedSince,
+                updatedSince,
             });
         }
 
