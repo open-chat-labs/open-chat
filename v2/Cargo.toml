@@ -53,3 +53,7 @@ members = [
 lto = true
 opt-level = "z"
 codegen-units = 1
+
+[patch.crates-io]
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "3f6db10c482d15c904b23d5ab8780cf66a855e76" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "3f6db10c482d15c904b23d5ab8780cf66a855e76" }
