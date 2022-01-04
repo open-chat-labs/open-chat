@@ -54,7 +54,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                             date: now,
                         }],
                         avatar_id: None,
-                        registration_fee: user.registration_fee,
+                        registration_fee: user.registration_fee.clone(),
                     };
                     User::Created(created_user)
                 } else {

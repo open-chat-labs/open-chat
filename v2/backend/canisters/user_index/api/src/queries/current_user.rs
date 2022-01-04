@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::Deserialize;
 use types::{
-    CanisterCreationStatus, CanisterUpgradeStatus, CryptocurrencyAccount, Cycles, PhoneNumber, TimestampMillis, UserId,
+    CanisterCreationStatus, CanisterUpgradeStatus, CryptocurrencyAccount, PhoneNumber, RegistrationFee, TimestampMillis, UserId,
 };
 
 #[derive(CandidType, Deserialize, Debug)]
@@ -23,19 +23,13 @@ pub struct UnconfirmedResult {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum UnconfirmedUserState {
-    PhoneNumber(UnconfirmedPhoneNumberState),
-    CyclesFee(UnconfirmedCyclesFeeState),
+    PhoneNumber(UnconfirmedPhoneNumber),
+    RegistrationFee(RegistrationFee),
 }
 
 #[derive(CandidType, Deserialize, Debug)]
-pub struct UnconfirmedPhoneNumberState {
+pub struct UnconfirmedPhoneNumber {
     pub phone_number: PhoneNumber,
-    pub valid_until: TimestampMillis,
-}
-
-#[derive(CandidType, Deserialize, Debug)]
-pub struct UnconfirmedCyclesFeeState {
-    pub amount: Cycles,
     pub valid_until: TimestampMillis,
 }
 
@@ -55,7 +49,7 @@ pub struct ConfirmedResult {
 #[derive(CandidType, Deserialize, Debug)]
 pub enum ConfirmationState {
     PhoneNumber(PhoneNumber),
-    CyclesFee(Cycles),
+    RegistrationFee(RegistrationFee),
 }
 
 #[derive(CandidType, Deserialize, Debug)]

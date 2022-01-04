@@ -17,7 +17,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         match user {
             User::Unconfirmed(u) => Unconfirmed(UnconfirmedResult {
-                state: (&u.state).into(),
+                state: u.state.clone().into(),
             }),
             User::Confirmed(u) => {
                 if u.username.is_none() {
