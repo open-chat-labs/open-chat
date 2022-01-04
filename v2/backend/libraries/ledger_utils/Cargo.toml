@@ -8,9 +8,6 @@ edition = "2021"
 
 [dependencies]
 candid = "0.7.9"
-dfn_core = { git = "https://github.com/dfinity/ic", rev = "bd3b73e075aea1cc81b23b38ccfb138ca4ab17ab" }
-dfn_protobuf = { git = "https://github.com/dfinity/ic", rev = "bd3b73e075aea1cc81b23b38ccfb138ca4ab17ab" }
-ledger-canister = { git = "https://github.com/dfinity/ic", rev = "bd3b73e075aea1cc81b23b38ccfb138ca4ab17ab" }
-ic-nns-constants = { git = "https://github.com/dfinity/ic", rev = "bd3b73e075aea1cc81b23b38ccfb138ca4ab17ab" }
+ic-ledger-types = "0.1.0"
 types = { path = "../types" }
 utils = { path = "../utils" }

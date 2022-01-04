@@ -55,5 +55,6 @@ opt-level = "z"
 codegen-units = 1
 
 [patch.crates-io]
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "3f6db10c482d15c904b23d5ab8780cf66a855e76" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "3f6db10c482d15c904b23d5ab8780cf66a855e76" }
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "a41309cefebb8a89aa6dd3669ba4a6c9ef8f34c8" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "a41309cefebb8a89aa6dd3669ba4a6c9ef8f34c8" }
+ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "a41309cefebb8a89aa6dd3669ba4a6c9ef8f34c8" }

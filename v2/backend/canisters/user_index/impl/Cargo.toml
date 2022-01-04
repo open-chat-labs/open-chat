@@ -21,8 +21,8 @@ group_canister_c2c_client = { path = "../../group/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = "0.3.3"
 ic-cdk-macros = "0.3.3"
+ic-ledger-types = "0.1.0"
 itertools = "0.10.1"
-ledger_utils = { path = "../../../libraries/ledger_utils" }
 open_storage_index_canister = { path = "../../open_storage_index/api" }
 open_storage_index_canister_c2c_client = { path = "../../open_storage_index/c2c_client" }
 rand = "0.7.3"
