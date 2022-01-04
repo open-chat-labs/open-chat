@@ -1,5 +1,5 @@
 use crate::model::user::{ConfirmedUser, User};
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
 use cycles_utils::accept_cycles;
 use ic_cdk_macros::update;
@@ -14,7 +14,7 @@ fn wallet_receive() {
     if cycles_available < TWO_TRILLION {
         // If the cycles amount is < 2T, we assume that the payment is being made to register a user
         // in which case we either successfully register a user or we refund the cycles.
-        RUNTIME_STATE.with(|state| try_confirm_user(cycles_available as Cycles, state.borrow_mut().as_mut().unwrap()));
+        mutate_state(|state| try_confirm_user(cycles_available as Cycles, state));
     } else {
         // If the cycles amount is >= 2T, we assume this is a donation / top-up and accept all of
         // the cycles

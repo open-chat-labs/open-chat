@@ -1,4 +1,4 @@
-use crate::{run_regular_jobs, Data, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
@@ -13,7 +13,7 @@ use user_canister::c2c_send_message::{Response::*, *};
 async fn c2c_send_message(args: Args) -> Response {
     run_regular_jobs();
 
-    let sender_user_id = match RUNTIME_STATE.with(|state| get_sender_status(state.borrow().as_ref().unwrap())) {
+    let sender_user_id = match read_state(get_sender_status) {
         SenderStatus::Ok(user_id) => user_id,
         SenderStatus::Blocked => return Blocked,
         SenderStatus::UnknownUser(user_index_canister_id, user_id) => {
@@ -24,7 +24,7 @@ async fn c2c_send_message(args: Args) -> Response {
         }
     };
 
-    RUNTIME_STATE.with(|state| c2c_send_message_impl(sender_user_id, args, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| c2c_send_message_impl(sender_user_id, args, state))
 }
 
 enum SenderStatus {

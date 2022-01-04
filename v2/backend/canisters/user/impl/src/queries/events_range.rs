@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
 use user_canister::events_range::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
 fn events_range(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| events_range_impl(args, state.borrow().as_ref().unwrap()))
+    read_state(|state| events_range_impl(args, state))
 }
 
 fn events_range_impl(args: Args, runtime_state: &RuntimeState) -> Response {

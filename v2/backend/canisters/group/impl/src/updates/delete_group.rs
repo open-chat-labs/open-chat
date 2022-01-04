@@ -1,4 +1,4 @@
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use group_canister::delete_group::{Response::*, *};
 use group_index_canister::c2c_delete_group;
@@ -11,7 +11,7 @@ use types::{CanisterId, ChatId, UserId};
 async fn delete_group(_args: Args) -> Response {
     run_regular_jobs();
 
-    let prepare_result = match RUNTIME_STATE.with(|state| prepare(state.borrow().as_ref().unwrap())) {
+    let prepare_result = match read_state(prepare) {
         Ok(ok) => ok,
         Err(response) => return response,
     };

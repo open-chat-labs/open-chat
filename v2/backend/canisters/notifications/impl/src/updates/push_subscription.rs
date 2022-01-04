@@ -1,4 +1,4 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
@@ -9,13 +9,13 @@ use user_index_canister::c2c_lookup_user_id;
 #[update]
 #[trace]
 async fn push_subscription(args: Args) -> Response {
-    let user_id = match RUNTIME_STATE.with(|state| lookup_user_locally(state.borrow().as_ref().unwrap())) {
+    let user_id = match read_state(lookup_user_locally) {
         LookupResult::Found(user_id) => user_id,
         LookupResult::NotFound((user_principal, user_index_canister_id)) => {
             let c2c_lookup_user_id_args = c2c_lookup_user_id::Args { user_principal };
             match user_index_canister_c2c_client::c2c_lookup_user_id(user_index_canister_id, &c2c_lookup_user_id_args).await {
                 Ok(user_index_canister::c2c_lookup_user_id::Response::Success(user_id)) => {
-                    RUNTIME_STATE.with(|state| add_user_locally(user_principal, user_id, state.borrow_mut().as_mut().unwrap()));
+                    mutate_state(|state| add_user_locally(user_principal, user_id, state));
                     user_id
                 }
                 Ok(user_index_canister::c2c_lookup_user_id::Response::UserNotFound) => panic!("User not found"),
@@ -24,7 +24,7 @@ async fn push_subscription(args: Args) -> Response {
         }
     };
 
-    RUNTIME_STATE.with(|state| add_subscription(user_id, args.subscription, state.borrow_mut().as_mut().unwrap()));
+    mutate_state(|state| add_subscription(user_id, args.subscription, state));
     Success
 }
 

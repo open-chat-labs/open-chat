@@ -1,5 +1,5 @@
 use crate::model::user::{UnconfirmedCyclesRegistrationFee, UnconfirmedUser, UnconfirmedUserState, User};
-use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
+use crate::{mutate_state, RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::Cycles;
@@ -10,7 +10,7 @@ const BASELINE_REGISTRATION_FEE: Cycles = 1_000_000_000_000; // 1T cycles
 #[update]
 #[trace]
 fn generate_registration_fee(_args: Args) -> Response {
-    RUNTIME_STATE.with(|state| generate_registration_fee_impl(state.borrow_mut().as_mut().unwrap()))
+    mutate_state(generate_registration_fee_impl)
 }
 
 fn generate_registration_fee_impl(runtime_state: &mut RuntimeState) -> Response {

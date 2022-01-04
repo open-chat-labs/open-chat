@@ -1,4 +1,4 @@
-use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MIN_CYCLES_BALANCE, RUNTIME_STATE};
+use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MIN_CYCLES_BALANCE};
 use ic_cdk_macros::heartbeat;
 use types::{CanisterId, Cycles, Version};
 use utils::canister::{self, FailedUpgrade};
@@ -18,13 +18,13 @@ mod upgrade_canisters {
     type CanisterToUpgrade = utils::canister::CanisterToUpgrade<group_canister::post_upgrade::Args>;
 
     pub fn run() {
-        let chats_to_upgrade = RUNTIME_STATE.with(|state| get_next_batch(state.borrow_mut().as_mut().unwrap()));
+        let chats_to_upgrade = mutate_state(next_batch);
         if !chats_to_upgrade.is_empty() {
             ic_cdk::block_on(perform_upgrades(chats_to_upgrade));
         }
     }
 
-    fn get_next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
+    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
         let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
         (0..(MAX_CONCURRENT_CANISTER_UPGRADES - count_in_progress))
             // TODO replace this with 'map_while' once we have upgraded to Rust 1.57
@@ -73,11 +73,10 @@ mod upgrade_canisters {
 
         match canister::upgrade(canister_id, canister_to_upgrade.new_wasm.module, canister_to_upgrade.args).await {
             Ok(_) => {
-                RUNTIME_STATE.with(|state| on_success(canister_id, to_version, state.borrow_mut().as_mut().unwrap()));
+                mutate_state(|state| on_success(canister_id, to_version, state));
             }
             Err(_) => {
-                RUNTIME_STATE
-                    .with(|state| on_failure(canister_id, from_version, to_version, state.borrow_mut().as_mut().unwrap()));
+                mutate_state(|state| on_failure(canister_id, from_version, to_version, state));
             }
         }
     }
@@ -108,7 +107,7 @@ mod topup_canister_pool {
     use super::*;
 
     pub fn run() {
-        let is_full = RUNTIME_STATE.with(|state| is_pool_full(state.borrow().as_ref().unwrap()));
+        let is_full = read_state(is_pool_full);
         if !is_full {
             let cycles_to_use = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
 
@@ -125,7 +124,7 @@ mod topup_canister_pool {
 
     async fn add_new_canister(cycles_to_use: Cycles) {
         if let Ok(canister_id) = canister::create(cycles_to_use).await {
-            RUNTIME_STATE.with(|state| add_canister_to_pool(canister_id, cycles_to_use, state.borrow_mut().as_mut().unwrap()));
+            mutate_state(|state| add_canister_to_pool(canister_id, cycles_to_use, state));
         }
     }
 
@@ -139,7 +138,7 @@ mod calculate_metrics {
     use super::*;
 
     pub fn run() {
-        RUNTIME_STATE.with(|state| calculate_metrics(state.borrow_mut().as_mut().unwrap()));
+        mutate_state(calculate_metrics);
     }
 
     fn calculate_metrics(runtime_state: &mut RuntimeState) {

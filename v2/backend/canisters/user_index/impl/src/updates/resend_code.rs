@@ -1,5 +1,5 @@
 use crate::model::user::{UnconfirmedPhoneNumber, UnconfirmedUserState, User};
-use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
+use crate::{mutate_state, RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::ConfirmationCodeSms;
@@ -8,7 +8,7 @@ use user_index_canister::resend_code::{Response::*, *};
 #[update]
 #[trace]
 fn resend_code(_args: Args) -> Response {
-    RUNTIME_STATE.with(|state| resend_code_impl(state.borrow_mut().as_mut().unwrap()))
+    mutate_state(resend_code_impl)
 }
 
 fn resend_code_impl(runtime_state: &mut RuntimeState) -> Response {

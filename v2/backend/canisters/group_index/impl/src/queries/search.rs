@@ -1,4 +1,4 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{read_state, RuntimeState};
 use group_index_canister::search::{Response::*, *};
 use ic_cdk_macros::query;
 
@@ -7,7 +7,7 @@ const MAX_TERM_LENGTH: u8 = 20;
 
 #[query]
 fn search(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| search_impl(args, state.borrow().as_ref().unwrap()))
+    read_state(|state| search_impl(args, state))
 }
 
 fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {

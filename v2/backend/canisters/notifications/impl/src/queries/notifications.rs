@@ -1,5 +1,5 @@
 use crate::guards::caller_is_push_service;
-use crate::{RuntimeState, MAX_SUBSCRIPTION_AGE, RUNTIME_STATE};
+use crate::{read_state, RuntimeState, MAX_SUBSCRIPTION_AGE};
 use ic_cdk_macros::query;
 use notifications_canister::notifications::{Response::*, *};
 use std::collections::HashMap;
@@ -9,7 +9,7 @@ const MAX_NOTIFICATIONS_PER_BATCH: u32 = 100;
 
 #[query(guard = "caller_is_push_service")]
 fn notifications(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| notifications_impl(args, state.borrow().as_ref().unwrap()))
+    read_state(|state| notifications_impl(args, state))
 }
 
 fn notifications_impl(args: Args, runtime_state: &RuntimeState) -> Response {

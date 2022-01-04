@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{read_state, RuntimeState};
 use chat_events::ChatEventInternal;
 use ic_cdk_macros::query;
 use search::*;
@@ -13,7 +13,7 @@ const MAX_TERM_LENGTH: u8 = 30;
 
 #[query(guard = "caller_is_owner")]
 async fn search_all_messages(args: Args) -> Response {
-    let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
+    let prepare_result = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -26,7 +26,7 @@ async fn search_all_messages(args: Args) -> Response {
     )
     .await;
 
-    let mut direct_chat_matches = RUNTIME_STATE.with(|state| search_all_direct_chats(&args, state.borrow().as_ref().unwrap()));
+    let mut direct_chat_matches = read_state(|state| search_all_direct_chats(&args, state));
 
     matches.append(&mut direct_chat_matches);
     matches.sort_unstable_by(|m1, m2| m2.score.cmp(&m1.score));

@@ -1,7 +1,7 @@
 use crate::model::participants::TransferOwnershipResult;
 use crate::updates::handle_activity_notification;
 use crate::updates::transfer_ownership::Response::*;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::transfer_ownership::*;
@@ -13,7 +13,7 @@ use types::OwnershipTransferred;
 fn transfer_ownership(args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| transfer_ownership_impl(args, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| transfer_ownership_impl(args, state))
 }
 
 fn transfer_ownership_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {

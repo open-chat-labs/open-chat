@@ -1,4 +1,4 @@
-use crate::{RuntimeState, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_TOP_UP_AMOUNT};
+use crate::{mutate_state, read_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CANISTER_TOP_UP_AMOUNT};
 use canister_api_macros::trace;
 use cycles_utils::top_up_canister;
 use ic_cdk_macros::update;
@@ -7,14 +7,14 @@ use types::{CyclesTopUp, NotifyLowBalanceResponse, UserId};
 #[update]
 #[trace]
 async fn c2c_notify_low_balance() -> NotifyLowBalanceResponse {
-    let prepare_ok = match RUNTIME_STATE.with(|state| prepare(state.borrow().as_ref().unwrap())) {
+    let prepare_ok = match read_state(prepare) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
     let amount = prepare_ok.top_up.amount;
 
     if top_up_canister(prepare_ok.user_id.into(), amount).await.is_ok() {
-        RUNTIME_STATE.with(|state| commit(prepare_ok.user_id, prepare_ok.top_up, state.borrow_mut().as_mut().unwrap()));
+        mutate_state(|state| commit(prepare_ok.user_id, prepare_ok.top_up, state));
         NotifyLowBalanceResponse::Success(amount)
     } else {
         NotifyLowBalanceResponse::FailedToDepositCycles

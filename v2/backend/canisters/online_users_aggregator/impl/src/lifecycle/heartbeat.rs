@@ -1,4 +1,4 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use ic_cdk_macros::heartbeat;
 use types::CanisterId;
@@ -12,7 +12,7 @@ mod flush_online_users {
     use super::*;
 
     pub fn run() {
-        if let Some(result) = RUNTIME_STATE.with(|state| prepare(state.borrow_mut().as_mut().unwrap())) {
+        if let Some(result) = mutate_state(prepare) {
             ic_cdk::block_on(send_to_user_index(result.user_index_canister_id, result.online_users));
         }
     }
@@ -41,7 +41,7 @@ mod flush_online_users {
 
         let success = matches!(response, Ok(user_index_canister::c2c_mark_users_online::Response::Success));
 
-        RUNTIME_STATE.with(|state| mark_batch_outcome(success, state.borrow_mut().as_mut().unwrap()));
+        mutate_state(|state| mark_batch_outcome(success, state));
     }
 
     fn mark_batch_outcome(success: bool, runtime_state: &mut RuntimeState) {

@@ -1,7 +1,7 @@
 use crate::model::user::{CreatedUser, User};
 use crate::model::user_map::UpdateUserResult;
 use crate::{
-    RuntimeState, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE,
+    mutate_state, RuntimeState, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, MIN_CYCLES_BALANCE, USER_CANISTER_INITIAL_CYCLES_BALANCE,
 };
 use candid::Principal;
 use canister_api_macros::trace;
@@ -20,7 +20,7 @@ async fn create_canister(_args: Args) -> Response {
     // Confirm the user needs a canister to be created.
     // Extract the user canister_id and wasm module from the runtime state.
     // Set the user's CanisterCreationStatus to InProgress.
-    let init_ok = match RUNTIME_STATE.with(|state| initialize(state.borrow_mut().as_mut().unwrap())) {
+    let init_ok = match mutate_state(initialize) {
         Err(response) => return response,
         Ok(ok) => ok,
     };
@@ -45,7 +45,7 @@ async fn create_canister(_args: Args) -> Response {
             // If the confirmed user record has a username then change the stored user from Confirmed to Created
             // otherwise set the user's CanisterCreationStatus to Created.
             let wasm_version = init_ok.canister_wasm.version;
-            RUNTIME_STATE.with(|state| commit(caller, canister_id, wasm_version, state.borrow_mut().as_mut().unwrap()));
+            mutate_state(|state| commit(caller, canister_id, wasm_version, state));
             Success(canister_id)
         }
         Err(error) => {
@@ -56,7 +56,7 @@ async fn create_canister(_args: Args) -> Response {
             // The canister create/install failed so set the user's CanisterCreationStatus back to Pending.
             // If the create succeeded but the install failed then set the user_id (aka canister_id)
             // on the user record.
-            RUNTIME_STATE.with(|state| rollback(caller, canister_id, state.borrow_mut().as_mut().unwrap()));
+            mutate_state(|state| rollback(caller, canister_id, state));
             InternalError(format!("{:?}", error))
         }
     }
@@ -195,5 +195,5 @@ fn rollback(caller: Principal, canister_id: Option<CanisterId>, runtime_state: &
 }
 
 fn on_canister_created(cycles: Cycles) {
-    RUNTIME_STATE.with(|state| state.borrow_mut().as_mut().unwrap().data.total_cycles_spent_on_canisters += cycles);
+    mutate_state(|state| state.data.total_cycles_spent_on_canisters += cycles);
 }

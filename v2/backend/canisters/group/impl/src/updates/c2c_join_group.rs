@@ -1,6 +1,6 @@
 use crate::model::participants::AddResult;
 use crate::updates::handle_activity_notification;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_join_group::{Response::*, *};
@@ -14,7 +14,7 @@ use user_index_canister::c2c_is_super_admin;
 async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
-    let prepare_result = RUNTIME_STATE.with(|state| prepare(state.borrow_mut().as_mut().unwrap()));
+    let prepare_result = mutate_state(prepare);
     let user_id = prepare_result.user_id;
 
     if args.as_super_admin {
@@ -27,7 +27,7 @@ async fn c2c_join_group(args: Args) -> Response {
         };
     }
 
-    RUNTIME_STATE.with(|state| commit(args, user_id, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| commit(args, user_id, state))
 }
 
 struct PrepareResult {

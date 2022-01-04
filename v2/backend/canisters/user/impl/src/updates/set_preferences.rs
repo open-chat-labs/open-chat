@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::Timestamped;
@@ -10,7 +10,7 @@ use user_canister::set_preferences::*;
 fn set_preferences(args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| set_preferences_impl(args, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| set_preferences_impl(args, state))
 }
 
 fn set_preferences_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {

@@ -1,7 +1,7 @@
 use crate::model::participants::DismissAdminResult;
 use crate::updates::dismiss_admin::Response::*;
 use crate::updates::handle_activity_notification;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::dismiss_admin::*;
@@ -13,7 +13,7 @@ use types::ParticipantsDismissedAsAdmin;
 fn dismiss_admin(args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| dismiss_admin_impl(args, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| dismiss_admin_impl(args, state))
 }
 
 fn dismiss_admin_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {

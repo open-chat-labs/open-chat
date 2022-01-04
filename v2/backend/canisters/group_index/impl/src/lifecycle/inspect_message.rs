@@ -1,9 +1,9 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{read_state, RuntimeState};
 use ic_cdk_macros::inspect_message;
 
 #[inspect_message]
 fn inspect_message() {
-    RUNTIME_STATE.with(|state| accept_if_valid(state.borrow().as_ref().unwrap()));
+    read_state(accept_if_valid);
 }
 
 fn accept_if_valid(runtime_state: &RuntimeState) {

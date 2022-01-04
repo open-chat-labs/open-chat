@@ -1,4 +1,4 @@
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::{AlertDetails, RemovedFromGroup};
@@ -9,7 +9,7 @@ use user_canister::c2c_remove_from_group::{Response::*, *};
 fn c2c_remove_from_group(args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| c2c_remove_from_group_impl(args, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| c2c_remove_from_group_impl(args, state))
 }
 
 fn c2c_remove_from_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
