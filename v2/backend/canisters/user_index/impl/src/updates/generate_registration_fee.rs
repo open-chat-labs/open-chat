@@ -1,4 +1,4 @@
-use crate::model::user::{UnconfirmedUser, UnconfirmedUserState, User};
+use crate::model::user::{UnconfirmedUser, UnconfirmedUserState};
 use crate::{mutate_state, RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
@@ -23,41 +23,17 @@ fn generate_registration_fee_impl(args: Args, runtime_state: &mut RuntimeState) 
 
     let fee = match args.currency {
         Cryptocurrency::ICP => {
-            let mut amount = ICP_REGISTRATION_FEE;
-            if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
-                match &user {
-                    User::Unconfirmed(u) => {
-                        if let UnconfirmedUserState::RegistrationFee(RegistrationFee::ICP(f)) = &u.state {
-                            amount = f.amount;
-                        }
-                    }
-                    _ => return AlreadyRegistered,
-                }
-            }
-
             let subaccount = convert_to_subaccount(&caller);
             let recipient = AccountIdentifier::new(&runtime_state.env.canister_id(), &subaccount);
 
             RegistrationFee::ICP(ICPRegistrationFee {
-                amount,
+                amount: ICP_REGISTRATION_FEE,
                 recipient,
                 valid_until,
             })
         }
         Cryptocurrency::Cycles => {
-            let mut cycles_amount: Option<Cycles> = None;
-            if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
-                match &user {
-                    User::Unconfirmed(u) => {
-                        if let UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(f)) = &u.state {
-                            cycles_amount = Some(f.amount);
-                        }
-                    }
-                    _ => return AlreadyRegistered,
-                }
-            }
-
-            let amount = cycles_amount.unwrap_or_else(|| generate_new_cycles_fee_amount(runtime_state));
+            let amount = generate_new_cycles_fee_amount(runtime_state);
             let recipient = runtime_state.env.canister_id();
 
             RegistrationFee::Cycles(CyclesRegistrationFee {
