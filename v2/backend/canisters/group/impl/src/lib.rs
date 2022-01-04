@@ -2,6 +2,7 @@ use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::participants::Participants;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
+use canister_state_macros::state_operations;
 use chat_events::GroupChatEvents;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -31,6 +32,8 @@ thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
+
+state_operations!();
 
 struct RuntimeState {
     pub env: Box<dyn Environment>,
@@ -173,10 +176,8 @@ pub struct Metrics {
 }
 
 fn run_regular_jobs() {
-    fn run_regular_jobs_impl(runtime_state: &mut RuntimeState) {
-        let now = runtime_state.env.now();
-        runtime_state.regular_jobs.run(now, &mut runtime_state.data);
-    }
-
-    RUNTIME_STATE.with(|state| run_regular_jobs_impl(state.borrow_mut().as_mut().unwrap()));
+    mutate_state(|state| {
+        let now = state.env.now();
+        state.regular_jobs.run(now, &mut state.data)
+    });
 }

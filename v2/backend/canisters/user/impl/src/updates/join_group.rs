@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use group_canister::c2c_join_group;
 use ic_cdk_macros::update;
@@ -11,7 +11,7 @@ use user_canister::join_group::{Response::*, *};
 async fn join_group(args: Args) -> Response {
     run_regular_jobs();
 
-    let principal = RUNTIME_STATE.with(|state| state.borrow().as_ref().unwrap().env.caller());
+    let principal = read_state(|state| state.env.caller());
 
     let c2c_args = c2c_join_group::Args {
         principal,
@@ -21,7 +21,7 @@ async fn join_group(args: Args) -> Response {
     match group_canister_c2c_client::c2c_join_group(args.chat_id.into(), &c2c_args).await {
         Ok(result) => match result {
             c2c_join_group::Response::Success(_) => {
-                RUNTIME_STATE.with(|state| commit(args.chat_id, args.as_super_admin, state.borrow_mut().as_mut().unwrap()));
+                mutate_state(|state| commit(args.chat_id, args.as_super_admin, state));
                 Success
             }
             c2c_join_group::Response::AlreadyInGroup => AlreadyInGroup,

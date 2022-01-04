@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::{EditMessageArgs, EditMessageResult};
 use ic_cdk_macros::update;
@@ -12,7 +12,7 @@ use user_canister::edit_message::{Response::*, *};
 fn edit_message(args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| edit_message_impl(args, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| edit_message_impl(args, state))
 }
 
 fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {

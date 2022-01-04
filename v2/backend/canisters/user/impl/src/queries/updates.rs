@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, RUNTIME_STATE, WASM_VERSION};
+use crate::{read_state, RuntimeState, WASM_VERSION};
 use group_canister::c2c_summary::Summary;
 use group_canister::c2c_summary_updates::SummaryUpdates;
 use group_index_canister::c2c_filter_groups;
@@ -15,7 +15,7 @@ use utils::range_set::convert_to_message_index_ranges;
 
 #[query(guard = "caller_is_owner")]
 async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
-    let prepare_result = RUNTIME_STATE.with(|state| prepare(None, state.borrow().as_ref().unwrap()));
+    let prepare_result = read_state(|state| prepare(None, state));
 
     let mut group_chats_added = prepare_result.group_chats_added;
 
@@ -49,16 +49,7 @@ async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
         upgrades_in_progress = filter_groups_result.upgrades_in_progress;
     }
 
-    let result = RUNTIME_STATE.with(|state| {
-        finalize(
-            None,
-            summaries,
-            Vec::new(),
-            deleted_groups,
-            upgrades_in_progress,
-            state.borrow().as_ref().unwrap(),
-        )
-    });
+    let result = read_state(|state| finalize(None, summaries, Vec::new(), deleted_groups, upgrades_in_progress, state));
 
     initial_state::Response::Success(initial_state::SuccessResult {
         timestamp: result.timestamp,
@@ -73,7 +64,7 @@ async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
 
 #[query(guard = "caller_is_owner")]
 async fn updates(args: updates::Args) -> updates::Response {
-    let prepare_result = RUNTIME_STATE.with(|state| prepare(Some(&args.updates_since), state.borrow().as_ref().unwrap()));
+    let prepare_result = read_state(|state| prepare(Some(&args.updates_since), state));
 
     let mut group_chats_added = prepare_result.group_chats_added;
     let mut group_chats_to_check_for_updates = prepare_result.group_chats_to_check_for_updates;
@@ -114,14 +105,14 @@ async fn updates(args: updates::Args) -> updates::Response {
         summary_updates = su;
     }
 
-    let result = RUNTIME_STATE.with(|state| {
+    let result = read_state(|state| {
         finalize(
             Some(&args.updates_since),
             summaries,
             summary_updates,
             deleted_groups,
             upgrades_in_progress,
-            state.borrow().as_ref().unwrap(),
+            state,
         )
     });
 

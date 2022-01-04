@@ -1,10 +1,10 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{read_state, RuntimeState};
 use group_canister::selected_initial::{Response::*, *};
 use ic_cdk_macros::query;
 
 #[query]
 fn selected_initial(_args: Args) -> Response {
-    RUNTIME_STATE.with(|state| selected_initial_impl(state.borrow().as_ref().unwrap()))
+    read_state(selected_initial_impl)
 }
 
 fn selected_initial_impl(runtime_state: &RuntimeState) -> Response {

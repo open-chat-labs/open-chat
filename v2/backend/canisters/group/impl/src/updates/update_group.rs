@@ -1,6 +1,6 @@
 use crate::updates::handle_activity_notification;
 use crate::updates::update_group::Response::*;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::update_group::*;
@@ -18,7 +18,7 @@ use types::{
 async fn update_group(args: Args) -> Response {
     run_regular_jobs();
 
-    let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
+    let prepare_result = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -45,7 +45,7 @@ async fn update_group(args: Args) -> Response {
         };
     }
 
-    RUNTIME_STATE.with(|state| commit(prepare_result.my_user_id, args, state.borrow_mut().as_mut().unwrap()));
+    mutate_state(|state| commit(prepare_result.my_user_id, args, state));
     Success
 }
 

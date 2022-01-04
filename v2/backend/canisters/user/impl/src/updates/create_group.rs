@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
 use group_index_canister::c2c_create_group;
@@ -13,7 +13,7 @@ use user_canister::create_group::{Response::*, *};
 async fn create_group(args: Args) -> Response {
     run_regular_jobs();
 
-    let prepare_result = match RUNTIME_STATE.with(|state| prepare(args, state.borrow().as_ref().unwrap())) {
+    let prepare_result = match read_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -26,7 +26,7 @@ async fn create_group(args: Args) -> Response {
     {
         Ok(response) => match response {
             c2c_create_group::Response::Success(r) => {
-                RUNTIME_STATE.with(|state| commit(r.chat_id, state.borrow_mut().as_mut().unwrap()));
+                mutate_state(|state| commit(r.chat_id, state));
                 Success(SuccessResult { chat_id: r.chat_id })
             }
             c2c_create_group::Response::NameTaken => NameTaken,

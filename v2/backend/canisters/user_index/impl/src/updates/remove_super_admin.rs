@@ -1,5 +1,5 @@
 use crate::guards::caller_is_controller;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::{ChatId, UserId};
@@ -9,7 +9,7 @@ use user_index_canister::remove_super_admin::{Response::*, *};
 #[update(guard = "caller_is_controller")]
 #[trace]
 async fn remove_super_admin(args: Args) -> Response {
-    if !RUNTIME_STATE.with(|state| is_already_super_admin(&args.user_id, state.borrow().as_ref().unwrap())) {
+    if !read_state(|state| is_already_super_admin(&args.user_id, state)) {
         return NotSuperAdmin;
     }
 
@@ -17,13 +17,7 @@ async fn remove_super_admin(args: Args) -> Response {
     match user_canister_c2c_client::c2c_revoke_super_admin(args.user_id.into(), &c2c_args).await {
         Ok(result) => {
             let c2c_revoke_super_admin::Response::Success(success_result) = result;
-            RUNTIME_STATE.with(|state| {
-                commit(
-                    &args.user_id,
-                    success_result.groups_to_dismiss_user_from,
-                    state.borrow_mut().as_mut().unwrap(),
-                )
-            });
+            mutate_state(|state| commit(&args.user_id, success_result.groups_to_dismiss_user_from, state));
             Success
         }
         Err(error) => InternalError(format!("{:?}", error)),

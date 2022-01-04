@@ -1,13 +1,13 @@
 use crate::model::participants::ParticipantInternal;
-use crate::GroupChatEvents;
-use crate::{RuntimeState, RUNTIME_STATE, WASM_VERSION};
+use crate::{read_state, GroupChatEvents};
+use crate::{RuntimeState, WASM_VERSION};
 use group_canister::c2c_summary::{Response::*, *};
 use ic_cdk_macros::query;
 use types::{Avatar, Mention, MAX_RETURNED_MENTIONS};
 
 #[query]
 fn c2c_summary(_: Args) -> Response {
-    RUNTIME_STATE.with(|state| c2c_summary_impl(state.borrow().as_ref().unwrap()))
+    read_state(c2c_summary_impl)
 }
 
 fn c2c_summary_impl(runtime_state: &RuntimeState) -> Response {

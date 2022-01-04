@@ -1,6 +1,6 @@
 use crate::model::participants::MakeSuperAdminResult;
 use crate::updates::handle_activity_notification;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_assume_super_admin::{Response::*, *};
@@ -13,15 +13,13 @@ use user_index_canister::c2c_is_super_admin;
 async fn c2c_assume_super_admin(_args: Args) -> Response {
     run_regular_jobs();
 
-    let prepare_result = RUNTIME_STATE.with(|state| prepare(state.borrow_mut().as_mut().unwrap()));
+    let prepare_result = mutate_state(prepare);
     let user_id = prepare_result.user_id;
 
     let canister_id = prepare_result.user_index_canister_id;
     let is_super_admin_args = c2c_is_super_admin::Args { user_id };
     match user_index_canister_c2c_client::c2c_is_super_admin(canister_id, &is_super_admin_args).await {
-        Ok(user_index_canister::c2c_is_super_admin::Response::Yes) => {
-            RUNTIME_STATE.with(|state| commit(user_id, state.borrow_mut().as_mut().unwrap()))
-        }
+        Ok(user_index_canister::c2c_is_super_admin::Response::Yes) => mutate_state(|state| commit(user_id, state)),
         Ok(user_index_canister::c2c_is_super_admin::Response::No) => NotSuperAdmin,
         Err(error) => InternalError(format!("Failed to call 'user_idex::c2c_is_super_admin': {:?}", error)),
     }

@@ -1,4 +1,4 @@
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use cycles_utils::accept_cycles;
 use ic_cdk_macros::update;
@@ -11,7 +11,7 @@ fn wallet_receive() {
 
     let cycles_accepted = accept_cycles();
     if cycles_accepted > 0 {
-        RUNTIME_STATE.with(|state| store_cycles_deposit(cycles_accepted, state.borrow_mut().as_mut().unwrap()));
+        mutate_state(|state| store_cycles_deposit(cycles_accepted, state));
     }
 }
 

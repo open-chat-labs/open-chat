@@ -1,4 +1,4 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, RuntimeState};
 use group_index_canister::c2c_mark_active;
 use types::{CanisterId, Milliseconds};
 
@@ -45,7 +45,7 @@ fn handle_activity_notification(runtime_state: &mut RuntimeState) {
             duration: mark_active_duration,
         };
         let response = group_index_canister_c2c_client::c2c_mark_active(canister_id, &args).await;
-        RUNTIME_STATE.with(|state| handle_response(response.is_ok(), state.borrow_mut().as_mut().unwrap()));
+        mutate_state(|state| handle_response(response.is_ok(), state));
     }
 
     fn handle_response(success: bool, runtime_state: &mut RuntimeState) {

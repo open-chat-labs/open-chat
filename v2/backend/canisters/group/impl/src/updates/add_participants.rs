@@ -1,5 +1,5 @@
 use crate::updates::handle_activity_notification;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
@@ -13,7 +13,7 @@ use user_canister::c2c_try_add_to_group;
 async fn add_participants(args: Args) -> Response {
     run_regular_jobs();
 
-    let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
+    let prepare_result = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -50,14 +50,7 @@ async fn add_participants(args: Args) -> Response {
 
     if !users_added.is_empty() {
         let added_by_name = args.added_by_name;
-        RUNTIME_STATE.with(|state| {
-            commit(
-                prepare_result.added_by,
-                added_by_name,
-                &users_added,
-                state.borrow_mut().as_mut().unwrap(),
-            )
-        });
+        mutate_state(|state| commit(prepare_result.added_by, added_by_name, &users_added, state));
     }
 
     if users_added.len() == args.user_ids.len() {

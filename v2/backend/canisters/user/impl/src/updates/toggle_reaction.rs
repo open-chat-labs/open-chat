@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::ToggleReactionResult;
 use ic_cdk_macros::update;
@@ -13,7 +13,7 @@ fn toggle_reaction(args: Args) -> Response {
     run_regular_jobs();
 
     if args.reaction.is_valid() {
-        RUNTIME_STATE.with(|state| toggle_reaction_impl(args, state.borrow_mut().as_mut().unwrap()))
+        mutate_state(|state| toggle_reaction_impl(args, state))
     } else {
         InvalidReaction
     }

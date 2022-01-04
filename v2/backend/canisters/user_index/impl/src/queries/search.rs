@@ -1,5 +1,5 @@
 use crate::model::user::CreatedUser;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{read_state, RuntimeState};
 use core::cmp::Ordering;
 use ic_cdk_macros::query;
 use user_index_canister::search::{Response::*, *};
@@ -8,7 +8,7 @@ const MAX_SEARCH_TERM_LENGTH: usize = 25;
 
 #[query]
 fn search(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| search_impl(args, state.borrow().as_ref().unwrap()))
+    read_state(|state| search_impl(args, state))
 }
 
 fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {

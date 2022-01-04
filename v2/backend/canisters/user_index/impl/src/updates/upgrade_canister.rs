@@ -1,5 +1,5 @@
 use crate::model::user_map::UpdateUserResult;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::{UserId, Version};
@@ -10,7 +10,7 @@ use utils::canister::CanisterToUpgrade;
 #[update]
 #[trace]
 async fn upgrade_canister(_args: Args) -> Response {
-    let canister_to_upgrade = match RUNTIME_STATE.with(|state| initialize_upgrade(None, state.borrow_mut().as_mut().unwrap())) {
+    let canister_to_upgrade = match mutate_state(|state| initialize_upgrade(None, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -21,11 +21,11 @@ async fn upgrade_canister(_args: Args) -> Response {
 
     match canister::upgrade(canister_id, canister_to_upgrade.new_wasm.module, canister_to_upgrade.args).await {
         Ok(_) => {
-            RUNTIME_STATE.with(|state| set_upgrade_complete(user_id, Some(to_version), state.borrow_mut().as_mut().unwrap()));
+            mutate_state(|state| set_upgrade_complete(user_id, Some(to_version), state));
             Success
         }
         Err(error) => {
-            RUNTIME_STATE.with(|state| set_upgrade_complete(user_id, None, state.borrow_mut().as_mut().unwrap()));
+            mutate_state(|state| set_upgrade_complete(user_id, None, state));
             InternalError(format!("{:?}", error))
         }
     }

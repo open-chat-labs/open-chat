@@ -1,11 +1,11 @@
 use crate::guards::caller_is_controller;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
 use user_index_canister::super_admins::{Response::*, *};
 
 #[query(guard = "caller_is_controller")]
 fn super_admins(_args: Args) -> Response {
-    RUNTIME_STATE.with(|state| super_admins_impl(state.borrow().as_ref().unwrap()))
+    read_state(super_admins_impl)
 }
 
 fn super_admins_impl(runtime_state: &RuntimeState) -> Response {
