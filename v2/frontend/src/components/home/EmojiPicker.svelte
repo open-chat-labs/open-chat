@@ -29,11 +29,17 @@
 <style type="text/scss">
     emoji-picker {
         width: 100%;
-        --num-columns: 12;
+        --num-columns: 13;
         --emoji-padding: 0.3rem;
         --emoji-size: 1.8rem;
-        @include size-below(xs) {
-            --num-columns: 7;
+        @include size-below(md) {
+            --num-columns: 11 !important;
+        }
+        @include size-below(sm) {
+            --num-columns: 8 !important;
+        }
+        @include size-below(xxs) {
+            --num-columns: 7 !important;
         }
     }
 </style>
