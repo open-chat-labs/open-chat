@@ -32,36 +32,33 @@
         }
     }
 
-    function handleTouchStart(e: any) {
-        e = unifyEvent(e);
-        startX = e.clientX;
-        startY = e.clientY;
+    function handleTouchStart(e: TouchEvent) {
+        let t = e.changedTouches[0];
+        startX = t.clientX;
+        startY = t.clientY;
         
         clearLongPressTimer();
 
-        longPressTimer = setTimeout(() => {
+        longPressTimer = window.setTimeout(() => {
             if (longPressTimer !== undefined) {
                 longPressing = true;
             }
         }, LONGPRESS_DELAY);
     }
 
-    function handleTouchMove(e: any) {
-        e = unifyEvent(e);
-
+    function handleTouchMove(e: TouchEvent) {
         // calculate total number of pixels the pointer has moved
-        var diffX = Math.abs(startX - e.clientX);
-        var diffY = Math.abs(startY - e.clientY);
+        let t = e.changedTouches[0];
+        let diffX = Math.abs(startX - t.clientX);
+        let diffY = Math.abs(startY - t.clientY);
 
         // if pointer has moved more than allowed, cancel the long-press timer and therefore the event
         if (diffX >= maxDiffX || diffY >= maxDiffY) {
-            console.log("Touch move too far!");
             clearLongPressTimer();
         }
     }
 
-    function handleTouchEnd(e: any) {
-        console.log("Touch end");
+    function handleTouchEnd(e: TouchEvent) {
         if (longPressTimer !== undefined) {
             window.clearTimeout(longPressTimer);
             longPressTimer = undefined;
@@ -76,13 +73,6 @@
         longPressing = false;
     }
 
-    function unifyEvent(e: any) {
-        if (e.changedTouches !== undefined) {
-            return e.changedTouches[0];
-        }
-        return e;
-    }
-
     onMount(async () => {        
         let isTouch = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
 
@@ -91,13 +81,13 @@
             containerDiv.addEventListener("touchend", handleTouchEnd);
             containerDiv.addEventListener("touchmove", handleTouchMove);
             containerDiv.addEventListener("touchstart", handleTouchStart);
-            containerDiv.addEventListener("contextmenu", (e: any) => { 
+            containerDiv.addEventListener("contextmenu", (e: MouseEvent) => { 
                 e.preventDefault(); 
             });
         } else {
             containerDiv.addEventListener("mouseenter", startHover);
             containerDiv.addEventListener("mouseleave", endHover);
-            containerDiv.addEventListener("contextmenu", (e: any) => { 
+            containerDiv.addEventListener("contextmenu", (e: MouseEvent) => { 
                 e.preventDefault(); 
                 startHover() 
             });
