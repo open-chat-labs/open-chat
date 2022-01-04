@@ -1,25 +1,32 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { fade } from "svelte/transition";
+    import type { NativeEmoji } from "emoji-picker-element/shared";
     import type { UserLookup } from "../../domain/user/user";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
     import { rtlStore } from "../../stores/rtl";
-    import type { NativeEmoji } from "emoji-picker-element/shared";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import Hoverable from "../Hoverable.svelte";
 
     export let reaction: string;
     export let userIds: Set<string>;
     export let me: boolean;
     export let myUserId: string | undefined;
 
-    const TOOLTIP_DELAY = 350;
-    let hover = false;
     let userLookup = getContext<UserLookup>("userLookup");
-    let tooltipTimer: number | undefined;
+    let usernames = "";
+    let reactionCode = "unknown";
+    let maxWidth = 150;
 
+    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
     $: selected = myUserId !== undefined ? userIds.has(myUserId) : false;
-    $: usernames = hover ? buildReactionUsernames(userIds) : "";
-    $: maxWidth = calculateMaxWidth(usernames.length);
+    $: usernames = buildReactionUsernames(userIds);
+    $: maxWidth = calculateMaxWidth(usernames.length, reactionCode.length, mobile);
+
+    onMount(async () => {
+        reactionCode = (await buildReactionCode(reaction)) ?? "unknown";
+    });
 
     function buildReactionUsernames(userIds: Set<string>): string {
         let usernames =
@@ -51,51 +58,47 @@
         return code ?? ":unknown:";
     }
 
-    function calculateMaxWidth(numChars: number): number {
-        return Math.min(300, Math.max(136, Math.sqrt(numChars) * 12.5));
-    }
+    function calculateMaxWidth(usernamesLength: number, reactionCodeLength: number, mobile: boolean): number {
+        const MIN_WIDTH = mobile ? 100 : 140;
+        const MAX_WIDTH = mobile ? 250 : 300;
+        const CHAR_WIDTH = mobile ? 6 : 7;
 
-    function startHover() {
-        tooltipTimer = window.setTimeout(() => (hover = true), TOOLTIP_DELAY);
-    }
-
-    function endHover() {
-        window.clearTimeout(tooltipTimer);
-        hover = false;
+        let numChars = usernamesLength + 13 + reactionCodeLength;
+        let longestWord = reactionCodeLength;
+        return Math.max(
+            longestWord * CHAR_WIDTH, 
+            Math.min(
+                MAX_WIDTH, 
+                Math.max(
+                    MIN_WIDTH, 
+                    Math.sqrt(numChars) * CHAR_WIDTH * 2)));
     }
 </script>
 
-<div
-    on:click
-    on:mouseenter={startHover}
-    on:mouseleave={endHover}
-    on:blur={endHover}
-    on:contextmenu|preventDefault={startHover}
-    class:selected
-    class="message-reaction">
-    {reaction}
-    <span class="reaction-count">
-        {userIds.size > 99 ? "99+" : userIds.size}
-    </span>
-    {#if hover}
-        <div
-            transition:fade={{ duration: 100 }}
-            class="reaction-tooltip"
-            class:right={me != $rtlStore}
-            style={`max-width: ${maxWidth}px`}>
-            <div class="reaction-tooltip-emoji">{reaction}</div>
-            <div>
-                <span class="reaction_usernames">{usernames}</span>
-                {$_("reactions.reactedWith")}
-                <span class="reaction_code">
-                    {#await buildReactionCode(reaction) then value}
-                        {value}
-                    {/await}
-                </span>
+<Hoverable let:hovering={hover}>
+    <div on:click class:selected class="message-reaction">
+        {reaction}
+        <span class="reaction-count">
+            {userIds.size > 99 ? "99+" : userIds.size}
+        </span>
+        {#if hover}
+            <div
+                transition:fade={{ duration: 100 }}
+                class="reaction-tooltip"
+                class:right={me != $rtlStore}
+                style={`max-width: ${maxWidth}px`}>
+                <div class="reaction-tooltip-emoji">{reaction}</div>
+                <div>
+                    <span class="reaction_usernames">{usernames}</span>
+                    {$_("reactions.reactedWith")}
+                    <span class="reaction_code">
+                        {reactionCode}
+                    </span>
+                </div>
             </div>
-        </div>
-    {/if}
-</div>
+        {/if}
+    </div>        
+</Hoverable>
 
 <style type="text/scss">
     .message-reaction {
@@ -183,7 +186,7 @@
         }
 
         .reaction_code {
-            word-break: break-all;
+            word-wrap: break-word;
         }
     }
 </style>
