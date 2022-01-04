@@ -31,9 +31,10 @@ fn extract_principal_and_fee(runtime_state: &RuntimeState) -> Result<(Principal,
 
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         if let User::Unconfirmed(u) = user {
-            match &u.state {
-                UnconfirmedUserState::RegistrationFee(f) => Ok((caller, f.clone())),
-                _ => Err(PaymentNotFound),
+            if let UnconfirmedUserState::RegistrationFee(f) = &u.state {
+                Ok((caller, f.clone()))
+            } else {
+                Err(PaymentNotFound)
             }
         } else {
             Err(AlreadyRegistered)
