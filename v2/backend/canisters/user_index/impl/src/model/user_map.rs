@@ -3,7 +3,7 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{Cycles, CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId};
+use types::{Cycles, CyclesTopUp, Milliseconds, PhoneNumber, RegistrationFee, TimestampMillis, Timestamped, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
 
@@ -20,6 +20,8 @@ pub struct UserMap {
     registration_fee_cycles_to_principal: HashMap<Cycles, Principal>,
     unconfirmed_users: HashSet<Principal>,
     users_confirmed_via_phone: u64,
+    #[serde(default)]
+    users_confirmed_via_icp: u64,
     users_confirmed_via_cycles: u64,
     cached_metrics: Timestamped<Metrics>,
     unconfirmed_users_last_pruned: TimestampMillis,
@@ -46,7 +48,10 @@ impl UserMap {
         let mut maybe_fee_cycles = None;
         match &user.state {
             UnconfirmedUserState::PhoneNumber(p) => maybe_phone_number = Some(&p.phone_number),
-            UnconfirmedUserState::CyclesFee(c) => maybe_fee_cycles = Some(c.amount),
+            UnconfirmedUserState::RegistrationFee(fee) => match fee {
+                RegistrationFee::ICP(_) => {}
+                RegistrationFee::Cycles(f) => maybe_fee_cycles = Some(f.amount),
+            },
         };
 
         if let Vacant(principal_entry) = self.users_by_principal.entry(principal) {
@@ -160,7 +165,8 @@ impl UserMap {
                 self.unconfirmed_users.remove(&principal);
                 match previous.state {
                     UnconfirmedUserState::PhoneNumber(_) => self.users_confirmed_via_phone += 1,
-                    UnconfirmedUserState::CyclesFee(_) => self.users_confirmed_via_cycles += 1,
+                    UnconfirmedUserState::RegistrationFee(RegistrationFee::ICP(_)) => self.users_confirmed_via_icp += 1,
+                    UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(_)) => self.users_confirmed_via_cycles += 1,
                 };
             }
             self.users_by_principal.insert(principal, user);
@@ -274,7 +280,7 @@ impl UserMap {
                 .filter_map(|u| if let User::Unconfirmed(user) = u { Some(user) } else { None })
                 .filter(|u| match &u.state {
                     UnconfirmedUserState::PhoneNumber(p) => now > p.valid_until,
-                    UnconfirmedUserState::CyclesFee(c) => now > c.valid_until,
+                    UnconfirmedUserState::RegistrationFee(f) => now > f.valid_until(),
                 })
                 .map(|u| u.principal)
                 .collect();
@@ -345,17 +351,18 @@ impl UserMap {
 
     #[cfg(test)]
     pub fn add_test_user(&mut self, user: User) {
-        use crate::model::user::UnconfirmedCyclesRegistrationFee;
+        use types::CyclesRegistrationFee;
 
         if let User::Unconfirmed(u) = user {
             self.add(u);
         } else {
             self.add(UnconfirmedUser {
                 principal: user.get_principal(),
-                state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
+                state: UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(CyclesRegistrationFee {
                     amount: 0,
+                    recipient: Principal::anonymous(),
                     valid_until: 0,
-                }),
+                })),
             });
             self.update(user);
         }
@@ -381,11 +388,10 @@ pub enum UpdateUserResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{
-        ConfirmedUser, CreatedUser, UnconfirmedCyclesRegistrationFee, UnconfirmedPhoneNumber, UnconfirmedUser,
-    };
+    use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedPhoneNumber, UnconfirmedUser};
+    use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
     use itertools::Itertools;
-    use types::CanisterCreationStatusInternal;
+    use types::{CanisterCreationStatusInternal, CyclesRegistrationFee, ICPRegistrationFee, RegistrationFee};
 
     #[test]
     fn add_with_no_clashes() {
@@ -716,18 +722,20 @@ mod tests {
 
         let user1 = UnconfirmedUser {
             principal: principal1,
-            state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
+            state: UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(CyclesRegistrationFee {
                 amount: fee,
+                recipient: Principal::anonymous(),
                 valid_until: 1000,
-            }),
+            })),
         };
 
         let user2 = UnconfirmedUser {
             principal: principal2,
-            state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
+            state: UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(CyclesRegistrationFee {
                 amount: fee,
+                recipient: Principal::anonymous(),
                 valid_until: 1000,
-            }),
+            })),
         };
 
         user_map.add(user1);
@@ -745,25 +753,28 @@ mod tests {
 
         let original = UnconfirmedUser {
             principal: principal1,
-            state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
+            state: UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(CyclesRegistrationFee {
                 amount: fee1,
+                recipient: Principal::anonymous(),
                 valid_until: 1000,
-            }),
+            })),
         };
 
         let other = UnconfirmedUser {
             principal: principal2,
-            state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
+            state: UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(CyclesRegistrationFee {
                 amount: fee2,
+                recipient: Principal::anonymous(),
                 valid_until: 1000,
-            }),
+            })),
         };
 
         let mut updated = original.clone();
-        updated.state = UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
+        updated.state = UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(CyclesRegistrationFee {
             amount: fee2,
+            recipient: Principal::anonymous(),
             valid_until: 1000,
-        });
+        }));
 
         user_map.add(original);
         user_map.add(other);
@@ -804,10 +815,11 @@ mod tests {
 
         let unconfirmed2 = UnconfirmedUser {
             principal: principal2,
-            state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
+            state: UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(CyclesRegistrationFee {
                 amount: 1000,
+                recipient: Principal::anonymous(),
                 valid_until: 2,
-            }),
+            })),
         };
         user_map.add(unconfirmed2.clone());
 
@@ -894,18 +906,20 @@ mod tests {
 
         let user3 = UnconfirmedUser {
             principal: principal3,
-            state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
+            state: UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(CyclesRegistrationFee {
                 amount: 3,
+                recipient: Principal::anonymous(),
                 valid_until: now + 1000,
-            }),
+            })),
         };
 
         let user4 = UnconfirmedUser {
             principal: principal4,
-            state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
+            state: UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(CyclesRegistrationFee {
                 amount: 4,
+                recipient: Principal::anonymous(),
                 valid_until: now + 1001,
-            }),
+            })),
         };
 
         user_map.add(user1);
@@ -928,6 +942,7 @@ mod tests {
 
         let principal1 = Principal::from_slice(&[1]);
         let principal2 = Principal::from_slice(&[2]);
+        let principal3 = Principal::from_slice(&[3]);
 
         let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
 
@@ -941,16 +956,29 @@ mod tests {
             }),
         };
 
+        let icp_fee = RegistrationFee::ICP(ICPRegistrationFee {
+            amount: Tokens::from_e8s(2),
+            recipient: AccountIdentifier::new(&Principal::anonymous(), &DEFAULT_SUBACCOUNT),
+            valid_until: 2,
+        });
         let user2 = UnconfirmedUser {
             principal: principal2,
-            state: UnconfirmedUserState::CyclesFee(UnconfirmedCyclesRegistrationFee {
-                amount: 2,
-                valid_until: 2,
-            }),
+            state: UnconfirmedUserState::RegistrationFee(icp_fee.clone()),
+        };
+
+        let cycles_fee = RegistrationFee::Cycles(CyclesRegistrationFee {
+            amount: 3,
+            recipient: Principal::anonymous(),
+            valid_until: 3,
+        });
+        let user3 = UnconfirmedUser {
+            principal: principal3,
+            state: UnconfirmedUserState::RegistrationFee(cycles_fee.clone()),
         };
 
         user_map.add(user1);
         user_map.add(user2);
+        user_map.add(user3);
 
         let confirmed1 = User::Confirmed(ConfirmedUser {
             principal: principal1,
@@ -969,18 +997,36 @@ mod tests {
             canister_creation_status: CanisterCreationStatusInternal::Pending(None),
             upgrade_in_progress: false,
             date_confirmed: 2,
-            registration_fee: Some(2),
+            registration_fee: Some(icp_fee),
+        });
+
+        let confirmed3 = User::Confirmed(ConfirmedUser {
+            principal: principal3,
+            phone_number: None,
+            username: None,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
+            upgrade_in_progress: false,
+            date_confirmed: 3,
+            registration_fee: Some(cycles_fee),
         });
 
         assert_eq!(user_map.users_confirmed_via_phone, 0);
+        assert_eq!(user_map.users_confirmed_via_icp, 0);
         assert_eq!(user_map.users_confirmed_via_cycles, 0);
 
         user_map.update(confirmed1);
         assert_eq!(user_map.users_confirmed_via_phone, 1);
+        assert_eq!(user_map.users_confirmed_via_icp, 0);
         assert_eq!(user_map.users_confirmed_via_cycles, 0);
 
         user_map.update(confirmed2);
         assert_eq!(user_map.users_confirmed_via_phone, 1);
+        assert_eq!(user_map.users_confirmed_via_icp, 1);
+        assert_eq!(user_map.users_confirmed_via_cycles, 0);
+
+        user_map.update(confirmed3);
+        assert_eq!(user_map.users_confirmed_via_phone, 1);
+        assert_eq!(user_map.users_confirmed_via_icp, 1);
         assert_eq!(user_map.users_confirmed_via_cycles, 1);
     }
 }

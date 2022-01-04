@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use user_canister::block_user::*;
@@ -9,7 +9,7 @@ use user_canister::block_user::*;
 fn unblock_user(args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| unblock_user_impl(args, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| unblock_user_impl(args, state))
 }
 
 fn unblock_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {

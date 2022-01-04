@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use group_canister::c2c_toggle_mute_notifications;
 use ic_cdk_macros::update;
@@ -11,7 +11,7 @@ use user_canister::mute_notifications::*;
 fn mute_notifications(args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| toggle_mute_notifications_impl(args.chat_id, true, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| toggle_mute_notifications_impl(args.chat_id, true, state))
 }
 
 #[update(guard = "caller_is_owner")]
@@ -19,7 +19,7 @@ fn mute_notifications(args: Args) -> Response {
 fn unmute_notifications(args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| toggle_mute_notifications_impl(args.chat_id, false, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| toggle_mute_notifications_impl(args.chat_id, false, state))
 }
 
 fn toggle_mute_notifications_impl(chat_id: ChatId, mute: bool, runtime_state: &mut RuntimeState) -> Response {

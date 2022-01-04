@@ -1,5 +1,5 @@
 use crate::updates::handle_activity_notification;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use group_canister::delete_messages::{Response::*, *};
 use ic_cdk_macros::update;
@@ -9,7 +9,7 @@ use ic_cdk_macros::update;
 fn delete_messages(args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| delete_messages_impl(args, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| delete_messages_impl(args, state))
 }
 
 fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {

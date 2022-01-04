@@ -1,4 +1,4 @@
-use crate::{Data, RuntimeState, RUNTIME_STATE};
+use crate::{read_state, Data, RuntimeState};
 use chat_events::ChatEventInternal;
 use group_canister::selected_updates::{Response::*, *};
 use ic_cdk_macros::query;
@@ -7,7 +7,7 @@ use types::UserId;
 
 #[query]
 fn selected_updates(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| selected_updates_impl(args, state.borrow().as_ref().unwrap()))
+    read_state(|state| selected_updates_impl(args, state))
 }
 
 fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {

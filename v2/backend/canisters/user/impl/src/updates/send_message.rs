@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
@@ -31,7 +31,7 @@ async fn send_message(mut args: Args) -> Response {
         };
     }
 
-    if RUNTIME_STATE.with(|state| is_recipient_blocked(&args.recipient, state.borrow().as_ref().unwrap())) {
+    if read_state(|state| is_recipient_blocked(&args.recipient, state)) {
         return RecipientBlocked;
     }
 
@@ -68,7 +68,7 @@ async fn send_message(mut args: Args) -> Response {
         }
     }
 
-    RUNTIME_STATE.with(|state| send_message_impl(args, cycles_transfer, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| send_message_impl(args, cycles_transfer, state))
 }
 
 fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>, runtime_state: &mut RuntimeState) -> Response {
@@ -128,9 +128,9 @@ pub(crate) async fn send_to_recipients_canister(
     match user_canister_c2c_client::c2c_send_message(recipient.into(), &args, cycles_to_send).await {
         Ok(_) => {
             if let Some(ct) = cycles_transfer {
-                RUNTIME_STATE.with(|state| {
+                mutate_state(|state| {
                     let transfer = CryptocurrencyTransfer::Cycles(CyclesTransfer::Completed(ct.transfer));
-                    update_transaction(ct.index, transfer, state.borrow_mut().as_mut().unwrap())
+                    update_transaction(ct.index, transfer, state)
                 });
             }
         }
@@ -144,15 +144,14 @@ pub(crate) async fn send_to_recipients_canister(
                         cycles: ct.transfer.cycles,
                         error_message: format!("{:?}", error),
                     };
-                    RUNTIME_STATE.with(|state| {
-                        handle_failed_cycles_transfer(ct.index, failed_cycles_transfer, state.borrow_mut().as_mut().unwrap());
+                    mutate_state(|state| {
+                        handle_failed_cycles_transfer(ct.index, failed_cycles_transfer, state);
                     });
                 }
             } else {
                 // If this is not a retry, queue up the message to be retried
-                let user_index_canister_id = RUNTIME_STATE.with(|state| {
-                    queue_failed_message_for_retry(recipient, args, cycles_transfer, state.borrow_mut().as_mut().unwrap())
-                });
+                let user_index_canister_id =
+                    mutate_state(|state| queue_failed_message_for_retry(recipient, args, cycles_transfer, state));
 
                 let _ = user_index_canister_c2c_client::c2c_mark_send_message_failed(
                     user_index_canister_id,
@@ -180,10 +179,10 @@ fn queue_failed_message_for_retry(
 }
 
 async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> Result<CompletedICPTransfer, String> {
-    let index = RUNTIME_STATE.with(|state| {
+    let index = mutate_state(|state| {
         record_transaction(
             CryptocurrencyTransfer::ICP(ICPTransfer::Pending(pending_transfer.clone())),
-            state.borrow_mut().as_mut().unwrap(),
+            state,
         )
     });
 
@@ -201,11 +200,11 @@ async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> 
     match ic_ledger_types::transfer(MAINNET_LEDGER_CANISTER_ID, transfer_args).await {
         Ok(Ok(block_height)) => {
             let completed_transfer = pending_transfer.completed(my_user_id, fee.e8s(), memo.0, block_height);
-            RUNTIME_STATE.with(|state| {
+            mutate_state(|state| {
                 update_transaction(
                     index,
                     CryptocurrencyTransfer::ICP(ICPTransfer::Completed(completed_transfer.clone())),
-                    state.borrow_mut().as_mut().unwrap(),
+                    state,
                 )
             });
             Ok(completed_transfer)
@@ -213,11 +212,11 @@ async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> 
         Ok(Err(transfer_error)) => {
             let error_message = format!("Transfer failed. {:?}", transfer_error);
             let failed_transfer = pending_transfer.failed(fee.e8s(), memo.0, error_message.clone());
-            RUNTIME_STATE.with(|state| {
+            mutate_state(|state| {
                 update_transaction(
                     index,
                     CryptocurrencyTransfer::ICP(ICPTransfer::Failed(failed_transfer)),
-                    state.borrow_mut().as_mut().unwrap(),
+                    state,
                 )
             });
             Err(error_message)
@@ -225,11 +224,11 @@ async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> 
         Err((code, msg)) => {
             let error_message = format!("Transfer failed. {:?}: {}", code, msg);
             let failed_transfer = pending_transfer.failed(fee.e8s(), memo.0, error_message.clone());
-            RUNTIME_STATE.with(|state| {
+            mutate_state(|state| {
                 update_transaction(
                     index,
                     CryptocurrencyTransfer::ICP(ICPTransfer::Failed(failed_transfer)),
-                    state.borrow_mut().as_mut().unwrap(),
+                    state,
                 )
             });
             Err(error_message)
@@ -276,7 +275,7 @@ fn subtract_cycles_from_user_balance(transfer: &PendingCyclesTransfer) -> Result
         }
     }
 
-    RUNTIME_STATE.with(|state| subtract_cycles_from_user_balance_impl(transfer, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| subtract_cycles_from_user_balance_impl(transfer, state))
 }
 
 fn handle_failed_cycles_transfer(index: u32, failed_transfer: FailedCyclesTransfer, runtime_state: &mut RuntimeState) {

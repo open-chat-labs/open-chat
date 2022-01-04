@@ -1,5 +1,5 @@
 use crate::updates::handle_activity_notification;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::remove_participant::{Response::*, *};
@@ -12,7 +12,7 @@ use user_canister::c2c_remove_from_group;
 async fn remove_participant(args: Args) -> Response {
     run_regular_jobs();
 
-    let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
+    let prepare_result = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -26,7 +26,7 @@ async fn remove_participant(args: Args) -> Response {
         return InternalError(format!("{:?}", error));
     }
 
-    RUNTIME_STATE.with(|state| commit(prepare_result.removed_by, args.user_id, state.borrow_mut().as_mut().unwrap()));
+    mutate_state(|state| commit(prepare_result.removed_by, args.user_id, state));
 
     Success
 }

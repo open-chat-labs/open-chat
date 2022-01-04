@@ -1,9 +1,9 @@
-use crate::model::user::{ConfirmedUser, User};
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::model::user::{ConfirmedUser, UnconfirmedUserState, User};
+use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
 use cycles_utils::accept_cycles;
 use ic_cdk_macros::update;
-use types::{CanisterCreationStatusInternal, Cycles};
+use types::{CanisterCreationStatusInternal, Cycles, RegistrationFee};
 
 const TWO_TRILLION: u128 = 2_000_000_000_000;
 
@@ -14,7 +14,7 @@ fn wallet_receive() {
     if cycles_available < TWO_TRILLION {
         // If the cycles amount is < 2T, we assume that the payment is being made to register a user
         // in which case we either successfully register a user or we refund the cycles.
-        RUNTIME_STATE.with(|state| try_confirm_user(cycles_available as Cycles, state.borrow_mut().as_mut().unwrap()));
+        mutate_state(|state| try_confirm_user(cycles_available as Cycles, state));
     } else {
         // If the cycles amount is >= 2T, we assume this is a donation / top-up and accept all of
         // the cycles
@@ -23,11 +23,20 @@ fn wallet_receive() {
 }
 
 fn try_confirm_user(cycles_available: Cycles, runtime_state: &mut RuntimeState) {
-    if let Some(principal) = runtime_state
+    if let Some((principal, fee)) = runtime_state
         .data
         .users
         .get_by_registration_fee_cycles(&cycles_available)
-        .map(|u| u.get_principal())
+        .map(|u| if let User::Unconfirmed(user) = u { Some(user) } else { None })
+        .flatten()
+        .map(|u| {
+            if let UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(fee)) = &u.state {
+                Some((u.principal, fee.clone()))
+            } else {
+                None
+            }
+        })
+        .flatten()
     {
         accept_cycles();
 
@@ -38,7 +47,7 @@ fn try_confirm_user(cycles_available: Cycles, runtime_state: &mut RuntimeState) 
             date_confirmed: runtime_state.env.now(),
             canister_creation_status: CanisterCreationStatusInternal::Pending(None),
             upgrade_in_progress: false,
-            registration_fee: Some(cycles_available),
+            registration_fee: Some(RegistrationFee::Cycles(fee)),
         });
         runtime_state.data.users.update(user);
     }

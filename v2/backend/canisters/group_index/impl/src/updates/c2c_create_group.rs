@@ -1,5 +1,5 @@
 use crate::model::public_groups::GroupCreatedArgs;
-use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE, RUNTIME_STATE};
+use crate::{mutate_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE};
 use canister_api_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
 use ic_cdk_macros::update;
@@ -16,7 +16,7 @@ async fn c2c_create_group(args: Args) -> Response {
     let is_public = args.is_public;
     let avatar_id = Avatar::id(&args.avatar);
 
-    let canister_args = match RUNTIME_STATE.with(|state| prepare(args, state.borrow_mut().as_mut().unwrap())) {
+    let canister_args = match mutate_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -35,7 +35,7 @@ async fn c2c_create_group(args: Args) -> Response {
         Ok(canister_id) => {
             let chat_id = canister_id.into();
             let wasm_version = canister_args.canister_wasm.version;
-            RUNTIME_STATE.with(|state| {
+            mutate_state(|state| {
                 commit(
                     CommitArgs {
                         is_public,
@@ -45,7 +45,7 @@ async fn c2c_create_group(args: Args) -> Response {
                         avatar_id,
                         wasm_version,
                     },
-                    state.borrow_mut().as_mut().unwrap(),
+                    state,
                 )
             });
             Success(SuccessResult { chat_id })
@@ -56,7 +56,7 @@ async fn c2c_create_group(args: Args) -> Response {
                 canister_id = Some(id);
             }
 
-            RUNTIME_STATE.with(|state| rollback(is_public, &name, canister_id, state.borrow_mut().as_mut().unwrap()));
+            mutate_state(|state| rollback(is_public, &name, canister_id, state));
             InternalError
         }
     }
@@ -155,5 +155,5 @@ fn rollback(is_public: bool, name: &str, canister_id: Option<CanisterId>, runtim
 }
 
 fn on_canister_created(cycles: Cycles) {
-    RUNTIME_STATE.with(|state| state.borrow_mut().as_mut().unwrap().data.total_cycles_spent_on_canisters += cycles);
+    mutate_state(|state| state.data.total_cycles_spent_on_canisters += cycles);
 }

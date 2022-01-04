@@ -1,5 +1,5 @@
 use crate::updates::upgrade_canister::{initialize_upgrade, set_upgrade_complete};
-use crate::{RuntimeState, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
+use crate::{mutate_state, read_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use group_canister::c2c_dismiss_super_admin;
 use ic_cdk_macros::heartbeat;
 use tracing::error;
@@ -27,13 +27,13 @@ mod upgrade_canisters {
     type CanisterToUpgrade = utils::canister::CanisterToUpgrade<user_canister::post_upgrade::Args>;
 
     pub fn run() {
-        let canisters_to_upgrade = RUNTIME_STATE.with(|state| get_next_batch(state.borrow_mut().as_mut().unwrap()));
+        let canisters_to_upgrade = mutate_state(next_batch);
         if !canisters_to_upgrade.is_empty() {
             ic_cdk::block_on(perform_upgrades(canisters_to_upgrade));
         }
     }
 
-    fn get_next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
+    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
         let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
         (0..(MAX_CONCURRENT_CANISTER_UPGRADES - count_in_progress))
             // TODO replace this with 'map_while' once we have upgraded to Rust 1.57
@@ -62,11 +62,10 @@ mod upgrade_canisters {
 
         match canister::upgrade(canister_id, canister_to_upgrade.new_wasm.module, canister_to_upgrade.args).await {
             Ok(_) => {
-                RUNTIME_STATE.with(|state| on_success(canister_id, to_version, state.borrow_mut().as_mut().unwrap()));
+                mutate_state(|state| on_success(canister_id, to_version, state));
             }
             Err(_) => {
-                RUNTIME_STATE
-                    .with(|state| on_failure(canister_id, from_version, to_version, state.borrow_mut().as_mut().unwrap()));
+                mutate_state(|state| on_failure(canister_id, from_version, to_version, state));
             }
         }
     }
@@ -90,7 +89,7 @@ mod topup_canister_pool {
     use super::*;
 
     pub fn run() {
-        let is_full = RUNTIME_STATE.with(|state| is_pool_full(state.borrow().as_ref().unwrap()));
+        let is_full = read_state(is_pool_full);
         if !is_full {
             let cycles_to_use = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
 
@@ -107,7 +106,7 @@ mod topup_canister_pool {
 
     async fn add_new_canister(cycles_to_use: Cycles) {
         if let Ok(canister_id) = canister::create(cycles_to_use).await {
-            RUNTIME_STATE.with(|state| add_canister_to_pool(canister_id, cycles_to_use, state.borrow_mut().as_mut().unwrap()));
+            mutate_state(|state| add_canister_to_pool(canister_id, cycles_to_use, state));
         }
     }
 
@@ -121,13 +120,13 @@ mod retry_failed_messages {
     use super::*;
 
     pub fn run() {
-        let messages_to_retry = RUNTIME_STATE.with(|state| get_next_batch(state.borrow_mut().as_mut().unwrap()));
+        let messages_to_retry = mutate_state(next_batch);
         if !messages_to_retry.is_empty() {
             ic_cdk::block_on(send_to_canisters(messages_to_retry));
         }
     }
 
-    fn get_next_batch(runtime_state: &mut RuntimeState) -> Vec<(UserId, UserId)> {
+    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<(UserId, UserId)> {
         let canisters_requiring_upgrade = &runtime_state.data.canisters_requiring_upgrade;
         // Filter out canisters that are currently being upgraded
         let filter = |_: &UserId, recipient: &UserId| {
@@ -161,7 +160,7 @@ mod sync_users_to_open_storage {
     use open_storage_index_canister::add_or_update_users::UserConfig;
 
     pub fn run() {
-        if let Some((canister_id, users)) = RUNTIME_STATE.with(|state| next_batch(state.borrow_mut().as_mut().unwrap())) {
+        if let Some((canister_id, users)) = mutate_state(next_batch) {
             ic_cdk::block_on(sync_users(canister_id, users));
         }
     }
@@ -175,12 +174,8 @@ mod sync_users_to_open_storage {
     async fn sync_users(open_storage_index_canister_id: CanisterId, users: Vec<UserConfig>) {
         let args = open_storage_index_canister::add_or_update_users::Args { users: users.clone() };
         match open_storage_index_canister_c2c_client::add_or_update_users(open_storage_index_canister_id, &args).await {
-            Ok(_) => {
-                RUNTIME_STATE.with(|state| on_success(state.borrow_mut().as_mut().unwrap()));
-            }
-            Err(_) => {
-                RUNTIME_STATE.with(|state| on_failure(users, state.borrow_mut().as_mut().unwrap()));
-            }
+            Ok(_) => mutate_state(on_success),
+            Err(_) => mutate_state(|state| on_failure(users, state)),
         }
     }
 
@@ -197,7 +192,7 @@ mod calculate_metrics {
     use super::*;
 
     pub fn run() {
-        RUNTIME_STATE.with(|state| calculate_metrics(state.borrow_mut().as_mut().unwrap()));
+        mutate_state(calculate_metrics);
     }
 
     fn calculate_metrics(runtime_state: &mut RuntimeState) {
@@ -210,9 +205,7 @@ mod dismiss_removed_super_admins {
     use super::*;
 
     pub fn run() {
-        if let Some((user_id, group_id)) =
-            RUNTIME_STATE.with(|state| pop_super_admin_to_dismiss(state.borrow_mut().as_mut().unwrap()))
-        {
+        if let Some((user_id, group_id)) = mutate_state(pop_super_admin_to_dismiss) {
             ic_cdk::block_on(dismiss_super_admin(user_id, group_id));
         }
     }
@@ -229,7 +222,7 @@ mod dismiss_removed_super_admins {
         let c2c_args = c2c_dismiss_super_admin::Args { user_id };
         if let Err(error) = group_canister_c2c_client::c2c_dismiss_super_admin(group_id.into(), &c2c_args).await {
             error!(?error, ?user_id, ?group_id, "Error calling group::c2c_dismiss_super_admin");
-            RUNTIME_STATE.with(|state| push_super_admin_to_dismiss(user_id, group_id, state.borrow_mut().as_mut().unwrap()));
+            mutate_state(|state| push_super_admin_to_dismiss(user_id, group_id, state));
         }
     }
 }
@@ -238,7 +231,7 @@ mod prune_unconfirmed_users {
     use super::*;
 
     pub fn run() {
-        RUNTIME_STATE.with(|state| prune_unconfirmed_users_impl(state.borrow_mut().as_mut().unwrap()));
+        mutate_state(prune_unconfirmed_users_impl);
     }
 
     fn prune_unconfirmed_users_impl(runtime_state: &mut RuntimeState) {

@@ -1,6 +1,5 @@
-use crate::{Data, LOG_MESSAGES, RUNTIME_STATE, STATE_VERSION};
+use crate::{take_state, LOG_MESSAGES, STATE_VERSION};
 use canister_api_macros::trace;
-use canister_logger::LogMessagesWrapper;
 use ic_cdk_macros::pre_upgrade;
 use tracing::info;
 
@@ -9,14 +8,13 @@ use tracing::info;
 fn pre_upgrade() {
     info!("Pre-upgrade starting");
 
-    RUNTIME_STATE.with(|state| LOG_MESSAGES.with(|l| pre_upgrade_impl(state.take().unwrap().data, l.take())));
-}
+    let state = take_state();
+    let messages_container = LOG_MESSAGES.with(|l| l.take());
 
-fn pre_upgrade_impl(data: Data, messages_container: LogMessagesWrapper) {
     let log_messages = messages_container.logs.drain_messages();
     let trace_messages = messages_container.traces.drain_messages();
 
-    let stable_state = (data, log_messages, trace_messages);
+    let stable_state = (state.data, log_messages, trace_messages);
     let bytes = serializer::serialize(&stable_state).unwrap();
 
     ic_cdk::storage::stable_save((STATE_VERSION, &bytes)).unwrap();

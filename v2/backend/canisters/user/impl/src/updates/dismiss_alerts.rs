@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use std::str::FromStr;
@@ -11,7 +11,7 @@ use user_canister::dismiss_alerts::{Response::*, *};
 fn dismiss_alerts(args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| dismiss_alerts_impl(args, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| dismiss_alerts_impl(args, state))
 }
 
 fn dismiss_alerts_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {

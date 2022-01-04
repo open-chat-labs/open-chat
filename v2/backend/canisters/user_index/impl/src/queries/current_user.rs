@@ -1,5 +1,5 @@
 use crate::model::user::User;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use types::{CanisterUpgradeStatus, Cryptocurrency, CryptocurrencyAccount};
@@ -7,7 +7,7 @@ use user_index_canister::current_user::{Response::*, *};
 
 #[query]
 fn current_user(_args: Args) -> Response {
-    RUNTIME_STATE.with(|state| current_user_impl(state.borrow().as_ref().unwrap()))
+    read_state(current_user_impl)
 }
 
 fn current_user_impl(runtime_state: &RuntimeState) -> Response {
@@ -17,7 +17,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         match user {
             User::Unconfirmed(u) => Unconfirmed(UnconfirmedResult {
-                state: (&u.state).into(),
+                state: u.state.clone().into(),
             }),
             User::Confirmed(u) => {
                 if u.username.is_none() {

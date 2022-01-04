@@ -41,7 +41,7 @@
         background-color: var(--modal-bg);
         color: var(--modal-txt);
         box-shadow: var(--modal-sh);
-        width: 50%;
+        width: 60%;
         max-width: 576px;
         @include size-below(xs) {
             width: 100%;

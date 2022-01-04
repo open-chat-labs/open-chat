@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use user_canister::c2c_revoke_super_admin::*;
@@ -9,7 +9,7 @@ use user_canister::c2c_revoke_super_admin::*;
 fn c2c_revoke_super_admin(_args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| c2c_revoke_super_admin_impl(state.borrow_mut().as_mut().unwrap()))
+    mutate_state(c2c_revoke_super_admin_impl)
 }
 
 fn c2c_revoke_super_admin_impl(runtime_state: &mut RuntimeState) -> Response {

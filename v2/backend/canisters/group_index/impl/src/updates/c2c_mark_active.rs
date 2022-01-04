@@ -1,4 +1,4 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
 use group_index_canister::c2c_mark_active::{Response::*, *};
 use ic_cdk_macros::update;
@@ -7,7 +7,7 @@ use types::ChatId;
 #[update]
 #[trace]
 fn c2c_mark_active(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| c2c_mark_active_impl(args, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| c2c_mark_active_impl(args, state))
 }
 
 fn c2c_mark_active_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use group_canister::c2c_assume_super_admin;
 use ic_cdk_macros::update;
@@ -12,7 +12,7 @@ use user_canister::assume_group_super_admin::{Response::*, *};
 async fn assume_group_super_admin(args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(response) = RUNTIME_STATE.with(|state| prepare(&args.chat_id, state.borrow().as_ref().unwrap())) {
+    if let Err(response) = read_state(|state| prepare(&args.chat_id, state)) {
         return response;
     }
 
@@ -20,7 +20,7 @@ async fn assume_group_super_admin(args: Args) -> Response {
     match group_canister_c2c_client::c2c_assume_super_admin(args.chat_id.into(), &c2c_args).await {
         Ok(response) => match response {
             c2c_assume_super_admin::Response::Success => {
-                RUNTIME_STATE.with(|state| commit(&args.chat_id, state.borrow_mut().as_mut().unwrap()));
+                mutate_state(|state| commit(&args.chat_id, state));
                 Success
             }
             c2c_assume_super_admin::Response::CallerNotInGroup => {

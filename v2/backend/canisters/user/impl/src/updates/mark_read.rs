@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::ChatId;
@@ -12,7 +12,7 @@ use utils::range_set::{convert_to_message_index_ranges, insert_ranges, RangeSet}
 fn mark_read(args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| mark_read_impl(args, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| mark_read_impl(args, state))
 }
 
 fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
@@ -57,8 +57,7 @@ async fn mark_read_on_recipients_canister(chat_id: ChatId, their_message_ranges:
     };
     let _ = user_canister_c2c_client::c2c_mark_read(chat_id.into(), &args).await;
 
-    RUNTIME_STATE
-        .with(|state| remove_from_message_index_map(chat_id, our_message_ranges, state.borrow_mut().as_mut().unwrap()));
+    mutate_state(|state| remove_from_message_index_map(chat_id, our_message_ranges, state));
 
     fn remove_from_message_index_map(chat_id: ChatId, ranges: RangeSet, runtime_state: &mut RuntimeState) {
         if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {

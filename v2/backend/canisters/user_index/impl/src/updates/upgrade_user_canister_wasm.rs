@@ -1,5 +1,5 @@
 use crate::guards::caller_is_controller;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use tracing::info;
@@ -8,7 +8,7 @@ use user_index_canister::upgrade_user_canister_wasm::{Response::*, *};
 #[update(guard = "caller_is_controller")]
 #[trace]
 fn upgrade_user_canister_wasm(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| upgrade_user_canister_wasm_impl(args, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| upgrade_user_canister_wasm_impl(args, state))
 }
 
 fn upgrade_user_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {

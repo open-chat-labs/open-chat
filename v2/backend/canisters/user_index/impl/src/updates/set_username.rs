@@ -1,6 +1,6 @@
 use crate::model::user::{CreatedUser, User};
 use crate::model::user_map::UpdateUserResult;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::{CanisterCreationStatusInternal, CyclesTopUp};
@@ -12,7 +12,7 @@ const MIN_USERNAME_LENGTH: u16 = 3;
 #[update]
 #[trace]
 fn set_username(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| set_username_impl(args, state.borrow_mut().as_mut().unwrap()))
+    mutate_state(|state| set_username_impl(args, state))
 }
 
 fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
@@ -54,7 +54,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                             date: now,
                         }],
                         avatar_id: None,
-                        registration_fee: user.registration_fee,
+                        registration_fee: user.registration_fee.clone(),
                     };
                     User::Created(created_user)
                 } else {
