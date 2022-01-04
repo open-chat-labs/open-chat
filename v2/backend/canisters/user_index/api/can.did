@@ -47,15 +47,30 @@ type ResendCodeResponse =
     };
 
 type GenerateRegistrationFeeArgs =
-    record {};
+    record {
+        currency: Cryptocurrency;
+    };
 
 type GenerateRegistrationFeeResponse =
     variant {
         Success: record {
-            amount: Cycles;
-            valid_until: TimestampMillis;
+            fee: RegistrationFee;
         };
         AlreadyRegistered;
+        InvalidCurrency;
+    };
+
+type NotifyRegistrationFeePaidArgs =
+    record {
+    };
+
+type NotifyRegistrationFeePaidResponse =
+    variant {
+        Success;
+        AlreadyRegistered;
+        PaymentNotFound;
+        UserNotFound;
+        InternalError: text;
     };
 
 type CreateCanisterArgs =
@@ -151,7 +166,7 @@ type CurrentUserResponse =
 type UnconfirmedUserState =
     variant {
         PhoneNumber: UnconfirmedPhoneNumberState;
-        CyclesFee: UnconfirmedCyclesFeeState;
+        RegistrationFee: RegistrationFee;
     };
 
 type UnconfirmedPhoneNumberState =
@@ -160,16 +175,10 @@ type UnconfirmedPhoneNumberState =
         valid_until: TimestampMillis;
     };
 
-type UnconfirmedCyclesFeeState =
-    record {
-        amount: Cycles;
-        valid_until: TimestampMillis;
-    };
-
 type ConfirmationState =
     variant {
         PhoneNumber: PhoneNumber;
-        CyclesFee: Cycles;
+        RegistrationFee: RegistrationFee;
     };
 
 type UserArgs = 
@@ -262,9 +271,11 @@ service: {
     // call this to resend the code
     resend_code: (ResendCodeArgs) -> (ResendCodeResponse);
 
-    // If the user wants to register by paying a small fee in cycles, they should call this endpoint to generate a new
-    // fee amount which is unique to them
+    // If the user wants to register by paying a small fee, they should call this endpoint with their chosen currency,
+    // the response will contain the payment details
     generate_registration_fee: (GenerateRegistrationFeeArgs) -> (GenerateRegistrationFeeResponse);
+
+    notify_registration_fee_paid: (NotifyRegistrationFeePaidArgs) -> (NotifyRegistrationFeePaidResponse);
 
     // Once the confirm_phone_number call has succeeded (user is in one of the "confirmed" states)
     // then call this to create a canister for the user

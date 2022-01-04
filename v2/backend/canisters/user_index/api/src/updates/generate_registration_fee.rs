@@ -1,18 +1,20 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{Cycles, TimestampMillis};
+use types::{Cryptocurrency, RegistrationFee};
 
 #[derive(CandidType, Deserialize, Debug)]
-pub struct Args {}
+pub struct Args {
+    pub currency: Cryptocurrency,
+}
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     AlreadyRegistered,
+    InvalidCurrency,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub amount: Cycles,
-    pub valid_until: TimestampMillis,
+    pub fee: RegistrationFee,
 }

@@ -1481,7 +1481,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk"
 version = "0.3.3"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=a41309cefebb8a89aa6dd3669ba4a6c9ef8f34c8#a41309cefebb8a89aa6dd3669ba4a6c9ef8f34c8"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=4631c0312db3a5abbf21f9338534bcdbfa1a005b#4631c0312db3a5abbf21f9338534bcdbfa1a005b"
 dependencies = [
  "candid",
  "cfg-if",
@@ -1491,7 +1491,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk-macros"
 version = "0.3.3"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=a41309cefebb8a89aa6dd3669ba4a6c9ef8f34c8#a41309cefebb8a89aa6dd3669ba4a6c9ef8f34c8"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=4631c0312db3a5abbf21f9338534bcdbfa1a005b#4631c0312db3a5abbf21f9338534bcdbfa1a005b"
 dependencies = [
  "candid",
  "ic-cdk",
@@ -1551,7 +1551,7 @@ dependencies = [
 [[package]]
 name = "ic-ledger-types"
 version = "0.1.0"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=a41309cefebb8a89aa6dd3669ba4a6c9ef8f34c8#a41309cefebb8a89aa6dd3669ba4a6c9ef8f34c8"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=4631c0312db3a5abbf21f9338534bcdbfa1a005b#4631c0312db3a5abbf21f9338534bcdbfa1a005b"
 dependencies = [
  "candid",
  "crc32fast",
@@ -3657,6 +3657,7 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "ic-ledger-types",
  "lzma-rs",
  "serde",
  "serde_bytes",
@@ -3792,6 +3793,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "ic-ledger-types",
  "serde",
  "serde_bytes",
  "types",
@@ -3836,6 +3838,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-ledger-types",
  "itertools 0.10.1",
+ "ledger_utils",
  "open_storage_index_canister",
  "open_storage_index_canister_c2c_client",
  "rand 0.7.3",
