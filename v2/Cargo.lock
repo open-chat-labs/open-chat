@@ -608,7 +608,7 @@ name = "canister_logger"
 version = "0.1.0"
 dependencies = [
  "candid",
- "ic-cdk 0.3.2",
+ "ic-cdk",
  "serde",
  "tracing",
  "tracing-attributes",
@@ -810,7 +810,7 @@ dependencies = [
  "candid",
  "canister_client_macros",
  "ic-base-types",
- "ic-cdk 0.3.2",
+ "ic-cdk",
  "ic-ic00-types",
  "serde",
  "tracing",
@@ -1291,7 +1291,7 @@ dependencies = [
  "candid",
  "canister_client_macros",
  "group_canister",
- "ic-cdk 0.3.2",
+ "ic-cdk",
  "tracing",
  "types",
 ]
@@ -1321,8 +1321,8 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
- "ic-cdk 0.3.2",
- "ic-cdk-macros 0.3.2",
+ "ic-cdk",
+ "ic-cdk-macros",
  "itertools 0.10.1",
  "lazy_static",
  "notifications_canister",
@@ -1356,7 +1356,7 @@ version = "0.1.0"
 dependencies = [
  "canister_client_macros",
  "group_index_canister",
- "ic-cdk 0.3.2",
+ "ic-cdk",
  "tracing",
  "types",
 ]
@@ -1384,8 +1384,8 @@ dependencies = [
  "group_canister",
  "group_index_canister",
  "http_request",
- "ic-cdk 0.3.1",
- "ic-cdk-macros 0.3.1",
+ "ic-cdk",
+ "ic-cdk-macros",
  "search",
  "serde",
  "serializer",
@@ -1638,18 +1638,8 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk"
-version = "0.3.1"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=6f1539aac70aae9ee7f1d2c326c633b6b863721f#6f1539aac70aae9ee7f1d2c326c633b6b863721f"
-dependencies = [
- "candid",
- "cfg-if 0.1.10",
- "serde",
-]
-
-[[package]]
-name = "ic-cdk"
-version = "0.3.2"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=827d553181aaac61cf6209aa0654baf19b1dbef4#827d553181aaac61cf6209aa0654baf19b1dbef4"
+version = "0.3.3"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=3f6db10c482d15c904b23d5ab8780cf66a855e76#3f6db10c482d15c904b23d5ab8780cf66a855e76"
 dependencies = [
  "candid",
  "cfg-if 1.0.0",
@@ -1658,25 +1648,11 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk-macros"
-version = "0.3.1"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=6f1539aac70aae9ee7f1d2c326c633b6b863721f#6f1539aac70aae9ee7f1d2c326c633b6b863721f"
+version = "0.3.3"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=3f6db10c482d15c904b23d5ab8780cf66a855e76#3f6db10c482d15c904b23d5ab8780cf66a855e76"
 dependencies = [
  "candid",
- "ic-cdk 0.3.1",
- "proc-macro2",
- "quote",
- "serde",
- "serde_tokenstream",
- "syn",
-]
-
-[[package]]
-name = "ic-cdk-macros"
-version = "0.3.2"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=827d553181aaac61cf6209aa0654baf19b1dbef4#827d553181aaac61cf6209aa0654baf19b1dbef4"
-dependencies = [
- "candid",
- "ic-cdk 0.3.2",
+ "ic-cdk",
  "proc-macro2",
  "quote",
  "serde",
@@ -2292,7 +2268,7 @@ name = "notifications_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros",
- "ic-cdk 0.3.2",
+ "ic-cdk",
  "notifications_canister",
  "tracing",
  "types",
@@ -2318,8 +2294,8 @@ dependencies = [
  "canister_logger",
  "cycles_utils",
  "http_request",
- "ic-cdk 0.3.2",
- "ic-cdk-macros 0.3.2",
+ "ic-cdk",
+ "ic-cdk-macros",
  "notifications_canister",
  "serde",
  "serializer",
@@ -2447,8 +2423,8 @@ dependencies = [
  "canister_logger",
  "cycles_utils",
  "http_request",
- "ic-cdk 0.3.2",
- "ic-cdk-macros 0.3.2",
+ "ic-cdk",
+ "ic-cdk-macros",
  "online_users_aggregator_canister",
  "serde",
  "serializer",
@@ -2480,7 +2456,7 @@ name = "open_storage_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros",
- "ic-cdk 0.3.2",
+ "ic-cdk",
  "open_storage_index_canister",
  "tracing",
  "types",
@@ -4121,7 +4097,7 @@ name = "user_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros",
- "ic-cdk 0.3.2",
+ "ic-cdk",
  "tracing",
  "types",
  "user_canister",
@@ -4153,8 +4129,8 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
- "ic-cdk 0.3.2",
- "ic-cdk-macros 0.3.2",
+ "ic-cdk",
+ "ic-cdk-macros",
  "itertools 0.10.1",
  "ledger_utils",
  "notifications_canister",
@@ -4187,7 +4163,7 @@ name = "user_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros",
- "ic-cdk 0.3.2",
+ "ic-cdk",
  "tracing",
  "types",
  "user_index_canister",
@@ -4216,8 +4192,8 @@ dependencies = [
  "group_canister",
  "group_canister_c2c_client",
  "http_request",
- "ic-cdk 0.3.2",
- "ic-cdk-macros 0.3.2",
+ "ic-cdk",
+ "ic-cdk-macros",
  "itertools 0.10.1",
  "ledger_utils",
  "open_storage_index_canister",
@@ -4245,7 +4221,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "getrandom 0.2.3",
- "ic-cdk 0.3.2",
+ "ic-cdk",
  "rand 0.7.3",
  "range-set",
  "serde",

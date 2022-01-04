@@ -21,8 +21,8 @@ group_canister = { path = "../api" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
+ic-cdk = "0.3.3"
+ic-cdk-macros = "0.3.3"
 itertools = "0.10.1"
 lazy_static = "1.4.0"
 notifications_canister = { path = "../../notifications/api" }

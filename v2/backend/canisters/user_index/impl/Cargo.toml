@@ -19,8 +19,8 @@ futures = "0.3.16"
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "827d553181aaac61cf6209aa0654baf19b1dbef4" }
+ic-cdk = "0.3.3"
+ic-cdk-macros = "0.3.3"
 itertools = "0.10.1"
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 open_storage_index_canister = { path = "../../open_storage_index/api" }
