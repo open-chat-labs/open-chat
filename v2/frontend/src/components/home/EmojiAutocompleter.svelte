@@ -6,8 +6,7 @@
     import { _ } from "svelte-i18n";
     import { emojiDatabase } from "../../utils/emojis";
     import type { NativeEmoji } from "emoji-picker-element/shared";
-
-    const ITEM_HEIGHT = 49.59;
+    import { ScreenWidth, screenWidth } from "stores/screenDimensions";
 
     type EmojiSummary = {
         unicode: string;
@@ -20,28 +19,28 @@
     let index = 0;
     let matches: EmojiSummary[] = [];
 
+    // this is definitely a bit horrible. It seems to be necessary when we use the virtual list.
+    $: ITEM_HEIGHT = $screenWidth === ScreenWidth.ExtraSmall ? 43.2 : 49.59;
     $: {
         if (query !== undefined) {
             emojiDatabase.getPreferredSkinTone().then((tone) => {
                 emojiDatabase.getEmojiBySearchQuery(query!).then((m) => {
                     matches = (m as NativeEmoji[])
+                        .filter((m) => m.unicode !== "🫱")
                         .map((match) => {
+                            const unicode =
+                                match.skins?.find((s) => s.tone === tone)?.unicode ?? match.unicode;
                             return {
-                                unicode:
-                                    match.skins?.find((s) => s.tone === tone)?.unicode ??
-                                    match.unicode,
+                                unicode,
                                 code: match.shortcodes
                                     ? match.shortcodes[match.shortcodes.length - 1]
                                     : match.annotation,
                             };
-                        })
-                        .filter((match) => !match.unicode.includes("🫢"));
+                        });
                 });
             });
         }
     }
-
-    $: console.log(matches);
 
     const dispatch = createEventDispatcher();
 
