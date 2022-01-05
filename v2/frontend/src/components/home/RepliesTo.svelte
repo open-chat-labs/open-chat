@@ -20,7 +20,7 @@
     let debug = false;
 
     $: me = repliesTo.senderId === user?.userId;
-    $: text = repliesTo.content?.kind === "text_content";
+    $: isTextContent = repliesTo.content?.kind === "text_content";
 
     function zoomToMessage() {
         if (repliesTo.chatId === chatId) {
@@ -37,7 +37,7 @@
 
 <Link on:click={zoomToMessage}>
     <div class="reply-wrapper" class:me class:rtl={$rtlStore}>
-        <h4 class="username" class:text>
+        <h4 class="username" class:text-content={isTextContent}>
             {getUsernameFromReplyContext(repliesTo)}
         </h4>
         {#if repliesTo.content !== undefined}
@@ -90,7 +90,7 @@
         display: inline;
         @include font(bold, normal, fs-100);
 
-        &.text {
+        &.text-content {
             display: block;
         }
     }
