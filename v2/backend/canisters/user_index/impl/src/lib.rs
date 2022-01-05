@@ -24,6 +24,7 @@ const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 500_000_000_000; // 0.5T cy
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT: u64 = 100 * 1024 * 1024; // 100 MB
 const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 60 * 60 * 1000; // 1 hour
+const REGISTRATION_FEE_EXPIRY_MILLIS: u64 = 2 * 60 * 60 * 1000; // 2 hours
 const STATE_VERSION: StateVersion = StateVersion::V1;
 
 #[derive(CandidType, Serialize, Deserialize)]
