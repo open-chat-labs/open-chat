@@ -2,8 +2,10 @@ use crate::model::user::{UnconfirmedUser, UnconfirmedUserState, User};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{HashMap, HashSet};
-use types::{Cycles, CyclesTopUp, Milliseconds, PhoneNumber, RegistrationFee, TimestampMillis, Timestamped, UserId};
+use std::collections::{HashMap, HashSet, VecDeque};
+use types::{
+    Cycles, CyclesTopUp, ICPRegistrationFee, Milliseconds, PhoneNumber, RegistrationFee, TimestampMillis, Timestamped, UserId,
+};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
 
@@ -18,6 +20,8 @@ pub struct UserMap {
     username_to_principal: CaseInsensitiveHashMap<Principal>,
     user_id_to_principal: HashMap<UserId, Principal>,
     registration_fee_cycles_to_principal: HashMap<Cycles, Principal>,
+    #[serde(default)]
+    registration_fees_pending_cycles_conversion: VecDeque<Principal>,
     unconfirmed_users: HashSet<Principal>,
     users_confirmed_via_phone: u64,
     #[serde(default)]
@@ -165,7 +169,10 @@ impl UserMap {
                 self.unconfirmed_users.remove(&principal);
                 match previous.state {
                     UnconfirmedUserState::PhoneNumber(_) => self.users_confirmed_via_phone += 1,
-                    UnconfirmedUserState::RegistrationFee(RegistrationFee::ICP(_)) => self.users_confirmed_via_icp += 1,
+                    UnconfirmedUserState::RegistrationFee(RegistrationFee::ICP(_)) => {
+                        self.registration_fees_pending_cycles_conversion.push_back(principal);
+                        self.users_confirmed_via_icp += 1
+                    }
                     UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(_)) => self.users_confirmed_via_cycles += 1,
                 };
             }
@@ -294,6 +301,16 @@ impl UserMap {
         } else {
             None
         }
+    }
+
+    #[allow(dead_code)]
+    pub fn next_fee_to_convert_to_cycles(&mut self) -> Option<ICPRegistrationFee> {
+        self.registration_fees_pending_cycles_conversion
+            .pop_front()
+            .map(|p| self.users_by_principal.get(&p))
+            .flatten()
+            .map(|u| if let Some(RegistrationFee::ICP(fee)) = u.get_registration_fee() { Some(fee) } else { None })
+            .flatten()
     }
 
     pub fn metrics(&self) -> Metrics {
