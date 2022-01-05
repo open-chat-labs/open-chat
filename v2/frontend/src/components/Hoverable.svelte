@@ -28,7 +28,7 @@
 
     function handleDocumentTouchStart() {
         if (longPressing) {
-            clearLongPressTimer();
+            cancelLongPress();
         }
     }
 
@@ -37,7 +37,7 @@
         startX = t.clientX;
         startY = t.clientY;
         
-        clearLongPressTimer();
+        cancelLongPress();
 
         longPressTimer = window.setTimeout(() => {
             if (longPressTimer !== undefined) {
@@ -54,15 +54,12 @@
 
         // if pointer has moved more than allowed, cancel the long-press timer and therefore the event
         if (diffX >= maxDiffX || diffY >= maxDiffY) {
-            clearLongPressTimer();
+            cancelLongPress();
         }
     }
 
-    function handleTouchEnd(e: TouchEvent) {
-        if (longPressTimer !== undefined) {
-            window.clearTimeout(longPressTimer);
-            longPressTimer = undefined;
-        }
+    function handleTouchEnd() {
+        clearLongPressTimer()
     }
 
     function clearLongPressTimer() {
@@ -70,6 +67,10 @@
             window.clearTimeout(longPressTimer);
             longPressTimer = undefined;
         }
+    }
+
+    function cancelLongPress() {
+        clearLongPressTimer();
         longPressing = false;
     }
 
