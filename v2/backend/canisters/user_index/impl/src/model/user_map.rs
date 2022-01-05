@@ -1045,5 +1045,10 @@ mod tests {
         assert_eq!(user_map.users_confirmed_via_phone, 1);
         assert_eq!(user_map.users_confirmed_via_icp, 1);
         assert_eq!(user_map.users_confirmed_via_cycles, 1);
+
+        assert_eq!(
+            user_map.registration_fees_pending_cycles_conversion.into_iter().collect_vec(),
+            vec![principal2]
+        );
     }
 }
