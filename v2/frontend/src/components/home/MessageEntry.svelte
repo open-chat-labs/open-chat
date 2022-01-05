@@ -15,6 +15,7 @@
     import { audioRecordingMimeType } from "../../utils/media";
     import MentionPicker from "./MentionPicker.svelte";
     import { userStore } from "stores/user";
+    import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -30,6 +31,7 @@
 
     const reverseUserLookup: Record<string, string> = {};
     const mentionRegex = /@([\d\w_]*)$/;
+    const emojiRegex = /:([\w_]*):?$/;
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
     let audioMimeType = audioRecordingMimeType();
@@ -44,7 +46,9 @@
     let audioSupported: boolean = "mediaDevices" in navigator;
     let inputIsEmpty = true;
     let showMentionPicker = false;
+    let showEmojiSearch = false;
     let mentionPrefix: string | undefined;
+    let emojiQuery: string | undefined;
     let messageEntry: HTMLDivElement;
 
     $: messageIsEmpty = true;
@@ -112,7 +116,21 @@
         inputIsEmpty = (trimmedContent?.length ?? 0) === 0;
         controller.setTextContent(inputIsEmpty ? undefined : content!);
         triggerMentionLookup(content);
+        triggerEmojiLookup(content);
         triggerTypingTimer();
+    }
+
+    function triggerEmojiLookup(inputContent: string | null): void {
+        if (inputContent === null) return;
+
+        const matches = inputContent.match(emojiRegex);
+        if (matches !== null) {
+            emojiQuery = matches[1].toLowerCase() || undefined;
+            showEmojiSearch = true;
+        } else {
+            showEmojiSearch = false;
+            emojiQuery = undefined;
+        }
     }
 
     function triggerMentionLookup(inputContent: string | null): void {
@@ -235,16 +253,36 @@
             reverseUserLookup[username] = user.userId;
         }
     }
+
+    function cancelMention() {
+        showMentionPicker = false;
+        setCaretToEnd();
+    }
+
+    function completeEmoji(ev: CustomEvent<string>) {
+        inp.textContent = inp.textContent?.replace(emojiRegex, ev.detail) || null;
+        controller.setTextContent(inp.textContent || undefined);
+        showEmojiSearch = false;
+        setCaretToEnd();
+    }
 </script>
 
 {#if showMentionPicker}
     <MentionPicker
         blockedUsers={$blockedUsers}
         offset={messageEntry.clientHeight}
-        on:close={() => (showMentionPicker = false)}
+        on:close={cancelMention}
         on:mention={mention}
         prefix={mentionPrefix}
         participants={$participants} />
+{/if}
+
+{#if showEmojiSearch}
+    <EmojiAutocompleter
+        offset={messageEntry.clientHeight}
+        on:close={() => (showEmojiSearch = false)}
+        on:select={completeEmoji}
+        query={emojiQuery} />
 {/if}
 
 <div class="message-entry" bind:this={messageEntry}>
