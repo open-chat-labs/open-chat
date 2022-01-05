@@ -103,8 +103,8 @@ export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
-export type ConfirmationState = { 'PhoneNumber' : PhoneNumber } |
-  { 'CyclesFee' : Cycles };
+export type ConfirmationState = { 'RegistrationFee' : RegistrationFee } |
+  { 'PhoneNumber' : PhoneNumber };
 export type CreateCanisterArgs = {};
 export type CreateCanisterResponse = { 'UserAlreadyCreated' : null } |
   { 'Success' : CanisterId } |
@@ -161,6 +161,11 @@ export type CurrentUserResponse = {
   { 'UserNotFound' : null };
 export type Cycles = bigint;
 export type CyclesDeposit = { 'Completed' : CompletedCyclesDeposit };
+export interface CyclesRegistrationFee {
+  'recipient' : Principal,
+  'valid_until' : TimestampMillis,
+  'amount' : Cycles,
+}
 export type CyclesTransfer = { 'Failed' : FailedCyclesTransfer } |
   { 'Completed' : CompletedCyclesTransfer } |
   { 'Pending' : PendingCyclesTransfer };
@@ -243,9 +248,10 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
-export type GenerateRegistrationFeeArgs = {};
-export type GenerateRegistrationFeeResponse = { 'AlreadyRegistered' : null } |
-  { 'Success' : { 'valid_until' : TimestampMillis, 'amount' : Cycles } };
+export interface GenerateRegistrationFeeArgs { 'currency' : Cryptocurrency }
+export type GenerateRegistrationFeeResponse = { 'InvalidCurrency' : null } |
+  { 'AlreadyRegistered' : null } |
+  { 'Success' : { 'fee' : RegistrationFee } };
 export interface GroupChatCreated {
   'name' : string,
   'description' : string,
@@ -330,6 +336,11 @@ export interface GroupNameChanged {
   'previous_name' : string,
 }
 export type ICPDeposit = { 'Completed' : CompletedICPDeposit };
+export interface ICPRegistrationFee {
+  'recipient' : Array<number>,
+  'valid_until' : TimestampMillis,
+  'amount' : { 'e8s' : bigint },
+}
 export type ICPTransfer = { 'Failed' : FailedICPTransfer } |
   { 'Completed' : CompletedICPTransfer } |
   { 'Pending' : PendingICPTransfer };
@@ -401,6 +412,12 @@ export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
 }
+export type NotifyRegistrationFeePaidArgs = {};
+export type NotifyRegistrationFeePaidResponse = { 'AlreadyRegistered' : null } |
+  { 'Success' : null } |
+  { 'PaymentNotFound' : null } |
+  { 'InternalError' : string } |
+  { 'UserNotFound' : null };
 export interface OptionalUserPreferences {
   'large_emoji' : [] | [boolean],
   'notification_preferences' : [] | [
@@ -480,6 +497,8 @@ export interface PendingICPWithdrawal {
   'amount_e8s' : bigint,
 }
 export interface PhoneNumber { 'country_code' : number, 'number' : string }
+export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
+  { 'Cycles' : CyclesRegistrationFee };
 export interface RemoveSuperAdminArgs { 'user_id' : UserId }
 export type RemoveSuperAdminResponse = { 'Success' : null } |
   { 'NotSuperAdmin' : null } |
@@ -551,18 +570,12 @@ export type TransferCyclesResponse = { 'BalanceExceeded' : null } |
   { 'Success' : { 'new_balance' : bigint } } |
   { 'UserNotFound' : null } |
   { 'RecipientNotFound' : null };
-export interface UnconfirmedCyclesFeeState {
-  'valid_until' : TimestampMillis,
-  'amount' : Cycles,
-}
 export interface UnconfirmedPhoneNumberState {
   'valid_until' : TimestampMillis,
   'phone_number' : PhoneNumber,
 }
-export type UnconfirmedUserState = {
-    'PhoneNumber' : UnconfirmedPhoneNumberState
-  } |
-  { 'CyclesFee' : UnconfirmedCyclesFeeState };
+export type UnconfirmedUserState = { 'RegistrationFee' : RegistrationFee } |
+  { 'PhoneNumber' : UnconfirmedPhoneNumberState };
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,
@@ -635,6 +648,9 @@ export interface _SERVICE {
   'generate_registration_fee' : (arg_0: GenerateRegistrationFeeArgs) => Promise<
       GenerateRegistrationFeeResponse
     >,
+  'notify_registration_fee_paid' : (
+      arg_0: NotifyRegistrationFeePaidArgs,
+    ) => Promise<NotifyRegistrationFeePaidResponse>,
   'remove_super_admin' : (arg_0: RemoveSuperAdminArgs) => Promise<
       RemoveSuperAdminResponse
     >,

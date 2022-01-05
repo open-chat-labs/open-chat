@@ -25,6 +25,7 @@ import {
     GenerateRegistrationFeeResponse,
     UnconfirmedUserState,
     ConfirmationState,
+    RegistrationFee,
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -52,6 +53,7 @@ export {
     GenerateRegistrationFeeResponse as ApiGenerateRegistrationFeeResponse,
     UnconfirmedUserState as ApiUnconfirmedUserState,
     ConfirmationState as ApiConfirmationState,
+    RegistrationFee as ApiRegistrationFee,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

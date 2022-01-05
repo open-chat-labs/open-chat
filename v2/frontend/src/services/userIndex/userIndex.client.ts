@@ -14,6 +14,7 @@ import type {
     UpgradeCanisterResponse,
     CreateCanisterResponse,
     RegistrationFeeResponse,
+    FeeCurrency,
 } from "../../domain/user/user";
 import { CandidService } from "../candidService";
 import {
@@ -93,9 +94,11 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         return this.handleResponse(this.userService.current_user({}), currentUserResponse);
     }
 
-    generateRegistrationFee(): Promise<RegistrationFeeResponse> {
+    generateRegistrationFee(currency: FeeCurrency): Promise<RegistrationFeeResponse> {
         return this.handleResponse(
-            this.userService.generate_registration_fee({}),
+            this.userService.generate_registration_fee({
+                currency: currency === "cycles" ? { Cycles: null } : { ICP: null },
+            }),
             generateRegistrationFeeResponse
         );
     }

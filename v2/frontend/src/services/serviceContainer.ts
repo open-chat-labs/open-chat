@@ -12,6 +12,7 @@ import type {
     UpgradeCanisterResponse,
     CreateCanisterResponse,
     RegistrationFeeResponse,
+    FeeCurrency,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -610,7 +611,7 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.getGroupClient(chatId).getGroupDetailsUpdates(previous);
     }
 
-    generateRegistrationFee(): Promise<RegistrationFeeResponse> {
-        return this._userIndexClient.generateRegistrationFee();
+    generateRegistrationFee(currency: FeeCurrency): Promise<RegistrationFeeResponse> {
+        return this._userIndexClient.generateRegistrationFee(currency);
     }
 }
