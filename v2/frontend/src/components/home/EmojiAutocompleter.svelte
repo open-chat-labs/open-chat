@@ -26,7 +26,7 @@
             emojiDatabase.getPreferredSkinTone().then((tone) => {
                 emojiDatabase.getEmojiBySearchQuery(query!).then((m) => {
                     matches = (m as NativeEmoji[])
-                        .filter((m) => m.unicode !== "🫱")
+                        .filter((m) => m.version < 14)
                         .map((match) => {
                             const unicode =
                                 match.skins?.find((s) => s.tone === tone)?.unicode ?? match.unicode;
