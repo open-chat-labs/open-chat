@@ -12,6 +12,8 @@ import type {
     CreateCanisterResponse,
     RegistrationFeeResponse,
     RegistrationState,
+    RegistrationFee,
+    NotificationFeePaidResponse,
 } from "../../domain/user/user";
 import type {
     ApiConfirmationState,
@@ -19,8 +21,10 @@ import type {
     ApiCreateCanisterResponse,
     ApiCurrentUserResponse,
     ApiGenerateRegistrationFeeResponse,
+    ApiNotificationFeePaidResponse,
     ApiPartialUserSummary,
     ApiPhoneNumber,
+    ApiRegistrationFee,
     ApiResendCodeResponse,
     ApiSearchResponse,
     ApiSetUsernameResponse,
@@ -165,18 +169,71 @@ function registrationState(candid: ApiUnconfirmedUserState): RegistrationState {
             },
         };
     }
-    if ("CyclesFee" in candid) {
+    if ("RegistrationFee" in candid) {
         return {
-            kind: "cycles_fee_registration",
-            amount: candid.CyclesFee.amount,
+            kind: "currency_registration",
+            fee: currencyRegistration(candid.RegistrationFee),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiRegistrationState type received", candid);
 }
 
+function recipientToHexString(bytes: number[]): string {
+    return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, "0"), "");
+}
+
+function currencyRegistration(candid: ApiRegistrationFee): RegistrationFee {
+    if ("ICP" in candid) {
+        return {
+            kind: "icp_registration_fee",
+            validUntil: candid.ICP.valid_until,
+            amount: candid.ICP.amount.e8s,
+            recipient: recipientToHexString(candid.ICP.recipient),
+        };
+    }
+    if ("Cycles" in candid) {
+        return {
+            kind: "cycles_registration_fee",
+            validUntil: candid.Cycles.valid_until,
+            amount: candid.Cycles.amount,
+            recipient: candid.Cycles.recipient.toString(),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiRegistrationFee type received", candid);
+}
+
+export function feePaidResponse(
+    candid: ApiNotificationFeePaidResponse
+): NotificationFeePaidResponse {
+    if ("AlreadyRegistered" in candid) {
+        return "already_registered";
+    }
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("PaymentNotFound" in candid) {
+        return "payment_not_found";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("UserNotFound" in candid) {
+        return "user_not_found";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiNotificationFeePaidResponse type received",
+        candid
+    );
+}
+
 export function generateRegistrationFeeResponse(
     candid: ApiGenerateRegistrationFeeResponse
 ): RegistrationFeeResponse {
+    if ("InvalidCurrency" in candid) {
+        return {
+            kind: "invalid_currency",
+        };
+    }
     if ("AlreadyRegistered" in candid) {
         return {
             kind: "already_registered",
@@ -184,9 +241,8 @@ export function generateRegistrationFeeResponse(
     }
     if ("Success" in candid) {
         return {
-            kind: "success",
-            validUntil: candid.Success.valid_until,
-            amount: candid.Success.amount,
+            kind: "currency_registration",
+            fee: currencyRegistration(candid.Success.fee),
         };
     }
     throw new UnsupportedValueError(
@@ -205,10 +261,10 @@ export function confirmationState(candid: ApiConfirmationState): RegistrationSta
             },
         };
     }
-    if ("CyclesFee" in candid) {
+    if ("RegistrationFee" in candid) {
         return {
-            kind: "cycles_fee_registration",
-            amount: candid.CyclesFee,
+            kind: "currency_registration",
+            fee: currencyRegistration(candid.RegistrationFee),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiConfirmationState type received", candid);

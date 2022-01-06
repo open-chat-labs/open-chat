@@ -5,6 +5,8 @@ import type {
     ConfirmPhoneNumberResponse,
     CreateCanisterResponse,
     CurrentUserResponse,
+    FeeCurrency,
+    NotificationFeePaidResponse,
     PartialUserSummary,
     PhoneNumber,
     RegistrationFeeResponse,
@@ -61,8 +63,12 @@ export class CachingUserIndexClient implements IUserIndexClient {
         return this.client.confirmPhoneNumber(code);
     }
 
-    generateRegistrationFee(): Promise<RegistrationFeeResponse> {
-        return this.client.generateRegistrationFee();
+    notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse> {
+        return this.client.notifyRegistrationFeePaid();
+    }
+
+    generateRegistrationFee(currency: FeeCurrency): Promise<RegistrationFeeResponse> {
+        return this.client.generateRegistrationFee(currency);
     }
 
     resendRegistrationCode(): Promise<ResendCodeResponse> {
@@ -94,7 +100,7 @@ export class CachingUserIndexClient implements IUserIndexClient {
         if (notFoundInCache.length > 0) {
             args.userGroups.push({
                 users: notFoundInCache,
-                updatedSince: BigInt(0)
+                updatedSince: BigInt(0),
             });
         }
 

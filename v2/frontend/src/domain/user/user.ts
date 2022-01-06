@@ -1,5 +1,7 @@
 import type { DataContent } from "../data/data";
 
+export const E8S_PER_ICP = 100_000_000;
+
 export type UserLastOnline = {
     userId: string;
     lastOnline: number; // timestamp calculated from server response in seconds
@@ -82,16 +84,16 @@ export type UpgradeInProgress = {
     kind: "upgrade_in_progress";
 };
 
-export type RegistrationState = PhoneRegistration | CyclesFeeRegistration;
+export type RegistrationState = PhoneRegistration | CurrencyRegistration;
+
+export type CurrencyRegistration = {
+    kind: "currency_registration";
+    fee: RegistrationFee;
+};
 
 export type PhoneRegistration = {
     kind: "phone_registration";
     phoneNumber: PhoneNumber;
-};
-
-export type CyclesFeeRegistration = {
-    kind: "cycles_fee_registration";
-    amount: bigint;
 };
 
 export type UnconfirmedUser = {
@@ -160,10 +162,31 @@ export type ResendCodeResponse =
     | "user_not_found"
     | "phone_number_not_submitted";
 
-export type RegistrationFeeResponse = AlreadyRegistered | RegistrationFeeSuccess;
+export type RegistrationFeeResponse = AlreadyRegistered | CurrencyRegistration | InvalidCurrency;
 
-export type RegistrationFeeSuccess = {
-    kind: "success";
+export type InvalidCurrency = { kind: "invalid_currency" };
+
+export type RegistrationFee = ICPRegistrationFee | CyclesRegistrationFee;
+
+type FeeCommon = {
     validUntil: bigint;
     amount: bigint;
+    recipient: string;
 };
+
+export type ICPRegistrationFee = FeeCommon & {
+    kind: "icp_registration_fee";
+};
+
+export type CyclesRegistrationFee = FeeCommon & {
+    kind: "cycles_registration_fee";
+};
+
+export type FeeCurrency = "icp" | "cycles";
+
+export type NotificationFeePaidResponse =
+    | "success"
+    | "already_registered"
+    | "payment_not_found"
+    | "internal_error"
+    | "user_not_found";

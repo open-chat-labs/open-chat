@@ -33,6 +33,7 @@
                 "svelte-jester": "^2.1.5",
                 "svelte-markdown": "^0.2.1",
                 "svelte-material-icons": "^1.0.3",
+                "svelte-qr": "^1.0.0",
                 "svelte-spa-router": "^3.1.0",
                 "ts-jest": "^27.0.5",
                 "uuid": "^3.4.0"
@@ -12650,6 +12651,11 @@
                 }
             }
         },
+        "node_modules/svelte-qr": {
+            "version": "1.0.0",
+            "resolved": "https://registry.npmjs.org/svelte-qr/-/svelte-qr-1.0.0.tgz",
+            "integrity": "sha512-7n/FPFhImPI68NCwChzYqzTbTpDhGCiFgGiCQY+IXS8sh0Xhzzd0wwQnN5n2BCJ0Uvti8s0RhKErwcw4Lp7RvQ=="
+        },
         "node_modules/svelte-spa-router": {
             "version": "3.2.0",
             "resolved": "https://registry.npmjs.org/svelte-spa-router/-/svelte-spa-router-3.2.0.tgz",
@@ -23361,6 +23367,11 @@
                 "detect-indent": "^6.0.0",
                 "strip-indent": "^3.0.0"
             }
+        },
+        "svelte-qr": {
+            "version": "1.0.0",
+            "resolved": "https://registry.npmjs.org/svelte-qr/-/svelte-qr-1.0.0.tgz",
+            "integrity": "sha512-7n/FPFhImPI68NCwChzYqzTbTpDhGCiFgGiCQY+IXS8sh0Xhzzd0wwQnN5n2BCJ0Uvti8s0RhKErwcw4Lp7RvQ=="
         },
         "svelte-spa-router": {
             "version": "3.2.0",

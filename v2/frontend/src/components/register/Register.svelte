@@ -1,6 +1,7 @@
 <script lang="ts">
     import Logo from "../Logo.svelte";
     import { _ } from "svelte-i18n";
+    import Toast from "../Toast.svelte";
     import ModalPage from "../ModalPage.svelte";
     import EnterPhoneNumber from "./EnterPhoneNumber.svelte";
     import Complete from "./Complete.svelte";
@@ -12,6 +13,7 @@
     import Link from "../Link.svelte";
     import ChoosePath from "./ChoosePath.svelte";
     import ConfirmTransfer from "./ConfirmTransfer.svelte";
+    import { E8S_PER_ICP } from "domain/user/user";
 
     const dispatch = createEventDispatcher();
 
@@ -32,7 +34,8 @@
 
     $: canGoBack =
         state.kind === "awaiting_phone_number" ||
-        state.kind === "awaiting_transfer_confirmation" ||
+        state.kind === "awaiting_cycles_transfer_confirmation" ||
+        state.kind === "awaiting_icp_transfer_confirmation" ||
         state.kind === "awaiting_code";
 </script>
 
@@ -53,8 +56,27 @@
             </h3>
         {:else if state.kind === "choose_registration_path"}
             <ChoosePath on:choosePhoneVerification on:chooseTransfer />
-        {:else if state.kind === "awaiting_transfer_confirmation"}
-            <ConfirmTransfer on:transferConfirmed amount={state.amount} />
+        {:else if state.kind === "awaiting_cycles_transfer_confirmation"}
+            <ConfirmTransfer
+                {error}
+                on:transferConfirmed={() => dispatch("cyclesTransferConfirmed")}
+                amount={state.amount}
+                adviceKey={"register.confirmCyclesTransferText"}
+                receiver={"process.env.USER_INDEX_CANISTER"} />
+        {:else if state.kind === "awaiting_icp_transfer_confirmation"}
+            <ConfirmTransfer
+                {error}
+                on:transferConfirmed={() => dispatch("icpTransferConfirmed")}
+                adviceKey={"register.confirmICPTransferText"}
+                receiver={state.receiver}
+                amount={Number(state.amount) / E8S_PER_ICP}>
+                <a
+                    class="how-to"
+                    href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
+                    target="_blank">
+                    {$_("howToBuyICP")}
+                </a>
+            </ConfirmTransfer>
         {/if}
 
         {#if state.kind === "awaiting_phone_number"}
@@ -82,11 +104,22 @@
     </Link>
 </div>
 
+<Toast />
+
 <style type="text/scss">
     .spinner {
         height: 150px;
         width: 100%;
         @include loading-spinner(3em, 1.5em, false, var(--button-bg));
+    }
+
+    .how-to {
+        @include font(light, normal, fs-90);
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-underline-offset: $sp1;
+        text-decoration-thickness: 2px;
+        margin-bottom: $sp4;
     }
 
     .logout {

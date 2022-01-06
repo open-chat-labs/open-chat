@@ -145,6 +145,11 @@ export type CryptocurrencyWithdrawal = { 'ICP' : ICPWithdrawal } |
   { 'Cycles' : CyclesWithdrawal };
 export type Cycles = bigint;
 export type CyclesDeposit = { 'Completed' : CompletedCyclesDeposit };
+export interface CyclesRegistrationFee {
+  'recipient' : Principal,
+  'valid_until' : TimestampMillis,
+  'amount' : Cycles,
+}
 export type CyclesTransfer = { 'Failed' : FailedCyclesTransfer } |
   { 'Completed' : CompletedCyclesTransfer } |
   { 'Pending' : PendingCyclesTransfer };
@@ -361,6 +366,11 @@ export interface GroupNameChanged {
   'previous_name' : string,
 }
 export type ICPDeposit = { 'Completed' : CompletedICPDeposit };
+export interface ICPRegistrationFee {
+  'recipient' : Array<number>,
+  'valid_until' : TimestampMillis,
+  'amount' : { 'e8s' : bigint },
+}
 export type ICPTransfer = { 'Failed' : FailedICPTransfer } |
   { 'Completed' : CompletedICPTransfer } |
   { 'Pending' : PendingICPTransfer };
@@ -547,6 +557,8 @@ export interface PendingICPWithdrawal {
   'fee_e8s' : [] | [bigint],
   'amount_e8s' : bigint,
 }
+export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
+  { 'Cycles' : CyclesRegistrationFee };
 export interface RelinquishGroupSuperAdminArgs { 'chat_id' : ChatId }
 export type RelinquishGroupSuperAdminResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : null } |

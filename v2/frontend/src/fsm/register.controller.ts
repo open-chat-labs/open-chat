@@ -1,7 +1,10 @@
 import { get, Writable, writable } from "svelte/store";
+import { rollbar } from "utils/logging";
 import type {
     CreatedUser,
     CurrentUserResponse,
+    FeeCurrency,
+    NotificationFeePaidResponse,
     PhoneNumber,
     RegistrationState,
 } from "../domain/user/user";
@@ -11,9 +14,14 @@ import { toastStore } from "../stores/toast";
 export type ChooseRegistrationPath = { kind: "choose_registration_path" };
 export type AwaitingPhoneNumber = { kind: "awaiting_phone_number" };
 export type AwaitingCode = { kind: "awaiting_code"; phoneNumber: PhoneNumber };
-export type AwaitingTransferConfirmation = {
-    kind: "awaiting_transfer_confirmation";
+export type AwaitingCyclesTransferConfirmation = {
+    kind: "awaiting_cycles_transfer_confirmation";
     amount: bigint;
+};
+export type AwaitingICPTransferConfirmation = {
+    kind: "awaiting_icp_transfer_confirmation";
+    amount: bigint;
+    receiver: string;
 };
 export type Verifying = { kind: "verifying" };
 export type AwaitingUsername = { kind: "awaiting_username"; regState: RegistrationState };
@@ -24,7 +32,8 @@ export type RegisterState =
     | ChooseRegistrationPath
     | AwaitingPhoneNumber
     | AwaitingCode
-    | AwaitingTransferConfirmation
+    | AwaitingCyclesTransferConfirmation
+    | AwaitingICPTransferConfirmation
     | Verifying
     | AwaitingUsername
     | AwaitingCompletion
@@ -53,10 +62,16 @@ export class RegisterController {
                     kind: "awaiting_code",
                     phoneNumber: user.registrationState.phoneNumber,
                 });
-            } else {
+            } else if (user.registrationState.fee.kind === "icp_registration_fee") {
                 this.state.set({
-                    kind: "awaiting_transfer_confirmation",
-                    amount: user.registrationState.amount,
+                    kind: "awaiting_icp_transfer_confirmation",
+                    amount: user.registrationState.fee.amount,
+                    receiver: user.registrationState.fee.recipient,
+                });
+            } else if (user.registrationState.fee.kind === "cycles_registration_fee") {
+                this.state.set({
+                    kind: "awaiting_cycles_transfer_confirmation",
+                    amount: user.registrationState.fee.amount,
                 });
             }
         } else if (user.kind === "confirmed_pending_username") {
@@ -71,10 +86,29 @@ export class RegisterController {
         }
     }
 
-    async transferConfirmed(): Promise<void> {
+    notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse> {
+        return this._api.notifyRegistrationFeePaid();
+    }
+
+    async cyclesTransferConfirmed(): Promise<void> {
         this.state.set({ kind: "verifying" });
         this.currentUser = await this.loadUser();
         this.deriveStateFromUser(this.currentUser);
+    }
+
+    async icpTransferConfirmed(): Promise<void> {
+        const currentState = get(this.state);
+        this.state.set({ kind: "verifying" });
+        const resp = await this.notifyRegistrationFeePaid();
+        if (resp === "success" || resp === "already_registered") {
+            this.error.set(undefined);
+            this.currentUser = await this.loadUser();
+            this.deriveStateFromUser(this.currentUser);
+        } else {
+            this.state.set(currentState);
+            this.error.set("register.unableToConfirmFee");
+            rollbar.warn("Unable to confirm registration fee", resp);
+        }
     }
 
     reset(): void {
@@ -85,14 +119,23 @@ export class RegisterController {
         this.state.set({ kind: "awaiting_phone_number" });
     }
 
-    chooseCyclesTransfer(): void {
+    chooseTransfer(currency: FeeCurrency): void {
         this.state.set({ kind: "verifying" });
-        this._api.generateRegistrationFee().then((resp) => {
-            if (resp.kind === "success") {
-                this.state.set({
-                    kind: "awaiting_transfer_confirmation",
-                    amount: resp.amount,
-                });
+        this._api.generateRegistrationFee(currency).then((resp) => {
+            if (resp.kind === "currency_registration") {
+                if (resp.fee.kind === "icp_registration_fee") {
+                    this.state.set({
+                        kind: "awaiting_icp_transfer_confirmation",
+                        amount: resp.fee.amount,
+                        receiver: resp.fee.recipient,
+                    });
+                }
+                if (resp.fee.kind === "cycles_registration_fee") {
+                    this.state.set({
+                        kind: "awaiting_cycles_transfer_confirmation",
+                        amount: resp.fee.amount,
+                    });
+                }
             } else {
                 this.state.set({ kind: "choose_registration_path" });
                 toastStore.showFailureToast("register.failedToGetFee");

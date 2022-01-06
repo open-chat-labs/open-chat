@@ -40,15 +40,20 @@
     }
 
     function chooseTransfer() {
-        controller.chooseCyclesTransfer();
+        // We are hard-coding the choice of currency for now, but the code will exist to support cycles payments fairly easily
+        controller.chooseTransfer("icp");
     }
 
     function reset() {
         controller.reset();
     }
 
-    function transferConfirmed() {
-        controller.transferConfirmed();
+    function cyclesTransferConfirmed() {
+        controller.cyclesTransferConfirmed();
+    }
+
+    function icpTransferConfirmed() {
+        controller.icpTransferConfirmed();
     }
 </script>
 
@@ -57,7 +62,8 @@
     state={$uiState}
     username={$username}
     on:reset={reset}
-    on:transferConfirmed={transferConfirmed}
+    on:cyclesTransferConfirmed={cyclesTransferConfirmed}
+    on:icpTransferConfirmed={icpTransferConfirmed}
     on:choosePhoneVerification={choosePhoneVerification}
     on:chooseTransfer={chooseTransfer}
     on:submitPhoneNumber={submitPhoneNumber}

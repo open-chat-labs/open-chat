@@ -22,3 +22,5 @@ declare module "svelte-easy-crop" {
 }
 
 declare module "intl-tel-input/build/js/utils";
+
+declare module "svelte-qr";

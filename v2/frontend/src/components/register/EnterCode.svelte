@@ -77,7 +77,7 @@
     }
 
     .error {
-        @include font(bold, normal, fs-140);
+        @include font(bold, normal, fs-100);
         color: var(--error);
         margin-bottom: $sp4;
     }

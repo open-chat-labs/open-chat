@@ -27,6 +27,21 @@ export const idlFactory = ({ IDL }) => {
   });
   const CurrentUserArgs = IDL.Record({});
   const TimestampMillis = IDL.Nat64;
+  const ICPRegistrationFee = IDL.Record({
+    'recipient' : IDL.Vec(IDL.Nat8),
+    'valid_until' : TimestampMillis,
+    'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+  });
+  const Cycles = IDL.Nat;
+  const CyclesRegistrationFee = IDL.Record({
+    'recipient' : IDL.Principal,
+    'valid_until' : TimestampMillis,
+    'amount' : Cycles,
+  });
+  const RegistrationFee = IDL.Variant({
+    'ICP' : ICPRegistrationFee,
+    'Cycles' : CyclesRegistrationFee,
+  });
   const PhoneNumber = IDL.Record({
     'country_code' : IDL.Nat16,
     'number' : IDL.Text,
@@ -35,14 +50,9 @@ export const idlFactory = ({ IDL }) => {
     'valid_until' : TimestampMillis,
     'phone_number' : PhoneNumber,
   });
-  const Cycles = IDL.Nat;
-  const UnconfirmedCyclesFeeState = IDL.Record({
-    'valid_until' : TimestampMillis,
-    'amount' : Cycles,
-  });
   const UnconfirmedUserState = IDL.Variant({
+    'RegistrationFee' : RegistrationFee,
     'PhoneNumber' : UnconfirmedPhoneNumberState,
-    'CyclesFee' : UnconfirmedCyclesFeeState,
   });
   const CanisterCreationStatus = IDL.Variant({
     'InProgress' : IDL.Null,
@@ -50,8 +60,8 @@ export const idlFactory = ({ IDL }) => {
     'Pending' : IDL.Null,
   });
   const ConfirmationState = IDL.Variant({
+    'RegistrationFee' : RegistrationFee,
     'PhoneNumber' : PhoneNumber,
-    'CyclesFee' : Cycles,
   });
   const Cryptocurrency = IDL.Variant({ 'ICP' : IDL.Null, 'Cycles' : IDL.Null });
   const CryptocurrencyAccount = IDL.Record({
@@ -83,13 +93,21 @@ export const idlFactory = ({ IDL }) => {
     }),
     'UserNotFound' : IDL.Null,
   });
-  const GenerateRegistrationFeeArgs = IDL.Record({});
+  const GenerateRegistrationFeeArgs = IDL.Record({
+    'currency' : Cryptocurrency,
+  });
   const GenerateRegistrationFeeResponse = IDL.Variant({
+    'InvalidCurrency' : IDL.Null,
     'AlreadyRegistered' : IDL.Null,
-    'Success' : IDL.Record({
-      'valid_until' : TimestampMillis,
-      'amount' : Cycles,
-    }),
+    'Success' : IDL.Record({ 'fee' : RegistrationFee }),
+  });
+  const NotifyRegistrationFeePaidArgs = IDL.Record({});
+  const NotifyRegistrationFeePaidResponse = IDL.Variant({
+    'AlreadyRegistered' : IDL.Null,
+    'Success' : IDL.Null,
+    'PaymentNotFound' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'UserNotFound' : IDL.Null,
   });
   const RemoveSuperAdminArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveSuperAdminResponse = IDL.Variant({
@@ -203,6 +221,11 @@ export const idlFactory = ({ IDL }) => {
     'generate_registration_fee' : IDL.Func(
         [GenerateRegistrationFeeArgs],
         [GenerateRegistrationFeeResponse],
+        [],
+      ),
+    'notify_registration_fee_paid' : IDL.Func(
+        [NotifyRegistrationFeePaidArgs],
+        [NotifyRegistrationFeePaidResponse],
         [],
       ),
     'remove_super_admin' : IDL.Func(
