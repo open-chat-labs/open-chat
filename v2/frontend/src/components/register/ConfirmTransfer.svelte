@@ -1,6 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import Button from "../Button.svelte";
+    import { fade } from "svelte/transition";
     import { createEventDispatcher } from "svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
@@ -11,6 +12,7 @@
     export let amount: bigint | number;
     export let adviceKey: string;
     export let receiver: string;
+    export let error: string | undefined = undefined;
 
     let receiverSummary = receiver;
 
@@ -59,6 +61,10 @@
 
 <slot />
 
+{#if error}
+    <h4 in:fade class="error">{$_(error)}</h4>
+{/if}
+
 <div class="cta">
     <Button on:click={() => dispatch("transferConfirmed")}>
         {$_("register.confirmed")}
@@ -102,5 +108,11 @@
 
     .cta {
         margin-top: auto;
+    }
+
+    .error {
+        @include font(bold, normal, fs-100);
+        color: var(--error);
+        margin-bottom: $sp4;
     }
 </style>

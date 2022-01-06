@@ -57,16 +57,18 @@
             <ChoosePath on:choosePhoneVerification on:chooseTransfer />
         {:else if state.kind === "awaiting_cycles_transfer_confirmation"}
             <ConfirmTransfer
+                {error}
                 on:transferConfirmed={() => dispatch("cyclesTransferConfirmed")}
                 amount={state.amount}
                 adviceKey={"register.confirmCyclesTransferText"}
                 receiver={"process.env.USER_INDEX_CANISTER"} />
         {:else if state.kind === "awaiting_icp_transfer_confirmation"}
             <ConfirmTransfer
+                {error}
                 on:transferConfirmed={() => dispatch("icpTransferConfirmed")}
                 adviceKey={"register.confirmICPTransferText"}
                 receiver={state.receiver}
-                amount={Number(state.amount) / 1_000_000_000}>
+                amount={Number(state.amount) / 100_000_000}>
                 <a
                     class="how-to"
                     href={"https://www.finder.com/uk/how-to-buy-internet-computer"}

@@ -23,9 +23,15 @@
     <h3 class="title">
         {$_("register.codeAccepted")}
     </h3>
-{:else if regState.kind === "cycles_fee_registration"}
+{:else if regState.kind === "currency_registration"}
     <h3 class="title">
-        {$_("register.cyclesTransferred", { values: { fee: regState.amount.toString() } })}
+        {#if regState.fee.kind === "cycles_registration_fee"}
+            {$_("register.cyclesTransferred", { values: { fee: regState.fee.amount.toString() } })}
+        {:else}
+            {$_("register.icpTransferred", {
+                values: { fee: (Number(regState.fee.amount) / 100_000_000).toString() },
+            })}
+        {/if}
     </h3>
 {/if}
 
@@ -52,7 +58,7 @@
 
 <style type="text/scss">
     .error {
-        @include font(bold, normal, fs-140);
+        @include font(bold, normal, fs-100);
         color: var(--error);
         margin-bottom: $sp4;
     }

@@ -203,6 +203,7 @@
         "transfer": "Transfer",
         "codeAccepted": "Code accepted",
         "cyclesTransferred": "Fee of {fee} cycles confirmed",
+        "icpTransferred": "Fee of {fee} ICP confirmed",
         "choosePath": "How would you like to register?",
         "usernameRules": "Choose a username using only alphanumeric characters or underscores",
         "regOptions": "Would you prefer to verify via an SMS code (recommended) or by making a small ICP transfer?",
