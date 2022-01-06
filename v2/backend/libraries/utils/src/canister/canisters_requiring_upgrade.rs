@@ -15,7 +15,6 @@ pub struct CanistersRequiringUpgrade {
     pending: VecDeque<CanisterId>,
     in_progress: HashSet<CanisterId>,
     failed: VecDeque<FailedUpgrade>,
-    #[serde(default)]
     completed: u64,
 }
 
