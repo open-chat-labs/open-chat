@@ -1,5 +1,5 @@
 use crate::model::user::{UnconfirmedUser, UnconfirmedUserState};
-use crate::{mutate_state, RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS};
+use crate::{mutate_state, RuntimeState, REGISTRATION_FEE_EXPIRY_MILLIS};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{AccountIdentifier, Tokens};
@@ -19,7 +19,7 @@ fn generate_registration_fee(args: Args) -> Response {
 fn generate_registration_fee_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
-    let valid_until = now + CONFIRMATION_CODE_EXPIRY_MILLIS;
+    let valid_until = now + REGISTRATION_FEE_EXPIRY_MILLIS;
 
     let fee = match args.currency {
         Cryptocurrency::ICP => {
