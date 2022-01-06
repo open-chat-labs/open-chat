@@ -1,8 +1,10 @@
 import { get, Writable, writable } from "svelte/store";
+import { rollbar } from "utils/logging";
 import type {
     CreatedUser,
     CurrentUserResponse,
     FeeCurrency,
+    NotificationFeePaidResponse,
     PhoneNumber,
     RegistrationState,
 } from "../domain/user/user";
@@ -84,8 +86,8 @@ export class RegisterController {
         }
     }
 
-    notifyFeePaid(): Promise<void> {
-        return Promise.resolve();
+    notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse> {
+        return this._api.notifyRegistrationFeePaid();
     }
 
     async cyclesTransferConfirmed(): Promise<void> {
@@ -95,10 +97,18 @@ export class RegisterController {
     }
 
     async icpTransferConfirmed(): Promise<void> {
+        const currentState = get(this.state);
         this.state.set({ kind: "verifying" });
-        await this.notifyFeePaid();
-        this.currentUser = await this.loadUser();
-        this.deriveStateFromUser(this.currentUser);
+        const resp = await this.notifyRegistrationFeePaid();
+        if (resp === "success" || resp === "already_registered") {
+            this.error.set(undefined);
+            this.currentUser = await this.loadUser();
+            this.deriveStateFromUser(this.currentUser);
+        } else {
+            this.state.set(currentState);
+            this.error.set("register.unableToConfirmFee");
+            rollbar.warn("Unable to confirm registration fee", resp);
+        }
     }
 
     reset(): void {

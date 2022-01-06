@@ -192,6 +192,7 @@
         "reactedWith": "reacted with"
     },
     "register": {
+        "unableToConfirmFee": "We were unable to confirm your registration fee",
         "failedToGetFee": "Failed to generate a registration fee",
         "goBack": "Go back",
         "confirmTransfer": "Confirm transfer",

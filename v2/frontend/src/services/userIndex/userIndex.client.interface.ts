@@ -12,6 +12,7 @@ import type {
     CreateCanisterResponse,
     RegistrationFeeResponse,
     FeeCurrency,
+    NotificationFeePaidResponse,
 } from "../../domain/user/user";
 
 export interface IUserIndexClient {
@@ -25,4 +26,5 @@ export interface IUserIndexClient {
     getUsers(users: UsersArgs): Promise<UsersResponse>;
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]>;
     generateRegistrationFee(currency: FeeCurrency): Promise<RegistrationFeeResponse>;
+    notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse>;
 }

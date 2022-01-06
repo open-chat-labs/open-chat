@@ -15,6 +15,7 @@ import type {
     CreateCanisterResponse,
     RegistrationFeeResponse,
     FeeCurrency,
+    NotificationFeePaidResponse,
 } from "../../domain/user/user";
 import { CandidService } from "../candidService";
 import {
@@ -28,6 +29,7 @@ import {
     upgradeCanisterResponse,
     createCanisterResponse,
     generateRegistrationFeeResponse,
+    feePaidResponse,
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
@@ -92,6 +94,13 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
 
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this.handleResponse(this.userService.current_user({}), currentUserResponse);
+    }
+
+    notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse> {
+        return this.handleResponse(
+            this.userService.notify_registration_fee_paid({}),
+            feePaidResponse
+        );
     }
 
     generateRegistrationFee(currency: FeeCurrency): Promise<RegistrationFeeResponse> {

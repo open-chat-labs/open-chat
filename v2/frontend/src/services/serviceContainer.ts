@@ -13,6 +13,7 @@ import type {
     CreateCanisterResponse,
     RegistrationFeeResponse,
     FeeCurrency,
+    NotificationFeePaidResponse,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -613,5 +614,9 @@ export class ServiceContainer implements MarkMessagesRead {
 
     generateRegistrationFee(currency: FeeCurrency): Promise<RegistrationFeeResponse> {
         return this._userIndexClient.generateRegistrationFee(currency);
+    }
+
+    notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse> {
+        return this._userIndexClient.notifyRegistrationFeePaid();
     }
 }

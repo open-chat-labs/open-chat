@@ -13,6 +13,7 @@ import type {
     RegistrationFeeResponse,
     RegistrationState,
     RegistrationFee,
+    NotificationFeePaidResponse,
 } from "../../domain/user/user";
 import type {
     ApiConfirmationState,
@@ -20,6 +21,7 @@ import type {
     ApiCreateCanisterResponse,
     ApiCurrentUserResponse,
     ApiGenerateRegistrationFeeResponse,
+    ApiNotificationFeePaidResponse,
     ApiPartialUserSummary,
     ApiPhoneNumber,
     ApiRegistrationFee,
@@ -198,6 +200,30 @@ function currencyRegistration(candid: ApiRegistrationFee): RegistrationFee {
         };
     }
     throw new UnsupportedValueError("Unexpected ApiRegistrationFee type received", candid);
+}
+
+export function feePaidResponse(
+    candid: ApiNotificationFeePaidResponse
+): NotificationFeePaidResponse {
+    if ("AlreadyRegistered" in candid) {
+        return "already_registered";
+    }
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("PaymentNotFound" in candid) {
+        return "payment_not_found";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("UserNotFound" in candid) {
+        return "user_not_found";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiNotificationFeePaidResponse type received",
+        candid
+    );
 }
 
 export function generateRegistrationFeeResponse(

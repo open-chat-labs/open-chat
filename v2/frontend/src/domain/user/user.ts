@@ -181,3 +181,10 @@ export type CyclesRegistrationFee = FeeCommon & {
 };
 
 export type FeeCurrency = "icp" | "cycles";
+
+export type NotificationFeePaidResponse =
+    | "success"
+    | "already_registered"
+    | "payment_not_found"
+    | "internal_error"
+    | "user_not_found";

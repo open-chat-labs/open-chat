@@ -6,6 +6,7 @@ import type {
     CreateCanisterResponse,
     CurrentUserResponse,
     FeeCurrency,
+    NotificationFeePaidResponse,
     PartialUserSummary,
     PhoneNumber,
     RegistrationFeeResponse,
@@ -60,6 +61,10 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
         return this.client.confirmPhoneNumber(code);
+    }
+
+    notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse> {
+        return this.client.notifyRegistrationFeePaid();
     }
 
     generateRegistrationFee(currency: FeeCurrency): Promise<RegistrationFeeResponse> {
