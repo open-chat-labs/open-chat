@@ -2,7 +2,6 @@ use crate::document::Document;
 use types::{CryptocurrencyTransfer, MessageContent};
 
 const TRILLION: u128 = 1_000_000_000_000;
-const E8S_PER_ICP: u64 = 100_000_000;
 
 impl From<&MessageContent> for Document {
     fn from(message_content: &MessageContent) -> Self {
@@ -31,7 +30,7 @@ impl From<&MessageContent> for Document {
                     }
                     CryptocurrencyTransfer::ICP(icp) => {
                         document.add_field("icp".to_owned(), 0.1);
-                        document.add_field(format_as_whole_units(icp.amount_e8s() as f64, E8S_PER_ICP as f64), 0.1);
+                        document.add_field(format!("{}", icp.amount()), 0.1);
                     }
                 }
                 try_add_caption(&mut document, c.caption.as_ref())
