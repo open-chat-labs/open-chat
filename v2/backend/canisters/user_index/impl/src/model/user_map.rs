@@ -20,11 +20,9 @@ pub struct UserMap {
     username_to_principal: CaseInsensitiveHashMap<Principal>,
     user_id_to_principal: HashMap<UserId, Principal>,
     registration_fee_cycles_to_principal: HashMap<Cycles, Principal>,
-    #[serde(default)]
     registration_fees_pending_cycles_conversion: VecDeque<Principal>,
     unconfirmed_users: HashSet<Principal>,
     users_confirmed_via_phone: u64,
-    #[serde(default)]
     users_confirmed_via_icp: u64,
     users_confirmed_via_cycles: u64,
     cached_metrics: Timestamped<Metrics>,
@@ -42,6 +40,7 @@ pub struct Metrics {
     pub users_online_1_week: u32,
     pub users_online_1_month: u32,
     pub users_confirmed_via_phone: u64,
+    pub users_confirmed_via_icp: u64,
     pub users_confirmed_via_cycles: u64,
 }
 
@@ -325,6 +324,7 @@ impl UserMap {
 
         let mut metrics = Metrics {
             users_confirmed_via_phone: self.users_confirmed_via_phone,
+            users_confirmed_via_icp: self.users_confirmed_via_icp,
             users_confirmed_via_cycles: self.users_confirmed_via_cycles,
             ..Default::default()
         };
