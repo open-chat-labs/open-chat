@@ -100,7 +100,6 @@ export class RegisterController {
         const currentState = get(this.state);
         this.state.set({ kind: "verifying" });
         const resp = await this.notifyRegistrationFeePaid();
-        console.log("Fee: ", resp);
         if (resp === "success" || resp === "already_registered") {
             this.error.set(undefined);
             this.currentUser = await this.loadUser();
