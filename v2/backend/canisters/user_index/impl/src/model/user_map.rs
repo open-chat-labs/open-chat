@@ -42,6 +42,7 @@ pub struct Metrics {
     pub users_online_1_week: u32,
     pub users_online_1_month: u32,
     pub users_confirmed_via_phone: u64,
+    pub users_confirmed_via_icp: u64,
     pub users_confirmed_via_cycles: u64,
 }
 
@@ -325,6 +326,7 @@ impl UserMap {
 
         let mut metrics = Metrics {
             users_confirmed_via_phone: self.users_confirmed_via_phone,
+            users_confirmed_via_icp: self.users_confirmed_via_icp,
             users_confirmed_via_cycles: self.users_confirmed_via_cycles,
             ..Default::default()
         };
