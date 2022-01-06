@@ -13,6 +13,7 @@
     import Link from "../Link.svelte";
     import ChoosePath from "./ChoosePath.svelte";
     import ConfirmTransfer from "./ConfirmTransfer.svelte";
+    import { E8S_PER_ICP } from "domain/user/user";
 
     const dispatch = createEventDispatcher();
 
@@ -68,7 +69,7 @@
                 on:transferConfirmed={() => dispatch("icpTransferConfirmed")}
                 adviceKey={"register.confirmICPTransferText"}
                 receiver={state.receiver}
-                amount={Number(state.amount) / 100_000_000}>
+                amount={Number(state.amount) / E8S_PER_ICP}>
                 <a
                     class="how-to"
                     href={"https://www.finder.com/uk/how-to-buy-internet-computer"}

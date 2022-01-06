@@ -5,6 +5,7 @@
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
+    import { E8S_PER_ICP } from "../../domain/user/user";
     import type { RegistrationState } from "../../domain/user/user";
     export let error: string | undefined = undefined;
     export let username: string = "";
@@ -29,7 +30,7 @@
             {$_("register.cyclesTransferred", { values: { fee: regState.fee.amount.toString() } })}
         {:else}
             {$_("register.icpTransferred", {
-                values: { fee: (Number(regState.fee.amount) / 100_000_000).toString() },
+                values: { fee: (Number(regState.fee.amount) / E8S_PER_ICP).toString() },
             })}
         {/if}
     </h3>

@@ -1,5 +1,7 @@
 import type { DataContent } from "../data/data";
 
+export const E8S_PER_ICP = 100_000_000;
+
 export type UserLastOnline = {
     userId: string;
     lastOnline: number; // timestamp calculated from server response in seconds
