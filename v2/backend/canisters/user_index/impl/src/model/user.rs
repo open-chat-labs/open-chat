@@ -56,16 +56,24 @@ impl User {
         }
     }
 
-    pub fn get_registration_fee_cycles(&self) -> Option<Cycles> {
+    pub fn get_registration_fee(&self) -> Option<RegistrationFee> {
         match self {
             User::Unconfirmed(u) => {
-                if let UnconfirmedUserState::RegistrationFee(RegistrationFee::Cycles(f)) = &u.state {
-                    Some(f.amount)
+                if let UnconfirmedUserState::RegistrationFee(fee) = &u.state {
+                    Some(fee.clone())
                 } else {
                     None
                 }
             }
             _ => None,
+        }
+    }
+
+    pub fn get_registration_fee_cycles(&self) -> Option<Cycles> {
+        if let Some(RegistrationFee::Cycles(fee)) = self.get_registration_fee() {
+            Some(fee.amount)
+        } else {
+            None
         }
     }
 
