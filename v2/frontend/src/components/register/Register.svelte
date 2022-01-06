@@ -98,11 +98,13 @@
     {/if}
 </ModalPage>
 
-<div class="logout">
-    <Link underline="always" on:click={() => dispatch("logout")}>
-        {$_("logout")}
-    </Link>
-</div>
+<a
+    class="logout"
+    role="button"
+    href="/#"
+    on:click|preventDefault|stopPropagation={() => dispatch("logout")}>
+    {$_("logout")}
+</a>
 
 <Toast />
 
@@ -124,9 +126,17 @@
 
     .logout {
         @include font(light, normal, fs-90);
+        cursor: pointer;
         position: absolute;
         top: $sp3;
         right: $sp3;
+        color: #fff;
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-underline-offset: $sp1;
+        &:hover {
+            text-decoration-thickness: 2px;
+        }
     }
 
     .subtitle {
