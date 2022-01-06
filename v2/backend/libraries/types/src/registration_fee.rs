@@ -1,10 +1,9 @@
 use crate::{CanisterId, Cycles, TimestampMillis};
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use ic_ledger_types::{AccountIdentifier, Tokens};
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-#[serde(from = "Cycles")]
 pub enum RegistrationFee {
     ICP(ICPRegistrationFee),
     Cycles(CyclesRegistrationFee),
@@ -16,16 +15,6 @@ impl RegistrationFee {
             RegistrationFee::ICP(f) => f.valid_until,
             RegistrationFee::Cycles(f) => f.valid_until,
         }
-    }
-}
-
-impl From<Cycles> for RegistrationFee {
-    fn from(cycles: Cycles) -> Self {
-        RegistrationFee::Cycles(CyclesRegistrationFee {
-            amount: cycles,
-            recipient: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap(),
-            valid_until: 0,
-        })
     }
 }
 
