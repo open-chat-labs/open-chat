@@ -618,7 +618,12 @@ function mergeMessageEvents(
             const key = existing.event.messageId.toString();
             const merged = mergeReactions(incoming.event.reactions, localReactions[key] ?? []);
             existing.event.reactions = merged;
-            return existing;
+            return {
+                ...existing,
+                event: {
+                    ...existing.event,
+                },
+            };
         }
     }
     return existing;
