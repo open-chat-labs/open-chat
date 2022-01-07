@@ -9,9 +9,8 @@ fn events(args: Args) -> Response {
 
 fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        let min_visible_event_index = participant.min_visible_event_index();
 
+    if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller) {
         let events = runtime_state.data.events.from_index(
             args.start_index,
             args.ascending,
