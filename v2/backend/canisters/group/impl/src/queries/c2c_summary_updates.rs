@@ -109,7 +109,7 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
             }
             ChatEventInternal::PinnedMessageUpdated(p) => {
                 if updates.pinned_message.is_none() {
-                    updates.pinned_message = OptionUpdates::from_updates(p.new_value.clone());
+                    updates.pinned_message = OptionUpdates::from_updates(p.new_value);
                 }
             }
             ChatEventInternal::Message(message) => {
