@@ -37,6 +37,8 @@ pub struct GroupMessageNotification {
     pub sender: UserId,
     pub sender_name: String,
     pub message: EventWrapper<Message>,
+    #[serde(default)]
     pub mentioned: Vec<User>,
+    #[serde(default)]
     pub hide: bool,
 }

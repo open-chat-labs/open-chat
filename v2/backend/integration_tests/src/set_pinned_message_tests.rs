@@ -48,6 +48,7 @@ async fn set_pinned_message_tests_impl(handle: IcHandle, ctx: &fondue::pot::Cont
         sender_name: "TEST!".to_string(),
         content: MessageContent::Text(TextContent { text: "abc".to_string() }),
         replies_to: None,
+        mentioned: Vec::new(),
     };
     let _ = send_group_message(&user1_agent, chat_id, &send_message_args).await;
 

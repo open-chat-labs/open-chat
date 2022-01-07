@@ -23,6 +23,7 @@ pub struct UserMap {
     registration_fees_pending_cycles_conversion: VecDeque<Principal>,
     unconfirmed_users: HashSet<Principal>,
     users_confirmed_via_phone: u64,
+    #[serde(default)]
     users_confirmed_via_icp: u64,
     users_confirmed_via_cycles: u64,
     cached_metrics: Timestamped<Metrics>,
@@ -40,6 +41,7 @@ pub struct Metrics {
     pub users_online_1_week: u32,
     pub users_online_1_month: u32,
     pub users_confirmed_via_phone: u64,
+    #[serde(default)]
     pub users_confirmed_via_icp: u64,
     pub users_confirmed_via_cycles: u64,
 }

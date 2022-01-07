@@ -6,6 +6,7 @@ mod events_by_index;
 mod events_range;
 mod events_window;
 mod http_request;
+mod public_summary;
 mod search_messages;
 mod selected_initial;
 mod selected_updates;

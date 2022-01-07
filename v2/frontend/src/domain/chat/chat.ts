@@ -86,7 +86,7 @@ export type CompletedICPTransfer = {
     amountE8s: bigint;
     feeE8s: bigint;
     memo: bigint;
-    blockHeight: bigint;
+    blockIndex: bigint;
 };
 
 export type CompletedICPDeposit = {
@@ -95,7 +95,7 @@ export type CompletedICPDeposit = {
     amountE8s: bigint;
     feeE8s: bigint;
     memo: bigint;
-    blockHeight: bigint;
+    blockIndex: bigint;
 };
 
 export type FailedICPTransfer = {
@@ -124,7 +124,7 @@ export type CompletedICPWithdrawal = {
     amountE8s: bigint;
     feeE8s: bigint;
     memo: bigint;
-    blockHeight: bigint;
+    blockIndex: bigint;
 };
 
 export type FailedICPWithdrawal = {
@@ -287,7 +287,8 @@ export type GroupChatEvent =
     | ParticipantAssumesSuperAdmin
     | ParticipantRelinquishesSuperAdmin
     | ParticipantDismissedAsSuperAdmin
-    | OwnershipTransferred;
+    | OwnershipTransferred
+    | PinnedMessageUpdated;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -401,6 +402,12 @@ export type ParticipantsPromotedToAdmin = {
     kind: "participants_promoted_to_admin";
     userIds: string[];
     promotedBy: string;
+};
+
+export type PinnedMessageUpdated = {
+    kind: "pinned_message_updated";
+    newValue: number | undefined; // MessageIndex
+    updatedBy: string;
 };
 
 export type GroupChatCreated = {

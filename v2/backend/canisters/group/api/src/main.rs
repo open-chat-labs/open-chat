@@ -5,6 +5,7 @@ fn main() {
     generate_candid_method!(group, events_by_index, query);
     generate_candid_method!(group, events_range, query);
     generate_candid_method!(group, events_window, query);
+    generate_candid_method!(group, public_summary, query);
     generate_candid_method!(group, search_messages, query);
     generate_candid_method!(group, selected_initial, query);
     generate_candid_method!(group, selected_updates, query);

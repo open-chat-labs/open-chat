@@ -31,25 +31,25 @@ export const Notification = IDL.Variant({
             'transfer' : IDL.Variant({
               'ICP' : IDL.Variant({
                 'Failed' : IDL.Record({
+                  'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'memo' : IDL.Nat64,
                   'error_message' : IDL.Text,
                   'recipient' : IDL.Principal,
-                  'fee_e8s' : IDL.Nat64,
-                  'amount_e8s' : IDL.Nat64,
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'Completed' : IDL.Record({
+                  'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                  'block_index' : IDL.Nat64,
                   'memo' : IDL.Nat64,
                   'recipient' : IDL.Principal,
-                  'fee_e8s' : IDL.Nat64,
                   'sender' : IDL.Principal,
-                  'amount_e8s' : IDL.Nat64,
-                  'block_height' : IDL.Nat64,
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'Pending' : IDL.Record({
+                  'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'recipient' : IDL.Principal,
-                  'fee_e8s' : IDL.Opt(IDL.Nat64),
-                  'amount_e8s' : IDL.Nat64,
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
               }),
               'Cycles' : IDL.Variant({
@@ -145,25 +145,25 @@ export const Notification = IDL.Variant({
             'transfer' : IDL.Variant({
               'ICP' : IDL.Variant({
                 'Failed' : IDL.Record({
+                  'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'memo' : IDL.Nat64,
                   'error_message' : IDL.Text,
                   'recipient' : IDL.Principal,
-                  'fee_e8s' : IDL.Nat64,
-                  'amount_e8s' : IDL.Nat64,
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'Completed' : IDL.Record({
+                  'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                  'block_index' : IDL.Nat64,
                   'memo' : IDL.Nat64,
                   'recipient' : IDL.Principal,
-                  'fee_e8s' : IDL.Nat64,
                   'sender' : IDL.Principal,
-                  'amount_e8s' : IDL.Nat64,
-                  'block_height' : IDL.Nat64,
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
                 'Pending' : IDL.Record({
+                  'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'recipient' : IDL.Principal,
-                  'fee_e8s' : IDL.Opt(IDL.Nat64),
-                  'amount_e8s' : IDL.Nat64,
+                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
               }),
               'Cycles' : IDL.Variant({

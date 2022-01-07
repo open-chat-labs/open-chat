@@ -70,6 +70,7 @@ import {
     Mention,
     MessageIndexRange,
     User,
+    ICP,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -142,6 +143,7 @@ export {
     Mention as ApiMention,
     MessageIndexRange as ApiMessageIndexRange,
     User as ApiUser,
+    ICP as ApiICP,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
