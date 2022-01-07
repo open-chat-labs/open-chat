@@ -10,6 +10,7 @@ pub struct Args {
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success,
+    NoChange,
     MessageIndexOutOfRange,
     NotAuthorized,
     CallerNotInGroup,

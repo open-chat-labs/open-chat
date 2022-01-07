@@ -192,6 +192,20 @@ type UpdateGroupResponse =
         InternalError;
     };
 
+type SetPinnedMessageArgs =
+    record {
+        message_index: opt MessageIndex;
+    };
+
+type SetPinnedMessageResponse =
+    variant {
+        Success;
+        NoChange;
+        MessageIndexOutOfRange;
+        NotAuthorized;
+        CallerNotInGroup;
+    };
+
 type DeleteGroupArgs =
     record {
     };
@@ -226,7 +240,6 @@ type SelectedInitialSuccess =
         latest_event_index: EventIndex;
         participants: vec Participant;
         blocked_users: vec UserId;
-        pinned_message: opt MessageIndexOption;
     };
 
 type SelectedInitialResponse =
@@ -247,7 +260,6 @@ type SelectedUpdatesSuccess =
         participants_removed: vec UserId;
         blocked_users_added: vec UserId;
         blocked_users_removed: vec UserId;
-        pinned_message: opt MessageIndex;
     };
 
 type SelectedUpdatesResponse =
@@ -255,11 +267,6 @@ type SelectedUpdatesResponse =
         Success: SelectedUpdatesSuccess;
         SuccessNoUpdates;
         CallerNotInGroup;
-    };
-
-type MessageIndexOption =
-    record {
-        value: opt MessageIndex;
     };
 
 type EventsArgs =
@@ -333,6 +340,7 @@ service: {
     dismiss_admin: (DismissAdminArgs) -> (DismissAdminResponse);
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group: (UpdateGroupArgs) -> (UpdateGroupResponse);
+    set_pinned_message: (SetPinnedMessageArgs) -> (SetPinnedMessageResponse);
 
     // Can be called by admins or regular users of public groups
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse); 

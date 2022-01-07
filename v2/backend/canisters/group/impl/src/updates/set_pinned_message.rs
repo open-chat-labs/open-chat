@@ -21,6 +21,10 @@ fn set_pinned_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
             return NotAuthorized;
         }
 
+        if args.message_index == runtime_state.data.pinned_message {
+            return NoChange;
+        }
+
         if let Some(message_index) = args.message_index {
             let is_valid_message_index = runtime_state
                 .data

@@ -184,6 +184,7 @@ type GroupChatEvent =
         MessageReactionRemoved: UpdatedMessage;
         UsersBlocked: UsersBlocked;
         UsersUnblocked: UsersUnblocked;
+        PinnedMessageUpdated: PinnedMessageUpdated;
     };
 
 type GroupChatEventWrapper =
@@ -211,6 +212,7 @@ type GroupChatSummary =
         participant_count: nat32;
         role: Role;
         mentions: vec Mention;
+        pinned_message: opt MessageIndex;
         wasm_version: Version;
     };
 
@@ -228,6 +230,7 @@ type GroupChatSummaryUpdates =
         participant_count: opt nat32;
         role: opt Role;
         mentions: vec Mention;
+        pinned_message: opt record { value: opt MessageIndex; };
         wasm_version: opt Version;
     };
 
@@ -285,6 +288,12 @@ type GroupNameChanged =
         new_name: text;
         previous_name: text;
         changed_by: UserId;
+    };
+
+type PinnedMessageUpdated =
+    record {
+        new_value: opt MessageIndex;
+        updated_by: UserId;
     };
 
 type ReplyContext =
