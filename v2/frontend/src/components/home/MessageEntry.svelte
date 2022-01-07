@@ -181,17 +181,19 @@
     // replace anything of the form @username with @UserId(xyz) where xyz is the userId
     // if we don't have the mapping, just leave it as is (we *will* have the mapping)
     function expandMentions(text?: string): [string | undefined, User[]] {
-        let mentioned: User[] = [];
+        let mentionedMap = new Map<string, string>();
         let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
             const userId = reverseUserLookup[p1];
             if (userId !== undefined) {
-                mentioned.push({userId, username: p1});
+                mentionedMap.set(userId, p1);
                 return `@UserId(${userId})`;
             }
             return match;
         });
 
-       return [expandedText, mentioned];
+        let mentioned = Array.from(mentionedMap, ([userId, username]) => ({ userId, username }));
+
+        return [expandedText, mentioned];
     }
 
     function sendMessage() {
