@@ -26,11 +26,13 @@ export const idlFactory = ({ IDL }) => {
     'CyclesBalanceTooLow' : IDL.Null,
   });
   const CurrentUserArgs = IDL.Record({});
+  const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const TimestampMillis = IDL.Nat64;
+  const ICP = IDL.Record({ 'e8s' : IDL.Nat64 });
   const ICPRegistrationFee = IDL.Record({
-    'recipient' : IDL.Vec(IDL.Nat8),
+    'recipient' : AccountIdentifier,
     'valid_until' : TimestampMillis,
-    'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+    'amount' : ICP,
   });
   const Cycles = IDL.Nat;
   const CyclesRegistrationFee = IDL.Record({
@@ -63,10 +65,9 @@ export const idlFactory = ({ IDL }) => {
     'RegistrationFee' : RegistrationFee,
     'PhoneNumber' : PhoneNumber,
   });
-  const Cryptocurrency = IDL.Variant({ 'ICP' : IDL.Null, 'Cycles' : IDL.Null });
-  const CryptocurrencyAccount = IDL.Record({
-    'currency' : Cryptocurrency,
-    'address' : IDL.Text,
+  const CryptocurrencyAccount = IDL.Variant({
+    'ICP' : AccountIdentifier,
+    'Cycles' : CanisterId,
   });
   const CanisterUpgradeStatus = IDL.Variant({
     'Required' : IDL.Null,
@@ -93,6 +94,7 @@ export const idlFactory = ({ IDL }) => {
     }),
     'UserNotFound' : IDL.Null,
   });
+  const Cryptocurrency = IDL.Variant({ 'ICP' : IDL.Null, 'Cycles' : IDL.Null });
   const GenerateRegistrationFeeArgs = IDL.Record({
     'currency' : Cryptocurrency,
   });

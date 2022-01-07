@@ -74,27 +74,29 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const ICP = IDL.Record({ 'e8s' : IDL.Nat64 });
+  const Memo = IDL.Nat64;
   const FailedICPTransfer = IDL.Record({
-    'memo' : IDL.Nat64,
+    'fee' : ICP,
+    'memo' : Memo,
     'error_message' : IDL.Text,
     'recipient' : UserId,
-    'fee_e8s' : IDL.Nat64,
-    'amount_e8s' : IDL.Nat64,
+    'amount' : ICP,
   });
-  const BlockHeight = IDL.Nat64;
+  const BlockIndex = IDL.Nat64;
   const CompletedICPTransfer = IDL.Record({
-    'memo' : IDL.Nat64,
+    'fee' : ICP,
+    'block_index' : BlockIndex,
+    'memo' : Memo,
     'recipient' : UserId,
-    'fee_e8s' : IDL.Nat64,
     'sender' : UserId,
-    'amount_e8s' : IDL.Nat64,
-    'block_height' : BlockHeight,
+    'amount' : ICP,
   });
   const PendingICPTransfer = IDL.Record({
-    'memo' : IDL.Opt(IDL.Nat64),
+    'fee' : IDL.Opt(ICP),
+    'memo' : IDL.Opt(Memo),
     'recipient' : UserId,
-    'fee_e8s' : IDL.Opt(IDL.Nat64),
-    'amount_e8s' : IDL.Nat64,
+    'amount' : ICP,
   });
   const ICPTransfer = IDL.Variant({
     'Failed' : FailedICPTransfer,
@@ -273,6 +275,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
     'read_by_me' : IDL.Vec(MessageIndexRange),
+    'pinned_message' : IDL.Opt(MessageIndex),
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : EventIndex,
@@ -295,12 +298,13 @@ export const idlFactory = ({ IDL }) => {
     'Group' : GroupChatSummary,
     'Direct' : DirectChatSummary,
   });
+  const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const CompletedICPDeposit = IDL.Record({
-    'memo' : IDL.Nat64,
-    'fee_e8s' : IDL.Nat64,
-    'amount_e8s' : IDL.Nat64,
-    'from_address' : IDL.Text,
-    'block_height' : BlockHeight,
+    'fee' : ICP,
+    'block_index' : BlockIndex,
+    'memo' : Memo,
+    'from_address' : AccountIdentifier,
+    'amount' : ICP,
   });
   const ICPDeposit = IDL.Variant({ 'Completed' : CompletedICPDeposit });
   const CompletedCyclesDeposit = IDL.Record({
@@ -313,24 +317,24 @@ export const idlFactory = ({ IDL }) => {
     'Cycles' : CyclesDeposit,
   });
   const FailedICPWithdrawal = IDL.Record({
-    'to' : IDL.Text,
-    'memo' : IDL.Nat64,
+    'to' : AccountIdentifier,
+    'fee' : ICP,
+    'memo' : Memo,
     'error_message' : IDL.Text,
-    'fee_e8s' : IDL.Nat64,
-    'amount_e8s' : IDL.Nat64,
+    'amount' : ICP,
   });
   const CompletedICPWithdrawal = IDL.Record({
-    'to' : IDL.Text,
-    'memo' : IDL.Nat64,
-    'fee_e8s' : IDL.Nat64,
-    'amount_e8s' : IDL.Nat64,
-    'block_height' : BlockHeight,
+    'to' : AccountIdentifier,
+    'fee' : ICP,
+    'block_index' : BlockIndex,
+    'memo' : Memo,
+    'amount' : ICP,
   });
   const PendingICPWithdrawal = IDL.Record({
-    'to' : IDL.Text,
-    'memo' : IDL.Opt(IDL.Nat64),
-    'fee_e8s' : IDL.Opt(IDL.Nat64),
-    'amount_e8s' : IDL.Nat64,
+    'to' : AccountIdentifier,
+    'fee' : IDL.Opt(ICP),
+    'memo' : IDL.Opt(Memo),
+    'amount' : ICP,
   });
   const ICPWithdrawal = IDL.Variant({
     'Failed' : FailedICPWithdrawal,
@@ -571,6 +575,11 @@ export const idlFactory = ({ IDL }) => {
     'details' : AlertDetails,
     'elapsed' : Milliseconds,
   });
+  const PinnedMessageUpdates = IDL.Variant({
+    'None' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : MessageIndex,
+  });
   const GroupChatSummaryUpdates = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
@@ -579,6 +588,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
+    'pinned_message' : PinnedMessageUpdates,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : IDL.Opt(EventIndex),
     'mentions' : IDL.Vec(Mention),

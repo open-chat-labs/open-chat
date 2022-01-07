@@ -39,6 +39,7 @@ import type {
     ApiCyclesTransfer,
     ApiMessageIndexRange,
     ApiUser,
+    ApiICP,
 } from "../user/candid/idl";
 
 export function message(candid: ApiMessage): Message {
@@ -162,8 +163,8 @@ function icpTransfer(candid: ApiICPTransfer): ICPTransfer {
             transferKind: "icp_transfer",
             kind: "pending_icp_transfer",
             recipient: candid.Pending.recipient.toString(),
-            amountE8s: candid.Pending.amount_e8s,
-            feeE8s: optional(candid.Pending.fee_e8s, identity),
+            amountE8s: candid.Pending.amount.e8s,
+            feeE8s: optional(candid.Pending.fee, (f) => f.e8s),
             memo: optional(candid.Pending.memo, identity),
         };
     }
@@ -173,10 +174,10 @@ function icpTransfer(candid: ApiICPTransfer): ICPTransfer {
             kind: "completed_icp_transfer",
             recipient: candid.Completed.recipient.toString(),
             sender: candid.Completed.sender.toString(),
-            amountE8s: candid.Completed.amount_e8s,
-            feeE8s: candid.Completed.fee_e8s,
+            amountE8s: candid.Completed.amount.e8s,
+            feeE8s: candid.Completed.fee.e8s,
             memo: candid.Completed.memo,
-            blockHeight: candid.Completed.block_height,
+            blockIndex: candid.Completed.block_index,
         };
     }
     if ("Failed" in candid) {
@@ -184,8 +185,8 @@ function icpTransfer(candid: ApiICPTransfer): ICPTransfer {
             transferKind: "icp_transfer",
             kind: "failed_icp_transfer",
             recipient: candid.Failed.recipient.toString(),
-            amountE8s: candid.Failed.amount_e8s,
-            feeE8s: candid.Failed.fee_e8s,
+            amountE8s: candid.Failed.amount.e8s,
+            feeE8s: candid.Failed.fee.e8s,
             memo: candid.Failed.memo,
             errorMessage: candid.Failed.error_message,
         };
@@ -417,8 +418,8 @@ function apiICPTransfer(domain: ICPTransfer): ApiICPTransfer {
         return {
             Pending: {
                 recipient: Principal.fromText(domain.recipient),
-                amount_e8s: domain.amountE8s,
-                fee_e8s: apiOptional(identity, domain.feeE8s),
+                amount: apiICP(domain.amountE8s),
+                fee: apiOptional(apiICP, domain.feeE8s),
                 memo: apiOptional(identity, domain.memo),
             },
         };
@@ -428,10 +429,10 @@ function apiICPTransfer(domain: ICPTransfer): ApiICPTransfer {
             Completed: {
                 recipient: Principal.fromText(domain.recipient),
                 sender: Principal.fromText(domain.sender),
-                amount_e8s: domain.amountE8s,
-                fee_e8s: domain.feeE8s,
+                amount: apiICP(domain.amountE8s),
+                fee: apiICP(domain.feeE8s),
                 memo: domain.memo,
-                block_height: domain.blockHeight,
+                block_index: domain.blockIndex,
             },
         };
     }
@@ -439,8 +440,8 @@ function apiICPTransfer(domain: ICPTransfer): ApiICPTransfer {
         return {
             Failed: {
                 recipient: Principal.fromText(domain.recipient),
-                amount_e8s: domain.amountE8s,
-                fee_e8s: domain.feeE8s,
+                amount: apiICP(domain.amountE8s),
+                fee: apiICP(domain.feeE8s),
                 memo: domain.memo,
                 error_message: domain.errorMessage,
             },
@@ -462,5 +463,11 @@ function apiFileContent(domain: FileContent): ApiFileContent {
         blob_reference: apiBlobReference(domain.blobReference),
         caption: apiOptional(identity, domain.caption),
         file_size: domain.fileSize,
+    };
+}
+
+function apiICP(amountE8s: bigint): ApiICP {
+    return {
+        e8s: amountE8s
     };
 }

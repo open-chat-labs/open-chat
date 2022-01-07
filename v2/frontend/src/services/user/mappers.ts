@@ -430,10 +430,10 @@ function cryptoDepositAlert(candid: ApiCryptocurrencyDeposit): CryptocurrencyDep
         return {
             transferKind: "icp_deposit",
             kind: "completed_icp_deposit",
-            amountE8s: candid.ICP.Completed.amount_e8s,
-            feeE8s: candid.ICP.Completed.fee_e8s,
+            amountE8s: candid.ICP.Completed.amount.e8s,
+            feeE8s: candid.ICP.Completed.fee.e8s,
             memo: candid.ICP.Completed.memo,
-            blockHeight: candid.ICP.Completed.block_height,
+            blockIndex: candid.ICP.Completed.block_index,
         };
     }
     if ("Cycles" in candid) {

@@ -1,5 +1,5 @@
 import type { Principal } from '@dfinity/principal';
-export type AccountIdentifier = string;
+export type AccountIdentifier = Array<number>;
 export interface AddSuperAdminArgs { 'user_id' : UserId }
 export type AddSuperAdminResponse = { 'Success' : null } |
   { 'InternalError' : string } |
@@ -40,7 +40,7 @@ export interface BlobReference {
   'blob_id' : bigint,
   'canister_id' : CanisterId,
 }
-export type BlockHeight = bigint;
+export type BlockIndex = bigint;
 export type CanisterCreationStatus = { 'InProgress' : null } |
   { 'Created' : null } |
   { 'Pending' : null };
@@ -72,26 +72,26 @@ export interface CompletedCyclesWithdrawal {
   'cycles' : Cycles,
 }
 export interface CompletedICPDeposit {
-  'memo' : bigint,
-  'fee_e8s' : bigint,
-  'amount_e8s' : bigint,
-  'from_address' : string,
-  'block_height' : BlockHeight,
+  'fee' : ICP,
+  'block_index' : BlockIndex,
+  'memo' : Memo,
+  'from_address' : AccountIdentifier,
+  'amount' : ICP,
 }
 export interface CompletedICPTransfer {
-  'memo' : bigint,
+  'fee' : ICP,
+  'block_index' : BlockIndex,
+  'memo' : Memo,
   'recipient' : UserId,
-  'fee_e8s' : bigint,
   'sender' : UserId,
-  'amount_e8s' : bigint,
-  'block_height' : BlockHeight,
+  'amount' : ICP,
 }
 export interface CompletedICPWithdrawal {
-  'to' : string,
-  'memo' : bigint,
-  'fee_e8s' : bigint,
-  'amount_e8s' : bigint,
-  'block_height' : BlockHeight,
+  'to' : AccountIdentifier,
+  'fee' : ICP,
+  'block_index' : BlockIndex,
+  'memo' : Memo,
+  'amount' : ICP,
 }
 export interface ConfirmPhoneNumberArgs { 'confirmation_code' : string }
 export type ConfirmPhoneNumberResponse = { 'PhoneNumberNotSubmitted' : null } |
@@ -115,10 +115,8 @@ export type CreateCanisterResponse = { 'UserAlreadyCreated' : null } |
   { 'CyclesBalanceTooLow' : null };
 export type Cryptocurrency = { 'ICP' : null } |
   { 'Cycles' : null };
-export interface CryptocurrencyAccount {
-  'currency' : Cryptocurrency,
-  'address' : string,
-}
+export type CryptocurrencyAccount = { 'ICP' : AccountIdentifier } |
+  { 'Cycles' : CanisterId };
 export interface CryptocurrencyContent {
   'caption' : [] | [string],
   'transfer' : CryptocurrencyTransfer,
@@ -222,18 +220,18 @@ export interface FailedCyclesWithdrawal {
   'cycles' : Cycles,
 }
 export interface FailedICPTransfer {
-  'memo' : bigint,
+  'fee' : ICP,
+  'memo' : Memo,
   'error_message' : string,
   'recipient' : UserId,
-  'fee_e8s' : bigint,
-  'amount_e8s' : bigint,
+  'amount' : ICP,
 }
 export interface FailedICPWithdrawal {
-  'to' : string,
-  'memo' : bigint,
+  'to' : AccountIdentifier,
+  'fee' : ICP,
+  'memo' : Memo,
   'error_message' : string,
-  'fee_e8s' : bigint,
-  'amount_e8s' : bigint,
+  'amount' : ICP,
 }
 export type FallbackRole = { 'Participant' : null } |
   { 'Admin' : null };
@@ -263,6 +261,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
+  { 'PinnedMessageUpdated' : PinnedMessageUpdated } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
@@ -293,6 +292,7 @@ export interface GroupChatSummary {
   'description' : string,
   'last_updated' : TimestampMillis,
   'read_by_me' : Array<MessageIndexRange>,
+  'pinned_message' : [] | [MessageIndex],
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'latest_event_index' : EventIndex,
@@ -310,6 +310,7 @@ export interface GroupChatSummaryUpdates {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'read_by_me' : [] | [Array<MessageIndexRange>],
+  'pinned_message' : PinnedMessageUpdates,
   'avatar_id' : [] | [bigint],
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
@@ -336,11 +337,12 @@ export interface GroupNameChanged {
   'new_name' : string,
   'previous_name' : string,
 }
+export interface ICP { 'e8s' : bigint }
 export type ICPDeposit = { 'Completed' : CompletedICPDeposit };
 export interface ICPRegistrationFee {
-  'recipient' : Array<number>,
+  'recipient' : AccountIdentifier,
   'valid_until' : TimestampMillis,
-  'amount' : { 'e8s' : bigint },
+  'amount' : ICP,
 }
 export type ICPTransfer = { 'Failed' : FailedICPTransfer } |
   { 'Completed' : CompletedICPTransfer } |
@@ -360,6 +362,7 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
+export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,
   'event_index' : EventIndex,
@@ -486,18 +489,25 @@ export interface PendingCyclesWithdrawal {
   'cycles' : Cycles,
 }
 export interface PendingICPTransfer {
-  'memo' : [] | [bigint],
+  'fee' : [] | [ICP],
+  'memo' : [] | [Memo],
   'recipient' : UserId,
-  'fee_e8s' : [] | [bigint],
-  'amount_e8s' : bigint,
+  'amount' : ICP,
 }
 export interface PendingICPWithdrawal {
-  'to' : string,
-  'memo' : [] | [bigint],
-  'fee_e8s' : [] | [bigint],
-  'amount_e8s' : bigint,
+  'to' : AccountIdentifier,
+  'fee' : [] | [ICP],
+  'memo' : [] | [Memo],
+  'amount' : ICP,
 }
 export interface PhoneNumber { 'country_code' : number, 'number' : string }
+export interface PinnedMessageUpdated {
+  'updated_by' : UserId,
+  'new_value' : [] | [MessageIndex],
+}
+export type PinnedMessageUpdates = { 'None' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : MessageIndex };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemoveSuperAdminArgs { 'user_id' : UserId }
@@ -589,12 +599,12 @@ export type UpgradeCanisterResponse = { 'UpgradeInProgress' : null } |
   { 'UpgradeNotRequired' : null } |
   { 'InternalError' : string } |
   { 'UserNotFound' : null };
+export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserArgs {
   'username' : [] | [string],
   'user_id' : [] | [UserId],
 }
 export type UserId = CanisterId;
-export interface User { 'username' : string, 'user_id' : UserId }
 export type UserResponse = { 'Success' : UserSummary } |
   { 'UserNotFound' : null };
 export interface UserSummary {

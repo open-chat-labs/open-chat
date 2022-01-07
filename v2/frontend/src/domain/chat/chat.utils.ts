@@ -117,6 +117,9 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "ownership_transferred":
                 userIds.add(e.event.oldOwner);
                 break;
+            case "pinned_message_updated":
+                userIds.add(e.event.updatedBy);
+                break;
             case "message_deleted":
             case "message_edited":
             case "reaction_added":
