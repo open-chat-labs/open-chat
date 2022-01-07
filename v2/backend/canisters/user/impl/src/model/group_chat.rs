@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
-use types::{ChatId, GroupChatSummaryUpdates, OptionUpdates, TimestampMillis, Timestamped};
+use types::{ChatId, GroupChatSummaryUpdates, MessageIndex, OptionUpdates, TimestampMillis, Timestamped};
 use utils::range_set::{convert_to_message_index_ranges, RangeSet};
 
 #[derive(Serialize, Deserialize)]
@@ -13,11 +13,16 @@ pub struct GroupChat {
 }
 
 impl GroupChat {
-    pub fn new(chat_id: ChatId, is_super_admin: bool, now: TimestampMillis) -> GroupChat {
+    pub fn new(chat_id: ChatId, is_super_admin: bool, read_up_to: Option<MessageIndex>, now: TimestampMillis) -> GroupChat {
+        let mut read_by_me = RangeSet::new();
+        if let Some(index) = read_up_to {
+            read_by_me.insert_range(0..=index.into());
+        }
+
         GroupChat {
             chat_id,
             date_joined: now,
-            read_by_me: Timestamped::new(RangeSet::new(), now),
+            read_by_me: Timestamped::new(read_by_me, now),
             notifications_muted: Timestamped::new(false, now),
             is_super_admin,
         }

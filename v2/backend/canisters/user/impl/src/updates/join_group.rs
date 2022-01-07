@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use group_canister::c2c_join_group;
 use ic_cdk_macros::update;
-use types::ChatId;
+use types::{ChatId, MessageIndex};
 use user_canister::join_group::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
@@ -20,8 +20,8 @@ async fn join_group(args: Args) -> Response {
 
     match group_canister_c2c_client::c2c_join_group(args.chat_id.into(), &c2c_args).await {
         Ok(result) => match result {
-            c2c_join_group::Response::Success(_) => {
-                mutate_state(|state| commit(args.chat_id, args.as_super_admin, state));
+            c2c_join_group::Response::Success(result) => {
+                mutate_state(|state| commit(args.chat_id, args.as_super_admin, result.latest_message_index, state));
                 Success
             }
             c2c_join_group::Response::AlreadyInGroup => AlreadyInGroup,
@@ -37,7 +37,10 @@ async fn join_group(args: Args) -> Response {
     }
 }
 
-fn commit(chat_id: ChatId, as_super_admin: bool, runtime_state: &mut RuntimeState) {
+fn commit(chat_id: ChatId, as_super_admin: bool, latest_message_index: Option<MessageIndex>, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
-    runtime_state.data.group_chats.join(chat_id, as_super_admin, now);
+    runtime_state
+        .data
+        .group_chats
+        .join(chat_id, as_super_admin, latest_message_index, now);
 }
