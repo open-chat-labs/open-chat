@@ -113,7 +113,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub activity_notification_state: ActivityNotificationState,
-    #[serde(default)]
     pub pinned_message: Option<MessageIndex>,
     pub test_mode: bool,
 }
