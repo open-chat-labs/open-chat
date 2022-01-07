@@ -334,12 +334,12 @@
     {#if msg.reactions.length > 0 && !deleted}
         <div class="message-reactions" class:me>
             {#each msg.reactions as { reaction, userIds } (reaction)}
-                <MessageReaction 
-                    on:click={() => toggleReaction(reaction)} 
-                    {reaction} 
+                <MessageReaction
+                    on:click={() => toggleReaction(reaction)}
+                    {reaction}
                     {userIds}
-                    {me} 
-                    myUserId = {user?.userId}/>
+                    {me}
+                    myUserId={user?.userId} />
             {/each}
         </div>
     {/if}
@@ -459,7 +459,7 @@
     }
 
     .message-bubble {
-        $radius: 20px;
+        $radius: $sp4;
         $inner-radius: 4px;
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
             border ease-in-out 300ms, transform ease-in-out 200ms;
