@@ -79,27 +79,29 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const ICP = IDL.Record({ 'e8s' : IDL.Nat64 });
+  const Memo = IDL.Nat64;
   const FailedICPTransfer = IDL.Record({
-    'memo' : IDL.Nat64,
+    'fee' : ICP,
+    'memo' : Memo,
     'error_message' : IDL.Text,
     'recipient' : UserId,
-    'fee_e8s' : IDL.Nat64,
-    'amount_e8s' : IDL.Nat64,
+    'amount' : ICP,
   });
-  const BlockHeight = IDL.Nat64;
+  const BlockIndex = IDL.Nat64;
   const CompletedICPTransfer = IDL.Record({
-    'memo' : IDL.Nat64,
+    'fee' : ICP,
+    'block_index' : BlockIndex,
+    'memo' : Memo,
     'recipient' : UserId,
-    'fee_e8s' : IDL.Nat64,
     'sender' : UserId,
-    'amount_e8s' : IDL.Nat64,
-    'block_height' : BlockHeight,
+    'amount' : ICP,
   });
   const PendingICPTransfer = IDL.Record({
-    'memo' : IDL.Opt(IDL.Nat64),
+    'fee' : IDL.Opt(ICP),
+    'memo' : IDL.Opt(Memo),
     'recipient' : UserId,
-    'fee_e8s' : IDL.Opt(IDL.Nat64),
-    'amount_e8s' : IDL.Nat64,
+    'amount' : ICP,
   });
   const ICPTransfer = IDL.Variant({
     'Failed' : FailedICPTransfer,
@@ -202,6 +204,11 @@ export const idlFactory = ({ IDL }) => {
     'user_ids' : IDL.Vec(UserId),
     'promoted_by' : UserId,
   });
+  const MessageIndex = IDL.Nat32;
+  const PinnedMessageUpdated = IDL.Record({
+    'updated_by' : UserId,
+    'new_value' : IDL.Opt(MessageIndex),
+  });
   const UsersBlocked = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
     'blocked_by' : UserId,
@@ -216,7 +223,6 @@ export const idlFactory = ({ IDL }) => {
     'chat_id_if_other' : IDL.Opt(ChatId),
     'event_index' : EventIndex,
   });
-  const MessageIndex = IDL.Nat32;
   const Message = IDL.Record({
     'content' : MessageContent,
     'edited' : IDL.Bool,
@@ -262,6 +268,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupDescriptionChanged' : GroupDescriptionChanged,
     'GroupChatCreated' : GroupChatCreated,
     'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin,
+    'PinnedMessageUpdated' : PinnedMessageUpdated,
     'UsersBlocked' : UsersBlocked,
     'MessageReactionAdded' : UpdatedMessage,
     'ParticipantsRemoved' : ParticipantsRemoved,
@@ -397,6 +404,16 @@ export const idlFactory = ({ IDL }) => {
     }),
     'MessageEmpty' : IDL.Null,
   });
+  const SetPinnedMessageArgs = IDL.Record({
+    'message_index' : IDL.Opt(MessageIndex),
+  });
+  const SetPinnedMessageResponse = IDL.Variant({
+    'MessageIndexOutOfRange' : IDL.Null,
+    'NoChange' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const ToggleReactionArgs = IDL.Record({
     'message_id' : MessageId,
     'reaction' : IDL.Text,
@@ -493,6 +510,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
+    'set_pinned_message' : IDL.Func(
+        [SetPinnedMessageArgs],
+        [SetPinnedMessageResponse],
+        [],
+      ),
     'toggle_reaction' : IDL.Func(
         [ToggleReactionArgs],
         [ToggleReactionResponse],

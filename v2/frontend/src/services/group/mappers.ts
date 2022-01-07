@@ -44,6 +44,7 @@ import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
 import { message, updatedMessage } from "../common/chatMappers";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
+import { identity, optional } from "../../utils/mapping";
 
 function principalToString(p: Principal): string {
     return p.toString();
@@ -575,6 +576,14 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         return {
             kind: "participant_relinquishes_super_admin",
             userId: candid.ParticipantRelinquishesSuperAdmin.user_id.toString(),
+        };
+    }
+
+    if ("PinnedMessageUpdated" in candid) {
+        return {
+            kind: "pinned_message_updated",
+            newValue: optional(candid.PinnedMessageUpdated.new_value, identity),
+            updatedBy: candid.PinnedMessageUpdated.updated_by.toString(),
         };
     }
 
