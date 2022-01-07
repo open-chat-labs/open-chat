@@ -279,6 +279,7 @@ export interface GroupMessageNotification {
   'sender_name' : string,
   'chat_id' : ChatId,
   'group_name' : string,
+  'hide': boolean,
 }
 export interface GroupNameChanged {
   'changed_by' : UserId,
