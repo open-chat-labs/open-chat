@@ -16,5 +16,4 @@ pub struct SuccessResult {
     pub latest_event_index: EventIndex,
     pub participants: Vec<Participant>,
     pub blocked_users: Vec<UserId>,
-    pub pinned_message: Option<MessageIndex>,
 }

@@ -18,6 +18,5 @@ fn selected_initial_impl(runtime_state: &RuntimeState) -> Response {
         latest_event_index: runtime_state.data.events.last().index,
         participants: participants.iter().map(|p| p.into()).collect(),
         blocked_users: participants.blocked(),
-        pinned_message: runtime_state.data.pinned_message,
     })
 }
