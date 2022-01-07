@@ -193,6 +193,20 @@ type UpdateGroupResponse =
         InternalError;
     };
 
+type SetPinnedMessageArgs =
+    record {
+        message_index: opt MessageIndex;
+    };
+
+type SetPinnedMessageResponse =
+    variant {
+        Success;
+        NoChange;
+        MessageIndexOutOfRange;
+        NotAuthorized;
+        CallerNotInGroup;
+    };
+
 type DeleteGroupArgs =
     record {
     };
@@ -327,6 +341,7 @@ service: {
     dismiss_admin: (DismissAdminArgs) -> (DismissAdminResponse);
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group: (UpdateGroupArgs) -> (UpdateGroupResponse);
+    set_pinned_message: (SetPinnedMessageArgs) -> (SetPinnedMessageResponse);
 
     // Can be called by admins or regular users of public groups
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse); 

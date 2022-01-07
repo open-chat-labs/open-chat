@@ -15,5 +15,6 @@ generate_update_call!(edit_message);
 generate_update_call!(make_admin);
 generate_update_call!(remove_participant);
 generate_update_call!(send_message);
+generate_update_call!(set_pinned_message);
 generate_update_call!(toggle_reaction);
 generate_update_call!(transfer_ownership);

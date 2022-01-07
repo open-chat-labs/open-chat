@@ -14,6 +14,7 @@ mod online_users_aggregator_tests;
 mod register_user_tests;
 mod send_cycles_tests;
 mod send_message_tests;
+mod set_pinned_message_tests;
 
 fn main() {
     let fondue_config = fondue::pot::execution::Config::default().random_pot_rng_seed();
@@ -48,7 +49,8 @@ fn tests_pot() -> pot::Pot<IcManager> {
             register_user_tests::register_existing_user_tests,
             register_user_tests::register_user_by_paying_cycles_tests,
             send_cycles_tests::send_cycles_tests,
-            send_message_tests::send_message_tests
+            send_message_tests::send_message_tests,
+            set_pinned_message_tests::set_pinned_message_tests
         }
     )
 }

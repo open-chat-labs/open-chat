@@ -57,6 +57,7 @@ impl GroupChatEvents {
             ChatEventInternal::ParticipantsDismissedAsAdmin(p) => GroupChatEvent::ParticipantsDismissedAsAdmin(*p.clone()),
             ChatEventInternal::UsersBlocked(u) => GroupChatEvent::UsersBlocked(*u.clone()),
             ChatEventInternal::UsersUnblocked(u) => GroupChatEvent::UsersUnblocked(*u.clone()),
+            ChatEventInternal::PinnedMessageUpdated(p) => GroupChatEvent::PinnedMessageUpdated(*p.clone()),
             _ => panic!("Unrecognised event type"),
         };
 

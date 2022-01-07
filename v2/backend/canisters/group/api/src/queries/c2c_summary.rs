@@ -34,6 +34,7 @@ pub struct Summary {
     pub participant_count: u32,
     pub role: Role,
     pub mentions: Vec<Mention>,
+    pub pinned_message: Option<MessageIndex>,
     pub wasm_version: Version,
 }
 
@@ -56,6 +57,7 @@ impl From<Summary> for GroupChatSummary {
             participant_count: s.participant_count,
             role: s.role,
             mentions: s.mentions,
+            pinned_message: s.pinned_message,
             wasm_version: s.wasm_version,
         }
     }

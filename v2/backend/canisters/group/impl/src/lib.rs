@@ -7,7 +7,9 @@ use chat_events::GroupChatEvents;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{Avatar, CanisterId, ChatId, Cycles, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version};
+use types::{
+    Avatar, CanisterId, ChatId, Cycles, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
+};
 use utils::env::Environment;
 use utils::memory;
 use utils::rand::get_random_item;
@@ -110,6 +112,8 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub activity_notification_state: ActivityNotificationState,
+    #[serde(default)]
+    pub pinned_message: Option<MessageIndex>,
     pub test_mode: bool,
 }
 
@@ -148,6 +152,7 @@ impl Data {
             user_index_canister_id,
             notifications_canister_ids,
             activity_notification_state: ActivityNotificationState::new(now),
+            pinned_message: None,
             test_mode,
         }
     }

@@ -35,6 +35,7 @@ fn c2c_summary_impl(runtime_state: &RuntimeState) -> Response {
             participant_count: data.participants.len(),
             role: participant.role,
             mentions: get_most_recent_mentions(participant, &runtime_state.data.events),
+            pinned_message: runtime_state.data.pinned_message,
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
         };
         Success(SuccessResult { summary })
