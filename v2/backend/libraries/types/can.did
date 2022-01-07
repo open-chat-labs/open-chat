@@ -230,7 +230,7 @@ type GroupChatSummaryUpdates =
         participant_count: opt nat32;
         role: opt Role;
         mentions: vec Mention;
-        pinned_message: opt record { value: opt MessageIndex; };
+        pinned_message: PinnedMessageUpdates;
         wasm_version: opt Version;
     };
 
@@ -294,6 +294,13 @@ type PinnedMessageUpdated =
     record {
         new_value: opt MessageIndex;
         updated_by: UserId;
+    };
+
+type PinnedMessageUpdates =
+    variant {
+        None;
+        SetToNone;
+        SetToSome: MessageIndex;
     };
 
 type ReplyContext =

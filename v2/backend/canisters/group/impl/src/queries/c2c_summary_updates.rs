@@ -3,7 +3,7 @@ use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use types::{
-    Avatar, EventIndex, EventWrapper, Mention, Message, MessageIndex, TimestampMillis, WrappedOption, MAX_RETURNED_MENTIONS,
+    Avatar, EventIndex, EventWrapper, Mention, Message, MessageIndex, OptionUpdates, TimestampMillis, MAX_RETURNED_MENTIONS,
 };
 
 #[query]
@@ -55,7 +55,7 @@ struct UpdatesFromEvents {
     participants_changed: bool,
     role_changed: bool,
     mentions: Vec<Mention>,
-    pinned_message: Option<WrappedOption<MessageIndex>>,
+    pinned_message: OptionUpdates<MessageIndex>,
 }
 
 fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_mentions: &[MessageIndex]) -> UpdatesFromEvents {
@@ -109,7 +109,7 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
             }
             ChatEventInternal::PinnedMessageUpdated(p) => {
                 if updates.pinned_message.is_none() {
-                    updates.pinned_message = Some(p.new_value.into());
+                    updates.pinned_message = OptionUpdates::from_updates(p.new_value.clone());
                 }
             }
             ChatEventInternal::Message(message) => {

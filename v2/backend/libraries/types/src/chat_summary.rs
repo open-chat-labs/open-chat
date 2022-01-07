@@ -1,6 +1,6 @@
 use crate::{
-    ChatId, EventIndex, EventWrapper, Mention, Message, MessageIndex, MessageIndexRange, Role, TimestampMillis, UserId,
-    Version, WrappedOption,
+    ChatId, EventIndex, EventWrapper, Mention, Message, MessageIndex, MessageIndexRange, OptionUpdates, Role, TimestampMillis,
+    UserId, Version,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -102,6 +102,6 @@ pub struct GroupChatSummaryUpdates {
     pub participant_count: Option<u32>,
     pub role: Option<Role>,
     pub mentions: Vec<Mention>,
-    pub pinned_message: Option<WrappedOption<MessageIndex>>,
+    pub pinned_message: OptionUpdates<MessageIndex>,
     pub wasm_version: Option<Version>,
 }
