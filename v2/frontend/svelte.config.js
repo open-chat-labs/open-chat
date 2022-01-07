@@ -14,7 +14,7 @@ const preprocessOptions = {
     },
     scss: {
         // prependData: `@import 'v2/frontend/src/styles/mixins.scss';`,
-        prependData: `@import '${mixins}';`,
+        prependData: `@use 'sass:math'; @import '${mixins}';`,
     },
 };
 module.exports = {
