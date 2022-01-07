@@ -57,6 +57,10 @@ impl RuntimeState {
         self.env.caller() == self.data.user_index_canister_id
     }
 
+    pub fn is_group_public(&self) -> bool {
+        self.data.is_public
+    }
+
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
         let random = self.env.random_u32() as usize;
 
