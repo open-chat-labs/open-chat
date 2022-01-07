@@ -284,6 +284,7 @@ type GroupMessageNotification =
         sender_name: text;
         message: MessageEventWrapper;
         mentioned: vec User;
+        hide: bool;
     };
 
 type GroupNameChanged =
