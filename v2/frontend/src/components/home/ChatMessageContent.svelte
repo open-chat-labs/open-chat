@@ -12,7 +12,7 @@
     import type { MessageContent } from "../../domain/chat/chat";
     import { userStore } from "stores/user";
     import { _ } from "svelte-i18n";
-    import { parseMentions } from "domain/user/user.utils";
+    import { parseMentions } from "../../domain/user/user.utils";
 
     const SIZE_LIMIT = 1000;
     export let content: MessageContent;

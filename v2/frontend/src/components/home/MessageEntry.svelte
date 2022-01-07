@@ -16,6 +16,7 @@
     import MentionPicker from "./MentionPicker.svelte";
     import { userStore } from "stores/user";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
+    import type { User } from "../../domain/user/user";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -179,14 +180,18 @@
 
     // replace anything of the form @username with @UserId(xyz) where xyz is the userId
     // if we don't have the mapping, just leave it as is (we *will* have the mapping)
-    function expandMentions(text?: string): string | undefined {
-        return text?.replace(/@([\w\d_]*)/g, (match, p1) => {
+    function expandMentions(text?: string): [string | undefined, User[]] {
+        let mentioned: User[] = [];
+        let expandedText = text?.replace(/@([\w\d_]*)/g, (match, p1) => {
             const userId = reverseUserLookup[p1];
             if (userId !== undefined) {
+                mentioned.push({userId, username: p1});
                 return `@UserId(${userId})`;
             }
             return match;
         });
+
+       return [expandedText, mentioned];
     }
 
     function sendMessage() {

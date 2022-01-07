@@ -378,9 +378,11 @@ export const idlFactory = ({ IDL }) => {
     'Success' : SelectedUpdatesSuccess,
     'SuccessNoUpdates' : IDL.Null,
   });
+  const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const SendMessageArgs = IDL.Record({
     'content' : MessageContent,
+    'mentioned' : IDL.Vec(User),
     'sender_name' : IDL.Text,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(GroupReplyContext),

@@ -68,6 +68,7 @@ async fn get_updates_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         content: MessageContent::Text(TextContent { text: "3".to_string() }),
         sender_name: USER2_DEFAULT_NAME.to_string(),
         replies_to: None,
+        mentioned: vec![],
     };
     let result3 = send_group_message(&user2_agent, chat_id1, &group_message_args1).await;
 
@@ -76,6 +77,7 @@ async fn get_updates_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         content: MessageContent::Text(TextContent { text: "4".to_string() }),
         sender_name: USER2_DEFAULT_NAME.to_string(),
         replies_to: None,
+        mentioned: vec![],
     };
     let result4 = send_group_message(&user2_agent, chat_id2, &group_message_args2).await;
 

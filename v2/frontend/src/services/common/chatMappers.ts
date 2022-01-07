@@ -18,6 +18,7 @@ import type {
     CyclesTransfer,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
+import type { User } from "../../domain/user/user";
 import { UnsupportedValueError } from "../../utils/error";
 import { identity, optional } from "../../utils/mapping";
 import type {
@@ -37,6 +38,7 @@ import type {
     ApiICPTransfer,
     ApiCyclesTransfer,
     ApiMessageIndexRange,
+    ApiUser,
 } from "../user/candid/idl";
 
 export function message(candid: ApiMessage): Message {
@@ -89,6 +91,13 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
         return cryptoContent(candid.Cryptocurrency);
     }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
+}
+
+export function apiUser(domain: User): ApiUser {
+    return {
+        user_id: Principal.fromText(domain.userId),
+        username: domain.username,
+    };
 }
 
 function deletedContent(candid: ApiDeletedContent): DeletedContent {
@@ -445,6 +454,7 @@ function apiTextContent(domain: TextContent): ApiTextContent {
         text: domain.text,
     };
 }
+
 function apiFileContent(domain: FileContent): ApiFileContent {
     return {
         name: domain.name,

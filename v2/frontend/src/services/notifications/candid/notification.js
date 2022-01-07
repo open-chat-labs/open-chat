@@ -113,6 +113,9 @@ export const Notification = IDL.Variant({
     'sender_name' : IDL.Text,
   }),
   'GroupMessageNotification' : IDL.Record({
+    'mentioned' : IDL.Vec(
+      IDL.Record({ 'username' : IDL.Text, 'user_id' : IDL.Principal })
+    ),
     'sender' : IDL.Principal,
     'message' : IDL.Record({
       'event' : IDL.Record({

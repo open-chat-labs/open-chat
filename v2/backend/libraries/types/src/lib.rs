@@ -37,6 +37,7 @@ mod timestamped;
 mod transaction;
 mod user_id;
 mod user_preferences;
+mod user;
 mod user_summary;
 mod version;
 
@@ -76,6 +77,7 @@ pub use timestamped::*;
 pub use transaction::*;
 pub use user_id::*;
 pub use user_preferences::*;
+pub use user::*;
 pub use user_summary::*;
 pub use version::*;
 

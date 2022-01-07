@@ -7,7 +7,7 @@ use ic_fondue::ic_manager::IcHandle;
 use std::panic;
 use types::{
     CanisterId, ChatSummary, ChatSummaryUpdates, GroupChatEvent, MessageContent, SubscriptionInfo, SubscriptionKeys,
-    TextContent, UserId,
+    TextContent, User, UserId,
 };
 use user_canister::updates::{GroupChatUpdatesSince, UpdatesSince};
 
@@ -84,6 +84,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
             }),
             sender_name: "user2".to_owned(),
             replies_to: None,
+            mentioned: vec![],
         };
         send_group_message(&user2_agent, chat_id, &args).await;
         println!("Ok");
@@ -112,6 +113,10 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
             }),
             sender_name: "user2".to_owned(),
             replies_to: None,
+            mentioned: vec![User {
+                user_id: user1_id,
+                username: "Matt".to_owned(),
+            }],
         };
         send_group_message(&user2_agent, chat_id, &args).await;
         println!("Ok");
@@ -165,6 +170,10 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
             }),
             sender_name: "user2".to_owned(),
             replies_to: None,
+            mentioned: vec![User {
+                user_id: user1_id,
+                username: "Matt".to_owned(),
+            }],
         };
         send_group_message(&user2_agent, chat_id, &args).await;
         println!("Ok");

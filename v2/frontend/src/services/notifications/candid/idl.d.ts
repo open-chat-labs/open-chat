@@ -7,6 +7,7 @@ import {
     DirectMessageNotification,
     GroupMessageNotification,
     SubscriptionExistsResponse,
+    User,
 } from "./types";
 export {
     _SERVICE as NotificationsService,
@@ -16,6 +17,7 @@ export {
     DirectMessageNotification as ApiDirectMessageNotification,
     GroupMessageNotification as ApiGroupMessageNotification,
     SubscriptionExistsResponse as ApiSubscriptionExistsResponse,
+    User as ApiUser,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

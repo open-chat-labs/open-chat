@@ -600,13 +600,13 @@ export class ChatController {
         return getNextEventIndex(get(this.serverChatSummary), unconfirmed.getMessages(this.chatId));
     }
 
-    createMessage(textContent: string | null, fileToAttach: MessageContent | undefined): Message {
+    createMessage(textContent: string | undefined, fileToAttach: MessageContent | undefined): Message {
         const nextMessageIndex = this.getNextMessageIndex();
 
         return createMessage(
             this.user.userId,
             nextMessageIndex,
-            textContent ?? undefined,
+            textContent,
             get(this.replyingTo),
             fileToAttach
         );
