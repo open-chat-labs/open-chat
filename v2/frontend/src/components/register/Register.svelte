@@ -40,7 +40,9 @@
 </script>
 
 <ModalPage {bgClass} minHeight="380px">
-    {#if state.kind === "awaiting_completion"}
+    {#if state.kind === "verifying" || state.kind === "awaiting_canister"}
+        <div class="spinner" />
+    {:else if state.kind === "awaiting_completion"}
         <Complete on:complete />
     {:else}
         {#if canGoBack}
@@ -50,11 +52,7 @@
         {/if}
         <h4 class="subtitle">{$_("register.registerUser")}</h4>
         <Logo />
-        {#if state.kind === "awaiting_canister"}
-            <h3 class="title">
-                {$_("register.preparingUser")}
-            </h3>
-        {:else if state.kind === "choose_registration_path"}
+        {#if state.kind === "choose_registration_path"}
             <ChoosePath on:choosePhoneVerification on:chooseTransfer />
         {:else if state.kind === "awaiting_cycles_transfer_confirmation"}
             <ConfirmTransfer
@@ -88,10 +86,6 @@
                 on:submitCode
                 on:resendCode
                 on:changePhoneNumber />
-        {:else if state.kind === "verifying"}
-            <div class="spinner" />
-        {:else if state.kind === "awaiting_canister"}
-            <div class="spinner" />
         {:else if state.kind === "awaiting_username"}
             <EnterUsername {username} {error} on:submitUsername regState={state.regState} />
         {/if}
@@ -110,9 +104,10 @@
 
 <style type="text/scss">
     .spinner {
-        height: 150px;
+        margin-top: auto;
+        margin-bottom: auto;
         width: 100%;
-        @include loading-spinner(3em, 1.5em, false, var(--button-bg));
+        @include loading-spinner(5em, 2.5em, false, var(--button-bg));
     }
 
     .how-to {
