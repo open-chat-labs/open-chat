@@ -2,7 +2,9 @@ use crate::{read_state, RuntimeState, WASM_VERSION};
 use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
-use types::{Avatar, EventIndex, EventWrapper, Mention, Message, MessageIndex, TimestampMillis, MAX_RETURNED_MENTIONS};
+use types::{
+    Avatar, EventIndex, EventWrapper, Mention, Message, MessageIndex, TimestampMillis, WrappedOption, MAX_RETURNED_MENTIONS,
+};
 
 #[query]
 fn c2c_summary_updates(args: Args) -> Response {
@@ -33,6 +35,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             },
             role: if updates_from_events.role_changed { Some(participant.role) } else { None },
             mentions: updates_from_events.mentions,
+            pinned_message: updates_from_events.pinned_message,
             wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(args.updates_since).copied()),
         };
         Success(Box::new(SuccessResult { updates }))
@@ -52,6 +55,7 @@ struct UpdatesFromEvents {
     participants_changed: bool,
     role_changed: bool,
     mentions: Vec<Mention>,
+    pinned_message: Option<WrappedOption<MessageIndex>>,
 }
 
 fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_mentions: &[MessageIndex]) -> UpdatesFromEvents {
@@ -102,6 +106,11 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
             | ChatEventInternal::UsersBlocked(_)
             | ChatEventInternal::UsersUnblocked(_) => {
                 updates.participants_changed = true;
+            }
+            ChatEventInternal::PinnedMessageUpdated(p) => {
+                if updates.pinned_message.is_none() {
+                    updates.pinned_message = Some(p.new_value.into());
+                }
             }
             ChatEventInternal::Message(message) => {
                 lowest_message_index = message.message_index;

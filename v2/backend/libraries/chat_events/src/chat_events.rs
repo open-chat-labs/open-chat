@@ -49,6 +49,7 @@ pub enum ChatEventInternal {
     ParticipantsDismissedAsAdmin(Box<ParticipantsDismissedAsAdmin>),
     UsersBlocked(Box<UsersBlocked>),
     UsersUnblocked(Box<UsersUnblocked>),
+    PinnedMessageUpdated(Box<PinnedMessageUpdated>),
 }
 
 impl ChatEventInternal {
@@ -88,6 +89,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::ParticipantsDismissedAsAdmin(_)
                 | ChatEventInternal::UsersBlocked(_)
                 | ChatEventInternal::UsersUnblocked(_)
+                | ChatEventInternal::PinnedMessageUpdated(_)
         )
     }
 }

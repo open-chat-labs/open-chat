@@ -69,12 +69,16 @@ impl Role {
         self.has_admin_rights()
     }
 
-    pub fn can_delete_group(&self) -> bool {
-        self.has_owner_rights()
+    pub fn can_set_pinned_message(&self) -> bool {
+        self.has_admin_rights()
     }
 
     pub fn can_delete_messages(&self) -> bool {
         self.has_admin_rights()
+    }
+
+    pub fn can_delete_group(&self) -> bool {
+        self.has_owner_rights()
     }
 
     pub fn can_transfer_ownership(&self) -> bool {

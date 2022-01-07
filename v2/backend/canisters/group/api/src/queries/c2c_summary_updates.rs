@@ -31,6 +31,7 @@ pub struct SummaryUpdates {
     pub participant_count: Option<u32>,
     pub role: Option<Role>,
     pub mentions: Vec<Mention>,
+    pub pinned_message: Option<WrappedOption<MessageIndex>>,
     pub wasm_version: Option<Version>,
 }
 
@@ -49,6 +50,7 @@ impl From<SummaryUpdates> for GroupChatSummaryUpdates {
             read_by_me: None,
             notifications_muted: None,
             mentions: s.mentions,
+            pinned_message: s.pinned_message,
             wasm_version: s.wasm_version,
         }
     }

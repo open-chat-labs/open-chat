@@ -13,6 +13,7 @@ pub mod edit_message;
 pub mod make_admin;
 pub mod remove_participant;
 pub mod send_message;
+pub mod set_pinned_message;
 pub mod toggle_reaction;
 pub mod transfer_ownership;
 pub mod unblock_user;

@@ -17,6 +17,7 @@ mod edit_message;
 mod make_admin;
 mod remove_participant;
 mod send_message;
+mod set_pinned_message;
 mod toggle_reaction;
 mod transfer_ownership;
 mod unblock_user;

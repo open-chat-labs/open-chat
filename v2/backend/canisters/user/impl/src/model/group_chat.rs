@@ -43,6 +43,7 @@ impl From<&GroupChat> for GroupChatSummaryUpdates {
             read_by_me: Some(convert_to_message_index_ranges(s.read_by_me.value.clone())),
             notifications_muted: Some(s.notifications_muted.value),
             mentions: Vec::new(),
+            pinned_message: None,
             wasm_version: None,
         }
     }

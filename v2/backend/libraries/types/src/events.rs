@@ -1,4 +1,4 @@
-use crate::{EventIndex, Message, MessageId, UserId};
+use crate::{EventIndex, Message, MessageId, MessageIndex, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -25,6 +25,7 @@ pub enum GroupChatEvent {
     MessageDeleted(UpdatedMessage),
     MessageReactionAdded(UpdatedMessage),
     MessageReactionRemoved(UpdatedMessage),
+    PinnedMessageUpdated(PinnedMessageUpdated),
 }
 
 impl GroupChatEvent {
@@ -134,6 +135,12 @@ pub struct ParticipantDismissedAsSuperAdmin {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ParticipantRelinquishesSuperAdmin {
     pub user_id: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PinnedMessageUpdated {
+    pub new_value: Option<MessageIndex>,
+    pub updated_by: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

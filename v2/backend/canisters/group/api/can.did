@@ -226,6 +226,7 @@ type SelectedInitialSuccess =
         latest_event_index: EventIndex;
         participants: vec Participant;
         blocked_users: vec UserId;
+        pinned_message: opt MessageIndexOption;
     };
 
 type SelectedInitialResponse =
@@ -246,6 +247,7 @@ type SelectedUpdatesSuccess =
         participants_removed: vec UserId;
         blocked_users_added: vec UserId;
         blocked_users_removed: vec UserId;
+        pinned_message: opt MessageIndex;
     };
 
 type SelectedUpdatesResponse =
@@ -253,6 +255,11 @@ type SelectedUpdatesResponse =
         Success: SelectedUpdatesSuccess;
         SuccessNoUpdates;
         CallerNotInGroup;
+    };
+
+type MessageIndexOption =
+    record {
+        value: opt MessageIndex;
     };
 
 type EventsArgs =
