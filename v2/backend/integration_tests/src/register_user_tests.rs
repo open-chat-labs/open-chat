@@ -3,7 +3,7 @@ use canister_client::operations::*;
 use canister_client::utils::{build_ic_agent, build_identity, build_management_canister};
 use canister_client::TestIdentity;
 use ic_fondue::ic_manager::IcHandle;
-use types::Cycles;
+use types::{Cryptocurrency, Cycles, RegistrationFee};
 
 pub fn register_user_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(register_user_tests_impl(handle, ctx));
@@ -68,9 +68,11 @@ async fn register_user_by_paying_cycles_tests_impl(handle: IcHandle, ctx: &fondu
     let management_canister = build_management_canister(&agent);
     let cycles_wallet_canister_id = create_cycles_wallet(&management_canister).await;
 
-    print!("Generating a registration fee... ");
+    print!("Generating a cycles registration fee... ");
     let fee: Cycles;
-    let generate_registration_fee_args = user_index_canister::generate_registration_fee::Args {};
+    let generate_registration_fee_args = user_index_canister::generate_registration_fee::Args {
+        currency: Cryptocurrency::Cycles,
+    };
     match user_index_canister_client::generate_registration_fee(
         &agent,
         &canister_ids.user_index,
@@ -80,7 +82,12 @@ async fn register_user_by_paying_cycles_tests_impl(handle: IcHandle, ctx: &fondu
     .unwrap()
     {
         user_index_canister::generate_registration_fee::Response::Success(r) => {
-            fee = r.amount;
+            if let RegistrationFee::Cycles(f) = r.fee {
+                assert_eq!(f.recipient, canister_ids.user_index);
+                fee = f.amount;
+            } else {
+                panic!("GenerateRegistrationFee returned an unexpected response: {:?}", r);
+            }
         }
         response => panic!("GenerateRegistrationFee returned an error: {:?}", response),
     };
