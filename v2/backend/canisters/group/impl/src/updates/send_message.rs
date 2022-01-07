@@ -1,13 +1,10 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use candid::Principal;
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
-use lazy_static::lazy_static;
-use regex::Regex;
-use types::{ContentValidationError, GroupMessageNotification, MessageContent, Notification, UserId};
+use types::{ContentValidationError, GroupMessageNotification, Notification};
 
 #[update]
 #[trace]
@@ -29,7 +26,6 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let now = runtime_state.env.now();
         let sender = participant.user_id;
-        let mentioned_users = extract_mentioned_users(&args.content);
 
         let push_message_args = PushMessageArgs {
             sender,
@@ -46,22 +42,23 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let event_index = message_event.index;
         let message_index = message_event.event.message_index;
 
+        let mut notification_recipients = runtime_state.data.participants.users_to_notify(sender);
+
+        for u in &args.mentioned {
+            if runtime_state.data.participants.add_mention(&u.user_id, message_index) {
+                // Also notify any mentioned participants regardless of whether they have muted notifications for the group
+                notification_recipients.insert(u.user_id);
+            }
+        }
+
         let notification = Notification::GroupMessageNotification(GroupMessageNotification {
             chat_id: runtime_state.env.canister_id().into(),
             group_name: runtime_state.data.name.clone(),
             sender,
             sender_name: args.sender_name,
             message: message_event,
+            mentioned: args.mentioned,
         });
-
-        let mut notification_recipients = runtime_state.data.participants.users_to_notify(sender);
-
-        // Also notify any mentioned participants regardless of whether they have muted notifications for the group
-        for u in mentioned_users {
-            if runtime_state.data.participants.add_mention(&u, message_index) {
-                notification_recipients.insert(u);
-            }
-        }
 
         runtime_state.push_notification(notification_recipients.into_iter().collect(), notification);
 
@@ -72,49 +69,5 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         })
     } else {
         CallerNotInGroup
-    }
-}
-
-fn extract_mentioned_users(content: &MessageContent) -> Vec<UserId> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"@UserId\(([^\)]*)\)").unwrap();
-    }
-
-    let text = match content {
-        MessageContent::Text(m) => Some(&m.text),
-        MessageContent::Image(m) => m.caption.as_ref(),
-        MessageContent::Video(m) => m.caption.as_ref(),
-        MessageContent::Audio(m) => m.caption.as_ref(),
-        MessageContent::File(m) => m.caption.as_ref(),
-        MessageContent::Cryptocurrency(m) => m.caption.as_ref(),
-        _ => None,
-    };
-
-    if let Some(text) = text {
-        RE.captures_iter(text)
-            .filter_map(|cap| Principal::from_text(&cap[1]).ok())
-            .map(|p| p.into())
-            .collect()
-    } else {
-        Vec::new()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use types::TextContent;
-
-    #[test]
-    fn text_extract_mentioned_users() {
-        let message = "Hey @UserId(qoctq-giaaa-aaaaa-aaaea-cai), \n@UserId(renrk-eyaaa-aaaaa-aaada-cai), check this out";
-        let content = MessageContent::Text(TextContent {
-            text: message.to_owned(),
-        });
-        let users = extract_mentioned_users(&content);
-
-        assert_eq!(2, users.len());
-        assert_eq!("qoctq-giaaa-aaaaa-aaaea-cai".to_owned(), users[0].to_string());
-        assert_eq!("renrk-eyaaa-aaaaa-aaada-cai".to_owned(), users[1].to_string());
     }
 }

@@ -22,6 +22,7 @@ import type {
     TransferOwnershipResponse,
     DeleteGroupResponse,
 } from "../../domain/chat/chat";
+import type { User } from "../../domain/user/user";
 import { CandidService } from "../candidService";
 import {
     addParticipantsResponse,
@@ -45,7 +46,7 @@ import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
 import type { Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
-import { apiMessageContent, apiOptional } from "../common/chatMappers";
+import { apiMessageContent, apiOptional, apiUser } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import {
     enoughVisibleMessages,
@@ -194,7 +195,8 @@ export class GroupClient extends CandidService implements IGroupClient {
                 );
             });
     }
-    sendMessage(senderName: string, message: Message): Promise<SendMessageResponse> {
+    
+    sendMessage(senderName: string, mentioned: User[], message: Message): Promise<SendMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.chatId])
             .then(() => {
@@ -209,6 +211,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                             }),
                             message.repliesTo
                         ),
+                        mentioned: mentioned.map(apiUser),
                     }),
                     sendMessageResponse
                 );

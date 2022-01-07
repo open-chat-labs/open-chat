@@ -1,3 +1,4 @@
+import type { User } from "../../domain/user/user";
 import type { EventWrapper, Message } from "../chat/chat";
 
 export type Notification = AddedToGroupNotification | DirectNotification | GroupNotification;
@@ -24,6 +25,7 @@ export type GroupNotification = {
     senderName: string;
     chatId: string;
     groupName: string;
+    mentioned: User[],
 };
 
 export type SubscriptionExistsResponse = boolean;

@@ -69,6 +69,7 @@ import {
     Role,
     Mention,
     MessageIndexRange,
+    User,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -140,6 +141,7 @@ export {
     Role as ApiRole,
     Mention as ApiMention,
     MessageIndexRange as ApiMessageIndexRange,
+    User as ApiUser,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -324,6 +324,7 @@ export interface GroupDescriptionChanged {
   'changed_by' : UserId,
 }
 export interface GroupMessageNotification {
+  'mentioned' : Array<User>,
   'sender' : UserId,
   'message' : MessageEventWrapper,
   'sender_name' : string,
@@ -593,6 +594,7 @@ export interface UserArgs {
   'user_id' : [] | [UserId],
 }
 export type UserId = CanisterId;
+export interface User { 'username' : string, 'user_id' : UserId }
 export type UserResponse = { 'Success' : UserSummary } |
   { 'UserNotFound' : null };
 export interface UserSummary {

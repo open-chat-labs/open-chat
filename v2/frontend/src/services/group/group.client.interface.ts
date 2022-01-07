@@ -1,3 +1,4 @@
+import type { User } from "../../domain/user/user";
 import type {
     AddParticipantsResponse,
     EventsResponse,
@@ -39,7 +40,7 @@ export interface IGroupClient {
         myUsername: string,
         allowBlocked: boolean
     ): Promise<AddParticipantsResponse>;
-    sendMessage(senderName: string, message: Message): Promise<SendMessageResponse>;
+    sendMessage(senderName: string, mentioned: User[], message: Message): Promise<SendMessageResponse>;
     editMessage(message: Message): Promise<EditMessageResponse>;
     makeAdmin(userId: string): Promise<MakeAdminResponse>;
     dismissAsAdmin(userId: string): Promise<DismissAdminResponse>;

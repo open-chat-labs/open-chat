@@ -14,6 +14,7 @@ import type {
     RegistrationFeeResponse,
     FeeCurrency,
     NotificationFeePaidResponse,
+    User,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -125,9 +126,9 @@ export class ServiceContainer implements MarkMessagesRead {
         throw new UnsupportedValueError("Unexpect chat type", chat);
     }
 
-    sendMessage(chat: ChatSummary, user: UserSummary, msg: Message): Promise<SendMessageResponse> {
+    sendMessage(chat: ChatSummary, user: UserSummary, mentioned: User[], msg: Message): Promise<SendMessageResponse> {
         if (chat.kind === "group_chat") {
-            return this.sendGroupMessage(chat.chatId, user.username, msg);
+            return this.sendGroupMessage(chat.chatId, user.username, mentioned, msg);
         }
         if (chat.kind === "direct_chat") {
             const replyingToChatId =
@@ -144,9 +145,10 @@ export class ServiceContainer implements MarkMessagesRead {
     private sendGroupMessage(
         chatId: string,
         senderName: string,
+        mentioned: User[],
         message: Message
     ): Promise<SendMessageResponse> {
-        return this.getGroupClient(chatId).sendMessage(senderName, message);
+        return this.getGroupClient(chatId).sendMessage(senderName, mentioned, message);
     }
 
     private editGroupMessage(chatId: string, message: Message): Promise<EditMessageResponse> {

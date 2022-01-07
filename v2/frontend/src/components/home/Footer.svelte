@@ -9,6 +9,7 @@
     import { rollbar } from "../../utils/logging";
     import Loading from "../Loading.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
+    import type { User } from "../../domain/user/user";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -24,7 +25,7 @@
     }
 
     function editMessageWithAttachment(
-        textContent: string | null,
+        textContent: string | undefined,
         fileToAttach: MessageContent | undefined,
         editingEvent: EventWrapper<Message>
     ) {
@@ -54,7 +55,8 @@
     }
 
     function sendMessageWithAttachment(
-        textContent: string | null,
+        textContent: string | undefined,
+        mentioned: User[],
         fileToAttach: MessageContent | undefined
     ) {
         if (textContent || fileToAttach) {
@@ -62,7 +64,7 @@
 
             const msg = controller.createMessage(textContent, fileToAttach);
             controller.api
-                .sendMessage($chat, controller.user, msg)
+                .sendMessage($chat, controller.user, mentioned, msg)
                 .then((resp) => {
                     if (resp.kind === "success") {
                         controller.confirmMessage(msg, resp);
@@ -84,11 +86,12 @@
         }
     }
 
-    function sendMessage(ev: CustomEvent<string | null>) {
+    function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
+        let [text, mentioned] = ev.detail;
         if ($editingEvent !== undefined) {
-            editMessageWithAttachment(ev.detail, $fileToAttach, $editingEvent);
+            editMessageWithAttachment(text, $fileToAttach, $editingEvent);
         } else {
-            sendMessageWithAttachment(ev.detail, $fileToAttach);
+            sendMessageWithAttachment(text, mentioned, $fileToAttach);
         }
     }
 

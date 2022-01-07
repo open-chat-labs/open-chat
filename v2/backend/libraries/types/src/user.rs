@@ -29,3 +29,9 @@ impl Display for UserId {
         std::fmt::Display::fmt(&self.0, f)
     }
 }
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct User {
+    pub user_id: UserId,
+    pub username: String,
+}

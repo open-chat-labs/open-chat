@@ -87,6 +87,7 @@ export function groupNotification(candid: ApiGroupMessageNotification): GroupNot
         senderName: candid.sender_name,
         chatId: candid.chat_id.toString(),
         groupName: candid.group_name,
+        mentioned: candid.mentioned.map(m => ({ userId: m.user_id.toText(), username: m.username})),
     };
 }
 
