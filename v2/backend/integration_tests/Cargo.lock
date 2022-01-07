@@ -2477,6 +2477,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-cdk"
+version = "0.3.3"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=4631c0312db3a5abbf21f9338534bcdbfa1a005b#4631c0312db3a5abbf21f9338534bcdbfa1a005b"
+dependencies = [
+ "candid",
+ "cfg-if 1.0.0",
+ "serde",
+]
+
+[[package]]
 name = "ic-certified-vars"
 version = "0.8.0"
 source = "git+ssh://github.com/dfinity-lab/dfinity?rev=e2ae8ea3958cf16e5116acae513cacb7cb6c6b92#e2ae8ea3958cf16e5116acae513cacb7cb6c6b92"
@@ -3338,6 +3348,19 @@ dependencies = [
  "rand 0.7.3",
  "serde",
  "serde_bytes",
+]
+
+[[package]]
+name = "ic-ledger-types"
+version = "0.1.0"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=4631c0312db3a5abbf21f9338534bcdbfa1a005b#4631c0312db3a5abbf21f9338534bcdbfa1a005b"
+dependencies = [
+ "candid",
+ "crc32fast",
+ "hex",
+ "ic-cdk",
+ "serde",
+ "sha2",
 ]
 
 [[package]]
@@ -7457,6 +7480,7 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "ic-ledger-types",
  "serde",
  "serde_bytes",
 ]
@@ -7571,6 +7595,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "ic-ledger-types",
  "serde",
  "serde_bytes",
  "types",
