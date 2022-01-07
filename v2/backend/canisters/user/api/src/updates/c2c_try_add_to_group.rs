@@ -1,10 +1,11 @@
 use candid::{CandidType, Principal};
 use serde::Deserialize;
-use types::UserId;
+use types::{MessageIndex, UserId};
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct Args {
     pub added_by: UserId,
+    pub latest_message_index: Option<MessageIndex>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

@@ -2,7 +2,7 @@ use crate::model::group_chat::GroupChat;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, TimestampMillis};
+use types::{ChatId, MessageIndex, TimestampMillis};
 
 const MAX_GROUPS_PER_USER: u32 = 10;
 
@@ -42,16 +42,22 @@ impl GroupChats {
         if self.groups_created >= MAX_GROUPS_PER_USER {
             false
         } else {
-            self.join(chat_id, false, now);
+            self.join(chat_id, false, None, now);
             self.groups_created += 1;
             true
         }
     }
 
-    pub fn join(&mut self, chat_id: ChatId, as_super_admin: bool, now: TimestampMillis) -> bool {
+    pub fn join(
+        &mut self,
+        chat_id: ChatId,
+        as_super_admin: bool,
+        read_up_to: Option<MessageIndex>,
+        now: TimestampMillis,
+    ) -> bool {
         match self.group_chats.entry(chat_id) {
             Vacant(e) => {
-                e.insert(GroupChat::new(chat_id, as_super_admin, now));
+                e.insert(GroupChat::new(chat_id, as_super_admin, read_up_to, now));
                 self.removed.retain(|g| g.chat_id != chat_id);
                 true
             }

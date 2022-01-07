@@ -79,7 +79,9 @@ fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Resp
 
                 handle_activity_notification(runtime_state);
 
-                Success(SuccessResult {})
+                Success(SuccessResult {
+                    latest_message_index: runtime_state.data.events.latest_message_index(),
+                })
             }
             AddResult::AlreadyInGroup => AlreadyInGroup,
             AddResult::Blocked => Blocked,

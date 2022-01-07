@@ -1,5 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::Deserialize;
+use types::MessageIndex;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -19,4 +20,6 @@ pub enum Response {
 }
 
 #[derive(CandidType, Deserialize, Debug)]
-pub struct SuccessResult {}
+pub struct SuccessResult {
+    pub latest_message_index: Option<MessageIndex>,
+}
