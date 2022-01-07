@@ -1,4 +1,5 @@
 use candid::Principal;
+use ic_ledger_types::Tokens;
 
 mod alert;
 mod avatar;
@@ -80,8 +81,8 @@ pub use user_preferences::*;
 pub use user_summary::*;
 pub use version::*;
 
-pub type BlockHeight = u64;
 pub type CanisterId = Principal;
+pub type ICP = Tokens;
 pub type Milliseconds = u64;
 pub type TimestampMillis = u64;
 pub type TimestampNanos = u64;

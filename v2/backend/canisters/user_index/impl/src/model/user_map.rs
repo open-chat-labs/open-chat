@@ -406,9 +406,9 @@ pub enum UpdateUserResult {
 mod tests {
     use super::*;
     use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedPhoneNumber, UnconfirmedUser};
-    use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
+    use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
     use itertools::Itertools;
-    use types::{CanisterCreationStatusInternal, CyclesRegistrationFee, ICPRegistrationFee, RegistrationFee};
+    use types::{CanisterCreationStatusInternal, CyclesRegistrationFee, ICPRegistrationFee, RegistrationFee, ICP};
 
     #[test]
     fn add_with_no_clashes() {
@@ -974,7 +974,7 @@ mod tests {
         };
 
         let icp_fee = RegistrationFee::ICP(ICPRegistrationFee {
-            amount: Tokens::from_e8s(2),
+            amount: ICP::from_e8s(2),
             recipient: AccountIdentifier::new(&Principal::anonymous(), &DEFAULT_SUBACCOUNT),
             valid_until: 2,
         });
