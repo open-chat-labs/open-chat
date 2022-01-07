@@ -1,6 +1,6 @@
-use crate::{CanisterId, Cycles, TimestampMillis};
+use crate::{CanisterId, Cycles, TimestampMillis, ICP};
 use candid::CandidType;
-use ic_ledger_types::{AccountIdentifier, Tokens};
+use ic_ledger_types::AccountIdentifier;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -20,7 +20,7 @@ impl RegistrationFee {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ICPRegistrationFee {
-    pub amount: Tokens,
+    pub amount: ICP,
     pub recipient: AccountIdentifier,
     pub valid_until: TimestampMillis,
 }

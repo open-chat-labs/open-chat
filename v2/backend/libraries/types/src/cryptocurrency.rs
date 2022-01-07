@@ -1,5 +1,6 @@
-use crate::{BlockHeight, CanisterId, Cycles, UserId};
+use crate::{CanisterId, Cycles, UserId, ICP};
 use candid::CandidType;
+use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo};
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
@@ -9,9 +10,9 @@ pub enum Cryptocurrency {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CryptocurrencyAccount {
-    pub currency: Cryptocurrency,
-    pub address: String,
+pub enum CryptocurrencyAccount {
+    ICP(AccountIdentifier),
+    Cycles(CanisterId),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -51,11 +52,11 @@ pub enum ICPDeposit {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CompletedICPDeposit {
-    pub from_address: String,
-    pub amount_e8s: u64,
-    pub fee_e8s: u64,
-    pub memo: u64,
-    pub block_height: BlockHeight,
+    pub from_address: AccountIdentifier,
+    pub amount: ICP,
+    pub fee: ICP,
+    pub memo: Memo,
+    pub block_index: BlockIndex,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -93,27 +94,27 @@ pub enum ICPWithdrawal {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PendingICPWithdrawal {
-    pub to: String,
-    pub amount_e8s: u64,
-    pub fee_e8s: Option<u64>,
-    pub memo: Option<u64>,
+    pub to: AccountIdentifier,
+    pub amount: ICP,
+    pub fee: Option<ICP>,
+    pub memo: Option<Memo>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CompletedICPWithdrawal {
-    pub to: String,
-    pub amount_e8s: u64,
-    pub fee_e8s: u64,
-    pub memo: u64,
-    pub block_height: BlockHeight,
+    pub to: AccountIdentifier,
+    pub amount: ICP,
+    pub fee: ICP,
+    pub memo: Memo,
+    pub block_index: BlockIndex,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FailedICPWithdrawal {
-    pub to: String,
-    pub amount_e8s: u64,
-    pub fee_e8s: u64,
-    pub memo: u64,
+    pub to: AccountIdentifier,
+    pub amount: ICP,
+    pub fee: ICP,
+    pub memo: Memo,
     pub error_message: String,
 }
 
@@ -127,7 +128,7 @@ impl CryptocurrencyTransfer {
     pub fn is_zero(&self) -> bool {
         match self {
             CryptocurrencyTransfer::Cycles(c) => c.cycles() == 0,
-            CryptocurrencyTransfer::ICP(icp) => icp.amount_e8s() == 0,
+            CryptocurrencyTransfer::ICP(icp) => icp.amount().e8s() == 0,
         }
     }
 }
@@ -195,11 +196,11 @@ pub enum ICPTransfer {
 }
 
 impl ICPTransfer {
-    pub fn amount_e8s(&self) -> u64 {
+    pub fn amount(&self) -> ICP {
         match self {
-            Self::Pending(t) => t.amount_e8s,
-            Self::Completed(t) => t.amount_e8s,
-            Self::Failed(t) => t.amount_e8s,
+            Self::Pending(t) => t.amount,
+            Self::Completed(t) => t.amount,
+            Self::Failed(t) => t.amount,
         }
     }
 }
@@ -207,28 +208,28 @@ impl ICPTransfer {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PendingICPTransfer {
     pub recipient: UserId,
-    pub amount_e8s: u64,
-    pub fee_e8s: Option<u64>,
-    pub memo: Option<u64>,
+    pub amount: ICP,
+    pub fee: Option<ICP>,
+    pub memo: Option<Memo>,
 }
 
 impl PendingICPTransfer {
-    pub fn completed(&self, sender: UserId, fee_e8s: u64, memo: u64, block_height: BlockHeight) -> CompletedICPTransfer {
+    pub fn completed(&self, sender: UserId, fee: ICP, memo: Memo, block_index: BlockIndex) -> CompletedICPTransfer {
         CompletedICPTransfer {
             sender,
             recipient: self.recipient,
-            amount_e8s: self.amount_e8s,
-            fee_e8s,
+            amount: self.amount,
+            fee,
             memo,
-            block_height,
+            block_index,
         }
     }
 
-    pub fn failed(&self, fee_e8s: u64, memo: u64, error_message: String) -> FailedICPTransfer {
+    pub fn failed(&self, fee: ICP, memo: Memo, error_message: String) -> FailedICPTransfer {
         FailedICPTransfer {
             recipient: self.recipient,
-            amount_e8s: self.amount_e8s,
-            fee_e8s,
+            amount: self.amount,
+            fee,
             memo,
             error_message,
         }
@@ -239,17 +240,17 @@ impl PendingICPTransfer {
 pub struct CompletedICPTransfer {
     pub sender: UserId,
     pub recipient: UserId,
-    pub amount_e8s: u64,
-    pub fee_e8s: u64,
-    pub memo: u64,
-    pub block_height: BlockHeight,
+    pub amount: ICP,
+    pub fee: ICP,
+    pub memo: Memo,
+    pub block_index: BlockIndex,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FailedICPTransfer {
     pub recipient: UserId,
-    pub amount_e8s: u64,
-    pub fee_e8s: u64,
-    pub memo: u64,
+    pub amount: ICP,
+    pub fee: ICP,
+    pub memo: Memo,
     pub error_message: String,
 }

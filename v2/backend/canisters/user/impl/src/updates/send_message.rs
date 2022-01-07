@@ -3,9 +3,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
-use ic_ledger_types::{
-    AccountIdentifier, Memo, Tokens, TransferArgs, DEFAULT_FEE, DEFAULT_SUBACCOUNT, MAINNET_LEDGER_CANISTER_ID,
-};
+use ic_ledger_types::{AccountIdentifier, Memo, TransferArgs, DEFAULT_FEE, DEFAULT_SUBACCOUNT, MAINNET_LEDGER_CANISTER_ID};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{
@@ -186,20 +184,20 @@ async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> 
         )
     });
 
-    let memo = Memo(pending_transfer.memo.unwrap_or(DEFAULT_MEMO));
-    let fee = pending_transfer.fee_e8s.map_or(DEFAULT_FEE, Tokens::from_e8s);
+    let memo = pending_transfer.memo.unwrap_or(Memo(DEFAULT_MEMO));
+    let fee = pending_transfer.fee.unwrap_or(DEFAULT_FEE);
 
     let transfer_args = TransferArgs {
         memo,
-        amount: Tokens::from_e8s(pending_transfer.amount_e8s),
+        amount: pending_transfer.amount,
         fee,
         from_subaccount: None,
         to: AccountIdentifier::new(&pending_transfer.recipient.into(), &DEFAULT_SUBACCOUNT),
         created_at_time: None,
     };
     match ic_ledger_types::transfer(MAINNET_LEDGER_CANISTER_ID, transfer_args).await {
-        Ok(Ok(block_height)) => {
-            let completed_transfer = pending_transfer.completed(my_user_id, fee.e8s(), memo.0, block_height);
+        Ok(Ok(block_index)) => {
+            let completed_transfer = pending_transfer.completed(my_user_id, fee, memo, block_index);
             mutate_state(|state| {
                 update_transaction(
                     index,
@@ -211,7 +209,7 @@ async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> 
         }
         Ok(Err(transfer_error)) => {
             let error_message = format!("Transfer failed. {:?}", transfer_error);
-            let failed_transfer = pending_transfer.failed(fee.e8s(), memo.0, error_message.clone());
+            let failed_transfer = pending_transfer.failed(fee, memo, error_message.clone());
             mutate_state(|state| {
                 update_transaction(
                     index,
@@ -223,7 +221,7 @@ async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> 
         }
         Err((code, msg)) => {
             let error_message = format!("Transfer failed. {:?}: {}", code, msg);
-            let failed_transfer = pending_transfer.failed(fee.e8s(), memo.0, error_message.clone());
+            let failed_transfer = pending_transfer.failed(fee, memo, error_message.clone());
             mutate_state(|state| {
                 update_transaction(
                     index,

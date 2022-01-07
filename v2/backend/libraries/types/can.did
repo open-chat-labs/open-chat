@@ -1,9 +1,11 @@
-type AccountIdentifier = text;
-type BlockHeight = nat64;
+type AccountIdentifier = blob;
+type BlockIndex = nat64;
 type CanisterId = principal;
 type ChatId = CanisterId;
 type Cycles = nat;
 type EventIndex = nat32;
+type ICP = record { e8s: nat64; };
+type Memo = nat64;
 type MessageId = nat;
 type MessageIndex = nat32;
 type Milliseconds = nat64;
@@ -447,10 +449,8 @@ type RegistrationFee =
 
 type ICPRegistrationFee =
     record {
-        amount: record {
-            e8s: nat64;
-        };
-        recipient: blob;
+        amount: ICP;
+        recipient: AccountIdentifier;
         valid_until: TimestampMillis;
     };
 
@@ -540,9 +540,9 @@ type Cryptocurrency =
     };
 
 type CryptocurrencyAccount =
-    record {
-        currency: Cryptocurrency;
-        address: text;
+    variant {
+        ICP: AccountIdentifier;
+        Cycles: CanisterId;
     };
 
 type CryptocurrencyTransaction =
@@ -582,11 +582,11 @@ type ICPDeposit =
 
 type CompletedICPDeposit =
     record {
-        from_address: text;
-        amount_e8s: nat64;
-        fee_e8s: nat64;
-        memo: nat64;
-        block_height: BlockHeight;
+        from_address: AccountIdentifier;
+        amount: ICP;
+        fee: ICP;
+        memo: Memo;
+        block_index: BlockIndex;
     };
 
 type CyclesWithdrawal =
@@ -624,27 +624,27 @@ type ICPWithdrawal =
 
 type PendingICPWithdrawal =
     record {
-        to: text;
-        amount_e8s: nat64;
-        fee_e8s: opt nat64;
-        memo: opt nat64;
+        to: AccountIdentifier;
+        amount: ICP;
+        fee: opt ICP;
+        memo: opt Memo;
     };
 
 type CompletedICPWithdrawal =
     record {
-        to: text;
-        amount_e8s: nat64;
-        fee_e8s: nat64;
-        memo: nat64;
-        block_height: BlockHeight;
+        to: AccountIdentifier;
+        amount: ICP;
+        fee: ICP;
+        memo: Memo;
+        block_index: BlockIndex;
     };
 
 type FailedICPWithdrawal =
     record {
-        to: text;
-        amount_e8s: nat64;
-        fee_e8s: nat64;
-        memo: nat64;
+        to: AccountIdentifier;
+        amount: ICP;
+        fee: ICP;
+        memo: Memo;
         error_message: text;
     };
 
@@ -691,27 +691,27 @@ type ICPTransfer =
 type PendingICPTransfer =
     record {
         recipient: UserId;
-        amount_e8s: nat64;
-        fee_e8s: opt nat64;
-        memo: opt nat64;
+        amount: ICP;
+        fee: opt ICP;
+        memo: opt Memo;
     };
 
 type CompletedICPTransfer =
     record {
         sender: UserId;
         recipient: UserId;
-        amount_e8s: nat64;
-        fee_e8s: nat64;
-        memo: nat64;
-        block_height: BlockHeight;
+        amount: ICP;
+        fee: ICP;
+        memo: Memo;
+        block_index: BlockIndex;
     };
 
 type FailedICPTransfer =
     record {
         recipient: UserId;
-        amount_e8s: nat64;
-        fee_e8s: nat64;
-        memo: nat64;
+        amount: ICP;
+        fee: ICP;
+        memo: Memo;
         error_message: text;
     };
 
