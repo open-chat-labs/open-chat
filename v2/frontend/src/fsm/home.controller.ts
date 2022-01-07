@@ -238,6 +238,20 @@ export class HomeController {
             });
     }
 
+    /**
+     * We may wish to look at (public group) chats without joining them.
+     * If so, we load the chat summary directly (assuming it is a public group chat)
+     * We will then add that chat to our chat list locally with a custom role of "Previewer"
+     * This will allow us to interact with the chat in a readonly mode.
+     *
+     * We will load the chat and then add it to the chat list. If we refresh the page
+     * it will just disppear (unless of course we still have the canisterId in the url)
+     */
+    previewChat(chatId: string): Promise<boolean> {
+        console.log("trying to load the chat: ", chatId);
+        return Promise.resolve(false);
+    }
+
     selectChat(chatId: string, messageIndex?: number): void {
         closeNotificationsForChat(chatId);
 

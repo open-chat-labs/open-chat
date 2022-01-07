@@ -32,6 +32,7 @@
     import type { Writable } from "svelte/store";
     import type { HomeController } from "../../fsm/home.controller";
     import { _ } from "svelte-i18n";
+    import { messageContentFromFile } from "utils/media";
 
     export let controller: HomeController;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
@@ -63,7 +64,9 @@
     onMount(() => {
         // bootstrap anything that needs a service container here
         rtcConnectionsManager.init(controller.user.userId);
-        initNotificationStores(api, controller.user!.userId, (n) => controller.notificationReceived(n));
+        initNotificationStores(api, controller.user!.userId, (n) =>
+            controller.notificationReceived(n)
+        );
     });
 
     onDestroy(() => {
@@ -75,14 +78,23 @@
         if (controller.initialised) {
             // if we have a chatid in the params then we need to select that chat
             if (params.chatId && params.chatId !== $selectedChat?.chatId?.toString()) {
+                // if the chat in the param is not known to us then we need to attempt to load the
+                // chat on the assumption that it is a public group chat that we want to preview
                 // if we have an unknown chat in the param, then redirect to home
-                if ($chatSummaries[params.chatId] === undefined) {
-                    replace("/");
+                const chatId = params.chatId;
+                const messageIndex =
+                    params.messageIndex == null ? undefined : Number(params.messageIndex);
+
+                if ($chatSummaries[chatId] === undefined) {
+                    controller.previewChat(chatId).then((canPreview) => {
+                        if (canPreview) {
+                            controller.selectChat(chatId, messageIndex);
+                        } else {
+                            replace("/");
+                        }
+                    });
                 } else {
-                    controller.selectChat(
-                        params.chatId,
-                        params.messageIndex == null ? undefined : Number(params.messageIndex)
-                    );
+                    controller.selectChat(chatId, messageIndex);
                 }
             }
 

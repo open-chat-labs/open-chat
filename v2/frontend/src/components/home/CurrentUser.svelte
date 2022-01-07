@@ -13,7 +13,12 @@
     import { _ } from "svelte-i18n";
     import { modalStore, ModalType } from "../../stores/modal";
     import { avatarUrl } from "../../domain/user/user.utils";
-    import { ScreenHeight, screenHeight, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import {
+        ScreenHeight,
+        screenHeight,
+        ScreenWidth,
+        screenWidth,
+    } from "../../stores/screenDimensions";
     import type { PartialUserSummary } from "../../domain/user/user";
     import { createEventDispatcher } from "svelte";
     import { notificationStatus } from "../../stores/notifications";
@@ -90,6 +95,10 @@
                             </MenuItem>
                         {/if}
                     {/if}
+                    <MenuItem on:click={() => dispatch("whatsHot")}>
+                        <span class="flame" slot="icon">🔥</span>
+                        <span slot="text">{$_("whatsHot")}</span>
+                    </MenuItem>
                     <MenuItem on:click={() => dispatch("logout")}>
                         <Logout size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("logout")}</span>
@@ -109,6 +118,10 @@
     :global(.current-user.small.rtl .photo-section) {
         margin-left: $sp4;
         margin-right: 0;
+    }
+
+    .flame {
+        @include font(bold, normal, fs-110);
     }
 
     .current-user-box {
