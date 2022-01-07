@@ -8,7 +8,8 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
+    Avatar, CanisterId, ChatId, Cycles, EventIndex, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped,
+    UserId, Version,
 };
 use utils::env::Environment;
 use utils::memory;
@@ -154,6 +155,16 @@ impl Data {
             activity_notification_state: ActivityNotificationState::new(now),
             pinned_message: None,
             test_mode,
+        }
+    }
+
+    pub fn min_visible_event_index(&self, caller: Principal) -> Option<EventIndex> {
+        if self.is_public {
+            Some(EventIndex::default())
+        } else if let Some(participant) = self.participants.get_by_principal(&caller) {
+            Some(participant.min_visible_event_index())
+        } else {
+            None
         }
     }
 }
