@@ -3,6 +3,7 @@ import type { ApiNotification } from "../services/notifications/candid/idl";
 import { Notification as NotificationIdl } from "../services/notifications/candid/notification";
 import type { MessageContent } from "../domain/chat/chat";
 import type { Notification } from "../domain/notifications";
+import type { User } from "../domain/user/user";
 import { UnsupportedValueError } from "../utils/error";
 import { notification as toNotification } from "../services/notifications/mappers";
 import { getSoftDisabled } from "../utils/caching";
@@ -44,6 +45,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
         type: "window",
         includeUncontrolled: true,
     });
+
     windowClients.forEach((window) => {
         window.postMessage({
             type: "NOTIFICATION_RECEIVED",
@@ -101,7 +103,7 @@ async function showNotification(notification: Notification): Promise<void> {
         icon = content.image ?? icon;
         path = notification.sender;
     } else if (notification.kind === "group_notification") {
-        const content = extractMessageContent(notification.message.event.content);
+        const content = extractMessageContent(notification.message.event.content, notification.mentioned);
         title += notification.groupName;
         body = `${notification.senderName}: ${content.text}`;
         icon = content.image ?? icon;
@@ -130,49 +132,66 @@ type ContentExtract = {
     image?: string;
 };
 
-function extractMessageContent(content: MessageContent): ContentExtract {
+function extractMessageContent(content: MessageContent, mentioned: Array<User> = []): ContentExtract {
+    let result: ContentExtract;
+
     if (content.kind === "text_content") {
-        return {
+        result = {
             text: content.text,
         };
     } else if (content.kind === "image_content") {
-        return {
+        result =  {
             text: content.caption ?? extractMediaType(content.mimeType),
             image: content.thumbnailData,
         };
     } else if (content.kind === "video_content") {
-        return {
+        result =  {
             text: content.caption ?? extractMediaType(content.mimeType),
             image: content.thumbnailData,
         };
     } else if (content.kind === "audio_content") {
-        return {
+        result =  {
             text: content.caption ?? extractMediaType(content.mimeType),
         };
     } else if (content.kind === "file_content") {
-        return {
+        result =  {
             text: content.caption ?? content.mimeType,
             image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==",
         };
     } else if (content.kind === "crypto_content") {
-        return {
+        result =  {
             text: "TODO - crypto content",
         };
     } else if (content.kind === "deleted_content") {
-        return {
+        result =  {
             text: "TODO - deleted content",
         };
     } else if (content.kind === "placeholder_content") {
-        return {
+        result =  {
             text: "TODO - placeholder content",
         };
+    } else {
+        throw new UnsupportedValueError(
+            "Unexpected message content type received with notification",
+            content
+        );    
     }
-    throw new UnsupportedValueError(
-        "Unexpected message content type received with notification",
-        content
-    );
+
+    if (mentioned.length > 0) {
+        result.text = replaceMentions(result.text, mentioned);
+    }
+
+    return result;
 }
 
 function extractMediaType(mimeType: string): string {
     return mimeType.replace(/\/.*/, "");
+}
+
+function replaceMentions(text: string, mentioned: Array<User>): string {
+    const usernameLookup = Object.fromEntries(mentioned.map((u) => [u.userId, u.username]));
+    return text.replace(/@UserId\(([\d\w-]+)\)/g, (_match, p1) => {
+        const username = usernameLookup[p1] ?? "Unknown";
+        return `@${username}`;
+    });
 }

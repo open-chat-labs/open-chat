@@ -19,6 +19,7 @@ import type {
     TransferOwnershipResponse,
     DeleteGroupResponse,
 } from "../../domain/chat/chat";
+import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
 import {
@@ -101,9 +102,9 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.addParticipants(userIds, myUsername, allowBlocked);
     }
 
-    sendMessage(senderName: string, message: Message): Promise<SendMessageResponse> {
+    sendMessage(senderName: string, mentioned: User[], message: Message): Promise<SendMessageResponse> {
         return this.client
-            .sendMessage(senderName, message)
+            .sendMessage(senderName, mentioned, message)
             .then(setCachedMessage(this.db, this.chatId, message));
     }
 

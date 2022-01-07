@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{EventIndex, MessageContent, MessageId, MessageIndex, ReplyContext, TimestampMillis};
+use types::{EventIndex, MessageContent, MessageId, MessageIndex, ReplyContext, TimestampMillis, User};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -8,6 +8,7 @@ pub struct Args {
     pub content: MessageContent,
     pub sender_name: String,
     pub replies_to: Option<GroupReplyContext>,
+    pub mentioned: Vec<User>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

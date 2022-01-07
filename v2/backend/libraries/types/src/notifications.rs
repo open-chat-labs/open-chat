@@ -1,4 +1,4 @@
-use crate::{ChatId, EventWrapper, Message, UserId};
+use crate::{ChatId, EventWrapper, Message, User, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -37,4 +37,5 @@ pub struct GroupMessageNotification {
     pub sender: UserId,
     pub sender_name: String,
     pub message: EventWrapper<Message>,
+    pub mentioned: Vec<User>,
 }

@@ -73,6 +73,7 @@ async fn run_data_generator(
                     sender_name: n,
                     content: MessageContent::Text(build_text_content(&mut rng)),
                     replies_to: None,
+                    mentioned: Vec::new(),
                 };
                 send_group_message(&a, g, &args).await;
             }

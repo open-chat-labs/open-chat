@@ -283,6 +283,7 @@ type GroupMessageNotification =
         sender: UserId;
         sender_name: text;
         message: MessageEventWrapper;
+        mentioned: vec User;
     };
 
 type GroupNameChanged =
@@ -800,4 +801,10 @@ type VideoContent =
         mime_type: text;
         image_blob_reference: opt BlobReference;
         video_blob_reference: opt BlobReference;
+    };
+
+type User =
+    record {
+        user_id: UserId;
+        username: text;
     };

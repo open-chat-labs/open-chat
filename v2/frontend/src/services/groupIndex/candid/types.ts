@@ -279,6 +279,7 @@ export interface GroupMatch {
   'chat_id' : ChatId,
 }
 export interface GroupMessageNotification {
+  'mentioned' : Array<User>,
   'sender' : UserId,
   'message' : MessageEventWrapper,
   'sender_name' : string,
@@ -492,6 +493,7 @@ export interface UpdatedMessage {
   'event_index' : EventIndex,
 }
 export type UserId = CanisterId;
+export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserSummary {
   'username' : string,
   'user_id' : UserId,

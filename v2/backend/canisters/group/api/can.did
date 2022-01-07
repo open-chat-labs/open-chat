@@ -6,6 +6,7 @@ type SendMessageArgs =
         content: MessageContent;
         sender_name: text;
         replies_to: opt GroupReplyContext;
+        mentioned: vec User;
     };
 
 type GroupReplyContext =
