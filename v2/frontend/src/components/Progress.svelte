@@ -16,7 +16,7 @@
         width: 100%;
         height: $progress-bar-x-large;
         position: relative;
-        border-radius: $progress-bar-x-large / 2;
+        border-radius: math.div($progress-bar-x-large, 2);
         overflow: hidden;
     }
 
@@ -25,7 +25,7 @@
         transition: width 300ms;
         display: block;
         height: 100%;
-        border-radius: $progress-bar-x-large / 2;
+        border-radius: math.div($progress-bar-x-large, 2);
         background-color: var(--button-bg);
         position: relative;
     }

@@ -125,7 +125,7 @@ export default [
                 preprocess: sveltePreprocess({
                     sourceMap: !production,
                     scss: {
-                        prependData: `@import 'src/styles/mixins.scss';`,
+                        prependData: `@use 'sass:math'; @import 'src/styles/mixins.scss';`,
                     },
                 }),
                 compilerOptions: {
