@@ -161,10 +161,10 @@ impl Data {
     pub fn min_visible_event_index(&self, caller: Principal) -> Option<EventIndex> {
         if self.is_public {
             Some(EventIndex::default())
-        } else if let Some(participant) = self.participants.get_by_principal(&caller) {
-            Some(participant.min_visible_event_index())
         } else {
-            None
+            self.participants
+                .get_by_principal(&caller)
+                .map(|participant| participant.min_visible_event_index())
         }
     }
 }
