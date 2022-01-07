@@ -8219,8 +8219,3 @@ dependencies = [
  "cc",
  "libc",
 ]
-
-[[patch.unused]]
-name = "ic-cdk-macros"
-version = "0.3.3"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=4631c0312db3a5abbf21f9338534bcdbfa1a005b#4631c0312db3a5abbf21f9338534bcdbfa1a005b"
