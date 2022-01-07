@@ -132,7 +132,7 @@ type ContentExtract = {
     image?: string;
 };
 
-function extractMessageContent(content: MessageContent, mentioned?: Array<User>): ContentExtract {
+function extractMessageContent(content: MessageContent, mentioned: Array<User> = []): ContentExtract {
     let result: ContentExtract;
 
     if (content.kind === "text_content") {
@@ -177,7 +177,7 @@ function extractMessageContent(content: MessageContent, mentioned?: Array<User>)
         );    
     }
 
-    if (mentioned !== undefined) {
+    if (mentioned.length > 0) {
         result.text = replaceMentions(result.text, mentioned);
     }
 
