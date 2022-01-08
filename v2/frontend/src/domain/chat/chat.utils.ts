@@ -288,7 +288,6 @@ export function mergeChatUpdates(
     chatSummaries: ChatSummary[],
     updateResponse: UpdatesResponse
 ): ChatSummary[] {
-    console.log("Updates: ", updateResponse);
     return mergeThings((c) => c.chatId, mergeUpdates, chatSummaries, {
         added: updateResponse.chatsAdded,
         updated: updateResponse.chatsUpdated,
