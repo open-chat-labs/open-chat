@@ -135,6 +135,8 @@ export class ChatController {
     }
 
     get unreadMessageCount(): number {
+        if (this.chatVal.kind === "group_chat" && this.chatVal.myRole === "previewer") return 0;
+
         return this.markRead.unreadMessageCount(
             this.chatId,
             this.minVisibleMessageIndex,
@@ -600,7 +602,10 @@ export class ChatController {
         return getNextEventIndex(get(this.serverChatSummary), unconfirmed.getMessages(this.chatId));
     }
 
-    createMessage(textContent: string | undefined, fileToAttach: MessageContent | undefined): Message {
+    createMessage(
+        textContent: string | undefined,
+        fileToAttach: MessageContent | undefined
+    ): Message {
         const nextMessageIndex = this.getNextMessageIndex();
 
         return createMessage(
@@ -1008,5 +1013,24 @@ export class ChatController {
         };
 
         rtcConnectionsManager.sendMessage([...this.chatUserIds], rtc);
+    }
+
+    joinGroup(): Promise<void> {
+        if (this.chatVal.kind === "group_chat" && this.chatVal.myRole === "previewer") {
+            return this.api
+                .joinGroup(this.chatVal.chatId)
+                .then((resp) => {
+                    if (resp === "success" || resp === "already_in_group") {
+                        console.log("we joined the group - now what?");
+                    } else {
+                        toastStore.showFailureToast("joinGroupFailed");
+                    }
+                })
+                .catch((err) => {
+                    rollbar.error("Unable to join group", err);
+                    toastStore.showFailureToast("joinGroupFailed");
+                });
+        }
+        return Promise.resolve();
     }
 }

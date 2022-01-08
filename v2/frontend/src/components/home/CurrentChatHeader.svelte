@@ -38,6 +38,7 @@
 
     export let selectedChatSummary: Readable<ChatSummary>;
     export let blocked: boolean;
+    export let preview: boolean;
     export let unreadMessages: number;
 
     let supportsNotifications = notificationsSupported();
@@ -195,6 +196,8 @@
         <div class="chat-subtext" title={chat.subtext}>
             {#if blocked}
                 {$_("blocked")}
+            {:else if preview}
+                {$_("previewing")}
             {:else if chat.typing}
                 <Typing />
             {:else if isGroup}
@@ -206,99 +209,113 @@
             {/if}
         </div>
     </div>
-    <div class="menu">
-        <MenuIcon>
-            <div slot="icon">
-                <HoverIcon>
-                    <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
-                </HoverIcon>
-            </div>
-            <div slot="menu">
-                <Menu>
-                    {#if $selectedChatSummary.kind === "direct_chat"}
-                        {#if blocked}
-                            <MenuItem on:click={unblockUser}>
-                                <Cancel size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                                <div slot="text">{$_("unblockUser")}</div>
-                            </MenuItem>
-                        {:else}
-                            <MenuItem on:click={blockUser}>
-                                <Cancel size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                                <div slot="text">{$_("blockUser")}</div>
-                            </MenuItem>
-                        {/if}
-                    {:else if $selectedChatSummary.kind === "group_chat"}
-                        {#if $selectedChatSummary.myRole === "owner"}
-                            <MenuItem on:click={deleteGroup}>
-                                <DeleteAlertOutline
+    {#if !preview}
+        <div class="menu">
+            <MenuIcon>
+                <div slot="icon">
+                    <HoverIcon>
+                        <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </div>
+                <div slot="menu">
+                    <Menu>
+                        {#if $selectedChatSummary.kind === "direct_chat"}
+                            {#if blocked}
+                                <MenuItem on:click={unblockUser}>
+                                    <Cancel
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("unblockUser")}</div>
+                                </MenuItem>
+                            {:else}
+                                <MenuItem on:click={blockUser}>
+                                    <Cancel
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("blockUser")}</div>
+                                </MenuItem>
+                            {/if}
+                        {:else if $selectedChatSummary.kind === "group_chat"}
+                            {#if $selectedChatSummary.myRole === "owner"}
+                                <MenuItem on:click={deleteGroup}>
+                                    <DeleteAlertOutline
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("deleteGroup")}</div>
+                                </MenuItem>
+                            {/if}
+                            <MenuItem on:click={showGroupDetails}>
+                                <AccountMultiplePlus
                                     size={$iconSize}
                                     color={"var(--icon-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("deleteGroup")}</div>
+                                <div slot="text">{$_("groupDetails")}</div>
                             </MenuItem>
-                        {/if}
-                        <MenuItem on:click={showGroupDetails}>
-                            <AccountMultiplePlus
-                                size={$iconSize}
-                                color={"var(--icon-txt)"}
-                                slot="icon" />
-                            <div slot="text">{$_("groupDetails")}</div>
-                        </MenuItem>
-                        <MenuItem on:click={leaveGroup}>
-                            <LocationExit size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                            <div slot="text">{$_("leaveGroup")}</div>
-                        </MenuItem>
-                        <MenuItem on:click={showParticipants}>
-                            <AccountMultiplePlus
-                                size={$iconSize}
-                                color={"var(--icon-txt)"}
-                                slot="icon" />
-                            <div slot="text">{$_("participants")}</div>
-                        </MenuItem>
-                        {#if canAddParticipants($selectedChatSummary)}
-                            <MenuItem on:click={addParticipants}>
-                                <AccountPlusOutline
+                            <MenuItem on:click={leaveGroup}>
+                                <LocationExit
                                     size={$iconSize}
                                     color={"var(--icon-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("addParticipants")}</div>
+                                <div slot="text">{$_("leaveGroup")}</div>
                             </MenuItem>
+                            <MenuItem on:click={showParticipants}>
+                                <AccountMultiplePlus
+                                    size={$iconSize}
+                                    color={"var(--icon-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("participants")}</div>
+                            </MenuItem>
+                            {#if canAddParticipants($selectedChatSummary)}
+                                <MenuItem on:click={addParticipants}>
+                                    <AccountPlusOutline
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("addParticipants")}</div>
+                                </MenuItem>
+                            {/if}
                         {/if}
-                    {/if}
-                    {#if supportsNotifications}
-                        {#if $selectedChatSummary.notificationsMuted === true}
-                            <MenuItem on:click={toggleMuteNotifications}>
-                                <Bell size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                                <div slot="text">{$_("unmuteNotifications")}</div>
+                        {#if supportsNotifications}
+                            {#if $selectedChatSummary.notificationsMuted === true}
+                                <MenuItem on:click={toggleMuteNotifications}>
+                                    <Bell size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                                    <div slot="text">{$_("unmuteNotifications")}</div>
+                                </MenuItem>
+                            {:else}
+                                <MenuItem on:click={toggleMuteNotifications}>
+                                    <BellOff
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("muteNotifications")}</div>
+                                </MenuItem>
+                            {/if}
+                        {/if}
+                        {#if unreadMessages > 0}
+                            <MenuItem on:click={markAllRead}>
+                                <CheckboxMultipleMarked
+                                    size={$iconSize}
+                                    color={"var(--icon-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("markAllRead")}</div>
                             </MenuItem>
                         {:else}
-                            <MenuItem on:click={toggleMuteNotifications}>
-                                <BellOff size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                                <div slot="text">{$_("muteNotifications")}</div>
+                            <MenuItem disabled={true}>
+                                <CheckboxMultipleMarked
+                                    size={$iconSize}
+                                    color={"var(--icon-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("markAllRead")}</div>
                             </MenuItem>
                         {/if}
-                    {/if}
-                    {#if unreadMessages > 0}
-                        <MenuItem on:click={markAllRead}>
-                            <CheckboxMultipleMarked
-                                size={$iconSize}
-                                color={"var(--icon-txt)"}
-                                slot="icon" />
-                            <div slot="text">{$_("markAllRead")}</div>
-                        </MenuItem>
-                    {:else}
-                        <MenuItem disabled={true}>
-                            <CheckboxMultipleMarked
-                                size={$iconSize}
-                                color={"var(--icon-txt)"}
-                                slot="icon" />
-                            <div slot="text">{$_("markAllRead")}</div>
-                        </MenuItem>
-                    {/if}
-                </Menu>
-            </div>
-        </MenuIcon>
-    </div>
+                    </Menu>
+                </div>
+            </MenuIcon>
+        </div>
+    {/if}
 </SectionHeader>
 
 <style type="text/scss">

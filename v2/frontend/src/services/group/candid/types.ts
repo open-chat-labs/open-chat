@@ -353,6 +353,7 @@ export interface GroupDescriptionChanged {
   'changed_by' : UserId,
 }
 export interface GroupMessageNotification {
+  'hide' : boolean,
   'mentioned' : Array<User>,
   'sender' : UserId,
   'message' : MessageEventWrapper,
@@ -535,6 +536,21 @@ export interface PinnedMessageUpdated {
 export type PinnedMessageUpdates = { 'None' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
+export interface PublicGroupSummary {
+  'name' : string,
+  'wasm_version' : Version,
+  'description' : string,
+  'last_updated' : TimestampMillis,
+  'pinned_message' : [] | [MessageIndex],
+  'avatar_id' : [] | [bigint],
+  'latest_event_index' : EventIndex,
+  'chat_id' : ChatId,
+  'participant_count' : number,
+  'latest_message' : [] | [MessageEventWrapper],
+}
+export type PublicSummaryArgs = {};
+export type PublicSummaryResponse = { 'Success' : PublicSummarySuccess };
+export interface PublicSummarySuccess { 'summary' : PublicGroupSummary }
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemoveParticipantArgs { 'user_id' : UserId }
@@ -717,6 +733,9 @@ export interface _SERVICE {
   'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
   'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
   'make_admin' : (arg_0: MakeAdminArgs) => Promise<MakeAdminResponse>,
+  'public_summary' : (arg_0: PublicSummaryArgs) => Promise<
+      PublicSummaryResponse
+    >,
   'remove_participant' : (arg_0: RemoveParticipantArgs) => Promise<
       RemoveParticipantResponse
     >,

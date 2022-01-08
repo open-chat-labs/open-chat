@@ -355,6 +355,7 @@ export interface GroupDescriptionChanged {
   'changed_by' : UserId,
 }
 export interface GroupMessageNotification {
+  'hide' : boolean,
   'mentioned' : Array<User>,
   'sender' : UserId,
   'message' : MessageEventWrapper,

@@ -20,6 +20,7 @@ import type {
     UnblockUserResponse,
     TransferOwnershipResponse,
     DeleteGroupResponse,
+    GroupChatSummary,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
@@ -40,7 +41,11 @@ export interface IGroupClient {
         myUsername: string,
         allowBlocked: boolean
     ): Promise<AddParticipantsResponse>;
-    sendMessage(senderName: string, mentioned: User[], message: Message): Promise<SendMessageResponse>;
+    sendMessage(
+        senderName: string,
+        mentioned: User[],
+        message: Message
+    ): Promise<SendMessageResponse>;
     editMessage(message: Message): Promise<EditMessageResponse>;
     makeAdmin(userId: string): Promise<MakeAdminResponse>;
     dismissAsAdmin(userId: string): Promise<DismissAdminResponse>;
@@ -54,4 +59,5 @@ export interface IGroupClient {
     getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails>;
     transferOwnership(userId: string): Promise<TransferOwnershipResponse>;
     deleteGroup(): Promise<DeleteGroupResponse>;
+    getPublicSummary(): Promise<GroupChatSummary | undefined>;
 }

@@ -280,6 +280,7 @@ export interface GroupMatch {
   'chat_id' : ChatId,
 }
 export interface GroupMessageNotification {
+  'hide' : boolean,
   'mentioned' : Array<User>,
   'sender' : UserId,
   'message' : MessageEventWrapper,

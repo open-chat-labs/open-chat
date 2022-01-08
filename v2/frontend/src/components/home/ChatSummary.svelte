@@ -114,6 +114,7 @@
     $: isTyping =
         chatSummary.kind === "direct_chat" && $typing[chatSummary.chatId]?.has(chatSummary.them);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
+    $: preview = chatSummary.kind === "group_chat" && chatSummary.myRole === "previewer";
 </script>
 
 <a
@@ -122,7 +123,6 @@
     class:first={index === 0}
     class:selected
     class:rtl={$rtlStore}
-    title={JSON.stringify(unreadMentions)}
     on:mouseenter={() => (hovering = true)}
     on:mouseleave={() => (hovering = false)}
     href={`/#/${chatSummary.chatId}`}>
@@ -151,23 +151,25 @@
     <div class:rtl={$rtlStore} class="chat-date">
         {formatMessageDate(new Date(Number(displayDate)))}
     </div>
-    {#if unreadMentions > 0}
-        <div
-            in:pop={{ duration: 1500 }}
-            title={$_("chatSummary.mentions", { values: { count: unreadMentions.toString() } })}
-            class:rtl={$rtlStore}
-            class="notification mention">
-            @
-        </div>
-    {/if}
-    {#if unreadMessages > 0}
-        <div
-            in:pop={{ duration: 1500 }}
-            title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
-            class:rtl={$rtlStore}
-            class="notification">
-            {unreadMessages > 99 ? "99+" : unreadMessages}
-        </div>
+    {#if !preview}
+        {#if unreadMentions > 0}
+            <div
+                in:pop={{ duration: 1500 }}
+                title={$_("chatSummary.mentions", { values: { count: unreadMentions.toString() } })}
+                class:rtl={$rtlStore}
+                class="notification mention">
+                @
+            </div>
+        {/if}
+        {#if unreadMessages > 0}
+            <div
+                in:pop={{ duration: 1500 }}
+                title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
+                class:rtl={$rtlStore}
+                class="notification">
+                {unreadMessages > 99 ? "99+" : unreadMessages}
+            </div>
+        {/if}
     {/if}
 </a>
 

@@ -113,6 +113,7 @@ export const Notification = IDL.Variant({
     'sender_name' : IDL.Text,
   }),
   'GroupMessageNotification' : IDL.Record({
+    'hide' : IDL.Bool,
     'mentioned' : IDL.Vec(
       IDL.Record({ 'username' : IDL.Text, 'user_id' : IDL.Principal })
     ),
@@ -227,7 +228,6 @@ export const Notification = IDL.Variant({
     'sender_name' : IDL.Text,
     'chat_id' : IDL.Principal,
     'group_name' : IDL.Text,
-    'hide' : IDL.Bool,
   }),
   'AddedToGroupNotification' : IDL.Record({
     'added_by_name' : IDL.Text,

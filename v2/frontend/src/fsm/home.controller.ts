@@ -248,8 +248,18 @@ export class HomeController {
      * it will just disppear (unless of course we still have the canisterId in the url)
      */
     previewChat(chatId: string): Promise<boolean> {
-        console.log("trying to load the chat: ", chatId);
-        return Promise.resolve(false);
+        return this.api.previewChat(chatId).then((maybeChat) => {
+            if (maybeChat === undefined) {
+                return false;
+            }
+            this.serverChatSummaries.update((summaries) => {
+                return {
+                    ...summaries,
+                    [chatId]: maybeChat,
+                };
+            });
+            return true;
+        });
     }
 
     selectChat(chatId: string, messageIndex?: number): void {

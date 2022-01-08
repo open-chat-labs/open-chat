@@ -274,13 +274,13 @@ export interface GroupDescriptionChanged {
   'changed_by' : UserId,
 }
 export interface GroupMessageNotification {
+  'hide' : boolean,
   'mentioned' : Array<User>,
   'sender' : UserId,
   'message' : MessageEventWrapper,
   'sender_name' : string,
   'chat_id' : ChatId,
   'group_name' : string,
-  'hide': boolean,
 }
 export interface GroupNameChanged {
   'changed_by' : UserId,

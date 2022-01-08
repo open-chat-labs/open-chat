@@ -43,6 +43,8 @@
 
     function getFirstUnreadMessageIndex(): number | undefined {
         const chat = controller.chatVal;
+        if (chat.kind === "group_chat" && chat.myRole === "previewer") return undefined;
+
         return controller.markRead.getFirstUnreadMessageIndex(
             chat.chatId,
             getMinVisibleMessageIndex(chat),
@@ -86,11 +88,14 @@
     }
 
     $: chat = controller.chat;
+
+    $: preview = $chat.kind === "group_chat" && $chat.public && $chat.myRole === "previewer";
 </script>
 
 <div class="wrapper">
     <CurrentChatHeader
         {blocked}
+        {preview}
         {unreadMessages}
         on:clearSelection
         on:blockUser
@@ -108,10 +113,11 @@
         on:messageRead={messageRead}
         on:chatWith
         {controller}
+        {preview}
         {firstUnreadMention}
         {firstUnreadMessage}
         {unreadMessages} />
-    <Footer {blocked} {controller} />
+    <Footer {preview} {blocked} {controller} />
 </div>
 
 <style type="text/scss">

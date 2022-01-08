@@ -53,6 +53,7 @@ import type {
     TransferOwnershipResponse,
     DeleteGroupResponse,
     MessageContent,
+    GroupChatSummary,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
@@ -126,7 +127,12 @@ export class ServiceContainer implements MarkMessagesRead {
         throw new UnsupportedValueError("Unexpect chat type", chat);
     }
 
-    sendMessage(chat: ChatSummary, user: UserSummary, mentioned: User[], msg: Message): Promise<SendMessageResponse> {
+    sendMessage(
+        chat: ChatSummary,
+        user: UserSummary,
+        mentioned: User[],
+        msg: Message
+    ): Promise<SendMessageResponse> {
         if (chat.kind === "group_chat") {
             return this.sendGroupMessage(chat.chatId, user.username, mentioned, msg);
         }
@@ -620,5 +626,9 @@ export class ServiceContainer implements MarkMessagesRead {
 
     notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse> {
         return this._userIndexClient.notifyRegistrationFeePaid();
+    }
+
+    previewChat(chatId: string): Promise<GroupChatSummary | undefined> {
+        return this.getGroupClient(chatId).getPublicSummary();
     }
 }

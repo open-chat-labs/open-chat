@@ -288,6 +288,7 @@ export function mergeChatUpdates(
     chatSummaries: ChatSummary[],
     updateResponse: UpdatesResponse
 ): ChatSummary[] {
+    console.log("Updates: ", updateResponse);
     return mergeThings((c) => c.chatId, mergeUpdates, chatSummaries, {
         added: updateResponse.chatsAdded,
         updated: updateResponse.chatsUpdated,
@@ -328,7 +329,7 @@ function mergeUpdatedGroupChat(
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
-    chat.myRole = updatedChat.myRole ?? chat.myRole;
+    chat.myRole = updatedChat.myRole ?? chat.myRole === "previewer" ? "participant" : chat.myRole;
     chat.mentions = mergeMentions(chat.mentions, updatedChat.mentions);
     return chat;
 }
