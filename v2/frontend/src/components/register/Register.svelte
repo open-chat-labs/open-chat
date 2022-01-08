@@ -10,7 +10,6 @@
     import EnterCode from "./EnterCode.svelte";
     import type { RegisterState } from "../../fsm/register.controller";
     import { createEventDispatcher } from "svelte";
-    import Link from "../Link.svelte";
     import ChoosePath from "./ChoosePath.svelte";
     import ConfirmTransfer from "./ConfirmTransfer.svelte";
     import { E8S_PER_ICP } from "domain/user/user";
@@ -150,12 +149,5 @@
         width: $sp5;
         height: $sp5;
         cursor: pointer;
-    }
-
-    .title {
-        @include font(bold, normal, fs-160);
-        margin: $sp3 $sp4;
-        text-align: center;
-        text-shadow: var(--modalPage-txt-sh);
     }
 </style>
