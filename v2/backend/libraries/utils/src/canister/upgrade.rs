@@ -47,6 +47,7 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
     if let Err((code, msg)) = stop_canister_response {
         let code = code as u8;
         error!(
+            canister_id = canister_id.to_string().as_str(),
             error_code = code,
             error_message = msg.as_str(),
             "Error calling 'stop_canister'"
@@ -85,6 +86,7 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
     if let Err((code, msg)) = start_canister_response {
         let code = code as u8;
         error!(
+            canister_id = canister_id.to_string().as_str(),
             error_code = code,
             error_message = msg.as_str(),
             "Error calling 'start_canister'"
