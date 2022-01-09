@@ -24,6 +24,7 @@ async fn add_participants(args: Args) -> Response {
     if !prepare_result.users_to_add.is_empty() {
         let c2c_args = c2c_try_add_to_group::Args {
             added_by: prepare_result.added_by,
+            latest_message_index: prepare_result.latest_message_index,
         };
         let futures: Vec<_> = prepare_result
             .users_to_add
@@ -81,6 +82,7 @@ async fn add_participants(args: Args) -> Response {
 
 struct PrepareResult {
     added_by: UserId,
+    latest_message_index: Option<MessageIndex>,
     users_to_add: Vec<UserId>,
     users_already_in_group: Vec<UserId>,
     users_blocked_from_group: Vec<UserId>,
@@ -112,6 +114,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             }
             Ok(PrepareResult {
                 added_by: participant.user_id,
+                latest_message_index: runtime_state.data.events.latest_message_index(),
                 users_to_add,
                 users_already_in_group,
                 users_blocked_from_group,
