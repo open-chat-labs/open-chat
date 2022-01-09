@@ -249,12 +249,7 @@ export class HomeController {
             if (maybeChat === undefined) {
                 return false;
             }
-            this.serverChatSummaries.update((summaries) => {
-                return {
-                    ...summaries,
-                    [chatId]: maybeChat,
-                };
-            });
+            this.replaceChat(maybeChat);
             return true;
         });
     }
@@ -576,24 +571,21 @@ export class HomeController {
         });
     }
 
-    joinGroup(chatId: string): Promise<void> {
+    replaceChat(chat: ChatSummary): void {
+        this.serverChatSummaries.update((summaries) => {
+            return {
+                ...summaries,
+                [chat.chatId]: chat,
+            };
+        });
+    }
+
+    joinGroup(chat: ChatSummary): Promise<void> {
         return this.api
-            .joinGroup(chatId)
+            .joinGroup(chat.chatId)
             .then((resp) => {
                 if (resp === "success" || resp === "already_in_group") {
-                    this.serverChatSummaries.update((summaries) => {
-                        const chat = summaries[chatId];
-                        if (chat && chat.kind === "group_chat" && chat.public) {
-                            return {
-                                ...summaries,
-                                [chatId]: {
-                                    ...chat,
-                                    myRole: "participant",
-                                },
-                            };
-                        }
-                        return summaries;
-                    });
+                    this.replaceChat(chat);
                 } else {
                     if (resp === "blocked") {
                         toastStore.showFailureToast("youreBlocked");

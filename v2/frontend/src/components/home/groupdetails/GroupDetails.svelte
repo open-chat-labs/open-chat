@@ -11,7 +11,7 @@
     import type { UpdatedGroup } from "../../../fsm/editGroup";
     import type { GroupChatSummary } from "../../../domain/chat/chat";
     import { createEventDispatcher } from "svelte";
-    import type { Writable } from "svelte/store";
+    import type { Readable } from "svelte/store";
     import type { ChatController } from "../../../fsm/chat.controller";
 
     const MIN_LENGTH = 3;
@@ -22,7 +22,7 @@
     export let controller: ChatController;
     export let updatedGroup: UpdatedGroup;
 
-    $: chat = controller.chat as Writable<GroupChatSummary>;
+    $: chat = controller.chat as Readable<GroupChatSummary>;
 
     let showConfirmation = false;
     let confirmed = false;
@@ -61,12 +61,12 @@
             .updateGroup(updatedGroup.name, updatedGroup.desc, updatedGroup.avatar?.blobData)
             .then((success) => {
                 if (success) {
-                    chat.update((c) => ({
-                        ...c,
+                    dispatch("updateChat", {
+                        ...$chat,
                         name: updatedGroup.name,
                         description: updatedGroup.desc,
                         blobUrl: updatedGroup.avatar?.blobUrl,
-                    }));
+                    });
                     dispatch("close");
                 }
             })

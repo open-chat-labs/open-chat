@@ -22,8 +22,9 @@
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
-    export let joining: boolean;
     export let showEmojiPicker = false;
+
+    let joining = false;
 
     $: textContent = controller.textContent;
     $: editingEvent = controller.editingEvent;
@@ -280,7 +281,15 @@
     }
 
     function joinGroup() {
-        dispatch("joinGroup", $chat.chatId);
+        joining = true;
+        controller
+            .joinGroup()
+            .then((maybeChat) => {
+                if (maybeChat !== undefined) {
+                    dispatch("updateChat", maybeChat);
+                }
+            })
+            .finally(() => (joining = false));
     }
 </script>
 

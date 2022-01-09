@@ -28,7 +28,11 @@
     import { initNotificationStores } from "../../stores/notifications";
     import type { EditGroupState } from "../../fsm/editGroup";
     import { rollbar } from "../../utils/logging";
-    import type { EnhancedReplyContext, GroupChatSummary } from "../../domain/chat/chat";
+    import type {
+        ChatSummary,
+        EnhancedReplyContext,
+        GroupChatSummary,
+    } from "../../domain/chat/chat";
     import type { Writable } from "svelte/store";
     import type { HomeController } from "../../fsm/home.controller";
     import { _ } from "svelte-i18n";
@@ -47,7 +51,6 @@
     let searchResultsAvailable: boolean = false;
     let removingOperation: "leave" | "delete" = "delete";
     let removingChatId: string | undefined;
-    let joining = false;
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -225,9 +228,8 @@
         editGroupHistory = [...editGroupHistory, "group_details"];
     }
 
-    function joinGroup(ev: CustomEvent<string>) {
-        joining = true;
-        controller.joinGroup(ev.detail).finally(() => (joining = false));
+    function updateChat(ev: CustomEvent<ChatSummary>) {
+        controller.replaceChat(ev.detail);
     }
 
     $: chat = $selectedChat?.chat;
@@ -262,7 +264,6 @@
         {/if}
         {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
             <MiddlePanel
-                {joining}
                 loadingChats={$chatsLoading}
                 blocked={!!blocked}
                 on:clearSelection={clearSelectedChat}
@@ -275,7 +276,7 @@
                 on:addParticipants={addParticipants}
                 on:showGroupDetails={showGroupDetails}
                 on:showParticipants={showParticipants}
-                on:joinGroup={joinGroup}
+                on:updateChat={updateChat}
                 controller={$selectedChat} />
         {/if}
     </main>
@@ -296,7 +297,8 @@
                     on:addParticipants={addParticipants}
                     on:showParticipants={showParticipants}
                     on:chatWith={chatWith}
-                    on:blockUser={blockUser} />
+                    on:blockUser={blockUser}
+                    on:updateChat={updateChat} />
             </div>
         {/if}
     </Overlay>

@@ -12,7 +12,6 @@
 
     export let controller: ChatController;
     export let blocked: boolean;
-    export let joining: boolean;
 
     let chatId = controller.chatId;
     let unreadMessages = 0;
@@ -118,7 +117,7 @@
         {firstUnreadMention}
         {firstUnreadMessage}
         {unreadMessages} />
-    <Footer {joining} {preview} {blocked} {controller} on:joinGroup />
+    <Footer {preview} {blocked} {controller} on:updateChat />
 </div>
 
 <style type="text/scss">

@@ -1014,4 +1014,29 @@ export class ChatController {
 
         rtcConnectionsManager.sendMessage([...this.chatUserIds], rtc);
     }
+
+    joinGroup(): Promise<ChatSummary | undefined> {
+        return this.api
+            .joinGroup(this.chatVal.chatId)
+            .then((resp) => {
+                if (resp === "success" || resp === "already_in_group") {
+                    return {
+                        ...this.chatVal,
+                        myRole: "participant" as ParticipantRole,
+                    };
+                } else {
+                    if (resp === "blocked") {
+                        toastStore.showFailureToast("youreBlocked");
+                    } else {
+                        toastStore.showFailureToast("joinGroupFailed");
+                    }
+                    return undefined;
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to join group", err);
+                toastStore.showFailureToast("joinGroupFailed");
+                return undefined;
+            });
+    }
 }
