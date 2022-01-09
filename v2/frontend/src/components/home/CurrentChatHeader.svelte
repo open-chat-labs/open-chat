@@ -197,7 +197,7 @@
             {#if blocked}
                 {$_("blocked")}
             {:else if preview}
-                {$_("previewing")}
+                {chat.subtext}
             {:else if chat.typing}
                 <Typing />
             {:else if isGroup}

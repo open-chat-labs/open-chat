@@ -153,6 +153,7 @@
     "chatWith": "Chat with {username}",
     "joinGroup": "Join group",
     "joinGroupFailed": "Unable to join group",
+    "youreBlocked": "Sorry - you have been blocked from this group",
     "reply": "Reply",
     "replyPrivately": "Reply privately",
     "deleteMessage": "Delete message",

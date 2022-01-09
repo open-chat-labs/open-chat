@@ -597,8 +597,11 @@ export class HomeController {
                               };
                     });
                 } else {
-                    // todo - probably worth calling out the blocked case
-                    toastStore.showFailureToast("joinGroupFailed");
+                    if (resp === "blocked") {
+                        toastStore.showFailureToast("youreBlocked");
+                    } else {
+                        toastStore.showFailureToast("joinGroupFailed");
+                    }
                 }
             })
             .catch((err) => {
