@@ -164,12 +164,12 @@ type LeaveGroupResponse =
 
 type SetAvatarArgs =
     record {
-        avatar: Avatar
+        avatar: opt Avatar
     };
 
 type SetAvatarResponse =
     variant {
-        Success: nat;
+        Success;
         AvatarTooBig: FieldTooLongResult;
     }; 
 

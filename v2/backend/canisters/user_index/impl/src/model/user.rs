@@ -106,10 +106,10 @@ impl User {
         }
     }
 
-    pub fn set_avatar_id(&mut self, avatar_id: u128, now: TimestampMillis) -> bool {
+    pub fn set_avatar_id(&mut self, avatar_id: Option<u128>, now: TimestampMillis) -> bool {
         match self {
             User::Created(u) => {
-                u.avatar_id = Some(avatar_id);
+                u.avatar_id = avatar_id;
                 u.date_updated = now;
                 true
             }

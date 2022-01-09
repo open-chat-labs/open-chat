@@ -195,7 +195,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 );
             });
     }
-    
+
     sendMessage(senderName: string, mentioned: User[], message: Message): Promise<SendMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.chatId])
@@ -223,14 +223,15 @@ export class GroupClient extends CandidService implements IGroupClient {
             this.groupService.update_group({
                 name: name,
                 description: desc,
-                avatar: apiOptional(
-                    (data) => ({
-                        id: DataClient.newBlobId(),
-                        mime_type: "image/jpg",
-                        data: Array.from(data),
-                    }),
-                    avatar
-                ),
+                avatar: avatar === undefined
+                    ? { NoChange: null }
+                    : {
+                        SetToSome: {
+                            id: DataClient.newBlobId(),
+                            mime_type: "image/jpg",
+                            data: Array.from(avatar),
+                        }
+                    },
             }),
             updateGroupResponse
         );

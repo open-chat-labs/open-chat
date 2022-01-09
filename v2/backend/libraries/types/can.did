@@ -232,7 +232,7 @@ type GroupChatSummaryUpdates =
         participant_count: opt nat32;
         role: opt Role;
         mentions: vec Mention;
-        pinned_message: PinnedMessageUpdates;
+        pinned_message: PinnedMessageUpdate;
         wasm_version: opt Version;
     };
 
@@ -245,9 +245,16 @@ type GroupDescriptionChanged =
 
 type AvatarChanged =
     record {
-        new_avatar: nat;
+        new_avatar: opt nat;
         previous_avatar: opt nat;
         changed_by: UserId;
+    };
+
+type AvatarUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: Avatar;
     };
 
 type Mention =
@@ -300,9 +307,9 @@ type PinnedMessageUpdated =
         updated_by: UserId;
     };
 
-type PinnedMessageUpdates =
+type PinnedMessageUpdate =
     variant {
-        None;
+        NoChange;
         SetToNone;
         SetToSome: MessageIndex;
     };

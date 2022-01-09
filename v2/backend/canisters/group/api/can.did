@@ -178,7 +178,7 @@ type UpdateGroupArgs =
     record {
         name: text;
         description: text;
-        avatar: opt Avatar;
+        avatar: AvatarUpdate;
     };
 
 type UpdateGroupResponse =

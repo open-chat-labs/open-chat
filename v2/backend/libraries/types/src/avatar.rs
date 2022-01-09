@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::fmt::{Debug, Formatter};
 
-pub const MAX_AVATAR_SIZE: u64 = 1024 * 1024; // 1MB
+pub const MAX_AVATAR_SIZE: u32 = 1024 * 1024; // 1MB
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct Avatar {
