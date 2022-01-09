@@ -9,6 +9,7 @@
     export let controller: ChatController | undefined;
     export let loadingChats: boolean = false;
     export let blocked: boolean;
+    export let joining: boolean;
 </script>
 
 <Panel middle>
@@ -24,6 +25,7 @@
         </div>
     {:else}
         <CurrentChat
+            {joining}
             {blocked}
             {controller}
             on:unblockUser
@@ -35,7 +37,8 @@
             on:addParticipants
             on:showGroupDetails
             on:showParticipants
-            on:chatWith />
+            on:chatWith
+            on:joinGroup />
     {/if}
 </Panel>
 

@@ -1014,23 +1014,4 @@ export class ChatController {
 
         rtcConnectionsManager.sendMessage([...this.chatUserIds], rtc);
     }
-
-    joinGroup(): Promise<void> {
-        if (this.chatVal.kind === "group_chat" && this.chatVal.myRole === "previewer") {
-            return this.api
-                .joinGroup(this.chatVal.chatId)
-                .then((resp) => {
-                    if (resp === "success" || resp === "already_in_group") {
-                        console.log("we joined the group - now what?");
-                    } else {
-                        toastStore.showFailureToast("joinGroupFailed");
-                    }
-                })
-                .catch((err) => {
-                    rollbar.error("Unable to join group", err);
-                    toastStore.showFailureToast("joinGroupFailed");
-                });
-        }
-        return Promise.resolve();
-    }
 }

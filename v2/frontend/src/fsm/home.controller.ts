@@ -578,4 +578,32 @@ export class HomeController {
             };
         });
     }
+
+    joinGroup(chatId: string): Promise<void> {
+        return this.api
+            .joinGroup(chatId)
+            .then((resp) => {
+                if (resp === "success" || resp === "already_in_group") {
+                    this.serverChatSummaries.update((summaries) => {
+                        const chat = summaries[chatId];
+                        return chat === undefined
+                            ? summaries
+                            : {
+                                  [chatId]: {
+                                      ...chat,
+                                      myRole: "participant",
+                                  },
+                                  ...summaries,
+                              };
+                    });
+                } else {
+                    // todo - probably worth calling out the blocked case
+                    toastStore.showFailureToast("joinGroupFailed");
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to join group", err);
+                toastStore.showFailureToast("joinGroupFailed");
+            });
+    }
 }

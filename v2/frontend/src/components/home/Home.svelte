@@ -45,9 +45,9 @@
     let searchTerm: string = "";
     let searching: boolean = false;
     let searchResultsAvailable: boolean = false;
-
     let removingOperation: "leave" | "delete" = "delete";
     let removingChatId: string | undefined;
+    let joining = false;
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -225,6 +225,11 @@
         editGroupHistory = [...editGroupHistory, "group_details"];
     }
 
+    function joinGroup(ev: CustomEvent<string>) {
+        joining = true;
+        controller.joinGroup(ev.detail).finally(() => (joining = false));
+    }
+
     $: chat = $selectedChat?.chat;
 
     $: groupChat =
@@ -257,6 +262,7 @@
         {/if}
         {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
             <MiddlePanel
+                {joining}
                 loadingChats={$chatsLoading}
                 blocked={!!blocked}
                 on:clearSelection={clearSelectedChat}
@@ -269,6 +275,7 @@
                 on:addParticipants={addParticipants}
                 on:showGroupDetails={showGroupDetails}
                 on:showParticipants={showParticipants}
+                on:joinGroup={joinGroup}
                 controller={$selectedChat} />
         {/if}
     </main>

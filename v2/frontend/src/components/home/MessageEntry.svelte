@@ -22,12 +22,15 @@
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
+    export let joining: boolean;
+    export let showEmojiPicker = false;
 
     $: textContent = controller.textContent;
     $: editingEvent = controller.editingEvent;
     $: fileToAttach = controller.fileToAttach;
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
+    $: chat = controller.chat;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -38,7 +41,6 @@
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
     let audioMimeType = audioRecordingMimeType();
-    export let showEmojiPicker = false;
     let selectedRange: Range | undefined;
     let dragging: boolean = false;
     let recording: boolean = false;
@@ -53,7 +55,6 @@
     let mentionPrefix: string | undefined;
     let emojiQuery: string | undefined;
     let messageEntry: HTMLDivElement;
-    let joining = false;
 
     $: messageIsEmpty = true;
 
@@ -277,8 +278,7 @@
     }
 
     function joinGroup() {
-        joining = true;
-        controller.joinGroup().finally(() => (joining = false));
+        dispatch("joinGroup", $chat.chatId);
     }
 </script>
 

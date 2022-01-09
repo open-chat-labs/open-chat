@@ -14,6 +14,7 @@
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
+    export let joining: boolean;
 
     let showEmojiPicker = false;
     $: chat = controller.chat;
@@ -163,9 +164,11 @@
         on:drop={onDrop}
         {preview}
         {blocked}
+        {joining}
         on:sendMessage={sendMessage}
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
+        on:joinGroup
         {controller} />
 </div>
 
