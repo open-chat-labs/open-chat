@@ -583,15 +583,16 @@ export class HomeController {
                 if (resp === "success" || resp === "already_in_group") {
                     this.serverChatSummaries.update((summaries) => {
                         const chat = summaries[chatId];
-                        return chat === undefined
-                            ? summaries
-                            : {
-                                  [chatId]: {
-                                      ...chat,
-                                      myRole: "participant",
-                                  },
-                                  ...summaries,
-                              };
+                        if (chat && chat.kind === "group_chat" && chat.public) {
+                            return {
+                                ...summaries,
+                                [chatId]: {
+                                    ...chat,
+                                    myRole: "participant",
+                                },
+                            };
+                        }
+                        return summaries;
                     });
                 } else {
                     if (resp === "blocked") {

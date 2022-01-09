@@ -95,10 +95,10 @@
                             </MenuItem>
                         {/if}
                     {/if}
-                    <MenuItem on:click={() => dispatch("whatsHot")}>
+                    <!-- <MenuItem on:click={() => dispatch("whatsHot")}>
                         <span class="flame" slot="icon">🔥</span>
                         <span slot="text">{$_("whatsHot")}</span>
-                    </MenuItem>
+                    </MenuItem> -->
                     <MenuItem on:click={() => dispatch("logout")}>
                         <Logout size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("logout")}</span>

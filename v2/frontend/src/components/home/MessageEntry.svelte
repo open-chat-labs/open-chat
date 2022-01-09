@@ -32,6 +32,8 @@
     $: blockedUsers = controller.blockedUsers;
     $: chat = controller.chat;
 
+    $: console.log("Previewing: ", $chat.kind === "group_chat" && $chat.myRole === "previewer");
+
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
