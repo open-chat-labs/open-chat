@@ -184,10 +184,7 @@ export class HomeController {
 
                 this.initialised = true;
             }
-            toastStore.hideToast();
-            console.log("loaded chats");
         } catch (err) {
-            toastStore.showFailureToast("errorLoadingChats");
             rollbar.error("Error loading chats", err as Error);
             throw err;
         } finally {
