@@ -9,7 +9,7 @@ pub fn caller_is_user_index() -> Result<(), String> {
 }
 
 pub fn group_is_public() -> Result<(), String> {
-    if read_state(|state| state.is_group_public()) {
+    if read_state(|state| state.data.is_public) {
         Ok(())
     } else {
         Err("Group is not public".to_owned())
