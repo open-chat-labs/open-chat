@@ -5,11 +5,11 @@ use types::{Avatar, FieldTooLongResult};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub avatar: Avatar,
+    pub avatar: Option<Avatar>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
-    Success(u128),
+    Success,
     AvatarTooBig(FieldTooLongResult),
 }

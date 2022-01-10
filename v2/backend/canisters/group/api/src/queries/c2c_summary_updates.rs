@@ -31,7 +31,7 @@ pub struct SummaryUpdates {
     pub participant_count: Option<u32>,
     pub role: Option<Role>,
     pub mentions: Vec<Mention>,
-    pub pinned_message: OptionUpdates<MessageIndex>,
+    pub pinned_message: OptionUpdate<MessageIndex>,
     pub wasm_version: Option<Version>,
 }
 

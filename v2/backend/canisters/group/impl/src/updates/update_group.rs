@@ -27,7 +27,7 @@ async fn update_group(args: Args) -> Response {
         let c2c_update_group_args = c2c_update_group::Args {
             name: args.name.clone(),
             description: args.description.clone(),
-            avatar_id: Avatar::id(&args.avatar),
+            avatar_id: prepare_result.avatar_id,
         };
 
         let group_index_canister_id = prepare_result.group_index_canister_id;
@@ -54,10 +54,14 @@ struct PrepareResult {
     group_index_canister_id: CanisterId,
     is_public: bool,
     chat_id: ChatId,
+    avatar_id: Option<u128>,
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = runtime_state.env.caller();
+    let avatar_update = args.avatar.as_ref().expand();
+    let avatar_update_size = avatar_update.flatten().map_or(0, |a| a.data.len() as u32);
+
     if args.name.len() > MAX_GROUP_NAME_LENGTH as usize {
         Err(NameTooLong(FieldTooLongResult {
             length_provided: args.name.len() as u32,
@@ -68,14 +72,10 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             length_provided: args.description.len() as u32,
             max_length: MAX_GROUP_DESCRIPTION_LENGTH,
         }))
-    } else if args
-        .avatar
-        .as_ref()
-        .map_or(false, |a| a.data.len() > MAX_AVATAR_SIZE as usize)
-    {
+    } else if avatar_update_size > MAX_AVATAR_SIZE {
         Err(AvatarTooBig(FieldTooLongResult {
-            length_provided: args.avatar.as_ref().unwrap().data.len() as u32,
-            max_length: MAX_AVATAR_SIZE as u32,
+            length_provided: avatar_update_size,
+            max_length: MAX_AVATAR_SIZE,
         }))
     } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         if !participant.role.can_update_group() {
@@ -86,6 +86,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                 group_index_canister_id: runtime_state.data.group_index_canister_id,
                 is_public: runtime_state.data.is_public,
                 chat_id: runtime_state.env.canister_id().into(),
+                avatar_id: avatar_update.map_or(Avatar::id(&runtime_state.data.avatar), |avatar| avatar.map(|a| a.id)),
             })
         }
     } else {
@@ -123,17 +124,22 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
         runtime_state.data.description = args.description;
     }
 
-    if let Some(avatar) = args.avatar {
-        events.push_event(
-            ChatEventInternal::AvatarChanged(Box::new(AvatarChanged {
-                new_avatar: avatar.id,
-                previous_avatar: Avatar::id(&runtime_state.data.avatar),
-                changed_by: my_user_id,
-            })),
-            now,
-        );
+    if let Some(avatar) = args.avatar.expand() {
+        let previous_avatar_id = Avatar::id(&runtime_state.data.avatar);
+        let new_avatar_id = Avatar::id(&avatar);
 
-        runtime_state.data.avatar = Some(avatar);
+        if new_avatar_id != previous_avatar_id {
+            events.push_event(
+                ChatEventInternal::AvatarChanged(Box::new(AvatarChanged {
+                    new_avatar: new_avatar_id,
+                    previous_avatar: previous_avatar_id,
+                    changed_by: my_user_id,
+                })),
+                now,
+            );
+
+            runtime_state.data.avatar = avatar;
+        }
     }
 
     handle_activity_notification(runtime_state);

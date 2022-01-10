@@ -3,7 +3,7 @@ use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use types::{
-    Avatar, EventIndex, EventWrapper, Mention, Message, MessageIndex, OptionUpdates, TimestampMillis, MAX_RETURNED_MENTIONS,
+    Avatar, EventIndex, EventWrapper, Mention, Message, MessageIndex, OptionUpdate, TimestampMillis, MAX_RETURNED_MENTIONS,
 };
 
 #[query]
@@ -49,13 +49,13 @@ struct UpdatesFromEvents {
     latest_update: Option<TimestampMillis>,
     name: Option<String>,
     description: Option<String>,
-    avatar_id: Option<u128>,
+    avatar_id: OptionUpdate<u128>,
     latest_message: Option<EventWrapper<Message>>,
     latest_event_index: Option<EventIndex>,
     participants_changed: bool,
     role_changed: bool,
     mentions: Vec<Mention>,
-    pinned_message: OptionUpdates<MessageIndex>,
+    pinned_message: OptionUpdate<MessageIndex>,
 }
 
 fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_mentions: &[MessageIndex]) -> UpdatesFromEvents {
@@ -87,8 +87,8 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
                 }
             }
             ChatEventInternal::AvatarChanged(a) => {
-                if updates.avatar_id.is_none() {
-                    updates.avatar_id = Some(a.new_avatar);
+                if !updates.avatar_id.has_update() {
+                    updates.avatar_id = OptionUpdate::from_update(a.new_avatar);
                 }
             }
             ChatEventInternal::ParticipantsPromotedToAdmin(_)
@@ -108,8 +108,8 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
                 updates.participants_changed = true;
             }
             ChatEventInternal::PinnedMessageUpdated(p) => {
-                if updates.pinned_message.is_none() {
-                    updates.pinned_message = OptionUpdates::from_updates(p.new_value);
+                if !updates.pinned_message.has_update() {
+                    updates.pinned_message = OptionUpdate::from_update(p.new_value);
                 }
             }
             ChatEventInternal::Message(message) => {

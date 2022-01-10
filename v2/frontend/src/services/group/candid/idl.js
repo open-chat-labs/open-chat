@@ -254,7 +254,7 @@ export const idlFactory = ({ IDL }) => {
   const AvatarChanged = IDL.Record({
     'changed_by' : UserId,
     'previous_avatar' : IDL.Opt(IDL.Nat),
-    'new_avatar' : IDL.Nat,
+    'new_avatar' : IDL.Opt(IDL.Nat),
   });
   const ParticipantsAdded = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -315,6 +315,33 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
+  });
+  const PublicSummaryArgs = IDL.Record({});
+  const Version = IDL.Record({
+    'major' : IDL.Nat32,
+    'minor' : IDL.Nat32,
+    'patch' : IDL.Nat32,
+  });
+  const MessageEventWrapper = IDL.Record({
+    'event' : Message,
+    'timestamp' : TimestampMillis,
+    'index' : EventIndex,
+  });
+  const PublicGroupSummary = IDL.Record({
+    'name' : IDL.Text,
+    'wasm_version' : Version,
+    'description' : IDL.Text,
+    'last_updated' : TimestampMillis,
+    'pinned_message' : IDL.Opt(MessageIndex),
+    'avatar_id' : IDL.Opt(IDL.Nat),
+    'latest_event_index' : EventIndex,
+    'chat_id' : ChatId,
+    'participant_count' : IDL.Nat32,
+    'latest_message' : IDL.Opt(MessageEventWrapper),
+  });
+  const PublicSummarySuccess = IDL.Record({ 'summary' : PublicGroupSummary });
+  const PublicSummaryResponse = IDL.Variant({
+    'Success' : PublicSummarySuccess,
   });
   const RemoveParticipantArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveParticipantResponse = IDL.Variant({
@@ -446,10 +473,15 @@ export const idlFactory = ({ IDL }) => {
     'data' : IDL.Vec(IDL.Nat8),
     'mime_type' : IDL.Text,
   });
+  const AvatarUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : Avatar,
+  });
   const UpdateGroupArgs = IDL.Record({
     'name' : IDL.Text,
     'description' : IDL.Text,
-    'avatar' : IDL.Opt(Avatar),
+    'avatar' : AvatarUpdate,
   });
   const FieldTooLongResult = IDL.Record({
     'length_provided' : IDL.Nat32,
@@ -489,6 +521,11 @@ export const idlFactory = ({ IDL }) => {
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
     'make_admin' : IDL.Func([MakeAdminArgs], [MakeAdminResponse], []),
+    'public_summary' : IDL.Func(
+        [PublicSummaryArgs],
+        [PublicSummaryResponse],
+        ['query'],
+      ),
     'remove_participant' : IDL.Func(
         [RemoveParticipantArgs],
         [RemoveParticipantResponse],
