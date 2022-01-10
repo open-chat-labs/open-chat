@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
-use types::{ChatId, GroupChatSummaryUpdates, MessageIndex, OptionUpdates, TimestampMillis, Timestamped};
+use types::{ChatId, GroupChatSummaryUpdates, MessageIndex, OptionUpdate, TimestampMillis, Timestamped};
 use utils::range_set::{convert_to_message_index_ranges, RangeSet};
 
 #[derive(Serialize, Deserialize)]
@@ -48,7 +48,7 @@ impl From<&GroupChat> for GroupChatSummaryUpdates {
             read_by_me: Some(convert_to_message_index_ranges(s.read_by_me.value.clone())),
             notifications_muted: Some(s.notifications_muted.value),
             mentions: Vec::new(),
-            pinned_message: OptionUpdates::None,
+            pinned_message: OptionUpdate::NoChange,
             wasm_version: None,
         }
     }

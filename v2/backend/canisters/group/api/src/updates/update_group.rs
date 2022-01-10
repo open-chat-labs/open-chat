@@ -1,12 +1,12 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{Avatar, FieldTooLongResult};
+use types::{Avatar, FieldTooLongResult, OptionUpdate};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
     pub name: String,
     pub description: String,
-    pub avatar: Option<Avatar>,
+    pub avatar: OptionUpdate<Avatar>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

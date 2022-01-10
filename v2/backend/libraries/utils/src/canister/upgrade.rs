@@ -13,7 +13,7 @@ pub struct CanisterToUpgrade<A: CandidType> {
     pub args: A,
 }
 
-pub async fn upgrade<A: CandidType>(canister_id: CanisterId, wasm_module: Vec<u8>, args: A) -> Result<(), canister::Error> {
+pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -> Result<(), canister::Error> {
     #[derive(CandidType, Deserialize)]
     struct StartOrStopCanisterArgs {
         canister_id: Principal,
@@ -39,6 +39,7 @@ pub async fn upgrade<A: CandidType>(canister_id: CanisterId, wasm_module: Vec<u8
         arg: Vec<u8>,
     }
 
+    let canister_id = canister_to_upgrade.canister_id;
     let stop_canister_args = StartOrStopCanisterArgs { canister_id };
     let stop_canister_response: CallResult<()> =
         api::call::call(Principal::management_canister(), "stop_canister", (stop_canister_args,)).await;
@@ -46,6 +47,7 @@ pub async fn upgrade<A: CandidType>(canister_id: CanisterId, wasm_module: Vec<u8
     if let Err((code, msg)) = stop_canister_response {
         let code = code as u8;
         error!(
+            canister_id = canister_id.to_string().as_str(),
             error_code = code,
             error_message = msg.as_str(),
             "Error calling 'stop_canister'"
@@ -56,8 +58,8 @@ pub async fn upgrade<A: CandidType>(canister_id: CanisterId, wasm_module: Vec<u8
     let install_code_args = CanisterInstall {
         mode: InstallMode::Upgrade,
         canister_id,
-        wasm_module,
-        arg: candid::encode_one(args).unwrap(),
+        wasm_module: canister_to_upgrade.new_wasm.module,
+        arg: candid::encode_one(canister_to_upgrade.args).unwrap(),
     };
     let install_code_response: CallResult<()> =
         api::call::call(Principal::management_canister(), "install_code", (install_code_args,)).await;
@@ -66,6 +68,9 @@ pub async fn upgrade<A: CandidType>(canister_id: CanisterId, wasm_module: Vec<u8
     if let Err((code, msg)) = install_code_response {
         let code = code as u8;
         error!(
+            canister_id = canister_id.to_string().as_str(),
+            from_wasm_version = %canister_to_upgrade.current_wasm_version,
+            to_wasm_version = %canister_to_upgrade.new_wasm.version,
             error_code = code,
             error_message = msg.as_str(),
             "Error calling 'install_code'"
@@ -81,6 +86,7 @@ pub async fn upgrade<A: CandidType>(canister_id: CanisterId, wasm_module: Vec<u8
     if let Err((code, msg)) = start_canister_response {
         let code = code as u8;
         error!(
+            canister_id = canister_id.to_string().as_str(),
             error_code = code,
             error_message = msg.as_str(),
             "Error calling 'start_canister'"

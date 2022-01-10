@@ -57,6 +57,7 @@ import type { UserSummary } from "../../domain/user/user";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { muteNotificationsResponse } from "../notifications/mappers";
+import { identity } from "../../utils/mapping";
 
 const MAX_RECURSION = 10;
 
@@ -229,11 +230,11 @@ export class UserClient extends CandidService implements IUserClient {
         const blobId = DataClient.newBlobId();
         return this.handleResponse(
             this.userService.set_avatar({
-                avatar: {
+                avatar: apiOptional(identity, {
                     id: blobId,
                     data: Array.from(bytes),
                     mime_type: "image/jpg",
-                },
+                }),
             }),
             setAvatarResponse
         ).then((resp) => {

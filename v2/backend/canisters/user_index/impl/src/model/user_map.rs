@@ -258,7 +258,7 @@ impl UserMap {
         false
     }
 
-    pub fn set_avatar_id(&mut self, user_id: &UserId, avatar_id: u128, now: TimestampMillis) -> bool {
+    pub fn set_avatar_id(&mut self, user_id: &UserId, avatar_id: Option<u128>, now: TimestampMillis) -> bool {
         if let Some(principal) = self.user_id_to_principal.get(user_id) {
             if let Some(user) = self.users_by_principal.get_mut(principal) {
                 return user.set_avatar_id(avatar_id, now);

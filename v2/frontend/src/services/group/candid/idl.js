@@ -254,7 +254,7 @@ export const idlFactory = ({ IDL }) => {
   const AvatarChanged = IDL.Record({
     'changed_by' : UserId,
     'previous_avatar' : IDL.Opt(IDL.Nat),
-    'new_avatar' : IDL.Nat,
+    'new_avatar' : IDL.Opt(IDL.Nat),
   });
   const ParticipantsAdded = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -473,10 +473,15 @@ export const idlFactory = ({ IDL }) => {
     'data' : IDL.Vec(IDL.Nat8),
     'mime_type' : IDL.Text,
   });
+  const AvatarUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : Avatar,
+  });
   const UpdateGroupArgs = IDL.Record({
     'name' : IDL.Text,
     'description' : IDL.Text,
-    'avatar' : IDL.Opt(Avatar),
+    'avatar' : AvatarUpdate,
   });
   const FieldTooLongResult = IDL.Record({
     'length_provided' : IDL.Nat32,

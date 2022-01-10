@@ -1,35 +1,58 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-// This is needed in cases where we would otherwise be returning an Option<Option<T>> where it would
-// not be possible to tell which layer is None after converting to JSON
+// This is needed when we would otherwise use an Option<Option<T>> in which case it would not be
+// possible to tell which layer is None when represented as JSON
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum OptionUpdates<T> {
-    None,
+pub enum OptionUpdate<T> {
+    NoChange,
     SetToNone,
     SetToSome(T),
 }
 
-impl<T> OptionUpdates<T> {
-    pub fn from_updates(option: Option<T>) -> OptionUpdates<T> {
+impl<T> OptionUpdate<T> {
+    pub fn from_update(option: Option<T>) -> OptionUpdate<T> {
         if let Some(value) = option {
-            OptionUpdates::SetToSome(value)
+            OptionUpdate::SetToSome(value)
         } else {
-            OptionUpdates::SetToNone
+            OptionUpdate::SetToNone
         }
     }
 
-    pub fn is_some(&self) -> bool {
-        !self.is_none()
+    pub fn expand(self) -> Option<Option<T>> {
+        match self {
+            OptionUpdate::NoChange => None,
+            OptionUpdate::SetToNone => Some(None),
+            OptionUpdate::SetToSome(value) => Some(Some(value)),
+        }
     }
 
-    pub fn is_none(&self) -> bool {
-        matches!(self, OptionUpdates::None)
+    pub fn has_update(&self) -> bool {
+        !matches!(self, OptionUpdate::NoChange)
+    }
+
+    pub fn as_ref(&self) -> OptionUpdate<&T> {
+        match self {
+            OptionUpdate::NoChange => OptionUpdate::NoChange,
+            OptionUpdate::SetToNone => OptionUpdate::SetToNone,
+            OptionUpdate::SetToSome(value) => OptionUpdate::SetToSome(value),
+        }
+    }
+
+    pub fn map<F, R>(self, f: F) -> OptionUpdate<R>
+    where
+        F: FnOnce(T) -> R,
+    {
+        match self {
+            OptionUpdate::NoChange => OptionUpdate::NoChange,
+            OptionUpdate::SetToNone => OptionUpdate::SetToNone,
+            OptionUpdate::SetToSome(value) => OptionUpdate::SetToSome(f(value)),
+        }
     }
 }
 
-impl<T> Default for OptionUpdates<T> {
+impl<T> Default for OptionUpdate<T> {
     fn default() -> Self {
-        OptionUpdates::None
+        OptionUpdate::NoChange
     }
 }

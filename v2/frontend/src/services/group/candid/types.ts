@@ -56,8 +56,11 @@ export interface Avatar {
 export interface AvatarChanged {
   'changed_by' : UserId,
   'previous_avatar' : [] | [bigint],
-  'new_avatar' : bigint,
+  'new_avatar' : [] | [bigint],
 }
+export type AvatarUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : Avatar };
 export interface BlobReference {
   'blob_id' : bigint,
   'canister_id' : CanisterId,
@@ -338,7 +341,7 @@ export interface GroupChatSummaryUpdates {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'read_by_me' : [] | [Array<MessageIndexRange>],
-  'pinned_message' : PinnedMessageUpdates,
+  'pinned_message' : PinnedMessageUpdate,
   'avatar_id' : [] | [bigint],
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
@@ -529,13 +532,13 @@ export interface PendingICPWithdrawal {
   'memo' : [] | [Memo],
   'amount' : ICP,
 }
+export type PinnedMessageUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : MessageIndex };
 export interface PinnedMessageUpdated {
   'updated_by' : UserId,
   'new_value' : [] | [MessageIndex],
 }
-export type PinnedMessageUpdates = { 'None' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : MessageIndex };
 export interface PublicGroupSummary {
   'name' : string,
   'wasm_version' : Version,
@@ -670,7 +673,7 @@ export type UnblockUserResponse = { 'GroupNotPublic' : null } |
 export interface UpdateGroupArgs {
   'name' : string,
   'description' : string,
-  'avatar' : [] | [Avatar],
+  'avatar' : AvatarUpdate,
 }
 export type UpdateGroupResponse = {
     'DescriptionTooLong' : FieldTooLongResult

@@ -1,5 +1,5 @@
 use crate::{
-    ChatId, EventIndex, EventWrapper, Mention, Message, MessageIndex, MessageIndexRange, OptionUpdates, Role, TimestampMillis,
+    ChatId, EventIndex, EventWrapper, Mention, Message, MessageIndex, MessageIndexRange, OptionUpdate, Role, TimestampMillis,
     UserId, Version,
 };
 use candid::CandidType;
@@ -102,6 +102,6 @@ pub struct GroupChatSummaryUpdates {
     pub participant_count: Option<u32>,
     pub role: Option<Role>,
     pub mentions: Vec<Mention>,
-    pub pinned_message: OptionUpdates<MessageIndex>,
+    pub pinned_message: OptionUpdate<MessageIndex>,
     pub wasm_version: Option<Version>,
 }

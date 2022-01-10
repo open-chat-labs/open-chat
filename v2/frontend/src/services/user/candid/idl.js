@@ -483,10 +483,10 @@ export const idlFactory = ({ IDL }) => {
     'RecipientBlocked' : IDL.Null,
     'InvalidRequest' : IDL.Text,
   });
-  const SetAvatarArgs = IDL.Record({ 'avatar' : Avatar });
+  const SetAvatarArgs = IDL.Record({ 'avatar' : IDL.Opt(Avatar) });
   const SetAvatarResponse = IDL.Variant({
     'AvatarTooBig' : FieldTooLongResult,
-    'Success' : IDL.Nat,
+    'Success' : IDL.Null,
   });
   const NightMode = IDL.Variant({
     'On' : IDL.Null,
@@ -575,8 +575,8 @@ export const idlFactory = ({ IDL }) => {
     'details' : AlertDetails,
     'elapsed' : Milliseconds,
   });
-  const PinnedMessageUpdates = IDL.Variant({
-    'None' : IDL.Null,
+  const PinnedMessageUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
     'SetToSome' : MessageIndex,
   });
@@ -588,7 +588,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
-    'pinned_message' : PinnedMessageUpdates,
+    'pinned_message' : PinnedMessageUpdate,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : IDL.Opt(EventIndex),
     'mentions' : IDL.Vec(Mention),

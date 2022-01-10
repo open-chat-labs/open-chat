@@ -55,7 +55,6 @@ import {
     mergeGroupChatDetails,
     nextIndex,
 } from "../../domain/chat/chat.utils";
-import { HttpError } from "services/httpError";
 
 const MAX_RECURSION = 10;
 
@@ -230,14 +229,16 @@ export class GroupClient extends CandidService implements IGroupClient {
             this.groupService.update_group({
                 name: name,
                 description: desc,
-                avatar: apiOptional(
-                    (data) => ({
-                        id: DataClient.newBlobId(),
-                        mime_type: "image/jpg",
-                        data: Array.from(data),
-                    }),
-                    avatar
-                ),
+                avatar:
+                    avatar === undefined
+                        ? { NoChange: null }
+                        : {
+                              SetToSome: {
+                                  id: DataClient.newBlobId(),
+                                  mime_type: "image/jpg",
+                                  data: Array.from(avatar),
+                              },
+                          },
             }),
             updateGroupResponse
         );
