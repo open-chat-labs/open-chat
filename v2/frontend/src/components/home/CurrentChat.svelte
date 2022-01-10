@@ -43,7 +43,7 @@
 
     function getFirstUnreadMessageIndex(): number | undefined {
         const chat = controller.chatVal;
-        if (chat.kind === "group_chat" && chat.myRole === "previewer") return undefined;
+        if (preview) return undefined;
 
         return controller.markRead.getFirstUnreadMessageIndex(
             chat.chatId,
