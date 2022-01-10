@@ -142,7 +142,7 @@
             <Typing />
         {:else}
             <div class="chat-msg">
-                <Markdown text={lastMessage} oneLine={true} inline={false} />
+                <Markdown text={lastMessage} oneLine={true} suppressLinks={true} inline={false} />
             </div>
         {/if}
     </div>

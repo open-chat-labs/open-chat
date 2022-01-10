@@ -3,10 +3,12 @@
 <script lang="ts">
     import SvelteMarkdown from "svelte-markdown";
     import ChatMessageLink from "./ChatMessageLink.svelte";
+    import ChatMessageLinkSuppressed from "./ChatMessageLinkSuppressed.svelte";
 
     export let text: string;
     export let inline: boolean = true;
     export let oneLine: boolean = false;
+    export let suppressLinks: boolean = false;
 </script>
 
 <p class="markdown-wrapper" class:inline class:oneLine>
@@ -14,7 +16,7 @@
         options={{ breaks: !oneLine, sanitize: true }}
         isInline={true}
         source={text}
-        renderers={{ link: ChatMessageLink }} />
+        renderers={{ link: suppressLinks ? ChatMessageLinkSuppressed : ChatMessageLink }} />
 </p>
 
 <style type="text/scss">
