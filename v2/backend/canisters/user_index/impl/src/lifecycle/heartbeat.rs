@@ -60,7 +60,7 @@ mod upgrade_canisters {
         let from_version = canister_to_upgrade.current_wasm_version;
         let to_version = canister_to_upgrade.new_wasm.version;
 
-        match canister::upgrade(canister_id, canister_to_upgrade.new_wasm.module, canister_to_upgrade.args).await {
+        match canister::upgrade(canister_to_upgrade).await {
             Ok(_) => {
                 mutate_state(|state| on_success(canister_id, to_version, state));
             }

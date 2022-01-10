@@ -19,7 +19,7 @@ async fn upgrade_canister(_args: Args) -> Response {
     let user_id = canister_id.into();
     let to_version = canister_to_upgrade.new_wasm.version;
 
-    match canister::upgrade(canister_id, canister_to_upgrade.new_wasm.module, canister_to_upgrade.args).await {
+    match canister::upgrade(canister_to_upgrade).await {
         Ok(_) => {
             mutate_state(|state| set_upgrade_complete(user_id, Some(to_version), state));
             Success
