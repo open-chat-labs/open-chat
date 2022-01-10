@@ -1,4 +1,4 @@
-import { isPreviewing } from "domain/chat/chat.utils";
+import { isPreviewing } from "../domain/chat/chat.utils";
 import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
