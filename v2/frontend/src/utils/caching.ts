@@ -1,3 +1,4 @@
+import { isPreviewing } from "domain/chat/chat.utils";
 import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
@@ -111,6 +112,18 @@ export function openCache(principal: string): Database | undefined {
     }
 }
 
+export async function removeCachedChat(
+    db: Database,
+    userId: string,
+    chatId: string
+): Promise<void> {
+    const fromCache = await getCachedChats(db, userId);
+    if (fromCache !== undefined) {
+        fromCache.chatSummaries = fromCache.chatSummaries.filter((c) => c.chatId !== chatId);
+        await setCachedChats(db, userId)(fromCache);
+    }
+}
+
 export async function getCachedChats(
     db: Database,
     userId: string
@@ -145,24 +158,30 @@ export function setCachedChats(
 ): (data: MergedUpdatesResponse) => Promise<MergedUpdatesResponse> {
     return async (data: MergedUpdatesResponse) => {
         // irritating hoop jumping to keep typescript happy here
-        const serialisable = data.chatSummaries.map((c) => {
-            if (c.kind === "direct_chat") {
-                return {
-                    ...c,
-                    readByMe: drangeToIndexRanges(c.readByMe),
-                    readByThem: drangeToIndexRanges(c.readByThem),
-                    latestMessage: c.latestMessage ? makeSerialisable(c.latestMessage) : undefined,
-                };
-            }
-            if (c.kind === "group_chat") {
-                return {
-                    ...c,
-                    readByMe: drangeToIndexRanges(c.readByMe),
-                    latestMessage: c.latestMessage ? makeSerialisable(c.latestMessage) : undefined,
-                };
-            }
-            return c;
-        });
+        const serialisable = data.chatSummaries
+            .filter((c) => !isPreviewing(c))
+            .map((c) => {
+                if (c.kind === "direct_chat") {
+                    return {
+                        ...c,
+                        readByMe: drangeToIndexRanges(c.readByMe),
+                        readByThem: drangeToIndexRanges(c.readByThem),
+                        latestMessage: c.latestMessage
+                            ? makeSerialisable(c.latestMessage)
+                            : undefined,
+                    };
+                }
+                if (c.kind === "group_chat") {
+                    return {
+                        ...c,
+                        readByMe: drangeToIndexRanges(c.readByMe),
+                        latestMessage: c.latestMessage
+                            ? makeSerialisable(c.latestMessage)
+                            : undefined,
+                    };
+                }
+                return c;
+            });
         (await db).put(
             "chats",
             {

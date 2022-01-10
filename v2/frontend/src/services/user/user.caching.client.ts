@@ -26,6 +26,7 @@ import {
     getCachedEvents,
     getCachedEventsByIndex,
     getCachedEventsWindow,
+    removeCachedChat,
     setCachedChats,
     setCachedEvents,
     setCachedMessage,
@@ -160,7 +161,8 @@ export class CachingUserClient implements IUserClient {
         return this.client.unblockUser(userId);
     }
 
-    leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
+    async leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
+        await removeCachedChat(this.db, this.userId, chatId);
         return this.client.leaveGroup(chatId);
     }
 

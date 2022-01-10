@@ -14,6 +14,7 @@
         getContentAsText,
         getDisplayDate,
         getMinVisibleMessageIndex,
+        isPreviewing,
     } from "../../domain/chat/chat.utils";
     import type { ChatSummary } from "../../domain/chat/chat";
     import Markdown from "./Markdown.svelte";
@@ -114,7 +115,7 @@
     $: isTyping =
         chatSummary.kind === "direct_chat" && $typing[chatSummary.chatId]?.has(chatSummary.them);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
-    $: preview = chatSummary.kind === "group_chat" && chatSummary.myRole === "previewer";
+    $: preview = isPreviewing(chatSummary);
 </script>
 
 <a

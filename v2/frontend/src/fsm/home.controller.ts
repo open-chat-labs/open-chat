@@ -310,10 +310,7 @@ export class HomeController {
                 if (resp === "success") {
                     toastStore.showSuccessToast("deleteGroupSuccess");
                     this.clearSelectedChat();
-                    this.serverChatSummaries.update((summaries) => {
-                        delete summaries[chatId];
-                        return summaries;
-                    });
+                    this.removeGroup(chatId);
                 } else {
                     rollbar.warn("Unable to delete group", resp);
                     toastStore.showFailureToast("deleteGroupFailure");
@@ -334,10 +331,7 @@ export class HomeController {
                 if (resp === "success") {
                     toastStore.showSuccessToast("leftGroup");
                     this.clearSelectedChat();
-                    this.serverChatSummaries.update((summaries) => {
-                        delete summaries[chatId];
-                        return summaries;
-                    });
+                    this.removeGroup(chatId);
                 } else {
                     if (resp === "owner_cannot_leave") {
                         toastStore.showFailureToast("ownerCantLeave");
@@ -580,23 +574,12 @@ export class HomeController {
         });
     }
 
-    joinGroup(chat: ChatSummary): Promise<void> {
-        return this.api
-            .joinGroup(chat.chatId)
-            .then((resp) => {
-                if (resp === "success" || resp === "already_in_group") {
-                    this.replaceChat(chat);
-                } else {
-                    if (resp === "blocked") {
-                        toastStore.showFailureToast("youreBlocked");
-                    } else {
-                        toastStore.showFailureToast("joinGroupFailed");
-                    }
-                }
-            })
-            .catch((err) => {
-                rollbar.error("Unable to join group", err);
-                toastStore.showFailureToast("joinGroupFailed");
-            });
+    removeGroup(chatId: string): void {
+        this.serverChatSummaries.update((summaries) => {
+            delete summaries[chatId];
+            return {
+                ...summaries,
+            };
+        });
     }
 }

@@ -25,6 +25,7 @@ import {
     getNextEventIndex,
     getNextMessageIndex,
     indexRangeForChat,
+    isPreviewing,
     mergeUnconfirmedIntoSummary,
     pruneLocalReactions,
     replaceAffected,
@@ -135,7 +136,7 @@ export class ChatController {
     }
 
     get unreadMessageCount(): number {
-        if (this.chatVal.kind === "group_chat" && this.chatVal.myRole === "previewer") return 0;
+        if (isPreviewing(this.chatVal)) return 0;
 
         return this.markRead.unreadMessageCount(
             this.chatId,

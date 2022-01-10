@@ -785,3 +785,7 @@ function getLatestMessage(
         ? updatedChat.latestMessage
         : chat.latestMessage;
 }
+
+export function isPreviewing(chat: ChatSummary): boolean {
+    return chat.kind === "group_chat" && chat.public && chat.myRole === "previewer";
+}

@@ -7,7 +7,7 @@
     import { _ } from "svelte-i18n";
     import type { ChatController } from "../../fsm/chat.controller";
     import { onDestroy } from "svelte";
-    import { getMinVisibleMessageIndex } from "domain/chat/chat.utils";
+    import { getMinVisibleMessageIndex, isPreviewing } from "domain/chat/chat.utils";
     import type { Mention } from "domain/chat/chat";
 
     export let controller: ChatController;
@@ -89,7 +89,7 @@
 
     $: chat = controller.chat;
 
-    $: preview = $chat.kind === "group_chat" && $chat.public && $chat.myRole === "previewer";
+    $: preview = isPreviewing($chat);
 </script>
 
 <div class="wrapper">
