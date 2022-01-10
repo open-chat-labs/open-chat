@@ -50,6 +50,7 @@
     export let observer: IntersectionObserver;
     export let focused: boolean;
     export let admin: boolean;
+    export let preview: boolean;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
@@ -217,7 +218,7 @@
         data-index={msg.messageIndex}
         data-id={msg.messageId}
         id={`event-${eventIndex}`}>
-        {#if me && !deleted}
+        {#if me && !deleted && !preview}
             <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
@@ -271,7 +272,7 @@
                 <pre>ReadByUs: {readByMe}</pre>
             {/if}
 
-            {#if !deleted}
+            {#if !deleted && !preview}
                 <div class="menu" class:rtl={$rtlStore}>
                     <MenuIcon>
                         <div class="menu-icon" slot="icon">
@@ -320,7 +321,7 @@
                 </div>
             {/if}
         </div>
-        {#if !me && !deleted}
+        {#if !me && !deleted && !preview}
             <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>

@@ -7,7 +7,6 @@
     import { flip } from "svelte/animate";
     import { elasticOut } from "svelte/easing";
     import { _ } from "svelte-i18n";
-    import { toastStore } from "../../stores/toast";
     import type { ChatSummary as ChatSummaryType } from "../../domain/chat/chat";
     import type {
         GroupMatch,
@@ -37,7 +36,6 @@
 
     const dispatch = createEventDispatcher();
 
-    let joiningGroup: string | undefined = undefined;
     let chatsWithUnreadMsgs: number;
 
     $: user = controller.user ? $userStore[controller.user?.userId] : undefined;
@@ -88,6 +86,10 @@
 
     $: chatLookup = controller.chatSummaries;
 
+    function whatsHot() {
+        console.log("Let's look up some popular groups");
+    }
+
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
         controller.updateUserAvatar({
             blobData: ev.detail.data,
@@ -103,36 +105,13 @@
         dispatch("loadMessage", msg);
     }
 
-    // this is pretty iffy, but ....
-    function selectJoinedChat(chatId: string): void {
-        if (chats.find((c) => c.chatId === chatId) !== undefined) {
-            push(`/${chatId}`);
-            joiningGroup = undefined;
-        } else {
-            setTimeout(() => selectJoinedChat(chatId), 200);
-        }
-    }
-
-    function joinGroup(group: GroupMatch): void {
-        if (chats.find((c) => c.chatId === group.chatId) !== undefined) {
-            push(`/${group.chatId}`);
-            joiningGroup = undefined;
-        } else {
-            joiningGroup = group.chatId;
-            api.joinGroup(group.chatId)
-                .then((resp) => {
-                    if (resp === "success" || resp === "already_in_group") {
-                        selectJoinedChat(group.chatId);
-                    } else {
-                        toastStore.showFailureToast("joinGroupFailed");
-                        joiningGroup = undefined;
-                    }
-                })
-                .catch((_err) => {
-                    toastStore.showFailureToast("joinGroupFailed");
-                    joiningGroup = undefined;
-                });
-        }
+    /**
+     * All we need to do here is push the route
+     * the routing will take care of the rest
+     */
+    function selectGroup({ chatId }: GroupMatch): void {
+        push(`/${chatId}`);
+        dispatch("searchEntered", "");
     }
 
     function messageMatchDataContent({ chatId, sender }: MessageMatch): DataContent {
@@ -156,6 +135,7 @@
     <CurrentUser
         on:userAvatarSelected={userAvatarSelected}
         on:logout
+        on:whatsHot={whatsHot}
         {user}
         on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
         on:newGroup />
@@ -190,8 +170,7 @@
                                     <SearchResult
                                         index={i}
                                         avatarUrl={avatarUrl(group, "../assets/group.svg")}
-                                        showSpinner={joiningGroup === group.chatId}
-                                        on:click={() => joinGroup(group)}>
+                                        on:click={() => selectGroup(group)}>
                                         <h4 class="search-item-title">
                                             {group.name}
                                         </h4>

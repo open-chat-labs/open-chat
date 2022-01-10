@@ -40,6 +40,8 @@ import {
     Role,
     TransferOwnershipResponse,
     DeleteGroupResponse,
+    PublicGroupSummary,
+    PublicSummaryResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -81,6 +83,8 @@ export {
     Role as ApiRole,
     TransferOwnershipResponse as ApiTransferOwnershipResponse,
     DeleteGroupResponse as ApiDeleteGroupResponse,
+    PublicGroupSummary as ApiPublicGroupSummary,
+    PublicSummaryResponse as ApiPublicSummaryResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

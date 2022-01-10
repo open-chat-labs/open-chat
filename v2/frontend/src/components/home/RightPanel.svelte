@@ -6,7 +6,7 @@
     import type { EditGroupState } from "../../fsm/editGroup";
     import type { FullParticipant, GroupChatSummary } from "../../domain/chat/chat";
     import type { ServiceContainer } from "../../services/serviceContainer";
-    import type { Writable } from "svelte/store";
+    import type { Readable } from "svelte/store";
     import type { ChatController } from "../../fsm/chat.controller";
     import type { UserSummary } from "../../domain/user/user";
     import { toastStore } from "../../stores/toast";
@@ -17,7 +17,7 @@
     export let userId: string;
 
     let savingParticipants = false;
-    let chat = controller.chat as Writable<GroupChatSummary>;
+    let chat = controller.chat as Readable<GroupChatSummary>;
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
 
@@ -87,7 +87,12 @@
 
 <Panel right>
     {#if lastState === "group_details"}
-        <GroupDetails {controller} {updatedGroup} on:close={pop} on:showParticipants />
+        <GroupDetails
+            {controller}
+            {updatedGroup}
+            on:close={pop}
+            on:showParticipants
+            on:updateChat />
     {:else if lastState === "add_participants"}
         <AddParticipants
             busy={savingParticipants}

@@ -35,7 +35,8 @@
             on:addParticipants
             on:showGroupDetails
             on:showParticipants
-            on:chatWith />
+            on:chatWith
+            on:updateChat />
     {/if}
 </Panel>
 

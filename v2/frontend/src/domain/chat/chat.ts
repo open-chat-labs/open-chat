@@ -525,7 +525,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     mentions: Mention[];
 };
 
-export type ParticipantRole = "admin" | "participant" | "owner" | "super_admin";
+export type ParticipantRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
 
 export type Participant = {
     role: ParticipantRole;

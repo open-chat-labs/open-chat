@@ -25,6 +25,7 @@ import {
     getNextEventIndex,
     getNextMessageIndex,
     indexRangeForChat,
+    isPreviewing,
     mergeUnconfirmedIntoSummary,
     pruneLocalReactions,
     replaceAffected,
@@ -135,6 +136,8 @@ export class ChatController {
     }
 
     get unreadMessageCount(): number {
+        if (isPreviewing(this.chatVal)) return 0;
+
         return this.markRead.unreadMessageCount(
             this.chatId,
             this.minVisibleMessageIndex,
@@ -600,7 +603,10 @@ export class ChatController {
         return getNextEventIndex(get(this.serverChatSummary), unconfirmed.getMessages(this.chatId));
     }
 
-    createMessage(textContent: string | undefined, fileToAttach: MessageContent | undefined): Message {
+    createMessage(
+        textContent: string | undefined,
+        fileToAttach: MessageContent | undefined
+    ): Message {
         const nextMessageIndex = this.getNextMessageIndex();
 
         return createMessage(
@@ -1008,5 +1014,30 @@ export class ChatController {
         };
 
         rtcConnectionsManager.sendMessage([...this.chatUserIds], rtc);
+    }
+
+    joinGroup(): Promise<ChatSummary | undefined> {
+        return this.api
+            .joinGroup(this.chatVal.chatId)
+            .then((resp) => {
+                if (resp === "success" || resp === "already_in_group") {
+                    return {
+                        ...this.chatVal,
+                        myRole: "participant" as ParticipantRole,
+                    };
+                } else {
+                    if (resp === "blocked") {
+                        toastStore.showFailureToast("youreBlocked");
+                    } else {
+                        toastStore.showFailureToast("joinGroupFailed");
+                    }
+                    return undefined;
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to join group", err);
+                toastStore.showFailureToast("joinGroupFailed");
+                return undefined;
+            });
     }
 }

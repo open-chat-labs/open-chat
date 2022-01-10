@@ -11,9 +11,9 @@
     } from "../../../domain/chat/chat";
     import { userStore } from "../../../stores/user";
     import { createEventDispatcher } from "svelte";
-    import type { Writable } from "svelte/store";
+    import type { Readable, Writable } from "svelte/store";
 
-    export let chat: Writable<GroupChatSummary>;
+    export let chat: Readable<GroupChatSummary>;
     export let participants: Writable<ParticipantType[]>;
     export let blockedUsers: Writable<Set<string>>;
     export let userId: string;

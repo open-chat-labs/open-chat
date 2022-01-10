@@ -17,9 +17,14 @@
     import { userStore } from "stores/user";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import type { User } from "../../domain/user/user";
+    import Button from "../Button.svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
+    export let preview: boolean;
+    export let showEmojiPicker = false;
+
+    let joining = false;
 
     $: textContent = controller.textContent;
     $: editingEvent = controller.editingEvent;
@@ -36,7 +41,6 @@
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
     let audioMimeType = audioRecordingMimeType();
-    export let showEmojiPicker = false;
     let selectedRange: Range | undefined;
     let dragging: boolean = false;
     let recording: boolean = false;
@@ -272,6 +276,18 @@
         showEmojiSearch = false;
         setCaretToEnd();
     }
+
+    function joinGroup() {
+        joining = true;
+        controller
+            .joinGroup()
+            .then((maybeChat) => {
+                if (maybeChat !== undefined) {
+                    dispatch("updateChat", maybeChat);
+                }
+            })
+            .finally(() => (joining = false));
+    }
 </script>
 
 {#if showMentionPicker}
@@ -296,6 +312,12 @@
     {#if blocked}
         <div class="blocked">
             {$_("userIsBlocked")}
+        </div>
+    {:else if preview}
+        <div class="preview">
+            <Button loading={joining} disabled={joining} small={true} on:click={joinGroup}>
+                {$_("joinGroup")}
+            </Button>
         </div>
     {:else}
         <div class="emoji" on:click={toggleEmojiPicker}>
@@ -405,7 +427,8 @@
         }
     }
 
-    .blocked {
+    .blocked,
+    .preview {
         height: 42px;
         color: var(--entry-input-txt);
         @include font(book, normal, fs-100);
@@ -413,5 +436,9 @@
         justify-content: center;
         align-items: center;
         width: 100%;
+    }
+
+    .preview {
+        justify-content: flex-end;
     }
 </style>

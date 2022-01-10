@@ -13,6 +13,7 @@
 
     export let controller: ChatController;
     export let blocked: boolean;
+    export let preview: boolean;
 
     let showEmojiPicker = false;
     $: chat = controller.chat;
@@ -160,10 +161,12 @@
         bind:showEmojiPicker
         on:paste={onPaste}
         on:drop={onDrop}
+        {preview}
         {blocked}
         on:sendMessage={sendMessage}
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
+        on:updateChat
         {controller} />
 </div>
 

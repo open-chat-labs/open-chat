@@ -21,6 +21,7 @@ import type {
     UnblockUserResponse,
     TransferOwnershipResponse,
     DeleteGroupResponse,
+    GroupChatSummary,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import { CandidService } from "../candidService";
@@ -41,6 +42,7 @@ import {
     unblockUserResponse,
     transferOwnershipResponse,
     deleteGroupResponse,
+    publicSummaryResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -196,7 +198,11 @@ export class GroupClient extends CandidService implements IGroupClient {
             });
     }
 
-    sendMessage(senderName: string, mentioned: User[], message: Message): Promise<SendMessageResponse> {
+    sendMessage(
+        senderName: string,
+        mentioned: User[],
+        message: Message
+    ): Promise<SendMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.chatId])
             .then(() => {
@@ -223,15 +229,16 @@ export class GroupClient extends CandidService implements IGroupClient {
             this.groupService.update_group({
                 name: name,
                 description: desc,
-                avatar: avatar === undefined
-                    ? { NoChange: null }
-                    : {
-                        SetToSome: {
-                            id: DataClient.newBlobId(),
-                            mime_type: "image/jpg",
-                            data: Array.from(avatar),
-                        }
-                    },
+                avatar:
+                    avatar === undefined
+                        ? { NoChange: null }
+                        : {
+                              SetToSome: {
+                                  id: DataClient.newBlobId(),
+                                  mime_type: "image/jpg",
+                                  data: Array.from(avatar),
+                              },
+                          },
             }),
             updateGroupResponse
         );
@@ -304,5 +311,15 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     deleteGroup(): Promise<DeleteGroupResponse> {
         return this.handleResponse(this.groupService.delete_group({}), deleteGroupResponse);
+    }
+
+    getPublicSummary(): Promise<GroupChatSummary | undefined> {
+        return this.handleResponse(
+            this.groupService.public_summary({}),
+            publicSummaryResponse
+        ).catch((_err) => {
+            // whatever error we get, just assume that we cannot get hold of the group
+            return undefined;
+        });
     }
 }

@@ -7,7 +7,7 @@
     import { _ } from "svelte-i18n";
     import type { ChatController } from "../../fsm/chat.controller";
     import { onDestroy } from "svelte";
-    import { getMinVisibleMessageIndex } from "domain/chat/chat.utils";
+    import { getMinVisibleMessageIndex, isPreviewing } from "domain/chat/chat.utils";
     import type { Mention } from "domain/chat/chat";
 
     export let controller: ChatController;
@@ -43,6 +43,8 @@
 
     function getFirstUnreadMessageIndex(): number | undefined {
         const chat = controller.chatVal;
+        if (preview) return undefined;
+
         return controller.markRead.getFirstUnreadMessageIndex(
             chat.chatId,
             getMinVisibleMessageIndex(chat),
@@ -86,11 +88,14 @@
     }
 
     $: chat = controller.chat;
+
+    $: preview = isPreviewing($chat);
 </script>
 
 <div class="wrapper">
     <CurrentChatHeader
         {blocked}
+        {preview}
         {unreadMessages}
         on:clearSelection
         on:blockUser
@@ -108,10 +113,11 @@
         on:messageRead={messageRead}
         on:chatWith
         {controller}
+        {preview}
         {firstUnreadMention}
         {firstUnreadMessage}
         {unreadMessages} />
-    <Footer {blocked} {controller} />
+    <Footer {preview} {blocked} {controller} on:updateChat />
 </div>
 
 <style type="text/scss">

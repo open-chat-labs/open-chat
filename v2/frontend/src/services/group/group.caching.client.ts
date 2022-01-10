@@ -18,6 +18,7 @@ import type {
     UnblockUserResponse,
     TransferOwnershipResponse,
     DeleteGroupResponse,
+    GroupChatSummary,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -102,7 +103,11 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.addParticipants(userIds, myUsername, allowBlocked);
     }
 
-    sendMessage(senderName: string, mentioned: User[], message: Message): Promise<SendMessageResponse> {
+    sendMessage(
+        senderName: string,
+        mentioned: User[],
+        message: Message
+    ): Promise<SendMessageResponse> {
         return this.client
             .sendMessage(senderName, mentioned, message)
             .then(setCachedMessage(this.db, this.chatId, message));
@@ -171,5 +176,9 @@ export class CachingGroupClient implements IGroupClient {
 
     deleteGroup(): Promise<DeleteGroupResponse> {
         return this.client.deleteGroup();
+    }
+
+    getPublicSummary(): Promise<GroupChatSummary | undefined> {
+        return this.client.getPublicSummary();
     }
 }

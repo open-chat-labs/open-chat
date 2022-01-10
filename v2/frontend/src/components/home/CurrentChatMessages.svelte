@@ -40,6 +40,7 @@
 
     export let controller: ChatController;
     export let unreadMessages: number;
+    export let preview: boolean;
     export let firstUnreadMention: Mention | undefined;
     export let firstUnreadMessage: number | undefined;
 
@@ -400,6 +401,8 @@
     }
 
     function isReadByMe(_store: MessageReadState, evt: EventWrapper<ChatEventType>): boolean {
+        if (preview) return true;
+
         if (evt.event.kind === "message") {
             return controller.markRead.isRead(
                 $chat.chatId,
@@ -419,7 +422,7 @@
             </div>
             {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
                 {#each userGroup as evt, i (eventKey(evt))}
-                    {#if evt.event.kind === "message" && unreadMessages > 0 && evt.event.messageIndex === firstUnreadMessage}
+                    {#if !preview && evt.event.kind === "message" && unreadMessages > 0 && evt.event.messageIndex === firstUnreadMessage}
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}
                     <ChatEvent
@@ -436,6 +439,7 @@
                         first={i === 0}
                         last={i + 1 === userGroup.length}
                         {admin}
+                        {preview}
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo
@@ -450,17 +454,19 @@
     {/each}
 </div>
 
-<div
-    title={$_("goToFirstMention")}
-    class:show={firstUnreadMention !== undefined}
-    class="fab mentions"
-    class:rtl={$rtlStore}>
-    <Fab on:click={() => scrollToMention(firstUnreadMention)}>
-        <div in:pop={{ duration: 1500 }} class="unread">
-            <div class="mention-count">@</div>
-        </div>
-    </Fab>
-</div>
+{#if !preview}
+    <div
+        title={$_("goToFirstMention")}
+        class:show={firstUnreadMention !== undefined}
+        class="fab mentions"
+        class:rtl={$rtlStore}>
+        <Fab on:click={() => scrollToMention(firstUnreadMention)}>
+            <div in:pop={{ duration: 1500 }} class="unread">
+                <div class="mention-count">@</div>
+            </div>
+        </Fab>
+    </div>
+{/if}
 
 <div
     title={$_("goToFirstMessage")}

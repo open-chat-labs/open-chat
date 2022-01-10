@@ -328,7 +328,7 @@ function mergeUpdatedGroupChat(
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
-    chat.myRole = updatedChat.myRole ?? chat.myRole;
+    chat.myRole = updatedChat.myRole ?? chat.myRole === "previewer" ? "participant" : chat.myRole;
     chat.mentions = mergeMentions(chat.mentions, updatedChat.mentions);
     return chat;
 }
@@ -784,4 +784,8 @@ function getLatestMessage(
     return (updatedChat.latestMessage?.index ?? -1) > (chat.latestMessage?.index ?? -1)
         ? updatedChat.latestMessage
         : chat.latestMessage;
+}
+
+export function isPreviewing(chat: ChatSummary): boolean {
+    return chat.kind === "group_chat" && chat.public && chat.myRole === "previewer";
 }

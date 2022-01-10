@@ -28,7 +28,11 @@
     import { initNotificationStores } from "../../stores/notifications";
     import type { EditGroupState } from "../../fsm/editGroup";
     import { rollbar } from "../../utils/logging";
-    import type { EnhancedReplyContext, GroupChatSummary } from "../../domain/chat/chat";
+    import type {
+        ChatSummary,
+        EnhancedReplyContext,
+        GroupChatSummary,
+    } from "../../domain/chat/chat";
     import type { Writable } from "svelte/store";
     import type { HomeController } from "../../fsm/home.controller";
     import { _ } from "svelte-i18n";
@@ -45,7 +49,6 @@
     let searchTerm: string = "";
     let searching: boolean = false;
     let searchResultsAvailable: boolean = false;
-
     let removingOperation: "leave" | "delete" = "delete";
     let removingChatId: string | undefined;
 
@@ -63,7 +66,9 @@
     onMount(() => {
         // bootstrap anything that needs a service container here
         rtcConnectionsManager.init(controller.user.userId);
-        initNotificationStores(api, controller.user!.userId, (n) => controller.notificationReceived(n));
+        initNotificationStores(api, controller.user!.userId, (n) =>
+            controller.notificationReceived(n)
+        );
     });
 
     onDestroy(() => {
@@ -75,14 +80,23 @@
         if (controller.initialised) {
             // if we have a chatid in the params then we need to select that chat
             if (params.chatId && params.chatId !== $selectedChat?.chatId?.toString()) {
+                // if the chat in the param is not known to us then we need to attempt to load the
+                // chat on the assumption that it is a public group chat that we want to preview
                 // if we have an unknown chat in the param, then redirect to home
-                if ($chatSummaries[params.chatId] === undefined) {
-                    replace("/");
+                const chatId = params.chatId;
+                const messageIndex =
+                    params.messageIndex == null ? undefined : Number(params.messageIndex);
+
+                if ($chatSummaries[chatId] === undefined) {
+                    controller.previewChat(chatId).then((canPreview) => {
+                        if (canPreview) {
+                            controller.selectChat(chatId, messageIndex);
+                        } else {
+                            replace("/");
+                        }
+                    });
                 } else {
-                    controller.selectChat(
-                        params.chatId,
-                        params.messageIndex == null ? undefined : Number(params.messageIndex)
-                    );
+                    controller.selectChat(chatId, messageIndex);
                 }
             }
 
@@ -214,6 +228,10 @@
         editGroupHistory = [...editGroupHistory, "group_details"];
     }
 
+    function updateChat(ev: CustomEvent<ChatSummary>) {
+        controller.replaceChat(ev.detail);
+    }
+
     $: chat = $selectedChat?.chat;
 
     $: groupChat =
@@ -258,6 +276,7 @@
                 on:addParticipants={addParticipants}
                 on:showGroupDetails={showGroupDetails}
                 on:showParticipants={showParticipants}
+                on:updateChat={updateChat}
                 controller={$selectedChat} />
         {/if}
     </main>
@@ -278,7 +297,8 @@
                     on:addParticipants={addParticipants}
                     on:showParticipants={showParticipants}
                     on:chatWith={chatWith}
-                    on:blockUser={blockUser} />
+                    on:blockUser={blockUser}
+                    on:updateChat={updateChat} />
             </div>
         {/if}
     </Overlay>

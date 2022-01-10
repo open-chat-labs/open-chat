@@ -27,6 +27,7 @@
     export let observer: IntersectionObserver;
     export let focused: boolean;
     export let admin: boolean;
+    export let preview: boolean;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -52,6 +53,7 @@
         {first}
         {last}
         {admin}
+        {preview}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo

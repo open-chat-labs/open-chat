@@ -184,10 +184,7 @@ export class HomeController {
 
                 this.initialised = true;
             }
-            toastStore.hideToast();
-            console.log("loaded chats");
         } catch (err) {
-            toastStore.showFailureToast("errorLoadingChats");
             rollbar.error("Error loading chats", err as Error);
             throw err;
         } finally {
@@ -236,6 +233,25 @@ export class HomeController {
                 rollbar.error("Failed to update user's avatar", err);
                 toastStore.showFailureToast("avatarUpdateFailed");
             });
+    }
+
+    /**
+     * We may wish to look at (public group) chats without joining them.
+     * If so, we load the chat summary directly (assuming it is a public group chat)
+     * We will then add that chat to our chat list locally with a custom role of "Previewer"
+     * This will allow us to interact with the chat in a readonly mode.
+     *
+     * We will load the chat and then add it to the chat list. If we refresh the page
+     * it will just disppear (unless of course we still have the canisterId in the url)
+     */
+    previewChat(chatId: string): Promise<boolean> {
+        return this.api.previewChat(chatId).then((maybeChat) => {
+            if (maybeChat === undefined) {
+                return false;
+            }
+            this.replaceChat(maybeChat);
+            return true;
+        });
     }
 
     selectChat(chatId: string, messageIndex?: number): void {
@@ -294,10 +310,7 @@ export class HomeController {
                 if (resp === "success") {
                     toastStore.showSuccessToast("deleteGroupSuccess");
                     this.clearSelectedChat();
-                    this.serverChatSummaries.update((summaries) => {
-                        delete summaries[chatId];
-                        return summaries;
-                    });
+                    this.removeGroup(chatId);
                 } else {
                     rollbar.warn("Unable to delete group", resp);
                     toastStore.showFailureToast("deleteGroupFailure");
@@ -318,10 +331,7 @@ export class HomeController {
                 if (resp === "success") {
                     toastStore.showSuccessToast("leftGroup");
                     this.clearSelectedChat();
-                    this.serverChatSummaries.update((summaries) => {
-                        delete summaries[chatId];
-                        return summaries;
-                    });
+                    this.removeGroup(chatId);
                 } else {
                     if (resp === "owner_cannot_leave") {
                         toastStore.showFailureToast("ownerCantLeave");
@@ -551,6 +561,24 @@ export class HomeController {
                     latestEventIndex,
                     latestMessage,
                 },
+            };
+        });
+    }
+
+    replaceChat(chat: ChatSummary): void {
+        this.serverChatSummaries.update((summaries) => {
+            return {
+                ...summaries,
+                [chat.chatId]: chat,
+            };
+        });
+    }
+
+    removeGroup(chatId: string): void {
+        this.serverChatSummaries.update((summaries) => {
+            delete summaries[chatId];
+            return {
+                ...summaries,
             };
         });
     }
