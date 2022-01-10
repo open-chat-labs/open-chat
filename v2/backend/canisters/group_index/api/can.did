@@ -1,5 +1,20 @@
 import "../../../libraries/types/can.did";
 
+type HotGroupsArgs =
+    record {
+        count: nat8;
+    };
+
+type HotGroupsResponse =
+    variant {
+        Success: HotGroupsSuccessResult;
+    };
+
+type HotGroupsSuccessResult =
+    record {
+        groups: vec PublicGroupSummary;
+    };
+
 type SearchArgs =
     record {
         search_term: text;
@@ -28,5 +43,6 @@ type GroupMatch =
     };
 
 service: {
+    hot_groups: (HotGroupsArgs) -> (HotGroupsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
 }

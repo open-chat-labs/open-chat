@@ -1,10 +1,12 @@
-use crate::MARK_ACTIVE_DURATION;
+use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
 use candid::CandidType;
 use search::*;
 use serde::{Deserialize, Serialize};
+use std::cmp::{Ordering, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::HashMap;
-use types::{ChatId, Cycles, CyclesTopUp, GroupMatch, PublicGroupActivity, TimestampMillis, Version};
+use std::collections::{BinaryHeap, HashMap};
+use types::{ChatId, Cycles, CyclesTopUp, GroupMatch, Milliseconds, PublicGroupActivity, TimestampMillis, Version};
+use utils::time::DAY_IN_MS;
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct PublicGroups {
@@ -118,6 +120,30 @@ impl PublicGroups {
     pub fn iter(&self) -> impl Iterator<Item = &PublicGroupInfo> {
         self.groups.values()
     }
+
+    pub fn calculate_hot_groups(&self, now: TimestampMillis) -> Vec<ChatId> {
+        let mut top = BinaryHeap::with_capacity(CACHED_HOT_GROUPS_COUNT);
+
+        // First fill the heap with 'CACHED_HOT_GROUPS_COUNT' values
+        let mut iter = self.groups.values();
+        for group in iter.by_ref().take(CACHED_HOT_GROUPS_COUNT) {
+            top.push(Reverse(WeightedGroup {
+                chat_id: group.id,
+                weighting: group.calculate_weight(now),
+            }));
+        }
+
+        // Then as we add each item, pop the lowest so that the count remains constant
+        for group in iter {
+            top.push(Reverse(WeightedGroup {
+                chat_id: group.id,
+                weighting: group.calculate_weight(now),
+            }));
+            top.pop();
+        }
+
+        top.into_sorted_vec().into_iter().map(|g| g.0.chat_id).collect()
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize)]
@@ -200,6 +226,35 @@ impl PublicGroupInfo {
     pub fn set_upgrade_in_progress(&mut self, upgrade_in_progress: bool) {
         self.upgrade_in_progress = upgrade_in_progress;
     }
+
+    pub fn calculate_weight(&self, now: TimestampMillis) -> u64 {
+        let mut weighting = 0u64;
+
+        const MAX_RECENCY_MULTIPLIER: u64 = 1000;
+        const ZERO_WEIGHT_AFTER_DURATION: Milliseconds = DAY_IN_MS;
+
+        // recency_multiplier is MAX_RECENCY_MULTIPLIER for groups which are active now and is
+        // linear down to 0 for groups which were active ZERO_WEIGHT_AFTER_DURATION ago. So for
+        // example, recency_multiplier will be MAX_RECENCY_MULTIPLIER / 2 for a group that was
+        // active ZERO_WEIGHT_AFTER_DURATION / 2 ago.
+        let mut recency_multiplier = 0u64;
+        if self.marked_active_until >= now {
+            recency_multiplier = MAX_RECENCY_MULTIPLIER;
+        } else if self.marked_active_until > now - ZERO_WEIGHT_AFTER_DURATION {
+            recency_multiplier = MAX_RECENCY_MULTIPLIER
+                .saturating_sub((MAX_RECENCY_MULTIPLIER * (now - self.marked_active_until)) / ZERO_WEIGHT_AFTER_DURATION);
+        }
+
+        if recency_multiplier > 0 {
+            let activity = &self.activity.last_day;
+
+            weighting += (activity.messages * activity.message_unique_users) as u64;
+            weighting += (activity.reactions * activity.reaction_unique_users) as u64;
+
+            weighting *= recency_multiplier
+        }
+        weighting
+    }
 }
 
 impl From<&PublicGroupInfo> for GroupMatch {
@@ -231,4 +286,22 @@ pub struct GroupCreatedArgs {
     pub now: TimestampMillis,
     pub wasm_version: Version,
     pub cycles: Cycles,
+}
+
+#[derive(PartialEq, Eq, Debug)]
+struct WeightedGroup {
+    chat_id: ChatId,
+    weighting: u64,
+}
+
+impl PartialOrd for WeightedGroup {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for WeightedGroup {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.weighting.cmp(&other.weighting)
+    }
 }

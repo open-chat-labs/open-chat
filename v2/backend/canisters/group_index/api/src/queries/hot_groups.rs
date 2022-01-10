@@ -3,7 +3,9 @@ use serde::Deserialize;
 use types::PublicGroupSummary;
 
 #[derive(CandidType, Deserialize, Debug)]
-pub struct Args {}
+pub struct Args {
+    pub count: u8,
+}
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
@@ -12,5 +14,5 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub summary: PublicGroupSummary,
+    pub groups: Vec<PublicGroupSummary>,
 }

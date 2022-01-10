@@ -3,7 +3,7 @@ use crate::read_state;
 use crate::{RuntimeState, WASM_VERSION};
 use group_canister::public_summary::{Response::*, *};
 use ic_cdk_macros::query;
-use types::Avatar;
+use types::{Avatar, PublicGroupSummary};
 
 #[query(guard = "group_is_public")]
 fn public_summary(_: Args) -> Response {
