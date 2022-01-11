@@ -1,19 +1,23 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
     import { fade } from "svelte/transition";
     import Link from "./Link.svelte";
-    import { modalStore } from "../stores/modal";
     import { rtlStore } from "../stores/rtl";
 
+    const dispatch = createEventDispatcher();
+
     export let fill: boolean = false;
+    export let large: boolean = false;
     export let hideHeader: boolean = false;
     export let hideFooter: boolean = false;
+    export let compactFooter: boolean = false;
 </script>
 
 <div
     class="modal-content"
+    class:large
     in:fade={{ duration: 100, delay: 200 }}
-    out:fade={{ duration: 100 }}
-    on:click|stopPropagation>
+    out:fade={{ duration: 100 }}>
     {#if !hideHeader}
         <div class="header">
             <h3>
@@ -25,9 +29,9 @@
         <slot name="body" />
     </div>
     {#if !hideFooter}
-        <div class="footer" class:rtl={$rtlStore}>
+        <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
             <slot name="footer">
-                <Link on:click={modalStore.hideModal}>Close</Link>
+                <Link on:click={() => dispatch("close")}>Close</Link>
             </slot>
         </div>
     {/if}
@@ -35,17 +39,25 @@
 
 <style type="text/scss">
     .modal-content {
+        @include font-size(fs-100);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         background-color: var(--modal-bg);
         color: var(--modal-txt);
         box-shadow: var(--modal-sh);
-        width: 60%;
-        max-width: 576px;
         @include size-below(xs) {
             width: 100%;
-            border-radius: $sp4 $sp4 0 0;
+            height: 100%;
+        }
+        @include size-above(xs) {
+            width: 60%;
+            max-width: 576px;
+            &.large {
+                width: 90%;
+                max-height: 90%;
+                max-width: 850px;
+            }
         }
     }
     .header {
@@ -58,7 +70,9 @@
 
     .body {
         flex: 1;
-        padding: $sp6 $sp4;
+        padding: $sp4;
+        overflow-y: auto;
+        @include nice-scrollbar();
 
         &.fill {
             padding: 0;
@@ -66,6 +80,9 @@
     }
     .footer {
         padding: $sp4;
+        &.compact {
+            padding: $sp3 $sp4;
+        }
         background-color: var(--modal-footer-bg);
         color: var(--modal-footer-txt);
         border-top: 1px solid var(--modal-footer-bd);

@@ -15,7 +15,7 @@ import {
 } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
 import type { Notification } from "../domain/notifications";
-import type { User } from "../domain/user/user";
+import type { CreatedUser, User } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type {
@@ -77,7 +77,7 @@ export class HomeController {
     private chatPoller: Poller | undefined;
     private usersPoller: Poller | undefined;
 
-    constructor(public api: ServiceContainer, public user: User) {
+    constructor(public api: ServiceContainer, public user: CreatedUser) {
         this.messagesRead = new MessageReadTracker(api);
         if (process.env.NODE_ENV !== "test") {
             this.loadChats().then(() => {

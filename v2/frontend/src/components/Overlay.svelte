@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { modalStore } from "../stores/modal";
     import { onMount, onDestroy } from "svelte";
 
     export let active: boolean;
@@ -26,13 +25,6 @@
         document.removeEventListener("keydown", onKeyDown);
     });
 
-    function onClick() {
-        if (dismissible) {
-            active = false;
-        }
-        modalStore.hideModal;
-    }
-
     function onKeyDown(ev: KeyboardEvent) {
         if (dismissible && ev.key === "Escape") {
             active = false;
@@ -41,7 +33,7 @@
 </script>
 
 <div class="blueprint">
-    <div bind:this={ref} class="overlay" class:active on:click={onClick}>
+    <div bind:this={ref} class="overlay" class:active>
         {#if active}
             <slot />
         {/if}

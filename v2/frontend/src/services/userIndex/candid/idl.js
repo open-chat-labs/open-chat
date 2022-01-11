@@ -65,6 +65,11 @@ export const idlFactory = ({ IDL }) => {
     'RegistrationFee' : RegistrationFee,
     'PhoneNumber' : PhoneNumber,
   });
+  const Version = IDL.Record({
+    'major' : IDL.Nat32,
+    'minor' : IDL.Nat32,
+    'patch' : IDL.Nat32,
+  });
   const CryptocurrencyAccount = IDL.Variant({
     'ICP' : AccountIdentifier,
     'Cycles' : CanisterId,
@@ -87,6 +92,7 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Created' : IDL.Record({
       'username' : IDL.Text,
+      'wasm_version' : Version,
       'user_id' : UserId,
       'cryptocurrency_accounts' : IDL.Vec(CryptocurrencyAccount),
       'avatar_id' : IDL.Opt(IDL.Nat),

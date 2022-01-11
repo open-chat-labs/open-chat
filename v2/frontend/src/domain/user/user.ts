@@ -1,3 +1,4 @@
+import type { Version } from "../../domain/version";
 import type { DataContent } from "../data/data";
 
 export const E8S_PER_ICP = 100_000_000;
@@ -119,6 +120,7 @@ export type CreatedUser = {
     username: string;
     userId: string;
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
+    wasmVersion: Version;
 };
 
 export type UserNotFound = {
