@@ -48,7 +48,9 @@
         box-shadow: var(--modal-sh);
         @include size-below(xs) {
             width: 100%;
-            height: 100%;
+            &.large {
+                height: 100%;
+            }
         }
         @include size-above(xs) {
             width: 60%;
