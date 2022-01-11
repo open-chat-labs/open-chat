@@ -2,10 +2,11 @@ use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
 use candid::CandidType;
 use search::*;
 use serde::{Deserialize, Serialize};
-use std::cmp::{Ordering, Reverse};
+use std::cmp::Ordering;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::HashMap;
 use types::{ChatId, Cycles, CyclesTopUp, GroupMatch, Milliseconds, PublicGroupActivity, TimestampMillis, Version};
+use utils::iterator_extensions::IteratorExtensions;
 use utils::time::DAY_IN_MS;
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
@@ -69,20 +70,16 @@ impl PublicGroups {
     pub fn search(&self, search_term: &str, max_results: u8) -> Vec<GroupMatch> {
         let query = Query::parse(search_term);
 
-        let mut all_matches = self
-            .groups
+        self.groups
             .values()
             .map(|g| {
                 let document: Document = g.into();
                 let score = document.calculate_score(&query);
                 (score, g)
             })
-            .filter(|m| m.0 > 0)
-            .collect::<Vec<_>>();
-
-        all_matches.sort_unstable_by(|m1, m2| m2.0.cmp(&m1.0));
-
-        all_matches.iter().take(max_results as usize).map(|m| m.1.into()).collect()
+            .max_n_by(|(score, _)| *score, max_results as usize)
+            .map(|(_, g)| g.into())
+            .collect()
     }
 
     pub fn update_group(
@@ -122,27 +119,11 @@ impl PublicGroups {
     }
 
     pub fn calculate_hot_groups(&self, now: TimestampMillis) -> Vec<ChatId> {
-        let mut top = BinaryHeap::with_capacity(CACHED_HOT_GROUPS_COUNT);
-
-        // First fill the heap with 'CACHED_HOT_GROUPS_COUNT' values
-        let mut iter = self.groups.values();
-        for group in iter.by_ref().take(CACHED_HOT_GROUPS_COUNT) {
-            top.push(Reverse(WeightedGroup {
-                chat_id: group.id,
-                weighting: group.calculate_weight(now),
-            }));
-        }
-
-        // Then as we add each item, pop the lowest so that the count remains constant
-        for group in iter {
-            top.push(Reverse(WeightedGroup {
-                chat_id: group.id,
-                weighting: group.calculate_weight(now),
-            }));
-            top.pop();
-        }
-
-        top.into_sorted_vec().into_iter().map(|g| g.0.chat_id).collect()
+        self.groups
+            .values()
+            .max_n_by(|g| g.calculate_weight(now), CACHED_HOT_GROUPS_COUNT)
+            .map(|g| g.id)
+            .collect()
     }
 }
 
