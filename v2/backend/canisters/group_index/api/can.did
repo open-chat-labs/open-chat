@@ -1,20 +1,5 @@
 import "../../../libraries/types/can.did";
 
-type RecommendedGroupsArgs =
-    record {
-        count: nat8;
-    };
-
-type RecommendedGroupsResponse =
-    variant {
-        Success: RecommendedGroupsSuccessResult;
-    };
-
-type RecommendedGroupsSuccessResult =
-    record {
-        groups: vec PublicGroupSummary;
-    };
-
 type SearchArgs =
     record {
         search_term: text;
@@ -43,6 +28,5 @@ type GroupMatch =
     };
 
 service: {
-    recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
 }

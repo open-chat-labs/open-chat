@@ -25,7 +25,7 @@ const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const STATE_VERSION: StateVersion = StateVersion::V1;
 const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
-const CACHED_HOT_GROUPS_COUNT: usize = 20;
+const CACHED_HOT_GROUPS_COUNT: usize = 40;
 
 #[derive(CandidType, Serialize, Deserialize)]
 enum StateVersion {

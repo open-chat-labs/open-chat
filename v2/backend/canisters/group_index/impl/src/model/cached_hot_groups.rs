@@ -1,10 +1,11 @@
+use crate::FIVE_MINUTES_IN_MS;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use tracing::info;
-use types::{Milliseconds, PublicGroupSummary, TimestampMillis};
-use utils::time::MINUTE_IN_MS;
+use types::{ChatId, Milliseconds, PublicGroupSummary, TimestampMillis};
 
-const HOT_GROUPS_CACHE_DURATION: Milliseconds = 2 * MINUTE_IN_MS; // 2 minutes
+const HOT_GROUPS_CACHE_DURATION: Milliseconds = FIVE_MINUTES_IN_MS;
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct CachedHotGroups {
@@ -14,8 +15,13 @@ pub struct CachedHotGroups {
 }
 
 impl CachedHotGroups {
-    pub fn get(&self, count: usize) -> Vec<PublicGroupSummary> {
-        self.groups.iter().take(count).cloned().collect()
+    pub fn get(&self, count: usize, exclusions: &HashSet<ChatId>) -> Vec<PublicGroupSummary> {
+        self.groups
+            .iter()
+            .filter(|g| !exclusions.contains(&g.chat_id))
+            .take(count)
+            .cloned()
+            .collect()
     }
 
     pub fn start_update_if_due(&mut self, now: TimestampMillis) -> bool {
