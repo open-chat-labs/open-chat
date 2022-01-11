@@ -40,6 +40,10 @@ pub trait IteratorExtensions: Iterator {
         }
 
         // Return the items in ascending order
+
+        // I tried skipping this 'needless' collect but the Rust type system really fought back.
+        // TODO - Will have another stab at it at a later date.
+        #[allow(clippy::needless_collect)]
         let vec: Vec<_> = top.into_sorted_vec().into_iter().map(|g| g.item).collect();
         vec.into_iter()
     }
@@ -60,7 +64,7 @@ impl<V, K: Ord> PartialEq<Self> for ItemWithSortKey<V, K> {
 
 impl<V, K: Ord> PartialOrd<Self> for ItemWithSortKey<V, K> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(&other))
+        Some(self.cmp(other))
     }
 }
 
