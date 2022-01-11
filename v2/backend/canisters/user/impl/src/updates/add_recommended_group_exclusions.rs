@@ -13,8 +13,9 @@ fn add_recommended_group_exclusions(args: Args) -> Response {
 }
 
 fn add_recommended_group_exclusions_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    let now = runtime_state.env.now();
     for group in args.groups {
-        runtime_state.data.recommended_group_exclusions.insert(group);
+        runtime_state.data.recommended_group_exclusions.add(group, args.duration, now);
     }
     Success
 }

@@ -2,6 +2,7 @@ use crate::model::alerts::Alerts;
 use crate::model::direct_chats::DirectChats;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::group_chats::GroupChats;
+use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
 use crate::model::transactions::Transactions;
 use crate::model::user_cycles_balance::UserCyclesBalance;
 use crate::model::user_preferences::UserPreferences;
@@ -12,7 +13,7 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{Avatar, CanisterId, ChatId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
+use types::{Avatar, CanisterId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
 use utils::rand::get_random_item;
@@ -120,7 +121,7 @@ struct Data {
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,
     #[serde(default)]
-    pub recommended_group_exclusions: HashSet<ChatId>,
+    pub recommended_group_exclusions: RecommendedGroupExclusions,
 }
 
 impl Data {
@@ -148,7 +149,7 @@ impl Data {
             alerts: Alerts::default(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             is_super_admin: false,
-            recommended_group_exclusions: HashSet::new(),
+            recommended_group_exclusions: RecommendedGroupExclusions::default(),
         }
     }
 }

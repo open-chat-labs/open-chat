@@ -247,6 +247,7 @@ type RelinquishGroupSuperAdminResponse =
 type AddRecommendedGroupExclusionsArgs =
     record {
         groups: vec ChatId;
+        duration: opt Milliseconds;
     };
 
 type AddRecommendedGroupExclusionsResponse =
