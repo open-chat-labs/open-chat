@@ -1,10 +1,13 @@
-use crate::MARK_ACTIVE_DURATION;
+use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
 use candid::CandidType;
 use search::*;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, Cycles, CyclesTopUp, GroupMatch, PublicGroupActivity, TimestampMillis, Version};
+use types::{ChatId, Cycles, CyclesTopUp, GroupMatch, Milliseconds, PublicGroupActivity, TimestampMillis, Version};
+use utils::iterator_extensions::IteratorExtensions;
+use utils::time::DAY_IN_MS;
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct PublicGroups {
@@ -67,20 +70,17 @@ impl PublicGroups {
     pub fn search(&self, search_term: &str, max_results: u8) -> Vec<GroupMatch> {
         let query = Query::parse(search_term);
 
-        let mut all_matches = self
-            .groups
+        self.groups
             .values()
             .map(|g| {
                 let document: Document = g.into();
                 let score = document.calculate_score(&query);
                 (score, g)
             })
-            .filter(|m| m.0 > 0)
-            .collect::<Vec<_>>();
-
-        all_matches.sort_unstable_by(|m1, m2| m2.0.cmp(&m1.0));
-
-        all_matches.iter().take(max_results as usize).map(|m| m.1.into()).collect()
+            .filter(|(score, _)| *score > 0)
+            .max_n_by(max_results as usize, |(score, _)| *score)
+            .map(|(_, g)| g.into())
+            .collect()
     }
 
     pub fn update_group(
@@ -117,6 +117,14 @@ impl PublicGroups {
 
     pub fn iter(&self) -> impl Iterator<Item = &PublicGroupInfo> {
         self.groups.values()
+    }
+
+    pub fn calculate_hot_groups(&self, now: TimestampMillis) -> Vec<ChatId> {
+        self.groups
+            .values()
+            .max_n_by(CACHED_HOT_GROUPS_COUNT, |g| g.calculate_weight(now))
+            .map(|g| g.id)
+            .collect()
     }
 }
 
@@ -200,6 +208,35 @@ impl PublicGroupInfo {
     pub fn set_upgrade_in_progress(&mut self, upgrade_in_progress: bool) {
         self.upgrade_in_progress = upgrade_in_progress;
     }
+
+    pub fn calculate_weight(&self, now: TimestampMillis) -> u64 {
+        let mut weighting = 0u64;
+
+        const MAX_RECENCY_MULTIPLIER: u64 = 1000;
+        const ZERO_WEIGHT_AFTER_DURATION: Milliseconds = DAY_IN_MS;
+
+        // recency_multiplier is MAX_RECENCY_MULTIPLIER for groups which are active now and is
+        // linear down to 0 for groups which were active ZERO_WEIGHT_AFTER_DURATION ago. So for
+        // example, recency_multiplier will be MAX_RECENCY_MULTIPLIER / 2 for a group that was
+        // active ZERO_WEIGHT_AFTER_DURATION / 2 ago.
+        let mut recency_multiplier = 0u64;
+        if self.marked_active_until >= now {
+            recency_multiplier = MAX_RECENCY_MULTIPLIER;
+        } else if self.marked_active_until > now - ZERO_WEIGHT_AFTER_DURATION {
+            recency_multiplier = MAX_RECENCY_MULTIPLIER
+                .saturating_sub((MAX_RECENCY_MULTIPLIER * (now - self.marked_active_until)) / ZERO_WEIGHT_AFTER_DURATION);
+        }
+
+        if recency_multiplier > 0 {
+            let activity = &self.activity.last_day;
+
+            weighting += (activity.messages * activity.message_unique_users) as u64;
+            weighting += (activity.reactions * activity.reaction_unique_users) as u64;
+
+            weighting *= recency_multiplier
+        }
+        weighting
+    }
 }
 
 impl From<&PublicGroupInfo> for GroupMatch {
@@ -231,4 +268,22 @@ pub struct GroupCreatedArgs {
     pub now: TimestampMillis,
     pub wasm_version: Version,
     pub cycles: Cycles,
+}
+
+#[derive(PartialEq, Eq, Debug)]
+struct WeightedGroup {
+    chat_id: ChatId,
+    weighting: u64,
+}
+
+impl PartialOrd for WeightedGroup {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for WeightedGroup {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.weighting.cmp(&other.weighting)
+    }
 }

@@ -338,6 +338,22 @@ type EventsResponse =
         ChatNotFound;
     };
 
+type RecommendedGroupsArgs =
+    record {
+        count: nat8;
+    };
+
+type RecommendedGroupsResponse =
+    variant {
+        Success: RecommendedGroupsSuccessResult;
+        InternalError: text;
+    };
+
+type RecommendedGroupsSuccessResult =
+    record {
+        groups: vec PublicGroupSummary;
+    };
+
 type TransactionsArgs =
     record {
         start_index: nat32;
@@ -415,8 +431,8 @@ service: {
     events_range: (EventsRangeArgs) -> (EventsResponse) query;
     events_window: (EventsWindowArgs) -> (EventsResponse) query;
 
+    recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     transactions: (TransactionsArgs) -> (TransactionsResponse) query;
-
     initial_state: (InitialStateArgs) -> (InitialStateResponse) query;
     updates: (UpdatesArgs) -> (UpdatesResponse) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat

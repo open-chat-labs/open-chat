@@ -1,3 +1,4 @@
+use crate::model::cached_hot_groups::CachedHotGroups;
 use crate::model::deleted_groups::DeletedGroups;
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
@@ -23,7 +24,8 @@ const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 500_000_000_000; // 0.5T c
 const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const STATE_VERSION: StateVersion = StateVersion::V1;
-const FIVE_MINUTES_IN_MS: u64 = MINUTE_IN_MS * 5;
+const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
+const CACHED_HOT_GROUPS_COUNT: usize = 40;
 
 #[derive(CandidType, Serialize, Deserialize)]
 enum StateVersion {
@@ -90,6 +92,7 @@ struct Data {
     pub canister_pool: canister::Pool,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
+    pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
 }
 
@@ -114,6 +117,7 @@ impl Data {
             canister_pool: canister::Pool::new(canister_pool_target_size),
             test_mode,
             total_cycles_spent_on_canisters: 0,
+            cached_hot_groups: CachedHotGroups::default(),
             cached_metrics: CachedMetrics::default(),
         }
     }
@@ -164,6 +168,7 @@ impl Default for Data {
             canister_pool: canister::Pool::new(0),
             test_mode: true,
             total_cycles_spent_on_canisters: 0,
+            cached_hot_groups: CachedHotGroups::default(),
             cached_metrics: CachedMetrics::default(),
         }
     }
