@@ -12,7 +12,7 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{Avatar, CanisterId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
+use types::{Avatar, CanisterId, ChatId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
 use utils::rand::get_random_item;
@@ -119,6 +119,8 @@ struct Data {
     pub alerts: Alerts,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,
+    #[serde(default)]
+    pub recommended_group_exclusions: HashSet<ChatId>,
 }
 
 impl Data {
@@ -146,6 +148,7 @@ impl Data {
             alerts: Alerts::default(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             is_super_admin: false,
+            recommended_group_exclusions: HashSet::new(),
         }
     }
 }

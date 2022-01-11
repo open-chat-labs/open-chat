@@ -23,7 +23,8 @@ async fn recommended_groups(args: Args) -> Response {
 
 fn prepare(runtime_state: &RuntimeState) -> (CanisterId, Vec<ChatId>) {
     let group_index_canister_id = runtime_state.data.group_index_canister_id;
-    let exclusions = runtime_state.data.group_chats.iter().map(|g| g.chat_id).collect();
+    let mut exclusions: Vec<_> = runtime_state.data.group_chats.iter().map(|g| g.chat_id).collect();
+    exclusions.extend(runtime_state.data.recommended_group_exclusions.iter().copied());
 
     (group_index_canister_id, exclusions)
 }

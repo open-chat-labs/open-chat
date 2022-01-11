@@ -244,6 +244,16 @@ type RelinquishGroupSuperAdminResponse =
         InternalError: text;
     };
 
+type AddRecommendedGroupExclusionsArgs =
+    record {
+        groups: vec ChatId;
+    };
+
+type AddRecommendedGroupExclusionsResponse =
+    variant {
+        Success;
+    };
+
 type InitialStateArgs = 
     record {
     };
@@ -425,6 +435,7 @@ service: {
     dismiss_alerts: (DismissAlertsArgs) -> (DismissAlertsResponse);
     assume_group_super_admin: (AssumeGroupSuperAdminArgs) -> (AssumeGroupSuperAdminResponse);
     relinquish_group_super_admin: (RelinquishGroupSuperAdminArgs) -> (RelinquishGroupSuperAdminResponse);
+    add_recommended_group_exclusions: (AddRecommendedGroupExclusionsArgs) -> (AddRecommendedGroupExclusionsResponse);
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
