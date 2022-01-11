@@ -18,12 +18,12 @@
             but this will soon increase.
         </p>
         <p>
-            We have been building this new version over the last 6+ months and it is the platform for OpenChat going forwards. 
+            We have rebuilt OpenChat from the ground up over the last 6+ months giving us a solid platform going forwards. 
             With a canister per user and per group this will ultimately allow OpenChat to scale indefinitely. 
         </p>
         <p>
             Unfortunately we won't be able to migrate accounts from the orginal test version which is still 
-            running at <a href="https://oc.app" target="_blank">https://oc.app</a>. When we finish beta testing the oc.app domain will
+            running at <a href="https://oc.app" target="_blank">https://oc.app</a>. When we finish beta testing, the oc.app domain will
             re-direct to this new version and we will keep the old version running as long as possible (hopefully forever) so
             you can continue to access your old messages.
         </p>
@@ -35,12 +35,12 @@
             <li>Group preview</li>
             <li>Voice messages</li>
             <li>@user mentions</li>
-            <li>Inline <em>markdown</em></li>
+            <li>Inline _<em>markdown</em>_</li>
         </ul>
         <strong>Upcoming features/developments</strong>
         <ul>
             <li>Send cycles and ICP as chat messages</li>            
-            <li><a target="_blank" href="https://medium.com/dfinity/how-the-service-nervous-system-sns-will-bring-tokenized-governance-to-on-chain-dapps-b74fb8364a5c">SNS integration</a> / tokenisation</li>
+            <li><a target="_blank" href="https://forum.dfinity.org/t/open-governance-canister-for-sns-design-proposal/10224">SNS integration</a> / tokenisation</li>
             <li>Tag/filter messages</li>
             <li>Invite contacts</li>
             <li>Edit sent messages</li>            
@@ -52,8 +52,7 @@
             <em>Enjoy! - OpenChat devs</em>
         </p>
         <p class="limitations">
-            (Each user is currently limited to 100Mb storage for media messages. If the limit is exceeded old media will be deleted leaving a 
-            thumbnail only. Each user is limited to creating 10 groups - you can join as many as you like!)
+            (Each user is currently limited to 100Mb storage for media messages and also to creating 10 groups - you can join as many as you like!)
         </p>
     </div>
     <div class="footer" class:rtl={$rtlStore} slot="footer">
