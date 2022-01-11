@@ -77,6 +77,7 @@ impl PublicGroups {
                 let score = document.calculate_score(&query);
                 (score, g)
             })
+            .filter(|(score, _)| *score > 0)
             .max_n_by(|(score, _)| *score, max_results as usize)
             .map(|(_, g)| g.into())
             .collect()
