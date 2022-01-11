@@ -1,5 +1,5 @@
 use crate::{read_state, RuntimeState};
-use group_index_canister::new_popular_and_hot::{Response::*, *};
+use group_index_canister::recommended_groups::{Response::*, *};
 use ic_cdk_macros::query;
 
 #[query]

@@ -1,16 +1,16 @@
 import "../../../libraries/types/can.did";
 
-type NewPopularAndHotArgs =
+type RecommendedGroupsArgs =
     record {
         count: nat8;
     };
 
-type NewPopularAndHotResponse =
+type RecommendedGroupsResponse =
     variant {
-        Success: NewPopularAndHotSuccessResult;
+        Success: RecommendedGroupsSuccessResult;
     };
 
-type NewPopularAndHotSuccessResult =
+type RecommendedGroupsSuccessResult =
     record {
         groups: vec PublicGroupSummary;
     };
@@ -43,6 +43,6 @@ type GroupMatch =
     };
 
 service: {
-    new_popular_and_hot: (NewPopularAndHotArgs) -> (NewPopularAndHotResponse) query;
+    recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
 }
