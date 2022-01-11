@@ -36,6 +36,7 @@
     import type { Writable } from "svelte/store";
     import type { HomeController } from "../../fsm/home.controller";
     import { _ } from "svelte-i18n";
+    import type { RemoteData } from "../../utils/remoteData";
 
     export let controller: HomeController;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
@@ -51,6 +52,7 @@
     let searchResultsAvailable: boolean = false;
     let removingOperation: "leave" | "delete" = "delete";
     let removingChatId: string | undefined;
+    let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -233,7 +235,12 @@
     }
 
     function whatsHot() {
-        console.log("how are we going to structure this");
+        controller.clearSelectedChat();
+        recommendedGroups = { kind: "loading" };
+        controller.api
+            .getRecommendedGroups()
+            .then((resp) => (recommendedGroups = { kind: "success", data: resp }))
+            .catch((err) => (recommendedGroups = { kind: "error", error: err.toString() }));
     }
 
     $: chat = $selectedChat?.chat;
@@ -269,6 +276,7 @@
         {/if}
         {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
             <MiddlePanel
+                {recommendedGroups}
                 loadingChats={$chatsLoading}
                 blocked={!!blocked}
                 on:clearSelection={clearSelectedChat}

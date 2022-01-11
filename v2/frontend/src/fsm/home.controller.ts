@@ -6,6 +6,7 @@ import type {
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
+    GroupChatSummary,
     Message,
 } from "../domain/chat/chat";
 import {

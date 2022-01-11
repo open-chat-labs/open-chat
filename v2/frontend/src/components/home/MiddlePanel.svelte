@@ -4,24 +4,35 @@
     import { fade } from "svelte/transition";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import NoChatSelected from "./NoChatSelected.svelte";
+    import RecommendedGroups from "./RecommendedGroups.svelte";
     import CurrentChat from "./CurrentChat.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
+    import type { RemoteData } from "../../utils/remoteData";
+    import type { GroupChatSummary } from "../../domain/chat/chat";
+
     export let controller: ChatController | undefined;
     export let loadingChats: boolean = false;
     export let blocked: boolean;
+    export let recommendedGroups: RemoteData<GroupChatSummary[], string>;
 </script>
 
 <Panel middle>
-    {#if loadingChats}
+    {#if loadingChats || recommendedGroups.kind === "loading"}
         {#if $screenWidth === ScreenWidth.ExtraSmall}
             <div />
         {:else}
             <Loading />
         {/if}
     {:else if controller === undefined}
-        <div class="no-chat" in:fade>
-            <NoChatSelected on:newchat />
-        </div>
+        {#if recommendedGroups.kind === "success"}
+            <RecommendedGroups groups={recommendedGroups.data} />
+        {:else if recommendedGroups.kind === "error"}
+            <h1>Oh no there was an error: {recommendedGroups.error}</h1>
+        {:else}
+            <div class="no-chat" in:fade>
+                <NoChatSelected on:newchat />
+            </div>
+        {/if}
     {:else}
         <CurrentChat
             {blocked}

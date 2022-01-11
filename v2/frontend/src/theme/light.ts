@@ -287,5 +287,9 @@ export function lightTheme(): Theme {
                 },
             },
         },
+
+        recommended: {
+            bg: "#ffffff",
+        },
     };
 }
