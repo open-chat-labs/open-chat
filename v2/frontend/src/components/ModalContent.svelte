@@ -48,9 +48,8 @@
         box-shadow: var(--modal-sh);
         @include size-below(xs) {
             width: 100%;
-            &.large {
-                height: 100%;
-            }
+            max-height: 100%;
+            border-radius: $sp4 $sp4 0 0;
         }
         @include size-above(xs) {
             width: 60%;
@@ -68,6 +67,9 @@
         background-color: var(--modal-header-bg);
         color: var(--modal-header-txt);
         border-bottom: 1px solid var(--modal-header-bd);
+        @include size-below(xs) {
+            border-radius: $sp4 $sp4 0 0;
+        }
     }
 
     .body {
