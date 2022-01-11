@@ -34,6 +34,7 @@
         <ChatList
             on:loadMessage
             on:chatWith
+            on:whatsHot
             on:newGroup={() => (addingGroup = true)}
             on:logout
             on:searchEntered

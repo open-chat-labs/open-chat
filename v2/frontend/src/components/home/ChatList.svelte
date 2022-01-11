@@ -86,10 +86,6 @@
 
     $: chatLookup = controller.chatSummaries;
 
-    function whatsHot() {
-        console.log("Let's look up some popular groups");
-    }
-
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
         controller.updateUserAvatar({
             blobData: ev.detail.data,
@@ -135,7 +131,7 @@
     <CurrentUser
         on:userAvatarSelected={userAvatarSelected}
         on:logout
-        on:whatsHot={whatsHot}
+        on:whatsHot
         {user}
         on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
         on:newGroup />

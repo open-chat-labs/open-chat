@@ -232,6 +232,10 @@
         controller.replaceChat(ev.detail);
     }
 
+    function whatsHot() {
+        console.log("how are we going to structure this");
+    }
+
     $: chat = $selectedChat?.chat;
 
     $: groupChat =
@@ -259,6 +263,7 @@
                 {searching}
                 on:searchEntered={performSearch}
                 on:chatWith={chatWith}
+                on:whatsHot={whatsHot}
                 on:logout={logout}
                 on:loadMessage={loadMessage} />
         {/if}
