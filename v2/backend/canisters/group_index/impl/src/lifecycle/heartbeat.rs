@@ -1,6 +1,7 @@
+use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MIN_CYCLES_BALANCE};
 use ic_cdk_macros::heartbeat;
-use types::{CanisterId, ChatId, Cycles, PublicGroupSummary, Version};
+use types::{CanisterId, ChatId, Cycles, Version};
 use utils::canister::{self, FailedUpgrade};
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
@@ -164,7 +165,7 @@ mod calculate_hot_groups {
         })
     }
 
-    async fn hydrate_hot_groups(chat_ids: Vec<ChatId>) -> Vec<PublicGroupSummary> {
+    async fn hydrate_hot_groups(chat_ids: Vec<ChatId>) -> Vec<CachedPublicGroupSummary> {
         use group_canister::public_summary::{Args, Response};
 
         let args = Args {};
@@ -179,7 +180,7 @@ mod calculate_hot_groups {
         responses
             .into_iter()
             .filter_map(|r| if let Ok(Response::Success(result)) = r { Some(result) } else { None })
-            .map(|r| r.summary)
+            .map(|r| r.summary.into())
             .collect()
     }
 }

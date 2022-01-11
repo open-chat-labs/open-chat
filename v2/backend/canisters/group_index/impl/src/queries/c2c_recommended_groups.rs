@@ -10,8 +10,13 @@ fn c2c_recommended_groups(args: Args) -> Response {
 
 fn c2c_recommended_groups_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let exclusions: HashSet<_> = args.exclusions.into_iter().collect();
+    let groups = runtime_state
+        .data
+        .cached_hot_groups
+        .get(args.count as usize, &exclusions)
+        .into_iter()
+        .filter_map(|g| runtime_state.data.public_groups.hydrate_cached_summary(g))
+        .collect();
 
-    Success(SuccessResult {
-        groups: runtime_state.data.cached_hot_groups.get(args.count as usize, &exclusions),
-    })
+    Success(SuccessResult { groups })
 }
