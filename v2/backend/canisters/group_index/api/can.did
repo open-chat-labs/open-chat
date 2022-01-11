@@ -7,7 +7,7 @@ type NewPopularAndHotArgs =
 
 type NewPopularAndHotResponse =
     variant {
-        Success: HotGroupsSuccessResult;
+        Success: NewPopularAndHotSuccessResult;
     };
 
 type NewPopularAndHotSuccessResult =
@@ -43,6 +43,6 @@ type GroupMatch =
     };
 
 service: {
-    new_popular_and_hot_groups: (NewPopularAndHotArgs) -> (NewPopularAndHotResponse) query;
+    new_popular_and_hot: (NewPopularAndHotArgs) -> (NewPopularAndHotResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
 }
