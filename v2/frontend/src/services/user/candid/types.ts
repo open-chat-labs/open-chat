@@ -572,6 +572,26 @@ export interface PinnedMessageUpdated {
   'updated_by' : UserId,
   'new_value' : [] | [MessageIndex],
 }
+export interface PublicGroupSummary {
+  'name' : string,
+  'wasm_version' : Version,
+  'description' : string,
+  'last_updated' : TimestampMillis,
+  'pinned_message' : [] | [MessageIndex],
+  'avatar_id' : [] | [bigint],
+  'latest_event_index' : EventIndex,
+  'chat_id' : ChatId,
+  'participant_count' : number,
+  'latest_message' : [] | [MessageEventWrapper],
+}
+export interface RecommendedGroupsArgs { 'count' : number }
+export type RecommendedGroupsResponse = {
+    'Success' : RecommendedGroupsSuccessResult
+  } |
+  { 'InternalError' : string };
+export interface RecommendedGroupsSuccessResult {
+  'groups' : Array<PublicGroupSummary>,
+}
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RelinquishGroupSuperAdminArgs { 'chat_id' : ChatId }
@@ -759,6 +779,9 @@ export interface _SERVICE {
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'mute_notifications' : (arg_0: MuteNotificationsArgs) => Promise<
       MuteNotificationsResponse
+    >,
+  'recommended_groups' : (arg_0: RecommendedGroupsArgs) => Promise<
+      RecommendedGroupsResponse
     >,
   'relinquish_group_super_admin' : (
       arg_0: RelinquishGroupSuperAdminArgs,

@@ -42,13 +42,17 @@ import {
     unblockUserResponse,
     transferOwnershipResponse,
     deleteGroupResponse,
-    publicSummaryResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
 import type { Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
-import { apiMessageContent, apiOptional, apiUser } from "../common/chatMappers";
+import {
+    apiMessageContent,
+    apiOptional,
+    apiUser,
+    publicSummaryResponse,
+} from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import {
     enoughVisibleMessages,

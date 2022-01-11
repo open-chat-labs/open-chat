@@ -71,6 +71,8 @@ import {
     MessageIndexRange,
     User,
     ICP,
+    RecommendedGroupsResponse,
+    RecommendedGroupsSuccessResult,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -144,6 +146,8 @@ export {
     MessageIndexRange as ApiMessageIndexRange,
     User as ApiUser,
     ICP as ApiICP,
+    RecommendedGroupsResponse as ApiRecommendedGroupsResponse,
+    RecommendedGroupsSuccessResult as ApiRecommendedGroupsSuccessResult,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

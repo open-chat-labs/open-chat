@@ -633,6 +633,6 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
-        return this._groupIndexClient.getRecommendedGroups();
+        return this.userClient.getRecommendedGroups();
     }
 }

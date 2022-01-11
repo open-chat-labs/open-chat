@@ -100,6 +100,7 @@
                 } else {
                     controller.selectChat(chatId, messageIndex);
                 }
+                recommendedGroups = { kind: "idle" };
             }
 
             // if there is no chatId param, tell the machine to clear the selection
@@ -107,6 +108,10 @@
                 controller.clearSelectedChat();
             }
         }
+    }
+
+    function cancelRecommendations() {
+        recommendedGroups = { kind: "idle" };
     }
 
     async function performSearch(ev: CustomEvent<string>) {
@@ -255,11 +260,40 @@
     let editGroupHistory: EditGroupState[] = [];
 
     $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
+
+    /** SHOW LEFT
+     * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
+     * ==========================================================
+     * F             |  -            |  -            |  T
+     * T             |  T            |  -            |  F
+     * T             |  F            |  T            |  F
+     * T             |  F            |  F            |  T
+     */
+    $: showLeft =
+        $screenWidth !== ScreenWidth.ExtraSmall ||
+        ($screenWidth === ScreenWidth.ExtraSmall &&
+            params.chatId == null &&
+            recommendedGroups.kind === "idle");
+
+    /** SHOW MIDDLE
+     * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
+     * ==========================================================
+     * F             |  -            |  -            |  T
+     * T             |  T            |  -            |  T
+     * T             |  F            |  T            |  T
+     * T             |  F            |  F            |  F
+     */
+    $: showMiddle =
+        $screenWidth !== ScreenWidth.ExtraSmall ||
+        ($screenWidth === ScreenWidth.ExtraSmall && params.chatId != null) ||
+        ($screenWidth === ScreenWidth.ExtraSmall &&
+            params.chatId == null &&
+            recommendedGroups.kind !== "idle");
 </script>
 
 {#if controller.user}
     <main>
-        {#if params.chatId == null || $screenWidth !== ScreenWidth.ExtraSmall}
+        {#if showLeft}
             <LeftPanel
                 {controller}
                 {groupSearchResults}
@@ -274,7 +308,7 @@
                 on:logout={logout}
                 on:loadMessage={loadMessage} />
         {/if}
-        {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
+        {#if showMiddle}
             <MiddlePanel
                 {recommendedGroups}
                 loadingChats={$chatsLoading}
@@ -290,6 +324,7 @@
                 on:showGroupDetails={showGroupDetails}
                 on:showParticipants={showParticipants}
                 on:updateChat={updateChat}
+                on:cancelRecommendations={cancelRecommendations}
                 controller={$selectedChat} />
         {/if}
     </main>

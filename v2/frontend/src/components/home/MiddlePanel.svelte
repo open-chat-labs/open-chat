@@ -25,7 +25,7 @@
         {/if}
     {:else if controller === undefined}
         {#if recommendedGroups.kind === "success"}
-            <RecommendedGroups groups={recommendedGroups.data} />
+            <RecommendedGroups on:cancelRecommendations groups={recommendedGroups.data} />
         {:else if recommendedGroups.kind === "error"}
             <h1>Oh no there was an error: {recommendedGroups.error}</h1>
         {:else}

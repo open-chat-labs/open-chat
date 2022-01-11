@@ -460,6 +460,18 @@ export interface PinnedMessageUpdated {
   'updated_by' : UserId,
   'new_value' : [] | [MessageIndex],
 }
+export interface PublicGroupSummary {
+  'name' : string,
+  'wasm_version' : Version,
+  'description' : string,
+  'last_updated' : TimestampMillis,
+  'pinned_message' : [] | [MessageIndex],
+  'avatar_id' : [] | [bigint],
+  'latest_event_index' : EventIndex,
+  'chat_id' : ChatId,
+  'participant_count' : number,
+  'latest_message' : [] | [MessageEventWrapper],
+}
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemovedFromGroupAlert {

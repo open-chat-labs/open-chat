@@ -424,6 +424,26 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
   });
+  const RecommendedGroupsArgs = IDL.Record({ 'count' : IDL.Nat8 });
+  const PublicGroupSummary = IDL.Record({
+    'name' : IDL.Text,
+    'wasm_version' : Version,
+    'description' : IDL.Text,
+    'last_updated' : TimestampMillis,
+    'pinned_message' : IDL.Opt(MessageIndex),
+    'avatar_id' : IDL.Opt(IDL.Nat),
+    'latest_event_index' : EventIndex,
+    'chat_id' : ChatId,
+    'participant_count' : IDL.Nat32,
+    'latest_message' : IDL.Opt(MessageEventWrapper),
+  });
+  const RecommendedGroupsSuccessResult = IDL.Record({
+    'groups' : IDL.Vec(PublicGroupSummary),
+  });
+  const RecommendedGroupsResponse = IDL.Variant({
+    'Success' : RecommendedGroupsSuccessResult,
+    'InternalError' : IDL.Text,
+  });
   const RelinquishGroupSuperAdminArgs = IDL.Record({ 'chat_id' : ChatId });
   const RelinquishGroupSuperAdminResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
@@ -662,6 +682,11 @@ export const idlFactory = ({ IDL }) => {
         [MuteNotificationsArgs],
         [MuteNotificationsResponse],
         [],
+      ),
+    'recommended_groups' : IDL.Func(
+        [RecommendedGroupsArgs],
+        [RecommendedGroupsResponse],
+        ['query'],
       ),
     'relinquish_group_super_admin' : IDL.Func(
         [RelinquishGroupSuperAdminArgs],
