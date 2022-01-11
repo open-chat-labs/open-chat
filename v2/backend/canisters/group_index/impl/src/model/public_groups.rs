@@ -4,7 +4,7 @@ use search::*;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, Cycles, CyclesTopUp, GroupMatch, TimestampMillis, Version};
+use types::{ChatId, Cycles, CyclesTopUp, GroupMatch, PublicGroupActivity, TimestampMillis, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct PublicGroups {
@@ -128,6 +128,8 @@ pub struct PublicGroupInfo {
     avatar_id: Option<u128>,
     created: TimestampMillis,
     marked_active_until: TimestampMillis,
+    #[serde(default)]
+    activity: PublicGroupActivity,
     wasm_version: Version,
     cycle_top_ups: Vec<CyclesTopUp>,
     upgrade_in_progress: bool,
@@ -156,6 +158,7 @@ impl PublicGroupInfo {
             avatar_id,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
+            activity: PublicGroupActivity::default(),
             wasm_version,
             cycle_top_ups: vec![CyclesTopUp {
                 date: now,
@@ -177,8 +180,9 @@ impl PublicGroupInfo {
         self.wasm_version = version;
     }
 
-    pub fn mark_active(&mut self, until: TimestampMillis) {
+    pub fn mark_active(&mut self, until: TimestampMillis, activity: PublicGroupActivity) {
         self.marked_active_until = until;
+        self.activity = activity;
     }
 
     pub fn has_been_active_since(&self, since: TimestampMillis) -> bool {
