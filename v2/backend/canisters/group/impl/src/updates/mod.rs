@@ -1,8 +1,8 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, Data, RuntimeState};
 use chat_events::ChatEventInternal;
 use group_index_canister::c2c_mark_active;
 use std::collections::HashSet;
-use types::{CanisterId, EventWrapper, Milliseconds, PublicGroupActivity, TimestampMillis};
+use types::{CanisterId, Milliseconds, PublicGroupActivity, TimestampMillis};
 
 mod add_participants;
 mod block_user;
@@ -40,11 +40,9 @@ fn handle_activity_notification(runtime_state: &mut RuntimeState) {
         .start_if_required(now, mark_active_duration);
 
     if requires_notification {
-        let public_group_activity = if runtime_state.data.is_public {
-            Some(extract_activity(now, runtime_state.data.events.iter().rev()))
-        } else {
-            None
-        };
+        let public_group_activity =
+            if runtime_state.data.is_public { Some(extract_activity(now, &runtime_state.data)) } else { None };
+
         let args = c2c_mark_active::Args {
             duration: mark_active_duration,
             public_group_activity,
@@ -53,34 +51,32 @@ fn handle_activity_notification(runtime_state: &mut RuntimeState) {
         ic_cdk::block_on(call_group_index_canister(runtime_state.data.group_index_canister_id, args));
     }
 
-    fn extract_activity<'a>(
-        now: TimestampMillis,
-        events: impl Iterator<Item = &'a EventWrapper<ChatEventInternal>>,
-    ) -> PublicGroupActivity {
+    fn extract_activity<'a>(now: TimestampMillis, data: &Data) -> PublicGroupActivity {
         let one_hour_ago = now - ONE_HOUR;
         let one_day_ago = now - ONE_DAY;
 
         let mut activity = PublicGroupActivity {
             timestamp: now,
+            participant_count: data.participants.len(),
             ..Default::default()
         };
 
         let mut message_unique_users = HashSet::new();
         let mut reaction_unique_users = HashSet::new();
 
-        let mut inc_user_count = |count, within_last_hour| {
-            activity.last_day.user_count_change += count;
+        let mut inc_participant_count = |count, within_last_hour| {
+            activity.last_day.participant_count_change += count;
             if within_last_hour {
-                activity.last_hour.user_count_change += count;
+                activity.last_hour.participant_count_change += count;
             }
         };
 
-        for event in events.take_while(|e| e.timestamp >= one_day_ago) {
+        for event in data.events.iter().rev().take_while(|e| e.timestamp >= one_day_ago) {
             let within_last_hour = event.timestamp >= one_hour_ago;
 
             match &event.event {
                 ChatEventInternal::GroupChatCreated(_) => {
-                    inc_user_count(1, within_last_hour);
+                    inc_participant_count(1, within_last_hour);
                 }
                 ChatEventInternal::Message(m) => {
                     activity.last_day.messages += 1;
@@ -108,17 +104,17 @@ fn handle_activity_notification(runtime_state: &mut RuntimeState) {
                 }
                 ChatEventInternal::ParticipantsAdded(p) => {
                     let count = p.user_ids.len() as i32;
-                    inc_user_count(count, within_last_hour);
+                    inc_participant_count(count, within_last_hour);
                 }
                 ChatEventInternal::ParticipantsRemoved(p) => {
                     let count = p.user_ids.len() as i32;
-                    inc_user_count(-count, within_last_hour);
+                    inc_participant_count(-count, within_last_hour);
                 }
                 ChatEventInternal::ParticipantJoined(_) => {
-                    inc_user_count(1, within_last_hour);
+                    inc_participant_count(1, within_last_hour);
                 }
                 ChatEventInternal::ParticipantLeft(_) => {
-                    inc_user_count(-1, within_last_hour);
+                    inc_participant_count(-1, within_last_hour);
                 }
                 _ => {}
             }
