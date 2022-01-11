@@ -78,7 +78,7 @@ impl PublicGroups {
                 (score, g)
             })
             .filter(|(score, _)| *score > 0)
-            .max_n_by(|(score, _)| *score, max_results as usize)
+            .max_n_by(max_results as usize, |(score, _)| *score)
             .map(|(_, g)| g.into())
             .collect()
     }
@@ -122,7 +122,7 @@ impl PublicGroups {
     pub fn calculate_hot_groups(&self, now: TimestampMillis) -> Vec<ChatId> {
         self.groups
             .values()
-            .max_n_by(|g| g.calculate_weight(now), CACHED_HOT_GROUPS_COUNT)
+            .max_n_by(CACHED_HOT_GROUPS_COUNT, |g| g.calculate_weight(now))
             .map(|g| g.id)
             .collect()
     }

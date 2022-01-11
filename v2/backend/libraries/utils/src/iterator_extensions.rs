@@ -6,16 +6,16 @@ use std::vec::IntoIter;
 impl<I: Iterator> IteratorExtensions for I {}
 
 pub trait IteratorExtensions: Iterator {
-    fn max_n_by<K, F>(self, key_fn: F, count: usize) -> IntoIter<Self::Item>
+    fn max_n_by<K, F>(self, count: usize, key_fn: F) -> IntoIter<Self::Item>
     where
         Self: Sized,
         K: Ord,
         F: Fn(&Self::Item) -> K,
     {
-        self.min_n_by(|i| Reverse(key_fn(i)), count)
+        self.min_n_by(count, |i| Reverse(key_fn(i)))
     }
 
-    fn min_n_by<K, F>(self, key_fn: F, count: usize) -> IntoIter<Self::Item>
+    fn min_n_by<K, F>(self, count: usize, key_fn: F) -> IntoIter<Self::Item>
     where
         Self: Sized,
         K: Ord,
@@ -85,7 +85,7 @@ mod tests {
 
         let input: Vec<_> = (0..100).into_iter().map(|_| rng.next_u32()).collect();
 
-        let max: Vec<_> = input.iter().cloned().max_n_by(|i| *i, 10).collect();
+        let max: Vec<_> = input.iter().cloned().max_n_by(10, |i| *i).collect();
 
         let mut max_original: Vec<_> = input.clone();
         max_original.sort();
@@ -101,7 +101,7 @@ mod tests {
 
         let input: Vec<_> = (0..100).into_iter().map(|_| rng.next_u32()).collect();
 
-        let min: Vec<_> = input.iter().cloned().min_n_by(|i| *i, 10).collect();
+        let min: Vec<_> = input.iter().cloned().min_n_by(10, |i| *i).collect();
 
         let mut min_original: Vec<_> = input.clone();
         min_original.sort();
