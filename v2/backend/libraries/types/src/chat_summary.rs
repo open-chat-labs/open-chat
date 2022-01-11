@@ -105,3 +105,17 @@ pub struct GroupChatSummaryUpdates {
     pub pinned_message: OptionUpdate<MessageIndex>,
     pub wasm_version: Option<Version>,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PublicGroupSummary {
+    pub chat_id: ChatId,
+    pub last_updated: TimestampMillis,
+    pub name: String,
+    pub description: String,
+    pub avatar_id: Option<u128>,
+    pub latest_message: Option<EventWrapper<Message>>,
+    pub latest_event_index: EventIndex,
+    pub participant_count: u32,
+    pub pinned_message: Option<MessageIndex>,
+    pub wasm_version: Version,
+}

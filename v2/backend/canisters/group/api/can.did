@@ -342,20 +342,6 @@ type PublicSummarySuccess =
         summary: PublicGroupSummary;
     };
 
-type PublicGroupSummary =
-    record {
-        chat_id: ChatId;
-        last_updated: TimestampMillis;
-        name: text;
-        description: text;
-        avatar_id: opt nat;
-        latest_message: opt MessageEventWrapper;
-        latest_event_index: EventIndex;
-        participant_count: nat32;
-        pinned_message: opt MessageIndex;
-        wasm_version: Version;
-    };
-
 service: {
     // Owner only
     delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);

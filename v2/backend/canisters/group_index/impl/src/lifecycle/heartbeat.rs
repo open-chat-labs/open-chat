@@ -1,6 +1,6 @@
 use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MIN_CYCLES_BALANCE};
 use ic_cdk_macros::heartbeat;
-use types::{CanisterId, Cycles, Version};
+use types::{CanisterId, ChatId, Cycles, PublicGroupSummary, Version};
 use utils::canister::{self, FailedUpgrade};
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
@@ -10,6 +10,7 @@ const MAX_CONCURRENT_CANISTER_UPGRADES: u32 = 5;
 fn heartbeat() {
     upgrade_canisters::run();
     topup_canister_pool::run();
+    calculate_hot_groups::run();
     calculate_metrics::run();
 }
 
@@ -131,6 +132,55 @@ mod topup_canister_pool {
     fn add_canister_to_pool(canister_id: CanisterId, cycles: Cycles, runtime_state: &mut RuntimeState) {
         runtime_state.data.canister_pool.push(canister_id);
         runtime_state.data.total_cycles_spent_on_canisters += cycles;
+    }
+}
+
+mod calculate_hot_groups {
+    use super::*;
+
+    pub fn run() {
+        if let Some(groups) = mutate_state(calculate_hot_groups_if_due) {
+            ic_cdk::block_on(set_hot_groups(groups));
+        }
+    }
+
+    fn calculate_hot_groups_if_due(runtime_state: &mut RuntimeState) -> Option<Vec<ChatId>> {
+        let now = runtime_state.env.now();
+        if runtime_state.data.cached_hot_groups.start_update_if_due(now) {
+            let hot_groups = runtime_state.data.public_groups.calculate_hot_groups(now);
+
+            Some(hot_groups)
+        } else {
+            None
+        }
+    }
+
+    async fn set_hot_groups(chat_ids: Vec<ChatId>) {
+        let hydrated = hydrate_hot_groups(chat_ids).await;
+
+        mutate_state(|state| {
+            let now = state.env.now();
+            state.data.cached_hot_groups.update(hydrated, now);
+        })
+    }
+
+    async fn hydrate_hot_groups(chat_ids: Vec<ChatId>) -> Vec<PublicGroupSummary> {
+        use group_canister::public_summary::{Args, Response};
+
+        let args = Args {};
+
+        let futures: Vec<_> = chat_ids
+            .into_iter()
+            .map(|chat_id| group_canister_c2c_client::public_summary(chat_id.into(), &args))
+            .collect();
+
+        let responses = futures::future::join_all(futures).await;
+
+        responses
+            .into_iter()
+            .filter_map(|r| if let Ok(Response::Success(result)) = r { Some(result) } else { None })
+            .map(|r| r.summary)
+            .collect()
     }
 }
 
