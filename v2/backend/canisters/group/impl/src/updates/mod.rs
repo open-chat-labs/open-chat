@@ -51,7 +51,7 @@ fn handle_activity_notification(runtime_state: &mut RuntimeState) {
         ic_cdk::block_on(call_group_index_canister(runtime_state.data.group_index_canister_id, args));
     }
 
-    fn extract_activity<'a>(now: TimestampMillis, data: &Data) -> PublicGroupActivity {
+    fn extract_activity(now: TimestampMillis, data: &Data) -> PublicGroupActivity {
         let one_hour_ago = now - ONE_HOUR;
         let one_day_ago = now - ONE_DAY;
 
