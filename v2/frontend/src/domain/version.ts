@@ -1,13 +1,5 @@
 export class Version {
-    major : number;
-    minor : number;
-    patch : number;
-  
-    constructor(major: number, minor: number, patch: number) {
-        this.major = major;
-        this.minor = minor;
-        this.patch = patch;
-    }
+    constructor(private major: number, private minor: number, private patch: number) {}
 
     toText(): string {
         return `${this.major}.${this.minor}.${this.patch}`;
