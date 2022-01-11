@@ -45,5 +45,5 @@ fn commit(chat_id: ChatId, as_super_admin: bool, latest_message_index: Option<Me
         .group_chats
         .join(chat_id, as_super_admin, latest_message_index, now);
 
-    runtime_state.data.recommended_group_exclusions.remove(&chat_id);
+    runtime_state.data.recommended_group_exclusions.remove(&chat_id, now);
 }

@@ -18,7 +18,7 @@ impl RecommendedGroupExclusions {
             .insert(chat_id, now + duration.unwrap_or(DEFAULT_EXCLUSION_DURATION));
     }
 
-    pub fn remove(&mut self, chat_id: &ChatId) -> bool {
+    pub fn remove(&mut self, chat_id: &ChatId, now: TimestampMillis) -> bool {
         self.prune(now);
 
         self.exclusions.remove(chat_id).is_some()
