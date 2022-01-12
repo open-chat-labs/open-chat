@@ -8,7 +8,8 @@ use ic_cdk_macros::query;
 use std::collections::{HashMap, HashSet};
 use types::{
     Alert, AlertDetails, AlertId, CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary,
-    DirectChatSummaryUpdates, GroupChatSummary, GroupChatSummaryUpdates, GroupDeleted, Milliseconds, TimestampMillis,
+    DirectChatSummaryUpdates, GroupChatSummary, GroupChatSummaryUpdates, GroupDeleted, Milliseconds, OptionUpdate,
+    TimestampMillis,
 };
 use user_canister::{initial_state, updates, updates::UpdatesSince};
 use utils::range_set::convert_to_message_index_ranges;
@@ -332,6 +333,14 @@ fn finalize(
         None
     };
 
+    let avatar_id = runtime_state
+        .data
+        .avatar
+        .if_set_after(updates_since)
+        .map_or(OptionUpdate::NoChange, |update| {
+            OptionUpdate::from_update(update.as_ref().map(|a| a.id))
+        });
+
     // Combine the internal alerts with alerts based on deleted groups
     // and sort so the most recent alerts are at the top
     let mut alerts = runtime_state.data.alerts.get_all(Some(updates_since), now);
@@ -356,6 +365,7 @@ fn finalize(
         transactions,
         blocked_users,
         cycles_balance,
+        avatar_id,
         alerts,
         upgrades_in_progress,
         user_canister_wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(updates_since).copied()),

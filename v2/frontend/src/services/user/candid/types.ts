@@ -721,6 +721,7 @@ export type UpdatesResponse = {
       'chats_updated' : Array<ChatSummaryUpdates>,
       'blocked_users' : Array<UserId>,
       'chats_added' : Array<ChatSummary>,
+      'avatar_id' : AvatarUpdate,
       'chats_removed' : Array<ChatId>,
       'timestamp' : TimestampMillis,
       'transactions' : Array<TransactionWrapper>,
