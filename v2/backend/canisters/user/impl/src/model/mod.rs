@@ -4,6 +4,7 @@ pub mod direct_chats;
 pub mod failed_messages_pending_retry;
 pub mod group_chat;
 pub mod group_chats;
+pub mod recommended_group_exclusions;
 pub mod transactions;
 pub mod unread_message_index_map;
 pub mod user_cycles_balance;
