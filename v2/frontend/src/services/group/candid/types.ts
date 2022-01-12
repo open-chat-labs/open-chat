@@ -58,6 +58,9 @@ export interface AvatarChanged {
   'previous_avatar' : [] | [bigint],
   'new_avatar' : [] | [bigint],
 }
+export type AvatarIdUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : bigint };
 export type AvatarUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : Avatar };

@@ -44,6 +44,9 @@ export interface AvatarChanged {
   'previous_avatar' : [] | [bigint],
   'new_avatar' : [] | [bigint],
 }
+export type AvatarIdUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : bigint };
 export type AvatarUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : Avatar };
@@ -721,7 +724,7 @@ export type UpdatesResponse = {
       'chats_updated' : Array<ChatSummaryUpdates>,
       'blocked_users' : Array<UserId>,
       'chats_added' : Array<ChatSummary>,
-      'avatar_id' : AvatarUpdate,
+      'avatar_id' : AvatarIdUpdate,
       'chats_removed' : Array<ChatId>,
       'timestamp' : TimestampMillis,
       'transactions' : Array<TransactionWrapper>,

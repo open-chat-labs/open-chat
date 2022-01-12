@@ -300,7 +300,7 @@ type UpdatesResponse =
             transactions: vec TransactionWrapper;
             blocked_users: vec UserId;
             cycles_balance: opt Cycles;
-            avatar_id: AvatarUpdate;
+            avatar_id: AvatarIdUpdate;
             alerts: vec Alert;
             upgrades_in_progress: vec ChatId;
             user_canister_wasm_version: opt Version;

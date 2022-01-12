@@ -635,10 +635,10 @@ export const idlFactory = ({ IDL }) => {
     'Group' : GroupChatSummaryUpdates,
     'Direct' : DirectChatSummaryUpdates,
   });
-  const AvatarUpdate = IDL.Variant({
+  const AvatarIdUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
-    'SetToSome' : Avatar,
+    'SetToSome' : IDL.Nat,
   });
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({
@@ -649,7 +649,7 @@ export const idlFactory = ({ IDL }) => {
       'chats_updated' : IDL.Vec(ChatSummaryUpdates),
       'blocked_users' : IDL.Vec(UserId),
       'chats_added' : IDL.Vec(ChatSummary),
-      'avatar_id' : AvatarUpdate,
+      'avatar_id' : AvatarIdUpdate,
       'chats_removed' : IDL.Vec(ChatId),
       'timestamp' : TimestampMillis,
       'transactions' : IDL.Vec(TransactionWrapper),
