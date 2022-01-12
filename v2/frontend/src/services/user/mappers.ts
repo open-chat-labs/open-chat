@@ -24,6 +24,7 @@ import type {
     ApiCryptocurrencyDeposit,
     ApiRole,
     ApiMention,
+    ApiVersion,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -59,6 +60,7 @@ import {
     updatedMessage,
 } from "../common/chatMappers";
 import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
+import { Version } from "../../domain/version";
 
 export function searchAllMessageResponse(
     candid: ApiSearchAllMessagesResponse
@@ -471,6 +473,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             participantCount: optional(candid.Group.participant_count, identity),
             myRole: optional(candid.Group.role, participantRole),
             mentions: candid.Group.mentions.map(mention),
+            wasmVersion: optional(candid.Group.wasm_version, wasmVersion),
         };
     }
     if ("Direct" in candid) {
@@ -517,6 +520,10 @@ function mention(candid: ApiMention): Mention {
     };
 }
 
+function wasmVersion(candid: ApiVersion): Version {
+    return new Version(candid.major, candid.minor, candid.patch);
+}
+
 function chatSummary(candid: ApiChatSummary): ChatSummary {
     if ("Group" in candid) {
         return {
@@ -546,6 +553,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             participantCount: candid.Group.participant_count,
             myRole: participantRole(candid.Group.role),
             mentions: candid.Group.mentions.map(mention),
+            wasmVersion: wasmVersion(candid.Group.wasm_version),
         };
     }
     if ("Direct" in candid) {

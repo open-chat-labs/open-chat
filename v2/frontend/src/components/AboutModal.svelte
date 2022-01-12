@@ -12,7 +12,7 @@
 
 <ModalContent large={true} compactFooter={canister !== undefined} on:close>
     <div slot="header">About OpenChat</div>
-    <div slot="body">
+    <div slot="body" class:rtl={$rtlStore}>
         <p>
             We are pleased to be able to open up OpenChat for beta testing! The number of users has been limited to <strong>5000</strong> for now
             but this will soon increase.
@@ -57,9 +57,17 @@
     </div>
     <div class="footer" class:rtl={$rtlStore} slot="footer">
         {#if canister !== undefined}
-            <div class="version">
-                <div><code>user canister <strong>{canister.id}</strong></code></div>
-                <div><code>version&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>{canister.wasmVersion.toText()}</strong></code></div>
+            <div class="version" class:rtl={$rtlStore}>
+                <table>
+                    <tr>
+                        <td>id</td>
+                        <td><code><strong>{canister.id}</strong></code></td>
+                    </tr>
+                    <tr>
+                        <td>version</td>
+                        <td><code><strong>{canister.wasmVersion.toText()}</strong></code></td>
+                    </tr>
+                </table>    
             </div>
         {/if}
         <Link on:click={() => dispatch("close")}>Close</Link>
@@ -67,15 +75,8 @@
 </ModalContent>
 
 <style type="text/scss">
-    .version {
-        display: flex;
-        flex-direction: column;
-        text-align: left;
-        &.rtl {
-            text-align: right;
-        }
-        flex: 1;
-        @include font(book, normal, fs-50);
+    td {
+        padding-right: $sp4;
     }
 
     ul {
@@ -103,5 +104,27 @@
         display: flex;
         justify-content: flex-end;
         align-items: center;
+    }
+
+    .version {
+        text-align: left;
+        flex: 1;
+        @include font(book, normal, fs-50);
+    }
+
+    .rtl {
+        ul {
+            margin-right: 20px;
+            margin-left: 0;
+        }
+
+        .version {
+            text-align: right;
+        }
+
+        td {
+            padding-left: $sp4;
+            padding-right: 0;
+        }        
     }
 </style>

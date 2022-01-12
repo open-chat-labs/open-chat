@@ -48,6 +48,7 @@ import { message, updatedMessage } from "../common/chatMappers";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { identity, optional } from "../../utils/mapping";
 import DRange from "drange";
+import { Version } from "../../domain/version";
 
 function principalToString(p: Principal): string {
     return p.toString();
@@ -121,6 +122,9 @@ export function publicSummaryResponse(
 ): GroupChatSummary | undefined {
     if ("Success" in candid) {
         const { summary } = candid.Success;
+        const version = summary.wasm_version;
+        console.log("GroupChatSummary wasm version:");
+        console.log(version);
         return {
             kind: "group_chat",
             chatId: summary.chat_id.toString(),
@@ -146,6 +150,7 @@ export function publicSummaryResponse(
                 blobId,
                 canisterId: summary.chat_id.toString(),
             })),
+            wasmVersion: new Version(version.major, version.minor, version.patch),
         };
     }
 }

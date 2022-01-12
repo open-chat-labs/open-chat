@@ -12,6 +12,7 @@
     import type { GroupChatSummary } from "../../../domain/chat/chat";
     import { createEventDispatcher } from "svelte";
     import type { Readable } from "svelte/store";
+    import { rtlStore } from "../../../stores/rtl";
     import type { ChatController } from "../../../fsm/chat.controller";
 
     const MIN_LENGTH = 3;
@@ -125,6 +126,19 @@
                 {/if}
             </div>
         </div>
+        <div class="sub-section">
+            <h4>Group canister</h4>
+            <table class="version" class:rtl={$rtlStore}>
+                <tr>
+                    <td>id</td>
+                    <td><code><strong>{$chat.chatId}</strong></code></td>
+                </tr>
+                <tr>
+                    <td>version</td>
+                    <td><code><strong>{$chat.wasmVersion.toText()}</strong></code></td>
+                </tr>
+            </table>
+        </div>
     </div>
     <div class="cta">
         <Button loading={saving} disabled={!dirty || saving || !canEdit} fill={true}
@@ -211,6 +225,21 @@
 
         p {
             margin-bottom: $sp4;
+        }
+    }
+
+    .version {
+        @include font(book, normal, fs-50);
+
+        td {
+            padding-right: $sp4;
+        }
+
+        &.rtl {
+            td {
+                padding-left: $sp4;
+                padding-right: 0;
+            }
         }
     }
 </style>

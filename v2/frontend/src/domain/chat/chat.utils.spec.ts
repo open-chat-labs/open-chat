@@ -1,3 +1,4 @@
+import { Version } from "../../domain/version";
 import DRange from "drange";
 import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
 import type {
@@ -59,6 +60,7 @@ const defaultGroupChat: GroupChatSummary = {
     participantCount: 10,
     myRole: "admin",
     mentions: [],
+    wasmVersion: new Version(0,0,0),
 };
 
 function directChatId(id: number): DirectChatSummary {
@@ -226,6 +228,7 @@ describe("merging updates", () => {
             name: "stuff",
             description: "stuff",
             mentions: [],
+            wasmVersion: new Version(0,0,0),
         };
 
         test("attempting to update with a mismatched kind throws error", () => {

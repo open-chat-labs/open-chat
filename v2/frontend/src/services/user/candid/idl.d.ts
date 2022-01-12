@@ -71,6 +71,7 @@ import {
     MessageIndexRange,
     User,
     ICP,
+    Version,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -144,6 +145,7 @@ export {
     MessageIndexRange as ApiMessageIndexRange,
     User as ApiUser,
     ICP as ApiICP,
+    Version as ApiVersion,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

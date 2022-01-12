@@ -1,3 +1,4 @@
+import type { Version } from "domain/version";
 import type DRange from "drange";
 import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
@@ -523,6 +524,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     participantCount?: number;
     myRole?: ParticipantRole;
     mentions: Mention[];
+    wasmVersion?: Version;
 };
 
 export type ParticipantRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
@@ -586,6 +588,7 @@ export type GroupChatSummary = DataContent &
         participantCount: number;
         myRole: ParticipantRole;
         mentions: Mention[];
+        wasmVersion: Version;
     };
 
 export type Mention = {
