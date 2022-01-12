@@ -1,6 +1,6 @@
 use crate::{mutate_state, read_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CANISTER_TOP_UP_AMOUNT};
 use canister_api_macros::trace;
-use cycles_utils::top_up_canister;
+use cycles_utils::{can_spend_cycles, top_up_canister};
 use ic_cdk_macros::update;
 use types::{CyclesTopUp, NotifyLowBalanceResponse, UserId};
 
@@ -34,8 +34,8 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalan
         date: runtime_state.env.now(),
         amount: top_up_amount,
     };
-    let cycles_balance = runtime_state.env.cycles_balance();
-    if cycles_balance - top_up_amount < MIN_CYCLES_BALANCE {
+
+    if !can_spend_cycles(top_up_amount, MIN_CYCLES_BALANCE) {
         Err(NotifyLowBalanceResponse::NotEnoughCyclesRemaining)
     } else if runtime_state.data.users.get_by_user_id(&user_id).is_some() {
         Ok(PrepareResult { user_id, top_up })
