@@ -1,3 +1,4 @@
+use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
 use candid::CandidType;
 use search::*;
@@ -5,7 +6,9 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, Cycles, CyclesTopUp, GroupMatch, Milliseconds, PublicGroupActivity, TimestampMillis, Version};
+use types::{
+    ChatId, Cycles, CyclesTopUp, GroupMatch, Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis, Version,
+};
 use utils::iterator_extensions::IteratorExtensions;
 use utils::time::DAY_IN_MS;
 
@@ -81,6 +84,21 @@ impl PublicGroups {
             .max_n_by(max_results as usize, |(score, _)| *score)
             .map(|(_, g)| g.into())
             .collect()
+    }
+
+    pub fn hydrate_cached_summary(&self, summary: CachedPublicGroupSummary) -> Option<PublicGroupSummary> {
+        self.groups.get(&summary.chat_id).map(|group| PublicGroupSummary {
+            chat_id: summary.chat_id,
+            last_updated: summary.last_updated,
+            name: group.name.clone(),
+            description: group.description.clone(),
+            avatar_id: group.avatar_id,
+            latest_message: summary.latest_message,
+            latest_event_index: summary.latest_event_index,
+            participant_count: summary.participant_count,
+            pinned_message: summary.pinned_message,
+            wasm_version: group.wasm_version,
+        })
     }
 
     pub fn update_group(
