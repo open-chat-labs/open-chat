@@ -126,7 +126,7 @@
     </span>
 </div>
 
-<Overlay active={modal !== ModalType.NoModal}>
+<Overlay dismissible={true} active={modal !== ModalType.NoModal}>
     {#if modal === ModalType.About}
         <AboutModal canister={{id: user.userId, wasmVersion}} on:close={() => modal = ModalType.NoModal}/>
     {:else if modal === ModalType.ThemeSelection}
