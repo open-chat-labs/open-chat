@@ -13,7 +13,7 @@ export function optionUpdate<A, B>(candid: ApiOptionUpdate<A>, mapper: (a: A) =>
     if ("NoChange" in candid ) return undefined;
     if ("SetToNone" in candid) return "set_to_none";
     if ("SetToSome" in candid) return { value: mapper(candid.SetToSome) };
-    throw new UnsupportedValueError("Unexpected ApiOptionUpdate returned", candid);
+    throw new UnsupportedValueError("Unexpected ApiOptionUpdate type returned", candid);
 }
 
 export function applyOptionUpdate<T>(original: T | undefined, update: OptionUpdate<T>): T | undefined {
