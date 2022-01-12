@@ -12,6 +12,7 @@ fn main() {
     generate_candid_method!(user, transactions, query);
     generate_candid_method!(user, updates, query);
 
+    generate_candid_method!(user, add_recommended_group_exclusions, update);
     generate_candid_method!(user, assume_group_super_admin, update);
     generate_candid_method!(user, block_user, update);
     generate_candid_method!(user, create_group, update);
