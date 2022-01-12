@@ -132,13 +132,17 @@
         <h1 class="title">{$_("noRecommendations")}</h1>
         <p class="subtitle">{$_("checkBackLater")}</p>
         <div class="buttons">
-            <Button small={true} on:click={cancelRecommendations}>{$_("cancel")}</Button>
+            <Button small={true} on:click={cancelRecommendations}>{$_("close")}</Button>
             <Button secondary={true} small={true} on:click={refresh}>{$_("refresh")}</Button>
         </div>
     {/if}
 </div>
 
 <style type="text/scss">
+    :global(.no-groups .buttons button:first-child) {
+        text-transform: capitalize;
+    }
+
     .subtitle {
         margin-bottom: $sp6;
         @include size-below(xs) {
