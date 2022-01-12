@@ -25,6 +25,7 @@
     import NotificationsBar from "./NotificationsBar.svelte";
     import { unsubscribeNotifications } from "../../utils/notifications";
     import type { HomeController } from "../../fsm/home.controller";
+    import type { Version } from "../../domain/version";
 
     export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -33,6 +34,7 @@
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
+    export let wasmVersion: Version;
 
     const dispatch = createEventDispatcher();
 
@@ -137,6 +139,7 @@
         on:logout
         on:whatsHot={whatsHot}
         {user}
+        {wasmVersion}
         on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
         on:newGroup />
     <Search {searching} {searchTerm} on:searchEntered />

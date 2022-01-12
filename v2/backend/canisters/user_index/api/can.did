@@ -160,6 +160,7 @@ type CurrentUserResponse =
             canister_upgrade_status: CanisterUpgradeStatus;
             avatar_id: opt nat;
             cryptocurrency_accounts: vec CryptocurrencyAccount;
+            wasm_version: Version;
         };
     };
 
