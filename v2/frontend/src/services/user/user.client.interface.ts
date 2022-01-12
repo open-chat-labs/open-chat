@@ -73,4 +73,5 @@ export interface IUserClient {
         muted: boolean
     ): Promise<ToggleMuteNotificationResponse>;
     getRecommendedGroups(): Promise<GroupChatSummary[]>;
+    dismissRecommendation(chatId: string): Promise<void>;
 }

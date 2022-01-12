@@ -39,108 +39,106 @@
     function joinGroup(group: GroupChatSummary) {
         dispatch("joinGroup", group);
     }
+
+    function refresh() {
+        dispatch("recommend");
+    }
 </script>
 
-<div class="wrapper">
-    {#if $screenWidth === ScreenWidth.ExtraSmall}
-        <SectionHeader>
-            <div class="back" class:rtl={$rtlStore} on:click={cancelRecommendations}>
-                <HoverIcon>
-                    {#if $rtlStore}
-                        <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
-                    {:else}
-                        <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
-                    {/if}
-                </HoverIcon>
-            </div>
-            <div>
-                <h1 class="title">{$_("recommendedGroups")}</h1>
-                <p class="subtitle">{$_("selectAGroup")}</p>
-            </div>
-        </SectionHeader>
-    {:else}
-        <h1 class="title">{$_("recommendedGroups")}</h1>
-        <p class="subtitle">{$_("selectAGroup")}</p>
-    {/if}
+<div class="wrapper" class:no-groups={groups.length === 0}>
+    {#if groups.length > 0}
+        {#if $screenWidth === ScreenWidth.ExtraSmall}
+            <SectionHeader>
+                <div class="back" class:rtl={$rtlStore} on:click={cancelRecommendations}>
+                    <HoverIcon>
+                        {#if $rtlStore}
+                            <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                        {:else}
+                            <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                        {/if}
+                    </HoverIcon>
+                </div>
+                <div>
+                    <h1 class="title">{$_("recommendedGroups")}</h1>
+                    <p class="subtitle">{$_("selectAGroup")}</p>
+                </div>
+            </SectionHeader>
+        {:else}
+            <h1 class="title">{$_("recommendedGroups")}</h1>
+            <p class="subtitle">{$_("selectAGroup")}</p>
+        {/if}
 
-    {#each groups as group, i (group.chatId)}
-        <div
-            animate:flip={{ duration: 150 }}
-            class:rtl={$rtlStore}
-            class="group-card"
-            class:selected={selected === i}
-            on:mouseenter={() => (selected = i)}>
-            {#if $screenWidth !== ScreenWidth.ExtraSmall}
-                <div class="avatar">
-                    <Avatar
-                        url={getAvatarUrl(group, "../assets/group.svg")}
-                        status={UserStatus.None}
-                        size={AvatarSize.Small} />
-                </div>
-            {/if}
-            <div class="body">
-                <div class="group-title-line">
-                    {#if $screenWidth === ScreenWidth.ExtraSmall}
-                        <div class="avatar">
-                            <Avatar
-                                url={getAvatarUrl(group, "../assets/group.svg")}
-                                status={UserStatus.None}
-                                size={AvatarSize.Tiny} />
-                        </div>
-                    {/if}
-                    <h3 class="group-name">
-                        {group.name}
-                    </h3>
-                    <span title={$_("notInterested")} class="close" on:click={() => dismiss(group)}>
-                        <HoverIcon>
-                            <Close size={"1.2em"} color={"var(--icon-txt)"} />
-                        </HoverIcon>
-                    </span>
-                </div>
-                <p class="group-desc">
-                    {group.description}
-                </p>
-                <div class="footer">
-                    <p class="user-count">
-                        {$_("groupWithN", { values: { number: group.participantCount } })}
+        {#each groups as group, i (group.chatId)}
+            <div
+                animate:flip={{ duration: 150 }}
+                class:rtl={$rtlStore}
+                class="group-card"
+                class:selected={selected === i}
+                on:mouseenter={() => (selected = i)}>
+                {#if $screenWidth !== ScreenWidth.ExtraSmall}
+                    <div class="avatar">
+                        <Avatar
+                            url={getAvatarUrl(group, "../assets/group.svg")}
+                            status={UserStatus.None}
+                            size={AvatarSize.Small} />
+                    </div>
+                {/if}
+                <div class="body">
+                    <div class="group-title-line">
+                        {#if $screenWidth === ScreenWidth.ExtraSmall}
+                            <div class="avatar">
+                                <Avatar
+                                    url={getAvatarUrl(group, "../assets/group.svg")}
+                                    status={UserStatus.None}
+                                    size={AvatarSize.Tiny} />
+                            </div>
+                        {/if}
+                        <h3 class="group-name">
+                            {group.name}
+                        </h3>
+                        <span
+                            title={$_("notInterested")}
+                            class="close"
+                            on:click={() => dismiss(group)}>
+                            <HoverIcon>
+                                <Close size={"1.2em"} color={"var(--icon-txt)"} />
+                            </HoverIcon>
+                        </span>
+                    </div>
+                    <p class="group-desc">
+                        {group.description}
                     </p>
-                    <div class="buttons">
-                        <Button
-                            disabled={joining === group}
-                            small={true}
-                            on:click={() => previewGroup(group)}>{$_("preview")}</Button>
-                        <Button
-                            disabled={joining === group}
-                            loading={joining === group}
-                            small={true}
-                            on:click={() => joinGroup(group)}
-                            secondary={true}>{$_("join")}</Button>
+                    <div class="footer">
+                        <p class="user-count">
+                            {$_("groupWithN", { values: { number: group.participantCount } })}
+                        </p>
+                        <div class="buttons">
+                            <Button
+                                disabled={joining === group}
+                                small={true}
+                                on:click={() => previewGroup(group)}>{$_("preview")}</Button>
+                            <Button
+                                disabled={joining === group}
+                                loading={joining === group}
+                                small={true}
+                                on:click={() => joinGroup(group)}
+                                secondary={true}>{$_("join")}</Button>
+                        </div>
                     </div>
                 </div>
             </div>
+        {/each}
+    {:else}
+        <h1 class="title">{$_("noRecommendations")}</h1>
+        <p class="subtitle">{$_("checkBackLater")}</p>
+        <div class="buttons">
+            <Button small={true} on:click={cancelRecommendations}>{$_("cancel")}</Button>
+            <Button secondary={true} small={true} on:click={refresh}>{$_("refresh")}</Button>
         </div>
-    {/each}
+    {/if}
 </div>
 
 <style type="text/scss">
-    .wrapper {
-        background-color: var(--currentChat-header-bg);
-        color: var(--currentChat-header-txt);
-
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items: center;
-        height: 100%;
-        padding-top: $sp4;
-        overflow: auto;
-        @include nice-scrollbar();
-        @include size-below(xs) {
-            padding-top: 0;
-            background-color: inherit;
-        }
-    }
-
     .subtitle {
         margin-bottom: $sp6;
         @include size-below(xs) {
@@ -158,6 +156,42 @@
             margin-bottom: 0;
             @include font(book, normal, fs-120);
             @include ellipsis();
+        }
+    }
+
+    .wrapper {
+        background-color: var(--currentChat-header-bg);
+        color: var(--currentChat-header-txt);
+
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        height: 100%;
+        padding-top: $sp4;
+        overflow: auto;
+        @include nice-scrollbar();
+        @include size-below(xs) {
+            padding-top: 0;
+            background-color: inherit;
+        }
+
+        &.no-groups {
+            justify-content: center;
+            background-color: var(--currentChat-header-bg);
+
+            .title {
+                @include size-below(xs) {
+                    @include font(book, normal, fs-160);
+                    @include ellipsis();
+                }
+            }
+
+            .subtitle {
+                @include size-below(xs) {
+                    margin-bottom: $sp6;
+                }
+            }
         }
     }
 

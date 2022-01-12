@@ -30,6 +30,7 @@
                 {joining}
                 on:cancelRecommendations
                 on:joinGroup
+                on:recommend
                 on:dismissRecommendation
                 groups={recommendedGroups.data} />
         {:else if recommendedGroups.kind === "error"}

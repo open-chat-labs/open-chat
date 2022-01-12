@@ -33,7 +33,8 @@
     import type { Writable } from "svelte/store";
     import type { HomeController } from "../../fsm/home.controller";
     import { _ } from "svelte-i18n";
-    import { mapRemoteData, RemoteData } from "../../utils/remoteData";
+    import { mapRemoteData } from "../../utils/remoteData";
+    import type { RemoteData } from "../../utils/remoteData";
 
     export let controller: HomeController;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
@@ -117,6 +118,7 @@
         recommendedGroups = mapRemoteData(recommendedGroups, (data) =>
             data.filter((g) => g.chatId !== ev.detail)
         );
+        api.dismissRecommendation(ev.detail);
     }
 
     async function performSearch(ev: CustomEvent<string>) {

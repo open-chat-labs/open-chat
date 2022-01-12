@@ -637,4 +637,8 @@ export class ServiceContainer implements MarkMessagesRead {
             .getRecommendedGroups()
             .then((groups) => groups.map((g) => this.rehydrateDataContent(g, "avatar")));
     }
+
+    dismissRecommendation(chatId: string): Promise<void> {
+        return this.userClient.dismissRecommendation(chatId);
+    }
 }

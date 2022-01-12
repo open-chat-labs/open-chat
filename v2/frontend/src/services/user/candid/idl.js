@@ -1,6 +1,14 @@
 export const idlFactory = ({ IDL }) => {
+  const Milliseconds = IDL.Nat64;
   const CanisterId = IDL.Principal;
   const ChatId = CanisterId;
+  const AddRecommendedGroupExclusionsArgs = IDL.Record({
+    'duration' : IDL.Opt(Milliseconds),
+    'groups' : IDL.Vec(ChatId),
+  });
+  const AddRecommendedGroupExclusionsResponse = IDL.Variant({
+    'Success' : IDL.Null,
+  });
   const AssumeGroupSuperAdminArgs = IDL.Record({ 'chat_id' : ChatId });
   const AssumeGroupSuperAdminResponse = IDL.Variant({
     'AlreadyOwner' : IDL.Null,
@@ -589,7 +597,6 @@ export const idlFactory = ({ IDL }) => {
     'RemovedFromGroup' : RemovedFromGroupAlert,
     'BlockedFromGroup' : RemovedFromGroupAlert,
   });
-  const Milliseconds = IDL.Nat64;
   const Alert = IDL.Record({
     'id' : IDL.Text,
     'details' : AlertDetails,
@@ -644,6 +651,11 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
   });
   return IDL.Service({
+    'add_recommended_group_exclusions' : IDL.Func(
+        [AddRecommendedGroupExclusionsArgs],
+        [AddRecommendedGroupExclusionsResponse],
+        [],
+      ),
     'assume_group_super_admin' : IDL.Func(
         [AssumeGroupSuperAdminArgs],
         [AssumeGroupSuperAdminResponse],

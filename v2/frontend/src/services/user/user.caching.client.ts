@@ -205,4 +205,8 @@ export class CachingUserClient implements IUserClient {
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
         return this.client.getRecommendedGroups();
     }
+
+    dismissRecommendation(chatId: string): Promise<void> {
+        return this.client.dismissRecommendation(chatId);
+    }
 }

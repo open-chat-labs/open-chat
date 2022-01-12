@@ -407,6 +407,7 @@ export class UserClient extends CandidService implements IUserClient {
     dismissRecommendation(chatId: string): Promise<void> {
         return this.handleResponse(
             this.userService.add_recommended_group_exclusions({
+                duration: [],
                 groups: [Principal.fromText(chatId)],
             }),
             toVoid

@@ -1,5 +1,10 @@
 import type { Principal } from '@dfinity/principal';
 export type AccountIdentifier = Array<number>;
+export interface AddRecommendedGroupExclusionsArgs {
+  'duration' : [] | [Milliseconds],
+  'groups' : Array<ChatId>,
+}
+export type AddRecommendedGroupExclusionsResponse = { 'Success' : null };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -757,6 +762,9 @@ export interface VideoContent {
   'width' : number,
 }
 export interface _SERVICE {
+  'add_recommended_group_exclusions' : (
+      arg_0: AddRecommendedGroupExclusionsArgs,
+    ) => Promise<AddRecommendedGroupExclusionsResponse>,
   'assume_group_super_admin' : (arg_0: AssumeGroupSuperAdminArgs) => Promise<
       AssumeGroupSuperAdminResponse
     >,
