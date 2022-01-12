@@ -6,7 +6,7 @@ use ic_cdk_macros::update;
 use types::ConfirmationCodeSms;
 use user_index_canister::submit_phone_number::{Response::*, *};
 
-const USER_LIMIT: usize = 100;
+const USER_LIMIT: usize = 5000;
 
 #[update]
 #[trace]
