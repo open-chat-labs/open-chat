@@ -607,6 +607,11 @@ export const idlFactory = ({ IDL }) => {
     'SetToNone' : IDL.Null,
     'SetToSome' : MessageIndex,
   });
+  const AvatarIdUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : IDL.Nat,
+  });
   const GroupChatSummaryUpdates = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
@@ -616,7 +621,7 @@ export const idlFactory = ({ IDL }) => {
     'last_updated' : TimestampMillis,
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'pinned_message' : PinnedMessageUpdate,
-    'avatar_id' : IDL.Opt(IDL.Nat),
+    'avatar_id' : AvatarIdUpdate,
     'latest_event_index' : IDL.Opt(EventIndex),
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
@@ -634,11 +639,6 @@ export const idlFactory = ({ IDL }) => {
   const ChatSummaryUpdates = IDL.Variant({
     'Group' : GroupChatSummaryUpdates,
     'Direct' : DirectChatSummaryUpdates,
-  });
-  const AvatarIdUpdate = IDL.Variant({
-    'NoChange' : IDL.Null,
-    'SetToNone' : IDL.Null,
-    'SetToSome' : IDL.Nat,
   });
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({

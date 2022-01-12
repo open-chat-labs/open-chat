@@ -40,7 +40,7 @@ impl From<&GroupChat> for GroupChatSummaryUpdates {
             last_updated: s.last_updated(),
             name: None,
             description: None,
-            avatar_id: None,
+            avatar_id: OptionUpdate::NoChange,
             latest_message: None,
             latest_event_index: None,
             participant_count: None,
