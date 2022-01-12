@@ -52,7 +52,7 @@ import type {
     Mention,
     GroupChatSummary,
 } from "../../domain/chat/chat";
-import { identity, optional } from "../../utils/mapping";
+import { identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
 import {
     apiMessageIndexRanges,
@@ -481,7 +481,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             name: optional(candid.Group.name, identity),
             description: optional(candid.Group.description, identity),
             latestEventIndex: optional(candid.Group.latest_event_index, identity),
-            avatarBlobReference: optional(candid.Group.avatar_id, (blobId) => ({
+            avatarBlobReferenceUpdate: optionUpdate(candid.Group.avatar_id, (blobId) => ({
                 blobId,
                 canisterId: chatId,
             })),

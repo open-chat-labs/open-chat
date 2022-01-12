@@ -345,7 +345,7 @@ export interface GroupChatSummaryUpdates {
   'last_updated' : TimestampMillis,
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'pinned_message' : PinnedMessageUpdate,
-  'avatar_id' : [] | [bigint],
+  'avatar_id' : AvatarIdUpdate,
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,

@@ -25,7 +25,7 @@ pub struct SummaryUpdates {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
-    pub avatar_id: Option<u128>,
+    pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
     pub participant_count: Option<u32>,

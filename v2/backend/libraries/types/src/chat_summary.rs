@@ -94,7 +94,7 @@ pub struct GroupChatSummaryUpdates {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
-    pub avatar_id: Option<u128>,
+    pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
     pub read_by_me: Option<Vec<MessageIndexRange>>,
