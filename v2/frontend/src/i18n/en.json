@@ -179,6 +179,8 @@
     "errorSearchingForUser": "An unexpected error occurred when searching for users",
     "errorSendingMessage": "An unexpected error occurred sending your message",
     "errorEditingMessage": "An unexpected error occurred editing your message",
+    "aboutOpenChat": "About OpenChat",
+    "here": "here",
     "chatSummary": {
         "unread": "{count} unread message(s)",
         "mentions": "{count} unread mention(s)"
@@ -186,7 +188,7 @@
     "login": {
         "welcomeTo": "Welcome to ...",
         "blurbPartOne": "A secure, intuitive, decentralized chat app running entirely on ",
-        "blurbPartTwo": " - the world's first internet-scale blockchain.",
+        "blurbPartTwo": " - the world's first internet-scale blockchain. Read more ",
         "signIn": "Sign in"
     },
     "reactions": {

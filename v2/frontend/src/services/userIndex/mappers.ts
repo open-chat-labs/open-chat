@@ -36,6 +36,7 @@ import type {
 } from "./candid/idl";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
+import { Version } from "../../domain/version";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {
@@ -306,6 +307,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
     }
 
     if ("Created" in candid) {
+        const version = candid.Created.wasm_version;
         return {
             kind: "created_user",
             userId: candid.Created.user_id.toString(),
@@ -316,6 +318,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                     : "NotRequired" in candid.Created.canister_upgrade_status
                     ? "not_required"
                     : "in_progress",
+            wasmVersion: new Version(version.major, version.minor, version.patch)
         };
     }
 

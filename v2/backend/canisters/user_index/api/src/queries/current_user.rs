@@ -1,7 +1,8 @@
 use candid::CandidType;
 use serde::Deserialize;
 use types::{
-    CanisterCreationStatus, CanisterUpgradeStatus, CryptocurrencyAccount, PhoneNumber, RegistrationFee, TimestampMillis, UserId,
+    CanisterCreationStatus, CanisterUpgradeStatus, CryptocurrencyAccount, PhoneNumber, RegistrationFee, TimestampMillis,
+    UserId, Version,
 };
 
 #[derive(CandidType, Deserialize, Debug)]
@@ -59,4 +60,5 @@ pub struct CreatedResult {
     pub avatar_id: Option<u128>,
     pub canister_upgrade_status: CanisterUpgradeStatus,
     pub cryptocurrency_accounts: Vec<CryptocurrencyAccount>,
+    pub wasm_version: Version,
 }

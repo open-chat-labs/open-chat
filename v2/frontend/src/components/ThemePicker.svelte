@@ -13,9 +13,9 @@
     }
 </script>
 
-<ModalContent>
+<ModalContent on:close>
     <span slot="header"> Choose your theme </span>
-    <span slot="body">
+    <div class="body" slot="body">
         <Radio
             group="theme"
             value="system"
@@ -32,5 +32,11 @@
                 label={theme.label}
                 on:change={selectTheme} />
         {/each}
-    </span>
+    </div>
 </ModalContent>
+
+<style type="text/scss">
+    .body {
+        padding: $sp4 0;
+    }
+</style>

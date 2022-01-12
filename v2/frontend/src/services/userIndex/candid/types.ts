@@ -153,6 +153,7 @@ export type CurrentUserResponse = {
   {
     'Created' : {
       'username' : string,
+      'wasm_version' : Version,
       'user_id' : UserId,
       'cryptocurrency_accounts' : Array<CryptocurrencyAccount>,
       'avatar_id' : [] | [bigint],
