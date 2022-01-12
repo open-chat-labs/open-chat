@@ -2,9 +2,7 @@ use crate::{read_state, RuntimeState, WASM_VERSION};
 use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
-use types::{
-    Avatar, EventIndex, EventWrapper, Mention, Message, MessageIndex, OptionUpdate, TimestampMillis, MAX_RETURNED_MENTIONS,
-};
+use types::{EventIndex, EventWrapper, Mention, Message, MessageIndex, OptionUpdate, TimestampMillis, MAX_RETURNED_MENTIONS};
 
 #[query]
 fn c2c_summary_updates(args: Args) -> Response {
@@ -25,7 +23,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             last_updated,
             name: updates_from_events.name,
             description: updates_from_events.description,
-            avatar_id: Avatar::id(&runtime_state.data.avatar),
+            avatar_id: updates_from_events.avatar_id,
             latest_message: updates_from_events.latest_message,
             latest_event_index: updates_from_events.latest_event_index,
             participant_count: if updates_from_events.participants_changed {

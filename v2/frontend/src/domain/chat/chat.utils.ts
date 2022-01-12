@@ -31,6 +31,7 @@ import { UnsupportedValueError } from "../../utils/error";
 import { overwriteCachedEvents } from "../../utils/caching";
 import { unconfirmed } from "../../stores/unconfirmed";
 import type { IMessageReadTracker } from "../../stores/markRead";
+import { applyOptionUpdate } from "../../utils/mapping";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 const EVENT_PAGE_SIZE = 20;
@@ -325,7 +326,7 @@ function mergeUpdatedGroupChat(
     chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = getLatestEventIndex(chat, updatedChat);
     chat.latestMessage = getLatestMessage(chat, updatedChat);
-    chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
+    chat.blobReference = applyOptionUpdate(chat.blobReference, updatedChat.avatarBlobReferenceUpdate);
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
     chat.myRole = updatedChat.myRole ?? chat.myRole === "previewer" ? "participant" : chat.myRole;

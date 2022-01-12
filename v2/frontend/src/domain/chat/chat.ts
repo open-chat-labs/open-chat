@@ -1,6 +1,7 @@
 import type DRange from "drange";
 import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
+import type { OptionUpdate } from "../optionUpdate";
 
 export type MessageContent =
     | FileContent
@@ -519,7 +520,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     lastUpdated: bigint;
     name?: string;
     description?: string;
-    avatarBlobReference?: BlobReference;
+    avatarBlobReferenceUpdate?: OptionUpdate<BlobReference>;
     participantCount?: number;
     myRole?: ParticipantRole;
     mentions: Mention[];

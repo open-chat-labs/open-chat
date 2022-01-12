@@ -10,7 +10,7 @@ use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::state_operations;
 use notifications_canister::c2c_push_notification;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{Avatar, CanisterId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
@@ -112,7 +112,8 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
-    pub avatar: Option<Avatar>,
+    #[serde(deserialize_with = "deserialize_avatar")]
+    pub avatar: Timestamped<Option<Avatar>>,
     pub user_cycles_balance: UserCyclesBalance,
     pub transactions: Transactions,
     pub test_mode: bool,
@@ -122,6 +123,18 @@ struct Data {
     pub is_super_admin: bool,
     #[serde(default)]
     pub recommended_group_exclusions: RecommendedGroupExclusions,
+}
+
+fn deserialize_avatar<'de, D>(deserializer: D) -> Result<Timestamped<Option<Avatar>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let avatar: Option<Avatar> = serde::de::Deserialize::deserialize(deserializer)?;
+
+    Ok(Timestamped {
+        value: avatar,
+        timestamp: 0,
+    })
 }
 
 impl Data {
@@ -141,7 +154,7 @@ impl Data {
             user_index_canister_id,
             group_index_canister_id,
             notifications_canister_ids,
-            avatar: None,
+            avatar: Timestamped::default(),
             user_cycles_balance: UserCyclesBalance::new(now),
             transactions: Transactions::default(),
             test_mode,

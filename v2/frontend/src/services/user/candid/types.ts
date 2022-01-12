@@ -44,6 +44,9 @@ export interface AvatarChanged {
   'previous_avatar' : [] | [bigint],
   'new_avatar' : [] | [bigint],
 }
+export type AvatarIdUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : bigint };
 export type AvatarUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : Avatar };
@@ -345,7 +348,7 @@ export interface GroupChatSummaryUpdates {
   'last_updated' : TimestampMillis,
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'pinned_message' : PinnedMessageUpdate,
-  'avatar_id' : [] | [bigint],
+  'avatar_id' : AvatarIdUpdate,
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
@@ -721,6 +724,7 @@ export type UpdatesResponse = {
       'chats_updated' : Array<ChatSummaryUpdates>,
       'blocked_users' : Array<UserId>,
       'chats_added' : Array<ChatSummary>,
+      'avatar_id' : AvatarIdUpdate,
       'chats_removed' : Array<ChatId>,
       'timestamp' : TimestampMillis,
       'transactions' : Array<TransactionWrapper>,

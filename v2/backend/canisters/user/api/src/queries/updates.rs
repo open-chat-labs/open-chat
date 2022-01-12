@@ -1,6 +1,8 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{Alert, ChatId, ChatSummary, ChatSummaryUpdates, Cycles, TimestampMillis, TransactionWrapper, UserId, Version};
+use types::{
+    Alert, ChatId, ChatSummary, ChatSummaryUpdates, Cycles, OptionUpdate, TimestampMillis, TransactionWrapper, UserId, Version,
+};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -19,6 +21,7 @@ pub struct GroupChatUpdatesSince {
     pub updates_since: TimestampMillis,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -34,6 +37,7 @@ pub struct SuccessResult {
     pub transactions: Vec<TransactionWrapper>,
     pub blocked_users: Vec<UserId>,
     pub cycles_balance: Option<Cycles>,
+    pub avatar_id: OptionUpdate<u128>,
     pub alerts: Vec<Alert>,
     pub upgrades_in_progress: Vec<ChatId>,
     pub user_canister_wasm_version: Option<Version>,
