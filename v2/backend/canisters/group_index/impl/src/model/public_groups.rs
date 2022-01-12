@@ -154,7 +154,6 @@ pub struct PublicGroupInfo {
     avatar_id: Option<u128>,
     created: TimestampMillis,
     marked_active_until: TimestampMillis,
-    #[serde(default)]
     activity: PublicGroupActivity,
     wasm_version: Version,
     cycle_top_ups: Vec<CyclesTopUp>,
