@@ -257,6 +257,13 @@ type AvatarUpdate =
         SetToSome: Avatar;
     };
 
+type AvatarIdUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: nat;
+    };
+
 type Mention =
     record {
         message_id: MessageId;

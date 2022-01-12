@@ -3,7 +3,7 @@ use crate::updates::set_avatar::Response::*;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use types::{CanisterId, FieldTooLongResult, MAX_AVATAR_SIZE};
+use types::{CanisterId, FieldTooLongResult, Timestamped, MAX_AVATAR_SIZE};
 use user_canister::set_avatar::*;
 
 #[update(guard = "caller_is_owner")]
@@ -24,8 +24,9 @@ fn set_avatar_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 
     let id = args.avatar.as_ref().map(|a| a.id);
+    let now = runtime_state.env.now();
 
-    runtime_state.data.avatar = args.avatar;
+    runtime_state.data.avatar = Timestamped::new(args.avatar, now);
 
     let user_index_canister_id = runtime_state.data.user_index_canister_id;
     ic_cdk::block_on(update_index_canister(user_index_canister_id, id));
