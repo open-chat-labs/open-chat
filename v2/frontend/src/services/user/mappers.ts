@@ -24,6 +24,7 @@ import type {
     ApiCryptocurrencyDeposit,
     ApiRole,
     ApiMention,
+    ApiRecommendedGroupsResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -49,6 +50,7 @@ import type {
     CryptocurrencyDeposit,
     ParticipantRole,
     Mention,
+    GroupChatSummary,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -56,9 +58,25 @@ import {
     apiMessageIndexRanges,
     message,
     messageContent,
+    publicGroupSummary,
     updatedMessage,
 } from "../common/chatMappers";
 import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
+
+export function recommendedGroupsResponse(
+    candid: ApiRecommendedGroupsResponse
+): GroupChatSummary[] {
+    if ("Success" in candid) {
+        return candid.Success.groups.map(publicGroupSummary);
+    }
+    if ("InternalError" in candid) {
+        return [];
+    }
+    throw new UnsupportedValueError(
+        `Unexpected ApiRecommendedGroupsResponse type received`,
+        candid
+    );
+}
 
 export function searchAllMessageResponse(
     candid: ApiSearchAllMessagesResponse

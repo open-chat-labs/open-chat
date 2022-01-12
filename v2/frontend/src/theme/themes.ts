@@ -285,6 +285,10 @@ export interface Theme {
             };
         };
     };
+
+    recommended: {
+        bg: string;
+    };
 }
 
 export type Themes = {

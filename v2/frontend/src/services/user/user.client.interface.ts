@@ -19,6 +19,7 @@ import type {
     JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
+    GroupChatSummary,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
@@ -71,4 +72,6 @@ export interface IUserClient {
         chatId: string,
         muted: boolean
     ): Promise<ToggleMuteNotificationResponse>;
+    getRecommendedGroups(): Promise<GroupChatSummary[]>;
+    dismissRecommendation(chatId: string): Promise<void>;
 }

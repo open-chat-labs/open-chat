@@ -7,11 +7,12 @@
     import { _ } from "svelte-i18n";
     import type { ChatController } from "../../fsm/chat.controller";
     import { onDestroy } from "svelte";
-    import { getMinVisibleMessageIndex, isPreviewing } from "domain/chat/chat.utils";
-    import type { Mention } from "domain/chat/chat";
+    import { getMinVisibleMessageIndex, isPreviewing } from "../../domain/chat/chat.utils";
+    import type { GroupChatSummary, Mention } from "../../domain/chat/chat";
 
     export let controller: ChatController;
     export let blocked: boolean;
+    export let joining: GroupChatSummary | undefined;
 
     let chatId = controller.chatId;
     let unreadMessages = 0;
@@ -117,7 +118,7 @@
         {firstUnreadMention}
         {firstUnreadMessage}
         {unreadMessages} />
-    <Footer {preview} {blocked} {controller} on:updateChat />
+    <Footer {joining} {preview} {blocked} {controller} on:joinGroup on:cancelPreview />
 </div>
 
 <style type="text/scss">

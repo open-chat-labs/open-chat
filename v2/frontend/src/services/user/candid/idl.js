@@ -1,6 +1,14 @@
 export const idlFactory = ({ IDL }) => {
+  const Milliseconds = IDL.Nat64;
   const CanisterId = IDL.Principal;
   const ChatId = CanisterId;
+  const AddRecommendedGroupExclusionsArgs = IDL.Record({
+    'duration' : IDL.Opt(Milliseconds),
+    'groups' : IDL.Vec(ChatId),
+  });
+  const AddRecommendedGroupExclusionsResponse = IDL.Variant({
+    'Success' : IDL.Null,
+  });
   const AssumeGroupSuperAdminArgs = IDL.Record({ 'chat_id' : ChatId });
   const AssumeGroupSuperAdminResponse = IDL.Variant({
     'AlreadyOwner' : IDL.Null,
@@ -424,6 +432,26 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
   });
+  const RecommendedGroupsArgs = IDL.Record({ 'count' : IDL.Nat8 });
+  const PublicGroupSummary = IDL.Record({
+    'name' : IDL.Text,
+    'wasm_version' : Version,
+    'description' : IDL.Text,
+    'last_updated' : TimestampMillis,
+    'pinned_message' : IDL.Opt(MessageIndex),
+    'avatar_id' : IDL.Opt(IDL.Nat),
+    'latest_event_index' : EventIndex,
+    'chat_id' : ChatId,
+    'participant_count' : IDL.Nat32,
+    'latest_message' : IDL.Opt(MessageEventWrapper),
+  });
+  const RecommendedGroupsSuccessResult = IDL.Record({
+    'groups' : IDL.Vec(PublicGroupSummary),
+  });
+  const RecommendedGroupsResponse = IDL.Variant({
+    'Success' : RecommendedGroupsSuccessResult,
+    'InternalError' : IDL.Text,
+  });
   const RelinquishGroupSuperAdminArgs = IDL.Record({ 'chat_id' : ChatId });
   const RelinquishGroupSuperAdminResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
@@ -569,7 +597,6 @@ export const idlFactory = ({ IDL }) => {
     'RemovedFromGroup' : RemovedFromGroupAlert,
     'BlockedFromGroup' : RemovedFromGroupAlert,
   });
-  const Milliseconds = IDL.Nat64;
   const Alert = IDL.Record({
     'id' : IDL.Text,
     'details' : AlertDetails,
@@ -624,6 +651,11 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
   });
   return IDL.Service({
+    'add_recommended_group_exclusions' : IDL.Func(
+        [AddRecommendedGroupExclusionsArgs],
+        [AddRecommendedGroupExclusionsResponse],
+        [],
+      ),
     'assume_group_super_admin' : IDL.Func(
         [AssumeGroupSuperAdminArgs],
         [AssumeGroupSuperAdminResponse],
@@ -662,6 +694,11 @@ export const idlFactory = ({ IDL }) => {
         [MuteNotificationsArgs],
         [MuteNotificationsResponse],
         [],
+      ),
+    'recommended_groups' : IDL.Func(
+        [RecommendedGroupsArgs],
+        [RecommendedGroupsResponse],
+        ['query'],
       ),
     'relinquish_group_super_admin' : IDL.Func(
         [RelinquishGroupSuperAdminArgs],

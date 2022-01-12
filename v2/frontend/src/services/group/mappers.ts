@@ -116,40 +116,6 @@ export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupC
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
-export function publicSummaryResponse(
-    candid: ApiPublicSummaryResponse
-): GroupChatSummary | undefined {
-    if ("Success" in candid) {
-        const { summary } = candid.Success;
-        return {
-            kind: "group_chat",
-            chatId: summary.chat_id.toString(),
-            readByMe: new DRange(),
-            latestEventIndex: summary.latest_event_index,
-            latestMessage: optional(summary.latest_message, (ev) => ({
-                index: ev.index,
-                timestamp: ev.timestamp,
-                event: message(ev.event),
-            })),
-            notificationsMuted: true,
-            name: summary.name,
-            description: summary.description,
-            public: true,
-            joined: BigInt(Date.now()),
-            minVisibleEventIndex: 0,
-            minVisibleMessageIndex: 0,
-            lastUpdated: summary.last_updated,
-            participantCount: summary.participant_count,
-            myRole: "previewer",
-            mentions: [],
-            blobReference: optional(summary.avatar_id, (blobId) => ({
-                blobId,
-                canisterId: summary.chat_id.toString(),
-            })),
-        };
-    }
-}
-
 export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroupResponse {
     if ("Success" in candid) {
         return "success";

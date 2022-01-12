@@ -233,5 +233,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 },
             },
         },
+
+        recommended: {
+            ...defaultTheme.recommended,
+            bg: dark25,
+        },
     };
 }

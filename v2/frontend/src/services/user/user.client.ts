@@ -22,6 +22,7 @@ import type {
     JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
+    GroupChatSummary,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -35,6 +36,7 @@ import {
     joinGroupResponse,
     leaveGroupResponse,
     markReadResponse,
+    recommendedGroupsResponse,
     searchAllMessageResponse,
     sendMessageResponse,
     setAvatarResponse,
@@ -57,7 +59,8 @@ import type { UserSummary } from "../../domain/user/user";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { muteNotificationsResponse } from "../notifications/mappers";
-import { identity } from "../../utils/mapping";
+import { identity, toVoid } from "../../utils/mapping";
+import DRange from "drange";
 
 const MAX_RECURSION = 10;
 
@@ -390,5 +393,24 @@ export class UserClient extends CandidService implements IUserClient {
                 muteNotificationsResponse
             );
         }
+    }
+
+    getRecommendedGroups(): Promise<GroupChatSummary[]> {
+        return this.handleResponse(
+            this.userService.recommended_groups({
+                count: 10,
+            }),
+            recommendedGroupsResponse
+        );
+    }
+
+    dismissRecommendation(chatId: string): Promise<void> {
+        return this.handleResponse(
+            this.userService.add_recommended_group_exclusions({
+                duration: [],
+                groups: [Principal.fromText(chatId)],
+            }),
+            toVoid
+        );
     }
 }

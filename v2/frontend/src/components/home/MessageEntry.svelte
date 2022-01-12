@@ -18,13 +18,13 @@
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import type { User } from "../../domain/user/user";
     import Button from "../Button.svelte";
+    import type { GroupChatSummary } from "../../domain/chat/chat";
 
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
     export let showEmojiPicker = false;
-
-    let joining = false;
+    export let joining: GroupChatSummary | undefined;
 
     $: textContent = controller.textContent;
     $: editingEvent = controller.editingEvent;
@@ -278,15 +278,11 @@
     }
 
     function joinGroup() {
-        joining = true;
-        controller
-            .joinGroup()
-            .then((maybeChat) => {
-                if (maybeChat !== undefined) {
-                    dispatch("updateChat", maybeChat);
-                }
-            })
-            .finally(() => (joining = false));
+        dispatch("joinGroup", controller.chatVal);
+    }
+
+    function cancelPreview() {
+        dispatch("cancelPreview", controller.chatId);
     }
 </script>
 
@@ -314,8 +310,15 @@
             {$_("userIsBlocked")}
         </div>
     {:else if preview}
-        <div class="preview">
-            <Button loading={joining} disabled={joining} small={true} on:click={joinGroup}>
+        <div class="preview buttons">
+            <Button secondary={true} small={true} on:click={cancelPreview}>
+                {$_("noThanks")}
+            </Button>
+            <Button
+                loading={joining !== undefined}
+                disabled={joining !== undefined}
+                small={true}
+                on:click={joinGroup}>
                 {$_("joinGroup")}
             </Button>
         </div>

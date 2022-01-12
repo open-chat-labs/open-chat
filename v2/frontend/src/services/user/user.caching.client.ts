@@ -18,6 +18,7 @@ import type {
     JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
+    GroupChatSummary,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -199,5 +200,13 @@ export class CachingUserClient implements IUserClient {
         muted: boolean
     ): Promise<ToggleMuteNotificationResponse> {
         return this.client.toggleMuteNotifications(chatId, muted);
+    }
+
+    getRecommendedGroups(): Promise<GroupChatSummary[]> {
+        return this.client.getRecommendedGroups();
+    }
+
+    dismissRecommendation(chatId: string): Promise<void> {
+        return this.client.dismissRecommendation(chatId);
     }
 }

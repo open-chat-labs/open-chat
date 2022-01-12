@@ -5,7 +5,7 @@
     import RightPanel from "./RightPanel.svelte";
     import { fly } from "svelte/transition";
     import Overlay from "../Overlay.svelte";
-    import { createEventDispatcher, onDestroy, onMount } from "svelte";
+    import { createEventDispatcher, onDestroy, onMount, tick } from "svelte";
     const dispatch = createEventDispatcher();
     import { rtlStore } from "../../stores/rtl";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
@@ -33,6 +33,8 @@
     import type { Writable } from "svelte/store";
     import type { HomeController } from "../../fsm/home.controller";
     import { _ } from "svelte-i18n";
+    import { mapRemoteData } from "../../utils/remoteData";
+    import type { RemoteData } from "../../utils/remoteData";
 
     export let controller: HomeController;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
@@ -48,6 +50,8 @@
     let searchResultsAvailable: boolean = false;
     let removingOperation: "leave" | "delete" = "delete";
     let removingChatId: string | undefined;
+    let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
+    let joining: GroupChatSummary | undefined = undefined;
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -96,6 +100,7 @@
                 } else {
                     controller.selectChat(chatId, messageIndex);
                 }
+                recommendedGroups = { kind: "idle" };
             }
 
             // if there is no chatId param, tell the machine to clear the selection
@@ -103,6 +108,17 @@
                 controller.clearSelectedChat();
             }
         }
+    }
+
+    function cancelRecommendations() {
+        recommendedGroups = { kind: "idle" };
+    }
+
+    function dismissRecommendation(ev: CustomEvent<string>) {
+        recommendedGroups = mapRemoteData(recommendedGroups, (data) =>
+            data.filter((g) => g.chatId !== ev.detail)
+        );
+        api.dismissRecommendation(ev.detail);
     }
 
     async function performSearch(ev: CustomEvent<string>) {
@@ -230,6 +246,32 @@
         controller.replaceChat(ev.detail);
     }
 
+    function joinGroup(ev: CustomEvent<GroupChatSummary>) {
+        joining = ev.detail;
+        controller
+            .joinGroup(ev.detail)
+            .then((success) => {
+                if (success) {
+                    recommendedGroups = { kind: "idle" };
+                    push(`/${ev.detail.chatId}`);
+                }
+            })
+            .finally(() => (joining = undefined));
+    }
+
+    function cancelPreview(ev: CustomEvent<string>) {
+        controller.clearSelectedChat();
+        tick().then(() => controller.removeGroup(ev.detail));
+    }
+
+    function whatsHot() {
+        controller.clearSelectedChat();
+        recommendedGroups = { kind: "loading" };
+        api.getRecommendedGroups()
+            .then((resp) => (recommendedGroups = { kind: "success", data: resp }))
+            .catch((err) => (recommendedGroups = { kind: "error", error: err.toString() }));
+    }
+
     $: chat = $selectedChat?.chat;
 
     $: groupChat =
@@ -242,11 +284,40 @@
     let editGroupHistory: EditGroupState[] = [];
 
     $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
+
+    /** SHOW LEFT
+     * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
+     * ==========================================================
+     * F             |  -            |  -            |  T
+     * T             |  T            |  -            |  F
+     * T             |  F            |  T            |  F
+     * T             |  F            |  F            |  T
+     */
+    $: showLeft =
+        $screenWidth !== ScreenWidth.ExtraSmall ||
+        ($screenWidth === ScreenWidth.ExtraSmall &&
+            params.chatId == null &&
+            recommendedGroups.kind === "idle");
+
+    /** SHOW MIDDLE
+     * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
+     * ==========================================================
+     * F             |  -            |  -            |  T
+     * T             |  T            |  -            |  T
+     * T             |  F            |  T            |  T
+     * T             |  F            |  F            |  F
+     */
+    $: showMiddle =
+        $screenWidth !== ScreenWidth.ExtraSmall ||
+        ($screenWidth === ScreenWidth.ExtraSmall && params.chatId != null) ||
+        ($screenWidth === ScreenWidth.ExtraSmall &&
+            params.chatId == null &&
+            recommendedGroups.kind !== "idle");
 </script>
 
 {#if controller.user}
     <main>
-        {#if params.chatId == null || $screenWidth !== ScreenWidth.ExtraSmall}
+        {#if showLeft}
             <LeftPanel
                 {controller}
                 {groupSearchResults}
@@ -258,11 +329,14 @@
                 {wasmVersion}
                 on:searchEntered={performSearch}
                 on:chatWith={chatWith}
+                on:whatsHot={whatsHot}
                 on:logout={logout}
                 on:loadMessage={loadMessage} />
         {/if}
-        {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
+        {#if showMiddle}
             <MiddlePanel
+                {recommendedGroups}
+                {joining}
                 loadingChats={$chatsLoading}
                 blocked={!!blocked}
                 on:clearSelection={clearSelectedChat}
@@ -276,6 +350,11 @@
                 on:showGroupDetails={showGroupDetails}
                 on:showParticipants={showParticipants}
                 on:updateChat={updateChat}
+                on:joinGroup={joinGroup}
+                on:cancelPreview={cancelPreview}
+                on:cancelRecommendations={cancelRecommendations}
+                on:recommend={whatsHot}
+                on:dismissRecommendation={dismissRecommendation}
                 controller={$selectedChat} />
         {/if}
     </main>

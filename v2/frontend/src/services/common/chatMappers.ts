@@ -1,5 +1,6 @@
 import { Principal } from "@dfinity/principal";
 import DRange from "drange";
+import type { ApiPublicGroupSummary, ApiPublicSummaryResponse } from "../group/candid/idl";
 import type {
     FileContent,
     ImageContent,
@@ -16,6 +17,7 @@ import type {
     CryptocurrencyTransfer,
     ICPTransfer,
     CyclesTransfer,
+    GroupChatSummary,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { User } from "../../domain/user/user";
@@ -468,6 +470,43 @@ function apiFileContent(domain: FileContent): ApiFileContent {
 
 function apiICP(amountE8s: bigint): ApiICP {
     return {
-        e8s: amountE8s
+        e8s: amountE8s,
     };
+}
+
+export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSummary {
+    return {
+        kind: "group_chat",
+        chatId: candid.chat_id.toString(),
+        readByMe: new DRange(),
+        latestEventIndex: candid.latest_event_index,
+        latestMessage: optional(candid.latest_message, (ev) => ({
+            index: ev.index,
+            timestamp: ev.timestamp,
+            event: message(ev.event),
+        })),
+        notificationsMuted: true,
+        name: candid.name,
+        description: candid.description,
+        public: true,
+        joined: BigInt(Date.now()),
+        minVisibleEventIndex: 0,
+        minVisibleMessageIndex: 0,
+        lastUpdated: candid.last_updated,
+        participantCount: candid.participant_count,
+        myRole: "previewer",
+        mentions: [],
+        blobReference: optional(candid.avatar_id, (blobId) => ({
+            blobId,
+            canisterId: candid.chat_id.toString(),
+        })),
+    };
+}
+
+export function publicSummaryResponse(
+    candid: ApiPublicSummaryResponse
+): GroupChatSummary | undefined {
+    if ("Success" in candid) {
+        return publicGroupSummary(candid.Success.summary);
+    }
 }
