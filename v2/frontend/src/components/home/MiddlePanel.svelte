@@ -14,6 +14,7 @@
     export let loadingChats: boolean = false;
     export let blocked: boolean;
     export let recommendedGroups: RemoteData<GroupChatSummary[], string>;
+    export let joining: GroupChatSummary | undefined;
 </script>
 
 <Panel middle>
@@ -25,16 +26,22 @@
         {/if}
     {:else if controller === undefined}
         {#if recommendedGroups.kind === "success"}
-            <RecommendedGroups on:cancelRecommendations groups={recommendedGroups.data} />
+            <RecommendedGroups
+                {joining}
+                on:cancelRecommendations
+                on:joinGroup
+                on:dismissRecommendation
+                groups={recommendedGroups.data} />
         {:else if recommendedGroups.kind === "error"}
             <h1>Oh no there was an error: {recommendedGroups.error}</h1>
         {:else}
             <div class="no-chat" in:fade>
-                <NoChatSelected on:newchat />
+                <NoChatSelected on:recommend on:newchat />
             </div>
         {/if}
     {:else}
         <CurrentChat
+            {joining}
             {blocked}
             {controller}
             on:unblockUser
@@ -47,7 +54,8 @@
             on:showGroupDetails
             on:showParticipants
             on:chatWith
-            on:updateChat />
+            on:joinGroup
+            on:cancelPreview />
     {/if}
 </Panel>
 

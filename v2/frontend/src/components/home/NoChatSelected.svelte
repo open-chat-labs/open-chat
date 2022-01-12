@@ -1,10 +1,14 @@
 <script lang="ts">
+    import Button from "../Button.svelte";
     import { _ } from "svelte-i18n";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
 </script>
 
 <div class="wrapper">
     <h1 class="title">{$_("noChatSelected")}</h1>
     <p class="subtitle">{$_("selectAChat")}</p>
+    <Button on:click={() => dispatch("recommend")}>{$_("recommendSomething")}</Button>
 </div>
 
 <style type="text/scss">

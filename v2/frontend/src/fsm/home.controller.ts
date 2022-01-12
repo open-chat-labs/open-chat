@@ -8,6 +8,7 @@ import type {
     EventWrapper,
     GroupChatSummary,
     Message,
+    ParticipantRole,
 } from "../domain/chat/chat";
 import {
     compareChats,
@@ -582,5 +583,32 @@ export class HomeController {
                 ...summaries,
             };
         });
+    }
+
+    joinGroup(group: GroupChatSummary): Promise<boolean> {
+        return this.api
+            .joinGroup(group.chatId)
+            .then((resp) => {
+                if (resp === "success" || resp === "already_in_group") {
+                    this.replaceChat({
+                        ...group,
+                        myRole: "participant" as ParticipantRole,
+                    });
+                    this.selectChat(group.chatId);
+                    return true;
+                } else {
+                    if (resp === "blocked") {
+                        toastStore.showFailureToast("youreBlocked");
+                    } else {
+                        toastStore.showFailureToast("joinGroupFailed");
+                    }
+                    return false;
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to join group", err);
+                toastStore.showFailureToast("joinGroupFailed");
+                return false;
+            });
     }
 }

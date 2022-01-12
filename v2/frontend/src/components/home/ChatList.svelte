@@ -45,6 +45,8 @@
     $: selectedChat = controller.selectedChat;
     $: chatsLoading = controller.loading;
 
+    $: console.log("ChatsList: ", $chatsList);
+
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat") {
             return (

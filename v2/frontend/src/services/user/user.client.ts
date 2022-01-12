@@ -59,7 +59,7 @@ import type { UserSummary } from "../../domain/user/user";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { muteNotificationsResponse } from "../notifications/mappers";
-import { identity } from "../../utils/mapping";
+import { identity, toVoid } from "../../utils/mapping";
 import DRange from "drange";
 
 const MAX_RECURSION = 10;
@@ -402,84 +402,14 @@ export class UserClient extends CandidService implements IUserClient {
             }),
             recommendedGroupsResponse
         );
-        // return new Promise((resolve) => {
-        //     setTimeout(
-        //         () =>
-        //             resolve([
-        //                 {
-        //                     kind: "group_chat",
-        //                     name: "Dfinity Pioneers",
-        //                     description:
-        //                         'Mostly just idiots talking nonsense to each other about NFTs. Supplemented with people saying "Hi!"',
-        //                     public: true,
-        //                     joined: BigInt(0),
-        //                     minVisibleEventIndex: 0,
-        //                     minVisibleMessageIndex: 0,
-        //                     lastUpdated: BigInt(0),
-        //                     participantCount: 1234,
-        //                     myRole: "previewer",
-        //                     mentions: [],
-        //                     chatId: "123456",
-        //                     readByMe: new DRange(),
-        //                     latestEventIndex: 0,
-        //                     notificationsMuted: false,
-        //                 },
-        //                 {
-        //                     kind: "group_chat",
-        //                     name: "Product feedback",
-        //                     description:
-        //                         "A chance to give feedback about the OpenChat product itself. Let us know what you think.",
-        //                     public: true,
-        //                     joined: BigInt(0),
-        //                     minVisibleEventIndex: 0,
-        //                     minVisibleMessageIndex: 0,
-        //                     lastUpdated: BigInt(0),
-        //                     participantCount: 1234,
-        //                     myRole: "previewer",
-        //                     mentions: [],
-        //                     chatId: "xyz",
-        //                     readByMe: new DRange(),
-        //                     latestEventIndex: 0,
-        //                     notificationsMuted: false,
-        //                 },
-        //                 {
-        //                     kind: "group_chat",
-        //                     name: "Bug reports",
-        //                     description:
-        //                         "Found a bug in OpenChat. Let us know here. Tell us what you were doing, what you expected to happen and what actually happened.",
-        //                     public: true,
-        //                     joined: BigInt(0),
-        //                     minVisibleEventIndex: 0,
-        //                     minVisibleMessageIndex: 0,
-        //                     lastUpdated: BigInt(0),
-        //                     participantCount: 1234,
-        //                     myRole: "previewer",
-        //                     mentions: [],
-        //                     chatId: "efg",
-        //                     readByMe: new DRange(),
-        //                     latestEventIndex: 0,
-        //                     notificationsMuted: false,
-        //                 },
-        //                 {
-        //                     kind: "group_chat",
-        //                     name: "Memes",
-        //                     description: "",
-        //                     public: true,
-        //                     joined: BigInt(0),
-        //                     minVisibleEventIndex: 0,
-        //                     minVisibleMessageIndex: 0,
-        //                     lastUpdated: BigInt(0),
-        //                     participantCount: 1234,
-        //                     myRole: "previewer",
-        //                     mentions: [],
-        //                     chatId: "abc",
-        //                     readByMe: new DRange(),
-        //                     latestEventIndex: 0,
-        //                     notificationsMuted: false,
-        //                 },
-        //             ]),
-        //         2000
-        //     );
-        //});
+    }
+
+    dismissRecommendation(chatId: string): Promise<void> {
+        return this.handleResponse(
+            this.userService.add_recommended_group_exclusions({
+                groups: [Principal.fromText(chatId)],
+            }),
+            toVoid
+        );
     }
 }

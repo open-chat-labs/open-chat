@@ -19,23 +19,25 @@
     import { iconSize } from "../../stores/iconSize";
 
     export let groups: GroupChatSummary[];
+    export let joining: GroupChatSummary | undefined;
 
     const dispatch = createEventDispatcher();
     let selected = 0;
-    let notInterested: string[] = [];
-
-    $: filtered = groups.filter((g) => !notInterested.includes(g.chatId));
 
     function previewGroup({ chatId }: GroupChatSummary) {
         push(`/${chatId}`);
     }
 
-    function close({ chatId }: GroupChatSummary) {
-        notInterested = [chatId, ...notInterested];
+    function dismiss({ chatId }: GroupChatSummary) {
+        dispatch("dismissRecommendation", chatId);
     }
 
     function cancelRecommendations() {
         dispatch("cancelRecommendations");
+    }
+
+    function joinGroup(group: GroupChatSummary) {
+        dispatch("joinGroup", group);
     }
 </script>
 
@@ -61,18 +63,13 @@
         <p class="subtitle">{$_("selectAGroup")}</p>
     {/if}
 
-    {#each filtered as group, i (group.chatId)}
+    {#each groups as group, i (group.chatId)}
         <div
             animate:flip={{ duration: 150 }}
             class:rtl={$rtlStore}
             class="group-card"
             class:selected={selected === i}
             on:mouseenter={() => (selected = i)}>
-            <span title={$_("notInterested")} class="close" on:click={() => close(group)}>
-                <HoverIcon>
-                    <Close size={"1.2em"} color={"var(--icon-txt)"} />
-                </HoverIcon>
-            </span>
             {#if $screenWidth !== ScreenWidth.ExtraSmall}
                 <div class="avatar">
                     <Avatar
@@ -82,9 +79,24 @@
                 </div>
             {/if}
             <div class="body">
-                <h3 class="group-name">
-                    {group.name}
-                </h3>
+                <div class="group-title-line">
+                    {#if $screenWidth === ScreenWidth.ExtraSmall}
+                        <div class="avatar">
+                            <Avatar
+                                url={getAvatarUrl(group, "../assets/group.svg")}
+                                status={UserStatus.None}
+                                size={AvatarSize.Tiny} />
+                        </div>
+                    {/if}
+                    <h3 class="group-name">
+                        {group.name}
+                    </h3>
+                    <span title={$_("notInterested")} class="close" on:click={() => dismiss(group)}>
+                        <HoverIcon>
+                            <Close size={"1.2em"} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    </span>
+                </div>
                 <p class="group-desc">
                     {group.description}
                 </p>
@@ -93,8 +105,16 @@
                         {$_("groupWithN", { values: { number: group.participantCount } })}
                     </p>
                     <div class="buttons">
-                        <Button small={true} on:click={() => previewGroup(group)}>Preview</Button>
-                        <Button small={true} secondary={true}>Join</Button>
+                        <Button
+                            disabled={joining === group}
+                            small={true}
+                            on:click={() => previewGroup(group)}>{$_("preview")}</Button>
+                        <Button
+                            disabled={joining === group}
+                            loading={joining === group}
+                            small={true}
+                            on:click={() => joinGroup(group)}
+                            secondary={true}>{$_("join")}</Button>
                     </div>
                 </div>
             </div>
@@ -117,6 +137,7 @@
         @include nice-scrollbar();
         @include size-below(xs) {
             padding-top: 0;
+            background-color: inherit;
         }
     }
 
@@ -166,14 +187,20 @@
 
         @include size-below(xs) {
             width: auto;
-            margin: 0 $sp3 $sp3 $sp3;
+            margin: 0 $sp3 $sp4 $sp3;
             padding: $sp3;
+            opacity: 1;
+        }
+
+        .group-title-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: $sp3;
         }
 
         .close {
-            position: absolute;
-            top: $sp2;
-            right: $sp2;
+            flex: 0 0 20px;
         }
 
         @include size-above(xs) {
@@ -193,7 +220,7 @@
         .avatar {
             flex: 0 0 60px;
             @include size-below(xs) {
-                flex: 0 0 50px;
+                flex: 0 0 45px;
             }
         }
 
@@ -205,7 +232,10 @@
             @include font(bold, normal, fs-160);
             margin-bottom: $sp3;
             @include size-below(xs) {
-                @include font-size(fs-140);
+                @include font-size(fs-120);
+                @include ellipsis();
+                margin-bottom: 0;
+                flex: 1;
             }
         }
 
@@ -233,6 +263,10 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+        }
+
+        .buttons {
+            display: flex;
         }
     }
 </style>

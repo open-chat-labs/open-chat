@@ -8,7 +8,7 @@
     import { fly } from "svelte/transition";
     import { modalStore, ModalType } from "../../stores/modal";
     import Overlay from "../Overlay.svelte";
-    import { createEventDispatcher, onDestroy, onMount } from "svelte";
+    import { createEventDispatcher, onDestroy, onMount, tick } from "svelte";
     const dispatch = createEventDispatcher();
     import { rtlStore } from "../../stores/rtl";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
@@ -36,7 +36,7 @@
     import type { Writable } from "svelte/store";
     import type { HomeController } from "../../fsm/home.controller";
     import { _ } from "svelte-i18n";
-    import type { RemoteData } from "../../utils/remoteData";
+    import { mapRemoteData, RemoteData } from "../../utils/remoteData";
 
     export let controller: HomeController;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
@@ -53,6 +53,7 @@
     let removingOperation: "leave" | "delete" = "delete";
     let removingChatId: string | undefined;
     let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
+    let joining: GroupChatSummary | undefined = undefined;
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -112,6 +113,12 @@
 
     function cancelRecommendations() {
         recommendedGroups = { kind: "idle" };
+    }
+
+    function dismissRecommendation(ev: CustomEvent<string>) {
+        recommendedGroups = mapRemoteData(recommendedGroups, (data) =>
+            data.filter((g) => g.chatId !== ev.detail)
+        );
     }
 
     async function performSearch(ev: CustomEvent<string>) {
@@ -239,11 +246,28 @@
         controller.replaceChat(ev.detail);
     }
 
+    function joinGroup(ev: CustomEvent<GroupChatSummary>) {
+        joining = ev.detail;
+        controller
+            .joinGroup(ev.detail)
+            .then((success) => {
+                if (success) {
+                    recommendedGroups = { kind: "idle" };
+                    push(`/${ev.detail.chatId}`);
+                }
+            })
+            .finally(() => (joining = undefined));
+    }
+
+    function cancelPreview(ev: CustomEvent<string>) {
+        controller.clearSelectedChat();
+        tick().then(() => controller.removeGroup(ev.detail));
+    }
+
     function whatsHot() {
         controller.clearSelectedChat();
         recommendedGroups = { kind: "loading" };
-        controller.api
-            .getRecommendedGroups()
+        api.getRecommendedGroups()
             .then((resp) => (recommendedGroups = { kind: "success", data: resp }))
             .catch((err) => (recommendedGroups = { kind: "error", error: err.toString() }));
     }
@@ -311,6 +335,7 @@
         {#if showMiddle}
             <MiddlePanel
                 {recommendedGroups}
+                {joining}
                 loadingChats={$chatsLoading}
                 blocked={!!blocked}
                 on:clearSelection={clearSelectedChat}
@@ -324,7 +349,11 @@
                 on:showGroupDetails={showGroupDetails}
                 on:showParticipants={showParticipants}
                 on:updateChat={updateChat}
+                on:joinGroup={joinGroup}
+                on:cancelPreview={cancelPreview}
                 on:cancelRecommendations={cancelRecommendations}
+                on:recommend={whatsHot}
+                on:dismissRecommendation={dismissRecommendation}
                 controller={$selectedChat} />
         {/if}
     </main>

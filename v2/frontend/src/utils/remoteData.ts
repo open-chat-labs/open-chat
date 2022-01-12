@@ -11,3 +11,16 @@ export type Success<T> = {
     data: T;
 };
 export type RemoteData<T, E> = Idle | Loading | Error<E> | Success<T>;
+
+export function mapRemoteData<T, E>(
+    remote: RemoteData<T, E>,
+    mapFn: (data: T) => T
+): RemoteData<T, E> {
+    if (remote.kind === "success") {
+        return {
+            kind: "success",
+            data: mapFn(remote.data),
+        };
+    }
+    return remote;
+}

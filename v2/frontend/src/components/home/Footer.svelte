@@ -4,7 +4,12 @@
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
-    import type { EventWrapper, Message, MessageContent } from "../../domain/chat/chat";
+    import type {
+        EventWrapper,
+        GroupChatSummary,
+        Message,
+        MessageContent,
+    } from "../../domain/chat/chat";
     import { getMessageContent } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import Loading from "../Loading.svelte";
@@ -14,6 +19,7 @@
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
+    export let joining: GroupChatSummary | undefined;
 
     let showEmojiPicker = false;
     $: chat = controller.chat;
@@ -163,10 +169,12 @@
         on:drop={onDrop}
         {preview}
         {blocked}
+        {joining}
         on:sendMessage={sendMessage}
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
-        on:updateChat
+        on:joinGroup
+        on:cancelPreview
         {controller} />
 </div>
 

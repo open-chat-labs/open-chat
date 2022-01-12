@@ -633,6 +633,8 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
-        return this.userClient.getRecommendedGroups();
+        return this.userClient
+            .getRecommendedGroups()
+            .then((groups) => groups.map((g) => this.rehydrateDataContent(g, "avatar")));
     }
 }
