@@ -17,7 +17,8 @@
     class="modal-content"
     class:large
     in:fade={{ duration: 100, delay: 200 }}
-    out:fade={{ duration: 100 }}>
+    out:fade={{ duration: 100 }}
+    on:click|stopPropagation>
     {#if !hideHeader}
         <div class="header">
             <h3>

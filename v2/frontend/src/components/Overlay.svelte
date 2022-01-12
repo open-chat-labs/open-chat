@@ -25,6 +25,12 @@
         document.removeEventListener("keydown", onKeyDown);
     });
 
+    function onClick() {
+        if (dismissible) {
+            active = false;
+        }
+    }
+
     function onKeyDown(ev: KeyboardEvent) {
         if (dismissible && ev.key === "Escape") {
             active = false;
@@ -33,7 +39,7 @@
 </script>
 
 <div class="blueprint">
-    <div bind:this={ref} class="overlay" class:active>
+    <div bind:this={ref} class="overlay" class:active on:click={onClick}>
         {#if active}
             <slot />
         {/if}
