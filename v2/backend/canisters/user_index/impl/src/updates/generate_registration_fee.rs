@@ -7,7 +7,7 @@ use ledger_utils::convert_to_subaccount;
 use types::{Cryptocurrency, Cycles, CyclesRegistrationFee, ICPRegistrationFee, RegistrationFee, ICP};
 use user_index_canister::generate_registration_fee::{Response::*, *};
 
-const ICP_REGISTRATION_FEE: ICP = ICP::from_e8s(5_000_000); // 0.05 ICP
+const ICP_REGISTRATION_FEE: ICP = ICP::from_e8s(10_000_000); // 0.1 ICP
 const BASELINE_CYCLES_REGISTRATION_FEE: Cycles = 1_000_000_000_000; // 1T cycles
 
 #[update]
