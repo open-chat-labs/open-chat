@@ -8,6 +8,7 @@
     } from "../../domain/search/search";
     import type { UserSummary } from "../../domain/user/user";
     import type { HomeController } from "../../fsm/home.controller";
+    import type { Version } from "../../domain/version";
 
     export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -16,6 +17,7 @@
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
+    export let wasmVersion: Version;
 
     $: api = controller.api;
     $: currentUser = controller.user;
@@ -44,6 +46,7 @@
             {groupSearchResults}
             {userSearchResults}
             {messageSearchResults}
-            {controller} />
+            {controller}
+            {wasmVersion} />
     {/if}
 </Panel>

@@ -3,10 +3,7 @@
     import Toast from "../Toast.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
-    import TestModeModal from "../TestModeModal.svelte";
-    import ThemePicker from "../ThemePicker.svelte";
     import { fly } from "svelte/transition";
-    import { modalStore, ModalType } from "../../stores/modal";
     import Overlay from "../Overlay.svelte";
     import { createEventDispatcher, onDestroy, onMount, tick } from "svelte";
     const dispatch = createEventDispatcher();
@@ -61,6 +58,7 @@
     $: chatSummaries = controller.chatSummaries;
     $: chatSummariesList = controller.chatSummariesList;
     $: selectedChat = controller.selectedChat;
+    $: wasmVersion = controller.user.wasmVersion;
 
     function logout() {
         dispatch("logout");
@@ -326,6 +324,7 @@
                 {searchTerm}
                 {searchResultsAvailable}
                 {searching}
+                {wasmVersion}
                 on:searchEntered={performSearch}
                 on:chatWith={chatWith}
                 on:whatsHot={whatsHot}
@@ -380,14 +379,6 @@
         {/if}
     </Overlay>
 {/if}
-
-<Overlay active={$modalStore !== ModalType.NoModal}>
-    {#if $modalStore === ModalType.TestMode}
-        <TestModeModal />
-    {:else if $modalStore === ModalType.ThemeSelection}
-        <ThemePicker />
-    {/if}
-</Overlay>
 
 <RemovingGroup
     operation={removingOperation}

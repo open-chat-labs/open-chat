@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { modalStore } from "../stores/modal";
     import { onMount, onDestroy } from "svelte";
 
     export let active: boolean;
@@ -30,7 +29,6 @@
         if (dismissible) {
             active = false;
         }
-        modalStore.hideModal;
     }
 
     function onKeyDown(ev: KeyboardEvent) {
