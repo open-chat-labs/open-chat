@@ -14,7 +14,7 @@
     <div slot="header">About OpenChat</div>
     <div slot="body" class:rtl={$rtlStore}>
         <p>
-            We are pleased to be able to open up OpenChat for beta testing! The number of users has been limited to <strong>5000</strong> for now
+            We are pleased to open up OpenChat for beta testing! The number of users has been limited to <strong>5000</strong> for now
             but this will soon increase.
         </p>
         <p>

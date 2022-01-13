@@ -224,6 +224,7 @@ export const idlFactory = ({ IDL }) => {
     'event_index' : EventIndex,
   });
   const Message = IDL.Record({
+    'forwarded' : IDL.Bool,
     'content' : MessageContent,
     'edited' : IDL.Bool,
     'sender' : UserId,

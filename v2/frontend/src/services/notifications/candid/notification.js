@@ -5,6 +5,7 @@ export const Notification = IDL.Variant({
     'sender' : IDL.Principal,
     'message' : IDL.Record({
       'event' : IDL.Record({
+        'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
           'File' : IDL.Record({
             'name' : IDL.Text,
@@ -120,6 +121,7 @@ export const Notification = IDL.Variant({
     'sender' : IDL.Principal,
     'message' : IDL.Record({
       'event' : IDL.Record({
+        'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
           'File' : IDL.Record({
             'name' : IDL.Text,
