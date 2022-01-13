@@ -11,6 +11,7 @@ pub struct Message {
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
     pub edited: bool,
+    pub forwarded: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

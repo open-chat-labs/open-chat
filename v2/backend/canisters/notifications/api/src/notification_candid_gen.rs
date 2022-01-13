@@ -16,6 +16,7 @@ fn main() {
                 replies_to: None,
                 reactions: Vec::new(),
                 edited: false,
+                forwarded: false,
             },
         },
     });

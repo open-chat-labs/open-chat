@@ -433,7 +433,22 @@ export class ChatController {
                 );
             }
             if (upToDate) {
-                this.events.update((events) => [...events, messageEvent]);
+                this.events.update((events) => {
+                    const existing = events.find(
+                        (ev) =>
+                            ev.event.kind === "message" &&
+                            ev.event.messageId === messageEvent.event.messageId
+                    );
+                    if (existing !== undefined) {
+                        rollbar.error(
+                            "Trying to add a duplicate message to the event list",
+                            sentByMe.toString()
+                        );
+                        return [...events];
+                    } else {
+                        return [...events, messageEvent];
+                    }
+                });
             }
             this.raiseEvent({
                 chatId: this.chatId,
