@@ -185,7 +185,7 @@
     </div>
     <div class="chat-details">
         <div class="chat-name" title={chat.name}>
-            {#if isGroup}
+            {#if isGroup && !preview}
                 <span on:click={showGroupDetails} class="group-details">
                     {chat.name}
                 </span>

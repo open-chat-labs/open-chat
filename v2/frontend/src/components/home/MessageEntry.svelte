@@ -443,5 +443,8 @@
 
     .preview {
         justify-content: flex-end;
+        @include size-below(xs) {
+            justify-content: center;
+        }
     }
 </style>
