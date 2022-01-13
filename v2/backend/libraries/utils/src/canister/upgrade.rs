@@ -68,7 +68,7 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
     let mut cycles_used = None;
     let mut error = None;
     if let Err((code, msg)) = &install_code_response {
-        if let Some(cycles) = should_deposit_cycles_and_retry(code, &msg, canister_to_upgrade.cycles_to_deposit_if_needed) {
+        if let Some(cycles) = should_deposit_cycles_and_retry(code, msg, canister_to_upgrade.cycles_to_deposit_if_needed) {
             if top_up_canister(canister_id, cycles).await.is_ok() {
                 cycles_used = Some(cycles);
                 install_code_response =
