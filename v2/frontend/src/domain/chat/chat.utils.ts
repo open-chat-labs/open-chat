@@ -326,7 +326,10 @@ function mergeUpdatedGroupChat(
     chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = getLatestEventIndex(chat, updatedChat);
     chat.latestMessage = getLatestMessage(chat, updatedChat);
-    chat.blobReference = applyOptionUpdate(chat.blobReference, updatedChat.avatarBlobReferenceUpdate);
+    chat.blobReference = applyOptionUpdate(
+        chat.blobReference,
+        updatedChat.avatarBlobReferenceUpdate
+    );
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
     chat.myRole = updatedChat.myRole ?? chat.myRole === "previewer" ? "participant" : chat.myRole;
@@ -565,7 +568,7 @@ export function enoughVisibleMessages(
         return true;
     } else if (ascending) {
         // if there are no more events then we have enough by definition
-        return events[events.length - 1].index === maxIndex;
+        return events[events.length - 1]?.index === maxIndex;
     } else {
         // if there are no previous events then we have enough by definition
         return events[0].index <= minIndex;
