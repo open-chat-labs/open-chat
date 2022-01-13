@@ -8,6 +8,7 @@ import type {
     UpdatesResponse,
 } from "./chat";
 import {
+    enoughVisibleMessages,
     getParticipantsString,
     indexIsInRanges,
     mergeChatUpdates,
@@ -84,6 +85,12 @@ function createUser(userId: string, username: string, seconds: number): PartialU
         updated: BigInt(0),
     };
 }
+
+describe("enough visible messages", () => {
+    test("returns false when there are no messages", () => {
+        expect(enoughVisibleMessages(true, [0, 1000], [])).toBe(false);
+    });
+});
 
 describe("get participants string for group chat", () => {
     const withFewerThanSix = ["a", "b", "c", "d", "z"];
