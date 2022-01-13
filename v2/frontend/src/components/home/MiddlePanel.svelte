@@ -2,7 +2,6 @@
     import Panel from "../Panel.svelte";
     import Loading from "../Loading.svelte";
     import { fade } from "svelte/transition";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import NoChatSelected from "./NoChatSelected.svelte";
     import RecommendedGroups from "./RecommendedGroups.svelte";
     import CurrentChat from "./CurrentChat.svelte";
@@ -19,11 +18,7 @@
 
 <Panel middle>
     {#if loadingChats || recommendedGroups.kind === "loading"}
-        {#if $screenWidth === ScreenWidth.ExtraSmall}
-            <div />
-        {:else}
-            <Loading />
-        {/if}
+        <Loading />
     {:else if controller === undefined}
         {#if recommendedGroups.kind === "success"}
             <RecommendedGroups

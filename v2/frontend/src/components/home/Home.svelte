@@ -90,9 +90,11 @@
                     params.messageIndex == null ? undefined : Number(params.messageIndex);
 
                 if ($chatSummaries[chatId] === undefined) {
+                    recommendedGroups = { kind: "loading" };
                     controller.previewChat(chatId).then((canPreview) => {
                         if (canPreview) {
                             controller.selectChat(chatId, messageIndex);
+                            recommendedGroups = { kind: "idle" };
                         } else {
                             replace("/");
                         }
@@ -100,7 +102,6 @@
                 } else {
                     controller.selectChat(chatId, messageIndex);
                 }
-                recommendedGroups = { kind: "idle" };
             }
 
             // if there is no chatId param, tell the machine to clear the selection
@@ -261,12 +262,15 @@
 
     function cancelPreview(ev: CustomEvent<string>) {
         controller.clearSelectedChat();
-        tick().then(() => controller.removeGroup(ev.detail));
+        tick().then(() => {
+            controller.removeGroup(ev.detail);
+            dismissRecommendation(ev);
+        });
     }
 
     function whatsHot() {
-        controller.clearSelectedChat();
         recommendedGroups = { kind: "loading" };
+        controller.clearSelectedChat();
         api.getRecommendedGroups()
             .then((resp) => (recommendedGroups = { kind: "success", data: resp }))
             .catch((err) => (recommendedGroups = { kind: "error", error: err.toString() }));
