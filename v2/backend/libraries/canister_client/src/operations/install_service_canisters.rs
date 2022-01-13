@@ -27,11 +27,11 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     )
     .await;
 
-    println!("user_index canister id: {}", user_index_canister_id);
-    println!("group_index canister id: {}", group_index_canister_id);
-    println!("notifications canister id: {}", notifications_canister_id);
-    println!("users online aggregator canister id: {}", online_users_aggregator_canister_id);
-    println!("open_storage_index canister id: {}", open_storage_index_canister_id);
+    println!("user_index canister id: {user_index_canister_id}");
+    println!("group_index canister id: {group_index_canister_id}");
+    println!("notifications canister id: {notifications_canister_id}");
+    println!("users online aggregator canister id: {online_users_aggregator_canister_id}");
+    println!("open_storage_index canister id: {open_storage_index_canister_id}");
 
     let canister_ids = CanisterIds {
         user_index: user_index_canister_id,
