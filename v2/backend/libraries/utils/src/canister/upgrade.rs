@@ -1,19 +1,21 @@
 use crate::canister;
+use crate::cycles::top_up_canister;
 use candid::{CandidType, Principal};
 use ic_cdk::api;
-use ic_cdk::api::call::CallResult;
+use ic_cdk::api::call::{CallResult, RejectionCode};
 use serde::Deserialize;
 use tracing::error;
-use types::{CanisterId, CanisterWasm, Version};
+use types::{CanisterId, CanisterWasm, Cycles, Version};
 
 pub struct CanisterToUpgrade<A: CandidType> {
     pub canister_id: CanisterId,
     pub current_wasm_version: Version,
     pub new_wasm: CanisterWasm,
+    pub cycles_to_deposit_if_needed: Option<Cycles>,
     pub args: A,
 }
 
-pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -> Result<(), canister::Error> {
+pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -> Result<Option<Cycles>, canister::Error> {
     #[derive(CandidType, Deserialize)]
     struct StartOrStopCanisterArgs {
         canister_id: Principal,
@@ -45,10 +47,9 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
         api::call::call(Principal::management_canister(), "stop_canister", (stop_canister_args,)).await;
 
     if let Err((code, msg)) = stop_canister_response {
-        let code = code as u8;
         error!(
             canister_id = canister_id.to_string().as_str(),
-            error_code = code,
+            error_code = code as u8,
             error_message = msg.as_str(),
             "Error calling 'stop_canister'"
         );
@@ -61,17 +62,27 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
         wasm_module: canister_to_upgrade.new_wasm.module,
         arg: candid::encode_one(canister_to_upgrade.args).unwrap(),
     };
-    let install_code_response: CallResult<()> =
-        api::call::call(Principal::management_canister(), "install_code", (install_code_args,)).await;
+    let mut install_code_response: CallResult<()> =
+        api::call::call(Principal::management_canister(), "install_code", (&install_code_args,)).await;
 
+    let mut cycles_used = None;
     let mut error = None;
+    if let Err((code, msg)) = &install_code_response {
+        if let Some(cycles) = should_deposit_cycles_and_retry(code, msg, canister_to_upgrade.cycles_to_deposit_if_needed) {
+            if top_up_canister(canister_id, cycles).await.is_ok() {
+                cycles_used = Some(cycles);
+                install_code_response =
+                    api::call::call(Principal::management_canister(), "install_code", (&install_code_args,)).await;
+            }
+        }
+    }
+
     if let Err((code, msg)) = install_code_response {
-        let code = code as u8;
         error!(
             canister_id = canister_id.to_string().as_str(),
             from_wasm_version = %canister_to_upgrade.current_wasm_version,
             to_wasm_version = %canister_to_upgrade.new_wasm.version,
-            error_code = code,
+            error_code = code as u8,
             error_message = msg.as_str(),
             "Error calling 'install_code'"
         );
@@ -84,10 +95,9 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
         api::call::call(Principal::management_canister(), "start_canister", (start_canister_args,)).await;
 
     if let Err((code, msg)) = start_canister_response {
-        let code = code as u8;
         error!(
             canister_id = canister_id.to_string().as_str(),
-            error_code = code,
+            error_code = code as u8,
             error_message = msg.as_str(),
             "Error calling 'start_canister'"
         );
@@ -95,7 +105,19 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
     }
 
     match error {
-        None => Ok(()),
+        None => Ok(cycles_used),
         Some(e) => Err(e),
+    }
+}
+
+fn should_deposit_cycles_and_retry(
+    error_code: &RejectionCode,
+    error_message: &str,
+    cycles_to_deposit_if_required: Option<Cycles>,
+) -> Option<Cycles> {
+    if matches!(error_code, RejectionCode::CanisterError) && error_message.contains("out of cycles") {
+        cycles_to_deposit_if_required
+    } else {
+        None
     }
 }

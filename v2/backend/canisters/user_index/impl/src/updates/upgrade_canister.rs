@@ -1,11 +1,13 @@
 use crate::model::user_map::UpdateUserResult;
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, RuntimeState, MIN_CYCLES_BALANCE};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::{UserId, Version};
 use user_index_canister::upgrade_canister::{Response::*, *};
 use utils::canister;
 use utils::canister::CanisterToUpgrade;
+use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
+use utils::cycles::can_spend_cycles;
 
 #[update]
 #[trace]
@@ -58,11 +60,19 @@ pub(crate) fn initialize_upgrade(
         } else {
             let mut clone = user.clone();
             clone.set_canister_upgrade_status(true, None);
+
+            let cycles_to_deposit_if_needed = if can_spend_cycles(CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE) {
+                Some(CYCLES_REQUIRED_FOR_UPGRADE)
+            } else {
+                None
+            };
+
             match runtime_state.data.users.update(clone) {
                 UpdateUserResult::Success => Ok(CanisterToUpgrade {
                     canister_id,
                     current_wasm_version,
                     new_wasm: user_canister_wasm.clone(),
+                    cycles_to_deposit_if_needed,
                     args: user_canister::post_upgrade::Args {
                         wasm_version: user_canister_wasm.version,
                     },

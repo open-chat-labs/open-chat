@@ -72,7 +72,7 @@ struct CreateCanisterArgs {
 fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCanisterArgs, Response> {
     let cycles_to_use = if runtime_state.data.canister_pool.is_empty() {
         let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-        if !cycles_utils::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
+        if !utils::cycles::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
             return Err(CyclesBalanceTooLow);
         }
         cycles_required

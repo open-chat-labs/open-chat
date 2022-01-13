@@ -1,9 +1,9 @@
 use crate::model::user::{ConfirmedUser, UnconfirmedUserState, User};
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
-use cycles_utils::accept_cycles;
 use ic_cdk_macros::update;
 use types::{CanisterCreationStatusInternal, Cycles, RegistrationFee};
+use utils::cycles::accept_cycles;
 
 const TWO_TRILLION: u128 = 2_000_000_000_000;
 

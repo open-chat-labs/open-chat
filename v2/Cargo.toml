@@ -34,7 +34,6 @@ members = [
     "backend/libraries/canister_logger",
     "backend/libraries/canister_state_macros",
     "backend/libraries/chat_events",
-    "backend/libraries/cycles_utils",
     "backend/libraries/dynamodb_index_store",
     "backend/libraries/http_request",
     "backend/libraries/index_store",
@@ -56,6 +55,6 @@ opt-level = "z"
 codegen-units = 1
 
 [patch.crates-io]
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "4631c0312db3a5abbf21f9338534bcdbfa1a005b" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "4631c0312db3a5abbf21f9338534bcdbfa1a005b" }
-ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "4631c0312db3a5abbf21f9338534bcdbfa1a005b" }
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "2731184ce08496ab26eb8e1a4b932fb303479013" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "2731184ce08496ab26eb8e1a4b932fb303479013" }
+ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "2731184ce08496ab26eb8e1a4b932fb303479013" }
