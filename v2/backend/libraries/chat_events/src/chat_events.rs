@@ -461,6 +461,7 @@ impl ChatEvents {
                 .map(|(r, u)| (r.clone(), u.iter().copied().collect()))
                 .collect(),
             edited: message.last_updated.is_some(),
+            forwarded: false,
         }
     }
 

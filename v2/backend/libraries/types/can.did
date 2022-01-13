@@ -281,6 +281,7 @@ type Message =
         replies_to: opt ReplyContext;
         reactions: vec record { text; vec UserId; };
         edited: bool;
+        forwarded: bool;
     };
 
 type MessageEventWrapper =

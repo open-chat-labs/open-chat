@@ -332,6 +332,7 @@ export interface Mention {
   'message_index' : MessageIndex,
 }
 export interface Message {
+  'forwarded' : boolean,
   'content' : MessageContent,
   'edited' : boolean,
   'sender' : UserId,

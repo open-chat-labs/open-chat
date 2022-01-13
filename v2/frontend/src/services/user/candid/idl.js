@@ -197,6 +197,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const MessageIndex = IDL.Nat32;
   const Message = IDL.Record({
+    'forwarded' : IDL.Bool,
     'content' : MessageContent,
     'edited' : IDL.Bool,
     'sender' : UserId,
