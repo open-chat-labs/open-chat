@@ -224,7 +224,7 @@
         margin-bottom: $sp5;
 
         @include size-below(xs) {
-            width: auto;
+            width: calc(100% - #{$sp4});
             margin: 0 $sp3 $sp4 $sp3;
             padding: $sp3;
             opacity: 1;
