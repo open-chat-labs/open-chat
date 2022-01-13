@@ -332,7 +332,7 @@ function mergeUpdatedGroupChat(
     );
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
-    chat.myRole = updatedChat.myRole ?? chat.myRole === "previewer" ? "participant" : chat.myRole;
+    chat.myRole = updatedChat.myRole ?? (chat.myRole === "previewer" ? "participant" : chat.myRole);
     chat.mentions = mergeMentions(chat.mentions, updatedChat.mentions);
     return chat;
 }
