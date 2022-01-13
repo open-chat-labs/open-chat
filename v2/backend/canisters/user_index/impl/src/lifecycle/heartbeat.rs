@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CAN
 use group_canister::c2c_dismiss_super_admin;
 use ic_cdk_macros::heartbeat;
 use tracing::error;
-use types::{CanisterId, ChatId, Cycles, UserId, Version};
+use types::{CanisterId, ChatId, Cycles, CyclesTopUp, UserId, Version};
 use utils::canister;
 use utils::canister::FailedUpgrade;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
@@ -61,8 +61,8 @@ mod upgrade_canisters {
         let to_version = canister_to_upgrade.new_wasm.version;
 
         match canister::upgrade(canister_to_upgrade).await {
-            Ok(_) => {
-                mutate_state(|state| on_success(canister_id, to_version, state));
+            Ok(cycles_top_up) => {
+                mutate_state(|state| on_success(canister_id, to_version, cycles_top_up, state));
             }
             Err(_) => {
                 mutate_state(|state| on_failure(canister_id, from_version, to_version, state));
@@ -70,8 +70,19 @@ mod upgrade_canisters {
         }
     }
 
-    fn on_success(canister_id: CanisterId, to_version: Version, runtime_state: &mut RuntimeState) {
-        set_upgrade_complete(canister_id.into(), Some(to_version), runtime_state);
+    fn on_success(canister_id: CanisterId, to_version: Version, top_up: Option<Cycles>, runtime_state: &mut RuntimeState) {
+        let user_id = canister_id.into();
+        set_upgrade_complete(user_id, Some(to_version), runtime_state);
+        if let Some(top_up) = top_up {
+            runtime_state.data.users.mark_cycles_top_up(
+                &user_id,
+                CyclesTopUp {
+                    amount: top_up,
+                    date: runtime_state.env.now(),
+                },
+            );
+        }
+
         runtime_state.data.canisters_requiring_upgrade.mark_success(&canister_id);
     }
 
@@ -94,7 +105,7 @@ mod topup_canister_pool {
             let cycles_to_use = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
 
             // Only create the new canister if it won't result in the cycles balance being too low
-            if cycles_utils::can_spend_cycles(cycles_to_use, MIN_CYCLES_BALANCE) {
+            if utils::cycles::can_spend_cycles(cycles_to_use, MIN_CYCLES_BALANCE) {
                 ic_cdk::block_on(add_new_canister(cycles_to_use));
             }
         }

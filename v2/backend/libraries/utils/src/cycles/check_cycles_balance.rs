@@ -1,3 +1,4 @@
+use crate::memory;
 use canister_client_macros::generate_c2c_call;
 use std::cmp::max;
 use tracing::error;
@@ -22,7 +23,7 @@ fn should_notify(user_cycles_balance: Cycles) -> bool {
 }
 
 fn get_approx_freeze_threshold_cycles() -> Cycles {
-    let approx_memory_usage = utils::memory::used();
+    let approx_memory_usage = memory::used();
 
     let one_gib = 1 << 30;
 

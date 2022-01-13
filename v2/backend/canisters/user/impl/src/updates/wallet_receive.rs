@@ -1,8 +1,8 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
-use cycles_utils::accept_cycles;
 use ic_cdk_macros::update;
 use types::{AlertDetails, CompletedCyclesDeposit, CryptocurrencyDeposit, Cycles, CyclesDeposit};
+use utils::cycles::accept_cycles;
 
 #[update]
 #[trace]

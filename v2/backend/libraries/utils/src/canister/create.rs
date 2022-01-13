@@ -76,9 +76,8 @@ pub async fn create(cycles_to_use: Cycles) -> Result<Principal, canister::Error>
     {
         Ok(x) => x,
         Err((code, msg)) => {
-            let code = code as u8;
             error!(
-                error_code = code,
+                error_code = code as u8,
                 error_message = msg.as_str(),
                 "Error calling create_canister"
             );
@@ -121,8 +120,11 @@ pub async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Ve
     let (_,): ((),) = match api::call::call(Principal::management_canister(), "install_code", (install_config,)).await {
         Ok(x) => x,
         Err((code, msg)) => {
-            let code = code as u8;
-            error!(error_code = code, error_message = msg.as_str(), "Error calling install_code");
+            error!(
+                error_code = code as u8,
+                error_message = msg.as_str(),
+                "Error calling install_code"
+            );
             return Err(canister::Error { code, msg });
         }
     };

@@ -1,6 +1,6 @@
 use canister_api_macros::trace;
-use cycles_utils::accept_cycles;
 use ic_cdk_macros::update;
+use utils::cycles::accept_cycles;
 
 #[update]
 #[trace]

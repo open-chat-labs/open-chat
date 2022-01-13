@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 candid = "0.7.9"
+canister_client_macros = { path = "../canister_client_macros" }
 getrandom = { version = "0.2.3", features = ["js"] }
 ic-cdk = "0.3.3"
 rand = "0.7.3"

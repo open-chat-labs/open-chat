@@ -1,6 +1,7 @@
 pub mod canister;
 pub mod case_insensitive_hash_map;
 pub mod consts;
+pub mod cycles;
 pub mod env;
 pub mod event_stream;
 pub mod iterator_extensions;

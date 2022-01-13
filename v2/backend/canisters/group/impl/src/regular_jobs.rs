@@ -10,5 +10,5 @@ pub(crate) fn build() -> RegularJobs<Data> {
 
 fn check_cycles_balance(data: &mut Data) {
     let group_index_canister_id = data.group_index_canister_id;
-    cycles_utils::check_cycles_balance(0, group_index_canister_id);
+    utils::cycles::check_cycles_balance(0, group_index_canister_id);
 }
