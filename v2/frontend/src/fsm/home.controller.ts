@@ -17,7 +17,7 @@ import {
 } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
 import type { Notification } from "../domain/notifications";
-import type { CreatedUser, User } from "../domain/user/user";
+import type { CreatedUser } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type {

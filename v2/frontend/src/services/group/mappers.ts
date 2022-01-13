@@ -17,7 +17,6 @@ import type {
     ApiRole,
     ApiTransferOwnershipResponse,
     ApiDeleteGroupResponse,
-    ApiPublicSummaryResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -40,14 +39,12 @@ import type {
     ParticipantRole,
     TransferOwnershipResponse,
     DeleteGroupResponse,
-    GroupChatSummary,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
 import { message, updatedMessage } from "../common/chatMappers";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { identity, optional } from "../../utils/mapping";
-import DRange from "drange";
 
 function principalToString(p: Principal): string {
     return p.toString();

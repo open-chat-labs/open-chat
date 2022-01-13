@@ -60,7 +60,6 @@ import type { SearchAllMessagesResponse } from "../../domain/search/search";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
-import DRange from "drange";
 
 const MAX_RECURSION = 10;
 
