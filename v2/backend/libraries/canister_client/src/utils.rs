@@ -17,7 +17,7 @@ const USER3_PEM: &str = include_str!("../keys/user3.pem");
 
 pub fn get_dfx_identity(name: &str) -> BasicIdentity {
     let home_dir = dirs::home_dir().expect("Failed to get home directory");
-    let pem_file_path = home_dir.join(Path::new(&format!(".config/dfx/identity/{}/identity.pem", name)));
+    let pem_file_path = home_dir.join(Path::new(&format!(".config/dfx/identity/{name}/identity.pem")));
     BasicIdentity::from_pem_file(pem_file_path).expect("Failed to create identity")
 }
 

@@ -42,7 +42,7 @@ mod tests {
     #[test]
     fn avatar() {
         const BLOB_ID: u128 = 367253521351235123;
-        match extract_route(&format!("/avatar/{}", BLOB_ID)) {
+        match extract_route(&format!("/avatar/{BLOB_ID}")) {
             Route::Avatar(Some(id)) => assert_eq!(BLOB_ID, id),
             _ => assert!(false),
         }

@@ -109,12 +109,12 @@ async fn get_updates_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
             .unwrap();
 
         if let user_canister::updates::Response::Success(r) = updates_response {
-            assert_eq!(r.chats_updated.len(), 2, "{:?}", r);
-            assert!(r.chats_added.is_empty(), "{:?}", r);
+            assert_eq!(r.chats_updated.len(), 2, "{r:?}");
+            assert!(r.chats_added.is_empty(), "{r:?}");
         } else {
-            panic!("Updates returned an error: {:?}", updates_response);
+            panic!("Updates returned an error: {updates_response:?}");
         }
     } else {
-        panic!("InitialState returned an error: {:?}", initial_state_response);
+        panic!("InitialState returned an error: {initial_state_response:?}");
     }
 }

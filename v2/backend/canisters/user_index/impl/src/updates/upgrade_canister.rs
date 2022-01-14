@@ -28,7 +28,7 @@ async fn upgrade_canister(_args: Args) -> Response {
         }
         Err(error) => {
             mutate_state(|state| set_upgrade_complete(user_id, None, state));
-            InternalError(format!("{:?}", error))
+            InternalError(format!("{error:?}"))
         }
     }
 }
@@ -77,7 +77,7 @@ pub(crate) fn initialize_upgrade(
                         wasm_version: user_canister_wasm.version,
                     },
                 }),
-                r => Err(InternalError(format!("{:?}", r))),
+                result => Err(InternalError(format!("{result:?}"))),
             }
         }
     }

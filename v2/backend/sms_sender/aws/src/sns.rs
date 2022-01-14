@@ -22,8 +22,7 @@ impl SmsSender for SnsClient {
             .publish()
             .phone_number(phone_number)
             .message(format!(
-                "Your OpenChat confirmation code is {}. This code will expire in 10 minutes.",
-                code
+                "Your OpenChat confirmation code is {code}. This code will expire in 10 minutes."
             ))
             .send()
             .await?;

@@ -19,7 +19,7 @@ async fn add_super_admin(args: Args) -> Response {
             mutate_state(|state| commit(args.user_id, state));
             Success
         }
-        Err(error) => InternalError(format!("{:?}", error)),
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }
 

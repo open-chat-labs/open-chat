@@ -140,7 +140,7 @@ pub(crate) async fn send_to_recipients_canister(
                     let failed_cycles_transfer = FailedCyclesTransfer {
                         recipient: ct.transfer.recipient,
                         cycles: ct.transfer.cycles,
-                        error_message: format!("{:?}", error),
+                        error_message: format!("{error:?}"),
                     };
                     mutate_state(|state| {
                         handle_failed_cycles_transfer(ct.index, failed_cycles_transfer, state);
@@ -208,7 +208,7 @@ async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> 
             Ok(completed_transfer)
         }
         Ok(Err(transfer_error)) => {
-            let error_message = format!("Transfer failed. {:?}", transfer_error);
+            let error_message = format!("Transfer failed. {transfer_error:?}");
             let failed_transfer = pending_transfer.failed(fee, memo, error_message.clone());
             mutate_state(|state| {
                 update_transaction(
@@ -220,7 +220,7 @@ async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> 
             Err(error_message)
         }
         Err((code, msg)) => {
-            let error_message = format!("Transfer failed. {:?}: {}", code, msg);
+            let error_message = format!("Transfer failed. {code:?}: {msg}");
             let failed_transfer = pending_transfer.failed(fee, memo, error_message.clone());
             mutate_state(|state| {
                 update_transaction(

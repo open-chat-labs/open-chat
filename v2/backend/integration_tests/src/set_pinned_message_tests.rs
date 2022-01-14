@@ -61,7 +61,7 @@ async fn set_pinned_message_tests_impl(handle: IcHandle, ctx: &fondue::pot::Cont
         .unwrap()
     {
         group_canister::set_pinned_message::Response::Success => {}
-        response => panic!("SetPinnedMessage returned an error: {:?}", response),
+        response => panic!("SetPinnedMessage returned an error: {response:?}"),
     };
     println!("Ok");
 
@@ -97,7 +97,7 @@ async fn set_pinned_message_tests_impl(handle: IcHandle, ctx: &fondue::pot::Cont
             assert!(matches!(r.events[2].event, GroupChatEvent::Message(_)));
             assert!(matches!(r.events[3].event, GroupChatEvent::PinnedMessageUpdated(_)));
         }
-        response => panic!("EventsRange returned an error: {:?}", response),
+        response => panic!("EventsRange returned an error: {response:?}"),
     };
     println!("Ok");
 }

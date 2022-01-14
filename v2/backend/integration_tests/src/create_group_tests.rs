@@ -76,7 +76,7 @@ async fn create_group_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 }
 
 async fn create_and_validate_group(name: String, is_public: bool, users: &Users) -> ChatId {
-    let description = format!("{} description", name);
+    let description = format!("{name} description");
 
     let args = user_canister::create_group::Args {
         is_public,
@@ -106,10 +106,10 @@ async fn create_and_validate_group(name: String, is_public: bool, users: &Users)
                 assert_eq!(group_chat_summary.description, description);
                 assert_eq!(group_chat_summary.is_public, is_public);
             } else {
-                panic!("Group not found in InitialState response. Response: {:?}", r);
+                panic!("Group not found in InitialState response. Response: {r:?}");
             }
         }
-        response => panic!("user::initial_state returned an error: {:?}", response),
+        response => panic!("user::initial_state returned an error: {response:?}"),
     }
 
     futures::future::join3(
@@ -155,7 +155,7 @@ async fn ensure_user_canister_links_to_group(agent: &Agent, user_id: UserId, cha
                 panic!("Group chat not found");
             }
         }
-        response => panic!("InitialState returned an error: {:?}", response),
+        response => panic!("InitialState returned an error: {response:?}"),
     };
 }
 

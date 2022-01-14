@@ -22,7 +22,7 @@ async fn leave_group(args: Args) -> Response {
             c2c_leave_group::Response::CallerNotInGroup => CallerNotInGroup,
             c2c_leave_group::Response::OwnerCannotLeave => OwnerCannotLeave,
         },
-        Err(error) => InternalError(format!("{:?}", error)),
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }
 

@@ -21,7 +21,7 @@ async fn c2c_assume_super_admin(_args: Args) -> Response {
     match user_index_canister_c2c_client::c2c_is_super_admin(canister_id, &is_super_admin_args).await {
         Ok(user_index_canister::c2c_is_super_admin::Response::Yes) => mutate_state(|state| commit(user_id, state)),
         Ok(user_index_canister::c2c_is_super_admin::Response::No) => NotSuperAdmin,
-        Err(error) => InternalError(format!("Failed to call 'user_idex::c2c_is_super_admin': {:?}", error)),
+        Err(error) => InternalError(format!("Failed to call 'user_idex::c2c_is_super_admin': {error:?}")),
     }
 }
 

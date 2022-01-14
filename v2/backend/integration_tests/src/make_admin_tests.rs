@@ -51,7 +51,7 @@ async fn make_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         .unwrap()
     {
         group_canister::make_admin::Response::Success => {}
-        response => panic!("MakeAdmin returned an error: {:?}", response),
+        response => panic!("MakeAdmin returned an error: {response:?}"),
     };
     println!("Ok");
 
@@ -70,7 +70,7 @@ async fn make_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         .unwrap()
     {
         group_canister::make_admin::Response::Success => {}
-        response => panic!("MakeAdmin returned an error: {:?}", response),
+        response => panic!("MakeAdmin returned an error: {response:?}"),
     };
     println!("Ok");
 
@@ -81,7 +81,7 @@ async fn make_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         .unwrap()
     {
         group_canister::dismiss_admin::Response::UserNotAdmin => {}
-        response => panic!("DismissAdmin returned an unexpected response: {:?}", response),
+        response => panic!("DismissAdmin returned an unexpected response: {response:?}"),
     };
     println!("Ok");
 
@@ -95,7 +95,7 @@ async fn make_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         group_canister::dismiss_admin::Response::Success => {
             panic!("User should not have been able to dismiss themselves as admin");
         }
-        response => panic!("DismissAdmin returned an error: {:?}", response),
+        response => panic!("DismissAdmin returned an error: {response:?}"),
     };
     println!("Ok");
 
@@ -106,7 +106,7 @@ async fn make_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         .unwrap()
     {
         group_canister::dismiss_admin::Response::Success => {}
-        response => panic!("DismissAdmin returned an error: {:?}", response),
+        response => panic!("DismissAdmin returned an error: {response:?}"),
     };
     println!("Ok");
 
@@ -125,7 +125,7 @@ async fn make_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         .unwrap()
     {
         group_canister::dismiss_admin::Response::Success => {}
-        response => panic!("DismissAdmin returned an error: {:?}", response),
+        response => panic!("DismissAdmin returned an error: {response:?}"),
     };
     println!("Ok");
 
@@ -139,8 +139,8 @@ async fn make_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     print!("Check that a non-admin is not able to make another user an admin... ");
     match group_canister_client::make_admin(&user2_agent, &chat_id.into(), &make_user3_admin_args).await {
-        Err(error) if { format!("{:?}", error).contains("403") } => {}
-        response => panic!("MakeAdmin should have returned 403 but did not: {:?}", response),
+        Err(error) if { format!("{error:?}").contains("403") } => {}
+        response => panic!("MakeAdmin should have returned 403 but did not: {response:?}"),
     };
     println!("Ok");
 
@@ -162,7 +162,7 @@ async fn make_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
             assert!(matches!(r.events[4].event, GroupChatEvent::ParticipantsDismissedAsAdmin(_)));
             assert!(matches!(r.events[5].event, GroupChatEvent::ParticipantsDismissedAsAdmin(_)));
         }
-        response => panic!("EventsRange returned an error: {:?}", response),
+        response => panic!("EventsRange returned an error: {response:?}"),
     };
     println!("Ok");
 }
@@ -180,6 +180,6 @@ async fn user_role(user_id: UserId, agent: &Agent) -> Option<Role> {
                 None
             }
         }
-        response => panic!("user::initial_state returned an error: {:?}", response),
+        response => panic!("user::initial_state returned an error: {response:?}"),
     }
 }

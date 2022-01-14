@@ -19,7 +19,7 @@ async fn push_subscription(args: Args) -> Response {
                     user_id
                 }
                 Ok(user_index_canister::c2c_lookup_user_id::Response::UserNotFound) => panic!("User not found"),
-                Err(error) => return InternalError(format!("Failed to call 'user_idex::c2c_lookup_user_id': {:?}", error)),
+                Err(error) => return InternalError(format!("Failed to call 'user_idex::c2c_lookup_user_id': {error:?}")),
             }
         }
     };
