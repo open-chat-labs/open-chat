@@ -35,7 +35,6 @@
             <li>Group preview</li>
             <li>Voice messages</li>
             <li>@user mentions</li>
-            <li>Inline _<em>markdown</em>_</li>
         </ul>
         <strong>Upcoming features/developments</strong>
         <ul>
@@ -44,6 +43,7 @@
             <li>Tag/filter messages</li>
             <li>Invite contacts</li>
             <li>Edit sent messages</li>            
+            <li>Inline _<em>markdown</em>_</li>
             <li>Message forwarding</li>
             <li>Voice and video calls</li>
             <li>Native apps</li>
