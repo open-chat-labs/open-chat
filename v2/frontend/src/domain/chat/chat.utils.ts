@@ -575,7 +575,11 @@ export function enoughVisibleMessages(
     }
 }
 
-export function nextIndex(ascending: boolean, events: EventWrapper<ChatEvent>[]): number {
+export function nextIndex(
+    ascending: boolean,
+    events: EventWrapper<ChatEvent>[]
+): number | undefined {
+    if (events.length === 0) return undefined;
     return ascending ? events[events.length - 1].index + 1 : events[0].index - 1;
 }
 

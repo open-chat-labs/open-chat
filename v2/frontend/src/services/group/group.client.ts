@@ -130,15 +130,15 @@ export class GroupClient extends CandidService implements IGroupClient {
             console.log("we got enough visible messages to display now");
             return { ...resp, events: merged };
         } else if (iterations < MAX_RECURSION) {
-            // recurse and get the next chunk since we don't yet have enough events
-            console.log("we don't have enough message, recursing", resp.events);
-            return this.chatEvents(
-                eventIndexRange,
-                nextIndex(ascending, merged),
-                ascending,
-                merged,
-                iterations + 1
-            );
+            const idx = nextIndex(ascending, merged);
+            if (idx === undefined) {
+                // this will happen if we didn't get any events.
+                return { ...resp, events: merged };
+            } else {
+                // recurse and get the next chunk since we don't yet have enough events
+                console.log("we don't have enough message, recursing", resp.events);
+                return this.chatEvents(eventIndexRange, idx, ascending, merged, iterations + 1);
+            }
         } else {
             throw new Error(
                 `Reached the maximum number of iterations of ${MAX_RECURSION} when trying to load events`

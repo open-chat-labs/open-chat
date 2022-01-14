@@ -31,6 +31,7 @@
     $: fileToAttach = controller.fileToAttach;
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
+    $: replyingTo = controller.replyingTo;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -80,8 +81,8 @@
     }
 
     $: {
-        if ($fileToAttach !== undefined) {
-            inp.focus();
+        if ($fileToAttach !== undefined || $replyingTo !== undefined) {
+            inp?.focus();
         }
     }
 
@@ -312,7 +313,7 @@
     {:else if preview}
         <div class="preview buttons">
             <Button secondary={true} small={true} on:click={cancelPreview}>
-                {$_("noThanks")}
+                {$_("leave")}
             </Button>
             <Button
                 loading={joining !== undefined}
@@ -443,5 +444,8 @@
 
     .preview {
         justify-content: flex-end;
+        @include size-below(xs) {
+            justify-content: center;
+        }
     }
 </style>

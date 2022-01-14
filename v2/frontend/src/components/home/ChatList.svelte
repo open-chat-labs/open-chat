@@ -3,9 +3,6 @@
     import Search from "../Search.svelte";
     import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
-    import { fade } from "svelte/transition";
-    import { flip } from "svelte/animate";
-    import { elasticOut } from "svelte/easing";
     import { _ } from "svelte-i18n";
     import type { ChatSummary as ChatSummaryType } from "../../domain/chat/chat";
     import type {
@@ -148,16 +145,12 @@
                     <h3 class="search-subtitle">{$_("yourChats")}</h3>
                 {/if}
                 {#each chats as chatSummary, i (chatSummary.chatId)}
-                    <div
-                        animate:flip={{ duration: 600, easing: elasticOut }}
-                        out:fade|local={{ duration: 150 }}>
-                        <ChatSummary
-                            index={i}
-                            messagesRead={controller.messagesRead}
-                            {chatSummary}
-                            {userId}
-                            selected={$selectedChat?.chatId === chatSummary.chatId} />
-                    </div>
+                    <ChatSummary
+                        index={i}
+                        messagesRead={controller.messagesRead}
+                        {chatSummary}
+                        {userId}
+                        selected={$selectedChat?.chatId === chatSummary.chatId} />
                 {/each}
 
                 {#if groupSearchResults !== undefined}
