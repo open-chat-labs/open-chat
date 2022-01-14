@@ -68,6 +68,7 @@
         "util": "0.12.3"
     },
     "dependencies": {
+        "@crownframework/svelte-error-boundary": "^1.0.3",
         "@dfinity/agent": "^0.10.1",
         "@dfinity/auth-client": "^0.10.1",
         "@dfinity/authentication": "^0.10.1",

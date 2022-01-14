@@ -4,6 +4,8 @@
     import SvelteMarkdown from "svelte-markdown";
     import ChatMessageLink from "./ChatMessageLink.svelte";
     import ChatMessageLinkSuppressed from "./ChatMessageLinkSuppressed.svelte";
+    import { Boundary } from "@crownframework/svelte-error-boundary";
+    import { rollbar } from "../../utils/logging";
 
     export let text: string;
     export let inline: boolean = true;
@@ -11,13 +13,15 @@
     export let suppressLinks: boolean = false;
 </script>
 
-<p class="markdown-wrapper" class:inline class:oneLine>
-    <SvelteMarkdown
-        options={{ breaks: !oneLine, sanitize: true }}
-        isInline={true}
-        source={text}
-        renderers={{ link: suppressLinks ? ChatMessageLinkSuppressed : ChatMessageLink }} />
-</p>
+<Boundary onError={rollbar.error}>
+    <p class="markdown-wrapper" class:inline class:oneLine>
+        <SvelteMarkdown
+            options={{ breaks: !oneLine, sanitize: true }}
+            isInline={true}
+            source={text}
+            renderers={{ link: suppressLinks ? ChatMessageLinkSuppressed : ChatMessageLink }} />
+    </p>
+</Boundary>
 
 <style type="text/scss">
     :global(.markdown-wrapper a) {

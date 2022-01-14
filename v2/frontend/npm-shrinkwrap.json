@@ -8,6 +8,7 @@
             "name": "open_chat_frontend",
             "version": "2.0.0",
             "dependencies": {
+                "@crownframework/svelte-error-boundary": "^1.0.3",
                 "@dfinity/agent": "^0.10.1",
                 "@dfinity/auth-client": "^0.10.1",
                 "@dfinity/authentication": "^0.10.1",
@@ -1634,6 +1635,11 @@
             "version": "0.2.3",
             "resolved": "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz",
             "integrity": "sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw=="
+        },
+        "node_modules/@crownframework/svelte-error-boundary": {
+            "version": "1.0.3",
+            "resolved": "https://registry.npmjs.org/@crownframework/svelte-error-boundary/-/svelte-error-boundary-1.0.3.tgz",
+            "integrity": "sha512-ZtfYF9if48Ok8BTx/fn7bERJFKHKO6Ih5d/fkY6/pC3DQEnJq4vy6JOBFcisnpKYcZbjG5F/D4r06kqX7JKyqw=="
         },
         "node_modules/@dfinity/agent": {
             "version": "0.10.1",
@@ -14924,6 +14930,11 @@
             "version": "0.2.3",
             "resolved": "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz",
             "integrity": "sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw=="
+        },
+        "@crownframework/svelte-error-boundary": {
+            "version": "1.0.3",
+            "resolved": "https://registry.npmjs.org/@crownframework/svelte-error-boundary/-/svelte-error-boundary-1.0.3.tgz",
+            "integrity": "sha512-ZtfYF9if48Ok8BTx/fn7bERJFKHKO6Ih5d/fkY6/pC3DQEnJq4vy6JOBFcisnpKYcZbjG5F/D4r06kqX7JKyqw=="
         },
         "@dfinity/agent": {
             "version": "0.10.1",
