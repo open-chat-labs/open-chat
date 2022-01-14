@@ -23,9 +23,8 @@
         </p>
         <p>
             Unfortunately we won't be able to migrate accounts from the original test version which is still 
-            running at <a href="https://oc.app" target="_blank">https://oc.app</a>. When we finish beta testing, the oc.app domain will
-            re-direct to this new version and we will keep the old version running as long as possible (hopefully forever) so
-            you can continue to access your old messages.
+            running at <a href="https://v1.oc.app" target="_blank">https://v1.oc.app</a>. We will keep the old 
+            version running as long as possible (hopefully forever) so you can continue to access your old messages.
         </p>
         <strong>New feature highlights</strong>
         <ul>
