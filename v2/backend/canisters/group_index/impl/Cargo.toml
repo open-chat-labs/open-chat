@@ -22,6 +22,7 @@ group_index_canister = { path = "../api" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = "0.3.3"
 ic-cdk-macros = "0.3.3"
+rand = "0.7.3"
 search = { path = "../../../libraries/search" }
 serde = "1.0.126"
 serializer = { path = "../../../libraries/serializer" }

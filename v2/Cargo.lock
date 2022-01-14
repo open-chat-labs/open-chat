@@ -1170,6 +1170,7 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-macros",
+ "rand 0.7.3",
  "search",
  "serde",
  "serializer",
