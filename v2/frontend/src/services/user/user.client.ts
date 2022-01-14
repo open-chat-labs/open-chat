@@ -403,7 +403,7 @@ export class UserClient extends CandidService implements IUserClient {
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
         return this.handleResponse(
             this.userService.recommended_groups({
-                count: 10,
+                count: 20,
             }),
             recommendedGroupsResponse
         );
