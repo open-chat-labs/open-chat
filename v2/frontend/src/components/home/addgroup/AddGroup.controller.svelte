@@ -27,6 +27,20 @@
         participants: [],
     };
 
+    function reset() {
+        newGroupState = "group_form";
+        creatingCanister = false;
+        addingParticipants = false;
+        canisterId = undefined;
+        candidateGroup = {
+            name: "",
+            description: "",
+            historyVisible: false,
+            isPublic: false,
+            participants: [],
+        };
+    }
+
     function groupCreationErrorMessage(resp: CreateGroupResponse): string | undefined {
         if (resp.kind === "success") return undefined;
         if (resp.kind === "description_too_long") return "groupDescTooLong";
@@ -74,6 +88,7 @@
                     if (resp.kind === "add_participants_success") {
                         push(`/${canisterId}`); // trigger the selection of the chat
                         dispatch("groupCreated");
+                        reset();
                     } else {
                         toastStore.showFailureToast("addParticipantsFailed");
                     }
