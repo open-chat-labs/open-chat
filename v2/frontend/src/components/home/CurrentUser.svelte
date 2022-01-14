@@ -57,6 +57,10 @@
         dispatch("userAvatarSelected", ev.detail);
     }
 
+    function onCloseModal() {
+        modal = ModalType.NoModal;
+    }
+
     $: small = $screenWidth === ScreenWidth.ExtraSmall || $screenHeight === ScreenHeight.Small;
 </script>
 
@@ -126,11 +130,11 @@
     </span>
 </div>
 
-<Overlay dismissible={true} active={modal !== ModalType.NoModal}>
+<Overlay dismissible={true} active={modal !== ModalType.NoModal} on:close={onCloseModal}>
     {#if modal === ModalType.About}
-        <AboutModal canister={{id: user.userId, wasmVersion}} on:close={() => modal = ModalType.NoModal}/>
+        <AboutModal canister={{id: user.userId, wasmVersion}} on:close={onCloseModal}/>
     {:else if modal === ModalType.ThemeSelection}
-        <ThemePicker on:close={() => modal = ModalType.NoModal} />
+        <ThemePicker on:close={onCloseModal} />
     {/if}
 </Overlay>
 
