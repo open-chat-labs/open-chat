@@ -22,17 +22,18 @@
     $: api = controller.api;
     $: currentUser = controller.user;
 
-    let addingGroup: boolean = false;
+    let addingGroup = false;
 </script>
 
 <Panel left>
-    {#if addingGroup}
+    <div class="new-group" class:addingGroup>
         <NewGroup
             {api}
             {currentUser}
             on:cancelNewGroup={() => (addingGroup = false)}
             on:groupCreated={() => (addingGroup = false)} />
-    {:else}
+    </div>
+    <div class="chat-list" class:addingGroup>
         <ChatList
             on:loadMessage
             on:chatWith
@@ -48,5 +49,25 @@
             {messageSearchResults}
             {controller}
             {wasmVersion} />
-    {/if}
+    </div>
 </Panel>
+
+<style type="text/scss">
+    .new-group,
+    .chat-list {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    .new-group {
+        display: none;
+        &.addingGroup {
+            display: flex;
+        }
+    }
+    .chat-list {
+        &.addingGroup {
+            display: none;
+        }
+    }
+</style>

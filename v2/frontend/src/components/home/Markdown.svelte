@@ -11,17 +11,21 @@
     export let inline: boolean = true;
     export let oneLine: boolean = false;
     export let suppressLinks: boolean = false;
+
+    function interceptError(err: Error): void {
+        rollbar.error("Intercepted error at boundary: ", err);
+    }
 </script>
 
-<Boundary onError={rollbar.error}>
-    <p class="markdown-wrapper" class:inline class:oneLine>
+<p class="markdown-wrapper" class:inline class:oneLine>
+    <Boundary onError={interceptError}>
         <SvelteMarkdown
             options={{ breaks: !oneLine, sanitize: true }}
             isInline={true}
             source={text}
             renderers={{ link: suppressLinks ? ChatMessageLinkSuppressed : ChatMessageLink }} />
-    </p>
-</Boundary>
+    </Boundary>
+</p>
 
 <style type="text/scss">
     :global(.markdown-wrapper a) {

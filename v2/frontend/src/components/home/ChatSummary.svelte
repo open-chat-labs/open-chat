@@ -24,7 +24,7 @@
     import { userStore } from "../../stores/user";
     import type { IMessageReadTracker } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
-    import { onDestroy, onMount } from "svelte";
+    import { onDestroy } from "svelte";
     import { toTitleCase } from "../../utils/string";
     import { now } from "../../stores/time";
 
@@ -37,10 +37,6 @@
     let hovering = false;
     let unreadMessages: number;
     let unreadMentions: number;
-
-    onMount(() => {
-        throw new Error("how do we deal with this");
-    });
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
