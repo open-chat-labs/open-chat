@@ -1,6 +1,8 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
 use candid::CandidType;
+use rand::rngs::StdRng;
+use rand::{RngCore, SeedableRng};
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -138,10 +140,15 @@ impl PublicGroups {
     }
 
     pub fn calculate_hot_groups(&self, now: TimestampMillis) -> Vec<ChatId> {
+        let mut rng = StdRng::seed_from_u64(now);
+        let one_day_ago = now - DAY_IN_MS;
+
         self.groups
             .values()
-            .max_n_by(CACHED_HOT_GROUPS_COUNT, |g| g.calculate_weight(now))
-            .map(|g| g.id)
+            .filter(|g| g.has_been_active_since(one_day_ago))
+            .map(|g| (g, rng.next_u32()))
+            .max_n_by(CACHED_HOT_GROUPS_COUNT, |(g, random)| g.calculate_weight(*random, now))
+            .map(|(g, _)| g.id)
             .collect()
     }
 }
@@ -226,7 +233,7 @@ impl PublicGroupInfo {
         self.upgrade_in_progress = upgrade_in_progress;
     }
 
-    pub fn calculate_weight(&self, now: TimestampMillis) -> u64 {
+    pub fn calculate_weight(&self, random: u32, now: TimestampMillis) -> u64 {
         let mut weighting = 0u64;
 
         const MAX_RECENCY_MULTIPLIER: u64 = 1000;
@@ -236,11 +243,9 @@ impl PublicGroupInfo {
         // linear down to 0 for groups which were active ZERO_WEIGHT_AFTER_DURATION ago. So for
         // example, recency_multiplier will be MAX_RECENCY_MULTIPLIER / 2 for a group that was
         // active ZERO_WEIGHT_AFTER_DURATION / 2 ago.
-        let mut recency_multiplier = 0u64;
-        if self.marked_active_until >= now {
-            recency_multiplier = MAX_RECENCY_MULTIPLIER;
-        } else if self.marked_active_until > now - ZERO_WEIGHT_AFTER_DURATION {
-            recency_multiplier = MAX_RECENCY_MULTIPLIER
+        let mut recency_multiplier = MAX_RECENCY_MULTIPLIER;
+        if self.marked_active_until < now {
+            recency_multiplier = recency_multiplier
                 .saturating_sub((MAX_RECENCY_MULTIPLIER * (now - self.marked_active_until)) / ZERO_WEIGHT_AFTER_DURATION);
         }
 
@@ -250,7 +255,10 @@ impl PublicGroupInfo {
             weighting += (activity.messages * activity.message_unique_users) as u64;
             weighting += (activity.reactions * activity.reaction_unique_users) as u64;
 
-            weighting *= recency_multiplier
+            weighting *= recency_multiplier;
+
+            let random_multiplier = (random % 16) as u64;
+            weighting *= random_multiplier;
         }
         weighting
     }
