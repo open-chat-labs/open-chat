@@ -19,6 +19,7 @@ import type {
     UpdateGroupResponse,
 } from "../domain/chat/chat";
 import {
+    activeUserIdFromEvent,
     containsReaction,
     createMessage,
     getMinVisibleMessageIndex,
@@ -36,7 +37,7 @@ import {
     userIdsFromEvents,
 } from "../domain/chat/chat.utils";
 import type { UserSummary } from "../domain/user/user";
-import { missingUserIds, userIsOnline } from "../domain/user/user.utils";
+import { missingUserIds } from "../domain/user/user.utils";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
@@ -92,9 +93,10 @@ export class ChatController {
         this.focusMessageIndex = writable(_focusMessageIndex);
         this.participants = writable([]);
         this.blockedUsers = writable(new Set<string>());
-        this.chatUserIds = new Set<string>();
-        const { chatId } = get(this.chat);
+        const { chatId, kind } = get(this.chat);
         this.chatId = chatId;
+        // If this is a group chat, chatUserIds will be populated when processing the chat events
+        this.chatUserIds = new Set<string>(kind === "direct_chat" ? [chatId] : []);
         const draftMessage = readable(draftMessages.get(chatId), (set) =>
             draftMessages.subscribe((d) => set(d[chatId] ?? {}))
         );
@@ -246,35 +248,44 @@ export class ChatController {
             this.localReactions
         );
 
-        const userIds =
-            chat.kind === "direct_chat" ? new Set([chat.them]) : userIdsFromEvents(updated);
+        if (chat.kind === "group_chat") {
+            const userIds = userIdsFromEvents(updated);
+            await this.updateUserStore(userIds);
+        }
 
-        await this.updateUserStore(userIds);
-        this.makeRtcConnections(userIds);
         this.events.set(updated);
 
         if (resp.events.length > 0) {
             resp.events.forEach((e) => this.confirmedEventIndexesLoaded.add(e.index));
         }
+
+        this.makeRtcConnections();
     }
 
-    private makeRtcConnections(userIds: Set<string>): void {
-        // FIXME - this needs some refinement so that the total number of connections
-        // does not exceed MAX.
-        // we also need to disconnect when the chat is unselected
+    private makeRtcConnections(): void {
+        const userIds = this.getUsersToMakeRtcConnectionsWith();
+        if (userIds.length === 0) return;
+
+        // TODO - for groups we need to disconnect when the chat is unselected
         const lookup = get(userStore);
-        const now = Date.now();
-        [...userIds]
-            .filter((u) => u !== this.user.userId)
+        userIds
             .map((u) => lookup[u])
-            .filter((user) => user && userIsOnline(now, lookup, user.userId))
-            .sort((a, b) => b.lastOnline - a.lastOnline)
-            .slice(0, MAX_RTC_CONNECTIONS_PER_CHAT)
             .filter((user) => !rtcConnectionsManager.exists(user.userId))
             .map((user) => user.userId)
             .forEach((userId) => {
                 rtcConnectionsManager.create(this.user.userId, userId);
             });
+    }
+
+    private getUsersToMakeRtcConnectionsWith(): string[] {
+        if (get(this.chat).kind === "direct_chat") {
+            return [this.chatId];
+        }
+
+        const activeUsers = this.getRecentlyActiveUsers(MAX_RTC_CONNECTIONS_PER_CHAT);
+        return activeUsers.has(this.user.userId)
+            ? Array.from(activeUsers).filter((u) => u !== this.user.userId)
+            : [];
     }
 
     private async loadEventWindow(messageIndex: number) {
@@ -1029,5 +1040,29 @@ export class ChatController {
         };
 
         rtcConnectionsManager.sendMessage([...this.chatUserIds], rtc);
+    }
+
+    // Returns the most recently active users, only considering users who have been active within the last 10 minutes
+    private getRecentlyActiveUsers(maxUsers: number): Set<string> {
+        const users = new Set<string>();
+        if (this.upToDate()) {
+            const tenMinsAgo = Date.now() - 10 * 60 * 1000;
+            const events = get(this.events);
+
+            for (let i = events.length - 1; i >= 0; i--) {
+                const event = events[i];
+                if (event.timestamp < tenMinsAgo)
+                    break;
+
+                const activeUser = activeUserIdFromEvent(event.event);
+                if (activeUser !== undefined) {
+                    users.add(activeUser);
+                    if (users.size >= maxUsers) {
+                        break;
+                    }
+                }
+            }
+        }
+        return users;
     }
 }

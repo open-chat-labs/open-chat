@@ -136,6 +136,51 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
     }, new Set<string>());
 }
 
+// Returns the userId of the user who triggered the event
+export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
+    switch (event.kind) {
+        case "message":
+            return event.sender;
+        case "participant_joined":
+        case "participant_assumes_super_admin":
+        case "participant_relinquishes_super_admin":
+            return event.userId;
+        case "name_changed":
+        case "desc_changed":
+        case "avatar_changed":
+            return event.changedBy;
+        case "group_chat_created":
+            return event.created_by;
+        case "participants_added":
+            return event.addedBy;
+        case "participants_promoted_to_admin":
+            return event.promotedBy;
+        case "participants_dismissed_as_admin":
+            return event.dismissedBy;
+        case "participants_removed":
+            return event.removedBy;
+        case "users_blocked":
+            return event.blockedBy;
+        case "users_unblocked":
+            return event.unblockedBy;
+        case "ownership_transferred":
+            return event.oldOwner;
+        case "pinned_message_updated":
+            return event.updatedBy;
+        case "message_deleted":
+        case "message_edited":
+        case "reaction_added":
+        case "reaction_removed":
+            return event.message.updatedBy;
+        case "direct_chat_created":
+        case "participant_dismissed_as_super_admin":
+        case "participant_left": // We exclude participant_left events since the user is no longer in the group
+            return undefined;
+        default:
+            throw new UnsupportedValueError("Unexpected ChatEvent type received", event);
+    }
+}
+
 export function getMinVisibleMessageIndex(chat: ChatSummary): number {
     if (chat.kind === "direct_chat") return 0;
     return chat.minVisibleMessageIndex;
