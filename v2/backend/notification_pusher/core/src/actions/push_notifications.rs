@@ -35,12 +35,8 @@ pub async fn run<'a>(
 
         let (result1, result2) = futures::future::join(future1, future2).await;
 
-        if result1.is_err() {
-            return result1;
-        }
-        if result2.is_err() {
-            return result2;
-        }
+        result1?;
+        result2?;
     }
 
     Ok(())
