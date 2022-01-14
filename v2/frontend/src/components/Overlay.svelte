@@ -1,5 +1,8 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
     import { onMount, onDestroy } from "svelte";
+
+    const dispatch = createEventDispatcher();
 
     export let active: boolean;
     export let dismissible: boolean = false;
@@ -27,14 +30,19 @@
 
     function onClick() {
         if (dismissible) {
-            active = false;
+            onClose();
         }
     }
 
     function onKeyDown(ev: KeyboardEvent) {
         if (dismissible && ev.key === "Escape") {
-            active = false;
+            onClose();
         }
+    }
+
+    function onClose() {
+        active = false;
+        dispatch("close");
     }
 </script>
 
