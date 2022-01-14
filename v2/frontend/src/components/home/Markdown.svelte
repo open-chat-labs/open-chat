@@ -9,7 +9,7 @@
     export let oneLine: boolean = false;
     export let suppressLinks: boolean = false;
 
-    function renderTextContent(): string {
+    function renderTextContent(text: string): string {
         let str = text;
 
         // HTML encode the text
@@ -28,7 +28,7 @@
 </script>
 
 <p class="markdown-wrapper" class:inline class:oneLine>
-    {@html renderTextContent()}
+    {@html renderTextContent(text)}
 </p>
 
 <style type="text/scss">
