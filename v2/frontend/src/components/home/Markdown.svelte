@@ -1,30 +1,34 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import SvelteMarkdown from "svelte-markdown";
-    import ChatMessageLink from "./ChatMessageLink.svelte";
-    import ChatMessageLinkSuppressed from "./ChatMessageLinkSuppressed.svelte";
-    import { Boundary } from "@crownframework/svelte-error-boundary";
-    import { rollbar } from "../../utils/logging";
+    import {encode} from 'html-entities';
+    import { replaceNewlinesWithBrTags, wrapURLsInAnchorTags } from "../../utils/markup";
 
     export let text: string;
     export let inline: boolean = true;
     export let oneLine: boolean = false;
     export let suppressLinks: boolean = false;
 
-    function interceptError(err: Error): void {
-        rollbar.error("Intercepted error at boundary: ", err);
-    }
+    function renderTextContent(): string {
+        let str = text;
+
+        // HTML encode the text
+        str = encode(str);
+
+        if (!oneLine) {
+            str = replaceNewlinesWithBrTags(str);
+        }
+
+        if (!suppressLinks) {
+            str = wrapURLsInAnchorTags(str, true);
+        }
+
+        return str;
+    }    
 </script>
 
 <p class="markdown-wrapper" class:inline class:oneLine>
-    <Boundary onError={interceptError}>
-        <SvelteMarkdown
-            options={{ breaks: !oneLine, sanitize: true }}
-            isInline={true}
-            source={text}
-            renderers={{ link: suppressLinks ? ChatMessageLinkSuppressed : ChatMessageLink }} />
-    </Boundary>
+    {@html renderTextContent()}
 </p>
 
 <style type="text/scss">
