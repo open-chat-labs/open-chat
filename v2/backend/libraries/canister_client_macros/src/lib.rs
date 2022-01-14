@@ -11,12 +11,12 @@ macro_rules! generate_update_call {
             let method_name = stringify!($method_name);
             let response = agent
                 .update(canister_id, method_name)
-                .with_arg(Encode!(args).expect(&format!("Failed to serialize '{}' args", method_name)))
+                .with_arg(Encode!(args).expect(&format!("Failed to serialize '{method_name}' args")))
                 .call_and_wait(delay())
                 .await?;
 
             Ok(Decode!(response.as_slice(), $method_name::Response)
-                .expect(&format!("Failed to deserialize '{}' response", method_name)))
+                .expect(&format!("Failed to deserialize '{method_name}' response")))
         }
     };
 }
@@ -34,12 +34,12 @@ macro_rules! generate_query_call {
             let method_name = stringify!($method_name);
             let response = agent
                 .query(canister_id, method_name)
-                .with_arg(Encode!(args).expect(&format!("Failed to serialize '{}' args", method_name)))
+                .with_arg(Encode!(args).expect(&format!("Failed to serialize '{method_name}' args")))
                 .call()
                 .await?;
 
             Ok(Decode!(response.as_slice(), $method_name::Response)
-                .expect(&format!("Failed to deserialize '{}' response", method_name)))
+                .expect(&format!("Failed to deserialize '{method_name}' response")))
         }
     };
 }

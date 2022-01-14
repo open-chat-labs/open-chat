@@ -23,7 +23,7 @@ async fn remove_participant(args: Args) -> Response {
     };
     let response = user_canister_c2c_client::c2c_remove_from_group(args.user_id.into(), &c2c_remove_from_group_args).await;
     if let Err(error) = response {
-        return InternalError(format!("{:?}", error));
+        return InternalError(format!("{error:?}"));
     }
 
     mutate_state(|state| commit(prepare_result.removed_by, args.user_id, state));

@@ -57,7 +57,7 @@ async fn create_canister(_args: Args) -> Response {
             // If the create succeeded but the install failed then set the user_id (aka canister_id)
             // on the user record.
             mutate_state(|state| rollback(caller, canister_id, state));
-            InternalError(format!("{:?}", error))
+            InternalError(format!("{error:?}"))
         }
     }
 }

@@ -56,7 +56,7 @@ async fn send_message_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         .await
         .unwrap();
     if !matches!(response, user_canister::send_message::Response::MessageEmpty) {
-        panic!("SendMessage was expected to return MessageEmpty but did not: {:?}", response);
+        panic!("SendMessage was expected to return MessageEmpty but did not: {response:?}");
     }
 
     let send_message_args = user_canister::send_message::Args {
@@ -72,9 +72,6 @@ async fn send_message_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         .await
         .unwrap();
     if !matches!(response, user_canister::send_message::Response::TextTooLong(5000)) {
-        panic!(
-            "SendMessage was expected to return TextTooLong(5000) but did not: {:?}",
-            response
-        );
+        panic!("SendMessage was expected to return TextTooLong(5000) but did not: {response:?}");
     }
 }

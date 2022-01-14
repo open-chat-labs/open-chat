@@ -35,9 +35,9 @@ fn get_method_attribute(attrs: AttributeArgs) -> MethodAttribute {
         let value = c.get_ident().unwrap().to_string();
         match value.as_str() {
             "group" | "group_index" | "notifications" | "online_users_aggregator" | "user" | "user_index" => {
-                format!("{}_canister", value)
+                format!("{value}_canister")
             }
-            _ => panic!("Unrecognised 'canister_name' value: {:?}", value),
+            _ => panic!("Unrecognised 'canister_name' value: {value:?}"),
         }
     } else {
         panic!("Unrecognised 'canister_name' value: {:?}", attrs.get(0).unwrap());
@@ -53,7 +53,7 @@ fn get_method_attribute(attrs: AttributeArgs) -> MethodAttribute {
         let value = m.get_ident().unwrap().to_string();
         match value.as_str() {
             "query" | "update" => value,
-            _ => panic!("Unrecognised 'method_type' value: {}", value),
+            _ => panic!("Unrecognised 'method_type' value: {value}"),
         }
     } else {
         panic!("Unrecognised 'method_type' value");

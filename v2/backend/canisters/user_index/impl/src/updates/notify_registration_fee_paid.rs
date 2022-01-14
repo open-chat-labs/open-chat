@@ -47,7 +47,7 @@ fn extract_principal_and_fee(runtime_state: &RuntimeState) -> Result<(Principal,
 async fn check_icp_fee_has_been_paid(fee: &ICPRegistrationFee) -> Result<bool, String> {
     match ic_ledger_types::account_balance(MAINNET_LEDGER_CANISTER_ID, AccountBalanceArgs { account: fee.recipient }).await {
         Ok(balance) => Ok(balance >= fee.amount),
-        Err(error) => Err(format!("{:?}", error)),
+        Err(error) => Err(format!("{error:?}")),
     }
 }
 

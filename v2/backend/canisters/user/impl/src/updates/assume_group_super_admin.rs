@@ -35,10 +35,10 @@ async fn assume_group_super_admin(args: Args) -> Response {
                 InternalError(message.to_owned())
             }
             c2c_assume_super_admin::Response::InternalError(error) => {
-                InternalError(format!("Failed to call 'group::c2c_assume_super_admin': {:?}", error))
+                InternalError(format!("Failed to call 'group::c2c_assume_super_admin': {error:?}"))
             }
         },
-        Err(error) => InternalError(format!("{:?}", error)),
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }
 

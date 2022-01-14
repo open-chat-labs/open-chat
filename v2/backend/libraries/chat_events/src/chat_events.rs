@@ -238,7 +238,7 @@ impl ChatEvents {
         };
 
         if !valid {
-            panic!("Event type is not valid: {:?}", event);
+            panic!("Event type is not valid: {event:?}");
         }
 
         let event_index = self.events.last().map_or(EventIndex::default(), |e| e.index.incr());
@@ -346,7 +346,7 @@ impl ChatEvents {
     ) -> ToggleReactionResult {
         if !reaction.is_valid() {
             // This should never happen because we validate earlier
-            panic!("Invalid reaction: {:?}", reaction);
+            panic!("Invalid reaction: {reaction:?}");
         }
 
         if let Some(&event_index) = self.message_id_map.get(&message_id) {

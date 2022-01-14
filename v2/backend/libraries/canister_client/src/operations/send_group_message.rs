@@ -11,6 +11,6 @@ pub async fn send_group_message(
         .unwrap()
     {
         group_canister::send_message::Response::Success(r) => r,
-        response => panic!("Send group message returned an error: {:?}", response),
+        response => panic!("Send group message returned an error: {response:?}"),
     }
 }

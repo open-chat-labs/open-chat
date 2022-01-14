@@ -58,11 +58,11 @@ async fn send_cycles_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                 assert_eq!(c.from, cycles_wallet_canister_id);
                 assert_eq!(c.cycles, ONE_TRILLION);
             } else {
-                panic!("Unexpected transaction: {:?}", transaction);
+                panic!("Unexpected transaction: {transaction:?}");
             }
             initial_state_timestamp = result.timestamp;
         }
-        response => panic!("InitialState returned an error: {:?}", response),
+        response => panic!("InitialState returned an error: {response:?}"),
     };
     println!("Ok");
 
@@ -106,10 +106,10 @@ async fn send_cycles_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                 assert_eq!(c.recipient, user2_id);
                 assert_eq!(c.cycles, ONE_HUNDRED_BILLION);
             } else {
-                panic!("Unexpected transaction: {:?}", transaction);
+                panic!("Unexpected transaction: {transaction:?}");
             }
         }
-        response => panic!("Updates returned an error: {:?}", response),
+        response => panic!("Updates returned an error: {response:?}"),
     }
     println!("Ok");
 
@@ -130,10 +130,10 @@ async fn send_cycles_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                 assert_eq!(c.recipient, user2_id);
                 assert_eq!(c.cycles, ONE_HUNDRED_BILLION);
             } else {
-                panic!("Unexpected transaction: {:?}", transaction);
+                panic!("Unexpected transaction: {transaction:?}");
             }
         }
-        response => panic!("InitialState returned an error: {:?}", response),
+        response => panic!("InitialState returned an error: {response:?}"),
     };
     println!("Ok");
 }

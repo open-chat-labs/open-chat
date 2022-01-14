@@ -19,7 +19,7 @@ pub async fn register_user(
     let agent = build_ic_agent(url, identity).await;
 
     let submit_phone_number_args = user_index_canister::submit_phone_number::Args {
-        phone_number: PhoneNumber::new(44, format!("711100000{}", phone_number_suffix)),
+        phone_number: PhoneNumber::new(44, format!("711100000{phone_number_suffix}")),
     };
 
     let submit_phone_number_response =
@@ -59,7 +59,7 @@ pub async fn register_user(
         }
         user_canister_id.into()
     } else {
-        panic!("{:?}", create_canister_response);
+        panic!("{create_canister_response:?}");
     }
 }
 

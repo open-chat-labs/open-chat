@@ -36,7 +36,7 @@ async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
         {
             Ok(group_index_canister::c2c_filter_groups::Response::Success(result)) => result,
             Err(error) => {
-                return initial_state::Response::InternalError(format!("Failed to call 'c2c_filter_groups': {:?}", error))
+                return initial_state::Response::InternalError(format!("Failed to call 'c2c_filter_groups': {error:?}"))
             }
         };
 
@@ -88,7 +88,7 @@ async fn updates(args: updates::Args) -> updates::Response {
         .await
         {
             Ok(group_index_canister::c2c_filter_groups::Response::Success(result)) => result,
-            Err(error) => return updates::Response::InternalError(format!("Failed to call 'c2c_filter_groups': {:?}", error)),
+            Err(error) => return updates::Response::InternalError(format!("Failed to call 'c2c_filter_groups': {error:?}")),
         };
 
         deleted_groups = filter_groups_result.deleted_groups;

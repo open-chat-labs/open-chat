@@ -38,7 +38,7 @@ impl FromStr for CanisterName {
             "online_users_aggregator" => Ok(CanisterName::OnlineUsersAggregator),
             "user" => Ok(CanisterName::User),
             "user_index" => Ok(CanisterName::UserIndex),
-            _ => Err(format!("Unrecognised canister name: {}", s)),
+            _ => Err(format!("Unrecognised canister name: {s}")),
         }
     }
 }

@@ -86,10 +86,10 @@ async fn register_user_by_paying_cycles_tests_impl(handle: IcHandle, ctx: &fondu
                 assert_eq!(f.recipient, canister_ids.user_index);
                 fee = f.amount;
             } else {
-                panic!("GenerateRegistrationFee returned an unexpected response: {:?}", r);
+                panic!("GenerateRegistrationFee returned an unexpected response: {r:?}");
             }
         }
-        response => panic!("GenerateRegistrationFee returned an error: {:?}", response),
+        response => panic!("GenerateRegistrationFee returned an error: {response:?}"),
     };
     println!("Ok");
 
@@ -104,7 +104,7 @@ async fn register_user_by_paying_cycles_tests_impl(handle: IcHandle, ctx: &fondu
         .unwrap()
     {
         user_index_canister::current_user::Response::ConfirmedPendingUsername(_) => {}
-        response => panic!("CurrentUser returned an unexpected response: {:?}", response),
+        response => panic!("CurrentUser returned an unexpected response: {response:?}"),
     };
     println!("Ok");
 }

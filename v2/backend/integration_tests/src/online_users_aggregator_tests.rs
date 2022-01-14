@@ -49,7 +49,7 @@ async fn online_users_aggregator_tests_impl(handle: IcHandle, ctx: &fondue::pot:
     print!("Wait for user1 to be marked as online in user_index... ");
     let mut success = false;
     for i in 0..10 {
-        print!("{}... ", i);
+        print!("{i}... ");
 
         let seconds_since_last_online =
             match user_index_canister_client::user(&user2_agent, &canister_ids.user_index, &get_user_args)
@@ -57,7 +57,7 @@ async fn online_users_aggregator_tests_impl(handle: IcHandle, ctx: &fondue::pot:
                 .unwrap()
             {
                 user_index_canister::user::Response::Success(u) => u.seconds_since_last_online,
-                response => panic!("User returned an error: {:?}", response),
+                response => panic!("User returned an error: {response:?}"),
             };
 
         if seconds_since_last_online < 5 {
