@@ -14,7 +14,7 @@ pub fn set_panic_hook() {
             },
         };
 
-        let err_info = format!("Panicked at '{}', {}:{}:{}", error_message, file, line, column);
+        let err_info = format!("Panicked at '{error_message}', {file}:{line}:{column}");
         ic_cdk::print(&err_info);
         ic_cdk::trap(&err_info);
     }));

@@ -8,6 +8,6 @@ pub async fn set_username(agent: &Agent, username: String, user_index_canister_i
         .unwrap();
 
     if !matches!(response, user_index_canister::set_username::Response::Success) {
-        panic!("{:?}", response);
+        panic!("{response:?}");
     }
 }

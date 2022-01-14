@@ -19,14 +19,14 @@ pub async fn run(sms_reader: &dyn SmsReader, index_store: &dyn IndexStore, sms_s
                 processed_up_to = Some(new_processed_up_to);
             }
             Ok(None) => {}
-            Err(err) => error!("sending messages failed: {:?}", err),
+            Err(err) => error!("sending messages failed: {err:?}"),
         };
 
         if let Some(processed_up_to) = processed_up_to {
             if processed_up_to - pruned_up_to >= 1000 {
                 match sms_reader.remove(processed_up_to).await {
                     Ok(_) => pruned_up_to = processed_up_to,
-                    Err(err) => error!("pruning messages failed: {:?}", err),
+                    Err(err) => error!("pruning messages failed: {err:?}"),
                 }
                 continue;
             }

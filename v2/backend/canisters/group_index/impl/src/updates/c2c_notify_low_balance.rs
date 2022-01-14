@@ -40,7 +40,7 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalan
     } else if runtime_state.data.chat_exists(&chat_id) {
         Ok(PrepareResult { chat_id, top_up })
     } else {
-        panic!("Caller not recognised. {}", caller);
+        panic!("Caller not recognised. {caller}");
     }
 }
 
@@ -51,6 +51,6 @@ fn commit(chat_id: ChatId, top_up: CyclesTopUp, runtime_state: &mut RuntimeState
     } else if let Some(group_chat) = runtime_state.data.private_groups.get_mut(&chat_id) {
         group_chat.mark_cycles_top_up(top_up);
     } else {
-        panic!("Chat not found. {:?}", chat_id);
+        panic!("Chat not found. {chat_id:?}");
     }
 }

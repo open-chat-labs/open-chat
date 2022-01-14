@@ -20,7 +20,7 @@ async fn remove_super_admin(args: Args) -> Response {
             mutate_state(|state| commit(&args.user_id, success_result.groups_to_dismiss_user_from, state));
             Success
         }
-        Err(error) => InternalError(format!("{:?}", error)),
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }
 

@@ -23,9 +23,9 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let canister_ids = create_and_install_service_canisters(identity, url.clone(), true).await;
 
     let (user1_id, user2_id, user3_id) = register_3_default_users(url.clone(), canister_ids.user_index).await;
-    println!("user1_id: {:?}", user1_id);
-    println!("user2_id: {:?}", user2_id);
-    println!("user3_id: {:?}", user3_id);
+    println!("user1_id: {user1_id:?}");
+    println!("user2_id: {user2_id:?}");
+    println!("user3_id: {user3_id:?}");
 
     let controller_identity = build_identity(TestIdentity::Controller);
     let user1_identity = build_identity(TestIdentity::User1);
@@ -52,7 +52,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     };
 
     let chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id, user3_id]).await;
-    println!("chat_id: {:?}", chat_id);
+    println!("chat_id: {chat_id:?}");
 
     {
         print!("1. Subscribe all 3 users to receive notifications... ");
@@ -70,7 +70,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
             .unwrap()
         {
             user_canister::mute_notifications::Response::Success => {}
-            response => panic!("user::mute_notifications returned an error: {:?}", response),
+            response => panic!("user::mute_notifications returned an error: {response:?}"),
         };
         println!("Ok");
     }
@@ -109,7 +109,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         let args = group_canister::send_message::Args {
             message_id: 734979238479237_u128.into(),
             content: MessageContent::Text(TextContent {
-                text: format!("Hello @UserId({})", user1_id),
+                text: format!("Hello @UserId({user1_id})"),
             }),
             sender_name: "user2".to_owned(),
             replies_to: None,
@@ -156,7 +156,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                     assert!(false);
                 }
             }
-            response => panic!("user::initial_state returned an error: {:?}", response),
+            response => panic!("user::initial_state returned an error: {response:?}"),
         };
         println!("Ok");
     }
@@ -166,7 +166,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         let args = group_canister::send_message::Args {
             message_id: 9723892378497238947_u128.into(),
             content: MessageContent::Text(TextContent {
-                text: format!("Hello again @UserId({})", user1_id),
+                text: format!("Hello again @UserId({user1_id})"),
             }),
             sender_name: "user2".to_owned(),
             replies_to: None,
@@ -205,7 +205,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                     assert!(false);
                 }
             }
-            response => panic!("user::updates returned an error: {:?}", response),
+            response => panic!("user::updates returned an error: {response:?}"),
         };
         println!("Ok");
     }
@@ -228,7 +228,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                 assert!(matches!(r.events[3].event, GroupChatEvent::Message(_)));
                 assert!(matches!(r.events[4].event, GroupChatEvent::Message(_)));
             }
-            response => panic!("EventsRange returned an error: {:?}", response),
+            response => panic!("EventsRange returned an error: {response:?}"),
         };
 
         println!("Ok");
@@ -240,7 +240,7 @@ async fn subscribe_to_notifications(user_id: UserId, agent: &Agent, canister_id:
         subscription: SubscriptionInfo {
             endpoint: "endpoint".to_owned(),
             keys: SubscriptionKeys {
-                p256dh: format!("p256dh_{}", user_id),
+                p256dh: format!("p256dh_{user_id}"),
                 auth: "auth".to_owned(),
             },
         },

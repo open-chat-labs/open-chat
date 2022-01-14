@@ -23,11 +23,11 @@ pub async fn create_group(
                 .unwrap();
 
         if !matches!(add_participants_response, group_canister::add_participants::Response::Success) {
-            panic!("Add participants returned an error: {:?}", add_participants_response);
+            panic!("Add participants returned an error: {add_participants_response:?}");
         }
 
         r.chat_id
     } else {
-        panic!("Create group returned an error: {:?}", create_group_response);
+        panic!("Create group returned an error: {create_group_response:?}");
     }
 }

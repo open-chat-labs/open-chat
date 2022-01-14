@@ -19,9 +19,9 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
     let canister_ids = create_and_install_service_canisters(identity, url.clone(), true).await;
 
     let (user1_id, user2_id, user3_id) = register_3_default_users(url.clone(), canister_ids.user_index).await;
-    println!("user1_id: {:?}", user1_id);
-    println!("user2_id: {:?}", user2_id);
-    println!("user3_id: {:?}", user3_id);
+    println!("user1_id: {user1_id:?}");
+    println!("user2_id: {user2_id:?}");
+    println!("user3_id: {user3_id:?}");
 
     let controller_identity = build_identity(TestIdentity::Controller);
     let user1_identity = build_identity(TestIdentity::User1);
@@ -49,7 +49,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
 
     // User1 is owner and user2 is a participant
     let chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id]).await;
-    println!("chat_id: {:?}", chat_id);
+    println!("chat_id: {chat_id:?}");
 
     {
         print!("1. Controller make user3 a super admin... ");
@@ -59,7 +59,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
             .unwrap()
         {
             user_index_canister::add_super_admin::Response::Success => {}
-            response => panic!("user_index::add_super_admin returned an error: {:?}", response),
+            response => panic!("user_index::add_super_admin returned an error: {response:?}"),
         };
         println!("Ok");
     }
@@ -87,7 +87,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
             .unwrap()
         {
             user_canister::join_group::Response::GroupNotPublic => {}
-            response => panic!("user::join_group did not return GroupNotPublic: {:?}", response),
+            response => panic!("user::join_group did not return GroupNotPublic: {response:?}"),
         };
         println!("Failed as expected");
     }
@@ -103,7 +103,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
             .unwrap()
         {
             user_canister::join_group::Response::Success => {}
-            response => panic!("user::join_group did not return Success: {:?}", response),
+            response => panic!("user::join_group did not return Success: {response:?}"),
         };
         println!("Ok");
     }
@@ -123,7 +123,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
                     assert!(false);
                 }
             }
-            response => panic!("user::initial_state returned an error: {:?}", response),
+            response => panic!("user::initial_state returned an error: {response:?}"),
         };
         println!("Ok");
     }
@@ -136,7 +136,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
             .unwrap()
         {
             group_canister::transfer_ownership::Response::Success => {}
-            response => panic!("group::transfer_ownership returned an error: {:?}", response),
+            response => panic!("group::transfer_ownership returned an error: {response:?}"),
         };
         println!("Ok");
     }
@@ -149,7 +149,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
             .unwrap()
         {
             user_canister::leave_group::Response::Success => {}
-            response => panic!("user::leave_group did not return Success: {:?}", response),
+            response => panic!("user::leave_group did not return Success: {response:?}"),
         };
         println!("Ok");
     }
@@ -166,7 +166,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
             .unwrap()
         {
             group_canister::add_participants::Response::Success => {}
-            response => panic!("group::add_participants returned an error: {:?}", response),
+            response => panic!("group::add_participants returned an error: {response:?}"),
         };
         println!("Ok");
     }
@@ -179,7 +179,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
             .unwrap()
         {
             user_canister::assume_group_super_admin::Response::Success => {}
-            response => panic!("user::assume_group_super_admin returned an error: {:?}", response),
+            response => panic!("user::assume_group_super_admin returned an error: {response:?}"),
         };
         println!("Ok");
     }
@@ -192,7 +192,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
             .unwrap()
         {
             group_canister::remove_participant::Response::Success => {}
-            response => panic!("group::remove_participant returned an error: {:?}", response),
+            response => panic!("group::remove_participant returned an error: {response:?}"),
         };
         println!("Ok");
     }
@@ -205,7 +205,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
             .unwrap()
         {
             user_canister::relinquish_group_super_admin::Response::Success => {}
-            response => panic!("user::relinquish_group_super_admin returned an error: {:?}", response),
+            response => panic!("user::relinquish_group_super_admin returned an error: {response:?}"),
         };
         println!("Ok");
     }
@@ -216,10 +216,10 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
         match group_canister_client::remove_participant(&user3_agent, &chat_id.into(), &args).await {
             Err(HttpError(error)) => {
                 if error.status != 403 {
-                    panic!("group::remove_participant did not return 403 as expected: {:?}", error);
+                    panic!("group::remove_participant did not return 403 as expected: {error:?}");
                 }
             }
-            response => panic!("group::remove_participant did not return 403 as expected: {:?}", response),
+            response => panic!("group::remove_participant did not return 403 as expected: {response:?}"),
         };
         println!("Failed as expected");
     }
@@ -232,7 +232,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
             .unwrap()
         {
             user_canister::assume_group_super_admin::Response::Success => {}
-            response => panic!("user::assume_group_super_admin returned an error: {:?}", response),
+            response => panic!("user::assume_group_super_admin returned an error: {response:?}"),
         };
         println!("Ok");
     }
@@ -245,7 +245,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
             .unwrap()
         {
             user_index_canister::remove_super_admin::Response::Success => {}
-            response => panic!("user_index::remove_super_admin returned an error: {:?}", response),
+            response => panic!("user_index::remove_super_admin returned an error: {response:?}"),
         };
 
         println!("Ok");
@@ -266,7 +266,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
         print!("16. Wait for user3 to be dismissed as an admin by user_index::heartbeat... ");
         let one_second = time::Duration::from_secs(1);
         for i in 0..20 {
-            print!("{:?}... ", i);
+            print!("{i}... ");
 
             let args = user_canister::initial_state::Args {};
             match user_canister_client::initial_state(&user3_agent, &user3_id.into(), &args)
@@ -282,7 +282,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
                         assert!(false);
                     }
                 }
-                response => panic!("user::initial_state returned an error: {:?}", response),
+                response => panic!("user::initial_state returned an error: {response:?}"),
             };
 
             thread::sleep(one_second);
@@ -320,7 +320,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
                     GroupChatEvent::ParticipantDismissedAsSuperAdmin(_)
                 ));
             }
-            response => panic!("EventsRange returned an error: {:?}", response),
+            response => panic!("EventsRange returned an error: {response:?}"),
         };
 
         println!("Ok");

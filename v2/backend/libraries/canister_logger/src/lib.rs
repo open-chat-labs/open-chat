@@ -168,7 +168,7 @@ impl FormatTime for Timer {
     fn format_time(&self, w: &mut dyn Write) -> std::fmt::Result {
         let now = (self.time_fn)();
 
-        w.write_str(&format!("{}", now))
+        w.write_str(&format!("{now}"))
     }
 }
 

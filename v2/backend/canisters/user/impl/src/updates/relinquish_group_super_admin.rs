@@ -29,7 +29,7 @@ async fn relinquish_group_super_admin(args: Args) -> Response {
                 InternalError(message.to_owned())
             }
         },
-        Err(error) => InternalError(format!("{:?}", error)),
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }
 

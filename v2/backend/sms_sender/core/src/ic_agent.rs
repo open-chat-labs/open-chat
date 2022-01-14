@@ -46,11 +46,7 @@ impl IcAgent {
         match BasicIdentity::from_pem(pem.as_bytes()) {
             Ok(identity) => Box::new(identity),
             Err(error) => {
-                eprintln!(
-                    "Couldn't load identity from PEM file. {:?}. Input: {:?}",
-                    error,
-                    pem.as_bytes()
-                );
+                eprintln!("Couldn't load identity from PEM file. {error:?}. Input: {:?}", pem.as_bytes());
                 std::process::exit(1);
             }
         }

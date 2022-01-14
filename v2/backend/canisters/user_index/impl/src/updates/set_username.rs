@@ -74,7 +74,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             UpdateUserResult::Success => Success,
             UpdateUserResult::UsernameTaken => UsernameTaken,
             UpdateUserResult::UserNotFound => UserNotFound,
-            result => panic!("Unexpected result returned when updating username: {:?}", result),
+            result => panic!("Unexpected result returned when updating username: {result:?}"),
         }
     } else {
         UserNotFound

@@ -32,6 +32,6 @@ async fn main() -> Result<(), Error> {
         "push" => push_notifications::run(&ic_agent_config, &index_store, &vapid_private_pem).await,
         "prune" => prune_notifications::run(&ic_agent_config, &index_store).await,
         "auto" => runner::run(ic_agent_config, &index_store, &vapid_private_pem).await,
-        _ => Err(format!("Unsupported command: {}", command).into()),
+        _ => Err(format!("Unsupported command: {command}").into()),
     }
 }

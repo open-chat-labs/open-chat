@@ -83,7 +83,7 @@ impl HttpResponse {
         let mut headers = vec![HeaderField("Location".to_owned(), location.to_owned())];
 
         if let Some(max_age) = max_age {
-            let value = format!("public, max-age={}", max_age);
+            let value = format!("public, max-age={max_age}");
             headers.push(HeaderField("Cache-Control".to_owned(), value));
         }
 

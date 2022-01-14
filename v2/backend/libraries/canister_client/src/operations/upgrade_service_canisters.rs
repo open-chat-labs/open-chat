@@ -102,9 +102,9 @@ pub async fn upgrade_group_canister(
         .unwrap();
 
     if !matches!(response, group_index_canister::upgrade_group_canister_wasm::Response::Success) {
-        panic!("{:?}", response);
+        panic!("{response:?}");
     }
-    println!("Group canister wasm upgraded to version {}", version);
+    println!("Group canister wasm upgraded to version {version}");
 }
 
 pub async fn upgrade_user_canister(identity: BasicIdentity, url: String, user_index_canister_id: CanisterId, version: Version) {
@@ -123,9 +123,9 @@ pub async fn upgrade_user_canister(identity: BasicIdentity, url: String, user_in
         .unwrap();
 
     if !matches!(response, user_index_canister::upgrade_user_canister_wasm::Response::Success) {
-        panic!("{:?}", response);
+        panic!("{response:?}");
     }
-    println!("User canister wasm upgraded to version {}", version);
+    println!("User canister wasm upgraded to version {version}");
 }
 
 async fn upgrade_root_canister<A: CandidType + Send + Sync>(
@@ -149,7 +149,7 @@ async fn upgrade_wasm<A: CandidType + Send + Sync>(
     wasm_bytes: &[u8],
     args: A,
 ) {
-    println!("Stopping canister {}", canister_id);
+    println!("Stopping canister {canister_id}");
     management_canister
         .stop_canister(canister_id)
         .call_and_wait(delay())
@@ -166,7 +166,7 @@ async fn upgrade_wasm<A: CandidType + Send + Sync>(
         .await
     {
         Ok(_) => println!("Wasm upgraded"),
-        Err(error) => println!("Upgrade failed: {:?}", error),
+        Err(error) => println!("Upgrade failed: {error:?}"),
     };
 
     println!("Starting canister {}", canister_id);

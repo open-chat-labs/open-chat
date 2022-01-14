@@ -58,8 +58,8 @@ impl FromStr for AlertId {
 impl Display for AlertId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let ext_id = match self {
-            AlertId::Internal(id) => format!("in_{}", id),
-            AlertId::GroupDeleted(chat_id) => format!("gd_{}", chat_id),
+            AlertId::Internal(id) => format!("in_{id}"),
+            AlertId::GroupDeleted(chat_id) => format!("gd_{chat_id}"),
         };
 
         f.write_str(&ext_id)

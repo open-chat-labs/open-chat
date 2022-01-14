@@ -32,5 +32,5 @@ pub fn get_avatar(requested_avatar_id: Option<u128>, avatar: &Option<Avatar>) ->
 }
 
 fn build_avatar_location(blob_id: u128) -> String {
-    format!("/avatar/{}", blob_id)
+    format!("/avatar/{blob_id}")
 }
