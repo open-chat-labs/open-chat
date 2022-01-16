@@ -515,17 +515,28 @@ export class HomeController {
     }
 
     notificationReceived(notification: Notification): void {
+        let chatId: string;
         switch (notification.kind) {
             case "direct_notification": {
                 this.onConfirmedMessage(notification.sender, notification.message);
-                return;
+                chatId = notification.sender;
+                break;
             }
             case "group_notification": {
                 this.onConfirmedMessage(notification.chatId, notification.message);
-                return;
+                chatId = notification.chatId;
+                break;
             }
             case "added_to_group_notification":
                 return;
+        }
+
+        const selectedChat = get(this.selectedChat);
+        if (selectedChat?.chatId === chatId) {
+            selectedChat.raiseEvent({
+                chatId,
+                event: { kind: "chat_updated" }
+            });
         }
     }
 

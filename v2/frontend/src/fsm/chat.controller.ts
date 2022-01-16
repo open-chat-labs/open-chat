@@ -345,7 +345,7 @@ export class ChatController {
         );
     }
 
-    private raiseEvent(evt: ChatState): void {
+    public raiseEvent(evt: ChatState): void {
         if (this.onEvent) {
             this.onEvent(evt);
         }
