@@ -345,7 +345,7 @@ export class ChatController {
         );
     }
 
-    public raiseEvent(evt: ChatState): void {
+    private raiseEvent(evt: ChatState): void {
         if (this.onEvent) {
             this.onEvent(evt);
         }
@@ -398,7 +398,7 @@ export class ChatController {
         return get(this.events);
     }
 
-    async sendMessage(messageEvent: EventWrapper<Message>, userId: string): Promise<void> {
+    async sendMessage(messageEvent: EventWrapper<Message>, userId: string, confirmed = false): Promise<void> {
         // this message may have come in via webrtc
         const sentByMe = userId === this.user.userId;
         let upToDate = this.upToDate();
@@ -414,7 +414,7 @@ export class ChatController {
             draftMessages.delete(this.chatId);
         }
 
-        if (get(this.editingEvent)) {
+        if (sentByMe && get(this.editingEvent)) {
             this.events.update((events) => {
                 return events.map((e) => {
                     if (
@@ -427,7 +427,9 @@ export class ChatController {
                 });
             });
         } else {
-            unconfirmed.add(this.chatId, messageEvent);
+            if (!confirmed) {
+                unconfirmed.add(this.chatId, messageEvent);
+            }
             if (sentByMe) {
                 rtcConnectionsManager.sendMessage([...this.chatUserIds], {
                     kind: "remote_user_sent_message",
@@ -451,10 +453,6 @@ export class ChatController {
                             ev.event.messageId === messageEvent.event.messageId
                     );
                     if (existing !== undefined) {
-                        rollbar.error(
-                            "Trying to add a duplicate message to the event list",
-                            sentByMe.toString()
-                        );
                         return [...events];
                     } else {
                         return [...events, messageEvent];

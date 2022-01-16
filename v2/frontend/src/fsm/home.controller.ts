@@ -516,15 +516,18 @@ export class HomeController {
 
     notificationReceived(notification: Notification): void {
         let chatId: string;
+        let sender: string;
+        let message: EventWrapper<Message>;
         switch (notification.kind) {
             case "direct_notification": {
-                this.onConfirmedMessage(notification.sender, notification.message);
-                chatId = notification.sender;
+                chatId = sender = notification.sender;
+                message = notification.message;
                 break;
             }
             case "group_notification": {
-                this.onConfirmedMessage(notification.chatId, notification.message);
                 chatId = notification.chatId;
+                sender = notification.sender;
+                message = notification.message;
                 break;
             }
             case "added_to_group_notification":
@@ -533,11 +536,9 @@ export class HomeController {
 
         const selectedChat = get(this.selectedChat);
         if (selectedChat?.chatId === chatId) {
-            selectedChat.raiseEvent({
-                chatId,
-                event: { kind: "chat_updated" }
-            });
+            selectedChat.sendMessage(message, sender, true);
         }
+        this.onConfirmedMessage(chatId, message);
     }
 
     private delegateToChatController(
