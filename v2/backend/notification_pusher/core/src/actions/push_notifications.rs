@@ -59,7 +59,7 @@ async fn handle_notifications(
         if let Some(s) = subscriptions.remove(&user_id) {
             futures.push(push_notifications_to_user(
                 user_id,
-                &client,
+                client,
                 vapid_private_pem,
                 notifications,
                 s,
