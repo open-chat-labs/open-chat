@@ -398,8 +398,11 @@ export class ChatController {
         return get(this.events);
     }
 
+    // This is called in 3 scenarios:
+    // 1 - we are sending a message
+    // 2 - we receive an unconfirmed message via WebRTC
+    // 3 - we receive a confirmed message via a notification
     async sendMessage(messageEvent: EventWrapper<Message>, userId: string, confirmed = false): Promise<void> {
-        // this message may have come in via webrtc
         const sentByMe = userId === this.user.userId;
         let upToDate = this.upToDate();
 
