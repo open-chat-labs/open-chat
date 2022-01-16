@@ -363,7 +363,11 @@
                         }
                         break;
                     case "chat_updated":
-                        if (fromBottom < FROM_BOTTOM_THRESHOLD && shouldLoadNewMessages()) {
+                        if (
+                            initialised &&
+                            fromBottom < FROM_BOTTOM_THRESHOLD &&
+                            shouldLoadNewMessages()
+                        ) {
                             controller.loadNewMessages();
                         }
                         break;
