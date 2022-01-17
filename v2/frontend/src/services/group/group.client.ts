@@ -141,7 +141,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             }
         } else {
             throw new Error(
-                `Reached the maximum number of iterations of ${MAX_RECURSION} when trying to load events`
+                `Reached the maximum number of iterations of ${MAX_RECURSION} when trying to load events: ascending (${ascending}), range (${eventIndexRange}), so far (${previouslyLoadedEvents.length})`
             );
         }
     }
