@@ -32,12 +32,12 @@ pub async fn send_icp(pending_transfer: PendingICPTransfer) -> Result<CompletedI
         }
         Ok(Err(transfer_error)) => {
             let error_message = format!("Transfer failed. {transfer_error:?}");
-            let failed_transfer = pending_transfer.failed(fee, memo, error_message.clone());
+            let failed_transfer = pending_transfer.failed(fee, memo, error_message);
             Err(failed_transfer)
         }
         Err((code, msg)) => {
             let error_message = format!("Transfer failed. {code:?}: {msg}");
-            let failed_transfer = pending_transfer.failed(fee, memo, error_message.clone());
+            let failed_transfer = pending_transfer.failed(fee, memo, error_message);
             Err(failed_transfer)
         }
     };
