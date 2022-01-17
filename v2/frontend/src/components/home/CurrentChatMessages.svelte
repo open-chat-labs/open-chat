@@ -52,7 +52,8 @@
 
     setContext<UserLookup>("userLookup", $userStore);
 
-    let messagesDiv: HTMLDivElement;
+    // treat this as if it might be null so we don't get errors when it's unmounted
+    let messagesDiv: HTMLDivElement | undefined;
     let initialised = false;
     let scrollingToMessage = false;
     let scrollTimer: number | undefined;
@@ -97,7 +98,7 @@
     });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
-        messagesDiv.scrollTo({
+        messagesDiv?.scrollTo({
             top: 0,
             behavior,
         });
@@ -178,7 +179,7 @@
             return;
         }
 
-        fromBottom = -messagesDiv.scrollTop;
+        fromBottom = -(messagesDiv?.scrollTop ?? 0);
         fromTop = calculateFromTop();
 
         if (!$loading) {
@@ -345,7 +346,7 @@
                         // wait until the events are rendered
                         tick().then(() => {
                             // recalculate fromBottom
-                            fromBottom = -messagesDiv.scrollTop;
+                            fromBottom = -(messagesDiv?.scrollTop ?? 0);
                             if (fromBottom < FROM_BOTTOM_THRESHOLD) {
                                 // only scroll if we are now within threshold from the bottom
                                 scrollBottom("smooth");
