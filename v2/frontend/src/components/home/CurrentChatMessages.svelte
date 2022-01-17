@@ -427,9 +427,6 @@
             </div>
             {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
                 {#each userGroup as evt, i (eventKey(evt))}
-                    {#if !preview && evt.event.kind === "message" && unreadMessages > 0 && evt.event.messageIndex === firstUnreadMessage}
-                        <div id="new-msgs" class="new-msgs">{$_("new")}</div>
-                    {/if}
                     <ChatEvent
                         {observer}
                         focused={evt.event.kind === "message" &&
@@ -491,22 +488,6 @@
 </div>
 
 <style type="text/scss">
-    .new-msgs {
-        display: inline-block;
-        color: #fff;
-        @include font(light, normal, fs-100);
-        margin-bottom: $sp4;
-        margin-top: $sp4;
-
-        &:after {
-            content: "";
-            width: 100%;
-            border-top: 1px dotted #fff;
-            display: block;
-            position: absolute;
-        }
-    }
-
     .day-group {
         position: relative;
 
