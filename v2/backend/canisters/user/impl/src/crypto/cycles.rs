@@ -13,13 +13,9 @@ pub struct CyclesTransferDetails {
 pub fn start_cycles_transfer(pending_transfer: PendingCyclesTransfer) -> Result<CyclesTransferDetails, FailedCyclesTransfer> {
     mutate_state(|state| {
         let now = state.env.now();
-        let my_user_id = state.env.canister_id().into();
 
-        if state
-            .data
-            .user_cycles_balance
-            .try_subtract(pending_transfer.cycles, state.env.now())
-        {
+        if state.data.user_cycles_balance.try_subtract(pending_transfer.cycles, now) {
+            let my_user_id = state.env.canister_id().into();
             let completed_transfer = pending_transfer.completed(my_user_id);
             let index = state
                 .data
@@ -32,7 +28,7 @@ pub fn start_cycles_transfer(pending_transfer: PendingCyclesTransfer) -> Result<
             })
         } else {
             let error_message = "Insufficient cycles".to_string();
-            let failed_transfer = pending_transfer.failed(my_user_id, error_message);
+            let failed_transfer = pending_transfer.failed(error_message);
 
             let crypto_transfer = CryptocurrencyTransfer::Cycles(CyclesTransfer::Failed(failed_transfer.clone()));
             state.data.transactions.add(crypto_transfer, now);

@@ -88,13 +88,7 @@ fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>,
         .push_message(true, recipient, None, push_message_args);
 
     let c2c_args = build_c2c_args(args, message_event.event.message_index);
-    ic_cdk::block_on(send_to_recipients_canister(
-        my_user_id,
-        recipient,
-        c2c_args,
-        cycles_transfer,
-        false,
-    ));
+    ic_cdk::block_on(send_to_recipients_canister(recipient, c2c_args, cycles_transfer, false));
 
     Success(SuccessResult {
         chat_id: recipient.into(),
@@ -119,7 +113,6 @@ fn build_c2c_args(args: Args, message_index: MessageIndex) -> c2c_send_message::
 }
 
 pub(crate) async fn send_to_recipients_canister(
-    my_user_id: UserId,
     recipient: UserId,
     args: c2c_send_message::Args,
     cycles_transfer: Option<CyclesTransferDetails>,
@@ -142,7 +135,6 @@ pub(crate) async fn send_to_recipients_canister(
                 error!(?error, ?recipient, "Failed to send message to recipient even after retrying");
                 if let Some(ct) = cycles_transfer {
                     let failed_cycles_transfer = FailedCyclesTransfer {
-                        sender: my_user_id,
                         recipient: ct.transfer.recipient,
                         cycles: ct.transfer.cycles,
                         error_message: format!("{error:?}"),
