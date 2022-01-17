@@ -157,7 +157,7 @@
     }
 
     function canAddParticipants(chat: GroupChatSummary): boolean {
-        return chat.public || chat.myRole === "admin" || chat.myRole === "owner";
+        return !chat.public && (chat.myRole === "admin" || chat.myRole === "owner");
     }
 
     $: chat = normaliseChatSummary($now, $selectedChatSummary);

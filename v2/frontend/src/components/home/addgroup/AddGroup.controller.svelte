@@ -52,10 +52,14 @@
         if (resp.kind === "max_groups_created") return "maxGroupsCreated";
     }
 
-    function chooseParticipants() {
+    function onCreateGroup() {
         if (canisterId === undefined) {
             creatingCanister = true;
-            newGroupState = "choosing_participants";
+
+            if (!candidateGroup.isPublic) {
+                newGroupState = "choosing_participants";
+            }
+
             api.createGroupChat(candidateGroup)
                 .then((resp) => {
                     if (resp.kind !== "success") {
@@ -64,6 +68,9 @@
                         newGroupState = "group_form";
                     } else {
                         canisterId = resp.canisterId;
+                        if (candidateGroup.isPublic) {
+                            onGroupCreated();
+                        }
                     }
                 })
                 .catch((err) => {
@@ -86,9 +93,7 @@
             )
                 .then((resp) => {
                     if (resp.kind === "add_participants_success") {
-                        push(`/${canisterId}`); // trigger the selection of the chat
-                        dispatch("groupCreated");
-                        reset();
+                        onGroupCreated();
                     } else {
                         toastStore.showFailureToast("addParticipantsFailed");
                     }
@@ -100,6 +105,12 @@
                 .finally(() => (addingParticipants = false));
         }
     }
+
+    function onGroupCreated() {
+        push(`/${canisterId}`); // trigger the selection of the chat
+        dispatch("groupCreated");
+        reset();
+    }
 </script>
 
 {#if newGroupState === "group_form"}
@@ -107,7 +118,7 @@
         {creatingCanister}
         bind:candidateGroup
         on:cancelNewGroup
-        on:chooseParticipants={chooseParticipants} />
+        on:createGroup={onCreateGroup} />
 {:else if newGroupState === "choosing_participants"}
     <ChooseParticipants
         {api}
