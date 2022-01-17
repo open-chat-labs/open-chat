@@ -29,10 +29,6 @@ impl Pool {
         self.canister_ids.len() >= self.target_size as usize
     }
 
-    pub fn set_target_size(&mut self, size: u16) {
-        self.target_size = size;
-    }
-
     pub fn push(&mut self, canister_id: CanisterId) {
         self.canister_ids.push_back(canister_id);
     }
