@@ -19,6 +19,7 @@ use utils::memory;
 use utils::rand::get_random_item;
 use utils::regular_jobs::RegularJobs;
 
+mod crypto;
 mod guards;
 mod lifecycle;
 mod model;

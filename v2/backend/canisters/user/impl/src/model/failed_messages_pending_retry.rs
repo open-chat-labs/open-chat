@@ -1,4 +1,4 @@
-use crate::updates::send_message::CyclesTransferDetails;
+use crate::crypto::cycles::CyclesTransferDetails;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::UserId;

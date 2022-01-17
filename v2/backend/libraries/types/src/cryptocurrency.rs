@@ -165,8 +165,9 @@ impl PendingCyclesTransfer {
         }
     }
 
-    pub fn failed(&self, error_message: String) -> FailedCyclesTransfer {
+    pub fn failed(&self, sender: UserId, error_message: String) -> FailedCyclesTransfer {
         FailedCyclesTransfer {
+            sender,
             recipient: self.recipient,
             cycles: self.cycles,
             error_message,
@@ -183,6 +184,7 @@ pub struct CompletedCyclesTransfer {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FailedCyclesTransfer {
+    pub sender: UserId,
     pub recipient: UserId,
     pub cycles: Cycles,
     pub error_message: String,
@@ -225,8 +227,9 @@ impl PendingICPTransfer {
         }
     }
 
-    pub fn failed(&self, fee: ICP, memo: Memo, error_message: String) -> FailedICPTransfer {
+    pub fn failed(&self, sender: UserId, fee: ICP, memo: Memo, error_message: String) -> FailedICPTransfer {
         FailedICPTransfer {
+            sender,
             recipient: self.recipient,
             amount: self.amount,
             fee,
@@ -248,6 +251,7 @@ pub struct CompletedICPTransfer {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FailedICPTransfer {
+    pub sender: UserId,
     pub recipient: UserId,
     pub amount: ICP,
     pub fee: ICP,
