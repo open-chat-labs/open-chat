@@ -58,11 +58,6 @@
         closeNotificationsForChat(chatId);
     }
 
-    onMount(() => {
-        window.addEventListener("focus", onWindowFocus);
-        return () => window.removeEventListener("focus", onWindowFocus);
-    });
-
     onDestroy(unsub);
 
     function toggleMuteNotifications() {
@@ -102,6 +97,8 @@
 
     $: preview = isPreviewing($chat);
 </script>
+
+<svelte:window on:focus={onWindowFocus}/>
 
 <div class="wrapper">
     <CurrentChatHeader
