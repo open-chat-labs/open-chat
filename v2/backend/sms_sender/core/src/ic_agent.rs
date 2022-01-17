@@ -6,6 +6,7 @@ use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use std::time::Duration;
+use tracing::error;
 use types::{CanisterId, Error};
 
 pub struct IcAgentConfig {
@@ -46,7 +47,7 @@ impl IcAgent {
         match BasicIdentity::from_pem(pem.as_bytes()) {
             Ok(identity) => Box::new(identity),
             Err(error) => {
-                eprintln!("Couldn't load identity from PEM file. {error:?}. Input: {:?}", pem.as_bytes());
+                error!("Couldn't load identity from PEM file. {error:?}. Input: {:?}", pem.as_bytes());
                 std::process::exit(1);
             }
         }

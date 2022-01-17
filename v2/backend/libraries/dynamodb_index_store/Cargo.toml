@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 async-trait = "0.1.51"
-aws-sdk-dynamodb = "0.2.0"
+aws-sdk-dynamodb = "0.4.1"
+aws-types = "0.4.1"
 index_store = { path = "../index_store" }
 types = { path = "../types" }

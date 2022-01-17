@@ -1,8 +1,8 @@
 use crate::{SmsReader, SmsSender};
 use futures::future;
 use index_store::IndexStore;
-use log::{error, info};
 use tokio::time;
+use tracing::{error, info};
 use types::Error;
 
 pub async fn run(sms_reader: &dyn SmsReader, index_store: &dyn IndexStore, sms_sender: &dyn SmsSender) -> Result<(), Error> {
