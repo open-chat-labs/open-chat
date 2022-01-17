@@ -46,6 +46,7 @@ members = [
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
     "backend/sms_sender/aws",
+    "backend/sms_sender/cli",
     "backend/sms_sender/core"
 ]
 

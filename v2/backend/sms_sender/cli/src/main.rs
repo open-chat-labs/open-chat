@@ -1,12 +1,10 @@
-use crate::pinpoint::PinpointClient;
 use candid::Principal;
-use dynamodb_index_store::DynamoDbIndexStore;
+use index_store::DummyStore;
+use sms_sender_aws::pinpoint::PinpointClient;
 use sms_sender_core::{run, IcAgent, IcAgentConfig};
 use std::str::FromStr;
 use tracing::info;
 use types::Error;
-
-mod pinpoint;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -15,6 +13,10 @@ async fn main() -> Result<(), Error> {
 
     info!("Starting...");
 
+    let args: Vec<String> = std::env::args().collect();
+    let index = args[1].parse::<u64>().unwrap();
+    let index_store = DummyStore::new(Some(index));
+
     let canister_id = Principal::from_text(dotenv::var("USER_INDEX_CANISTER_ID")?).unwrap();
     let ic_url = dotenv::var("IC_URL")?;
     let ic_identity_pem = dotenv::var("IC_IDENTITY_PEM")?;
@@ -22,7 +24,6 @@ async fn main() -> Result<(), Error> {
     let pinpoint_application_id = dotenv::var("PINPOINT_APPLICATION_ID")?;
 
     let aws_config = aws_config::load_from_env().await;
-    let dynamodb_index_store = DynamoDbIndexStore::build(&aws_config, "sms_stream_indexes".to_string(), canister_id);
     let pinpoint_client = PinpointClient::build(&aws_config, pinpoint_application_id);
 
     info!("DynamoDbClient created");
@@ -37,5 +38,5 @@ async fn main() -> Result<(), Error> {
 
     info!("Configuration complete");
 
-    run(&ic_agent, &dynamodb_index_store, &pinpoint_client).await
+    run(&ic_agent, &index_store, &pinpoint_client).await
 }
