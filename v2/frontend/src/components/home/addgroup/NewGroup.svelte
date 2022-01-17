@@ -29,8 +29,8 @@
         dispatch("cancelNewGroup");
     }
 
-    function chooseParticipants() {
-        dispatch("chooseParticipants");
+    function createGroup() {
+        dispatch("createGroup");
     }
 
     function toggleScope() {
@@ -58,7 +58,7 @@
     <Avatar url={"assets/group.svg"} status={UserStatus.None} size={AvatarSize.Tiny} />
 </SectionHeader>
 
-<form class="group-form" on:submit|preventDefault={chooseParticipants}>
+<form class="group-form" on:submit|preventDefault={createGroup}>
     <div class="form-fields">
         <div class="sub-section photo">
             <EditableAvatar
@@ -145,7 +145,7 @@
 </form>
 <div class="cta">
     <Button
-        on:click={chooseParticipants}
+        on:click={createGroup}
         fill={true}
         disabled={!valid || creatingCanister}
         loading={creatingCanister}>{$_("submitNewGroup")}</Button>
