@@ -210,6 +210,16 @@ impl ChatEvents {
         events
     }
 
+    pub fn get(&self, event_index: EventIndex) -> Option<&EventWrapper<ChatEventInternal>> {
+        let index = self.get_index(event_index)?;
+        self.events.get(index)
+    }
+
+    pub fn get_mut(&mut self, event_index: EventIndex) -> Option<&mut EventWrapper<ChatEventInternal>> {
+        let index = self.get_index(event_index)?;
+        self.events.get_mut(index)
+    }
+
     pub fn push_message(&mut self, args: PushMessageArgs) -> EventWrapper<Message> {
         let message_index = self.next_message_index();
         let message_internal = MessageInternal {
@@ -350,7 +360,7 @@ impl ChatEvents {
         }
 
         if let Some(&event_index) = self.message_id_map.get(&message_id) {
-            if let Some(ChatEventInternal::Message(message)) = self.get_internal_mut(event_index).map(|e| &mut e.event) {
+            if let Some(ChatEventInternal::Message(message)) = self.get_mut(event_index).map(|e| &mut e.event) {
                 let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
                     if users.insert(user_id) {
                         true
@@ -395,7 +405,7 @@ impl ChatEvents {
 
     pub fn reaction_exists(&self, added_by: UserId, message_id: &MessageId, reaction: &Reaction) -> bool {
         if let Some(&event_index) = self.message_id_map.get(message_id) {
-            if let Some(ChatEventInternal::Message(message)) = self.get_internal(event_index).map(|e| &e.event) {
+            if let Some(ChatEventInternal::Message(message)) = self.get(event_index).map(|e| &e.event) {
                 if let Some((_, users)) = message.reactions.iter().find(|(r, _)| r == reaction) {
                     return users.contains(&added_by);
                 }
@@ -410,7 +420,7 @@ impl ChatEvents {
 
     pub fn latest_message_if_updated(&self, since: TimestampMillis) -> Option<EventWrapper<Message>> {
         let event_index = self.latest_message_event_index?;
-        let event = self.get_internal(event_index)?;
+        let event = self.get(event_index)?;
 
         if let ChatEventInternal::Message(m) = &event.event {
             if event.timestamp > since || m.last_updated.unwrap_or(0) > since {
@@ -671,7 +681,7 @@ impl ChatEvents {
 
     pub fn get_message_index(&self, message_id: MessageId) -> Option<MessageIndex> {
         if let Some(&event_index) = self.message_id_map.get(&message_id) {
-            if let Some(event) = self.get_internal(event_index) {
+            if let Some(event) = self.get(event_index) {
                 if let ChatEventInternal::Message(message) = &event.event {
                     return Some(message.message_index);
                 };
@@ -682,7 +692,7 @@ impl ChatEvents {
 
     pub fn hydrate_mention(&self, message_index: &MessageIndex) -> Option<Mention> {
         if let Some(&event_index) = self.message_index_map.get(message_index) {
-            if let Some(event) = self.get_internal(event_index) {
+            if let Some(event) = self.get(event_index) {
                 if let ChatEventInternal::Message(message) = &event.event {
                     return Some(Mention {
                         message_id: message.message_id,
@@ -712,21 +722,9 @@ impl ChatEvents {
         self.events.is_empty()
     }
 
-    fn get_internal(&self, event_index: EventIndex) -> Option<&EventWrapper<ChatEventInternal>> {
-        let index = self.get_index(event_index)?;
-
-        self.events.get(index)
-    }
-
-    fn get_internal_mut(&mut self, event_index: EventIndex) -> Option<&mut EventWrapper<ChatEventInternal>> {
-        let index = self.get_index(event_index)?;
-
-        self.events.get_mut(index)
-    }
-
     fn get_message_internal_mut(&mut self, message_id: MessageId) -> Option<&mut MessageInternal> {
         if let Some(&event_index) = self.message_id_map.get(&message_id) {
-            if let Some(event) = self.get_internal_mut(event_index) {
+            if let Some(event) = self.get_mut(event_index) {
                 if let ChatEventInternal::Message(message) = &mut event.event {
                     return Some(message);
                 };
