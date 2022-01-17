@@ -6,9 +6,11 @@ use index_store::IndexStore;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use std::rc::Rc;
-use tracing::error;
+use tracing::{error, info};
 use types::{Error, IndexedEvent, NotificationEnvelope, UserId};
 use web_push::*;
+
+const MAX_PAYLOAD_LENGTH_BYTES: usize = 4 * 1024;
 
 pub async fn run<'a>(
     config: &'a IcAgentConfig,
@@ -21,6 +23,8 @@ pub async fn run<'a>(
     let ic_response = ic_agent.get_notifications(from_notification_index).await?;
 
     if let Some(latest_notification_index) = ic_response.notifications.last().map(|e| e.index) {
+        let client = WebPushClient::new()?;
+
         let subscriptions_map = ic_response
             .subscriptions
             .into_iter()
@@ -28,7 +32,7 @@ pub async fn run<'a>(
             .collect();
 
         let subscriptions_to_remove =
-            handle_notifications(ic_response.notifications, subscriptions_map, vapid_private_pem).await;
+            handle_notifications(&client, ic_response.notifications, subscriptions_map, vapid_private_pem).await;
 
         let future1 = index_store.set(latest_notification_index);
         let future2 = ic_agent.remove_subscriptions(subscriptions_to_remove);
@@ -43,20 +47,19 @@ pub async fn run<'a>(
 }
 
 async fn handle_notifications(
+    client: &WebPushClient,
     envelopes: Vec<IndexedEvent<NotificationEnvelope>>,
     mut subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
     vapid_private_pem: &str,
 ) -> HashMap<UserId, Vec<String>> {
     let grouped_by_user = group_notifications_by_user(envelopes);
 
-    let client = WebPushClient::new();
-
     let mut futures = Vec::new();
     for (user_id, notifications) in grouped_by_user {
         if let Some(s) = subscriptions.remove(&user_id) {
             futures.push(push_notifications_to_user(
                 user_id,
-                &client,
+                client,
                 vapid_private_pem,
                 notifications,
                 s,
@@ -120,24 +123,36 @@ async fn push_notifications_to_user(
             let sig_builder = VapidSignatureBuilder::from_pem(vapid_private_pem.as_bytes(), subscription)?;
             let vapid_signature = sig_builder.build()?;
             let mut builder = WebPushMessageBuilder::new(subscription)?;
-            builder.set_payload(ContentEncoding::AesGcm, notification.as_bytes());
+            builder.set_payload(ContentEncoding::Aes128Gcm, notification.as_bytes());
             builder.set_vapid_signature(vapid_signature);
-            messages.push(builder.build()?);
+            let message = builder.build()?;
+
+            let length = message.payload.as_ref().map_or(0, |p| p.content.len());
+            if length <= MAX_PAYLOAD_LENGTH_BYTES {
+                messages.push((message, subscription));
+            } else {
+                info!(length, "Max length exceeded");
+            }
         }
     }
 
-    let futures: Vec<_> = messages.into_iter().map(|m| client.send(m)).collect();
+    let futures: Vec<_> = messages
+        .into_iter()
+        .map(|(m, s)| push_notification_to_user(client, m, s))
+        .collect();
+
     let results = futures::future::join_all(futures).await;
 
     let mut subscriptions_to_remove = Vec::new();
-    for index in 0..subscriptions.len() {
-        let result = &results[index];
+    for result in results {
         match result {
             Ok(_) => (),
-            Err(error) => match error {
+            Err((error, subscription)) => match error {
                 WebPushError::EndpointNotValid | WebPushError::InvalidUri | WebPushError::EndpointNotFound => {
-                    let subscription_key = subscriptions[index].keys.p256dh.clone();
-                    subscriptions_to_remove.push(subscription_key);
+                    let subscription_key = &subscription.keys.p256dh;
+                    if !subscriptions_to_remove.contains(subscription_key) {
+                        subscriptions_to_remove.push(subscription_key.clone());
+                    }
                 }
                 _ => {
                     error!(?error, "Failed to push notification");
@@ -147,6 +162,14 @@ async fn push_notifications_to_user(
     }
 
     Ok((user_id, subscriptions_to_remove))
+}
+
+async fn push_notification_to_user<'a>(
+    client: &WebPushClient,
+    message: WebPushMessage,
+    subscription: &'a SubscriptionInfo,
+) -> Result<(), (WebPushError, &'a SubscriptionInfo)> {
+    client.send(message).await.map_err(|e| (e, subscription))
 }
 
 fn convert_subscription_info(value: types::SubscriptionInfo) -> SubscriptionInfo {

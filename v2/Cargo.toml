@@ -58,3 +58,4 @@ codegen-units = 1
 ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "2731184ce08496ab26eb8e1a4b932fb303479013" }
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "2731184ce08496ab26eb8e1a4b932fb303479013" }
 ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "2731184ce08496ab26eb8e1a4b932fb303479013" }
+web-push = { git = "https://github.com/hpeebles/rust-web-push", rev = "c0424e229fab6094754338e6efb97efb9fcf56e5" }
