@@ -2,7 +2,7 @@ use crate::FIVE_MINUTES_IN_MS;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use tracing::info;
+use tracing::trace;
 use types::{ChatId, EventIndex, EventWrapper, Message, MessageIndex, Milliseconds, PublicGroupSummary, TimestampMillis};
 
 const HOT_GROUPS_CACHE_DURATION: Milliseconds = FIVE_MINUTES_IN_MS;
@@ -40,7 +40,7 @@ impl CachedHotGroups {
         self.last_updated = now;
         self.update_in_progress = false;
 
-        info!(?chat_ids, "Cached hot groups updated");
+        trace!(?chat_ids, "Cached hot groups updated");
     }
 }
 
