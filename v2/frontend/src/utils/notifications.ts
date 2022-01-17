@@ -38,28 +38,23 @@ export function permissionStateToNotificationPermission(
 }
 
 export async function closeNotificationsForChat(chatId: string): Promise<void> {
-    if (process.env.NODE_ENV !== "test") {
-        const registration = await registerServiceWorker();
-        if (registration != null) {
-            const notifications = await registration.getNotifications();
-            for (const notification of notifications) {
-                if (notification.data?.chatId === chatId) {
-                    notification.close();
-                }
+    const registration = await registerServiceWorker();
+    if (registration != null) {
+        const notifications = await registration.getNotifications();
+        for (const notification of notifications) {
+            if (notification.data?.path === chatId) {
+                notification.close();
             }
         }
     }
 }
 
 export async function unregister(): Promise<boolean> {
-    if (process.env.NODE_ENV !== "test") {
-        const registration = await registerServiceWorker();
-        if (registration == null) {
-            return false;
-        }
-        return registration.unregister();
+    const registration = await registerServiceWorker();
+    if (registration == null) {
+        return false;
     }
-    return Promise.resolve(false);
+    return registration.unregister();
 }
 
 async function registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
@@ -77,10 +72,6 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
 }
 
 export async function trySubscribe(api: ServiceContainer, userId: string, onNotification: (notification: Notification) => void): Promise<boolean> {
-    if (process.env.NODE_ENV === "test") {
-        return Promise.resolve(false);
-    }
-
     // Register a service worker if it hasn't already been done
     const registration = await registerServiceWorker();
     if (registration == null) {
