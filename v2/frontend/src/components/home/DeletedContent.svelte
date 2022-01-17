@@ -8,11 +8,12 @@
     export let content: DeletedContent;
     $: date = new Date(Number(content.timestamp));
     $: timestampStr = `${toLongDateString(date)} @ ${toShortTimeString(date)}`;
+    $: username = $userStore[content.deletedBy]?.username ?? $_("unknownUser");
 </script>
 
 <div class="deleted">
     {$_("messageDeleted", {
-        values: { username: $userStore[content.deletedBy].username, timestamp: timestampStr },
+        values: { username, timestamp: timestampStr },
     })}
 </div>
 

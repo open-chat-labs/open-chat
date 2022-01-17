@@ -1,4 +1,5 @@
 import { get, writable } from "svelte/store";
+import { rollbar } from "utils/logging";
 import { rtlStore } from "./rtl";
 import { ScreenWidth, screenWidth } from "./screenDimensions";
 
@@ -10,7 +11,12 @@ document.body.appendChild(menuAnchor);
 
 function close(menu: HTMLElement | undefined): HTMLElement | undefined {
     if (menu !== undefined) {
-        menuAnchor.removeChild(menu);
+        if (!menuAnchor) {
+            // debug logging - will remove later
+            rollbar.error("trying to remove menu when menu anchor is null");
+        } else {
+            menuAnchor.removeChild(menu);
+        }
     }
     return undefined;
 }
