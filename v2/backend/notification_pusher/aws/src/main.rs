@@ -20,11 +20,8 @@ async fn main() -> Result<(), Error> {
     let is_production = bool::from_str(&dotenv::var("IS_PRODUCTION")?).unwrap();
 
     let aws_config = aws_config::load_from_env().await;
-    let dynamodb_index_store = DynamoDbIndexStore::build(
-        (&aws_config).into(),
-        "push_notification_stream_indexes".to_string(),
-        canister_id,
-    );
+    let dynamodb_index_store =
+        DynamoDbIndexStore::build(&aws_config, "push_notification_stream_indexes".to_string(), canister_id);
 
     info!("DynamoDbClient created");
 
