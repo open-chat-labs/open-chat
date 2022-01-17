@@ -1,7 +1,7 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
-use chat_events::{ChatEventInternal, PushMessageArgs};
+use chat_events::{ChatEventInternal, GroupChatEvents, PushMessageArgs};
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
 use types::{ContentValidationError, GroupMessageNotification, Notification, UserId};
@@ -26,18 +26,10 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let now = runtime_state.env.now();
         let sender = participant.user_id;
-        let replies_to_user_id = args
+        let user_being_replied_to = args
             .replies_to
             .as_ref()
-            .map(|r| {
-                if let Some(ChatEventInternal::Message(message)) =
-                    runtime_state.data.events.get(r.event_index).map(|e| &e.event)
-                {
-                    Some(message.sender)
-                } else {
-                    None
-                }
-            })
+            .map(|r| get_user_being_replied_to(r, &runtime_state.data.events))
             .flatten();
 
         let push_message_args = PushMessageArgs {
@@ -67,7 +59,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         for u in &args.mentioned {
             add_mention(u.user_id);
         }
-        if let Some(user_id) = replies_to_user_id {
+        if let Some(user_id) = user_being_replied_to {
             if user_id != sender {
                 add_mention(user_id);
             }
@@ -92,5 +84,13 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         })
     } else {
         CallerNotInGroup
+    }
+}
+
+fn get_user_being_replied_to(replies_to: &GroupReplyContext, events: &GroupChatEvents) -> Option<UserId> {
+    if let Some(ChatEventInternal::Message(message)) = events.get(replies_to.event_index).map(|e| &e.event) {
+        Some(message.sender)
+    } else {
+        None
     }
 }
