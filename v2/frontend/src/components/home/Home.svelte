@@ -124,15 +124,16 @@
 
     async function performSearch(ev: CustomEvent<string>) {
         searchResultsAvailable = false;
-        searchTerm = ev.detail.toLowerCase();
+        searchTerm = ev.detail;
         if (searchTerm !== "") {
             searching = true;
-            groupSearchResults = api.searchGroups(searchTerm, 10);
-            userSearchResults = api.searchUsers(searchTerm, 10).then((resp) => {
+            const lowercase = searchTerm.toLowerCase();
+            groupSearchResults = api.searchGroups(lowercase, 10);
+            userSearchResults = api.searchUsers(lowercase, 10).then((resp) => {
                 userStore.addMany(resp);
                 return resp;
             });
-            messageSearchResults = api.searchAllMessages(searchTerm, 10);
+            messageSearchResults = api.searchAllMessages(lowercase, 10);
             try {
                 await Promise.all([
                     groupSearchResults,

@@ -43,12 +43,13 @@
     $: chatsList = controller.chatSummariesList;
     $: selectedChat = controller.selectedChat;
     $: chatsLoading = controller.loading;
+    $: lowercaseSearch = searchTerm.toLowerCase();
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat") {
             return (
-                chat.name.toLowerCase().indexOf(searchTerm) >= 0 ||
-                chat.description.toLowerCase().indexOf(searchTerm) >= 0
+                chat.name.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
+                chat.description.toLowerCase().indexOf(lowercaseSearch) >= 0
             );
         }
 
