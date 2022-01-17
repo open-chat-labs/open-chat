@@ -17,6 +17,7 @@
 
     onMount(() => {
         window.addEventListener("orientationchange", closeMenu);
+        return () => window.removeEventListener("orientationchange", closeMenu);
     });
 
     function closeMenu() {
