@@ -9,6 +9,7 @@
     "refresh": "Refresh",
     "goHome": "Home",
     "join": "Join",
+    "unableToLoadEmojiPicker": "Sorry! We could load the emoji picker. Please reload and try again.",
     "leave": "Leave",
     "preview": "Preview",
     "howToBuyICP": "how to buy ICP",

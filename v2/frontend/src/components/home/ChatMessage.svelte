@@ -31,6 +31,7 @@
     import type { MessageContent } from "../../domain/chat/chat";
     import { calculateMediaDimensions } from "../../utils/layout";
     import MessageReaction from "./MessageReaction.svelte";
+    import Reload from "../Reload.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -185,24 +186,26 @@
     <Overlay dismissible={true} bind:active={showEmojiPicker}>
         <ModalContent hideFooter={true} hideHeader={true} fill={true}>
             <span slot="body">
-                <div class="emoji-header">
-                    <h4>{$_("chooseReaction")}</h4>
-                    <span
-                        title={$_("close")}
-                        class="close-emoji"
-                        on:click={() => (showEmojiPicker = false)}>
-                        <HoverIcon>
-                            <Close size={$iconSize} color={"var(--icon-txt)"} />
-                        </HoverIcon>
-                    </span>
-                </div>
                 {#await import("./EmojiPicker.svelte")}
                     <div class="loading-emoji"><Loading /></div>
                 {:then picker}
+                    <div class="emoji-header">
+                        <h4>{$_("chooseReaction")}</h4>
+                        <span
+                            title={$_("close")}
+                            class="close-emoji"
+                            on:click={() => (showEmojiPicker = false)}>
+                            <HoverIcon>
+                                <Close size={$iconSize} color={"var(--icon-txt)"} />
+                            </HoverIcon>
+                        </span>
+                    </div>
                     <svelte:component
                         this={picker.default}
                         on:emojiSelected={selectReaction}
                         mode={"reaction"} />
+                {:catch _error}
+                    <Reload>{$_("unableToLoadEmojiPicker")}</Reload>
                 {/await}
             </span>
             <span slot="footer" />
