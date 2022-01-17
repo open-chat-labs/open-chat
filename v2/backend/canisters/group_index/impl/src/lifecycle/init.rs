@@ -7,7 +7,7 @@ use ic_cdk_macros::init;
 use tracing::info;
 use utils::env::canister::CanisterEnv;
 
-const CANISTER_POOL_TARGET_SIZE: u16 = 100;
+const CANISTER_POOL_TARGET_SIZE: u16 = 20;
 
 #[init]
 #[trace]
