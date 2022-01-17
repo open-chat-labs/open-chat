@@ -116,6 +116,15 @@
             ? $_("dropFile")
             : $_("enterMessage");
 
+    export function insertTextAtCaret(text: string) {
+        let range = window.getSelection()?.getRangeAt(0);
+        if (range !== undefined) {
+            range.deleteContents();
+            range.insertNode(document.createTextNode(text));
+            inputIsEmpty = false;
+        }
+    }    
+
     function onInput() {
         const content = inp.textContent;
         const trimmedContent = content?.trim();

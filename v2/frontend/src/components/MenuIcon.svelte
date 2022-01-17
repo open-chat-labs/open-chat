@@ -15,11 +15,6 @@
         }
     }
 
-    onMount(() => {
-        window.addEventListener("orientationchange", closeMenu);
-        return () => window.removeEventListener("orientationchange", closeMenu);
-    });
-
     function closeMenu() {
         menuStore.hideMenu();
     }
@@ -38,7 +33,7 @@
 </div>
 
 <svelte:body on:click={closeMenu} />
-<svelte:window on:resize={closeMenu} />
+<svelte:window on:resize={closeMenu} on:orientationchange={closeMenu} />
 
 <style type="text/scss">
     .menu {
