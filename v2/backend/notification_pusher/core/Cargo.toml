@@ -15,8 +15,7 @@ index_store = { path = "../../libraries/index_store" }
 notifications_canister = { path = "../../canisters/notifications/api" }
 openssl = { version = "0.10.35", features = ["vendored"] }
 serde = "1.0.126"
-serde_json = "1.0.64"
 tokio = { version = "1.10.0", features = ["macros", "time"] }
 tracing = "0.1.29"
 types = { path = "../../libraries/types" }
-web-push = { git = "https://github.com/pimeys/rust-web-push", rev = "85870ec55badfb95d74d1c7bd354a0deb5193481" }
+web-push = "0.9.1"
