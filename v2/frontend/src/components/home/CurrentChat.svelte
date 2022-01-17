@@ -3,13 +3,14 @@
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
     import { rollbar } from "../../utils/logging";
+    import { closeNotificationsForChat } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
     import { _ } from "svelte-i18n";
     import type { ChatController } from "../../fsm/chat.controller";
-    import { onDestroy } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import { getMinVisibleMessageIndex, isPreviewing } from "../../domain/chat/chat.utils";
     import type { GroupChatSummary, Mention } from "../../domain/chat/chat";
-
+    
     export let controller: ChatController;
     export let blocked: boolean;
     export let joining: GroupChatSummary | undefined;
@@ -52,6 +53,15 @@
             chat.latestMessage?.event.messageIndex
         );
     }
+
+    function onWindowFocus() {
+        closeNotificationsForChat(chatId);
+    }
+
+    onMount(() => {
+        window.addEventListener("focus", onWindowFocus);
+        return () => window.removeEventListener("focus", onWindowFocus);
+    });
 
     onDestroy(unsub);
 
