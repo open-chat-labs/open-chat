@@ -15,6 +15,8 @@
     import Loading from "../Loading.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
     import type { User } from "../../domain/user/user";
+    import Reload from "../Reload.svelte";
+    import { _ } from "svelte-i18n";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -161,6 +163,8 @@
                 <div class="loading-emoji"><Loading /></div>
             {:then picker}
                 <svelte:component this={picker.default} />
+            {:catch _error}
+                <Reload>{$_("unableToLoadEmojiPicker")}</Reload>
             {/await}
         {/if}
     </div>
