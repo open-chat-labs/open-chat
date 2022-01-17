@@ -22,6 +22,7 @@
     export let joining: GroupChatSummary | undefined;
 
     let showEmojiPicker = false;
+    let messageEntry: MessageEntry;
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
     $: editingEvent = controller.editingEvent;
@@ -129,7 +130,7 @@
             );
             const text = e.clipboardData.getData("text/plain");
             if (text) {
-                document.execCommand("insertText", false, text);
+                messageEntry.insertTextAtCaret(text);
             }
             e.preventDefault();
         }
@@ -164,6 +165,7 @@
         {/if}
     </div>
     <MessageEntry
+        bind:this={messageEntry}
         bind:showEmojiPicker
         on:paste={onPaste}
         on:drop={onDrop}
