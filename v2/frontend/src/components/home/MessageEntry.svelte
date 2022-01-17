@@ -211,7 +211,7 @@
     }
 
     function sendMessage() {
-        dispatch("sendMessage", expandMentions(inp.textContent?.trim()));
+        dispatch("sendMessage", expandMentions(inp.innerText?.trim()));
         inp.textContent = "";
         inp.focus();
         inputIsEmpty = true;
