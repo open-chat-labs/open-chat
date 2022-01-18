@@ -13,7 +13,7 @@
     export let publicGroup: boolean;
     export let closeIcon: "close" | "back";
 
-    $: canAdd = me?.role === "admin" || me?.role === "owner" || publicGroup;
+    $: canAdd = !publicGroup && (me?.role === "admin" || me?.role === "owner");
 
     const dispatch = createEventDispatcher();
     function close() {
