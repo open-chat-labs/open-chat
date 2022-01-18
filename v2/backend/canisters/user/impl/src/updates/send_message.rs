@@ -1,19 +1,19 @@
+use super::crypto::cycles::{
+    handle_failed_cycles_transfer, handle_successful_cycles_transfer, start_cycles_transfer, CyclesTransferDetails,
+};
+use super::crypto::icp::send_icp;
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
-use ic_ledger_types::{AccountIdentifier, Memo, TransferArgs, DEFAULT_FEE, DEFAULT_SUBACCOUNT, MAINNET_LEDGER_CANISTER_ID};
-use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{
-    CanisterId, CompletedCyclesTransfer, CompletedICPTransfer, ContentValidationError, CryptocurrencyTransfer, CyclesTransfer,
-    FailedCyclesTransfer, ICPTransfer, MessageContent, MessageIndex, PendingCyclesTransfer, PendingICPTransfer, Transaction,
-    UserId,
+    CanisterId, ContentValidationError, CryptocurrencyTransfer, CyclesTransfer, FailedCyclesTransfer, ICPTransfer,
+    MessageContent, MessageIndex, UserId,
 };
 use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
-use utils::consts::DEFAULT_MEMO;
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
@@ -37,29 +37,29 @@ async fn send_message(mut args: Args) -> Response {
     // If the message includes a pending cryptocurrency transfer, we process that and then update
     // the message to contain the completed transfer.
     if let MessageContent::Cryptocurrency(c) = &mut args.content {
-        match &mut c.transfer {
+        match c.transfer.clone() {
             CryptocurrencyTransfer::Cycles(CyclesTransfer::Pending(pending_transfer)) => {
                 if pending_transfer.recipient != args.recipient {
                     return InvalidRequest("Transfer recipient does not match message recipient".to_owned());
                 }
-                match subtract_cycles_from_user_balance(pending_transfer) {
+                match start_cycles_transfer(pending_transfer) {
                     Ok(completed_transfer) => {
                         c.transfer =
                             CryptocurrencyTransfer::Cycles(CyclesTransfer::Completed(completed_transfer.transfer.clone()));
                         cycles_transfer = Some(completed_transfer);
                     }
-                    Err(response) => return response,
+                    Err(failed_transfer) => return TransactionFailed(failed_transfer.error_message),
                 };
             }
             CryptocurrencyTransfer::ICP(ICPTransfer::Pending(pending_transfer)) => {
                 if pending_transfer.recipient != args.recipient {
                     return InvalidRequest("Transfer recipient does not match message recipient".to_owned());
                 }
-                match send_icp(args.recipient, pending_transfer).await {
+                match send_icp(pending_transfer).await {
                     Ok(completed_transfer) => {
                         c.transfer = CryptocurrencyTransfer::ICP(ICPTransfer::Completed(completed_transfer))
                     }
-                    Err(error) => return TransactionFailed(error),
+                    Err(failed_transfer) => return TransactionFailed(failed_transfer.error_message),
                 };
             }
             _ => return InvalidRequest("Can only send pending transfers".to_owned()),
@@ -126,10 +126,7 @@ pub(crate) async fn send_to_recipients_canister(
     match user_canister_c2c_client::c2c_send_message(recipient.into(), &args, cycles_to_send).await {
         Ok(_) => {
             if let Some(ct) = cycles_transfer {
-                mutate_state(|state| {
-                    let transfer = CryptocurrencyTransfer::Cycles(CyclesTransfer::Completed(ct.transfer));
-                    update_transaction(ct.index, transfer, state)
-                });
+                handle_successful_cycles_transfer(ct.index, ct.transfer);
             }
         }
         Err(error) => {
@@ -142,9 +139,7 @@ pub(crate) async fn send_to_recipients_canister(
                         cycles: ct.transfer.cycles,
                         error_message: format!("{error:?}"),
                     };
-                    mutate_state(|state| {
-                        handle_failed_cycles_transfer(ct.index, failed_cycles_transfer, state);
-                    });
+                    handle_failed_cycles_transfer(ct.index, failed_cycles_transfer);
                 }
             } else {
                 // If this is not a retry, queue up the message to be retried
@@ -174,126 +169,4 @@ fn queue_failed_message_for_retry(
         .add(recipient, args, cycles_transfer);
 
     runtime_state.data.user_index_canister_id
-}
-
-async fn send_icp(my_user_id: UserId, pending_transfer: &PendingICPTransfer) -> Result<CompletedICPTransfer, String> {
-    let index = mutate_state(|state| {
-        record_transaction(
-            CryptocurrencyTransfer::ICP(ICPTransfer::Pending(pending_transfer.clone())),
-            state,
-        )
-    });
-
-    let memo = pending_transfer.memo.unwrap_or(Memo(DEFAULT_MEMO));
-    let fee = pending_transfer.fee.unwrap_or(DEFAULT_FEE);
-
-    let transfer_args = TransferArgs {
-        memo,
-        amount: pending_transfer.amount,
-        fee,
-        from_subaccount: None,
-        to: AccountIdentifier::new(&pending_transfer.recipient.into(), &DEFAULT_SUBACCOUNT),
-        created_at_time: None,
-    };
-    match ic_ledger_types::transfer(MAINNET_LEDGER_CANISTER_ID, transfer_args).await {
-        Ok(Ok(block_index)) => {
-            let completed_transfer = pending_transfer.completed(my_user_id, fee, memo, block_index);
-            mutate_state(|state| {
-                update_transaction(
-                    index,
-                    CryptocurrencyTransfer::ICP(ICPTransfer::Completed(completed_transfer.clone())),
-                    state,
-                )
-            });
-            Ok(completed_transfer)
-        }
-        Ok(Err(transfer_error)) => {
-            let error_message = format!("Transfer failed. {transfer_error:?}");
-            let failed_transfer = pending_transfer.failed(fee, memo, error_message.clone());
-            mutate_state(|state| {
-                update_transaction(
-                    index,
-                    CryptocurrencyTransfer::ICP(ICPTransfer::Failed(failed_transfer)),
-                    state,
-                )
-            });
-            Err(error_message)
-        }
-        Err((code, msg)) => {
-            let error_message = format!("Transfer failed. {code:?}: {msg}");
-            let failed_transfer = pending_transfer.failed(fee, memo, error_message.clone());
-            mutate_state(|state| {
-                update_transaction(
-                    index,
-                    CryptocurrencyTransfer::ICP(ICPTransfer::Failed(failed_transfer)),
-                    state,
-                )
-            });
-            Err(error_message)
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct CyclesTransferDetails {
-    index: u32,
-    transfer: CompletedCyclesTransfer,
-}
-
-// If the user has enough cycles to cover the transfer, reduce their balance by the transfer amount
-// and log the pending transfer, else log a failed transfer.
-fn subtract_cycles_from_user_balance(transfer: &PendingCyclesTransfer) -> Result<CyclesTransferDetails, Response> {
-    fn subtract_cycles_from_user_balance_impl(
-        transfer: &PendingCyclesTransfer,
-        runtime_state: &mut RuntimeState,
-    ) -> Result<CyclesTransferDetails, Response> {
-        if runtime_state
-            .data
-            .user_cycles_balance
-            .try_subtract(transfer.cycles, runtime_state.env.now())
-        {
-            let index = record_transaction(
-                CryptocurrencyTransfer::Cycles(CyclesTransfer::Pending(transfer.clone())),
-                runtime_state,
-            );
-            let my_user_id = runtime_state.env.canister_id().into();
-            let completed_transfer = transfer.completed(my_user_id);
-            Ok(CyclesTransferDetails {
-                index,
-                transfer: completed_transfer,
-            })
-        } else {
-            let error_message = "Insufficient cycles".to_owned();
-            let failed_transfer = transfer.failed(error_message.clone());
-            record_transaction(
-                CryptocurrencyTransfer::Cycles(CyclesTransfer::Failed(failed_transfer)),
-                runtime_state,
-            );
-            Err(TransactionFailed(error_message))
-        }
-    }
-
-    mutate_state(|state| subtract_cycles_from_user_balance_impl(transfer, state))
-}
-
-fn handle_failed_cycles_transfer(index: u32, failed_transfer: FailedCyclesTransfer, runtime_state: &mut RuntimeState) {
-    runtime_state
-        .data
-        .user_cycles_balance
-        .add(failed_transfer.cycles, runtime_state.env.now());
-
-    update_transaction(
-        index,
-        CryptocurrencyTransfer::Cycles(CyclesTransfer::Failed(failed_transfer)),
-        runtime_state,
-    );
-}
-
-fn record_transaction(transaction: impl Into<Transaction>, runtime_state: &mut RuntimeState) -> u32 {
-    let now = runtime_state.env.now();
-    runtime_state.data.transactions.add(transaction, now)
-}
-
-fn update_transaction(index: u32, transaction: impl Into<Transaction>, runtime_state: &mut RuntimeState) {
-    runtime_state.data.transactions.update(index, transaction);
 }
