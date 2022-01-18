@@ -18,7 +18,6 @@ const authClient = AuthClient.create();
 
 if (isProd) {
     const apiKey = "process.env.USERGEEK_APIKEY";
-    console.log(`Usergeek.init API key: ${apiKey}`);
     Usergeek.init({ apiKey });
 }
 
