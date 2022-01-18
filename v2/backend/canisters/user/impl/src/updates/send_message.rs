@@ -1,7 +1,7 @@
-use crate::crypto::cycles::{
+use super::crypto::cycles::{
     handle_failed_cycles_transfer, handle_successful_cycles_transfer, start_cycles_transfer, CyclesTransferDetails,
 };
-use crate::crypto::icp::send_icp;
+use super::crypto::icp::send_icp;
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;

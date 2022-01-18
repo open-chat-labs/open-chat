@@ -1,6 +1,6 @@
-use crate::crypto::cycles::CyclesTransferDetails;
+use super::crypto::cycles::CyclesTransferDetails;
+use super::send_message::send_to_recipients_canister;
 use crate::guards::caller_is_user_index;
-use crate::updates::send_message::send_to_recipients_canister;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
