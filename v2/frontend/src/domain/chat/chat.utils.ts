@@ -1,6 +1,6 @@
 import type DRange from "drange";
 import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
-import { compareUsersOnlineFirst, nullUser } from "../user/user.utils";
+import { compareUsersOnlineFirst, extractUserIdsFromMentions, nullUser } from "../user/user.utils";
 import type {
     ChatSummary,
     DirectChatSummary,
@@ -81,9 +81,15 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
         switch (e.event.kind) {
             case "message":
                 userIds.add(e.event.sender);
-                if (e.event.repliesTo !== undefined && e.event.repliesTo.kind === "rehydrated_reply_context") {
+                if (
+                    e.event.repliesTo !== undefined &&
+                    e.event.repliesTo.kind === "rehydrated_reply_context"
+                ) {
                     userIds.add(e.event.repliesTo.senderId);
                 }
+                extractUserIdsFromMentions(getContentAsText(e.event.content)).forEach((id) =>
+                    userIds.add(id)
+                );
                 break;
             case "participant_joined":
             case "participant_left":
