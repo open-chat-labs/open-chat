@@ -20,6 +20,7 @@ fn heartbeat() {
     calculate_metrics::run();
     dismiss_removed_super_admins::run();
     prune_unconfirmed_users::run();
+    convert_fees_to_cycles::run();
 }
 
 mod upgrade_canisters {
@@ -248,5 +249,24 @@ mod prune_unconfirmed_users {
     fn prune_unconfirmed_users_impl(runtime_state: &mut RuntimeState) {
         let now = runtime_state.env.now();
         runtime_state.data.users.prune_unconfirmed_users_if_required(now);
+    }
+}
+
+mod convert_fees_to_cycles {
+    use super::*;
+    use types::ICPRegistrationFee;
+
+    pub fn run() {
+        if let Some(fee) = mutate_state(next) {
+            ic_cdk::block_on(convert_to_cycles(fee));
+        }
+    }
+
+    fn next(runtime_state: &mut RuntimeState) -> Option<ICPRegistrationFee> {
+        runtime_state.data.users.next_fee_to_convert_to_cycles()
+    }
+
+    async fn convert_to_cycles(fee: ICPRegistrationFee) {
+        ic_ledger_types::transfer()
     }
 }
