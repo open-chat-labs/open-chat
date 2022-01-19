@@ -2,7 +2,7 @@ use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::participants::Participants;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
-use canister_state_macros::state_operations;
+use canister_state_macros::canister_state;
 use chat_events::GroupChatEvents;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -31,12 +31,11 @@ enum StateVersion {
 }
 
 thread_local! {
-    static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 
-state_operations!();
+canister_state!(RuntimeState);
 
 struct RuntimeState {
     pub env: Box<dyn Environment>,
