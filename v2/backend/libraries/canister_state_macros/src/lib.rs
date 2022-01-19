@@ -1,26 +1,43 @@
 #[macro_export]
-macro_rules! state_operations {
-    () => {
-        fn set_state(runtime_state: RuntimeState) {
-            RUNTIME_STATE.with(|state| *state.borrow_mut() = Some(runtime_state));
+macro_rules! canister_state {
+    ($type:ty) => {
+        thread_local! {
+            static __STATE: RefCell<Option<$type>> = RefCell::default();
         }
 
-        fn take_state() -> RuntimeState {
-            RUNTIME_STATE.with(|state| state.take().unwrap())
+        const __STATE_ALREADY_INITIALIZED: &str = "State has already been initialized";
+        const __STATE_NOT_INITIALIZED: &str = "State has not been initialized";
+
+        fn init_state(state: $type) {
+            __STATE.with(|s| {
+                if s.borrow().is_some() {
+                    panic!("{}", __STATE_ALREADY_INITIALIZED);
+                } else {
+                    *s.borrow_mut() = Some(state);
+                }
+            });
+        }
+
+        fn replace_state(state: $type) -> $type {
+            __STATE.with(|s| s.replace(Some(state))).expect(__STATE_NOT_INITIALIZED)
+        }
+
+        fn take_state() -> $type {
+            __STATE.with(|s| s.take()).expect(__STATE_NOT_INITIALIZED)
         }
 
         fn read_state<F, R>(f: F) -> R
         where
-            F: FnOnce(&RuntimeState) -> R,
+            F: FnOnce(&$type) -> R,
         {
-            RUNTIME_STATE.with(|state| f(state.borrow().as_ref().unwrap()))
+            __STATE.with(|s| f(s.borrow().as_ref().expect(__STATE_NOT_INITIALIZED)))
         }
 
         fn mutate_state<F, R>(f: F) -> R
         where
-            F: FnOnce(&mut RuntimeState) -> R,
+            F: FnOnce(&mut $type) -> R,
         {
-            RUNTIME_STATE.with(|state| f(state.borrow_mut().as_mut().unwrap()))
+            __STATE.with(|s| f(s.borrow_mut().as_mut().expect(__STATE_NOT_INITIALIZED)))
         }
     };
 }
