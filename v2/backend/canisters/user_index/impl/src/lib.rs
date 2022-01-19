@@ -3,7 +3,7 @@ use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
-use canister_state_macros::state_operations;
+use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
@@ -33,12 +33,11 @@ enum StateVersion {
 }
 
 thread_local! {
-    static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 
-state_operations!();
+canister_state!(RuntimeState);
 
 struct RuntimeState {
     pub env: Box<dyn Environment>,
