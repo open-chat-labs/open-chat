@@ -2,7 +2,6 @@
     import { onMount, setContext } from "svelte";
 
     import "./i18n/i18n";
-    import { loadAndApplySavedTheme } from "./theme/themes";
     import { rtlStore } from "./stores/rtl";
     import { _ } from "svelte-i18n";
     import Router from "svelte-spa-router";
@@ -15,6 +14,7 @@
     import Lazy from "./components/Lazy.svelte";
     import { IdentityController } from "./fsm/identity.controller";
     import { SessionExpiryError } from "./services/httpError";
+    import "./theme/themes";
 
     let controller: IdentityController = new IdentityController();
     setContext("identityController", controller);
@@ -22,7 +22,6 @@
     $: identityState = controller.state;
 
     onMount(() => {
-        loadAndApplySavedTheme();
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);

@@ -1,7 +1,7 @@
 import { originalTheme } from "./original";
 import { darkTheme } from "./dark";
 import { lightTheme } from "./light";
-import { writable } from "svelte/store";
+import { derived, get, readable, writable } from "svelte/store";
 
 // these are the gradients used in the logo (from light to dark)
 // const blueFrom = "#28aae2";
@@ -316,38 +316,36 @@ function writeCssVars(prefix: string, section: Theme): void {
     }
 }
 
-function osDark(): boolean {
-    const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
-    return prefersDarkScheme.matches;
-}
+const prefersDarkQuery = "(prefers-color-scheme: dark)";
 
-function themeByName(name: string | null): Theme {
-    if (!name) return themes.light;
+const osDarkStore = readable(window.matchMedia(prefersDarkQuery).matches, (set) => {
+    const updateDarkPref = (event: MediaQueryListEvent) => set(event.matches);
+    const mediaQueryList = window.matchMedia(prefersDarkQuery);
+    mediaQueryList.addEventListener("change", updateDarkPref);
+    set(mediaQueryList.matches);
+    return () => mediaQueryList.removeEventListener("change", updateDarkPref);
+});
 
-    if (name === "system") {
-        return osDark() ? themes.dark : themes.light;
+export const themeNameStore = writable<string | null>(getCurrentThemeName());
+
+export const themeStore = derived([osDarkStore, themeNameStore], ([$dark, $themeName]) =>
+    themeByName($themeName, $dark)
+);
+
+themeStore.subscribe((theme) => writeCssVars("--", theme));
+
+function themeByName(name: string | null, prefersDark: boolean): Theme {
+    if (!name || name === "system") {
+        return prefersDark ? themes.dark : themes.light;
     }
-
     return themes[name as keyof Themes] ?? themes.light;
 }
 
 export function getCurrentThemeName(): string {
-    return localStorage.getItem("openchat_theme") ?? "light";
-}
-
-export function loadAndApplySavedTheme(): string {
-    const themeName = localStorage.getItem("openchat_theme");
-    const theme = themeByName(themeName);
-    writeCssVars("--", theme);
-    themeStore.set(theme);
-    return themeName ?? "light";
+    return localStorage.getItem("openchat_theme") ?? "system";
 }
 
 export function saveSeletedTheme(themeName: string): void {
-    const theme = themeByName(themeName);
-    writeCssVars("--", theme);
+    themeNameStore.set(themeName);
     localStorage.setItem("openchat_theme", themeName);
-    themeStore.set(theme);
 }
-
-export const themeStore = writable<Theme>(themeByName("light"));
