@@ -8,7 +8,6 @@
             "name": "open_chat_frontend",
             "version": "2.0.0",
             "dependencies": {
-                "@crownframework/svelte-error-boundary": "^1.0.3",
                 "@dfinity/agent": "^0.10.1",
                 "@dfinity/auth-client": "^0.10.1",
                 "@dfinity/authentication": "^0.10.1",
@@ -23,7 +22,6 @@
                 "dompurify": "^2.3.4",
                 "drange": "^2.0.1",
                 "emoji-picker-element": "^1.8.1",
-                "html-entities": "^2.3.2",
                 "idb": "^6.1.2",
                 "identicon.js": "^2.3.3",
                 "intl-tel-input": "^17.0.15",
@@ -37,7 +35,6 @@
                 "svelte-easy-crop": "^1.0.4",
                 "svelte-i18n": "^3.3.9",
                 "svelte-jester": "^2.1.5",
-                "svelte-markdown": "^0.2.2",
                 "svelte-material-icons": "^1.0.3",
                 "svelte-qr": "^1.0.0",
                 "svelte-spa-router": "^3.1.0",
@@ -57,7 +54,6 @@
                 "@testing-library/svelte": "^3.0.3",
                 "@tsconfig/svelte": "^1.0.0",
                 "@types/dom-mediacapture-record": "^1.0.10",
-                "@types/html-entities": "^1.3.4",
                 "@types/identicon.js": "^2.3.1",
                 "@types/intl-tel-input": "^17.0.4",
                 "@types/md5": "^2.3.1",
@@ -1642,11 +1638,6 @@
             "resolved": "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz",
             "integrity": "sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw=="
         },
-        "node_modules/@crownframework/svelte-error-boundary": {
-            "version": "1.0.3",
-            "resolved": "https://registry.npmjs.org/@crownframework/svelte-error-boundary/-/svelte-error-boundary-1.0.3.tgz",
-            "integrity": "sha512-ZtfYF9if48Ok8BTx/fn7bERJFKHKO6Ih5d/fkY6/pC3DQEnJq4vy6JOBFcisnpKYcZbjG5F/D4r06kqX7JKyqw=="
-        },
         "node_modules/@dfinity/agent": {
             "version": "0.10.1",
             "resolved": "https://registry.npmjs.org/@dfinity/agent/-/agent-0.10.1.tgz",
@@ -3100,16 +3091,6 @@
             "integrity": "sha512-anKkLmZZ+xm4p8JWBf4hElkM4XR+EZeA2M9BAkkTldmcyDY4mbdIJnRghDJH3Ov5ooY7/UAoENtmdMSkaAd7Cw==",
             "dependencies": {
                 "@types/node": "*"
-            }
-        },
-        "node_modules/@types/html-entities": {
-            "version": "1.3.4",
-            "resolved": "https://registry.npmjs.org/@types/html-entities/-/html-entities-1.3.4.tgz",
-            "integrity": "sha512-Ut62LV90H9tgXwyhmfR8U6yCw/6xeo26IlsbAJJfqPomaqDN2zoLb2Z+cbmy5AycJFhwNJDdH0zqjQp7Ox/eXg==",
-            "deprecated": "This is a stub types definition. html-entities provides its own type definitions, so you do not need this installed.",
-            "dev": true,
-            "dependencies": {
-                "html-entities": "*"
             }
         },
         "node_modules/@types/identicon.js": {
@@ -6857,11 +6838,6 @@
             "engines": {
                 "node": ">=10"
             }
-        },
-        "node_modules/html-entities": {
-            "version": "2.3.2",
-            "resolved": "https://registry.npmjs.org/html-entities/-/html-entities-2.3.2.tgz",
-            "integrity": "sha512-c3Ab/url5ksaT0WyleslpBEthOzWhrjQbg75y7XUsfSzi3Dgzt0l8w5e7DylRn15MTlMMD58dTfzddNS2kcAjQ=="
         },
         "node_modules/html-escaper": {
             "version": "2.0.2",
@@ -12615,18 +12591,6 @@
                 "svelte": ">= 3"
             }
         },
-        "node_modules/svelte-markdown": {
-            "version": "0.2.2",
-            "resolved": "https://registry.npmjs.org/svelte-markdown/-/svelte-markdown-0.2.2.tgz",
-            "integrity": "sha512-bNxpG3gRbC2UjAFakIMcLEzVq5db2Md57aeU4wKCuffSfD6f7RkvtYDqbrAk2ycC55t3wykOy0E7KDuvVKyDYA==",
-            "dependencies": {
-                "@types/marked": "^4.0.1",
-                "marked": "^4.0.10"
-            },
-            "peerDependencies": {
-                "svelte": "^3.0.0"
-            }
-        },
         "node_modules/svelte-material-icons": {
             "version": "1.0.3",
             "resolved": "https://registry.npmjs.org/svelte-material-icons/-/svelte-material-icons-1.0.3.tgz",
@@ -14970,11 +14934,6 @@
             "resolved": "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz",
             "integrity": "sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw=="
         },
-        "@crownframework/svelte-error-boundary": {
-            "version": "1.0.3",
-            "resolved": "https://registry.npmjs.org/@crownframework/svelte-error-boundary/-/svelte-error-boundary-1.0.3.tgz",
-            "integrity": "sha512-ZtfYF9if48Ok8BTx/fn7bERJFKHKO6Ih5d/fkY6/pC3DQEnJq4vy6JOBFcisnpKYcZbjG5F/D4r06kqX7JKyqw=="
-        },
         "@dfinity/agent": {
             "version": "0.10.1",
             "resolved": "https://registry.npmjs.org/@dfinity/agent/-/agent-0.10.1.tgz",
@@ -16168,15 +16127,6 @@
             "integrity": "sha512-anKkLmZZ+xm4p8JWBf4hElkM4XR+EZeA2M9BAkkTldmcyDY4mbdIJnRghDJH3Ov5ooY7/UAoENtmdMSkaAd7Cw==",
             "requires": {
                 "@types/node": "*"
-            }
-        },
-        "@types/html-entities": {
-            "version": "1.3.4",
-            "resolved": "https://registry.npmjs.org/@types/html-entities/-/html-entities-1.3.4.tgz",
-            "integrity": "sha512-Ut62LV90H9tgXwyhmfR8U6yCw/6xeo26IlsbAJJfqPomaqDN2zoLb2Z+cbmy5AycJFhwNJDdH0zqjQp7Ox/eXg==",
-            "dev": true,
-            "requires": {
-                "html-entities": "*"
             }
         },
         "@types/identicon.js": {
@@ -19103,11 +19053,6 @@
             "requires": {
                 "whatwg-encoding": "^1.0.5"
             }
-        },
-        "html-entities": {
-            "version": "2.3.2",
-            "resolved": "https://registry.npmjs.org/html-entities/-/html-entities-2.3.2.tgz",
-            "integrity": "sha512-c3Ab/url5ksaT0WyleslpBEthOzWhrjQbg75y7XUsfSzi3Dgzt0l8w5e7DylRn15MTlMMD58dTfzddNS2kcAjQ=="
         },
         "html-escaper": {
             "version": "2.0.2",
@@ -23423,15 +23368,6 @@
             "resolved": "https://registry.npmjs.org/svelte-jester/-/svelte-jester-2.1.5.tgz",
             "integrity": "sha512-T3JoPsNYltlN2MiVFDxAMOulIO4fztFFI3DhOkzbs1yZQCUFp6sqS6aqusBsIEMVmXaEDW4HO/6bX+CuwuEUSw==",
             "requires": {}
-        },
-        "svelte-markdown": {
-            "version": "0.2.2",
-            "resolved": "https://registry.npmjs.org/svelte-markdown/-/svelte-markdown-0.2.2.tgz",
-            "integrity": "sha512-bNxpG3gRbC2UjAFakIMcLEzVq5db2Md57aeU4wKCuffSfD6f7RkvtYDqbrAk2ycC55t3wykOy0E7KDuvVKyDYA==",
-            "requires": {
-                "@types/marked": "^4.0.1",
-                "marked": "^4.0.10"
-            }
         },
         "svelte-material-icons": {
             "version": "1.0.3",

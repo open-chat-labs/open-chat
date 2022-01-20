@@ -1,7 +1,6 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { wrapURLsInAnchorTags } from "../../utils/markup";
     import { marked } from "marked";
     import DOMPurify from "dompurify";
     import { onMount } from "svelte";
@@ -17,34 +16,32 @@
         breaks: !oneLine,
     };
 
+    const renderer = {
+        link(href: string | null, title: string | null, text: string) {
+            if (suppressLinks) {
+                return `<span class="fake-link" ${title && `title=${title}`}>${text}</span`;
+            } else {
+                return `<a href=${href} ${title && `title=${title}`} target="_blank">${text}</a>`;
+            }
+        },
+    };
+
+    marked.use({ renderer });
+
     onMount(() => {
         let parsed = text;
         try {
-            parsed = marked.parseInline(renderTextContent(text), options);
+            parsed = marked.parseInline(text, options);
         } catch (err: any) {
             rollbar.error("Error parsing markdown: ", err);
         }
 
         try {
-            sanitized = DOMPurify.sanitize(
-                parsed,
-                suppressLinks ? { FORBID_ATTR: ["href"] } : { ALLOWED_ATTR: ["target", "href"] }
-            );
+            sanitized = DOMPurify.sanitize(parsed, { ALLOWED_ATTR: ["target", "href", "class"] });
         } catch (err: any) {
             rollbar.error("Error sanitzing message content: ", err);
         }
     });
-
-    // TODO - we shouldn't need this, we should be able to do it with a custom renderer, but I want to
-    // come back to that.
-    // this will not do exactly what we want for markdown links e.g. [a link](https://www.google.co.uk)
-    function renderTextContent(text: string): string {
-        let str = text;
-        if (!suppressLinks) {
-            str = wrapURLsInAnchorTags(str, true);
-        }
-        return str;
-    }
 </script>
 
 <p class="markdown-wrapper" class:inline class:oneLine>
@@ -55,6 +52,10 @@
     :global(.markdown-wrapper a) {
         text-decoration: underline;
         word-break: break-all;
+    }
+
+    :global(.markdown-wrapper .fake-link) {
+        text-decoration: underline;
     }
 
     :global(.markdown-wrapper code) {
