@@ -88,6 +88,6 @@ export function extractUserIdsFromMentions(text: string): string[] {
 export function parseMentions(userLookup: UserLookup, text: string, unknown: string): string {
     return text.replace(mentionRegex, (_match, p1) => {
         const username = userLookup[p1]?.username ?? unknown;
-        return `@${username}`;
+        return `**@${username}**`;
     });
 }

@@ -51,7 +51,7 @@ describe("extract user ids from mentions", () => {
 describe("parse mentions", () => {
     test("replace a single mention", () => {
         const parsed = parseMentions(lookup, "hello there @UserId(xyz), how are you?", "unknown");
-        expect(parsed).toEqual("hello there @julian_jelfs, how are you?");
+        expect(parsed).toEqual("hello there **@julian_jelfs**, how are you?");
     });
 
     test("text is unchanged where there are no mentions", () => {
@@ -61,7 +61,7 @@ describe("parse mentions", () => {
 
     test("mention of an unknown user", () => {
         const parsed = parseMentions(lookup, "hello there @UserId(abc), how are you?", "unknown");
-        expect(parsed).toEqual("hello there @unknown, how are you?");
+        expect(parsed).toEqual("hello there **@unknown**, how are you?");
     });
 
     test("replace multiple mentions", () => {
@@ -70,7 +70,7 @@ describe("parse mentions", () => {
             "hello there @UserId(xyz), how are you @UserId(xyz)?",
             "unknown"
         );
-        expect(parsed).toEqual("hello there @julian_jelfs, how are you @julian_jelfs?");
+        expect(parsed).toEqual("hello there **@julian_jelfs**, how are you **@julian_jelfs**?");
     });
 });
 
