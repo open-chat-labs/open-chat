@@ -5,6 +5,8 @@
     import DOMPurify from "dompurify";
     import { onMount } from "svelte";
     import { rollbar } from "../../utils/logging";
+    import { userStore } from "../../stores/user";
+    import { _ } from "svelte-i18n";
 
     export let text: string;
     export let inline: boolean = true;
@@ -14,6 +16,38 @@
     let sanitized = "unsafe";
     const options = {
         breaks: !oneLine,
+    };
+
+    type MentionToken = {
+        type: "mention";
+        raw: string;
+        username: string;
+        userId: string;
+    };
+
+    const mention = {
+        name: "mention",
+        level: "inline" as "inline",
+        start: (src: string) => {
+            return src.match(/@/)?.index ?? -1;
+        },
+        tokenizer: (src: string) => {
+            const rule = /^@UserId\(([\d\w-]+)\)/;
+            const match = rule.exec(src);
+            if (match) {
+                const username = $userStore[match[1]]?.username ?? $_("unknown");
+                return {
+                    type: "mention",
+                    raw: match[0],
+                    username,
+                    userId: match[1],
+                };
+            }
+        },
+        renderer: (token: MentionToken) => {
+            return `<a href="#/${token.userId}?type=direct"><strong>@${token.username}</strong></a>`;
+        },
+        childTokens: ["strong"],
     };
 
     const renderer = {
@@ -26,7 +60,7 @@
         },
     };
 
-    marked.use({ renderer });
+    marked.use({ renderer, extensions: [mention] });
 
     onMount(() => {
         let parsed = text;

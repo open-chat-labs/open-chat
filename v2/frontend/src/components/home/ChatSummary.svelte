@@ -67,11 +67,13 @@
             return "";
         }
 
-        const latestMessageText = parseMentions(
-            users,
-            getContentAsText(chatSummary.latestMessage.event.content),
-            $_("unknown")
-        );
+        // const latestMessageText = parseMentions(
+        //     users,
+        //     getContentAsText(chatSummary.latestMessage.event.content),
+        //     $_("unknown")
+        // );
+
+        const latestMessageText = getContentAsText(chatSummary.latestMessage.event.content);
 
         if (chatSummary.kind === "direct_chat") {
             return latestMessageText;
