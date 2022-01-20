@@ -4,6 +4,7 @@
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
@@ -88,6 +89,21 @@
     function addParticipants() {
         if ($selectedChatSummary.kind === "group_chat") {
             dispatch("addParticipants");
+        }
+    }
+
+    function copyUrl() {
+        if ($selectedChatSummary.kind === "group_chat" && $selectedChatSummary.public) {
+            navigator.clipboard.writeText(window.location.href).then(
+                () => {
+                    toastStore.showSuccessToast("urlCopiedToClipboard");
+                },
+                () => {
+                    toastStore.showFailureToast("failedToCopyUrlToClipboard", {
+                        values: { url: window.location.href },
+                    });
+                }
+            );
         }
     }
 
@@ -275,6 +291,15 @@
                                         color={"var(--icon-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("addParticipants")}</div>
+                                </MenuItem>
+                            {/if}
+                            {#if $selectedChatSummary.public}
+                                <MenuItem on:click={copyUrl}>
+                                    <ContentCopy
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("copyGroupUrl")}</div>
                                 </MenuItem>
                             {/if}
                         {/if}
