@@ -23,6 +23,7 @@
     import { unsubscribeNotifications } from "../../utils/notifications";
     import type { HomeController } from "../../fsm/home.controller";
     import type { Version } from "../../domain/version";
+    import Markdown from "./Markdown.svelte";
 
     export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -212,11 +213,13 @@
                                         <h4 class="search-item-title">
                                             {messageMatchTitle(msg)}
                                         </h4>
-                                        <p
-                                            title={getContentAsText(msg.content)}
-                                            class="search-item-desc">
-                                            {getContentAsText(msg.content)}
-                                        </p>
+                                        <div class="search-item-desc">
+                                            <Markdown
+                                                text={getContentAsText(msg.content)}
+                                                oneLine={true}
+                                                suppressLinks={true}
+                                                inline={false} />
+                                        </div>
                                     </SearchResult>
                                 {/each}
                             {/if}

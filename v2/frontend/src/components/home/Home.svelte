@@ -9,7 +9,7 @@
     const dispatch = createEventDispatcher();
     import { rtlStore } from "../../stores/rtl";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    import { push, replace } from "svelte-spa-router";
+    import { push, replace, querystring } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
     import RemovingGroup from "./RemovingGroup.svelte";
@@ -60,6 +60,7 @@
     $: chatSummariesList = controller.chatSummariesList;
     $: selectedChat = controller.selectedChat;
     $: wasmVersion = controller.user.wasmVersion;
+    $: qs = new URLSearchParams($querystring);
 
     function logout() {
         dispatch("logout");
@@ -90,15 +91,19 @@
                     params.messageIndex == null ? undefined : Number(params.messageIndex);
 
                 if ($chatSummaries[chatId] === undefined) {
-                    recommendedGroups = { kind: "loading" };
-                    controller.previewChat(chatId).then((canPreview) => {
-                        if (canPreview) {
-                            controller.selectChat(chatId, messageIndex);
-                            recommendedGroups = { kind: "idle" };
-                        } else {
-                            replace("/");
-                        }
-                    });
+                    if (qs.get("type") === "direct") {
+                        controller.createDirectChat(chatId);
+                    } else {
+                        recommendedGroups = { kind: "loading" };
+                        controller.previewChat(chatId).then((canPreview) => {
+                            if (canPreview) {
+                                controller.selectChat(chatId, messageIndex);
+                                recommendedGroups = { kind: "idle" };
+                            } else {
+                                replace("/");
+                            }
+                        });
+                    }
                 } else {
                     controller.selectChat(chatId, messageIndex);
                 }
