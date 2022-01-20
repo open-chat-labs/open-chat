@@ -86,6 +86,9 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                     e.event.repliesTo.kind === "rehydrated_reply_context"
                 ) {
                     userIds.add(e.event.repliesTo.senderId);
+                    extractUserIdsFromMentions(getContentAsText(e.event.repliesTo.content)).forEach(
+                        (id) => userIds.add(id)
+                    );
                 }
                 extractUserIdsFromMentions(getContentAsText(e.event.content)).forEach((id) =>
                     userIds.add(id)
