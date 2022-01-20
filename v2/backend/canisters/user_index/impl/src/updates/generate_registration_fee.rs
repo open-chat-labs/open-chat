@@ -1,4 +1,4 @@
-use crate::model::user::{UnconfirmedUser, UnconfirmedUserState};
+use crate::model::user::{UnconfirmedUser, UnconfirmedUserState, User};
 use crate::{mutate_state, RuntimeState, REGISTRATION_FEE_EXPIRY_MILLIS};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
@@ -18,6 +18,11 @@ fn generate_registration_fee(args: Args) -> Response {
 
 fn generate_registration_fee_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
+
+    if let Some(User::Confirmed(_) | User::Created(_)) = runtime_state.data.users.get_by_principal(&caller) {
+        return AlreadyRegistered;
+    }
+
     let now = runtime_state.env.now();
     let valid_until = now + REGISTRATION_FEE_EXPIRY_MILLIS;
 
