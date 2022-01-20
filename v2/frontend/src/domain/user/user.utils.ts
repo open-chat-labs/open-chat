@@ -84,10 +84,3 @@ const mentionRegex = /@UserId\(([\d\w-]+)\)/g;
 export function extractUserIdsFromMentions(text: string): string[] {
     return [...text.matchAll(mentionRegex)].map((m) => m[1]);
 }
-
-export function parseMentions(userLookup: UserLookup, text: string, unknown: string): string {
-    return text.replace(mentionRegex, (_match, p1) => {
-        const username = userLookup[p1]?.username ?? unknown;
-        return `**@${username}**`;
-    });
-}

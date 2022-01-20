@@ -3,7 +3,6 @@ import {
     compareUsername,
     extractUserIdsFromMentions,
     missingUserIds,
-    parseMentions,
     userIsOnline,
 } from "./user.utils";
 
@@ -45,32 +44,6 @@ describe("extract user ids from mentions", () => {
     test("when there are no userIds to extract", () => {
         const parsed = extractUserIdsFromMentions("this is a string that doesn't have any userIds");
         expect(parsed).toEqual([]);
-    });
-});
-
-describe("parse mentions", () => {
-    test("replace a single mention", () => {
-        const parsed = parseMentions(lookup, "hello there @UserId(xyz), how are you?", "unknown");
-        expect(parsed).toEqual("hello there **@julian_jelfs**, how are you?");
-    });
-
-    test("text is unchanged where there are no mentions", () => {
-        const parsed = parseMentions(lookup, "hello there, how are you?", "unknown");
-        expect(parsed).toEqual("hello there, how are you?");
-    });
-
-    test("mention of an unknown user", () => {
-        const parsed = parseMentions(lookup, "hello there @UserId(abc), how are you?", "unknown");
-        expect(parsed).toEqual("hello there **@unknown**, how are you?");
-    });
-
-    test("replace multiple mentions", () => {
-        const parsed = parseMentions(
-            lookup,
-            "hello there @UserId(xyz), how are you @UserId(xyz)?",
-            "unknown"
-        );
-        expect(parsed).toEqual("hello there **@julian_jelfs**, how are you **@julian_jelfs**?");
     });
 });
 
