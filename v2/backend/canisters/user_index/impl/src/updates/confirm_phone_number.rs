@@ -1,5 +1,5 @@
-use crate::model::user::{ConfirmedUser, UnconfirmedUserState, User};
-use crate::{mutate_state, RuntimeState};
+use crate::model::user::{ConfirmedUser, PhoneStatus, UnconfirmedUserState, User};
+use crate::{mutate_state, RuntimeState, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::{CanisterCreationStatusInternal, PhoneNumber};
@@ -14,26 +14,39 @@ fn confirm_phone_number(args: Args) -> Response {
 fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
-    let test_mode = runtime_state.data.test_mode;
+    let test_code = runtime_state.data.test_mode && args.confirmation_code == "123456";
 
     let phone_number: PhoneNumber;
-    if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
+    if let Some(user) = runtime_state.data.users.get_by_principal_mut(&caller) {
         match user {
             User::Unconfirmed(u) => {
                 if let UnconfirmedUserState::PhoneNumber(p) = &u.state {
                     if now > p.valid_until {
                         return ConfirmationCodeExpired;
-                    } else if (args.confirmation_code == p.confirmation_code)
-                        || (test_mode && args.confirmation_code == "123456")
-                    {
-                        phone_number = p.phone_number.clone();
-                    } else {
+                    } else if (args.confirmation_code != p.confirmation_code) && !test_code {
                         return ConfirmationCodeIncorrect;
+                    } else {
+                        phone_number = p.phone_number.clone();
                     }
                 } else {
                     return PhoneNumberNotSubmitted;
                 }
             }
+            User::Created(u) => match &u.phone_status {
+                PhoneStatus::Confirmed(_) => return AlreadyClaimed,
+                PhoneStatus::Unconfirmed(p) => {
+                    if now > p.valid_until {
+                        return ConfirmationCodeExpired;
+                    } else if (args.confirmation_code != p.confirmation_code) && !test_code {
+                        return ConfirmationCodeIncorrect;
+                    } else {
+                        u.phone_status = PhoneStatus::Confirmed(p.phone_number.clone());
+                        u.open_storage_limit_bytes += DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT;
+                        return Success;
+                    }
+                }
+                PhoneStatus::None => return PhoneNumberNotSubmitted,
+            },
             _ => return AlreadyClaimed,
         }
     } else {

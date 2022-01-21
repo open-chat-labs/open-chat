@@ -226,6 +226,10 @@ impl UserMap {
         self.users_by_principal.get(principal)
     }
 
+    pub fn get_by_principal_mut(&mut self, principal: &Principal) -> Option<&mut User> {
+        self.users_by_principal.get_mut(principal)
+    }
+
     pub fn get_by_user_id(&self, user_id: &UserId) -> Option<&User> {
         self.user_id_to_principal
             .get(user_id)
