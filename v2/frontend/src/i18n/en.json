@@ -1,6 +1,8 @@
 {
     "openChat": "OpenChat",
     "home": "home",
+    "usernameRules": "alphanumerics and underscores only",
+    "enterBio": "Tell us something about yourself",
     "whatsHot": "What's hot?",
     "notInterested": "Not interested",
     "recommendSomething": "Recommend some groups",
@@ -58,6 +60,7 @@
     "submitNewGroup": "Create group",
     "chooseParticipants": "Choose participants",
     "confirmParticipants": "Confirm participants",
+    "clickToUpdateAvatar": "Click above to edit avatar",
     "groupCreationFailed": "Sorry we were unable to create your group",
     "groupUpdateFailed": "Sorry we were unable to update your group",
     "groupCreatedBy": "{username} created the group",

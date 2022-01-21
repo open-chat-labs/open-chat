@@ -2,6 +2,7 @@
     import Panel from "../Panel.svelte";
     import ChatList from "./ChatList.svelte";
     import NewGroup from "./addgroup/AddGroup.controller.svelte";
+    import UserProfile from "./profile/UserProfile.svelte";
     import type {
         GroupSearchResponse,
         SearchAllMessagesResponse,
@@ -9,6 +10,8 @@
     import type { UserSummary } from "../../domain/user/user";
     import type { HomeController } from "../../fsm/home.controller";
     import type { Version } from "../../domain/version";
+    import { userStore } from "../../stores/user";
+    import { nullUser } from "../../domain/user/user.utils";
 
     export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -21,8 +24,10 @@
 
     $: api = controller.api;
     $: currentUser = controller.user;
+    $: user = controller.user ? $userStore[controller.user?.userId] : nullUser("unknown");
 
-    let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-chat-list";
+    // let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-chat-list";
+    let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-profile";
 </script>
 
 <Panel left>
@@ -52,11 +57,14 @@
             {controller}
             {wasmVersion} />
     </div>
-    <div class="profile" class:showing-profile={view === "showing-profile"}>User profile</div>
+    <div class="profile" class:showing-profile={view === "showing-profile"}>
+        <UserProfile {user} on:closeProfile={() => (view = "showing-chat-list")} />
+    </div>
 </Panel>
 
 <style type="text/scss">
     .new-group,
+    .profile,
     .chat-list {
         display: none;
         flex-direction: column;

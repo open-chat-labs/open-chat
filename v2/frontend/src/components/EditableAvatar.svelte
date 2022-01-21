@@ -20,7 +20,7 @@
     let SAVE_SIZE = 150;
     let cropData: CropData | undefined = undefined;
 
-    function addPhoto() {
+    export function addPhoto() {
         if (!disabled) {
             fileinput.click();
         }
