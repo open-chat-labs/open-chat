@@ -415,6 +415,8 @@ export class ChatController {
 
         if (sentByMe) {
             draftMessages.delete(this.chatId);
+        } else {
+            await this.updateUserStore(userIdsFromEvents([messageEvent]));
         }
 
         if (sentByMe && get(this.editingEvent)) {
