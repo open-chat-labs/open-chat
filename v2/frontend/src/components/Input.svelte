@@ -81,7 +81,7 @@
         text-overflow: ellipsis;
         border-radius: $sp2;
 
-        margin-bottom: $sp4;
+        margin-bottom: $sp3;
 
         @include size-below(xs) {
             margin-bottom: $sp3;

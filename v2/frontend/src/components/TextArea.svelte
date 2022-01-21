@@ -62,7 +62,7 @@
         border: 1px solid var(--input-bd);
         outline: none;
         border-radius: $sp2;
-        margin-bottom: $sp4;
+        margin-bottom: $sp3;
         @include size-below(xs) {
             margin-bottom: $sp3;
         }

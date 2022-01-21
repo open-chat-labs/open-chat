@@ -6,6 +6,7 @@
     import BellOff from "svelte-material-icons/BellOff.svelte";
     import EditableAvatar from "../EditableAvatar.svelte";
     import Palette from "svelte-material-icons/Palette.svelte";
+    import Cogs from "svelte-material-icons/Cogs.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Information from "svelte-material-icons/Information.svelte";
@@ -41,7 +42,7 @@
     }
 
     export let wasmVersion: Version;
-    
+
     let supportsNotifications = notificationsSupported();
     let modal = ModalType.NoModal;
 
@@ -85,7 +86,7 @@
                             slot="icon" />
                         <span slot="text">{$_("newGroup")}</span>
                     </MenuItem>
-                    <MenuItem on:click={() => modal = ModalType.ThemeSelection}>
+                    <MenuItem on:click={() => (modal = ModalType.ThemeSelection)}>
                         <Palette size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("changeTheme")}</span>
                     </MenuItem>
@@ -116,11 +117,15 @@
                         <span class="flame" slot="icon">🔥</span>
                         <span slot="text">{$_("whatsHot")}</span>
                     </MenuItem>
+                    <MenuItem on:click={() => dispatch("profile")}>
+                        <Cogs size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                        <span slot="text">{$_("profile")}</span>
+                    </MenuItem>
                     <MenuItem on:click={() => dispatch("logout")}>
                         <Logout size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("logout")}</span>
                     </MenuItem>
-                    <MenuItem on:click={() => modal = ModalType.About}>
+                    <MenuItem on:click={() => (modal = ModalType.About)}>
                         <Information size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("aboutOpenChat")}</span>
                     </MenuItem>
@@ -132,7 +137,7 @@
 
 <Overlay dismissible={true} active={modal !== ModalType.NoModal} on:close={onCloseModal}>
     {#if modal === ModalType.About}
-        <AboutModal canister={{id: user.userId, wasmVersion}} on:close={onCloseModal}/>
+        <AboutModal canister={{ id: user.userId, wasmVersion }} on:close={onCloseModal} />
     {:else if modal === ModalType.ThemeSelection}
         <ThemePicker on:close={onCloseModal} />
     {/if}

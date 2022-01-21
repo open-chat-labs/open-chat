@@ -22,23 +22,24 @@
     $: api = controller.api;
     $: currentUser = controller.user;
 
-    let addingGroup = false;
+    let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-chat-list";
 </script>
 
 <Panel left>
-    <div class="new-group" class:addingGroup>
+    <div class="new-group" class:adding-group={view === "adding-group"}>
         <NewGroup
             {api}
             {currentUser}
-            on:cancelNewGroup={() => (addingGroup = false)}
-            on:groupCreated={() => (addingGroup = false)} />
+            on:cancelNewGroup={() => (view = "showing-chat-list")}
+            on:groupCreated={() => (view = "showing-chat-list")} />
     </div>
-    <div class="chat-list" class:addingGroup>
+    <div class="chat-list" class:showing-chat-list={view === "showing-chat-list"}>
         <ChatList
             on:loadMessage
             on:chatWith
             on:whatsHot
-            on:newGroup={() => (addingGroup = true)}
+            on:newGroup={() => (view = "adding-group")}
+            on:profile={() => (view = "showing-profile")}
             on:logout
             on:searchEntered
             on:deleteDirectChat
@@ -51,24 +52,29 @@
             {controller}
             {wasmVersion} />
     </div>
+    <div class="profile" class:showing-profile={view === "showing-profile"}>User profile</div>
 </Panel>
 
 <style type="text/scss">
     .new-group,
     .chat-list {
-        display: flex;
+        display: none;
         flex-direction: column;
         height: 100%;
     }
     .new-group {
-        display: none;
-        &.addingGroup {
+        &.adding-group {
             display: flex;
         }
     }
     .chat-list {
-        &.addingGroup {
-            display: none;
+        &.showing-chat-list {
+            display: flex;
+        }
+    }
+    .profile {
+        &.showing-profile {
+            display: flex;
         }
     }
 </style>

@@ -136,6 +136,7 @@
         {user}
         {wasmVersion}
         on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
+        on:profile
         on:newGroup />
     <Search {searching} {searchTerm} on:searchEntered />
     <div class="body">
