@@ -152,7 +152,8 @@
                         messagesRead={controller.messagesRead}
                         {chatSummary}
                         {userId}
-                        selected={$selectedChat?.chatId === chatSummary.chatId} />
+                        selected={$selectedChat?.chatId === chatSummary.chatId}
+                        on:deleteDirectChat />
                 {/each}
 
                 {#if groupSearchResults !== undefined}

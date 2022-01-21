@@ -149,6 +149,7 @@ export interface Theme {
         bd: string;
         "bd-selected": string;
         mb: string;
+        del: string;
     };
 
     spinner: string;

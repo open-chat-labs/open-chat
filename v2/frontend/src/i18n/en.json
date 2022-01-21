@@ -27,6 +27,7 @@
     "placeholderContent": "Please wait, your message will load shortly",
     "durationMins": "{duration} minutes",
     "durationHours": "{duration} hours",
+    "removeChat": "Remove chat",
     "durationDays": "{duration} days",
     "oneHour": "1 hour",
     "oneDay": "1 day",

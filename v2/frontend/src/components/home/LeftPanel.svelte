@@ -41,6 +41,7 @@
             on:newGroup={() => (addingGroup = true)}
             on:logout
             on:searchEntered
+            on:deleteDirectChat
             {searchResultsAvailable}
             {searchTerm}
             {searching}

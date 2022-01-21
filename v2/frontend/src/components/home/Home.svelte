@@ -211,6 +211,13 @@
         removingChatId = ev.detail;
     }
 
+    function deleteDirectChat(ev: CustomEvent<string>) {
+        if (ev.detail === params.chatId) {
+            controller.clearSelectedChat();
+        }
+        tick().then(() => controller.removeChat(ev.detail));
+    }
+
     function chatWith(ev: CustomEvent<string>) {
         const chat = $chatSummariesList.find((c) => {
             return c.kind === "direct_chat" && c.them === ev.detail;
@@ -269,7 +276,7 @@
     function cancelPreview(ev: CustomEvent<string>) {
         controller.clearSelectedChat();
         tick().then(() => {
-            controller.removeGroup(ev.detail);
+            controller.removeChat(ev.detail);
             dismissRecommendation(ev);
         });
     }
@@ -341,6 +348,7 @@
                 on:chatWith={chatWith}
                 on:whatsHot={whatsHot}
                 on:logout={logout}
+                on:deleteDirectChat={deleteDirectChat}
                 on:loadMessage={loadMessage} />
         {/if}
         {#if showMiddle}

@@ -141,6 +141,7 @@ export function lightTheme(): Theme {
             bd: "transparent",
             "bd-selected": pinkAccent,
             mb: sp3,
+            del: pinkAccent,
         },
 
         spinner: "#ffffff",
