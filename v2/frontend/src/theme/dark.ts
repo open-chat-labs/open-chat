@@ -129,6 +129,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             txt2: "#888888",
             bd: dark10,
             "bd-selected": "#085d8c",
+            del: "#085d8c",
         },
 
         menu: {

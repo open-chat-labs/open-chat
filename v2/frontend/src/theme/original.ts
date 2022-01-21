@@ -49,6 +49,7 @@ export function originalTheme(defaultTheme: Theme): Theme {
             mb: "0",
             bd: "1px solid #ddd",
             "bd-selected": "transparent",
+            del: accent,
         },
 
         currentUser: {

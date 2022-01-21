@@ -1,7 +1,9 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserLookup } from "../../domain/user/user";
+    import { fly } from "svelte/transition";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import Delete from "svelte-material-icons/Delete.svelte";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { formatMessageDate } from "../../utils/date";
@@ -20,9 +22,11 @@
     import { userStore } from "../../stores/user";
     import type { IMessageReadTracker } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
-    import { onDestroy } from "svelte";
+    import { createEventDispatcher, onDestroy } from "svelte";
     import { toTitleCase } from "../../utils/string";
     import { now } from "../../stores/time";
+    import { iconSize } from "../../stores/iconSize";
+    import { ScreenWidth, screenWidth } from "stores/screenDimensions";
 
     export let index: number;
     export let chatSummary: ChatSummary;
@@ -30,6 +34,7 @@
     export let selected: boolean;
     export let messagesRead: IMessageReadTracker;
 
+    const dispatch = createEventDispatcher();
     let hovering = false;
     let unreadMessages: number;
     let unreadMentions: number;
@@ -91,6 +96,10 @@
         unreadMentions = getUnreadMentionCount(chatSummary);
     }
 
+    function deleteDirectChat() {
+        dispatch("deleteDirectChat", chatSummary.chatId);
+    }
+
     $: chat = normaliseChatSummary($now, chatSummary);
     $: lastMessage = formatLatestMessage(chatSummary, $userStore);
 
@@ -108,6 +117,7 @@
         chatSummary.kind === "direct_chat" && $typing[chatSummary.chatId]?.has(chatSummary.them);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
     $: preview = isPreviewing(chatSummary);
+    $: canDelete = chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined;
 </script>
 
 <a
@@ -115,6 +125,7 @@
     class="chat-summary"
     class:first={index === 0}
     class:selected
+    class:empty={canDelete}
     class:rtl={$rtlStore}
     on:mouseenter={() => (hovering = true)}
     on:mouseleave={() => (hovering = false)}
@@ -164,9 +175,38 @@
             </div>
         {/if}
     {/if}
+    {#if canDelete && hovering && $screenWidth !== ScreenWidth.ExtraSmall}
+        <div
+            title={$_("removeChat")}
+            on:click|stopPropagation|preventDefault={deleteDirectChat}
+            in:fly={{ x: $rtlStore ? -100 : 100, duration: 200, delay: 200 }}
+            out:fly={{ x: $rtlStore ? -100 : 100, duration: 1000 }}
+            class:rtl={$rtlStore}
+            class="delete-chat">
+            <Delete size={$iconSize} color={"#fff"} slot="icon" />
+        </div>
+    {/if}
 </a>
 
 <style type="text/scss">
+    .delete-chat {
+        background-color: var(--chatSummary-del);
+        padding: $sp3;
+        position: absolute;
+        right: 0;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 50px;
+        cursor: pointer;
+
+        &.rtl {
+            right: unset;
+            left: 0;
+        }
+    }
+
     .chat-summary {
         position: relative;
         display: flex;

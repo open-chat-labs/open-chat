@@ -312,7 +312,7 @@ export class HomeController {
                 if (resp === "success") {
                     toastStore.showSuccessToast("deleteGroupSuccess");
                     this.clearSelectedChat();
-                    this.removeGroup(chatId);
+                    this.removeChat(chatId);
                 } else {
                     rollbar.warn("Unable to delete group", resp);
                     toastStore.showFailureToast("deleteGroupFailure");
@@ -333,7 +333,7 @@ export class HomeController {
                 if (resp === "success") {
                     toastStore.showSuccessToast("leftGroup");
                     this.clearSelectedChat();
-                    this.removeGroup(chatId);
+                    this.removeChat(chatId);
                 } else {
                     if (resp === "owner_cannot_leave") {
                         toastStore.showFailureToast("ownerCantLeave");
@@ -588,7 +588,7 @@ export class HomeController {
         });
     }
 
-    removeGroup(chatId: string): void {
+    removeChat(chatId: string): void {
         this.serverChatSummaries.update((summaries) => {
             delete summaries[chatId];
             return {
