@@ -1,6 +1,6 @@
-use crate::model::user::{CreatedUser, User};
+use crate::model::user::{CreatedUser, PhoneStatus, User};
 use crate::model::user_map::UpdateUserResult;
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, RuntimeState, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::{CanisterCreationStatusInternal, CyclesTopUp};
@@ -39,6 +39,11 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 if let CanisterCreationStatusInternal::Created(canister_id, wasm_version, cycles) =
                     &user.canister_creation_status
                 {
+                    let phone_status = match &user.phone_number {
+                        Some(pn) => PhoneStatus::Confirmed(pn.clone()),
+                        None => PhoneStatus::None,
+                    };
+
                     let created_user = CreatedUser {
                         principal: user.principal,
                         phone_number: user.phone_number.clone(),
@@ -55,6 +60,8 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                         }],
                         avatar_id: None,
                         registration_fee: user.registration_fee.clone(),
+                        open_storage_limit_bytes: DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, // This will become 0 when we enable new registration flow
+                        phone_status,
                     };
                     User::Created(created_user)
                 } else {
@@ -81,14 +88,14 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 }
 
-enum UsernameValidationResult {
+pub enum UsernameValidationResult {
     Ok,
     TooLong(u16),
     TooShort(u16),
     Invalid,
 }
 
-fn validate_username(username: &str) -> UsernameValidationResult {
+pub fn validate_username(username: &str) -> UsernameValidationResult {
     if username.len() > MAX_USERNAME_LENGTH as usize {
         return UsernameValidationResult::TooLong(MAX_USERNAME_LENGTH);
     }

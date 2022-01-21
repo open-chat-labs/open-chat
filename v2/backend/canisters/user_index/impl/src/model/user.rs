@@ -1,3 +1,4 @@
+use crate::DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
@@ -187,6 +188,38 @@ pub struct CreatedUser {
     pub cycle_top_ups: Vec<CyclesTopUp>,
     pub avatar_id: Option<u128>,
     pub registration_fee: Option<RegistrationFee>,
+    #[serde(default = "default_byte_limit")]
+    pub open_storage_limit_bytes: u64,
+    #[serde(rename(deserialize = "phone_number"))]
+    pub phone_status: PhoneStatus,
+}
+
+fn default_byte_limit() -> u64 {
+    DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[serde(from = "Option<PhoneNumber>")]
+#[allow(dead_code)]
+pub enum PhoneStatus {
+    None,
+    Unconfirmed(UnconfirmedPhoneNumber),
+    Confirmed(PhoneNumber),
+}
+
+impl From<Option<PhoneNumber>> for PhoneStatus {
+    fn from(phone_number: Option<PhoneNumber>) -> Self {
+        match phone_number {
+            Some(pn) => PhoneStatus::Confirmed(pn),
+            None => PhoneStatus::None,
+        }
+    }
+}
+
+impl Default for PhoneStatus {
+    fn default() -> Self {
+        PhoneStatus::None
+    }
 }
 
 impl CreatedUser {

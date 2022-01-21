@@ -61,4 +61,6 @@ pub struct CreatedResult {
     pub canister_upgrade_status: CanisterUpgradeStatus,
     pub cryptocurrency_accounts: Vec<CryptocurrencyAccount>,
     pub wasm_version: Version,
+    pub open_storage_limit_bytes: u64,
+    pub unconfirmed_phone_number: Option<UnconfirmedPhoneNumber>,
 }

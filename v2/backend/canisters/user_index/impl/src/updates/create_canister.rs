@@ -1,4 +1,4 @@
-use crate::model::user::{CreatedUser, User};
+use crate::model::user::{CreatedUser, PhoneStatus, User};
 use crate::model::user_map::UpdateUserResult;
 use crate::{
     mutate_state, RuntimeState, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, MIN_CYCLES_BALANCE, USER_CANISTER_INITIAL_CYCLES_BALANCE,
@@ -134,6 +134,11 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
             if let CanisterCreationStatus::InProgress = confirmed_user.canister_creation_status.into() {
                 let user_to_update = match &confirmed_user.username {
                     Some(username) => {
+                        let phone_status = match &confirmed_user.phone_number {
+                            Some(pn) => PhoneStatus::Confirmed(pn.clone()),
+                            None => PhoneStatus::None,
+                        };
+
                         let created_user = CreatedUser {
                             principal: confirmed_user.principal,
                             phone_number: confirmed_user.phone_number.clone(),
@@ -150,6 +155,8 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
                             }],
                             avatar_id: None,
                             registration_fee: confirmed_user.registration_fee.clone(),
+                            open_storage_limit_bytes: DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, // This will become 0 when we enable new registration flow
+                            phone_status,
                         };
                         User::Created(created_user)
                     }

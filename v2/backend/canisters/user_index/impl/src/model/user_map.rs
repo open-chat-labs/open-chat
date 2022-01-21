@@ -1,10 +1,11 @@
-use crate::model::user::{UnconfirmedUser, UnconfirmedUserState, User};
+use crate::model::user::{ConfirmedUser, UnconfirmedUser, UnconfirmedUserState, User};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet, VecDeque};
 use types::{
-    Cycles, CyclesTopUp, ICPRegistrationFee, Milliseconds, PhoneNumber, RegistrationFee, TimestampMillis, Timestamped, UserId,
+    CanisterCreationStatusInternal, Cycles, CyclesTopUp, ICPRegistrationFee, Milliseconds, PhoneNumber, RegistrationFee,
+    TimestampMillis, Timestamped, UserId,
 };
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
@@ -25,6 +26,8 @@ pub struct UserMap {
     users_confirmed_via_phone: u64,
     users_confirmed_via_icp: u64,
     users_confirmed_via_cycles: u64,
+    #[serde(default)]
+    users_confirmed_automatically: u64,
     cached_metrics: Timestamped<Metrics>,
     unconfirmed_users_last_pruned: TimestampMillis,
 }
@@ -45,6 +48,34 @@ pub struct Metrics {
 }
 
 impl UserMap {
+    pub fn register(&mut self, principal: Principal, username: &str, now: TimestampMillis) -> RegisterUserResult {
+        if self.users_by_principal.contains_key(&principal) {
+            return RegisterUserResult::AlreadyExists;
+        }
+
+        if self.username_to_principal.contains_key(username) {
+            return RegisterUserResult::UsernameTaken;
+        }
+
+        self.username_to_principal.insert(username, principal);
+
+        let user = ConfirmedUser {
+            principal,
+            phone_number: None,
+            username: Some(username.to_owned()),
+            date_confirmed: now,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
+            upgrade_in_progress: false,
+            registration_fee: None,
+        };
+
+        self.users_by_principal.insert(principal, User::Confirmed(user));
+
+        self.users_confirmed_automatically += 1;
+
+        RegisterUserResult::Success
+    }
+
     pub fn add(&mut self, user: UnconfirmedUser) -> AddUserResult {
         let principal = user.principal;
         let mut maybe_phone_number = None;
@@ -391,6 +422,12 @@ pub enum AddUserResult {
     AlreadyExists,
     PhoneNumberTaken,
     RegistrationFeeCyclesTaken,
+}
+
+pub enum RegisterUserResult {
+    Success,
+    AlreadyExists,
+    UsernameTaken,
 }
 
 #[derive(Debug)]
