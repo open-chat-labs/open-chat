@@ -16,6 +16,7 @@ generate_update_call!(create_canister);
 generate_update_call!(generate_registration_fee);
 generate_update_call!(remove_sms_messages);
 generate_update_call!(remove_super_admin);
+generate_update_call!(register_user);
 generate_update_call!(resend_code);
 generate_update_call!(set_username);
 generate_update_call!(submit_phone_number);

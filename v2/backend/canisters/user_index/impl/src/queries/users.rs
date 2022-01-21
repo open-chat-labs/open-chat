@@ -36,7 +36,7 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{CreatedUser, User};
+    use crate::model::user::{CreatedUser, PhoneStatus, User};
     use crate::Data;
     use candid::Principal;
     use itertools::Itertools;
@@ -54,7 +54,7 @@ mod tests {
 
         data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[1]),
-            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: user_id1,
             username: "abc".to_string(),
             date_created: env.now,
@@ -65,7 +65,7 @@ mod tests {
         env.now += 1000;
         data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
-            phone_number: Some(PhoneNumber::new(44, "2222 222 222".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: user_id2,
             username: "def".to_string(),
             date_created: env.now,
@@ -76,7 +76,7 @@ mod tests {
         env.now += 1000;
         data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[3]),
-            phone_number: Some(PhoneNumber::new(44, "3333 333 333".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "3333 333 333".to_owned())),
             user_id: user_id3,
             username: "ghi".to_string(),
             date_created: env.now,
@@ -120,7 +120,7 @@ mod tests {
 
         data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[1]),
-            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: user_id1,
             username: "abc".to_string(),
             date_created: env.now,
@@ -131,7 +131,7 @@ mod tests {
         env.now += 1000;
         data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
-            phone_number: Some(PhoneNumber::new(44, "2222 222 222".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: user_id2,
             username: "def".to_string(),
             date_created: env.now,
@@ -142,7 +142,7 @@ mod tests {
         env.now += 1000;
         data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[3]),
-            phone_number: Some(PhoneNumber::new(44, "3333 333 333".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "3333 333 333".to_owned())),
             user_id: user_id3,
             username: "ghi".to_string(),
             date_created: env.now,
@@ -186,7 +186,7 @@ mod tests {
 
         data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[1]),
-            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: user_id1,
             username: "abc".to_string(),
             date_created: start,
@@ -197,7 +197,7 @@ mod tests {
         env.now += 1000;
         data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
-            phone_number: Some(PhoneNumber::new(44, "2222 222 222".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: user_id2,
             username: "def".to_string(),
             date_created: start,
@@ -208,7 +208,7 @@ mod tests {
         env.now += 1000;
         data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[3]),
-            phone_number: Some(PhoneNumber::new(44, "3333 333 333".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "3333 333 333".to_owned())),
             user_id: user_id3,
             username: "ghi".to_string(),
             date_created: env.now,

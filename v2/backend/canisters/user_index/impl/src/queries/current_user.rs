@@ -44,6 +44,16 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
 
                 let icp_account = CryptocurrencyAccount::ICP(AccountIdentifier::new(&u.user_id.into(), &DEFAULT_SUBACCOUNT));
                 let cycles_account = CryptocurrencyAccount::Cycles(u.user_id.into());
+                let phone_status = match &u.phone_status {
+                    crate::model::user::PhoneStatus::Unconfirmed(unconfirmed_phone_number) => {
+                        PhoneStatus::Unconfirmed(UnconfirmedPhoneNumber {
+                            phone_number: unconfirmed_phone_number.phone_number.clone(),
+                            valid_until: unconfirmed_phone_number.valid_until,
+                        })
+                    }
+                    crate::model::user::PhoneStatus::Confirmed(_) => PhoneStatus::Confirmed,
+                    crate::model::user::PhoneStatus::None => PhoneStatus::None,
+                };
 
                 Created(CreatedResult {
                     user_id: u.user_id,
@@ -52,6 +62,8 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                     avatar_id: u.avatar_id,
                     cryptocurrency_accounts: vec![icp_account, cycles_account],
                     wasm_version: u.wasm_version,
+                    open_storage_limit_bytes: u.open_storage_limit_bytes,
+                    phone_status,
                 })
             }
         }

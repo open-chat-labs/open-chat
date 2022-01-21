@@ -1,4 +1,4 @@
-use crate::model::user::{CreatedUser, User};
+use crate::model::user::{CreatedUser, PhoneStatus, User};
 use crate::model::user_map::UpdateUserResult;
 use crate::{
     mutate_state, RuntimeState, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, MIN_CYCLES_BALANCE, USER_CANISTER_INITIAL_CYCLES_BALANCE,
@@ -134,9 +134,19 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
             if let CanisterCreationStatus::InProgress = confirmed_user.canister_creation_status.into() {
                 let user_to_update = match &confirmed_user.username {
                     Some(username) => {
+                        let phone_status = match &confirmed_user.phone_number {
+                            Some(pn) => PhoneStatus::Confirmed(pn.clone()),
+                            None => PhoneStatus::None,
+                        };
+                        let open_storage_limit_bytes =
+                            if matches!(phone_status, PhoneStatus::Confirmed(_)) || confirmed_user.registration_fee.is_some() {
+                                DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT
+                            } else {
+                                0
+                            };
+
                         let created_user = CreatedUser {
                             principal: confirmed_user.principal,
-                            phone_number: confirmed_user.phone_number.clone(),
                             user_id: canister_id.into(),
                             username: username.clone(),
                             date_created: now,
@@ -150,6 +160,8 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
                             }],
                             avatar_id: None,
                             registration_fee: confirmed_user.registration_fee.clone(),
+                            open_storage_limit_bytes,
+                            phone_status,
                         };
                         User::Created(created_user)
                     }

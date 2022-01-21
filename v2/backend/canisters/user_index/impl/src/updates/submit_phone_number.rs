@@ -1,12 +1,10 @@
 use crate::model::user::{UnconfirmedPhoneNumber, UnconfirmedUser, UnconfirmedUserState, User};
 use crate::model::user_map::AddUserResult;
-use crate::{mutate_state, RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS};
+use crate::{mutate_state, RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, USER_LIMIT};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::ConfirmationCodeSms;
 use user_index_canister::submit_phone_number::{Response::*, *};
-
-const USER_LIMIT: usize = 5000;
 
 #[update]
 #[trace]

@@ -1,3 +1,4 @@
+use crate::DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
@@ -32,7 +33,7 @@ impl User {
                 }
             }
             User::Confirmed(u) => u.phone_number.as_ref(),
-            User::Created(u) => u.phone_number.as_ref(),
+            User::Created(u) => u.phone_status.phone_number(),
         }
     }
 
@@ -176,7 +177,6 @@ pub struct ConfirmedUser {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CreatedUser {
     pub principal: Principal,
-    pub phone_number: Option<PhoneNumber>,
     pub user_id: UserId,
     pub username: String,
     pub date_created: TimestampMillis,
@@ -187,6 +187,48 @@ pub struct CreatedUser {
     pub cycle_top_ups: Vec<CyclesTopUp>,
     pub avatar_id: Option<u128>,
     pub registration_fee: Option<RegistrationFee>,
+    #[serde(default = "default_byte_limit")]
+    pub open_storage_limit_bytes: u64,
+    #[serde(rename(deserialize = "phone_number"))]
+    pub phone_status: PhoneStatus,
+}
+
+fn default_byte_limit() -> u64 {
+    DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[serde(from = "Option<PhoneNumber>")]
+#[allow(dead_code)]
+pub enum PhoneStatus {
+    None,
+    Unconfirmed(UnconfirmedPhoneNumber),
+    Confirmed(PhoneNumber),
+}
+
+impl PhoneStatus {
+    fn phone_number(&self) -> Option<&PhoneNumber> {
+        match self {
+            PhoneStatus::None => None,
+            PhoneStatus::Unconfirmed(un) => Some(&un.phone_number),
+            PhoneStatus::Confirmed(pn) => Some(pn),
+        }
+    }
+}
+
+impl From<Option<PhoneNumber>> for PhoneStatus {
+    fn from(phone_number: Option<PhoneNumber>) -> Self {
+        match phone_number {
+            Some(pn) => PhoneStatus::Confirmed(pn),
+            None => PhoneStatus::None,
+        }
+    }
+}
+
+impl Default for PhoneStatus {
+    fn default() -> Self {
+        PhoneStatus::None
+    }
 }
 
 impl CreatedUser {
@@ -277,7 +319,6 @@ impl Default for CreatedUser {
     fn default() -> Self {
         CreatedUser {
             principal: Principal::anonymous(),
-            phone_number: Some(PhoneNumber::new(44, "000".to_owned())),
             user_id: Principal::anonymous().into(),
             username: String::new(),
             date_created: 0,
@@ -288,6 +329,8 @@ impl Default for CreatedUser {
             cycle_top_ups: Vec::new(),
             avatar_id: None,
             registration_fee: None,
+            open_storage_limit_bytes: 0,
+            phone_status: PhoneStatus::None,
         }
     }
 }
