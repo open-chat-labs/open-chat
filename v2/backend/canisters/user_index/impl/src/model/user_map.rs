@@ -442,7 +442,7 @@ pub enum UpdateUserResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedPhoneNumber, UnconfirmedUser};
+    use crate::model::user::{ConfirmedUser, CreatedUser, PhoneStatus, UnconfirmedPhoneNumber, UnconfirmedUser};
     use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
     use itertools::Itertools;
     use types::{CanisterCreationStatusInternal, CyclesRegistrationFee, ICPRegistrationFee, RegistrationFee, ICP};
@@ -488,12 +488,12 @@ mod tests {
 
         let created = User::Created(CreatedUser {
             principal: principal3,
-            phone_number: Some(phone_number3.clone()),
             user_id: user_id3,
             username: username3.clone(),
             date_created: 3,
             date_updated: 3,
             last_online: 1,
+            phone_status: PhoneStatus::Confirmed(phone_number3.clone()),
             ..Default::default()
         });
         user_map.add_test_user(created.clone());
@@ -620,7 +620,7 @@ mod tests {
 
         let original = CreatedUser {
             principal,
-            phone_number: Some(phone_number1.clone()),
+            phone_status: PhoneStatus::Confirmed(phone_number1.clone()),
             user_id,
             username: username1.clone(),
             date_created: 1,
@@ -631,7 +631,7 @@ mod tests {
 
         let mut updated = original.clone();
         updated.username = username2.clone();
-        updated.phone_number = Some(phone_number2.clone());
+        updated.phone_status = PhoneStatus::Confirmed(phone_number2.clone());
 
         user_map.add_test_user(User::Created(original));
         assert!(matches!(user_map.update(User::Created(updated)), UpdateUserResult::Success));
@@ -660,7 +660,7 @@ mod tests {
 
         let original = CreatedUser {
             principal: principal1,
-            phone_number: Some(phone_number1),
+            phone_status: PhoneStatus::Confirmed(phone_number1),
             user_id: user_id1,
             username: username1.clone(),
             date_created: 1,
@@ -671,7 +671,7 @@ mod tests {
 
         let other = CreatedUser {
             principal: principal2,
-            phone_number: Some(phone_number2.clone()),
+            phone_status: PhoneStatus::Confirmed(phone_number2.clone()),
             user_id: user_id2,
             username: username2.clone(),
             date_created: 2,
@@ -681,7 +681,7 @@ mod tests {
         };
 
         let mut updated = original.clone();
-        updated.phone_number = Some(phone_number2);
+        updated.phone_status = PhoneStatus::Confirmed(phone_number2);
 
         user_map.add_test_user(User::Created(original));
         user_map.add_test_user(User::Created(other));
@@ -708,7 +708,7 @@ mod tests {
 
         let original = CreatedUser {
             principal: principal1,
-            phone_number: Some(phone_number1),
+            phone_status: PhoneStatus::Confirmed(phone_number1),
             user_id: user_id1,
             username: username1.clone(),
             date_created: 1,
@@ -719,7 +719,7 @@ mod tests {
 
         let other = CreatedUser {
             principal: principal2,
-            phone_number: Some(phone_number2.clone()),
+            phone_status: PhoneStatus::Confirmed(phone_number2.clone()),
             user_id: user_id2,
             username: username2.clone(),
             date_created: 2,
@@ -749,7 +749,7 @@ mod tests {
 
         let original = CreatedUser {
             principal,
-            phone_number: Some(phone_number),
+            phone_status: PhoneStatus::Confirmed(phone_number),
             user_id: user_id,
             username: username.clone(),
             date_created: 1,
@@ -890,7 +890,7 @@ mod tests {
 
         let created = User::Created(CreatedUser {
             principal: principal4,
-            phone_number: Some(phone_number4.clone()),
+            phone_status: PhoneStatus::Confirmed(phone_number4.clone()),
             user_id: user_id4,
             username: username4.clone(),
             date_created: 4,

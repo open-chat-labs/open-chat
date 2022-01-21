@@ -178,6 +178,8 @@ type CurrentUserResponse =
             avatar_id: opt nat;
             cryptocurrency_accounts: vec CryptocurrencyAccount;
             wasm_version: Version;
+            open_storage_limit_bytes: nat64;
+            phone_status: PhoneStatus;
         };
     };
 
@@ -197,6 +199,13 @@ type ConfirmationState =
     variant {
         PhoneNumber: PhoneNumber;
         RegistrationFee: RegistrationFee;
+    };
+
+type PhoneStatus =
+    variant {
+        None;
+        Unconfirmed: UnconfirmedPhoneNumberState;
+        Confirmed;
     };
 
 type UserArgs = 

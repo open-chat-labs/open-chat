@@ -54,6 +54,13 @@ pub enum ConfirmationState {
 }
 
 #[derive(CandidType, Deserialize, Debug)]
+pub enum PhoneStatus {
+    None,
+    Unconfirmed(UnconfirmedPhoneNumber),
+    Confirmed,
+}
+
+#[derive(CandidType, Deserialize, Debug)]
 pub struct CreatedResult {
     pub user_id: UserId,
     pub username: String,
@@ -62,5 +69,5 @@ pub struct CreatedResult {
     pub cryptocurrency_accounts: Vec<CryptocurrencyAccount>,
     pub wasm_version: Version,
     pub open_storage_limit_bytes: u64,
-    pub unconfirmed_phone_number: Option<UnconfirmedPhoneNumber>,
+    pub phone_status: PhoneStatus,
 }

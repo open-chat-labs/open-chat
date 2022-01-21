@@ -43,10 +43,15 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                         Some(pn) => PhoneStatus::Confirmed(pn.clone()),
                         None => PhoneStatus::None,
                     };
+                    let open_storage_limit_bytes =
+                        if matches!(phone_status, PhoneStatus::Confirmed(_)) || user.registration_fee.is_some() {
+                            DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT
+                        } else {
+                            0
+                        };
 
                     let created_user = CreatedUser {
                         principal: user.principal,
-                        phone_number: user.phone_number.clone(),
                         user_id: (*canister_id).into(),
                         username,
                         date_created: now,
@@ -60,7 +65,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                         }],
                         avatar_id: None,
                         registration_fee: user.registration_fee.clone(),
-                        open_storage_limit_bytes: DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, // This will become 0 when we enable new registration flow
+                        open_storage_limit_bytes,
                         phone_status,
                     };
                     User::Created(created_user)
@@ -118,7 +123,7 @@ pub fn validate_username(username: &str) -> UsernameValidationResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{CreatedUser, UnconfirmedPhoneNumber, UnconfirmedUser, UnconfirmedUserState, User};
+    use crate::model::user::{CreatedUser, PhoneStatus, UnconfirmedPhoneNumber, UnconfirmedUser, UnconfirmedUserState, User};
     use crate::Data;
     use candid::Principal;
     use types::PhoneNumber;
@@ -130,7 +135,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add_test_user(User::Created(CreatedUser {
             principal: env.caller,
-            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
@@ -157,7 +162,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add_test_user(User::Created(CreatedUser {
             principal: env.caller,
-            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
@@ -180,7 +185,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[1]),
-            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
@@ -190,7 +195,7 @@ mod tests {
         }));
         data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
-            phone_number: Some(PhoneNumber::new(44, "2222 222 222".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: Principal::from_slice(&[2]).into(),
             username: "xyz".to_string(),
             date_created: env.now,
@@ -235,7 +240,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add_test_user(User::Created(CreatedUser {
             principal: env.caller,
-            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
@@ -258,7 +263,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add_test_user(User::Created(CreatedUser {
             principal: env.caller,
-            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
@@ -281,7 +286,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add_test_user(User::Created(CreatedUser {
             principal: env.caller,
-            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,

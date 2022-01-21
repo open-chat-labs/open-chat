@@ -138,10 +138,15 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
                             Some(pn) => PhoneStatus::Confirmed(pn.clone()),
                             None => PhoneStatus::None,
                         };
+                        let open_storage_limit_bytes =
+                            if matches!(phone_status, PhoneStatus::Confirmed(_)) || confirmed_user.registration_fee.is_some() {
+                                DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT
+                            } else {
+                                0
+                            };
 
                         let created_user = CreatedUser {
                             principal: confirmed_user.principal,
-                            phone_number: confirmed_user.phone_number.clone(),
                             user_id: canister_id.into(),
                             username: username.clone(),
                             date_created: now,
@@ -155,7 +160,7 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
                             }],
                             avatar_id: None,
                             registration_fee: confirmed_user.registration_fee.clone(),
-                            open_storage_limit_bytes: DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, // This will become 0 when we enable new registration flow
+                            open_storage_limit_bytes,
                             phone_status,
                         };
                         User::Created(created_user)
