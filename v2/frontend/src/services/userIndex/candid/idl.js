@@ -65,6 +65,11 @@ export const idlFactory = ({ IDL }) => {
     'RegistrationFee' : RegistrationFee,
     'PhoneNumber' : PhoneNumber,
   });
+  const PhoneStatus = IDL.Variant({
+    'Unconfirmed' : UnconfirmedPhoneNumberState,
+    'None' : IDL.Null,
+    'Confirmed' : IDL.Null,
+  });
   const Version = IDL.Record({
     'major' : IDL.Nat32,
     'minor' : IDL.Nat32,
@@ -92,11 +97,13 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Created' : IDL.Record({
       'username' : IDL.Text,
+      'phone_status' : PhoneStatus,
       'wasm_version' : Version,
       'user_id' : UserId,
       'cryptocurrency_accounts' : IDL.Vec(CryptocurrencyAccount),
       'avatar_id' : IDL.Opt(IDL.Nat),
       'canister_upgrade_status' : CanisterUpgradeStatus,
+      'open_storage_limit_bytes' : IDL.Nat64,
     }),
     'UserNotFound' : IDL.Null,
   });
@@ -116,6 +123,17 @@ export const idlFactory = ({ IDL }) => {
     'PaymentNotFound' : IDL.Null,
     'InternalError' : IDL.Text,
     'UserNotFound' : IDL.Null,
+  });
+  const RegisterUserArgs = IDL.Record({ 'username' : IDL.Text });
+  const RegisterUserResponse = IDL.Variant({
+    'UsernameTaken' : IDL.Null,
+    'UsernameTooShort' : IDL.Nat16,
+    'UsernameInvalid' : IDL.Null,
+    'AlreadyRegistered' : IDL.Null,
+    'UserLimitReached' : IDL.Null,
+    'UsernameTooLong' : IDL.Nat16,
+    'Success' : IDL.Null,
+    'NotSupported' : IDL.Null,
   });
   const RemoveSuperAdminArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveSuperAdminResponse = IDL.Variant({
@@ -236,6 +254,7 @@ export const idlFactory = ({ IDL }) => {
         [NotifyRegistrationFeePaidResponse],
         [],
       ),
+    'register_user' : IDL.Func([RegisterUserArgs], [RegisterUserResponse], []),
     'remove_super_admin' : IDL.Func(
         [RemoveSuperAdminArgs],
         [RemoveSuperAdminResponse],

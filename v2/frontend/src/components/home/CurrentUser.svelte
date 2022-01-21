@@ -129,6 +129,10 @@
                         <Information size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("aboutOpenChat")}</span>
                     </MenuItem>
+                    <MenuItem on:click={() => dispatch("logout")}>
+                        <Logout size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                        <span slot="text">{$_("logout")}</span>
+                    </MenuItem>
                 </Menu>
             </span>
         </MenuIcon>

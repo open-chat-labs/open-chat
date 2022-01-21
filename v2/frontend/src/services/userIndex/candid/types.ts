@@ -156,11 +156,13 @@ export type CurrentUserResponse = {
   {
     'Created' : {
       'username' : string,
+      'phone_status' : PhoneStatus,
       'wasm_version' : Version,
       'user_id' : UserId,
       'cryptocurrency_accounts' : Array<CryptocurrencyAccount>,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
+      'open_storage_limit_bytes' : bigint,
     }
   } |
   { 'UserNotFound' : null };
@@ -510,6 +512,9 @@ export interface PendingICPWithdrawal {
   'amount' : ICP,
 }
 export interface PhoneNumber { 'country_code' : number, 'number' : string }
+export type PhoneStatus = { 'Unconfirmed' : UnconfirmedPhoneNumberState } |
+  { 'None' : null } |
+  { 'Confirmed' : null };
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
@@ -529,6 +534,15 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
+export interface RegisterUserArgs { 'username' : string }
+export type RegisterUserResponse = { 'UsernameTaken' : null } |
+  { 'UsernameTooShort' : number } |
+  { 'UsernameInvalid' : null } |
+  { 'AlreadyRegistered' : null } |
+  { 'UserLimitReached' : null } |
+  { 'UsernameTooLong' : number } |
+  { 'Success' : null } |
+  { 'NotSupported' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemoveSuperAdminArgs { 'user_id' : UserId }
@@ -684,6 +698,7 @@ export interface _SERVICE {
   'notify_registration_fee_paid' : (
       arg_0: NotifyRegistrationFeePaidArgs,
     ) => Promise<NotifyRegistrationFeePaidResponse>,
+  'register_user' : (arg_0: RegisterUserArgs) => Promise<RegisterUserResponse>,
   'remove_super_admin' : (arg_0: RemoveSuperAdminArgs) => Promise<
       RemoveSuperAdminResponse
     >,

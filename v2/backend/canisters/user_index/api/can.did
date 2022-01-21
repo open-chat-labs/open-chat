@@ -1,5 +1,22 @@
 import "../../../libraries/types/can.did";
 
+type RegisterUserArgs = 
+    record {
+        username: text;
+    };
+
+type RegisterUserResponse = 
+    variant {
+        Success;
+        AlreadyRegistered;
+        UserLimitReached;
+        UsernameTaken;
+        UsernameInvalid;
+        UsernameTooShort: nat16;
+        UsernameTooLong: nat16;
+        NotSupported;
+    };
+
 type PhoneNumber = 
     record {
         country_code: nat16;
@@ -161,6 +178,8 @@ type CurrentUserResponse =
             avatar_id: opt nat;
             cryptocurrency_accounts: vec CryptocurrencyAccount;
             wasm_version: Version;
+            open_storage_limit_bytes: nat64;
+            phone_status: PhoneStatus;
         };
     };
 
@@ -180,6 +199,13 @@ type ConfirmationState =
     variant {
         PhoneNumber: PhoneNumber;
         RegistrationFee: RegistrationFee;
+    };
+
+type PhoneStatus =
+    variant {
+        None;
+        Unconfirmed: UnconfirmedPhoneNumberState;
+        Confirmed;
     };
 
 type UserArgs = 
@@ -260,6 +286,8 @@ type SuperAdminsResponse =
     };
 
 service: {
+    register_user: (RegisterUserArgs) -> (RegisterUserResponse);
+
     // If the current user does not exist, the phone number is valid, and not already in use 
     // then send an SMS with a confirmation code to this phone number
     submit_phone_number: (SubmitPhoneNumberArgs) -> (SubmitPhoneNumberResponse);
