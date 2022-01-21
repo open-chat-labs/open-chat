@@ -67,7 +67,7 @@ fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::User;
+    use crate::model::user::{PhoneStatus, User};
     use crate::Data;
     use candid::Principal;
     use types::PhoneNumber;
@@ -171,12 +171,12 @@ mod tests {
 
             data.users.add_test_user(User::Created(CreatedUser {
                 principal: p,
-                phone_number: Some(PhoneNumber::new(44, format!("+44 1111 111 11{index}"))),
                 user_id: p.into(),
                 username: usernames[index].to_string(),
                 date_created: env.now,
                 date_updated: env.now,
                 last_online: env.now,
+                phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, format!("+44 1111 111 11{index}"))),
                 ..Default::default()
             }));
             env.now += 1000;
