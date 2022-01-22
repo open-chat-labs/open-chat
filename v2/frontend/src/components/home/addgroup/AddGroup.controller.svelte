@@ -8,7 +8,8 @@
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
     import { push } from "svelte-spa-router";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, tick } from "svelte";
+    import { groupChatFromCandidate } from "domain/chat/chat.utils";
 
     const dispatch = createEventDispatcher();
 
@@ -107,9 +108,14 @@
     }
 
     function onGroupCreated() {
-        push(`/${canisterId}`); // trigger the selection of the chat
-        dispatch("groupCreated");
-        reset();
+        if (canisterId !== undefined) {
+            const url = `/${canisterId}`;
+            dispatch("groupCreated", groupChatFromCandidate(canisterId, candidateGroup));
+            reset();
+
+            // tick ensure that the new chat will have made its way in to the chat list by the time we arrive at the route
+            tick().then(() => push(url)); // trigger the selection of the chat
+        }
     }
 </script>
 

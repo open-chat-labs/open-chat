@@ -257,7 +257,7 @@
     }
 
     function updateChat(ev: CustomEvent<ChatSummary>) {
-        controller.replaceChat(ev.detail);
+        controller.addOrReplaceChat(ev.detail);
     }
 
     function joinGroup(ev: CustomEvent<GroupChatSummary>) {

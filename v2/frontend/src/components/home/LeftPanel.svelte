@@ -9,6 +9,7 @@
     import type { UserSummary } from "../../domain/user/user";
     import type { HomeController } from "../../fsm/home.controller";
     import type { Version } from "../../domain/version";
+    import type { GroupChatSummary } from "domain/chat/chat";
 
     export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -23,6 +24,11 @@
     $: currentUser = controller.user;
 
     let addingGroup = false;
+
+    function groupCreated(ev: CustomEvent<GroupChatSummary>) {
+        controller.addOrReplaceChat(ev.detail);
+        addingGroup = false;
+    }
 </script>
 
 <Panel left>
@@ -31,7 +37,7 @@
             {api}
             {currentUser}
             on:cancelNewGroup={() => (addingGroup = false)}
-            on:groupCreated={() => (addingGroup = false)} />
+            on:groupCreated={groupCreated} />
     </div>
     <div class="chat-list" class:addingGroup>
         <ChatList
