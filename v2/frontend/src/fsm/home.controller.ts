@@ -251,7 +251,7 @@ export class HomeController {
             if (maybeChat === undefined) {
                 return false;
             }
-            this.replaceChat(maybeChat);
+            this.addOrReplaceChat(maybeChat);
             return true;
         });
     }
@@ -579,7 +579,7 @@ export class HomeController {
         });
     }
 
-    replaceChat(chat: ChatSummary): void {
+    addOrReplaceChat(chat: ChatSummary): void {
         this.serverChatSummaries.update((summaries) => {
             return {
                 ...summaries,
@@ -602,7 +602,7 @@ export class HomeController {
             .joinGroup(group.chatId)
             .then((resp) => {
                 if (resp === "success" || resp === "already_in_group") {
-                    this.replaceChat({
+                    this.addOrReplaceChat({
                         ...group,
                         myRole: "participant" as ParticipantRole,
                     });
