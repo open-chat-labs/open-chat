@@ -8,6 +8,7 @@ pub struct Args {
     pub as_super_admin: bool,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(Summary),
