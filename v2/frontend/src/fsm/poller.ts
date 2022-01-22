@@ -11,9 +11,9 @@ export class Poller {
 
     constructor(
         private fn: () => Promise<void>,
-        // If either interval is undefined then the job will not run while in that state
-        private interval: number | undefined,
-        private idleInterval: number | undefined
+        private interval: number,
+        // If idleInterval is undefined then the job will not run while the app is idle
+        private idleInterval?: number
     ) {
         this.unsubscribeBackground = background.subscribe((hidden) => {
             this.start(hidden);
