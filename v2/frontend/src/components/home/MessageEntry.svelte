@@ -121,9 +121,10 @@
         if (range !== undefined) {
             range.deleteContents();
             range.insertNode(document.createTextNode(text));
+            range.collapse(false);
             inputIsEmpty = false;
         }
-    }    
+    }
 
     function onInput() {
         const content = inp.textContent;
