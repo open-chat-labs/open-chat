@@ -11,7 +11,7 @@ export class Poller {
 
     constructor(
         private fn: () => Promise<void>,
-        private interval: number | undefined,
+        private interval: number | undefined, // An interval of 'undefined' means the job will not be run at all
         private idleInterval: number | undefined
     ) {
         this.unsubscribeBackground = background.subscribe((hidden) => {
