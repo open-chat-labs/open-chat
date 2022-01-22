@@ -11,8 +11,8 @@ export class Poller {
 
     constructor(
         private fn: () => Promise<void>,
-        private interval: number,
-        private idleInterval: number = interval
+        private interval: number | undefined,
+        private idleInterval: number | undefined
     ) {
         this.unsubscribeBackground = background.subscribe((hidden) => {
             this.start(hidden);
@@ -25,9 +25,13 @@ export class Poller {
 
         if (this.timeoutId !== undefined) {
             window.clearTimeout(this.timeoutId);
+            this.timeoutId = undefined;
         }
 
         const interval = hidden ? this.idleInterval : this.interval;
+        if (interval === undefined) {
+            return;
+        }
 
         // The first interval after toggling 'hidden' can be shorter so that if the job is now due based on the new
         // interval then it will run immediately.

@@ -88,7 +88,7 @@ export class HomeController {
                     CHAT_UPDATE_INTERVAL,
                     CHAT_UPDATE_IDLE_INTERVAL
                 );
-                this.usersPoller = new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL);
+                this.usersPoller = new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
                 rtcConnectionsManager.subscribe((msg) => this.handleWebRtcMessage(msg));
             });
         }
