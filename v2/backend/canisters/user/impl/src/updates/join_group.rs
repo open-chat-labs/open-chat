@@ -1,14 +1,21 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
-use group_canister::c2c_join_group;
+use group_canister::c2c_join_group_v2 as c2c_join_group;
 use ic_cdk_macros::update;
-use types::{ChatId, MessageIndex};
-use user_canister::join_group::{Response::*, *};
+use types::{ChatId, GroupChatSummary, MessageIndex, MessageIndexRange};
+use user_canister::join_group::Response as ResponseV1;
+use user_canister::join_group_v2::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
-async fn join_group(args: Args) -> Response {
+async fn join_group(args: Args) -> ResponseV1 {
+    join_group_v2(args).await.into()
+}
+
+#[update(guard = "caller_is_owner")]
+#[trace]
+async fn join_group_v2(args: Args) -> Response {
     run_regular_jobs();
 
     let principal = read_state(|state| state.env.caller());
@@ -18,11 +25,21 @@ async fn join_group(args: Args) -> Response {
         as_super_admin: args.as_super_admin,
     };
 
-    match group_canister_c2c_client::c2c_join_group(args.chat_id.into(), &c2c_args).await {
+    match group_canister_c2c_client::c2c_join_group_v2(args.chat_id.into(), &c2c_args).await {
         Ok(result) => match result {
-            c2c_join_group::Response::Success(result) => {
-                mutate_state(|state| commit(args.chat_id, args.as_super_admin, result.latest_message_index, state));
-                Success
+            c2c_join_group::Response::Success(summary) => {
+                let latest_message_index = summary.latest_message.as_ref().map(|m| m.event.message_index);
+
+                mutate_state(|state| commit(args.chat_id, args.as_super_admin, latest_message_index, state));
+
+                let mut summary: GroupChatSummary = summary.into();
+                if let Some(message_index) = latest_message_index {
+                    summary.read_by_me.push(MessageIndexRange {
+                        from: MessageIndex::default(),
+                        to: message_index,
+                    });
+                }
+                Success(summary)
             }
             c2c_join_group::Response::AlreadyInGroup => AlreadyInGroup,
             c2c_join_group::Response::GroupNotPublic => GroupNotPublic,

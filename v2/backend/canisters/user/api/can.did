@@ -147,6 +147,24 @@ type JoinGroupResponse =
         NotSuperAdmin;
     };
 
+type JoinGroupV2Args =
+    record {
+        chat_id: ChatId;
+        as_super_admin: bool;
+    };
+
+type JoinGroupV2Response =
+    variant {
+        Success: GroupChatSummary;
+        AlreadyInGroup;
+        Blocked;
+        GroupNotFound;
+        GroupNotPublic;
+        ParticipantLimitReached: nat32;
+        InternalError: text;
+        NotSuperAdmin;
+    };
+
 type LeaveGroupArgs =
     record {
         chat_id: ChatId;
@@ -429,6 +447,7 @@ service: {
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
+    join_group_v2: (JoinGroupV2Args) -> (JoinGroupV2Response);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);

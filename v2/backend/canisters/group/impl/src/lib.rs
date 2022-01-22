@@ -1,9 +1,10 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
-use crate::model::participants::Participants;
+use crate::model::participants::{ParticipantInternal, Participants};
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use chat_events::GroupChatEvents;
+use group_canister::Summary;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -69,6 +70,34 @@ impl RuntimeState {
 
         async fn push_notification_inner(canister_id: CanisterId, args: notifications_canister::c2c_push_notification::Args) {
             let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
+        }
+    }
+
+    pub fn summary(&self, participant: &ParticipantInternal) -> Summary {
+        let data = &self.data;
+        let latest_event = data.events.last();
+        let min_visible_message_index = participant.min_visible_message_index();
+
+        Summary {
+            chat_id: self.env.canister_id().into(),
+            last_updated: latest_event.timestamp,
+            name: data.name.clone(),
+            description: data.description.clone(),
+            avatar_id: Avatar::id(&data.avatar),
+            is_public: data.is_public,
+            min_visible_event_index: participant.min_visible_event_index(),
+            min_visible_message_index,
+            latest_message: data
+                .events
+                .latest_message()
+                .filter(|m| m.event.message_index >= min_visible_message_index),
+            latest_event_index: latest_event.index,
+            joined: participant.date_added,
+            participant_count: data.participants.len(),
+            role: participant.role,
+            mentions: participant.get_most_recent_mentions(&data.events),
+            pinned_message: data.pinned_message,
+            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
         }
     }
 
