@@ -10,27 +10,42 @@
     import Select from "../../Select.svelte";
     import TextArea from "../../TextArea.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import { createEventDispatcher, onMount } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "./Toggle.svelte";
+    import { setLocale } from "i18n/i18n";
 
     const dispatch = createEventDispatcher();
-    const MIN_LENGTH = 3;
-    const MAX_LENGTH = 25;
-    const MAX_DESC_LENGTH = 1024;
+    const MIN_USERNAME_LENGTH = 3;
+    const MAX_USERNAME_LENGTH = 25;
+    const MAX_BIO_LENGTH = 1024;
 
     export let user: PartialUserSummary;
 
     let username = "";
+    let userbio = "";
+    let selectedLocale = $locale;
     let enterSend = true;
     let notifications = true;
     let currentScrollStrategy = "latest";
 
+    $: {
+        setLocale(selectedLocale);
+    }
+
     onMount(() => {
         username = user?.username ?? "";
     });
+
+    export function reset(user: PartialUserSummary) {
+        username = user.username ?? "";
+        userbio = "";
+        enterSend = true;
+        notifications = true;
+        currentScrollStrategy = "latest";
+    }
 
     function saveUser() {}
 
@@ -61,8 +76,12 @@
 
 <form class="user-form" on:submit|preventDefault={saveUser}>
     <div class="user">
-        <EditableAvatar image={avatarUrl(user)} on:imageSelected={userAvatarSelected} />
-        <h4 class="photo-legend">{$_("clickToUpdateAvatar")}</h4>
+        <div class="avatar">
+            <EditableAvatar
+                overlayIcon={true}
+                image={avatarUrl(user)}
+                on:imageSelected={userAvatarSelected} />
+        </div>
         <div class="close" on:click={closeProfile}>
             <HoverIcon>
                 <Close size={$iconSize} color={"var(--icon-txt)"} />
@@ -74,25 +93,26 @@
             invalid={false}
             bind:value={username}
             autofocus={false}
-            minlength={MIN_LENGTH}
-            maxlength={MAX_LENGTH}
+            minlength={MIN_USERNAME_LENGTH}
+            maxlength={MAX_USERNAME_LENGTH}
             countdown={true}
             placeholder={$_("register.enterUsername")} />
 
         <div class="legend">{$_("supportsMarkdown")}</div>
         <TextArea
             rows={3}
+            bind:value={userbio}
             invalid={false}
-            maxlength={MAX_DESC_LENGTH}
+            maxlength={MAX_BIO_LENGTH}
             placeholder={$_("enterBio")} />
     </div>
 
     <div class="appearance">
         <CollapsibleCard open={true} headerText={$_("appearance")}>
             <div class="legend">{$_("preferredLanguage")}</div>
-            <Select value={"en"}>
+            <Select bind:value={selectedLocale}>
                 <option value={"en"}>English</option>
-                <option value={"cn"}>Chinese</option>
+                <option value={"cn"}>中国人</option>
             </Select>
 
             <div class="legend">{$_("Theme")}</div>
@@ -120,7 +140,7 @@
     </div>
 
     <div class="chats">
-        <CollapsibleCard open={false} headerText={$_("chats")}>
+        <CollapsibleCard open={true} headerText={$_("chats")}>
             <Toggle
                 id={"enter-send"}
                 on:change={toggleEnterSend}
@@ -191,6 +211,10 @@
         }
     }
 
+    .avatar {
+        margin: $sp4 0 $sp5 0;
+    }
+
     .cta {
         position: sticky;
         bottom: 0;
@@ -221,14 +245,6 @@
         @include font(light, normal, fs-60);
         margin-bottom: $sp2;
         text-transform: lowercase;
-    }
-
-    .photo-legend {
-        @include font(mediumBold, normal, fs-100);
-        color: var(--section-txt);
-        text-align: center;
-        margin-top: $sp3;
-        margin-bottom: $vertical-gap;
     }
 
     .close {

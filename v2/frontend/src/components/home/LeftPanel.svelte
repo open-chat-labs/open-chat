@@ -22,12 +22,19 @@
     export let searchResultsAvailable: boolean = false;
     export let wasmVersion: Version;
 
+    let profileComponent: UserProfile;
+
     $: api = controller.api;
     $: currentUser = controller.user;
     $: user = controller.user ? $userStore[controller.user?.userId] : nullUser("unknown");
 
     // let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-chat-list";
     let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-profile";
+
+    function showProfile() {
+        view = "showing-profile";
+        profileComponent.reset(user);
+    }
 </script>
 
 <Panel left>
@@ -44,7 +51,7 @@
             on:chatWith
             on:whatsHot
             on:newGroup={() => (view = "adding-group")}
-            on:profile={() => (view = "showing-profile")}
+            on:profile={showProfile}
             on:logout
             on:searchEntered
             on:deleteDirectChat
@@ -58,7 +65,10 @@
             {wasmVersion} />
     </div>
     <div class="profile" class:showing-profile={view === "showing-profile"}>
-        <UserProfile {user} on:closeProfile={() => (view = "showing-chat-list")} />
+        <UserProfile
+            bind:this={profileComponent}
+            {user}
+            on:closeProfile={() => (view = "showing-chat-list")} />
     </div>
 </Panel>
 

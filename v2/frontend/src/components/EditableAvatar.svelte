@@ -9,8 +9,9 @@
     const dispatch = createEventDispatcher();
 
     export let image: string | null | undefined;
-    export let disabled: boolean = false;
-    export let small: boolean = false;
+    export let disabled = false;
+    export let small = false;
+    export let overlayIcon = false;
 
     let fileinput: HTMLInputElement;
     let avatar: string | null | undefined;
@@ -102,6 +103,11 @@
     <div class:small class="photo-icon">
         {#if image}
             <div class="avatar" style={`background-image: url(${image})`} />
+            {#if overlayIcon}
+                <div class="overlay">
+                    <Camera size={"3em"} color={"#fff"} />
+                </div>
+            {/if}
         {:else}
             <Camera size={"3em"} color={"var(--icon-txt)"} />
         {/if}
@@ -122,6 +128,11 @@
         cursor: pointer;
     }
 
+    .overlay {
+        position: absolute;
+        opacity: 0.5;
+    }
+
     .photo-icon {
         border-radius: 50%;
         width: 90px;
@@ -129,6 +140,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        position: relative;
 
         &.small {
             width: 45px;
