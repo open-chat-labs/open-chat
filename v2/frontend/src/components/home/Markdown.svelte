@@ -3,7 +3,7 @@
 <script lang="ts">
     import { marked } from "marked";
     import DOMPurify from "dompurify";
-    import { afterUpdate, onMount } from "svelte";
+    import { afterUpdate } from "svelte";
     import { rollbar } from "../../utils/logging";
     import { userStore } from "../../stores/user";
     import { _ } from "svelte-i18n";
