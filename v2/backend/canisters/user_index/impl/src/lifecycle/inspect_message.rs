@@ -24,7 +24,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         }
         "add_super_admin" | "remove_super_admin" | "upgrade_user_canister_wasm" => runtime_state.is_caller_service_principal(),
         "remove_sms_messages" => runtime_state.is_caller_sms_service(),
-        "generate_registration_fee" | "notify_registration_fee_paid" | "submit_phone_number" | "register_user" => true,
+        "generate_registration_fee" | "notify_registration_fee_paid" | "register_user" | "submit_phone_number" => true,
         _ => false,
     };
 
