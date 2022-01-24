@@ -55,7 +55,7 @@
         transition: border ease-in-out 300ms;
         display: block;
         width: 100%;
-        padding: $sp4 $sp5;
+        padding: $sp4;
         @include font(book, normal, fs-100);
         color: var(--input-txt);
         background-color: var(--input-bg);

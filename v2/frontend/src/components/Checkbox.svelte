@@ -49,7 +49,7 @@
             text-indent: -9999px;
             width: 80px;
             height: 36px;
-            background: var(--button-bg);
+            background: var(--button-disabled);
             display: block;
             border-radius: 18px;
             position: relative;

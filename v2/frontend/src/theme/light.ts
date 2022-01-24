@@ -292,5 +292,25 @@ export function lightTheme(): Theme {
         recommended: {
             bg: "#ffffff",
         },
+
+        profile: {
+            section: {
+                mg: "8px",
+                bd: "none",
+                bg: "#fff",
+                xs: {
+                    mg: "0",
+                    bd: "1px solid #eaeaea",
+                },
+            },
+        },
+
+        collapsible: {
+            header: {
+                bg: "#f6f6f6",
+                bd: "1px solid #eaeaea",
+            },
+            bg: "#fff",
+        },
     };
 }
