@@ -21,6 +21,8 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
         .confirm_phone_number(caller, args.confirmation_code, runtime_state.data.test_mode, now)
     {
         ConfirmPhoneNumberResult::Success(Some(new_byte_limit)) => {
+            // NOTE: If we later allow a user to change their already confimed phone number
+            // we must remember not to increase their byte_limit in this case
             runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
                 user_id: caller,
                 byte_limit: new_byte_limit,
