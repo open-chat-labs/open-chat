@@ -1,6 +1,5 @@
-use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, UnconfirmedUser, UnconfirmedUserState, User};
-use crate::model::user_map::AddUserResult;
-use crate::{mutate_state, RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, USER_LIMIT};
+use crate::model::user_map::SubmitPhoneNumberResult;
+use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use types::ConfirmationCodeSms;
@@ -22,77 +21,32 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         return InvalidPhoneNumber;
     }
 
-    let phone_number_already_used = runtime_state.data.users.get_by_phone_number(&phone_number).is_some();
-
-    let phone_number_string = phone_number.to_string();
     let confirmation_code = runtime_state.generate_6_digit_code();
-    let mut unconfirmed_phone_number = UnconfirmedPhoneNumber {
-        phone_number: phone_number.clone(),
-        confirmation_code: confirmation_code.clone(),
-        valid_until: now + CONFIRMATION_CODE_EXPIRY_MILLIS,
-        sms_messages_sent: 1,
-    };
+    let phone_number_string = phone_number.to_string();
 
-    if let Some(user) = runtime_state.data.users.get_by_principal_mut(&caller) {
-        if let Some(user_phone_number) = user.get_phone_number() {
-            if phone_number_already_used && (user_phone_number != &phone_number) {
-                return AlreadyRegisteredByOther;
-            }
+    match runtime_state
+        .data
+        .users
+        .submit_phone_number(caller, phone_number, &confirmation_code, now)
+    {
+        SubmitPhoneNumberResult::Success => {
+            let sms = ConfirmationCodeSms {
+                phone_number: phone_number_string,
+                confirmation_code,
+            };
+            runtime_state.data.sms_messages.add(sms);
+            Success
         }
-
-        match user {
-            User::Unconfirmed(u) => {
-                if let UnconfirmedUserState::PhoneNumber(p) = &u.state {
-                    unconfirmed_phone_number.sms_messages_sent += p.sms_messages_sent;
-                }
-                runtime_state.data.users.remove_by_principal(&caller);
-            }
-            User::Confirmed(_) => return AlreadyRegistered,
-            User::Created(u) => {
-                match &u.phone_status {
-                    PhoneStatus::Confirmed(_) => return AlreadyRegistered,
-                    PhoneStatus::Unconfirmed(p) => unconfirmed_phone_number.sms_messages_sent += p.sms_messages_sent,
-                    PhoneStatus::None => (),
-                }
-
-                u.phone_status = PhoneStatus::Unconfirmed(unconfirmed_phone_number);
-
-                let sms = ConfirmationCodeSms {
-                    phone_number: phone_number_string,
-                    confirmation_code,
-                };
-                runtime_state.data.sms_messages.add(sms);
-
-                return Success;
-            }
-        }
-    } else if runtime_state.data.users.len() >= USER_LIMIT {
-        return UserLimitReached;
-    } else if phone_number_already_used {
-        return AlreadyRegisteredByOther;
-    }
-
-    let user = UnconfirmedUser {
-        principal: caller,
-        state: UnconfirmedUserState::PhoneNumber(unconfirmed_phone_number),
-    };
-
-    if matches!(runtime_state.data.users.add(user), AddUserResult::Success) {
-        let sms = ConfirmationCodeSms {
-            phone_number: phone_number_string,
-            confirmation_code,
-        };
-        runtime_state.data.sms_messages.add(sms);
-        Success
-    } else {
-        panic!("Failed to add user");
+        SubmitPhoneNumberResult::AlreadyTaken => AlreadyRegisteredByOther,
+        SubmitPhoneNumberResult::AlreadyConfirmed => AlreadyRegistered,
+        SubmitPhoneNumberResult::UserLimitReached => UserLimitReached,
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::ConfirmedUser;
+    use crate::model::user::{ConfirmedUser, User};
     use crate::Data;
     use candid::Principal;
     use types::PhoneNumber;

@@ -1,8 +1,7 @@
-use crate::model::user::{ConfirmedUser, PhoneStatus, UnconfirmedUserState, User};
-use crate::{mutate_state, RuntimeState, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT};
+use crate::model::user_map::ConfirmPhoneNumberResult;
+use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use types::{CanisterCreationStatusInternal, PhoneNumber};
 use user_index_canister::confirm_phone_number::{Response::*, *};
 
 #[update]
@@ -14,68 +13,26 @@ fn confirm_phone_number(args: Args) -> Response {
 fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
-    let test_code = runtime_state.data.test_mode && args.confirmation_code == "123456";
 
-    let phone_number: PhoneNumber;
-    if let Some(user) = runtime_state.data.users.get_by_principal_mut(&caller) {
-        match user {
-            User::Unconfirmed(u) => {
-                if let UnconfirmedUserState::PhoneNumber(p) = &u.state {
-                    if now > p.valid_until {
-                        return ConfirmationCodeExpired;
-                    } else if (args.confirmation_code != p.confirmation_code) && !test_code {
-                        return ConfirmationCodeIncorrect;
-                    } else {
-                        phone_number = p.phone_number.clone();
-                    }
-                } else {
-                    return PhoneNumberNotSubmitted;
-                }
-            }
-            User::Created(u) => match &u.phone_status {
-                PhoneStatus::Confirmed(_) => return AlreadyClaimed,
-                PhoneStatus::Unconfirmed(p) => {
-                    if now > p.valid_until {
-                        return ConfirmationCodeExpired;
-                    } else if (args.confirmation_code != p.confirmation_code) && !test_code {
-                        return ConfirmationCodeIncorrect;
-                    } else {
-                        u.phone_status = PhoneStatus::Confirmed(p.phone_number.clone());
-                        u.open_storage_limit_bytes += DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT;
-                        return Success;
-                    }
-                }
-                PhoneStatus::None => return PhoneNumberNotSubmitted,
-            },
-            _ => return AlreadyClaimed,
-        }
-    } else {
-        // We remove unconfirmed users once their confirmation codes expire, so if we are unable to
-        // find the user that either means the user never registered, or they registered but
-        // subsequently were removed due to their code expiring. Since we can't differentiate
-        // between these 2 cases, we simply return ConfirmationCodeExpired for both.
-        return ConfirmationCodeExpired;
+    match runtime_state
+        .data
+        .users
+        .confirm_phone_number(caller, args.confirmation_code, runtime_state.data.test_mode, now)
+    {
+        ConfirmPhoneNumberResult::Success => Success,
+        ConfirmPhoneNumberResult::CodeExpired => ConfirmationCodeExpired,
+        ConfirmPhoneNumberResult::CodeIncorrect => ConfirmationCodeIncorrect,
+        ConfirmPhoneNumberResult::PhoneNumberNotSubmitted => PhoneNumberNotSubmitted,
+        ConfirmPhoneNumberResult::AlreadyConfirmed => AlreadyClaimed,
     }
-
-    let user = ConfirmedUser {
-        principal: caller,
-        phone_number: Some(phone_number),
-        username: None,
-        date_confirmed: now,
-        canister_creation_status: CanisterCreationStatusInternal::Pending(None),
-        upgrade_in_progress: false,
-        registration_fee: None,
-    };
-    runtime_state.data.users.update(User::Confirmed(user));
-
-    Success
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{UnconfirmedPhoneNumber, UnconfirmedUser};
+    use crate::model::user::{ConfirmedUser, UnconfirmedPhoneNumber, UnconfirmedUser, UnconfirmedUserState, User};
     use crate::Data;
+    use types::PhoneNumber;
     use utils::env::test::TestEnv;
 
     #[test]
