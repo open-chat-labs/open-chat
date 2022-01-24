@@ -1,6 +1,6 @@
-import type DRange from "drange";
 import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
 import { compareUsersOnlineFirst, extractUserIdsFromMentions, nullUser } from "../user/user.utils";
+import DRange from "drange";
 import type {
     ChatSummary,
     DirectChatSummary,
@@ -23,6 +23,7 @@ import type {
     GroupChatDetails,
     GroupChatDetailsUpdates,
     Mention,
+    CandidateGroupChat,
 } from "./chat";
 import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -853,4 +854,29 @@ function getLatestMessage(
 
 export function isPreviewing(chat: ChatSummary): boolean {
     return chat.kind === "group_chat" && chat.public && chat.myRole === "previewer";
+}
+
+export function groupChatFromCandidate(
+    chatId: string,
+    candidate: CandidateGroupChat
+): GroupChatSummary {
+    return {
+        kind: "group_chat",
+        chatId,
+        readByMe: new DRange(),
+        latestEventIndex: 0,
+        latestMessage: undefined,
+        notificationsMuted: false,
+        name: candidate.name,
+        description: candidate.description,
+        public: candidate.isPublic,
+        joined: BigInt(Date.now()),
+        minVisibleEventIndex: 0,
+        minVisibleMessageIndex: 0,
+        lastUpdated: BigInt(0),
+        participantCount: candidate.participants.length + 1, // +1 to include us
+        myRole: "owner",
+        mentions: [],
+        ...candidate.avatar,
+    };
 }
