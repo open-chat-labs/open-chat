@@ -308,7 +308,7 @@ impl UserMap {
                         } else {
                             u.phone_status = PhoneStatus::Confirmed(p.phone_number.clone());
                             u.open_storage_limit_bytes += DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT;
-                            return ConfirmPhoneNumberResult::Success;
+                            return ConfirmPhoneNumberResult::PhoneNumberConfirmed(u.open_storage_limit_bytes);
                         }
                     }
                     PhoneStatus::None => return ConfirmPhoneNumberResult::PhoneNumberNotSubmitted,
@@ -319,7 +319,7 @@ impl UserMap {
             // We remove unconfirmed users once their confirmation codes expire, so if we are unable to
             // find the user that either means the user never registered, or they registered but
             // subsequently were removed due to their code expiring. Since we can't differentiate
-            // between these 2 cases, we simply return ConfirmationCodeExpired for both.
+            // between these 2 cases, we simply return CodeExpired for both.
             return ConfirmPhoneNumberResult::CodeExpired;
         }
 
@@ -333,8 +333,7 @@ impl UserMap {
             registration_fee: None,
         };
         self.update(User::Confirmed(user));
-
-        ConfirmPhoneNumberResult::Success
+        ConfirmPhoneNumberResult::UserConfirmed
     }
 
     pub fn mark_online(&mut self, principal: &Principal, now: TimestampMillis) -> bool {
@@ -571,7 +570,8 @@ pub enum SubmitPhoneNumberResult {
 }
 
 pub enum ConfirmPhoneNumberResult {
-    Success,
+    UserConfirmed,
+    PhoneNumberConfirmed(u64),
     CodeExpired,
     CodeIncorrect,
     PhoneNumberNotSubmitted,

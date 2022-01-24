@@ -2,6 +2,7 @@ use crate::model::user_map::ConfirmPhoneNumberResult;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
+use open_storage_index_canister::add_or_update_users::UserConfig;
 use user_index_canister::confirm_phone_number::{Response::*, *};
 
 #[update]
@@ -19,7 +20,14 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
         .users
         .confirm_phone_number(caller, args.confirmation_code, runtime_state.data.test_mode, now)
     {
-        ConfirmPhoneNumberResult::Success => Success,
+        ConfirmPhoneNumberResult::PhoneNumberConfirmed(new_byte_limit) => {
+            runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
+                user_id: caller,
+                byte_limit: new_byte_limit,
+            });
+            Success
+        }
+        ConfirmPhoneNumberResult::UserConfirmed => Success,
         ConfirmPhoneNumberResult::CodeExpired => ConfirmationCodeExpired,
         ConfirmPhoneNumberResult::CodeIncorrect => ConfirmationCodeIncorrect,
         ConfirmPhoneNumberResult::PhoneNumberNotSubmitted => PhoneNumberNotSubmitted,
