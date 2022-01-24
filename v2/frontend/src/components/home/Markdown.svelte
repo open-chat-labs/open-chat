@@ -3,7 +3,7 @@
 <script lang="ts">
     import { marked } from "marked";
     import DOMPurify from "dompurify";
-    import { onMount } from "svelte";
+    import { afterUpdate, onMount } from "svelte";
     import { rollbar } from "../../utils/logging";
     import { userStore } from "../../stores/user";
     import { _ } from "svelte-i18n";
@@ -62,7 +62,7 @@
 
     marked.use({ renderer, extensions: [mention] });
 
-    onMount(() => {
+    function render() {
         let parsed = text;
         try {
             parsed = marked.parseInline(text, options);
@@ -75,7 +75,9 @@
         } catch (err: any) {
             rollbar.error("Error sanitzing message content: ", err);
         }
-    });
+    }
+
+    afterUpdate(render);
 </script>
 
 <p class="markdown-wrapper" class:inline class:oneLine>
