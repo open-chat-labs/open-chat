@@ -308,7 +308,7 @@ impl UserMap {
                         } else {
                             u.phone_status = PhoneStatus::Confirmed(p.phone_number.clone());
                             u.open_storage_limit_bytes += DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT;
-                            return ConfirmPhoneNumberResult::PhoneNumberConfirmed(u.open_storage_limit_bytes);
+                            return ConfirmPhoneNumberResult::Success(Some(u.open_storage_limit_bytes));
                         }
                     }
                     PhoneStatus::None => return ConfirmPhoneNumberResult::PhoneNumberNotSubmitted,
@@ -333,7 +333,7 @@ impl UserMap {
             registration_fee: None,
         };
         self.update(User::Confirmed(user));
-        ConfirmPhoneNumberResult::UserConfirmed
+        ConfirmPhoneNumberResult::Success(None)
     }
 
     pub fn mark_online(&mut self, principal: &Principal, now: TimestampMillis) -> bool {
@@ -570,8 +570,7 @@ pub enum SubmitPhoneNumberResult {
 }
 
 pub enum ConfirmPhoneNumberResult {
-    UserConfirmed,
-    PhoneNumberConfirmed(u64),
+    Success(Option<u64>),
     CodeExpired,
     CodeIncorrect,
     PhoneNumberNotSubmitted,

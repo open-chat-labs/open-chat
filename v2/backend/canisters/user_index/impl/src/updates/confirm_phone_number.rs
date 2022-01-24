@@ -20,14 +20,14 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
         .users
         .confirm_phone_number(caller, args.confirmation_code, runtime_state.data.test_mode, now)
     {
-        ConfirmPhoneNumberResult::PhoneNumberConfirmed(new_byte_limit) => {
+        ConfirmPhoneNumberResult::Success(Some(new_byte_limit)) => {
             runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
                 user_id: caller,
                 byte_limit: new_byte_limit,
             });
             Success
         }
-        ConfirmPhoneNumberResult::UserConfirmed => Success,
+        ConfirmPhoneNumberResult::Success(None) => Success,
         ConfirmPhoneNumberResult::CodeExpired => ConfirmationCodeExpired,
         ConfirmPhoneNumberResult::CodeIncorrect => ConfirmationCodeIncorrect,
         ConfirmPhoneNumberResult::PhoneNumberNotSubmitted => PhoneNumberNotSubmitted,
