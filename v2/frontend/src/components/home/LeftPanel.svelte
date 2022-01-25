@@ -12,6 +12,7 @@
     import type { Version } from "../../domain/version";
     import { userStore } from "../../stores/user";
     import { nullUser } from "../../domain/user/user.utils";
+    import { unsubscribeNotifications } from "../../utils/notifications";
 
     export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -26,6 +27,7 @@
 
     $: api = controller.api;
     $: currentUser = controller.user;
+    $: userId = controller.user!.userId;
     $: user = controller.user ? $userStore[controller.user?.userId] : nullUser("unknown");
 
     // let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-chat-list";
@@ -49,6 +51,7 @@
         <ChatList
             on:loadMessage
             on:chatWith
+            on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
             on:whatsHot
             on:newGroup={() => (view = "adding-group")}
             on:profile={showProfile}
@@ -67,6 +70,7 @@
     <div class="profile" class:showing-profile={view === "showing-profile"}>
         <UserProfile
             bind:this={profileComponent}
+            on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
             {user}
             on:closeProfile={() => (view = "showing-chat-list")} />
     </div>

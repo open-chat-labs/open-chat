@@ -3,13 +3,14 @@
     import { _ } from "svelte-i18n";
 
     export let checked: boolean = false;
+    export let disabled: boolean = false;
     export let label: string;
     export let id: string;
 </script>
 
 <div class="toggle-wrapper">
     <div class="toggle">
-        <Checkbox {id} toggle={true} on:change {label} {checked} />
+        <Checkbox {disabled} {id} toggle={true} on:change {label} bind:checked />
     </div>
     <div class="label">
         {label}

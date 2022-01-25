@@ -135,7 +135,7 @@
         on:whatsHot
         {user}
         {wasmVersion}
-        on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
+        on:unsubscribeNotifications
         on:profile
         on:newGroup />
     <Search {searching} {searchTerm} on:searchEntered />

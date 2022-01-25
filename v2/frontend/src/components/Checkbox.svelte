@@ -8,7 +8,7 @@
 </script>
 
 <div class="checkbox" class:toggle class:rtl={$rtlStore}>
-    <input {id} type="checkbox" {checked} {disabled} on:change />
+    <input {id} type="checkbox" bind:checked {disabled} on:change />
     <label for={id}>{label}</label>
 </div>
 
@@ -69,6 +69,11 @@
 
         input:checked + label {
             background-color: var(--accent);
+        }
+
+        input:disabled + label {
+            // todo - need to make it more obvious what a disabled toggle looks like
+            // background-color: blue;
         }
 
         input:checked + label:after {

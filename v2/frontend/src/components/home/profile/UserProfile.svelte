@@ -10,9 +10,12 @@
     import Select from "../../Select.svelte";
     import TextArea from "../../TextArea.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import { notificationStatus } from "../../../stores/notifications";
+    import { askForNotificationPermission } from "../../../utils/notifications";
+    import { supported as notificationsSupported } from "../../../utils/notifications";
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
-    import { enterSend, notifications, scrollStrategy } from "../../../stores/settings";
+    import { enterSend, scrollStrategy } from "../../../stores/settings";
     import { createEventDispatcher, onMount } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "./Toggle.svelte";
@@ -32,6 +35,7 @@
     let dirty = false;
     let usernameError: string | undefined = undefined;
     let bioError: string | undefined = undefined;
+    let supportsNotifications = notificationsSupported();
 
     $: {
         setLocale(selectedLocale);
@@ -51,6 +55,14 @@
     }
 
     function saveUser() {}
+
+    function toggleNotifications() {
+        if ($notificationStatus !== "granted") {
+            askForNotificationPermission();
+        } else {
+            dispatch("unsubscribeNotifications");
+        }
+    }
 
     function selectScrollStrategy(ev: Event) {
         scrollStrategy.set((ev.target as HTMLInputElement).value as ScrollStrategy);
@@ -154,11 +166,18 @@
                 on:change={() => enterSend.toggle()}
                 label={$_("enterToSend")}
                 checked={$enterSend} />
-            <Toggle
-                id={"notifications"}
-                on:change={() => notifications.toggle()}
-                label={$_("notificationsEnabled")}
-                checked={$notifications} />
+            {#if supportsNotifications}
+                <Toggle
+                    id={"notifications"}
+                    disabled={$notificationStatus === "hard-denied"}
+                    on:change={toggleNotifications}
+                    label={$notificationStatus === "hard-denied"
+                        ? $_("notificationsDisabled")
+                        : $notificationStatus === "granted"
+                        ? $_("disableNotificationsMenu")
+                        : $_("enableNotificationsMenu")}
+                    checked={$notificationStatus === "granted"} />
+            {/if}
             <div class="legend">{$_("scrollPosition")}</div>
             {#each ["latestMessage", "firstMessage", "firstMention"] as strategy}
                 <Radio

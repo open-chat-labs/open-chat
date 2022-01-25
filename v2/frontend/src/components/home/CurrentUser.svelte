@@ -2,8 +2,6 @@
     import AboutModal from "../AboutModal.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import Bell from "svelte-material-icons/Bell.svelte";
-    import BellOff from "svelte-material-icons/BellOff.svelte";
     import EditableAvatar from "../EditableAvatar.svelte";
     import Palette from "svelte-material-icons/Palette.svelte";
     import Cogs from "svelte-material-icons/Cogs.svelte";
@@ -25,8 +23,6 @@
     } from "../../stores/screenDimensions";
     import type { PartialUserSummary } from "../../domain/user/user";
     import { createEventDispatcher } from "svelte";
-    import { notificationStatus } from "../../stores/notifications";
-    import { askForNotificationPermission } from "../../utils/notifications";
     import { rtlStore } from "../../stores/rtl";
     import { supported as notificationsSupported } from "../../utils/notifications";
     import { iconSize } from "../../stores/iconSize";
@@ -48,10 +44,6 @@
 
     function newGroup() {
         dispatch("newGroup");
-    }
-
-    function unsubscribeNotifications() {
-        dispatch("unsubscribeNotifications");
     }
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
@@ -90,29 +82,6 @@
                         <Palette size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("changeTheme")}</span>
                     </MenuItem>
-                    {#if supportsNotifications}
-                        {#if $notificationStatus !== "granted"}
-                            {#if $notificationStatus === "hard-denied"}
-                                <MenuItem>
-                                    <BellOff
-                                        size={$iconSize}
-                                        color={"var(--icon-txt)"}
-                                        slot="icon" />
-                                    <span slot="text">{$_("notificationsDisabled")}</span>
-                                </MenuItem>
-                            {:else}
-                                <MenuItem on:click={askForNotificationPermission}>
-                                    <Bell size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                                    <span slot="text">{$_("enableNotificationsMenu")}</span>
-                                </MenuItem>
-                            {/if}
-                        {:else}
-                            <MenuItem on:click={unsubscribeNotifications}>
-                                <BellOff size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                                <span slot="text">{$_("disableNotificationsMenu")}</span>
-                            </MenuItem>
-                        {/if}
-                    {/if}
                     <MenuItem on:click={() => dispatch("whatsHot")}>
                         <span class="flame" slot="icon">🔥</span>
                         <span slot="text">{$_("whatsHot")}</span>
