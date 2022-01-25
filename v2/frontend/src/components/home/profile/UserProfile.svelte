@@ -12,10 +12,12 @@
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
+    import { enterSend, notifications, scrollStrategy } from "../../../stores/settings";
     import { createEventDispatcher, onMount } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "./Toggle.svelte";
     import { setLocale } from "i18n/i18n";
+    import type { ScrollStrategy } from "../../../domain/chat/chat";
 
     const dispatch = createEventDispatcher();
     const MIN_USERNAME_LENGTH = 3;
@@ -26,14 +28,18 @@
 
     let username = "";
     let userbio = "";
-    let selectedLocale = $locale;
-    let enterSend = true;
-    let notifications = true;
-    let currentScrollStrategy = "latest";
+    let selectedLocale = ($locale as string).substring(0, 2);
+    let dirty = false;
+    let usernameError: string | undefined = undefined;
+    let bioError: string | undefined = undefined;
 
     $: {
         setLocale(selectedLocale);
     }
+
+    $: usernameDirty = username !== user?.username ?? "";
+
+    $: dirty = usernameDirty;
 
     onMount(() => {
         username = user?.username ?? "";
@@ -42,14 +48,13 @@
     export function reset(user: PartialUserSummary) {
         username = user.username ?? "";
         userbio = "";
-        enterSend = true;
-        notifications = true;
-        currentScrollStrategy = "latest";
     }
 
     function saveUser() {}
 
-    function selectScrollStrategy() {}
+    function selectScrollStrategy(ev: Event) {
+        scrollStrategy.set((ev.target as HTMLInputElement).value as ScrollStrategy);
+    }
 
     function selectTheme(theme: string) {
         saveSeletedTheme(theme);
@@ -57,14 +62,6 @@
 
     function toggleSystemTheme() {
         saveSeletedTheme($themeNameStore === "system" ? "light" : "system");
-    }
-
-    function toggleEnterSend() {
-        enterSend = !enterSend;
-    }
-
-    function toggleNotifications() {
-        notifications = !notifications;
     }
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {}
@@ -96,7 +93,11 @@
             minlength={MIN_USERNAME_LENGTH}
             maxlength={MAX_USERNAME_LENGTH}
             countdown={true}
-            placeholder={$_("register.enterUsername")} />
+            placeholder={$_("register.enterUsername")}>
+            {#if usernameError !== undefined}
+                <div class="error">{usernameError}</div>
+            {/if}
+        </Input>
 
         <div class="legend">{$_("supportsMarkdown")}</div>
         <TextArea
@@ -104,7 +105,14 @@
             bind:value={userbio}
             invalid={false}
             maxlength={MAX_BIO_LENGTH}
-            placeholder={$_("enterBio")} />
+            placeholder={$_("enterBio")}>
+            {#if bioError !== undefined}
+                <div class="error">{bioError}</div>
+            {/if}
+        </TextArea>
+        <div class="save">
+            <Button disabled={!dirty} fill={true} small={true}>{$_("update")}</Button>
+        </div>
     </div>
 
     <div class="appearance">
@@ -115,7 +123,7 @@
                 <option value={"cn"}>中国人</option>
             </Select>
 
-            <div class="legend">{$_("Theme")}</div>
+            <div class="legend">{$_("theme")}</div>
             <Toggle
                 id={"inherit-system"}
                 on:change={toggleSystemTheme}
@@ -143,43 +151,42 @@
         <CollapsibleCard open={true} headerText={$_("chats")}>
             <Toggle
                 id={"enter-send"}
-                on:change={toggleEnterSend}
+                on:change={() => enterSend.toggle()}
                 label={$_("enterToSend")}
-                checked={enterSend} />
+                checked={$enterSend} />
             <Toggle
                 id={"notifications"}
-                on:change={toggleNotifications}
+                on:change={() => notifications.toggle()}
                 label={$_("notificationsEnabled")}
-                checked={notifications} />
+                checked={$notifications} />
             <div class="legend">{$_("scrollPosition")}</div>
-            {#each ["latest", "firstMessage", "firstMention"] as scrollStrategy}
+            {#each ["latestMessage", "firstMessage", "firstMention"] as strategy}
                 <Radio
                     group="scrollPosition"
-                    value={scrollStrategy}
-                    checked={currentScrollStrategy === scrollStrategy}
-                    id={scrollStrategy}
-                    label={$_(scrollStrategy)}
+                    value={strategy}
+                    checked={$scrollStrategy === strategy}
+                    id={strategy}
+                    label={$_(strategy)}
                     on:change={selectScrollStrategy} />
             {/each}
         </CollapsibleCard>
     </div>
-
-    <!-- <div class="account">
-        <CollapsibleCard open={false} headerText={$_("account")}>
-            <p>thing one</p>
-            <p>thing two</p>
-            <p>thing three</p>
-            <p>thing four</p>
-        </CollapsibleCard>
-    </div> -->
 </form>
-
-<div class="cta">
-    <Button fill={true}>{$_("update")}</Button>
-</div>
 
 <style type="text/scss">
     $vertical-gap: $sp4;
+
+    .save {
+        display: flex;
+        justify-content: center;
+        margin-top: $sp4;
+    }
+
+    .error {
+        @include font(bold, normal, fs-100);
+        color: var(--error);
+        margin-bottom: $sp4;
+    }
 
     .theme-selection {
         display: flex;
@@ -213,13 +220,6 @@
 
     .avatar {
         margin: $sp4 0 $sp5 0;
-    }
-
-    .cta {
-        position: sticky;
-        bottom: 0;
-        height: 57px;
-        margin-top: auto;
     }
 
     .user,

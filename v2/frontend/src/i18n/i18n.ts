@@ -1,4 +1,4 @@
-import { init, locale, addMessages } from "svelte-i18n";
+import { init, locale, addMessages, getLocaleFromNavigator } from "svelte-i18n";
 
 import en from "./en.json";
 import ar from "./ar.json";
@@ -17,7 +17,7 @@ init({
 });
 
 export function getStoredLocale(): string {
-    return localStorage.getItem("openchat_locale") ?? "en";
+    return localStorage.getItem("openchat_locale") ?? getLocaleFromNavigator();
 }
 
 export function setLocale(code: string): void {

@@ -46,11 +46,17 @@
     {#if countdown && maxlength < Number.MAX_VALUE && type === "text" && typeof value === "string"}
         <div class:near-max={remaining <= 5} class="countdown">{remaining}</div>
     {/if}
+    <slot />
 </div>
 
 <style type="text/scss">
     .input-wrapper {
         position: relative;
+        margin-bottom: $sp3;
+
+        @include size-below(xs) {
+            margin-bottom: $sp3;
+        }
     }
 
     .countdown {
@@ -80,12 +86,6 @@
         overflow: hidden;
         text-overflow: ellipsis;
         border-radius: $sp2;
-
-        margin-bottom: $sp3;
-
-        @include size-below(xs) {
-            margin-bottom: $sp3;
-        }
 
         &.small {
             @include font(book, normal, fs-80);

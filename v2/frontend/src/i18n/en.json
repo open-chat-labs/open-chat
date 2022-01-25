@@ -5,7 +5,7 @@
     "enterToSend": "Enter key sends message",
     "notificationsEnabled": "Notifications enabled",
     "scrollPosition": "Scroll position",
-    "latest": "Latest message",
+    "latestMessage": "Latest message",
     "firstMessage": "First unread message",
     "firstMention": "First unread mention",
     "usernameRules": "alphanumerics and underscores only",

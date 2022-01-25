@@ -19,23 +19,33 @@
     $: remaining = typeof value === "string" ? maxlength - value.length : 0;
 </script>
 
-<div class="input-wrapper">
-    <textarea
-        {rows}
-        class:invalid
-        spellcheck="false"
-        {disabled}
-        {minlength}
-        {maxlength}
-        {placeholder}
-        bind:value
-        class={"textbox"} />
-    {#if maxlength < Number.MAX_VALUE}
-        <div class:near-max={remaining <= 5} class="countdown">{remaining}</div>
-    {/if}
+<div class="outer-wrapper">
+    <div class="input-wrapper">
+        <textarea
+            {rows}
+            class:invalid
+            spellcheck="false"
+            {disabled}
+            {minlength}
+            {maxlength}
+            {placeholder}
+            bind:value
+            class={"textbox"} />
+        {#if maxlength < Number.MAX_VALUE}
+            <div class:near-max={remaining <= 5} class="countdown">{remaining}</div>
+        {/if}
+    </div>
+    <slot />
 </div>
 
 <style type="text/scss">
+    .outer-wrapper {
+        margin-bottom: $sp3;
+        @include size-below(xs) {
+            margin-bottom: $sp3;
+        }
+    }
+
     .input-wrapper {
         position: relative;
     }
@@ -62,10 +72,7 @@
         border: 1px solid var(--input-bd);
         outline: none;
         border-radius: $sp2;
-        margin-bottom: $sp3;
-        @include size-below(xs) {
-            margin-bottom: $sp3;
-        }
+        resize: vertical;
 
         &.invalid {
             border: 1px solid var(--error);
