@@ -1,6 +1,6 @@
 use crate::model::user::User;
 use crate::model::user_map::RegisterUserResult;
-use crate::updates::set_username::{validate_username, UsernameValidationResult};
+use crate::updates::set_profile::{validate_bio, validate_username, BioValidationResult, UsernameValidationResult};
 use crate::{mutate_state, RuntimeState, USER_LIMIT};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
@@ -24,6 +24,10 @@ fn register_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
         _ => {}
     };
 
+    if let BioValidationResult::TooLong(max_length) = validate_bio(&args.bio) {
+        return BioTooLong(max_length);
+    }
+
     let caller = runtime_state.env.caller();
 
     if let Some(User::Unconfirmed(_)) = runtime_state.data.users.get_by_principal(&caller) {
@@ -32,7 +36,7 @@ fn register_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
 
     let now = runtime_state.env.now();
 
-    match runtime_state.data.users.register(caller, &args.username, now) {
+    match runtime_state.data.users.register(caller, args.username, args.bio, now) {
         RegisterUserResult::AlreadyExists => AlreadyRegistered,
         RegisterUserResult::UsernameTaken => UsernameTaken,
         RegisterUserResult::Success => Success,

@@ -11,7 +11,10 @@ pub async fn register_user(
     let identity = build_identity(user_identity);
     let agent = build_ic_agent(url, identity).await;
 
-    let register_user_args = user_index_canister::register_user::Args { username };
+    let register_user_args = user_index_canister::register_user::Args {
+        username,
+        bio: "".to_owned(),
+    };
 
     let register_user_response =
         user_index_canister_client::register_user(&agent, &user_index_canister_id, &register_user_args)

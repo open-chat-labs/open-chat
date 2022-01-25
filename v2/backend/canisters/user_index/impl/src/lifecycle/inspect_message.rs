@@ -19,9 +19,13 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
     let is_user = runtime_state.data.users.get_by_principal(&caller).is_some();
 
     let is_valid = match method_name.as_str() {
-        "confirm_phone_number" | "create_canister" | "mark_as_online" | "resend_code" | "set_username" | "upgrade_canister" => {
-            is_user
-        }
+        "confirm_phone_number"
+        | "create_canister"
+        | "mark_as_online"
+        | "resend_code"
+        | "set_profile"
+        | "set_username"
+        | "upgrade_canister" => is_user,
         "add_super_admin" | "remove_super_admin" | "upgrade_user_canister_wasm" => runtime_state.is_caller_service_principal(),
         "remove_sms_messages" => runtime_state.is_caller_sms_service(),
         "generate_registration_fee" | "notify_registration_fee_paid" | "register_user" | "submit_phone_number" => true,

@@ -70,7 +70,7 @@ mod tests {
     use crate::model::user::{PhoneStatus, User};
     use crate::Data;
     use candid::Principal;
-    use types::PhoneNumber;
+    use types::{PhoneNumber, Timestamped};
     use utils::env::test::TestEnv;
 
     #[test]
@@ -172,7 +172,8 @@ mod tests {
             data.users.add_test_user(User::Created(CreatedUser {
                 principal: p,
                 user_id: p.into(),
-                username: usernames[index].to_string(),
+                username: Timestamped::new(usernames[index].to_string(), env.now),
+                bio: Timestamped::default(),
                 date_created: env.now,
                 date_updated: env.now,
                 last_online: env.now,

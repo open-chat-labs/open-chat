@@ -44,6 +44,7 @@ fn try_confirm_user(cycles_available: Cycles, runtime_state: &mut RuntimeState) 
             principal,
             phone_number: None,
             username: None,
+            bio: None,
             date_confirmed: runtime_state.env.now(),
             canister_creation_status: CanisterCreationStatusInternal::Pending(None),
             upgrade_in_progress: false,

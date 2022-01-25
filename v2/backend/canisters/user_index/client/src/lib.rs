@@ -18,6 +18,7 @@ generate_update_call!(remove_sms_messages);
 generate_update_call!(remove_super_admin);
 generate_update_call!(register_user);
 generate_update_call!(resend_code);
+generate_update_call!(set_profile);
 generate_update_call!(set_username);
 generate_update_call!(submit_phone_number);
 generate_update_call!(upgrade_user_canister_wasm);

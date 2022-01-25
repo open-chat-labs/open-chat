@@ -43,6 +43,7 @@ pub struct ConfirmedPendingUsernameResult {
 #[derive(CandidType, Deserialize, Debug)]
 pub struct ConfirmedResult {
     pub username: String,
+    pub bio: String,
     pub canister_creation_status: CanisterCreationStatus,
     pub confirmation_state: ConfirmationState,
 }
@@ -64,6 +65,7 @@ pub enum PhoneStatus {
 pub struct CreatedResult {
     pub user_id: UserId,
     pub username: String,
+    pub bio: String,
     pub avatar_id: Option<u128>,
     pub canister_upgrade_status: CanisterUpgradeStatus,
     pub cryptocurrency_accounts: Vec<CryptocurrencyAccount>,

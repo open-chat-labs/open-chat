@@ -3,6 +3,7 @@ import "../../../libraries/types/can.did";
 type RegisterUserArgs = 
     record {
         username: text;
+        bio: text;
     };
 
 type RegisterUserResponse = 
@@ -14,6 +15,7 @@ type RegisterUserResponse =
         UsernameInvalid;
         UsernameTooShort: nat16;
         UsernameTooLong: nat16;
+        BioTooLong: nat16;
         NotSupported;
     };
 
@@ -121,6 +123,23 @@ type SetUsernameResponse =
         UsernameTooLong: nat16;
     };
 
+type SetProfileArgs =
+    record {
+        username: opt text;
+        bio: opt text;
+    };
+
+type SetProfileResponse =
+    variant {
+        Success;
+        UsernameTaken;
+        UserNotCreated;
+        UsernameInvalid;
+        UsernameTooShort: nat16;
+        UsernameTooLong: nat16;
+        BioTooLong: nat16;
+    };
+
 type UpgradeCanisterArgs =
     record {
     };
@@ -168,12 +187,14 @@ type CurrentUserResponse =
         };
         Confirmed: record {
             username: text;
+            bio: text;
             canister_creation_status: CanisterCreationStatus;
             confirmation_state: ConfirmationState;
         };
         Created: record {
             user_id: UserId;
             username: text;
+            bio: text;
             canister_upgrade_status: CanisterUpgradeStatus;
             avatar_id: opt nat;
             cryptocurrency_accounts: vec CryptocurrencyAccount;
@@ -312,6 +333,8 @@ service: {
 
     // This is used to set the initial username and subsequently to change it
     set_username: (SetUsernameArgs) -> (SetUsernameResponse);
+    
+    set_profile: (SetProfileArgs) -> (SetProfileResponse);
 
     // If the current user is "upgrade_required" then call this to upgrade the user canister
     // Will need to block in the app until this has completed

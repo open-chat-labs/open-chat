@@ -7,7 +7,9 @@ use candid::Principal;
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use open_storage_index_canister::add_or_update_users::UserConfig;
-use types::{CanisterCreationStatus, CanisterCreationStatusInternal, CanisterId, CanisterWasm, Cycles, CyclesTopUp, Version};
+use types::{
+    CanisterCreationStatus, CanisterCreationStatusInternal, CanisterId, CanisterWasm, Cycles, CyclesTopUp, Timestamped, Version,
+};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_index_canister::create_canister::{Response::*, *};
 use utils::canister;
@@ -144,11 +146,16 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
                             } else {
                                 0
                             };
+                        let bio = match &confirmed_user.bio {
+                            Some(b) => b.clone(),
+                            None => "".to_owned(),
+                        };
 
                         let created_user = CreatedUser {
                             principal: confirmed_user.principal,
                             user_id: canister_id.into(),
-                            username: username.clone(),
+                            username: Timestamped::new(username.clone(), now),
+                            bio: Timestamped::new(bio, now),
                             date_created: now,
                             date_updated: now,
                             last_online: now,

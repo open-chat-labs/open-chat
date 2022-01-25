@@ -11,6 +11,7 @@ pub mod register_user;
 pub mod remove_sms_messages;
 pub mod remove_super_admin;
 pub mod resend_code;
+pub mod set_profile;
 pub mod set_username;
 pub mod submit_phone_number;
 pub mod upgrade_canister;

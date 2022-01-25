@@ -29,6 +29,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                     Confirmed(ConfirmedResult {
                         canister_creation_status: u.canister_creation_status.into(),
                         username: u.username.as_ref().unwrap().clone(),
+                        bio: u.bio.as_ref().map_or("".to_owned(), |b| b.clone()),
                         confirmation_state: u.confirmation_state(),
                     })
                 }
@@ -57,7 +58,8 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
 
                 Created(CreatedResult {
                     user_id: u.user_id,
-                    username: u.username.clone(),
+                    username: u.username.value.clone(),
+                    bio: u.bio.value.clone(),
                     canister_upgrade_status,
                     avatar_id: u.avatar_id,
                     cryptocurrency_accounts: vec![icp_account, cycles_account],

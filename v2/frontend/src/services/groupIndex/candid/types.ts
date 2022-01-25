@@ -402,6 +402,7 @@ export interface OwnershipTransferred {
   'new_owner' : UserId,
 }
 export interface PartialUserSummary {
+  'bio' : [] | [string],
   'username' : [] | [string],
   'user_id' : UserId,
   'avatar_id' : [] | [bigint],
@@ -525,6 +526,7 @@ export interface UpdatedMessage {
 export interface User { 'username' : string, 'user_id' : UserId }
 export type UserId = CanisterId;
 export interface UserSummary {
+  'bio' : string,
   'username' : string,
   'user_id' : UserId,
   'avatar_id' : [] | [bigint],
