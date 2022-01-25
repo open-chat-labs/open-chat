@@ -7,11 +7,13 @@ import type {
     EnhancedReplyContext,
     EventWrapper,
     GroupChatSummary,
+    Mention,
     Message,
     ParticipantRole,
 } from "../domain/chat/chat";
 import {
     compareChats,
+    getMinVisibleMessageIndex,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
 } from "../domain/chat/chat.utils";
@@ -42,6 +44,8 @@ import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
 import { ChatController } from "./chat.controller";
 import { Poller } from "./poller";
+import { scrollStrategy } from "stores/settings";
+import { message } from "services/common/chatMappers";
 
 const ONE_MINUTE = 60 * 1000;
 const ONE_HOUR = 60 * ONE_MINUTE;
@@ -88,7 +92,11 @@ export class HomeController {
                     CHAT_UPDATE_INTERVAL,
                     CHAT_UPDATE_IDLE_INTERVAL
                 );
-                this.usersPoller = new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
+                this.usersPoller = new Poller(
+                    () => this.updateUsers(),
+                    USER_UPDATE_INTERVAL,
+                    USER_UPDATE_INTERVAL
+                );
                 rtcConnectionsManager.subscribe((msg) => this.handleWebRtcMessage(msg));
             });
         }
@@ -273,6 +281,18 @@ export class HomeController {
                     selectedChat.destroy();
                 }
 
+                const currentScrollStrategy = get(scrollStrategy);
+                if (messageIndex === undefined) {
+                    if (currentScrollStrategy === "firstMention") {
+                        messageIndex =
+                            this.getFirstUnreadMention(chat)?.messageIndex ??
+                            this.getFirstUnreadMessageIndex(chat);
+                    }
+                    if (currentScrollStrategy === "firstMessage") {
+                        messageIndex = this.getFirstUnreadMessageIndex(chat);
+                    }
+                }
+
                 const readableChatSummary = readable(chat, (set) =>
                     this.serverChatSummaries.subscribe((summaries) => {
                         if (summaries[chatId] !== undefined) {
@@ -293,6 +313,23 @@ export class HomeController {
         } else {
             this.clearSelectedChat();
         }
+    }
+
+    getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
+        if (chat.kind === "direct_chat") return undefined;
+        return chat.mentions.find(
+            (m) => !this.messagesRead.isRead(chat.chatId, m.messageIndex, m.messageId)
+        );
+    }
+
+    getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {
+        if (chat.kind === "group_chat" && chat.myRole === "previewer") return undefined;
+
+        return this.messagesRead.getFirstUnreadMessageIndex(
+            chat.chatId,
+            getMinVisibleMessageIndex(chat),
+            chat.latestMessage?.event.messageIndex
+        );
     }
 
     clearSelectedChat(): void {

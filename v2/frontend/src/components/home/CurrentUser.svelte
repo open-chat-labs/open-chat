@@ -3,7 +3,6 @@
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import EditableAvatar from "../EditableAvatar.svelte";
-    import Palette from "svelte-material-icons/Palette.svelte";
     import Cogs from "svelte-material-icons/Cogs.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -12,7 +11,6 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import Overlay from "../Overlay.svelte";
-    import ThemePicker from "../ThemePicker.svelte";
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../domain/user/user.utils";
     import {
@@ -24,23 +22,15 @@
     import type { PartialUserSummary } from "../../domain/user/user";
     import { createEventDispatcher } from "svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { supported as notificationsSupported } from "../../utils/notifications";
     import { iconSize } from "../../stores/iconSize";
     import type { Version } from "../../domain/version";
     const dispatch = createEventDispatcher();
 
     export let user: PartialUserSummary;
 
-    enum ModalType {
-        NoModal,
-        About,
-        ThemeSelection,
-    }
-
     export let wasmVersion: Version;
 
-    let supportsNotifications = notificationsSupported();
-    let modal = ModalType.NoModal;
+    let showAbout = false;
 
     function newGroup() {
         dispatch("newGroup");
@@ -50,8 +40,8 @@
         dispatch("userAvatarSelected", ev.detail);
     }
 
-    function onCloseModal() {
-        modal = ModalType.NoModal;
+    function closeAboutModal() {
+        showAbout = false;
     }
 
     $: small = $screenWidth === ScreenWidth.ExtraSmall || $screenHeight === ScreenHeight.Small;
@@ -78,10 +68,6 @@
                             slot="icon" />
                         <span slot="text">{$_("newGroup")}</span>
                     </MenuItem>
-                    <MenuItem on:click={() => (modal = ModalType.ThemeSelection)}>
-                        <Palette size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                        <span slot="text">{$_("changeTheme")}</span>
-                    </MenuItem>
                     <MenuItem on:click={() => dispatch("whatsHot")}>
                         <span class="flame" slot="icon">🔥</span>
                         <span slot="text">{$_("whatsHot")}</span>
@@ -90,7 +76,7 @@
                         <Cogs size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("profile")}</span>
                     </MenuItem>
-                    <MenuItem on:click={() => (modal = ModalType.About)}>
+                    <MenuItem on:click={() => (showAbout = true)}>
                         <Information size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("aboutOpenChat")}</span>
                     </MenuItem>
@@ -104,12 +90,8 @@
     </span>
 </div>
 
-<Overlay dismissible={true} active={modal !== ModalType.NoModal} on:close={onCloseModal}>
-    {#if modal === ModalType.About}
-        <AboutModal canister={{ id: user.userId, wasmVersion }} on:close={onCloseModal} />
-    {:else if modal === ModalType.ThemeSelection}
-        <ThemePicker on:close={onCloseModal} />
-    {/if}
+<Overlay dismissible={true} active={showAbout} on:close={closeAboutModal}>
+    <AboutModal canister={{ id: user.userId, wasmVersion }} on:close={closeAboutModal} />
 </Overlay>
 
 <style type="text/scss">

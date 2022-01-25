@@ -16,7 +16,7 @@
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import { enterSend, scrollStrategy } from "../../../stores/settings";
-    import { createEventDispatcher, onMount } from "svelte";
+    import { createEventDispatcher } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "./Toggle.svelte";
     import { setLocale } from "i18n/i18n";
@@ -44,10 +44,6 @@
     $: usernameDirty = username !== user?.username ?? "";
 
     $: dirty = usernameDirty;
-
-    onMount(() => {
-        username = user?.username ?? "";
-    });
 
     export function reset(user: PartialUserSummary) {
         username = user.username ?? "";
@@ -252,6 +248,10 @@
             margin-bottom: var(--profile-section-xs-mg);
             border-bottom: var(--profile-section-xs-bd);
         }
+    }
+
+    .user-form {
+        @include nice-scrollbar();
     }
 
     .user {

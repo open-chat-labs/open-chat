@@ -31,8 +31,7 @@
     $: userId = controller.user!.userId;
     $: user = controller.user ? $userStore[controller.user?.userId] : nullUser("unknown");
 
-    // let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-chat-list";
-    let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-profile";
+    let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-chat-list";
 
     function showProfile() {
         view = "showing-profile";
