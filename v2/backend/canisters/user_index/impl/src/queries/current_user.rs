@@ -57,7 +57,8 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
 
                 Created(CreatedResult {
                     user_id: u.user_id,
-                    username: u.username.clone(),
+                    username: u.username.value.clone(),
+                    bio: u.bio.value.clone(),
                     canister_upgrade_status,
                     avatar_id: u.avatar_id,
                     cryptocurrency_accounts: vec![icp_account, cycles_account],

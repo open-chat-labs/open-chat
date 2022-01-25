@@ -155,6 +155,7 @@ export type CurrentUserResponse = {
   } |
   {
     'Created' : {
+      'bio' : string,
       'username' : string,
       'phone_status' : PhoneStatus,
       'wasm_version' : Version,
@@ -456,6 +457,7 @@ export interface OwnershipTransferred {
   'new_owner' : UserId,
 }
 export interface PartialUserSummary {
+  'bio' : [] | [string],
   'username' : [] | [string],
   'user_id' : UserId,
   'avatar_id' : [] | [bigint],
@@ -570,6 +572,17 @@ export interface SearchArgs { 'max_results' : number, 'search_term' : string }
 export type SearchResponse = {
     'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }
   };
+export interface SetProfileArgs {
+  'bio' : [] | [string],
+  'username' : [] | [string],
+}
+export type SetProfileResponse = { 'BioTooLong' : number } |
+  { 'UserNotCreated' : null } |
+  { 'UsernameTaken' : null } |
+  { 'UsernameTooShort' : number } |
+  { 'UsernameInvalid' : null } |
+  { 'UsernameTooLong' : number } |
+  { 'Success' : null };
 export interface SetUsernameArgs { 'username' : string }
 export type SetUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |
@@ -643,6 +656,7 @@ export type UserId = CanisterId;
 export type UserResponse = { 'Success' : UserSummary } |
   { 'UserNotFound' : null };
 export interface UserSummary {
+  'bio' : string,
   'username' : string,
   'user_id' : UserId,
   'avatar_id' : [] | [bigint],
@@ -704,6 +718,7 @@ export interface _SERVICE {
     >,
   'resend_code' : (arg_0: ResendCodeArgs) => Promise<ResendCodeResponse>,
   'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
+  'set_profile' : (arg_0: SetProfileArgs) => Promise<SetProfileResponse>,
   'set_username' : (arg_0: SetUsernameArgs) => Promise<SetUsernameResponse>,
   'submit_phone_number' : (arg_0: SubmitPhoneNumberArgs) => Promise<
       SubmitPhoneNumberResponse

@@ -22,10 +22,7 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 .filter_map(|user_id| runtime_state.data.users.get_by_user_id(&user_id))
                 .filter_map(|u| u.created_user())
                 .filter(move |u| u.date_updated > updated_since || u.last_online > updated_since)
-                .map(move |u| {
-                    let include_username = u.date_updated > updated_since;
-                    u.to_partial_summary(include_username, now)
-                })
+                .map(move |u| u.to_partial_summary(updated_since, now))
         })
         .flatten()
         .collect();
@@ -40,7 +37,7 @@ mod tests {
     use crate::Data;
     use candid::Principal;
     use itertools::Itertools;
-    use types::PhoneNumber;
+    use types::{PhoneNumber, Timestamped};
     use utils::env::test::TestEnv;
 
     #[test]
@@ -56,7 +53,8 @@ mod tests {
             principal: Principal::from_slice(&[1]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: user_id1,
-            username: "abc".to_string(),
+            username: Timestamped::new("abc".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -67,7 +65,8 @@ mod tests {
             principal: Principal::from_slice(&[2]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: user_id2,
-            username: "def".to_string(),
+            username: Timestamped::new("def".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -78,7 +77,8 @@ mod tests {
             principal: Principal::from_slice(&[3]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "3333 333 333".to_owned())),
             user_id: user_id3,
-            username: "ghi".to_string(),
+            username: Timestamped::new("ghi".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -122,7 +122,8 @@ mod tests {
             principal: Principal::from_slice(&[1]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: user_id1,
-            username: "abc".to_string(),
+            username: Timestamped::new("abc".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -133,7 +134,8 @@ mod tests {
             principal: Principal::from_slice(&[2]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: user_id2,
-            username: "def".to_string(),
+            username: Timestamped::new("def".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -144,7 +146,8 @@ mod tests {
             principal: Principal::from_slice(&[3]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "3333 333 333".to_owned())),
             user_id: user_id3,
-            username: "ghi".to_string(),
+            username: Timestamped::new("ghi".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -188,7 +191,8 @@ mod tests {
             principal: Principal::from_slice(&[1]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: user_id1,
-            username: "abc".to_string(),
+            username: Timestamped::new("abc".to_string(), start),
+            bio: Timestamped::default(),
             date_created: start,
             date_updated: start,
             last_online: env.now,
@@ -199,7 +203,8 @@ mod tests {
             principal: Principal::from_slice(&[2]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: user_id2,
-            username: "def".to_string(),
+            username: Timestamped::new("def".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: start,
             date_updated: env.now,
             last_online: env.now,
@@ -210,7 +215,8 @@ mod tests {
             principal: Principal::from_slice(&[3]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "3333 333 333".to_owned())),
             user_id: user_id3,
-            username: "ghi".to_string(),
+            username: Timestamped::new("ghi".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,

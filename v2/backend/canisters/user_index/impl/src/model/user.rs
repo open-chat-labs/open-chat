@@ -1,9 +1,8 @@
-use crate::DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT;
 use candid::{CandidType, Principal};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use types::{
     CanisterCreationStatusInternal, Cycles, CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis,
-    UserId, UserSummary, Version,
+    Timestamped, UserId, UserSummary, Version,
 };
 use user_index_canister::current_user::ConfirmationState;
 
@@ -178,7 +177,10 @@ pub struct ConfirmedUser {
 pub struct CreatedUser {
     pub principal: Principal,
     pub user_id: UserId,
-    pub username: String,
+    #[serde(deserialize_with = "deserialize_username")]
+    pub username: Timestamped<String>,
+    #[serde(default)]
+    pub bio: Timestamped<String>,
     pub date_created: TimestampMillis,
     pub date_updated: TimestampMillis,
     pub last_online: TimestampMillis,
@@ -187,19 +189,23 @@ pub struct CreatedUser {
     pub cycle_top_ups: Vec<CyclesTopUp>,
     pub avatar_id: Option<u128>,
     pub registration_fee: Option<RegistrationFee>,
-    #[serde(default = "default_byte_limit")]
     pub open_storage_limit_bytes: u64,
-    #[serde(rename(deserialize = "phone_number"))]
     pub phone_status: PhoneStatus,
 }
 
-fn default_byte_limit() -> u64 {
-    DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT
+fn deserialize_username<'de, D>(deserializer: D) -> Result<Timestamped<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let username: String = serde::de::Deserialize::deserialize(deserializer)?;
+
+    Ok(Timestamped {
+        value: username,
+        timestamp: 0,
+    })
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-#[serde(from = "Option<PhoneNumber>")]
-#[allow(dead_code)]
 pub enum PhoneStatus {
     None,
     Unconfirmed(UnconfirmedPhoneNumber),
@@ -212,15 +218,6 @@ impl PhoneStatus {
             PhoneStatus::None => None,
             PhoneStatus::Unconfirmed(un) => Some(&un.phone_number),
             PhoneStatus::Confirmed(pn) => Some(pn),
-        }
-    }
-}
-
-impl From<Option<PhoneNumber>> for PhoneStatus {
-    fn from(phone_number: Option<PhoneNumber>) -> Self {
-        match phone_number {
-            Some(pn) => PhoneStatus::Confirmed(pn),
-            None => PhoneStatus::None,
         }
     }
 }
@@ -238,19 +235,21 @@ impl CreatedUser {
 
         UserSummary {
             user_id: self.user_id,
-            username: self.username.clone(),
+            username: self.username.value.clone(),
+            bio: self.bio.value.clone(),
             seconds_since_last_online,
             avatar_id: self.avatar_id,
         }
     }
 
-    pub fn to_partial_summary(&self, include_username: bool, now: TimestampMillis) -> PartialUserSummary {
+    pub fn to_partial_summary(&self, updated_since: TimestampMillis, now: TimestampMillis) -> PartialUserSummary {
         let millis_since_last_online = now - self.last_online;
         let seconds_since_last_online = (millis_since_last_online / 1000) as u32;
 
         PartialUserSummary {
             user_id: self.user_id,
-            username: if include_username { Some(self.username.clone()) } else { None },
+            username: self.username.if_set_after(updated_since).map(|u| u.to_owned()),
+            bio: self.bio.if_set_after(updated_since).map(|b| b.to_owned()),
             seconds_since_last_online,
             avatar_id: self.avatar_id,
         }
@@ -320,7 +319,8 @@ impl Default for CreatedUser {
         CreatedUser {
             principal: Principal::anonymous(),
             user_id: Principal::anonymous().into(),
-            username: String::new(),
+            username: Timestamped::default(),
+            bio: Timestamped::default(),
             date_created: 0,
             date_updated: 0,
             last_online: 0,

@@ -1,6 +1,6 @@
 use crate::model::user::User;
 use crate::model::user_map::RegisterUserResult;
-use crate::updates::set_username::{validate_username, UsernameValidationResult};
+use crate::updates::set_profile::{validate_username, UsernameValidationResult};
 use crate::{mutate_state, RuntimeState, USER_LIMIT};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
@@ -32,7 +32,7 @@ fn register_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
 
     let now = runtime_state.env.now();
 
-    match runtime_state.data.users.register(caller, &args.username, now) {
+    match runtime_state.data.users.register(caller, args.username, now) {
         RegisterUserResult::AlreadyExists => AlreadyRegistered,
         RegisterUserResult::UsernameTaken => UsernameTaken,
         RegisterUserResult::Success => Success,

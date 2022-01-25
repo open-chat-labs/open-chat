@@ -64,6 +64,7 @@ pub enum PhoneStatus {
 pub struct CreatedResult {
     pub user_id: UserId,
     pub username: String,
+    pub bio: String,
     pub avatar_id: Option<u128>,
     pub canister_upgrade_status: CanisterUpgradeStatus,
     pub cryptocurrency_accounts: Vec<CryptocurrencyAccount>,

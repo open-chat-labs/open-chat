@@ -1,13 +1,11 @@
 use crate::model::user::{CreatedUser, PhoneStatus, User};
 use crate::model::user_map::UpdateUserResult;
+use crate::updates::set_profile::{validate_username, UsernameValidationResult};
 use crate::{mutate_state, RuntimeState, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use types::{CanisterCreationStatusInternal, CyclesTopUp};
+use types::{CanisterCreationStatusInternal, CyclesTopUp, Timestamped};
 use user_index_canister::set_username::{Response::*, *};
-
-const MAX_USERNAME_LENGTH: u16 = 25;
-const MIN_USERNAME_LENGTH: u16 = 3;
 
 #[update]
 #[trace]
@@ -53,7 +51,8 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     let created_user = CreatedUser {
                         principal: user.principal,
                         user_id: (*canister_id).into(),
-                        username,
+                        username: Timestamped::new(username, now),
+                        bio: Timestamped::new("".to_owned(), now),
                         date_created: now,
                         date_updated: now,
                         last_online: now,
@@ -77,7 +76,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             }
             User::Created(user) => {
                 let mut user = user.clone();
-                user.username = username;
+                user.username = Timestamped::new(username, now);
                 user.date_updated = now;
                 User::Created(user)
             }
@@ -90,33 +89,6 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         }
     } else {
         UserNotFound
-    }
-}
-
-pub enum UsernameValidationResult {
-    Ok,
-    TooLong(u16),
-    TooShort(u16),
-    Invalid,
-}
-
-pub fn validate_username(username: &str) -> UsernameValidationResult {
-    if username.len() > MAX_USERNAME_LENGTH as usize {
-        return UsernameValidationResult::TooLong(MAX_USERNAME_LENGTH);
-    }
-
-    if username.len() < MIN_USERNAME_LENGTH as usize {
-        return UsernameValidationResult::TooShort(MIN_USERNAME_LENGTH);
-    }
-
-    if username.starts_with('_') || username.ends_with('_') || username.contains("__") {
-        return UsernameValidationResult::Invalid;
-    }
-
-    if username.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
-        UsernameValidationResult::Ok
-    } else {
-        UsernameValidationResult::Invalid
     }
 }
 
@@ -137,7 +109,8 @@ mod tests {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
-            username: "abc".to_string(),
+            username: Timestamped::new("abc".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -164,7 +137,8 @@ mod tests {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
-            username: "abc".to_string(),
+            username: Timestamped::new("abc".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -187,7 +161,8 @@ mod tests {
             principal: Principal::from_slice(&[1]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
-            username: "abc".to_string(),
+            username: Timestamped::new("abc".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -197,7 +172,8 @@ mod tests {
             principal: Principal::from_slice(&[2]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: Principal::from_slice(&[2]).into(),
-            username: "xyz".to_string(),
+            username: Timestamped::new("xyz".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -242,7 +218,8 @@ mod tests {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
-            username: "abc".to_string(),
+            username: Timestamped::new("abc".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -265,7 +242,8 @@ mod tests {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
-            username: "abc".to_string(),
+            username: Timestamped::new("abc".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -288,7 +266,8 @@ mod tests {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
-            username: "abc".to_string(),
+            username: Timestamped::new("abc".to_string(), env.now),
+            bio: Timestamped::default(),
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
@@ -301,28 +280,5 @@ mod tests {
         };
         let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::UsernameTooLong(25)));
-    }
-
-    #[test]
-    fn valid_usernames() {
-        assert!(matches!(validate_username("abc"), UsernameValidationResult::Ok));
-        assert!(matches!(validate_username("123"), UsernameValidationResult::Ok));
-        assert!(matches!(
-            validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3"),
-            UsernameValidationResult::Ok
-        ));
-    }
-
-    #[test]
-    fn invalid_usernames() {
-        assert!(matches!(validate_username("abc "), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("ab c"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("_abc"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("abc_"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("ab__c"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("ab,c"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("abcé"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("abcṷ"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("abc王"), UsernameValidationResult::Invalid));
     }
 }

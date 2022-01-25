@@ -96,6 +96,7 @@ export const idlFactory = ({ IDL }) => {
       'confirmation_state' : ConfirmationState,
     }),
     'Created' : IDL.Record({
+      'bio' : IDL.Text,
       'username' : IDL.Text,
       'phone_status' : PhoneStatus,
       'wasm_version' : Version,
@@ -153,6 +154,7 @@ export const idlFactory = ({ IDL }) => {
     'search_term' : IDL.Text,
   });
   const UserSummary = IDL.Record({
+    'bio' : IDL.Text,
     'username' : IDL.Text,
     'user_id' : UserId,
     'avatar_id' : IDL.Opt(IDL.Nat),
@@ -163,6 +165,19 @@ export const idlFactory = ({ IDL }) => {
       'timestamp' : TimestampMillis,
       'users' : IDL.Vec(UserSummary),
     }),
+  });
+  const SetProfileArgs = IDL.Record({
+    'bio' : IDL.Opt(IDL.Text),
+    'username' : IDL.Opt(IDL.Text),
+  });
+  const SetProfileResponse = IDL.Variant({
+    'BioTooLong' : IDL.Nat16,
+    'UserNotCreated' : IDL.Null,
+    'UsernameTaken' : IDL.Null,
+    'UsernameTooShort' : IDL.Nat16,
+    'UsernameInvalid' : IDL.Null,
+    'UsernameTooLong' : IDL.Nat16,
+    'Success' : IDL.Null,
   });
   const SetUsernameArgs = IDL.Record({ 'username' : IDL.Text });
   const SetUsernameResponse = IDL.Variant({
@@ -212,6 +227,7 @@ export const idlFactory = ({ IDL }) => {
     ),
   });
   const PartialUserSummary = IDL.Record({
+    'bio' : IDL.Opt(IDL.Text),
     'username' : IDL.Opt(IDL.Text),
     'user_id' : UserId,
     'avatar_id' : IDL.Opt(IDL.Nat),
@@ -262,6 +278,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'resend_code' : IDL.Func([ResendCodeArgs], [ResendCodeResponse], []),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
+    'set_profile' : IDL.Func([SetProfileArgs], [SetProfileResponse], []),
     'set_username' : IDL.Func([SetUsernameArgs], [SetUsernameResponse], []),
     'submit_phone_number' : IDL.Func(
         [SubmitPhoneNumberArgs],

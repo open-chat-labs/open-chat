@@ -15,6 +15,7 @@ fn main() {
     generate_candid_method!(user_index, register_user, update);
     generate_candid_method!(user_index, remove_super_admin, update);
     generate_candid_method!(user_index, resend_code, update);
+    generate_candid_method!(user_index, set_profile, update);
     generate_candid_method!(user_index, set_username, update);
     generate_candid_method!(user_index, submit_phone_number, update);
     generate_candid_method!(user_index, upgrade_canister, update);

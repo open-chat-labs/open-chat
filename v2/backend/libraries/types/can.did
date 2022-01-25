@@ -408,6 +408,7 @@ type PartialUserSummary =
     record {
         user_id: UserId;
         username: opt text;
+        bio: opt text;
         seconds_since_last_online: nat32;
         avatar_id: opt nat;
     };
@@ -568,6 +569,7 @@ type UserSummary =
     record {
         user_id: UserId;
         username: text;
+        bio: text;
         seconds_since_last_online: nat32;
         avatar_id: opt nat;
     };

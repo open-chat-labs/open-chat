@@ -27,7 +27,6 @@ pub struct UserMap {
     users_confirmed_via_phone: u64,
     users_confirmed_via_icp: u64,
     users_confirmed_via_cycles: u64,
-    #[serde(default)]
     users_confirmed_automatically: u64,
     cached_metrics: Timestamped<Metrics>,
     unconfirmed_users_last_pruned: TimestampMillis,
@@ -49,21 +48,21 @@ pub struct Metrics {
 }
 
 impl UserMap {
-    pub fn register(&mut self, principal: Principal, username: &str, now: TimestampMillis) -> RegisterUserResult {
+    pub fn register(&mut self, principal: Principal, username: String, now: TimestampMillis) -> RegisterUserResult {
         if self.users_by_principal.contains_key(&principal) {
             return RegisterUserResult::AlreadyExists;
         }
 
-        if self.username_to_principal.contains_key(username) {
+        if self.username_to_principal.contains_key(&username) {
             return RegisterUserResult::UsernameTaken;
         }
 
-        self.username_to_principal.insert(username, principal);
+        self.username_to_principal.insert(&username, principal);
 
         let user = ConfirmedUser {
             principal,
             phone_number: None,
-            username: Some(username.to_owned()),
+            username: Some(username),
             date_confirmed: now,
             canister_creation_status: CanisterCreationStatusInternal::Pending(None),
             upgrade_in_progress: false,
@@ -583,7 +582,7 @@ mod tests {
     use crate::model::user::{ConfirmedUser, CreatedUser, PhoneStatus, UnconfirmedPhoneNumber, UnconfirmedUser};
     use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
     use itertools::Itertools;
-    use types::{CanisterCreationStatusInternal, CyclesRegistrationFee, ICPRegistrationFee, RegistrationFee, ICP};
+    use types::{CanisterCreationStatusInternal, CyclesRegistrationFee, ICPRegistrationFee, RegistrationFee, Timestamped, ICP};
 
     #[test]
     fn add_with_no_clashes() {
@@ -627,7 +626,8 @@ mod tests {
         let created = User::Created(CreatedUser {
             principal: principal3,
             user_id: user_id3,
-            username: username3.clone(),
+            username: Timestamped::new(username3.clone(), 0),
+            bio: Timestamped::default(),
             date_created: 3,
             date_updated: 3,
             last_online: 1,
@@ -760,7 +760,8 @@ mod tests {
             principal,
             phone_status: PhoneStatus::Confirmed(phone_number1.clone()),
             user_id,
-            username: username1.clone(),
+            username: Timestamped::new(username1.clone(), 0),
+            bio: Timestamped::default(),
             date_created: 1,
             date_updated: 1,
             last_online: 1,
@@ -768,7 +769,7 @@ mod tests {
         };
 
         let mut updated = original.clone();
-        updated.username = username2.clone();
+        updated.username = Timestamped::new(username2.clone(), 0);
         updated.phone_status = PhoneStatus::Confirmed(phone_number2.clone());
 
         user_map.add_test_user(User::Created(original));
@@ -800,7 +801,8 @@ mod tests {
             principal: principal1,
             phone_status: PhoneStatus::Confirmed(phone_number1),
             user_id: user_id1,
-            username: username1.clone(),
+            username: Timestamped::new(username1.clone(), 0),
+            bio: Timestamped::default(),
             date_created: 1,
             date_updated: 1,
             last_online: 1,
@@ -811,7 +813,8 @@ mod tests {
             principal: principal2,
             phone_status: PhoneStatus::Confirmed(phone_number2.clone()),
             user_id: user_id2,
-            username: username2.clone(),
+            username: Timestamped::new(username2.clone(), 0),
+            bio: Timestamped::default(),
             date_created: 2,
             date_updated: 2,
             last_online: 2,
@@ -848,7 +851,8 @@ mod tests {
             principal: principal1,
             phone_status: PhoneStatus::Confirmed(phone_number1),
             user_id: user_id1,
-            username: username1.clone(),
+            username: Timestamped::new(username1.clone(), 0),
+            bio: Timestamped::default(),
             date_created: 1,
             date_updated: 1,
             last_online: 1,
@@ -859,7 +863,8 @@ mod tests {
             principal: principal2,
             phone_status: PhoneStatus::Confirmed(phone_number2.clone()),
             user_id: user_id2,
-            username: username2.clone(),
+            username: Timestamped::new(username2.clone(), 0),
+            bio: Timestamped::default(),
             date_created: 2,
             date_updated: 2,
             last_online: 2,
@@ -867,7 +872,7 @@ mod tests {
         };
 
         let mut updated = original.clone();
-        updated.username = username2;
+        updated.username = Timestamped::new(username2, 0);
 
         user_map.add_test_user(User::Created(original));
         user_map.add_test_user(User::Created(other));
@@ -889,7 +894,8 @@ mod tests {
             principal,
             phone_status: PhoneStatus::Confirmed(phone_number),
             user_id: user_id,
-            username: username.clone(),
+            username: Timestamped::new(username.clone(), 0),
+            bio: Timestamped::default(),
             date_created: 1,
             date_updated: 1,
             last_online: 1,
@@ -899,7 +905,7 @@ mod tests {
         let mut updated = original.clone();
 
         user_map.add_test_user(User::Created(original));
-        updated.username = "ABC".to_string();
+        updated.username = Timestamped::new("ABC".to_string(), 0);
 
         assert!(matches!(user_map.update(User::Created(updated)), UpdateUserResult::Success));
     }
@@ -1030,7 +1036,8 @@ mod tests {
             principal: principal4,
             phone_status: PhoneStatus::Confirmed(phone_number4.clone()),
             user_id: user_id4,
-            username: username4.clone(),
+            username: Timestamped::new(username4.clone(), 0),
+            bio: Timestamped::default(),
             date_created: 4,
             date_updated: 4,
             last_online: 4,
