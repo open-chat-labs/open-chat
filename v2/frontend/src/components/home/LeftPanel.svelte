@@ -42,6 +42,13 @@
         controller.addOrReplaceChat(ev.detail);
         view = "showing-chat-list";
     }
+
+    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
+        controller.updateUserAvatar({
+            blobData: ev.detail.data,
+            blobUrl: ev.detail.url,
+        });
+    }
 </script>
 
 <Panel left>
@@ -56,6 +63,7 @@
         <ChatList
             on:loadMessage
             on:chatWith
+            on:userAvatarSelected={userAvatarSelected}
             on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
             on:whatsHot
             on:newGroup={() => (view = "adding-group")}
@@ -77,6 +85,8 @@
             bind:this={profileComponent}
             on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
             {user}
+            {api}
+            on:userAvatarSelected={userAvatarSelected}
             on:closeProfile={() => (view = "showing-chat-list")} />
     </div>
 </Panel>

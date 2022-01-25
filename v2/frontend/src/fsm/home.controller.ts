@@ -45,7 +45,6 @@ import { closeNotificationsForChat } from "../utils/notifications";
 import { ChatController } from "./chat.controller";
 import { Poller } from "./poller";
 import { scrollStrategy } from "stores/settings";
-import { message } from "services/common/chatMappers";
 
 const ONE_MINUTE = 60 * 1000;
 const ONE_HOUR = 60 * ONE_MINUTE;

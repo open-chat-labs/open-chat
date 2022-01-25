@@ -21,13 +21,18 @@
     import Toggle from "./Toggle.svelte";
     import { setLocale } from "i18n/i18n";
     import type { ScrollStrategy } from "../../../domain/chat/chat";
+    import type { ServiceContainer } from "services/serviceContainer";
+    import { toastStore } from "../../../stores/toast";
+    import { rollbar } from "../../../utils/logging";
+    import { userStore } from "../../../stores/user";
 
     const dispatch = createEventDispatcher();
     const MIN_USERNAME_LENGTH = 3;
     const MAX_USERNAME_LENGTH = 25;
-    const MAX_BIO_LENGTH = 1024;
+    const MAX_BIO_LENGTH = 5000;
 
     export let user: PartialUserSummary;
+    export let api: ServiceContainer;
 
     let username = "";
     let userbio = "";
@@ -36,6 +41,7 @@
     let usernameError: string | undefined = undefined;
     let bioError: string | undefined = undefined;
     let supportsNotifications = notificationsSupported();
+    let saving = false;
 
     $: {
         setLocale(selectedLocale);
@@ -44,13 +50,43 @@
     $: usernameDirty = username !== user?.username ?? "";
 
     $: dirty = usernameDirty;
+    $: valid = username.length >= 3;
 
     export function reset(user: PartialUserSummary) {
         username = user.username ?? "";
         userbio = "";
     }
 
-    function saveUser() {}
+    function saveUser() {
+        saving = true;
+        usernameError = undefined;
+        api.setUsername(username)
+            .then((resp) => {
+                if (resp === "success") {
+                    userStore.add({
+                        ...user,
+                        username: username,
+                    });
+                } else {
+                    if (resp === "username_taken") {
+                        usernameError = "register.usernameTaken";
+                    } else if (resp === "user_not_found") {
+                        usernameError = "register.userNotFound";
+                    } else if (resp === "username_too_short") {
+                        usernameError = "register.usernameTooShort";
+                    } else if (resp === "username_too_long") {
+                        usernameError = "register.usernameTooLong";
+                    } else if (resp === "username_invalid") {
+                        usernameError = "register.usernameInvalid";
+                    }
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast($_("unableToSaveUserProfile"));
+                rollbar.error("Unable to save user profile: ", err);
+            })
+            .finally(() => (saving = false));
+    }
 
     function toggleNotifications() {
         if ($notificationStatus !== "granted") {
@@ -72,7 +108,9 @@
         saveSeletedTheme($themeNameStore === "system" ? "light" : "system");
     }
 
-    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {}
+    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
+        dispatch("userAvatarSelected", ev.detail);
+    }
 
     function closeProfile() {
         dispatch("closeProfile");
@@ -103,7 +141,7 @@
             countdown={true}
             placeholder={$_("register.enterUsername")}>
             {#if usernameError !== undefined}
-                <div class="error">{usernameError}</div>
+                <div class="error">{$_(usernameError)}</div>
             {/if}
         </Input>
 
@@ -119,7 +157,8 @@
             {/if}
         </TextArea>
         <div class="save">
-            <Button disabled={!dirty} fill={true} small={true}>{$_("update")}</Button>
+            <Button loading={saving} disabled={!dirty || !valid || saving} fill={true} small={true}
+                >{$_("update")}</Button>
         </div>
     </div>
 
@@ -199,6 +238,7 @@
 
     .error {
         @include font(bold, normal, fs-100);
+        text-transform: lowercase;
         color: var(--error);
         margin-bottom: $sp4;
     }

@@ -20,7 +20,6 @@
     import type { DataContent } from "../../domain/data/data";
     import { userStore } from "../../stores/user";
     import NotificationsBar from "./NotificationsBar.svelte";
-    import { unsubscribeNotifications } from "../../utils/notifications";
     import type { HomeController } from "../../fsm/home.controller";
     import type { Version } from "../../domain/version";
     import Markdown from "./Markdown.svelte";
@@ -39,7 +38,6 @@
     let chatsWithUnreadMsgs: number;
 
     $: user = controller.user ? $userStore[controller.user?.userId] : undefined;
-    $: api = controller.api;
     $: userId = controller.user!.userId;
     $: chatsList = controller.chatSummariesList;
     $: selectedChat = controller.selectedChat;
@@ -87,13 +85,6 @@
 
     $: chatLookup = controller.chatSummaries;
 
-    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
-        controller.updateUserAvatar({
-            blobData: ev.detail.data,
-            blobUrl: ev.detail.url,
-        });
-    }
-
     function chatWith(userId: string): void {
         dispatch("chatWith", userId);
     }
@@ -130,7 +121,7 @@
 
 {#if user}
     <CurrentUser
-        on:userAvatarSelected={userAvatarSelected}
+        on:userAvatarSelected
         on:logout
         on:whatsHot
         {user}
