@@ -15,6 +15,11 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         return;
     }
 
+    // 'bio' can be called by anyone
+    if method_name == "bio" {
+        return;
+    }
+
     if runtime_state.is_caller_owner() {
         ic_cdk::api::call::accept_message();
     }
