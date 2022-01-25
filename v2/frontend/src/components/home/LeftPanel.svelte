@@ -13,6 +13,7 @@
     import { userStore } from "../../stores/user";
     import { nullUser } from "../../domain/user/user.utils";
     import { unsubscribeNotifications } from "../../utils/notifications";
+    import type { GroupChatSummary } from "domain/chat/chat";
 
     export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -37,6 +38,11 @@
         view = "showing-profile";
         profileComponent.reset(user);
     }
+
+    function groupCreated(ev: CustomEvent<GroupChatSummary>) {
+        controller.addOrReplaceChat(ev.detail);
+        view = "showing-chat-list";
+    }
 </script>
 
 <Panel left>
@@ -45,7 +51,7 @@
             {api}
             {currentUser}
             on:cancelNewGroup={() => (view = "showing-chat-list")}
-            on:groupCreated={() => (view = "showing-chat-list")} />
+            on:groupCreated={groupCreated} />
     </div>
     <div class="chat-list" class:showing-chat-list={view === "showing-chat-list"}>
         <ChatList

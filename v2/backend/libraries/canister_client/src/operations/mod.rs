@@ -1,5 +1,6 @@
 mod create_group;
 mod cycles_wallet;
+mod gated_register_user;
 mod get_user;
 mod install_service_canisters;
 mod register_user;
@@ -10,6 +11,7 @@ mod upgrade_service_canisters;
 
 pub use create_group::*;
 pub use cycles_wallet::*;
+pub use gated_register_user::*;
 pub use get_user::*;
 pub use install_service_canisters::*;
 pub use register_user::*;

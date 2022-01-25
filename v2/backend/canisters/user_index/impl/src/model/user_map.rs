@@ -1,4 +1,5 @@
-use crate::model::user::{ConfirmedUser, UnconfirmedUser, UnconfirmedUserState, User};
+use crate::model::user::{ConfirmedUser, PhoneStatus, UnconfirmedPhoneNumber, UnconfirmedUser, UnconfirmedUserState, User};
+use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, USER_LIMIT};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -211,6 +212,128 @@ impl UserMap {
         } else {
             UpdateUserResult::UserNotFound
         }
+    }
+
+    pub fn submit_phone_number(
+        &mut self,
+        principal: Principal,
+        phone_number: PhoneNumber,
+        confirmation_code: &str,
+        now: TimestampMillis,
+    ) -> SubmitPhoneNumberResult {
+        let phone_number_already_used = self.get_by_phone_number(&phone_number).is_some();
+
+        let mut unconfirmed_phone_number = UnconfirmedPhoneNumber {
+            phone_number: phone_number.clone(),
+            confirmation_code: confirmation_code.to_owned(),
+            valid_until: now + CONFIRMATION_CODE_EXPIRY_MILLIS,
+            sms_messages_sent: 1,
+        };
+
+        if let Some(user) = self.users_by_principal.get_mut(&principal) {
+            if let Some(user_phone_number) = user.get_phone_number() {
+                if phone_number_already_used && (user_phone_number != &phone_number) {
+                    return SubmitPhoneNumberResult::AlreadyTaken;
+                }
+            }
+
+            match user {
+                User::Unconfirmed(u) => {
+                    if let UnconfirmedUserState::PhoneNumber(p) = &u.state {
+                        unconfirmed_phone_number.sms_messages_sent += p.sms_messages_sent;
+                    }
+                    self.remove_by_principal(&principal);
+                }
+                User::Confirmed(_) => return SubmitPhoneNumberResult::AlreadyConfirmed,
+                User::Created(u) => {
+                    match &u.phone_status {
+                        PhoneStatus::Confirmed(_) => return SubmitPhoneNumberResult::AlreadyConfirmed,
+                        PhoneStatus::Unconfirmed(p) => unconfirmed_phone_number.sms_messages_sent += p.sms_messages_sent,
+                        PhoneStatus::None => (),
+                    }
+
+                    u.phone_status = PhoneStatus::Unconfirmed(unconfirmed_phone_number);
+                    return SubmitPhoneNumberResult::Success;
+                }
+            }
+        } else if self.len() >= USER_LIMIT {
+            return SubmitPhoneNumberResult::UserLimitReached;
+        } else if phone_number_already_used {
+            return SubmitPhoneNumberResult::AlreadyTaken;
+        }
+
+        let user = UnconfirmedUser {
+            principal,
+            state: UnconfirmedUserState::PhoneNumber(unconfirmed_phone_number),
+        };
+
+        if matches!(self.add(user), AddUserResult::Success) {
+            SubmitPhoneNumberResult::Success
+        } else {
+            panic!("Failed to add user");
+        }
+    }
+
+    pub fn confirm_phone_number(
+        &mut self,
+        principal: Principal,
+        confirmation_code: String,
+        test_mode: bool,
+        now: TimestampMillis,
+    ) -> ConfirmPhoneNumberResult {
+        let test_code = test_mode && confirmation_code == "123456";
+        let phone_number: PhoneNumber;
+        if let Some(user) = self.users_by_principal.get_mut(&principal) {
+            match user {
+                User::Unconfirmed(u) => {
+                    if let UnconfirmedUserState::PhoneNumber(p) = &u.state {
+                        if now > p.valid_until {
+                            return ConfirmPhoneNumberResult::CodeExpired;
+                        } else if (confirmation_code != p.confirmation_code) && !test_code {
+                            return ConfirmPhoneNumberResult::CodeIncorrect;
+                        } else {
+                            phone_number = p.phone_number.clone();
+                        }
+                    } else {
+                        return ConfirmPhoneNumberResult::PhoneNumberNotSubmitted;
+                    }
+                }
+                User::Created(u) => match &u.phone_status {
+                    PhoneStatus::Confirmed(_) => return ConfirmPhoneNumberResult::AlreadyConfirmed,
+                    PhoneStatus::Unconfirmed(p) => {
+                        if now > p.valid_until {
+                            return ConfirmPhoneNumberResult::CodeExpired;
+                        } else if (confirmation_code != p.confirmation_code) && !test_code {
+                            return ConfirmPhoneNumberResult::CodeIncorrect;
+                        } else {
+                            u.phone_status = PhoneStatus::Confirmed(p.phone_number.clone());
+                            u.open_storage_limit_bytes += DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT;
+                            return ConfirmPhoneNumberResult::Success(Some(u.open_storage_limit_bytes));
+                        }
+                    }
+                    PhoneStatus::None => return ConfirmPhoneNumberResult::PhoneNumberNotSubmitted,
+                },
+                _ => return ConfirmPhoneNumberResult::AlreadyConfirmed,
+            }
+        } else {
+            // We remove unconfirmed users once their confirmation codes expire, so if we are unable to
+            // find the user that either means the user never registered, or they registered but
+            // subsequently were removed due to their code expiring. Since we can't differentiate
+            // between these 2 cases, we simply return CodeExpired for both.
+            return ConfirmPhoneNumberResult::CodeExpired;
+        }
+
+        let user = ConfirmedUser {
+            principal,
+            phone_number: Some(phone_number),
+            username: None,
+            date_confirmed: now,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
+            upgrade_in_progress: false,
+            registration_fee: None,
+        };
+        self.update(User::Confirmed(user));
+        ConfirmPhoneNumberResult::Success(None)
     }
 
     pub fn mark_online(&mut self, principal: &Principal, now: TimestampMillis) -> bool {
@@ -437,6 +560,21 @@ pub enum UpdateUserResult {
     UsernameTaken,
     UserNotFound,
     RegistrationFeeCyclesTaken,
+}
+
+pub enum SubmitPhoneNumberResult {
+    Success,
+    AlreadyTaken,
+    AlreadyConfirmed,
+    UserLimitReached,
+}
+
+pub enum ConfirmPhoneNumberResult {
+    Success(Option<u64>),
+    CodeExpired,
+    CodeIncorrect,
+    PhoneNumberNotSubmitted,
+    AlreadyConfirmed,
 }
 
 #[cfg(test)]

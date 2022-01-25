@@ -176,13 +176,13 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
                     }
                 };
                 runtime_state.data.users.update(user_to_update);
+
+                runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
+                    user_id: caller,
+                    byte_limit: DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT,
+                });
             }
         }
-
-        runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
-            user_id: caller,
-            byte_limit: DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT,
-        });
     }
 }
 
