@@ -78,12 +78,15 @@
                 const id = idAttr ? BigInt(idAttr.value) : undefined;
                 if (idx !== undefined && id !== undefined) {
                     if (entry.isIntersecting && messageReadTimers[idx] === undefined) {
+                        const chatId = controller.chatId;
                         const timer = setTimeout(() => {
-                            dispatch("messageRead", {
-                                chatId: controller.chatId,
-                                messageIndex: idx,
-                                messageId: id,
-                            });
+                            if (chatId === controller.chatId) {
+                                dispatch("messageRead", {
+                                    chatId,
+                                    messageIndex: idx,
+                                    messageId: id,
+                                });
+                            }
                             delete messageReadTimers[idx];
                         }, MESSAGE_READ_THRESHOLD);
                         messageReadTimers[idx] = timer;
