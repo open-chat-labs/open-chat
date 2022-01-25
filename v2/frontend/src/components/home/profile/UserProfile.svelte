@@ -178,7 +178,7 @@
                 checked={$themeNameStore === "system"} />
             {#if $themeNameStore !== "system"}
                 <div class="theme-selection">
-                    {#each ["dark", "light", "original"] as t}
+                    {#each ["light", "original", "dark"] as t}
                         <div
                             class="theme"
                             class:dark={t === "dark"}
@@ -186,7 +186,9 @@
                             class:original={t === "original"}
                             class:selected={$themeNameStore === t}
                             on:click={() => selectTheme(t)}>
-                            {$_(t)}
+                            <span class="theme-txt">
+                                {$_(t)}
+                            </span>
                         </div>
                     {/each}
                 </div>
@@ -255,6 +257,11 @@
             color: #fff;
             cursor: pointer;
 
+            .theme-txt {
+                border-bottom: $sp2 solid hotpink;
+                padding-bottom: $sp2;
+            }
+
             &.selected {
                 @include box-shadow(1);
             }
@@ -264,7 +271,11 @@
             }
 
             &.original {
-                background-color: #59df59;
+                // background-color: #59df59;
+                background-color: #3ec4ee;
+                .theme-txt {
+                    border-bottom-color: #59df59;
+                }
             }
 
             &.light {

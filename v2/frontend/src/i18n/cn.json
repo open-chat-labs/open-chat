@@ -5,7 +5,7 @@
     "enterToSend": "回车键发送消息",
     "notificationsEnabled": "启用通知",
     "scrollPosition": "滚动位置",
-    "latest": "最新消息",
+    "latestMessage": "最新消息",
     "firstMessage": "第一条未读消息",
     "firstMention": "第一次未读提及",
     "usernameRules": "仅限字母数字和下划线",
