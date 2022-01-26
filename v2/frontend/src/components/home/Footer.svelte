@@ -162,9 +162,14 @@
     <ModalContent fill={true}>
         <span slot="header">{$_("insufficientStorage")}</span>
         <span slot="body">
-            <p class="review-storage">
-                {$_("reviewStorage")}
-            </p>
+            <div class="review-storage">
+                <p>
+                    {$_("reviewStorage1")}
+                </p>
+                <p>
+                    {$_("reviewStorage2")}
+                </p>
+            </div>
         </span>
         <span slot="footer">
             <div class="buttons">
@@ -260,5 +265,9 @@
 
     .review-storage {
         padding: $sp5;
+
+        p {
+            margin-bottom: $sp4;
+        }
     }
 </style>
