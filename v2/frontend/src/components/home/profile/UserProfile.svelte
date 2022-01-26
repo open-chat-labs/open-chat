@@ -162,7 +162,7 @@
             </HoverIcon>
         </div>
 
-        <div class="legend">{$_("usernameRules")}</div>
+        <div class="legend">{$_("username")} ({$_("usernameRules")})</div>
         <Input
             invalid={false}
             bind:value={username}
@@ -176,7 +176,7 @@
             {/if}
         </Input>
 
-        <div class="legend">{$_("supportsMarkdown")}</div>
+        <div class="legend">{$_("bio")} ({$_("supportsMarkdown")})</div>
         <TextArea
             rows={3}
             bind:value={userbio}
