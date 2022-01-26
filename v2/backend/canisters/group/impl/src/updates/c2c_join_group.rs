@@ -3,7 +3,8 @@ use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
-use group_canister::c2c_join_group::{Response::*, *};
+use group_canister::c2c_join_group::Response as ResponseV1;
+use group_canister::c2c_join_group_v2::{Response::*, *};
 use ic_cdk_macros::update;
 use types::{CanisterId, EventIndex, MessageIndex, ParticipantJoined, UserId};
 use user_index_canister::c2c_is_super_admin;
@@ -11,7 +12,13 @@ use user_index_canister::c2c_is_super_admin;
 // Called via the user's user canister
 #[update]
 #[trace]
-async fn c2c_join_group(args: Args) -> Response {
+async fn c2c_join_group(args: Args) -> ResponseV1 {
+    c2c_join_group_v2(args).await.into()
+}
+
+#[update]
+#[trace]
+async fn c2c_join_group_v2(args: Args) -> Response {
     run_regular_jobs();
 
     let prepare_result = mutate_state(prepare);
@@ -67,7 +74,7 @@ fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Resp
             min_visible_message_index,
             args.as_super_admin,
         ) {
-            AddResult::Success => {
+            AddResult::Success(participant) => {
                 let event = ParticipantJoined {
                     user_id,
                     as_super_admin: args.as_super_admin,
@@ -79,9 +86,8 @@ fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Resp
 
                 handle_activity_notification(runtime_state);
 
-                Success(SuccessResult {
-                    latest_message_index: runtime_state.data.events.latest_message_index(),
-                })
+                let summary = runtime_state.summary(&participant);
+                Success(summary)
             }
             AddResult::AlreadyInGroup => AlreadyInGroup,
             AddResult::Blocked => Blocked,

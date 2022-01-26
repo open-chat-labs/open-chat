@@ -1,8 +1,11 @@
 use candid::{CandidType, Principal};
+use chat_events::GroupChatEvents;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{EventIndex, FallbackRole, MessageIndex, Participant, Role, TimestampMillis, UserId};
+use types::{
+    EventIndex, FallbackRole, Mention, MessageIndex, Participant, Role, TimestampMillis, UserId, MAX_RETURNED_MENTIONS,
+};
 
 const MAX_PARTICIPANTS_PER_PUBLIC_GROUP: u32 = 100_000;
 const MAX_PARTICIPANTS_PER_PRIVATE_GROUP: u32 = 200;
@@ -49,7 +52,7 @@ impl Participants {
         } else {
             match self.by_principal.entry(principal) {
                 Vacant(e) => {
-                    e.insert(ParticipantInternal {
+                    let participant = ParticipantInternal {
                         user_id,
                         date_added: now,
                         role: if as_super_admin { Role::SuperAdmin(FallbackRole::Participant) } else { Role::Participant },
@@ -57,9 +60,10 @@ impl Participants {
                         min_visible_message_index,
                         notifications_muted: false,
                         mentions: Vec::new(),
-                    });
+                    };
+                    e.insert(participant.clone());
                     self.user_id_to_principal_map.insert(user_id, principal);
-                    AddResult::Success
+                    AddResult::Success(participant)
                 }
                 _ => AddResult::AlreadyInGroup,
             }
@@ -275,7 +279,7 @@ impl Participants {
 }
 
 pub enum AddResult {
-    Success,
+    Success(ParticipantInternal),
     AlreadyInGroup,
     Blocked,
 }
@@ -315,7 +319,7 @@ pub enum DismissSuperAdminResult {
     NotSuperAdmin,
 }
 
-#[derive(CandidType, Serialize, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct ParticipantInternal {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
@@ -342,6 +346,15 @@ impl ParticipantInternal {
         } else {
             self.min_visible_message_index
         }
+    }
+
+    pub fn get_most_recent_mentions(&self, events: &GroupChatEvents) -> Vec<Mention> {
+        self.mentions
+            .iter()
+            .rev()
+            .filter_map(|message_index| events.hydrate_mention(message_index))
+            .take(MAX_RETURNED_MENTIONS)
+            .collect()
     }
 }
 

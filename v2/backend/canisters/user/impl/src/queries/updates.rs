@@ -1,7 +1,7 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState, WASM_VERSION};
-use group_canister::c2c_summary::Summary;
 use group_canister::c2c_summary_updates::SummaryUpdates;
+use group_canister::Summary;
 use group_index_canister::c2c_filter_groups;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::query;
