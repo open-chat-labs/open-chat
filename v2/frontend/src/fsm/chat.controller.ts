@@ -402,7 +402,11 @@ export class ChatController {
     // 1 - we are sending a message
     // 2 - we receive an unconfirmed message via WebRTC
     // 3 - we receive a confirmed message via a notification
-    async sendMessage(messageEvent: EventWrapper<Message>, userId: string, confirmed = false): Promise<void> {
+    async sendMessage(
+        messageEvent: EventWrapper<Message>,
+        userId: string,
+        confirmed = false
+    ): Promise<void> {
         const sentByMe = userId === this.user.userId;
         let upToDate = this.upToDate();
 
@@ -1054,8 +1058,7 @@ export class ChatController {
 
             for (let i = events.length - 1; i >= 0; i--) {
                 const event = events[i];
-                if (event.timestamp < tenMinsAgo)
-                    break;
+                if (event.timestamp < tenMinsAgo) break;
 
                 const activeUser = activeUserIdFromEvent(event.event);
                 if (activeUser !== undefined) {

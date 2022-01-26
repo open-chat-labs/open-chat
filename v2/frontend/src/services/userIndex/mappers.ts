@@ -318,7 +318,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                     : "NotRequired" in candid.Created.canister_upgrade_status
                     ? "not_required"
                     : "in_progress",
-            wasmVersion: new Version(version.major, version.minor, version.patch)
+            wasmVersion: new Version(version.major, version.minor, version.patch),
         };
     }
 
