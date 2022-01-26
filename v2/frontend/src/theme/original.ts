@@ -165,5 +165,26 @@ export function originalTheme(defaultTheme: Theme): Theme {
                 },
             },
         },
+
+        profile: {
+            ...defaultTheme.profile,
+            section: {
+                mg: "0",
+                bd: "1px solid #ddd",
+                bg: "#efefef",
+                xs: {
+                    mg: "0",
+                    bd: "1px solid #ddd",
+                },
+            },
+        },
+
+        collapsible: {
+            header: {
+                bg: "#efefef",
+                bd: "1px solid #ddd",
+            },
+            bg: "#f6f6f6",
+        },
     };
 }

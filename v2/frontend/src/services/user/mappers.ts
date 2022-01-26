@@ -25,6 +25,7 @@ import type {
     ApiRole,
     ApiMention,
     ApiRecommendedGroupsResponse,
+    ApiSetBioResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -62,6 +63,17 @@ import {
     updatedMessage,
 } from "../common/chatMappers";
 import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
+import type { SetBioResponse } from "../../domain/user/user";
+
+export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("TooLong" in candid) {
+        return "bio_too_long";
+    }
+    throw new UnsupportedValueError(`Unexpected ApiSetBioResponse type received`, candid);
+}
 
 export function recommendedGroupsResponse(
     candid: ApiRecommendedGroupsResponse

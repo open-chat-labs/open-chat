@@ -73,6 +73,7 @@ import {
     ICP,
     RecommendedGroupsResponse,
     RecommendedGroupsSuccessResult,
+    SetBioResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -148,6 +149,7 @@ export {
     ICP as ApiICP,
     RecommendedGroupsResponse as ApiRecommendedGroupsResponse,
     RecommendedGroupsSuccessResult as ApiRecommendedGroupsSuccessResult,
+    SetBioResponse as ApiSetBioResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

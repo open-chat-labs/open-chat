@@ -117,7 +117,9 @@
         chatSummary.kind === "direct_chat" && $typing[chatSummary.chatId]?.has(chatSummary.them);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
     $: preview = isPreviewing(chatSummary);
-    $: canDelete = chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined;
+    $: canDelete =
+        (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
+        (chatSummary.kind === "group_chat" && chatSummary.myRole === "previewer");
 </script>
 
 <a
