@@ -120,6 +120,8 @@ struct Data {
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
+    #[serde(default)]
+    pub bio: String,
 }
 
 impl Data {
@@ -148,6 +150,7 @@ impl Data {
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             is_super_admin: false,
             recommended_group_exclusions: RecommendedGroupExclusions::default(),
+            bio: "".to_string(),
         }
     }
 }

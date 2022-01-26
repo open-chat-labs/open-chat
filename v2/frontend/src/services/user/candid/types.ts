@@ -50,6 +50,8 @@ export type AvatarIdUpdate = { 'NoChange' : null } |
 export type AvatarUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : Avatar };
+export type BioArgs = {};
+export type BioResponse = { 'Success' : string };
 export interface BlobReference {
   'blob_id' : bigint,
   'canister_id' : CanisterId,
@@ -662,6 +664,9 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
 export interface SetAvatarArgs { 'avatar' : [] | [Avatar] }
 export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : null };
+export interface SetBioArgs { 'text' : string }
+export type SetBioResponse = { 'TooLong' : FieldTooLongResult } |
+  { 'Success' : null };
 export interface SetPreferencesArgs { 'preferences' : OptionalUserPreferences }
 export type SetPreferencesResponse = { 'Success' : null };
 export interface Subscription {
@@ -773,6 +778,7 @@ export interface _SERVICE {
   'assume_group_super_admin' : (arg_0: AssumeGroupSuperAdminArgs) => Promise<
       AssumeGroupSuperAdminResponse
     >,
+  'bio' : (arg_0: BioArgs) => Promise<BioResponse>,
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
   'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
   'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
@@ -807,6 +813,7 @@ export interface _SERVICE {
     >,
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
+  'set_bio' : (arg_0: SetBioArgs) => Promise<SetBioResponse>,
   'set_preferences' : (arg_0: SetPreferencesArgs) => Promise<
       SetPreferencesResponse
     >,
