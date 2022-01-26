@@ -192,3 +192,5 @@ export type NotificationFeePaidResponse =
     | "payment_not_found"
     | "internal_error"
     | "user_not_found";
+
+export type SetBioResponse = "success" | "bio_too_long";

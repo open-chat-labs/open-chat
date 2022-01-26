@@ -19,6 +19,7 @@
     import type { User } from "../../domain/user/user";
     import Button from "../Button.svelte";
     import type { GroupChatSummary } from "../../domain/chat/chat";
+    import { enterSend } from "../../stores/settings";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -184,7 +185,7 @@
     }
 
     function keyPress(e: KeyboardEvent) {
-        if (e.key === "Enter" && !e.shiftKey) {
+        if (e.key === "Enter" && $enterSend && !e.shiftKey) {
             if (!messageIsEmpty) {
                 sendMessage();
                 controller.stopTyping();

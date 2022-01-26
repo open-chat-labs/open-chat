@@ -18,6 +18,8 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'AlreadySuperAdmin' : IDL.Null,
   });
+  const BioArgs = IDL.Record({});
+  const BioResponse = IDL.Variant({ 'Success' : IDL.Text });
   const UserId = CanisterId;
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
@@ -517,6 +519,11 @@ export const idlFactory = ({ IDL }) => {
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Null,
   });
+  const SetBioArgs = IDL.Record({ 'text' : IDL.Text });
+  const SetBioResponse = IDL.Variant({
+    'TooLong' : FieldTooLongResult,
+    'Success' : IDL.Null,
+  });
   const NightMode = IDL.Variant({
     'On' : IDL.Null,
     'Off' : IDL.Null,
@@ -668,6 +675,7 @@ export const idlFactory = ({ IDL }) => {
         [AssumeGroupSuperAdminResponse],
         [],
       ),
+    'bio' : IDL.Func([BioArgs], [BioResponse], ['query']),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'create_group' : IDL.Func([CreateGroupArgs], [CreateGroupResponse], []),
     'delete_messages' : IDL.Func(
@@ -724,6 +732,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
+    'set_bio' : IDL.Func([SetBioArgs], [SetBioResponse], []),
     'set_preferences' : IDL.Func(
         [SetPreferencesArgs],
         [SetPreferencesResponse],

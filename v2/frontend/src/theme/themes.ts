@@ -290,6 +290,27 @@ export interface Theme {
     recommended: {
         bg: string;
     };
+
+    profile: {
+        section: {
+            mg: string;
+            bd: string;
+            bg: string;
+
+            xs: {
+                mg: string;
+                bd: string;
+            };
+        };
+    };
+
+    collapsible: {
+        header: {
+            bg: string;
+            bd: string;
+        };
+        bg: string;
+    };
 }
 
 export type Themes = {

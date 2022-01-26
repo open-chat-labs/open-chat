@@ -865,3 +865,5 @@ export type SerializableDirectChatSummary = Omit<DirectChatSummary, "readByMe" |
 export type SerializableGroupChatSummary = Omit<GroupChatSummary, "readByMe"> & {
     readByMe: IndexRange[];
 };
+
+export type ScrollStrategy = "latestMessage" | "firstMessage" | "firstMention";

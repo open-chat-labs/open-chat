@@ -60,6 +60,7 @@
         on:replyTo
         on:selectReaction
         on:deleteMessage
+        on:blockUser
         on:editMessage={editEvent}
         eventIndex={event.index}
         timestamp={event.timestamp}

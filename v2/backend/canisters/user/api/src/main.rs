@@ -1,6 +1,7 @@
 use candid_gen::generate_candid_method;
 
 fn main() {
+    generate_candid_method!(user, bio, query);
     generate_candid_method!(user, events, query);
     generate_candid_method!(user, events_by_index, query);
     generate_candid_method!(user, events_range, query);
@@ -27,6 +28,7 @@ fn main() {
     generate_candid_method!(user, relinquish_group_super_admin, update);
     generate_candid_method!(user, send_message, update);
     generate_candid_method!(user, set_avatar, update);
+    generate_candid_method!(user, set_bio, update);
     generate_candid_method!(user, set_preferences, update);
     generate_candid_method!(user, toggle_reaction, update);
     generate_candid_method!(user, unblock_user, update);

@@ -8,6 +8,8 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UserConfig {
+    // Note this is called user_id from the OpenStorage perspective but is actually
+    // the OpenChat user principal and *not* the OpenChat user_id (CanisterId)
     pub user_id: Principal,
     pub byte_limit: u64,
 }

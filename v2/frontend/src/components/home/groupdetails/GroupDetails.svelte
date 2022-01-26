@@ -198,7 +198,7 @@
     .sub-section {
         padding: $sp4;
         background-color: var(--sub-section-bg);
-        margin-bottom: $sp4;
+        margin-bottom: $sp3;
         @include box-shadow(1);
 
         h4 {

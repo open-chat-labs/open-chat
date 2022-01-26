@@ -17,22 +17,25 @@ async fn block_user(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let c2c_remove_from_group_args = c2c_remove_from_group::Args {
-        removed_by: prepare_result.blocked_by,
-        blocked: true,
-    };
-    let response = user_canister_c2c_client::c2c_remove_from_group(args.user_id.into(), &c2c_remove_from_group_args).await;
-    if let Err(error) = response {
-        return InternalError(format!("{error:?}"));
+    if prepare_result.is_blocked_user_participant {
+        let c2c_remove_from_group_args = c2c_remove_from_group::Args {
+            removed_by: prepare_result.my_user_id,
+            blocked: true,
+        };
+        let response = user_canister_c2c_client::c2c_remove_from_group(args.user_id.into(), &c2c_remove_from_group_args).await;
+        if let Err(error) = response {
+            return InternalError(format!("{error:?}"));
+        }
     }
 
-    mutate_state(|state| commit(prepare_result.blocked_by, args.user_id, state));
+    mutate_state(|state| commit(prepare_result.my_user_id, args.user_id, state));
 
     Success
 }
 
 struct PrepareResult {
-    blocked_by: UserId,
+    my_user_id: UserId,
+    is_blocked_user_participant: bool,
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -44,11 +47,15 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             Err(CannotBlockSelf)
         } else if participant.role.can_block_user() {
             match runtime_state.data.participants.get_by_user_id(&args.user_id) {
-                None => Err(UserNotInGroup),
+                None => Ok(PrepareResult {
+                    my_user_id: participant.user_id,
+                    is_blocked_user_participant: false,
+                }),
                 Some(participant_to_remove) => {
                     if participant_to_remove.role.can_be_removed() {
                         Ok(PrepareResult {
-                            blocked_by: participant.user_id,
+                            my_user_id: participant.user_id,
+                            is_blocked_user_participant: true,
                         })
                     } else {
                         Err(CannotBlockUser)
@@ -64,20 +71,22 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 }
 
 fn commit(blocked_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
+    if !runtime_state.data.participants.is_blocked(&user_id) {
+        let now = runtime_state.env.now();
 
-    runtime_state.data.participants.block(user_id);
-    runtime_state.data.participants.remove(user_id);
+        runtime_state.data.participants.block(user_id);
+        runtime_state.data.participants.remove(user_id);
 
-    let event = UsersBlocked {
-        user_ids: vec![user_id],
-        blocked_by,
-    };
+        let event = UsersBlocked {
+            user_ids: vec![user_id],
+            blocked_by,
+        };
 
-    runtime_state
-        .data
-        .events
-        .push_event(ChatEventInternal::UsersBlocked(Box::new(event)), now);
+        runtime_state
+            .data
+            .events
+            .push_event(ChatEventInternal::UsersBlocked(Box::new(event)), now);
 
-    handle_activity_notification(runtime_state);
+        handle_activity_notification(runtime_state);
+    }
 }

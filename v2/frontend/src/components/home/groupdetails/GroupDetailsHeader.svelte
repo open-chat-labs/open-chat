@@ -22,7 +22,7 @@
     }
 </script>
 
-<SectionHeader>
+<SectionHeader flush={true}>
     <span title={$_("participants")} class="participants" on:click={showParticipants}>
         <HoverIcon>
             <AccountMultiplePlus size={$iconSize} color={"var(--icon-txt)"} />

@@ -40,6 +40,7 @@ import {
     searchAllMessageResponse,
     sendMessageResponse,
     setAvatarResponse,
+    setBioResponse,
     toggleReactionResponse,
     unblockResponse,
 } from "./mappers";
@@ -55,7 +56,7 @@ import { CachingUserClient } from "./user.caching.client";
 import { apiMessageContent, apiOptional, apiReplyContextArgs } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
-import type { UserSummary } from "../../domain/user/user";
+import type { SetBioResponse, UserSummary } from "../../domain/user/user";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { muteNotificationsResponse } from "../notifications/mappers";
@@ -417,5 +418,13 @@ export class UserClient extends CandidService implements IUserClient {
             }),
             toVoid
         );
+    }
+
+    getBio(): Promise<string> {
+        return this.handleResponse(this.userService.bio({}), (candid) => candid.Success);
+    }
+
+    setBio(bio: string): Promise<SetBioResponse> {
+        return this.handleResponse(this.userService.set_bio({ text: bio }), setBioResponse);
     }
 }
