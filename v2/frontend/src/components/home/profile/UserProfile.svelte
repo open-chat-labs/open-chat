@@ -263,7 +263,7 @@
             }
 
             &.selected {
-                @include box-shadow(1);
+                @include box-shadow(2);
             }
 
             &.dark {
@@ -321,7 +321,5 @@
         position: absolute;
         top: $sp3;
         right: $sp3;
-        width: 40px;
-        height: 40px;
     }
 </style>
