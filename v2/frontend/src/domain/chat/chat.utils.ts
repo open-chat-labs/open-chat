@@ -880,3 +880,24 @@ export function groupChatFromCandidate(
         ...candidate.avatar,
     };
 }
+
+export function getStorageRequiredForMessage(content: MessageContent | undefined): number {
+    if (content === undefined) return 0;
+
+    switch (content.kind) {
+        case "audio_content":
+            return content.blobData?.length ?? 0;
+        case "file_content":
+            return content.blobData?.length ?? 0;
+        case "image_content":
+            return content.blobData?.length ?? 0;
+        case "video_content":
+            return (
+                (content.videoData.blobData?.length ?? 0) +
+                (content.imageData.blobData?.length ?? 0)
+            );
+
+        default:
+            return 0;
+    }
+}

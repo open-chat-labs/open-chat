@@ -10,7 +10,7 @@
     import { onDestroy, onMount } from "svelte";
     import { getMinVisibleMessageIndex, isPreviewing } from "../../domain/chat/chat.utils";
     import type { GroupChatSummary, Mention } from "../../domain/chat/chat";
-    
+
     export let controller: ChatController;
     export let blocked: boolean;
     export let joining: GroupChatSummary | undefined;
@@ -98,7 +98,7 @@
     $: preview = isPreviewing($chat);
 </script>
 
-<svelte:window on:focus={onWindowFocus}/>
+<svelte:window on:focus={onWindowFocus} />
 
 <div class="wrapper">
     <CurrentChatHeader
@@ -125,7 +125,14 @@
         {firstUnreadMention}
         {firstUnreadMessage}
         {unreadMessages} />
-    <Footer {joining} {preview} {blocked} {controller} on:joinGroup on:cancelPreview />
+    <Footer
+        {joining}
+        {preview}
+        {blocked}
+        {controller}
+        on:joinGroup
+        on:cancelPreview
+        on:goToMyAccount />
 </div>
 
 <style type="text/scss">

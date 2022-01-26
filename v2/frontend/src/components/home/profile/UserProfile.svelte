@@ -25,6 +25,7 @@
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
     import { userStore } from "../../../stores/user";
+    import { storageStore } from "../../../stores/storage";
 
     const dispatch = createEventDispatcher();
     const MIN_USERNAME_LENGTH = 3;
@@ -194,7 +195,7 @@
     </div>
 
     <div class="appearance">
-        <CollapsibleCard open={true} headerText={$_("appearance")}>
+        <CollapsibleCard open={false} headerText={$_("appearance")}>
             <div class="legend">{$_("preferredLanguage")}</div>
             <Select disabled={true} bind:value={selectedLocale}>
                 {#each supportedLanguages as lang}
@@ -229,7 +230,7 @@
     </div>
 
     <div class="chats">
-        <CollapsibleCard open={true} headerText={$_("chats")}>
+        <CollapsibleCard open={false} headerText={$_("chats")}>
             <Toggle
                 id={"enter-send"}
                 on:change={() => enterSend.toggle()}
@@ -257,6 +258,13 @@
                     label={$_(strategy)}
                     on:change={selectScrollStrategy} />
             {/each}
+        </CollapsibleCard>
+    </div>
+
+    <div class="account">
+        <CollapsibleCard open={true} headerText={$_("account")}>
+            <div class="legend">{$_("storage")}</div>
+            <h1>account stuff</h1>
         </CollapsibleCard>
     </div>
 </form>
@@ -322,6 +330,7 @@
 
     .user,
     .chats,
+    .account,
     .appearance {
         margin-bottom: var(--profile-section-mg);
         border-bottom: var(--profile-section-bd);

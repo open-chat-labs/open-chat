@@ -2,6 +2,9 @@
     import ReplyingTo from "./ReplyingTo.svelte";
     import MessageEntry from "./MessageEntry.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Button from "../Button.svelte";
+    import ModalContent from "../ModalContent.svelte";
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
     import type {
@@ -10,14 +13,18 @@
         Message,
         MessageContent,
     } from "../../domain/chat/chat";
-    import { getMessageContent } from "../../domain/chat/chat.utils";
+    import { getMessageContent, getStorageRequiredForMessage } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import Loading from "../Loading.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
     import type { User } from "../../domain/user/user";
     import Reload from "../Reload.svelte";
     import { _ } from "svelte-i18n";
+    import { remainingStorage } from "../../stores/storage";
+    import { createEventDispatcher } from "svelte";
+    import { draftMessages } from "../../stores/draftMessages";
 
+    const dispatch = createEventDispatcher();
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
@@ -25,6 +32,7 @@
 
     let showEmojiPicker = false;
     let messageEntry: MessageEntry;
+    let insufficientStorage = false;
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
     $: editingEvent = controller.editingEvent;
@@ -71,6 +79,12 @@
     ) {
         if (textContent || fileToAttach) {
             const nextEventIndex = controller.getNextEventIndex();
+            const storageRequired = getStorageRequiredForMessage(fileToAttach);
+            if ($remainingStorage < storageRequired) {
+                insufficientStorage = true;
+                draftMessages.delete($chat.chatId);
+                return;
+            }
 
             const msg = controller.createMessage(textContent, fileToAttach);
             controller.api
@@ -137,7 +151,30 @@
             e.preventDefault();
         }
     }
+
+    function goToMyAccount() {
+        insufficientStorage = false;
+        dispatch("goToMyAccount");
+    }
 </script>
+
+<Overlay bind:active={insufficientStorage}>
+    <ModalContent fill={true}>
+        <span slot="header">{$_("insufficientStorage")}</span>
+        <span slot="body">
+            <p class="review-storage">
+                {$_("reviewStorage")}
+            </p>
+        </span>
+        <span slot="footer">
+            <div class="buttons">
+                <Button on:click={goToMyAccount} small={true}>{$_("myAccount")}</Button>
+                <Button small={true} secondary={true} on:click={() => (insufficientStorage = false)}
+                    >{$_("cancel")}</Button>
+            </div>
+        </span>
+    </ModalContent>
+</Overlay>
 
 <div class="footer">
     <div class="footer-overlay">
@@ -219,5 +256,9 @@
         @include size-below(xxs) {
             --num-columns: 7 !important;
         }
+    }
+
+    .review-storage {
+        padding: $sp5;
     }
 </style>

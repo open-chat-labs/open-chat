@@ -33,7 +33,7 @@
 
     let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-chat-list";
 
-    function showProfile() {
+    export function showProfile() {
         view = "showing-profile";
         profileComponent.reset(user);
     }

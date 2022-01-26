@@ -52,6 +52,7 @@
     let removingChatId: string | undefined;
     let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
+    let leftPanel: LeftPanel;
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -336,6 +337,7 @@
     <main>
         {#if showLeft}
             <LeftPanel
+                bind:this={leftPanel}
                 {controller}
                 {groupSearchResults}
                 {userSearchResults}
@@ -373,6 +375,7 @@
                 on:cancelRecommendations={cancelRecommendations}
                 on:recommend={whatsHot}
                 on:dismissRecommendation={dismissRecommendation}
+                on:goToMyAccount={() => leftPanel.showProfile()}
                 controller={$selectedChat} />
         {/if}
     </main>
