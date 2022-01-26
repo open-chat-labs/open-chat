@@ -18,6 +18,7 @@
     import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
+    import Cancel from "svelte-material-icons/Cancel.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
@@ -177,6 +178,10 @@
         msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
     }
 
+    function blockUser() {
+        dispatch("blockUser", { userId: senderId });
+    }
+
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 </script>
 
@@ -304,6 +309,15 @@
                                             slot="icon" />
                                         <div slot="text">{$_("replyPrivately")}</div>
                                     </MenuItem>
+                                    {#if admin}
+                                        <MenuItem on:click={blockUser}>
+                                            <Cancel
+                                                size={$iconSize}
+                                                color={"var(--icon-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("blockUser")}</div>
+                                        </MenuItem>
+                                    {/if}
                                 {/if}
                                 {#if me || admin}
                                     <!-- <MenuItem on:click={editMessage}>
