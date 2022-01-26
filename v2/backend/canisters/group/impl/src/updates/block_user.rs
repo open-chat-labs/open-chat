@@ -71,20 +71,22 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 }
 
 fn commit(blocked_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
+    if !runtime_state.data.participants.is_blocked(&user_id) {
+        let now = runtime_state.env.now();
 
-    runtime_state.data.participants.block(user_id);
-    runtime_state.data.participants.remove(user_id);
+        runtime_state.data.participants.block(user_id);
+        runtime_state.data.participants.remove(user_id);
 
-    let event = UsersBlocked {
-        user_ids: vec![user_id],
-        blocked_by,
-    };
+        let event = UsersBlocked {
+            user_ids: vec![user_id],
+            blocked_by,
+        };
 
-    runtime_state
-        .data
-        .events
-        .push_event(ChatEventInternal::UsersBlocked(Box::new(event)), now);
+        runtime_state
+            .data
+            .events
+            .push_event(ChatEventInternal::UsersBlocked(Box::new(event)), now);
 
-    handle_activity_notification(runtime_state);
+        handle_activity_notification(runtime_state);
+    }
 }
