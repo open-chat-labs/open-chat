@@ -36,8 +36,6 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             User::Created(u) => {
                 let canister_upgrade_status = if u.upgrade_in_progress {
                     CanisterUpgradeStatus::InProgress
-                } else if &u.wasm_version < latest_wasm_version {
-                    CanisterUpgradeStatus::Required
                 } else {
                     CanisterUpgradeStatus::NotRequired
                 };
