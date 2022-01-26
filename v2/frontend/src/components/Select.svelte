@@ -1,10 +1,11 @@
 <script lang="ts">
     export let value: string = "";
     export let invalid: boolean = false;
+    export let disabled: boolean = false;
     let select: HTMLSelectElement;
 </script>
 
-<select class:invalid bind:value bind:this={select} class={`select`}>
+<select class:invalid {disabled} bind:value bind:this={select} class={`select`}>
     <slot />
 </select>
 
