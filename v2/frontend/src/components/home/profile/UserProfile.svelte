@@ -196,7 +196,7 @@
     <div class="appearance">
         <CollapsibleCard open={true} headerText={$_("appearance")}>
             <div class="legend">{$_("preferredLanguage")}</div>
-            <Select bind:value={selectedLocale}>
+            <Select disabled={true} bind:value={selectedLocale}>
                 {#each supportedLanguages as lang}
                     <option value={lang.code}>{lang.name}</option>
                 {/each}
