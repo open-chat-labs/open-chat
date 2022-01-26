@@ -15,6 +15,7 @@ import type {
     FeeCurrency,
     NotificationFeePaidResponse,
     User,
+    SetBioResponse,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -640,5 +641,13 @@ export class ServiceContainer implements MarkMessagesRead {
 
     dismissRecommendation(chatId: string): Promise<void> {
         return this.userClient.dismissRecommendation(chatId);
+    }
+
+    getBio(): Promise<string> {
+        return this.userClient.getBio();
+    }
+
+    setBio(bio: string): Promise<SetBioResponse> {
+        return this.userClient.setBio(bio);
     }
 }

@@ -1,15 +1,24 @@
 import { init, locale, addMessages, getLocaleFromNavigator } from "svelte-i18n";
 
 import en from "./en.json";
-import ar from "./ar.json";
-import fr from "./fr.json";
 import cn from "./cn.json";
 
-// todo we should be loading these async on demand
-addMessages("en", en);
-addMessages("ar", ar);
-addMessages("fr", fr);
-addMessages("cn", cn);
+export const supportedLanguages = [
+    {
+        name: "English",
+        code: "en",
+        json: en,
+    },
+    {
+        name: "中国人",
+        code: "cn",
+        json: cn,
+    },
+];
+
+supportedLanguages.forEach(({ code, json }) => {
+    addMessages(code, json);
+});
 
 init({
     fallbackLocale: "en",

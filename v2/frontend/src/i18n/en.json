@@ -274,6 +274,7 @@
         "userNotFound": "User not found",
         "usernameTooShort": "That username is too short",
         "usernameTooLong": "That username is too long",
+        "bioTooLong": "Your bio is too long",
         "codeExpired": "The code you entered has expired",
         "codeNotFound": "The code you entered was not found",
         "phoneAlreadyRegisterd": "The phone number is already registered",

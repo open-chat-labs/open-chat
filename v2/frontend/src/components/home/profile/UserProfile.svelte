@@ -19,7 +19,7 @@
     import { createEventDispatcher } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "./Toggle.svelte";
-    import { setLocale } from "i18n/i18n";
+    import { setLocale, supportedLanguages } from "i18n/i18n";
     import type { ScrollStrategy } from "../../../domain/chat/chat";
     import type { ServiceContainer } from "services/serviceContainer";
     import { toastStore } from "../../../stores/toast";
@@ -35,6 +35,7 @@
     export let api: ServiceContainer;
 
     let username = "";
+    let originalBio = "";
     let userbio = "";
     let selectedLocale = ($locale as string).substring(0, 2);
     let dirty = false;
@@ -48,44 +49,74 @@
     }
 
     $: usernameDirty = username !== user?.username ?? "";
+    $: bioDirty = userbio !== originalBio;
 
-    $: dirty = usernameDirty;
+    $: dirty = usernameDirty || bioDirty;
     $: valid = username.length >= 3;
 
     export function reset(user: PartialUserSummary) {
+        usernameError = undefined;
+        bioError = undefined;
         username = user.username ?? "";
-        userbio = "";
+        api.getBio().then((bio) => {
+            originalBio = userbio = bio;
+        });
     }
 
     function saveUser() {
         saving = true;
         usernameError = undefined;
-        api.setUsername(username)
-            .then((resp) => {
-                if (resp === "success") {
-                    userStore.add({
-                        ...user,
-                        username: username,
-                    });
-                } else {
-                    if (resp === "username_taken") {
-                        usernameError = "register.usernameTaken";
-                    } else if (resp === "user_not_found") {
-                        usernameError = "register.userNotFound";
-                    } else if (resp === "username_too_short") {
-                        usernameError = "register.usernameTooShort";
-                    } else if (resp === "username_too_long") {
-                        usernameError = "register.usernameTooLong";
-                    } else if (resp === "username_invalid") {
-                        usernameError = "register.usernameInvalid";
-                    }
-                }
-            })
-            .catch((err) => {
-                toastStore.showFailureToast($_("unableToSaveUserProfile"));
-                rollbar.error("Unable to save user profile: ", err);
-            })
-            .finally(() => (saving = false));
+        bioError = undefined;
+        const promises = [];
+
+        if (bioDirty) {
+            promises.push(
+                api
+                    .setBio(userbio)
+                    .then((resp) => {
+                        if (resp === "bio_too_long") {
+                            bioError = "register.bioTooLong";
+                        }
+                    })
+                    .catch((err) => {
+                        toastStore.showFailureToast($_("unableToSaveUserProfile"));
+                        rollbar.error("Unable to save user bio: ", err);
+                    })
+            );
+        }
+
+        if (usernameDirty) {
+            promises.push(
+                api
+                    .setUsername(username)
+                    .then((resp) => {
+                        if (resp === "success") {
+                            userStore.add({
+                                ...user,
+                                username: username,
+                            });
+                        } else {
+                            if (resp === "username_taken") {
+                                usernameError = "register.usernameTaken";
+                            } else if (resp === "user_not_found") {
+                                usernameError = "register.userNotFound";
+                            } else if (resp === "username_too_short") {
+                                usernameError = "register.usernameTooShort";
+                            } else if (resp === "username_too_long") {
+                                usernameError = "register.usernameTooLong";
+                            } else if (resp === "username_invalid") {
+                                usernameError = "register.usernameInvalid";
+                            }
+                        }
+                    })
+                    .catch((err) => {
+                        toastStore.showFailureToast($_("unableToSaveUserProfile"));
+                        rollbar.error("Unable to save username: ", err);
+                    })
+            );
+        }
+
+        Promise.all(promises).finally(() => (saving = false));
     }
 
     function toggleNotifications() {
@@ -135,7 +166,7 @@
         <Input
             invalid={false}
             bind:value={username}
-            autofocus={false}
+            autofocus={true}
             minlength={MIN_USERNAME_LENGTH}
             maxlength={MAX_USERNAME_LENGTH}
             countdown={true}
@@ -166,8 +197,9 @@
         <CollapsibleCard open={true} headerText={$_("appearance")}>
             <div class="legend">{$_("preferredLanguage")}</div>
             <Select bind:value={selectedLocale}>
-                <option value={"en"}>English</option>
-                <option value={"cn"}>中国人</option>
+                {#each supportedLanguages as lang}
+                    <option value={lang.code}>{lang.name}</option>
+                {/each}
             </Select>
 
             <div class="legend">{$_("theme")}</div>
