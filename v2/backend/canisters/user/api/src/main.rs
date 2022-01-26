@@ -21,6 +21,7 @@ fn main() {
     generate_candid_method!(user, dismiss_alerts, update);
     generate_candid_method!(user, edit_message, update);
     generate_candid_method!(user, join_group, update);
+    generate_candid_method!(user, join_group_v2, update);
     generate_candid_method!(user, leave_group, update);
     generate_candid_method!(user, mark_read, update);
     generate_candid_method!(user, mute_notifications, update);
