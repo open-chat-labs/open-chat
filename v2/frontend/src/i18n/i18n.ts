@@ -10,7 +10,7 @@ export const supportedLanguages = [
         json: en,
     },
     {
-        name: "中国人",
+        name: "中文",
         code: "cn",
         json: cn,
     },
