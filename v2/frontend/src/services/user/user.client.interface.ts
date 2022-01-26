@@ -24,7 +24,7 @@ import type {
 import type { BlobReference } from "../../domain/data/data";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
-import type { UserSummary } from "../../domain/user/user";
+import type { SetBioResponse, UserSummary } from "../../domain/user/user";
 
 export interface IUserClient {
     userId: string;
@@ -74,4 +74,6 @@ export interface IUserClient {
     ): Promise<ToggleMuteNotificationResponse>;
     getRecommendedGroups(): Promise<GroupChatSummary[]>;
     dismissRecommendation(chatId: string): Promise<void>;
+    getBio(): Promise<string>;
+    setBio(bio: string): Promise<SetBioResponse>;
 }

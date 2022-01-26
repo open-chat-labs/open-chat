@@ -35,7 +35,7 @@ import {
 import type { IDBPDatabase } from "idb";
 import { updateArgsFromChats } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
-import type { UserSummary } from "../../domain/user/user";
+import type { SetBioResponse, UserSummary } from "../../domain/user/user";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 
@@ -208,5 +208,13 @@ export class CachingUserClient implements IUserClient {
 
     dismissRecommendation(chatId: string): Promise<void> {
         return this.client.dismissRecommendation(chatId);
+    }
+
+    getBio(): Promise<string> {
+        return this.client.getBio();
+    }
+
+    setBio(bio: string): Promise<SetBioResponse> {
+        return this.client.setBio(bio);
     }
 }

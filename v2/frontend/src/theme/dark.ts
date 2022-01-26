@@ -239,5 +239,26 @@ export function darkTheme(defaultTheme: Theme): Theme {
             ...defaultTheme.recommended,
             bg: dark25,
         },
+
+        profile: {
+            ...defaultTheme.profile,
+            section: {
+                ...defaultTheme.profile.section,
+                bg: dark25,
+                xs: {
+                    ...defaultTheme.profile.section.xs,
+                    mg: "0",
+                    bd: `1px solid ${dark15}`,
+                },
+            },
+        },
+
+        collapsible: {
+            header: {
+                bg: dark20,
+                bd: `1px solid ${dark15}`,
+            },
+            bg: dark25,
+        },
     };
 }
