@@ -324,6 +324,10 @@
         return `${first.timestamp}_${first.index}`;
     }
 
+    function blockUser(ev: CustomEvent<{ userId: string }>) {
+        controller.blockUser(ev.detail.userId);
+    }
+
     $: groupedEvents = groupEvents($events).reverse();
 
     $: admin =
@@ -452,6 +456,7 @@
                         on:editEvent={editEvent}
                         on:goToMessageIndex={goToMessageIndex}
                         on:selectReaction={selectReaction}
+                        on:blockUser={blockUser}
                         event={evt} />
                 {/each}
             {/each}
