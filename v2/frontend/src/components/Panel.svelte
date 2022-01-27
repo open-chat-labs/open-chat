@@ -43,6 +43,7 @@
             @include size-below(xs) {
                 background: var(--panel-left-xs);
                 width: 100%;
+                max-width: none;
                 padding: 0;
                 flex: auto;
             }
