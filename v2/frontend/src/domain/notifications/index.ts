@@ -25,7 +25,7 @@ export type GroupNotification = {
     senderName: string;
     chatId: string;
     groupName: string;
-    mentioned: User[],
+    mentioned: User[];
 };
 
 export type SubscriptionExistsResponse = boolean;
