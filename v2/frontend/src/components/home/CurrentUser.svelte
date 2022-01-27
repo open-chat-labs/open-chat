@@ -184,7 +184,7 @@
     .menu {
         position: absolute;
         top: 0;
-        right: 0;
+        right: 1px;
         margin-top: 2px;
         flex: 0 0 40px;
         cursor: pointer;
