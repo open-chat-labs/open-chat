@@ -20,12 +20,13 @@
                 (cycles and ICP first, then Bitcoin and Ether later, plus more)
             </li>
             <li>Message forwarding</li>
-            <li>Pin message</li>
+            <li>Pinned messages</li>
             <li>Click to show images full-screen</li>
             <li>Improved UI design</li>
-            <li>Performance enhancements (asset caching with etags, webrtc improvements)</li>
+            <li>Performance enhancements (asset caching with etags, WebRTC improvements)</li>
             <li>2-way voice calls</li>
             <li>2-way video calls</li>
+            <li>Send "red-letters" containing tokens</li>
             <li>Native iOS app</li>
             <li>Disappearing messages</li>
             <li>Edit sent messages</li>
@@ -52,6 +53,7 @@
             </li>
             <li>
                 When it becomes available, incorporate the <a
+                    target="_blank"
                     href="https://forum.dfinity.org/t/open-governance-canister-for-sns-design-proposal/10224"
                     >SNS</a>
                 <ul>
