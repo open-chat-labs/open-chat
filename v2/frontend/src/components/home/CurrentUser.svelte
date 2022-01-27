@@ -8,8 +8,8 @@
     import Cogs from "svelte-material-icons/Cogs.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import Help from "svelte-material-icons/Help.svelte";
-    import Information from "svelte-material-icons/Information.svelte";
+    import HelpCircleOutline from "svelte-material-icons/HelpCircleOutline.svelte";
+    import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import Map from "svelte-material-icons/Map.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
@@ -38,7 +38,7 @@
         About,
         Faq,
         Roadmap,
-    }    
+    }
 
     export let wasmVersion: Version;
 
@@ -88,16 +88,19 @@
                         <Cogs size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("profile")}</span>
                     </MenuItem>
-                    <MenuItem on:click={() => modal = ModalType.Faq}>
-                        <Help size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                    <MenuItem on:click={() => (modal = ModalType.Faq)}>
+                        <HelpCircleOutline size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("faq")}</span>
                     </MenuItem>
-                    <MenuItem on:click={() => modal = ModalType.Roadmap}>
+                    <MenuItem on:click={() => (modal = ModalType.Roadmap)}>
                         <Map size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("roadmap")}</span>
                     </MenuItem>
-                    <MenuItem on:click={() => modal = ModalType.About}>
-                        <Information size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                    <MenuItem on:click={() => (modal = ModalType.About)}>
+                        <InformationOutline
+                            size={$iconSize}
+                            color={"var(--icon-txt)"}
+                            slot="icon" />
                         <span slot="text">{$_("aboutOpenChat")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("logout")}>
