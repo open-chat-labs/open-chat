@@ -1,10 +1,8 @@
 <script lang="ts">
     import { rtlStore } from "../stores/rtl";
     import { iconSize } from "../stores/iconSize";
-    import { slide } from "svelte/transition";
 
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import { quartInOut } from "svelte/easing";
 
     export let headerText: string;
     export let open: boolean = true;
@@ -18,7 +16,7 @@
         </div>
     </div>
     {#if open}
-        <div transition:slide={{ duration: 200, easing: quartInOut }} class="body" class:open>
+        <div class="body" class:open>
             <slot />
         </div>
     {/if}
@@ -26,7 +24,6 @@
 
 <style type="text/scss">
     .card {
-        // background-color: var(--section-bg);
         background-color: var(--collapsible-bg);
     }
 
