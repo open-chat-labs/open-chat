@@ -17,6 +17,10 @@ use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 #[update]
 #[trace]
 async fn create_canister(_args: Args) -> Response {
+    create_canister_impl().await
+}
+
+pub async fn create_canister_impl() -> Response {
     // Confirm the user needs a canister to be created.
     // Extract the user canister_id and wasm module from the runtime state.
     // Set the user's CanisterCreationStatus to InProgress.

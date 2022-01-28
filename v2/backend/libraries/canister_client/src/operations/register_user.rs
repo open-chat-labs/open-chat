@@ -13,27 +13,12 @@ pub async fn register_user(
 
     let register_user_args = user_index_canister::register_user::Args { username };
 
-    let register_user_response =
-        user_index_canister_client::register_user(&agent, &user_index_canister_id, &register_user_args)
-            .await
-            .unwrap();
-
-    assert!(matches!(
-        register_user_response,
-        user_index_canister::register_user::Response::Success
-    ));
-
-    let create_canister_args = user_index_canister::create_canister::Args {};
-
-    let create_canister_response =
-        user_index_canister_client::create_canister(&agent, &user_index_canister_id, &create_canister_args)
-            .await
-            .unwrap();
-
-    if let user_index_canister::create_canister::Response::Success(user_canister_id) = create_canister_response {
-        user_canister_id.into()
-    } else {
-        panic!("{create_canister_response:?}");
+    match user_index_canister_client::register_user(&agent, &user_index_canister_id, &register_user_args)
+        .await
+        .unwrap()
+    {
+        user_index_canister::register_user::Response::Success(user_id) => user_id,
+        response => panic!("{response:?}"),
     }
 }
 

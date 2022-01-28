@@ -132,8 +132,10 @@ export const idlFactory = ({ IDL }) => {
     'AlreadyRegistered' : IDL.Null,
     'UserLimitReached' : IDL.Null,
     'UsernameTooLong' : IDL.Nat16,
-    'Success' : IDL.Null,
+    'Success' : UserId,
     'NotSupported' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'CyclesBalanceTooLow' : IDL.Null,
   });
   const RemoveSuperAdminArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveSuperAdminResponse = IDL.Variant({
