@@ -333,6 +333,8 @@
     $: admin =
         $chat.kind === "group_chat" && ($chat.myRole === "admin" || $chat.myRole === "owner");
 
+    $: isPublic = $chat.kind === "group_chat" && $chat.public;
+
     $: {
         if (controller.chatId !== currentChatId) {
             currentChatId = controller.chatId;
@@ -449,6 +451,7 @@
                         last={i + 1 === userGroup.length}
                         {admin}
                         {preview}
+                        {isPublic}
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo
