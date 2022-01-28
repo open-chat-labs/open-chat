@@ -1,9 +1,14 @@
 <script lang="ts">
     export let percent: number;
+    export let bg: "button" | "accent" = "button";
 </script>
 
 <div class="bar">
-    <span class="meter" style={`width: ${percent}%`} />
+    <span
+        class="meter"
+        style={`width: ${percent}%; background-color: ${
+            bg === "button" ? "var(--button-bg)" : "var(--accent)"
+        }`} />
 </div>
 
 <style type="text/scss">
@@ -11,8 +16,6 @@
 
     .bar {
         border: 1px solid #ccc;
-
-        margin: 0 $sp3;
         width: 100%;
         height: $progress-bar-x-large;
         position: relative;
@@ -26,7 +29,6 @@
         display: block;
         height: 100%;
         border-radius: math.div($progress-bar-x-large, 2);
-        background-color: var(--button-bg);
         position: relative;
     }
 </style>

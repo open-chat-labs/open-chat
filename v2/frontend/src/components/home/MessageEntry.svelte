@@ -354,7 +354,9 @@
         </div>
 
         {#if recording}
-            <Progress percent={percentRecorded} />
+            <div class="recording">
+                <Progress percent={percentRecorded} />
+            </div>
         {/if}
         <div
             tabindex={0}
@@ -458,5 +460,10 @@
         @include size-below(xs) {
             justify-content: center;
         }
+    }
+
+    .recording {
+        padding: 0 $sp3;
+        flex: auto;
     }
 </style>

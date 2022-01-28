@@ -2,9 +2,6 @@
     import ReplyingTo from "./ReplyingTo.svelte";
     import MessageEntry from "./MessageEntry.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
-    import Overlay from "../Overlay.svelte";
-    import Button from "../Button.svelte";
-    import ModalContent from "../ModalContent.svelte";
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
     import type {
@@ -24,15 +21,14 @@
     import { createEventDispatcher } from "svelte";
     import { draftMessages } from "../../stores/draftMessages";
 
-    const dispatch = createEventDispatcher();
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
     export let joining: GroupChatSummary | undefined;
 
+    const dispatch = createEventDispatcher();
     let showEmojiPicker = false;
     let messageEntry: MessageEntry;
-    let insufficientStorage = false;
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
     $: editingEvent = controller.editingEvent;
@@ -81,7 +77,7 @@
             const nextEventIndex = controller.getNextEventIndex();
             const storageRequired = getStorageRequiredForMessage(fileToAttach);
             if ($remainingStorage < storageRequired) {
-                insufficientStorage = true;
+                dispatch("upgrade", "intercepting");
                 draftMessages.delete($chat.chatId);
                 return;
             }
@@ -151,35 +147,7 @@
             e.preventDefault();
         }
     }
-
-    function goToMyAccount() {
-        insufficientStorage = false;
-        dispatch("goToMyAccount");
-    }
 </script>
-
-<Overlay bind:active={insufficientStorage}>
-    <ModalContent fill={true}>
-        <span slot="header">{$_("insufficientStorage")}</span>
-        <span slot="body">
-            <div class="review-storage">
-                <p>
-                    {$_("reviewStorage1")}
-                </p>
-                <p>
-                    {$_("reviewStorage2")}
-                </p>
-            </div>
-        </span>
-        <span slot="footer">
-            <div class="buttons">
-                <Button on:click={goToMyAccount} small={true}>{$_("myAccount")}</Button>
-                <Button small={true} secondary={true} on:click={() => (insufficientStorage = false)}
-                    >{$_("cancel")}</Button>
-            </div>
-        </span>
-    </ModalContent>
-</Overlay>
 
 <div class="footer">
     <div class="footer-overlay">
@@ -260,14 +228,6 @@
         }
         @include size-below(xxs) {
             --num-columns: 7 !important;
-        }
-    }
-
-    .review-storage {
-        padding: $sp5;
-
-        p {
-            margin-bottom: $sp4;
         }
     }
 </style>

@@ -1,0 +1,102 @@
+<script lang="ts">
+    import { _ } from "svelte-i18n";
+    import { ONE_GB, storageStore } from "../../../stores/storage";
+    import ModalContent from "../../ModalContent.svelte";
+    import Button from "../../Button.svelte";
+    import Footer from "./Footer.svelte";
+    import { createEventDispatcher } from "svelte";
+
+    const dispatch = createEventDispatcher();
+
+    export let mode: "intercepting" | "direct";
+
+    $: smsUpgradePossible = $storageStore.byteLimit === 0;
+    $: mbLimit = Math.ceil($storageStore.byteLimit / 1_000_000);
+    $: upgradePossible = $storageStore.byteLimit < ONE_GB;
+
+    function cancel() {
+        dispatch("cancel");
+    }
+
+    function upgradeIcp() {
+        dispatch("upgradeIcp");
+    }
+
+    function upgradeSms() {
+        dispatch("upgradeSms");
+    }
+</script>
+
+<div class="body">
+    <!-- if we have intercepted the user sending a message we need to explain what's going on -->
+    {#if mode === "intercepting"}
+        <p>
+            {$_("insufficientStorageAdvice")}
+        </p>
+
+        {#if $storageStore.byteLimit > 0}
+            <p>
+                {#if upgradePossible}
+                    {$_("usageText", {
+                        values: { limit: mbLimit.toString() },
+                    })}
+                {:else}
+                    {$_("maxUsageText")}
+                {/if}
+            </p>
+        {/if}
+
+        <p>
+            {$_("explainStorageLimit")}
+        </p>
+
+        <!-- depending on whether the user already has storage display one of two messages -->
+        {#if upgradePossible}
+            <p>
+                {#if smsUpgradePossible}
+                    {$_("chooseUpgrade")}
+                {:else}
+                    {$_("chooseTransfer")}
+                {/if}
+            </p>
+        {/if}
+    {/if}
+    {#if mode === "direct"}
+        <!-- no need to explain what's going on if the user directly navigated here 
+                         we also know already that upgrade is possible in this scenario -->
+        <p>
+            {#if smsUpgradePossible}
+                {$_("chooseUpgrade")}
+            {/if}
+        </p>
+        <p>direct</p>
+    {/if}
+</div>
+
+<Footer>
+    {#if mode === "intercepting"}
+        {#if upgradePossible}
+            {#if smsUpgradePossible}
+                <Button on:click={upgradeSms} small={true}>{$_("upgradeBySMS")}</Button>
+            {/if}
+            <Button on:click={upgradeIcp} secondary={smsUpgradePossible} small={true}
+                >{$_("upgradeByTransfer")}</Button>
+            <Button small={true} secondary={true} on:click={cancel}>{$_("cancel")}</Button>
+        {:else}
+            <Button small={true} secondary={true} on:click={cancel}>{$_("close")}</Button>
+        {/if}
+    {/if}
+    {#if mode === "direct"}
+        <Button small={true} secondary={true} on:click={cancel}>{$_("close")}</Button>
+    {/if}
+</Footer>
+
+<style type="text/scss">
+    .body {
+        padding: $sp4 $sp5;
+
+        p {
+            margin-bottom: $sp4;
+        }
+    }
+</style>

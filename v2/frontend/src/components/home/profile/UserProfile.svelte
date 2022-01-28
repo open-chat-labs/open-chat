@@ -3,6 +3,7 @@
     import type { PartialUserSummary } from "../../../domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
+    import StorageUsage from "../../StorageUsage.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Input from "../../Input.svelte";
     import Button from "../../Button.svelte";
@@ -25,7 +26,7 @@
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
     import { userStore } from "../../../stores/user";
-    import { storageStore } from "../../../stores/storage";
+    import { ONE_GB, storageStore } from "../../../stores/storage";
 
     const dispatch = createEventDispatcher();
     const MIN_USERNAME_LENGTH = 3;
@@ -188,7 +189,7 @@
                 <div class="error">{bioError}</div>
             {/if}
         </TextArea>
-        <div class="save">
+        <div class="full-width-btn">
             <Button loading={saving} disabled={!dirty || !valid || saving} fill={true} small={true}
                 >{$_("update")}</Button>
         </div>
@@ -264,7 +265,27 @@
     <div class="account">
         <CollapsibleCard open={true} headerText={$_("account")}>
             <div class="legend">{$_("storage")}</div>
-            <h1>account stuff</h1>
+            {#if $storageStore.byteLimit === 0}
+                <p>
+                    {$_("noStorageAdvice")}
+                </p>
+                <p>{$_("chooseUpgrade")}</p>
+                <div class="full-width-btn">
+                    <Button on:click={() => dispatch("upgrade", "direct")} fill={true} small={true}
+                        >{$_("upgradeStorage")}</Button>
+                </div>
+            {:else}
+                <StorageUsage />
+                {#if $storageStore.byteLimit < ONE_GB}
+                    <p>{$_("chooseTransfer")}</p>
+                    <div class="full-width-btn">
+                        <Button
+                            on:click={() => dispatch("upgrade", "direct")}
+                            fill={true}
+                            small={true}>{$_("upgradeStorage")}</Button>
+                    </div>
+                {/if}
+            {/if}
         </CollapsibleCard>
     </div>
 </form>
@@ -272,7 +293,7 @@
 <style type="text/scss">
     $vertical-gap: $sp4;
 
-    .save {
+    .full-width-btn {
         display: flex;
         justify-content: center;
         margin-top: $sp4;
@@ -339,6 +360,12 @@
         @include size-below(xs) {
             margin-bottom: var(--profile-section-xs-mg);
             border-bottom: var(--profile-section-xs-bd);
+        }
+    }
+
+    .account {
+        p {
+            margin-bottom: $sp3;
         }
     }
 

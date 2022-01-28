@@ -35,6 +35,7 @@
     import { _ } from "svelte-i18n";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
+    import Upgrade from "./upgrade/Upgrade.svelte";
 
     export let controller: HomeController;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
@@ -52,7 +53,7 @@
     let removingChatId: string | undefined;
     let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
-    let leftPanel: LeftPanel;
+    let upgradeStorage: "intercepting" | "direct" | undefined = undefined;
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -290,6 +291,10 @@
             .catch((err) => (recommendedGroups = { kind: "error", error: err.toString() }));
     }
 
+    function upgrade(ev: CustomEvent<"intercepting" | "direct">) {
+        upgradeStorage = ev.detail;
+    }
+
     $: chat = $selectedChat?.chat;
 
     $: groupChat =
@@ -337,7 +342,6 @@
     <main>
         {#if showLeft}
             <LeftPanel
-                bind:this={leftPanel}
                 {controller}
                 {groupSearchResults}
                 {userSearchResults}
@@ -350,6 +354,7 @@
                 on:chatWith={chatWith}
                 on:whatsHot={whatsHot}
                 on:logout={logout}
+                on:upgrade={upgrade}
                 on:deleteDirectChat={deleteDirectChat}
                 on:loadMessage={loadMessage} />
         {/if}
@@ -375,7 +380,7 @@
                 on:cancelRecommendations={cancelRecommendations}
                 on:recommend={whatsHot}
                 on:dismissRecommendation={dismissRecommendation}
-                on:goToMyAccount={() => leftPanel.showProfile()}
+                on:upgrade={upgrade}
                 controller={$selectedChat} />
         {/if}
     </main>
@@ -410,6 +415,10 @@
     bind:chatId={removingChatId} />
 
 <Toast />
+
+{#if upgradeStorage}
+    <Upgrade mode={upgradeStorage} on:cancel={() => (upgradeStorage = undefined)} />
+{/if}
 
 <style type="text/scss">
     main {

@@ -84,6 +84,7 @@
         <UserProfile
             bind:this={profileComponent}
             on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
+            on:upgrade
             {user}
             {api}
             on:userAvatarSelected={userAvatarSelected}
