@@ -427,18 +427,6 @@ export type JoinGroupResponse = { 'Blocked' : null } |
   { 'GroupNotFound' : null } |
   { 'GroupNotPublic' : null } |
   { 'AlreadyInGroup' : null } |
-  { 'Success' : null } |
-  { 'NotSuperAdmin' : null } |
-  { 'ParticipantLimitReached' : number } |
-  { 'InternalError' : string };
-export interface JoinGroupV2Args {
-  'as_super_admin' : boolean,
-  'chat_id' : ChatId,
-}
-export type JoinGroupV2Response = { 'Blocked' : null } |
-  { 'GroupNotFound' : null } |
-  { 'GroupNotPublic' : null } |
-  { 'AlreadyInGroup' : null } |
   { 'Success' : GroupChatSummary } |
   { 'NotSuperAdmin' : null } |
   { 'ParticipantLimitReached' : number } |
@@ -805,8 +793,7 @@ export interface _SERVICE {
   'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
   'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
   'initial_state' : (arg_0: InitialStateArgs) => Promise<InitialStateResponse>,
-  'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
-  'join_group_v2' : (arg_0: JoinGroupV2Args) => Promise<JoinGroupV2Response>,
+  'join_group_v2' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
   'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'mute_notifications' : (arg_0: MuteNotificationsArgs) => Promise<
