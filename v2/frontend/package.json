@@ -75,7 +75,7 @@
         "@dfinity/identity": "^0.10.1",
         "@dfinity/principal": "^0.10.1",
         "@fortawesome/free-solid-svg-icons": "^5.15.3",
-        "@open-ic/open-storage-agent": "file:src/openStorage",
+        "@open-ic/open-storage-agent": "^0.1.1",
         "@sveltejs/svelte-virtual-list": "^3.0.1",
         "@types/dompurify": "^2.3.3",
         "@types/marked": "^4.0.1",
