@@ -7,13 +7,15 @@ type RegisterUserArgs =
 
 type RegisterUserResponse = 
     variant {
-        Success;
+        Success: UserId;
         AlreadyRegistered;
         UserLimitReached;
         UsernameTaken;
         UsernameInvalid;
         UsernameTooShort: nat16;
         UsernameTooLong: nat16;
+        CyclesBalanceTooLow;
+        InternalError: text;
         NotSupported;
     };
 

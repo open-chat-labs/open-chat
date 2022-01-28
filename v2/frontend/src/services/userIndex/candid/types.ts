@@ -541,8 +541,10 @@ export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'AlreadyRegistered' : null } |
   { 'UserLimitReached' : null } |
   { 'UsernameTooLong' : number } |
-  { 'Success' : null } |
-  { 'NotSupported' : null };
+  { 'Success' : UserId } |
+  { 'NotSupported' : null } |
+  { 'InternalError' : string } |
+  { 'CyclesBalanceTooLow' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemoveSuperAdminArgs { 'user_id' : UserId }
