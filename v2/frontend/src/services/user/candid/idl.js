@@ -408,20 +408,6 @@ export const idlFactory = ({ IDL }) => {
     'GroupNotFound' : IDL.Null,
     'GroupNotPublic' : IDL.Null,
     'AlreadyInGroup' : IDL.Null,
-    'Success' : IDL.Null,
-    'NotSuperAdmin' : IDL.Null,
-    'ParticipantLimitReached' : IDL.Nat32,
-    'InternalError' : IDL.Text,
-  });
-  const JoinGroupV2Args = IDL.Record({
-    'as_super_admin' : IDL.Bool,
-    'chat_id' : ChatId,
-  });
-  const JoinGroupV2Response = IDL.Variant({
-    'Blocked' : IDL.Null,
-    'GroupNotFound' : IDL.Null,
-    'GroupNotPublic' : IDL.Null,
-    'AlreadyInGroup' : IDL.Null,
     'Success' : GroupChatSummary,
     'NotSuperAdmin' : IDL.Null,
     'ParticipantLimitReached' : IDL.Nat32,
@@ -716,8 +702,7 @@ export const idlFactory = ({ IDL }) => {
         [InitialStateResponse],
         ['query'],
       ),
-    'join_group' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
-    'join_group_v2' : IDL.Func([JoinGroupV2Args], [JoinGroupV2Response], []),
+    'join_group_v2' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'mute_notifications' : IDL.Func(

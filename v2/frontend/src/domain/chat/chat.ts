@@ -817,14 +817,14 @@ export type LeaveGroupResponse =
     | "group_not_public";
 
 export type JoinGroupResponse =
-    | "success"
-    | "blocked"
-    | "group_not_found"
-    | "group_not_public"
-    | "already_in_group"
-    | "not_super_admin"
-    | "participant_limit_reached"
-    | "internal_error";
+    | GroupChatSummary
+    | { kind: "blocked" }
+    | { kind: "group_not_found" }
+    | { kind: "group_not_public" }
+    | { kind: "already_in_group" }
+    | { kind: "not_super_admin" }
+    | { kind: "participant_limit_reached" }
+    | { kind: "internal_error" };
 
 export type MarkReadRequest = {
     ranges: DRange;

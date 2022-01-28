@@ -52,6 +52,7 @@ import type {
     ParticipantRole,
     Mention,
     GroupChatSummary,
+    DirectChatSummary,
 } from "../../domain/chat/chat";
 import { identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -64,6 +65,8 @@ import {
 } from "../common/chatMappers";
 import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
 import type { SetBioResponse } from "../../domain/user/user";
+import { JoinGroupV2Response } from "./candid/types";
+import { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
 
 export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
     if ("Success" in candid) {
@@ -202,29 +205,29 @@ export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupRes
 
 export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupResponse {
     if ("Success" in candid) {
-        return "success";
+        return groupChatSummary(candid.Success);
     }
     if ("Blocked" in candid) {
-        return "blocked";
+        return { kind: "blocked" };
     }
     if ("AlreadyInGroup" in candid) {
-        return "already_in_group";
+        return { kind: "already_in_group" };
     }
     if ("GroupNotPublic" in candid) {
-        return "group_not_public";
+        return { kind: "group_not_public" };
     }
     if ("InternalError" in candid) {
-        return "internal_error";
+        return { kind: "internal_error" };
     }
     if ("ParticipantLimitReached" in candid) {
         // todo - check if we need to deal with this in the UI
-        return "participant_limit_reached";
+        return { kind: "participant_limit_reached" };
     }
     if ("GroupNotFound" in candid) {
-        return "group_not_found";
+        return { kind: "group_not_found" };
     }
     if ("NotSuperAdmin" in candid) {
-        return "not_super_admin";
+        return { kind: "not_super_admin" };
     }
     throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
 }
@@ -549,51 +552,59 @@ function mention(candid: ApiMention): Mention {
 
 function chatSummary(candid: ApiChatSummary): ChatSummary {
     if ("Group" in candid) {
-        return {
-            kind: "group_chat",
-            chatId: candid.Group.chat_id.toString(),
-            latestMessage: optional(candid.Group.latest_message, (ev) => {
-                return {
-                    index: ev.index,
-                    timestamp: ev.timestamp,
-                    event: message(ev.event),
-                };
-            }),
-            readByMe: apiMessageIndexRanges(candid.Group.read_by_me),
-            name: candid.Group.name,
-            description: candid.Group.description,
-            public: candid.Group.is_public,
-            joined: candid.Group.joined,
-            minVisibleEventIndex: candid.Group.min_visible_event_index,
-            minVisibleMessageIndex: candid.Group.min_visible_message_index,
-            latestEventIndex: candid.Group.latest_event_index,
-            lastUpdated: candid.Group.last_updated,
-            blobReference: optional(candid.Group.avatar_id, (blobId) => ({
-                blobId,
-                canisterId: candid.Group.chat_id.toString(),
-            })),
-            notificationsMuted: candid.Group.notifications_muted,
-            participantCount: candid.Group.participant_count,
-            myRole: participantRole(candid.Group.role),
-            mentions: candid.Group.mentions.map(mention),
-        };
+        return groupChatSummary(candid.Group);
     }
     if ("Direct" in candid) {
-        return {
-            kind: "direct_chat",
-            chatId: candid.Direct.them.toString(),
-            latestMessage: {
-                index: candid.Direct.latest_message.index,
-                timestamp: candid.Direct.latest_message.timestamp,
-                event: message(candid.Direct.latest_message.event),
-            },
-            them: candid.Direct.them.toString(),
-            latestEventIndex: candid.Direct.latest_event_index,
-            readByMe: apiMessageIndexRanges(candid.Direct.read_by_me),
-            readByThem: apiMessageIndexRanges(candid.Direct.read_by_them),
-            dateCreated: candid.Direct.date_created,
-            notificationsMuted: candid.Direct.notifications_muted,
-        };
+        return directChatSummary(candid.Direct);
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummary type received", candid);
+}
+
+function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
+    return {
+        kind: "group_chat",
+        chatId: candid.chat_id.toString(),
+        latestMessage: optional(candid.latest_message, (ev) => {
+            return {
+                index: ev.index,
+                timestamp: ev.timestamp,
+                event: message(ev.event),
+            };
+        }),
+        readByMe: apiMessageIndexRanges(candid.read_by_me),
+        name: candid.name,
+        description: candid.description,
+        public: candid.is_public,
+        joined: candid.joined,
+        minVisibleEventIndex: candid.min_visible_event_index,
+        minVisibleMessageIndex: candid.min_visible_message_index,
+        latestEventIndex: candid.latest_event_index,
+        lastUpdated: candid.last_updated,
+        blobReference: optional(candid.avatar_id, (blobId) => ({
+            blobId,
+            canisterId: candid.chat_id.toString(),
+        })),
+        notificationsMuted: candid.notifications_muted,
+        participantCount: candid.participant_count,
+        myRole: participantRole(candid.role),
+        mentions: candid.mentions.map(mention),
+    };
+}
+
+function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
+    return {
+        kind: "direct_chat",
+        chatId: candid.them.toString(),
+        latestMessage: {
+            index: candid.latest_message.index,
+            timestamp: candid.latest_message.timestamp,
+            event: message(candid.latest_message.event),
+        },
+        them: candid.them.toString(),
+        latestEventIndex: candid.latest_event_index,
+        readByMe: apiMessageIndexRanges(candid.read_by_me),
+        readByThem: apiMessageIndexRanges(candid.read_by_them),
+        dateCreated: candid.date_created,
+        notificationsMuted: candid.notifications_muted,
+    };
 }

@@ -637,7 +637,11 @@ export class HomeController {
         return this.api
             .joinGroup(group.chatId)
             .then((resp) => {
-                if (resp === "success" || resp === "already_in_group") {
+                if (resp.kind === "group_chat") {
+                    this.addOrReplaceChat(resp);
+                    this.selectChat(group.chatId);
+                    return true;
+                } else if (resp.kind === "already_in_group") {
                     this.addOrReplaceChat({
                         ...group,
                         myRole: "participant" as ParticipantRole,
@@ -645,7 +649,7 @@ export class HomeController {
                     this.selectChat(group.chatId);
                     return true;
                 } else {
-                    if (resp === "blocked") {
+                    if (resp.kind === "blocked") {
                         toastStore.showFailureToast("youreBlocked");
                     } else {
                         toastStore.showFailureToast("joinGroupFailed");
