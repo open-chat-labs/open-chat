@@ -54,7 +54,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     });
 
     // If notifications are disabled or an OC browser window already has the focus then don't show a notification
-    if (await getSoftDisabled() || await isClientFocused()) {
+    if ((await getSoftDisabled()) || (await isClientFocused())) {
         return;
     }
     await showNotification(notification);
@@ -103,7 +103,10 @@ async function showNotification(notification: Notification): Promise<void> {
         icon = content.image ?? icon;
         path = notification.sender;
     } else if (notification.kind === "group_notification") {
-        const content = extractMessageContent(notification.message.event.content, notification.mentioned);
+        const content = extractMessageContent(
+            notification.message.event.content,
+            notification.mentioned
+        );
         title += notification.groupName;
         body = `${notification.senderName}: ${content.text}`;
         icon = content.image ?? icon;
@@ -132,7 +135,10 @@ type ContentExtract = {
     image?: string;
 };
 
-function extractMessageContent(content: MessageContent, mentioned: Array<User> = []): ContentExtract {
+function extractMessageContent(
+    content: MessageContent,
+    mentioned: Array<User> = []
+): ContentExtract {
     let result: ContentExtract;
 
     if (content.kind === "text_content") {
@@ -140,41 +146,41 @@ function extractMessageContent(content: MessageContent, mentioned: Array<User> =
             text: content.text,
         };
     } else if (content.kind === "image_content") {
-        result =  {
+        result = {
             text: content.caption ?? extractMediaType(content.mimeType),
             image: content.thumbnailData,
         };
     } else if (content.kind === "video_content") {
-        result =  {
+        result = {
             text: content.caption ?? extractMediaType(content.mimeType),
             image: content.thumbnailData,
         };
     } else if (content.kind === "audio_content") {
-        result =  {
+        result = {
             text: content.caption ?? extractMediaType(content.mimeType),
         };
     } else if (content.kind === "file_content") {
-        result =  {
+        result = {
             text: content.caption ?? content.mimeType,
             image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==",
         };
     } else if (content.kind === "crypto_content") {
-        result =  {
+        result = {
             text: "TODO - crypto content",
         };
     } else if (content.kind === "deleted_content") {
-        result =  {
+        result = {
             text: "TODO - deleted content",
         };
     } else if (content.kind === "placeholder_content") {
-        result =  {
+        result = {
             text: "TODO - placeholder content",
         };
     } else {
         throw new UnsupportedValueError(
             "Unexpected message content type received with notification",
             content
-        );    
+        );
     }
 
     if (mentioned.length > 0) {

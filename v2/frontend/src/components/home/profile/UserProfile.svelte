@@ -31,7 +31,7 @@
     const dispatch = createEventDispatcher();
     const MIN_USERNAME_LENGTH = 3;
     const MAX_USERNAME_LENGTH = 25;
-    const MAX_BIO_LENGTH = 5000;
+    const MAX_BIO_LENGTH = 2000;
 
     export let user: PartialUserSummary;
     export let api: ServiceContainer;
@@ -244,8 +244,6 @@
                     on:change={toggleNotifications}
                     label={$notificationStatus === "hard-denied"
                         ? $_("notificationsDisabled")
-                        : $notificationStatus === "granted"
-                        ? $_("disableNotificationsMenu")
                         : $_("enableNotificationsMenu")}
                     checked={$notificationStatus === "granted"} />
             {/if}

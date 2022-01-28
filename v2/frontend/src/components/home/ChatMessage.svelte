@@ -53,6 +53,7 @@
     export let focused: boolean;
     export let admin: boolean;
     export let preview: boolean;
+    export let isPublic: boolean;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
@@ -309,7 +310,7 @@
                                             slot="icon" />
                                         <div slot="text">{$_("replyPrivately")}</div>
                                     </MenuItem>
-                                    {#if admin}
+                                    {#if admin && isPublic}
                                         <MenuItem on:click={blockUser}>
                                             <Cancel
                                                 size={$iconSize}

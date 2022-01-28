@@ -71,7 +71,11 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
     }
 }
 
-export async function trySubscribe(api: ServiceContainer, userId: string, onNotification: (notification: Notification) => void): Promise<boolean> {
+export async function trySubscribe(
+    api: ServiceContainer,
+    userId: string,
+    onNotification: (notification: Notification) => void
+): Promise<boolean> {
     // Register a service worker if it hasn't already been done
     const registration = await registerServiceWorker();
     if (registration == null) {

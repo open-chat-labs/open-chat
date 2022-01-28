@@ -236,6 +236,8 @@
     "errorSendingMessage": "An unexpected error occurred sending your message",
     "errorEditingMessage": "An unexpected error occurred editing your message",
     "aboutOpenChat": "About OpenChat",
+    "faq": "FAQ",
+    "roadmap": "Roadmap",
     "here": "here",
     "chatSummary": {
         "unread": "{count} unread message(s)",
