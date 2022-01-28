@@ -29,7 +29,7 @@
     const dispatch = createEventDispatcher();
     const MIN_USERNAME_LENGTH = 3;
     const MAX_USERNAME_LENGTH = 25;
-    const MAX_BIO_LENGTH = 5000;
+    const MAX_BIO_LENGTH = 2000;
 
     export let user: PartialUserSummary;
     export let api: ServiceContainer;

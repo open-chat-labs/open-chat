@@ -22,12 +22,19 @@
 <style type="text/scss">
     .menu-item {
         display: flex;
-        padding: $sp3;
         cursor: pointer;
         border-bottom: 1px solid var(--menu-bd);
         color: var(--menu-txt);
         align-items: center;
-        @include font(book, normal, fs-90);
+        font-size: 15px;
+        line-height: 145%;
+        padding: 10px;
+
+        @include size-below(xs) {
+            font-size: 14px;
+            line-height: 140%;
+            padding: 9px;
+        }
 
         &:last-child {
             border-bottom: none;
@@ -39,6 +46,7 @@
         }
 
         .icon {
+            display: flex;
             flex: 0 0 34px;
         }
 

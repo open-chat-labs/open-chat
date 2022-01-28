@@ -32,15 +32,23 @@ function convertAndSubscribe(
     return notifPerm;
 }
 
-export async function initNotificationStores(api: ServiceContainer, userId: string, onNotification: (notification: Notification) => void): Promise<void> {
+export async function initNotificationStores(
+    api: ServiceContainer,
+    userId: string,
+    onNotification: (notification: Notification) => void
+): Promise<void> {
     if (!isSupported) return;
     const softDisabled = await getSoftDisabled();
     notificationsSoftDisabled.set(softDisabled);
     if (navigator.permissions) {
         navigator.permissions.query({ name: "notifications" }).then((perm) => {
-            notificationPermission.set(convertAndSubscribe(api, userId, perm.state, onNotification));
+            notificationPermission.set(
+                convertAndSubscribe(api, userId, perm.state, onNotification)
+            );
             perm.onchange = () => {
-                notificationPermission.set(convertAndSubscribe(api, userId, perm.state, onNotification));
+                notificationPermission.set(
+                    convertAndSubscribe(api, userId, perm.state, onNotification)
+                );
             };
         });
     } else {
