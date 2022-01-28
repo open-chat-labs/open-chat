@@ -15,7 +15,7 @@
                 "@dfinity/identity": "^0.10.1",
                 "@dfinity/principal": "^0.10.1",
                 "@fortawesome/free-solid-svg-icons": "^5.15.3",
-                "@open-ic/open-storage-agent": "file:src/openStorage",
+                "@open-ic/open-storage-agent": "^0.1.0",
                 "@sveltejs/svelte-virtual-list": "^3.0.1",
                 "@types/dompurify": "^2.3.3",
                 "@types/marked": "^4.0.1",
@@ -2596,8 +2596,19 @@
             }
         },
         "node_modules/@open-ic/open-storage-agent": {
-            "resolved": "src/openStorage",
-            "link": true
+            "version": "0.1.0",
+            "resolved": "https://registry.npmjs.org/@open-ic/open-storage-agent/-/open-storage-agent-0.1.0.tgz",
+            "integrity": "sha512-UcNcOQ90tRojyBXHwcgMgvDYqwROLUwnJrRiS4gpHAhUrXSWEi9E0Yg+sYcuz+/F+q8akicfCAR3Vobu2wTj/g==",
+            "dependencies": {
+                "@dfinity/agent": "^0.10.1",
+                "@dfinity/auth-client": "^0.10.1",
+                "@dfinity/authentication": "^0.10.1",
+                "@dfinity/candid": "^0.10.1",
+                "@dfinity/identity": "^0.10.1",
+                "@dfinity/principal": "^0.10.1",
+                "js-sha3": "^0.8.0",
+                "uuid": "^3.4.0"
+            }
         },
         "node_modules/@polka/url": {
             "version": "1.0.0-next.15",
@@ -2979,12 +2990,6 @@
             "version": "4.2.1",
             "resolved": "https://registry.npmjs.org/@types/aria-query/-/aria-query-4.2.1.tgz",
             "integrity": "sha512-S6oPal772qJZHoRZLFc/XoZW2gFvwXusYUmXPXkgxJLuEk2vOt7jc4Yo6z/vtI0EBkbPBVrJJ0B+prLIKiWqHg==",
-            "dev": true
-        },
-        "node_modules/@types/async": {
-            "version": "3.2.10",
-            "resolved": "https://registry.npmjs.org/@types/async/-/async-3.2.10.tgz",
-            "integrity": "sha512-/bPr8eB1/00J14EGHrZiGqCal/zA0nE/8W1YCM3lGnUcfiWPW6liQwThgGzjt/3uIrYbLtLCPg3ZmpUe6YmFRw==",
             "dev": true
         },
         "node_modules/@types/babel__core": {
@@ -13790,85 +13795,6 @@
             "funding": {
                 "url": "https://github.com/sponsors/sindresorhus"
             }
-        },
-        "src/openStorage": {
-            "name": "@open-ic/open-storage-agent",
-            "version": "1.0.0",
-            "dependencies": {
-                "@dfinity/agent": "^0.10.1",
-                "@dfinity/auth-client": "^0.10.1",
-                "@dfinity/authentication": "^0.10.1",
-                "@dfinity/candid": "^0.10.1",
-                "@dfinity/identity": "^0.10.1",
-                "@dfinity/principal": "^0.10.1",
-                "js-sha3": "^0.8.0",
-                "uuid": "^3.4.0"
-            },
-            "devDependencies": {
-                "@types/async": "^3.2.10"
-            }
-        },
-        "src/openStorage/node_modules/@dfinity/agent": {
-            "version": "0.10.1",
-            "resolved": "https://registry.npmjs.org/@dfinity/agent/-/agent-0.10.1.tgz",
-            "integrity": "sha512-VUHO5mveK0XX8b9xbfg5SThEGLhMAwkfejuwS5fzF9gqQVWqnIx5ISrbre8UvNNyuzM5v4/vZI+kpE2zL54rwg==",
-            "dependencies": {
-                "base64-arraybuffer": "^0.2.0",
-                "bignumber.js": "^9.0.0",
-                "borc": "^2.1.1",
-                "js-sha256": "0.9.0",
-                "simple-cbor": "^0.4.1"
-            },
-            "peerDependencies": {
-                "@dfinity/candid": "^0.10.1",
-                "@dfinity/principal": "^0.10.1"
-            }
-        },
-        "src/openStorage/node_modules/@dfinity/auth-client": {
-            "version": "0.10.1",
-            "resolved": "https://registry.npmjs.org/@dfinity/auth-client/-/auth-client-0.10.1.tgz",
-            "integrity": "sha512-nKEUOyislqX4IklLh1kPGZyh5NHKusJCA6W+ySgh5VmGvE1qXHajRof0SY6z/i/lncjg7vi4fxtod/4knWtp/A==",
-            "peerDependencies": {
-                "@dfinity/agent": "^0.10.1",
-                "@dfinity/authentication": "^0.10.1",
-                "@dfinity/identity": "^0.10.1",
-                "@dfinity/principal": "^0.10.1"
-            }
-        },
-        "src/openStorage/node_modules/@dfinity/authentication": {
-            "version": "0.10.1",
-            "resolved": "https://registry.npmjs.org/@dfinity/authentication/-/authentication-0.10.1.tgz",
-            "integrity": "sha512-k8D80Ba27Kw3sgVtnz9j3jZ/7rpg5r8n1/NWdmy8aHMJnVhTXghIskptM0YRpA7bS9cJW5tSFLnvalKNGWcnuA==",
-            "peerDependencies": {
-                "@dfinity/agent": "^0.10.1",
-                "@dfinity/identity": "^0.10.1",
-                "@dfinity/principal": "^0.10.1"
-            }
-        },
-        "src/openStorage/node_modules/@dfinity/candid": {
-            "version": "0.10.1",
-            "resolved": "https://registry.npmjs.org/@dfinity/candid/-/candid-0.10.1.tgz",
-            "integrity": "sha512-Z7C125quoAYafj+yK20KQKI/MkXgB9tgPkvtIk1Ec8eGXIU7OXOHSIknvJR6zXdE9eUc/veiD4+VDWK7I82sDw=="
-        },
-        "src/openStorage/node_modules/@dfinity/identity": {
-            "version": "0.10.1",
-            "resolved": "https://registry.npmjs.org/@dfinity/identity/-/identity-0.10.1.tgz",
-            "integrity": "sha512-d5rkr5Sg1Eiwnmd2mkz1xvrzAdITbMBcIaU0LlKCG+eKMxcgDLm4eB8FBvS5Pqr0S5sHb/YXpLZrhpL5xC38bg==",
-            "dependencies": {
-                "borc": "^2.1.1",
-                "js-sha256": "^0.9.0",
-                "secp256k1": "^4.0.2",
-                "tweetnacl": "^1.0.1"
-            },
-            "peerDependencies": {
-                "@dfinity/agent": "^0.10.1",
-                "@dfinity/principal": "^0.10.1"
-            }
-        },
-        "src/openStorage/node_modules/@dfinity/principal": {
-            "version": "0.10.1",
-            "resolved": "https://registry.npmjs.org/@dfinity/principal/-/principal-0.10.1.tgz",
-            "integrity": "sha512-1/r726xwVlSsCc+Fl2szM+P9xNfsu5TItC56n/KRuhGEE9sN8NLnorxcNvpzoII0f99XBNCNMRJPUkWSZPLpbw=="
         }
     },
     "dependencies": {
@@ -15663,7 +15589,9 @@
             }
         },
         "@open-ic/open-storage-agent": {
-            "version": "file:src/openStorage",
+            "version": "0.1.0",
+            "resolved": "https://registry.npmjs.org/@open-ic/open-storage-agent/-/open-storage-agent-0.1.0.tgz",
+            "integrity": "sha512-UcNcOQ90tRojyBXHwcgMgvDYqwROLUwnJrRiS4gpHAhUrXSWEi9E0Yg+sYcuz+/F+q8akicfCAR3Vobu2wTj/g==",
             "requires": {
                 "@dfinity/agent": "^0.10.1",
                 "@dfinity/auth-client": "^0.10.1",
@@ -15671,56 +15599,8 @@
                 "@dfinity/candid": "^0.10.1",
                 "@dfinity/identity": "^0.10.1",
                 "@dfinity/principal": "^0.10.1",
-                "@types/async": "^3.2.10",
                 "js-sha3": "^0.8.0",
                 "uuid": "^3.4.0"
-            },
-            "dependencies": {
-                "@dfinity/agent": {
-                    "version": "0.10.1",
-                    "resolved": "https://registry.npmjs.org/@dfinity/agent/-/agent-0.10.1.tgz",
-                    "integrity": "sha512-VUHO5mveK0XX8b9xbfg5SThEGLhMAwkfejuwS5fzF9gqQVWqnIx5ISrbre8UvNNyuzM5v4/vZI+kpE2zL54rwg==",
-                    "requires": {
-                        "base64-arraybuffer": "^0.2.0",
-                        "bignumber.js": "^9.0.0",
-                        "borc": "^2.1.1",
-                        "js-sha256": "0.9.0",
-                        "simple-cbor": "^0.4.1"
-                    }
-                },
-                "@dfinity/auth-client": {
-                    "version": "0.10.1",
-                    "resolved": "https://registry.npmjs.org/@dfinity/auth-client/-/auth-client-0.10.1.tgz",
-                    "integrity": "sha512-nKEUOyislqX4IklLh1kPGZyh5NHKusJCA6W+ySgh5VmGvE1qXHajRof0SY6z/i/lncjg7vi4fxtod/4knWtp/A==",
-                    "requires": {}
-                },
-                "@dfinity/authentication": {
-                    "version": "0.10.1",
-                    "resolved": "https://registry.npmjs.org/@dfinity/authentication/-/authentication-0.10.1.tgz",
-                    "integrity": "sha512-k8D80Ba27Kw3sgVtnz9j3jZ/7rpg5r8n1/NWdmy8aHMJnVhTXghIskptM0YRpA7bS9cJW5tSFLnvalKNGWcnuA==",
-                    "requires": {}
-                },
-                "@dfinity/candid": {
-                    "version": "0.10.1",
-                    "resolved": "https://registry.npmjs.org/@dfinity/candid/-/candid-0.10.1.tgz",
-                    "integrity": "sha512-Z7C125quoAYafj+yK20KQKI/MkXgB9tgPkvtIk1Ec8eGXIU7OXOHSIknvJR6zXdE9eUc/veiD4+VDWK7I82sDw=="
-                },
-                "@dfinity/identity": {
-                    "version": "0.10.1",
-                    "resolved": "https://registry.npmjs.org/@dfinity/identity/-/identity-0.10.1.tgz",
-                    "integrity": "sha512-d5rkr5Sg1Eiwnmd2mkz1xvrzAdITbMBcIaU0LlKCG+eKMxcgDLm4eB8FBvS5Pqr0S5sHb/YXpLZrhpL5xC38bg==",
-                    "requires": {
-                        "borc": "^2.1.1",
-                        "js-sha256": "^0.9.0",
-                        "secp256k1": "^4.0.2",
-                        "tweetnacl": "^1.0.1"
-                    }
-                },
-                "@dfinity/principal": {
-                    "version": "0.10.1",
-                    "resolved": "https://registry.npmjs.org/@dfinity/principal/-/principal-0.10.1.tgz",
-                    "integrity": "sha512-1/r726xwVlSsCc+Fl2szM+P9xNfsu5TItC56n/KRuhGEE9sN8NLnorxcNvpzoII0f99XBNCNMRJPUkWSZPLpbw=="
-                }
             }
         },
         "@polka/url": {
@@ -16015,12 +15895,6 @@
             "version": "4.2.1",
             "resolved": "https://registry.npmjs.org/@types/aria-query/-/aria-query-4.2.1.tgz",
             "integrity": "sha512-S6oPal772qJZHoRZLFc/XoZW2gFvwXusYUmXPXkgxJLuEk2vOt7jc4Yo6z/vtI0EBkbPBVrJJ0B+prLIKiWqHg==",
-            "dev": true
-        },
-        "@types/async": {
-            "version": "3.2.10",
-            "resolved": "https://registry.npmjs.org/@types/async/-/async-3.2.10.tgz",
-            "integrity": "sha512-/bPr8eB1/00J14EGHrZiGqCal/zA0nE/8W1YCM3lGnUcfiWPW6liQwThgGzjt/3uIrYbLtLCPg3ZmpUe6YmFRw==",
             "dev": true
         },
         "@types/babel__core": {
