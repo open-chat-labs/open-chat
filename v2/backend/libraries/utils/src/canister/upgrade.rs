@@ -4,7 +4,7 @@ use candid::{CandidType, Principal};
 use ic_cdk::api;
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use serde::Deserialize;
-use tracing::error;
+use tracing::{error, trace};
 use types::{CanisterId, CanisterWasm, Cycles, Version};
 
 pub struct CanisterToUpgrade<A: CandidType> {
@@ -42,13 +42,17 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
     }
 
     let canister_id = canister_to_upgrade.canister_id;
+    let canister_id_string = canister_id.to_string();
+
+    trace!(canister_id = canister_id_string.as_str(), "Canister upgrade starting");
+
     let stop_canister_args = StartOrStopCanisterArgs { canister_id };
     let stop_canister_response: CallResult<()> =
         api::call::call(Principal::management_canister(), "stop_canister", (stop_canister_args,)).await;
 
     if let Err((code, msg)) = stop_canister_response {
         error!(
-            canister_id = canister_id.to_string().as_str(),
+            canister_id = canister_id_string.as_str(),
             error_code = code as u8,
             error_message = msg.as_str(),
             "Error calling 'stop_canister'"
@@ -79,7 +83,7 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
 
     if let Err((code, msg)) = install_code_response {
         error!(
-            canister_id = canister_id.to_string().as_str(),
+            canister_id = canister_id_string.as_str(),
             from_wasm_version = %canister_to_upgrade.current_wasm_version,
             to_wasm_version = %canister_to_upgrade.new_wasm.version,
             error_code = code as u8,
@@ -96,17 +100,15 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
 
     if let Err((code, msg)) = start_canister_response {
         error!(
-            canister_id = canister_id.to_string().as_str(),
+            canister_id = canister_id_string.as_str(),
             error_code = code as u8,
             error_message = msg.as_str(),
             "Error calling 'start_canister'"
         );
-        error = error.or(Some(canister::Error { code, msg }));
-    }
-
-    match error {
-        None => Ok(cycles_used),
-        Some(e) => Err(e),
+        Err(error.unwrap_or(canister::Error { code, msg }))
+    } else {
+        trace!(canister_id = canister_id_string.as_str(), "Canister upgrade completed");
+        Ok(cycles_used)
     }
 }
 
