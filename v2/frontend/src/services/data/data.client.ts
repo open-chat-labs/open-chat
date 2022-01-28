@@ -6,7 +6,7 @@ import type { IDataClient } from "./data.client.interface";
 import { DataClientMock } from "./data.client.mock";
 import type { MessageContent } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
-import type { BlobReference } from "../../domain/data/data";
+import type { BlobReference, StorageStatus } from "../../domain/data/data";
 
 export class DataClient implements IDataClient {
     private openStorageAgent: OpenStorageAgent;
@@ -35,7 +35,26 @@ export class DataClient implements IDataClient {
         return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
     }
 
-    async uploadData(content: MessageContent, accessorCanisterIds: string[]): Promise<boolean> {
+    async storageStatus(): Promise<StorageStatus> {
+        const response = await this.openStorageAgent.user();
+
+        if (response.kind === "user") {
+            return {
+                byteLimit: response.byteLimit,
+                bytesUsed: response.bytesUsed,
+            };
+        } else {
+            return {
+                byteLimit: BigInt(0),
+                bytesUsed: BigInt(0),
+            };
+        }
+    }
+
+    async uploadData(
+        content: MessageContent,
+        accessorCanisterIds: string[]
+    ): Promise<UploadDataResponse> {
         if (
             content.kind === "file_content" ||
             content.kind === "image_content" ||

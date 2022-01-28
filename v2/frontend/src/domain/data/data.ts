@@ -8,3 +8,8 @@ export interface DataContent {
     blobData?: Uint8Array;
     blobUrl?: string;
 }
+
+export type StorageStatus = {
+    byteLimit: bigint;
+    bytesUsed: bigint;
+};
