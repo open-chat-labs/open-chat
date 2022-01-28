@@ -22,13 +22,19 @@
 <style type="text/scss">
     .menu-item {
         display: flex;
-        padding: 10px;
         cursor: pointer;
         border-bottom: 1px solid var(--menu-bd);
         color: var(--menu-txt);
         align-items: center;
         font-size: 15px;
-        line-height: 145%; //@include font(book, normal, fs-90);;
+        line-height: 145%;
+        padding: 10px;
+
+        @include size-below(xs) {
+            font-size: 14px;
+            line-height: 140%;
+            padding: 9px;
+        }
 
         &:last-child {
             border-bottom: none;
