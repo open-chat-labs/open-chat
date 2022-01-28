@@ -34,17 +34,11 @@
 </script>
 
 <div class="body">
-    <p>{min}</p>
-    <p>{newLimit}</p>
-
     {#if $storageStore.byteLimit > 0}
         <p>{$_("currentLimit", { values: { limit: $storageInMb.mbLimit.toString() } })}</p>
     {/if}
 
-    <div class="summary">
-        <span>Your current storage limit is 100MB</span>
-        <span>1GB</span>
-    </div>
+    <p>{$_("chooseAStorageLevel", { values: { limit: $storageInMb.mbLimit.toString() } })}</p>
 
     <div class="slider">
         <div class="range">
@@ -57,6 +51,10 @@
                 value={newLimit}
                 on:input={changeLimit} />
         </div>
+    </div>
+
+    <div class="new-limit">
+        {$_("newLimit", { values: { limit: (newLimit * 100).toString() } })}
     </div>
 </div>
 <Footer>
@@ -79,5 +77,9 @@
         .range-input {
             width: 100%;
         }
+    }
+
+    .new-limit {
+        @include font(light, normal, fs-70);
     }
 </style>

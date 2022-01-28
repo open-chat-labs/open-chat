@@ -14,6 +14,8 @@
     "bio": "User bio",
     "storage": "Storage",
     "currentLimit": "Your current storage limit is {limit}MB",
+    "newLimit": "{limit}MB / 1GB",
+    "chooseAStorageLevel": "Choose a storage level up to a maximum of 1GB",
     "currentUsage": "Current Usage",
     "percLeft": "{perc}% left",
     "mbUsed": "{used}MB used of {limit}MB",
