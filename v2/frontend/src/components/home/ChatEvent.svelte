@@ -28,6 +28,7 @@
     export let focused: boolean;
     export let admin: boolean;
     export let preview: boolean;
+    export let isPublic: boolean;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -54,6 +55,7 @@
         {last}
         {admin}
         {preview}
+        {isPublic}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo

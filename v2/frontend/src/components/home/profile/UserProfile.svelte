@@ -242,8 +242,6 @@
                     on:change={toggleNotifications}
                     label={$notificationStatus === "hard-denied"
                         ? $_("notificationsDisabled")
-                        : $notificationStatus === "granted"
-                        ? $_("disableNotificationsMenu")
                         : $_("enableNotificationsMenu")}
                     checked={$notificationStatus === "granted"} />
             {/if}
