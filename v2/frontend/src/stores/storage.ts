@@ -30,3 +30,10 @@ export const remainingStorage = derived(
     [storageStore],
     ([$storageStore]) => $storageStore.byteLimit - $storageStore.bytesUsed
 );
+
+export const storageInMb = derived([storageStore], ([$storageStore]) => {
+    return {
+        mbLimit: Math.ceil($storageStore.bytesUsed / 1_000_000),
+        mbUsed: Math.ceil($storageStore.byteLimit / 1_000_000),
+    };
+});

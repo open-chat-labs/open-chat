@@ -5,10 +5,8 @@
         percentageStorageRemaining,
         percentageStorageUsed,
         storageStore,
+        storageInMb,
     } from "../stores/storage";
-
-    $: mbUsed = Math.ceil($storageStore.bytesUsed / 1_000_000);
-    $: mbLimit = Math.ceil($storageStore.byteLimit / 1_000_000);
 </script>
 
 <!-- don't display anything if the user hasn't got any storage -->
@@ -26,7 +24,12 @@
     </div>
     <div class="row">
         <span class="usage">
-            {$_("mbUsed", { values: { used: mbUsed.toString(), limit: mbLimit.toString() } })}
+            {$_("mbUsed", {
+                values: {
+                    used: $storageInMb.mbUsed.toString(),
+                    limit: $storageInMb.mbLimit.toString(),
+                },
+            })}
         </span>
     </div>
 {/if}

@@ -13,6 +13,7 @@
     "username": "Username",
     "bio": "User bio",
     "storage": "Storage",
+    "currentLimit": "Your current storage limit is {limit}MB",
     "currentUsage": "Current Usage",
     "percLeft": "{perc}% left",
     "mbUsed": "{used}MB used of {limit}MB",
