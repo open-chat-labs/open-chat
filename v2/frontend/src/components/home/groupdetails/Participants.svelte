@@ -12,12 +12,14 @@
     import { userStore } from "../../../stores/user";
     import { createEventDispatcher } from "svelte";
     import type { Readable, Writable } from "svelte/store";
+    import type { ServiceContainer } from "../../../services/serviceContainer";
 
     export let chat: Readable<GroupChatSummary>;
     export let participants: Writable<ParticipantType[]>;
     export let blockedUsers: Writable<Set<string>>;
     export let userId: string;
     export let closeIcon: "close" | "back";
+    export let api: ServiceContainer;
 
     let searchTerm = "";
 
@@ -95,6 +97,7 @@
 {#if me !== undefined && me.kind === "full_participant"}
     <Participant
         {publicGroup}
+        {api}
         me={true}
         participant={me}
         myRole={$chat.myRole}
@@ -104,6 +107,7 @@
 
 <VirtualList keyFn={(user) => user.userId} items={others} let:item>
     <Participant
+        {api}
         me={false}
         participant={item}
         myRole={$chat.myRole}

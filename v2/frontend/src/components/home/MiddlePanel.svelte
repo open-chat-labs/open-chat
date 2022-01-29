@@ -8,12 +8,14 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import type { RemoteData } from "../../utils/remoteData";
     import type { GroupChatSummary } from "../../domain/chat/chat";
+    import type { ServiceContainer } from "../../services/serviceContainer";
 
     export let controller: ChatController | undefined;
     export let loadingChats: boolean = false;
     export let blocked: boolean;
     export let recommendedGroups: RemoteData<GroupChatSummary[], string>;
     export let joining: GroupChatSummary | undefined;
+    export let api: ServiceContainer;
 </script>
 
 <Panel middle>
@@ -38,6 +40,7 @@
             {joining}
             {blocked}
             {controller}
+            {api}
             on:unblockUser
             on:clearSelection
             on:blockUser

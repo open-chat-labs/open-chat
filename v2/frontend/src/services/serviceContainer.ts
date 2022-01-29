@@ -16,6 +16,7 @@ import type {
     NotificationFeePaidResponse,
     User,
     SetBioResponse,
+    PartialUserSummary,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -441,6 +442,23 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.userClient.searchAllMessages(searchTerm, maxResults);
     }
 
+    async getUser(userId: string): Promise<PartialUserSummary | undefined> {
+        const response = await this.getUsers({
+            userGroups: [
+                {
+                    users: [userId],
+                    updatedSince: BigInt(0),
+                },
+            ],
+        });
+
+        if (response.users.length == 0) {
+            return undefined;
+        }
+
+        return response.users[0];
+    }
+
     getUsers(users: UsersArgs): Promise<UsersResponse> {
         return this._userIndexClient.getUsers(users).then((resp) => ({
             timestamp: resp.timestamp,
@@ -643,8 +661,9 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.userClient.dismissRecommendation(chatId);
     }
 
-    getBio(): Promise<string> {
-        return this.userClient.getBio();
+    getBio(userId?: string): Promise<string> {
+        const userClient = userId ? UserClient.create(userId, this.identity) : this.userClient;
+        return userClient.getBio();
     }
 
     setBio(bio: string): Promise<SetBioResponse> {

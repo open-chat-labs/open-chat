@@ -11,11 +11,15 @@
     export let hideHeader: boolean = false;
     export let hideFooter: boolean = false;
     export let compactFooter: boolean = false;
+    export let fixedWidth: boolean = true;
+    export let style = "";
 </script>
 
 <div
+    {style}
     class="modal-content"
     class:large
+    class:fixed-width={fixedWidth}
     in:fade={{ duration: 100, delay: 200 }}
     out:fade={{ duration: 100 }}
     on:click|stopPropagation>
@@ -53,10 +57,14 @@
             border-radius: $sp4 $sp4 0 0;
         }
         @include size-above(xs) {
-            width: 60%;
+            &.fixed-width {
+                width: 60%;
+            }
             max-width: 576px;
             &.large {
-                width: 90%;
+                &.fixed-width {
+                    width: 90%;
+                }
                 max-height: 90%;
                 max-width: 850px;
             }

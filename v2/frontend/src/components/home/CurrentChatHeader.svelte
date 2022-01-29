@@ -34,6 +34,9 @@
     import { supported as notificationsSupported } from "../../utils/notifications";
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
+    import ViewUserProfile from "./profile/ViewUserProfile.svelte";
+    import type { ServiceContainer } from "../../services/serviceContainer";
+    import { formatLastOnlineDate } from "../../domain/user/user.utils";
 
     const dispatch = createEventDispatcher();
 
@@ -41,9 +44,12 @@
     export let blocked: boolean;
     export let preview: boolean;
     export let unreadMessages: number;
+    export let api: ServiceContainer;
 
     let supportsNotifications = notificationsSupported();
+    let viewProfile = false;
 
+    $: userId = $selectedChatSummary.kind === "direct_chat" ? $selectedChatSummary.them : "";
     $: isGroup = $selectedChatSummary.kind === "group_chat";
 
     function clearSelection() {
@@ -117,40 +123,6 @@
         }
     }
 
-    function formatLastOnlineDate(now: number, user: PartialUserSummary | undefined): string {
-        const TWO_MINUTES_MS = 120 * 1000;
-        if (user === undefined || now - Number(user.updated) > TWO_MINUTES_MS) {
-            return "";
-        }
-
-        const secondsSinceLastOnline = (now - user.lastOnline) / 1000;
-
-        const minutesSinceLastOnline = Math.floor(secondsSinceLastOnline / 60);
-
-        if (minutesSinceLastOnline < 2) {
-            return $_("onlineNow");
-        }
-
-        let durationText: string;
-        if (minutesSinceLastOnline < 60) {
-            durationText = $_("durationMins", { values: { duration: minutesSinceLastOnline } });
-        } else {
-            const hoursSinceLastOnline = Math.floor(minutesSinceLastOnline / 60);
-            if (hoursSinceLastOnline === 1) {
-                durationText = $_("oneHour");
-            } else if (hoursSinceLastOnline < 24) {
-                durationText = $_("durationHours", { values: { duration: hoursSinceLastOnline } });
-            } else {
-                const daysSinceLastOnline = Math.floor(hoursSinceLastOnline / 24);
-                durationText =
-                    daysSinceLastOnline === 1
-                        ? $_("oneDay")
-                        : $_("durationDays", { values: { duration: daysSinceLastOnline } });
-            }
-        }
-        return $_("lastOnline", { values: { duration: durationText } });
-    }
-
     function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
             return {
@@ -176,6 +148,14 @@
         return !chat.public && (chat.myRole === "admin" || chat.myRole === "owner");
     }
 
+    function openUserProfile() {
+        viewProfile = true;
+    }
+
+    function closeUserProfile() {
+        viewProfile = false;
+    }
+
     $: chat = normaliseChatSummary($now, $selectedChatSummary);
 </script>
 
@@ -191,6 +171,10 @@
             </HoverIcon>
         </div>
     {/if}
+    {#if viewProfile}
+        <ViewUserProfile {userId} {api} chatButton={false} on:close={closeUserProfile} />
+    {/if}
+
     <div class="avatar">
         <Avatar
             statusBorder={"var(--section-bg)"}
@@ -203,6 +187,10 @@
         <div class="chat-name" title={chat.name}>
             {#if isGroup && !preview}
                 <span on:click={showGroupDetails} class="group-details">
+                    {chat.name}
+                </span>
+            {:else if !isGroup}
+                <span on:click={openUserProfile} class="user-link">
                     {chat.name}
                 </span>
             {:else}
@@ -362,6 +350,13 @@
 
     .group-details {
         cursor: pointer;
+    }
+
+    .user-link {
+        cursor: pointer;
+        &:hover {
+            text-decoration: underline;
+        }
     }
 
     .chat-details {

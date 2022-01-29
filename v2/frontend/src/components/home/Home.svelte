@@ -355,6 +355,7 @@
             <MiddlePanel
                 {recommendedGroups}
                 {joining}
+                {api}
                 loadingChats={$chatsLoading}
                 blocked={!!blocked}
                 on:clearSelection={clearSelectedChat}
