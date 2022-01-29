@@ -30,8 +30,8 @@
             iOS OpenChat from scratch, then this will take significantly longer...
         </CollapsibleCard>
         <CollapsibleCard open={false} headerText={"When will there be an Android app?"}>
-            As for iOS (see above), the OpenChat web app<em>does</em> already work on Android and
-            you can be "Add to homescreen" from the browser menu. This gives you a standard icon to
+            As for iOS (see above), the OpenChat web app <em>does</em> already work on Android and
+            you can "Add to homescreen" from the browser menu. This gives you a standard icon to
             open the app which appears more like a native app without a url bar. However, unlike
             iOS, Progressive Web App (PWA) support is very good on Android. It
             <em>does</em> support web push notifications and it <em>does</em> support the reading of
@@ -105,15 +105,15 @@
             once
             <a
                 target="_blank"
-                href="https://developer.amd.com/sev/#:~:text=AMD%20Secure%20Encrypted%20Virtualization%2DEncrypted,to%20a%20CPU%20register%20state."
-                >SEV-ES</a>
-            is enabled on node machines, hopefully within a few months, users can be extremely confident
-            that, apart from the recipients of their messages, their data will not be accessible to anyone
-            but themselves. At a later date we will implement e2e encryption so that the data is actually
-            stored in encrypted form in canister memory and would therefore not be accessible by rogue
-            node operators regardless of SEV-ES being enabled. This will likely involve some limitations,
-            such as not being able to search your message history, so you could choose to opt-in to e2e
-            security for selected chats.
+                href="https://www.amd.com/system/files/TechDocs/SEV-SNP-strengthening-vm-isolation-with-integrity-protection-and-more.pdf"
+                >SEV-SNP</a>
+            is available on node machines, users can be extremely confident that, apart from the recipients
+            of their messages, their data will not be accessible to anyone but themselves. At a later
+            date we will implement e2e encryption so that the data is actually stored in encrypted form
+            in canister memory and would therefore not be accessible by rogue node operators regardless
+            of SEV-ES being enabled. This will likely involve some limitations, such as not being able
+            to search your message history, so you could choose to opt-in to e2e security for selected
+            chats.
         </CollapsibleCard>
         <CollapsibleCard open={false} headerText={"Do you have a roadmap?"}>
             Yes, we do now! Find it in the main menu next to this FAQ!
