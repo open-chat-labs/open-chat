@@ -49,7 +49,7 @@
         box-shadow: var(--modal-sh);
         @include size-below(xs) {
             width: 100%;
-            max-height: 100%;
+            max-height: calc(100% - 20px);
             border-radius: $sp4 $sp4 0 0;
         }
         @include size-above(xs) {

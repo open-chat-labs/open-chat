@@ -5,10 +5,11 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
 
     export let headerText: string;
-    export let open: boolean = true;
+    export let open = true;
+    export let bordered = false;
 </script>
 
-<div class="card">
+<div class="card" class:bordered>
     <div class="header" class:open on:click={() => (open = !open)}>
         <h4>{headerText}</h4>
         <div class="arrow" class:rtl={$rtlStore} class:open>
@@ -25,6 +26,10 @@
 <style type="text/scss">
     .card {
         background-color: var(--collapsible-bg);
+
+        &.bordered {
+            border: var(--collapsible-header-bd);
+        }
     }
 
     .header {

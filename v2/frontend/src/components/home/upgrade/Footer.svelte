@@ -12,4 +12,8 @@
         display: flex;
         justify-content: flex-end;
     }
+
+    .buttons {
+        display: flex;
+    }
 </style>

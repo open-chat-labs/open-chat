@@ -77,7 +77,7 @@
             const nextEventIndex = controller.getNextEventIndex();
             const storageRequired = getStorageRequiredForMessage(fileToAttach);
             if ($remainingStorage < storageRequired) {
-                dispatch("upgrade", "intercepting");
+                dispatch("upgrade", "explain");
                 draftMessages.delete($chat.chatId);
                 return;
             }

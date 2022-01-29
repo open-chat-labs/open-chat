@@ -268,9 +268,11 @@
                     {$_("noStorageAdvice")}
                 </p>
                 <p>{$_("chooseUpgrade")}</p>
-                <div class="full-width-btn">
-                    <Button on:click={() => dispatch("upgrade", "direct")} fill={true} small={true}
-                        >{$_("upgradeStorage")}</Button>
+                <div class="upgrade-buttons buttons">
+                    <Button on:click={() => dispatch("upgrade", "sms")} small={true}
+                        >{$_("upgradeBySMS")}</Button>
+                    <Button on:click={() => dispatch("upgrade", "icp")} small={true}
+                        >{$_("upgradeByTransfer")}</Button>
                 </div>
             {:else}
                 <StorageUsage />
@@ -387,5 +389,18 @@
         position: absolute;
         top: $sp3;
         right: $sp3;
+    }
+
+    .upgrade-buttons {
+        margin-top: $sp4;
+        display: flex;
+        justify-content: space-evenly;
+    }
+
+    :global(.upgrade-buttons button) {
+        flex: 1;
+        &:last-child {
+            margin: 0;
+        }
     }
 </style>

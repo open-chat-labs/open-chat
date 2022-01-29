@@ -53,7 +53,7 @@
     let removingChatId: string | undefined;
     let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
-    let upgradeStorage: "intercepting" | "direct" | undefined = undefined;
+    let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -291,7 +291,7 @@
             .catch((err) => (recommendedGroups = { kind: "error", error: err.toString() }));
     }
 
-    function upgrade(ev: CustomEvent<"intercepting" | "direct">) {
+    function upgrade(ev: CustomEvent<"explain" | "icp" | "sms">) {
         upgradeStorage = ev.detail;
     }
 
@@ -417,7 +417,7 @@
 <Toast />
 
 {#if upgradeStorage}
-    <Upgrade mode={upgradeStorage} on:cancel={() => (upgradeStorage = undefined)} />
+    <Upgrade step={upgradeStorage} on:cancel={() => (upgradeStorage = undefined)} />
 {/if}
 
 <style type="text/scss">

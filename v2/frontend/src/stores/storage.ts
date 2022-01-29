@@ -8,15 +8,15 @@ type StorageStats = {
     bytesUsed: number;
 };
 
-// export const storageStore = writable<StorageStats>({
-//     byteLimit: 0,
-//     bytesUsed: 0,
-// });
-
 export const storageStore = writable<StorageStats>({
-    byteLimit: 100_000_000,
-    bytesUsed: 99_999_000,
+    byteLimit: 0,
+    bytesUsed: 0,
 });
+
+// export const storageStore = writable<StorageStats>({
+//     byteLimit: 100_000_000,
+//     bytesUsed: 55_999_000,
+// });
 
 export const percentageStorageUsed = derived([storageStore], ([$storageStore]) =>
     Math.ceil(($storageStore.bytesUsed / $storageStore.byteLimit) * 100)
@@ -33,7 +33,7 @@ export const remainingStorage = derived(
 
 export const storageInMb = derived([storageStore], ([$storageStore]) => {
     return {
-        mbLimit: Math.ceil($storageStore.bytesUsed / 1_000_000),
-        mbUsed: Math.ceil($storageStore.byteLimit / 1_000_000),
+        mbLimit: Math.ceil($storageStore.byteLimit / 1_000_000),
+        mbUsed: Math.ceil($storageStore.bytesUsed / 1_000_000),
     };
 });
