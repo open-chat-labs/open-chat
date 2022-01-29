@@ -24,14 +24,19 @@
     import { userStore } from "../../../stores/user";
     import { iconSize } from "../../../stores/iconSize";
     import { now } from "../../../stores/time";
+    import ViewUserProfile from "../profile/ViewUserProfile.svelte";
+    import type { ServiceContainer } from "../../../services/serviceContainer";
+
     const dispatch = createEventDispatcher();
 
     export let me: boolean;
     export let participant: FullParticipant | BlockedParticipant;
     export let myRole: ParticipantRole;
     export let publicGroup: boolean;
+    export let api: ServiceContainer;
 
     let hovering = false;
+    let viewProfile = false;
 
     function removeUser() {
         dispatch("removeParticipant", participant.userId);
@@ -49,8 +54,9 @@
         dispatch("makeAdmin", participant.userId);
     }
 
-    function participantSelected(_e: MouseEvent) {
+    function participantSelected() {
         if (!me) {
+            closeUserProfile();
             dispatch("chatWith", participant.userId);
             dispatch("close");
         }
@@ -63,12 +69,30 @@
     function unblockUser() {
         dispatch("unblockUser", participant);
     }
+
+    function openUserProfile() {
+        if (!me) {
+            viewProfile = true;
+        }
+    }
+
+    function closeUserProfile() {
+        viewProfile = false;
+    }
 </script>
+
+{#if viewProfile}
+    <ViewUserProfile
+        userId={participant.userId}
+        {api}
+        on:openDirectChat={participantSelected}
+        on:close={closeUserProfile} />
+{/if}
 
 <div
     class="participant"
     class:me
-    on:click={participantSelected}
+    on:click={openUserProfile}
     role="button"
     on:mouseenter={() => (hovering = true)}
     on:mouseleave={() => (hovering = false)}>

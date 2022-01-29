@@ -34,6 +34,8 @@
     import { supported as notificationsSupported } from "../../utils/notifications";
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
+    import ViewUserProfile from "./profile/ViewUserProfile.svelte";
+    import type { ServiceContainer } from "../../services/serviceContainer";
 
     const dispatch = createEventDispatcher();
 
@@ -41,9 +43,12 @@
     export let blocked: boolean;
     export let preview: boolean;
     export let unreadMessages: number;
+    export let api: ServiceContainer;
 
     let supportsNotifications = notificationsSupported();
+    let viewProfile = false;
 
+    $: userId = $selectedChatSummary.kind === "direct_chat" ? $selectedChatSummary.them : "";
     $: isGroup = $selectedChatSummary.kind === "group_chat";
 
     function clearSelection() {
@@ -176,6 +181,14 @@
         return !chat.public && (chat.myRole === "admin" || chat.myRole === "owner");
     }
 
+    function openUserProfile() {
+        viewProfile = true;
+    }
+
+    function closeUserProfile() {
+        viewProfile = false;
+    }
+
     $: chat = normaliseChatSummary($now, $selectedChatSummary);
 </script>
 
@@ -191,6 +204,10 @@
             </HoverIcon>
         </div>
     {/if}
+    {#if viewProfile}
+        <ViewUserProfile {userId} {api} chatButton={false} on:close={closeUserProfile} />
+    {/if}
+
     <div class="avatar">
         <Avatar
             statusBorder={"var(--section-bg)"}
@@ -203,6 +220,10 @@
         <div class="chat-name" title={chat.name}>
             {#if isGroup && !preview}
                 <span on:click={showGroupDetails} class="group-details">
+                    {chat.name}
+                </span>
+            {:else if !isGroup}
+                <span on:click={openUserProfile} class="user-link">
                     {chat.name}
                 </span>
             {:else}
@@ -362,6 +383,13 @@
 
     .group-details {
         cursor: pointer;
+    }
+
+    .user-link {
+        cursor: pointer;
+        &:hover {
+            text-decoration: underline;
+        }
     }
 
     .chat-details {

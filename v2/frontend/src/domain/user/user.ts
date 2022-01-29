@@ -50,6 +50,7 @@ export enum AvatarSize {
     Small,
     Medium,
     Large,
+    ExtraLarge,
 }
 
 export type PhoneNumber = {

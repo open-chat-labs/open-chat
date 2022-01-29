@@ -103,6 +103,7 @@
     {:else if lastState === "show_participants"}
         <Participants
             closeIcon={editGroupHistory.length > 1 ? "back" : "close"}
+            {api}
             {participants}
             {blockedUsers}
             {chat}

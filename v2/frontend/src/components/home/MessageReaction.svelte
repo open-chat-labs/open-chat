@@ -18,6 +18,8 @@
     let usernames = "";
     let reactionCode = "unknown";
     let maxWidth = 150;
+    let hovering: boolean;
+    let longPressed: boolean;
 
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
     $: selected = myUserId !== undefined ? userIds.has(myUserId) : false;
@@ -58,7 +60,11 @@
         return code ?? ":unknown:";
     }
 
-    function calculateMaxWidth(usernamesLength: number, reactionCodeLength: number, mobile: boolean): number {
+    function calculateMaxWidth(
+        usernamesLength: number,
+        reactionCodeLength: number,
+        mobile: boolean
+    ): number {
         const MIN_WIDTH = mobile ? 100 : 140;
         const MAX_WIDTH = mobile ? 250 : 300;
         const CHAR_WIDTH = mobile ? 6 : 7;
@@ -66,22 +72,19 @@
         let numChars = usernamesLength + 13 + reactionCodeLength;
         let longestWord = reactionCodeLength;
         return Math.max(
-            longestWord * CHAR_WIDTH, 
-            Math.min(
-                MAX_WIDTH, 
-                Math.max(
-                    MIN_WIDTH, 
-                    Math.sqrt(numChars) * CHAR_WIDTH * 2)));
+            longestWord * CHAR_WIDTH,
+            Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.sqrt(numChars) * CHAR_WIDTH * 2))
+        );
     }
 </script>
 
-<Hoverable let:hovering={hover}>
+<Hoverable bind:hovering bind:longPressed enableLongPress={true}>
     <div on:click class:selected class="message-reaction">
         {reaction}
         <span class="reaction-count">
             {userIds.size > 99 ? "99+" : userIds.size}
         </span>
-        {#if hover}
+        {#if hovering || longPressed}
             <div
                 transition:fade={{ duration: 100 }}
                 class="reaction-tooltip"
@@ -97,7 +100,7 @@
                 </div>
             </div>
         {/if}
-    </div>        
+    </div>
 </Hoverable>
 
 <style type="text/scss">

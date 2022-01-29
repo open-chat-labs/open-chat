@@ -11,6 +11,7 @@
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import { _ } from "svelte-i18n";
     import { afterUpdate, createEventDispatcher } from "svelte";
+    import type { ServiceContainer } from "../../services/serviceContainer";
 
     const dispatch = createEventDispatcher();
 
@@ -29,6 +30,7 @@
     export let admin: boolean;
     export let preview: boolean;
     export let isPublic: boolean;
+    export let api: ServiceContainer;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -56,6 +58,7 @@
         {admin}
         {preview}
         {isPublic}
+        {api}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo
