@@ -170,7 +170,6 @@
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        text-align: center;
         align-items: center;
         height: 100%;
         padding-top: $sp4;
@@ -185,6 +184,7 @@
 
         &.no-groups {
             justify-content: center;
+            text-align: center;
             background-color: var(--currentChat-header-bg);
 
             .title {
