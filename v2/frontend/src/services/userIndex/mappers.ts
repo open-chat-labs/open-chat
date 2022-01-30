@@ -14,6 +14,7 @@ import type {
     RegistrationState,
     RegistrationFee,
     NotificationFeePaidResponse,
+    RegisterUserResponse,
 } from "../../domain/user/user";
 import type {
     ApiConfirmationState,
@@ -24,6 +25,7 @@ import type {
     ApiNotificationFeePaidResponse,
     ApiPartialUserSummary,
     ApiPhoneNumber,
+    ApiRegisterUserResponse,
     ApiRegistrationFee,
     ApiResendCodeResponse,
     ApiSearchResponse,
@@ -108,6 +110,41 @@ export function submitPhoneNumberResponse(
         "Unexpected ApiSubmitPhoneNumberResponse type received",
         candid
     );
+}
+
+export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterUserResponse {
+    if ("UsernameTaken" in candid) {
+        return "username_taken";
+    }
+    if ("UsernameTooShort" in candid) {
+        return "username_too_short";
+    }
+    if ("UsernameInvalid" in candid) {
+        return "username_invalid";
+    }
+    if ("AlreadyRegistered" in candid) {
+        return "already_registered";
+    }
+    if ("UserLimitReached" in candid) {
+        return "user_limit_reached";
+    }
+    if ("UsernameTooLong" in candid) {
+        return "username_too_long";
+    }
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("NotSupported" in candid) {
+        return "not_supported";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("CyclesBalanceTooLow" in candid) {
+        return "cycles_balance_too_low";
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
 }
 
 export function confirmPhoneNumber(
@@ -272,6 +309,7 @@ export function confirmationState(candid: ApiConfirmationState): RegistrationSta
 }
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
+    console.log("User: ", candid);
     if ("Unconfirmed" in candid) {
         return {
             kind: "unconfirmed_user",

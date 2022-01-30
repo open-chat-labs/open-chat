@@ -2,12 +2,18 @@ import { init, locale, addMessages, getLocaleFromNavigator } from "svelte-i18n";
 
 import en from "./en.json";
 import cn from "./cn.json";
+import it from "./it.json";
 
 export const supportedLanguages = [
     {
         name: "English",
         code: "en",
         json: en,
+    },
+    {
+        name: "Italiano",
+        code: "it",
+        json: it,
     },
     {
         name: "中文",

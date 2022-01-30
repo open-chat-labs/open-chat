@@ -194,3 +194,15 @@ export type NotificationFeePaidResponse =
     | "user_not_found";
 
 export type SetBioResponse = "success" | "bio_too_long";
+
+export type RegisterUserResponse =
+    | "user_limit_reached"
+    | "success"
+    | "not_supported"
+    | "already_registered"
+    | "username_taken"
+    | "internal_error"
+    | "cycles_balance_too_low"
+    | "username_too_short"
+    | "username_too_long"
+    | "username_invalid";

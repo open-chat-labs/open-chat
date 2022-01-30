@@ -9,6 +9,7 @@ import type {
     NotificationFeePaidResponse,
     PartialUserSummary,
     PhoneNumber,
+    RegisterUserResponse,
     RegistrationFeeResponse,
     ResendCodeResponse,
     SetUsernameResponse,
@@ -156,5 +157,9 @@ export class CachingUserIndexClient implements IUserIndexClient {
             users,
             timestamp: response.timestamp,
         };
+    }
+
+    registerUser(username: string): Promise<RegisterUserResponse> {
+        return this.client.registerUser(username);
     }
 }

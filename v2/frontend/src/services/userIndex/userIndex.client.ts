@@ -16,6 +16,7 @@ import type {
     RegistrationFeeResponse,
     FeeCurrency,
     NotificationFeePaidResponse,
+    RegisterUserResponse,
 } from "../../domain/user/user";
 import { CandidService } from "../candidService";
 import {
@@ -30,6 +31,7 @@ import {
     createCanisterResponse,
     generateRegistrationFeeResponse,
     feePaidResponse,
+    registerUserResponse,
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
@@ -143,6 +145,15 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
                 confirmation_code: code,
             }),
             confirmPhoneNumber
+        );
+    }
+
+    registerUser(username: string): Promise<RegisterUserResponse> {
+        return this.handleResponse(
+            this.userService.register_user({
+                username,
+            }),
+            registerUserResponse
         );
     }
 }

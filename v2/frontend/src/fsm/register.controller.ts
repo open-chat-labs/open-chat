@@ -6,7 +6,6 @@ import type {
     FeeCurrency,
     NotificationFeePaidResponse,
     PhoneNumber,
-    RegistrationState,
 } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { toastStore } from "../stores/toast";
@@ -24,7 +23,7 @@ export type AwaitingICPTransferConfirmation = {
     receiver: string;
 };
 export type Verifying = { kind: "verifying" };
-export type AwaitingUsername = { kind: "awaiting_username"; regState: RegistrationState };
+export type AwaitingUsername = { kind: "awaiting_username" };
 export type AwaitingCompletion = { kind: "awaiting_completion" };
 export type AwaitingCanister = { kind: "awaiting_canister" };
 
@@ -40,7 +39,7 @@ export type RegisterState =
     | AwaitingCanister;
 
 export class RegisterController {
-    public state: Writable<RegisterState> = writable({ kind: "awaiting_phone_number" });
+    public state: Writable<RegisterState> = writable({ kind: "awaiting_username" });
     public error: Writable<string | undefined> = writable(undefined);
     public username: Writable<string | undefined> = writable(undefined);
     private _createdUser?: CreatedUser;
@@ -55,7 +54,7 @@ export class RegisterController {
 
     private deriveStateFromUser(user: CurrentUserResponse): void {
         if (user.kind === "unknown_user") {
-            this.state.set({ kind: "choose_registration_path" });
+            this.state.set({ kind: "awaiting_username" });
         } else if (user.kind === "unconfirmed_user") {
             if (user.registrationState.kind === "phone_registration") {
                 this.state.set({
@@ -75,7 +74,7 @@ export class RegisterController {
                 });
             }
         } else if (user.kind === "confirmed_pending_username") {
-            this.state.set({ kind: "awaiting_username", regState: user.registrationState });
+            this.state.set({ kind: "awaiting_username" });
         } else if (user.kind === "confirmed_user") {
             if (user.canisterCreationStatus === "in_progress") {
                 this.state.set({ kind: "awaiting_canister" });
@@ -159,10 +158,6 @@ export class RegisterController {
                 this.error.set(undefined);
                 this.state.set({
                     kind: "awaiting_username",
-                    regState: {
-                        kind: "phone_registration",
-                        phoneNumber,
-                    },
                 });
             }
         });

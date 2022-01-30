@@ -16,6 +16,7 @@ import type {
     NotificationFeePaidResponse,
     User,
     SetBioResponse,
+    RegisterUserResponse,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -649,5 +650,9 @@ export class ServiceContainer implements MarkMessagesRead {
 
     setBio(bio: string): Promise<SetBioResponse> {
         return this.userClient.setBio(bio);
+    }
+
+    registerUser(username: string): Promise<RegisterUserResponse> {
+        return this._userIndexClient.registerUser(username);
     }
 }

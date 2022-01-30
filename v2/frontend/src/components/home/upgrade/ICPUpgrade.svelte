@@ -117,6 +117,14 @@
                 values: { amount: toPay.toFixed(2).toString() },
             })}
         </p>
+
+        <!-- TODO - how to buy ICP link 
+                    <a
+                    class="how-to"
+                    href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
+                    target="_blank">
+                    {$_("howToBuyICP")}
+                </a> -->
     {/if}
 </div>
 <Footer>
