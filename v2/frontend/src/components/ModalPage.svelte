@@ -1,4 +1,7 @@
 <script lang="ts">
+    import Select from "./Select.svelte";
+    import { setLocale, supportedLanguages } from "../i18n/i18n";
+    import { locale } from "svelte-i18n";
     export let minHeight: string | undefined = undefined;
     export let bgClass:
         | "none"
@@ -9,15 +12,58 @@
         | "expired"
         | "upgrade"
         | "empty" = "underwater";
+
+    let selectedLocale = ($locale as string).substring(0, 2);
+    $: {
+        setLocale(selectedLocale);
+    }
 </script>
 
 <div class={`modal-page ${bgClass}`}>
     <div class="modal-page-panel" style="min-height: {minHeight}">
         <slot />
     </div>
+    <div class="powered-by" />
+    <div class="lang">
+        <Select bind:value={selectedLocale}>
+            {#each supportedLanguages as lang}
+                <option value={lang.code}>{lang.name}</option>
+            {/each}
+        </Select>
+    </div>
 </div>
 
 <style type="text/scss">
+    :global(.lang select.select) {
+        @include font(light, normal, fs-90);
+        background-color: transparent;
+        padding: 0;
+        min-width: 80px;
+        height: auto;
+        border: none;
+        border-bottom: 1px solid var(--accent);
+        color: #fff;
+
+        option {
+            @include font(light, normal, fs-90);
+        }
+    }
+
+    .lang {
+        position: absolute;
+        left: $sp3;
+        top: $sp3;
+    }
+    .powered-by {
+        background-image: url("../assets/ic-badge-built-on-crypto_label-stripe-for-dark.svg");
+        position: absolute;
+        bottom: 0;
+        height: 40px;
+        left: 0;
+        right: 0;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
     .modal-page {
         display: flex;
         justify-content: center;
