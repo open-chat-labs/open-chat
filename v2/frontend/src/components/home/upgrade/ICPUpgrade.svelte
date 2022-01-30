@@ -117,20 +117,18 @@
                 values: { amount: toPay.toFixed(2).toString() },
             })}
         </p>
-
-        <!-- TODO - how to buy ICP link 
-                    <a
-                    class="how-to"
-                    href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
-                    target="_blank">
-                    {$_("howToBuyICP")}
-                </a> -->
     {/if}
 </div>
 <Footer>
     {#if confirmed}
         <Button small={true} on:click={cancel}>{$_("close")}</Button>
     {:else}
+        <a
+            class="how-to"
+            href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
+            target="_blank">
+            {$_("howToBuyICP")}
+        </a>
         <Button
             disabled={confirming || toPay === 0}
             loading={confirming}
@@ -224,5 +222,16 @@
             width: 30px;
         }
         margin: $sp4 0;
+    }
+
+    .how-to {
+        @include font(light, normal, fs-90);
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-underline-offset: $sp1;
+        text-decoration-thickness: 2px;
+        position: absolute;
+        left: $sp4;
+        bottom: $sp4;
     }
 </style>

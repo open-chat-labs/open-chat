@@ -11,6 +11,7 @@
         border-top: 1px solid var(--modal-footer-bd);
         display: flex;
         justify-content: flex-end;
+        position: relative;
     }
 
     .buttons {
