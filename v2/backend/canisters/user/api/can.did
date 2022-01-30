@@ -72,7 +72,7 @@ type MarkReadArgs =
         messages_read: vec ChatMessagesRead;
     };
 
-type ChatMessagesRead = 
+type ChatMessagesRead =
     record {
         chat_id: ChatId;
         message_ranges: vec MessageIndexRange;
@@ -85,23 +85,23 @@ type MarkReadResponse =
 
 type BlockUserArgs =
     record {
-        user_id: UserId;        
+        user_id: UserId;
     };
 
 type BlockUserResponse =
     variant {
         Success;
-    }; 
+    };
 
 type UnblockUserArgs =
     record {
-        user_id: UserId;        
+        user_id: UserId;
     };
 
 type UnblockUserResponse =
     variant {
         Success;
-    }; 
+    };
 
 type CreateGroupArgs =
     record {
@@ -137,24 +137,6 @@ type JoinGroupArgs =
 
 type JoinGroupResponse =
     variant {
-        Success;
-        AlreadyInGroup;
-        Blocked;
-        GroupNotFound;
-        GroupNotPublic;
-        ParticipantLimitReached: nat32;
-        InternalError: text;
-        NotSuperAdmin;
-    };
-
-type JoinGroupV2Args =
-    record {
-        chat_id: ChatId;
-        as_super_admin: bool;
-    };
-
-type JoinGroupV2Response =
-    variant {
         Success: GroupChatSummary;
         AlreadyInGroup;
         Blocked;
@@ -178,7 +160,7 @@ type LeaveGroupResponse =
         InternalError: text;
         CallerNotInGroup;
         OwnerCannotLeave;
-    }; 
+    };
 
 type SetAvatarArgs =
     record {
@@ -189,7 +171,7 @@ type SetAvatarResponse =
     variant {
         Success;
         AvatarTooBig: FieldTooLongResult;
-    }; 
+    };
 
 type MuteNotificationsArgs =
     record {
@@ -200,7 +182,7 @@ type MuteNotificationsResponse =
     variant {
         Success;
         ChatNotFound;
-    }; 
+    };
 
 type UnmuteNotificationsArgs =
     record {
@@ -211,7 +193,7 @@ type UnmuteNotificationsResponse =
     variant {
         Success;
         ChatNotFound;
-    }; 
+    };
 
 type SetPreferencesArgs =
     record {
@@ -222,7 +204,7 @@ type SetPreferencesResponse =
     variant {
         Success;
     };
-    
+
 type DismissAlertsArgs =
     record {
         alert_ids: vec text;
@@ -273,7 +255,7 @@ type AddRecommendedGroupExclusionsResponse =
         Success;
     };
 
-type SetBioArgs = 
+type SetBioArgs =
     record {
         text: text;
     };
@@ -282,12 +264,12 @@ type SetBioResponse =
     variant {
         Success;
         TooLong: FieldTooLongResult;
-    }; 
+    };
 
-type InitialStateArgs = 
+type InitialStateArgs =
     record {
     };
-    
+
 type InitialStateResponse =
     variant {
         Success: record {
@@ -314,7 +296,7 @@ type UpdatesSince =
         group_chats: vec GroupChatUpdatesSince;
     };
 
-type UpdatesArgs = 
+type UpdatesArgs =
     record {
         updates_since: UpdatesSince;
     };
@@ -427,7 +409,7 @@ type SearchMessagesResponse =
         TermTooLong: nat8;
         InvalidTerm;
         ChatNotFound;
-    }; 
+    };
 
 type SearchMessagesSuccessResult =
     record {
@@ -446,14 +428,14 @@ type SearchAllMessagesResponse =
         TermTooShort: nat8;
         TermTooLong: nat8;
         InvalidTerm;
-    }; 
+    };
 
 type BioArgs = record {};
 
 type BioResponse =
     variant {
         Success: text;
-    }; 
+    };
 
 service: {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
@@ -464,8 +446,7 @@ service: {
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
-    join_group: (JoinGroupArgs) -> (JoinGroupResponse);
-    join_group_v2: (JoinGroupV2Args) -> (JoinGroupV2Response);
+    join_group_v2: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);

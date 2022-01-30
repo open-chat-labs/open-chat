@@ -9,11 +9,11 @@ export const supportedLanguages = [
         code: "en",
         json: en,
     },
-    // {
-    //     name: "中文",
-    //     code: "cn",
-    //     json: cn,
-    // },
+    {
+        name: "中文",
+        code: "cn",
+        json: cn,
+    },
 ];
 
 supportedLanguages.forEach(({ code, json }) => {

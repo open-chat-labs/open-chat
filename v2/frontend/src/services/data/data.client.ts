@@ -1,7 +1,7 @@
 import { HttpAgent } from "@dfinity/agent";
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { OpenStorageAgent, UploadBlobResponse } from "@open-ic/open-storage-agent";
+import { OpenStorageAgent, UploadFileResponse } from "@open-ic/open-storage-agent";
 import type { IDataClient } from "./data.client.interface";
 import { DataClientMock } from "./data.client.mock";
 import type { MessageContent } from "../../domain/chat/chat";
@@ -45,7 +45,7 @@ export class DataClient implements IDataClient {
                 const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
 
                 content.blobReference = this.convertResponse(
-                    await this.openStorageAgent.uploadBlob(
+                    await this.openStorageAgent.uploadFile(
                         content.mimeType,
                         accessorIds,
                         content.blobData
@@ -62,12 +62,12 @@ export class DataClient implements IDataClient {
                 const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
 
                 await Promise.all([
-                    this.openStorageAgent.uploadBlob(
+                    this.openStorageAgent.uploadFile(
                         content.mimeType,
                         accessorIds,
                         content.videoData.blobData
                     ),
-                    this.openStorageAgent.uploadBlob(
+                    this.openStorageAgent.uploadFile(
                         "image/jpg",
                         accessorIds,
                         content.imageData.blobData
@@ -82,10 +82,10 @@ export class DataClient implements IDataClient {
         return Promise.resolve(true);
     }
 
-    convertResponse(response: UploadBlobResponse): BlobReference {
+    convertResponse(response: UploadFileResponse): BlobReference {
         return {
             canisterId: response.canisterId.toString(),
-            blobId: response.blobId,
+            blobId: response.fileId,
         };
     }
 }
