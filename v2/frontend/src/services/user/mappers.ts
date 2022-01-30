@@ -65,8 +65,7 @@ import {
 } from "../common/chatMappers";
 import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
 import type { SetBioResponse } from "../../domain/user/user";
-import { JoinGroupV2Response } from "./candid/types";
-import { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
+import type { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
 
 export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
     if ("Success" in candid) {
