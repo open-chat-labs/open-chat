@@ -190,12 +190,12 @@ export class RegisterController {
         const currentState = get(this.state);
         this.state.set({ kind: "verifying" });
         this.username.set(username);
-        this._api.setUsername(username).then((resp) => {
+        this._api.registerUser(username).then((resp) => {
             this.state.set(currentState);
             if (resp === "username_taken") {
                 this.error.set("register.usernameTaken");
-            } else if (resp === "user_not_found") {
-                this.error.set("register.userNotFound");
+                // } else if (resp === "user_not_found") {
+                //     this.error.set("register.userNotFound");
             } else if (resp === "username_too_short") {
                 this.error.set("register.usernameTooShort");
             } else if (resp === "username_too_long") {

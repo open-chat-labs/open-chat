@@ -73,6 +73,8 @@ import { NotificationsClient } from "./notifications/notifications.client";
 import type { ToggleMuteNotificationResponse } from "../domain/notifications";
 import type { IOnlineClient } from "./online/online.client.interface";
 import { OnlineClient } from "./online/online.client";
+import { DataClient } from "./data/data.client";
+import { storageStore } from "stores/storage";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -654,5 +656,10 @@ export class ServiceContainer implements MarkMessagesRead {
 
     registerUser(username: string): Promise<RegisterUserResponse> {
         return this._userIndexClient.registerUser(username);
+    }
+
+    getUserStorageLimits(): Promise<void> {
+        // do we need to do something if this fails? Not sure there's much we can do
+        return DataClient.create(this.identity).getUserStorage().then(storageStore.set);
     }
 }

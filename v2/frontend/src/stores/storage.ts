@@ -1,22 +1,22 @@
+import type { UserStorage } from "../domain/user/user";
 import { derived, writable } from "svelte/store";
 
 export const ONE_HUNDRED_MB = 100_000_000;
 export const ONE_GB = 1000_000_000;
 
-type StorageStats = {
-    byteLimit: number;
-    bytesUsed: number;
-};
-
-export const storageStore = writable<StorageStats>({
+export const storageStore = writable<UserStorage>({
     byteLimit: 0,
     bytesUsed: 0,
 });
 
-// export const storageStore = writable<StorageStats>({
-//     byteLimit: 100_000_000,
-//     bytesUsed: 55_999_000,
-// });
+export function reduceBy(bytes: number): void {
+    storageStore.update((store) => {
+        return {
+            bytesUsed: store.bytesUsed + bytes,
+            byteLimit: store.byteLimit,
+        };
+    });
+}
 
 export const percentageStorageUsed = derived([storageStore], ([$storageStore]) =>
     Math.ceil(($storageStore.bytesUsed / $storageStore.byteLimit) * 100)

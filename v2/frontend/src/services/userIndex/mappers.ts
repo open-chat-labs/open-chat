@@ -350,6 +350,10 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             kind: "created_user",
             userId: candid.Created.user_id.toString(),
             username: candid.Created.username,
+            cryptoAccounts: {
+                cycles: "todo - once the types are fixed",
+                icp: "todo - once the types are fixed",
+            },
             canisterUpgradeStatus:
                 "Required" in candid.Created.canister_upgrade_status
                     ? "required"

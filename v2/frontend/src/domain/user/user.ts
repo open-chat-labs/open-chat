@@ -118,9 +118,18 @@ export type ConfirmedPendingUsername = {
 export type CreatedUser = {
     kind: "created_user";
     username: string;
+    cryptoAccounts: {
+        cycles: string;
+        icp: string;
+    };
     userId: string;
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
     wasmVersion: Version;
+};
+
+export type UserStorage = {
+    byteLimit: number;
+    bytesUsed: number;
 };
 
 export type UserNotFound = {
