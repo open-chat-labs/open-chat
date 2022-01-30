@@ -175,6 +175,8 @@
         height: 100%;
         padding-top: $sp4;
         overflow: auto;
+        overflow-x: hidden;
+
         @include nice-scrollbar();
         @include size-below(xs) {
             padding-top: 0;
