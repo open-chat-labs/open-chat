@@ -20,10 +20,12 @@
                 (cycles and ICP first, then Bitcoin and Ether later, plus more)
             </li>
             <li>Message forwarding</li>
+            <li>Subscribe to message feed</li>
             <li>Pinned messages</li>
             <li>Click to show images full-screen</li>
             <li>Improved UI design</li>
             <li>Performance enhancements (asset caching with etags, WebRTC improvements)</li>
+            <li>Streamlined sign-in</li>
             <li>2-way voice calls</li>
             <li>2-way video calls</li>
             <li>Send "red-letters" containing tokens</li>
@@ -37,7 +39,6 @@
             <li>Link previews</li>
             <li>Report inappropriate content</li>
             <li>Incorporate token swap to allow other tokens to be sent</li>
-            <li>Streamlined sign-in</li>
             <li>Native Android app</li>
             <li>Organise events with calendar</li>
             <li>Create polls</li>
