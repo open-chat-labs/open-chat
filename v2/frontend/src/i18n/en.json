@@ -10,6 +10,8 @@
     "firstMention": "First unread mention",
     "usernameRules": "alphanumerics & underscores only",
     "enterBio": "Tell us something about yourself",
+    "username": "Username",
+    "bio": "User bio",
     "supportsMarkdown": "supports markdown",
     "preferredLanguage": "preferred language",
     "dark": "dark",

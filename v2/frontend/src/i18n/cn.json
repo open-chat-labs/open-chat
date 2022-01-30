@@ -10,6 +10,8 @@
     "firstMention": "最新提及",
     "usernameRules": "仅支持字母，数字和下划线",
     "enterBio": "自我介绍",
+    "username": "用户名",
+    "bio": "用户简介",
     "supportsMarkdown": "支持markdown格式",
     "preferredLanguage": "偏好语言",
     "dark": "深色模式",
