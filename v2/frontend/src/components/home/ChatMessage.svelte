@@ -570,7 +570,7 @@
         }
 
         &.focused {
-            border: 4px solid var(--toast-success-bg);
+            box-shadow: 0 0 0 4px var(--toast-success-bg);
         }
 
         &.deleted {
