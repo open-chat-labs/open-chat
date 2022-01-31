@@ -6,7 +6,7 @@ import type { IDataClient } from "./data.client.interface";
 import { DataClientMock } from "./data.client.mock";
 import type { MessageContent } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
-import type { BlobReference, StorageStatus } from "../../domain/data/data";
+import type { BlobReference, StorageStatus, UploadDataResponse } from "../../domain/data/data";
 
 export class DataClient implements IDataClient {
     private openStorageAgent: OpenStorageAgent;
@@ -55,6 +55,9 @@ export class DataClient implements IDataClient {
         content: MessageContent,
         accessorCanisterIds: string[]
     ): Promise<UploadDataResponse> {
+        let byteLimit = BigInt(0);
+        let bytesUsed = BigInt(0);
+
         if (
             content.kind === "file_content" ||
             content.kind === "image_content" ||
@@ -63,13 +66,14 @@ export class DataClient implements IDataClient {
             if (content.blobData && content.blobReference === undefined) {
                 const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
 
-                content.blobReference = this.convertResponse(
-                    await this.openStorageAgent.uploadFile(
-                        content.mimeType,
-                        accessorIds,
-                        content.blobData
-                    )
+                const response = await this.openStorageAgent.uploadFile(
+                    content.mimeType,
+                    accessorIds,
+                    content.blobData
                 );
+                content.blobReference = this.extractBlobReference(response);
+                byteLimit = response.byteLimit;
+                bytesUsed = response.bytesUsed;
             }
         } else if (content.kind === "video_content") {
             if (
@@ -92,16 +96,22 @@ export class DataClient implements IDataClient {
                         content.imageData.blobData
                     ),
                 ]).then(([video, image]) => {
-                    content.videoData.blobReference = this.convertResponse(video);
-                    content.imageData.blobReference = this.convertResponse(image);
+                    content.videoData.blobReference = this.extractBlobReference(video);
+                    content.imageData.blobReference = this.extractBlobReference(image);
+                    // TODO - include the bytes of the image too.
+                    // We can't simply add the bytes because the user may have uploaded the image previously already in
+                    // which case we do not charge them for uploading it again. We need the OpenStorage agent to return
+                    // additional data.
+                    byteLimit = video.byteLimit;
+                    bytesUsed = video.bytesUsed;
                 });
             }
         }
 
-        return Promise.resolve(true);
+        return { success: true, byteLimit, bytesUsed };
     }
 
-    convertResponse(response: UploadFileResponse): BlobReference {
+    extractBlobReference(response: UploadFileResponse): BlobReference {
         return {
             canisterId: response.canisterId.toString(),
             blobId: response.fileId,
