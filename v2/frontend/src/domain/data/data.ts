@@ -8,3 +8,12 @@ export interface DataContent {
     blobData?: Uint8Array;
     blobUrl?: string;
 }
+
+export type UploadDataResponse = StorageStatus & {
+    success: boolean;
+};
+
+export type StorageStatus = {
+    byteLimit: number;
+    bytesUsed: number;
+};

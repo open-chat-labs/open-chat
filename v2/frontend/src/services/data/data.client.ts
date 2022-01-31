@@ -6,9 +6,7 @@ import type { IDataClient } from "./data.client.interface";
 import { DataClientMock } from "./data.client.mock";
 import type { MessageContent } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
-import type { BlobReference } from "../../domain/data/data";
-import type { UserStorage } from "../../domain/user/user";
-import { reduceBy } from "../../stores/storage";
+import type { BlobReference, StorageStatus, UploadDataResponse } from "../../domain/data/data";
 
 export class DataClient implements IDataClient {
     private openStorageAgent: OpenStorageAgent;
@@ -37,9 +35,8 @@ export class DataClient implements IDataClient {
         return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
     }
 
-    getUserStorage(): Promise<UserStorage> {
+    storageStatus(): Promise<StorageStatus> {
         return this.openStorageAgent.user().then((resp) => {
-            console.log("Storage: ", resp);
             if (resp.kind === "user") {
                 return {
                     byteLimit: Number(resp.byteLimit),
@@ -54,26 +51,13 @@ export class DataClient implements IDataClient {
         });
     }
 
-    private dataSize(content: MessageContent): number {
-        if (
-            content.kind === "file_content" ||
-            content.kind === "image_content" ||
-            content.kind === "audio_content"
-        ) {
-            if (content.blobData) {
-                return content.blobData.length;
-            }
-        } else if (
-            content.kind === "video_content" &&
-            content.videoData.blobData &&
-            content.imageData.blobData
-        ) {
-            return content.videoData.blobData.length + content.imageData.blobData.length;
-        }
-        return 0;
-    }
+    async uploadData(
+        content: MessageContent,
+        accessorCanisterIds: string[]
+    ): Promise<UploadDataResponse> {
+        let byteLimit = 0;
+        let bytesUsed = 0;
 
-    async uploadData(content: MessageContent, accessorCanisterIds: string[]): Promise<boolean> {
         if (
             content.kind === "file_content" ||
             content.kind === "image_content" ||
@@ -82,13 +66,14 @@ export class DataClient implements IDataClient {
             if (content.blobData && content.blobReference === undefined) {
                 const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
 
-                content.blobReference = this.convertResponse(
-                    await this.openStorageAgent.uploadFile(
-                        content.mimeType,
-                        accessorIds,
-                        content.blobData
-                    )
+                const response = await this.openStorageAgent.uploadFile(
+                    content.mimeType,
+                    accessorIds,
+                    content.blobData
                 );
+                content.blobReference = this.extractBlobReference(response);
+                byteLimit = Number(response.byteLimit);
+                bytesUsed = Number(response.bytesUsed);
             }
         } else if (content.kind === "video_content") {
             if (
@@ -111,17 +96,22 @@ export class DataClient implements IDataClient {
                         content.imageData.blobData
                     ),
                 ]).then(([video, image]) => {
-                    content.videoData.blobReference = this.convertResponse(video);
-                    content.imageData.blobReference = this.convertResponse(image);
+                    content.videoData.blobReference = this.extractBlobReference(video);
+                    content.imageData.blobReference = this.extractBlobReference(image);
+                    // TODO - include the bytes of the image too.
+                    // We can't simply add the bytes because the user may have previously uploaded the same image, in
+                    // which case we do not charge them for uploading it again. We need the OpenStorage agent to return
+                    // additional data.
+                    byteLimit = Number(video.byteLimit);
+                    bytesUsed = Number(video.bytesUsed);
                 });
             }
         }
 
-        reduceBy(this.dataSize(content));
-        return Promise.resolve(true);
+        return { success: true, byteLimit, bytesUsed };
     }
 
-    convertResponse(response: UploadFileResponse): BlobReference {
+    extractBlobReference(response: UploadFileResponse): BlobReference {
         return {
             canisterId: response.canisterId.toString(),
             blobId: response.fileId,

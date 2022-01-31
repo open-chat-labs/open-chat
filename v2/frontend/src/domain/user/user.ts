@@ -133,11 +133,6 @@ export type CreatedUser = {
     wasmVersion: Version;
 };
 
-export type UserStorage = {
-    byteLimit: number;
-    bytesUsed: number;
-};
-
 export type UserNotFound = {
     kind: "unknown_user";
 };
