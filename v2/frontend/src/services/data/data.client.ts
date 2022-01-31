@@ -76,6 +76,10 @@ export class DataClient implements IDataClient {
                 content.blobReference = this.extractBlobReference(response);
                 byteLimit = Number(response.byteLimit);
                 bytesUsed = Number(response.bytesUsed);
+                storageStore.set({
+                    byteLimit,
+                    bytesUsed,
+                });
             }
         } else if (content.kind === "video_content") {
             if (
@@ -106,14 +110,13 @@ export class DataClient implements IDataClient {
                     // additional data.
                     byteLimit = Number(video.byteLimit);
                     bytesUsed = Number(video.bytesUsed);
+                    storageStore.set({
+                        byteLimit,
+                        bytesUsed,
+                    });
                 });
             }
         }
-
-        storageStore.set({
-            byteLimit,
-            bytesUsed,
-        });
 
         return { success: true, byteLimit, bytesUsed };
     }

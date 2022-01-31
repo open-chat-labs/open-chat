@@ -1,8 +1,9 @@
 import type { StorageStatus } from "../domain/data/data";
 import { derived, writable } from "svelte/store";
 
-export const ONE_HUNDRED_MB = 100_000_000;
-export const ONE_GB = 1000_000_000;
+export const ONE_MB = 1024 * 1024;
+export const ONE_HUNDRED_MB = ONE_MB * 100;
+export const ONE_GB = ONE_MB * 1000;
 
 export const storageStore = writable<StorageStatus>({
     byteLimit: 0,
@@ -33,7 +34,7 @@ export const remainingStorage = derived(
 
 export const storageInMb = derived([storageStore], ([$storageStore]) => {
     return {
-        mbLimit: Math.ceil($storageStore.byteLimit / 1_000_000),
-        mbUsed: Math.ceil($storageStore.bytesUsed / 1_000_000),
+        mbLimit: Math.ceil($storageStore.byteLimit / ONE_MB),
+        mbUsed: Math.ceil($storageStore.bytesUsed / ONE_MB),
     };
 });
