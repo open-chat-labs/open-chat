@@ -38,6 +38,7 @@ export class DataClient implements IDataClient {
     storageStatus(): Promise<StorageStatus> {
         return this.openStorageAgent.user().then((resp) => {
             if (resp.kind === "user") {
+                console.log("User storage: ", resp);
                 return {
                     byteLimit: Number(resp.byteLimit),
                     bytesUsed: Number(resp.bytesUsed),
