@@ -3,7 +3,7 @@
     import Button from "../../Button.svelte";
     import { createEventDispatcher } from "svelte";
     import Footer from "./Footer.svelte";
-    import { ONE_GB, storageInMb, storageStore } from "../../../stores/storage";
+    import { ONE_GB, ONE_HUNDRED_MB, storageInMb, storageStore } from "../../../stores/storage";
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
     import QR from "svelte-qr";
@@ -25,8 +25,8 @@
     let confirmed = false;
     let accountSummary = user.cryptoAccounts.icp;
 
-    $: min = Math.ceil($storageStore.byteLimit / 100_000_000);
-    $: max = Math.ceil(ONE_GB / 100_000_000);
+    $: min = Math.ceil($storageStore.byteLimit / ONE_HUNDRED_MB);
+    $: max = Math.ceil(ONE_GB / ONE_HUNDRED_MB);
     $: newLimit = min;
     $: toPay = (newLimit - min) * amount;
     $: {
@@ -58,6 +58,7 @@
 
         api.notifyRegistrationFeePaid()
             .then((resp) => {
+                console.log("Notify: ", resp);
                 if (resp === "success" || resp === "already_registered") {
                     error = undefined;
                     confirmed = true;

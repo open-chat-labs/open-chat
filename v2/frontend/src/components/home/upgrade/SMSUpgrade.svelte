@@ -15,6 +15,7 @@
     import type { CreatedUser, PhoneNumber } from "../../../domain/user/user";
     import type { ServiceContainer } from "../../../services/serviceContainer";
     import { rollbar } from "../../../utils/logging";
+    import { updateStorageLimit } from "stores/storage";
 
     const dispatch = createEventDispatcher();
     export let api: ServiceContainer;
@@ -101,8 +102,14 @@
                 } else if (resp === "not_found") {
                     error = "register.codeNotFound";
                 } else if (resp === "success") {
-                    error = undefined;
-                    confirmed = true;
+                    // todo - for the time being we will re-call getCurrentUser to get the new storage limit
+                    api.getCurrentUser().then((resp) => {
+                        if (resp.kind === "created_user") {
+                            updateStorageLimit(resp.openStorageLimitBytes);
+                            error = undefined;
+                            confirmed = true;
+                        }
+                    });
                 }
             })
             .catch((err) => {
@@ -201,6 +208,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        text-align: center;
     }
     .error {
         @include font(bold, normal, fs-100);
@@ -213,7 +221,6 @@
         .number {
             flex: 4;
             margin-bottom: $sp5;
-            text-align: center;
 
             @include size-below(xs) {
                 margin-bottom: $sp4;
@@ -247,14 +254,12 @@
     .title {
         @include font(bold, normal, fs-120);
         margin: $sp4 $sp4;
-        text-align: center;
         text-shadow: var(--modalPage-txt-sh);
     }
 
     .enter-code {
         @include font(light, normal, fs-100);
         margin-bottom: $sp4;
-        text-align: center;
     }
 
     .change-phone-number {

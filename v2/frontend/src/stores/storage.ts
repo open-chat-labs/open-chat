@@ -10,11 +10,11 @@ export const storageStore = writable<StorageStatus>({
     bytesUsed: 0,
 });
 
-export function reduceBy(bytes: number): void {
+export function updateStorageLimit(limit: number): void {
     storageStore.update((store) => {
         return {
-            bytesUsed: store.bytesUsed + bytes,
-            byteLimit: store.byteLimit,
+            bytesUsed: store.bytesUsed,
+            byteLimit: limit,
         };
     });
 }

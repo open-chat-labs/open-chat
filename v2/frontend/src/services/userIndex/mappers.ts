@@ -364,6 +364,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                     ? "not_required"
                     : "in_progress",
             wasmVersion: new Version(version.major, version.minor, version.patch),
+            openStorageLimitBytes: Number(candid.Created.open_storage_limit_bytes),
         };
     }
 

@@ -131,6 +131,7 @@ export type CreatedUser = {
     userId: string;
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
     wasmVersion: Version;
+    openStorageLimitBytes: number;
 };
 
 export type UserNotFound = {
