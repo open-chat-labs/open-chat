@@ -279,10 +279,8 @@
                 {#if $storageStore.byteLimit < ONE_GB}
                     <p>{$_("chooseTransfer")}</p>
                     <div class="full-width-btn">
-                        <Button
-                            on:click={() => dispatch("upgrade", "direct")}
-                            fill={true}
-                            small={true}>{$_("upgradeStorage")}</Button>
+                        <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small={true}
+                            >{$_("upgradeStorage")}</Button>
                     </div>
                 {/if}
             {/if}
