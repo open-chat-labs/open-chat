@@ -660,6 +660,6 @@ export class ServiceContainer implements MarkMessagesRead {
 
     getUserStorageLimits(): Promise<void> {
         // do we need to do something if this fails? Not sure there's much we can do
-        return DataClient.create(this.identity).getUserStorage().then(storageStore.set);
+        return DataClient.create(this.identity).storageStatus().then(storageStore.set);
     }
 }
