@@ -1,8 +1,7 @@
 use crate::model::user::{CreatedUser, PhoneStatus, User};
 use crate::model::user_map::UpdateUserResult;
-use crate::{
-    mutate_state, RuntimeState, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, MIN_CYCLES_BALANCE, USER_CANISTER_INITIAL_CYCLES_BALANCE,
-};
+use crate::updates::storage_byte_limit_for_new_user;
+use crate::{mutate_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
@@ -143,14 +142,10 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
                             None => PhoneStatus::None,
                         };
                         let open_storage_limit_bytes =
-                            if matches!(phone_status, PhoneStatus::Confirmed(_)) || confirmed_user.registration_fee.is_some() {
-                                DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT
-                            } else {
-                                0
-                            };
+                            storage_byte_limit_for_new_user(&phone_status, &confirmed_user.registration_fee);
 
                         let created_user = CreatedUser {
-                            principal: confirmed_user.principal,
+                            principal: caller,
                             user_id: canister_id.into(),
                             username: username.clone(),
                             date_created: now,
@@ -167,6 +162,14 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
                             open_storage_limit_bytes,
                             phone_status,
                         };
+
+                        if open_storage_limit_bytes > 0 {
+                            runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
+                                user_id: caller,
+                                byte_limit: open_storage_limit_bytes,
+                            });
+                        }
+
                         User::Created(created_user)
                     }
                     None => {
@@ -180,11 +183,6 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
                     }
                 };
                 runtime_state.data.users.update(user_to_update);
-
-                runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
-                    user_id: caller,
-                    byte_limit: DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT,
-                });
             }
         }
     }

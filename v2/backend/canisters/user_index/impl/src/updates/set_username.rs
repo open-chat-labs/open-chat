@@ -1,8 +1,10 @@
 use crate::model::user::{CreatedUser, PhoneStatus, User};
 use crate::model::user_map::UpdateUserResult;
-use crate::{mutate_state, RuntimeState, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT};
+use crate::updates::storage_byte_limit_for_new_user;
+use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
+use open_storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterCreationStatusInternal, CyclesTopUp};
 use user_index_canister::set_username::{Response::*, *};
 
@@ -16,10 +18,10 @@ fn set_username(args: Args) -> Response {
 }
 
 fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller = &runtime_state.env.caller();
+    let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
 
-    runtime_state.data.users.mark_online(caller, now);
+    runtime_state.data.users.mark_online(&caller, now);
 
     let username = args.username;
 
@@ -30,7 +32,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         _ => {}
     };
 
-    if let Some(user) = runtime_state.data.users.get_by_principal(caller) {
+    if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         let user_to_update = match user {
             User::Unconfirmed(_) => {
                 return UserUnconfirmed;
@@ -43,15 +45,10 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                         Some(pn) => PhoneStatus::Confirmed(pn.clone()),
                         None => PhoneStatus::None,
                     };
-                    let open_storage_limit_bytes =
-                        if matches!(phone_status, PhoneStatus::Confirmed(_)) || user.registration_fee.is_some() {
-                            DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT
-                        } else {
-                            0
-                        };
+                    let open_storage_limit_bytes = storage_byte_limit_for_new_user(&phone_status, &user.registration_fee);
 
                     let created_user = CreatedUser {
-                        principal: user.principal,
+                        principal: caller,
                         user_id: (*canister_id).into(),
                         username,
                         date_created: now,
@@ -68,6 +65,14 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                         open_storage_limit_bytes,
                         phone_status,
                     };
+
+                    if open_storage_limit_bytes > 0 {
+                        runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
+                            user_id: caller,
+                            byte_limit: open_storage_limit_bytes,
+                        });
+                    }
+
                     User::Created(created_user)
                 } else {
                     let mut user = user.clone();
