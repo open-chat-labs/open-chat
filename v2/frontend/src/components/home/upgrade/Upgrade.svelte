@@ -5,8 +5,12 @@
     import Explain from "./Explain.svelte";
     import ICPUpgrade from "./ICPUpgrade.svelte";
     import SMSUpgrade from "./SMSUpgrade.svelte";
+    import type { ServiceContainer } from "../../../services/serviceContainer";
+    import type { CreatedUser } from "../../../domain/user/user";
 
     export let step: "explain" | "icp" | "sms";
+    export let api: ServiceContainer;
+    export let user: CreatedUser;
 
     function upgradeViaSMS() {
         step = "sms";
@@ -27,10 +31,10 @@
                 <Explain on:cancel on:upgradeIcp={upgradeViaICP} on:upgradeSms={upgradeViaSMS} />
             {/if}
             {#if step === "icp"}
-                <ICPUpgrade on:cancel />
+                <ICPUpgrade {user} {api} on:cancel />
             {/if}
             {#if step === "sms"}
-                <SMSUpgrade on:cancel />
+                <SMSUpgrade {user} {api} on:cancel />
             {/if}
         </span>
     </ModalContent>

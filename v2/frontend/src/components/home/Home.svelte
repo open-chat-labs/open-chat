@@ -416,8 +416,12 @@
 
 <Toast />
 
-{#if upgradeStorage}
-    <Upgrade step={upgradeStorage} on:cancel={() => (upgradeStorage = undefined)} />
+{#if upgradeStorage && controller.user}
+    <Upgrade
+        user={controller.user}
+        {api}
+        step={upgradeStorage}
+        on:cancel={() => (upgradeStorage = undefined)} />
 {/if}
 
 <style type="text/scss">

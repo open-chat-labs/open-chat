@@ -15,6 +15,7 @@ import type {
     RegistrationFee,
     NotificationFeePaidResponse,
     RegisterUserResponse,
+    PhoneStatus,
 } from "../../domain/user/user";
 import type {
     ApiConfirmationState,
@@ -25,6 +26,7 @@ import type {
     ApiNotificationFeePaidResponse,
     ApiPartialUserSummary,
     ApiPhoneNumber,
+    ApiPhoneStatus,
     ApiRegisterUserResponse,
     ApiRegistrationFee,
     ApiResendCodeResponse,
@@ -354,6 +356,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                 cycles: "todo - once the types are fixed",
                 icp: "todo - once the types are fixed",
             },
+            phoneStatus: phoneStatus(candid.Created.phone_status),
             canisterUpgradeStatus:
                 "Required" in candid.Created.canister_upgrade_status
                     ? "required"
@@ -369,6 +372,23 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
     }
 
     throw new UnsupportedValueError("Unexpected ApiCurrentUserResponse type received", candid);
+}
+
+export function phoneStatus(candid: ApiPhoneStatus): PhoneStatus {
+    if ("Unconfirmed" in candid) {
+        return {
+            kind: "unconfirmed",
+            validUntil: Number(candid.Unconfirmed.valid_until),
+            phoneNumber: phoneNumber(candid.Unconfirmed.phone_number),
+        };
+    }
+    if ("None" in candid) {
+        return { kind: "none" };
+    }
+    if ("Confirmed" in candid) {
+        return { kind: "confirmed" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiPhoneStatus type received", candid);
 }
 
 export function setUsernameResponse(candid: ApiSetUsernameResponse): SetUsernameResponse {

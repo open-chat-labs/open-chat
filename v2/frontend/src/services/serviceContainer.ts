@@ -74,7 +74,7 @@ import type { ToggleMuteNotificationResponse } from "../domain/notifications";
 import type { IOnlineClient } from "./online/online.client.interface";
 import { OnlineClient } from "./online/online.client";
 import { DataClient } from "./data/data.client";
-import { storageStore } from "stores/storage";
+import { storageStore } from "../stores/storage";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {

@@ -10,23 +10,31 @@
     import { toastStore } from "../../../stores/toast";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../../stores/iconSize";
+    import type { CreatedUser } from "../../../domain/user/user";
+    import type { ServiceContainer } from "../../../services/serviceContainer";
 
     const dispatch = createEventDispatcher();
 
+    export let api: ServiceContainer;
+    export let user: CreatedUser;
+
+    let error: string | undefined = undefined;
     let range: HTMLInputElement;
     let amount: number = 0.1;
-    let account: string = "lkasd64aadkadlkjasd;lkja;dasd;jsdlkjlKSDflkjdflkjsdf;";
     let confirming = false;
     let confirmed = false;
-    let accountSummary = account;
+    let accountSummary = user.cryptoAccounts.icp;
 
     $: min = Math.ceil($storageStore.byteLimit / 100_000_000);
     $: max = Math.ceil(ONE_GB / 100_000_000);
     $: newLimit = min;
     $: toPay = (newLimit - min) * amount;
     $: {
-        if (account.length > 20) {
-            accountSummary = account.slice(0, 10) + "..." + account.slice(account.length - 10);
+        if (user.cryptoAccounts.icp.length > 20) {
+            accountSummary =
+                user.cryptoAccounts.icp.slice(0, 10) +
+                "..." +
+                user.cryptoAccounts.icp.slice(user.cryptoAccounts.icp.length - 10);
         }
     }
 
@@ -47,14 +55,21 @@
 
     function confirm() {
         confirming = true;
-        window.setTimeout(() => {
-            confirmed = true;
-            confirming = false;
-        }, 2000);
+
+        api.notifyRegistrationFeePaid()
+            .then((resp) => {
+                if (resp === "success" || resp === "already_registered") {
+                    error = undefined;
+                    confirmed = true;
+                } else {
+                    error = "register.unableToConfirmFee";
+                }
+            })
+            .finally(() => (confirming = false));
     }
 
     function copyToClipboard() {
-        navigator.clipboard.writeText(account).then(
+        navigator.clipboard.writeText(user.cryptoAccounts.icp).then(
             () => {
                 toastStore.showSuccessToast("copiedToClipboard");
             },
@@ -73,7 +88,7 @@
     {:else}
         <div class="account-info">
             <div class="qr">
-                <QR text={account} />
+                <QR text={user.cryptoAccounts.icp} />
             </div>
             <div class="receiver">
                 <div class="account">

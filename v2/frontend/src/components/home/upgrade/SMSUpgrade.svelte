@@ -12,22 +12,25 @@
     import "intl-tel-input/build/js/utils";
     import intlTelInput, { Plugin } from "intl-tel-input";
     import { phoneNumberToString } from "../../../domain/user/user.utils";
-    import type { PhoneNumber } from "../../../domain/user/user";
+    import type { CreatedUser, PhoneNumber } from "../../../domain/user/user";
+    import type { ServiceContainer } from "../../../services/serviceContainer";
+    import { rollbar } from "../../../utils/logging";
 
     const dispatch = createEventDispatcher();
-
-    export let error: string | undefined = undefined;
+    export let api: ServiceContainer;
+    export let user: CreatedUser;
 
     function cancel() {
         dispatch("cancel");
     }
 
+    let error: string | undefined = undefined;
     let phoneElement: HTMLInputElement;
     let phoneNumberStr: string = "";
     let countryCode = 44;
     let valid = false;
     let busy = false;
-    let awaitingCode = false;
+    let awaitingCode = user.phoneStatus.kind === "unconfirmed";
     let confirmed = false;
     let phoneNumber: PhoneNumber | undefined;
     let codeValue: string = "";
@@ -48,6 +51,12 @@
         phoneElement.addEventListener("input", () => {
             valid = iti.isValidNumber();
         });
+
+        // if we have already submitted our phone number recently, skip straight to waiting for the code
+        if (user.phoneStatus.kind === "unconfirmed" && user.phoneStatus.validUntil > Date.now()) {
+            phoneNumber = user.phoneStatus.phoneNumber;
+            awaitingCode = true;
+        }
     });
 
     onDestroy(() => iti?.destroy());
@@ -55,21 +64,51 @@
     function submitPhoneNumber() {
         if (valid) {
             phoneNumber = { countryCode, number: phoneNumberStr };
-            dispatch("submitPhoneNumber", phoneNumber);
+
             busy = true;
-            window.setTimeout(() => {
-                busy = false;
-                awaitingCode = true;
-            }, 2000);
+            api.submitPhoneNumber(phoneNumber)
+                .then((resp) => {
+                    if (resp.kind === "already_registered") {
+                        error = "register.phoneAlreadyRegistered";
+                    } else if (resp.kind === "already_registered_by_other") {
+                        error = "register.phoneAlreadyRegisteredByAnother";
+                    } else if (resp.kind === "invalid_phone_number") {
+                        error = "register.phoneInvalid";
+                    } else if (resp.kind === "user_limit_reached") {
+                        error = "register.userLimitReached";
+                    } else if (resp.kind === "success") {
+                        error = undefined;
+                        awaitingCode = true;
+                    }
+                })
+                .catch((err) => {
+                    rollbar.error("Error submitting phone number: ", err);
+                })
+                .finally(() => (busy = false));
         }
     }
 
     function submitCode() {
         busy = true;
-        window.setTimeout(() => {
-            busy = false;
-            confirmed = true;
-        }, 2000);
+        api.confirmPhoneNumber(codeValue)
+            .then((resp) => {
+                if (resp === "already_claimed") {
+                    error = "register.confirmAlreadyClaimed";
+                } else if (resp === "code_expired") {
+                    error = "register.codeExpired";
+                } else if (resp === "code_incorrect") {
+                    error = "register.codeIncorrect";
+                } else if (resp === "not_found") {
+                    error = "register.codeNotFound";
+                } else if (resp === "success") {
+                    error = undefined;
+                    confirmed = true;
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Error submitting sms code: ", err);
+            })
+            .finally(() => (busy = false));
     }
 
     function resendCode() {
@@ -109,7 +148,6 @@
                 invalid={error !== undefined}
                 align="center"
                 fontSize="large"
-                autofocus={true}
                 bind:value={codeValue}
                 minlength={6}
                 maxlength={6}
@@ -126,7 +164,6 @@
         <form class="phone-number" on:submit|preventDefault={submitPhoneNumber}>
             <div class="number">
                 <input
-                    autofocus={true}
                     minlength={3}
                     maxlength={25}
                     class="textbox"

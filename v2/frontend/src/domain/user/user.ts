@@ -115,6 +115,11 @@ export type ConfirmedPendingUsername = {
     registrationState: RegistrationState;
 };
 
+export type PhoneStatus =
+    | { kind: "confirmed" }
+    | { kind: "none" }
+    | { kind: "unconfirmed"; validUntil: number; phoneNumber: PhoneNumber };
+
 export type CreatedUser = {
     kind: "created_user";
     username: string;
@@ -122,6 +127,7 @@ export type CreatedUser = {
         cycles: string;
         icp: string;
     };
+    phoneStatus: PhoneStatus;
     userId: string;
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
     wasmVersion: Version;
