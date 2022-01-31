@@ -99,7 +99,7 @@ export class DataClient implements IDataClient {
                     content.videoData.blobReference = this.extractBlobReference(video);
                     content.imageData.blobReference = this.extractBlobReference(image);
                     // TODO - include the bytes of the image too.
-                    // We can't simply add the bytes because the user may have uploaded the image previously already in
+                    // We can't simply add the bytes because the user may have previously uploaded the same image, in
                     // which case we do not charge them for uploading it again. We need the OpenStorage agent to return
                     // additional data.
                     byteLimit = video.byteLimit;
