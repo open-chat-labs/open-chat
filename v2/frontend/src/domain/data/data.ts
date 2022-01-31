@@ -9,6 +9,10 @@ export interface DataContent {
     blobUrl?: string;
 }
 
+export type UploadDataResponse = StorageStatus & {
+    success: boolean,
+}
+
 export type StorageStatus = {
     byteLimit: bigint;
     bytesUsed: bigint;
