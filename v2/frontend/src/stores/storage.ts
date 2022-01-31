@@ -1,10 +1,10 @@
-import type { UserStorage } from "../domain/user/user";
+import type { StorageStatus } from "../domain/data/data";
 import { derived, writable } from "svelte/store";
 
 export const ONE_HUNDRED_MB = 100_000_000;
 export const ONE_GB = 1000_000_000;
 
-export const storageStore = writable<UserStorage>({
+export const storageStore = writable<StorageStatus>({
     byteLimit: 0,
     bytesUsed: 0,
 });

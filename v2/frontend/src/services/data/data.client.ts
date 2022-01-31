@@ -7,6 +7,7 @@ import { DataClientMock } from "./data.client.mock";
 import type { MessageContent } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
 import type { BlobReference, StorageStatus, UploadDataResponse } from "../../domain/data/data";
+import { storageStore } from "../../stores/storage";
 
 export class DataClient implements IDataClient {
     private openStorageAgent: OpenStorageAgent;
@@ -108,6 +109,11 @@ export class DataClient implements IDataClient {
                 });
             }
         }
+
+        storageStore.set({
+            byteLimit,
+            bytesUsed,
+        });
 
         return { success: true, byteLimit, bytesUsed };
     }
