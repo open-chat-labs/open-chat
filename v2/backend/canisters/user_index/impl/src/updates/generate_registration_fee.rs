@@ -2,8 +2,6 @@ use crate::model::user::{UnconfirmedUser, UnconfirmedUserState, User};
 use crate::{mutate_state, RuntimeState, REGISTRATION_FEE_EXPIRY_MILLIS};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use ic_ledger_types::AccountIdentifier;
-use ledger_utils::convert_to_subaccount;
 use types::{Cryptocurrency, Cycles, CyclesRegistrationFee, ICPRegistrationFee, RegistrationFee, ICP};
 use user_index_canister::generate_registration_fee::{Response::*, *};
 
@@ -28,8 +26,7 @@ fn generate_registration_fee_impl(args: Args, runtime_state: &mut RuntimeState) 
 
     let fee = match args.currency {
         Cryptocurrency::ICP => {
-            let subaccount = convert_to_subaccount(&caller);
-            let recipient = AccountIdentifier::new(&runtime_state.env.canister_id(), &subaccount);
+            let recipient = runtime_state.user_storage_upgrade_icp_account(caller.into());
 
             RegistrationFee::ICP(ICPRegistrationFee {
                 amount: ICP_REGISTRATION_FEE,

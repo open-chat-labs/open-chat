@@ -1,8 +1,6 @@
 use crate::model::user::User;
 use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
-use ic_ledger_types::AccountIdentifier;
-use ledger_utils::convert_to_subaccount;
 use types::CanisterUpgradeStatus;
 use user_index_canister::current_user::{Response::*, *};
 
@@ -54,8 +52,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                     crate::model::user::PhoneStatus::None => PhoneStatus::None,
                 };
 
-                let subaccount = convert_to_subaccount(&caller);
-                let storage_upgrade_icp_account = AccountIdentifier::new(&runtime_state.env.canister_id(), &subaccount);
+                let storage_upgrade_icp_account = runtime_state.user_storage_upgrade_icp_account(u.user_id);
 
                 Created(CreatedResult {
                     user_id: u.user_id,
