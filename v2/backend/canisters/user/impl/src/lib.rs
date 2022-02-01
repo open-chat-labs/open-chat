@@ -120,7 +120,6 @@ struct Data {
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
-    #[serde(default)]
     pub bio: String,
 }
 

@@ -97,6 +97,27 @@ type NotifyRegistrationFeePaidResponse =
         InternalError: text;
     };
 
+type UpgradeStorageArgs =
+    record {
+        new_storage_limit_bytes: nat64;
+    };
+
+type UpgradeStorageResponse =
+    variant {
+        Success: record {
+            remaining_account_credit: ICP;
+        };
+        SuccessNoChange;
+        PaymentInsufficient: record {
+            account_credit: ICP;
+            amount_required: ICP;
+        };
+        PaymentNotFound;
+        StorageLimitExceeded: nat64; // Returns the storage limit in bytes
+        UserNotFound;
+        InternalError: text;
+    };
+
 type CreateCanisterArgs =
     record {
     };
@@ -186,7 +207,8 @@ type CurrentUserResponse =
             wasm_version: Version;
             open_storage_limit_bytes: nat64;
             phone_status: PhoneStatus;
-            storage_upgrade_icp_account: AccountIdentifier;
+            billing_account: AccountIdentifier;
+            account_credit: ICP;
         };
     };
 
@@ -312,6 +334,9 @@ service: {
     generate_registration_fee: (GenerateRegistrationFeeArgs) -> (GenerateRegistrationFeeResponse);
 
     notify_registration_fee_paid: (NotifyRegistrationFeePaidArgs) -> (NotifyRegistrationFeePaidResponse);
+
+    // Increases the user's storage limit in OpenStorage
+    upgrade_storage: (UpgradeStorageArgs) -> (UpgradeStorageResponse);
 
     // Once the confirm_phone_number call has succeeded (user is in one of the "confirmed" states)
     // then call this to create a canister for the user

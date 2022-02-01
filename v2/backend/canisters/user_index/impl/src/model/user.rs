@@ -1,4 +1,4 @@
-use crate::DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT;
+use crate::model::account_billing::AccountBilling;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
@@ -187,19 +187,13 @@ pub struct CreatedUser {
     pub cycle_top_ups: Vec<CyclesTopUp>,
     pub avatar_id: Option<u128>,
     pub registration_fee: Option<RegistrationFee>,
-    #[serde(default = "default_byte_limit")]
+    #[serde(default)]
+    pub account_billing: AccountBilling,
     pub open_storage_limit_bytes: u64,
-    #[serde(rename(deserialize = "phone_number"))]
     pub phone_status: PhoneStatus,
 }
 
-fn default_byte_limit() -> u64 {
-    DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT
-}
-
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-#[serde(from = "Option<PhoneNumber>")]
-#[allow(dead_code)]
 pub enum PhoneStatus {
     None,
     Unconfirmed(UnconfirmedPhoneNumber),
@@ -212,15 +206,6 @@ impl PhoneStatus {
             PhoneStatus::None => None,
             PhoneStatus::Unconfirmed(un) => Some(&un.phone_number),
             PhoneStatus::Confirmed(pn) => Some(pn),
-        }
-    }
-}
-
-impl From<Option<PhoneNumber>> for PhoneStatus {
-    fn from(phone_number: Option<PhoneNumber>) -> Self {
-        match phone_number {
-            Some(pn) => PhoneStatus::Confirmed(pn),
-            None => PhoneStatus::None,
         }
     }
 }
@@ -329,6 +314,7 @@ impl Default for CreatedUser {
             cycle_top_ups: Vec::new(),
             avatar_id: None,
             registration_fee: None,
+            account_billing: AccountBilling::default(),
             open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
         }

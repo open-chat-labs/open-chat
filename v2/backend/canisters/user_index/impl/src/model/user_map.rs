@@ -1,3 +1,4 @@
+use crate::model::account_billing::{AccountCharge, AccountPayment};
 use crate::model::user::{ConfirmedUser, PhoneStatus, UnconfirmedPhoneNumber, UnconfirmedUser, UnconfirmedUserState, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, USER_LIMIT};
 use candid::{CandidType, Principal};
@@ -27,7 +28,6 @@ pub struct UserMap {
     users_confirmed_via_phone: u64,
     users_confirmed_via_icp: u64,
     users_confirmed_via_cycles: u64,
-    #[serde(default)]
     users_confirmed_automatically: u64,
     cached_metrics: Timestamped<Metrics>,
     unconfirmed_users_last_pruned: TimestampMillis,
@@ -49,6 +49,14 @@ pub struct Metrics {
 }
 
 impl UserMap {
+    pub fn repopulate_missing_phone_statuses(&mut self) {
+        for (phone_number, principal) in self.phone_number_to_principal.iter() {
+            if let Some(User::Created(user)) = self.users_by_principal.get_mut(principal) {
+                user.phone_status = PhoneStatus::Confirmed(phone_number.clone());
+            }
+        }
+    }
+
     pub fn register(&mut self, principal: Principal, username: &str, now: TimestampMillis) -> RegisterUserResult {
         if self.users_by_principal.contains_key(&principal) {
             return RegisterUserResult::AlreadyExists;
@@ -298,21 +306,23 @@ impl UserMap {
                         return ConfirmPhoneNumberResult::PhoneNumberNotSubmitted;
                     }
                 }
-                User::Created(u) => match &u.phone_status {
-                    PhoneStatus::Confirmed(_) => return ConfirmPhoneNumberResult::AlreadyConfirmed,
-                    PhoneStatus::Unconfirmed(p) => {
-                        if now > p.valid_until {
-                            return ConfirmPhoneNumberResult::CodeExpired;
-                        } else if (confirmation_code != p.confirmation_code) && !test_code {
-                            return ConfirmPhoneNumberResult::CodeIncorrect;
-                        } else {
-                            u.phone_status = PhoneStatus::Confirmed(p.phone_number.clone());
-                            u.open_storage_limit_bytes += DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT;
-                            return ConfirmPhoneNumberResult::Success(Some(u.open_storage_limit_bytes));
+                User::Created(u) => {
+                    return match &u.phone_status {
+                        PhoneStatus::Confirmed(_) => ConfirmPhoneNumberResult::AlreadyConfirmed,
+                        PhoneStatus::Unconfirmed(p) => {
+                            if now > p.valid_until {
+                                ConfirmPhoneNumberResult::CodeExpired
+                            } else if (confirmation_code != p.confirmation_code) && !test_code {
+                                ConfirmPhoneNumberResult::CodeIncorrect
+                            } else {
+                                u.phone_status = PhoneStatus::Confirmed(p.phone_number.clone());
+                                u.open_storage_limit_bytes += DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT;
+                                ConfirmPhoneNumberResult::Success(Some(u.open_storage_limit_bytes))
+                            }
                         }
+                        PhoneStatus::None => ConfirmPhoneNumberResult::PhoneNumberNotSubmitted,
                     }
-                    PhoneStatus::None => return ConfirmPhoneNumberResult::PhoneNumberNotSubmitted,
-                },
+                }
                 _ => return ConfirmPhoneNumberResult::AlreadyConfirmed,
             }
         } else {
@@ -404,22 +414,48 @@ impl UserMap {
     }
 
     pub fn mark_cycles_top_up(&mut self, user_id: &UserId, top_up: CyclesTopUp) -> bool {
-        if let Some(principal) = self.user_id_to_principal.get(user_id) {
-            if let Some(user) = self.users_by_principal.get_mut(principal) {
-                return user.mark_cycles_top_up(top_up);
-            }
+        if let Some(user) = self.get_by_user_id_mut_internal(user_id) {
+            user.mark_cycles_top_up(top_up);
+            true
+        } else {
+            false
         }
-        false
     }
 
     pub fn set_avatar_id(&mut self, user_id: &UserId, avatar_id: Option<u128>, now: TimestampMillis) -> bool {
-        if let Some(principal) = self.user_id_to_principal.get(user_id) {
-            if let Some(user) = self.users_by_principal.get_mut(principal) {
-                return user.set_avatar_id(avatar_id, now);
-            }
+        if let Some(user) = self.get_by_user_id_mut_internal(user_id) {
+            user.set_avatar_id(avatar_id, now);
+            true
+        } else {
+            false
         }
+    }
 
-        false
+    pub fn record_account_payment(&mut self, user_id: &UserId, payment: AccountPayment) -> bool {
+        if let Some(User::Created(user)) = self.get_by_user_id_mut_internal(user_id) {
+            user.account_billing.add_payment(payment);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn record_account_charge(&mut self, user_id: &UserId, charge: AccountCharge) -> bool {
+        if let Some(User::Created(user)) = self.get_by_user_id_mut_internal(user_id) {
+            user.account_billing.add_charge(charge);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn set_storage_limit(&mut self, user_id: &UserId, bytes: u64) -> bool {
+        if let Some(User::Created(user)) = self.get_by_user_id_mut_internal(user_id) {
+            user.open_storage_limit_bytes = bytes;
+            true
+        } else {
+            false
+        }
     }
 
     pub fn search(&self, term: &str) -> impl Iterator<Item = &User> {
@@ -537,6 +573,11 @@ impl UserMap {
             });
             self.update(user);
         }
+    }
+
+    fn get_by_user_id_mut_internal(&mut self, user_id: &UserId) -> Option<&mut User> {
+        let principal = self.user_id_to_principal.get(user_id)?;
+        self.users_by_principal.get_mut(principal)
     }
 }
 

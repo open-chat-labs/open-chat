@@ -88,7 +88,7 @@ impl RuntimeState {
         format!("{:0>6}", random % 1000000)
     }
 
-    pub fn user_storage_upgrade_icp_account(&self, user_id: UserId) -> AccountIdentifier {
+    pub fn user_billing_account(&self, user_id: UserId) -> AccountIdentifier {
         let subaccount = convert_to_subaccount(&user_id.into());
         AccountIdentifier::new(&self.env.canister_id(), &subaccount)
     }
