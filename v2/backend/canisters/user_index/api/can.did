@@ -99,13 +99,21 @@ type NotifyRegistrationFeePaidResponse =
 
 type NotifyStorageUpgradeFeePaidArgs =
     record {
+        new_storage_limit_bytes: nat64;
     };
 
 type NotifyStorageUpgradeFeePaidResponse =
     variant {
-        Success: record { open_storage_bytes_limit: nat64 };
-        PaymentInsufficient;
+        Success: record {
+            remaining_account_credit: ICP;
+        };
+        SuccessNoChange;
+        PaymentInsufficient: record {
+            account_credit: ICP;
+            amount_required: ICP;
+        };
         PaymentNotFound;
+        StorageLimitExceeded: nat64; // Returns the storage limit in bytes
         UserNotFound;
         InternalError: text;
     };
