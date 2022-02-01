@@ -452,7 +452,6 @@
                         {admin}
                         {preview}
                         {isPublic}
-                        api={controller.api}
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo

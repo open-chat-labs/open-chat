@@ -25,7 +25,6 @@
     import { iconSize } from "../../../stores/iconSize";
     import { now } from "../../../stores/time";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
-    import type { ServiceContainer } from "../../../services/serviceContainer";
 
     const dispatch = createEventDispatcher();
 
@@ -33,7 +32,6 @@
     export let participant: FullParticipant | BlockedParticipant;
     export let myRole: ParticipantRole;
     export let publicGroup: boolean;
-    export let api: ServiceContainer;
 
     let hovering = false;
     let viewProfile = false;
@@ -84,7 +82,6 @@
 {#if viewProfile}
     <ViewUserProfile
         userId={participant.userId}
-        {api}
         on:openDirectChat={participantSelected}
         on:close={closeUserProfile} />
 {/if}

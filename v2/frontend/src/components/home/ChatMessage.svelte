@@ -34,7 +34,6 @@
     import MessageReaction from "./MessageReaction.svelte";
     import Reload from "../Reload.svelte";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
-    import type { ServiceContainer } from "../../services/serviceContainer";
 
     const dispatch = createEventDispatcher();
 
@@ -56,7 +55,6 @@
     export let admin: boolean;
     export let preview: boolean;
     export let isPublic: boolean;
-    export let api: ServiceContainer;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
@@ -234,7 +232,6 @@
 {#if viewProfile}
     <ViewUserProfile
         userId={sender.userId}
-        {api}
         anchor={usernameAnchor}
         on:openDirectChat={chatWithUser}
         on:close={closeUserProfile} />

@@ -82,6 +82,8 @@ function buildIdenticonUrl(userId: string) {
     return `data:image/svg+xml;base64,${identicon}`;
 }
 
+export const apiKey = Symbol();
+
 export class ServiceContainer implements MarkMessagesRead {
     private _userIndexClient: IUserIndexClient;
     private _onlineClient: IOnlineClient;

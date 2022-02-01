@@ -35,7 +35,6 @@
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
-    import type { ServiceContainer } from "../../services/serviceContainer";
     import { formatLastOnlineDate } from "../../domain/user/user.utils";
 
     const dispatch = createEventDispatcher();
@@ -44,7 +43,6 @@
     export let blocked: boolean;
     export let preview: boolean;
     export let unreadMessages: number;
-    export let api: ServiceContainer;
 
     let supportsNotifications = notificationsSupported();
     let viewProfile = false;
@@ -172,7 +170,7 @@
         </div>
     {/if}
     {#if viewProfile}
-        <ViewUserProfile {userId} {api} chatButton={false} on:close={closeUserProfile} />
+        <ViewUserProfile {userId} chatButton={false} on:close={closeUserProfile} />
     {/if}
 
     <div class="avatar">

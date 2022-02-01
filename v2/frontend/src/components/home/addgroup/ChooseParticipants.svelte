@@ -9,14 +9,12 @@
     import SelectUsers from "../SelectUsers.svelte";
     import type { CandidateGroupChat } from "../../../domain/chat/chat";
     import { createEventDispatcher } from "svelte";
-    import type { ServiceContainer } from "../../../services/serviceContainer";
 
     const dispatch = createEventDispatcher();
 
     export let candidateGroup: CandidateGroupChat;
     export let creatingCanister: boolean;
     export let addingParticipants: boolean;
-    export let api: ServiceContainer;
 
     $: numParticipants = candidateGroup.participants.length;
     $: selectedUsers = candidateGroup.participants.map((p) => p.user);
@@ -53,7 +51,6 @@
         {#if !addingParticipants}
             <SelectUsers
                 mode={"add"}
-                {api}
                 on:deleteUser={deleteParticipant}
                 on:selectUser={addParticipant}
                 {selectedUsers} />

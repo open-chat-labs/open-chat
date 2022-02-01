@@ -10,12 +10,10 @@
     import { onDestroy } from "svelte";
     import { getMinVisibleMessageIndex, isPreviewing } from "../../domain/chat/chat.utils";
     import type { GroupChatSummary, Mention } from "../../domain/chat/chat";
-    import type { ServiceContainer } from "../../services/serviceContainer";
 
     export let controller: ChatController;
     export let blocked: boolean;
     export let joining: GroupChatSummary | undefined;
-    export let api: ServiceContainer;
 
     let chatId = controller.chatId;
     let unreadMessages = 0;
@@ -104,10 +102,6 @@
 
 <div class="wrapper">
     <CurrentChatHeader
-        {blocked}
-        {preview}
-        {unreadMessages}
-        {api}
         on:clearSelection
         on:blockUser
         on:unblockUser
@@ -118,6 +112,9 @@
         on:showParticipants
         on:leaveGroup
         on:deleteGroup
+        {blocked}
+        {preview}
+        {unreadMessages}
         selectedChatSummary={chat} />
     <CurrentChatMessages
         on:replyPrivatelyTo

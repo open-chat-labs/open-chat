@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount, tick } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import Avatar from "../../Avatar.svelte";
     import Markdown from "../Markdown.svelte";
     import { AvatarSize } from "../../../domain/user/user";
@@ -7,15 +7,15 @@
     import type { PartialUserSummary } from "../../../domain/user/user";
     import { avatarUrl, formatLastOnlineDate } from "../../../domain/user/user.utils";
     import { rtlStore } from "../../../stores/rtl";
-    import type { ServiceContainer } from "../../../services/serviceContainer";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { ScreenWidth, screenWidth } from "../../../stores/screenDimensions";
+    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
 
+    const api: ServiceContainer = getContext(apiKey);
     const dispatch = createEventDispatcher();
 
     export let userId: string;
-    export let api: ServiceContainer;
     export let anchor: HTMLElement | undefined = undefined;
     export let chatButton = true;
 
