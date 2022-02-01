@@ -24,7 +24,7 @@ async fn notify_storage_upgrade_fee_paid(args: Args) -> Response {
         Ok(ok) => match ic_ledger_types::account_balance(
             MAINNET_LEDGER_CANISTER_ID,
             AccountBalanceArgs {
-                account: ok.ledger_account,
+                account: ok.billing_account,
             },
         )
         .await
@@ -38,7 +38,7 @@ async fn notify_storage_upgrade_fee_paid(args: Args) -> Response {
 
 struct PrepareResult {
     caller: Principal,
-    ledger_account: AccountIdentifier,
+    billing_account: AccountIdentifier,
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -47,7 +47,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
         if user.open_storage_limit_bytes < args.new_storage_limit_bytes {
             Ok(PrepareResult {
                 caller,
-                ledger_account: runtime_state.user_storage_upgrade_icp_account(caller.into()),
+                billing_account: runtime_state.user_billing_account(caller.into()),
             })
         } else {
             Err(SuccessNoChange)

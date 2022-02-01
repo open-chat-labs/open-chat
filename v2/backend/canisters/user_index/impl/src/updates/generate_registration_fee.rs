@@ -26,7 +26,7 @@ fn generate_registration_fee_impl(args: Args, runtime_state: &mut RuntimeState) 
 
     let fee = match args.currency {
         Cryptocurrency::ICP => {
-            let recipient = runtime_state.user_storage_upgrade_icp_account(caller.into());
+            let recipient = runtime_state.user_billing_account(caller.into());
 
             RegistrationFee::ICP(ICPRegistrationFee {
                 amount: ICP_REGISTRATION_FEE,
