@@ -15,7 +15,7 @@ const BYTES_PER_1GB: u64 = 1000 * 1024 * 1024; // TODO we should be consistent b
 
 #[update]
 #[trace]
-async fn notify_storage_upgrade_fee_paid(args: Args) -> Response {
+async fn upgrade_storage(args: Args) -> Response {
     if args.new_storage_limit_bytes > BYTES_PER_1GB {
         return StorageLimitExceeded(BYTES_PER_1GB);
     }
