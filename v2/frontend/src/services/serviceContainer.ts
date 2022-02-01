@@ -17,6 +17,7 @@ import type {
     User,
     SetBioResponse,
     RegisterUserResponse,
+    UpgradeStorageResponse,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -661,5 +662,9 @@ export class ServiceContainer implements MarkMessagesRead {
     getUserStorageLimits(): Promise<void> {
         // do we need to do something if this fails? Not sure there's much we can do
         return DataClient.create(this.identity).storageStatus().then(storageStore.set);
+    }
+
+    upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
+        return this._userIndexClient.upgradeStorage(newLimitBytes);
     }
 }

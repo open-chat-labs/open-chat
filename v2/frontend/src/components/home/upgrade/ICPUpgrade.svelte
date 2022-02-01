@@ -12,6 +12,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import type { CreatedUser } from "../../../domain/user/user";
     import type { ServiceContainer } from "../../../services/serviceContainer";
+    import { E8S_PER_ICP } from "../../../domain/user/user";
 
     const dispatch = createEventDispatcher();
 
@@ -20,21 +21,22 @@
 
     let error: string | undefined = undefined;
     let range: HTMLInputElement;
-    let amount: number = 0.1;
+    let amount: number = 0.1; // TODO - storage price currently hard-coded
     let confirming = false;
     let confirmed = false;
-    let accountSummary = user.storageIcpAccount;
+    let accountSummary = user.billingAccount;
 
+    $: icpBalance = user.accountCredite8s / E8S_PER_ICP;
     $: min = Math.ceil($storageStore.byteLimit / ONE_HUNDRED_MB);
     $: max = Math.ceil(ONE_GB / ONE_HUNDRED_MB);
     $: newLimit = min;
-    $: toPay = (newLimit - min) * amount;
+    $: toPay = (newLimit - min - icpBalance) * amount;
     $: {
-        if (user.storageIcpAccount.length > 20) {
+        if (user.billingAccount.length > 20) {
             accountSummary =
-                user.storageIcpAccount.slice(0, 10) +
+                user.billingAccount.slice(0, 10) +
                 "..." +
-                user.storageIcpAccount.slice(user.storageIcpAccount.length - 10);
+                user.billingAccount.slice(user.billingAccount.length - 10);
         }
     }
 
@@ -56,10 +58,14 @@
     function confirm() {
         confirming = true;
 
-        api.notifyRegistrationFeePaid()
+        console.log("New limit: ", newLimit * ONE_HUNDRED_MB);
+
+        api.upgradeStorage(newLimit * ONE_HUNDRED_MB)
             .then((resp) => {
                 console.log("Notify: ", resp);
-                if (resp === "success" || resp === "already_registered") {
+                if (resp.kind === "success" || resp.kind === "success_no_change") {
+                    // todo - update the user's balance
+                    // todo - update the user's storage limit
                     error = undefined;
                     confirmed = true;
                 } else {
@@ -70,7 +76,7 @@
     }
 
     function copyToClipboard() {
-        navigator.clipboard.writeText(user.storageIcpAccount).then(
+        navigator.clipboard.writeText(user.billingAccount).then(
             () => {
                 toastStore.showSuccessToast("copiedToClipboard");
             },
@@ -89,7 +95,7 @@
     {:else}
         <div class="account-info">
             <div class="qr">
-                <QR text={user.storageIcpAccount} />
+                <QR text={user.billingAccount} />
             </div>
             <div class="receiver">
                 <div class="account">
@@ -125,7 +131,9 @@
         </div>
 
         <p class="para">
-            {$_("currentLimit", { values: { limit: $storageInMb.mbLimit.toString() } })}
+            {$_("currentLimit", {
+                values: { limit: $storageInMb.mbLimit.toString() },
+            })}
         </p>
 
         <p class="para">

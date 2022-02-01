@@ -95,11 +95,12 @@ export const idlFactory = ({ IDL }) => {
     'Created' : IDL.Record({
       'username' : IDL.Text,
       'phone_status' : PhoneStatus,
+      'billing_account' : AccountIdentifier,
       'wasm_version' : Version,
+      'account_credit' : ICP,
       'user_id' : UserId,
       'avatar_id' : IDL.Opt(IDL.Nat),
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'storage_upgrade_icp_account' : AccountIdentifier,
       'open_storage_limit_bytes' : IDL.Nat64,
     }),
     'UserNotFound' : IDL.Null,
@@ -194,6 +195,21 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'UserNotFound' : IDL.Null,
   });
+  const UpgradeStorageArgs = IDL.Record({
+    'new_storage_limit_bytes' : IDL.Nat64,
+  });
+  const UpgradeStorageResponse = IDL.Variant({
+    'SuccessNoChange' : IDL.Null,
+    'Success' : IDL.Record({ 'remaining_account_credit' : ICP }),
+    'PaymentNotFound' : IDL.Null,
+    'PaymentInsufficient' : IDL.Record({
+      'amount_required' : ICP,
+      'account_credit' : ICP,
+    }),
+    'InternalError' : IDL.Text,
+    'StorageLimitExceeded' : IDL.Nat64,
+    'UserNotFound' : IDL.Null,
+  });
   const UserArgs = IDL.Record({
     'username' : IDL.Opt(IDL.Text),
     'user_id' : IDL.Opt(UserId),
@@ -275,6 +291,11 @@ export const idlFactory = ({ IDL }) => {
     'upgrade_canister' : IDL.Func(
         [UpgradeCanisterArgs],
         [UpgradeCanisterResponse],
+        [],
+      ),
+    'upgrade_storage' : IDL.Func(
+        [UpgradeStorageArgs],
+        [UpgradeStorageResponse],
         [],
       ),
     'user' : IDL.Func([UserArgs], [UserResponse], ['query']),

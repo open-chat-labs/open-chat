@@ -13,6 +13,7 @@
     function toggle() {
         open = !open;
         dispatch(open ? "opened" : "closed");
+        dispatch("toggle");
     }
 </script>
 

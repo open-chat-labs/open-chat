@@ -17,7 +17,7 @@
     "enjoyYourStorage": "Enjoy posting pictures and videos to your heart's content",
     "pleaseDeposit": "Please deposit {amount} ICP into the account above and then hit the confirm button.",
     "storage": "Storage",
-    "currentLimit": "Your current storage limit is {limit}MB",
+    "currentLimit": "Your current storage limit is {limit}MB.",
     "newLimit": "{limit} / 1GB",
     "chooseAStorageLevel": "Choose a storage level up to a maximum of 1GB",
     "currentUsage": "Current Usage",

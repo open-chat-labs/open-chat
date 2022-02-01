@@ -14,6 +14,7 @@ import type {
     FeeCurrency,
     NotificationFeePaidResponse,
     RegisterUserResponse,
+    UpgradeStorageResponse,
 } from "../../domain/user/user";
 
 export interface IUserIndexClient {
@@ -29,4 +30,5 @@ export interface IUserIndexClient {
     generateRegistrationFee(currency: FeeCurrency): Promise<RegistrationFeeResponse>;
     notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse>;
     registerUser(username: string): Promise<RegisterUserResponse>;
+    upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse>;
 }

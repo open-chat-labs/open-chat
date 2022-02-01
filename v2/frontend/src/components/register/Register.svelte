@@ -12,7 +12,7 @@
     import { createEventDispatcher } from "svelte";
     import ChoosePath from "./ChoosePath.svelte";
     import ConfirmTransfer from "./ConfirmTransfer.svelte";
-    import { E8S_PER_ICP } from "domain/user/user";
+    import { E8S_PER_ICP } from "../../domain/user/user";
 
     const dispatch = createEventDispatcher();
 

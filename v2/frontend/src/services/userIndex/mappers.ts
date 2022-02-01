@@ -16,6 +16,7 @@ import type {
     NotificationFeePaidResponse,
     RegisterUserResponse,
     PhoneStatus,
+    UpgradeStorageResponse,
 } from "../../domain/user/user";
 import type {
     ApiConfirmationState,
@@ -35,6 +36,7 @@ import type {
     ApiSubmitPhoneNumberResponse,
     ApiUnconfirmedUserState,
     ApiUpgradeCanisterResponse,
+    ApiUpgradeStorageResponse,
     ApiUsersResponse,
     ApiUserSummary,
 } from "./candid/idl";
@@ -270,6 +272,38 @@ export function feePaidResponse(
     );
 }
 
+export function upgradeStorageResponse(candid: ApiUpgradeStorageResponse): UpgradeStorageResponse {
+    if ("SuccessNoChange" in candid) {
+        return { kind: "success_no_change" };
+    }
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            accountCredite8s: Number(candid.Success.remaining_account_credit.e8s),
+        };
+    }
+    if ("PaymentNotFound" in candid) {
+        return { kind: "payment_not_found" };
+    }
+    if ("PaymentInsufficient" in candid) {
+        return {
+            kind: "payment_insufficient",
+            accountCredite8s: Number(candid.PaymentInsufficient.account_credit.e8s),
+            ammountRequirede8s: Number(candid.PaymentInsufficient.amount_required.e8s),
+        };
+    }
+    if ("InternalError" in candid) {
+        return { kind: "internal_error" };
+    }
+    if ("StorageLimitExceeded" in candid) {
+        return { kind: "storage_limit_exceeded" };
+    }
+    if ("UserNotFound" in candid) {
+        return { kind: "user_not_found" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiUpgradeStorageResponse type received", candid);
+}
+
 export function generateRegistrationFeeResponse(
     candid: ApiGenerateRegistrationFeeResponse
 ): RegistrationFeeResponse {
@@ -351,11 +385,13 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
 
     if ("Created" in candid) {
         const version = candid.Created.wasm_version;
+        console.log("User: ", candid.Created);
         return {
             kind: "created_user",
             userId: candid.Created.user_id.toString(),
             username: candid.Created.username,
-            storageIcpAccount: recipientToHexString(candid.Created.storage_upgrade_icp_account),
+            accountCredite8s: Number(candid.Created.account_credit.e8s),
+            billingAccount: recipientToHexString(candid.Created.billing_account),
             phoneStatus: phoneStatus(candid.Created.phone_status),
             canisterUpgradeStatus:
                 "Required" in candid.Created.canister_upgrade_status

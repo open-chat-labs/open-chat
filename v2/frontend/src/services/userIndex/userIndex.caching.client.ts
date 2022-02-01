@@ -15,6 +15,7 @@ import type {
     SetUsernameResponse,
     SubmitPhoneNumberResponse,
     UpgradeCanisterResponse,
+    UpgradeStorageResponse,
     UsersArgs,
     UsersResponse,
     UserSummary,
@@ -161,5 +162,9 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     registerUser(username: string): Promise<RegisterUserResponse> {
         return this.client.registerUser(username);
+    }
+
+    upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
+        return this.client.upgradeStorage(newLimitBytes);
     }
 }

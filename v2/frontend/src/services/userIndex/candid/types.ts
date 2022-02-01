@@ -157,11 +157,12 @@ export type CurrentUserResponse = {
     'Created' : {
       'username' : string,
       'phone_status' : PhoneStatus,
+      'billing_account' : AccountIdentifier,
       'wasm_version' : Version,
+      'account_credit' : ICP,
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'storage_upgrade_icp_account' : AccountIdentifier,
       'open_storage_limit_bytes' : bigint,
     }
   } |
@@ -637,6 +638,16 @@ export type UpgradeCanisterResponse = { 'UpgradeInProgress' : null } |
   { 'UpgradeNotRequired' : null } |
   { 'InternalError' : string } |
   { 'UserNotFound' : null };
+export interface UpgradeStorageArgs { 'new_storage_limit_bytes' : bigint }
+export type UpgradeStorageResponse = { 'SuccessNoChange' : null } |
+  { 'Success' : { 'remaining_account_credit' : ICP } } |
+  { 'PaymentNotFound' : null } |
+  {
+    'PaymentInsufficient' : { 'amount_required' : ICP, 'account_credit' : ICP }
+  } |
+  { 'InternalError' : string } |
+  { 'StorageLimitExceeded' : bigint } |
+  { 'UserNotFound' : null };
 export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserArgs {
   'username' : [] | [string],
@@ -714,6 +725,9 @@ export interface _SERVICE {
   'super_admins' : (arg_0: SuperAdminsArgs) => Promise<SuperAdminsResponse>,
   'upgrade_canister' : (arg_0: UpgradeCanisterArgs) => Promise<
       UpgradeCanisterResponse
+    >,
+  'upgrade_storage' : (arg_0: UpgradeStorageArgs) => Promise<
+      UpgradeStorageResponse
     >,
   'user' : (arg_0: UserArgs) => Promise<UserResponse>,
   'users' : (arg_0: UsersArgs) => Promise<UsersResponse>,

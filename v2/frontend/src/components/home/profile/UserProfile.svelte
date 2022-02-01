@@ -1,5 +1,4 @@
 <script lang="ts">
-    import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import { avatarUrl } from "../../../domain/user/user.utils";
     import type { PartialUserSummary } from "../../../domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
@@ -18,7 +17,13 @@
     import { supported as notificationsSupported } from "../../../utils/notifications";
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
-    import { enterSend, scrollStrategy } from "../../../stores/settings";
+    import {
+        accountSectionOpen,
+        appearanceSectionOpen,
+        chatsSectionOpen,
+        enterSend,
+        scrollStrategy,
+    } from "../../../stores/settings";
     import { createEventDispatcher } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "./Toggle.svelte";
@@ -202,7 +207,10 @@
     </div>
 
     <div class="appearance">
-        <CollapsibleCard open={false} headerText={$_("appearance")}>
+        <CollapsibleCard
+            on:toggle={appearanceSectionOpen.toggle}
+            open={$appearanceSectionOpen}
+            headerText={$_("appearance")}>
             <div class="legend">{$_("preferredLanguage")}</div>
             <Select bind:value={selectedLocale}>
                 {#each supportedLanguages as lang}
@@ -237,7 +245,10 @@
     </div>
 
     <div class="chats">
-        <CollapsibleCard open={false} headerText={$_("chats")}>
+        <CollapsibleCard
+            on:toggle={chatsSectionOpen.toggle}
+            open={$chatsSectionOpen}
+            headerText={$_("chats")}>
             <Toggle
                 id={"enter-send"}
                 on:change={() => enterSend.toggle()}
@@ -267,7 +278,10 @@
     </div>
 
     <div class="account">
-        <CollapsibleCard open={true} headerText={$_("account")}>
+        <CollapsibleCard
+            on:toggle={accountSectionOpen.toggle}
+            open={$accountSectionOpen}
+            headerText={$_("account")}>
             <div class="legend">{$_("storage")}</div>
             {#if $storageStore.byteLimit === 0}
                 <p>

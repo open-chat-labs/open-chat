@@ -123,7 +123,8 @@ export type PhoneStatus =
 export type CreatedUser = {
     kind: "created_user";
     username: string;
-    storageIcpAccount: string;
+    accountCredite8s: number;
+    billingAccount: string;
     phoneStatus: PhoneStatus;
     userId: string;
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
@@ -214,3 +215,12 @@ export type RegisterUserResponse =
     | "username_too_short"
     | "username_too_long"
     | "username_invalid";
+
+export type UpgradeStorageResponse =
+    | { kind: "success_no_change" }
+    | { kind: "success"; accountCredite8s: number }
+    | { kind: "payment_not_found" }
+    | { kind: "payment_insufficient"; ammountRequirede8s: number; accountCredite8s: number }
+    | { kind: "internal_error" }
+    | { kind: "storage_limit_exceeded" }
+    | { kind: "user_not_found" };
