@@ -178,10 +178,10 @@ type CurrentUserResponse =
             username: text;
             canister_upgrade_status: CanisterUpgradeStatus;
             avatar_id: opt nat;
-            cryptocurrency_accounts: vec CryptocurrencyAccount;
             wasm_version: Version;
             open_storage_limit_bytes: nat64;
             phone_status: PhoneStatus;
+            storage_upgrade_icp_account: AccountIdentifier;
         };
     };
 

@@ -75,10 +75,6 @@ export const idlFactory = ({ IDL }) => {
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
   });
-  const CryptocurrencyAccount = IDL.Variant({
-    'ICP' : AccountIdentifier,
-    'Cycles' : CanisterId,
-  });
   const CanisterUpgradeStatus = IDL.Variant({
     'Required' : IDL.Null,
     'NotRequired' : IDL.Null,
@@ -100,9 +96,9 @@ export const idlFactory = ({ IDL }) => {
       'phone_status' : PhoneStatus,
       'wasm_version' : Version,
       'user_id' : UserId,
-      'cryptocurrency_accounts' : IDL.Vec(CryptocurrencyAccount),
       'avatar_id' : IDL.Opt(IDL.Nat),
       'canister_upgrade_status' : CanisterUpgradeStatus,
+      'storage_upgrade_icp_account' : AccountIdentifier,
       'open_storage_limit_bytes' : IDL.Nat64,
     }),
     'UserNotFound' : IDL.Null,
