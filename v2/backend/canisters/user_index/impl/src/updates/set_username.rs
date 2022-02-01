@@ -1,3 +1,4 @@
+use crate::model::account_billing::AccountBilling;
 use crate::model::user::{CreatedUser, PhoneStatus, User};
 use crate::model::user_map::UpdateUserResult;
 use crate::updates::storage_byte_limit_for_new_user;
@@ -62,6 +63,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                         }],
                         avatar_id: None,
                         registration_fee: user.registration_fee.clone(),
+                        account_billing: AccountBilling::default(),
                         open_storage_limit_bytes,
                         phone_status,
                     };

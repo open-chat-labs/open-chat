@@ -1,3 +1,4 @@
+use crate::model::account_billing::AccountBilling;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
@@ -186,6 +187,8 @@ pub struct CreatedUser {
     pub cycle_top_ups: Vec<CyclesTopUp>,
     pub avatar_id: Option<u128>,
     pub registration_fee: Option<RegistrationFee>,
+    #[serde(default)]
+    pub account_billing: AccountBilling,
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
 }
@@ -311,6 +314,7 @@ impl Default for CreatedUser {
             cycle_top_ups: Vec::new(),
             avatar_id: None,
             registration_fee: None,
+            account_billing: AccountBilling::default(),
             open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
         }

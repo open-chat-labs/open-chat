@@ -18,6 +18,7 @@ fn main() {
     generate_candid_method!(user_index, set_username, update);
     generate_candid_method!(user_index, submit_phone_number, update);
     generate_candid_method!(user_index, upgrade_canister, update);
+    generate_candid_method!(user_index, upgrade_storage, update);
 
     candid::export_service!();
     std::print!("{}", __export_service());
