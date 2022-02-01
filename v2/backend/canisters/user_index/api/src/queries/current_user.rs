@@ -1,9 +1,7 @@
 use candid::CandidType;
+use ic_ledger_types::AccountIdentifier;
 use serde::Deserialize;
-use types::{
-    CanisterCreationStatus, CanisterUpgradeStatus, CryptocurrencyAccount, PhoneNumber, RegistrationFee, TimestampMillis,
-    UserId, Version,
-};
+use types::{CanisterCreationStatus, CanisterUpgradeStatus, PhoneNumber, RegistrationFee, TimestampMillis, UserId, Version};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {}
@@ -66,8 +64,8 @@ pub struct CreatedResult {
     pub username: String,
     pub avatar_id: Option<u128>,
     pub canister_upgrade_status: CanisterUpgradeStatus,
-    pub cryptocurrency_accounts: Vec<CryptocurrencyAccount>,
     pub wasm_version: Version,
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
+    pub storage_upgrade_icp_account: AccountIdentifier,
 }

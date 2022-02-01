@@ -1,8 +1,7 @@
 use crate::model::user::User;
 use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
-use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
-use types::{CanisterUpgradeStatus, CryptocurrencyAccount};
+use types::CanisterUpgradeStatus;
 use user_index_canister::current_user::{Response::*, *};
 
 #[query]
@@ -42,8 +41,6 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                     CanisterUpgradeStatus::NotRequired
                 };
 
-                let icp_account = CryptocurrencyAccount::ICP(AccountIdentifier::new(&u.user_id.into(), &DEFAULT_SUBACCOUNT));
-                let cycles_account = CryptocurrencyAccount::Cycles(u.user_id.into());
                 let phone_status = match &u.phone_status {
                     crate::model::user::PhoneStatus::Unconfirmed(unconfirmed_phone_number) => {
                         PhoneStatus::Unconfirmed(UnconfirmedPhoneNumber {
@@ -55,15 +52,17 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                     crate::model::user::PhoneStatus::None => PhoneStatus::None,
                 };
 
+                let storage_upgrade_icp_account = runtime_state.user_storage_upgrade_icp_account(u.user_id);
+
                 Created(CreatedResult {
                     user_id: u.user_id,
                     username: u.username.clone(),
                     canister_upgrade_status,
                     avatar_id: u.avatar_id,
-                    cryptocurrency_accounts: vec![icp_account, cycles_account],
                     wasm_version: u.wasm_version,
                     open_storage_limit_bytes: u.open_storage_limit_bytes,
                     phone_status,
+                    storage_upgrade_icp_account,
                 })
             }
         }

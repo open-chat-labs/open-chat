@@ -27,9 +27,13 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
                 user_id: caller,
                 byte_limit: new_byte_limit,
             });
-            Success
+            Success(SuccessResult {
+                open_storage_limit_bytes: new_byte_limit,
+            })
         }
-        ConfirmPhoneNumberResult::Success(None) => Success,
+        ConfirmPhoneNumberResult::Success(None) => Success(SuccessResult {
+            open_storage_limit_bytes: 0,
+        }),
         ConfirmPhoneNumberResult::CodeExpired => ConfirmationCodeExpired,
         ConfirmPhoneNumberResult::CodeIncorrect => ConfirmationCodeIncorrect,
         ConfirmPhoneNumberResult::PhoneNumberNotSubmitted => PhoneNumberNotSubmitted,
@@ -63,7 +67,7 @@ mod tests {
 
         let args = Args { confirmation_code };
         let result = confirm_phone_number_impl(args, &mut runtime_state);
-        assert!(matches!(result, Response::Success));
+        assert!(matches!(result, Response::Success(_)));
 
         let user = runtime_state
             .data

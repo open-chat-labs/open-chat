@@ -159,9 +159,9 @@ export type CurrentUserResponse = {
       'phone_status' : PhoneStatus,
       'wasm_version' : Version,
       'user_id' : UserId,
-      'cryptocurrency_accounts' : Array<CryptocurrencyAccount>,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
+      'storage_upgrade_icp_account' : AccountIdentifier,
       'open_storage_limit_bytes' : bigint,
     }
   } |
