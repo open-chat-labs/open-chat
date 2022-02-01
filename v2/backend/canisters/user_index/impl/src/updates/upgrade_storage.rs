@@ -7,7 +7,7 @@ use ic_cdk_macros::update;
 use ic_ledger_types::{AccountBalanceArgs, AccountIdentifier, MAINNET_LEDGER_CANISTER_ID};
 use open_storage_index_canister::add_or_update_users::UserConfig;
 use types::ICP;
-use user_index_canister::notify_storage_upgrade_fee_paid::{Response::*, *};
+use user_index_canister::upgrade_storage::{Response::*, *};
 
 const FEE_PER_100MB: ICP = ICP::from_e8s(10_000_000); // 0.1 ICP
 const BYTES_PER_100MB: u64 = 100 * 1024 * 1024;
