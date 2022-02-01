@@ -79,7 +79,7 @@ async fn verify_user_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
             .unwrap();
         assert!(matches!(
             response,
-            user_index_canister::confirm_phone_number::Response::Success
+            user_index_canister::confirm_phone_number::Response::Success(_)
         ));
         println!("Ok");
     }

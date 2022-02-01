@@ -43,7 +43,7 @@ pub async fn gated_register_user(
 
     assert!(matches!(
         confirm_phone_number_response,
-        user_index_canister::confirm_phone_number::Response::Success
+        user_index_canister::confirm_phone_number::Response::Success(_)
     ));
 
     let create_canister_args = user_index_canister::create_canister::Args {};

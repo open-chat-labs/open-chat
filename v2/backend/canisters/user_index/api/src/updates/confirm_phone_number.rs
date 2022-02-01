@@ -8,9 +8,14 @@ pub struct Args {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Success(SuccessResult),
     ConfirmationCodeIncorrect,
     ConfirmationCodeExpired,
     AlreadyClaimed,
     PhoneNumberNotSubmitted,
+}
+
+#[derive(CandidType, Deserialize, Debug)]
+pub struct SuccessResult {
+    pub open_storage_limit_bytes: u64,
 }
