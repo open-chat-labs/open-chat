@@ -1,4 +1,5 @@
 <script lang="ts">
+    import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import { avatarUrl } from "../../../domain/user/user.utils";
     import type { PartialUserSummary } from "../../../domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
@@ -6,6 +7,7 @@
     import StorageUsage from "../../StorageUsage.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Input from "../../Input.svelte";
+    import Link from "../../Link.svelte";
     import Button from "../../Button.svelte";
     import Radio from "../../Radio.svelte";
     import Select from "../../Select.svelte";
@@ -63,6 +65,10 @@
         api.getBio().then((bio) => {
             originalBio = userbio = bio;
         });
+    }
+
+    function whySms() {
+        dispatch("showFaqQuestion", "sms_icp");
     }
 
     function saveUser() {
@@ -267,7 +273,13 @@
                 <p>
                     {$_("noStorageAdvice")}
                 </p>
-                <p>{$_("chooseUpgrade")}</p>
+                <p>
+                    {$_("chooseUpgrade")}
+
+                    <Link underline={"always"} on:click={whySms}>
+                        {$_("tellMeMore")}
+                    </Link>
+                </p>
                 <div class="upgrade-buttons buttons">
                     <Button on:click={() => dispatch("upgrade", "sms")} small={true}
                         >{$_("upgradeBySMS")}</Button>
@@ -290,6 +302,10 @@
 
 <style type="text/scss">
     $vertical-gap: $sp4;
+
+    .info {
+        cursor: pointer;
+    }
 
     .full-width-btn {
         display: flex;

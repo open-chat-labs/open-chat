@@ -3,14 +3,21 @@
     import { iconSize } from "../stores/iconSize";
 
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import { createEventDispatcher } from "svelte";
 
+    const dispatch = createEventDispatcher();
     export let headerText: string;
     export let open = true;
     export let bordered = false;
+
+    function toggle() {
+        open = !open;
+        dispatch(open ? "opened" : "closed");
+    }
 </script>
 
 <div class="card" class:bordered>
-    <div class="header" class:open on:click={() => (open = !open)}>
+    <div class="header" class:open on:click={toggle}>
         <h4>{headerText}</h4>
         <div class="arrow" class:rtl={$rtlStore} class:open>
             <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />

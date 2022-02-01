@@ -11,13 +11,15 @@
     export let hideHeader: boolean = false;
     export let hideFooter: boolean = false;
     export let compactFooter: boolean = false;
+    export let fadeDuration = 100;
+    export let fadeDelay = 200;
 </script>
 
 <div
     class="modal-content"
     class:large
-    in:fade={{ duration: 100, delay: 200 }}
-    out:fade={{ duration: 100 }}
+    in:fade={{ duration: fadeDuration, delay: fadeDelay }}
+    out:fade={{ duration: fadeDuration }}
     on:click|stopPropagation>
     {#if !hideHeader}
         <div class="header">

@@ -1,6 +1,7 @@
 {
     "openChat": "OpenChat",
     "home": "home",
+    "tellMeMore": "More information",
     "inheritSystem": "Inherit system theme",
     "enterToSend": "Enter key sends message",
     "notificationsEnabled": "Notifications enabled",

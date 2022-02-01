@@ -78,7 +78,6 @@
             const storageRequired = getStorageRequiredForMessage(fileToAttach);
             if ($remainingStorage < storageRequired) {
                 dispatch("upgrade", "explain");
-                draftMessages.delete($chat.chatId);
                 return;
             }
 

@@ -9,7 +9,6 @@
     } from "../../domain/search/search";
     import type { UserSummary } from "../../domain/user/user";
     import type { HomeController } from "../../fsm/home.controller";
-    import type { Version } from "../../domain/version";
     import { userStore } from "../../stores/user";
     import { nullUser } from "../../domain/user/user.utils";
     import { unsubscribeNotifications } from "../../utils/notifications";
@@ -22,7 +21,6 @@
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
-    export let wasmVersion: Version;
 
     let profileComponent: UserProfile;
 
@@ -63,6 +61,9 @@
         <ChatList
             on:loadMessage
             on:chatWith
+            on:showRoadmap
+            on:showFaq
+            on:showAbout
             on:userAvatarSelected={userAvatarSelected}
             on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
             on:whatsHot
@@ -77,14 +78,14 @@
             {groupSearchResults}
             {userSearchResults}
             {messageSearchResults}
-            {controller}
-            {wasmVersion} />
+            {controller} />
     </div>
     <div class="profile" class:showing-profile={view === "showing-profile"}>
         <UserProfile
             bind:this={profileComponent}
             on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
             on:upgrade
+            on:showFaqQuestion
             {user}
             {api}
             on:userAvatarSelected={userAvatarSelected}

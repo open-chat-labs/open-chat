@@ -3,6 +3,7 @@
     import { ONE_GB, storageStore } from "../../../stores/storage";
     import Button from "../../Button.svelte";
     import Footer from "./Footer.svelte";
+    import Link from "../../Link.svelte";
     import { createEventDispatcher } from "svelte";
 
     const dispatch = createEventDispatcher();
@@ -21,6 +22,10 @@
 
     function upgradeSms() {
         dispatch("upgradeSms");
+    }
+
+    function whySms() {
+        dispatch("showFaqQuestion", "sms_icp");
     }
 </script>
 
@@ -50,6 +55,10 @@
         <p>
             {#if smsUpgradePossible}
                 {$_("chooseUpgrade")}
+
+                <Link underline={"always"} on:click={whySms}>
+                    {$_("tellMeMore")}
+                </Link>
             {:else}
                 {$_("chooseTransfer")}
             {/if}

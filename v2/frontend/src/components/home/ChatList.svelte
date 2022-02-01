@@ -31,7 +31,6 @@
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
-    export let wasmVersion: Version;
 
     const dispatch = createEventDispatcher();
 
@@ -124,8 +123,10 @@
         on:userAvatarSelected
         on:logout
         on:whatsHot
+        on:showAbout
+        on:showFaq
+        on:showRoadmap
         {user}
-        {wasmVersion}
         on:unsubscribeNotifications
         on:profile
         on:newGroup />
