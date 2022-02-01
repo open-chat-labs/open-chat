@@ -46,11 +46,16 @@ type ConfirmPhoneNumberArgs =
 
 type ConfirmPhoneNumberResponse = 
     variant {
-        Success;
+        Success: SuccessResult;
         ConfirmationCodeIncorrect;
         ConfirmationCodeExpired;
         AlreadyClaimed;
         PhoneNumberNotSubmitted;
+    };
+
+type SuccessResult =
+    record {
+        open_storage_limit_bytes: nat64;
     };
 
 type ResendCodeArgs = 
