@@ -52,7 +52,8 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                     crate::model::user::PhoneStatus::None => PhoneStatus::None,
                 };
 
-                let storage_upgrade_icp_account = runtime_state.user_storage_upgrade_icp_account(u.user_id);
+                let billing_account = runtime_state.user_billing_account(u.user_id);
+                let account_credit = u.account_billing.credit();
 
                 Created(CreatedResult {
                     user_id: u.user_id,
@@ -62,7 +63,8 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                     wasm_version: u.wasm_version,
                     open_storage_limit_bytes: u.open_storage_limit_bytes,
                     phone_status,
-                    storage_upgrade_icp_account,
+                    billing_account,
+                    account_credit,
                 })
             }
         }
