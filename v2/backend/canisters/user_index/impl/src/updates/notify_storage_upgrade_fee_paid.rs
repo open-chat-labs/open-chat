@@ -1,11 +1,11 @@
-use crate::model::user::{AccountPayment, User};
+use crate::model::account_billing::{AccountCharge, AccountChargeDetails, AccountPayment, StorageAccountChargeDetails};
+use crate::model::user::User;
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{AccountBalanceArgs, AccountIdentifier, MAINNET_LEDGER_CANISTER_ID};
 use open_storage_index_canister::add_or_update_users::UserConfig;
-use std::cmp::min;
 use types::ICP;
 use user_index_canister::notify_storage_upgrade_fee_paid::{Response::*, *};
 
@@ -15,8 +15,12 @@ const BYTES_PER_1GB: u64 = 1000 * 1024 * 1024; // TODO we should be consistent b
 
 #[update]
 #[trace]
-async fn notify_storage_upgrade_fee_paid(_args: Args) -> Response {
-    match read_state(prepare) {
+async fn notify_storage_upgrade_fee_paid(args: Args) -> Response {
+    if args.new_storage_limit_bytes > BYTES_PER_1GB {
+        return StorageLimitExceeded(BYTES_PER_1GB);
+    }
+
+    match read_state(|state| prepare(&args, state)) {
         Ok(ok) => match ic_ledger_types::account_balance(
             MAINNET_LEDGER_CANISTER_ID,
             AccountBalanceArgs {
@@ -25,7 +29,7 @@ async fn notify_storage_upgrade_fee_paid(_args: Args) -> Response {
         )
         .await
         {
-            Ok(balance) => mutate_state(|state| process_balance(ok.caller, balance, state)),
+            Ok(balance) => mutate_state(|state| process_balance(args, ok.caller, balance, state)),
             Err(error) => InternalError(format!("{error:?}")),
         },
         Err(response) => response,
@@ -37,48 +41,73 @@ struct PrepareResult {
     ledger_account: AccountIdentifier,
 }
 
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = runtime_state.env.caller();
-    if let Some(User::Created(_)) = runtime_state.data.users.get_by_principal(&caller) {
-        Ok(PrepareResult {
-            caller,
-            ledger_account: runtime_state.user_storage_upgrade_icp_account(caller.into()),
-        })
+    if let Some(User::Created(user)) = runtime_state.data.users.get_by_principal(&caller) {
+        if user.open_storage_limit_bytes < args.new_storage_limit_bytes {
+            Ok(PrepareResult {
+                caller,
+                ledger_account: runtime_state.user_storage_upgrade_icp_account(caller.into()),
+            })
+        } else {
+            Err(SuccessNoChange)
+        }
     } else {
         Err(UserNotFound)
     }
 }
 
-fn process_balance(caller: Principal, balance: ICP, runtime_state: &mut RuntimeState) -> Response {
+fn process_balance(args: Args, caller: Principal, balance: ICP, runtime_state: &mut RuntimeState) -> Response {
     if let Some(User::Created(user)) = runtime_state.data.users.get_by_principal(&caller) {
         let user_id = user.user_id;
-        let current_total_paid = ICP::from_e8s(user.account_payments.iter().map(|p| p.amount.e8s()).sum());
+        let previous_balance = user.account_billing.ledger_balance();
 
-        if balance > current_total_paid {
-            let amount_paid = balance - current_total_paid;
-            let current_storage_limit = user.open_storage_limit_bytes;
-            let new_storage_limit = min((balance.e8s() / FEE_PER_100MB.e8s()) * BYTES_PER_100MB, BYTES_PER_1GB);
+        if balance > previous_balance {
+            let payment_amount = balance - previous_balance;
+            let previous_storage_limit = user.open_storage_limit_bytes;
+            let previous_credit = user.account_billing.credit();
+            let new_credit = previous_credit + payment_amount;
+            let requested_storage_increase = args.new_storage_limit_bytes - previous_storage_limit;
+            let required_credit = ICP::from_e8s((requested_storage_increase * FEE_PER_100MB.e8s()) / BYTES_PER_100MB);
+            let now = runtime_state.env.now();
 
             runtime_state.data.users.record_account_payment(
                 &user_id,
                 AccountPayment {
-                    amount: amount_paid,
-                    timestamp: runtime_state.env.now(),
+                    amount: payment_amount,
+                    timestamp: now,
                 },
             );
 
-            if new_storage_limit > current_storage_limit {
-                runtime_state.data.users.set_storage_limit(&user_id, new_storage_limit);
+            if new_credit >= required_credit {
+                let charge = AccountCharge {
+                    amount: required_credit,
+                    timestamp: now,
+                    details: AccountChargeDetails::Storage(StorageAccountChargeDetails {
+                        old_bytes_limit: previous_storage_limit,
+                        new_bytes_limit: args.new_storage_limit_bytes,
+                    }),
+                };
+                runtime_state.data.users.record_account_charge(&user_id, charge);
+
+                runtime_state
+                    .data
+                    .users
+                    .set_storage_limit(&user_id, args.new_storage_limit_bytes);
+
                 runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
                     user_id: caller,
-                    byte_limit: new_storage_limit,
+                    byte_limit: args.new_storage_limit_bytes,
                 });
 
                 Success(SuccessResult {
-                    open_storage_bytes_limit: new_storage_limit,
+                    remaining_account_credit: new_credit - required_credit,
                 })
             } else {
-                PaymentInsufficient
+                PaymentInsufficient(PaymentInsufficientResult {
+                    account_credit: new_credit,
+                    amount_required: required_credit,
+                })
             }
         } else {
             PaymentNotFound

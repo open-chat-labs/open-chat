@@ -1,3 +1,4 @@
+use crate::model::account_billing::AccountBilling;
 use crate::model::user::{CreatedUser, PhoneStatus, User};
 use crate::model::user_map::UpdateUserResult;
 use crate::updates::storage_byte_limit_for_new_user;
@@ -159,7 +160,7 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
                             }],
                             avatar_id: None,
                             registration_fee: confirmed_user.registration_fee.clone(),
-                            account_payments: Vec::new(),
+                            account_billing: AccountBilling::default(),
                             open_storage_limit_bytes,
                             phone_status,
                         };

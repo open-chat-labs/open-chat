@@ -1,6 +1,5 @@
-use crate::model::user::{
-    AccountPayment, ConfirmedUser, PhoneStatus, UnconfirmedPhoneNumber, UnconfirmedUser, UnconfirmedUserState, User,
-};
+use crate::model::account_billing::{AccountCharge, AccountPayment};
+use crate::model::user::{ConfirmedUser, PhoneStatus, UnconfirmedPhoneNumber, UnconfirmedUser, UnconfirmedUserState, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, USER_LIMIT};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
@@ -434,7 +433,16 @@ impl UserMap {
 
     pub fn record_account_payment(&mut self, user_id: &UserId, payment: AccountPayment) -> bool {
         if let Some(User::Created(user)) = self.get_by_user_id_mut_internal(user_id) {
-            user.account_payments.push(payment);
+            user.account_billing.add_payment(payment);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn record_account_charge(&mut self, user_id: &UserId, charge: AccountCharge) -> bool {
+        if let Some(User::Created(user)) = self.get_by_user_id_mut_internal(user_id) {
+            user.account_billing.add_charge(charge);
             true
         } else {
             false

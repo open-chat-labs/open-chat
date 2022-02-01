@@ -1,8 +1,9 @@
+use crate::model::account_billing::AccountBilling;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
     CanisterCreationStatusInternal, Cycles, CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis,
-    UserId, UserSummary, Version, ICP,
+    UserId, UserSummary, Version,
 };
 use user_index_canister::current_user::ConfirmationState;
 
@@ -187,7 +188,7 @@ pub struct CreatedUser {
     pub avatar_id: Option<u128>,
     pub registration_fee: Option<RegistrationFee>,
     #[serde(default)]
-    pub account_payments: Vec<AccountPayment>,
+    pub account_billing: AccountBilling,
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
 }
@@ -283,12 +284,6 @@ impl From<UnconfirmedUserState> for user_index_canister::current_user::Unconfirm
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct AccountPayment {
-    pub amount: ICP,
-    pub timestamp: TimestampMillis,
-}
-
 #[cfg(test)]
 impl Default for ConfirmedUser {
     fn default() -> Self {
@@ -319,7 +314,7 @@ impl Default for CreatedUser {
             cycle_top_ups: Vec::new(),
             avatar_id: None,
             registration_fee: None,
-            account_payments: Vec::new(),
+            account_billing: AccountBilling::default(),
             open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
         }
