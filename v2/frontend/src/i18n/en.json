@@ -52,6 +52,7 @@
     "goHome": "Home",
     "join": "Join",
     "unableToLoadEmojiPicker": "Sorry! We couldn't load the emoji picker. Please reload and try again.",
+    "unableToLoadSMSUpgrade": "Before upgrading your storage we need to refresh OpenChat. Please reload and try again.",
     "leave": "Leave",
     "preview": "Preview",
     "howToBuyICP": "how to buy ICP",

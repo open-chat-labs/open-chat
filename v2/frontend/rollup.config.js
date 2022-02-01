@@ -81,9 +81,7 @@ function serve() {
     });
 }
 
-if (production) {
-    rimraf.sync(path.join(__dirname, "public", "build"));
-}
+rimraf.sync(path.join(__dirname, "public", "build"));
 
 export default [
     {

@@ -179,25 +179,6 @@
         }
     }
 
-    .confirmed {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        text-align: center;
-
-        h1 {
-            @include font(bold, normal, fs-160);
-            margin-bottom: $sp4;
-        }
-
-        .tada {
-            @include font-size(fs-220);
-            margin-bottom: $sp4;
-        }
-    }
-
     .new-limit {
         @include font(light, normal, fs-70);
         margin-bottom: $sp3;

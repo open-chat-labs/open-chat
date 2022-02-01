@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     import SectionHeader from "../../SectionHeader.svelte";
-    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
@@ -25,7 +25,7 @@
 <SectionHeader flush={true}>
     <span title={$_("participants")} class="participants" on:click={showParticipants}>
         <HoverIcon>
-            <AccountMultiplePlus size={$iconSize} color={"var(--icon-txt)"} />
+            <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
     <h4>{$_("groupDetails")}</h4>

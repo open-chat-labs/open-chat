@@ -58,10 +58,4 @@
     .actions {
         margin-top: auto;
     }
-    .title {
-        @include font(bold, normal, fs-160);
-        margin: $sp4 0 0 0;
-        text-align: center;
-        text-shadow: var(--modalPage-txt-sh);
-    }
 </style>

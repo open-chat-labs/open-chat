@@ -1,10 +1,11 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import Overlay from "../../Overlay.svelte";
+    import Loading from "../../Loading.svelte";
+    import Reload from "../../Reload.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Explain from "./Explain.svelte";
     import ICPUpgrade from "./ICPUpgrade.svelte";
-    import SMSUpgrade from "./SMSUpgrade.svelte";
     import type { ServiceContainer } from "../../../services/serviceContainer";
     import type { CreatedUser } from "../../../domain/user/user";
 
@@ -34,8 +35,22 @@
                 <ICPUpgrade {user} {api} on:cancel />
             {/if}
             {#if step === "sms"}
-                <SMSUpgrade {user} {api} on:cancel />
+                {#await import("./SMSUpgrade.svelte")}
+                    <div class="loading">
+                        <Loading />
+                    </div>
+                {:then smsUpgrade}
+                    <svelte:component this={smsUpgrade.default} {user} {api} on:cancel />
+                {:catch _error}
+                    <Reload>{$_("unableToLoadSMSUpgrade")}</Reload>
+                {/await}
             {/if}
         </span>
     </ModalContent>
 </Overlay>
+
+<style type="text/scss">
+    .loading {
+        height: 200px;
+    }
+</style>
