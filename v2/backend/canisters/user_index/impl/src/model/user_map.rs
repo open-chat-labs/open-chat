@@ -48,6 +48,14 @@ pub struct Metrics {
 }
 
 impl UserMap {
+    pub fn repopulate_missing_phone_statuses(&mut self) {
+        for (phone_number, principal) in self.phone_number_to_principal.iter() {
+            if let Some(User::Created(user)) = self.users_by_principal.get_mut(principal) {
+                user.phone_status = PhoneStatus::Confirmed(phone_number.clone());
+            }
+        }
+    }
+
     pub fn register(&mut self, principal: Principal, username: &str, now: TimestampMillis) -> RegisterUserResult {
         if self.users_by_principal.contains_key(&principal) {
             return RegisterUserResult::AlreadyExists;
