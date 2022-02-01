@@ -152,13 +152,17 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
 export function confirmPhoneNumber(
     candid: ApiConfirmPhoneNumberResponse
 ): ConfirmPhoneNumberResponse {
-    if ("Success" in candid) return "success";
-    if ("UserNotFound" in candid) return "not_found";
-    if ("AlreadyClaimed" in candid) return "already_claimed";
-    if ("ConfirmationCodeExpired" in candid) return "code_expired";
-    if ("ConfirmationCodeIncorrect" in candid) return "code_incorrect";
+    if ("Success" in candid)
+        return {
+            kind: "success",
+            storageLimitBytes: Number(candid.Success.open_storage_limit_bytes),
+        };
+    if ("UserNotFound" in candid) return { kind: "not_found" };
+    if ("AlreadyClaimed" in candid) return { kind: "already_claimed" };
+    if ("ConfirmationCodeExpired" in candid) return { kind: "code_expired" };
+    if ("ConfirmationCodeIncorrect" in candid) return { kind: "code_incorrect" };
     if ("PhoneNumberNotSubmitted" in candid) {
-        return "phone_number_not_submitted";
+        return { kind: "phone_number_not_submitted" };
     }
 
     throw new UnsupportedValueError(
@@ -311,7 +315,6 @@ export function confirmationState(candid: ApiConfirmationState): RegistrationSta
 }
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
-    console.log("User: ", candid);
     if ("Unconfirmed" in candid) {
         return {
             kind: "unconfirmed_user",
@@ -352,10 +355,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             kind: "created_user",
             userId: candid.Created.user_id.toString(),
             username: candid.Created.username,
-            cryptoAccounts: {
-                cycles: "todo - once the types are fixed",
-                icp: "todo - once the types are fixed",
-            },
+            storageIcpAccount: recipientToHexString(candid.Created.storage_upgrade_icp_account),
             phoneStatus: phoneStatus(candid.Created.phone_status),
             canisterUpgradeStatus:
                 "Required" in candid.Created.canister_upgrade_status

@@ -23,18 +23,18 @@
     let amount: number = 0.1;
     let confirming = false;
     let confirmed = false;
-    let accountSummary = user.cryptoAccounts.icp;
+    let accountSummary = user.storageIcpAccount;
 
     $: min = Math.ceil($storageStore.byteLimit / ONE_HUNDRED_MB);
     $: max = Math.ceil(ONE_GB / ONE_HUNDRED_MB);
     $: newLimit = min;
     $: toPay = (newLimit - min) * amount;
     $: {
-        if (user.cryptoAccounts.icp.length > 20) {
+        if (user.storageIcpAccount.length > 20) {
             accountSummary =
-                user.cryptoAccounts.icp.slice(0, 10) +
+                user.storageIcpAccount.slice(0, 10) +
                 "..." +
-                user.cryptoAccounts.icp.slice(user.cryptoAccounts.icp.length - 10);
+                user.storageIcpAccount.slice(user.storageIcpAccount.length - 10);
         }
     }
 
@@ -70,7 +70,7 @@
     }
 
     function copyToClipboard() {
-        navigator.clipboard.writeText(user.cryptoAccounts.icp).then(
+        navigator.clipboard.writeText(user.storageIcpAccount).then(
             () => {
                 toastStore.showSuccessToast("copiedToClipboard");
             },
@@ -89,7 +89,7 @@
     {:else}
         <div class="account-info">
             <div class="qr">
-                <QR text={user.cryptoAccounts.icp} />
+                <QR text={user.storageIcpAccount} />
             </div>
             <div class="receiver">
                 <div class="account">

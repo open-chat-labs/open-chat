@@ -8,10 +8,11 @@ export const idlFactory = ({ IDL }) => {
     'AlreadySuperAdmin' : IDL.Null,
   });
   const ConfirmPhoneNumberArgs = IDL.Record({ 'confirmation_code' : IDL.Text });
+  const SuccessResult = IDL.Record({ 'open_storage_limit_bytes' : IDL.Nat64 });
   const ConfirmPhoneNumberResponse = IDL.Variant({
     'PhoneNumberNotSubmitted' : IDL.Null,
     'AlreadyClaimed' : IDL.Null,
-    'Success' : IDL.Null,
+    'Success' : SuccessResult,
     'ConfirmationCodeExpired' : IDL.Null,
     'ConfirmationCodeIncorrect' : IDL.Null,
   });

@@ -146,15 +146,15 @@ export class RegisterController {
         this.state.set({ kind: "verifying" });
         this._api.confirmPhoneNumber(code).then((resp) => {
             this.state.set({ kind: "awaiting_code", phoneNumber });
-            if (resp === "already_claimed") {
+            if (resp.kind === "already_claimed") {
                 this.error.set("register.confirmAlreadyClaimed");
-            } else if (resp === "code_expired") {
+            } else if (resp.kind === "code_expired") {
                 this.error.set("register.codeExpired");
-            } else if (resp === "code_incorrect") {
+            } else if (resp.kind === "code_incorrect") {
                 this.error.set("register.codeIncorrect");
-            } else if (resp === "not_found") {
+            } else if (resp.kind === "not_found") {
                 this.error.set("register.codeNotFound");
-            } else if (resp === "success") {
+            } else if (resp.kind === "success") {
                 this.error.set(undefined);
                 this.state.set({
                     kind: "awaiting_username",

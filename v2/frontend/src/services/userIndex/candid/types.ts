@@ -102,7 +102,7 @@ export interface CompletedICPWithdrawal {
 export interface ConfirmPhoneNumberArgs { 'confirmation_code' : string }
 export type ConfirmPhoneNumberResponse = { 'PhoneNumberNotSubmitted' : null } |
   { 'AlreadyClaimed' : null } |
-  { 'Success' : null } |
+  { 'Success' : SuccessResult } |
   { 'ConfirmationCodeExpired' : null } |
   { 'ConfirmationCodeIncorrect' : null };
 export interface ConfirmationCodeSms {
@@ -595,6 +595,7 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export interface SuccessResult { 'open_storage_limit_bytes' : bigint }
 export type SuperAdminsArgs = {};
 export type SuperAdminsResponse = { 'Success' : { 'users' : Array<UserId> } };
 export interface TextContent { 'text' : string }

@@ -123,10 +123,7 @@ export type PhoneStatus =
 export type CreatedUser = {
     kind: "created_user";
     username: string;
-    cryptoAccounts: {
-        cycles: string;
-        icp: string;
-    };
+    storageIcpAccount: string;
     phoneStatus: PhoneStatus;
     userId: string;
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
@@ -162,12 +159,12 @@ export type InvalidPhoneNumber = { kind: "invalid_phone_number" };
 export type UserLimitReached = { kind: "user_limit_reached" };
 
 export type ConfirmPhoneNumberResponse =
-    | "success"
-    | "already_claimed"
-    | "code_incorrect"
-    | "code_expired"
-    | "not_found"
-    | "phone_number_not_submitted";
+    | { kind: "success"; storageLimitBytes: number }
+    | { kind: "already_claimed" }
+    | { kind: "code_incorrect" }
+    | { kind: "code_expired" }
+    | { kind: "not_found" }
+    | { kind: "phone_number_not_submitted" };
 
 export type ResendCodeResponse =
     | "success"

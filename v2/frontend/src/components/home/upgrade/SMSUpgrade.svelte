@@ -93,23 +93,18 @@
         busy = true;
         api.confirmPhoneNumber(codeValue)
             .then((resp) => {
-                if (resp === "already_claimed") {
+                if (resp.kind === "already_claimed") {
                     error = "register.confirmAlreadyClaimed";
-                } else if (resp === "code_expired") {
+                } else if (resp.kind === "code_expired") {
                     error = "register.codeExpired";
-                } else if (resp === "code_incorrect") {
+                } else if (resp.kind === "code_incorrect") {
                     error = "register.codeIncorrect";
-                } else if (resp === "not_found") {
+                } else if (resp.kind === "not_found") {
                     error = "register.codeNotFound";
-                } else if (resp === "success") {
-                    // todo - for the time being we will re-call getCurrentUser to get the new storage limit
-                    api.getCurrentUser().then((resp) => {
-                        if (resp.kind === "created_user") {
-                            updateStorageLimit(resp.openStorageLimitBytes);
-                            error = undefined;
-                            confirmed = true;
-                        }
-                    });
+                } else if (resp.kind === "success") {
+                    error = undefined;
+                    confirmed = true;
+                    updateStorageLimit(resp.storageLimitBytes);
                 }
             })
             .catch((err) => {
