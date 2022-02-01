@@ -61,11 +61,11 @@ fn process_balance(args: Args, caller: Principal, balance: ICP, runtime_state: &
     if let Some(User::Created(user)) = runtime_state.data.users.get_by_principal(&caller) {
         let user_id = user.user_id;
         let previous_balance = user.account_billing.ledger_balance();
+        let previous_credit = user.account_billing.credit();
 
-        if balance > previous_balance {
+        if balance > previous_balance || previous_credit.e8s() > 0 {
             let payment_amount = balance - previous_balance;
             let previous_storage_limit = user.open_storage_limit_bytes;
-            let previous_credit = user.account_billing.credit();
             let new_credit = previous_credit + payment_amount;
             let requested_storage_increase = args.new_storage_limit_bytes - previous_storage_limit;
             let required_credit = ICP::from_e8s((requested_storage_increase * FEE_PER_100MB.e8s()) / BYTES_PER_100MB);
