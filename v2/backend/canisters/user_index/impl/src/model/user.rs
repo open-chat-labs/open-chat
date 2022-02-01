@@ -6,7 +6,7 @@ use types::{
 };
 use user_index_canister::current_user::ConfirmationState;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum User {
     Unconfirmed(UnconfirmedUser),
     Confirmed(ConfirmedUser),
@@ -156,13 +156,13 @@ impl User {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UnconfirmedUser {
     pub principal: Principal,
     pub state: UnconfirmedUserState,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ConfirmedUser {
     pub principal: Principal,
     pub phone_number: Option<PhoneNumber>,
@@ -173,7 +173,7 @@ pub struct ConfirmedUser {
     pub registration_fee: Option<RegistrationFee>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CreatedUser {
     pub principal: Principal,
     pub user_id: UserId,
@@ -283,7 +283,7 @@ impl From<UnconfirmedUserState> for user_index_canister::current_user::Unconfirm
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct AccountPayment {
     pub amount: ICP,
     pub timestamp: TimestampMillis,
@@ -319,6 +319,7 @@ impl Default for CreatedUser {
             cycle_top_ups: Vec::new(),
             avatar_id: None,
             registration_fee: None,
+            account_payments: Vec::new(),
             open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
         }
