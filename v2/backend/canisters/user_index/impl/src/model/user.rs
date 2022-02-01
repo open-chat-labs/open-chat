@@ -2,11 +2,11 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
     CanisterCreationStatusInternal, Cycles, CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis,
-    UserId, UserSummary, Version,
+    UserId, UserSummary, Version, ICP,
 };
 use user_index_canister::current_user::ConfirmationState;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum User {
     Unconfirmed(UnconfirmedUser),
     Confirmed(ConfirmedUser),
@@ -156,13 +156,13 @@ impl User {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UnconfirmedUser {
     pub principal: Principal,
     pub state: UnconfirmedUserState,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ConfirmedUser {
     pub principal: Principal,
     pub phone_number: Option<PhoneNumber>,
@@ -173,7 +173,7 @@ pub struct ConfirmedUser {
     pub registration_fee: Option<RegistrationFee>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CreatedUser {
     pub principal: Principal,
     pub user_id: UserId,
@@ -186,6 +186,8 @@ pub struct CreatedUser {
     pub cycle_top_ups: Vec<CyclesTopUp>,
     pub avatar_id: Option<u128>,
     pub registration_fee: Option<RegistrationFee>,
+    #[serde(default)]
+    pub account_payments: Vec<AccountPayment>,
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
 }
@@ -279,6 +281,12 @@ impl From<UnconfirmedUserState> for user_index_canister::current_user::Unconfirm
             }
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct AccountPayment {
+    pub amount: ICP,
+    pub timestamp: TimestampMillis,
 }
 
 #[cfg(test)]

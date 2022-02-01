@@ -62,6 +62,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                         }],
                         avatar_id: None,
                         registration_fee: user.registration_fee.clone(),
+                        account_payments: Vec::new(),
                         open_storage_limit_bytes,
                         phone_status,
                     };

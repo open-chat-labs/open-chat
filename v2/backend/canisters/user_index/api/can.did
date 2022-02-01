@@ -97,6 +97,19 @@ type NotifyRegistrationFeePaidResponse =
         InternalError: text;
     };
 
+type NotifyStorageUpgradeFeePaidArgs =
+    record {
+    };
+
+type NotifyStorageUpgradeFeePaidResponse =
+    variant {
+        Success: record { open_storage_bytes_limit: nat64 };
+        PaymentInsufficient;
+        PaymentNotFound;
+        UserNotFound;
+        InternalError: text;
+    };
+
 type CreateCanisterArgs =
     record {
     };
@@ -312,6 +325,7 @@ service: {
     generate_registration_fee: (GenerateRegistrationFeeArgs) -> (GenerateRegistrationFeeResponse);
 
     notify_registration_fee_paid: (NotifyRegistrationFeePaidArgs) -> (NotifyRegistrationFeePaidResponse);
+    notify_storage_upgrade_fee_paid: (NotifyStorageUpgradeFeePaidArgs) -> (NotifyStorageUpgradeFeePaidResponse);
 
     // Once the confirm_phone_number call has succeeded (user is in one of the "confirmed" states)
     // then call this to create a canister for the user

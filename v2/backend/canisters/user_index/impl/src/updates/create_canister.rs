@@ -159,6 +159,7 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
                             }],
                             avatar_id: None,
                             registration_fee: confirmed_user.registration_fee.clone(),
+                            account_payments: Vec::new(),
                             open_storage_limit_bytes,
                             phone_status,
                         };
