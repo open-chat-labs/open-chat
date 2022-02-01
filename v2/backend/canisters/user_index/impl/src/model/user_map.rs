@@ -27,7 +27,6 @@ pub struct UserMap {
     users_confirmed_via_phone: u64,
     users_confirmed_via_icp: u64,
     users_confirmed_via_cycles: u64,
-    #[serde(default)]
     users_confirmed_automatically: u64,
     cached_metrics: Timestamped<Metrics>,
     unconfirmed_users_last_pruned: TimestampMillis,
