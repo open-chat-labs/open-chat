@@ -5,7 +5,7 @@ use group_canister::c2c_dismiss_super_admin;
 use ic_cdk_macros::heartbeat;
 use ic_ledger_types::{AccountIdentifier, Memo, DEFAULT_FEE, DEFAULT_SUBACCOUNT};
 use ledger_utils::convert_to_subaccount;
-use tracing::{error, info};
+use tracing::error;
 use types::{CanisterId, ChatId, Cycles, CyclesTopUp, UserId, Version, ICP};
 use utils::canister::{self, FailedUpgrade};
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, DEFAULT_MEMO};
@@ -22,7 +22,7 @@ fn heartbeat() {
     calculate_metrics::run();
     dismiss_removed_super_admins::run();
     prune_unconfirmed_users::run();
-    // transfer_registration_fees::run();
+    transfer_registration_fees::run();
 }
 
 mod upgrade_canisters {
@@ -254,7 +254,7 @@ mod prune_unconfirmed_users {
     }
 }
 
-pub(crate) mod transfer_registration_fees {
+mod transfer_registration_fees {
     use super::*;
 
     pub fn run() {
@@ -269,17 +269,22 @@ pub(crate) mod transfer_registration_fees {
 
         let args = ic_ledger_types::TransferArgs {
             memo: Memo(DEFAULT_MEMO),
-            amount,
+            amount: amount - DEFAULT_FEE,
             fee: DEFAULT_FEE,
             from_subaccount: Some(subaccount),
             to: recipient,
             created_at_time: None,
         };
-        if let Err(error) = ic_ledger_types::transfer(ic_ledger_types::MAINNET_LEDGER_CANISTER_ID, args.clone()).await {
-            error!(?args, ?error, "Failed to transfer ICP");
+
+        if let Some(error_message) =
+            match ic_ledger_types::transfer(ic_ledger_types::MAINNET_LEDGER_CANISTER_ID, args.clone()).await {
+                Ok(Err(error)) => Some(format!("{error}")),
+                Err(error) => Some(format!("{error:?}")),
+                _ => None,
+            }
+        {
+            error!(?args, %error_message, "Failed to transfer ICP");
             mutate_state(|state| state.data.users.mark_failed_registration_fee_transfer(principal));
-        } else {
-            info!(?args, "Transferred ICP");
         }
     }
 }
