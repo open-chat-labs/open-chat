@@ -23,7 +23,6 @@ pub struct UserMap {
     username_to_principal: CaseInsensitiveHashMap<Principal>,
     user_id_to_principal: HashMap<UserId, Principal>,
     registration_fee_cycles_to_principal: HashMap<Cycles, Principal>,
-    #[serde(default)]
     failed_registration_fee_transfers: Vec<Principal>,
     registration_fees_pending_cycles_conversion: VecDeque<Principal>,
     unconfirmed_users: HashSet<Principal>,
