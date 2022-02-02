@@ -10,8 +10,8 @@ export interface DataContent {
 }
 
 export type UploadDataResponse = StorageStatus & {
-    success: boolean,
-}
+    success: boolean;
+};
 
 export type StorageStatus = {
     byteLimit: bigint;
