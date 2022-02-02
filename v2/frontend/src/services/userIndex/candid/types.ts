@@ -1,4 +1,5 @@
 import type { Principal } from '@dfinity/principal';
+export interface AccountCredit { 'account_credit' : ICP }
 export type AccountIdentifier = Array<number>;
 export interface AddSuperAdminArgs { 'user_id' : UserId }
 export type AddSuperAdminResponse = { 'Success' : null } |
@@ -535,6 +536,13 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
+export type RefreshAccountBalanceArgs = {};
+export type RefreshAccountBalanceResponse = {
+    'SuccessNoChange' : AccountCredit
+  } |
+  { 'Success' : AccountCredit } |
+  { 'InternalError' : string } |
+  { 'UserNotFound' : null };
 export interface RegisterUserArgs { 'username' : string }
 export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |
@@ -645,7 +653,6 @@ export type UpgradeStorageResponse = { 'SuccessNoChange' : null } |
   {
     'PaymentInsufficient' : { 'amount_required' : ICP, 'account_credit' : ICP }
   } |
-  { 'InternalError' : string } |
   { 'StorageLimitExceeded' : bigint } |
   { 'UserNotFound' : null };
 export interface User { 'username' : string, 'user_id' : UserId }
@@ -712,6 +719,9 @@ export interface _SERVICE {
   'notify_registration_fee_paid' : (
       arg_0: NotifyRegistrationFeePaidArgs,
     ) => Promise<NotifyRegistrationFeePaidResponse>,
+  'refresh_account_balance' : (arg_0: RefreshAccountBalanceArgs) => Promise<
+      RefreshAccountBalanceResponse
+    >,
   'register_user' : (arg_0: RegisterUserArgs) => Promise<RegisterUserResponse>,
   'remove_super_admin' : (arg_0: RemoveSuperAdminArgs) => Promise<
       RemoveSuperAdminResponse

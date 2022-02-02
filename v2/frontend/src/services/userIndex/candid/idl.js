@@ -122,6 +122,14 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'UserNotFound' : IDL.Null,
   });
+  const RefreshAccountBalanceArgs = IDL.Record({});
+  const AccountCredit = IDL.Record({ 'account_credit' : ICP });
+  const RefreshAccountBalanceResponse = IDL.Variant({
+    'SuccessNoChange' : AccountCredit,
+    'Success' : AccountCredit,
+    'InternalError' : IDL.Text,
+    'UserNotFound' : IDL.Null,
+  });
   const RegisterUserArgs = IDL.Record({ 'username' : IDL.Text });
   const RegisterUserResponse = IDL.Variant({
     'UsernameTaken' : IDL.Null,
@@ -206,7 +214,6 @@ export const idlFactory = ({ IDL }) => {
       'amount_required' : ICP,
       'account_credit' : ICP,
     }),
-    'InternalError' : IDL.Text,
     'StorageLimitExceeded' : IDL.Nat64,
     'UserNotFound' : IDL.Null,
   });
@@ -267,6 +274,11 @@ export const idlFactory = ({ IDL }) => {
     'notify_registration_fee_paid' : IDL.Func(
         [NotifyRegistrationFeePaidArgs],
         [NotifyRegistrationFeePaidResponse],
+        [],
+      ),
+    'refresh_account_balance' : IDL.Func(
+        [RefreshAccountBalanceArgs],
+        [RefreshAccountBalanceResponse],
         [],
       ),
     'register_user' : IDL.Func([RegisterUserArgs], [RegisterUserResponse], []),
