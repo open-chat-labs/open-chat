@@ -11,6 +11,7 @@
     import { AvatarSize, UserStatus } from "domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
     import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
     import { push } from "svelte-spa-router";
     import { rtlStore } from "../../stores/rtl";
     import HoverIcon from "../HoverIcon.svelte";
@@ -112,7 +113,7 @@
                         <p class="user-count">
                             {$_("groupWithN", { values: { number: group.participantCount } })}
                         </p>
-                        <div class="buttons">
+                        <ButtonGroup align={"fill"}>
                             <Button
                                 disabled={joining === group}
                                 small={true}
@@ -123,7 +124,7 @@
                                 small={true}
                                 on:click={() => joinGroup(group)}
                                 secondary={true}>{$_("join")}</Button>
-                        </div>
+                        </ButtonGroup>
                     </div>
                 </div>
             </div>
@@ -131,10 +132,10 @@
     {:else}
         <h1 class="title">{$_("noRecommendations")}</h1>
         <p class="subtitle">{$_("checkBackLater")}</p>
-        <div class="buttons">
+        <ButtonGroup align={"fill"}>
             <Button small={true} on:click={cancelRecommendations}>{$_("close")}</Button>
             <Button secondary={true} small={true} on:click={refresh}>{$_("refresh")}</Button>
-        </div>
+        </ButtonGroup>
     {/if}
 </div>
 
@@ -304,10 +305,6 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
-        }
-
-        .buttons {
-            display: flex;
         }
     }
 </style>

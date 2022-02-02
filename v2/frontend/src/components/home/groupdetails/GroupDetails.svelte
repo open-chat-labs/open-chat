@@ -4,6 +4,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
     import { _ } from "svelte-i18n";
@@ -141,29 +142,19 @@
             </p>
         </span>
         <span slot="footer" class="footer">
-            <div class="buttons">
+            <ButtonGroup>
                 <Button loading={saving} disabled={saving} small={true} on:click={updateGroup}
                     >{$_("save")}</Button>
                 <Button disabled={saving} small={true} on:click={close} secondary={true}
                     >{$_("discard")}</Button>
-            </div>
+            </ButtonGroup>
         </span>
     </ModalContent>
 </Overlay>
 
 <style type="text/scss">
-    :global(.footer .buttons button) {
-        margin-right: $sp3;
-    }
-
     .unsaved {
         padding: $sp5;
-    }
-
-    .buttons {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
     }
 
     .photo {
