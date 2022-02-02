@@ -140,7 +140,7 @@
                 {$_("unsavedGroupChanges")}
             </p>
         </span>
-        <span slot="footer">
+        <span slot="footer" class="footer">
             <div class="buttons">
                 <Button loading={saving} disabled={saving} small={true} on:click={updateGroup}
                     >{$_("save")}</Button>
@@ -152,7 +152,7 @@
 </Overlay>
 
 <style type="text/scss">
-    :global(.buttons button) {
+    :global(.footer .buttons button) {
         margin-right: $sp3;
     }
 

@@ -7,10 +7,10 @@
     import { toastStore } from "../../stores/toast";
     import { _ } from "svelte-i18n";
     import type { ChatController } from "../../fsm/chat.controller";
-    import { onDestroy, onMount } from "svelte";
+    import { onDestroy } from "svelte";
     import { getMinVisibleMessageIndex, isPreviewing } from "../../domain/chat/chat.utils";
     import type { GroupChatSummary, Mention } from "../../domain/chat/chat";
-    
+
     export let controller: ChatController;
     export let blocked: boolean;
     export let joining: GroupChatSummary | undefined;
@@ -98,13 +98,10 @@
     $: preview = isPreviewing($chat);
 </script>
 
-<svelte:window on:focus={onWindowFocus}/>
+<svelte:window on:focus={onWindowFocus} />
 
 <div class="wrapper">
     <CurrentChatHeader
-        {blocked}
-        {preview}
-        {unreadMessages}
         on:clearSelection
         on:blockUser
         on:unblockUser
@@ -115,6 +112,9 @@
         on:showParticipants
         on:leaveGroup
         on:deleteGroup
+        {blocked}
+        {preview}
+        {unreadMessages}
         selectedChatSummary={chat} />
     <CurrentChatMessages
         on:replyPrivatelyTo

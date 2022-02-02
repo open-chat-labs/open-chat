@@ -54,7 +54,6 @@
 <Panel left>
     <div class="new-group" class:adding-group={view === "adding-group"}>
         <NewGroup
-            {api}
             {currentUser}
             on:cancelNewGroup={() => (view = "showing-chat-list")}
             on:groupCreated={groupCreated} />
@@ -85,7 +84,6 @@
             bind:this={profileComponent}
             on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
             {user}
-            {api}
             on:userAvatarSelected={userAvatarSelected}
             on:closeProfile={() => (view = "showing-chat-list")} />
     </div>

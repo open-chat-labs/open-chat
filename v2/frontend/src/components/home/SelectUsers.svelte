@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { getContext } from "svelte";
     import FindUser from "../FindUser.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import UserPill from "../UserPill.svelte";
@@ -6,10 +7,8 @@
     import { _ } from "svelte-i18n";
     import type { UserSummary } from "../../domain/user/user";
     import { pop } from "../../utils/transition";
-    import type { ServiceContainer } from "../../services/serviceContainer";
 
     export let mode: "add" | "edit";
-    export let api: ServiceContainer;
     export let selectedUsers: UserSummary[];
 
     let error: string | undefined = undefined;
@@ -31,7 +30,7 @@
 {/if}
 
 <div class="find-user">
-    <FindUser {mode} on:selectUser {api} />
+    <FindUser {mode} on:selectUser />
 </div>
 
 <style type="text/scss">

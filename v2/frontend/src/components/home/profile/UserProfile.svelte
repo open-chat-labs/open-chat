@@ -16,15 +16,17 @@
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import { enterSend, scrollStrategy } from "../../../stores/settings";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "./Toggle.svelte";
     import { setLocale, supportedLanguages } from "i18n/i18n";
     import type { ScrollStrategy } from "../../../domain/chat/chat";
-    import type { ServiceContainer } from "services/serviceContainer";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
     import { userStore } from "../../../stores/user";
+    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
+
+    const api: ServiceContainer = getContext(apiKey);
 
     const dispatch = createEventDispatcher();
     const MIN_USERNAME_LENGTH = 3;
@@ -32,7 +34,6 @@
     const MAX_BIO_LENGTH = 2000;
 
     export let user: PartialUserSummary;
-    export let api: ServiceContainer;
 
     let username = "";
     let originalBio = "";

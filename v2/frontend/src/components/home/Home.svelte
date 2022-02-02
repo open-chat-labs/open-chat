@@ -5,8 +5,7 @@
     import RightPanel from "./RightPanel.svelte";
     import { fly } from "svelte/transition";
     import Overlay from "../Overlay.svelte";
-    import { createEventDispatcher, onDestroy, onMount, tick } from "svelte";
-    const dispatch = createEventDispatcher();
+    import { createEventDispatcher, onDestroy, onMount, setContext, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { push, replace, querystring } from "svelte-spa-router";
@@ -35,12 +34,17 @@
     import { _ } from "svelte-i18n";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
+    import { apiKey } from "../../services/serviceContainer";
+
+    const dispatch = createEventDispatcher();
 
     export let controller: HomeController;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
         messageIndex: undefined,
     };
+
+    setContext(apiKey, controller.api);
 
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -357,6 +361,7 @@
                 {joining}
                 loadingChats={$chatsLoading}
                 blocked={!!blocked}
+                controller={$selectedChat}
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}
                 on:unblockUser={unblockUser}
@@ -372,8 +377,7 @@
                 on:cancelPreview={cancelPreview}
                 on:cancelRecommendations={cancelRecommendations}
                 on:recommend={whatsHot}
-                on:dismissRecommendation={dismissRecommendation}
-                controller={$selectedChat} />
+                on:dismissRecommendation={dismissRecommendation} />
         {/if}
     </main>
 {/if}
@@ -386,7 +390,6 @@
                 class="right-wrapper"
                 class:rtl={$rtlStore}>
                 <RightPanel
-                    {api}
                     {userId}
                     controller={$selectedChat}
                     bind:editGroupHistory

@@ -7,14 +7,15 @@
     import Avatar from "./Avatar.svelte";
     import Loading from "./Loading.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, onMount } from "svelte";
-    import type { ServiceContainer } from "../services/serviceContainer";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { userStore } from "../stores/user";
     import { toastStore } from "../stores/toast";
     import { iconSize } from "../stores/iconSize";
     import { now } from "../stores/time";
+    import { apiKey, ServiceContainer } from "../services/serviceContainer";
 
-    export let api: ServiceContainer;
+    const api: ServiceContainer = getContext(apiKey);
+
     export let mode: "add" | "edit";
 
     const dispatch = createEventDispatcher();

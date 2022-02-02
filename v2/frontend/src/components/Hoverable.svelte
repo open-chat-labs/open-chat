@@ -6,10 +6,12 @@
 
     const maxDiffX = 10; // max number of X pixels the mouse can move during long press before it is canceled
     const maxDiffY = 10; // max number of Y pixels the mouse can move during long press before it is canceled
-    
+
+    export let hovering: boolean;
+    export let longPressed: boolean = false;
+    export let enableLongPress: boolean = false;
+
     let containerDiv: HTMLDivElement;
-    let hovering: boolean;
-    let longPressing: boolean;
     let hoverTimer: number | undefined;
     let longPressTimer: number | undefined;
 
@@ -27,7 +29,7 @@
     }
 
     function handleDocumentTouchStart() {
-        if (longPressing) {
+        if (longPressed) {
             cancelLongPress();
         }
     }
@@ -36,12 +38,12 @@
         let t = e.changedTouches[0];
         startX = t.clientX;
         startY = t.clientY;
-        
+
         cancelLongPress();
 
         longPressTimer = window.setTimeout(() => {
             if (longPressTimer !== undefined) {
-                longPressing = true;
+                longPressed = true;
             }
         }, LONGPRESS_DELAY);
     }
@@ -59,7 +61,7 @@
     }
 
     function handleTouchEnd() {
-        clearLongPressTimer()
+        clearLongPressTimer();
     }
 
     function clearLongPressTimer() {
@@ -71,33 +73,35 @@
 
     function cancelLongPress() {
         clearLongPressTimer();
-        longPressing = false;
+        longPressed = false;
     }
 
-    onMount(async () => {        
-        let isTouch = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
+    onMount(async () => {
+        let isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
         if (isTouch) {
-            document.addEventListener("touchstart", handleDocumentTouchStart);
-            containerDiv.addEventListener("touchend", handleTouchEnd);
-            containerDiv.addEventListener("touchmove", handleTouchMove);
-            containerDiv.addEventListener("touchstart", handleTouchStart);
-            containerDiv.addEventListener("contextmenu", (e: MouseEvent) => { 
-                e.preventDefault(); 
-            });
+            if (enableLongPress) {
+                document.addEventListener("touchstart", handleDocumentTouchStart);
+                containerDiv.addEventListener("touchend", handleTouchEnd);
+                containerDiv.addEventListener("touchmove", handleTouchMove);
+                containerDiv.addEventListener("touchstart", handleTouchStart);
+                containerDiv.addEventListener("contextmenu", (e: MouseEvent) => {
+                    e.preventDefault();
+                });
+            }
         } else {
             containerDiv.addEventListener("mouseenter", startHover);
             containerDiv.addEventListener("mouseleave", endHover);
-            containerDiv.addEventListener("contextmenu", (e: MouseEvent) => { 
-                e.preventDefault(); 
-                startHover() 
+            containerDiv.addEventListener("contextmenu", (e: MouseEvent) => {
+                e.preventDefault();
+                startHover();
             });
         }
     });
 </script>
 
 <div class="noselect" bind:this={containerDiv}>
-	<slot hovering={hovering || longPressing}></slot>
+    <slot />
 </div>
 
 <style type="text/scss">
@@ -108,5 +112,5 @@
         -moz-user-select: none; // Old versions of Firefox
         -ms-user-select: none; // Internet Explorer/Edge
         user-select: none; // Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox
-    }    
+    }
 </style>
