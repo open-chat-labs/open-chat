@@ -97,6 +97,23 @@ type NotifyRegistrationFeePaidResponse =
         InternalError: text;
     };
 
+type RefreshAccountBalanceArgs =
+    record {
+    };
+
+type RefreshAccountBalanceResponse =
+    variant {
+        Success: AccountCredit;
+        SuccessNoChange: AccountCredit;
+        UserNotFound;
+        InternalError: text;
+    };
+
+type AccountCredit =
+    record {
+        account_credit: ICP;
+    };
+
 type UpgradeStorageArgs =
     record {
         new_storage_limit_bytes: nat64;
@@ -115,7 +132,6 @@ type UpgradeStorageResponse =
         PaymentNotFound;
         StorageLimitExceeded: nat64; // Returns the storage limit in bytes
         UserNotFound;
-        InternalError: text;
     };
 
 type CreateCanisterArgs =
@@ -335,7 +351,10 @@ service: {
 
     notify_registration_fee_paid: (NotifyRegistrationFeePaidArgs) -> (NotifyRegistrationFeePaidResponse);
 
-    // Increases the user's storage limit in OpenStorage
+    // Checks the user's ledger account and credits their account if there has been a payment
+    refresh_account_balance: (RefreshAccountBalanceArgs) -> (RefreshAccountBalanceResponse);
+
+    // Increases the user's storage limit in OpenStorage (provided the user has enough credit)
     upgrade_storage: (UpgradeStorageArgs) -> (UpgradeStorageResponse);
 
     // Once the confirm_phone_number call has succeeded (user is in one of the "confirmed" states)
