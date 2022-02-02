@@ -4,6 +4,7 @@
     import Link from "./Link.svelte";
     import { rtlStore } from "../stores/rtl";
     import { rollbar } from "../utils/logging";
+    import { ScreenWidth, screenWidth } from "../stores/screenDimensions";
 
     const dispatch = createEventDispatcher();
 
@@ -19,11 +20,13 @@
 
     let divElement: HTMLElement;
 
-    $: style = alignTo === undefined ? "visibility: visible;" : "visibility: hidden;";
+    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
+    $: useAlignTo = alignTo !== undefined && !mobile;
+    $: style = useAlignTo ? "visibility: hidden;" : "visibility: visible;";
 
     onMount(async () => {
         try {
-            if (alignTo !== undefined) {
+            if (useAlignTo) {
                 await tick();
                 calculatePosition();
             }
