@@ -66,7 +66,8 @@ impl User {
                     None
                 }
             }
-            _ => None,
+            User::Confirmed(u) => u.registration_fee.clone(),
+            User::Created(u) => u.registration_fee.clone(),
         }
     }
 
