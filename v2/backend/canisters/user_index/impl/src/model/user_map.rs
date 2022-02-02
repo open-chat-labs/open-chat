@@ -7,7 +7,7 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet, VecDeque};
 use types::{
     CanisterCreationStatusInternal, Cycles, CyclesTopUp, ICPRegistrationFee, Milliseconds, PhoneNumber, RegistrationFee,
-    TimestampMillis, Timestamped, UserId,
+    TimestampMillis, Timestamped, UserId, ICP,
 };
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
@@ -23,6 +23,8 @@ pub struct UserMap {
     username_to_principal: CaseInsensitiveHashMap<Principal>,
     user_id_to_principal: HashMap<UserId, Principal>,
     registration_fee_cycles_to_principal: HashMap<Cycles, Principal>,
+    #[serde(default)]
+    failed_registration_fee_transfers: Vec<Principal>,
     registration_fees_pending_cycles_conversion: VecDeque<Principal>,
     unconfirmed_users: HashSet<Principal>,
     users_confirmed_via_phone: u64,
@@ -554,6 +556,21 @@ impl UserMap {
 
     pub fn len(&self) -> usize {
         self.users_by_principal.len()
+    }
+
+    pub fn next_registration_fee_to_transfer(&mut self) -> Option<(Principal, ICP)> {
+        let principal = self.registration_fees_pending_cycles_conversion.pop_front()?;
+        let user = self.users_by_principal.get(&principal)?;
+
+        if let Some(RegistrationFee::ICP(registration_fee)) = user.get_registration_fee() {
+            Some((principal, registration_fee.amount))
+        } else {
+            None
+        }
+    }
+
+    pub fn mark_failed_registration_fee_transfer(&mut self, principal: Principal) {
+        self.failed_registration_fee_transfers.push(principal);
     }
 
     #[cfg(test)]
