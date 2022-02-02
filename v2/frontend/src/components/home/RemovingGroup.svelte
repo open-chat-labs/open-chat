@@ -1,6 +1,7 @@
 <script lang="ts">
     import ModalContent from "../ModalContent.svelte";
     import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
     import type { HomeController } from "../../fsm/home.controller";
     import Overlay from "../Overlay.svelte";
     import { _ } from "svelte-i18n";
@@ -40,7 +41,7 @@
             </p>
         </span>
         <span slot="footer">
-            <div class="buttons">
+            <ButtonGroup>
                 <Button loading={inProgress} disabled={inProgress} small={true} on:click={confirm}
                     >{$_("yesPlease")}</Button>
                 <Button
@@ -51,7 +52,7 @@
                         chatId = undefined;
                     }}
                     secondary={true}>{$_("noThanks")}</Button>
-            </div>
+            </ButtonGroup>
         </span>
     </ModalContent>
 </Overlay>
@@ -59,11 +60,5 @@
 <style type="text/scss">
     .confirm-msg {
         padding: $sp5;
-    }
-
-    .buttons {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
     }
 </style>

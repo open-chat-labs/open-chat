@@ -4,6 +4,7 @@
     import Markdown from "../Markdown.svelte";
     import { AvatarSize } from "../../../domain/user/user";
     import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
     import type { PartialUserSummary } from "../../../domain/user/user";
     import { avatarUrl, formatLastOnlineDate } from "../../../domain/user/user.utils";
     import Overlay from "../../Overlay.svelte";
@@ -78,11 +79,12 @@
             {/if}
         </div>
         <div slot="footer" class="footer">
-            {#if chatButton}
-                <Button on:click={handleOpenDirectChat} small={true}>Chat</Button>
-                <div class="spacer" />
-            {/if}
-            <Button on:click={onClose} small={true} secondary={true}>Close</Button>
+            <ButtonGroup align={chatButton ? "fill" : "center"}>
+                {#if chatButton}
+                    <Button on:click={handleOpenDirectChat} small={true}>Chat</Button>
+                {/if}
+                <Button on:click={onClose} small={true} secondary={true}>Close</Button>
+            </ButtonGroup>
         </div>
     </ModalContent>
 </Overlay>
@@ -114,17 +116,6 @@
             .bio {
                 max-height: none;
             }
-        }
-    }
-
-    .footer {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-
-        .spacer {
-            width: $sp3;
-            height: $sp3;
         }
     }
 </style>
