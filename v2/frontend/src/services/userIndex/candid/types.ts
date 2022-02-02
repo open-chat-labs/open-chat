@@ -102,7 +102,7 @@ export interface CompletedICPWithdrawal {
 export interface ConfirmPhoneNumberArgs { 'confirmation_code' : string }
 export type ConfirmPhoneNumberResponse = { 'PhoneNumberNotSubmitted' : null } |
   { 'AlreadyClaimed' : null } |
-  { 'Success' : null } |
+  { 'Success' : SuccessResult } |
   { 'ConfirmationCodeExpired' : null } |
   { 'ConfirmationCodeIncorrect' : null };
 export interface ConfirmationCodeSms {
@@ -157,11 +157,12 @@ export type CurrentUserResponse = {
     'Created' : {
       'username' : string,
       'phone_status' : PhoneStatus,
+      'billing_account' : AccountIdentifier,
       'wasm_version' : Version,
+      'account_credit' : ICP,
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'storage_upgrade_icp_account' : AccountIdentifier,
       'open_storage_limit_bytes' : bigint,
     }
   } |
@@ -595,6 +596,7 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export interface SuccessResult { 'open_storage_limit_bytes' : bigint }
 export type SuperAdminsArgs = {};
 export type SuperAdminsResponse = { 'Success' : { 'users' : Array<UserId> } };
 export interface TextContent { 'text' : string }
@@ -635,6 +637,16 @@ export type UpgradeCanisterResponse = { 'UpgradeInProgress' : null } |
   { 'Success' : null } |
   { 'UpgradeNotRequired' : null } |
   { 'InternalError' : string } |
+  { 'UserNotFound' : null };
+export interface UpgradeStorageArgs { 'new_storage_limit_bytes' : bigint }
+export type UpgradeStorageResponse = { 'SuccessNoChange' : null } |
+  { 'Success' : { 'remaining_account_credit' : ICP } } |
+  { 'PaymentNotFound' : null } |
+  {
+    'PaymentInsufficient' : { 'amount_required' : ICP, 'account_credit' : ICP }
+  } |
+  { 'InternalError' : string } |
+  { 'StorageLimitExceeded' : bigint } |
   { 'UserNotFound' : null };
 export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserArgs {
@@ -713,6 +725,9 @@ export interface _SERVICE {
   'super_admins' : (arg_0: SuperAdminsArgs) => Promise<SuperAdminsResponse>,
   'upgrade_canister' : (arg_0: UpgradeCanisterArgs) => Promise<
       UpgradeCanisterResponse
+    >,
+  'upgrade_storage' : (arg_0: UpgradeStorageArgs) => Promise<
+      UpgradeStorageResponse
     >,
   'user' : (arg_0: UserArgs) => Promise<UserResponse>,
   'users' : (arg_0: UsersArgs) => Promise<UsersResponse>,
