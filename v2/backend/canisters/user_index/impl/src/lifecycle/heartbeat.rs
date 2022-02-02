@@ -1,12 +1,14 @@
 use crate::updates::upgrade_canister::{initialize_upgrade, set_upgrade_complete};
 use crate::{mutate_state, read_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
+use candid::Principal;
 use group_canister::c2c_dismiss_super_admin;
 use ic_cdk_macros::heartbeat;
-use tracing::error;
-use types::{CanisterId, ChatId, Cycles, CyclesTopUp, UserId, Version};
-use utils::canister;
-use utils::canister::FailedUpgrade;
-use utils::consts::CREATE_CANISTER_CYCLES_FEE;
+use ic_ledger_types::{AccountIdentifier, Memo, DEFAULT_FEE, DEFAULT_SUBACCOUNT};
+use ledger_utils::convert_to_subaccount;
+use tracing::{error, info};
+use types::{CanisterId, ChatId, Cycles, CyclesTopUp, UserId, Version, ICP};
+use utils::canister::{self, FailedUpgrade};
+use utils::consts::{CREATE_CANISTER_CYCLES_FEE, DEFAULT_MEMO};
 
 const MAX_CONCURRENT_CANISTER_UPGRADES: u32 = 5;
 const MAX_MESSAGES_TO_RETRY_PER_HEARTBEAT: u32 = 5;
@@ -20,6 +22,7 @@ fn heartbeat() {
     calculate_metrics::run();
     dismiss_removed_super_admins::run();
     prune_unconfirmed_users::run();
+    // transfer_registration_fees::run();
 }
 
 mod upgrade_canisters {
@@ -248,5 +251,35 @@ mod prune_unconfirmed_users {
     fn prune_unconfirmed_users_impl(runtime_state: &mut RuntimeState) {
         let now = runtime_state.env.now();
         runtime_state.data.users.prune_unconfirmed_users_if_required(now);
+    }
+}
+
+pub(crate) mod transfer_registration_fees {
+    use super::*;
+
+    pub fn run() {
+        if let Some((principal, amount)) = mutate_state(|state| state.data.users.next_registration_fee_to_transfer()) {
+            ic_cdk::block_on(transfer_registration_fee(principal, amount));
+        }
+    }
+
+    async fn transfer_registration_fee(principal: Principal, amount: ICP) {
+        let subaccount = convert_to_subaccount(&principal);
+        let recipient = AccountIdentifier::new(&ic_cdk::id(), &DEFAULT_SUBACCOUNT);
+
+        let args = ic_ledger_types::TransferArgs {
+            memo: Memo(DEFAULT_MEMO),
+            amount,
+            fee: DEFAULT_FEE,
+            from_subaccount: Some(subaccount),
+            to: recipient,
+            created_at_time: None,
+        };
+        if let Err(error) = ic_ledger_types::transfer(ic_ledger_types::MAINNET_LEDGER_CANISTER_ID, args.clone()).await {
+            error!(?args, ?error, "Failed to transfer ICP");
+            mutate_state(|state| state.data.users.mark_failed_registration_fee_transfer(principal));
+        } else {
+            info!(?args, "Transferred ICP");
+        }
     }
 }
