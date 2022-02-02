@@ -1,8 +1,15 @@
 <script lang="ts">
     export let underline: "never" | "always" | "hover" = "never";
+
+    let anchorElement: HTMLElement;
+
+    export function getBoundingRect(): DOMRect {
+        return anchorElement.getBoundingClientRect();
+    }
 </script>
 
 <a
+    bind:this={anchorElement}
     role="button"
     href="/#"
     class={underline}

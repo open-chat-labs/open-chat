@@ -9,10 +9,8 @@
     import type { UserSummary } from "../../../domain/user/user";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { createEventDispatcher } from "svelte";
-    import type { ServiceContainer } from "../../../services/serviceContainer";
     import { iconSize } from "../../../stores/iconSize";
 
-    export let api: ServiceContainer;
     export let closeIcon: "close" | "back";
     export let busy = false;
 
@@ -53,7 +51,6 @@
     <div class="find-user">
         <SelectUsers
             mode={"edit"}
-            {api}
             on:selectUser={selectUser}
             on:deleteUser={deleteUser}
             selectedUsers={usersToAdd} />

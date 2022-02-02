@@ -4,16 +4,16 @@
     import type { NewGroupState } from "../../../fsm/newGroup";
     import type { CandidateGroupChat, CreateGroupResponse } from "../../../domain/chat/chat";
     import type { User } from "../../../domain/user/user";
-    import type { ServiceContainer } from "../../../services/serviceContainer";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
     import { push } from "svelte-spa-router";
-    import { createEventDispatcher, tick } from "svelte";
+    import { createEventDispatcher, getContext, tick } from "svelte";
     import { groupChatFromCandidate } from "domain/chat/chat.utils";
+    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
 
+    const api: ServiceContainer = getContext(apiKey);
     const dispatch = createEventDispatcher();
 
-    export let api: ServiceContainer;
     export let currentUser: User;
 
     let newGroupState: NewGroupState = "group_form";
@@ -127,7 +127,6 @@
         on:createGroup={onCreateGroup} />
 {:else if newGroupState === "choosing_participants"}
     <ChooseParticipants
-        {api}
         {creatingCanister}
         {addingParticipants}
         bind:candidateGroup
