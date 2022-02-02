@@ -147,7 +147,9 @@
     }
 
     function openUserProfile() {
-        viewProfile = true;
+        if (!isGroup) {
+            viewProfile = true;
+        }
     }
 
     function closeUserProfile() {
@@ -173,7 +175,7 @@
         <ViewUserProfile {userId} chatButton={false} on:close={closeUserProfile} />
     {/if}
 
-    <div class="avatar">
+    <div class="avatar" class:is-direct={!isGroup} on:click={openUserProfile}>
         <Avatar
             statusBorder={"var(--section-bg)"}
             {blocked}
@@ -344,6 +346,10 @@
 
     .avatar {
         flex: 0 0 55px;
+
+        &.is-direct {
+            cursor: pointer;
+        }
     }
 
     .group-details {
