@@ -1,6 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { ONE_GB, storageStore } from "../../../stores/storage";
+    import { ONE_GB, storageInGb, storageStore } from "../../../stores/storage";
     import Button from "../../Button.svelte";
     import Footer from "./Footer.svelte";
     import Link from "../../Link.svelte";
@@ -9,7 +9,6 @@
     const dispatch = createEventDispatcher();
 
     $: smsUpgradePossible = $storageStore.byteLimit === 0;
-    $: mbLimit = Math.ceil($storageStore.byteLimit / 1_000_000);
     $: upgradePossible = $storageStore.byteLimit < ONE_GB;
 
     function cancel() {
@@ -38,7 +37,7 @@
         <p>
             {#if upgradePossible}
                 {$_("usageText", {
-                    values: { limit: mbLimit.toString() },
+                    values: { limit: $storageInGb.gbLimit.toFixed(1) },
                 })}
             {:else}
                 {$_("maxUsageText")}

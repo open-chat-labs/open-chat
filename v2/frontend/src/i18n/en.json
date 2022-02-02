@@ -26,7 +26,7 @@
     "currentUsage": "Current Usage",
     "percLeft": "{perc}% left",
     "storageUsed": "{used}GB used of {limit}GB",
-    "usageText": "You have reached your current {limit}MB limit.",
+    "usageText": "You have reached your current {limit}GB limit.",
     "maxUsageText": "You have reached the maximum 1GB limit.",
     "insufficientStorage": "Insufficient storage",
     "insufficientStorageAdvice": "You don't have enough storage to proceed.",
