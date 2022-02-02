@@ -38,6 +38,8 @@
 
     let iti: Plugin;
 
+    $: codeValid = codeValue.length === 6;
+
     onMount(() => {
         iti = intlTelInput(phoneElement, {
             initialCountry: "gb",
@@ -183,13 +185,13 @@
     {#if confirmed}
         <Button small={true} on:click={cancel}>{$_("close")}</Button>
     {:else if awaitingCode}
-        <Button disabled={!valid || busy} on:click={submitCode}
+        <Button small={true} disabled={!codeValid || busy} on:click={submitCode}
             >{$_("register.validateCode")}</Button>
-        <Button disabled={busy} secondary={true} on:click={resendCode}
+        <Button small={true} disabled={busy} secondary={true} on:click={resendCode}
             >{$_("register.resendCode")}</Button>
         <Button small={true} secondary={true} on:click={cancel}>{$_("cancel")}</Button>
     {:else}
-        <Button disabled={!valid || busy} loading={busy} on:click={submitPhoneNumber}>
+        <Button small={true} disabled={!valid || busy} loading={busy} on:click={submitPhoneNumber}>
             {$_("register.requestCode")}
         </Button>
         <Button small={true} secondary={true} on:click={cancel}>{$_("cancel")}</Button>

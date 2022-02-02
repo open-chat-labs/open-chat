@@ -30,6 +30,7 @@ import {
     RegisterUserResponse,
     PhoneStatus,
     UpgradeStorageResponse,
+    RefreshAccountBalanceResponse,
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -62,6 +63,7 @@ export {
     RegisterUserResponse as ApiRegisterUserResponse,
     PhoneStatus as ApiPhoneStatus,
     UpgradeStorageResponse as ApiUpgradeStorageResponse,
+    RefreshAccountBalanceResponse as ApiRefreshAccountBalanceResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -9,6 +9,7 @@ import type {
     NotificationFeePaidResponse,
     PartialUserSummary,
     PhoneNumber,
+    RefreshAccountBalanceResponse,
     RegisterUserResponse,
     RegistrationFeeResponse,
     ResendCodeResponse,
@@ -166,5 +167,9 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
         return this.client.upgradeStorage(newLimitBytes);
+    }
+
+    refreshBalance(): Promise<RefreshAccountBalanceResponse> {
+        return this.client.refreshBalance();
     }
 }

@@ -225,3 +225,8 @@ export type UpgradeStorageResponse =
     | { kind: "internal_error" }
     | { kind: "storage_limit_exceeded" }
     | { kind: "user_not_found" };
+
+export type RefreshAccountBalanceResponse =
+    | { kind: "success"; accountCredite8s: number }
+    | { kind: "internal_error" }
+    | { kind: "user_not_found" };

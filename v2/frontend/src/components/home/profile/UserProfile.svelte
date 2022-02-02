@@ -8,6 +8,7 @@
     import Input from "../../Input.svelte";
     import Link from "../../Link.svelte";
     import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
     import Radio from "../../Radio.svelte";
     import Select from "../../Select.svelte";
     import TextArea from "../../TextArea.svelte";
@@ -34,6 +35,7 @@
     import { userStore } from "../../../stores/user";
     import { ONE_GB, storageStore } from "../../../stores/storage";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
+    import { addListener } from "process";
 
     const api: ServiceContainer = getContext(apiKey);
 
@@ -285,26 +287,26 @@
             headerText={$_("account")}>
             <div class="legend">{$_("storage")}</div>
             {#if $storageStore.byteLimit === 0}
-                <p>
+                <p class="para">
                     {$_("noStorageAdvice")}
                 </p>
-                <p>
+                <p class="para last">
                     {$_("chooseUpgrade")}
 
                     <Link underline={"always"} on:click={whySms}>
                         {$_("tellMeMore")}
                     </Link>
                 </p>
-                <div class="upgrade-buttons buttons">
+                <ButtonGroup align={"fill"}>
                     <Button on:click={() => dispatch("upgrade", "sms")} small={true}
                         >{$_("upgradeBySMS")}</Button>
                     <Button on:click={() => dispatch("upgrade", "icp")} small={true}
                         >{$_("upgradeByTransfer")}</Button>
-                </div>
+                </ButtonGroup>
             {:else}
                 <StorageUsage />
                 {#if $storageStore.byteLimit < ONE_GB}
-                    <p>{$_("chooseTransfer")}</p>
+                    <p class="para">{$_("chooseTransfer")}</p>
                     <div class="full-width-btn">
                         <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small={true}
                             >{$_("upgradeStorage")}</Button>
@@ -317,10 +319,6 @@
 
 <style type="text/scss">
     $vertical-gap: $sp4;
-
-    .info {
-        cursor: pointer;
-    }
 
     .full-width-btn {
         display: flex;
@@ -392,9 +390,10 @@
         }
     }
 
-    .account {
-        p {
-            margin-bottom: $sp3;
+    .para {
+        margin-bottom: $sp3;
+        &.last {
+            margin-bottom: $sp4;
         }
     }
 
@@ -418,18 +417,5 @@
         position: absolute;
         top: $sp3;
         right: $sp3;
-    }
-
-    .upgrade-buttons {
-        margin-top: $sp4;
-        display: flex;
-        justify-content: space-evenly;
-    }
-
-    :global(.upgrade-buttons button) {
-        flex: 1;
-        &:last-child {
-            margin: 0;
-        }
     }
 </style>

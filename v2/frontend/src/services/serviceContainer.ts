@@ -19,6 +19,7 @@ import type {
     RegisterUserResponse,
     UpgradeStorageResponse,
     PartialUserSummary,
+    RefreshAccountBalanceResponse,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -687,5 +688,9 @@ export class ServiceContainer implements MarkMessagesRead {
 
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
         return this._userIndexClient.upgradeStorage(newLimitBytes);
+    }
+
+    refreshAccountBalance(): Promise<RefreshAccountBalanceResponse> {
+        return this._userIndexClient.refreshBalance();
     }
 }

@@ -1,9 +1,10 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import Button from "../../Button.svelte";
+    import { fade } from "svelte/transition";
     import { createEventDispatcher } from "svelte";
     import Footer from "./Footer.svelte";
-    import { ONE_GB, storageInGb, storageStore } from "../../../stores/storage";
+    import { ONE_GB, storageInGb, storageStore, updateStorageLimit } from "../../../stores/storage";
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
     import QR from "svelte-qr";
@@ -13,6 +14,7 @@
     import type { CreatedUser } from "../../../domain/user/user";
     import type { ServiceContainer } from "../../../services/serviceContainer";
     import { E8S_PER_ICP } from "../../../domain/user/user";
+    import { rollbar } from "utils/logging";
 
     const dispatch = createEventDispatcher();
     const decimals = 1;
@@ -27,8 +29,9 @@
     let confirmed = false;
     let refreshing = false;
     let accountSummary = user.billingAccount;
+    let accountBalance = user.accountCredite8s;
 
-    $: icpBalance = user.accountCredite8s / E8S_PER_ICP; //balance in the user's account expressed as ICP
+    $: icpBalance = accountBalance / E8S_PER_ICP; //balance in the user's account expressed as ICP
     $: min = Math.ceil(($storageStore.byteLimit / ONE_GB) * 10); //the min bound expressed as number of 1/10 GB units
     $: newLimit = min;
     $: toPay = (newLimit - min) * icpPrice;
@@ -44,7 +47,25 @@
 
     $: console.log($storageStore);
 
-    function refreshBalance() {}
+    function refreshBalance() {
+        refreshing = true;
+        error = undefined;
+        api.refreshAccountBalance()
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    accountBalance = resp.accountCredite8s;
+                    error = undefined;
+                } else {
+                    error = "unableToRefreshAccountBalance";
+                    rollbar.error("Unable to refresh user's account balance", resp);
+                }
+            })
+            .catch((err) => {
+                error = "unableToRefreshAccountBalance";
+                rollbar.error("Unable to refresh user's account balance", err);
+            })
+            .finally(() => (refreshing = false));
+    }
 
     function cancel() {
         dispatch("cancel");
@@ -63,6 +84,7 @@
 
     function confirm() {
         confirming = true;
+        error = undefined;
 
         const newLimitBytes = (newLimit * ONE_GB) / 10;
 
@@ -70,14 +92,19 @@
             .then((resp) => {
                 console.log("Notify: ", resp);
                 if (resp.kind === "success" || resp.kind === "success_no_change") {
-                    // todo - update the user's balance
-                    // todo - update the user's storage limit
-                    // todo - display errors
+                    accountBalance =
+                        resp.kind === "success" ? resp.accountCredite8s : accountBalance;
+                    updateStorageLimit(newLimitBytes);
                     error = undefined;
                     confirmed = true;
                 } else {
                     error = "register.unableToConfirmFee";
+                    rollbar.error("Unable to upgrade storage", resp);
                 }
+            })
+            .catch((err) => {
+                error = "register.unableToConfirmFee";
+                rollbar.error("Unable to upgrade storage", err);
             })
             .finally(() => (confirming = false));
     }
@@ -159,6 +186,10 @@
                 })}
             {/if}
         </p>
+
+        {#if error}
+            <h4 in:fade class="error">{$_(error)}</h4>
+        {/if}
     {/if}
 </div>
 <Footer>
@@ -264,5 +295,11 @@
         position: absolute;
         left: $sp4;
         bottom: $sp4;
+    }
+
+    .error {
+        @include font(bold, normal, fs-100);
+        color: var(--error);
+        margin-bottom: $sp4;
     }
 </style>
