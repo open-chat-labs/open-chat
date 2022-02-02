@@ -15,7 +15,6 @@ pub enum Response {
     PaymentNotFound,
     StorageLimitExceeded(u64), // Returns the storage limit in bytes
     UserNotFound,
-    InternalError(String),
 }
 
 #[derive(CandidType, Deserialize, Debug)]
