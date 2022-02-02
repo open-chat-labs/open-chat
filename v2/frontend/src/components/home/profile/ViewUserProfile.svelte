@@ -118,15 +118,4 @@
             }
         }
     }
-
-    // .footer {
-    //     display: flex;
-    //     justify-content: flex-end;
-    //     align-items: center;
-
-    //     .spacer {
-    //         width: $sp3;
-    //         height: $sp3;
-    //     }
-    // }
 </style>
