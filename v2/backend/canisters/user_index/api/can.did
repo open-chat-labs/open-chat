@@ -132,7 +132,6 @@ type UpgradeStorageResponse =
         PaymentNotFound;
         StorageLimitExceeded: nat64; // Returns the storage limit in bytes
         UserNotFound;
-        InternalError: text;
     };
 
 type CreateCanisterArgs =

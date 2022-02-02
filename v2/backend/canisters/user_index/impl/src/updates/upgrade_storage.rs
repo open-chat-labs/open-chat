@@ -1,35 +1,36 @@
-use super::refresh_account_balance::refresh_account_balance_impl;
 use crate::model::account_billing::{AccountCharge, AccountChargeDetails, StorageAccountChargeDetails};
 use crate::model::user::User;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use open_storage_index_canister::add_or_update_users::UserConfig;
+use std::cmp::max;
 use types::ICP;
-use user_index_canister::refresh_account_balance;
 use user_index_canister::upgrade_storage::{Response::*, *};
 
-const FEE_PER_100MB: ICP = ICP::from_e8s(10_000_000); // 0.1 ICP
-const BYTES_PER_100MB: u64 = 100 * 1000 * 1000;
-const BYTES_PER_1GB: u64 = 10 * BYTES_PER_100MB;
+const FEE_PER_GB: ICP = ICP::from_e8s(ICP::SUBDIVIDABLE_BY); // 0.1 ICP
+const BYTES_PER_1GB: u64 = 1024 * 1024 * 1024;
 
 #[update]
 #[trace]
-async fn upgrade_storage(args: Args) -> Response {
-    if args.new_storage_limit_bytes > BYTES_PER_1GB {
-        return StorageLimitExceeded(BYTES_PER_1GB);
-    }
+fn upgrade_storage(args: Args) -> Response {
+    mutate_state(|state| upgrade_storage_impl(args, state))
+}
 
-    let PrepareResult { caller, charge_amount } = match read_state(|state| prepare(&args, state)) {
-        Ok(prepare_result) => prepare_result,
-        Err(response) => return response,
-    };
+fn upgrade_storage_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    let caller = runtime_state.env.caller();
+    if let Some(User::Created(user)) = runtime_state.data.users.get_by_principal(&caller) {
+        if args.new_storage_limit_bytes > BYTES_PER_1GB {
+            return StorageLimitExceeded(BYTES_PER_1GB);
+        }
 
-    match refresh_account_balance_impl().await {
-        refresh_account_balance::Response::Success(refresh_account_balance::SuccessResult { account_credit })
-        | refresh_account_balance::Response::SuccessNoChange(refresh_account_balance::SuccessResult { account_credit }) => {
-            if account_credit.e8s() == 0 {
+        let requested_storage_increase = args.new_storage_limit_bytes.saturating_sub(user.open_storage_limit_bytes);
+        if requested_storage_increase > 0 {
+            let charge_amount = calculate_charge(requested_storage_increase);
+            let account_credit = user.account_billing.credit();
+
+            if account_credit == ICP::ZERO {
                 PaymentNotFound
             } else {
                 match account_credit.e8s().checked_sub(charge_amount.e8s()).map(ICP::from_e8s) {
@@ -48,30 +49,11 @@ async fn upgrade_storage(args: Args) -> Response {
                     }),
                 }
             }
-        }
-        refresh_account_balance::Response::UserNotFound => UserNotFound,
-        refresh_account_balance::Response::InternalError(error) => InternalError(error),
-    }
-}
-
-struct PrepareResult {
-    caller: Principal,
-    charge_amount: ICP,
-}
-
-fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    let caller = runtime_state.env.caller();
-    if let Some(User::Created(user)) = runtime_state.data.users.get_by_principal(&caller) {
-        let requested_storage_increase = args.new_storage_limit_bytes.saturating_sub(user.open_storage_limit_bytes);
-        if requested_storage_increase > 0 {
-            let charge_amount = ICP::from_e8s((requested_storage_increase * FEE_PER_100MB.e8s()) / BYTES_PER_100MB);
-
-            Ok(PrepareResult { caller, charge_amount })
         } else {
-            Err(SuccessNoChange)
+            SuccessNoChange
         }
     } else {
-        Err(UserNotFound)
+        UserNotFound
     }
 }
 
@@ -108,4 +90,16 @@ fn process_charge(
     } else {
         UserNotFound
     }
+}
+
+const MIN_CHARGE: ICP = ICP::from_e8s(ICP::SUBDIVIDABLE_BY / 100);
+
+// This calculates the exact charge in ICP and then rounds it to 2 decimal places
+fn calculate_charge(requested_storage_increase_bytes: u64) -> ICP {
+    let charge_amount = ICP::from_e8s((requested_storage_increase_bytes * FEE_PER_GB.e8s()) / BYTES_PER_1GB);
+
+    let charge_amount_fraction = charge_amount.e8s() as f64 / ICP::SUBDIVIDABLE_BY as f64;
+    let rounded_2_dp = (charge_amount_fraction * 100.0).round() / 100.0;
+
+    ICP::from_e8s(max((rounded_2_dp * ICP::SUBDIVIDABLE_BY as f64) as u64, MIN_CHARGE.e8s()))
 }
