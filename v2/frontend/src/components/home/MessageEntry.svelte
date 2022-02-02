@@ -322,7 +322,7 @@
             {$_("userIsBlocked")}
         </div>
     {:else if preview}
-        <div class="preview buttons">
+        <div class="preview">
             <Button secondary={true} small={true} on:click={cancelPreview}>
                 {$_("leave")}
             </Button>
@@ -455,6 +455,7 @@
 
     .preview {
         justify-content: flex-end;
+        gap: $sp3;
         @include size-below(xs) {
             justify-content: center;
         }
