@@ -14,4 +14,5 @@ pub mod resend_code;
 pub mod set_username;
 pub mod submit_phone_number;
 pub mod upgrade_canister;
+pub mod upgrade_storage;
 pub mod upgrade_user_canister_wasm;
