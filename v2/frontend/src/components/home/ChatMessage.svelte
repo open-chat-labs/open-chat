@@ -65,8 +65,8 @@
     let showEmojiPicker = false;
     let debug = false;
     let viewProfile = false;
-    let usernameAnchor: Link;
-    let usernameAnchorBoundingRect: DOMRect | undefined = undefined;
+    let usernameLink: Link;
+    let usernameLinkBoundingRect: DOMRect | undefined = undefined;
 
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
@@ -186,7 +186,7 @@
     }
 
     function openUserProfile() {
-        usernameAnchorBoundingRect = usernameAnchor.getBoundingRect();
+        usernameLinkBoundingRect = usernameLink.getBoundingRect();
         viewProfile = true;
     }
 
@@ -232,7 +232,7 @@
 
 {#if viewProfile}
     <ViewUserProfile
-        alignTo={usernameAnchorBoundingRect}
+        alignTo={usernameLinkBoundingRect}
         userId={sender.userId}
         on:openDirectChat={chatWithUser}
         on:close={closeUserProfile} />
@@ -272,7 +272,7 @@
             class:rtl={$rtlStore}>
             {#if first && !me && groupChat && !deleted}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
-                    <Link bind:this={usernameAnchor} underline={"hover"} on:click={openUserProfile}>
+                    <Link bind:this={usernameLink} underline={"hover"} on:click={openUserProfile}>
                         <h4 class="username" class:fill>{username}</h4>
                     </Link>
                 </div>
