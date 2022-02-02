@@ -5,7 +5,7 @@
         percentageStorageRemaining,
         percentageStorageUsed,
         storageStore,
-        storageInMb,
+        storageInGb,
     } from "../stores/storage";
 </script>
 
@@ -24,10 +24,10 @@
     </div>
     <div class="row">
         <span class="usage">
-            {$_("mbUsed", {
+            {$_("storageUsed", {
                 values: {
-                    used: $storageInMb.mbUsed.toString(),
-                    limit: $storageInMb.mbLimit.toString(),
+                    used: $storageInGb.gbUsed.toString(),
+                    limit: $storageInGb.gbLimit.toString(),
                 },
             })}
         </span>

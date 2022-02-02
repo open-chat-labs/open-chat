@@ -3,7 +3,7 @@
     import Button from "../../Button.svelte";
     import { createEventDispatcher } from "svelte";
     import Footer from "./Footer.svelte";
-    import { ONE_GB, ONE_HUNDRED_MB, storageInMb, storageStore } from "../../../stores/storage";
+    import { ONE_GB, storageInGb, storageStore } from "../../../stores/storage";
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
     import QR from "svelte-qr";
@@ -21,16 +21,17 @@
 
     let error: string | undefined = undefined;
     let range: HTMLInputElement;
-    let amount: number = 0.1; // TODO - storage price currently hard-coded
+    let icpPrice: number = 0.1; // storage price in ICP per 1/10th of a GB
     let confirming = false;
     let confirmed = false;
+    let refreshing = false;
     let accountSummary = user.billingAccount;
 
-    $: icpBalance = user.accountCredite8s / E8S_PER_ICP;
-    $: min = Math.ceil($storageStore.byteLimit / ONE_HUNDRED_MB);
-    $: max = Math.ceil(ONE_GB / ONE_HUNDRED_MB);
+    $: icpBalance = user.accountCredite8s / E8S_PER_ICP; //balance in the user's account expressed as ICP
+    $: min = Math.ceil(($storageStore.byteLimit / ONE_GB) * 10); //the min bound expressed as number of 1/10 GB units
     $: newLimit = min;
-    $: toPay = (newLimit - min - icpBalance) * amount;
+    $: toPay = (newLimit - min) * icpPrice;
+    $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
     $: {
         if (user.billingAccount.length > 20) {
             accountSummary =
@@ -39,6 +40,8 @@
                 user.billingAccount.slice(user.billingAccount.length - 10);
         }
     }
+
+    function refreshBalance() {}
 
     function cancel() {
         dispatch("cancel");
@@ -58,14 +61,16 @@
     function confirm() {
         confirming = true;
 
-        console.log("New limit: ", newLimit * ONE_HUNDRED_MB);
+        const newLimitBytes = (newLimit * ONE_GB) / 10;
+        console.log("New limit in bytes: ", newLimitBytes);
 
-        api.upgradeStorage(newLimit * ONE_HUNDRED_MB)
+        api.upgradeStorage(newLimitBytes)
             .then((resp) => {
                 console.log("Notify: ", resp);
                 if (resp.kind === "success" || resp.kind === "success_no_change") {
                     // todo - update the user's balance
                     // todo - update the user's storage limit
+                    // todo - display errors
                     error = undefined;
                     confirmed = true;
                 } else {
@@ -118,7 +123,7 @@
                     bind:this={range}
                     type="range"
                     min={0}
-                    {max}
+                    max={10}
                     value={newLimit}
                     on:input={changeLimit} />
             </div>
@@ -126,20 +131,28 @@
 
         <div class="new-limit">
             {$_("newLimit", {
-                values: { limit: (newLimit === 10 ? "1GB" : `${newLimit * 100}MB`).toString() },
+                values: { limit: `${newLimit / 10}GB` },
             })}
         </div>
 
         <p class="para">
             {$_("currentLimit", {
-                values: { limit: $storageInMb.mbLimit.toString() },
+                values: { balance: icpBalance.toFixed(2), limit: $storageInGb.gbLimit.toString() },
             })}
         </p>
 
         <p class="para">
-            {$_("pleaseDeposit", {
-                values: { amount: toPay.toFixed(2).toString() },
-            })}
+            {#if toPay === 0}
+                {$_("noChangeToStorage")}
+            {:else if insufficientFunds}
+                {$_("insufficientFunds", {
+                    values: { amount: toPay.toFixed(2) },
+                })}
+            {:else}
+                {$_("pleaseDeposit", {
+                    values: { amount: toPay.toFixed(2), limit: `${newLimit / 10}GB` },
+                })}
+            {/if}
         </p>
     {/if}
 </div>
@@ -153,11 +166,19 @@
             target="_blank">
             {$_("howToBuyICP")}
         </a>
-        <Button
-            disabled={confirming || toPay === 0}
-            loading={confirming}
-            on:click={confirm}
-            small={true}>{$_("register.confirmed")}</Button>
+        {#if insufficientFunds}
+            <Button
+                disabled={refreshing}
+                loading={refreshing}
+                on:click={refreshBalance}
+                small={true}>{$_("refresh")}</Button>
+        {:else}
+            <Button
+                disabled={confirming || toPay === 0}
+                loading={confirming}
+                on:click={confirm}
+                small={true}>{$_("register.confirmed")}</Button>
+        {/if}
         <Button disabled={confirming} small={true} secondary={true} on:click={cancel}
             >{$_("cancel")}</Button>
     {/if}
