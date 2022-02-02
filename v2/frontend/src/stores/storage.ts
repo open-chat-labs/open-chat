@@ -33,7 +33,7 @@ export const remainingStorage = derived(
 
 export const storageInGb = derived([storageStore], ([$storageStore]) => {
     return {
-        gbLimit: Math.ceil($storageStore.byteLimit / ONE_GB),
-        gbUsed: Math.ceil($storageStore.bytesUsed / ONE_GB),
+        gbLimit: $storageStore.byteLimit / ONE_GB,
+        gbUsed: $storageStore.bytesUsed / ONE_GB,
     };
 });

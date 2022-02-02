@@ -26,8 +26,8 @@
         <span class="usage">
             {$_("storageUsed", {
                 values: {
-                    used: $storageInGb.gbUsed.toString(),
-                    limit: $storageInGb.gbLimit.toString(),
+                    used: $storageInGb.gbUsed.toFixed(1),
+                    limit: $storageInGb.gbLimit.toFixed(1),
                 },
             })}
         </span>

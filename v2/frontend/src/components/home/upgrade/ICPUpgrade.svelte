@@ -15,6 +15,7 @@
     import { E8S_PER_ICP } from "../../../domain/user/user";
 
     const dispatch = createEventDispatcher();
+    const decimals = 1;
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
@@ -41,6 +42,8 @@
         }
     }
 
+    $: console.log($storageStore);
+
     function refreshBalance() {}
 
     function cancel() {
@@ -62,7 +65,6 @@
         confirming = true;
 
         const newLimitBytes = (newLimit * ONE_GB) / 10;
-        console.log("New limit in bytes: ", newLimitBytes);
 
         api.upgradeStorage(newLimitBytes)
             .then((resp) => {
@@ -137,7 +139,10 @@
 
         <p class="para">
             {$_("currentLimit", {
-                values: { balance: icpBalance.toFixed(2), limit: $storageInGb.gbLimit.toString() },
+                values: {
+                    balance: icpBalance.toFixed(decimals),
+                    limit: $storageInGb.gbLimit.toFixed(decimals),
+                },
             })}
         </p>
 
@@ -146,11 +151,11 @@
                 {$_("noChangeToStorage")}
             {:else if insufficientFunds}
                 {$_("insufficientFunds", {
-                    values: { amount: toPay.toFixed(2) },
+                    values: { amount: toPay.toFixed(decimals) },
                 })}
             {:else}
                 {$_("pleaseDeposit", {
-                    values: { amount: toPay.toFixed(2), limit: `${newLimit / 10}GB` },
+                    values: { amount: toPay.toFixed(decimals), limit: `${newLimit / 10}GB` },
                 })}
             {/if}
         </p>
@@ -187,7 +192,7 @@
 <style type="text/scss">
     .body {
         padding: $sp4 $sp5;
-        height: 390px;
+        min-height: 390px;
         transition: height 200ms ease-in-out;
 
         &.is-confirmed {
