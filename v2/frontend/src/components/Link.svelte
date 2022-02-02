@@ -1,10 +1,15 @@
 <script lang="ts">
     export let underline: "never" | "always" | "hover" = "never";
-    export let anchor: HTMLAnchorElement | undefined = undefined;
+
+    let anchorElement: HTMLElement;
+
+    export function getBoundingRect(): DOMRect {
+        return anchorElement.getBoundingClientRect();
+    }
 </script>
 
 <a
-    bind:this={anchor}
+    bind:this={anchorElement}
     role="button"
     href="/#"
     class={underline}

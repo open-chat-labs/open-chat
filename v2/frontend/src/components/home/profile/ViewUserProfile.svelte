@@ -1,33 +1,31 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import Avatar from "../../Avatar.svelte";
     import Markdown from "../Markdown.svelte";
     import { AvatarSize } from "../../../domain/user/user";
     import Button from "../../Button.svelte";
     import type { PartialUserSummary } from "../../../domain/user/user";
     import { avatarUrl, formatLastOnlineDate } from "../../../domain/user/user.utils";
-    import { rtlStore } from "../../../stores/rtl";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { ScreenWidth, screenWidth } from "../../../stores/screenDimensions";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
+    import { rollbar } from "../../../utils/logging";
 
     const api: ServiceContainer = getContext(apiKey);
     const dispatch = createEventDispatcher();
 
     export let userId: string;
-    export let anchor: HTMLElement | undefined = undefined;
+    export let alignTo: DOMRect | undefined = undefined;
     export let chatButton = true;
 
     let bio = "";
     let user: PartialUserSummary | undefined;
     let loaded = false;
-    let divElement: HTMLElement;
 
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
-    $: modal = anchor === undefined || mobile;
+    $: modal = alignTo === undefined || mobile;
     $: status = formatLastOnlineDate(Date.now(), user);
-    $: style = modal ? "visibility: visible;" : "visibility: hidden;";
 
     onMount(async () => {
         try {
@@ -36,33 +34,11 @@
             user = await task1;
             bio = await task2;
             loaded = true;
-
-            if (!modal) {
-                await tick();
-                calculatePosition();
-            }
-        } catch (e) {
-            console.log(e);
+        } catch (e: any) {
+            rollbar.error("Failed to load user profile", e);
             onClose();
         }
     });
-
-    function calculatePosition() {
-        if (anchor !== undefined) {
-            let modalDiv = divElement.parentElement?.parentElement!;
-            let rd = modalDiv.getBoundingClientRect();
-            let ra = anchor.getBoundingClientRect();
-            let top = Math.min(ra.top - 8, window.innerHeight - rd.height);
-
-            style = `position: absolute; visibility: visible; top: ${top}px; `;
-
-            if ($rtlStore) {
-                style += `right: ${window.innerWidth - ra.left + 8}px;`;
-            } else {
-                style += `left: ${ra.right + 8}px;`;
-            }
-        }
-    }
 
     function handleOpenDirectChat() {
         dispatch("openDirectChat");
@@ -87,9 +63,9 @@
         compactFooter={true}
         fixedWidth={false}
         large={modal}
-        {style}
+        {alignTo}
         on:close>
-        <div slot="body" bind:this={divElement} class="body" class:modal>
+        <div slot="body" class="body" class:modal>
             <Avatar url={avatarUrl(user)} size={AvatarSize.ExtraLarge} />
             {#if user?.username !== undefined}
                 <h2>{user.username}</h2>

@@ -58,15 +58,15 @@
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
-    let usernameAnchor: HTMLAnchorElement;
     let userLookup = getContext<UserLookup>("userLookup");
     let sender = userLookup[senderId];
-
     let groupChat = chatType === "group_chat";
     let username = sender?.username;
     let showEmojiPicker = false;
     let debug = false;
     let viewProfile = false;
+    let usernameAnchor: Link;
+    let usernameAnchorBoundingRect: DOMRect | undefined = undefined;
 
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
@@ -186,6 +186,7 @@
     }
 
     function openUserProfile() {
+        usernameAnchorBoundingRect = usernameAnchor.getBoundingRect();
         viewProfile = true;
     }
 
@@ -231,8 +232,8 @@
 
 {#if viewProfile}
     <ViewUserProfile
+        alignTo={usernameAnchorBoundingRect}
         userId={sender.userId}
-        anchor={usernameAnchor}
         on:openDirectChat={chatWithUser}
         on:close={closeUserProfile} />
 {/if}
@@ -271,10 +272,7 @@
             class:rtl={$rtlStore}>
             {#if first && !me && groupChat && !deleted}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
-                    <Link
-                        bind:anchor={usernameAnchor}
-                        underline={"hover"}
-                        on:click={openUserProfile}>
+                    <Link bind:this={usernameAnchor} underline={"hover"} on:click={openUserProfile}>
                         <h4 class="username" class:fill>{username}</h4>
                     </Link>
                 </div>

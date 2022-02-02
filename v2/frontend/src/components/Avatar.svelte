@@ -15,7 +15,7 @@
     class:small={size === AvatarSize.Small}
     class:medium={size === AvatarSize.Medium}
     class:large={size === AvatarSize.Large}
-    class:larger={size === AvatarSize.ExtraLarge}
+    class:extra-large={size === AvatarSize.ExtraLarge}
     class:blocked
     style="background-image: url({url});">
     {#if status === UserStatus.Online}
@@ -70,7 +70,7 @@
             height: 100px;
         }
 
-        &.larger {
+        &.extra-large {
             width: 150px;
             height: 150px;
         }
