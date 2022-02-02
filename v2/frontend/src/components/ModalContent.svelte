@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
     import Link from "./Link.svelte";
     import { rtlStore } from "../stores/rtl";
+    import { rollbar } from "../utils/logging";
 
     const dispatch = createEventDispatcher();
 
@@ -13,13 +14,53 @@
     export let compactFooter: boolean = false;
     export let fadeDuration = 100;
     export let fadeDelay = 200;
+    export let fixedWidth: boolean = true;
+    export let alignTo: DOMRect | undefined = undefined;
+
+    let divElement: HTMLElement;
+
+    $: style = alignTo === undefined ? "visibility: visible;" : "visibility: hidden;";
+
+    onMount(async () => {
+        try {
+            if (alignTo !== undefined) {
+                await tick();
+                calculatePosition();
+            }
+        } catch (e: any) {
+            rollbar.error("Failed to open modal", e);
+            onClose();
+        }
+    });
+
+    function calculatePosition() {
+        if (alignTo !== undefined) {
+            let modalRect = divElement.getBoundingClientRect();
+            let top = Math.min(alignTo.top - 8, window.innerHeight - modalRect.height);
+
+            style = `position: absolute; visibility: visible; top: ${top}px; `;
+
+            if ($rtlStore) {
+                style += `right: ${window.innerWidth - alignTo.left + 8}px;`;
+            } else {
+                style += `left: ${alignTo.right + 8}px;`;
+            }
+        }
+    }
+
+    function onClose() {
+        dispatch("close");
+    }
 </script>
 
 <div
+    bind:this={divElement}
+    {style}
     class="modal-content"
     class:large
     in:fade={{ duration: fadeDuration, delay: fadeDelay }}
     out:fade={{ duration: fadeDuration }}
+    class:fixed-width={fixedWidth}
     on:click|stopPropagation>
     {#if !hideHeader}
         <div class="header">
@@ -34,7 +75,7 @@
     {#if !hideFooter}
         <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
             <slot name="footer">
-                <Link on:click={() => dispatch("close")}>Close</Link>
+                <Link on:click={onClose}>Close</Link>
             </slot>
         </div>
     {/if}
@@ -55,10 +96,14 @@
             border-radius: $sp4 $sp4 0 0;
         }
         @include size-above(xs) {
-            width: 60%;
+            &.fixed-width {
+                width: 60%;
+            }
             max-width: 576px;
             &.large {
-                width: 90%;
+                &.fixed-width {
+                    width: 90%;
+                }
                 max-height: 90%;
                 max-width: 850px;
             }

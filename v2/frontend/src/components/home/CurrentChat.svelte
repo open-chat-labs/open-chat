@@ -7,7 +7,7 @@
     import { toastStore } from "../../stores/toast";
     import { _ } from "svelte-i18n";
     import type { ChatController } from "../../fsm/chat.controller";
-    import { onDestroy, onMount } from "svelte";
+    import { onDestroy } from "svelte";
     import { getMinVisibleMessageIndex, isPreviewing } from "../../domain/chat/chat.utils";
     import type { GroupChatSummary, Mention } from "../../domain/chat/chat";
 
@@ -102,9 +102,6 @@
 
 <div class="wrapper">
     <CurrentChatHeader
-        {blocked}
-        {preview}
-        {unreadMessages}
         on:clearSelection
         on:blockUser
         on:unblockUser
@@ -115,6 +112,9 @@
         on:showParticipants
         on:leaveGroup
         on:deleteGroup
+        {blocked}
+        {preview}
+        {unreadMessages}
         selectedChatSummary={chat} />
     <CurrentChatMessages
         on:replyPrivatelyTo

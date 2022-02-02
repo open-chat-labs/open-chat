@@ -33,6 +33,7 @@
     import { calculateMediaDimensions } from "../../utils/layout";
     import MessageReaction from "./MessageReaction.svelte";
     import Reload from "../Reload.svelte";
+    import ViewUserProfile from "./profile/ViewUserProfile.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -59,11 +60,13 @@
     let msgBubbleElement: HTMLElement;
     let userLookup = getContext<UserLookup>("userLookup");
     let sender = userLookup[senderId];
-
     let groupChat = chatType === "group_chat";
     let username = sender?.username;
     let showEmojiPicker = false;
     let debug = false;
+    let viewProfile = false;
+    let usernameLink: Link;
+    let usernameLinkBoundingRect: DOMRect | undefined = undefined;
 
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
@@ -84,7 +87,6 @@
             // todo - leaving this console log here for now just to make sure we are not *over* observing
             console.log("beginning to observe: ", msg.messageIndex);
             observer.observe(msgElement);
-        } else {
         }
 
         recalculateMediaDimensions();
@@ -183,6 +185,15 @@
         dispatch("blockUser", { userId: senderId });
     }
 
+    function openUserProfile() {
+        usernameLinkBoundingRect = usernameLink.getBoundingRect();
+        viewProfile = true;
+    }
+
+    function closeUserProfile() {
+        viewProfile = false;
+    }
+
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 </script>
 
@@ -219,6 +230,14 @@
     </Overlay>
 {/if}
 
+{#if viewProfile}
+    <ViewUserProfile
+        alignTo={usernameLinkBoundingRect}
+        userId={sender.userId}
+        on:openDirectChat={chatWithUser}
+        on:close={closeUserProfile} />
+{/if}
+
 <div class="message-wrapper" class:last>
     <div
         bind:this={msgElement}
@@ -253,7 +272,7 @@
             class:rtl={$rtlStore}>
             {#if first && !me && groupChat && !deleted}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
-                    <Link underline={"hover"} on:click={chatWithUser}>
+                    <Link bind:this={usernameLink} underline={"hover"} on:click={openUserProfile}>
                         <h4 class="username" class:fill>{username}</h4>
                     </Link>
                 </div>

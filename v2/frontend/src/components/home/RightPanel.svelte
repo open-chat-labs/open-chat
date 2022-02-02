@@ -5,13 +5,11 @@
     import Participants from "./groupdetails/Participants.svelte";
     import type { EditGroupState } from "../../fsm/editGroup";
     import type { FullParticipant, GroupChatSummary } from "../../domain/chat/chat";
-    import type { ServiceContainer } from "../../services/serviceContainer";
     import type { Readable } from "svelte/store";
     import type { ChatController } from "../../fsm/chat.controller";
     import type { UserSummary } from "../../domain/user/user";
     import { toastStore } from "../../stores/toast";
 
-    export let api: ServiceContainer;
     export let editGroupHistory: EditGroupState[];
     export let controller: ChatController;
     export let userId: string;
@@ -97,7 +95,6 @@
         <AddParticipants
             busy={savingParticipants}
             closeIcon={editGroupHistory.length > 1 ? "back" : "close"}
-            {api}
             on:saveParticipants={saveParticipants}
             on:cancelAddParticipants={pop} />
     {:else if lastState === "show_participants"}

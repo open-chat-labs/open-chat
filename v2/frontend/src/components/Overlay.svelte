@@ -1,13 +1,13 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
-    import { onMount, onDestroy } from "svelte";
+    import { onMount } from "svelte";
 
     const dispatch = createEventDispatcher();
 
     export let active: boolean;
+    export let fade: boolean = true;
     export let dismissible: boolean = false;
     let ref: HTMLElement;
-    let portal: HTMLElement;
 
     /**
      * This acts like a portal i.e. where ever it is rendered in component hierarchy it will
@@ -15,17 +15,13 @@
      */
 
     onMount(() => {
-        portal = document.createElement("div");
+        let portal = document.createElement("div");
         portal.className = "portal";
         document.body.appendChild(portal);
         portal.appendChild(ref);
-
-        document.addEventListener("keydown", onKeyDown);
-    });
-
-    onDestroy(() => {
-        document.body.removeChild(portal);
-        document.removeEventListener("keydown", onKeyDown);
+        return () => {
+            document.body.removeChild(portal);
+        };
     });
 
     function onClick() {
@@ -46,8 +42,10 @@
     }
 </script>
 
+<svelte:window on:keydown={onKeyDown} />
+
 <div class="blueprint">
-    <div bind:this={ref} class="overlay" class:active on:click={onClick}>
+    <div bind:this={ref} class="overlay" class:active class:faded={fade} on:click={onClick}>
         {#if active}
             <slot />
         {/if}
@@ -70,16 +68,19 @@
         @include fullHeight();
         width: 100%;
         pointer-events: none;
-        transition: background-color ease-in-out 100ms, backdrop-filter ease-in-out 100ms;
 
         @include size-below(xs) {
             align-items: flex-end;
         }
 
         &.active {
-            backdrop-filter: var(--modal-filter);
             pointer-events: all;
-            background-color: rgba(0, 0, 0, 0.5);
+
+            &.faded {
+                transition: background-color ease-in-out 100ms, backdrop-filter ease-in-out 100ms;
+                backdrop-filter: var(--modal-filter);
+                background-color: rgba(0, 0, 0, 0.5);
+            }
         }
     }
 </style>

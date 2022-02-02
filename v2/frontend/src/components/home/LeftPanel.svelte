@@ -52,7 +52,6 @@
 <Panel left>
     <div class="new-group" class:adding-group={view === "adding-group"}>
         <NewGroup
-            {api}
             {currentUser}
             on:cancelNewGroup={() => (view = "showing-chat-list")}
             on:groupCreated={groupCreated} />
@@ -87,7 +86,6 @@
             on:upgrade
             on:showFaqQuestion
             {user}
-            {api}
             on:userAvatarSelected={userAvatarSelected}
             on:closeProfile={() => (view = "showing-chat-list")} />
     </div>

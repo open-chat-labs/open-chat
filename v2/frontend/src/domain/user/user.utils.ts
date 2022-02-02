@@ -1,3 +1,5 @@
+import { _ } from "svelte-i18n";
+import { get } from "svelte/store";
 import {
     PartialUserSummary,
     PhoneNumber,
@@ -83,4 +85,40 @@ const mentionRegex = /@UserId\(([\d\w-]+)\)/g;
 
 export function extractUserIdsFromMentions(text: string): string[] {
     return [...text.matchAll(mentionRegex)].map((m) => m[1]);
+}
+
+export function formatLastOnlineDate(now: number, user: PartialUserSummary | undefined): string {
+    const TWO_MINUTES_MS = 120 * 1000;
+    if (user === undefined || now - Number(user.updated) > TWO_MINUTES_MS) {
+        return "";
+    }
+
+    const secondsSinceLastOnline = (now - user.lastOnline) / 1000;
+
+    const minutesSinceLastOnline = Math.floor(secondsSinceLastOnline / 60);
+
+    if (minutesSinceLastOnline < 2) {
+        return get(_)("onlineNow");
+    }
+
+    let durationText: string;
+    if (minutesSinceLastOnline < 60) {
+        durationText = get(_)("durationMins", { values: { duration: minutesSinceLastOnline } });
+    } else {
+        const hoursSinceLastOnline = Math.floor(minutesSinceLastOnline / 60);
+        if (hoursSinceLastOnline === 1) {
+            durationText = get(_)("oneHour");
+        } else if (hoursSinceLastOnline < 24) {
+            durationText = get(_)("durationHours", {
+                values: { duration: hoursSinceLastOnline },
+            });
+        } else {
+            const daysSinceLastOnline = Math.floor(hoursSinceLastOnline / 24);
+            durationText =
+                daysSinceLastOnline === 1
+                    ? get(_)("oneDay")
+                    : get(_)("durationDays", { values: { duration: daysSinceLastOnline } });
+        }
+    }
+    return get(_)("lastOnline", { values: { duration: durationText } });
 }
