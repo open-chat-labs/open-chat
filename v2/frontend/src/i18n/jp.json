@@ -270,7 +270,7 @@
         "confirmTransfer": "転送の確認",
         "confirmCyclesTransferText": "お客様のサイクルウォレットから{amount}サイクルを下記のOpenChatウォレットに送金されましたら、下記をご確認ください",
         "confirmICPTransferText": "P以下の口座に{amount}のICPを振り込んだら、以下の通り確認してください",
-        "confirmed": "確認済",
+        "confirm": "確認",
         "sms": "SMS コード",
         "transfer": "転送",
         "codeAccepted": "コード受付",

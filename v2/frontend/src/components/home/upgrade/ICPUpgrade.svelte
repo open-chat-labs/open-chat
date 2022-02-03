@@ -17,7 +17,7 @@
     import { rollbar } from "utils/logging";
 
     const dispatch = createEventDispatcher();
-    const decimals = 2;
+    const icpDecimals = 2;
     const icpPrice: number = 0.1; // storage price in ICP per 1/10th of a GB
 
     export let api: ServiceContainer;
@@ -162,8 +162,8 @@
         <p class="para">
             {$_("currentLimit", {
                 values: {
-                    balance: icpBalance.toFixed(decimals),
-                    limit: $storageInGb.gbLimit.toFixed(decimals),
+                    balance: icpBalance.toFixed(icpDecimals),
+                    limit: $storageInGb.gbLimit.toFixed(1),
                 },
             })}
         </p>
@@ -173,11 +173,11 @@
                 {$_("noChangeToStorage")}
             {:else if insufficientFunds}
                 {$_("insufficientFunds", {
-                    values: { amount: toPay.toFixed(decimals) },
+                    values: { amount: toPay.toFixed(icpDecimals) },
                 })}
             {:else}
                 {$_("pleaseDeposit", {
-                    values: { amount: toPay.toFixed(decimals), limit: `${newLimit / 10}GB` },
+                    values: { amount: toPay.toFixed(icpDecimals), limit: `${newLimit / 10}GB` },
                 })}
             {/if}
         </p>
@@ -208,7 +208,7 @@
                 disabled={confirming || toPay === 0}
                 loading={confirming}
                 on:click={confirm}
-                small={true}>{$_("register.confirmed")}</Button>
+                small={true}>{$_("register.confirm")}</Button>
         {/if}
         <Button disabled={confirming} small={true} secondary={true} on:click={cancel}
             >{$_("cancel")}</Button>
