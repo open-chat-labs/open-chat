@@ -10,19 +10,23 @@
         Message,
         MessageContent,
     } from "../../domain/chat/chat";
-    import { getMessageContent } from "../../domain/chat/chat.utils";
+    import { getMessageContent, getStorageRequiredForMessage } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import Loading from "../Loading.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
     import type { User } from "../../domain/user/user";
     import Reload from "../Reload.svelte";
     import { _ } from "svelte-i18n";
+    import { remainingStorage } from "../../stores/storage";
+    import { createEventDispatcher } from "svelte";
+    import { draftMessages } from "../../stores/draftMessages";
 
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
     export let joining: GroupChatSummary | undefined;
 
+    const dispatch = createEventDispatcher();
     let showEmojiPicker = false;
     let messageEntry: MessageEntry;
     $: chat = controller.chat;
@@ -71,6 +75,11 @@
     ) {
         if (textContent || fileToAttach) {
             const nextEventIndex = controller.getNextEventIndex();
+            const storageRequired = getStorageRequiredForMessage(fileToAttach);
+            if ($remainingStorage < storageRequired) {
+                dispatch("upgrade", "explain");
+                return;
+            }
 
             const msg = controller.createMessage(textContent, fileToAttach);
             controller.api

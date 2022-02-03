@@ -12,7 +12,7 @@
     import { createEventDispatcher } from "svelte";
     import ChoosePath from "./ChoosePath.svelte";
     import ConfirmTransfer from "./ConfirmTransfer.svelte";
-    import { E8S_PER_ICP } from "domain/user/user";
+    import { E8S_PER_ICP } from "../../domain/user/user";
 
     const dispatch = createEventDispatcher();
 
@@ -50,7 +50,9 @@
             </div>
         {/if}
         <h4 class="subtitle">{$_("register.registerUser")}</h4>
-        <Logo />
+        <div class="logo">
+            <Logo />
+        </div>
         {#if state.kind === "choose_registration_path"}
             <ChoosePath on:choosePhoneVerification on:chooseTransfer />
         {:else if state.kind === "awaiting_cycles_transfer_confirmation"}
@@ -86,7 +88,7 @@
                 on:resendCode
                 on:changePhoneNumber />
         {:else if state.kind === "awaiting_username"}
-            <EnterUsername {username} {error} on:submitUsername regState={state.regState} />
+            <EnterUsername {username} {error} on:submitUsername />
         {/if}
     {/if}
 </ModalPage>
@@ -102,6 +104,9 @@
 <Toast />
 
 <style type="text/scss">
+    .logo {
+        margin-bottom: $sp4;
+    }
     .spinner {
         margin-top: auto;
         margin-bottom: auto;

@@ -6,7 +6,6 @@ import type {
     FeeCurrency,
     NotificationFeePaidResponse,
     PhoneNumber,
-    RegistrationState,
 } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { toastStore } from "../stores/toast";
@@ -24,7 +23,7 @@ export type AwaitingICPTransferConfirmation = {
     receiver: string;
 };
 export type Verifying = { kind: "verifying" };
-export type AwaitingUsername = { kind: "awaiting_username"; regState: RegistrationState };
+export type AwaitingUsername = { kind: "awaiting_username" };
 export type AwaitingCompletion = { kind: "awaiting_completion" };
 export type AwaitingCanister = { kind: "awaiting_canister" };
 
@@ -40,7 +39,7 @@ export type RegisterState =
     | AwaitingCanister;
 
 export class RegisterController {
-    public state: Writable<RegisterState> = writable({ kind: "awaiting_phone_number" });
+    public state: Writable<RegisterState> = writable({ kind: "awaiting_username" });
     public error: Writable<string | undefined> = writable(undefined);
     public username: Writable<string | undefined> = writable(undefined);
     private _createdUser?: CreatedUser;
@@ -55,7 +54,7 @@ export class RegisterController {
 
     private deriveStateFromUser(user: CurrentUserResponse): void {
         if (user.kind === "unknown_user") {
-            this.state.set({ kind: "choose_registration_path" });
+            this.state.set({ kind: "awaiting_username" });
         } else if (user.kind === "unconfirmed_user") {
             if (user.registrationState.kind === "phone_registration") {
                 this.state.set({
@@ -75,7 +74,7 @@ export class RegisterController {
                 });
             }
         } else if (user.kind === "confirmed_pending_username") {
-            this.state.set({ kind: "awaiting_username", regState: user.registrationState });
+            this.state.set({ kind: "awaiting_username" });
         } else if (user.kind === "confirmed_user") {
             if (user.canisterCreationStatus === "in_progress") {
                 this.state.set({ kind: "awaiting_canister" });
@@ -147,22 +146,18 @@ export class RegisterController {
         this.state.set({ kind: "verifying" });
         this._api.confirmPhoneNumber(code).then((resp) => {
             this.state.set({ kind: "awaiting_code", phoneNumber });
-            if (resp === "already_claimed") {
+            if (resp.kind === "already_claimed") {
                 this.error.set("register.confirmAlreadyClaimed");
-            } else if (resp === "code_expired") {
+            } else if (resp.kind === "code_expired") {
                 this.error.set("register.codeExpired");
-            } else if (resp === "code_incorrect") {
+            } else if (resp.kind === "code_incorrect") {
                 this.error.set("register.codeIncorrect");
-            } else if (resp === "not_found") {
+            } else if (resp.kind === "not_found") {
                 this.error.set("register.codeNotFound");
-            } else if (resp === "success") {
+            } else if (resp.kind === "success") {
                 this.error.set(undefined);
                 this.state.set({
                     kind: "awaiting_username",
-                    regState: {
-                        kind: "phone_registration",
-                        phoneNumber,
-                    },
                 });
             }
         });
@@ -195,12 +190,12 @@ export class RegisterController {
         const currentState = get(this.state);
         this.state.set({ kind: "verifying" });
         this.username.set(username);
-        this._api.setUsername(username).then((resp) => {
+        this._api.registerUser(username).then((resp) => {
             this.state.set(currentState);
             if (resp === "username_taken") {
                 this.error.set("register.usernameTaken");
-            } else if (resp === "user_not_found") {
-                this.error.set("register.userNotFound");
+                // } else if (resp === "user_not_found") {
+                //     this.error.set("register.userNotFound");
             } else if (resp === "username_too_short") {
                 this.error.set("register.usernameTooShort");
             } else if (resp === "username_too_long") {

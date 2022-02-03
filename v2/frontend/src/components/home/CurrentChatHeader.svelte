@@ -7,6 +7,7 @@
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import DeleteAlertOutline from "svelte-material-icons/DeleteAlertOutline.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
@@ -266,7 +267,7 @@
                                 <div slot="text">{$_("leaveGroup")}</div>
                             </MenuItem>
                             <MenuItem on:click={showParticipants}>
-                                <AccountMultiplePlus
+                                <AccountMultiple
                                     size={$iconSize}
                                     color={"var(--icon-txt)"}
                                     slot="icon" />

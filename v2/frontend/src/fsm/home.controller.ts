@@ -98,6 +98,7 @@ export class HomeController {
                 );
                 rtcConnectionsManager.subscribe((msg) => this.handleWebRtcMessage(msg));
             });
+            this.api.getUserStorageLimits();
         }
     }
 

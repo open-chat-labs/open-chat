@@ -16,6 +16,8 @@ import type {
     RegistrationFeeResponse,
     FeeCurrency,
     NotificationFeePaidResponse,
+    RegisterUserResponse,
+    UpgradeStorageResponse,
 } from "../../domain/user/user";
 import { CandidService } from "../candidService";
 import {
@@ -30,6 +32,8 @@ import {
     createCanisterResponse,
     generateRegistrationFeeResponse,
     feePaidResponse,
+    registerUserResponse,
+    upgradeStorageResponse,
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
@@ -103,6 +107,15 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
+    upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
+        return this.handleResponse(
+            this.userService.upgrade_storage({
+                new_storage_limit_bytes: BigInt(newLimitBytes),
+            }),
+            upgradeStorageResponse
+        );
+    }
+
     generateRegistrationFee(currency: FeeCurrency): Promise<RegistrationFeeResponse> {
         return this.handleResponse(
             this.userService.generate_registration_fee({
@@ -143,6 +156,15 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
                 confirmation_code: code,
             }),
             confirmPhoneNumber
+        );
+    }
+
+    registerUser(username: string): Promise<RegisterUserResponse> {
+        return this.handleResponse(
+            this.userService.register_user({
+                username,
+            }),
+            registerUserResponse
         );
     }
 }

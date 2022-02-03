@@ -1,9 +1,25 @@
-<div class="loading" />
+<script lang="ts">
+    export let size: "small" | "medium" | "large" = "medium";
+
+    let cls = `loading ${size}`;
+</script>
+
+<div class={cls} />
 
 <style type="text/scss">
     .loading {
         height: 100%;
         width: 100%;
-        @include loading-spinner(3em, 1.5em, false, var(--spinner));
+        &.small {
+            @include loading-spinner(2em, 1em, false, var(--spinner));
+        }
+
+        &.medium {
+            @include loading-spinner(3em, 1.5em, false, var(--spinner));
+        }
+
+        &.large {
+            @include loading-spinner(5em, 2.5em, false, var(--spinner));
+        }
     }
 </style>

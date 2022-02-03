@@ -15,6 +15,10 @@ function boolFromLS(key: string, def: boolean): boolean {
 
 export const enterSend = createLsBoolStore("openchat_entersend", true);
 
+export const appearanceSectionOpen = createLsBoolStore("openchat_appearance_section", false);
+export const chatsSectionOpen = createLsBoolStore("openchat_chats_section", false);
+export const accountSectionOpen = createLsBoolStore("openchat_account_section", false);
+
 function createLsBoolStore(key: string, def: boolean) {
     const store = writable<boolean>(boolFromLS(key, def));
     return {

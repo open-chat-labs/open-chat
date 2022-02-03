@@ -1,6 +1,9 @@
 <script lang="ts">
     import LeftPanel from "./LeftPanel.svelte";
     import Toast from "../Toast.svelte";
+    import AboutModal from "../AboutModal.svelte";
+    import FaqModal from "../FaqModal.svelte";
+    import RoadmapModal from "../RoadmapModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
     import { fly } from "svelte/transition";
@@ -34,6 +37,8 @@
     import { _ } from "svelte-i18n";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
+    import Upgrade from "./upgrade/Upgrade.svelte";
+    import type { Questions } from "../../domain/faq";
     import { apiKey } from "../../services/serviceContainer";
 
     const dispatch = createEventDispatcher();
@@ -44,6 +49,14 @@
         messageIndex: undefined,
     };
 
+    enum ModalType {
+        None,
+        About,
+        Faq,
+        Roadmap,
+    }
+    let faqQuestion: Questions | undefined = undefined;
+    let modal = ModalType.None;
     setContext(apiKey, controller.api);
 
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -56,6 +69,7 @@
     let removingChatId: string | undefined;
     let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
+    let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -120,6 +134,10 @@
         }
     }
 
+    function closeModal() {
+        modal = ModalType.None;
+    }
+
     function cancelRecommendations() {
         recommendedGroups = { kind: "idle" };
     }
@@ -129,6 +147,11 @@
             data.filter((g) => g.chatId !== ev.detail)
         );
         api.dismissRecommendation(ev.detail);
+    }
+
+    function showFaqQuestion(ev: CustomEvent<Questions>) {
+        faqQuestion = ev.detail;
+        modal = ModalType.Faq;
     }
 
     async function performSearch(ev: CustomEvent<string>) {
@@ -293,6 +316,10 @@
             .catch((err) => (recommendedGroups = { kind: "error", error: err.toString() }));
     }
 
+    function upgrade(ev: CustomEvent<"explain" | "icp" | "sms">) {
+        upgradeStorage = ev.detail;
+    }
+
     $: chat = $selectedChat?.chat;
 
     $: groupChat =
@@ -347,11 +374,15 @@
                 {searchTerm}
                 {searchResultsAvailable}
                 {searching}
-                {wasmVersion}
+                on:showAbout={() => (modal = ModalType.About)}
+                on:showFaq={() => (modal = ModalType.Faq)}
+                on:showFaqQuestion={showFaqQuestion}
+                on:showRoadmap={() => (modal = ModalType.Roadmap)}
                 on:searchEntered={performSearch}
                 on:chatWith={chatWith}
                 on:whatsHot={whatsHot}
                 on:logout={logout}
+                on:upgrade={upgrade}
                 on:deleteDirectChat={deleteDirectChat}
                 on:loadMessage={loadMessage} />
         {/if}
@@ -377,7 +408,8 @@
                 on:cancelPreview={cancelPreview}
                 on:cancelRecommendations={cancelRecommendations}
                 on:recommend={whatsHot}
-                on:dismissRecommendation={dismissRecommendation} />
+                on:dismissRecommendation={dismissRecommendation}
+                on:upgrade={upgrade} />
         {/if}
     </main>
 {/if}
@@ -410,6 +442,25 @@
     bind:chatId={removingChatId} />
 
 <Toast />
+
+{#if upgradeStorage && controller.user}
+    <Upgrade
+        user={controller.user}
+        {api}
+        step={upgradeStorage}
+        on:showFaqQuestion={showFaqQuestion}
+        on:cancel={() => (upgradeStorage = undefined)} />
+{/if}
+
+<Overlay dismissible={true} active={modal !== ModalType.None} on:close={closeModal}>
+    {#if modal === ModalType.Faq}
+        <FaqModal bind:question={faqQuestion} on:close={closeModal} />
+    {:else if modal === ModalType.Roadmap}
+        <RoadmapModal on:close={closeModal} />
+    {:else if modal === ModalType.About}
+        <AboutModal canister={{ id: userId, wasmVersion }} on:close={closeModal} />
+    {/if}
+</Overlay>
 
 <style type="text/scss">
     main {

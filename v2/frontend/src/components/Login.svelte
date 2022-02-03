@@ -16,7 +16,11 @@
         {$_("login.blurbPartOne")}<a target="_blank" href="https://internetcomputer.org/"
             >{$_("theInternetComputer")}</a
         >{$_("login.blurbPartTwo")}
-        <a target="_blank" href="https://medium.com/dfinity/openchat-a-truly-decentralized-alternative-to-whatsapp-d0d051479b9a">{$_("here")}</a>.
+        <a
+            target="_blank"
+            href="https://medium.com/dfinity/openchat-a-truly-decentralized-alternative-to-whatsapp-d0d051479b9a"
+            >{$_("here")}</a
+        >.
     </p>
     <Button disabled={loading} {loading} on:click={() => dispatch("login")}
         >{$_("login.signIn")}</Button>

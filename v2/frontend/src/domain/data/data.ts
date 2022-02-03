@@ -14,6 +14,6 @@ export type UploadDataResponse = StorageStatus & {
 };
 
 export type StorageStatus = {
-    byteLimit: bigint;
-    bytesUsed: bigint;
+    byteLimit: number;
+    bytesUsed: number;
 };

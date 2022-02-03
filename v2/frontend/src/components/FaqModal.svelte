@@ -1,12 +1,21 @@
 <script lang="ts">
     import ModalContent from "./ModalContent.svelte";
     import CollapsibleCard from "./CollapsibleCard.svelte";
+    import type { Questions } from "../domain/faq";
+
+    export let question: Questions | undefined = undefined;
+    export let fadeDuration = 100;
+    export let fadeDelay = 200;
 </script>
 
-<ModalContent large={true} on:close>
+<ModalContent {fadeDuration} {fadeDelay} large={true} on:close>
     <div slot="header">Frequently asked questions</div>
-    <div slot="body">
-        <CollapsibleCard open={false} headerText={"When will there be an iOS app?"}>
+    <div class="faq-body" slot="body">
+        <CollapsibleCard
+            bordered={true}
+            open={question === "ios_app"}
+            on:opened={() => (question = "ios_app")}
+            headerText={"When will there be an iOS app?"}>
             It is worth saying that the OpenChat web app <em>does</em> already work on iOS and you
             can "Add to homescreen" from the browser menu. This gives you a standard icon to open
             the app which appears more like a native app without a url bar. The big limitation for
@@ -29,7 +38,11 @@
             be ready within a few months. Otherwise, if we need to re-write (and then maintain) a native
             iOS OpenChat from scratch, then this will take significantly longer...
         </CollapsibleCard>
-        <CollapsibleCard open={false} headerText={"When will there be an Android app?"}>
+        <CollapsibleCard
+            bordered={true}
+            open={question === "android_app"}
+            on:opened={() => (question = "android_app")}
+            headerText={"When will there be an Android app?"}>
             As for iOS (see above), the OpenChat web app <em>does</em> already work on Android and
             you can "Add to homescreen" from the browser menu. This gives you a standard icon to
             open the app which appears more like a native app without a url bar. However, unlike
@@ -41,7 +54,11 @@
             Android app as an iOS in terms of aiming for a thin native wrapper around a core web app,
             and with regards to certification on the Android play store.
         </CollapsibleCard>
-        <CollapsibleCard open={false} headerText={"How do I find groups?"}>
+        <CollapsibleCard
+            bordered={true}
+            open={question === "find_groups"}
+            on:opened={() => (question = "find_groups")}
+            headerText={"How do I find groups?"}>
             There are currently two ways to find public groups. You can find a link to 🔥 hot groups
             in the main menu. This shows 20 groups you are not already a member of, ordered primarly
             by the amount of recent activity but also with a random factor. This changes every 10
@@ -50,7 +67,11 @@
             groups from the main search bar based on find matches in the group title and summary.
             Going forward we will make it easier still to find groups you might be interested in.
         </CollapsibleCard>
-        <CollapsibleCard open={false} headerText={"Can I style messages?"}>
+        <CollapsibleCard
+            bordered={true}
+            open={question === "style_messages"}
+            on:opened={() => (question = "style_messages")}
+            headerText={"Can I style messages?"}>
             You can add line breaks by using shift-enter and you can use a subset of markdown as
             follows:<br />
             _<em>italics</em>_ or *<em>italics</em>*<br />
@@ -61,7 +82,9 @@
             `<code>let a: int = 10; // code</code>`
         </CollapsibleCard>
         <CollapsibleCard
-            open={false}
+            bordered={true}
+            open={question === "sms_icp"}
+            on:opened={() => (question = "sms_icp")}
             headerText={"Why do you ask for my phone number or for a payment?"}>
             We ask for a phone number so that we can send you a code by SMS which you then enter to
             prove you own the phone number. This aims to reduce the chance the registration is from
@@ -81,7 +104,11 @@
             it is the storage of images, videos etc which contributes a large proportion of our costs.
             More details coming soon...
         </CollapsibleCard>
-        <CollapsibleCard open={false} headerText={"Will there be an airdrop?"}>
+        <CollapsibleCard
+            bordered={true}
+            open={question === "airdrop"}
+            on:opened={() => (question = "airdrop")}
+            headerText={"Will there be an airdrop?"}>
             When we integrate with the <a
                 target="_blank"
                 href="https://forum.dfinity.org/t/open-governance-canister-for-sns-design-proposal/10224"
@@ -97,7 +124,11 @@
             users. Also you might be able to earn tokens by referring friends to help grow the user
             base and make OpenChat increasingly useful and relevant.
         </CollapsibleCard>
-        <CollapsibleCard open={false} headerText={"Are my messages secure?"}>
+        <CollapsibleCard
+            bordered={true}
+            open={question === "security"}
+            on:opened={() => (question = "security")}
+            headerText={"Are my messages secure?"}>
             In short the Internet Computer provides very strong security guarentees. There is
             however a particular well known area of weakness which Dfinity are tackling. With some
             effort a rogue node provider could install a hacked version of the node software
@@ -115,7 +146,11 @@
             to search your message history, so you could choose to opt-in to e2e security for selected
             chats.
         </CollapsibleCard>
-        <CollapsibleCard open={false} headerText={"Do you have a roadmap?"}>
+        <CollapsibleCard
+            bordered={true}
+            open={question === "roadmap"}
+            on:opened={() => (question = "roadmap")}
+            headerText={"Do you have a roadmap?"}>
             Yes, we do now! Find it in the main menu next to this FAQ!
         </CollapsibleCard>
     </div>
@@ -124,5 +159,13 @@
 <style type="text/scss">
     a {
         text-decoration: underline;
+    }
+
+    :global(.faq-body .card) {
+        margin-bottom: $sp3;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
     }
 </style>

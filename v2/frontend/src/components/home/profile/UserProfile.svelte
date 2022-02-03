@@ -3,9 +3,12 @@
     import type { PartialUserSummary } from "../../../domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
+    import StorageUsage from "../../StorageUsage.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Input from "../../Input.svelte";
+    import Link from "../../Link.svelte";
     import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
     import Radio from "../../Radio.svelte";
     import Select from "../../Select.svelte";
     import TextArea from "../../TextArea.svelte";
@@ -15,7 +18,13 @@
     import { supported as notificationsSupported } from "../../../utils/notifications";
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
-    import { enterSend, scrollStrategy } from "../../../stores/settings";
+    import {
+        accountSectionOpen,
+        appearanceSectionOpen,
+        chatsSectionOpen,
+        enterSend,
+        scrollStrategy,
+    } from "../../../stores/settings";
     import { createEventDispatcher, getContext } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "./Toggle.svelte";
@@ -24,7 +33,9 @@
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
     import { userStore } from "../../../stores/user";
+    import { ONE_GB, storageStore } from "../../../stores/storage";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
+    import { addListener } from "process";
 
     const api: ServiceContainer = getContext(apiKey);
 
@@ -62,6 +73,10 @@
         api.getBio().then((bio) => {
             originalBio = userbio = bio;
         });
+    }
+
+    function whySms() {
+        dispatch("showFaqQuestion", "sms_icp");
     }
 
     function saveUser() {
@@ -188,14 +203,17 @@
                 <div class="error">{bioError}</div>
             {/if}
         </TextArea>
-        <div class="save">
+        <div class="full-width-btn">
             <Button loading={saving} disabled={!dirty || !valid || saving} fill={true} small={true}
                 >{$_("update")}</Button>
         </div>
     </div>
 
     <div class="appearance">
-        <CollapsibleCard open={true} headerText={$_("appearance")}>
+        <CollapsibleCard
+            on:toggle={appearanceSectionOpen.toggle}
+            open={$appearanceSectionOpen}
+            headerText={$_("appearance")}>
             <div class="legend">{$_("preferredLanguage")}</div>
             <Select bind:value={selectedLocale}>
                 {#each supportedLanguages as lang}
@@ -230,7 +248,10 @@
     </div>
 
     <div class="chats">
-        <CollapsibleCard open={true} headerText={$_("chats")}>
+        <CollapsibleCard
+            on:toggle={chatsSectionOpen.toggle}
+            open={$chatsSectionOpen}
+            headerText={$_("chats")}>
             <Toggle
                 id={"enter-send"}
                 on:change={() => enterSend.toggle()}
@@ -258,12 +279,48 @@
             {/each}
         </CollapsibleCard>
     </div>
+
+    <div class="account">
+        <CollapsibleCard
+            on:toggle={accountSectionOpen.toggle}
+            open={$accountSectionOpen}
+            headerText={$_("account")}>
+            <div class="legend">{$_("storage")}</div>
+            {#if $storageStore.byteLimit === 0}
+                <p class="para">
+                    {$_("noStorageAdvice")}
+                </p>
+                <p class="para last">
+                    {$_("chooseUpgrade")}
+
+                    <Link underline={"always"} on:click={whySms}>
+                        {$_("tellMeMore")}
+                    </Link>
+                </p>
+                <ButtonGroup align={"fill"}>
+                    <Button on:click={() => dispatch("upgrade", "sms")} small={true}
+                        >{$_("upgradeBySMS")}</Button>
+                    <Button on:click={() => dispatch("upgrade", "icp")} small={true}
+                        >{$_("upgradeByTransfer")}</Button>
+                </ButtonGroup>
+            {:else}
+                <StorageUsage />
+                {#if $storageStore.byteLimit < ONE_GB}
+                    <p class="para">{$_("chooseTransfer")}</p>
+                    <div class="full-width-btn">
+                        <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small={true}
+                            >{$_("upgradeStorage")}</Button>
+                    </div>
+                {/if}
+            {/if}
+        </CollapsibleCard>
+    </div>
 </form>
 
 <style type="text/scss">
     $vertical-gap: $sp4;
 
-    .save {
+    .full-width-btn {
         display: flex;
         justify-content: center;
         margin-top: $sp4;
@@ -321,6 +378,7 @@
 
     .user,
     .chats,
+    .account,
     .appearance {
         margin-bottom: var(--profile-section-mg);
         border-bottom: var(--profile-section-bd);
@@ -329,6 +387,13 @@
         @include size-below(xs) {
             margin-bottom: var(--profile-section-xs-mg);
             border-bottom: var(--profile-section-xs-bd);
+        }
+    }
+
+    .para {
+        margin-bottom: $sp3;
+        &.last {
+            margin-bottom: $sp4;
         }
     }
 

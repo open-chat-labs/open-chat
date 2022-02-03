@@ -7,6 +7,7 @@ import { DataClientMock } from "./data.client.mock";
 import type { MessageContent } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
 import type { BlobReference, StorageStatus, UploadDataResponse } from "../../domain/data/data";
+import { storageStore } from "../../stores/storage";
 
 export class DataClient implements IDataClient {
     private openStorageAgent: OpenStorageAgent;
@@ -35,28 +36,29 @@ export class DataClient implements IDataClient {
         return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
     }
 
-    async storageStatus(): Promise<StorageStatus> {
-        const response = await this.openStorageAgent.user();
-
-        if (response.kind === "user") {
-            return {
-                byteLimit: response.byteLimit,
-                bytesUsed: response.bytesUsed,
-            };
-        } else {
-            return {
-                byteLimit: BigInt(0),
-                bytesUsed: BigInt(0),
-            };
-        }
+    storageStatus(): Promise<StorageStatus> {
+        return this.openStorageAgent.user().then((resp) => {
+            if (resp.kind === "user") {
+                console.log("User storage: ", resp);
+                return {
+                    byteLimit: Number(resp.byteLimit),
+                    bytesUsed: Number(resp.bytesUsed),
+                };
+            } else {
+                return {
+                    byteLimit: 0,
+                    bytesUsed: 0,
+                };
+            }
+        });
     }
 
     async uploadData(
         content: MessageContent,
         accessorCanisterIds: string[]
     ): Promise<UploadDataResponse> {
-        let byteLimit = BigInt(0);
-        let bytesUsed = BigInt(0);
+        let byteLimit = 0;
+        let bytesUsed = 0;
 
         if (
             content.kind === "file_content" ||
@@ -72,8 +74,12 @@ export class DataClient implements IDataClient {
                     content.blobData
                 );
                 content.blobReference = this.extractBlobReference(response);
-                byteLimit = response.byteLimit;
-                bytesUsed = response.bytesUsed;
+                byteLimit = Number(response.byteLimit);
+                bytesUsed = Number(response.bytesUsed);
+                storageStore.set({
+                    byteLimit,
+                    bytesUsed,
+                });
             }
         } else if (content.kind === "video_content") {
             if (
@@ -102,8 +108,12 @@ export class DataClient implements IDataClient {
                     // We can't simply add the bytes because the user may have previously uploaded the same image, in
                     // which case we do not charge them for uploading it again. We need the OpenStorage agent to return
                     // additional data.
-                    byteLimit = video.byteLimit;
-                    bytesUsed = video.bytesUsed;
+                    byteLimit = Number(video.byteLimit);
+                    bytesUsed = Number(video.bytesUsed);
+                    storageStore.set({
+                        byteLimit,
+                        bytesUsed,
+                    });
                 });
             }
         }

@@ -49,6 +49,7 @@
             on:showParticipants
             on:chatWith
             on:joinGroup
+            on:upgrade
             on:cancelPreview />
     {/if}
 </Panel>
