@@ -28,7 +28,7 @@ console.log("DFX_NETWORK: ", dfxNetwork);
 
 if (dfxNetwork) {
     const canisterPath =
-        dfxNetwork === "ic"
+        dfxNetwork.startsWith("ic")
             ? path.join(__dirname, "..", "canister_ids.json")
             : path.join(__dirname, "..", ".dfx", dfxNetwork, "canister_ids.json");
 

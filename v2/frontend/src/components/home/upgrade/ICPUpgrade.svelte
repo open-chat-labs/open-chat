@@ -80,7 +80,7 @@
         confirming = true;
         error = undefined;
 
-        const newLimitBytes = (newLimit * ONE_GB) / 10;
+        const newLimitBytes = Math.floor((newLimit * ONE_GB) / 10);
 
         api.upgradeStorage(newLimitBytes)
             .then((resp) => {
