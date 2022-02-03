@@ -205,8 +205,7 @@ type CurrentUserResponse =
             wasm_version: Version;
             open_storage_limit_bytes: nat64;
             phone_status: PhoneStatus;
-            billing_account: AccountIdentifier;
-            account_balance: ICP;
+            icp_account: AccountIdentifier;
         };
     };
 
