@@ -64,7 +64,7 @@
     "copyToClipboard": "Copier dans le presse-papier",
     "copiedToClipboard": "Adresse du compte copiée dans le presse-papier !",
     "urlCopiedToClipboard": "URL du groupe copiée dans le presse-papier !",
-    "failedToCopyToClipboard": "Impossible de copier dans le presse-papiers",
+    "failedToCopyToClipboard": "Impossible de copier dans le presse-papiers {account}",
     "failedToCopyUrlToClipboard": "Impossible de copier l'URL ({url}) dans le presse-papiers",
     "publicGroups": "Groupes publics",
     "yourChats": "Vos discussions",

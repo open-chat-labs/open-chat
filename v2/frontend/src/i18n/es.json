@@ -64,7 +64,7 @@
     "copyToClipboard": "Copiar al portapapeles",
     "copiedToClipboard": "¡Dirección de cuenta copiada al portapapeles!",
     "urlCopiedToClipboard": "¡La URL del grupo se copió en el portapapeles!",
-    "failedToCopyToClipboard": "No se puede copiar al portapapeles",
+    "failedToCopyToClipboard": "No se puede copiar al portapapeles {account}",
     "failedToCopyUrlToClipboard": "No se puede copiar la URL ({url}) al portapapeles",
     "publicGroups": "Grupos públicos",
     "yourChats": "tus chats",

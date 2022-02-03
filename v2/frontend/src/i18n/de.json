@@ -64,7 +64,7 @@
     "copyToClipboard": "In die Zwischenablage kopieren",
     "copiedToClipboard": "Kontoadresse in die Zwischenablage kopiert!",
     "urlCopiedToClipboard": "Gruppen-URL in die Zwischenablage kopiert!",
-    "failedToCopyToClipboard": "Kopieren in die Zwischenablage nicht möglich",
+    "failedToCopyToClipboard": "Kopieren in die Zwischenablage nicht möglich {account}",
     "failedToCopyUrlToClipboard": "Die URL ({url}) kann nicht in die Zwischenablage kopiert werden",
     "publicGroups": "Öffentliche Gruppen",
     "yourChats": "Ihre Chats",

@@ -64,7 +64,7 @@
     "copyToClipboard": "クリップボードにコピーする",
     "copiedToClipboard": "アカウントアドレスがクリップボードにコピーされました",
     "urlCopiedToClipboard": "グループのURLがクリップボードにコピーされました",
-    "failedToCopyToClipboard": "クリップボードにコピーができません",
+    "failedToCopyToClipboard": "クリップボードにコピーができません. {account}",
     "failedToCopyUrlToClipboard": "url ({url}) をクリップボードにコピーできません",
     "publicGroups": "公開グループ",
     "yourChats": "あなたのチャット",

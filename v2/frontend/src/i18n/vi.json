@@ -59,7 +59,7 @@
     "copyToClipboard": "Sao chép",
     "copiedToClipboard": "Đã sao chép địa chỉ!",
     "urlCopiedToClipboard": "Đã sao chép đường dẫn tới Nhóm!",
-    "failedToCopyToClipboard": "Không thể sao chép",
+    "failedToCopyToClipboard": "Không thể sao chép {account}",
     "failedToCopyUrlToClipboard": "Không thể sao chép đường dẫn ({url})",
     "publicGroups": "Nhóm mở",
     "yourChats": "Mục trờ chuyện của bạn",

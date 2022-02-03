@@ -34,7 +34,7 @@
     "copyToClipboard": "复制到粘贴板",
     "copiedToClipboard": "账户地址已复制到粘贴板",
     "urlCopiedToClipboard": "群聊链接已复制到粘贴板",
-    "failedToCopyToClipboard": "无法复制到粘贴板",
+    "failedToCopyToClipboard": "无法复制到粘贴板 {account}",
     "failedToCopyUrlToClipboard": "无法复制 URL ({url}) 到粘贴板",
     "publicGroups": "公开群聊",
     "yourChats": "你的聊天",

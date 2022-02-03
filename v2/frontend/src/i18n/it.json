@@ -64,7 +64,7 @@
     "copyToClipboard": "Copia negli appunti",
     "copiedToClipboard": "Indirizzo dell'account copiato negli appunti!",
     "urlCopiedToClipboard": "URL del gruppo copiato negli appunti!",
-    "failedToCopyToClipboard": "Impossibile copiare negli appunti",
+    "failedToCopyToClipboard": "Impossibile copiare negli appunti {account}",
     "failedToCopyUrlToClipboard": "Impossibile copiare l'URL ({url}) negli appunti",
     "publicGroups": "Gruppi pubblici",
     "yourChats": "Le tue chat",
