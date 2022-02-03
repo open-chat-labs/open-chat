@@ -42,7 +42,7 @@ import type {
     ApiUsersResponse,
     ApiUserSummary,
 } from "./candid/idl";
-import { identity, optional } from "../../utils/mapping";
+import { bytesToHexString, identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
 import { Version } from "../../domain/version";
 
@@ -226,17 +226,13 @@ function registrationState(candid: ApiUnconfirmedUserState): RegistrationState {
     throw new UnsupportedValueError("Unexpected ApiRegistrationState type received", candid);
 }
 
-function recipientToHexString(bytes: number[]): string {
-    return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, "0"), "");
-}
-
 function currencyRegistration(candid: ApiRegistrationFee): RegistrationFee {
     if ("ICP" in candid) {
         return {
             kind: "icp_registration_fee",
             validUntil: candid.ICP.valid_until,
             amount: candid.ICP.amount.e8s,
-            recipient: recipientToHexString(candid.ICP.recipient),
+            recipient: bytesToHexString(candid.ICP.recipient),
         };
     }
     if ("Cycles" in candid) {
@@ -420,7 +416,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             userId: candid.Created.user_id.toString(),
             username: candid.Created.username,
             accountCredite8s: Number(candid.Created.account_credit.e8s),
-            billingAccount: recipientToHexString(candid.Created.billing_account),
+            billingAccount: bytesToHexString(candid.Created.billing_account),
             phoneStatus: phoneStatus(candid.Created.phone_status),
             canisterUpgradeStatus:
                 "Required" in candid.Created.canister_upgrade_status

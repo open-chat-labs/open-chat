@@ -1,4 +1,3 @@
-use crate::lifecycle::heartbeat::transfer_registration_fees;
 use crate::lifecycle::{init_logger, init_state};
 use crate::{Data, StateVersion, LOG_MESSAGES};
 use canister_api_macros::trace;
@@ -18,10 +17,8 @@ fn post_upgrade(args: Args) {
 
     match version {
         StateVersion::V1 => {
-            let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
+            let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
                 serializer::deserialize(&bytes).unwrap();
-
-            data.users.repopulate_missing_phone_statuses();
 
             init_logger(data.test_mode);
             init_state(env, data, args.wasm_version);
@@ -29,8 +26,6 @@ fn post_upgrade(args: Args) {
             if !log_messages.is_empty() || !trace_messages.is_empty() {
                 LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
             }
-
-            transfer_registration_fees::run();
         }
     };
 

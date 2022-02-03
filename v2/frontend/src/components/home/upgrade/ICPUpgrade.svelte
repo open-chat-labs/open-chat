@@ -50,15 +50,10 @@
     function refreshBalance() {
         refreshing = true;
         error = undefined;
-        api.refreshAccountBalance()
+        api.refreshAccountBalance(user.billingAccount)
             .then((resp) => {
-                if (resp.kind === "success") {
-                    accountBalance = resp.accountCredite8s;
-                    error = undefined;
-                } else {
-                    error = "unableToRefreshAccountBalance";
-                    rollbar.error("Unable to refresh user's account balance", resp);
-                }
+                accountBalance = Number(resp.e8s);
+                error = undefined;
             })
             .catch((err) => {
                 error = "unableToRefreshAccountBalance";
