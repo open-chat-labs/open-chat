@@ -86,19 +86,19 @@
             open={question === "sms_icp"}
             on:opened={() => (question = "sms_icp")}
             headerText={"Why must I pay or give my phone number to send images?"}>
-            TLDR - there is a cost associated with storing images on the IC.
+            TLDR, there is a cost associated with storing images on the IC.
             <br />
             <br />
-            Text messages take relatively little space and so cost us relatively little. Images typically
-            take much more space and the costs add up. Now some background on the OpenChat system. Each
-            user has their own canister which holds all the messages for their direct chats. Each group
-            also has its own canister which holds all the group messages. However we store any
+            Text messages take little space and so cost us relatively little. Images typically take much
+            more space and the costs add up. Now some background on the OpenChat system. Each user has
+            their own canister which holds all the messages for their direct chats. Each group also has
+            its own canister which holds all the group messages. However, we store any
             <em>file</em>
             data associated with messages, such as images and video, in
             <a target="_blank" href="https://github.com/open-ic/open-storage">OpenStorage</a>. Each
             user has a data allowance and when a message is sent any file data comes out of the
-            sender's allowance. This also applies to messages sent to groups so there is no group
-            data allowance just an individual one.
+            <em>sender's</em> allowance. This also applies to messages sent to groups so there is no
+            group data allowance just an individual one.
             <br />
             <br />
             We happily provide a 0.1 GB allowance free to every person who uses OpenChat. However it
