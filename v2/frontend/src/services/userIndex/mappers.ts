@@ -386,7 +386,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             kind: "created_user",
             userId: candid.Created.user_id.toString(),
             username: candid.Created.username,
-            billingAccount: bytesToHexString(candid.Created.billing_account),
+            icpAccount: bytesToHexString(candid.Created.icp_account),
             phoneStatus: phoneStatus(candid.Created.phone_status),
             canisterUpgradeStatus:
                 "Required" in candid.Created.canister_upgrade_status

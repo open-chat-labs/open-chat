@@ -157,12 +157,11 @@ export type CurrentUserResponse = {
     'Created' : {
       'username' : string,
       'phone_status' : PhoneStatus,
-      'billing_account' : AccountIdentifier,
       'wasm_version' : Version,
+      'icp_account' : AccountIdentifier,
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'account_balance' : ICP,
       'open_storage_limit_bytes' : bigint,
     }
   } |
@@ -535,12 +534,6 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
-export type RefreshAccountBalanceArgs = {};
-export type RefreshAccountBalanceResponse = {
-    'Success' : { 'account_balance' : ICP }
-  } |
-  { 'InternalError' : string } |
-  { 'UserNotFound' : null };
 export interface RegisterUserArgs { 'username' : string }
 export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |
@@ -718,9 +711,6 @@ export interface _SERVICE {
   'notify_registration_fee_paid' : (
       arg_0: NotifyRegistrationFeePaidArgs,
     ) => Promise<NotifyRegistrationFeePaidResponse>,
-  'refresh_account_balance' : (arg_0: RefreshAccountBalanceArgs) => Promise<
-      RefreshAccountBalanceResponse
-    >,
   'register_user' : (arg_0: RegisterUserArgs) => Promise<RegisterUserResponse>,
   'remove_super_admin' : (arg_0: RemoveSuperAdminArgs) => Promise<
       RemoveSuperAdminResponse

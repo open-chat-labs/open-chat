@@ -28,7 +28,7 @@
     let confirming = false;
     let confirmed = false;
     let refreshing = false;
-    let accountSummary = user.billingAccount;
+    let accountSummary = user.icpAccount;
     let accountBalance = 0;
 
     $: icpBalance = accountBalance / E8S_PER_ICP; //balance in the user's account expressed as ICP
@@ -37,11 +37,11 @@
     $: toPay = (newLimit - min) * icpPrice;
     $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
     $: {
-        if (user.billingAccount.length > 20) {
+        if (user.icpAccount.length > 20) {
             accountSummary =
-                user.billingAccount.slice(0, 10) +
+                user.icpAccount.slice(0, 10) +
                 "..." +
-                user.billingAccount.slice(user.billingAccount.length - 10);
+                user.icpAccount.slice(user.icpAccount.length - 10);
         }
     }
 
@@ -50,7 +50,7 @@
     function refreshBalance() {
         refreshing = true;
         error = undefined;
-        api.refreshAccountBalance(user.billingAccount)
+        api.refreshAccountBalance(user.icpAccount)
             .then((resp) => {
                 accountBalance = Number(resp.e8s);
                 error = undefined;
@@ -104,12 +104,14 @@
     }
 
     function copyToClipboard() {
-        navigator.clipboard.writeText(user.billingAccount).then(
+        navigator.clipboard.writeText(user.icpAccount).then(
             () => {
                 toastStore.showSuccessToast("copiedToClipboard");
             },
             () => {
-                toastStore.showFailureToast("failedToCopyToClipboard");
+                toastStore.showFailureToast("failedToCopyToClipboard", {
+                    values: { account: user.icpAccount },
+                });
             }
         );
     }
@@ -123,7 +125,7 @@
     {:else}
         <div class="account-info">
             <div class="qr">
-                <QR text={user.billingAccount} />
+                <QR text={user.icpAccount} />
             </div>
             <div class="receiver">
                 <div class="account">

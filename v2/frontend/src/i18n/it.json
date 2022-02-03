@@ -59,7 +59,7 @@
     "copyToClipboard": "Copy to clipboard",
     "copiedToClipboard": "Account address copied to clipboard!",
     "urlCopiedToClipboard": "Group url copied to clipboard!",
-    "failedToCopyToClipboard": "Unable to copy to clipboard",
+    "failedToCopyToClipboard": "Unable to copy to clipboard. {account}",
     "failedToCopyUrlToClipboard": "Unable to copy url ({url}) to clipboard",
     "publicGroups": "Public groups",
     "yourChats": "Your chats",

@@ -124,7 +124,7 @@ export type PhoneStatus =
 export type CreatedUser = {
     kind: "created_user";
     username: string;
-    billingAccount: string;
+    icpAccount: string;
     phoneStatus: PhoneStatus;
     userId: string;
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";

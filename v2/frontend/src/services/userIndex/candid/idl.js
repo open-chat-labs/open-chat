@@ -95,12 +95,11 @@ export const idlFactory = ({ IDL }) => {
     'Created' : IDL.Record({
       'username' : IDL.Text,
       'phone_status' : PhoneStatus,
-      'billing_account' : AccountIdentifier,
       'wasm_version' : Version,
+      'icp_account' : AccountIdentifier,
       'user_id' : UserId,
       'avatar_id' : IDL.Opt(IDL.Nat),
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'account_balance' : ICP,
       'open_storage_limit_bytes' : IDL.Nat64,
     }),
     'UserNotFound' : IDL.Null,
@@ -119,12 +118,6 @@ export const idlFactory = ({ IDL }) => {
     'AlreadyRegistered' : IDL.Null,
     'Success' : IDL.Null,
     'PaymentNotFound' : IDL.Null,
-    'InternalError' : IDL.Text,
-    'UserNotFound' : IDL.Null,
-  });
-  const RefreshAccountBalanceArgs = IDL.Record({});
-  const RefreshAccountBalanceResponse = IDL.Variant({
-    'Success' : IDL.Record({ 'account_balance' : ICP }),
     'InternalError' : IDL.Text,
     'UserNotFound' : IDL.Null,
   });
@@ -273,11 +266,6 @@ export const idlFactory = ({ IDL }) => {
     'notify_registration_fee_paid' : IDL.Func(
         [NotifyRegistrationFeePaidArgs],
         [NotifyRegistrationFeePaidResponse],
-        [],
-      ),
-    'refresh_account_balance' : IDL.Func(
-        [RefreshAccountBalanceArgs],
-        [RefreshAccountBalanceResponse],
         [],
       ),
     'register_user' : IDL.Func([RegisterUserArgs], [RegisterUserResponse], []),

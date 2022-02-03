@@ -64,7 +64,7 @@
     "copyToClipboard": "Копировать в буфер обмена",
     "copiedToClipboard": "Адрес аккаунта скопирован в буфер обмена!",
     "urlCopiedToClipboard": "URL группы скопирован в буфер обмена!",
-    "failedToCopyToClipboard": "Невозможно скопировать в буфер обмена",
+    "failedToCopyToClipboard": "Невозможно скопировать в буфер обмена. {account}",
     "failedToCopyUrlToClipboard": "Невозможно скопировать URL ({url}) в буфер обмена",
     "publicGroups": "Общие группы",
     "yourChats": "Ваши чаты",
