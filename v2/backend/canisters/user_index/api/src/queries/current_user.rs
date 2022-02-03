@@ -70,5 +70,5 @@ pub struct CreatedResult {
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
     pub billing_account: AccountIdentifier,
-    pub account_credit: ICP,
+    pub account_balance: ICP,
 }

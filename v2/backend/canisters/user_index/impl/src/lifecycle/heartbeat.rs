@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CAN
 use candid::Principal;
 use group_canister::c2c_dismiss_super_admin;
 use ic_cdk_macros::heartbeat;
-use ic_ledger_types::{AccountIdentifier, Memo, DEFAULT_FEE, DEFAULT_SUBACCOUNT};
+use ic_ledger_types::{Memo, DEFAULT_FEE};
 use ledger_utils::convert_to_subaccount;
 use tracing::error;
 use types::{CanisterId, ChatId, Cycles, CyclesTopUp, UserId, Version, ICP};
@@ -265,7 +265,7 @@ mod transfer_registration_fees {
 
     async fn transfer_registration_fee(principal: Principal, amount: ICP) {
         let subaccount = convert_to_subaccount(&principal);
-        let recipient = AccountIdentifier::new(&ic_cdk::id(), &DEFAULT_SUBACCOUNT);
+        let recipient = read_state(|state| state.user_index_ledger_account());
 
         let args = ic_ledger_types::TransferArgs {
             memo: Memo(DEFAULT_MEMO),
