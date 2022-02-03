@@ -9,8 +9,8 @@ use group_index_canister::c2c_update_group;
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged, JoinAsViewerChanged, UserId,
-    MAX_AVATAR_SIZE,
+    Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged,
+    JoinAsViewerChanged, UserId, MAX_AVATAR_SIZE,
 };
 
 #[update]

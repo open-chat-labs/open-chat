@@ -35,7 +35,11 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             mentions: updates_from_events.mentions,
             pinned_message: updates_from_events.pinned_message,
             wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(args.updates_since).copied()),
-            join_as_viewer: if updates_from_events.join_as_viewer_changed { Some(runtime_state.data.join_as_viewer) } else { None },
+            join_as_viewer: if updates_from_events.join_as_viewer_changed {
+                Some(runtime_state.data.join_as_viewer)
+            } else {
+                None
+            },
         };
         Success(Box::new(SuccessResult { updates }))
     } else {

@@ -178,6 +178,7 @@ pub enum UpdateGroupResult {
     NameTaken,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl PublicGroupInfo {
     pub fn new(
         id: ChatId,

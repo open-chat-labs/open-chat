@@ -13,11 +13,13 @@ fn c2c_update_group(args: Args) -> Response {
 
 fn c2c_update_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let chat_id = ChatId::from(runtime_state.env.caller());
-    match runtime_state
-        .data
-        .public_groups
-        .update_group(&chat_id, args.name, args.description, args.avatar_id, args.join_as_viewer)
-    {
+    match runtime_state.data.public_groups.update_group(
+        &chat_id,
+        args.name,
+        args.description,
+        args.avatar_id,
+        args.join_as_viewer,
+    ) {
         UpdateGroupResult::Success => Success,
         UpdateGroupResult::ChatNotFound => ChatNotFound,
         UpdateGroupResult::NameTaken => NameTaken,

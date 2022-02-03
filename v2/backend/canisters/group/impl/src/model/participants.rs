@@ -19,6 +19,7 @@ pub struct Participants {
     viewer_count: u32,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl Participants {
     pub fn new(creator_principal: Principal, creator_user_id: UserId, now: TimestampMillis) -> Participants {
         let participant = ParticipantInternal {

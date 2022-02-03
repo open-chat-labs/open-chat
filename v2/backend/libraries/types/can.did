@@ -168,8 +168,9 @@ type GroupChatEvent =
     variant {
         Message: Message;
         GroupChatCreated: GroupChatCreated;
-        GroupNameChanged: GroupNameChanged;
+        GroupNameChanged: GroupNameChanged;        
         GroupDescriptionChanged: GroupDescriptionChanged;
+        JoinAsViewerChanged: JoinAsViewerChanged;
         AvatarChanged: AvatarChanged;
         OwnershipTransferred: OwnershipTransferred;
         ParticipantsAdded: ParticipantsAdded;
@@ -217,6 +218,7 @@ type GroupChatSummary =
         mentions: vec Mention;
         pinned_message: opt MessageIndex;
         wasm_version: Version;
+        join_as_viewer: bool;
     };
 
 type GroupChatSummaryUpdates =
@@ -235,6 +237,7 @@ type GroupChatSummaryUpdates =
         mentions: vec Mention;
         pinned_message: PinnedMessageUpdate;
         wasm_version: opt Version;
+        join_as_viewer: opt bool;
     };
 
 type GroupDescriptionChanged =
@@ -310,6 +313,12 @@ type GroupNameChanged =
         changed_by: UserId;
     };
 
+type JoinAsViewerChanged =
+    record {
+        new_value: bool;
+        changed_by: UserId;
+    };
+
 type PinnedMessageUpdated =
     record {
         new_value: opt MessageIndex;
@@ -335,6 +344,7 @@ type PublicGroupSummary =
         participant_count: nat32;
         pinned_message: opt MessageIndex;
         wasm_version: Version;
+        join_as_viewer: bool;
     };
 
 type ReplyContext =
@@ -424,6 +434,7 @@ type ParticipantJoined =
     record {
         user_id: UserId;
         as_super_admin: bool;
+        as_viewer: bool;
     };
 
 type ParticipantLeft =
@@ -515,6 +526,7 @@ type Role =
         Owner;
         Admin;
         Participant;
+        Viewer;
     };
 
 type FallbackRole =

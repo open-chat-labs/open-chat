@@ -169,7 +169,14 @@ impl Data {
         join_as_viewer: bool,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
-        let events = GroupChatEvents::new(chat_id, name.clone(), description.clone(), creator_user_id, now, join_as_viewer);
+        let events = GroupChatEvents::new(
+            chat_id,
+            name.clone(),
+            description.clone(),
+            creator_user_id,
+            now,
+            join_as_viewer,
+        );
 
         Data {
             is_public,

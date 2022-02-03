@@ -8,6 +8,7 @@ pub enum GroupChatEvent {
     GroupChatCreated(GroupChatCreated),
     GroupNameChanged(GroupNameChanged),
     GroupDescriptionChanged(GroupDescriptionChanged),
+    JoinAsViewerChanged(JoinAsViewerChanged),
     AvatarChanged(AvatarChanged),
     OwnershipTransferred(OwnershipTransferred),
     ParticipantsAdded(ParticipantsAdded),
