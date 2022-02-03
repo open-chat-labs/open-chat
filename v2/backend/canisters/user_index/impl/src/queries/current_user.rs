@@ -1,6 +1,7 @@
 use crate::model::user::User;
 use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
+use ledger_utils::default_ledger_account;
 use types::CanisterUpgradeStatus;
 use user_index_canister::current_user::{Response::*, *};
 
@@ -52,9 +53,6 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                     crate::model::user::PhoneStatus::None => PhoneStatus::None,
                 };
 
-                let billing_account = runtime_state.user_billing_account(u.user_id);
-                let account_credit = u.account_billing.credit();
-
                 Created(CreatedResult {
                     user_id: u.user_id,
                     username: u.username.clone(),
@@ -63,8 +61,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                     wasm_version: u.wasm_version,
                     open_storage_limit_bytes: u.open_storage_limit_bytes,
                     phone_status,
-                    billing_account,
-                    account_credit,
+                    icp_account: default_ledger_account(u.user_id.into()),
                 })
             }
         }

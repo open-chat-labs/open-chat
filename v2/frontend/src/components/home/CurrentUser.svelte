@@ -1,7 +1,4 @@
 <script lang="ts">
-    import AboutModal from "../AboutModal.svelte";
-    import FaqModal from "../FaqModal.svelte";
-    import RoadmapModal from "../RoadmapModal.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import EditableAvatar from "../EditableAvatar.svelte";
@@ -14,7 +11,6 @@
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import Overlay from "../Overlay.svelte";
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../domain/user/user.utils";
     import {
@@ -33,27 +29,12 @@
 
     export let user: PartialUserSummary;
 
-    enum ModalType {
-        None,
-        About,
-        Faq,
-        Roadmap,
-    }
-
-    export let wasmVersion: Version;
-
-    let modal = ModalType.None;
-
     function newGroup() {
         dispatch("newGroup");
     }
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
         dispatch("userAvatarSelected", ev.detail);
-    }
-
-    function closeModal() {
-        modal = ModalType.None;
     }
 
     $: small = $screenWidth === ScreenWidth.ExtraSmall || $screenHeight === ScreenHeight.Small;
@@ -88,15 +69,15 @@
                         <Cogs size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("profile")}</span>
                     </MenuItem>
-                    <MenuItem on:click={() => (modal = ModalType.Faq)}>
+                    <MenuItem on:click={() => dispatch("showFaq")}>
                         <HelpCircleOutline size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("faq")}</span>
                     </MenuItem>
-                    <MenuItem on:click={() => (modal = ModalType.Roadmap)}>
+                    <MenuItem on:click={() => dispatch("showRoadmap")}>
                         <Map size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                         <span slot="text">{$_("roadmap")}</span>
                     </MenuItem>
-                    <MenuItem on:click={() => (modal = ModalType.About)}>
+                    <MenuItem on:click={() => dispatch("showAbout")}>
                         <InformationOutline
                             size={$iconSize}
                             color={"var(--icon-txt)"}
@@ -112,16 +93,6 @@
         </MenuIcon>
     </span>
 </div>
-
-<Overlay dismissible={true} active={modal !== ModalType.None} on:close={closeModal}>
-    {#if modal === ModalType.Faq}
-        <FaqModal on:close={closeModal} />
-    {:else if modal === ModalType.Roadmap}
-        <RoadmapModal on:close={closeModal} />
-    {:else if modal === ModalType.About}
-        <AboutModal canister={{ id: user.userId, wasmVersion }} on:close={closeModal} />
-    {/if}
-</Overlay>
 
 <style type="text/scss">
     :global(.current-user.small .photo-section) {

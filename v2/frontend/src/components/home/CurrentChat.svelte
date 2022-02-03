@@ -125,7 +125,7 @@
         {firstUnreadMention}
         {firstUnreadMessage}
         {unreadMessages} />
-    <Footer {joining} {preview} {blocked} {controller} on:joinGroup on:cancelPreview />
+    <Footer {joining} {preview} {blocked} {controller} on:joinGroup on:cancelPreview on:upgrade />
 </div>
 
 <style type="text/scss">

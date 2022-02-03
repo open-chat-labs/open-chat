@@ -16,6 +16,8 @@ import type {
     NotificationFeePaidResponse,
     User,
     SetBioResponse,
+    RegisterUserResponse,
+    UpgradeStorageResponse,
     PartialUserSummary,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
@@ -73,6 +75,11 @@ import { NotificationsClient } from "./notifications/notifications.client";
 import type { ToggleMuteNotificationResponse } from "../domain/notifications";
 import type { IOnlineClient } from "./online/online.client.interface";
 import { OnlineClient } from "./online/online.client";
+import { DataClient } from "./data/data.client";
+import { storageStore } from "../stores/storage";
+import type { ILedgerClient } from "./ledger/ledger.client.interface";
+import { LedgerClient } from "./ledger/ledger.client";
+import type { ICP } from "../domain/crypto/crypto";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -90,6 +97,7 @@ export class ServiceContainer implements MarkMessagesRead {
     private _groupIndexClient: IGroupIndexClient;
     private _userClient?: IUserClient;
     private _notificationClient: INotificationsClient;
+    private _ledgerClient: ILedgerClient;
     private _groupClients: Record<string, IGroupClient>;
     private db?: Database;
 
@@ -99,6 +107,7 @@ export class ServiceContainer implements MarkMessagesRead {
         this._userIndexClient = UserIndexClient.create(identity, this.db);
         this._groupIndexClient = GroupIndexClient.create(identity);
         this._notificationClient = NotificationsClient.create(identity);
+        this._ledgerClient = LedgerClient.create(identity);
         this._groupClients = {};
     }
 
@@ -670,5 +679,22 @@ export class ServiceContainer implements MarkMessagesRead {
 
     setBio(bio: string): Promise<SetBioResponse> {
         return this.userClient.setBio(bio);
+    }
+
+    registerUser(username: string): Promise<RegisterUserResponse> {
+        return this._userIndexClient.registerUser(username);
+    }
+
+    getUserStorageLimits(): Promise<void> {
+        // do we need to do something if this fails? Not sure there's much we can do
+        return DataClient.create(this.identity).storageStatus().then(storageStore.set);
+    }
+
+    upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
+        return this._userIndexClient.upgradeStorage(newLimitBytes);
+    }
+
+    refreshAccountBalance(account: string): Promise<ICP> {
+        return this._ledgerClient.accountBalance(account);
     }
 }

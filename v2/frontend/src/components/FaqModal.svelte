@@ -1,12 +1,21 @@
 <script lang="ts">
     import ModalContent from "./ModalContent.svelte";
     import CollapsibleCard from "./CollapsibleCard.svelte";
+    import type { Questions } from "../domain/faq";
+
+    export let question: Questions | undefined = undefined;
+    export let fadeDuration = 100;
+    export let fadeDelay = 200;
 </script>
 
-<ModalContent large={true} on:close>
+<ModalContent {fadeDuration} {fadeDelay} large={true} on:close>
     <div slot="header">Frequently asked questions</div>
-    <div slot="body">
-        <CollapsibleCard open={false} headerText={"When will there be an iOS app?"}>
+    <div class="faq-body" slot="body">
+        <CollapsibleCard
+            bordered={true}
+            open={question === "ios_app"}
+            on:opened={() => (question = "ios_app")}
+            headerText={"When will there be an iOS app?"}>
             It is worth saying that the OpenChat web app <em>does</em> already work on iOS and you
             can "Add to homescreen" from the browser menu. This gives you a standard icon to open
             the app which appears more like a native app without a url bar. The big limitation for
@@ -29,7 +38,11 @@
             be ready within a few months. Otherwise, if we need to re-write (and then maintain) a native
             iOS OpenChat from scratch, then this will take significantly longer...
         </CollapsibleCard>
-        <CollapsibleCard open={false} headerText={"When will there be an Android app?"}>
+        <CollapsibleCard
+            bordered={true}
+            open={question === "android_app"}
+            on:opened={() => (question = "android_app")}
+            headerText={"When will there be an Android app?"}>
             As for iOS (see above), the OpenChat web app <em>does</em> already work on Android and
             you can "Add to homescreen" from the browser menu. This gives you a standard icon to
             open the app which appears more like a native app without a url bar. However, unlike
@@ -41,7 +54,11 @@
             Android app as an iOS in terms of aiming for a thin native wrapper around a core web app,
             and with regards to certification on the Android play store.
         </CollapsibleCard>
-        <CollapsibleCard open={false} headerText={"How do I find groups?"}>
+        <CollapsibleCard
+            bordered={true}
+            open={question === "find_groups"}
+            on:opened={() => (question = "find_groups")}
+            headerText={"How do I find groups?"}>
             There are currently two ways to find public groups. You can find a link to 🔥 hot groups
             in the main menu. This shows 20 groups you are not already a member of, ordered primarly
             by the amount of recent activity but also with a random factor. This changes every 10
@@ -50,7 +67,11 @@
             groups from the main search bar based on find matches in the group title and summary.
             Going forward we will make it easier still to find groups you might be interested in.
         </CollapsibleCard>
-        <CollapsibleCard open={false} headerText={"Can I style messages?"}>
+        <CollapsibleCard
+            bordered={true}
+            open={question === "style_messages"}
+            on:opened={() => (question = "style_messages")}
+            headerText={"Can I style messages?"}>
             You can add line breaks by using shift-enter and you can use a subset of markdown as
             follows:<br />
             _<em>italics</em>_ or *<em>italics</em>*<br />
@@ -61,27 +82,53 @@
             `<code>let a: int = 10; // code</code>`
         </CollapsibleCard>
         <CollapsibleCard
-            open={false}
-            headerText={"Why do you ask for my phone number or for a payment?"}>
-            We ask for a phone number so that we can send you a code by SMS which you then enter to
-            prove you own the phone number. This aims to reduce the chance the registration is from
-            a bot and to reduce the chance that you create multiple accounts. We don't want bots
-            because any messages they send are unlikely to be worthwhile. But also there is a cost
-            to us associated with each account and so we would prefer to restrict accounts to one
-            per real person. Alternatively, if you are either unable to receive SMSs or would prefer
-            not to enter your phone number, you can pay a small amount of ICP to offset this cost.
-            Co-incidentally very soon after our v2 launch, the Internet Identity (II) used for
-            authentication, introduced a
-            <a target="_blank" href="https://en.wikipedia.org/wiki/CAPTCHA">CAPTCHA</a> which mitigates
-            the problem of bot accounts. Furthermore, it wasn't until soon after our v2 launch that we
-            realised how many countries and how many potential users are unable to receive SMSs from
-            us. So coming soon, we will be removing the SMS or payment gate from registration so that
-            anyone can join for free. This still leaves the issue of the cost per user. We will address
-            this by putting the SMS/payment gate in front of the facility to send media messages because
-            it is the storage of images, videos etc which contributes a large proportion of our costs.
-            More details coming soon...
+            bordered={true}
+            open={question === "sms_icp"}
+            on:opened={() => (question = "sms_icp")}
+            headerText={"Why must I pay or give my phone number to send images?"}>
+            TLDR, there is a cost associated with storing images on the IC.
+            <br />
+            <br />
+            Text messages take little space and so cost us relatively little. Images typically take much
+            more space and the costs add up. Now some background on the OpenChat system. Each user has
+            their own canister which holds all the messages for their direct chats. Each group also has
+            its own canister which holds all the group messages. However, we store any
+            <em>file</em>
+            data associated with messages, such as images and video, in
+            <a target="_blank" href="https://github.com/open-ic/open-storage">OpenStorage</a>. Each
+            user has a data allowance and when a message is sent any file data comes out of the
+            <em>sender's</em> allowance. This also applies to messages sent to groups so there is no
+            group data allowance just an individual one.
+            <br />
+            <br />
+            We happily provide a 0.1 GB allowance free to every person who uses OpenChat. However it
+            is relatively easy for a single person to create many OpenChat accounts and exploit the free
+            storage perhaps with malicious intent. At the moment the best way we have of trying to ensure
+            that each person only gets one quota of storage is ask that they enter their mobile phone
+            number to receive a verification code by SMS since it is relatively hard for an individual
+            to come by many phone numbers. Once used to "prove" personhood that same phone number can't
+            be reused (at least not without a specific transfer process).
+            <br />
+            <br />
+            Unfortunately there are many places and people that can't currently receive our SMS messages
+            and so we provide another way to obtain storage to enable sending images, which is simply
+            to pay. We are hoping to be able to extend the regions to which we can send SMSs but that
+            is largely out of our hands. We also hope to be able to find alternative methods to "prove"
+            personhood and so allow people to claim their free storage. One such alternative could be
+            "people parties" which is under development at Dfinity.
+            <br />
+            <br />
+            Once you have reached your 0.1 GB storage limit you cannot send any more images unless you
+            increase your limit by making a payment. Soon we will offer the choice to have old images
+            deleted to free up storage and enable you to continue to send images without ever paying.
+            The message itself, including any caption and an image thumbnail, would never be deleted
+            and so the message history would be maintained.
         </CollapsibleCard>
-        <CollapsibleCard open={false} headerText={"Will there be an airdrop?"}>
+        <CollapsibleCard
+            bordered={true}
+            open={question === "airdrop"}
+            on:opened={() => (question = "airdrop")}
+            headerText={"Will there be an airdrop?"}>
             When we integrate with the <a
                 target="_blank"
                 href="https://forum.dfinity.org/t/open-governance-canister-for-sns-design-proposal/10224"
@@ -97,7 +144,11 @@
             users. Also you might be able to earn tokens by referring friends to help grow the user
             base and make OpenChat increasingly useful and relevant.
         </CollapsibleCard>
-        <CollapsibleCard open={false} headerText={"Are my messages secure?"}>
+        <CollapsibleCard
+            bordered={true}
+            open={question === "security"}
+            on:opened={() => (question = "security")}
+            headerText={"Are my messages secure?"}>
             In short the Internet Computer provides very strong security guarentees. There is
             however a particular well known area of weakness which Dfinity are tackling. With some
             effort a rogue node provider could install a hacked version of the node software
@@ -111,11 +162,15 @@
             of their messages, their data will not be accessible to anyone but themselves. At a later
             date we will implement e2e encryption so that the data is actually stored in encrypted form
             in canister memory and would therefore not be accessible by rogue node operators regardless
-            of SEV-ES being enabled. This will likely involve some limitations, such as not being able
+            of SEV-SNP being in place. This will likely involve some limitations, such as not being able
             to search your message history, so you could choose to opt-in to e2e security for selected
             chats.
         </CollapsibleCard>
-        <CollapsibleCard open={false} headerText={"Do you have a roadmap?"}>
+        <CollapsibleCard
+            bordered={true}
+            open={question === "roadmap"}
+            on:opened={() => (question = "roadmap")}
+            headerText={"Do you have a roadmap?"}>
             Yes, we do now! Find it in the main menu next to this FAQ!
         </CollapsibleCard>
     </div>
@@ -124,5 +179,13 @@
 <style type="text/scss">
     a {
         text-decoration: underline;
+    }
+
+    :global(.faq-body .card) {
+        margin-bottom: $sp3;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
     }
 </style>

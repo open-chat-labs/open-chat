@@ -13,6 +13,8 @@
     export let hideHeader: boolean = false;
     export let hideFooter: boolean = false;
     export let compactFooter: boolean = false;
+    export let fadeDuration = 100;
+    export let fadeDelay = 200;
     export let fixedWidth: boolean = true;
     export let alignTo: DOMRect | undefined = undefined;
 
@@ -59,9 +61,9 @@
     {style}
     class="modal-content"
     class:large
+    in:fade={{ duration: fadeDuration, delay: fadeDelay }}
+    out:fade={{ duration: fadeDuration }}
     class:fixed-width={fixedWidth}
-    in:fade={{ duration: 100, delay: 200 }}
-    out:fade={{ duration: 100 }}
     on:click|stopPropagation>
     {#if !hideHeader}
         <div class="header">
@@ -93,7 +95,7 @@
         box-shadow: var(--modal-sh);
         @include size-below(xs) {
             width: 100%;
-            max-height: 100%;
+            max-height: calc(100% - 20px);
             border-radius: $sp4 $sp4 0 0;
         }
         @include size-above(xs) {

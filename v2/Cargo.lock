@@ -3790,6 +3790,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "ic-ledger-types",
  "serde",
  "serde_bytes",
  "types",
@@ -3836,6 +3837,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-ledger-types",
  "itertools",
+ "ledger_utils",
  "notifications_canister",
  "notifications_canister_c2c_client",
  "search",

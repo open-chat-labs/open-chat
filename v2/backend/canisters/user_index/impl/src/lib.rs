@@ -5,7 +5,7 @@ use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use ic_ledger_types::AccountIdentifier;
-use ledger_utils::convert_to_subaccount;
+use ledger_utils::default_ledger_account;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
@@ -88,9 +88,8 @@ impl RuntimeState {
         format!("{:0>6}", random % 1000000)
     }
 
-    pub fn user_billing_account(&self, user_id: UserId) -> AccountIdentifier {
-        let subaccount = convert_to_subaccount(&user_id.into());
-        AccountIdentifier::new(&self.env.canister_id(), &subaccount)
+    pub fn user_index_ledger_account(&self) -> AccountIdentifier {
+        default_ledger_account(self.env.canister_id())
     }
 
     pub fn metrics(&self) -> Metrics {

@@ -157,9 +157,8 @@ export type CurrentUserResponse = {
     'Created' : {
       'username' : string,
       'phone_status' : PhoneStatus,
-      'billing_account' : AccountIdentifier,
       'wasm_version' : Version,
-      'account_credit' : ICP,
+      'icp_account' : AccountIdentifier,
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
@@ -640,10 +639,10 @@ export type UpgradeCanisterResponse = { 'UpgradeInProgress' : null } |
   { 'UserNotFound' : null };
 export interface UpgradeStorageArgs { 'new_storage_limit_bytes' : bigint }
 export type UpgradeStorageResponse = { 'SuccessNoChange' : null } |
-  { 'Success' : { 'remaining_account_credit' : ICP } } |
+  { 'Success' : null } |
   { 'PaymentNotFound' : null } |
   {
-    'PaymentInsufficient' : { 'amount_required' : ICP, 'account_credit' : ICP }
+    'PaymentInsufficient' : { 'amount_required' : ICP, 'account_balance' : ICP }
   } |
   { 'InternalError' : string } |
   { 'StorageLimitExceeded' : bigint } |

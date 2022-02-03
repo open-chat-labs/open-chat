@@ -1,9 +1,7 @@
 use candid::CandidType;
 use ic_ledger_types::AccountIdentifier;
 use serde::Deserialize;
-use types::{
-    CanisterCreationStatus, CanisterUpgradeStatus, PhoneNumber, RegistrationFee, TimestampMillis, UserId, Version, ICP,
-};
+use types::{CanisterCreationStatus, CanisterUpgradeStatus, PhoneNumber, RegistrationFee, TimestampMillis, UserId, Version};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {}
@@ -69,6 +67,5 @@ pub struct CreatedResult {
     pub wasm_version: Version,
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
-    pub billing_account: AccountIdentifier,
-    pub account_credit: ICP,
+    pub icp_account: AccountIdentifier,
 }

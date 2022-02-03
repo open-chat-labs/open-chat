@@ -27,6 +27,10 @@ import {
     ConfirmationState,
     RegistrationFee,
     NotifyRegistrationFeePaidResponse,
+    RegisterUserResponse,
+    PhoneStatus,
+    UpgradeStorageResponse,
+    RefreshAccountBalanceResponse,
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -56,6 +60,10 @@ export {
     ConfirmationState as ApiConfirmationState,
     RegistrationFee as ApiRegistrationFee,
     NotifyRegistrationFeePaidResponse as ApiNotificationFeePaidResponse,
+    RegisterUserResponse as ApiRegisterUserResponse,
+    PhoneStatus as ApiPhoneStatus,
+    UpgradeStorageResponse as ApiUpgradeStorageResponse,
+    RefreshAccountBalanceResponse as ApiRefreshAccountBalanceResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

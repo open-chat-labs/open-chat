@@ -97,23 +97,6 @@ type NotifyRegistrationFeePaidResponse =
         InternalError: text;
     };
 
-type RefreshAccountBalanceArgs =
-    record {
-    };
-
-type RefreshAccountBalanceResponse =
-    variant {
-        Success: AccountCredit;
-        SuccessNoChange: AccountCredit;
-        UserNotFound;
-        InternalError: text;
-    };
-
-type AccountCredit =
-    record {
-        account_credit: ICP;
-    };
-
 type UpgradeStorageArgs =
     record {
         new_storage_limit_bytes: nat64;
@@ -121,17 +104,16 @@ type UpgradeStorageArgs =
 
 type UpgradeStorageResponse =
     variant {
-        Success: record {
-            remaining_account_credit: ICP;
-        };
+        Success;
         SuccessNoChange;
         PaymentInsufficient: record {
-            account_credit: ICP;
+            account_balance: ICP;
             amount_required: ICP;
         };
         PaymentNotFound;
         StorageLimitExceeded: nat64; // Returns the storage limit in bytes
         UserNotFound;
+        InternalError: text;
     };
 
 type CreateCanisterArgs =
@@ -223,8 +205,7 @@ type CurrentUserResponse =
             wasm_version: Version;
             open_storage_limit_bytes: nat64;
             phone_status: PhoneStatus;
-            billing_account: AccountIdentifier;
-            account_credit: ICP;
+            icp_account: AccountIdentifier;
         };
     };
 
@@ -351,10 +332,7 @@ service: {
 
     notify_registration_fee_paid: (NotifyRegistrationFeePaidArgs) -> (NotifyRegistrationFeePaidResponse);
 
-    // Checks the user's ledger account and credits their account if there has been a payment
-    refresh_account_balance: (RefreshAccountBalanceArgs) -> (RefreshAccountBalanceResponse);
-
-    // Increases the user's storage limit in OpenStorage (provided the user has enough credit)
+    // Increases the user's storage limit in OpenStorage (provided the user has deposited enough ICP)
     upgrade_storage: (UpgradeStorageArgs) -> (UpgradeStorageResponse);
 
     // Once the confirm_phone_number call has succeeded (user is in one of the "confirmed" states)
