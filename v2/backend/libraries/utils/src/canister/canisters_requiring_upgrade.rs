@@ -29,6 +29,10 @@ impl CanistersRequiringUpgrade {
         Some(canister_id)
     }
 
+    pub fn clear(&mut self) {
+        self.pending.clear();
+    }
+
     pub fn mark_success(&mut self, canister_id: &CanisterId) {
         self.in_progress.remove(canister_id);
         self.completed += 1;
