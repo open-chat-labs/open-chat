@@ -9,21 +9,17 @@ pub struct Args {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
-    Success(SuccessResult),
+    Success,
     SuccessNoChange,
     PaymentInsufficient(PaymentInsufficientResult),
     PaymentNotFound,
     StorageLimitExceeded(u64), // Returns the storage limit in bytes
     UserNotFound,
-}
-
-#[derive(CandidType, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub remaining_account_credit: ICP,
+    InternalError(String),
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct PaymentInsufficientResult {
-    pub account_credit: ICP,
+    pub account_balance: ICP,
     pub amount_required: ICP,
 }

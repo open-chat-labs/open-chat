@@ -1,4 +1,5 @@
 use candid::CandidType;
+use ic_ledger_types::BlockIndex;
 use serde::{Deserialize, Serialize};
 use types::{TimestampMillis, ICP};
 
@@ -17,12 +18,7 @@ impl AccountBilling {
         self.charges.push(charge);
     }
 
-    // TODO account for the burned ICP once we implement burning
-    pub fn ledger_balance(&self) -> ICP {
-        ICP::from_e8s(self.payments.iter().map(|p| p.amount.e8s()).sum())
-    }
-
-    pub fn credit(&self) -> ICP {
+    pub fn account_balance(&self) -> ICP {
         let payments_total: u64 = self.payments.iter().map(|p| p.amount.e8s()).sum();
         let charges_total: u64 = self.charges.iter().map(|c| c.amount.e8s()).sum();
 
@@ -40,6 +36,7 @@ pub struct AccountPayment {
 pub struct AccountCharge {
     pub amount: ICP,
     pub timestamp: TimestampMillis,
+    pub block_index: BlockIndex,
     pub details: AccountChargeDetails,
 }
 

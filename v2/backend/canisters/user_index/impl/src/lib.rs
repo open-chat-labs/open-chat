@@ -4,7 +4,7 @@ use crate::model::user_map::UserMap;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use ic_ledger_types::AccountIdentifier;
+use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use ledger_utils::convert_to_subaccount;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -86,6 +86,10 @@ impl RuntimeState {
     pub fn generate_6_digit_code(&mut self) -> String {
         let random = self.env.random_u32();
         format!("{:0>6}", random % 1000000)
+    }
+
+    pub fn user_index_ledger_account(&self) -> AccountIdentifier {
+        AccountIdentifier::new(&self.env.canister_id(), &DEFAULT_SUBACCOUNT)
     }
 
     pub fn user_billing_account(&self, user_id: UserId) -> AccountIdentifier {

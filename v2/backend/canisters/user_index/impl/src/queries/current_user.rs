@@ -53,7 +53,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                 };
 
                 let billing_account = runtime_state.user_billing_account(u.user_id);
-                let account_credit = u.account_billing.credit();
+                let account_balance = u.account_billing.account_balance();
 
                 Created(CreatedResult {
                     user_id: u.user_id,
@@ -64,7 +64,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                     open_storage_limit_bytes: u.open_storage_limit_bytes,
                     phone_status,
                     billing_account,
-                    account_credit,
+                    account_balance,
                 })
             }
         }
