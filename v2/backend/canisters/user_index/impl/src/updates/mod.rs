@@ -11,7 +11,6 @@ pub mod confirm_phone_number;
 pub mod create_canister;
 pub mod generate_registration_fee;
 pub mod notify_registration_fee_paid;
-pub mod refresh_account_balance;
 pub mod register_user;
 pub mod remove_sms_messages;
 pub mod remove_super_admin;
