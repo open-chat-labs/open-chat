@@ -86,30 +86,37 @@
             open={question === "sms_icp"}
             on:opened={() => (question = "sms_icp")}
             headerText={"Why must I pay or give my phone number to send images?"}>
-            TLDR - there is a cost associated with storing images on the IC.<br />
+            TLDR - there is a cost associated with storing images on the IC.
             <br />
-            First a bit of background on the OpenChat system. Each user has their own canister which
-            holds all the messages for their direct chats. Each group also has its own canister which
-            holds all the group messages. However we store any <em>file</em> data associated with
-            messages, such as images and video, in
-            <a target="_blank" href="https://github.com/open-ic/open-storage">OpenStorage</a>.<br />
             <br />
             Text messages take relatively little space and so cost us relatively little. Images typically
-            take much more space and the costs add up. We happily provide 0.1 GB of file storage free
-            to every person who uses OpenChat. However it is relatively easy for a single person to create
-            many OpenChat accounts and exploit the free storage perhaps with malicious intent. At the
-            moment the best way we have of trying to ensure that each person only gets one quota of storage
-            is ask that they enter their mobile phone number to receive a verification code by SMS since
-            it is relatively hard for an individual to come by many phone numbers. Once used to "prove"
-            personhood that same phone number can't be reused (at least not without a specific transfer
-            process).<br />
+            take much more space and the costs add up. Now some background on the OpenChat system. Each
+            user has their own canister which holds all the messages for their direct chats. Each group
+            also has its own canister which holds all the group messages. However we store any
+            <em>file</em>
+            data associated with messages, such as images and video, in
+            <a target="_blank" href="https://github.com/open-ic/open-storage">OpenStorage</a>. Each
+            user has a data allowance and when a message is sent any file data comes out of the
+            sender's allowance. This also applies to messages sent to groups so there is no group
+            data allowance just an individual one.
+            <br />
+            <br />
+            We happily provide a 0.1 GB allowance free to every person who uses OpenChat. However it
+            is relatively easy for a single person to create many OpenChat accounts and exploit the free
+            storage perhaps with malicious intent. At the moment the best way we have of trying to ensure
+            that each person only gets one quota of storage is ask that they enter their mobile phone
+            number to receive a verification code by SMS since it is relatively hard for an individual
+            to come by many phone numbers. Once used to "prove" personhood that same phone number can't
+            be reused (at least not without a specific transfer process).
+            <br />
             <br />
             Unfortunately there are many places and people that can't currently receive our SMS messages
             and so we provide another way to obtain storage to enable sending images, which is simply
             to pay. We are hoping to be able to extend the regions to which we can send SMSs but that
             is largely out of our hands. We also hope to be able to find alternative methods to "prove"
             personhood and so allow people to claim their free storage. One such alternative could be
-            "people parties" which is under development at Dfinity.<br />
+            "people parties" which is under development at Dfinity.
+            <br />
             <br />
             Once you have reached your 0.1 GB storage limit you cannot send any more images unless you
             increase your limit by making a payment. Soon we will offer the choice to have old images
