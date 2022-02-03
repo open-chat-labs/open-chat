@@ -3,6 +3,7 @@ import { init, locale, addMessages, getLocaleFromNavigator } from "svelte-i18n";
 import en from "./en.json";
 import cn from "./cn.json";
 import jp from "./jp.json";
+import ru from "./ru.json";
 
 export const supportedLanguages = [
     {
@@ -21,9 +22,14 @@ export const supportedLanguages = [
         json: cn,
     },
     {
-        name: "Japanese",
+        name: "日本",
         code: "jp",
         json: jp,
+    },
+    {
+        name: "русский",
+        code: "ru",
+        json: ru,
     },
 ];
 
