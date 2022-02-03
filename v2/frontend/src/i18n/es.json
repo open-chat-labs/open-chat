@@ -270,7 +270,7 @@
         "confirmTransfer": "Confirmar transferencia",
         "confirmCyclesTransferText": "Confirme a continuación cuando haya realizado una transferencia de {amount} ciclos desde su billetera de ciclos a la billetera de OpenChat a continuación",
         "confirmICPTransferText": "Confirme a continuación cuando haya realizado una transferencia de {amount} ICP a la cuenta que se indica a continuación",
-        "confirmed": "Confirmado",
+        "confirm": "Confirmar",
         "sms": "código SMS",
         "transfer": "Transferir",
         "codeAccepted": "Código aceptado",
