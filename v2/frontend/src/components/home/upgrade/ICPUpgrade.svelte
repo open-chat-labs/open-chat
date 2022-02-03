@@ -17,7 +17,7 @@
     import { rollbar } from "utils/logging";
 
     const dispatch = createEventDispatcher();
-    const decimals = 1;
+    const decimals = 2;
     const icpPrice: number = 0.1; // storage price in ICP per 1/10th of a GB
 
     export let api: ServiceContainer;
@@ -116,7 +116,7 @@
     }
 </script>
 
-<div class="body" class:is-confirmed={confirmed}>
+<div class="body" class:confirming class:is-confirmed={confirmed}>
     {#if confirming}
         <Loading size={"large"} />
     {:else if confirmed}
@@ -223,6 +223,10 @@
 
         &.is-confirmed {
             height: 240px;
+        }
+
+        &.confirming {
+            height: 390px;
         }
     }
     .slider {
