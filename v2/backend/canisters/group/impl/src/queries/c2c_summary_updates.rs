@@ -35,6 +35,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             mentions: updates_from_events.mentions,
             pinned_message: updates_from_events.pinned_message,
             wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(args.updates_since).copied()),
+            join_as_viewer: if updates_from_events.join_as_viewer_changed { Some(runtime_state.data.join_as_viewer) } else { None },
         };
         Success(Box::new(SuccessResult { updates }))
     } else {
@@ -54,6 +55,7 @@ struct UpdatesFromEvents {
     role_changed: bool,
     mentions: Vec<Mention>,
     pinned_message: OptionUpdate<MessageIndex>,
+    join_as_viewer_changed: bool,
 }
 
 fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_mentions: &[MessageIndex]) -> UpdatesFromEvents {
@@ -78,6 +80,9 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
                 if updates.name.is_none() {
                     updates.name = Some(n.new_name.clone());
                 }
+            }
+            ChatEventInternal::JoinAsViewerChanged(_) => {
+                updates.join_as_viewer_changed = true;
             }
             ChatEventInternal::GroupDescriptionChanged(n) => {
                 if updates.description.is_none() {

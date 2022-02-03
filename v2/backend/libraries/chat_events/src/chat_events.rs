@@ -35,6 +35,7 @@ pub enum ChatEventInternal {
     DirectChatCreated(DirectChatCreated),
     GroupChatCreated(Box<GroupChatCreated>),
     GroupNameChanged(Box<GroupNameChanged>),
+    JoinAsViewerChanged(Box<JoinAsViewerChanged>),
     GroupDescriptionChanged(Box<GroupDescriptionChanged>),
     AvatarChanged(Box<AvatarChanged>),
     OwnershipTransferred(Box<OwnershipTransferred>),
@@ -186,6 +187,7 @@ impl ChatEvents {
         description: String,
         created_by: UserId,
         now: TimestampMillis,
+        join_as_viewer: bool,
     ) -> ChatEvents {
         let mut events = ChatEvents {
             chat_type: ChatType::Group,
@@ -203,6 +205,7 @@ impl ChatEvents {
                 name,
                 description,
                 created_by,
+                join_as_viewer,
             })),
             now,
         );

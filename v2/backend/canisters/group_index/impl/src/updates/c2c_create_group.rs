@@ -14,6 +14,7 @@ async fn c2c_create_group(args: Args) -> Response {
     let name = args.name.to_owned();
     let description = args.description.to_owned();
     let is_public = args.is_public;
+    let join_as_viewer = args.join_as_viewer;
     let avatar_id = Avatar::id(&args.avatar);
 
     let canister_args = match mutate_state(|state| prepare(args, state)) {
@@ -44,6 +45,7 @@ async fn c2c_create_group(args: Args) -> Response {
                         description,
                         avatar_id,
                         wasm_version,
+                        join_as_viewer,
                     },
                     state,
                 )
@@ -102,6 +104,7 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCaniste
             notifications_canister_ids: runtime_state.data.notifications_canister_ids.clone(),
             avatar: args.avatar,
             test_mode: runtime_state.data.test_mode,
+            join_as_viewer: args.join_as_viewer,
         };
 
         Ok(CreateCanisterArgs {
@@ -120,6 +123,7 @@ struct CommitArgs {
     description: String,
     avatar_id: Option<u128>,
     wasm_version: Version,
+    join_as_viewer: bool,
 }
 
 fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
@@ -133,6 +137,7 @@ fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
             now,
             wasm_version: args.wasm_version,
             cycles: GROUP_CANISTER_INITIAL_CYCLES_BALANCE,
+            join_as_viewer: args.join_as_viewer,
         });
     } else {
         runtime_state.data.private_groups.handle_group_created(

@@ -33,6 +33,7 @@ pub struct Summary {
     pub mentions: Vec<Mention>,
     pub pinned_message: Option<MessageIndex>,
     pub wasm_version: Version,
+    pub join_as_viewer: bool,
 }
 
 impl From<Summary> for GroupChatSummary {
@@ -56,6 +57,7 @@ impl From<Summary> for GroupChatSummary {
             mentions: s.mentions,
             pinned_message: s.pinned_message,
             wasm_version: s.wasm_version,
+            join_as_viewer: s.join_as_viewer,
         }
     }
 }

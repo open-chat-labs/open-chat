@@ -16,6 +16,7 @@ pub struct Participants {
     user_id_to_principal_map: HashMap<UserId, Principal>,
     blocked: HashSet<UserId>,
     admin_count: u32,
+    viewer_count: u32,
 }
 
 impl Participants {
@@ -35,6 +36,7 @@ impl Participants {
             user_id_to_principal_map: vec![(creator_user_id, creator_principal)].into_iter().collect(),
             blocked: HashSet::new(),
             admin_count: 0,
+            viewer_count: 0,
         }
     }
 
@@ -46,6 +48,7 @@ impl Participants {
         min_visible_event_index: EventIndex,
         min_visible_message_index: MessageIndex,
         as_super_admin: bool,
+        as_viewer: bool,
     ) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
@@ -55,7 +58,13 @@ impl Participants {
                     let participant = ParticipantInternal {
                         user_id,
                         date_added: now,
-                        role: if as_super_admin { Role::SuperAdmin(FallbackRole::Participant) } else { Role::Participant },
+                        role: if as_super_admin {
+                            Role::SuperAdmin(FallbackRole::Participant)
+                        } else if as_viewer {
+                            Role::Viewer
+                        } else {
+                            Role::Participant
+                        },
                         min_visible_event_index,
                         min_visible_message_index,
                         notifications_muted: false,
@@ -63,6 +72,9 @@ impl Participants {
                     };
                     e.insert(participant.clone());
                     self.user_id_to_principal_map.insert(user_id, principal);
+                    if as_viewer {
+                        self.viewer_count += 1;
+                    }
                     AddResult::Success(participant)
                 }
                 _ => AddResult::AlreadyInGroup,
@@ -77,6 +89,8 @@ impl Participants {
                 if let Some(participant) = self.by_principal.remove(&principal) {
                     if participant.role.is_admin() {
                         self.admin_count -= 1;
+                    } else if participant.role.is_viewer() {
+                        self.viewer_count -= 1;
                     }
                 }
                 true
@@ -164,7 +178,7 @@ impl Participants {
             Some(p) => match p.role {
                 Role::Owner => return MakeAdminResult::AlreadyOwner,
                 Role::Admin | Role::SuperAdmin(FallbackRole::Admin) => return MakeAdminResult::AlreadyAdmin,
-                Role::Participant => p.role = Role::Admin,
+                Role::Participant | Role::Viewer => p.role = Role::Admin,
                 Role::SuperAdmin(FallbackRole::Participant) => p.role = Role::SuperAdmin(FallbackRole::Admin),
             },
             None => return MakeAdminResult::NotInGroup,
@@ -183,7 +197,7 @@ impl Participants {
                     p.role = Role::SuperAdmin(FallbackRole::Admin);
                     MakeSuperAdminResult::Success
                 }
-                Role::Participant => {
+                Role::Participant | Role::Viewer => {
                     p.role = Role::SuperAdmin(FallbackRole::Participant);
                     MakeSuperAdminResult::Success
                 }
@@ -264,6 +278,10 @@ impl Participants {
 
     pub fn admin_count(&self) -> u32 {
         self.admin_count
+    }
+
+    pub fn viewer_count(&self) -> u32 {
+        self.viewer_count
     }
 
     pub fn add_mention(&mut self, user_id: &UserId, message_index: MessageIndex) -> bool {

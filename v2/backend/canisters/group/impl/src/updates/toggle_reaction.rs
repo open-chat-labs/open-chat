@@ -20,6 +20,10 @@ fn toggle_reaction(args: Args) -> Response {
 fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        if participant.role.is_viewer() {
+            return CallerIsViewer;
+        }
+
         let now = runtime_state.env.now();
 
         match runtime_state

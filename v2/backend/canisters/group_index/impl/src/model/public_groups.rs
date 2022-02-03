@@ -58,6 +58,7 @@ impl PublicGroups {
                 args.now,
                 args.wasm_version,
                 args.cycles,
+                args.join_as_viewer,
             );
 
             self.name_to_id_map.insert(args.name, args.chat_id);
@@ -100,6 +101,7 @@ impl PublicGroups {
             participant_count: summary.participant_count,
             pinned_message: summary.pinned_message,
             wasm_version: group.wasm_version,
+            join_as_viewer: group.join_as_viewer,
         })
     }
 
@@ -109,6 +111,7 @@ impl PublicGroups {
         name: String,
         description: String,
         avatar_id: Option<u128>,
+        join_as_viewer: bool,
     ) -> UpdateGroupResult {
         match self.groups.get_mut(chat_id) {
             None => UpdateGroupResult::ChatNotFound,
@@ -120,6 +123,7 @@ impl PublicGroups {
                     group.name = name;
                     group.description = description;
                     group.avatar_id = avatar_id;
+                    group.join_as_viewer = join_as_viewer;
                     UpdateGroupResult::Success
                 }
             }
@@ -165,6 +169,7 @@ pub struct PublicGroupInfo {
     wasm_version: Version,
     cycle_top_ups: Vec<CyclesTopUp>,
     upgrade_in_progress: bool,
+    join_as_viewer: bool,
 }
 
 pub enum UpdateGroupResult {
@@ -182,6 +187,7 @@ impl PublicGroupInfo {
         now: TimestampMillis,
         wasm_version: Version,
         cycles: Cycles,
+        join_as_viewer: bool,
     ) -> PublicGroupInfo {
         PublicGroupInfo {
             id,
@@ -197,6 +203,7 @@ impl PublicGroupInfo {
                 amount: cycles,
             }],
             upgrade_in_progress: false,
+            join_as_viewer,
         }
     }
 
@@ -293,6 +300,7 @@ pub struct GroupCreatedArgs {
     pub now: TimestampMillis,
     pub wasm_version: Version,
     pub cycles: Cycles,
+    pub join_as_viewer: bool,
 }
 
 #[derive(PartialEq, Eq, Debug)]

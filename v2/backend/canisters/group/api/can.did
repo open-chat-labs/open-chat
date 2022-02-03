@@ -24,6 +24,7 @@ type SendMessageResponse =
         MessageEmpty;
         TextTooLong: nat32;
         CallerNotInGroup;
+        CallerIsViewer;
     };
 
 type EditMessageArgs =
@@ -37,6 +38,7 @@ type EditMessageResponse =
         Success;
         MessageNotFound;
         CallerNotInGroup;
+        CallerIsViewer;
     };
 
 type DeleteMessagesArgs =
@@ -63,6 +65,7 @@ type ToggleReactionResponse =
         InvalidReaction;
         MessageNotFound;
         CallerNotInGroup;
+        CallerIsViewer;
     };
 
 type BlockUserArgs =
@@ -179,6 +182,7 @@ type UpdateGroupArgs =
         name: text;
         description: text;
         avatar: AvatarUpdate;
+        join_as_viewer: bool;
     };
 
 type UpdateGroupResponse =

@@ -64,6 +64,7 @@ pub struct GroupChatSummary {
     pub mentions: Vec<Mention>,
     pub pinned_message: Option<MessageIndex>,
     pub wasm_version: Version,
+    pub join_as_viewer: bool,
 }
 
 impl GroupChatSummary {
@@ -104,6 +105,7 @@ pub struct GroupChatSummaryUpdates {
     pub mentions: Vec<Mention>,
     pub pinned_message: OptionUpdate<MessageIndex>,
     pub wasm_version: Option<Version>,
+    pub join_as_viewer: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -118,4 +120,5 @@ pub struct PublicGroupSummary {
     pub participant_count: u32,
     pub pinned_message: Option<MessageIndex>,
     pub wasm_version: Version,
+    pub join_as_viewer: bool,
 }

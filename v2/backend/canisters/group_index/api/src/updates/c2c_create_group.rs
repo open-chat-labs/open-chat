@@ -10,6 +10,7 @@ pub struct Args {
     pub description: String,
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
+    pub join_as_viewer: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

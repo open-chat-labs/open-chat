@@ -6,6 +6,7 @@ pub struct Args {
     pub name: String,
     pub description: String,
     pub avatar_id: Option<u128>,
+    pub join_as_viewer: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

@@ -161,6 +161,7 @@ type GroupChatCreated =
         name: text;
         description: text;
         created_by: UserId;
+        join_as_viewer: bool;
     };
 
 type GroupChatEvent =

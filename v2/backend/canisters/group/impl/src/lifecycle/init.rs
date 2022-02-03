@@ -32,6 +32,7 @@ fn init(args: Args) {
         args.user_index_canister_id,
         args.notifications_canister_ids,
         args.test_mode,
+        args.join_as_viewer,
     );
 
     init_state(env, data, args.wasm_version);

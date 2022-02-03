@@ -7,6 +7,7 @@ pub enum Role {
     Owner,
     Admin,
     Participant,
+    Viewer,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
@@ -35,6 +36,10 @@ impl Role {
 
     pub fn is_super_admin(&self) -> bool {
         matches!(self, Role::SuperAdmin(_))
+    }
+
+    pub fn is_viewer(&self) -> bool {
+        matches!(self, Role::Viewer)
     }
 
     pub fn can_add_participants(&self, is_public_group: bool) -> bool {

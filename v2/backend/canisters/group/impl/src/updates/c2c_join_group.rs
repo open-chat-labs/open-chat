@@ -73,11 +73,14 @@ fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Resp
             min_visible_event_index,
             min_visible_message_index,
             args.as_super_admin,
+            runtime_state.data.join_as_viewer,
         ) {
             AddResult::Success(participant) => {
+                // TODO: Do we want to publish a Viewier Joined event?
                 let event = ParticipantJoined {
                     user_id,
                     as_super_admin: args.as_super_admin,
+                    as_viewer: runtime_state.data.join_as_viewer,
                 };
                 runtime_state
                     .data

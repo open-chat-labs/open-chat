@@ -9,7 +9,7 @@ use group_index_canister::c2c_update_group;
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged, UserId,
+    Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged, JoinAsViewerChanged, UserId,
     MAX_AVATAR_SIZE,
 };
 
@@ -28,6 +28,7 @@ async fn update_group(args: Args) -> Response {
             name: args.name.clone(),
             description: args.description.clone(),
             avatar_id: prepare_result.avatar_id,
+            join_as_viewer: args.join_as_viewer,
         };
 
         let group_index_canister_id = prepare_result.group_index_canister_id;
@@ -109,6 +110,18 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
         );
 
         runtime_state.data.name = args.name;
+    }
+
+    if runtime_state.data.join_as_viewer != args.join_as_viewer {
+        events.push_event(
+            ChatEventInternal::JoinAsViewerChanged(Box::new(JoinAsViewerChanged {
+                new_value: args.join_as_viewer,
+                changed_by: my_user_id,
+            })),
+            now,
+        );
+
+        runtime_state.data.join_as_viewer = args.join_as_viewer;
     }
 
     if runtime_state.data.description != args.description {

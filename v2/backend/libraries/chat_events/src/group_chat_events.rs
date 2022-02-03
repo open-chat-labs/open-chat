@@ -18,8 +18,9 @@ impl GroupChatEvents {
         description: String,
         created_by: UserId,
         now: TimestampMillis,
+        join_as_viewer: bool,
     ) -> GroupChatEvents {
-        let events = ChatEvents::new_group_chat(chat_id, name, description, created_by, now);
+        let events = ChatEvents::new_group_chat(chat_id, name, description, created_by, now, join_as_viewer);
 
         GroupChatEvents { inner: events }
     }

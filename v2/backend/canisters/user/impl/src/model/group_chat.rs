@@ -50,6 +50,7 @@ impl From<&GroupChat> for GroupChatSummaryUpdates {
             mentions: Vec::new(),
             pinned_message: OptionUpdate::NoChange,
             wasm_version: None,
+            join_as_viewer: None,
         }
     }
 }

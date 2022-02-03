@@ -155,6 +155,7 @@ fn commit(added_by: UserId, added_by_name: String, users: &[(UserId, Principal)]
             min_visible_event_index,
             min_visible_message_index,
             false,
+            false,
         );
     }
 

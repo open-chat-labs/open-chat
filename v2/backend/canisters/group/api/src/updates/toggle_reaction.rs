@@ -15,4 +15,5 @@ pub enum Response {
     InvalidReaction,
     MessageNotFound,
     CallerNotInGroup,
+    CallerIsViewer,
 }

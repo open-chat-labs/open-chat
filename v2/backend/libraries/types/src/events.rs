@@ -45,12 +45,19 @@ pub struct GroupChatCreated {
     pub name: String,
     pub description: String,
     pub created_by: UserId,
+    pub join_as_viewer: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupNameChanged {
     pub new_name: String,
     pub previous_name: String,
+    pub changed_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct JoinAsViewerChanged {
+    pub new_value: bool,
     pub changed_by: UserId,
 }
 
@@ -97,6 +104,7 @@ pub struct UsersUnblocked {
 pub struct ParticipantJoined {
     pub user_id: UserId,
     pub as_super_admin: bool,
+    pub as_viewer: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

@@ -98,6 +98,7 @@ impl RuntimeState {
             mentions: participant.get_most_recent_mentions(&data.events),
             pinned_message: data.pinned_message,
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            join_as_viewer: data.join_as_viewer,
         }
     }
 
@@ -109,6 +110,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             participants: self.data.participants.len() as u32,
+            viewers: self.data.participants.viewer_count(),
             admins: self.data.participants.admin_count(),
             events: chat_metrics.total_events,
             text_messages: chat_metrics.text_messages,
@@ -143,6 +145,8 @@ struct Data {
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_message: Option<MessageIndex>,
     pub test_mode: bool,
+    #[serde(default)]
+    pub join_as_viewer: bool,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -162,12 +166,14 @@ impl Data {
         user_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         test_mode: bool,
+        join_as_viewer: bool,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
-        let events = GroupChatEvents::new(chat_id, name.clone(), description.clone(), creator_user_id, now);
+        let events = GroupChatEvents::new(chat_id, name.clone(), description.clone(), creator_user_id, now, join_as_viewer);
 
         Data {
             is_public,
+            join_as_viewer,
             name,
             description,
             avatar,
@@ -202,6 +208,8 @@ pub struct Metrics {
     pub memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
+    #[serde(default)]
+    pub viewers: u32,
     pub participants: u32,
     pub admins: u32,
     pub events: u64,
