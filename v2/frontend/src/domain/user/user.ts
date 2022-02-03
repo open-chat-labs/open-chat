@@ -124,7 +124,6 @@ export type PhoneStatus =
 export type CreatedUser = {
     kind: "created_user";
     username: string;
-    accountCredite8s: number;
     billingAccount: string;
     phoneStatus: PhoneStatus;
     userId: string;
@@ -219,9 +218,9 @@ export type RegisterUserResponse =
 
 export type UpgradeStorageResponse =
     | { kind: "success_no_change" }
-    | { kind: "success"; accountCredite8s: number }
+    | { kind: "success" }
     | { kind: "payment_not_found" }
-    | { kind: "payment_insufficient"; ammountRequirede8s: number; accountCredite8s: number }
+    | { kind: "payment_insufficient"; ammountRequirede8s: number; accountBalancee8s: number }
     | { kind: "internal_error" }
     | { kind: "storage_limit_exceeded" }
     | { kind: "user_not_found" };

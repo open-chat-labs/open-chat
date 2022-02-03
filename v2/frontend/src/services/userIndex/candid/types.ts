@@ -1,5 +1,4 @@
 import type { Principal } from '@dfinity/principal';
-export interface AccountCredit { 'account_credit' : ICP }
 export type AccountIdentifier = Array<number>;
 export interface AddSuperAdminArgs { 'user_id' : UserId }
 export type AddSuperAdminResponse = { 'Success' : null } |
@@ -160,10 +159,10 @@ export type CurrentUserResponse = {
       'phone_status' : PhoneStatus,
       'billing_account' : AccountIdentifier,
       'wasm_version' : Version,
-      'account_credit' : ICP,
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
+      'account_balance' : ICP,
       'open_storage_limit_bytes' : bigint,
     }
   } |
@@ -538,9 +537,8 @@ export interface PublicGroupSummary {
 }
 export type RefreshAccountBalanceArgs = {};
 export type RefreshAccountBalanceResponse = {
-    'SuccessNoChange' : AccountCredit
+    'Success' : { 'account_balance' : ICP }
   } |
-  { 'Success' : AccountCredit } |
   { 'InternalError' : string } |
   { 'UserNotFound' : null };
 export interface RegisterUserArgs { 'username' : string }
@@ -648,11 +646,12 @@ export type UpgradeCanisterResponse = { 'UpgradeInProgress' : null } |
   { 'UserNotFound' : null };
 export interface UpgradeStorageArgs { 'new_storage_limit_bytes' : bigint }
 export type UpgradeStorageResponse = { 'SuccessNoChange' : null } |
-  { 'Success' : { 'remaining_account_credit' : ICP } } |
+  { 'Success' : null } |
   { 'PaymentNotFound' : null } |
   {
-    'PaymentInsufficient' : { 'amount_required' : ICP, 'account_credit' : ICP }
+    'PaymentInsufficient' : { 'amount_required' : ICP, 'account_balance' : ICP }
   } |
+  { 'InternalError' : string } |
   { 'StorageLimitExceeded' : bigint } |
   { 'UserNotFound' : null };
 export interface User { 'username' : string, 'user_id' : UserId }

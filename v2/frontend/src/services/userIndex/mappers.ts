@@ -276,7 +276,6 @@ export function upgradeStorageResponse(candid: ApiUpgradeStorageResponse): Upgra
     if ("Success" in candid) {
         return {
             kind: "success",
-            accountCredite8s: Number(candid.Success.remaining_account_credit.e8s),
         };
     }
     if ("PaymentNotFound" in candid) {
@@ -285,7 +284,7 @@ export function upgradeStorageResponse(candid: ApiUpgradeStorageResponse): Upgra
     if ("PaymentInsufficient" in candid) {
         return {
             kind: "payment_insufficient",
-            accountCredite8s: Number(candid.PaymentInsufficient.account_credit.e8s),
+            accountBalancee8s: Number(candid.PaymentInsufficient.account_balance.e8s),
             ammountRequirede8s: Number(candid.PaymentInsufficient.amount_required.e8s),
         };
     }
@@ -387,7 +386,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             kind: "created_user",
             userId: candid.Created.user_id.toString(),
             username: candid.Created.username,
-            accountCredite8s: Number(candid.Created.account_credit.e8s),
             billingAccount: bytesToHexString(candid.Created.billing_account),
             phoneStatus: phoneStatus(candid.Created.phone_status),
             canisterUpgradeStatus:

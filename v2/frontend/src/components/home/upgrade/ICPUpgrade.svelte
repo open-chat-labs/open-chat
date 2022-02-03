@@ -2,7 +2,7 @@
     import { _ } from "svelte-i18n";
     import Button from "../../Button.svelte";
     import { fade } from "svelte/transition";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onMount } from "svelte";
     import Footer from "./Footer.svelte";
     import { ONE_GB, storageInGb, storageStore, updateStorageLimit } from "../../../stores/storage";
     import Loading from "../../Loading.svelte";
@@ -29,7 +29,7 @@
     let confirmed = false;
     let refreshing = false;
     let accountSummary = user.billingAccount;
-    let accountBalance = user.accountCredite8s;
+    let accountBalance = 0;
 
     $: icpBalance = accountBalance / E8S_PER_ICP; //balance in the user's account expressed as ICP
     $: min = Math.ceil(($storageStore.byteLimit / ONE_GB) * 10); //the min bound expressed as number of 1/10 GB units
@@ -45,7 +45,7 @@
         }
     }
 
-    $: console.log($storageStore);
+    onMount(refreshBalance);
 
     function refreshBalance() {
         refreshing = true;
@@ -87,8 +87,7 @@
             .then((resp) => {
                 console.log("Notify: ", resp);
                 if (resp.kind === "success" || resp.kind === "success_no_change") {
-                    accountBalance =
-                        resp.kind === "success" ? resp.accountCredite8s : accountBalance;
+                    refreshBalance();
                     updateStorageLimit(newLimitBytes);
                     error = undefined;
                     confirmed = true;
