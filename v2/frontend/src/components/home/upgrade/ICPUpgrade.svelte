@@ -18,17 +18,17 @@
 
     const dispatch = createEventDispatcher();
     const decimals = 1;
+    const icpPrice: number = 0.1; // storage price in ICP per 1/10th of a GB
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
 
     let error: string | undefined = undefined;
     let range: HTMLInputElement;
-    let icpPrice: number = 0.1; // storage price in ICP per 1/10th of a GB
     let confirming = false;
     let confirmed = false;
     let refreshing = false;
-    let accountSummary = user.icpAccount;
+    let accountSummary = collapseAccount(user.icpAccount);
     let accountBalance = 0;
 
     $: icpBalance = accountBalance / E8S_PER_ICP; //balance in the user's account expressed as ICP
@@ -36,13 +36,12 @@
     $: newLimit = min;
     $: toPay = (newLimit - min) * icpPrice;
     $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
-    $: {
-        if (user.icpAccount.length > 20) {
-            accountSummary =
-                user.icpAccount.slice(0, 10) +
-                "..." +
-                user.icpAccount.slice(user.icpAccount.length - 10);
+
+    function collapseAccount(account: string) {
+        if (account.length > 20) {
+            return account.slice(0, 10) + "..." + account.slice(account.length - 10);
         }
+        return account;
     }
 
     onMount(refreshBalance);

@@ -163,5 +163,9 @@
 
     :global(.faq-body .card) {
         margin-bottom: $sp3;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
     }
 </style>

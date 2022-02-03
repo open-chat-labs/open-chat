@@ -886,9 +886,7 @@ export function getStorageRequiredForMessage(content: MessageContent | undefined
 
     switch (content.kind) {
         case "audio_content":
-            return content.blobData?.length ?? 0;
         case "file_content":
-            return content.blobData?.length ?? 0;
         case "image_content":
             return content.blobData?.length ?? 0;
         case "video_content":

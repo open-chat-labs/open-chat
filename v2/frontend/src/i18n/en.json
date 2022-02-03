@@ -15,7 +15,7 @@
     "bio": "User bio",
     "unableToRefreshAccountBalance": "Sorry, we were unable to refresh your account balance",
     "congratulations": "Congratulations!",
-    "enjoyYourStorage": "Enjoy posting pictures and videos to your heart's content",
+    "enjoyYourStorage": "You can now enjoy posting pictures and videos!",
     "pleaseDeposit": "Please press the \"Confirm\" button if you are happy to pay {amount} ICP from the above account to upgrade your storage to {limit}",
     "insufficientFunds": "Please ensure that the account above has a balance of at least {amount} ICP to cover the requested storage, then hit the \"Refresh\" button.",
     "noChangeToStorage": "Choose a new storage limit using the slider above so that we can calculate an upgrade price for you.",
