@@ -17,7 +17,6 @@ import type {
     RegisterUserResponse,
     PhoneStatus,
     UpgradeStorageResponse,
-    RefreshAccountBalanceResponse,
 } from "../../domain/user/user";
 import type {
     ApiConfirmationState,
@@ -266,33 +265,6 @@ export function feePaidResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiNotificationFeePaidResponse type received",
-        candid
-    );
-}
-
-export function refreshAccountBalanceResponse(
-    candid: ApiRefreshAccountBalanceResponse
-): RefreshAccountBalanceResponse {
-    if ("SuccessNoChange" in candid) {
-        return {
-            kind: "success",
-            accountCredite8s: Number(candid.SuccessNoChange.account_credit.e8s),
-        };
-    }
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            accountCredite8s: Number(candid.Success.account_credit.e8s),
-        };
-    }
-    if ("InternalError" in candid) {
-        return { kind: "internal_error" };
-    }
-    if ("UserNotFound" in candid) {
-        return { kind: "user_not_found" };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiRefreshAccountBalanceResponse type received",
         candid
     );
 }

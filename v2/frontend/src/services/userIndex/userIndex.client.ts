@@ -18,7 +18,6 @@ import type {
     NotificationFeePaidResponse,
     RegisterUserResponse,
     UpgradeStorageResponse,
-    RefreshAccountBalanceResponse,
 } from "../../domain/user/user";
 import { CandidService } from "../candidService";
 import {
@@ -35,7 +34,6 @@ import {
     feePaidResponse,
     registerUserResponse,
     upgradeStorageResponse,
-    refreshAccountBalanceResponse,
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
@@ -115,13 +113,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
                 new_storage_limit_bytes: BigInt(newLimitBytes),
             }),
             upgradeStorageResponse
-        );
-    }
-
-    refreshBalance(): Promise<RefreshAccountBalanceResponse> {
-        return this.handleResponse(
-            this.userService.refresh_account_balance({}),
-            refreshAccountBalanceResponse
         );
     }
 

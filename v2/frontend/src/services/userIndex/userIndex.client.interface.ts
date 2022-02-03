@@ -15,7 +15,6 @@ import type {
     NotificationFeePaidResponse,
     RegisterUserResponse,
     UpgradeStorageResponse,
-    RefreshAccountBalanceResponse,
 } from "../../domain/user/user";
 
 export interface IUserIndexClient {
@@ -32,5 +31,4 @@ export interface IUserIndexClient {
     notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse>;
     registerUser(username: string): Promise<RegisterUserResponse>;
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse>;
-    refreshBalance(): Promise<RefreshAccountBalanceResponse>;
 }
