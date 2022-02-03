@@ -209,6 +209,7 @@ export interface GroupChatCreated {
   'name' : string,
   'description' : string,
   'created_by' : UserId,
+  'join_as_viewer' : boolean,
 }
 export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
@@ -229,6 +230,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
+  { 'JoinAsViewerChanged' : JoinAsViewerChanged } |
   { 'MessageEdited' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
@@ -248,6 +250,7 @@ export interface GroupChatSummary {
   'last_updated' : TimestampMillis,
   'read_by_me' : Array<MessageIndexRange>,
   'pinned_message' : [] | [MessageIndex],
+  'join_as_viewer' : boolean,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'latest_event_index' : EventIndex,
@@ -266,6 +269,7 @@ export interface GroupChatSummaryUpdates {
   'last_updated' : TimestampMillis,
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'pinned_message' : PinnedMessageUpdate,
+  'join_as_viewer' : [] | [boolean],
   'avatar_id' : AvatarIdUpdate,
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
@@ -317,6 +321,10 @@ export interface ImageContent {
 export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
+}
+export interface JoinAsViewerChanged {
+  'changed_by' : UserId,
+  'new_value' : boolean,
 }
 export type Memo = bigint;
 export interface Mention {
@@ -411,6 +419,7 @@ export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
 export interface ParticipantJoined {
   'user_id' : UserId,
   'as_super_admin' : boolean,
+  'as_viewer' : boolean,
 }
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
@@ -464,6 +473,7 @@ export interface PublicGroupSummary {
   'description' : string,
   'last_updated' : TimestampMillis,
   'pinned_message' : [] | [MessageIndex],
+  'join_as_viewer' : boolean,
   'avatar_id' : [] | [bigint],
   'latest_event_index' : EventIndex,
   'chat_id' : ChatId,
@@ -487,7 +497,8 @@ export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
-export type Role = { 'Participant' : null } |
+export type Role = { 'Viewer' : null } |
+  { 'Participant' : null } |
   { 'SuperAdmin' : FallbackRole } |
   { 'Admin' : null } |
   { 'Owner' : null };

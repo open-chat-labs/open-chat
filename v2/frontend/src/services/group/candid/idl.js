@@ -170,6 +170,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EditMessageResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
+    'CallerIsViewer' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
   });
@@ -188,6 +189,7 @@ export const idlFactory = ({ IDL }) => {
   const ParticipantJoined = IDL.Record({
     'user_id' : UserId,
     'as_super_admin' : IDL.Bool,
+    'as_viewer' : IDL.Bool,
   });
   const ParticipantAssumesSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupDescriptionChanged = IDL.Record({
@@ -199,6 +201,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'created_by' : UserId,
+    'join_as_viewer' : IDL.Bool,
   });
   const ParticipantsPromotedToAdmin = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -252,6 +255,10 @@ export const idlFactory = ({ IDL }) => {
     'old_owner' : UserId,
     'new_owner' : UserId,
   });
+  const JoinAsViewerChanged = IDL.Record({
+    'changed_by' : UserId,
+    'new_value' : IDL.Bool,
+  });
   const AvatarChanged = IDL.Record({
     'changed_by' : UserId,
     'previous_avatar' : IDL.Opt(IDL.Nat),
@@ -282,6 +289,7 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin,
     'GroupNameChanged' : GroupNameChanged,
     'OwnershipTransferred' : OwnershipTransferred,
+    'JoinAsViewerChanged' : JoinAsViewerChanged,
     'MessageEdited' : UpdatedMessage,
     'AvatarChanged' : AvatarChanged,
     'ParticipantsAdded' : ParticipantsAdded,
@@ -334,6 +342,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
     'pinned_message' : IDL.Opt(MessageIndex),
+    'join_as_viewer' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : EventIndex,
     'chat_id' : ChatId,
@@ -381,6 +390,7 @@ export const idlFactory = ({ IDL }) => {
     'Admin' : IDL.Null,
   });
   const Role = IDL.Variant({
+    'Viewer' : IDL.Null,
     'Participant' : IDL.Null,
     'SuperAdmin' : FallbackRole,
     'Admin' : IDL.Null,
@@ -424,6 +434,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SendMessageResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
+    'CallerIsViewer' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
@@ -448,6 +459,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ToggleReactionResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
+    'CallerIsViewer' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'InvalidReaction' : IDL.Null,
     'Added' : EventIndex,
@@ -482,6 +494,7 @@ export const idlFactory = ({ IDL }) => {
   const UpdateGroupArgs = IDL.Record({
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'join_as_viewer' : IDL.Bool,
     'avatar' : AvatarUpdate,
   });
   const FieldTooLongResult = IDL.Record({

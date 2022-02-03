@@ -32,6 +32,7 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Bool,
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'join_as_viewer' : IDL.Bool,
     'history_visible_to_new_joiners' : IDL.Bool,
     'avatar' : IDL.Opt(Avatar),
   });
@@ -256,6 +257,7 @@ export const idlFactory = ({ IDL }) => {
     'Admin' : IDL.Null,
   });
   const Role = IDL.Variant({
+    'Viewer' : IDL.Null,
     'Participant' : IDL.Null,
     'SuperAdmin' : FallbackRole,
     'Admin' : IDL.Null,
@@ -287,6 +289,7 @@ export const idlFactory = ({ IDL }) => {
     'last_updated' : TimestampMillis,
     'read_by_me' : IDL.Vec(MessageIndexRange),
     'pinned_message' : IDL.Opt(MessageIndex),
+    'join_as_viewer' : IDL.Bool,
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : EventIndex,
@@ -442,6 +445,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
     'pinned_message' : IDL.Opt(MessageIndex),
+    'join_as_viewer' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : EventIndex,
     'chat_id' : ChatId,
@@ -629,6 +633,7 @@ export const idlFactory = ({ IDL }) => {
     'last_updated' : TimestampMillis,
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'pinned_message' : PinnedMessageUpdate,
+    'join_as_viewer' : IDL.Opt(IDL.Bool),
     'avatar_id' : AvatarIdUpdate,
     'latest_event_index' : IDL.Opt(EventIndex),
     'mentions' : IDL.Vec(Mention),
