@@ -97,17 +97,6 @@ type NotifyRegistrationFeePaidResponse =
         InternalError: text;
     };
 
-type RefreshAccountBalanceArgs =
-    record {
-    };
-
-type RefreshAccountBalanceResponse =
-    variant {
-        Success: record { account_balance: ICP; };
-        UserNotFound;
-        InternalError: text;
-    };
-
 type UpgradeStorageArgs =
     record {
         new_storage_limit_bytes: nat64;
@@ -216,8 +205,7 @@ type CurrentUserResponse =
             wasm_version: Version;
             open_storage_limit_bytes: nat64;
             phone_status: PhoneStatus;
-            billing_account: AccountIdentifier;
-            account_balance: ICP;
+            icp_account: AccountIdentifier;
         };
     };
 
@@ -343,9 +331,6 @@ service: {
     generate_registration_fee: (GenerateRegistrationFeeArgs) -> (GenerateRegistrationFeeResponse);
 
     notify_registration_fee_paid: (NotifyRegistrationFeePaidArgs) -> (NotifyRegistrationFeePaidResponse);
-
-    // Checks the user's ledger account and updates the user record with the new balance
-    refresh_account_balance: (RefreshAccountBalanceArgs) -> (RefreshAccountBalanceResponse);
 
     // Increases the user's storage limit in OpenStorage (provided the user has deposited enough ICP)
     upgrade_storage: (UpgradeStorageArgs) -> (UpgradeStorageResponse);

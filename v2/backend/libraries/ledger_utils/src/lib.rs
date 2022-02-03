@@ -1,5 +1,9 @@
 use candid::Principal;
-use ic_ledger_types::Subaccount;
+use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
+
+pub fn default_ledger_account(principal: Principal) -> AccountIdentifier {
+    AccountIdentifier::new(&principal, &DEFAULT_SUBACCOUNT)
+}
 
 pub fn convert_to_subaccount(principal: &Principal) -> Subaccount {
     let mut subaccount = [0; std::mem::size_of::<Subaccount>()];

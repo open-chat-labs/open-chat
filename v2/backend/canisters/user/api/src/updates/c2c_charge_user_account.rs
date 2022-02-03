@@ -1,18 +1,16 @@
 use candid::CandidType;
+use ic_ledger_types::{BlockIndex, TransferError};
 use serde::Deserialize;
 use types::ICP;
 
 #[derive(CandidType, Deserialize, Debug)]
-pub struct Args {}
-
-#[derive(CandidType, Deserialize, Debug)]
-pub enum Response {
-    Success(SuccessResult),
-    UserNotFound,
-    InternalError(String),
+pub struct Args {
+    pub amount: ICP,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub account_balance: ICP,
+pub enum Response {
+    Success(BlockIndex),
+    TransferError(TransferError),
+    InternalError(String),
 }

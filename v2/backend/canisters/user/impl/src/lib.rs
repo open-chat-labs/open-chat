@@ -9,6 +9,8 @@ use crate::model::user_preferences::UserPreferences;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
+use ic_ledger_types::AccountIdentifier;
+use ledger_utils::default_ledger_account;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -151,6 +153,10 @@ impl Data {
             recommended_group_exclusions: RecommendedGroupExclusions::default(),
             bio: "".to_string(),
         }
+    }
+
+    pub fn user_index_ledger_account(&self) -> AccountIdentifier {
+        default_ledger_account(self.user_index_canister_id)
     }
 }
 

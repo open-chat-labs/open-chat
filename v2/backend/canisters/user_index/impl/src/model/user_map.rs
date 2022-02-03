@@ -1,4 +1,4 @@
-use crate::model::account_billing::{AccountCharge, AccountPayment};
+use crate::model::account_billing::AccountCharge;
 use crate::model::user::{ConfirmedUser, PhoneStatus, UnconfirmedPhoneNumber, UnconfirmedUser, UnconfirmedUserState, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT, USER_LIMIT};
 use candid::{CandidType, Principal};
@@ -418,15 +418,6 @@ impl UserMap {
     pub fn set_avatar_id(&mut self, user_id: &UserId, avatar_id: Option<u128>, now: TimestampMillis) -> bool {
         if let Some(user) = self.get_by_user_id_mut_internal(user_id) {
             user.set_avatar_id(avatar_id, now);
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn record_account_payment(&mut self, user_id: &UserId, payment: AccountPayment) -> bool {
-        if let Some(User::Created(user)) = self.get_by_user_id_mut_internal(user_id) {
-            user.account_billing.add_payment(payment);
             true
         } else {
             false
