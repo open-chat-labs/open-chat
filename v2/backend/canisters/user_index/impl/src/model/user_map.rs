@@ -50,17 +50,6 @@ pub struct Metrics {
 }
 
 impl UserMap {
-    // This is a one time method which increases each user's storage limit from 100MB to 0.1GB
-    pub fn update_storage_limits(&mut self) {
-        for user in self.users_by_principal.values_mut() {
-            if let User::Created(u) = user {
-                if 0 < u.open_storage_limit_bytes && u.open_storage_limit_bytes < DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT {
-                    u.open_storage_limit_bytes = DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT;
-                }
-            }
-        }
-    }
-
     pub fn register(&mut self, principal: Principal, username: &str, now: TimestampMillis) -> RegisterUserResult {
         if self.users_by_principal.contains_key(&principal) {
             return RegisterUserResult::AlreadyExists;
