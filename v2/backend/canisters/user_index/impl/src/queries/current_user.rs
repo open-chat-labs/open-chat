@@ -12,7 +12,6 @@ fn current_user(_args: Args) -> Response {
 
 fn current_user_impl(runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    let latest_wasm_version = &runtime_state.data.user_canister_wasm.version;
 
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         match user {
@@ -36,8 +35,6 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             User::Created(u) => {
                 let canister_upgrade_status = if u.upgrade_in_progress {
                     CanisterUpgradeStatus::InProgress
-                } else if &u.wasm_version < latest_wasm_version {
-                    CanisterUpgradeStatus::Required
                 } else {
                     CanisterUpgradeStatus::NotRequired
                 };
