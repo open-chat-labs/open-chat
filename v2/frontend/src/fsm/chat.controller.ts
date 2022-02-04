@@ -1005,9 +1005,14 @@ export class ChatController {
             });
     }
 
-    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<boolean> {
+    updateGroup(
+        name: string,
+        desc: string,
+        joinAsViewer: boolean,
+        avatar?: Uint8Array
+    ): Promise<boolean> {
         return this.api
-            .updateGroup(this.chatId, name, desc, avatar)
+            .updateGroup(this.chatId, name, desc, joinAsViewer, avatar)
             .then((resp) => {
                 const err = this.groupUpdateErrorMessage(resp);
                 if (err) {

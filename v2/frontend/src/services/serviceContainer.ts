@@ -195,9 +195,10 @@ export class ServiceContainer implements MarkMessagesRead {
         chatId: string,
         name: string,
         desc: string,
+        joinAsViewer: boolean,
         avatar?: Uint8Array
     ): Promise<UpdateGroupResponse> {
-        return this.getGroupClient(chatId).updateGroup(name, desc, avatar);
+        return this.getGroupClient(chatId).updateGroup(name, desc, joinAsViewer, avatar);
     }
 
     addParticipants(

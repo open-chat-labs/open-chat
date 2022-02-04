@@ -94,6 +94,7 @@ export class UserClient extends CandidService implements IUserClient {
                         mime_type: "image/jpg",
                     };
                 }, group.avatar?.blobData),
+                join_as_viewer: group.joinAsViewer,
             }),
             createGroupResponse
         );

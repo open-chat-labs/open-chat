@@ -228,7 +228,12 @@ export class GroupClient extends CandidService implements IGroupClient {
             });
     }
 
-    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
+    updateGroup(
+        name: string,
+        desc: string,
+        joinAsViewer: boolean,
+        avatar?: Uint8Array
+    ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group({
                 name: name,
@@ -243,6 +248,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                                   data: Array.from(avatar),
                               },
                           },
+                join_as_viewer: joinAsViewer,
             }),
             updateGroupResponse
         );

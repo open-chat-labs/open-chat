@@ -528,6 +528,9 @@ function participantRole(candid: ApiRole): ParticipantRole {
     if ("Admin" in candid) {
         return "admin";
     }
+    if ("Viewer" in candid) {
+        return "viewer";
+    }
     if ("Participant" in candid) {
         return "participant";
     }
@@ -587,6 +590,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         participantCount: candid.participant_count,
         myRole: participantRole(candid.role),
         mentions: candid.mentions.map(mention),
+        joinAsViewer: candid.join_as_viewer,
     };
 }
 

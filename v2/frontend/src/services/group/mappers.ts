@@ -54,6 +54,9 @@ function participantRole(candid: ApiRole): ParticipantRole {
     if ("Admin" in candid) {
         return "admin";
     }
+    if ("Viewer" in candid) {
+        return "viewer";
+    }
     if ("Participant" in candid) {
         return "participant";
     }
@@ -226,6 +229,9 @@ export function toggleReactionResponse(candid: ApiToggleReactionResponse): Toggl
     if ("CallerNotInGroup" in candid) {
         return "not_in_group";
     }
+    if ("CallerIsViewer" in candid) {
+        return "caller_is_viewer";
+    }
     throw new UnsupportedValueError("Unexpected ApiToggleReactionResponse type received", candid);
 }
 
@@ -273,6 +279,9 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
     if ("CallerNotInGroup" in candid) {
         return "not_in_group";
     }
+    if ("CallerIsViewer" in candid) {
+        return "caller_is_viewer";
+    }
     throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
 }
 
@@ -293,6 +302,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     }
     if ("MessageEmpty" in candid) {
         return { kind: "message_empty" };
+    }
+    if ("CallerIsViewer" in candid) {
+        return { kind: "caller_is_viewer" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
@@ -442,6 +454,7 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             name: candid.GroupChatCreated.name,
             description: candid.GroupChatCreated.description,
             created_by: candid.GroupChatCreated.created_by.toString(),
+            joinAsViewer: candid.GroupChatCreated.join_as_viewer,
         };
     }
     if ("ParticipantsAdded" in candid) {
@@ -496,6 +509,13 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         return {
             kind: "desc_changed",
             changedBy: candid.GroupDescriptionChanged.changed_by.toString(),
+        };
+    }
+
+    if ("JoinAsViewerChanged" in candid) {
+        return {
+            kind: "join_as_viewer_changed",
+            changedBy: candid.JoinAsViewerChanged.changed_by.toString(),
         };
     }
 

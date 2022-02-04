@@ -50,7 +50,12 @@ export interface IGroupClient {
     makeAdmin(userId: string): Promise<MakeAdminResponse>;
     dismissAsAdmin(userId: string): Promise<DismissAdminResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
-    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
+    updateGroup(
+        name: string,
+        desc: string,
+        joinAsViewer: boolean,
+        avatar?: Uint8Array
+    ): Promise<UpdateGroupResponse>;
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;
     deleteMessage(messageId: bigint): Promise<DeleteMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;

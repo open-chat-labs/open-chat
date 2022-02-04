@@ -9,4 +9,5 @@ export type UpdatedGroup = {
     name: string;
     desc: string;
     avatar?: UpdatedAvatar;
+    joinAsViewer: boolean;
 };

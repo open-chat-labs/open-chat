@@ -34,10 +34,37 @@
     }
 
     function toggleScope() {
-        candidateGroup.isPublic = !candidateGroup.isPublic;
         if (candidateGroup.isPublic) {
-            candidateGroup.historyVisible = true;
+            setPrivate();
+        } else {
+            setPublic();
         }
+    }
+
+    function toggleJoinAs() {
+        if (candidateGroup.joinAsViewer) {
+            setJoinAsParticipant();
+        } else {
+            setJoinAsViewer();
+        }
+    }
+
+    function setPublic() {
+        candidateGroup.isPublic = true;
+        candidateGroup.historyVisible = true;
+    }
+
+    function setPrivate() {
+        candidateGroup.isPublic = false;
+        candidateGroup.joinAsViewer = false;
+    }
+
+    function setJoinAsViewer() {
+        candidateGroup.joinAsViewer = true;
+    }
+
+    function setJoinAsParticipant() {
+        candidateGroup.joinAsViewer = false;
     }
 
     function groupAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
@@ -86,9 +113,9 @@
         <div class="sub-section">
             <div class="scope">
                 <span
-                    class="scope-label"
+                    class="select-label"
                     class:selected={!candidateGroup.isPublic}
-                    on:click={() => (candidateGroup.isPublic = false)}>{$_("private")}</span>
+                    on:click={setPrivate}>{$_("private")}</span>
 
                 <Checkbox
                     id="is-public"
@@ -98,9 +125,9 @@
                     checked={candidateGroup.isPublic} />
 
                 <span
-                    class="scope-label"
+                    class="select-label"
                     class:selected={candidateGroup.isPublic}
-                    on:click={() => (candidateGroup.isPublic = true)}>{$_("public")}</span>
+                    on:click={setPublic}>{$_("public")}</span>
             </div>
 
             <div class="info">
@@ -141,6 +168,33 @@
                 {/if}
             </div>
         </div>
+
+        {#if candidateGroup.isPublic}
+            <div class="sub-section">
+                <h2>Users can join as viewers or participants?</h2>
+                <div class="join-as">
+                    <span
+                        class="select-label"
+                        class:selected={candidateGroup.joinAsViewer}
+                        on:click={setJoinAsViewer}>Viewers</span>
+
+                    <Checkbox
+                        id="join-as"
+                        toggle={true}
+                        on:change={toggleJoinAs}
+                        label={"Join as"}
+                        checked={!candidateGroup.joinAsViewer} />
+
+                    <span
+                        class="select-label"
+                        class:selected={!candidateGroup.joinAsViewer}
+                        on:click={setJoinAsParticipant}>Participants</span>
+                </div>
+                <div class="info">
+                    <p>Viewers can only read messages but not send or react</p>
+                </div>
+            </div>
+        {/if}
     </div>
 </form>
 <div class="cta">
@@ -152,6 +206,10 @@
 </div>
 
 <style type="text/scss">
+    h2 {
+        margin-bottom: $sp4;
+    }
+
     h4 {
         flex: 1;
         padding: 0 $sp4;
@@ -197,14 +255,15 @@
         @include box-shadow(1);
     }
 
-    .scope {
+    .scope,
+    .join-as {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: $sp4;
     }
 
-    .scope-label {
+    .select-label {
         @include font(book, normal, fs-140);
         cursor: pointer;
         border-bottom: 3px solid transparent;
@@ -219,6 +278,9 @@
 
         p {
             margin-bottom: $sp4;
+            &:last-child {
+                margin-bottom: 0;
+            }
         }
     }
 

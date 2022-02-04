@@ -59,7 +59,12 @@
     function updateGroup() {
         saving = true;
         controller
-            .updateGroup(updatedGroup.name, updatedGroup.desc, updatedGroup.avatar?.blobData)
+            .updateGroup(
+                updatedGroup.name,
+                updatedGroup.desc,
+                updatedGroup.joinAsViewer,
+                updatedGroup.avatar?.blobData
+            )
             .then((success) => {
                 if (success) {
                     dispatch("updateChat", {
@@ -126,6 +131,18 @@
                 {/if}
             </div>
         </div>
+        {#if $chat.joinAsViewer}
+            <div class="sub-section">
+                <h4>Join as viewer</h4>
+                <div class="info">
+                    <p>
+                        Any user who joins this group will do so as a <em>viewer</em> rather than a
+                        <em>participant</em> which means they will only be able to read messages and
+                        not send or react.
+                    </p>
+                </div>
+            </div>
+        {/if}
     </div>
     <div class="cta">
         <Button loading={saving} disabled={!dirty || saving || !canEdit} fill={true}
@@ -202,6 +219,9 @@
 
         p {
             margin-bottom: $sp4;
+            &:last-child {
+                margin-bottom: 0;
+            }
         }
     }
 </style>

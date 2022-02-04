@@ -276,6 +276,7 @@ export type GroupChatEvent =
     | ParticipantsRemoved
     | ParticipantLeft
     | GroupNameChanged
+    | JoinAsViewerChanged
     | AvatarChanged
     | MessageDeleted
     | MessageEdited
@@ -320,6 +321,11 @@ export type GroupNameChanged = {
 
 export type GroupDescChanged = {
     kind: "desc_changed";
+    changedBy: string;
+};
+
+export type JoinAsViewerChanged = {
+    kind: "join_as_viewer_changed";
     changedBy: string;
 };
 
@@ -416,6 +422,7 @@ export type GroupChatCreated = {
     name: string;
     description: string;
     created_by: string;
+    joinAsViewer: boolean;
 };
 
 export type EventWrapper<T extends ChatEvent> = {
@@ -524,9 +531,16 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     participantCount?: number;
     myRole?: ParticipantRole;
     mentions: Mention[];
+    joinAsViewer?: boolean;
 };
 
-export type ParticipantRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
+export type ParticipantRole =
+    | "admin"
+    | "participant"
+    | "owner"
+    | "super_admin"
+    | "previewer"
+    | "viewer";
 
 export type Participant = {
     role: ParticipantRole;
@@ -587,6 +601,7 @@ export type GroupChatSummary = DataContent &
         participantCount: number;
         myRole: ParticipantRole;
         mentions: Mention[];
+        joinAsViewer: boolean;
     };
 
 export type Mention = {
@@ -608,6 +623,7 @@ export type CandidateGroupChat = {
     isPublic: boolean;
     participants: CandidateParticipant[];
     avatar?: DataContent;
+    joinAsViewer: boolean;
 };
 
 // todo - there are all sorts of error conditions here that we need to deal with but - later
@@ -705,7 +721,8 @@ export type EditMessageResponse =
     | "chat_not_found"
     | "message_not_found"
     | "user_blocked"
-    | "not_in_group";
+    | "not_in_group"
+    | "caller_is_viewer";
 
 export type SendMessageResponse =
     | SendMessageSuccess
@@ -716,6 +733,7 @@ export type SendMessageResponse =
     | SendMessageBalanceExceeded
     | SendMessageRecipientNotFound
     | TransationFailed
+    | SendMessageCallerIsViewer
     | SendMessageNotInGroup;
 
 export type SendMessageSuccess = {
@@ -755,6 +773,10 @@ export type SendMessageBalanceExceeded = {
 
 export type SendMessageNotInGroup = {
     kind: "not_in_group";
+};
+
+export type SendMessageCallerIsViewer = {
+    kind: "caller_is_viewer";
 };
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error";
@@ -850,6 +872,7 @@ export type ToggleReactionResponse =
     | "invalid"
     | "message_not_found"
     | "not_in_group"
+    | "caller_is_viewer"
     | "chat_not_found";
 
 export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";

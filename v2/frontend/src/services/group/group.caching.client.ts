@@ -129,8 +129,13 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.removeParticipant(userId);
     }
 
-    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
-        return this.client.updateGroup(name, desc, avatar);
+    updateGroup(
+        name: string,
+        desc: string,
+        joinAsViewer: boolean,
+        avatar?: Uint8Array
+    ): Promise<UpdateGroupResponse> {
+        return this.client.updateGroup(name, desc, joinAsViewer, avatar);
     }
 
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse> {

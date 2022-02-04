@@ -60,6 +60,7 @@ const defaultGroupChat: GroupChatSummary = {
     participantCount: 10,
     myRole: "admin",
     mentions: [],
+    joinAsViewer: false,
 };
 
 function directChatId(id: number): DirectChatSummary {
@@ -233,6 +234,7 @@ describe("merging updates", () => {
             name: "stuff",
             description: "stuff",
             mentions: [],
+            joinAsViewer: undefined,
         };
 
         test("attempting to update with a mismatched kind throws error", () => {

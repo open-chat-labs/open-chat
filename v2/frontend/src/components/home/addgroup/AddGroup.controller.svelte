@@ -26,6 +26,7 @@
         historyVisible: false,
         isPublic: false,
         participants: [],
+        joinAsViewer: false,
     };
 
     function reset() {
@@ -39,6 +40,7 @@
             historyVisible: false,
             isPublic: false,
             participants: [],
+            joinAsViewer: false,
         };
     }
 

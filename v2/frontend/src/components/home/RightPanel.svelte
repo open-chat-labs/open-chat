@@ -30,6 +30,7 @@
                   blobData: $chat.blobData,
               }
             : undefined,
+        joinAsViewer: false,
     };
 
     function dismissAsAdmin(ev: CustomEvent<string>): void {

@@ -105,6 +105,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "name_changed":
             case "desc_changed":
             case "avatar_changed":
+            case "join_as_viewer_changed":
                 userIds.add(e.event.changedBy);
                 break;
             case "group_chat_created":
@@ -161,6 +162,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "name_changed":
         case "desc_changed":
         case "avatar_changed":
+        case "join_as_viewer_changed":
             return event.changedBy;
         case "group_chat_created":
             return event.created_by;
@@ -392,6 +394,7 @@ function mergeUpdatedGroupChat(
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
     chat.myRole = updatedChat.myRole ?? (chat.myRole === "previewer" ? "participant" : chat.myRole);
     chat.mentions = mergeMentions(chat.mentions, updatedChat.mentions);
+    chat.joinAsViewer = updatedChat.joinAsViewer ?? chat.joinAsViewer;
     return chat;
 }
 
@@ -878,6 +881,7 @@ export function groupChatFromCandidate(
         myRole: "owner",
         mentions: [],
         ...candidate.avatar,
+        joinAsViewer: candidate.joinAsViewer,
     };
 }
 
