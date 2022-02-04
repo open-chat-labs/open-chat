@@ -238,7 +238,7 @@
         "confirmTransfer": "确认转账",
         "confirmCyclesTransferText": "请确认：您将转账 {amount} cycles给以下OpenChat钱包地址",
         "confirmICPTransferText": "请确认： 您将转账 {amount} ICP 给以下地址",
-        "confirmed": "确认成功",
+        "confirm": "确认",
         "sms": "短信验证码",
         "transfer": "转账",
         "codeAccepted": "验证码已确认",

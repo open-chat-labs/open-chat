@@ -270,7 +270,7 @@
         "confirmTransfer": "Überweisung bestätigen",
         "confirmCyclesTransferText": "Bitte bestätigen Sie unten, wenn Sie {amount} Zyklen von Ihrer Zyklen-Wallet auf die OpenChat-Wallet unten übertragen haben",
         "confirmICPTransferText": "Bitte bestätigen Sie unten, wenn Sie eine Überweisung von {amount} ICP auf das unten angegebene Konto getätigt haben",
-        "confirmed": "Bestätigt",
+        "confirm": "Bestätigen",
         "sms": "SMS-Code",
         "transfer": "Transfer",
         "codeAccepted": "Code akzeptiert",

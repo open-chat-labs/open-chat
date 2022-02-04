@@ -270,7 +270,7 @@
         "confirmTransfer": "Confirm transfer",
         "confirmCyclesTransferText": "Please confirm below when you have made a transfer of {amount} cycles from your cycles wallet to the OpenChat wallet below",
         "confirmICPTransferText": "Please confirm below when you have made a transfer of {amount} ICP to the account given below",
-        "confirmed": "Confirmed",
+        "confirm": "Confirm",
         "sms": "SMS code",
         "transfer": "Transfer",
         "codeAccepted": "Code accepted",

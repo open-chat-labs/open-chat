@@ -67,7 +67,7 @@
 
 <div class="cta">
     <Button on:click={() => dispatch("transferConfirmed")}>
-        {$_("register.confirmed")}
+        {$_("register.confirm")}
     </Button>
 </div>
 
