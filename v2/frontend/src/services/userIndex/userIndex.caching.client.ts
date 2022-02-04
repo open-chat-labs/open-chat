@@ -5,12 +5,9 @@ import type {
     ConfirmPhoneNumberResponse,
     CreateCanisterResponse,
     CurrentUserResponse,
-    FeeCurrency,
-    NotificationFeePaidResponse,
     PartialUserSummary,
     PhoneNumber,
     RegisterUserResponse,
-    RegistrationFeeResponse,
     ResendCodeResponse,
     SetUsernameResponse,
     SubmitPhoneNumberResponse,
@@ -63,14 +60,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
         return this.client.confirmPhoneNumber(code);
-    }
-
-    notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse> {
-        return this.client.notifyRegistrationFeePaid();
-    }
-
-    generateRegistrationFee(currency: FeeCurrency): Promise<RegistrationFeeResponse> {
-        return this.client.generateRegistrationFee(currency);
     }
 
     resendRegistrationCode(): Promise<ResendCodeResponse> {

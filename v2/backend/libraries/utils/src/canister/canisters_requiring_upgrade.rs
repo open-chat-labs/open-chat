@@ -43,6 +43,10 @@ impl CanistersRequiringUpgrade {
         self.failed.push_back(failed_upgrade);
     }
 
+    pub fn mark_skipped(&mut self, canister_id: &CanisterId) {
+        self.in_progress.remove(canister_id);
+    }
+
     pub fn is_in_progress(&self, canister_id: &CanisterId) -> bool {
         self.in_progress.contains(canister_id)
     }

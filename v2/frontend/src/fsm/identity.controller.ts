@@ -50,8 +50,6 @@ export class IdentityController {
             switch (user.kind) {
                 case "confirmed_user":
                 case "unknown_user":
-                case "unconfirmed_user":
-                case "confirmed_pending_username":
                     this.state.set("registering");
                     this.registerController = new RegisterController(
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

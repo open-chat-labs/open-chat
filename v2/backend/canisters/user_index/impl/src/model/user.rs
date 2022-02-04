@@ -79,14 +79,6 @@ impl User {
         }
     }
 
-    pub fn upgrade_in_progress(&self) -> bool {
-        match self {
-            User::Unconfirmed(_) => false,
-            User::Confirmed(u) => u.upgrade_in_progress,
-            User::Created(u) => u.upgrade_in_progress,
-        }
-    }
-
     pub fn wasm_version(&self) -> Option<Version> {
         match self {
             User::Confirmed(u) => {

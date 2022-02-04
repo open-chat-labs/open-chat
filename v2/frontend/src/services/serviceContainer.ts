@@ -11,9 +11,6 @@ import type {
     UserSummary,
     UpgradeCanisterResponse,
     CreateCanisterResponse,
-    RegistrationFeeResponse,
-    FeeCurrency,
-    NotificationFeePaidResponse,
     User,
     SetBioResponse,
     RegisterUserResponse,
@@ -649,14 +646,6 @@ export class ServiceContainer implements MarkMessagesRead {
         previous: GroupChatDetails
     ): Promise<GroupChatDetails> {
         return this.getGroupClient(chatId).getGroupDetailsUpdates(previous);
-    }
-
-    generateRegistrationFee(currency: FeeCurrency): Promise<RegistrationFeeResponse> {
-        return this._userIndexClient.generateRegistrationFee(currency);
-    }
-
-    notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse> {
-        return this._userIndexClient.notifyRegistrationFeePaid();
     }
 
     previewChat(chatId: string): Promise<GroupChatSummary | undefined> {

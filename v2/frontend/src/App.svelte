@@ -7,7 +7,7 @@
     import Router from "svelte-spa-router";
     import { routes } from "./routes";
     import Login from "./components/Login.svelte";
-    const Register = () => import("./components/register/Register.controller.svelte");
+    const Register = () => import("./components/register/Register.svelte");
     import Upgrading from "./components/upgrading/Upgrading.svelte";
     import Loading from "./components/Loading.svelte";
     import SessionExpired from "./components/sessionExpired/SessionExpired.svelte";

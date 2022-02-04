@@ -13,9 +13,6 @@ import type {
     UserSummary,
     UpgradeCanisterResponse,
     CreateCanisterResponse,
-    RegistrationFeeResponse,
-    FeeCurrency,
-    NotificationFeePaidResponse,
     RegisterUserResponse,
     UpgradeStorageResponse,
 } from "../../domain/user/user";
@@ -30,8 +27,6 @@ import {
     userSearchResponse,
     upgradeCanisterResponse,
     createCanisterResponse,
-    generateRegistrationFeeResponse,
-    feePaidResponse,
     registerUserResponse,
     upgradeStorageResponse,
 } from "./mappers";
@@ -100,28 +95,12 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         return this.handleResponse(this.userService.current_user({}), currentUserResponse);
     }
 
-    notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse> {
-        return this.handleResponse(
-            this.userService.notify_registration_fee_paid({}),
-            feePaidResponse
-        );
-    }
-
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
         return this.handleResponse(
             this.userService.upgrade_storage({
                 new_storage_limit_bytes: BigInt(newLimitBytes),
             }),
             upgradeStorageResponse
-        );
-    }
-
-    generateRegistrationFee(currency: FeeCurrency): Promise<RegistrationFeeResponse> {
-        return this.handleResponse(
-            this.userService.generate_registration_fee({
-                currency: currency === "cycles" ? { Cycles: null } : { ICP: null },
-            }),
-            generateRegistrationFeeResponse
         );
     }
 
