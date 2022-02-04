@@ -63,8 +63,7 @@ export type CanisterCreationStatus = { 'InProgress' : null } |
   { 'Created' : null } |
   { 'Pending' : null };
 export type CanisterId = Principal;
-export type CanisterUpgradeStatus = { 'Required' : null } |
-  { 'NotRequired' : null } |
+export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
 export interface CanisterWasm {
   'compressed' : boolean,

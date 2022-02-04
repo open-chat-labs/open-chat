@@ -51,8 +51,7 @@ export type CanisterCreationStatus = { 'InProgress' : null } |
   { 'Created' : null } |
   { 'Pending' : null };
 export type CanisterId = Principal;
-export type CanisterUpgradeStatus = { 'Required' : null } |
-  { 'NotRequired' : null } |
+export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
 export interface CanisterWasm {
   'compressed' : boolean,
@@ -100,23 +99,20 @@ export interface CompletedICPWithdrawal {
   'amount' : ICP,
 }
 export interface ConfirmPhoneNumberArgs { 'confirmation_code' : string }
-export type ConfirmPhoneNumberResponse = { 'PhoneNumberNotSubmitted' : null } |
-  { 'AlreadyClaimed' : null } |
+export type ConfirmPhoneNumberResponse = { 'AlreadyClaimed' : null } |
   { 'Success' : SuccessResult } |
   { 'ConfirmationCodeExpired' : null } |
-  { 'ConfirmationCodeIncorrect' : null };
+  { 'ConfirmationCodeIncorrect' : null } |
+  { 'UserNotFound' : null };
 export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
-export type ConfirmationState = { 'RegistrationFee' : RegistrationFee } |
-  { 'PhoneNumber' : PhoneNumber };
 export type CreateCanisterArgs = {};
 export type CreateCanisterResponse = { 'UserAlreadyCreated' : null } |
   { 'Success' : CanisterId } |
   { 'CreationInProgress' : null } |
   { 'InternalError' : string } |
-  { 'UserUnconfirmed' : null } |
   { 'UserNotFound' : null } |
   { 'CyclesBalanceTooLow' : null };
 export type Cryptocurrency = { 'ICP' : null } |
@@ -138,19 +134,9 @@ export type CryptocurrencyWithdrawal = { 'ICP' : ICPWithdrawal } |
   { 'Cycles' : CyclesWithdrawal };
 export type CurrentUserArgs = {};
 export type CurrentUserResponse = {
-    'Unconfirmed' : { 'state' : UnconfirmedUserState }
-  } |
-  {
     'Confirmed' : {
       'username' : string,
       'canister_creation_status' : CanisterCreationStatus,
-      'confirmation_state' : ConfirmationState,
-    }
-  } |
-  {
-    'ConfirmedPendingUsername' : {
-      'canister_creation_status' : CanisterCreationStatus,
-      'confirmation_state' : ConfirmationState,
     }
   } |
   {
@@ -255,10 +241,6 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
-export interface GenerateRegistrationFeeArgs { 'currency' : Cryptocurrency }
-export type GenerateRegistrationFeeResponse = { 'InvalidCurrency' : null } |
-  { 'AlreadyRegistered' : null } |
-  { 'Success' : { 'fee' : RegistrationFee } };
 export interface GroupChatCreated {
   'name' : string,
   'description' : string,
@@ -427,12 +409,6 @@ export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
 }
-export type NotifyRegistrationFeePaidArgs = {};
-export type NotifyRegistrationFeePaidResponse = { 'AlreadyRegistered' : null } |
-  { 'Success' : null } |
-  { 'PaymentNotFound' : null } |
-  { 'InternalError' : string } |
-  { 'UserNotFound' : null };
 export interface OptionalUserPreferences {
   'large_emoji' : [] | [boolean],
   'notification_preferences' : [] | [
@@ -561,8 +537,8 @@ export interface ReplyContext {
 }
 export type ResendCodeArgs = {};
 export type ResendCodeResponse = { 'PhoneNumberNotSubmitted' : null } |
-  { 'AlreadyClaimed' : null } |
   { 'Success' : null } |
+  { 'PhoneNumberAlreadyConfirmed' : null } |
   { 'UserNotFound' : null };
 export type Role = { 'Participant' : null } |
   { 'SuperAdmin' : FallbackRole } |
@@ -578,14 +554,13 @@ export type SetUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameInvalid' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : null } |
-  { 'UserUnconfirmed' : null } |
   { 'UserNotFound' : null };
 export interface SubmitPhoneNumberArgs { 'phone_number' : PhoneNumber }
 export type SubmitPhoneNumberResponse = { 'AlreadyRegistered' : null } |
-  { 'UserLimitReached' : null } |
   { 'Success' : null } |
   { 'AlreadyRegisteredByOther' : null } |
-  { 'InvalidPhoneNumber' : null };
+  { 'InvalidPhoneNumber' : null } |
+  { 'UserNotFound' : null };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -623,20 +598,11 @@ export interface UnconfirmedPhoneNumberState {
   'valid_until' : TimestampMillis,
   'phone_number' : PhoneNumber,
 }
-export type UnconfirmedUserState = { 'RegistrationFee' : RegistrationFee } |
-  { 'PhoneNumber' : UnconfirmedPhoneNumberState };
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }
-export type UpgradeCanisterArgs = {};
-export type UpgradeCanisterResponse = { 'UpgradeInProgress' : null } |
-  { 'UserNotCreated' : null } |
-  { 'Success' : null } |
-  { 'UpgradeNotRequired' : null } |
-  { 'InternalError' : string } |
-  { 'UserNotFound' : null };
 export interface UpgradeStorageArgs { 'new_storage_limit_bytes' : bigint }
 export type UpgradeStorageResponse = { 'SuccessNoChange' : null } |
   { 'Success' : null } |
@@ -705,12 +671,6 @@ export interface _SERVICE {
       CreateCanisterResponse
     >,
   'current_user' : (arg_0: CurrentUserArgs) => Promise<CurrentUserResponse>,
-  'generate_registration_fee' : (arg_0: GenerateRegistrationFeeArgs) => Promise<
-      GenerateRegistrationFeeResponse
-    >,
-  'notify_registration_fee_paid' : (
-      arg_0: NotifyRegistrationFeePaidArgs,
-    ) => Promise<NotifyRegistrationFeePaidResponse>,
   'register_user' : (arg_0: RegisterUserArgs) => Promise<RegisterUserResponse>,
   'remove_super_admin' : (arg_0: RemoveSuperAdminArgs) => Promise<
       RemoveSuperAdminResponse
@@ -722,9 +682,6 @@ export interface _SERVICE {
       SubmitPhoneNumberResponse
     >,
   'super_admins' : (arg_0: SuperAdminsArgs) => Promise<SuperAdminsResponse>,
-  'upgrade_canister' : (arg_0: UpgradeCanisterArgs) => Promise<
-      UpgradeCanisterResponse
-    >,
   'upgrade_storage' : (arg_0: UpgradeStorageArgs) => Promise<
       UpgradeStorageResponse
     >,
