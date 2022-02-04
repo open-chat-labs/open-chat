@@ -21,7 +21,7 @@
     "chooseAStorageLevel": "Elije un nivel de almacenamiento máximo hasta de 1GB",
     "currentUsage": "Uso actual",
     "percLeft": "{perc}% restante",
-    "usageText": "Has alcanzado tu límite actual de {limit}MB.",
+    "usageText": "Has alcanzado tu límite actual de {limit}GB.",
     "maxUsageText": "Has alcanzado el límite máximo de 1GB.",
     "insufficientStorage": "Espacio insuficiente",
     "insufficientStorageAdvice": "No tienes suficiente espacio de almacenamiento para continuar.",
