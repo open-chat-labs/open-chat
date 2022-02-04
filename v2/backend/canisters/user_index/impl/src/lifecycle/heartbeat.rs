@@ -1,4 +1,4 @@
-use crate::updates::upgrade_canister::{initialize_upgrade, set_upgrade_complete};
+use crate::model::user_map::UpdateUserResult;
 use crate::{mutate_state, read_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
 use group_canister::c2c_dismiss_super_admin;
@@ -8,7 +8,8 @@ use ledger_utils::convert_to_subaccount;
 use tracing::error;
 use types::{CanisterId, ChatId, Cycles, CyclesTopUp, UserId, Version, ICP};
 use utils::canister::{self, FailedUpgrade};
-use utils::consts::{CREATE_CANISTER_CYCLES_FEE, DEFAULT_MEMO};
+use utils::consts::{CREATE_CANISTER_CYCLES_FEE, CYCLES_REQUIRED_FOR_UPGRADE, DEFAULT_MEMO};
+use utils::cycles::can_spend_cycles;
 
 const MAX_CONCURRENT_CANISTER_UPGRADES: u32 = 5;
 const MAX_MESSAGES_TO_RETRY_PER_HEARTBEAT: u32 = 5;
@@ -49,7 +50,45 @@ mod upgrade_canisters {
     fn try_get_next(runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
         let canister_id = runtime_state.data.canisters_requiring_upgrade.try_take_next()?;
 
-        initialize_upgrade(Some(canister_id.into()), runtime_state).ok()
+        initialize_upgrade(canister_id, runtime_state).or_else(|| {
+            runtime_state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
+            None
+        })
+    }
+
+    fn initialize_upgrade(canister_id: CanisterId, runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
+        let user_id = canister_id.into();
+        let mut user = runtime_state.data.users.get_by_user_id(&user_id).cloned()?;
+        let current_wasm_version = user.wasm_version().unwrap_or_else(Version::min);
+        let user_canister_wasm = &runtime_state.data.user_canister_wasm;
+
+        if current_wasm_version >= user_canister_wasm.version {
+            return None;
+        }
+
+        user.set_canister_upgrade_status(true, None);
+
+        let cycles_to_deposit_if_needed = if can_spend_cycles(CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE) {
+            Some(CYCLES_REQUIRED_FOR_UPGRADE)
+        } else {
+            None
+        };
+
+        match runtime_state.data.users.update(user) {
+            UpdateUserResult::Success => Some(CanisterToUpgrade {
+                canister_id,
+                current_wasm_version,
+                new_wasm: user_canister_wasm.clone(),
+                cycles_to_deposit_if_needed,
+                args: user_canister::post_upgrade::Args {
+                    wasm_version: user_canister_wasm.version,
+                },
+            }),
+            result => {
+                error!("Error updating user to be upgraded: {result:?}");
+                None
+            }
+        }
     }
 
     async fn perform_upgrades(canisters_to_upgrade: Vec<CanisterToUpgrade>) {
@@ -75,7 +114,8 @@ mod upgrade_canisters {
 
     fn on_success(canister_id: CanisterId, to_version: Version, top_up: Option<Cycles>, runtime_state: &mut RuntimeState) {
         let user_id = canister_id.into();
-        set_upgrade_complete(user_id, Some(to_version), runtime_state);
+        mark_upgrade_complete(user_id, Some(to_version), runtime_state);
+
         if let Some(top_up) = top_up {
             runtime_state.data.users.mark_cycles_top_up(
                 &user_id,
@@ -90,12 +130,20 @@ mod upgrade_canisters {
     }
 
     fn on_failure(canister_id: CanisterId, from_version: Version, to_version: Version, runtime_state: &mut RuntimeState) {
-        set_upgrade_complete(canister_id.into(), None, runtime_state);
+        mark_upgrade_complete(canister_id.into(), None, runtime_state);
+
         runtime_state.data.canisters_requiring_upgrade.mark_failure(FailedUpgrade {
             canister_id,
             from_version,
             to_version,
         });
+    }
+
+    fn mark_upgrade_complete(user_id: UserId, new_wasm_version: Option<Version>, runtime_state: &mut RuntimeState) {
+        if let Some(mut user) = runtime_state.data.users.get_by_user_id(&user_id).cloned() {
+            user.set_canister_upgrade_status(false, new_wasm_version);
+            runtime_state.data.users.update(user);
+        }
     }
 }
 
