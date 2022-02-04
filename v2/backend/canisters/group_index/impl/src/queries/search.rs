@@ -133,6 +133,7 @@ mod tests {
                 now: env.now,
                 wasm_version: Version::new(1, 0, 0),
                 cycles: 0,
+                join_as_viewer: false,
             });
         }
 
