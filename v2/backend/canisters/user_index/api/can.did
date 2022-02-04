@@ -147,20 +147,6 @@ type SetUsernameResponse =
         UsernameTooLong: nat16;
     };
 
-type UpgradeCanisterArgs =
-    record {
-    };
-
-type UpgradeCanisterResponse =
-    variant {
-        Success;
-        UserNotFound;
-        UserNotCreated;
-        UpgradeNotRequired;
-        UpgradeInProgress;
-        InternalError: text;
-    };
-
 type TransferCyclesArgs = 
     record {
         sender: UserId;
@@ -341,10 +327,6 @@ service: {
 
     // This is used to set the initial username and subsequently to change it
     set_username: (SetUsernameArgs) -> (SetUsernameResponse);
-
-    // If the current user is "upgrade_required" then call this to upgrade the user canister
-    // Will need to block in the app until this has completed
-    upgrade_canister: (UpgradeCanisterArgs) -> (UpgradeCanisterResponse);
 
     // Gets the user based on the caller principal. The user can be in a variety of states
     current_user: (CurrentUserArgs) -> (CurrentUserResponse) query;
