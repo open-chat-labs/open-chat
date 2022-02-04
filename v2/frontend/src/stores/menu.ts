@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { rollbar } from "utils/logging";
+import { rollbar } from "../utils/logging";
 import { rtlStore } from "./rtl";
 import { ScreenWidth, screenWidth } from "./screenDimensions";
 

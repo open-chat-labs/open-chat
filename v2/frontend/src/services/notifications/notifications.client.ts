@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Identity } from "@dfinity/agent";
-import { idlFactory, NotificationsService } from "./candid/idl";
+import { idlFactory } from "./candid/idl";
+import type { NotificationsService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type { INotificationsClient } from "./notifications.client.interface";
 import { Principal } from "@dfinity/principal";
@@ -15,7 +16,7 @@ export class NotificationsClient extends CandidService implements INotifications
 
         this.service = this.createServiceClient<NotificationsService>(
             idlFactory,
-            "process.env.NOTIFICATIONS_CANISTER"
+            process.env.NOTIFICATIONS_CANISTER!
         );
     }
 

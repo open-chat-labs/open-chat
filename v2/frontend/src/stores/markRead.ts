@@ -1,5 +1,6 @@
 import DRange from "drange";
-import { Subscriber, Unsubscriber, writable } from "svelte/store";
+import { writable } from "svelte/store";
+import type { Subscriber, Unsubscriber } from "svelte/store";
 import type { MarkReadRequest, MarkReadResponse } from "../domain/chat/chat";
 import { indexIsInRanges } from "../domain/chat/chat.utils";
 import { unconfirmed } from "./unconfirmed";

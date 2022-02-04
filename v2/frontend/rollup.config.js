@@ -27,10 +27,9 @@ const dfxNetwork = process.env.DFX_NETWORK;
 console.log("DFX_NETWORK: ", dfxNetwork);
 
 if (dfxNetwork) {
-    const canisterPath =
-        dfxNetwork.startsWith("ic")
-            ? path.join(__dirname, "..", "canister_ids.json")
-            : path.join(__dirname, "..", ".dfx", dfxNetwork, "canister_ids.json");
+    const canisterPath = dfxNetwork.startsWith("ic")
+        ? path.join(__dirname, "..", "canister_ids.json")
+        : path.join(__dirname, "..", ".dfx", dfxNetwork, "canister_ids.json");
 
     if (fs.existsSync(canisterPath)) {
         const canisters = JSON.parse(fs.readFileSync(canisterPath));
@@ -159,15 +158,21 @@ export default [
                 "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
                 "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
                 "process.env.MOCK_SERVICES": !production && process.env.MOCK_SERVICES, // make double sure we don't release with mock data
-                "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
-                "process.env.GROUP_INDEX_CANISTER": process.env.GROUP_INDEX_CANISTER,
-                "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
-                "process.env.ONLINE_CANISTER": process.env.ONLINE_CANISTER,
-                "process.env.OPEN_STORAGE_INDEX_CANISTER": process.env.OPEN_STORAGE_INDEX_CANISTER,
-                "process.env.LEDGER_CANISTER": process.env.LEDGER_CANISTER,
+                "process.env.USER_INDEX_CANISTER": JSON.stringify(process.env.USER_INDEX_CANISTER),
+                "process.env.GROUP_INDEX_CANISTER": JSON.stringify(
+                    process.env.GROUP_INDEX_CANISTER
+                ),
+                "process.env.NOTIFICATIONS_CANISTER": JSON.stringify(
+                    process.env.NOTIFICATIONS_CANISTER
+                ),
+                "process.env.ONLINE_CANISTER": JSON.stringify(process.env.ONLINE_CANISTER),
+                "process.env.OPEN_STORAGE_INDEX_CANISTER": JSON.stringify(
+                    process.env.OPEN_STORAGE_INDEX_CANISTER
+                ),
+                "process.env.LEDGER_CANISTER": JSON.stringify(process.env.LEDGER_CANISTER),
                 "process.env.BLOB_URL_PATTERN": process.env.BLOB_URL_PATTERN,
                 "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
-                "process.env.USERGEEK_APIKEY": process.env.USERGEEK_APIKEY,
+                "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
             }),
 
             // In dev mode, call `npm run start` once

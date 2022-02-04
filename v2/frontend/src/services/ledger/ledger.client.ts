@@ -1,5 +1,6 @@
 import type { Identity } from "@dfinity/agent";
-import { idlFactory, LedgerService } from "./candid/idl";
+import { idlFactory } from "./candid/idl";
+import type { LedgerService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type { ILedgerClient } from "./ledger.client.interface";
 import type { ICP } from "../../domain/crypto/crypto";
@@ -13,7 +14,8 @@ export class LedgerClient extends CandidService implements ILedgerClient {
 
         this.service = this.createServiceClient<LedgerService>(
             idlFactory,
-            "process.env.LEDGER_CANISTER"
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            process.env.LEDGER_CANISTER!
         );
     }
 

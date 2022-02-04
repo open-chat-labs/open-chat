@@ -1,5 +1,6 @@
 import { push } from "svelte-spa-router";
-import { derived, get, readable, Readable, Writable, writable } from "svelte/store";
+import { derived, get, readable, writable } from "svelte/store";
+import type { Readable, Writable } from "svelte/store";
 import DRange from "drange";
 import type {
     ChatSummary,
@@ -34,7 +35,8 @@ import type {
 import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
 import { draftMessages } from "../stores/draftMessages";
-import { IMessageReadTracker, MessageReadTracker } from "../stores/markRead";
+import { MessageReadTracker } from "../stores/markRead";
+import type { IMessageReadTracker } from "../stores/markRead";
 import { toastStore } from "../stores/toast";
 import { typing } from "../stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "../stores/unconfirmed";
@@ -44,7 +46,7 @@ import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
 import { ChatController } from "./chat.controller";
 import { Poller } from "./poller";
-import { scrollStrategy } from "stores/settings";
+import { scrollStrategy } from "../stores/settings";
 
 const ONE_MINUTE = 60 * 1000;
 const ONE_HOUR = 60 * ONE_MINUTE;

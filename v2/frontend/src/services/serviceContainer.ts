@@ -57,7 +57,8 @@ import type {
     GroupChatSummary,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
-import { Database, initDb } from "../utils/caching";
+import { initDb } from "../utils/caching";
+import type { Database } from "../utils/caching";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";

@@ -14,7 +14,7 @@
     import Smiley from "./Smiley.svelte";
     import { audioRecordingMimeType } from "../../utils/media";
     import MentionPicker from "./MentionPicker.svelte";
-    import { userStore } from "stores/user";
+    import { userStore } from "../../stores/user";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import type { User } from "../../domain/user/user";
     import Button from "../Button.svelte";

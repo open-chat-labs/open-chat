@@ -23,8 +23,8 @@ import type {
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
+import type { ChatSchema } from "../../utils/caching";
 import {
-    ChatSchema,
     getCachedEvents,
     getCachedEventsByIndex,
     getCachedEventsWindow,

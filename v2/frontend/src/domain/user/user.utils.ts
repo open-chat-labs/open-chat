@@ -1,13 +1,13 @@
 import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
-import {
+import type {
     PartialUserSummary,
     PhoneNumber,
     UserLastOnline,
     UserLookup,
-    UserStatus,
     UserSummary,
 } from "./user";
+import { UserStatus } from "./user";
 
 const ONLINE_THRESHOLD = 120;
 

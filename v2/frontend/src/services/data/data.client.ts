@@ -1,7 +1,8 @@
 import { HttpAgent } from "@dfinity/agent";
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { OpenStorageAgent, UploadFileResponse } from "@open-ic/open-storage-agent";
+import { OpenStorageAgent } from "@open-ic/open-storage-agent";
+import type { UploadFileResponse } from "@open-ic/open-storage-agent";
 import type { IDataClient } from "./data.client.interface";
 import { DataClientMock } from "./data.client.mock";
 import type { MessageContent } from "../../domain/chat/chat";
@@ -22,7 +23,8 @@ export class DataClient implements IDataClient {
         }
         const openStorageAgent = new OpenStorageAgent(
             agent,
-            Principal.fromText("process.env.OPEN_STORAGE_INDEX_CANISTER")
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            Principal.fromText(process.env.OPEN_STORAGE_INDEX_CANISTER!)
         );
 
         return new DataClient(openStorageAgent);

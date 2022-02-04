@@ -3,13 +3,13 @@
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
 
-    import type { Participant } from "domain/chat/chat";
-    import { userStore } from "stores/user";
+    import type { Participant } from "../../domain/chat/chat";
+    import { userStore } from "../../stores/user";
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize } from "domain/user/user";
-    import { avatarUrl } from "domain/user/user.utils";
+    import { AvatarSize } from "../../domain/user/user";
+    import { avatarUrl } from "../../domain/user/user.utils";
 
     export let blockedUsers: Set<string>;
     export let participants: Participant[];

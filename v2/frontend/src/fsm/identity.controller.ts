@@ -1,5 +1,6 @@
 import type { Identity } from "@dfinity/agent";
-import { Writable, writable } from "svelte/store";
+import { writable } from "svelte/store";
+import type { Writable } from "svelte/store";
 import type { CreatedUser, User } from "../domain/user/user";
 import { getIdentity, login, logout, startSession } from "../services/auth";
 import { ServiceContainer } from "../services/serviceContainer";

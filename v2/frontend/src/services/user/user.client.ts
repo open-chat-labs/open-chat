@@ -1,6 +1,7 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { ApiSendMessageArgs, idlFactory, UserService } from "./candid/idl";
+import { idlFactory } from "./candid/idl";
+import type { ApiSendMessageArgs, UserService } from "./candid/idl";
 import type {
     EventsResponse,
     UpdateArgs,

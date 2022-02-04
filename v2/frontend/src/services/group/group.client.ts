@@ -1,5 +1,6 @@
 import type { Identity } from "@dfinity/agent";
-import { idlFactory, GroupService } from "./candid/idl";
+import { idlFactory } from "./candid/idl";
+import type { GroupService } from "./candid/idl";
 import type {
     AddParticipantsResponse,
     EventsResponse,

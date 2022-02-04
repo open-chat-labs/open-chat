@@ -26,16 +26,15 @@
         scrollStrategy,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext } from "svelte";
-    import { saveSeletedTheme, themeNameStore } from "theme/themes";
+    import { saveSeletedTheme, themeNameStore } from "../../../theme/themes";
     import Toggle from "./Toggle.svelte";
-    import { setLocale, supportedLanguages } from "i18n/i18n";
+    import { setLocale, supportedLanguages } from "../../../i18n/i18n";
     import type { ScrollStrategy } from "../../../domain/chat/chat";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
     import { userStore } from "../../../stores/user";
     import { ONE_GB, storageStore } from "../../../stores/storage";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
-    import { addListener } from "process";
 
     const api: ServiceContainer = getContext(apiKey);
 

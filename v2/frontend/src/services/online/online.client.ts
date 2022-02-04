@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Identity } from "@dfinity/agent";
-import { idlFactory, OnlineService } from "./candid/idl";
+import { idlFactory } from "./candid/idl";
+import type { OnlineService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type { IOnlineClient } from "./online.client.interface";
 import { toVoid } from "../../utils/mapping";
@@ -13,7 +14,7 @@ export class OnlineClient extends CandidService implements IOnlineClient {
 
         this.service = this.createServiceClient<OnlineService>(
             idlFactory,
-            "process.env.ONLINE_CANISTER"
+            process.env.ONLINE_CANISTER!
         );
     }
 

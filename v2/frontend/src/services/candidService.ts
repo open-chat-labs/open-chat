@@ -1,4 +1,5 @@
-import { Actor, HttpAgent, Identity } from "@dfinity/agent";
+import { Actor, HttpAgent } from "@dfinity/agent";
+import type { Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import { toHttpError } from "./httpError";
 

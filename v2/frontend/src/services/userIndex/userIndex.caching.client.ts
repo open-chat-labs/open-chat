@@ -1,5 +1,6 @@
 import type { IUserIndexClient } from "./userIndex.client.interface";
-import { ChatSchema, getCachedUsers, setCachedUsers } from "../../utils/caching";
+import { getCachedUsers, setCachedUsers } from "../../utils/caching";
+import type { ChatSchema } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
 import type {
     ConfirmPhoneNumberResponse,

@@ -1,6 +1,7 @@
 import { isPreviewing } from "../domain/chat/chat.utils";
 import DRange from "drange";
-import { openDB, DBSchema, IDBPDatabase } from "idb";
+import { openDB } from "idb";
+import type { DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
     EventsResponse,

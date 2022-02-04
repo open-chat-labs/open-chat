@@ -21,8 +21,8 @@ import type {
     GroupChatSummary,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
+import type { ChatSchema } from "../../utils/caching";
 import {
-    ChatSchema,
     getCachedChats,
     getCachedEvents,
     getCachedEventsByIndex,

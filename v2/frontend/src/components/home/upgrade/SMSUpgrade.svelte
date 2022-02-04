@@ -15,7 +15,7 @@
     import type { CreatedUser, PhoneNumber } from "../../../domain/user/user";
     import type { ServiceContainer } from "../../../services/serviceContainer";
     import { rollbar } from "../../../utils/logging";
-    import { updateStorageLimit } from "stores/storage";
+    import { updateStorageLimit } from "../../../stores/storage";
 
     const dispatch = createEventDispatcher();
     export let api: ServiceContainer;

@@ -17,7 +17,8 @@ const IDENTITY_URL = process.env.INTERNET_IDENTITY_URL || "https://identity.ic0.
 const authClient = AuthClient.create();
 
 if (isProd) {
-    const apiKey = "process.env.USERGEEK_APIKEY";
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const apiKey = process.env.VITE_USERGEEK_APIKEY!;
     Usergeek.init({ apiKey });
 }
 

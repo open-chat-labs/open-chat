@@ -8,7 +8,7 @@
     import SectionHeader from "../SectionHeader.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import { avatarUrl as getAvatarUrl } from "../../domain/user/user.utils";
-    import { AvatarSize, UserStatus } from "domain/user/user";
+    import { AvatarSize, UserStatus } from "../../domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";

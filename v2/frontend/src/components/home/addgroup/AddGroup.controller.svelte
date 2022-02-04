@@ -8,7 +8,7 @@
     import { rollbar } from "../../../utils/logging";
     import { push } from "svelte-spa-router";
     import { createEventDispatcher, getContext, tick } from "svelte";
-    import { groupChatFromCandidate } from "domain/chat/chat.utils";
+    import { groupChatFromCandidate } from "../../../domain/chat/chat.utils";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
 
     const api: ServiceContainer = getContext(apiKey);

@@ -1,6 +1,7 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { idlFactory, UserIndexService } from "./candid/idl";
+import { idlFactory } from "./candid/idl";
+import type { UserIndexService } from "./candid/idl";
 import type {
     ConfirmPhoneNumberResponse,
     CurrentUserResponse,
@@ -43,7 +44,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         this.userService = this.createServiceClient<UserIndexService>(
             idlFactory,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            "process.env.USER_INDEX_CANISTER"
+            process.env.USER_INDEX_CANISTER!
         );
     }
 

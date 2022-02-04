@@ -26,7 +26,7 @@
     import { toTitleCase } from "../../utils/string";
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
-    import { ScreenWidth, screenWidth } from "stores/screenDimensions";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
 
     export let index: number;
     export let chatSummary: ChatSummary;

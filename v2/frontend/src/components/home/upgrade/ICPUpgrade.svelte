@@ -14,7 +14,7 @@
     import type { CreatedUser } from "../../../domain/user/user";
     import type { ServiceContainer } from "../../../services/serviceContainer";
     import { E8S_PER_ICP } from "../../../domain/user/user";
-    import { rollbar } from "utils/logging";
+    import { rollbar } from "../../../utils/logging";
 
     const dispatch = createEventDispatcher();
     const icpDecimals = 2;

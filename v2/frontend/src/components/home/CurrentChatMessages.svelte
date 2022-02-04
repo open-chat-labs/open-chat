@@ -428,7 +428,7 @@
     }
 </script>
 
-<div bind:this={messagesDiv} class="chat-messages" on:scroll|passive={onScroll} id="chat-messages">
+<div bind:this={messagesDiv} class="chat-messages" on:scroll={onScroll} id="chat-messages">
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
