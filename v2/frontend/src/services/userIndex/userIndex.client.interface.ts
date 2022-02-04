@@ -10,9 +10,6 @@ import type {
     UserSummary,
     UpgradeCanisterResponse,
     CreateCanisterResponse,
-    RegistrationFeeResponse,
-    FeeCurrency,
-    NotificationFeePaidResponse,
     RegisterUserResponse,
     UpgradeStorageResponse,
 } from "../../domain/user/user";
@@ -27,8 +24,6 @@ export interface IUserIndexClient {
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse>;
     getUsers(users: UsersArgs): Promise<UsersResponse>;
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]>;
-    generateRegistrationFee(currency: FeeCurrency): Promise<RegistrationFeeResponse>;
-    notifyRegistrationFeePaid(): Promise<NotificationFeePaidResponse>;
     registerUser(username: string): Promise<RegisterUserResponse>;
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse>;
 }
