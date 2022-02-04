@@ -75,45 +75,16 @@ export type UpgradeCanisterResponse =
     | "internal_error"
     | "user_not_found";
 
-export type CurrentUserResponse =
-    | UnconfirmedUser
-    | ConfirmedUser
-    | ConfirmedPendingUsername
-    | CreatedUser
-    | UserNotFound;
+export type CurrentUserResponse = ConfirmedUser | CreatedUser | UserNotFound;
 
 export type UpgradeInProgress = {
     kind: "upgrade_in_progress";
-};
-
-export type RegistrationState = PhoneRegistration | CurrencyRegistration;
-
-export type CurrencyRegistration = {
-    kind: "currency_registration";
-    fee: RegistrationFee;
-};
-
-export type PhoneRegistration = {
-    kind: "phone_registration";
-    phoneNumber: PhoneNumber;
-};
-
-export type UnconfirmedUser = {
-    kind: "unconfirmed_user";
-    registrationState: RegistrationState;
 };
 
 export type ConfirmedUser = {
     kind: "confirmed_user";
     canisterCreationStatus: "in_progress" | "pending";
     username: string;
-    registrationState: RegistrationState;
-};
-
-export type ConfirmedPendingUsername = {
-    kind: "confirmed_pending_username";
-    canisterCreationStatus: "in_progress" | "pending" | "created";
-    registrationState: RegistrationState;
 };
 
 export type PhoneStatus =
@@ -173,34 +144,7 @@ export type ResendCodeResponse =
     | "user_not_found"
     | "phone_number_not_submitted";
 
-export type RegistrationFeeResponse = AlreadyRegistered | CurrencyRegistration | InvalidCurrency;
-
 export type InvalidCurrency = { kind: "invalid_currency" };
-
-export type RegistrationFee = ICPRegistrationFee | CyclesRegistrationFee;
-
-type FeeCommon = {
-    validUntil: bigint;
-    amount: bigint;
-    recipient: string;
-};
-
-export type ICPRegistrationFee = FeeCommon & {
-    kind: "icp_registration_fee";
-};
-
-export type CyclesRegistrationFee = FeeCommon & {
-    kind: "cycles_registration_fee";
-};
-
-export type FeeCurrency = "icp" | "cycles";
-
-export type NotificationFeePaidResponse =
-    | "success"
-    | "already_registered"
-    | "payment_not_found"
-    | "internal_error"
-    | "user_not_found";
 
 export type SetBioResponse = "success" | "bio_too_long";
 

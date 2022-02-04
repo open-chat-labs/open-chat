@@ -10,10 +10,6 @@ import type {
     PartialUserSummary,
     UpgradeCanisterResponse,
     CreateCanisterResponse,
-    RegistrationFeeResponse,
-    RegistrationState,
-    RegistrationFee,
-    NotificationFeePaidResponse,
     RegisterUserResponse,
     PhoneStatus,
     UpgradeStorageResponse,
@@ -23,12 +19,9 @@ import type {
     ApiConfirmPhoneNumberResponse,
     ApiCreateCanisterResponse,
     ApiCurrentUserResponse,
-    ApiGenerateRegistrationFeeResponse,
-    ApiNotificationFeePaidResponse,
     ApiPartialUserSummary,
     ApiPhoneNumber,
     ApiPhoneStatus,
-    ApiRefreshAccountBalanceResponse,
     ApiRegisterUserResponse,
     ApiRegistrationFee,
     ApiResendCodeResponse,
@@ -206,69 +199,6 @@ export function upgradeCanisterResponse(
     throw new UnsupportedValueError("Unexpected ApiUpgradeCanisterResponse type received", candid);
 }
 
-function registrationState(candid: ApiUnconfirmedUserState): RegistrationState {
-    if ("PhoneNumber" in candid) {
-        return {
-            kind: "phone_registration",
-            phoneNumber: {
-                countryCode: candid.PhoneNumber.phone_number.country_code,
-                number: candid.PhoneNumber.phone_number.number,
-            },
-        };
-    }
-    if ("RegistrationFee" in candid) {
-        return {
-            kind: "currency_registration",
-            fee: currencyRegistration(candid.RegistrationFee),
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiRegistrationState type received", candid);
-}
-
-function currencyRegistration(candid: ApiRegistrationFee): RegistrationFee {
-    if ("ICP" in candid) {
-        return {
-            kind: "icp_registration_fee",
-            validUntil: candid.ICP.valid_until,
-            amount: candid.ICP.amount.e8s,
-            recipient: bytesToHexString(candid.ICP.recipient),
-        };
-    }
-    if ("Cycles" in candid) {
-        return {
-            kind: "cycles_registration_fee",
-            validUntil: candid.Cycles.valid_until,
-            amount: candid.Cycles.amount,
-            recipient: candid.Cycles.recipient.toString(),
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiRegistrationFee type received", candid);
-}
-
-export function feePaidResponse(
-    candid: ApiNotificationFeePaidResponse
-): NotificationFeePaidResponse {
-    if ("AlreadyRegistered" in candid) {
-        return "already_registered";
-    }
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("PaymentNotFound" in candid) {
-        return "payment_not_found";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("UserNotFound" in candid) {
-        return "user_not_found";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiNotificationFeePaidResponse type received",
-        candid
-    );
-}
-
 export function upgradeStorageResponse(candid: ApiUpgradeStorageResponse): UpgradeStorageResponse {
     if ("SuccessNoChange" in candid) {
         return { kind: "success_no_change" };
@@ -300,58 +230,7 @@ export function upgradeStorageResponse(candid: ApiUpgradeStorageResponse): Upgra
     throw new UnsupportedValueError("Unexpected ApiUpgradeStorageResponse type received", candid);
 }
 
-export function generateRegistrationFeeResponse(
-    candid: ApiGenerateRegistrationFeeResponse
-): RegistrationFeeResponse {
-    if ("InvalidCurrency" in candid) {
-        return {
-            kind: "invalid_currency",
-        };
-    }
-    if ("AlreadyRegistered" in candid) {
-        return {
-            kind: "already_registered",
-        };
-    }
-    if ("Success" in candid) {
-        return {
-            kind: "currency_registration",
-            fee: currencyRegistration(candid.Success.fee),
-        };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiGenerateRegistrationFeeResponse type received",
-        candid
-    );
-}
-
-export function confirmationState(candid: ApiConfirmationState): RegistrationState {
-    if ("PhoneNumber" in candid) {
-        return {
-            kind: "phone_registration",
-            phoneNumber: {
-                countryCode: candid.PhoneNumber.country_code,
-                number: candid.PhoneNumber.number,
-            },
-        };
-    }
-    if ("RegistrationFee" in candid) {
-        return {
-            kind: "currency_registration",
-            fee: currencyRegistration(candid.RegistrationFee),
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiConfirmationState type received", candid);
-}
-
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
-    if ("Unconfirmed" in candid) {
-        return {
-            kind: "unconfirmed_user",
-            registrationState: registrationState(candid.Unconfirmed.state),
-        };
-    }
-
     if ("Confirmed" in candid) {
         return {
             kind: "confirmed_user",
@@ -360,22 +239,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                     ? "in_progress"
                     : "pending",
             username: candid.Confirmed.username,
-            registrationState: confirmationState(candid.Confirmed.confirmation_state),
-        };
-    }
-
-    if ("ConfirmedPendingUsername" in candid) {
-        return {
-            kind: "confirmed_pending_username",
-            canisterCreationStatus:
-                "InProgress" in candid.ConfirmedPendingUsername.canister_creation_status
-                    ? "in_progress"
-                    : "Created" in candid.ConfirmedPendingUsername.canister_creation_status
-                    ? "created"
-                    : "pending",
-            registrationState: confirmationState(
-                candid.ConfirmedPendingUsername.confirmation_state
-            ),
         };
     }
 
@@ -403,7 +266,8 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
         return { kind: "unknown_user" };
     }
 
-    throw new UnsupportedValueError("Unexpected ApiCurrentUserResponse type received", candid);
+    throw new Error(`Unexpected ApiCurrentUserResponse type received: ${candid}`);
+    // throw new UnsupportedValueError("Unexpected ApiCurrentUserResponse type received", candid);
 }
 
 export function phoneStatus(candid: ApiPhoneStatus): PhoneStatus {
