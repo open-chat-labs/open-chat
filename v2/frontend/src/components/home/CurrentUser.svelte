@@ -71,7 +71,7 @@
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("showFaq")}>
                         <HelpCircleOutline size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                        <span slot="text">{$_("faq")}</span>
+                        <span slot="text">{$_("faq.menu")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("showRoadmap")}>
                         <Map size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
