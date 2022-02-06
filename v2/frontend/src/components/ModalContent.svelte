@@ -132,6 +132,10 @@
         &.fill {
             padding: 0;
         }
+
+        @include size-below(xs) {
+            padding: $sp3;
+        }
     }
     .footer {
         padding: $sp4;
