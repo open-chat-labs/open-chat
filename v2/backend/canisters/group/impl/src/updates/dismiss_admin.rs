@@ -27,7 +27,6 @@ fn dismiss_admin_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
     {
         ChangeRoleResult::UserNotInGroup => UserNotInGroup,
         ChangeRoleResult::CallerNotInGroup => CallerNotInGroup,
-        ChangeRoleResult::Invalid => UserNotAdmin,
         ChangeRoleResult::Unchanged => Success,
         ChangeRoleResult::Success(r) => {
             let event = ParticipantsDismissedAsAdmin {

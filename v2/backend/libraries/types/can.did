@@ -464,6 +464,7 @@ type RoleChanged =
         changed_by: UserId;
         new_role: Role;
     };
+    
 type OwnershipTransferred =
     record {
         old_owner: UserId;
