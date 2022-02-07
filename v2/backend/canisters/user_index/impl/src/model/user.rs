@@ -118,7 +118,6 @@ impl User {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ConfirmedUser {
     pub principal: Principal,
-    #[serde(deserialize_with = "unwrap_option")]
     pub username: String,
     pub date_confirmed: TimestampMillis,
     pub canister_creation_status: CanisterCreationStatusInternal,
