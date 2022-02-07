@@ -24,7 +24,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "change_role" => {
                 let (args,) = ic_cdk::api::call::arg_data::<(group_canister::change_role::Args,)>();
                 role.can_change_role(args.new_role)
-            },
+            }
             "delete_group" => role.can_delete_group(),
             "dismiss_admin" => role.can_dismiss_admin(),
             "make_admin" => role.can_make_admin(),
