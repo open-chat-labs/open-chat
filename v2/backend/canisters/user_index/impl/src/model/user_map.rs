@@ -23,9 +23,7 @@ pub struct UserMap {
     users_confirmed_via_cycles: u64,
     users_confirmed_automatically: u64,
     cached_metrics: Timestamped<Metrics>,
-    #[serde(default)]
     users_with_unconfirmed_phone_numbers: HashSet<Principal>,
-    #[serde(default)]
     unconfirmed_phone_numbers_last_pruned: TimestampMillis,
 }
 
