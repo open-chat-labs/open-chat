@@ -105,6 +105,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "name_changed":
             case "desc_changed":
             case "avatar_changed":
+            case "role_changed":
                 userIds.add(e.event.changedBy);
                 break;
             case "group_chat_created":
@@ -121,9 +122,6 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 break;
             case "participants_removed":
                 userIds.add(e.event.removedBy);
-                break;
-            case "role_changed":
-                userIds.add(e.event.changedBy);
                 break;
             case "users_blocked":
                 userIds.add(e.event.blockedBy);
@@ -164,6 +162,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "name_changed":
         case "desc_changed":
         case "avatar_changed":
+        case "role_changed":
             return event.changedBy;
         case "group_chat_created":
             return event.created_by;
@@ -175,8 +174,6 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.dismissedBy;
         case "participants_removed":
             return event.removedBy;
-        case "role_changed":
-            return event.changedBy;
         case "users_blocked":
             return event.blockedBy;
         case "users_unblocked":
