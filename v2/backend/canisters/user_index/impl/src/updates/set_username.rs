@@ -1,11 +1,9 @@
 use crate::model::account_billing::AccountBilling;
 use crate::model::user::{CreatedUser, PhoneStatus, User};
 use crate::model::user_map::UpdateUserResult;
-use crate::updates::storage_byte_limit_for_new_user;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use open_storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterCreationStatusInternal, CyclesTopUp};
 use user_index_canister::set_username::{Response::*, *};
 
@@ -35,20 +33,11 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         let user_to_update = match user {
-            User::Unconfirmed(_) => {
-                return UserUnconfirmed;
-            }
             User::Confirmed(user) => {
                 if let CanisterCreationStatusInternal::Created(canister_id, wasm_version, cycles) =
                     &user.canister_creation_status
                 {
-                    let phone_status = match &user.phone_number {
-                        Some(pn) => PhoneStatus::Confirmed(pn.clone()),
-                        None => PhoneStatus::None,
-                    };
-                    let open_storage_limit_bytes = storage_byte_limit_for_new_user(&phone_status, &user.registration_fee);
-
-                    let created_user = CreatedUser {
+                    User::Created(CreatedUser {
                         principal: caller,
                         user_id: (*canister_id).into(),
                         username,
@@ -62,23 +51,14 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                             date: now,
                         }],
                         avatar_id: None,
-                        registration_fee: user.registration_fee.clone(),
+                        registration_fee: None,
                         account_billing: AccountBilling::default(),
-                        open_storage_limit_bytes,
-                        phone_status,
-                    };
-
-                    if open_storage_limit_bytes > 0 {
-                        runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
-                            user_id: caller,
-                            byte_limit: open_storage_limit_bytes,
-                        });
-                    }
-
-                    User::Created(created_user)
+                        open_storage_limit_bytes: 0,
+                        phone_status: PhoneStatus::None,
+                    })
                 } else {
                     let mut user = user.clone();
-                    user.username = Some(username);
+                    user.username = username;
                     User::Confirmed(user)
                 }
             }
@@ -130,7 +110,7 @@ pub fn validate_username(username: &str) -> UsernameValidationResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{CreatedUser, PhoneStatus, UnconfirmedPhoneNumber, UnconfirmedUser, UnconfirmedUserState, User};
+    use crate::model::user::{CreatedUser, PhoneStatus, User};
     use crate::Data;
     use candid::Principal;
     use types::PhoneNumber;
@@ -160,7 +140,7 @@ mod tests {
 
         let user = runtime_state.data.users.get_by_username("xyz").unwrap();
 
-        assert_eq!(user.get_username().unwrap(), "xyz");
+        assert_eq!(user.get_username(), "xyz");
     }
 
     #[test]
@@ -217,28 +197,6 @@ mod tests {
         };
         let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::UsernameTaken));
-    }
-
-    #[test]
-    fn unconfirmed_user() {
-        let env = TestEnv::default();
-        let mut data = Data::default();
-        data.users.add(UnconfirmedUser {
-            principal: env.caller,
-            state: UnconfirmedUserState::PhoneNumber(UnconfirmedPhoneNumber {
-                phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
-                confirmation_code: "123456".to_string(),
-                valid_until: env.now + 1000,
-                sms_messages_sent: 1,
-            }),
-        });
-        let mut runtime_state = RuntimeState::new(Box::new(env), data);
-
-        let args = Args {
-            username: "abc".to_string(),
-        };
-        let result = set_username_impl(args, &mut runtime_state);
-        assert!(matches!(result, Response::UserUnconfirmed));
     }
 
     #[test]

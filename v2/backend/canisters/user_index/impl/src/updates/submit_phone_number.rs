@@ -27,7 +27,7 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
     match runtime_state
         .data
         .users
-        .submit_phone_number(caller, phone_number, &confirmation_code, now)
+        .submit_phone_number(caller, phone_number, confirmation_code.clone(), now)
     {
         SubmitPhoneNumberResult::Success => {
             let sms = ConfirmationCodeSms {
@@ -37,93 +37,61 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
             runtime_state.data.sms_messages.add(sms);
             Success
         }
-        SubmitPhoneNumberResult::AlreadyTaken => AlreadyRegisteredByOther,
+        SubmitPhoneNumberResult::PhoneNumberTaken => AlreadyRegisteredByOther,
         SubmitPhoneNumberResult::AlreadyConfirmed => AlreadyRegistered,
-        SubmitPhoneNumberResult::UserLimitReached => UserLimitReached,
+        SubmitPhoneNumberResult::UserNotFound => UserNotFound,
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{ConfirmedUser, User};
+    use crate::model::user::{CreatedUser, PhoneStatus, User};
     use crate::Data;
     use candid::Principal;
     use types::PhoneNumber;
     use utils::env::test::TestEnv;
 
     #[test]
-    fn new_user_succeeds() {
+    fn phone_number_added_successfully() {
         let env = TestEnv::default();
-        let mut runtime_state = RuntimeState::new(Box::new(env), Data::default());
+        let mut data = Data::default();
+        let principal = Principal::from_slice(&[1]);
+        let phone_number = PhoneNumber::new(44, "1111 111 111".to_string());
+
+        data.users.add_test_user(User::Created(CreatedUser {
+            principal,
+            user_id: Principal::from_slice(&[1, 1]).into(),
+            username: "1".to_string(),
+            ..Default::default()
+        }));
+        let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
-            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
+            phone_number: phone_number.clone(),
         };
         let result = submit_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::Success));
-
-        let user = runtime_state
-            .data
-            .users
-            .get_by_principal(&runtime_state.env.caller())
-            .unwrap();
-        assert!(matches!(user, User::Unconfirmed(_)));
+        let user = runtime_state.data.users.get_by_principal(&principal).unwrap();
+        assert_eq!(*user.get_phone_number().unwrap(), phone_number);
     }
 
     #[test]
-    fn existing_unconfirmed_user_succeeds() {
+    fn already_registered_by_other() {
         let env = TestEnv::default();
-        let mut runtime_state = RuntimeState::new(Box::new(env), Data::default());
-
-        let args1 = Args {
-            phone_number: PhoneNumber::new(44, "2222 222 222".to_owned()),
-        };
-        let result1 = submit_phone_number_impl(args1, &mut runtime_state);
-        assert!(matches!(result1, Response::Success));
-
-        let args2 = Args {
-            phone_number: PhoneNumber::new(44, "2222 222 222".to_owned()),
-        };
-        let result2 = submit_phone_number_impl(args2, &mut runtime_state);
-        assert!(matches!(result2, Response::Success));
-
-        let user = runtime_state
-            .data
-            .users
-            .get_by_principal(&runtime_state.env.caller())
-            .unwrap();
-        assert!(matches!(user, User::Unconfirmed(_)));
-        assert_eq!(user.get_phone_number().unwrap().to_string(), "+44 2222222222");
-    }
-
-    #[test]
-    fn existing_confirmed_user_returns_already_registered() {
-        let env = Box::new(TestEnv::default());
         let mut data = Data::default();
-        data.users.add_test_user(User::Confirmed(ConfirmedUser {
-            principal: env.caller,
-            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
-            date_confirmed: env.now,
+        data.users.add_test_user(User::Created(CreatedUser {
+            principal: Principal::from_slice(&[1]),
+            user_id: Principal::from_slice(&[1, 1]).into(),
+            username: "1".to_string(),
             ..Default::default()
         }));
-        let mut runtime_state = RuntimeState::new(env, data);
 
-        let args = Args {
-            phone_number: PhoneNumber::new(44, "2222 222 222".to_owned()),
-        };
-        let result = submit_phone_number_impl(args, &mut runtime_state);
-        assert!(matches!(result, Response::AlreadyRegistered));
-    }
-
-    #[test]
-    fn phone_number_taken_returns_already_taken_by_other() {
-        let env = TestEnv::default();
-        let mut data = Data::default();
-        data.users.add_test_user(User::Confirmed(ConfirmedUser {
+        data.users.add_test_user(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
-            phone_number: Some(PhoneNumber::new(44, "1111 111 111".to_owned())),
-            date_confirmed: env.now,
+            user_id: Principal::from_slice(&[2, 2]).into(),
+            username: "2".to_string(),
+            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);

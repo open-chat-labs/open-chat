@@ -50,7 +50,6 @@ type CanisterCreationStatus =
 
 type CanisterUpgradeStatus =
     variant {
-        Required;
         InProgress;
         NotRequired;
     };

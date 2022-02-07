@@ -9,7 +9,6 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
-    UpgradeCanisterResponse,
     CreateCanisterResponse,
     User,
     SetBioResponse,
@@ -507,10 +506,6 @@ export class ServiceContainer implements MarkMessagesRead {
 
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this._userIndexClient.getCurrentUser();
-    }
-
-    upgradeUser(): Promise<UpgradeCanisterResponse> {
-        return this._userIndexClient.upgradeUser();
     }
 
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {

@@ -1,6 +1,6 @@
 use rmp_serde::{Deserializer, Serializer};
 use serde::de::DeserializeOwned;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::error::Error;
 
 pub fn serialize<T>(value: T) -> Result<Vec<u8>, impl Error>
@@ -20,4 +20,14 @@ where
 {
     let mut deserializer = Deserializer::new(bytes);
     T::deserialize(&mut deserializer)
+}
+
+pub fn unwrap_option<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    let option: Option<T> = Option::deserialize(deserializer)?;
+
+    Ok(option.unwrap())
 }

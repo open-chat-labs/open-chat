@@ -10,7 +10,6 @@ pub struct Args {
 pub enum Response {
     Success,
     UsernameTaken,
-    UserUnconfirmed,
     UserNotFound,
     UsernameInvalid,
     UsernameTooShort(u16),

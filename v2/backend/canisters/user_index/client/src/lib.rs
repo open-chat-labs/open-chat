@@ -13,7 +13,6 @@ generate_query_call!(users);
 generate_update_call!(add_super_admin);
 generate_update_call!(confirm_phone_number);
 generate_update_call!(create_canister);
-generate_update_call!(generate_registration_fee);
 generate_update_call!(remove_sms_messages);
 generate_update_call!(remove_super_admin);
 generate_update_call!(register_user);
