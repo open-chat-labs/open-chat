@@ -2,6 +2,7 @@ import type DRange from "drange";
 import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
+import type { Role } from "services/userIndex/candid/types";
 
 export type MessageContent =
     | FileContent
@@ -288,6 +289,7 @@ export type GroupChatEvent =
     | ParticipantAssumesSuperAdmin
     | ParticipantRelinquishesSuperAdmin
     | ParticipantDismissedAsSuperAdmin
+    | RoleChanged
     | OwnershipTransferred
     | PinnedMessageUpdated;
 
@@ -403,6 +405,13 @@ export type ParticipantsPromotedToAdmin = {
     kind: "participants_promoted_to_admin";
     userIds: string[];
     promotedBy: string;
+};
+
+export type RoleChanged = {
+    kind: "role_changed";
+    userIds: string[];
+    changedBy: string;
+    newRole: Role;
 };
 
 export type PinnedMessageUpdated = {
