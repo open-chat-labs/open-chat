@@ -16,15 +16,15 @@ OPEN_STORAGE_INDEX_CANISTER_ID=$2
 ./compress-wasm.sh group_canister_impl
 ./compress-wasm.sh user_canister_impl
 
-dfx --identity $IDENTITY canister --no-wallet create user_index
-dfx --identity $IDENTITY canister --no-wallet create group_index
-dfx --identity $IDENTITY canister --no-wallet create notifications
-dfx --identity $IDENTITY canister --no-wallet create online_users_aggregator
+dfx --identity $IDENTITY canister create user_index
+dfx --identity $IDENTITY canister create group_index
+dfx --identity $IDENTITY canister create notifications
+dfx --identity $IDENTITY canister create online_users_aggregator
 
-USER_INDEX_CANISTER_ID=$(dfx canister --no-wallet id user_index)
-GROUP_INDEX_CANISTER_ID=$(dfx canister --no-wallet id group_index)
-NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --no-wallet id notifications)
-ONLINE_USERS_AGGREGATOR=$(dfx canister --no-wallet id online_users_aggregator)
+USER_INDEX_CANISTER_ID=$(dfx canister id user_index)
+GROUP_INDEX_CANISTER_ID=$(dfx canister id group_index)
+NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister id notifications)
+ONLINE_USERS_AGGREGATOR=$(dfx canister id online_users_aggregator)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml \
