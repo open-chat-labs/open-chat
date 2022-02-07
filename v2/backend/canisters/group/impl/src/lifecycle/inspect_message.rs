@@ -18,20 +18,27 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
     let caller = runtime_state.env.caller();
     if let Some(role) = runtime_state.data.participants.get_by_principal(&caller).map(|p| p.role) {
         let is_public_group = runtime_state.data.is_public;
-        let is_valid = match method_name.as_str() {
-            "add_participants" => role.can_add_participants(is_public_group),
-            "block_user" => role.can_block_user(),
-            "delete_group" => role.can_delete_group(),
-            "dismiss_admin" => role.can_dismiss_admin(),
-            "make_admin" => role.can_make_admin(),
-            "remove_participant" => role.can_remove_participants(),
-            "set_pinned_message" => role.can_set_pinned_message(),
-            "transfer_ownership" => role.can_transfer_ownership(),
-            "unblock_user" => role.can_unblock_user(),
-            "update_group" => role.can_update_group(),
-            "delete_messages" | "edit_message" | "put_chunk" | "send_message" | "toggle_reaction" => true,
-            _ => false,
-        };
+
+        let is_valid;
+        if method_name == "change_role" {
+            let (args,) = ic_cdk::api::call::arg_data::<(group_canister::change_role::Args,)>();
+            is_valid = role.can_change_role(args.new_role);
+        } else {
+            is_valid = match method_name.as_str() {
+                "add_participants" => role.can_add_participants(is_public_group),
+                "block_user" => role.can_block_user(),
+                "delete_group" => role.can_delete_group(),
+                "dismiss_admin" => role.can_dismiss_admin(),
+                "make_admin" => role.can_make_admin(),
+                "remove_participant" => role.can_remove_participants(),
+                "set_pinned_message" => role.can_set_pinned_message(),
+                "transfer_ownership" => role.can_transfer_ownership(),
+                "unblock_user" => role.can_unblock_user(),
+                "update_group" => role.can_update_group(),
+                "delete_messages" | "edit_message" | "put_chunk" | "send_message" | "toggle_reaction" => true,
+                _ => false,
+            };
+        }
 
         if is_valid {
             ic_cdk::api::call::accept_message();

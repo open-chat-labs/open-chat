@@ -55,6 +55,7 @@ impl GroupChatEvents {
             }
             ChatEventInternal::ParticipantsPromotedToAdmin(p) => GroupChatEvent::ParticipantsPromotedToAdmin(*p.clone()),
             ChatEventInternal::ParticipantsDismissedAsAdmin(p) => GroupChatEvent::ParticipantsDismissedAsAdmin(*p.clone()),
+            ChatEventInternal::ParticipantsRoleChanged(p) => GroupChatEvent::ParticipantsRoleChanged(*p.clone()),
             ChatEventInternal::UsersBlocked(u) => GroupChatEvent::UsersBlocked(*u.clone()),
             ChatEventInternal::UsersUnblocked(u) => GroupChatEvent::UsersUnblocked(*u.clone()),
             ChatEventInternal::PinnedMessageUpdated(p) => GroupChatEvent::PinnedMessageUpdated(*p.clone()),

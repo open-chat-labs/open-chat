@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, PartialEq)]
 pub enum Role {
     SuperAdmin(FallbackRole),
     Owner,
@@ -9,7 +9,7 @@ pub enum Role {
     Participant,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, PartialEq)]
 pub enum FallbackRole {
     Admin,
     Participant,
@@ -83,6 +83,15 @@ impl Role {
 
     pub fn can_transfer_ownership(&self) -> bool {
         self.has_owner_rights()
+    }
+
+    pub fn can_change_role(&self, new_role: Role) -> bool {
+        match new_role {
+            Role::SuperAdmin(_) => false,
+            Role::Owner => self.has_owner_rights(),
+            Role::Admin => self.has_admin_rights(),
+            Role::Participant => self.has_admin_rights(),
+        }
     }
 
     pub fn can_be_removed(&self) -> bool {

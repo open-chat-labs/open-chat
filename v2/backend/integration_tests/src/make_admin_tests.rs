@@ -42,6 +42,7 @@ async fn make_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         history_visible_to_new_joiners: false,
     };
 
+    // User1 is owner and user2 and user3 are participants
     let chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id, user3_id]).await;
 
     print!("Check that the Owner can make another user an admin... ");
@@ -82,20 +83,6 @@ async fn make_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     {
         group_canister::dismiss_admin::Response::UserNotAdmin => {}
         response => panic!("DismissAdmin returned an unexpected response: {response:?}"),
-    };
-    println!("Ok");
-
-    print!("Check that an admin can't dismiss themselves as admin... ");
-    let dismiss_user2_as_admin_args = group_canister::dismiss_admin::Args { user_id: user2_id };
-    match group_canister_client::dismiss_admin(&user2_agent, &chat_id.into(), &dismiss_user2_as_admin_args)
-        .await
-        .unwrap()
-    {
-        group_canister::dismiss_admin::Response::CannotDismissSelf => {}
-        group_canister::dismiss_admin::Response::Success => {
-            panic!("User should not have been able to dismiss themselves as admin");
-        }
-        response => panic!("DismissAdmin returned an error: {response:?}"),
     };
     println!("Ok");
 

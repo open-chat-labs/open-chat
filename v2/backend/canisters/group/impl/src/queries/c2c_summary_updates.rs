@@ -89,7 +89,8 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
                     updates.avatar_id = OptionUpdate::from_update(a.new_avatar);
                 }
             }
-            ChatEventInternal::ParticipantsPromotedToAdmin(_)
+            ChatEventInternal::ParticipantsRoleChanged(_)
+            | ChatEventInternal::ParticipantsPromotedToAdmin(_)
             | ChatEventInternal::ParticipantsDismissedAsAdmin(_)
             | ChatEventInternal::OwnershipTransferred(_)
             | ChatEventInternal::ParticipantAssumesSuperAdmin(_)

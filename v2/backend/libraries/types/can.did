@@ -179,6 +179,7 @@ type GroupChatEvent =
         ParticipantRelinquishesSuperAdmin: ParticipantRelinquishesSuperAdmin;
         ParticipantsPromotedToAdmin: ParticipantsPromotedToAdmin;
         ParticipantsDismissedAsAdmin: ParticipantsDismissedAsAdmin;
+        ParticipantsRoleChanged: ParticipantsRoleChanged;
         MessageEdited: UpdatedMessage;
         MessageDeleted: UpdatedMessage;
         MessageReactionAdded: UpdatedMessage;
@@ -457,6 +458,12 @@ type ParticipantsDismissedAsAdmin =
         dismissed_by: UserId;
     };
 
+type ParticipantsRoleChanged =
+    record {
+        user_ids: vec UserId;
+        changed_by: UserId;
+        new_role: Role;
+    };
 type OwnershipTransferred =
     record {
         old_owner: UserId;

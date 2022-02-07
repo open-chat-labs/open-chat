@@ -47,6 +47,7 @@ pub enum ChatEventInternal {
     ParticipantRelinquishesSuperAdmin(Box<ParticipantRelinquishesSuperAdmin>),
     ParticipantsPromotedToAdmin(Box<ParticipantsPromotedToAdmin>),
     ParticipantsDismissedAsAdmin(Box<ParticipantsDismissedAsAdmin>),
+    ParticipantsRoleChanged(Box<ParticipantsRoleChanged>),
     UsersBlocked(Box<UsersBlocked>),
     UsersUnblocked(Box<UsersUnblocked>),
     PinnedMessageUpdated(Box<PinnedMessageUpdated>),
@@ -87,6 +88,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::ParticipantRelinquishesSuperAdmin(_)
                 | ChatEventInternal::ParticipantsPromotedToAdmin(_)
                 | ChatEventInternal::ParticipantsDismissedAsAdmin(_)
+                | ChatEventInternal::ParticipantsRoleChanged(_)
                 | ChatEventInternal::UsersBlocked(_)
                 | ChatEventInternal::UsersUnblocked(_)
                 | ChatEventInternal::PinnedMessageUpdated(_)
