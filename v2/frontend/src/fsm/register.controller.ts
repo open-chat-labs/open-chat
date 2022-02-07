@@ -50,6 +50,8 @@ export class RegisterController {
                 this.error.set("register.usernameTooLong");
             } else if (resp === "username_invalid") {
                 this.error.set("register.usernameInvalid");
+            } else if (resp === "user_limit_reached") {
+                this.error.set("register.userLimitReached");
             } else if (resp === "success") {
                 this.error.set(undefined);
                 this.state.set({ kind: "awaiting_canister" });
