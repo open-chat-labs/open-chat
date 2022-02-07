@@ -16,10 +16,10 @@ VERSION=$3
 ./compress-wasm.sh group_canister_impl
 ./compress-wasm.sh user_canister_impl
 
-USER_INDEX_CANISTER_ID=$(dfx canister --no-wallet id user_index)
-GROUP_INDEX_CANISTER_ID=$(dfx canister --no-wallet id group_index)
-NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --no-wallet id notifications)
-ONLINE_USERS_AGGREGATOR=$(dfx canister --no-wallet id online_users_aggregator)
+USER_INDEX_CANISTER_ID=$(dfx canister id user_index)
+GROUP_INDEX_CANISTER_ID=$(dfx canister id group_index)
+NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister id notifications)
+ONLINE_USERS_AGGREGATOR=$(dfx canister id online_users_aggregator)
 
 cargo run \
   --manifest-path backend/canister_upgrader/Cargo.toml \

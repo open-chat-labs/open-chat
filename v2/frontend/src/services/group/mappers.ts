@@ -579,6 +579,15 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("RoleChanged" in candid) {
+        return {
+            kind: "role_changed",
+            userIds: candid.RoleChanged.user_ids.map((p) => p.toString()),
+            changedBy: candid.RoleChanged.changed_by.toString(),
+            newRole: candid.RoleChanged.new_role,
+        };
+    }
+
     if ("PinnedMessageUpdated" in candid) {
         return {
             kind: "pinned_message_updated",

@@ -38,6 +38,24 @@ export const idlFactory = ({ IDL }) => {
     'CannotBlockSelf' : IDL.Null,
     'CannotBlockUser' : IDL.Null,
   });
+  const FallbackRole = IDL.Variant({
+    'Participant' : IDL.Null,
+    'Admin' : IDL.Null,
+  });
+  const Role = IDL.Variant({
+    'Participant' : IDL.Null,
+    'SuperAdmin' : FallbackRole,
+    'Admin' : IDL.Null,
+    'Owner' : IDL.Null,
+  });
+  const ChangeRoleArgs = IDL.Record({ 'user_id' : UserId, 'new_role' : Role });
+  const ChangeRoleResponse = IDL.Variant({
+    'Invalid' : IDL.Null,
+    'UserNotInGroup' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const DeleteGroupArgs = IDL.Record({});
   const DeleteGroupResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
@@ -248,6 +266,11 @@ export const idlFactory = ({ IDL }) => {
     'new_name' : IDL.Text,
     'previous_name' : IDL.Text,
   });
+  const RoleChanged = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'changed_by' : UserId,
+    'new_role' : Role,
+  });
   const OwnershipTransferred = IDL.Record({
     'old_owner' : UserId,
     'new_owner' : UserId,
@@ -281,6 +304,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageDeleted' : UpdatedMessage,
     'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin,
     'GroupNameChanged' : GroupNameChanged,
+    'RoleChanged' : RoleChanged,
     'OwnershipTransferred' : OwnershipTransferred,
     'MessageEdited' : UpdatedMessage,
     'AvatarChanged' : AvatarChanged,
@@ -376,16 +400,6 @@ export const idlFactory = ({ IDL }) => {
     'InvalidTerm' : IDL.Null,
   });
   const SelectedInitialArgs = IDL.Record({});
-  const FallbackRole = IDL.Variant({
-    'Participant' : IDL.Null,
-    'Admin' : IDL.Null,
-  });
-  const Role = IDL.Variant({
-    'Participant' : IDL.Null,
-    'SuperAdmin' : FallbackRole,
-    'Admin' : IDL.Null,
-    'Owner' : IDL.Null,
-  });
   const Participant = IDL.Record({
     'role' : Role,
     'user_id' : UserId,
@@ -505,6 +519,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
+    'change_role' : IDL.Func([ChangeRoleArgs], [ChangeRoleResponse], []),
     'delete_group' : IDL.Func([DeleteGroupArgs], [DeleteGroupResponse], []),
     'delete_messages' : IDL.Func(
         [DeleteMessagesArgs],

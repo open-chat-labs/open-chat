@@ -13,18 +13,18 @@ II_ENV=development dfx deploy --no-wallet --argument '(null)'
 popd
 
 # Create the OpenChat canisters
-dfx --identity $IDENTITY canister --no-wallet create user_index
-dfx --identity $IDENTITY canister --no-wallet create group_index
-dfx --identity $IDENTITY canister --no-wallet create notifications
-dfx --identity $IDENTITY canister --no-wallet create online_users_aggregator
-USER_INDEX_CANISTER_ID=$(dfx canister --no-wallet id user_index)
-GROUP_INDEX_CANISTER_ID=$(dfx canister --no-wallet id group_index)
+dfx --identity $IDENTITY canister create user_index
+dfx --identity $IDENTITY canister create group_index
+dfx --identity $IDENTITY canister create notifications
+dfx --identity $IDENTITY canister create online_users_aggregator
+USER_INDEX_CANISTER_ID=$(dfx canister id user_index)
+GROUP_INDEX_CANISTER_ID=$(dfx canister id group_index)
 
 # Create the OpenStorage index canister
 pushd $OPEN_STORAGE_DIR
 rm -r .dfx/local
-dfx --identity $IDENTITY canister --no-wallet create index
-OPEN_STORAGE_INDEX_CANISTER_ID=$(dfx canister --no-wallet id index)
+dfx --identity $IDENTITY canister create index
+OPEN_STORAGE_INDEX_CANISTER_ID=$(dfx canister id index)
 
 # Deploy OpenStorage canisters
 ./deploy-local.sh $IDENTITY

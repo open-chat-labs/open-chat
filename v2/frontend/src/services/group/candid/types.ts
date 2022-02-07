@@ -89,6 +89,12 @@ export interface CanisterWasm {
   'version' : Version,
   'module' : Array<number>,
 }
+export interface ChangeRoleArgs { 'user_id' : UserId, 'new_role' : Role }
+export type ChangeRoleResponse = { 'Invalid' : null } |
+  { 'UserNotInGroup' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export type ChatId = CanisterId;
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
@@ -306,6 +312,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'RoleChanged' : RoleChanged } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'MessageEdited' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
@@ -579,6 +586,11 @@ export type Role = { 'Participant' : null } |
   { 'SuperAdmin' : FallbackRole } |
   { 'Admin' : null } |
   { 'Owner' : null };
+export interface RoleChanged {
+  'user_ids' : Array<UserId>,
+  'changed_by' : UserId,
+  'new_role' : Role,
+}
 export interface SearchMessagesArgs {
   'max_results' : number,
   'search_term' : string,
@@ -728,6 +740,7 @@ export interface _SERVICE {
       AddParticipantsResponse
     >,
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
+  'change_role' : (arg_0: ChangeRoleArgs) => Promise<ChangeRoleResponse>,
   'delete_group' : (arg_0: DeleteGroupArgs) => Promise<DeleteGroupResponse>,
   'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
       DeleteMessagesResponse
