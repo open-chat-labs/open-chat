@@ -122,6 +122,9 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "participants_removed":
                 userIds.add(e.event.removedBy);
                 break;
+            case "role_changed":
+                userIds.add(e.event.changedBy);
+                break;
             case "users_blocked":
                 userIds.add(e.event.blockedBy);
                 break;
@@ -172,6 +175,8 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.dismissedBy;
         case "participants_removed":
             return event.removedBy;
+        case "role_changed":
+            return event.changedBy;
         case "users_blocked":
             return event.blockedBy;
         case "users_unblocked":
