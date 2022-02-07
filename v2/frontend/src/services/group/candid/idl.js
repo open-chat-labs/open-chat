@@ -248,6 +248,21 @@ export const idlFactory = ({ IDL }) => {
     'new_name' : IDL.Text,
     'previous_name' : IDL.Text,
   });
+  const FallbackRole = IDL.Variant({
+    'Participant' : IDL.Null,
+    'Admin' : IDL.Null,
+  });
+  const Role = IDL.Variant({
+    'Participant' : IDL.Null,
+    'SuperAdmin' : FallbackRole,
+    'Admin' : IDL.Null,
+    'Owner' : IDL.Null,
+  });
+  const RoleChanged = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'changed_by' : UserId,
+    'new_role' : Role,
+  });
   const OwnershipTransferred = IDL.Record({
     'old_owner' : UserId,
     'new_owner' : UserId,
@@ -281,6 +296,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageDeleted' : UpdatedMessage,
     'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin,
     'GroupNameChanged' : GroupNameChanged,
+    'RoleChanged' : RoleChanged,
     'OwnershipTransferred' : OwnershipTransferred,
     'MessageEdited' : UpdatedMessage,
     'AvatarChanged' : AvatarChanged,
@@ -376,16 +392,6 @@ export const idlFactory = ({ IDL }) => {
     'InvalidTerm' : IDL.Null,
   });
   const SelectedInitialArgs = IDL.Record({});
-  const FallbackRole = IDL.Variant({
-    'Participant' : IDL.Null,
-    'Admin' : IDL.Null,
-  });
-  const Role = IDL.Variant({
-    'Participant' : IDL.Null,
-    'SuperAdmin' : FallbackRole,
-    'Admin' : IDL.Null,
-    'Owner' : IDL.Null,
-  });
   const Participant = IDL.Record({
     'role' : Role,
     'user_id' : UserId,

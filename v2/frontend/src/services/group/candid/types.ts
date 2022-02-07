@@ -306,6 +306,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'RoleChanged' : RoleChanged } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'MessageEdited' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
@@ -579,6 +580,11 @@ export type Role = { 'Participant' : null } |
   { 'SuperAdmin' : FallbackRole } |
   { 'Admin' : null } |
   { 'Owner' : null };
+export interface RoleChanged {
+  'user_ids' : Array<UserId>,
+  'changed_by' : UserId,
+  'new_role' : Role,
+}
 export interface SearchMessagesArgs {
   'max_results' : number,
   'search_term' : string,
