@@ -4,8 +4,6 @@ use crate::model::user_map::UserMap;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use ic_ledger_types::AccountIdentifier;
-use ledger_utils::default_ledger_account;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
@@ -26,9 +24,8 @@ pub const USER_LIMIT: usize = 5000;
 const MIN_CYCLES_BALANCE: Cycles = 5_000_000_000_000; // 5T
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 500_000_000_000; // 0.5T cycles
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
-const DEFAULT_OPEN_STORAGE_USER_BYTE_LIMIT: u64 = (1024 * 1024 * 1024) / 10; // 0.1 GB
+const CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE: u64 = (1024 * 1024 * 1024) / 10; // 0.1 GB
 const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 10 * 60 * 1000; // 10 minutes
-const REGISTRATION_FEE_EXPIRY_MILLIS: u64 = 2 * 60 * 60 * 1000; // 2 hours
 const STATE_VERSION: StateVersion = StateVersion::V1;
 
 #[derive(CandidType, Serialize, Deserialize)]
@@ -88,10 +85,6 @@ impl RuntimeState {
         format!("{:0>6}", random % 1000000)
     }
 
-    pub fn user_index_ledger_account(&self) -> AccountIdentifier {
-        default_ledger_account(self.env.canister_id())
-    }
-
     pub fn metrics(&self) -> Metrics {
         let user_metrics = self.data.users.metrics();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
@@ -102,7 +95,6 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             canisters_in_pool: self.data.canister_pool.len() as u16,
-            users_unconfirmed: user_metrics.users_unconfirmed,
             users_confirmed: user_metrics.users_confirmed,
             users_created: user_metrics.users_created,
             users_online_5_minutes: user_metrics.users_online_5_minutes,
@@ -212,7 +204,6 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
     pub total_cycles_spent_on_canisters: Cycles,
-    pub users_unconfirmed: u32,
     pub users_confirmed: u32,
     pub users_created: u64,
     pub users_online_5_minutes: u32,

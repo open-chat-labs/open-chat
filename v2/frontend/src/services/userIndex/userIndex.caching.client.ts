@@ -11,7 +11,6 @@ import type {
     ResendCodeResponse,
     SetUsernameResponse,
     SubmitPhoneNumberResponse,
-    UpgradeCanisterResponse,
     UpgradeStorageResponse,
     UsersArgs,
     UsersResponse,
@@ -52,10 +51,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this.client.getCurrentUser();
-    }
-
-    upgradeUser(): Promise<UpgradeCanisterResponse> {
-        return this.client.upgradeUser();
     }
 
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {

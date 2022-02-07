@@ -8,14 +8,12 @@ import type {
     UsersResponse,
     UserSummary,
     PartialUserSummary,
-    UpgradeCanisterResponse,
     CreateCanisterResponse,
     RegisterUserResponse,
     PhoneStatus,
     UpgradeStorageResponse,
 } from "../../domain/user/user";
 import type {
-    ApiConfirmationState,
     ApiConfirmPhoneNumberResponse,
     ApiCreateCanisterResponse,
     ApiCurrentUserResponse,
@@ -23,13 +21,10 @@ import type {
     ApiPhoneNumber,
     ApiPhoneStatus,
     ApiRegisterUserResponse,
-    ApiRegistrationFee,
     ApiResendCodeResponse,
     ApiSearchResponse,
     ApiSetUsernameResponse,
     ApiSubmitPhoneNumberResponse,
-    ApiUnconfirmedUserState,
-    ApiUpgradeCanisterResponse,
     ApiUpgradeStorageResponse,
     ApiUsersResponse,
     ApiUserSummary,
@@ -90,19 +85,19 @@ export function submitPhoneNumberResponse(
     candid: ApiSubmitPhoneNumberResponse
 ): SubmitPhoneNumberResponse {
     if ("Success" in candid) {
-        return { kind: "success" };
+        return "success";
     }
     if ("AlreadyRegistered" in candid) {
-        return { kind: "already_registered" };
+        return "already_registered";
     }
     if ("AlreadyRegisteredByOther" in candid) {
-        return { kind: "already_registered_by_other" };
+        return "already_registered_by_other";
     }
     if ("InvalidPhoneNumber" in candid) {
-        return { kind: "invalid_phone_number" };
+        return "invalid_phone_number";
     }
-    if ("UserLimitReached" in candid) {
-        return { kind: "user_limit_reached" };
+    if ("UserNotFound" in candid) {
+        return "user_not_found";
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSubmitPhoneNumberResponse type received",
@@ -179,24 +174,10 @@ export function createCanisterResponse(candid: ApiCreateCanisterResponse): Creat
     if ("UserAlreadyCreated" in candid) return "user_already_created";
     if ("CreationInProgress" in candid) return "creation_in_progress";
     if ("InternalError" in candid) return "internal_error";
-    if ("UserUnconfirmed" in candid) return "user_unconfirmed";
     if ("UserNotFound" in candid) return "user_not_found";
     if ("CyclesBalanceTooLow" in candid) return "cycles_balance_too_low";
 
     throw new UnsupportedValueError("Unexpected ApiCreateCanisterResponse type received", candid);
-}
-
-export function upgradeCanisterResponse(
-    candid: ApiUpgradeCanisterResponse
-): UpgradeCanisterResponse {
-    if ("Success" in candid) return "success";
-    if ("UpgradeInProgress" in candid) return "upgrade_in_progress";
-    if ("UserNotCreated" in candid) return "user_not_created";
-    if ("UpgradeNotRequired" in candid) return "upgrade_not_required";
-    if ("InternalError" in candid) return "internal_error";
-    if ("UserNotFound" in candid) return "user_not_found";
-
-    throw new UnsupportedValueError("Unexpected ApiUpgradeCanisterResponse type received", candid);
 }
 
 export function upgradeStorageResponse(candid: ApiUpgradeStorageResponse): UpgradeStorageResponse {
@@ -319,8 +300,8 @@ export function resendCodeResponse(candid: ApiResendCodeResponse): ResendCodeRes
     if ("Success" in candid) {
         return "success";
     }
-    if ("AlreadyClaimed" in candid) {
-        return "already_claimed";
+    if ("PhoneNumberAlreadyConfirmed" in candid) {
+        return "phone_number_already_confirmed";
     }
     if ("UserNotFound" in candid) {
         return "user_not_found";
