@@ -1,7 +1,6 @@
 use crate::model::account_billing::AccountBilling;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use serializer::unwrap_option;
 use types::{
     CanisterCreationStatusInternal, CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId,
     UserSummary, Version,
