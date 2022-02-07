@@ -17,7 +17,6 @@ import {
     PartialUserSummary,
     SearchArgs,
     SearchResponse,
-    UpgradeCanisterResponse,
     CreateCanisterResponse,
     RegistrationState,
     UnconfirmedPhoneNumberState,

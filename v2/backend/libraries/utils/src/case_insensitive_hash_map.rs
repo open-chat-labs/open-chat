@@ -43,6 +43,10 @@ impl<V> CaseInsensitiveHashMap<V> {
             .filter(move |(k, _)| k.starts_with(&term_uppercase))
             .map(|(_, v)| v)
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &V)> {
+        self.map.iter()
+    }
 }
 
 impl<V> Default for CaseInsensitiveHashMap<V> {

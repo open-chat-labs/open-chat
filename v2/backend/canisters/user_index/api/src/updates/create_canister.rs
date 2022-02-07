@@ -9,7 +9,6 @@ pub struct Args {}
 pub enum Response {
     Success(CanisterId),
     UserNotFound,
-    UserUnconfirmed,
     UserAlreadyCreated,
     CreationInProgress,
     CyclesBalanceTooLow,

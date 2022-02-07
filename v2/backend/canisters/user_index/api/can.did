@@ -36,7 +36,7 @@ type SubmitPhoneNumberResponse =
         AlreadyRegistered;
         AlreadyRegisteredByOther;
         InvalidPhoneNumber;
-        UserLimitReached;
+        UserNotFound;
     };
 
 type ConfirmPhoneNumberArgs = 
@@ -50,7 +50,7 @@ type ConfirmPhoneNumberResponse =
         ConfirmationCodeIncorrect;
         ConfirmationCodeExpired;
         AlreadyClaimed;
-        PhoneNumberNotSubmitted;
+        UserNotFound;
     };
 
 type SuccessResult =
@@ -65,36 +65,9 @@ type ResendCodeArgs =
 type ResendCodeResponse = 
     variant {
         Success;
-        AlreadyClaimed;
         PhoneNumberNotSubmitted;
+        PhoneNumberAlreadyConfirmed;
         UserNotFound;
-    };
-
-type GenerateRegistrationFeeArgs =
-    record {
-        currency: Cryptocurrency;
-    };
-
-type GenerateRegistrationFeeResponse =
-    variant {
-        Success: record {
-            fee: RegistrationFee;
-        };
-        AlreadyRegistered;
-        InvalidCurrency;
-    };
-
-type NotifyRegistrationFeePaidArgs =
-    record {
-    };
-
-type NotifyRegistrationFeePaidResponse =
-    variant {
-        Success;
-        AlreadyRegistered;
-        PaymentNotFound;
-        UserNotFound;
-        InternalError: text;
     };
 
 type UpgradeStorageArgs =
@@ -124,7 +97,6 @@ type CreateCanisterResponse =
     variant {
         Success: CanisterId;
         UserNotFound;
-        UserUnconfirmed;
         UserAlreadyCreated;
         CreationInProgress;
         CyclesBalanceTooLow;
@@ -140,7 +112,6 @@ type SetUsernameResponse =
     variant {
         Success;
         UsernameTaken;
-        UserUnconfirmed;
         UserNotFound;
         UsernameInvalid;
         UsernameTooShort: nat16;
@@ -171,17 +142,9 @@ type CurrentUserArgs =
 type CurrentUserResponse =
     variant {
         UserNotFound;
-        Unconfirmed: record {
-            state: UnconfirmedUserState;
-        };
-        ConfirmedPendingUsername: record {
-            canister_creation_status: CanisterCreationStatus;
-            confirmation_state: ConfirmationState;
-        };
         Confirmed: record {
             username: text;
             canister_creation_status: CanisterCreationStatus;
-            confirmation_state: ConfirmationState;
         };
         Created: record {
             user_id: UserId;
@@ -195,22 +158,10 @@ type CurrentUserResponse =
         };
     };
 
-type UnconfirmedUserState =
-    variant {
-        PhoneNumber: UnconfirmedPhoneNumberState;
-        RegistrationFee: RegistrationFee;
-    };
-
 type UnconfirmedPhoneNumberState =
     record {
         phone_number: PhoneNumber;
         valid_until: TimestampMillis;
-    };
-
-type ConfirmationState =
-    variant {
-        PhoneNumber: PhoneNumber;
-        RegistrationFee: RegistrationFee;
     };
 
 type PhoneStatus =
@@ -311,12 +262,6 @@ service: {
     // If the user did not receive or enter the confirmation code before it expired then
     // call this to resend the code
     resend_code: (ResendCodeArgs) -> (ResendCodeResponse);
-
-    // If the user wants to register by paying a small fee, they should call this endpoint with their chosen currency,
-    // the response will contain the payment details
-    generate_registration_fee: (GenerateRegistrationFeeArgs) -> (GenerateRegistrationFeeResponse);
-
-    notify_registration_fee_paid: (NotifyRegistrationFeePaidArgs) -> (NotifyRegistrationFeePaidResponse);
 
     // Increases the user's storage limit in OpenStorage (provided the user has deposited enough ICP)
     upgrade_storage: (UpgradeStorageArgs) -> (UpgradeStorageResponse);

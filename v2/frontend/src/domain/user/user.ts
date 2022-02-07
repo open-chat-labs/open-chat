@@ -67,14 +67,6 @@ export type CreateCanisterResponse =
     | "cycles_balance_too_low"
     | "user_not_found";
 
-export type UpgradeCanisterResponse =
-    | "upgrade_in_progress"
-    | "user_not_created"
-    | "success"
-    | "upgrade_not_required"
-    | "internal_error"
-    | "user_not_found";
-
 export type CurrentUserResponse = ConfirmedUser | CreatedUser | UserNotFound;
 
 export type UpgradeInProgress = {
@@ -118,17 +110,11 @@ export type SetUsernameResponse =
     | "username_invalid";
 
 export type SubmitPhoneNumberResponse =
-    | RegisterSuccess
-    | AlreadyRegistered
-    | AlreadyRegisteredByOther
-    | UserLimitReached
-    | InvalidPhoneNumber;
-
-export type RegisterSuccess = { kind: "success" };
-export type AlreadyRegistered = { kind: "already_registered" };
-export type AlreadyRegisteredByOther = { kind: "already_registered_by_other" };
-export type InvalidPhoneNumber = { kind: "invalid_phone_number" };
-export type UserLimitReached = { kind: "user_limit_reached" };
+    | "success"
+    | "already_registered"
+    | "already_registered_by_other"
+    | "invalid_phone_number"
+    | "user_not_found";
 
 export type ConfirmPhoneNumberResponse =
     | { kind: "success"; storageLimitBytes: number }
@@ -140,7 +126,7 @@ export type ConfirmPhoneNumberResponse =
 
 export type ResendCodeResponse =
     | "success"
-    | "already_claimed"
+    | "phone_number_already_confirmed"
     | "user_not_found"
     | "phone_number_not_submitted";
 

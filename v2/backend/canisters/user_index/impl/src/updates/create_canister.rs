@@ -1,12 +1,10 @@
 use crate::model::account_billing::AccountBilling;
 use crate::model::user::{CreatedUser, PhoneStatus, User};
 use crate::model::user_map::UpdateUserResult;
-use crate::updates::storage_byte_limit_for_new_user;
 use crate::{mutate_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use open_storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterCreationStatus, CanisterCreationStatusInternal, CanisterId, CanisterWasm, Cycles, CyclesTopUp, Version};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_index_canister::create_canister::{Response::*, *};
@@ -77,9 +75,8 @@ struct InitOk {
 fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
     let caller = runtime_state.env.caller();
     let response;
-    if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
-        response = match user {
-            User::Unconfirmed(_) => UserUnconfirmed,
+    if let Some(mut user) = runtime_state.data.users.get_by_principal(&caller).cloned() {
+        response = match &user {
             User::Created(_) => UserAlreadyCreated,
             User::Confirmed(confirmed_user) => match confirmed_user.canister_creation_status {
                 CanisterCreationStatusInternal::Pending(canister_id) => {
@@ -95,7 +92,6 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                     };
 
                     let user_principal = confirmed_user.principal;
-                    let mut user = user.clone();
                     user.set_canister_creation_status(CanisterCreationStatusInternal::InProgress);
                     match runtime_state.data.users.update(user) {
                         UpdateUserResult::Success => {
@@ -133,59 +129,28 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
 
 fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
-    if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
-        if let User::Confirmed(confirmed_user) = user {
-            if let CanisterCreationStatus::InProgress = confirmed_user.canister_creation_status.into() {
-                let user_to_update = match &confirmed_user.username {
-                    Some(username) => {
-                        let phone_status = match &confirmed_user.phone_number {
-                            Some(pn) => PhoneStatus::Confirmed(pn.clone()),
-                            None => PhoneStatus::None,
-                        };
-                        let open_storage_limit_bytes =
-                            storage_byte_limit_for_new_user(&phone_status, &confirmed_user.registration_fee);
-
-                        let created_user = CreatedUser {
-                            principal: caller,
-                            user_id: canister_id.into(),
-                            username: username.clone(),
-                            date_created: now,
-                            date_updated: now,
-                            last_online: now,
-                            wasm_version,
-                            upgrade_in_progress: false,
-                            cycle_top_ups: vec![CyclesTopUp {
-                                amount: USER_CANISTER_INITIAL_CYCLES_BALANCE,
-                                date: now,
-                            }],
-                            avatar_id: None,
-                            registration_fee: confirmed_user.registration_fee.clone(),
-                            account_billing: AccountBilling::default(),
-                            open_storage_limit_bytes,
-                            phone_status,
-                        };
-
-                        if open_storage_limit_bytes > 0 {
-                            runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
-                                user_id: caller,
-                                byte_limit: open_storage_limit_bytes,
-                            });
-                        }
-
-                        User::Created(created_user)
-                    }
-                    None => {
-                        let mut user = user.clone();
-                        user.set_canister_creation_status(CanisterCreationStatusInternal::Created(
-                            canister_id,
-                            wasm_version,
-                            USER_CANISTER_INITIAL_CYCLES_BALANCE,
-                        ));
-                        user
-                    }
-                };
-                runtime_state.data.users.update(user_to_update);
-            }
+    if let Some(User::Confirmed(user)) = runtime_state.data.users.get_by_principal(&caller).cloned() {
+        if let CanisterCreationStatus::InProgress = user.canister_creation_status.into() {
+            let created_user = User::Created(CreatedUser {
+                principal: caller,
+                user_id: canister_id.into(),
+                username: user.username,
+                date_created: now,
+                date_updated: now,
+                last_online: now,
+                wasm_version,
+                upgrade_in_progress: false,
+                cycle_top_ups: vec![CyclesTopUp {
+                    amount: USER_CANISTER_INITIAL_CYCLES_BALANCE,
+                    date: now,
+                }],
+                avatar_id: None,
+                registration_fee: None,
+                account_billing: AccountBilling::default(),
+                open_storage_limit_bytes: 0,
+                phone_status: PhoneStatus::None,
+            });
+            runtime_state.data.users.update(created_user);
         }
     }
 }

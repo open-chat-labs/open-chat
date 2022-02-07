@@ -71,15 +71,15 @@
             busy = true;
             api.submitPhoneNumber(phoneNumber)
                 .then((resp) => {
-                    if (resp.kind === "already_registered") {
+                    if (resp === "already_registered") {
                         error = "register.phoneAlreadyRegistered";
-                    } else if (resp.kind === "already_registered_by_other") {
+                    } else if (resp === "already_registered_by_other") {
                         error = "register.phoneAlreadyRegisteredByAnother";
-                    } else if (resp.kind === "invalid_phone_number") {
+                    } else if (resp === "invalid_phone_number") {
                         error = "register.phoneInvalid";
-                    } else if (resp.kind === "user_limit_reached") {
-                        error = "register.userLimitReached";
-                    } else if (resp.kind === "success") {
+                    } else if (resp === "user_not_found") {
+                        error = "register.userNotFound";
+                    } else if (resp === "success") {
                         error = undefined;
                         awaitingCode = true;
                     }

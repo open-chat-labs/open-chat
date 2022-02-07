@@ -10,8 +10,6 @@ fn main() {
     generate_candid_method!(user_index, add_super_admin, update);
     generate_candid_method!(user_index, confirm_phone_number, update);
     generate_candid_method!(user_index, create_canister, update);
-    generate_candid_method!(user_index, generate_registration_fee, update);
-    generate_candid_method!(user_index, notify_registration_fee_paid, update);
     generate_candid_method!(user_index, register_user, update);
     generate_candid_method!(user_index, remove_super_admin, update);
     generate_candid_method!(user_index, resend_code, update);

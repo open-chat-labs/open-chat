@@ -1,4 +1,3 @@
-use crate::model::user::User;
 use crate::model::user_map::RegisterUserResult;
 use crate::updates::create_canister::create_canister_impl;
 use crate::updates::set_username::{validate_username, UsernameValidationResult};
@@ -37,14 +36,9 @@ fn register_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Result<()
     };
 
     let caller = runtime_state.env.caller();
-
-    if let Some(User::Unconfirmed(_)) = runtime_state.data.users.get_by_principal(&caller) {
-        runtime_state.data.users.remove_by_principal(&caller);
-    }
-
     let now = runtime_state.env.now();
 
-    match runtime_state.data.users.register(caller, &args.username, now) {
+    match runtime_state.data.users.register(caller, args.username, now) {
         RegisterUserResult::AlreadyExists => Err(AlreadyRegistered),
         RegisterUserResult::UsernameTaken => Err(UsernameTaken),
         RegisterUserResult::Success => Ok(()),
