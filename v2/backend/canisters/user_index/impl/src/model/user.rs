@@ -1,6 +1,7 @@
 use crate::model::account_billing::AccountBilling;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
+use serializer::unwrap_option;
 use types::{
     CanisterCreationStatusInternal, CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId,
     UserSummary, Version,
@@ -117,6 +118,7 @@ impl User {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ConfirmedUser {
     pub principal: Principal,
+    #[serde(deserialize_with = "unwrap_option")]
     pub username: String,
     pub date_confirmed: TimestampMillis,
     pub canister_creation_status: CanisterCreationStatusInternal,

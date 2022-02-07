@@ -12,6 +12,7 @@ mod c2c_join_group;
 mod c2c_leave_group;
 mod c2c_relinquish_super_admin;
 mod c2c_toggle_mute_notifications;
+mod change_role;
 mod delete_group;
 mod delete_messages;
 mod dismiss_admin;

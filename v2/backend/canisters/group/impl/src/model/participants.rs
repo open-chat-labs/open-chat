@@ -159,19 +159,96 @@ impl Participants {
         self.user_id_to_principal_map.len() as u32
     }
 
-    pub fn make_admin(&mut self, user_id: &UserId) -> MakeAdminResult {
-        match self.get_by_user_id_mut(user_id) {
-            Some(p) => match p.role {
-                Role::Owner => return MakeAdminResult::AlreadyOwner,
-                Role::Admin | Role::SuperAdmin(FallbackRole::Admin) => return MakeAdminResult::AlreadyAdmin,
-                Role::Participant => p.role = Role::Admin,
-                Role::SuperAdmin(FallbackRole::Participant) => p.role = Role::SuperAdmin(FallbackRole::Admin),
-            },
-            None => return MakeAdminResult::NotInGroup,
+    pub fn change_role(&mut self, caller: Principal, user_id: &UserId, new_role: Role) -> ChangeRoleResult {
+        // This function cannot be used to make a user a SuperAdmin
+        if matches!(new_role, Role::SuperAdmin(_)) {
+            return ChangeRoleResult::Invalid;
         }
 
-        self.admin_count += 1;
-        MakeAdminResult::Success
+        // Is the caller authorized to change the user to this role
+        let caller_id = match self.get_by_principal(&caller) {
+            Some(p) => {
+                if !p.role.can_change_role(new_role) {
+                    return ChangeRoleResult::NotAuthorized;
+                }
+                p.user_id
+            }
+            None => return ChangeRoleResult::CallerNotInGroup,
+        };
+
+        let mut admin_count = self.admin_count;
+
+        let member = match self.get_by_user_id_mut(user_id) {
+            Some(p) => p,
+            None => return ChangeRoleResult::UserNotInGroup,
+        };
+
+        // It is not possible to change the role of the owner
+        if matches!(member.role, Role::Owner) {
+            return ChangeRoleResult::Invalid;
+        }
+
+        if member.role == new_role {
+            return ChangeRoleResult::Unchanged;
+        }
+
+        let mut prev_owner_id: Option<UserId> = None;
+
+        if let Role::SuperAdmin(fallback) = member.role {
+            // Super admins can be "changed" to admins or particpants but that just affects
+            // the fallback role for when they cease to be a super admin.
+            match new_role {
+                Role::Admin => {
+                    if matches!(fallback, FallbackRole::Admin) {
+                        return ChangeRoleResult::Unchanged;
+                    }
+                    member.role = Role::SuperAdmin(FallbackRole::Admin);
+                    admin_count += 1;
+                }
+                Role::Participant => {
+                    if matches!(fallback, FallbackRole::Participant) {
+                        return ChangeRoleResult::Unchanged;
+                    }
+                    member.role = Role::SuperAdmin(FallbackRole::Participant);
+                    admin_count -= 1;
+                }
+                _ => return ChangeRoleResult::Invalid,
+            }
+        } else {
+            if matches!(member.role, Role::Admin) {
+                admin_count -= 1;
+            }
+
+            member.role = new_role;
+            let new_owner_id = member.user_id;
+
+            if matches!(new_role, Role::Owner) {
+                // If the member is becoming the owner then any previous owner becomes an admin
+                let curr_owner_id = self
+                    .iter()
+                    .find(|p| p.role.is_owner() && p.user_id != new_owner_id)
+                    .map(|p| p.user_id);
+                if let Some(owner_id) = curr_owner_id {
+                    if let Some(curr_owner) = self.get_by_user_id_mut(&owner_id) {
+                        curr_owner.role = Role::Admin;
+                        admin_count += 1;
+                        prev_owner_id = Some(owner_id);
+                    }
+                }
+                if prev_owner_id.is_none() {
+                    return ChangeRoleResult::Invalid;
+                }
+            } else if matches!(new_role, Role::Admin) {
+                admin_count += 1;
+            }
+        }
+
+        self.admin_count = admin_count;
+
+        ChangeRoleResult::Success(ChangeRoleSuccessResult {
+            caller_id,
+            prev_owner_id,
+        })
     }
 
     pub fn make_super_admin(&mut self, user_id: &UserId) -> MakeSuperAdminResult {
@@ -190,62 +267,6 @@ impl Participants {
             },
             None => MakeSuperAdminResult::NotInGroup,
         }
-    }
-
-    pub fn transfer_ownership(&mut self, caller_id: &UserId, user_id: &UserId) -> TransferOwnershipResult {
-        match self.get_by_user_id(caller_id) {
-            Some(caller) => {
-                if !caller.role.can_transfer_ownership() {
-                    return TransferOwnershipResult::CallerNotOwner;
-                } else {
-                    match self.get_by_user_id(user_id) {
-                        Some(user) => {
-                            if user.role.is_owner() {
-                                // Should not happen. Means > 1 owner!
-                                return TransferOwnershipResult::UserAlreadyOwner;
-                            } else if user.role.is_super_admin() {
-                                return TransferOwnershipResult::UserAlreadySuperAdmin;
-                            }
-                        }
-                        None => return TransferOwnershipResult::UserNotInGroup,
-                    }
-                }
-            }
-            None => return TransferOwnershipResult::CallerNotInGroup,
-        }
-
-        let curr_owner_id = self.iter().find(|p| p.role.is_owner()).map(|p| p.user_id);
-
-        if let Some(curr_owner_id) = curr_owner_id {
-            if let Some(curr_owner) = self.get_by_user_id_mut(&curr_owner_id) {
-                curr_owner.role = Role::Admin;
-                self.admin_count += 1;
-            }
-        }
-
-        if let Some(user) = self.get_by_user_id_mut(user_id) {
-            let was_user_admin = user.role.is_admin();
-            user.role = Role::Owner;
-            if was_user_admin {
-                self.admin_count -= 1;
-            }
-        }
-
-        TransferOwnershipResult::Success(curr_owner_id)
-    }
-
-    pub fn dismiss_admin(&mut self, user_id: &UserId) -> DismissAdminResult {
-        match self.get_by_user_id_mut(user_id) {
-            Some(p) => match p.role {
-                Role::Admin => p.role = Role::Participant,
-                Role::SuperAdmin(FallbackRole::Admin) => p.role = Role::SuperAdmin(FallbackRole::Participant),
-                _ => return DismissAdminResult::UserNotAdmin,
-            },
-            None => return DismissAdminResult::UserNotInGroup,
-        }
-
-        self.admin_count -= 1;
-        DismissAdminResult::Success
     }
 
     pub fn dismiss_super_admin(&mut self, user_id: &UserId) -> DismissSuperAdminResult {
@@ -284,11 +305,18 @@ pub enum AddResult {
     Blocked,
 }
 
-pub enum MakeAdminResult {
-    Success,
-    NotInGroup,
-    AlreadyAdmin,
-    AlreadyOwner,
+pub enum ChangeRoleResult {
+    Success(ChangeRoleSuccessResult),
+    CallerNotInGroup,
+    NotAuthorized,
+    UserNotInGroup,
+    Unchanged,
+    Invalid,
+}
+
+pub struct ChangeRoleSuccessResult {
+    pub caller_id: UserId,
+    pub prev_owner_id: Option<UserId>,
 }
 
 pub enum MakeSuperAdminResult {
@@ -296,21 +324,6 @@ pub enum MakeSuperAdminResult {
     NotInGroup,
     AlreadySuperAdmin,
     AlreadyOwner,
-}
-
-pub enum TransferOwnershipResult {
-    Success(Option<UserId>),
-    UserNotInGroup,
-    UserAlreadyOwner,
-    UserAlreadySuperAdmin,
-    CallerNotInGroup,
-    CallerNotOwner,
-}
-
-pub enum DismissAdminResult {
-    Success,
-    UserNotInGroup,
-    UserNotAdmin,
 }
 
 pub enum DismissSuperAdminResult {
