@@ -1,4 +1,4 @@
-use crate::{EventIndex, Message, MessageId, MessageIndex, UserId};
+use crate::{EventIndex, Message, MessageId, MessageIndex, Role, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -19,6 +19,7 @@ pub enum GroupChatEvent {
     ParticipantRelinquishesSuperAdmin(ParticipantRelinquishesSuperAdmin),
     ParticipantsPromotedToAdmin(ParticipantsPromotedToAdmin),
     ParticipantsDismissedAsAdmin(ParticipantsDismissedAsAdmin),
+    RoleChanged(RoleChanged),
     UsersBlocked(UsersBlocked),
     UsersUnblocked(UsersUnblocked),
     MessageEdited(UpdatedMessage),
@@ -120,6 +121,13 @@ pub struct OwnershipTransferred {
 pub struct ParticipantsDismissedAsAdmin {
     pub user_ids: Vec<UserId>,
     pub dismissed_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct RoleChanged {
+    pub user_ids: Vec<UserId>,
+    pub changed_by: UserId,
+    pub new_role: Role,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
