@@ -9,6 +9,7 @@ generate_query_call!(events_range);
 // Updates
 generate_update_call!(add_participants);
 generate_update_call!(block_user);
+generate_update_call!(change_role);
 generate_update_call!(delete_messages);
 generate_update_call!(dismiss_admin);
 generate_update_call!(edit_message);
