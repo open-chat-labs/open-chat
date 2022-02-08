@@ -9,52 +9,36 @@ use types::{
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum User {
-    Confirmed(ConfirmedUser),
     Created(CreatedUser),
 }
 
 impl User {
     pub fn get_principal(&self) -> Principal {
         match self {
-            User::Confirmed(u) => u.principal,
             User::Created(u) => u.principal,
         }
     }
 
     pub fn get_phone_number(&self) -> Option<&PhoneNumber> {
         match self {
-            User::Confirmed(_) => None,
             User::Created(u) => u.phone_status.phone_number(),
         }
     }
 
     pub fn get_username(&self) -> &str {
         match self {
-            User::Confirmed(u) => &u.username,
             User::Created(u) => &u.username,
         }
     }
 
     pub fn get_user_id(&self) -> Option<UserId> {
         match self {
-            User::Confirmed(u) => match u.canister_creation_status {
-                CanisterCreationStatusInternal::Pending(canister_id) => canister_id.map(|c| c.into()),
-                CanisterCreationStatusInternal::Created(canister_id, ..) => Some(canister_id.into()),
-                _ => None,
-            },
             User::Created(u) => Some(u.user_id),
         }
     }
 
     pub fn wasm_version(&self) -> Option<Version> {
         match self {
-            User::Confirmed(u) => {
-                if let CanisterCreationStatusInternal::Created(_, v, _) = u.canister_creation_status {
-                    Some(v)
-                } else {
-                    None
-                }
-            }
             User::Created(u) => Some(u.wasm_version),
         }
     }
@@ -77,28 +61,12 @@ impl User {
         }
     }
 
-    pub fn set_canister_creation_status(&mut self, canister_creation_status: CanisterCreationStatusInternal) -> bool {
-        match self {
-            User::Confirmed(u) => u.canister_creation_status = canister_creation_status,
-            _ => return false,
-        }
-        true
-    }
-
     pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<Version>) {
         match self {
             User::Created(u) => {
                 u.upgrade_in_progress = upgrade_in_progress;
                 if let Some(version) = new_version {
                     u.wasm_version = version;
-                }
-            }
-            User::Confirmed(u) => {
-                u.upgrade_in_progress = upgrade_in_progress;
-                if let Some(version) = new_version {
-                    if let CanisterCreationStatusInternal::Created(_, v, _) = &mut u.canister_creation_status {
-                        *v = version;
-                    }
                 }
             }
         }
@@ -112,15 +80,6 @@ impl User {
             false
         }
     }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct ConfirmedUser {
-    pub principal: Principal,
-    pub username: String,
-    pub date_confirmed: TimestampMillis,
-    pub canister_creation_status: CanisterCreationStatusInternal,
-    pub upgrade_in_progress: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -196,19 +155,6 @@ pub struct UnconfirmedPhoneNumber {
     pub confirmation_code: String,
     pub valid_until: TimestampMillis,
     pub sms_messages_sent: u16,
-}
-
-#[cfg(test)]
-impl Default for ConfirmedUser {
-    fn default() -> Self {
-        ConfirmedUser {
-            principal: Principal::anonymous(),
-            username: "abc".to_string(),
-            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
-            upgrade_in_progress: false,
-            date_confirmed: 0,
-        }
-    }
 }
 
 #[cfg(test)]

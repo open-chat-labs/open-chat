@@ -1,5 +1,5 @@
 use crate::model::account_billing::AccountCharge;
-use crate::model::user::{ConfirmedUser, PhoneStatus, UnconfirmedPhoneNumber, User};
+use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
@@ -18,13 +18,10 @@ pub struct UserMap {
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,
     username_to_principal: CaseInsensitiveHashMap<Principal>,
     user_id_to_principal: HashMap<UserId, Principal>,
-    users_confirmed_via_phone: u64,
-    users_confirmed_via_icp: u64,
-    users_confirmed_via_cycles: u64,
-    users_confirmed_automatically: u64,
     cached_metrics: Timestamped<Metrics>,
     users_with_unconfirmed_phone_numbers: HashSet<Principal>,
     unconfirmed_phone_numbers_last_pruned: TimestampMillis,
+    reserved_usernames: HashSet<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Default, Debug)]
@@ -42,30 +39,34 @@ pub struct Metrics {
 }
 
 impl UserMap {
-    pub fn register(&mut self, principal: Principal, username: String, now: TimestampMillis) -> RegisterUserResult {
-        if self.users_by_principal.contains_key(&principal) {
-            return RegisterUserResult::AlreadyExists;
-        }
+    pub fn reserve_username(&mut self, username: String) {
+        self.reserved_usernames.insert(username);
+    }
 
-        if self.username_to_principal.contains_key(&username) {
-            return RegisterUserResult::UsernameTaken;
-        }
+    pub fn release_username(&mut self, username: &str) {
+        self.reserved_usernames.remove(username);
+    }
 
+    pub fn username_available(&self, username: &str) -> bool {
+        self.username_to_principal.contains_key(username) || self.reserved_usernames.contains(username)
+    }
+
+    pub fn register(&mut self, principal: Principal, user_id: UserId, wasm_version: Version, username: String, now: TimestampMillis) {
         self.username_to_principal.insert(&username, principal);
+        self.user_id_to_principal.insert(&user_id, principal);
 
-        let user = ConfirmedUser {
+        let user = CreatedUser {
             principal,
+            user_id,
             username,
-            date_confirmed: now,
-            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
-            upgrade_in_progress: false,
+            date_created: now,
+            date_updated: now,
+            last_online: now,
+            wasm_version,
+            ..Default::default()
         };
 
-        self.users_by_principal.insert(principal, User::Confirmed(user));
-
-        self.users_confirmed_automatically += 1;
-
-        RegisterUserResult::Success
+        self.users_by_principal.insert(principal, User::Created(user));
     }
 
     pub fn update(&mut self, user: User) -> UpdateUserResult {
@@ -375,12 +376,6 @@ impl UserMap {
             }
         }
     }
-}
-
-pub enum RegisterUserResult {
-    Success,
-    AlreadyExists,
-    UsernameTaken,
 }
 
 #[derive(Debug)]
