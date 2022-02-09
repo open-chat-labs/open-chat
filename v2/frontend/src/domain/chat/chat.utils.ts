@@ -105,6 +105,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "name_changed":
             case "desc_changed":
             case "avatar_changed":
+            case "role_changed":
                 userIds.add(e.event.changedBy);
                 break;
             case "group_chat_created":
@@ -161,6 +162,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "name_changed":
         case "desc_changed":
         case "avatar_changed":
+        case "role_changed":
             return event.changedBy;
         case "group_chat_created":
             return event.created_by;

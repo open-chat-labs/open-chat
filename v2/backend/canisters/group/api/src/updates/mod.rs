@@ -7,6 +7,7 @@ pub mod c2c_join_group_v2;
 pub mod c2c_leave_group;
 pub mod c2c_relinquish_super_admin;
 pub mod c2c_toggle_mute_notifications;
+pub mod change_role;
 pub mod delete_group;
 pub mod delete_messages;
 pub mod dismiss_admin;
