@@ -750,13 +750,20 @@ export function replaceLocal(
     });
 
     // concat and dedupe the two lists of non-message events
-    const uniqEvts = dedupe((a, b) => a.index === b.index, [...clientEvts, ...serverEvts]);
+    const uniqEvts = dedupe(
+        (a, b) => a.index === b.index,
+        [...clientEvts, ...serverEvts].sort(sortByIndex)
+    );
 
     // create a list from the merged map of messages
     const msgEvts = Object.values(clientMsgs);
 
     // concat it with the merged non-message event list
-    return [...uniqEvts, ...msgEvts].sort((a, b) => a.index - b.index);
+    return [...uniqEvts, ...msgEvts].sort(sortByIndex);
+}
+
+function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
+    return a.index - b.index;
 }
 
 function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
