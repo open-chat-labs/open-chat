@@ -15,14 +15,18 @@ const PRUNE_UNCONFIRMED_PHONE_NUMBERS_INTERVAL_MS: Milliseconds = MINUTE_IN_MS *
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserMap {
     users_by_principal: HashMap<Principal, User>,
+    #[serde(skip)]
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,
+    #[serde(skip)]
     username_to_principal: CaseInsensitiveHashMap<Principal>,
+    #[serde(skip)]
     user_id_to_principal: HashMap<UserId, Principal>,
     users_confirmed_via_phone: u64,
     users_confirmed_via_icp: u64,
     users_confirmed_via_cycles: u64,
     users_confirmed_automatically: u64,
     cached_metrics: Timestamped<Metrics>,
+    #[serde(skip)]
     users_with_unconfirmed_phone_numbers: HashSet<Principal>,
     unconfirmed_phone_numbers_last_pruned: TimestampMillis,
 }
@@ -42,6 +46,38 @@ pub struct Metrics {
 }
 
 impl UserMap {
+    pub fn rehydrate(&mut self) {
+        for (principal, user) in self.users_by_principal.iter() {
+            match user {
+                User::Created(u) => {
+                    match &u.phone_status {
+                        PhoneStatus::Confirmed(p) => {
+                            self.phone_number_to_principal.insert(p.clone(), *principal);
+                        }
+                        PhoneStatus::Unconfirmed(p) => {
+                            self.phone_number_to_principal.insert(p.phone_number.clone(), *principal);
+                            self.users_with_unconfirmed_phone_numbers.insert(*principal);
+                        }
+                        _ => {}
+                    };
+
+                    self.username_to_principal.insert(&u.username, *principal);
+                    self.user_id_to_principal.insert(u.user_id, *principal);
+                }
+                User::Confirmed(u) => {
+                    self.username_to_principal.insert(&u.username, *principal);
+                    if let Some(user_id) = match u.canister_creation_status {
+                        CanisterCreationStatusInternal::Pending(canister_id) => canister_id.map(|c| c.into()),
+                        CanisterCreationStatusInternal::Created(canister_id, ..) => Some(canister_id.into()),
+                        _ => None,
+                    } {
+                        self.user_id_to_principal.insert(user_id, *principal);
+                    }
+                }
+            };
+        }
+    }
+
     pub fn register(&mut self, principal: Principal, username: String, now: TimestampMillis) -> RegisterUserResult {
         if self.users_by_principal.contains_key(&principal) {
             return RegisterUserResult::AlreadyExists;
