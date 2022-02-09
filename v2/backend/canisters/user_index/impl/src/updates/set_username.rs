@@ -1,10 +1,8 @@
-use crate::model::account_billing::AccountBilling;
-use crate::model::user::{CreatedUser, PhoneStatus, User};
+use crate::model::user::User;
 use crate::model::user_map::UpdateUserResult;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use types::{CanisterCreationStatusInternal, CyclesTopUp};
 use user_index_canister::set_username::{Response::*, *};
 
 const MAX_USERNAME_LENGTH: u16 = 25;
@@ -31,45 +29,11 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         _ => {}
     };
 
-    if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
-        let user_to_update = match user {
-            User::Confirmed(user) => {
-                if let CanisterCreationStatusInternal::Created(canister_id, wasm_version, cycles) =
-                    &user.canister_creation_status
-                {
-                    User::Created(CreatedUser {
-                        principal: caller,
-                        user_id: (*canister_id).into(),
-                        username,
-                        date_created: now,
-                        date_updated: now,
-                        last_online: now,
-                        wasm_version: *wasm_version,
-                        upgrade_in_progress: user.upgrade_in_progress,
-                        cycle_top_ups: vec![CyclesTopUp {
-                            amount: *cycles,
-                            date: now,
-                        }],
-                        avatar_id: None,
-                        registration_fee: None,
-                        account_billing: AccountBilling::default(),
-                        open_storage_limit_bytes: 0,
-                        phone_status: PhoneStatus::None,
-                    })
-                } else {
-                    let mut user = user.clone();
-                    user.username = username;
-                    User::Confirmed(user)
-                }
-            }
-            User::Created(user) => {
-                let mut user = user.clone();
-                user.username = username;
-                user.date_updated = now;
-                User::Created(user)
-            }
-        };
-        match runtime_state.data.users.update(user_to_update) {
+    if let Some(User::Created(user)) = runtime_state.data.users.get_by_principal(&caller) {
+        let mut user_to_update = user.clone();
+        user_to_update.username = username;
+        user_to_update.date_updated = now;
+        match runtime_state.data.users.update(User::Created(user_to_update)) {
             UpdateUserResult::Success => Success,
             UpdateUserResult::UsernameTaken => UsernameTaken,
             UpdateUserResult::UserNotFound => UserNotFound,
@@ -110,7 +74,7 @@ pub fn validate_username(username: &str) -> UsernameValidationResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{CreatedUser, PhoneStatus, User};
+    use crate::model::user::{CreatedUser, PhoneStatus};
     use crate::Data;
     use candid::Principal;
     use types::PhoneNumber;
@@ -120,7 +84,7 @@ mod tests {
     fn valid_username_succeeds() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -129,7 +93,7 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
@@ -147,7 +111,7 @@ mod tests {
     fn no_change_to_username_succeeds() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -156,7 +120,7 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
@@ -170,7 +134,7 @@ mod tests {
     fn username_taken() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: Principal::from_slice(&[1]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -179,8 +143,8 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
-        data.users.add_test_user(User::Created(CreatedUser {
+        });
+        data.users.add_test_user(CreatedUser {
             principal: Principal::from_slice(&[2]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: Principal::from_slice(&[2]).into(),
@@ -189,7 +153,7 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
@@ -203,7 +167,7 @@ mod tests {
     fn invalid_username() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -212,7 +176,7 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
@@ -226,7 +190,7 @@ mod tests {
     fn username_too_short() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -235,7 +199,7 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
@@ -249,7 +213,7 @@ mod tests {
     fn username_too_long() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -258,7 +222,7 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {

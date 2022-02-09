@@ -54,7 +54,7 @@ mod tests {
         let env = TestEnv::default();
         let confirmation_code = "123456".to_string();
         let mut data = Data::default();
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: env.caller,
             phone_status: PhoneStatus::Unconfirmed(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
@@ -63,30 +63,26 @@ mod tests {
                 sms_messages_sent: 1,
             }),
             ..Default::default()
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args { confirmation_code };
         let result = confirm_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::Success(_)));
 
-        if let User::Created(user) = runtime_state
+        let User::Created(user) = runtime_state
             .data
             .users
             .get_by_principal(&runtime_state.env.caller())
-            .unwrap()
-        {
-            assert!(matches!(user.phone_status, PhoneStatus::Confirmed(_)));
-        } else {
-            panic!("Unexpected user returned");
-        }
+            .unwrap();
+        assert!(matches!(user.phone_status, PhoneStatus::Confirmed(_)));
     }
 
     #[test]
     fn incorrect_code_returns_confirmation_code_incorrect() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: env.caller,
             phone_status: PhoneStatus::Unconfirmed(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
@@ -95,7 +91,7 @@ mod tests {
                 sms_messages_sent: 1,
             }),
             ..Default::default()
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
@@ -110,7 +106,7 @@ mod tests {
         let confirmation_code = "123456".to_string();
         let mut env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: env.caller,
             phone_status: PhoneStatus::Unconfirmed(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
@@ -119,7 +115,7 @@ mod tests {
                 sms_messages_sent: 1,
             }),
             ..Default::default()
-        }));
+        });
         env.now += 1001;
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -132,11 +128,11 @@ mod tests {
     fn confirmed_phone_number_returns_already_claimed() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_string())),
             ..Default::default()
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
@@ -151,10 +147,10 @@ mod tests {
     fn no_phone_number_returns_confirmation_code_expired() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: env.caller,
             ..Default::default()
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {

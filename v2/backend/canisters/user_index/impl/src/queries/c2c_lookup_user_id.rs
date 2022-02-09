@@ -10,9 +10,7 @@ fn c2c_lookup_user_id(args: Args) -> Response {
 
 fn c2c_lookup_user_id_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(user) = runtime_state.data.users.get_by_principal(&args.user_principal) {
-        if let Some(user_id) = user.get_user_id() {
-            return Response::Success(user_id);
-        }
+        return Response::Success(user.get_user_id());
     }
 
     Response::UserNotFound

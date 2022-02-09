@@ -1,126 +1,65 @@
 use crate::model::account_billing::AccountBilling;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{
-    CanisterCreationStatusInternal, CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId,
-    UserSummary, Version,
-};
+use types::{CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary, Version};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum User {
-    Confirmed(ConfirmedUser),
     Created(CreatedUser),
 }
 
 impl User {
     pub fn get_principal(&self) -> Principal {
-        match self {
-            User::Confirmed(u) => u.principal,
-            User::Created(u) => u.principal,
-        }
+        let User::Created(u) = self;
+        u.principal
     }
 
     pub fn get_phone_number(&self) -> Option<&PhoneNumber> {
-        match self {
-            User::Confirmed(_) => None,
-            User::Created(u) => u.phone_status.phone_number(),
-        }
+        let User::Created(u) = self;
+        u.phone_status.phone_number()
     }
 
     pub fn get_username(&self) -> &str {
-        match self {
-            User::Confirmed(u) => &u.username,
-            User::Created(u) => &u.username,
-        }
+        let User::Created(u) = self;
+        &u.username
     }
 
-    pub fn get_user_id(&self) -> Option<UserId> {
-        match self {
-            User::Confirmed(u) => match u.canister_creation_status {
-                CanisterCreationStatusInternal::Pending(canister_id) => canister_id.map(|c| c.into()),
-                CanisterCreationStatusInternal::Created(canister_id, ..) => Some(canister_id.into()),
-                _ => None,
-            },
-            User::Created(u) => Some(u.user_id),
-        }
+    pub fn get_user_id(&self) -> UserId {
+        let User::Created(u) = self;
+        u.user_id
     }
 
-    pub fn wasm_version(&self) -> Option<Version> {
-        match self {
-            User::Confirmed(u) => {
-                if let CanisterCreationStatusInternal::Created(_, v, _) = u.canister_creation_status {
-                    Some(v)
-                } else {
-                    None
-                }
-            }
-            User::Created(u) => Some(u.wasm_version),
-        }
+    pub fn wasm_version(&self) -> Version {
+        let User::Created(u) = self;
+        u.wasm_version
     }
 
-    pub fn created_user(&self) -> Option<&CreatedUser> {
-        match self {
-            User::Created(u) => Some(u),
-            _ => None,
-        }
+    pub fn created_user(&self) -> &CreatedUser {
+        let User::Created(u) = self;
+        u
     }
 
     pub fn set_avatar_id(&mut self, avatar_id: Option<u128>, now: TimestampMillis) -> bool {
-        match self {
-            User::Created(u) => {
-                u.avatar_id = avatar_id;
-                u.date_updated = now;
-                true
-            }
-            _ => false,
-        }
-    }
-
-    pub fn set_canister_creation_status(&mut self, canister_creation_status: CanisterCreationStatusInternal) -> bool {
-        match self {
-            User::Confirmed(u) => u.canister_creation_status = canister_creation_status,
-            _ => return false,
-        }
+        let User::Created(u) = self;
+        u.avatar_id = avatar_id;
+        u.date_updated = now;
         true
     }
 
     pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<Version>) {
-        match self {
-            User::Created(u) => {
-                u.upgrade_in_progress = upgrade_in_progress;
-                if let Some(version) = new_version {
-                    u.wasm_version = version;
-                }
-            }
-            User::Confirmed(u) => {
-                u.upgrade_in_progress = upgrade_in_progress;
-                if let Some(version) = new_version {
-                    if let CanisterCreationStatusInternal::Created(_, v, _) = &mut u.canister_creation_status {
-                        *v = version;
-                    }
-                }
-            }
+        let User::Created(u) = self;
+        u.upgrade_in_progress = upgrade_in_progress;
+        if let Some(version) = new_version {
+            u.wasm_version = version;
         }
     }
 
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) -> bool {
-        if let User::Created(u) = self {
-            u.cycle_top_ups.push(top_up);
-            true
-        } else {
-            false
-        }
+        let User::Created(u) = self;
+        u.cycle_top_ups.push(top_up);
+        true
     }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct ConfirmedUser {
-    pub principal: Principal,
-    pub username: String,
-    pub date_confirmed: TimestampMillis,
-    pub canister_creation_status: CanisterCreationStatusInternal,
-    pub upgrade_in_progress: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -198,15 +137,29 @@ pub struct UnconfirmedPhoneNumber {
     pub sms_messages_sent: u16,
 }
 
-#[cfg(test)]
-impl Default for ConfirmedUser {
-    fn default() -> Self {
-        ConfirmedUser {
-            principal: Principal::anonymous(),
-            username: "abc".to_string(),
-            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
+impl CreatedUser {
+    pub fn new(
+        principal: Principal,
+        user_id: UserId,
+        username: String,
+        now: TimestampMillis,
+        wasm_version: Version,
+    ) -> CreatedUser {
+        CreatedUser {
+            principal,
+            user_id,
+            username,
+            date_created: now,
+            date_updated: now,
+            last_online: now,
+            wasm_version,
             upgrade_in_progress: false,
-            date_confirmed: 0,
+            cycle_top_ups: Vec::new(),
+            avatar_id: None,
+            registration_fee: None,
+            account_billing: AccountBilling::default(),
+            open_storage_limit_bytes: 0,
+            phone_status: PhoneStatus::None,
         }
     }
 }

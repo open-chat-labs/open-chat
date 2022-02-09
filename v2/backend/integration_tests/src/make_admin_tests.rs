@@ -81,7 +81,7 @@ async fn make_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         .await
         .unwrap()
     {
-        group_canister::dismiss_admin::Response::UserNotAdmin => {}
+        group_canister::dismiss_admin::Response::NotAuthorized => {}
         response => panic!("DismissAdmin returned an unexpected response: {response:?}"),
     };
     println!("Ok");

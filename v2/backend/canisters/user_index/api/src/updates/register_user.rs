@@ -18,5 +18,4 @@ pub enum Response {
     UsernameTooLong(u16),
     CyclesBalanceTooLow,
     InternalError(String),
-    NotSupported,
 }

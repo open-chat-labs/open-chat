@@ -16,7 +16,6 @@ type RegisterUserResponse =
         UsernameTooLong: nat16;
         CyclesBalanceTooLow;
         InternalError: text;
-        NotSupported;
     };
 
 type PhoneNumber = 
@@ -86,20 +85,6 @@ type UpgradeStorageResponse =
         PaymentNotFound;
         StorageLimitExceeded: nat64; // Returns the storage limit in bytes
         UserNotFound;
-        InternalError: text;
-    };
-
-type CreateCanisterArgs =
-    record {
-    };
-
-type CreateCanisterResponse =
-    variant {
-        Success: CanisterId;
-        UserNotFound;
-        UserAlreadyCreated;
-        CreationInProgress;
-        CyclesBalanceTooLow;
         InternalError: text;
     };
 
@@ -265,10 +250,6 @@ service: {
 
     // Increases the user's storage limit in OpenStorage (provided the user has deposited enough ICP)
     upgrade_storage: (UpgradeStorageArgs) -> (UpgradeStorageResponse);
-
-    // Once the confirm_phone_number call has succeeded (user is in one of the "confirmed" states)
-    // then call this to create a canister for the user
-    create_canister: (CreateCanisterArgs) -> (CreateCanisterResponse);
 
     // This is used to set the initial username and subsequently to change it
     set_username: (SetUsernameArgs) -> (SetUsernameResponse);

@@ -46,7 +46,7 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{CreatedUser, PhoneStatus, User};
+    use crate::model::user::{CreatedUser, PhoneStatus};
     use crate::Data;
     use candid::Principal;
     use types::PhoneNumber;
@@ -59,12 +59,12 @@ mod tests {
         let principal = Principal::from_slice(&[1]);
         let phone_number = PhoneNumber::new(44, "1111 111 111".to_string());
 
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal,
             user_id: Principal::from_slice(&[1, 1]).into(),
             username: "1".to_string(),
             ..Default::default()
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
@@ -80,20 +80,20 @@ mod tests {
     fn already_registered_by_other() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: Principal::from_slice(&[1]),
             user_id: Principal::from_slice(&[1, 1]).into(),
             username: "1".to_string(),
             ..Default::default()
-        }));
+        });
 
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: Principal::from_slice(&[2]),
             user_id: Principal::from_slice(&[2, 2]).into(),
             username: "2".to_string(),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             ..Default::default()
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {

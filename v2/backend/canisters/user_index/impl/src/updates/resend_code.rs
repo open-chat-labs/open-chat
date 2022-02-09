@@ -54,7 +54,7 @@ mod tests {
     fn created_user_succeeds() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: env.caller,
             phone_status: PhoneStatus::Unconfirmed(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
@@ -63,7 +63,7 @@ mod tests {
                 sms_messages_sent: 1,
             }),
             ..Default::default()
-        }));
+        });
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let result = resend_code_impl(&mut runtime_state);
