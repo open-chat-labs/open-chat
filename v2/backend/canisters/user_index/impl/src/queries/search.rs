@@ -23,7 +23,7 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     // Filter
     let mut matches: Vec<&CreatedUser> = users
         .search(&search_term)
-        .filter_map(|u| u.created_user())
+        .map(|u| u.created_user())
         .filter(|u| u.principal != caller)
         .collect();
 
@@ -67,7 +67,7 @@ fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{PhoneStatus, User};
+    use crate::model::user::PhoneStatus;
     use crate::Data;
     use candid::Principal;
     use types::PhoneNumber;
@@ -169,7 +169,7 @@ mod tests {
             let bytes = vec![index as u8, 1];
             let p = Principal::from_slice(&bytes[..]);
 
-            data.users.add_test_user(User::Created(CreatedUser {
+            data.users.add_test_user(CreatedUser {
                 principal: p,
                 user_id: p.into(),
                 username: usernames[index].to_string(),
@@ -178,7 +178,7 @@ mod tests {
                 last_online: env.now,
                 phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, format!("+44 1111 111 11{index}"))),
                 ..Default::default()
-            }));
+            });
             env.now += 1000;
         }
 
