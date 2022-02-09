@@ -20,7 +20,7 @@ fn upgrade_user_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState)
         runtime_state.data.canisters_requiring_upgrade.clear();
         runtime_state.data.user_canister_wasm = args.user_canister_wasm.decompress();
 
-        for user_id in runtime_state.data.users.iter().filter_map(|u| u.get_user_id()) {
+        for user_id in runtime_state.data.users.iter().map(|u| u.get_user_id()) {
             runtime_state.data.canisters_requiring_upgrade.enqueue(user_id.into())
         }
 

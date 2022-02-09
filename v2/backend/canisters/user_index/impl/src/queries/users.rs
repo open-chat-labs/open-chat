@@ -20,7 +20,7 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             g.users
                 .into_iter()
                 .filter_map(|user_id| runtime_state.data.users.get_by_user_id(&user_id))
-                .filter_map(|u| u.created_user())
+                .map(|u| u.created_user())
                 .filter(move |u| u.date_updated > updated_since || u.last_online > updated_since)
                 .map(move |u| {
                     let include_username = u.date_updated > updated_since;
@@ -36,7 +36,7 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{CreatedUser, PhoneStatus, User};
+    use crate::model::user::{CreatedUser, PhoneStatus};
     use crate::Data;
     use candid::Principal;
     use itertools::Itertools;
@@ -52,7 +52,7 @@ mod tests {
         let user_id2 = Principal::from_slice(&[2, 2]).into();
         let user_id3 = Principal::from_slice(&[3, 3]).into();
 
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: Principal::from_slice(&[1]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: user_id1,
@@ -61,9 +61,9 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         env.now += 1000;
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: Principal::from_slice(&[2]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: user_id2,
@@ -72,9 +72,9 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         env.now += 1000;
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: Principal::from_slice(&[3]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "3333 333 333".to_owned())),
             user_id: user_id3,
@@ -83,7 +83,7 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         env.now += 1000;
         let runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -118,7 +118,7 @@ mod tests {
         let user_id2 = Principal::from_slice(&[2, 2]).into();
         let user_id3 = Principal::from_slice(&[3, 3]).into();
 
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: Principal::from_slice(&[1]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: user_id1,
@@ -127,9 +127,9 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         env.now += 1000;
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: Principal::from_slice(&[2]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: user_id2,
@@ -138,9 +138,9 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         env.now += 1000;
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: Principal::from_slice(&[3]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "3333 333 333".to_owned())),
             user_id: user_id3,
@@ -149,7 +149,7 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         env.now += 1000;
         let now = env.now;
         let runtime_state = RuntimeState::new(Box::new(env), data);
@@ -184,7 +184,7 @@ mod tests {
         let start = env.now;
         env.now += 10000;
 
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: Principal::from_slice(&[1]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: user_id1,
@@ -193,9 +193,9 @@ mod tests {
             date_updated: start,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         env.now += 1000;
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: Principal::from_slice(&[2]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: user_id2,
@@ -204,9 +204,9 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         env.now += 1000;
-        data.users.add_test_user(User::Created(CreatedUser {
+        data.users.add_test_user(CreatedUser {
             principal: Principal::from_slice(&[3]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "3333 333 333".to_owned())),
             user_id: user_id3,
@@ -215,7 +215,7 @@ mod tests {
             date_updated: env.now,
             last_online: env.now,
             ..Default::default()
-        }));
+        });
         env.now += 1000;
         let runtime_state = RuntimeState::new(Box::new(env), data);
 
