@@ -265,7 +265,7 @@
         "confirmTransfer": "Xác nhận chuyển khoản",
         "confirmCyclesTransferText": "Vui lòng xác nhận khi bạn đã chuyển {amount} cycles từ ví của bạn sang ví  được cung cấp bên dưới",
         "confirmICPTransferText": "Vui lòng xác nhận khi bạn đã chuyển {amount} ICP vào tài khoản được cung cấp bên dưới",
-        "confirm": "Đã xác nhận",
+        "confirm": "Xác nhận",
         "sms": "Mã SMS",
         "transfer": "Chuyển khoản",
         "codeAccepted": "Mã đã được chấp nhận",
