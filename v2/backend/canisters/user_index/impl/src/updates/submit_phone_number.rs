@@ -46,7 +46,7 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{CreatedUser, PhoneStatus};
+    use crate::model::user::{PhoneStatus, User};
     use crate::Data;
     use candid::Principal;
     use types::PhoneNumber;
@@ -59,7 +59,7 @@ mod tests {
         let principal = Principal::from_slice(&[1]);
         let phone_number = PhoneNumber::new(44, "1111 111 111".to_string());
 
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal,
             user_id: Principal::from_slice(&[1, 1]).into(),
             username: "1".to_string(),
@@ -73,21 +73,21 @@ mod tests {
         let result = submit_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::Success));
         let user = runtime_state.data.users.get_by_principal(&principal).unwrap();
-        assert_eq!(*user.get_phone_number().unwrap(), phone_number);
+        assert_eq!(*user.phone_status.phone_number().unwrap(), phone_number);
     }
 
     #[test]
     fn already_registered_by_other() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: Principal::from_slice(&[1]),
             user_id: Principal::from_slice(&[1, 1]).into(),
             username: "1".to_string(),
             ..Default::default()
         });
 
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: Principal::from_slice(&[2]),
             user_id: Principal::from_slice(&[2, 2]).into(),
             username: "2".to_string(),

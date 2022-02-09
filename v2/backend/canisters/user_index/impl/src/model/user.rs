@@ -3,63 +3,9 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary, Version};
 
-#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub enum User {
+pub enum UserOld {
     Created(CreatedUser),
-}
-
-impl User {
-    pub fn get_principal(&self) -> Principal {
-        let User::Created(u) = self;
-        u.principal
-    }
-
-    pub fn get_phone_number(&self) -> Option<&PhoneNumber> {
-        let User::Created(u) = self;
-        u.phone_status.phone_number()
-    }
-
-    pub fn get_username(&self) -> &str {
-        let User::Created(u) = self;
-        &u.username
-    }
-
-    pub fn get_user_id(&self) -> UserId {
-        let User::Created(u) = self;
-        u.user_id
-    }
-
-    pub fn wasm_version(&self) -> Version {
-        let User::Created(u) = self;
-        u.wasm_version
-    }
-
-    pub fn created_user(&self) -> &CreatedUser {
-        let User::Created(u) = self;
-        u
-    }
-
-    pub fn set_avatar_id(&mut self, avatar_id: Option<u128>, now: TimestampMillis) -> bool {
-        let User::Created(u) = self;
-        u.avatar_id = avatar_id;
-        u.date_updated = now;
-        true
-    }
-
-    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<Version>) {
-        let User::Created(u) = self;
-        u.upgrade_in_progress = upgrade_in_progress;
-        if let Some(version) = new_version {
-            u.wasm_version = version;
-        }
-    }
-
-    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) -> bool {
-        let User::Created(u) = self;
-        u.cycle_top_ups.push(top_up);
-        true
-    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -81,6 +27,65 @@ pub struct CreatedUser {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[serde(from = "UserOld")]
+pub struct User {
+    pub principal: Principal,
+    pub user_id: UserId,
+    pub username: String,
+    pub date_created: TimestampMillis,
+    pub date_updated: TimestampMillis,
+    pub last_online: TimestampMillis,
+    pub wasm_version: Version,
+    pub upgrade_in_progress: bool,
+    pub cycle_top_ups: Vec<CyclesTopUp>,
+    pub avatar_id: Option<u128>,
+    pub registration_fee: Option<RegistrationFee>,
+    pub account_billing: AccountBilling,
+    pub open_storage_limit_bytes: u64,
+    pub phone_status: PhoneStatus,
+}
+
+impl From<UserOld> for User {
+    fn from(user_old: UserOld) -> Self {
+        let UserOld::Created(user) = user_old;
+        User {
+            principal: user.principal,
+            user_id: user.user_id,
+            username: user.username,
+            date_created: user.date_created,
+            date_updated: user.date_updated,
+            last_online: user.last_online,
+            wasm_version: user.wasm_version,
+            upgrade_in_progress: user.upgrade_in_progress,
+            cycle_top_ups: user.cycle_top_ups,
+            avatar_id: user.avatar_id,
+            registration_fee: user.registration_fee,
+            account_billing: user.account_billing,
+            open_storage_limit_bytes: user.open_storage_limit_bytes,
+            phone_status: user.phone_status,
+        }
+    }
+}
+
+impl User {
+    pub fn set_avatar_id(&mut self, avatar_id: Option<u128>, now: TimestampMillis) {
+        self.avatar_id = avatar_id;
+        self.date_updated = now;
+    }
+
+    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<Version>) {
+        self.upgrade_in_progress = upgrade_in_progress;
+        if let Some(version) = new_version {
+            self.wasm_version = version;
+        }
+    }
+
+    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
+        self.cycle_top_ups.push(top_up)
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum PhoneStatus {
     None,
     Unconfirmed(UnconfirmedPhoneNumber),
@@ -88,7 +93,7 @@ pub enum PhoneStatus {
 }
 
 impl PhoneStatus {
-    fn phone_number(&self) -> Option<&PhoneNumber> {
+    pub fn phone_number(&self) -> Option<&PhoneNumber> {
         match self {
             PhoneStatus::None => None,
             PhoneStatus::Unconfirmed(un) => Some(&un.phone_number),
@@ -103,7 +108,26 @@ impl Default for PhoneStatus {
     }
 }
 
-impl CreatedUser {
+impl User {
+    pub fn new(principal: Principal, user_id: UserId, username: String, now: TimestampMillis, wasm_version: Version) -> User {
+        User {
+            principal,
+            user_id,
+            username,
+            date_created: now,
+            date_updated: now,
+            last_online: now,
+            wasm_version,
+            upgrade_in_progress: false,
+            cycle_top_ups: Vec::new(),
+            avatar_id: None,
+            registration_fee: None,
+            account_billing: AccountBilling::default(),
+            open_storage_limit_bytes: 0,
+            phone_status: PhoneStatus::None,
+        }
+    }
+
     pub fn to_summary(&self, now: TimestampMillis) -> UserSummary {
         let millis_since_last_online = now - self.last_online;
         let seconds_since_last_online = (millis_since_last_online / 1000) as u32;
@@ -137,37 +161,10 @@ pub struct UnconfirmedPhoneNumber {
     pub sms_messages_sent: u16,
 }
 
-impl CreatedUser {
-    pub fn new(
-        principal: Principal,
-        user_id: UserId,
-        username: String,
-        now: TimestampMillis,
-        wasm_version: Version,
-    ) -> CreatedUser {
-        CreatedUser {
-            principal,
-            user_id,
-            username,
-            date_created: now,
-            date_updated: now,
-            last_online: now,
-            wasm_version,
-            upgrade_in_progress: false,
-            cycle_top_ups: Vec::new(),
-            avatar_id: None,
-            registration_fee: None,
-            account_billing: AccountBilling::default(),
-            open_storage_limit_bytes: 0,
-            phone_status: PhoneStatus::None,
-        }
-    }
-}
-
 #[cfg(test)]
-impl Default for CreatedUser {
+impl Default for User {
     fn default() -> Self {
-        CreatedUser {
+        User {
             principal: Principal::anonymous(),
             user_id: Principal::anonymous().into(),
             username: String::new(),

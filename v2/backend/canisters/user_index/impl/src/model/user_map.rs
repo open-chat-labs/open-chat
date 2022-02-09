@@ -1,5 +1,5 @@
 use crate::model::account_billing::AccountCharge;
-use crate::model::user::{CreatedUser, PhoneStatus, UnconfirmedPhoneNumber, User};
+use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
@@ -40,8 +40,7 @@ pub struct Metrics {
 impl UserMap {
     pub fn rehydrate(&mut self) {
         for (principal, user) in self.users_by_principal.iter() {
-            let User::Created(u) = user;
-            match &u.phone_status {
+            match &user.phone_status {
                 PhoneStatus::Confirmed(p) => {
                     self.phone_number_to_principal.insert(p.clone(), *principal);
                 }
@@ -52,8 +51,8 @@ impl UserMap {
                 _ => {}
             };
 
-            self.username_to_principal.insert(&u.username, *principal);
-            self.user_id_to_principal.insert(u.user_id, *principal);
+            self.username_to_principal.insert(&user.username, *principal);
+            self.user_id_to_principal.insert(user.user_id, *principal);
         }
     }
 
@@ -77,24 +76,24 @@ impl UserMap {
         self.username_to_principal.insert(&username, principal);
         self.user_id_to_principal.insert(user_id, principal);
 
-        let user = CreatedUser::new(principal, user_id, username, now, wasm_version);
-        self.users_by_principal.insert(principal, User::Created(user));
+        let user = User::new(principal, user_id, username, now, wasm_version);
+        self.users_by_principal.insert(principal, user);
     }
 
     pub fn update(&mut self, user: User) -> UpdateUserResult {
-        let principal = user.get_principal();
+        let principal = user.principal;
 
         if let Some(previous) = self.users_by_principal.get(&principal) {
-            let previous_phone_number = previous.get_phone_number();
-            let phone_number = user.get_phone_number();
+            let previous_phone_number = previous.phone_status.phone_number();
+            let phone_number = user.phone_status.phone_number();
             let phone_number_changed = previous_phone_number != phone_number;
 
-            let previous_username = previous.get_username();
-            let username = user.get_username();
+            let previous_username = &previous.username;
+            let username = &user.username;
             let username_case_insensitive_changed = previous_username.to_uppercase() != username.to_uppercase();
 
-            let previous_user_id = previous.get_user_id();
-            let user_id = user.get_user_id();
+            let previous_user_id = previous.user_id;
+            let user_id = user.user_id;
             let user_id_changed = previous_user_id != user_id;
 
             if phone_number_changed {
@@ -144,7 +143,7 @@ impl UserMap {
         confirmation_code: String,
         now: TimestampMillis,
     ) -> SubmitPhoneNumberResult {
-        if let Some(User::Created(user)) = self.users_by_principal.get_mut(&principal) {
+        if let Some(user) = self.users_by_principal.get_mut(&principal) {
             match &mut user.phone_status {
                 PhoneStatus::Confirmed(_) => return SubmitPhoneNumberResult::AlreadyConfirmed,
                 PhoneStatus::Unconfirmed(p) => {
@@ -188,7 +187,7 @@ impl UserMap {
         test_mode: bool,
         now: TimestampMillis,
     ) -> ConfirmPhoneNumberResult {
-        if let Some(User::Created(user)) = self.users_by_principal.get_mut(&principal) {
+        if let Some(user) = self.users_by_principal.get_mut(&principal) {
             match &user.phone_status {
                 PhoneStatus::Confirmed(_) => ConfirmPhoneNumberResult::AlreadyConfirmed,
                 PhoneStatus::Unconfirmed(p) => {
@@ -215,7 +214,7 @@ impl UserMap {
     }
 
     pub fn mark_online(&mut self, principal: &Principal, now: TimestampMillis) -> bool {
-        if let Some(User::Created(user)) = self.users_by_principal.get_mut(principal) {
+        if let Some(user) = self.users_by_principal.get_mut(principal) {
             user.last_online = now;
             true
         } else {
@@ -264,7 +263,7 @@ impl UserMap {
     }
 
     pub fn record_account_charge(&mut self, user_id: &UserId, charge: AccountCharge) -> bool {
-        if let Some(User::Created(user)) = self.get_by_user_id_mut_internal(user_id) {
+        if let Some(user) = self.get_by_user_id_mut_internal(user_id) {
             user.account_billing.add_charge(charge);
             true
         } else {
@@ -273,7 +272,7 @@ impl UserMap {
     }
 
     pub fn set_storage_limit(&mut self, user_id: &UserId, bytes: u64) -> bool {
-        if let Some(User::Created(user)) = self.get_by_user_id_mut_internal(user_id) {
+        if let Some(user) = self.get_by_user_id_mut_internal(user_id) {
             user.open_storage_limit_bytes = bytes;
             true
         } else {
@@ -295,7 +294,7 @@ impl UserMap {
             let mut removed = Vec::new();
 
             for principal in self.users_with_unconfirmed_phone_numbers.iter() {
-                if let Some(User::Created(user)) = self.users_by_principal.get_mut(principal) {
+                if let Some(user) = self.users_by_principal.get_mut(principal) {
                     if let PhoneStatus::Unconfirmed(p) = &mut user.phone_status {
                         if now > p.valid_until {
                             self.phone_number_to_principal.remove(&p.phone_number);
@@ -329,18 +328,17 @@ impl UserMap {
         let mut metrics = Metrics::default();
 
         for user in self.users_by_principal.values() {
-            let User::Created(u) = user;
             metrics.users_created += 1;
-            if u.last_online > now - FIVE_MINUTES_IN_MS {
+            if user.last_online > now - FIVE_MINUTES_IN_MS {
                 metrics.users_online_5_minutes += 1;
             }
-            if u.last_online > now - HOUR_IN_MS {
+            if user.last_online > now - HOUR_IN_MS {
                 metrics.users_online_1_hour += 1;
             }
-            if u.last_online > now - WEEK_IN_MS {
+            if user.last_online > now - WEEK_IN_MS {
                 metrics.users_online_1_week += 1;
             }
-            if u.last_online > now - THIRTY_DAYS_IN_MS {
+            if user.last_online > now - THIRTY_DAYS_IN_MS {
                 metrics.users_online_1_month += 1;
             }
         }
@@ -362,7 +360,7 @@ impl UserMap {
     }
 
     #[cfg(test)]
-    pub fn add_test_user(&mut self, user: CreatedUser) {
+    pub fn add_test_user(&mut self, user: User) {
         self.register(
             user.principal,
             user.user_id,
@@ -370,7 +368,7 @@ impl UserMap {
             user.username.clone(),
             user.date_created,
         );
-        self.update(User::Created(user));
+        self.update(user);
     }
 }
 
@@ -400,7 +398,7 @@ pub enum ConfirmPhoneNumberResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{CreatedUser, PhoneStatus};
+    use crate::model::user::{PhoneStatus, User};
     use itertools::Itertools;
 
     #[test]
@@ -495,11 +493,11 @@ mod tests {
         user_map.submit_phone_number(principal, phone_number1, "123".to_string(), 2);
 
         if let Some(original) = user_map.get_by_principal(&principal) {
-            let mut updated = original.created_user().clone();
+            let mut updated = original.clone();
             updated.username = username2.clone();
             updated.phone_status = PhoneStatus::Confirmed(phone_number2.clone());
 
-            assert!(matches!(user_map.update(User::Created(updated)), UpdateUserResult::Success));
+            assert!(matches!(user_map.update(updated), UpdateUserResult::Success));
 
             assert_eq!(user_map.users_by_principal.keys().collect_vec(), vec!(&principal));
             assert_eq!(user_map.phone_number_to_principal.keys().collect_vec(), vec!(&phone_number2));
@@ -524,7 +522,7 @@ mod tests {
         let user_id1 = Principal::from_slice(&[1, 1]).into();
         let user_id2 = Principal::from_slice(&[2, 2]).into();
 
-        let original = CreatedUser {
+        let original = User {
             principal: principal1,
             phone_status: PhoneStatus::Confirmed(phone_number1),
             user_id: user_id1,
@@ -535,7 +533,7 @@ mod tests {
             ..Default::default()
         };
 
-        let other = CreatedUser {
+        let other = User {
             principal: principal2,
             phone_status: PhoneStatus::Confirmed(phone_number2.clone()),
             user_id: user_id2,
@@ -551,10 +549,7 @@ mod tests {
 
         user_map.add_test_user(original);
         user_map.add_test_user(other);
-        assert!(matches!(
-            user_map.update(User::Created(updated)),
-            UpdateUserResult::PhoneNumberTaken
-        ));
+        assert!(matches!(user_map.update(updated), UpdateUserResult::PhoneNumberTaken));
     }
 
     #[test]
@@ -572,7 +567,7 @@ mod tests {
         let user_id1 = Principal::from_slice(&[1, 1]).into();
         let user_id2 = Principal::from_slice(&[2, 2]).into();
 
-        let original = CreatedUser {
+        let original = User {
             principal: principal1,
             phone_status: PhoneStatus::Confirmed(phone_number1),
             user_id: user_id1,
@@ -583,7 +578,7 @@ mod tests {
             ..Default::default()
         };
 
-        let other = CreatedUser {
+        let other = User {
             principal: principal2,
             phone_status: PhoneStatus::Confirmed(phone_number2.clone()),
             user_id: user_id2,
@@ -599,10 +594,7 @@ mod tests {
 
         user_map.add_test_user(original);
         user_map.add_test_user(other);
-        assert!(matches!(
-            user_map.update(User::Created(updated)),
-            UpdateUserResult::UsernameTaken
-        ));
+        assert!(matches!(user_map.update(updated), UpdateUserResult::UsernameTaken));
     }
 
     #[test]
@@ -613,7 +605,7 @@ mod tests {
         let username = "abc".to_string();
         let user_id = Principal::from_slice(&[1, 1]).into();
 
-        let original = CreatedUser {
+        let original = User {
             principal,
             phone_status: PhoneStatus::Confirmed(phone_number),
             user_id: user_id,
@@ -629,7 +621,7 @@ mod tests {
         user_map.add_test_user(original);
         updated.username = "ABC".to_string();
 
-        assert!(matches!(user_map.update(User::Created(updated)), UpdateUserResult::Success));
+        assert!(matches!(user_map.update(updated), UpdateUserResult::Success));
     }
 
     #[test]
@@ -657,14 +649,14 @@ mod tests {
         let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
         let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
 
-        let user1 = CreatedUser {
+        let user1 = User {
             principal: principal1,
             user_id: user_id1,
             username: "1".to_string(),
             ..Default::default()
         };
 
-        let user2 = CreatedUser {
+        let user2 = User {
             principal: principal2,
             user_id: user_id2,
             username: "2".to_string(),
@@ -691,7 +683,8 @@ mod tests {
             .users_by_principal
             .get(&principal1)
             .unwrap()
-            .get_phone_number()
+            .phone_status
+            .phone_number()
             .is_none());
         assert_eq!(
             user_map.phone_number_to_principal.keys().cloned().collect_vec(),

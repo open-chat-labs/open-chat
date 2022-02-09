@@ -1,4 +1,3 @@
-use crate::model::user::User;
 use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
 use ledger_utils::default_ledger_account;
@@ -13,7 +12,7 @@ fn current_user(_args: Args) -> Response {
 fn current_user_impl(runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
 
-    if let Some(User::Created(u)) = runtime_state.data.users.get_by_principal(&caller) {
+    if let Some(u) = runtime_state.data.users.get_by_principal(&caller) {
         let canister_upgrade_status = if u.upgrade_in_progress {
             CanisterUpgradeStatus::InProgress
         } else {

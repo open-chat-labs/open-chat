@@ -1,5 +1,5 @@
 use crate::model::account_billing::{AccountCharge, AccountChargeDetails, StorageAccountChargeDetails};
-use crate::model::user::{CreatedUser, User};
+use crate::model::user::User;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
@@ -38,7 +38,7 @@ async fn upgrade_storage(args: Args) -> Response {
 }
 
 struct PrepareResult {
-    user: CreatedUser,
+    user: User,
     new_storage_limit_bytes: u64,
     charge_amount: ICP,
 }
@@ -47,7 +47,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
     let caller = runtime_state.env.caller();
     let new_storage_limit_bytes = args.new_storage_limit_bytes;
 
-    if let Some(User::Created(user)) = runtime_state.data.users.get_by_principal(&caller) {
+    if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         if new_storage_limit_bytes > BYTES_PER_1GB {
             return Err(StorageLimitExceeded(BYTES_PER_1GB));
         }
@@ -70,7 +70,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
 }
 
 fn process_charge(
-    user: CreatedUser,
+    user: User,
     new_storage_limit_bytes: u64,
     charge_amount: ICP,
     block_index: BlockIndex,

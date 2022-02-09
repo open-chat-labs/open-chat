@@ -44,7 +44,7 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{CreatedUser, PhoneStatus, UnconfirmedPhoneNumber, User};
+    use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, User};
     use crate::Data;
     use types::PhoneNumber;
     use utils::env::test::TestEnv;
@@ -54,7 +54,7 @@ mod tests {
         let env = TestEnv::default();
         let confirmation_code = "123456".to_string();
         let mut data = Data::default();
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: env.caller,
             phone_status: PhoneStatus::Unconfirmed(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
@@ -70,7 +70,7 @@ mod tests {
         let result = confirm_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::Success(_)));
 
-        let User::Created(user) = runtime_state
+        let user = runtime_state
             .data
             .users
             .get_by_principal(&runtime_state.env.caller())
@@ -82,7 +82,7 @@ mod tests {
     fn incorrect_code_returns_confirmation_code_incorrect() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: env.caller,
             phone_status: PhoneStatus::Unconfirmed(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
@@ -106,7 +106,7 @@ mod tests {
         let confirmation_code = "123456".to_string();
         let mut env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: env.caller,
             phone_status: PhoneStatus::Unconfirmed(UnconfirmedPhoneNumber {
                 phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
@@ -128,7 +128,7 @@ mod tests {
     fn confirmed_phone_number_returns_already_claimed() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_string())),
             ..Default::default()
@@ -147,7 +147,7 @@ mod tests {
     fn no_phone_number_returns_confirmation_code_expired() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: env.caller,
             ..Default::default()
         });
