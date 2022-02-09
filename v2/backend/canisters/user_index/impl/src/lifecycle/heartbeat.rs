@@ -55,7 +55,7 @@ mod upgrade_canisters {
     fn initialize_upgrade(canister_id: CanisterId, runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
         let user_id = canister_id.into();
         let mut user = runtime_state.data.users.get_by_user_id(&user_id).cloned()?;
-        let current_wasm_version = user.wasm_version();
+        let current_wasm_version = user.wasm_version;
         let user_canister_wasm = &runtime_state.data.user_canister_wasm;
 
         if current_wasm_version >= user_canister_wasm.version {

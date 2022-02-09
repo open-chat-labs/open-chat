@@ -1,4 +1,3 @@
-use crate::model::user::User;
 use crate::model::user_map::UpdateUserResult;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
@@ -29,11 +28,11 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         _ => {}
     };
 
-    if let Some(User::Created(user)) = runtime_state.data.users.get_by_principal(&caller) {
+    if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         let mut user_to_update = user.clone();
         user_to_update.username = username;
         user_to_update.date_updated = now;
-        match runtime_state.data.users.update(User::Created(user_to_update)) {
+        match runtime_state.data.users.update(user_to_update) {
             UpdateUserResult::Success => Success,
             UpdateUserResult::UsernameTaken => UsernameTaken,
             UpdateUserResult::UserNotFound => UserNotFound,
@@ -74,7 +73,7 @@ pub fn validate_username(username: &str) -> UsernameValidationResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{CreatedUser, PhoneStatus};
+    use crate::model::user::{PhoneStatus, User};
     use crate::Data;
     use candid::Principal;
     use types::PhoneNumber;
@@ -84,7 +83,7 @@ mod tests {
     fn valid_username_succeeds() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -104,14 +103,14 @@ mod tests {
 
         let user = runtime_state.data.users.get_by_username("xyz").unwrap();
 
-        assert_eq!(user.get_username(), "xyz");
+        assert_eq!(&user.username, "xyz");
     }
 
     #[test]
     fn no_change_to_username_succeeds() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -134,7 +133,7 @@ mod tests {
     fn username_taken() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: Principal::from_slice(&[1]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -144,7 +143,7 @@ mod tests {
             last_online: env.now,
             ..Default::default()
         });
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: Principal::from_slice(&[2]),
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
             user_id: Principal::from_slice(&[2]).into(),
@@ -167,7 +166,7 @@ mod tests {
     fn invalid_username() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -190,7 +189,7 @@ mod tests {
     fn username_too_short() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),
@@ -213,7 +212,7 @@ mod tests {
     fn username_too_long() {
         let env = TestEnv::default();
         let mut data = Data::default();
-        data.users.add_test_user(CreatedUser {
+        data.users.add_test_user(User {
             principal: env.caller,
             phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
             user_id: Principal::from_slice(&[1]).into(),

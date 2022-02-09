@@ -1,4 +1,3 @@
-use crate::model::user::User;
 use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
 use user_index_canister::user::{Response::*, *};
@@ -18,7 +17,7 @@ fn user_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         user = runtime_state.data.users.get_by_username(&username);
     }
 
-    if let Some(User::Created(user)) = user {
+    if let Some(user) = user {
         let now = runtime_state.env.now();
         Success(user.to_summary(now))
     } else {

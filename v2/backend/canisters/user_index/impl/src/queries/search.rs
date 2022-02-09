@@ -1,4 +1,4 @@
-use crate::model::user::CreatedUser;
+use crate::model::user::User;
 use crate::{read_state, RuntimeState};
 use core::cmp::Ordering;
 use ic_cdk_macros::query;
@@ -21,11 +21,7 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     search_term.truncate(MAX_SEARCH_TERM_LENGTH);
 
     // Filter
-    let mut matches: Vec<&CreatedUser> = users
-        .search(&search_term)
-        .map(|u| u.created_user())
-        .filter(|u| u.principal != caller)
-        .collect();
+    let mut matches: Vec<&User> = users.search(&search_term).filter(|u| u.principal != caller).collect();
 
     // Sort
     matches.sort_unstable_by(|u1, u2| order_usernames(&search_term, &u1.username, &u2.username));
@@ -67,7 +63,7 @@ fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::PhoneStatus;
+    use crate::model::user::{PhoneStatus, User};
     use crate::Data;
     use candid::Principal;
     use types::PhoneNumber;
@@ -169,7 +165,7 @@ mod tests {
             let bytes = vec![index as u8, 1];
             let p = Principal::from_slice(&bytes[..]);
 
-            data.users.add_test_user(CreatedUser {
+            data.users.add_test_user(User {
                 principal: p,
                 user_id: p.into(),
                 username: usernames[index].to_string(),
