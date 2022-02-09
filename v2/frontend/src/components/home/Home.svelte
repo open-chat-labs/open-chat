@@ -435,11 +435,13 @@
     </Overlay>
 {/if}
 
-<RemovingGroup
-    operation={removingOperation}
-    {controller}
-    on:removed={() => (removingChatId = undefined)}
-    bind:chatId={removingChatId} />
+{#if removingChatId !== undefined}
+    <RemovingGroup
+        operation={removingOperation}
+        {controller}
+        on:removed={() => (removingChatId = undefined)}
+        bind:chatId={removingChatId} />
+{/if}
 
 <Toast />
 
