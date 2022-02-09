@@ -343,33 +343,35 @@ export class HomeController {
     }
 
     deleteGroup(chatId: string): Promise<boolean> {
+        this.clearSelectedChat();
         return this.api
             .deleteGroup(chatId)
             .then((resp) => {
                 if (resp === "success") {
                     toastStore.showSuccessToast("deleteGroupSuccess");
-                    this.clearSelectedChat();
                     this.removeChat(chatId);
                 } else {
                     rollbar.warn("Unable to delete group", resp);
                     toastStore.showFailureToast("deleteGroupFailure");
+                    push(`/${chatId}`);
                 }
                 return true;
             })
             .catch((err) => {
                 toastStore.showFailureToast("deleteGroupFailure");
                 rollbar.error("Unable to delete group", err);
+                push(`/${chatId}`);
                 return false;
             });
     }
 
     leaveGroup(chatId: string): Promise<void> {
+        this.clearSelectedChat();
         return this.api
             .leaveGroup(chatId)
             .then((resp) => {
                 if (resp === "success") {
                     toastStore.showSuccessToast("leftGroup");
-                    this.clearSelectedChat();
                     this.removeChat(chatId);
                 } else {
                     if (resp === "owner_cannot_leave") {
@@ -377,11 +379,13 @@ export class HomeController {
                     } else {
                         toastStore.showFailureToast("failedToLeaveGroup");
                     }
+                    push(`/${chatId}`);
                 }
             })
             .catch((err) => {
                 toastStore.showFailureToast("failedToLeaveGroup");
                 rollbar.error("Unable to leave group", err);
+                push(`/${chatId}`);
             });
     }
 
