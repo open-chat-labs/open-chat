@@ -363,9 +363,15 @@ impl UserMap {
 
     #[cfg(test)]
     pub fn add_test_user(&mut self, user: CreatedUser) {
-        self.register(user.principal, user.user_id, user.wasm_version, user.username.clone(), user.date_created);
+        self.register(
+            user.principal,
+            user.user_id,
+            user.wasm_version,
+            user.username.clone(),
+            user.date_created,
+        );
         self.update(User::Created(user));
-    }    
+    }
 }
 
 #[derive(Debug)]
@@ -445,7 +451,10 @@ mod tests {
             username_to_principal,
             vec!((username1, principal1), (username2, principal2), (username3, principal3))
         );
-        assert_eq!(user_id_to_principal, vec!((user_id1, principal1), (user_id2, principal2), (user_id3, principal3)));
+        assert_eq!(
+            user_id_to_principal,
+            vec!((user_id1, principal1), (user_id2, principal2), (user_id3, principal3))
+        );
     }
 
     #[test]
