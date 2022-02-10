@@ -9,6 +9,7 @@ type CreateChallengeArgs =
 type CreateChallengeResponse = 
     variant {
         Success: Challenge;
+        Throttled;
     };
 
 type Challenge = record {
@@ -19,10 +20,10 @@ type Challenge = record {
 type RegisterUserArgs = 
     record {
         username: text;
-        challenge_answer: ChallengeAnswer;
+        challenge_attempt: ChallengeAttempt;
     };
 
-type ChallengeAnswer = record {
+type ChallengeAttempt = record {
     key : ChallengeKey;
     chars : text;
 };
