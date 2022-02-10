@@ -78,9 +78,6 @@ export type BlockUserResponse = { 'GroupNotPublic' : null } |
   { 'InternalError' : string } |
   { 'CannotBlockSelf' : null } |
   { 'CannotBlockUser' : null };
-export type CanisterCreationStatus = { 'InProgress' : null } |
-  { 'Created' : null } |
-  { 'Pending' : null };
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };

@@ -8,14 +8,12 @@ import type {
     UsersResponse,
     UserSummary,
     PartialUserSummary,
-    CreateCanisterResponse,
     RegisterUserResponse,
     PhoneStatus,
     UpgradeStorageResponse,
 } from "../../domain/user/user";
 import type {
     ApiConfirmPhoneNumberResponse,
-    ApiCreateCanisterResponse,
     ApiCurrentUserResponse,
     ApiPartialUserSummary,
     ApiPhoneNumber,
@@ -169,17 +167,6 @@ export function phoneNumber(candid: ApiPhoneNumber): PhoneNumber {
     };
 }
 
-export function createCanisterResponse(candid: ApiCreateCanisterResponse): CreateCanisterResponse {
-    if ("Success" in candid) return "success";
-    if ("UserAlreadyCreated" in candid) return "user_already_created";
-    if ("CreationInProgress" in candid) return "creation_in_progress";
-    if ("InternalError" in candid) return "internal_error";
-    if ("UserNotFound" in candid) return "user_not_found";
-    if ("CyclesBalanceTooLow" in candid) return "cycles_balance_too_low";
-
-    throw new UnsupportedValueError("Unexpected ApiCreateCanisterResponse type received", candid);
-}
-
 export function upgradeStorageResponse(candid: ApiUpgradeStorageResponse): UpgradeStorageResponse {
     if ("SuccessNoChange" in candid) {
         return { kind: "success_no_change" };
@@ -212,34 +199,24 @@ export function upgradeStorageResponse(candid: ApiUpgradeStorageResponse): Upgra
 }
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
-    if ("Confirmed" in candid) {
-        return {
-            kind: "confirmed_user",
-            canisterCreationStatus:
-                "InProgress" in candid.Confirmed.canister_creation_status
-                    ? "in_progress"
-                    : "pending",
-            username: candid.Confirmed.username,
-        };
-    }
-
-    if ("Created" in candid) {
-        const version = candid.Created.wasm_version;
-        console.log("User: ", candid.Created);
+    if ("Success" in candid) {
+        const r = candid.Success;
+        console.log("User: ", r);
+        const version = r.wasm_version;
         return {
             kind: "created_user",
-            userId: candid.Created.user_id.toString(),
-            username: candid.Created.username,
-            icpAccount: bytesToHexString(candid.Created.icp_account),
-            phoneStatus: phoneStatus(candid.Created.phone_status),
+            userId: r.user_id.toString(),
+            username: r.username,
+            icpAccount: bytesToHexString(r.icp_account),
+            phoneStatus: phoneStatus(r.phone_status),
             canisterUpgradeStatus:
-                "Required" in candid.Created.canister_upgrade_status
+                "Required" in r.canister_upgrade_status
                     ? "required"
-                    : "NotRequired" in candid.Created.canister_upgrade_status
+                    : "NotRequired" in r.canister_upgrade_status
                     ? "not_required"
                     : "in_progress",
             wasmVersion: new Version(version.major, version.minor, version.patch),
-            openStorageLimitBytes: Number(candid.Created.open_storage_limit_bytes),
+            openStorageLimitBytes: Number(r.open_storage_limit_bytes),
         };
     }
 

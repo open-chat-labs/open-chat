@@ -126,12 +126,7 @@ type CurrentUserArgs =
 
 type CurrentUserResponse =
     variant {
-        UserNotFound;
-        Confirmed: record {
-            username: text;
-            canister_creation_status: CanisterCreationStatus;
-        };
-        Created: record {
+        Success: record {
             user_id: UserId;
             username: text;
             canister_upgrade_status: CanisterUpgradeStatus;
@@ -141,12 +136,7 @@ type CurrentUserResponse =
             phone_status: PhoneStatus;
             icp_account: AccountIdentifier;
         };
-    };
-
-type UnconfirmedPhoneNumberState =
-    record {
-        phone_number: PhoneNumber;
-        valid_until: TimestampMillis;
+        UserNotFound;
     };
 
 type PhoneStatus =
@@ -154,6 +144,12 @@ type PhoneStatus =
         None;
         Unconfirmed: UnconfirmedPhoneNumberState;
         Confirmed;
+    };
+
+type UnconfirmedPhoneNumberState =
+    record {
+        phone_number: PhoneNumber;
+        valid_until: TimestampMillis;
     };
 
 type UserArgs = 

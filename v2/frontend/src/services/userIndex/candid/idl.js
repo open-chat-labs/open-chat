@@ -16,21 +16,7 @@ export const idlFactory = ({ IDL }) => {
     'ConfirmationCodeIncorrect' : IDL.Null,
     'UserNotFound' : IDL.Null,
   });
-  const CreateCanisterArgs = IDL.Record({});
-  const CreateCanisterResponse = IDL.Variant({
-    'UserAlreadyCreated' : IDL.Null,
-    'Success' : CanisterId,
-    'CreationInProgress' : IDL.Null,
-    'InternalError' : IDL.Text,
-    'UserNotFound' : IDL.Null,
-    'CyclesBalanceTooLow' : IDL.Null,
-  });
   const CurrentUserArgs = IDL.Record({});
-  const CanisterCreationStatus = IDL.Variant({
-    'InProgress' : IDL.Null,
-    'Created' : IDL.Null,
-    'Pending' : IDL.Null,
-  });
   const TimestampMillis = IDL.Nat64;
   const PhoneNumber = IDL.Record({
     'country_code' : IDL.Nat16,
@@ -56,11 +42,7 @@ export const idlFactory = ({ IDL }) => {
     'InProgress' : IDL.Null,
   });
   const CurrentUserResponse = IDL.Variant({
-    'Confirmed' : IDL.Record({
-      'username' : IDL.Text,
-      'canister_creation_status' : CanisterCreationStatus,
-    }),
-    'Created' : IDL.Record({
+    'Success' : IDL.Record({
       'username' : IDL.Text,
       'phone_status' : PhoneStatus,
       'wasm_version' : Version,
@@ -81,7 +63,6 @@ export const idlFactory = ({ IDL }) => {
     'UserLimitReached' : IDL.Null,
     'UsernameTooLong' : IDL.Nat16,
     'Success' : UserId,
-    'NotSupported' : IDL.Null,
     'InternalError' : IDL.Text,
     'CyclesBalanceTooLow' : IDL.Null,
   });
@@ -188,11 +169,6 @@ export const idlFactory = ({ IDL }) => {
     'confirm_phone_number' : IDL.Func(
         [ConfirmPhoneNumberArgs],
         [ConfirmPhoneNumberResponse],
-        [],
-      ),
-    'create_canister' : IDL.Func(
-        [CreateCanisterArgs],
-        [CreateCanisterResponse],
         [],
       ),
     'current_user' : IDL.Func(

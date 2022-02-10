@@ -59,9 +59,6 @@ export interface BlobReference {
 export type BlockIndex = bigint;
 export interface BlockUserArgs { 'user_id' : UserId }
 export type BlockUserResponse = { 'Success' : null };
-export type CanisterCreationStatus = { 'InProgress' : null } |
-  { 'Created' : null } |
-  { 'Pending' : null };
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };

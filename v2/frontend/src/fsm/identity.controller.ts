@@ -48,7 +48,6 @@ export class IdentityController {
         }
         this._api.getCurrentUser().then((user) => {
             switch (user.kind) {
-                case "confirmed_user":
                 case "unknown_user":
                     this.state.set("registering");
                     this.registerController = new RegisterController(

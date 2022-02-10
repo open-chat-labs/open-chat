@@ -26,7 +26,6 @@
     let bgClass: "underwater" | "sunset" = "underwater";
     $: {
         switch ($state.kind) {
-            case "awaiting_canister":
             case "awaiting_completion":
                 bgClass = "sunset";
                 break;
@@ -37,7 +36,7 @@
 </script>
 
 <ModalPage {bgClass} minHeight="380px">
-    {#if $state.kind === "verifying" || $state.kind === "awaiting_canister"}
+    {#if $state.kind === "verifying"}
         <div class="spinner" />
     {:else if $state.kind === "awaiting_completion"}
         <Complete on:complete={complete} />

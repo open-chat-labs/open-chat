@@ -3,7 +3,6 @@ import { ChatSchema, getCachedUsers, setCachedUsers } from "../../utils/caching"
 import type { IDBPDatabase } from "idb";
 import type {
     ConfirmPhoneNumberResponse,
-    CreateCanisterResponse,
     CurrentUserResponse,
     PartialUserSummary,
     PhoneNumber,
@@ -43,10 +42,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
         await setCachedUsers(this.db, mergedResponse.users.filter(isUserSummary));
 
         return mergedResponse;
-    }
-
-    createCanister(): Promise<CreateCanisterResponse> {
-        return this.client.createCanister();
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
