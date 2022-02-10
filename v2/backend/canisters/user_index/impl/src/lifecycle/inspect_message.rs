@@ -28,9 +28,9 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         | "upgrade_storage" => is_user,
         "add_super_admin" | "remove_super_admin" | "upgrade_user_canister_wasm" => runtime_state.is_caller_service_principal(),
         "remove_sms_messages" => runtime_state.is_caller_sms_service(),
-        "generate_registration_fee"
+        "create_challenge"
+        | "generate_registration_fee"
         | "notify_registration_fee_paid"
-        | "create_challenge"
         | "register_user"
         | "submit_phone_number" => true,
         _ => false,
