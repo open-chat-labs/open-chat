@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-pub type ChallengeKey = String;
+pub type ChallengeKey = u32;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Challenge {

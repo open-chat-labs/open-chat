@@ -52,7 +52,7 @@ impl Challenges {
             // Try generating a unique key or trap after 10 attempts
             const MAX_TRIES: u8 = 10;
             for _ in 0..MAX_TRIES {
-                let challenge_key = random_string(rng, 10);
+                let challenge_key = rng.next_u32();
 
                 if !self.inflight.contains_key(&challenge_key) {
                     // Create the CAPTCHA
@@ -77,7 +77,7 @@ impl Challenges {
     }
 
     pub fn check(&mut self, attempt: &ChallengeAttempt, now: TimestampMillis) -> bool {
-        if self.test_mode && attempt.key == "TEST" && attempt.chars == "TEST" {
+        if self.test_mode && attempt.key == 0 && attempt.chars == "TEST" {
             return true;
         }
 
@@ -118,27 +118,4 @@ fn create_captcha<T: RngCore>(rng: T) -> (Base64, String) {
     };
 
     (resp, captcha.chars_as_string())
-}
-
-// Generate an n-char long string of random characters. The characters are sampled from the rang
-// a-z.
-//
-// NOTE: The 'rand' crate (currently) does not build on wasm32-unknown-unknown so we have to
-// make-do with the RngCore trait (as opposed to Rng), therefore we have to implement this
-// ourselves as opposed to using one of rand's distributions.
-fn random_string<T: RngCore>(rng: &mut T, n: usize) -> String {
-    let mut chars: Vec<u8> = vec![];
-
-    // The range
-    let a = b'a';
-    let z = b'z';
-
-    // n times, get a random number as u32, then shrink to u8, and finally shrink to the size of
-    // our range. Finally, offset by the start of our range.
-    for _ in 0..n {
-        let next: u8 = rng.next_u32() as u8 % (z - a) + a;
-        chars.push(next);
-    }
-
-    return String::from_utf8_lossy(&chars).to_string();
 }

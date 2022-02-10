@@ -14,7 +14,7 @@ pub async fn register_user(
     let register_user_args = user_index_canister::register_user::Args {
         username,
         challenge_attempt: ChallengeAttempt {
-            key: "TEST".to_owned(),
+            key: 0,
             chars: "TEST".to_owned(),
         },
     };

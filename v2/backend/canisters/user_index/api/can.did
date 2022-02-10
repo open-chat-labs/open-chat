@@ -1,6 +1,6 @@
 import "../../../libraries/types/can.did";
 
-type ChallengeKey = text;
+type ChallengeKey = nat32;
 
 type CreateChallengeArgs = 
     record {
