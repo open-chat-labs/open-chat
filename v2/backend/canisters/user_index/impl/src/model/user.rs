@@ -4,30 +4,6 @@ use serde::{Deserialize, Serialize};
 use types::{CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub enum UserOld {
-    Created(CreatedUser),
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct CreatedUser {
-    pub principal: Principal,
-    pub user_id: UserId,
-    pub username: String,
-    pub date_created: TimestampMillis,
-    pub date_updated: TimestampMillis,
-    pub last_online: TimestampMillis,
-    pub wasm_version: Version,
-    pub upgrade_in_progress: bool,
-    pub cycle_top_ups: Vec<CyclesTopUp>,
-    pub avatar_id: Option<u128>,
-    pub registration_fee: Option<RegistrationFee>,
-    pub account_billing: AccountBilling,
-    pub open_storage_limit_bytes: u64,
-    pub phone_status: PhoneStatus,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-#[serde(from = "UserOld")]
 pub struct User {
     pub principal: Principal,
     pub user_id: UserId,
@@ -43,28 +19,6 @@ pub struct User {
     pub account_billing: AccountBilling,
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
-}
-
-impl From<UserOld> for User {
-    fn from(user_old: UserOld) -> Self {
-        let UserOld::Created(user) = user_old;
-        User {
-            principal: user.principal,
-            user_id: user.user_id,
-            username: user.username,
-            date_created: user.date_created,
-            date_updated: user.date_updated,
-            last_online: user.last_online,
-            wasm_version: user.wasm_version,
-            upgrade_in_progress: user.upgrade_in_progress,
-            cycle_top_ups: user.cycle_top_ups,
-            avatar_id: user.avatar_id,
-            registration_fee: user.registration_fee,
-            account_billing: user.account_billing,
-            open_storage_limit_bytes: user.open_storage_limit_bytes,
-            phone_status: user.phone_status,
-        }
-    }
 }
 
 impl User {
