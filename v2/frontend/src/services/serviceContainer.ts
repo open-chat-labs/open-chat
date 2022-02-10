@@ -9,7 +9,6 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
-    CreateCanisterResponse,
     User,
     SetBioResponse,
     RegisterUserResponse,
@@ -522,10 +521,6 @@ export class ServiceContainer implements MarkMessagesRead {
 
     setUsername(username: string): Promise<SetUsernameResponse> {
         return this._userIndexClient.setUsername(username);
-    }
-
-    createCanister(): Promise<CreateCanisterResponse> {
-        return this._userIndexClient.createCanister();
     }
 
     differentIdentity(identity: Identity): boolean {

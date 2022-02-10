@@ -30,7 +30,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             crate::model::user::PhoneStatus::None => PhoneStatus::None,
         };
 
-        Created(CreatedResult {
+        Success(SuccessResult {
             user_id: u.user_id,
             username: u.username.clone(),
             canister_upgrade_status,

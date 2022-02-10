@@ -43,9 +43,6 @@ export interface BlobReference {
   'canister_id' : CanisterId,
 }
 export type BlockIndex = bigint;
-export type CanisterCreationStatus = { 'InProgress' : null } |
-  { 'Created' : null } |
-  { 'Pending' : null };
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };

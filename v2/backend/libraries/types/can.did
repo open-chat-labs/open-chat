@@ -41,13 +41,6 @@ type BlobReference =
         blob_id: nat;
     };
 
-type CanisterCreationStatus =
-    variant {
-        Pending;
-        InProgress;
-        Created;
-    };
-
 type CanisterUpgradeStatus =
     variant {
         InProgress;

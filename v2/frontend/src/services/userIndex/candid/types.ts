@@ -47,9 +47,6 @@ export interface BlobReference {
   'canister_id' : CanisterId,
 }
 export type BlockIndex = bigint;
-export type CanisterCreationStatus = { 'InProgress' : null } |
-  { 'Created' : null } |
-  { 'Pending' : null };
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
@@ -108,13 +105,6 @@ export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
-export type CreateCanisterArgs = {};
-export type CreateCanisterResponse = { 'UserAlreadyCreated' : null } |
-  { 'Success' : CanisterId } |
-  { 'CreationInProgress' : null } |
-  { 'InternalError' : string } |
-  { 'UserNotFound' : null } |
-  { 'CyclesBalanceTooLow' : null };
 export type Cryptocurrency = { 'ICP' : null } |
   { 'Cycles' : null };
 export type CryptocurrencyAccount = { 'ICP' : AccountIdentifier } |
@@ -134,13 +124,7 @@ export type CryptocurrencyWithdrawal = { 'ICP' : ICPWithdrawal } |
   { 'Cycles' : CyclesWithdrawal };
 export type CurrentUserArgs = {};
 export type CurrentUserResponse = {
-    'Confirmed' : {
-      'username' : string,
-      'canister_creation_status' : CanisterCreationStatus,
-    }
-  } |
-  {
-    'Created' : {
+    'Success' : {
       'username' : string,
       'phone_status' : PhoneStatus,
       'wasm_version' : Version,
@@ -519,7 +503,6 @@ export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'UserLimitReached' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : UserId } |
-  { 'NotSupported' : null } |
   { 'InternalError' : string } |
   { 'CyclesBalanceTooLow' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
@@ -672,9 +655,6 @@ export interface _SERVICE {
     >,
   'confirm_phone_number' : (arg_0: ConfirmPhoneNumberArgs) => Promise<
       ConfirmPhoneNumberResponse
-    >,
-  'create_canister' : (arg_0: CreateCanisterArgs) => Promise<
-      CreateCanisterResponse
     >,
   'current_user' : (arg_0: CurrentUserArgs) => Promise<CurrentUserResponse>,
   'register_user' : (arg_0: RegisterUserArgs) => Promise<RegisterUserResponse>,

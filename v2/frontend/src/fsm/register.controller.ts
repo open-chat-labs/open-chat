@@ -5,9 +5,8 @@ import type { ServiceContainer } from "../services/serviceContainer";
 export type Verifying = { kind: "verifying" };
 export type AwaitingUsername = { kind: "awaiting_username" };
 export type AwaitingCompletion = { kind: "awaiting_completion" };
-export type AwaitingCanister = { kind: "awaiting_canister" };
 
-export type RegisterState = Verifying | AwaitingUsername | AwaitingCompletion | AwaitingCanister;
+export type RegisterState = Verifying | AwaitingUsername | AwaitingCompletion;
 
 export class RegisterController {
     public state: Writable<RegisterState> = writable({ kind: "awaiting_username" });
@@ -26,13 +25,6 @@ export class RegisterController {
     private deriveStateFromUser(user: CurrentUserResponse): void {
         if (user.kind === "unknown_user") {
             this.state.set({ kind: "awaiting_username" });
-        } else if (user.kind === "confirmed_user") {
-            if (user.canisterCreationStatus === "in_progress") {
-                this.state.set({ kind: "awaiting_canister" });
-            } else if (user.canisterCreationStatus === "pending") {
-                this.state.set({ kind: "awaiting_canister" });
-                this.loadUser();
-            }
         }
     }
 
@@ -54,7 +46,6 @@ export class RegisterController {
                 this.error.set("register.userLimitReached");
             } else if (resp === "success") {
                 this.error.set(undefined);
-                this.state.set({ kind: "awaiting_canister" });
                 this.loadUser();
             }
         });
@@ -62,14 +53,7 @@ export class RegisterController {
 
     private loadUser(): Promise<CurrentUserResponse> {
         return this._api.getCurrentUser().then((resp) => {
-            if (resp.kind === "confirmed_user" && resp.canisterCreationStatus === "pending") {
-                return this._api.createCanister().then((canisterResp) => {
-                    if (canisterResp !== "success") {
-                        console.log("Create use canister failed: ", canisterResp);
-                    }
-                    return this.loadUser();
-                });
-            } else if (resp.kind === "created_user") {
+            if (resp.kind === "created_user") {
                 this.state.set({ kind: "awaiting_completion" });
                 this._createdUser = resp;
                 return resp;

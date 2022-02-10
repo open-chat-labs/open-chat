@@ -8,13 +8,11 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
-    CreateCanisterResponse,
     RegisterUserResponse,
     UpgradeStorageResponse,
 } from "../../domain/user/user";
 
 export interface IUserIndexClient {
-    createCanister: () => Promise<CreateCanisterResponse>;
     getCurrentUser: () => Promise<CurrentUserResponse>;
     setUsername(username: string): Promise<SetUsernameResponse>;
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse>;

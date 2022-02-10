@@ -44,7 +44,7 @@ async fn verify_user_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     {
         print!("2. current_user... ");
         match current_user(&user_agent, &canister_ids.user_index).await {
-            user_index_canister::current_user::Response::Created(u) => {
+            user_index_canister::current_user::Response::Success(u) => {
                 assert!(matches!(u.phone_status, PhoneStatus::Unconfirmed(_)));
                 assert_eq!(u.open_storage_limit_bytes, 0);
             }
@@ -86,7 +86,7 @@ async fn verify_user_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     {
         print!("5. current_user... ");
         match current_user(&user_agent, &canister_ids.user_index).await {
-            user_index_canister::current_user::Response::Created(u) => {
+            user_index_canister::current_user::Response::Success(u) => {
                 assert!(matches!(u.phone_status, PhoneStatus::Confirmed));
                 assert!(u.open_storage_limit_bytes > 0);
             }

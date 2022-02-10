@@ -11,7 +11,6 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
-    CreateCanisterResponse,
     RegisterUserResponse,
     UpgradeStorageResponse,
 } from "../../domain/user/user";
@@ -24,7 +23,6 @@ import {
     resendCodeResponse,
     usersResponse,
     userSearchResponse,
-    createCanisterResponse,
     registerUserResponse,
     upgradeStorageResponse,
 } from "./mappers";
@@ -79,10 +77,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
             }),
             usersResponse
         );
-    }
-
-    createCanister(): Promise<CreateCanisterResponse> {
-        return this.handleResponse(this.userService.create_canister({}), createCanisterResponse);
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {

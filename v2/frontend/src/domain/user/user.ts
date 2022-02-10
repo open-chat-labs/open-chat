@@ -58,25 +58,10 @@ export type PhoneNumber = {
     number: string;
 };
 
-export type CreateCanisterResponse =
-    | "success"
-    | "user_already_created"
-    | "creation_in_progress"
-    | "internal_error"
-    | "user_unconfirmed"
-    | "cycles_balance_too_low"
-    | "user_not_found";
-
-export type CurrentUserResponse = ConfirmedUser | CreatedUser | UserNotFound;
+export type CurrentUserResponse = CreatedUser | UserNotFound;
 
 export type UpgradeInProgress = {
     kind: "upgrade_in_progress";
-};
-
-export type ConfirmedUser = {
-    kind: "confirmed_user";
-    canisterCreationStatus: "in_progress" | "pending";
-    username: string;
 };
 
 export type PhoneStatus =
