@@ -4,9 +4,11 @@
     import Toast from "../Toast.svelte";
     import ModalPage from "../ModalPage.svelte";
     import Complete from "./Complete.svelte";
+    import Challenge from "./Challenge.svelte";
     import EnterUsername from "./EnterUsername.svelte";
     import type { RegisterController } from "../../fsm/register.controller";
     import type { IdentityController } from "../../fsm/identity.controller";
+    import type { ChallengeAttempt } from "domain/user/user";
 
     export let controller: RegisterController;
     export let identityController: IdentityController;
@@ -14,9 +16,18 @@
     $: state = controller.state;
     $: username = controller.username;
     $: error = controller.error;
+    $: challenge = controller.challenge;
 
     function submitUsername(ev: CustomEvent<{ username: string }>) {
-        controller.registerUser(ev.detail.username);
+        controller.submitUsername(ev.detail.username);
+    }
+
+    function confirmChallenge(ev: CustomEvent<ChallengeAttempt>) {
+        controller.submitChallengeAttempt(ev.detail);
+    }
+
+    function cancelChallenge() {
+        controller.cancelChallengeAttempt();
     }
 
     function complete() {
@@ -36,10 +47,16 @@
 </script>
 
 <ModalPage {bgClass} minHeight="380px">
-    {#if $state.kind === "verifying"}
+    {#if $state.kind === "spinning"}
         <div class="spinner" />
     {:else if $state.kind === "awaiting_completion"}
         <Complete on:complete={complete} />
+    {:else if $state.kind === "awaiting_challenge_attempt"}
+        <Challenge
+            challenge={$challenge}
+            error={$error}
+            on:confirm={confirmChallenge}
+            on:cancel={cancelChallenge} />
     {:else}
         <h4 class="subtitle">{$_("register.registerUser")}</h4>
         <div class="logo">
