@@ -13,10 +13,13 @@ import type {
     UserSummary,
     RegisterUserResponse,
     UpgradeStorageResponse,
+    ChallengeAttempt,
+    CreateChallengeResponse,
 } from "../../domain/user/user";
 import { CandidService } from "../candidService";
 import {
     setUsernameResponse,
+    createChallengeResponse,
     currentUserResponse,
     submitPhoneNumberResponse,
     confirmPhoneNumber,
@@ -49,6 +52,29 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
             : new UserIndexClient(identity);
     }
 
+    getCurrentUser(): Promise<CurrentUserResponse> {
+        return this.handleResponse(this.userService.current_user({}), currentUserResponse);
+    }
+
+    createChallenge(): Promise<CreateChallengeResponse> {
+        return this.handleResponse(this.userService.create_challenge({}), createChallengeResponse);
+    }
+
+    registerUser(
+        username: string,
+        challengeAttempt: ChallengeAttempt
+    ): Promise<RegisterUserResponse> {
+        console.log(username);
+        console.log(challengeAttempt);
+        return this.handleResponse(
+            this.userService.register_user({
+                username,
+                challenge_attempt: challengeAttempt,
+            }),
+            registerUserResponse
+        );
+    }
+
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
         return this.handleResponse(
             this.userService.search({
@@ -77,10 +103,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
             }),
             usersResponse
         );
-    }
-
-    getCurrentUser(): Promise<CurrentUserResponse> {
-        return this.handleResponse(this.userService.current_user({}), currentUserResponse);
     }
 
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
@@ -123,15 +145,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
                 confirmation_code: code,
             }),
             confirmPhoneNumber
-        );
-    }
-
-    registerUser(username: string): Promise<RegisterUserResponse> {
-        return this.handleResponse(
-            this.userService.register_user({
-                username,
-            }),
-            registerUserResponse
         );
     }
 }
