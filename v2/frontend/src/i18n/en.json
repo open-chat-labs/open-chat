@@ -312,6 +312,9 @@
         "phoneAlreadyRegisteredByAnother": "The phone number is already registered by someone else",
         "phoneInvalid": "The phone number is invalid",
         "userLimitReached": "The user limit has been reached",
+        "challengeAttemptFailed": "The value you entered is incorrect. Please try the new challenge.",
+        "challengeThrottled": "Too many challenges have been generated. Please try again later.",
+        "attemptChallenge": "Please type in the characters you see",
         "createUser": "Create user"
     },
     "faq": {

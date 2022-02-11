@@ -33,6 +33,7 @@ export class RegisterController {
         this.state.set({ kind: "verifying" });
         this.username.set(username);
         this._api.registerUser(username).then((resp) => {
+            console.log("RegisterResp: ", resp);
             this.state.set(currentState);
             if (resp === "username_taken") {
                 this.error.set("register.usernameTaken");

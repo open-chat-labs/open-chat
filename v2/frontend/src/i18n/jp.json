@@ -312,7 +312,10 @@
         "phoneAlreadyRegisteredByAnother": "電話番号がすでに他の人によって登録されています",
         "phoneInvalid": "電話番号が無効です",
         "userLimitReached": "ユーザー数の上限に達しています",
-        "createUser": "ユーザーを作成する"
+        "createUser": "ユーザーを作成する",
+        "challengeAttemptFailed": "入力した値が正しくありません。新しいチャレンジをお試しください。",
+        "challengeThrottled": "あまりにも多くの課題が発生しました。後でもう一度やり直してください。",
+        "attemptChallenge": "表示されている文字を入力してください"
     },
     "faq": {
         "menu": "FAQ",
