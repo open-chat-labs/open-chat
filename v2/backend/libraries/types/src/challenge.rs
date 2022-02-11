@@ -5,8 +5,8 @@ pub type ChallengeKey = u32;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Challenge {
+    pub key: ChallengeKey,
     pub png_base64: String,
-    pub challenge_key: ChallengeKey,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

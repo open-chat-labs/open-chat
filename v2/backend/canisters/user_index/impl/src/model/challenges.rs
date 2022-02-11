@@ -52,9 +52,9 @@ impl Challenges {
             // Try generating a unique key or trap after 10 attempts
             const MAX_TRIES: u8 = 10;
             for _ in 0..MAX_TRIES {
-                let challenge_key = rng.next_u32();
+                let key = rng.next_u32();
 
-                if let std::collections::hash_map::Entry::Vacant(e) = self.inflight.entry(challenge_key) {
+                if let std::collections::hash_map::Entry::Vacant(e) = self.inflight.entry(key) {
                     // Create the CAPTCHA
                     let (Base64(png_base64), chars) = create_captcha(rng);
 
@@ -62,10 +62,7 @@ impl Challenges {
                     e.insert(ChallengeSolution { created: now, chars });
 
                     // Return the challenge
-                    return Some(Challenge {
-                        png_base64,
-                        challenge_key,
-                    });
+                    return Some(Challenge { png_base64, key });
                 }
             }
 

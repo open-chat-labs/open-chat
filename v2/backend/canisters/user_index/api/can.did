@@ -13,8 +13,8 @@ type CreateChallengeResponse =
     };
 
 type Challenge = record {
+    key: ChallengeKey;
     png_base64: text;
-    challenge_key: ChallengeKey;
 };
 
 type RegisterUserArgs = 
