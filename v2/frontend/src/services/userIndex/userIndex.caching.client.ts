@@ -2,7 +2,9 @@ import type { IUserIndexClient } from "./userIndex.client.interface";
 import { ChatSchema, getCachedUsers, setCachedUsers } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
 import type {
+    ChallengeAttempt,
     ConfirmPhoneNumberResponse,
+    CreateChallengeResponse,
     CurrentUserResponse,
     PartialUserSummary,
     PhoneNumber,
@@ -46,6 +48,17 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this.client.getCurrentUser();
+    }
+
+    createChallenge(): Promise<CreateChallengeResponse> {
+        return this.client.createChallenge();
+    }
+
+    registerUser(
+        username: string,
+        challengeAttempt: ChallengeAttempt
+    ): Promise<RegisterUserResponse> {
+        return this.client.registerUser(username, challengeAttempt);
     }
 
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
@@ -137,10 +150,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
             users,
             timestamp: response.timestamp,
         };
-    }
-
-    registerUser(username: string): Promise<RegisterUserResponse> {
-        return this.client.registerUser(username);
     }
 
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {

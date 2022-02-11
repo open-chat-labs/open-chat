@@ -55,6 +55,9 @@ export interface CanisterWasm {
   'version' : Version,
   'module' : Array<number>,
 }
+export interface Challenge { 'key' : ChallengeKey, 'png_base64' : string }
+export interface ChallengeAttempt { 'key' : ChallengeKey, 'chars' : string }
+export type ChallengeKey = number;
 export type ChatId = CanisterId;
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
@@ -105,6 +108,9 @@ export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
+export type CreateChallengeArgs = {};
+export type CreateChallengeResponse = { 'Throttled' : null } |
+  { 'Success' : Challenge };
 export type Cryptocurrency = { 'ICP' : null } |
   { 'Cycles' : null };
 export type CryptocurrencyAccount = { 'ICP' : AccountIdentifier } |
@@ -495,7 +501,10 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
-export interface RegisterUserArgs { 'username' : string }
+export interface RegisterUserArgs {
+  'username' : string,
+  'challenge_attempt' : ChallengeAttempt,
+}
 export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |
   { 'UsernameInvalid' : null } |
@@ -503,6 +512,7 @@ export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'UserLimitReached' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : UserId } |
+  { 'ChallengeFailed' : null } |
   { 'InternalError' : string } |
   { 'CyclesBalanceTooLow' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
@@ -655,6 +665,9 @@ export interface _SERVICE {
     >,
   'confirm_phone_number' : (arg_0: ConfirmPhoneNumberArgs) => Promise<
       ConfirmPhoneNumberResponse
+    >,
+  'create_challenge' : (arg_0: CreateChallengeArgs) => Promise<
+      CreateChallengeResponse
     >,
   'current_user' : (arg_0: CurrentUserArgs) => Promise<CurrentUserResponse>,
   'register_user' : (arg_0: RegisterUserArgs) => Promise<RegisterUserResponse>,

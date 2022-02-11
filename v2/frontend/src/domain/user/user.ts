@@ -53,6 +53,23 @@ export enum AvatarSize {
     ExtraLarge,
 }
 
+export type CreateChallengeResponse = Challenge | Throttled;
+
+export type Challenge = {
+    kind: "challenge";
+    key: number;
+    pngBase64: string;
+};
+
+export type Throttled = {
+    kind: "throttled";
+};
+
+export type ChallengeAttempt = {
+    key: number;
+    chars: string;
+};
+
 export type PhoneNumber = {
     countryCode: number;
     number: string;
@@ -129,7 +146,8 @@ export type RegisterUserResponse =
     | "cycles_balance_too_low"
     | "username_too_short"
     | "username_too_long"
-    | "username_invalid";
+    | "username_invalid"
+    | "challenge_failed";
 
 export type UpgradeStorageResponse =
     | { kind: "success_no_change" }

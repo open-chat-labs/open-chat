@@ -14,6 +14,8 @@ import type {
     RegisterUserResponse,
     UpgradeStorageResponse,
     PartialUserSummary,
+    ChallengeAttempt,
+    CreateChallengeResponse,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
@@ -660,8 +662,15 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.userClient.setBio(bio);
     }
 
-    registerUser(username: string): Promise<RegisterUserResponse> {
-        return this._userIndexClient.registerUser(username);
+    createChallenge(): Promise<CreateChallengeResponse> {
+        return this._userIndexClient.createChallenge();
+    }
+
+    registerUser(
+        username: string,
+        challengeAttempt: ChallengeAttempt
+    ): Promise<RegisterUserResponse> {
+        return this._userIndexClient.registerUser(username, challengeAttempt);
     }
 
     getUserStorageLimits(): Promise<void> {

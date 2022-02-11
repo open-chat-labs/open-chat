@@ -16,6 +16,16 @@ export const idlFactory = ({ IDL }) => {
     'ConfirmationCodeIncorrect' : IDL.Null,
     'UserNotFound' : IDL.Null,
   });
+  const CreateChallengeArgs = IDL.Record({});
+  const ChallengeKey = IDL.Nat32;
+  const Challenge = IDL.Record({
+    'key' : ChallengeKey,
+    'png_base64' : IDL.Text,
+  });
+  const CreateChallengeResponse = IDL.Variant({
+    'Throttled' : IDL.Null,
+    'Success' : Challenge,
+  });
   const CurrentUserArgs = IDL.Record({});
   const TimestampMillis = IDL.Nat64;
   const PhoneNumber = IDL.Record({
@@ -54,7 +64,14 @@ export const idlFactory = ({ IDL }) => {
     }),
     'UserNotFound' : IDL.Null,
   });
-  const RegisterUserArgs = IDL.Record({ 'username' : IDL.Text });
+  const ChallengeAttempt = IDL.Record({
+    'key' : ChallengeKey,
+    'chars' : IDL.Text,
+  });
+  const RegisterUserArgs = IDL.Record({
+    'username' : IDL.Text,
+    'challenge_attempt' : ChallengeAttempt,
+  });
   const RegisterUserResponse = IDL.Variant({
     'UsernameTaken' : IDL.Null,
     'UsernameTooShort' : IDL.Nat16,
@@ -63,6 +80,7 @@ export const idlFactory = ({ IDL }) => {
     'UserLimitReached' : IDL.Null,
     'UsernameTooLong' : IDL.Nat16,
     'Success' : UserId,
+    'ChallengeFailed' : IDL.Null,
     'InternalError' : IDL.Text,
     'CyclesBalanceTooLow' : IDL.Null,
   });
@@ -169,6 +187,11 @@ export const idlFactory = ({ IDL }) => {
     'confirm_phone_number' : IDL.Func(
         [ConfirmPhoneNumberArgs],
         [ConfirmPhoneNumberResponse],
+        [],
+      ),
+    'create_challenge' : IDL.Func(
+        [CreateChallengeArgs],
+        [CreateChallengeResponse],
         [],
       ),
     'current_user' : IDL.Func(
