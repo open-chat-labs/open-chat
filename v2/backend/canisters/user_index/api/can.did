@@ -1,9 +1,32 @@
 import "../../../libraries/types/can.did";
 
+type ChallengeKey = nat32;
+
+type CreateChallengeArgs = 
+    record {
+    };
+
+type CreateChallengeResponse = 
+    variant {
+        Success: Challenge;
+        Throttled;
+    };
+
+type Challenge = record {
+    key: ChallengeKey;
+    png_base64: text;
+};
+
 type RegisterUserArgs = 
     record {
         username: text;
+        challenge_attempt: ChallengeAttempt;
     };
+
+type ChallengeAttempt = record {
+    key : ChallengeKey;
+    chars : text;
+};
 
 type RegisterUserResponse = 
     variant {
@@ -16,6 +39,7 @@ type RegisterUserResponse =
         UsernameTooLong: nat16;
         CyclesBalanceTooLow;
         InternalError: text;
+        ChallengeFailed;
     };
 
 type PhoneNumber = 
@@ -230,6 +254,8 @@ type SuperAdminsResponse =
     };
 
 service: {
+    create_challenge : (CreateChallengeArgs) -> (CreateChallengeResponse);    
+
     register_user: (RegisterUserArgs) -> (RegisterUserResponse);
 
     // If the current user does not exist, the phone number is valid, and not already in use 

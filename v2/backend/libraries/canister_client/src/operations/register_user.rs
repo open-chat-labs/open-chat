@@ -1,6 +1,6 @@
 use crate::utils::{build_ic_agent, build_identity};
 use crate::{TestIdentity, USER1_DEFAULT_NAME, USER2_DEFAULT_NAME, USER3_DEFAULT_NAME};
-use types::{CanisterId, UserId};
+use types::{CanisterId, ChallengeAttempt, UserId};
 
 pub async fn register_user(
     url: String,
@@ -11,7 +11,13 @@ pub async fn register_user(
     let identity = build_identity(user_identity);
     let agent = build_ic_agent(url, identity).await;
 
-    let register_user_args = user_index_canister::register_user::Args { username };
+    let register_user_args = user_index_canister::register_user::Args {
+        username,
+        challenge_attempt: ChallengeAttempt {
+            key: 0,
+            chars: "TEST".to_owned(),
+        },
+    };
 
     match user_index_canister_client::register_user(&agent, &user_index_canister_id, &register_user_args)
         .await

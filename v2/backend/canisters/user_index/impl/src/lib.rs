@@ -1,3 +1,4 @@
+use crate::model::challenges::Challenges;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
@@ -108,6 +109,7 @@ impl RuntimeState {
             super_admins: self.data.super_admins.len() as u8,
             super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
             user_wasm_version: self.data.user_canister_wasm.version,
+            inflight_challenges: self.data.challenges.count(),
         }
     }
 }
@@ -131,6 +133,8 @@ struct Data {
     pub super_admins: HashSet<UserId>,
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
+    #[serde(default)]
+    pub challenges: Challenges,
 }
 
 impl Data {
@@ -164,6 +168,7 @@ impl Data {
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),
             test_mode,
+            challenges: Challenges::new(test_mode),
         }
     }
 }
@@ -189,6 +194,7 @@ impl Default for Data {
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),
             test_mode: true,
+            challenges: Challenges::new(true),
         }
     }
 }
@@ -214,4 +220,5 @@ pub struct Metrics {
     pub sms_messages_in_queue: u32,
     pub super_admins: u8,
     pub super_admins_to_dismiss: u32,
+    pub inflight_challenges: u32,
 }

@@ -13,9 +13,10 @@ use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 #[update]
 #[trace]
 async fn register_user(args: Args) -> Response {
+    // Check the challenge
     // Check the username is valid and doesn't already exist then reserve it
     // Extract the wasm module from the runtime state
-    let prepare_ok = match mutate_state(|state| prepare(&args.username, state)) {
+    let prepare_ok = match mutate_state(|state| prepare(&args, state)) {
         Err(response) => return response,
         Ok(ok) => ok,
     };
@@ -62,8 +63,13 @@ struct PrepareOk {
     init_canister_args: InitUserCanisterArgs,
 }
 
-fn prepare(username: &str, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Response> {
+fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Response> {
     let caller = runtime_state.env.caller();
+    let now = runtime_state.env.now();
+
+    if !runtime_state.data.challenges.check(&args.challenge_attempt, now) {
+        return Err(ChallengeFailed);
+    }
 
     if runtime_state.data.users.get_by_principal(&caller).is_some() {
         return Err(AlreadyRegistered);
@@ -73,7 +79,7 @@ fn prepare(username: &str, runtime_state: &mut RuntimeState) -> Result<PrepareOk
         return Err(UserLimitReached);
     }
 
-    match validate_username(username) {
+    match validate_username(&args.username) {
         UsernameValidationResult::TooShort(min_length) => return Err(UsernameTooShort(min_length)),
         UsernameValidationResult::TooLong(max_length) => return Err(UsernameTooLong(max_length)),
         UsernameValidationResult::Invalid => return Err(UsernameInvalid),
@@ -90,7 +96,7 @@ fn prepare(username: &str, runtime_state: &mut RuntimeState) -> Result<PrepareOk
         0
     };
 
-    if !runtime_state.data.users.reserve_username(username) {
+    if !runtime_state.data.users.reserve_username(&args.username) {
         return Err(UsernameTaken);
     }
 
