@@ -54,13 +54,12 @@ impl Challenges {
             for _ in 0..MAX_TRIES {
                 let challenge_key = rng.next_u32();
 
-                if !self.inflight.contains_key(&challenge_key) {
+                if let std::collections::hash_map::Entry::Vacant(e) = self.inflight.entry(challenge_key) {
                     // Create the CAPTCHA
                     let (Base64(png_base64), chars) = create_captcha(rng);
 
                     // Remember the solution
-                    self.inflight
-                        .insert(challenge_key.clone(), ChallengeSolution { created: now, chars });
+                    e.insert(ChallengeSolution { created: now, chars });
 
                     // Return the challenge
                     return Some(Challenge {
