@@ -46,14 +46,12 @@ export class RegisterController {
         if (this._challengeAttempt !== undefined) {
             // The user already has an untried challenge attempt so call register_user
             this.registerUser(username, this._challengeAttempt);
+        } else if (get(this.challenge) === undefined) {
+            // The challenge isn't ready yet so wait...
+            this.state.set({ kind: "spinning" });
         } else {
-            if (get(this.challenge) === undefined) {
-                // The challenge isn't ready yet so wait...
-                this.state.set({ kind: "spinning" });
-            } else {
-                // The challenge is ready so goto the "challenge" panel.
-                this.state.set({ kind: "awaiting_challenge_attempt" });
-            }
+            // The challenge is ready so goto the "challenge" panel.
+            this.state.set({ kind: "awaiting_challenge_attempt" });
         }
     }
 
@@ -115,8 +113,11 @@ export class RegisterController {
             if (challengeResponse.kind === "challenge") {
                 this.challenge.set(challengeResponse);
                 if (get(this.username) !== undefined) {
-                    // The user has submittted a username so goto the "challenge" panel.
+                    // The user has submitted a username so goto the "challenge" panel.
                     this.state.set({ kind: "awaiting_challenge_attempt" });
+                } else {
+                    // The user has not submitted a username so goto the "username" panel.
+                    this.state.set({ kind: "awaiting_username" });
                 }
             } else {
                 // Creating a new challenge has failed.
