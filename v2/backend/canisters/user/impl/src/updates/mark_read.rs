@@ -38,7 +38,7 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 }
 
                 if !their_message_ranges.is_empty() {
-                    ic_cdk::block_on(mark_read_on_recipients_canister(
+                    ic_cdk::spawn(mark_read_on_recipients_canister(
                         chat_messages_read.chat_id,
                         their_message_ranges,
                         added,

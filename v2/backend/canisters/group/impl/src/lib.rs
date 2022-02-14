@@ -65,7 +65,7 @@ impl RuntimeState {
                 recipients,
                 notification,
             };
-            ic_cdk::block_on(push_notification_inner(*canister_id, args));
+            ic_cdk::spawn(push_notification_inner(*canister_id, args));
         }
 
         async fn push_notification_inner(canister_id: CanisterId, args: notifications_canister::c2c_push_notification::Args) {

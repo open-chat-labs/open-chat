@@ -22,7 +22,7 @@ fn c2c_delete_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
         deleted = runtime_state.data.public_groups.delete(&chat_id);
     }
 
-    ic_cdk::block_on(delete_canister(caller));
+    ic_cdk::spawn(delete_canister(caller));
 
     if deleted {
         runtime_state.data.canisters_requiring_upgrade.remove(&chat_id.into());

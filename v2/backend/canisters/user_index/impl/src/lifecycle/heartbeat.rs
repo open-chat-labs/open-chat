@@ -29,7 +29,7 @@ mod upgrade_canisters {
     pub fn run() {
         let canisters_to_upgrade = mutate_state(next_batch);
         if !canisters_to_upgrade.is_empty() {
-            ic_cdk::block_on(perform_upgrades(canisters_to_upgrade));
+            ic_cdk::spawn(perform_upgrades(canisters_to_upgrade));
         }
     }
 
@@ -153,7 +153,7 @@ mod topup_canister_pool {
 
             // Only create the new canister if it won't result in the cycles balance being too low
             if utils::cycles::can_spend_cycles(cycles_to_use, MIN_CYCLES_BALANCE) {
-                ic_cdk::block_on(add_new_canister(cycles_to_use));
+                ic_cdk::spawn(add_new_canister(cycles_to_use));
             }
         }
     }
@@ -180,7 +180,7 @@ mod retry_failed_messages {
     pub fn run() {
         let messages_to_retry = mutate_state(next_batch);
         if !messages_to_retry.is_empty() {
-            ic_cdk::block_on(send_to_canisters(messages_to_retry));
+            ic_cdk::spawn(send_to_canisters(messages_to_retry));
         }
     }
 
@@ -219,7 +219,7 @@ mod sync_users_to_open_storage {
 
     pub fn run() {
         if let Some((canister_id, users)) = mutate_state(next_batch) {
-            ic_cdk::block_on(sync_users(canister_id, users));
+            ic_cdk::spawn(sync_users(canister_id, users));
         }
     }
 
@@ -264,7 +264,7 @@ mod dismiss_removed_super_admins {
 
     pub fn run() {
         if let Some((user_id, group_id)) = mutate_state(pop_super_admin_to_dismiss) {
-            ic_cdk::block_on(dismiss_super_admin(user_id, group_id));
+            ic_cdk::spawn(dismiss_super_admin(user_id, group_id));
         }
     }
 

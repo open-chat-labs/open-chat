@@ -13,7 +13,7 @@ mod flush_online_users {
 
     pub fn run() {
         if let Some(result) = mutate_state(prepare) {
-            ic_cdk::block_on(send_to_user_index(result.user_index_canister_id, result.online_users));
+            ic_cdk::spawn(send_to_user_index(result.user_index_canister_id, result.online_users));
         }
     }
 
