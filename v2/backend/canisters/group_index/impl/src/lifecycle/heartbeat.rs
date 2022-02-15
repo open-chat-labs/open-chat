@@ -23,7 +23,7 @@ mod upgrade_canisters {
     pub fn run() {
         let chats_to_upgrade = mutate_state(next_batch);
         if !chats_to_upgrade.is_empty() {
-            ic_cdk::block_on(perform_upgrades(chats_to_upgrade));
+            ic_cdk::spawn(perform_upgrades(chats_to_upgrade));
         }
     }
 
@@ -133,7 +133,7 @@ mod topup_canister_pool {
 
             // Only create the new canister if it won't result in the cycles balance being too low
             if utils::cycles::can_spend_cycles(cycles_to_use, MIN_CYCLES_BALANCE) {
-                ic_cdk::block_on(add_new_canister(cycles_to_use));
+                ic_cdk::spawn(add_new_canister(cycles_to_use));
             }
         }
     }
@@ -159,7 +159,7 @@ mod calculate_hot_groups {
 
     pub fn run() {
         if let Some(groups) = mutate_state(calculate_hot_groups_if_due) {
-            ic_cdk::block_on(set_hot_groups(groups));
+            ic_cdk::spawn(set_hot_groups(groups));
         }
     }
 

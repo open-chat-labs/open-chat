@@ -32,7 +32,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             .collect();
 
         if !deleted.is_empty() {
-            ic_cdk::block_on(delete_on_recipients_canister(args.user_id.into(), deleted));
+            ic_cdk::spawn(delete_on_recipients_canister(args.user_id.into(), deleted));
         }
 
         Success
