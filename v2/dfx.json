@@ -1,5 +1,11 @@
 {
   "canisters": {
+    "root": {
+      "type": "custom",
+      "candid": "backend/canisters/root/api/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/root_canister_impl-opt.wasm",
+      "build": "./generate-wasm.sh root_canister_impl"
+    },
     "notifications": {
       "type": "custom",
       "candid": "backend/canisters/notifications/api/can.did",
