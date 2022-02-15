@@ -9,12 +9,14 @@ OPEN_STORAGE_INDEX_CANISTER_ID=$2
 ./generate-wasm.sh group_index_canister_impl
 ./generate-wasm.sh notifications_canister_impl
 ./generate-wasm.sh online_users_aggregator_canister_impl
+./generate-wasm.sh root_canister_impl
 ./generate-wasm.sh user_canister_impl
 ./generate-wasm.sh user_index_canister_impl
 
 ./compress-wasm.sh group_canister_impl
 ./compress-wasm.sh user_canister_impl
 
+ROOT_CANISTER_ID=$(dfx canister --network ic_test id root)
 USER_INDEX_CANISTER_ID=$(dfx canister --network ic_test id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --network ic_test id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network ic_test id notifications)
@@ -25,6 +27,7 @@ cargo run \
   'https://ic0.app/' \
   true \
   $IDENTITY \
+  $ROOT_CANISTER_ID \
   $USER_INDEX_CANISTER_ID \
   $GROUP_INDEX_CANISTER_ID \
   $NOTIFICATIONS_INDEX_CANISTER_ID \

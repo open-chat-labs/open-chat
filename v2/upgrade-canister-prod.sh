@@ -10,12 +10,14 @@ VERSION=$3
 ./generate-wasm.sh group_index_canister_impl
 ./generate-wasm.sh notifications_canister_impl
 ./generate-wasm.sh online_users_aggregator_canister_impl
+./generate-wasm.sh root_canister_impl
 ./generate-wasm.sh user_canister_impl
 ./generate-wasm.sh user_index_canister_impl
 
 ./compress-wasm.sh group_canister_impl
 ./compress-wasm.sh user_canister_impl
 
+ROOT_CANISTER_ID=$(dfx canister --network ic id root)
 USER_INDEX_CANISTER_ID=$(dfx canister --network ic id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --network ic id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network ic id notifications)
@@ -25,6 +27,7 @@ cargo run \
   --manifest-path backend/canister_upgrader/Cargo.toml \
   'https://ic0.app/' \
   $IDENTITY \
+  $ROOT_CANISTER_ID \
   $USER_INDEX_CANISTER_ID \
   $GROUP_INDEX_CANISTER_ID \
   $NOTIFICATIONS_INDEX_CANISTER_ID \

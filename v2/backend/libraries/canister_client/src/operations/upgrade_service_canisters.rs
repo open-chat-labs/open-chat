@@ -26,21 +26,15 @@ pub async fn upgrade_group_index_canister(
     println!("Group index canister upgraded");
 }
 
-pub async fn upgrade_user_index_canister(
-    identity: BasicIdentity,
-    url: String,
-    user_index_canister_id: CanisterId,
-    version: Version,
-) {
-    upgrade_root_canister(
-        identity,
-        url,
-        user_index_canister_id,
-        version,
-        user_index_canister::post_upgrade::Args { wasm_version: version },
-        CanisterName::UserIndex,
-    )
-    .await;
+pub async fn upgrade_user_index_canister(identity: BasicIdentity, url: String, root_canister_id: CanisterId, version: Version) {
+    let agent = build_ic_agent(url, identity).await;
+    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version, false);
+    let args = root_canister::upgrade_user_index_canister::Args {
+        user_index_canister_wasm,
+    };
+    root_canister_client::upgrade_user_index_canister(&agent, &root_canister_id, &args)
+        .await
+        .unwrap_or_else(|e| panic!("Failed to upgrade user_index canister. Error: {e:?}"));
     println!("User index canister upgraded");
 }
 

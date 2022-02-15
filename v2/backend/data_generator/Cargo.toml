@@ -11,7 +11,7 @@ canister_client = { path = "../libraries/canister_client" }
 clap = { version = "3.0.14", features = ["derive"] }
 futures = "0.3.16"
 group_canister = { path = "../canisters/group/api" }
-ic-agent = "0.6.0"
+ic-agent = "0.12.1"
 lipsum = "0.8.0"
 rand = "0.7.3"
 tokio = { version = "1.10.0", features = ["full"] }

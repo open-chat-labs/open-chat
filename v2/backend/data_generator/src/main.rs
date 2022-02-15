@@ -14,6 +14,7 @@ async fn main() {
     let opts = Opts::parse();
 
     let canister_ids = CanisterIds {
+        root: opts.root,
         user_index: opts.user_index,
         group_index: opts.group_index,
         notifications: opts.notifications,
@@ -159,6 +160,7 @@ fn build_rng(seed: Option<u32>) -> StdRng {
 #[derive(Parser)]
 struct Opts {
     pub url: String,
+    pub root: CanisterId,
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub notifications: CanisterId,
