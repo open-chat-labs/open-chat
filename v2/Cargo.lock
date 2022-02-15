@@ -3198,7 +3198,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client_macros",
- "ic-agent 0.7.0",
+ "ic-agent",
  "root_canister",
  "types",
 ]
@@ -3212,7 +3212,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "http_request",
- "ic-cdk",
+ "ic-cdk 0.4.0",
  "ic-cdk-macros",
  "root_canister",
  "serde",
