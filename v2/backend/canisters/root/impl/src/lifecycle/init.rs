@@ -16,7 +16,7 @@ fn init(args: Args) {
     let env = Box::new(CanisterEnv::new());
 
     let data = Data::new(
-        args.service_principals,
+        args.service_principals.into_iter().collect(),
         args.user_index_canister_id,
         args.group_index_canister_id,
         args.notifications_canister_id,

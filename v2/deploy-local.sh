@@ -10,17 +10,20 @@ OPEN_STORAGE_INDEX_CANISTER_ID=$2
 ./generate-wasm.sh group_index_canister_impl
 ./generate-wasm.sh notifications_canister_impl
 ./generate-wasm.sh online_users_aggregator_canister_impl
+./generate-wasm.sh root_canister_impl
 ./generate-wasm.sh user_canister_impl
 ./generate-wasm.sh user_index_canister_impl
 
 ./compress-wasm.sh group_canister_impl
 ./compress-wasm.sh user_canister_impl
 
+dfx --identity $IDENTITY canister create root
 dfx --identity $IDENTITY canister create user_index
 dfx --identity $IDENTITY canister create group_index
 dfx --identity $IDENTITY canister create notifications
 dfx --identity $IDENTITY canister create online_users_aggregator
 
+ROOT_CANISTER_ID=$(dfx canister id root)
 USER_INDEX_CANISTER_ID=$(dfx canister id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister id notifications)
@@ -31,6 +34,7 @@ cargo run \
   'http://127.0.0.1:8000/' \
   $TEST_MODE \
   $IDENTITY \
+  $ROOT_CANISTER_ID \
   $USER_INDEX_CANISTER_ID \
   $GROUP_INDEX_CANISTER_ID \
   $NOTIFICATIONS_INDEX_CANISTER_ID \

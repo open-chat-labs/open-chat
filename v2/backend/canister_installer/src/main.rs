@@ -9,6 +9,7 @@ async fn main() {
     let opts = Opts::parse();
 
     let canister_ids = CanisterIds {
+        root: opts.root,
         user_index: opts.user_index,
         group_index: opts.group_index,
         notifications: opts.notifications,
@@ -27,6 +28,7 @@ struct Opts {
     #[clap(parse(try_from_str))]
     test_mode: bool,
     controller: String,
+    root: CanisterId,
     user_index: CanisterId,
     group_index: CanisterId,
     notifications: CanisterId,

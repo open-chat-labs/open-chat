@@ -12,6 +12,9 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     let agent = build_ic_agent(url, identity).await;
     let management_canister = build_management_canister(&agent);
 
+    // futures::future::joinN is only defined for N <= 5
+    let root_canister_id = create_empty_canister(&management_canister).await;
+
     let (
         user_index_canister_id,
         group_index_canister_id,
@@ -27,6 +30,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     )
     .await;
 
+    println!("root canister id: {root_canister_id}");
     println!("user_index canister id: {user_index_canister_id}");
     println!("group_index canister id: {group_index_canister_id}");
     println!("notifications canister id: {notifications_canister_id}");
@@ -34,6 +38,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     println!("open_storage_index canister id: {open_storage_index_canister_id}");
 
     let canister_ids = CanisterIds {
+        root: root_canister_id,
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
         notifications: notifications_canister_id,
@@ -61,6 +66,18 @@ async fn install_service_canisters_impl(
     test_mode: bool,
 ) {
     let version = Version::min();
+
+    let root_canister_wasm = get_canister_wasm(CanisterName::Root, version, false);
+    let root_init_args = root_canister::init::Args {
+        service_principals: vec![principal],
+        user_index_canister_id: canister_ids.user_index,
+        group_index_canister_id: canister_ids.group_index,
+        notifications_canister_id: canister_ids.notifications,
+        online_users_aggregator_canister_id: canister_ids.online_users_aggregator,
+        open_storage_index_canister_id: canister_ids.open_storage_index,
+        wasm_version: Version::min(),
+        test_mode,
+    };
 
     let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version, false);
     let user_canister_wasm = get_canister_wasm(CanisterName::User, Version::min(), true);
@@ -102,7 +119,13 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    futures::future::join4(
+    futures::future::join5(
+        install_wasm(
+            management_canister,
+            &canister_ids.root,
+            &root_canister_wasm.module,
+            root_init_args,
+        ),
         install_wasm(
             management_canister,
             &canister_ids.user_index,

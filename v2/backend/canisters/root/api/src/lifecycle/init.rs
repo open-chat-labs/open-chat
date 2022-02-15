@@ -1,11 +1,10 @@
 use candid::CandidType;
 use serde::Deserialize;
-use std::collections::HashSet;
 use types::{CanisterId, Version};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub service_principals: HashSet<CanisterId>,
+    pub service_principals: Vec<CanisterId>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,

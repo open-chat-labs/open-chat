@@ -16,9 +16,11 @@ group_canister = { path = "../../canisters/group/api" }
 group_canister_client = { path = "../../canisters/group/client" }
 group_index_canister = { path = "../../canisters/group_index/api" }
 group_index_canister_client = { path = "../../canisters/group_index/client" }
-ic-agent = "0.6.0"
-ic-utils = "0.4.0"
+ic-agent = "0.12.1"
+ic-utils = "0.12.1"
 notifications_canister = { path = "../../canisters/notifications/api" }
+root_canister = { path = "../../canisters/root/api" }
+root_canister_client = { path = "../../canisters/root/client" }
 serde = "1.0.126"
 types = { path = "../types", default-features = false }
 user_canister = { path = "../../canisters/user/api" }

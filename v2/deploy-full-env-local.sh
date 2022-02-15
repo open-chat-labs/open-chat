@@ -13,6 +13,7 @@ II_ENV=development dfx deploy --no-wallet --argument '(null)'
 popd
 
 # Create the OpenChat canisters
+dfx --identity $IDENTITY canister create root
 dfx --identity $IDENTITY canister create user_index
 dfx --identity $IDENTITY canister create group_index
 dfx --identity $IDENTITY canister create notifications
