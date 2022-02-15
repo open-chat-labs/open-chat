@@ -28,7 +28,7 @@ pub async fn upgrade_group_index_canister(
 
 pub async fn upgrade_user_index_canister(identity: BasicIdentity, url: String, root_canister_id: CanisterId, version: Version) {
     let agent = build_ic_agent(url, identity).await;
-    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version, false);
+    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version, true);
     let args = root_canister::upgrade_user_index_canister::Args {
         user_index_canister_wasm,
     };

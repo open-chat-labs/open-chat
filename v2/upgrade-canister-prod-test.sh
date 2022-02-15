@@ -16,6 +16,7 @@ VERSION=$3
 
 ./compress-wasm.sh group_canister_impl
 ./compress-wasm.sh user_canister_impl
+./compress-wasm.sh user_index_canister_impl
 
 ROOT_CANISTER_ID=$(dfx canister --network ic_test id root)
 USER_INDEX_CANISTER_ID=$(dfx canister --network ic_test id user_index)
