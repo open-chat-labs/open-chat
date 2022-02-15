@@ -3190,6 +3190,47 @@ dependencies = [
 ]
 
 [[package]]
+name = "root_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "root_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client_macros",
+ "ic-agent 0.7.0",
+ "root_canister",
+ "types",
+]
+
+[[package]]
+name = "root_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "http_request",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "root_canister",
+ "serde",
+ "serializer",
+ "tracing",
+ "types",
+ "user_index_canister",
+ "utils",
+]
+
+[[package]]
 name = "rsa"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
