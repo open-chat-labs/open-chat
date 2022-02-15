@@ -29,7 +29,7 @@ fn toggle_mute_notifications_impl(chat_id: ChatId, mute: bool, runtime_state: &m
     match runtime_state.data.group_chats.get_mut(&chat_id) {
         Some(group_chat) => {
             group_chat.notifications_muted = notifications_muted;
-            ic_cdk::block_on(toggle_mute_notifications_on_group_canister(group_chat.chat_id.into(), mute));
+            ic_cdk::spawn(toggle_mute_notifications_on_group_canister(group_chat.chat_id.into(), mute));
             Response::Success
         }
         None => match runtime_state.data.direct_chats.get_mut(&chat_id) {

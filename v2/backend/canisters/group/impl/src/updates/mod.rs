@@ -49,7 +49,7 @@ fn handle_activity_notification(runtime_state: &mut RuntimeState) {
             public_group_activity,
         };
 
-        ic_cdk::block_on(call_group_index_canister(runtime_state.data.group_index_canister_id, args));
+        ic_cdk::spawn(call_group_index_canister(runtime_state.data.group_index_canister_id, args));
     }
 
     fn extract_activity(now: TimestampMillis, data: &Data) -> PublicGroupActivity {

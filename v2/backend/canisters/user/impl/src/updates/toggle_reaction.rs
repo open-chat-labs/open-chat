@@ -29,7 +29,7 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             .toggle_reaction(my_user_id, args.message_id, args.reaction.clone(), now)
         {
             ToggleReactionResult::Added(e) => {
-                ic_cdk::block_on(toggle_reaction_on_recipients_canister(
+                ic_cdk::spawn(toggle_reaction_on_recipients_canister(
                     args.user_id.into(),
                     args.message_id,
                     args.reaction,
@@ -38,7 +38,7 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                 Added(e)
             }
             ToggleReactionResult::Removed(e) => {
-                ic_cdk::block_on(toggle_reaction_on_recipients_canister(
+                ic_cdk::spawn(toggle_reaction_on_recipients_canister(
                     args.user_id.into(),
                     args.message_id,
                     args.reaction,

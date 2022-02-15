@@ -18,7 +18,7 @@ fn c2c_retry_sending_failed_messages(args: Args) -> Response {
 fn c2c_retry_sending_failed_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let messages_to_retry = runtime_state.data.failed_messages_pending_retry.take(&args.recipient);
     if !messages_to_retry.is_empty() {
-        ic_cdk::block_on(retry_sending_messages(args.recipient, messages_to_retry));
+        ic_cdk::spawn(retry_sending_messages(args.recipient, messages_to_retry));
     }
     Success
 }

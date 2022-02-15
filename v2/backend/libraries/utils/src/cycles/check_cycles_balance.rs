@@ -10,7 +10,7 @@ const GB_STORAGE_PER_SECOND_FEE: Cycles = 127_000;
 
 pub fn check_cycles_balance(user_cycles_balance: Cycles, top_up_canister_id: CanisterId) {
     if should_notify(user_cycles_balance) {
-        ic_cdk::block_on(send_notification(top_up_canister_id));
+        ic_cdk::spawn(send_notification(top_up_canister_id));
     }
 }
 

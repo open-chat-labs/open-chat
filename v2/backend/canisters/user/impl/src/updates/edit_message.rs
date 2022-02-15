@@ -31,7 +31,7 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         match chat.events.edit_message(edit_message_args) {
             EditMessageResult::Success => {
-                ic_cdk::block_on(edit_on_recipients_canister(
+                ic_cdk::spawn(edit_on_recipients_canister(
                     args.user_id.into(),
                     args.message_id,
                     args.content,
