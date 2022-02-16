@@ -120,4 +120,5 @@ pub struct PublicGroupSummary {
     pub participant_count: u32,
     pub pinned_message: Option<MessageIndex>,
     pub wasm_version: Version,
+    pub owner_id: UserId,
 }

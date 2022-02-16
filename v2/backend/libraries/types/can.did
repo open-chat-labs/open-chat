@@ -329,6 +329,7 @@ type PublicGroupSummary =
         participant_count: nat32;
         pinned_message: opt MessageIndex;
         wasm_version: Version;
+        owner_id: UserId;
     };
 
 type ReplyContext =

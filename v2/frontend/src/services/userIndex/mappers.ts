@@ -123,6 +123,7 @@ export function createChallengeResponse(
 }
 
 export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterUserResponse {
+    console.log(candid);
     if ("UsernameTaken" in candid) {
         return "username_taken";
     }

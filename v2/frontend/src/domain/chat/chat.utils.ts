@@ -394,6 +394,7 @@ function mergeUpdatedGroupChat(
     chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
     chat.myRole = updatedChat.myRole ?? (chat.myRole === "previewer" ? "participant" : chat.myRole);
     chat.mentions = mergeMentions(chat.mentions, updatedChat.mentions);
+    chat.ownerId = updatedChat.ownerId ?? chat.ownerId;
     return chat;
 }
 
@@ -866,6 +867,7 @@ export function isPreviewing(chat: ChatSummary): boolean {
 }
 
 export function groupChatFromCandidate(
+    userId: string,
     chatId: string,
     candidate: CandidateGroupChat
 ): GroupChatSummary {
@@ -887,6 +889,7 @@ export function groupChatFromCandidate(
         myRole: "owner",
         mentions: [],
         ...candidate.avatar,
+        ownerId: userId,
     };
 }
 

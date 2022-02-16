@@ -60,6 +60,7 @@ const defaultGroupChat: GroupChatSummary = {
     participantCount: 10,
     myRole: "admin",
     mentions: [],
+    ownerId: "some_owner",
 };
 
 function directChatId(id: number): DirectChatSummary {

@@ -503,6 +503,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             participantCount: optional(candid.Group.participant_count, identity),
             myRole: optional(candid.Group.role, participantRole),
             mentions: candid.Group.mentions.map(mention),
+            ownerId: optional(candid.Group.owner_id, (id) => id.toString()),
         };
     }
     if ("Direct" in candid) {
@@ -587,6 +588,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         participantCount: candid.participant_count,
         myRole: participantRole(candid.role),
         mentions: candid.mentions.map(mention),
+        ownerId: candid.owner_id.toString(),
     };
 }
 

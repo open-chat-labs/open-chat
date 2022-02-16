@@ -9,7 +9,7 @@ use std::cmp::Ordering;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    ChatId, Cycles, CyclesTopUp, GroupMatch, Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis, Version,
+    ChatId, Cycles, CyclesTopUp, GroupMatch, Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis, Version, UserId
 };
 use utils::iterator_extensions::IteratorExtensions;
 use utils::time::DAY_IN_MS;
@@ -58,6 +58,7 @@ impl PublicGroups {
                 args.now,
                 args.wasm_version,
                 args.cycles,
+                args.owner_id,
             );
 
             self.name_to_id_map.insert(args.name, args.chat_id);
@@ -100,6 +101,7 @@ impl PublicGroups {
             participant_count: summary.participant_count,
             pinned_message: summary.pinned_message,
             wasm_version: group.wasm_version,
+            owner_id: group.owner_id,
         })
     }
 
@@ -165,6 +167,7 @@ pub struct PublicGroupInfo {
     wasm_version: Version,
     cycle_top_ups: Vec<CyclesTopUp>,
     upgrade_in_progress: bool,
+    owner_id: UserId,
 }
 
 pub enum UpdateGroupResult {
@@ -182,6 +185,7 @@ impl PublicGroupInfo {
         now: TimestampMillis,
         wasm_version: Version,
         cycles: Cycles,
+        owner_id: UserId,
     ) -> PublicGroupInfo {
         PublicGroupInfo {
             id,
@@ -197,6 +201,7 @@ impl PublicGroupInfo {
                 amount: cycles,
             }],
             upgrade_in_progress: false,
+            owner_id,
         }
     }
 
@@ -293,6 +298,7 @@ pub struct GroupCreatedArgs {
     pub now: TimestampMillis,
     pub wasm_version: Version,
     pub cycles: Cycles,
+    pub owner_id: UserId,
 }
 
 #[derive(PartialEq, Eq, Debug)]

@@ -33,6 +33,7 @@ mod tests {
     use crate::Data;
     use candid::Principal;
     use types::Version;
+    use types::UserId;
     use utils::env::test::TestEnv;
 
     #[test]
@@ -122,6 +123,8 @@ mod tests {
             (7, "Small sausages", "Weeners"),
         ];
 
+        let owner_id = UserId::from(Principal::from_slice(&[]));
+
         for (id, name, description) in groups_raw {
             let chat_id = Principal::from_slice(&[id]).into();
             data.public_groups.reserve_name(name, env.now);
@@ -133,6 +136,7 @@ mod tests {
                 now: env.now,
                 wasm_version: Version::new(1, 0, 0),
                 cycles: 0,
+                owner_id,
             });
         }
 

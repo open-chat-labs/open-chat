@@ -533,6 +533,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     participantCount?: number;
     myRole?: ParticipantRole;
     mentions: Mention[];
+    ownerId?: string;
 };
 
 export type ParticipantRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
@@ -596,6 +597,7 @@ export type GroupChatSummary = DataContent &
         participantCount: number;
         myRole: ParticipantRole;
         mentions: Mention[];
+        ownerId: string;
     };
 
 export type Mention = {
