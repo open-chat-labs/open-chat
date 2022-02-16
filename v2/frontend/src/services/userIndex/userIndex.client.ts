@@ -64,8 +64,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         username: string,
         challengeAttempt: ChallengeAttempt
     ): Promise<RegisterUserResponse> {
-        console.log(username);
-        console.log(challengeAttempt);
         return this.handleResponse(
             this.userService.register_user({
                 username,
