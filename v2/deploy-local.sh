@@ -17,11 +17,11 @@ OPEN_STORAGE_INDEX_CANISTER_ID=$2
 ./compress-wasm.sh group_canister_impl
 ./compress-wasm.sh user_canister_impl
 
-dfx --identity $IDENTITY canister create root
-dfx --identity $IDENTITY canister create user_index
-dfx --identity $IDENTITY canister create group_index
-dfx --identity $IDENTITY canister create notifications
-dfx --identity $IDENTITY canister create online_users_aggregator
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 root
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 user_index
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 group_index
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 online_users_aggregator
 
 ROOT_CANISTER_ID=$(dfx canister id root)
 USER_INDEX_CANISTER_ID=$(dfx canister id user_index)
