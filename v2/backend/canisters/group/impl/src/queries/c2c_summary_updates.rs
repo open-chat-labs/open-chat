@@ -69,6 +69,7 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
         ..Default::default()
     };
 
+
     // Iterate through events starting from most recent
     let mut lowest_message_index: MessageIndex = u32::MIN.into();
     for event_wrapper in runtime_state.data.events.iter().rev().take_while(|e| e.timestamp > since) {
@@ -118,8 +119,13 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
                 lowest_message_index = message.message_index;
             }
             ChatEventInternal::OwnershipTransferred(ownership) => {
-                updates.role_changed = true;
-                updates.owner_id = Some(ownership.new_owner);
+                let caller = runtime_state.env.caller().into();
+                if ownership.new_owner == caller || ownership.old_owner == caller {
+                    updates.role_changed = true;
+                }
+                if updates.owner_id == None {
+                    updates.owner_id = Some(ownership.new_owner);
+                }
             }
             _ => {}
         }
