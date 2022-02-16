@@ -144,7 +144,13 @@ struct Data {
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_message: Option<MessageIndex>,
     pub test_mode: bool,
+
+    #[serde(default = "default_userid")]
     pub owner_id: UserId,
+}
+
+fn default_userid() -> UserId {
+    Principal::anonymous().into()
 }
 
 #[allow(clippy::too_many_arguments)]
