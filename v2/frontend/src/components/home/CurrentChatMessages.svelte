@@ -565,6 +565,7 @@
         background-color: var(--currentChat-msgs-bg);
         padding: $sp3 $sp3;
         overflow-x: hidden;
+        overscroll-behavior-y: contain;
         position: relative;
         display: flex;
         flex-direction: column-reverse;
