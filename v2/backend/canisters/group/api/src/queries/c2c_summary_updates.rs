@@ -33,6 +33,7 @@ pub struct SummaryUpdates {
     pub mentions: Vec<Mention>,
     pub pinned_message: OptionUpdate<MessageIndex>,
     pub wasm_version: Option<Version>,
+    pub owner_id: Option<UserId>,
 }
 
 impl From<SummaryUpdates> for GroupChatSummaryUpdates {
@@ -52,6 +53,7 @@ impl From<SummaryUpdates> for GroupChatSummaryUpdates {
             mentions: s.mentions,
             pinned_message: s.pinned_message,
             wasm_version: s.wasm_version,
+            owner_id: s.owner_id,
         }
     }
 }

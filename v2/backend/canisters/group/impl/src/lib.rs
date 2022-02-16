@@ -98,6 +98,7 @@ impl RuntimeState {
             mentions: participant.get_most_recent_mentions(&data.events),
             pinned_message: data.pinned_message,
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            owner_id: data.owner_id,
         }
     }
 
@@ -143,6 +144,7 @@ struct Data {
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_message: Option<MessageIndex>,
     pub test_mode: bool,
+    pub owner_id: UserId,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -182,6 +184,7 @@ impl Data {
             activity_notification_state: ActivityNotificationState::new(now),
             pinned_message: None,
             test_mode,
+            owner_id: creator_user_id,
         }
     }
 

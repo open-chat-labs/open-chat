@@ -64,6 +64,7 @@ pub struct GroupChatSummary {
     pub mentions: Vec<Mention>,
     pub pinned_message: Option<MessageIndex>,
     pub wasm_version: Version,
+    pub owner_id: UserId,
 }
 
 impl GroupChatSummary {
@@ -104,6 +105,7 @@ pub struct GroupChatSummaryUpdates {
     pub mentions: Vec<Mention>,
     pub pinned_message: OptionUpdate<MessageIndex>,
     pub wasm_version: Option<Version>,
+    pub owner_id: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

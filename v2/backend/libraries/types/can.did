@@ -209,6 +209,7 @@ type GroupChatSummary =
         mentions: vec Mention;
         pinned_message: opt MessageIndex;
         wasm_version: Version;
+        owner_id: UserId;
     };
 
 type GroupChatSummaryUpdates =
@@ -227,6 +228,7 @@ type GroupChatSummaryUpdates =
         mentions: vec Mention;
         pinned_message: PinnedMessageUpdate;
         wasm_version: opt Version;
+        owner_id: opt UserId;
     };
 
 type GroupDescriptionChanged =
