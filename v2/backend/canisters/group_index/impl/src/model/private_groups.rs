@@ -3,7 +3,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, Cycles, CyclesTopUp, TimestampMillis, Version, UserId};
+use types::{ChatId, Cycles, CyclesTopUp, TimestampMillis, UserId, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct PrivateGroups {

@@ -9,7 +9,7 @@ pub use updates::*;
 use candid::CandidType;
 use serde::Deserialize;
 use types::{
-    ChatId, EventIndex, EventWrapper, GroupChatSummary, Mention, Message, MessageIndex, Role, TimestampMillis, Version, UserId
+    ChatId, EventIndex, EventWrapper, GroupChatSummary, Mention, Message, MessageIndex, Role, TimestampMillis, UserId, Version,
 };
 
 pub const MAX_GROUP_NAME_LENGTH: u32 = 25;

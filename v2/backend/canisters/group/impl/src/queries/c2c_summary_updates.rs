@@ -2,7 +2,9 @@ use crate::{read_state, RuntimeState, WASM_VERSION};
 use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
-use types::{EventIndex, EventWrapper, Mention, Message, MessageIndex, OptionUpdate, TimestampMillis, MAX_RETURNED_MENTIONS, UserId};
+use types::{
+    EventIndex, EventWrapper, Mention, Message, MessageIndex, OptionUpdate, TimestampMillis, UserId, MAX_RETURNED_MENTIONS,
+};
 
 #[query]
 fn c2c_summary_updates(args: Args) -> Response {

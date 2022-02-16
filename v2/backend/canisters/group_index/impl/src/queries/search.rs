@@ -32,8 +32,8 @@ mod tests {
     use crate::model::public_groups::GroupCreatedArgs;
     use crate::Data;
     use candid::Principal;
-    use types::Version;
     use types::UserId;
+    use types::Version;
     use utils::env::test::TestEnv;
 
     #[test]

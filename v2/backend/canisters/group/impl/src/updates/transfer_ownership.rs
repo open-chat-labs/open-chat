@@ -35,7 +35,7 @@ fn transfer_ownership_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
                     new_owner: args.new_owner,
                 };
 
-                runtime_state.data.owner_id = args.new_owner; 
+                runtime_state.data.owner_id = args.new_owner;
 
                 runtime_state
                     .data

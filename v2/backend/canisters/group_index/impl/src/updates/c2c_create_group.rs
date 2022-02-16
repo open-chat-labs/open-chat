@@ -3,7 +3,7 @@ use crate::{mutate_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, M
 use canister_api_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
 use ic_cdk_macros::update;
-use types::{Avatar, CanisterId, CanisterWasm, ChatId, Cycles, Version, UserId};
+use types::{Avatar, CanisterId, CanisterWasm, ChatId, Cycles, UserId, Version};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
