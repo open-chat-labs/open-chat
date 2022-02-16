@@ -49,21 +49,33 @@ impl PublicGroups {
         }
     }
 
-    pub fn handle_group_created(&mut self, args: GroupCreatedArgs) -> bool {
-        if self.groups_pending.remove(&args.name).is_some() {
-            let group_info = PublicGroupInfo::new(
-                args.chat_id,
-                args.name.clone(),
-                args.description,
-                args.avatar_id,
-                args.now,
-                args.wasm_version,
-                args.cycles,
-                args.owner_id,
-            );
+    pub fn handle_group_created(
+        &mut self,
+        GroupCreatedArgs {
+            chat_id,
+            name,
+            description,
+            avatar_id,
+            now,
+            wasm_version,
+            cycles,
+            owner_id,
+        }: GroupCreatedArgs,
+    ) -> bool {
+        if self.groups_pending.remove(&name).is_some() {
+            let group_info = PublicGroupInfo::new(PublicGroupInfoArgs {
+                id: chat_id,
+                name: name.clone(),
+                description,
+                avatar_id,
+                now,
+                wasm_version,
+                cycles,
+                owner_id,
+            });
 
-            self.name_to_id_map.insert(args.name, args.chat_id);
-            self.groups.insert(args.chat_id, group_info);
+            self.name_to_id_map.insert(name, chat_id);
+            self.groups.insert(chat_id, group_info);
             true
         } else {
             false
@@ -177,16 +189,29 @@ pub enum UpdateGroupResult {
     NameTaken,
 }
 
+pub struct PublicGroupInfoArgs {
+    id: ChatId,
+    name: String,
+    description: String,
+    avatar_id: Option<u128>,
+    now: TimestampMillis,
+    wasm_version: Version,
+    cycles: Cycles,
+    owner_id: UserId,
+}
+
 impl PublicGroupInfo {
     pub fn new(
-        id: ChatId,
-        name: String,
-        description: String,
-        avatar_id: Option<u128>,
-        now: TimestampMillis,
-        wasm_version: Version,
-        cycles: Cycles,
-        owner_id: UserId,
+        PublicGroupInfoArgs {
+            id,
+            name,
+            description,
+            avatar_id,
+            now,
+            wasm_version,
+            cycles,
+            owner_id,
+        }: PublicGroupInfoArgs,
     ) -> PublicGroupInfo {
         PublicGroupInfo {
             id,
