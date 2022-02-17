@@ -188,7 +188,9 @@ impl Participants {
             return ChangeRoleResult::Invalid;
         }
 
-        if member.role == new_role {
+        let prev_role = member.role;
+
+        if prev_role == new_role {
             return ChangeRoleResult::Unchanged;
         }
 
@@ -248,6 +250,7 @@ impl Participants {
         ChangeRoleResult::Success(ChangeRoleSuccessResult {
             caller_id,
             prev_owner_id,
+            prev_role,
         })
     }
 
@@ -317,6 +320,7 @@ pub enum ChangeRoleResult {
 pub struct ChangeRoleSuccessResult {
     pub caller_id: UserId,
     pub prev_owner_id: Option<UserId>,
+    pub prev_role: Role,
 }
 
 pub enum MakeSuperAdminResult {
