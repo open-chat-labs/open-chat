@@ -127,6 +127,7 @@ pub struct ParticipantsDismissedAsAdmin {
 pub struct RoleChanged {
     pub user_ids: Vec<UserId>,
     pub changed_by: UserId,
+    pub old_role: Role,
     pub new_role: Role,
 }
 
