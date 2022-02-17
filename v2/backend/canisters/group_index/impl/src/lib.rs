@@ -91,7 +91,6 @@ struct Data {
     pub canister_pool: canister::Pool,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
-    #[serde(default)]
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
 }
