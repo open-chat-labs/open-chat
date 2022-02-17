@@ -53,7 +53,7 @@
     const renderer = {
         link(href: string | null, title: string | null, text: string) {
             if (suppressLinks) {
-                return `<span class="fake-link" ${title && `title=${title}`}>${text}</span`;
+                return `<span class="fake-link" ${title && `title=${title}`}>${text}</span>`;
             } else {
                 return `<a href=${href} ${title && `title=${title}`} target="_blank">${text}</a>`;
             }
