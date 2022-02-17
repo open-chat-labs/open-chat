@@ -2,7 +2,9 @@ use crate::{read_state, RuntimeState, WASM_VERSION};
 use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
-use types::{EventIndex, EventWrapper, Mention, Message, MessageIndex, OptionUpdate, TimestampMillis, MAX_RETURNED_MENTIONS};
+use types::{
+    EventIndex, EventWrapper, Mention, Message, MessageIndex, OptionUpdate, TimestampMillis, UserId, MAX_RETURNED_MENTIONS,
+};
 
 #[query]
 fn c2c_summary_updates(args: Args) -> Response {
@@ -35,6 +37,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             mentions: updates_from_events.mentions,
             pinned_message: updates_from_events.pinned_message,
             wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(args.updates_since).copied()),
+            owner_id: updates_from_events.owner_id,
         };
         Success(Box::new(SuccessResult { updates }))
     } else {
@@ -54,6 +57,7 @@ struct UpdatesFromEvents {
     role_changed: bool,
     mentions: Vec<Mention>,
     pinned_message: OptionUpdate<MessageIndex>,
+    owner_id: Option<UserId>,
 }
 
 fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_mentions: &[MessageIndex]) -> UpdatesFromEvents {
@@ -92,7 +96,6 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
             ChatEventInternal::RoleChanged(_)
             | ChatEventInternal::ParticipantsPromotedToAdmin(_)
             | ChatEventInternal::ParticipantsDismissedAsAdmin(_)
-            | ChatEventInternal::OwnershipTransferred(_)
             | ChatEventInternal::ParticipantAssumesSuperAdmin(_)
             | ChatEventInternal::ParticipantDismissedAsSuperAdmin(_)
             | ChatEventInternal::ParticipantRelinquishesSuperAdmin(_) => {
@@ -113,6 +116,15 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
             }
             ChatEventInternal::Message(message) => {
                 lowest_message_index = message.message_index;
+            }
+            ChatEventInternal::OwnershipTransferred(ownership) => {
+                let caller = runtime_state.env.caller().into();
+                if ownership.new_owner == caller || ownership.old_owner == caller {
+                    updates.role_changed = true;
+                }
+                if updates.owner_id == None {
+                    updates.owner_id = Some(ownership.new_owner);
+                }
             }
             _ => {}
         }

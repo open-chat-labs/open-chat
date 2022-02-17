@@ -3,7 +3,9 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tracing::trace;
-use types::{ChatId, EventIndex, EventWrapper, Message, MessageIndex, Milliseconds, PublicGroupSummary, TimestampMillis};
+use types::{
+    ChatId, EventIndex, EventWrapper, Message, MessageIndex, Milliseconds, PublicGroupSummary, TimestampMillis, UserId,
+};
 
 const HOT_GROUPS_CACHE_DURATION: Milliseconds = FIVE_MINUTES_IN_MS;
 
@@ -52,6 +54,7 @@ pub struct CachedPublicGroupSummary {
     pub latest_event_index: EventIndex,
     pub participant_count: u32,
     pub pinned_message: Option<MessageIndex>,
+    pub owner_id: UserId,
 }
 
 impl From<PublicGroupSummary> for CachedPublicGroupSummary {
@@ -63,6 +66,7 @@ impl From<PublicGroupSummary> for CachedPublicGroupSummary {
             latest_event_index: summary.latest_event_index,
             participant_count: summary.participant_count,
             pinned_message: summary.pinned_message,
+            owner_id: summary.owner_id,
         }
     }
 }

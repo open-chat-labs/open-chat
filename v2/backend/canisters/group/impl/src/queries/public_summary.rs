@@ -25,6 +25,7 @@ fn public_summary_impl(runtime_state: &RuntimeState) -> Response {
         participant_count: data.participants.len(),
         pinned_message: runtime_state.data.pinned_message,
         wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+        owner_id: runtime_state.data.owner_id,
     };
     Success(SuccessResult { summary })
 }

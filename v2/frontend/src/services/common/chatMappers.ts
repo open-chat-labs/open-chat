@@ -500,6 +500,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
             blobId,
             canisterId: candid.chat_id.toString(),
         })),
+        ownerId: candid.owner_id.toString(),
     };
 }
 
