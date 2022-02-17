@@ -269,6 +269,7 @@ export const idlFactory = ({ IDL }) => {
   const RoleChanged = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
     'changed_by' : UserId,
+    'old_role' : Role,
     'new_role' : Role,
   });
   const OwnershipTransferred = IDL.Record({

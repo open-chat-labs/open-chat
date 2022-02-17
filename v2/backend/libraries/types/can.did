@@ -455,6 +455,7 @@ type RoleChanged =
     record {
         user_ids: vec UserId;
         changed_by: UserId;
+        old_role: Role;
         new_role: Role;
     };
     

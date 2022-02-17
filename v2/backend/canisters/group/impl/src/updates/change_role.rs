@@ -35,6 +35,7 @@ fn change_role_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             None => {
                 let event = RoleChanged {
                     user_ids: vec![args.user_id],
+                    old_role: r.prev_role,
                     new_role: args.new_role,
                     changed_by: r.caller_id,
                 };
