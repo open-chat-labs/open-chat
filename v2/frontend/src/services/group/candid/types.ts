@@ -589,6 +589,7 @@ export type Role = { 'Participant' : null } |
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
   'changed_by' : UserId,
+  'old_role' : Role,
   'new_role' : Role,
 }
 export interface SearchMessagesArgs {
