@@ -3,7 +3,9 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tracing::trace;
-use types::{ChatId, EventIndex, EventWrapper, Message, MessageIndex, Milliseconds, PublicGroupSummary, TimestampMillis, UserId};
+use types::{
+    ChatId, EventIndex, EventWrapper, Message, MessageIndex, Milliseconds, PublicGroupSummary, TimestampMillis, UserId,
+};
 
 const HOT_GROUPS_CACHE_DURATION: Milliseconds = FIVE_MINUTES_IN_MS;
 
