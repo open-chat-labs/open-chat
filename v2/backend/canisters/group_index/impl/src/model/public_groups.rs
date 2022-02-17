@@ -61,15 +61,7 @@ impl PublicGroups {
         }: GroupCreatedArgs,
     ) -> bool {
         if self.groups_pending.remove(&name).is_some() {
-            let group_info = PublicGroupInfo::new(PublicGroupInfoArgs {
-                id: chat_id,
-                name: name.clone(),
-                description,
-                avatar_id,
-                now,
-                wasm_version,
-                cycles,
-            });
+            let group_info = PublicGroupInfo::new(chat_id, name.clone(), description, avatar_id, now, wasm_version, cycles);
 
             self.name_to_id_map.insert(name, chat_id);
             self.groups.insert(chat_id, group_info);
@@ -185,27 +177,15 @@ pub enum UpdateGroupResult {
     NameTaken,
 }
 
-pub struct PublicGroupInfoArgs {
-    id: ChatId,
-    name: String,
-    description: String,
-    avatar_id: Option<u128>,
-    now: TimestampMillis,
-    wasm_version: Version,
-    cycles: Cycles,
-}
-
 impl PublicGroupInfo {
     pub fn new(
-        PublicGroupInfoArgs {
-            id,
-            name,
-            description,
-            avatar_id,
-            now,
-            wasm_version,
-            cycles,
-        }: PublicGroupInfoArgs,
+        id: ChatId,
+        name: String,
+        description: String,
+        avatar_id: Option<u128>,
+        now: TimestampMillis,
+        wasm_version: Version,
+        cycles: Cycles,
     ) -> PublicGroupInfo {
         PublicGroupInfo {
             id,
