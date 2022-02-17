@@ -9,7 +9,7 @@ use std::cmp::Ordering;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    ChatId, Cycles, CyclesTopUp, GroupMatch, Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis, UserId,
+    ChatId, Cycles, CyclesTopUp, GroupMatch, Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis, 
     Version,
 };
 use utils::iterator_extensions::IteratorExtensions;
@@ -59,7 +59,6 @@ impl PublicGroups {
             now,
             wasm_version,
             cycles,
-            owner_id,
         }: GroupCreatedArgs,
     ) -> bool {
         if self.groups_pending.remove(&name).is_some() {
@@ -71,7 +70,6 @@ impl PublicGroups {
                 now,
                 wasm_version,
                 cycles,
-                owner_id,
             });
 
             self.name_to_id_map.insert(name, chat_id);
@@ -114,7 +112,7 @@ impl PublicGroups {
             participant_count: summary.participant_count,
             pinned_message: summary.pinned_message,
             wasm_version: group.wasm_version,
-            owner_id: group.owner_id,
+            owner_id: summary.owner_id,
         })
     }
 
@@ -180,7 +178,6 @@ pub struct PublicGroupInfo {
     wasm_version: Version,
     cycle_top_ups: Vec<CyclesTopUp>,
     upgrade_in_progress: bool,
-    owner_id: UserId,
 }
 
 pub enum UpdateGroupResult {
@@ -197,7 +194,6 @@ pub struct PublicGroupInfoArgs {
     now: TimestampMillis,
     wasm_version: Version,
     cycles: Cycles,
-    owner_id: UserId,
 }
 
 impl PublicGroupInfo {
@@ -210,7 +206,6 @@ impl PublicGroupInfo {
             now,
             wasm_version,
             cycles,
-            owner_id,
         }: PublicGroupInfoArgs,
     ) -> PublicGroupInfo {
         PublicGroupInfo {
@@ -227,7 +222,6 @@ impl PublicGroupInfo {
                 amount: cycles,
             }],
             upgrade_in_progress: false,
-            owner_id,
         }
     }
 
@@ -324,7 +318,6 @@ pub struct GroupCreatedArgs {
     pub now: TimestampMillis,
     pub wasm_version: Version,
     pub cycles: Cycles,
-    pub owner_id: UserId,
 }
 
 #[derive(PartialEq, Eq, Debug)]
