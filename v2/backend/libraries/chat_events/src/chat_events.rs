@@ -166,10 +166,8 @@ pub struct Metrics {
 
 impl ChatEvents {
     pub fn transform_events(&mut self) {
-        self.events = self
-            .events
-            .iter()
-            .map(|ew| match &ew.event {
+        for wrapper in &mut self.events {
+            match &wrapper.event {
                 ChatEventInternal::ParticipantsPromotedToAdmin(e) => {
                     let event = RoleChanged {
                         user_ids: e.user_ids.clone(),
@@ -177,11 +175,8 @@ impl ChatEvents {
                         old_role: Role::Participant,
                         new_role: Role::Admin,
                     };
-                    EventWrapper {
-                        index: ew.index,
-                        timestamp: ew.timestamp,
-                        event: ChatEventInternal::RoleChanged(Box::new(event)),
-                    }
+
+                    wrapper.event = ChatEventInternal::RoleChanged(Box::new(event));
                 }
                 ChatEventInternal::ParticipantsDismissedAsAdmin(e) => {
                     let event = RoleChanged {
@@ -190,15 +185,12 @@ impl ChatEvents {
                         old_role: Role::Participant,
                         new_role: Role::Admin,
                     };
-                    EventWrapper {
-                        index: ew.index,
-                        timestamp: ew.timestamp,
-                        event: ChatEventInternal::RoleChanged(Box::new(event)),
-                    }
+
+                    wrapper.event = ChatEventInternal::RoleChanged(Box::new(event));
                 }
-                _ => ew.clone(),
-            })
-            .collect();
+                _ => (),
+            }
+        }
     }
 
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> ChatEvents {
