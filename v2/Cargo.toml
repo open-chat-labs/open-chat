@@ -43,6 +43,7 @@ members = [
     "backend/libraries/http_request",
     "backend/libraries/index_store",
     "backend/libraries/ledger_utils",
+    "backend/libraries/open_storage_bucket_client",
     "backend/libraries/search",
     "backend/libraries/serializer",
     "backend/libraries/types",

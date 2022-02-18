@@ -1462,8 +1462,7 @@ dependencies = [
  "lazy_static",
  "notifications_canister",
  "notifications_canister_c2c_client",
- "open_storage_bucket_canister",
- "open_storage_bucket_canister_c2c_client",
+ "open_storage_bucket_client",
  "regex",
  "search",
  "serde",
@@ -2612,6 +2611,17 @@ dependencies = [
  "ic-cdk 0.4.0",
  "open_storage_bucket_canister",
  "tracing",
+ "types",
+]
+
+[[package]]
+name = "open_storage_bucket_client"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "ic-cdk 0.4.0",
+ "open_storage_bucket_canister",
+ "open_storage_bucket_canister_c2c_client",
  "types",
 ]
 
@@ -4266,8 +4276,7 @@ dependencies = [
  "ledger_utils",
  "notifications_canister",
  "notifications_canister_c2c_client",
- "open_storage_bucket_canister",
- "open_storage_bucket_canister_c2c_client",
+ "open_storage_bucket_client",
  "search",
  "serde",
  "serializer",
