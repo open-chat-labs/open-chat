@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState, WASM_VERSION};
+use crate::{read_state, ParticipantInternal, RuntimeState, WASM_VERSION};
 use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
@@ -17,7 +17,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
         None => return CallerNotInGroup,
         Some(p) => p,
     };
-    let updates_from_events = process_events(args.updates_since, runtime_state, &participant.mentions);
+    let updates_from_events = process_events(args.updates_since, participant, runtime_state);
 
     if let Some(last_updated) = updates_from_events.latest_update {
         let updates = SummaryUpdates {
@@ -60,7 +60,11 @@ struct UpdatesFromEvents {
     owner_id: Option<UserId>,
 }
 
-fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_mentions: &[MessageIndex]) -> UpdatesFromEvents {
+fn process_events(
+    since: TimestampMillis,
+    participant: &ParticipantInternal,
+    runtime_state: &RuntimeState,
+) -> UpdatesFromEvents {
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
@@ -93,13 +97,35 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
                     updates.avatar_id = OptionUpdate::from_update(a.new_avatar);
                 }
             }
-            ChatEventInternal::RoleChanged(_)
-            | ChatEventInternal::ParticipantsPromotedToAdmin(_)
-            | ChatEventInternal::ParticipantsDismissedAsAdmin(_)
-            | ChatEventInternal::ParticipantAssumesSuperAdmin(_)
-            | ChatEventInternal::ParticipantDismissedAsSuperAdmin(_)
-            | ChatEventInternal::ParticipantRelinquishesSuperAdmin(_) => {
-                updates.role_changed = true;
+            ChatEventInternal::RoleChanged(r) => {
+                if r.user_ids.contains(&participant.user_id) {
+                    updates.role_changed = true;
+                }
+            }
+            ChatEventInternal::ParticipantsPromotedToAdmin(p) => {
+                if p.user_ids.contains(&participant.user_id) {
+                    updates.role_changed = true;
+                }
+            }
+            ChatEventInternal::ParticipantsDismissedAsAdmin(p) => {
+                if p.user_ids.contains(&participant.user_id) {
+                    updates.role_changed = true;
+                }
+            }
+            ChatEventInternal::ParticipantAssumesSuperAdmin(p) => {
+                if p.user_id == participant.user_id {
+                    updates.role_changed = true;
+                }
+            }
+            ChatEventInternal::ParticipantDismissedAsSuperAdmin(p) => {
+                if p.user_id == participant.user_id {
+                    updates.role_changed = true;
+                }
+            }
+            ChatEventInternal::ParticipantRelinquishesSuperAdmin(p) => {
+                if p.user_id == participant.user_id {
+                    updates.role_changed = true;
+                }
             }
             ChatEventInternal::ParticipantsAdded(_)
             | ChatEventInternal::ParticipantsRemoved(_)
@@ -130,7 +156,8 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState, all_ment
         }
     }
 
-    updates.mentions = all_mentions
+    updates.mentions = participant
+        .mentions
         .iter()
         .rev()
         .filter(|m| **m >= lowest_message_index)
