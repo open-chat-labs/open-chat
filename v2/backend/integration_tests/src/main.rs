@@ -8,7 +8,6 @@ use tokio::runtime::Runtime as TRuntime;
 mod create_group_tests;
 mod change_role_tests;
 mod get_updates_tests;
-mod make_admin_tests;
 mod make_super_admin_tests;
 mod mentions_tests;
 mod online_users_aggregator_tests;
@@ -43,7 +42,6 @@ fn tests_pot() -> pot::Pot<IcManager> {
             create_group_tests::create_group_tests,
             get_updates_tests::get_updates_tests,
             change_role_tests::change_role_tests,
-            make_admin_tests::make_admin_tests,
             make_super_admin_tests::make_super_admin_tests,
             mentions_tests::mentions_tests,
             online_users_aggregator_tests::online_users_aggregator_tests,

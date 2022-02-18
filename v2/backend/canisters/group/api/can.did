@@ -146,34 +146,6 @@ type RemoveParticipantResponse =
         UserNotInGroup;
     }; 
 
-type MakeAdminArgs =
-    record {
-        user_id: UserId;
-    };
-
-type MakeAdminResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-        NotAuthorized;
-        UserNotInGroup;
-    }; 
-
-type DismissAdminArgs =
-    record {
-        user_id: UserId;
-    };
-
-type DismissAdminResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-        NotAuthorized;
-        UserNotInGroup;
-        UserNotAdmin;
-        CannotDismissSelf;
-    };
-
 type ChangeRoleArgs =
     record {
         user_id: UserId;
@@ -231,20 +203,6 @@ type DeleteGroupResponse =
         Success;
         NotAuthorized;
         InternalError;
-    };
-
-type TransferOwnershipArgs =
-    record {
-        new_owner: UserId;
-    };
-
-type TransferOwnershipResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-        UserNotInGroup;
-        NotAuthorized;
-        UserAlreadySuperAdmin;
     };
 
 type SelectedInitialArgs =
@@ -360,13 +318,10 @@ type PublicSummarySuccess =
 service: {
     // Owner only
     delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);
-    transfer_ownership: (TransferOwnershipArgs) -> (TransferOwnershipResponse);
 
     // Admin only
     block_user: (BlockUserArgs) -> (BlockUserResponse); // public only
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
-    make_admin: (MakeAdminArgs) -> (MakeAdminResponse);
-    dismiss_admin: (DismissAdminArgs) -> (DismissAdminResponse);
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group: (UpdateGroupArgs) -> (UpdateGroupResponse);
     set_pinned_message: (SetPinnedMessageArgs) -> (SetPinnedMessageResponse);

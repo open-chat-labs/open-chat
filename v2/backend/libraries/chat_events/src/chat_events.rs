@@ -165,6 +165,34 @@ pub struct Metrics {
 }
 
 impl ChatEvents {
+    pub fn transform_events(&mut self) {
+        for wrapper in self.events.iter_mut() {
+            match &wrapper.event {
+                ChatEventInternal::ParticipantsPromotedToAdmin(e) => {
+                    let event = RoleChanged {
+                        user_ids: e.user_ids.clone(),
+                        changed_by: e.promoted_by,
+                        old_role: Role::Participant,
+                        new_role: Role::Admin,
+                    };
+
+                    wrapper.event = ChatEventInternal::RoleChanged(Box::new(event));
+                }
+                ChatEventInternal::ParticipantsDismissedAsAdmin(e) => {
+                    let event = RoleChanged {
+                        user_ids: e.user_ids.clone(),
+                        changed_by: e.dismissed_by,
+                        old_role: Role::Participant,
+                        new_role: Role::Admin,
+                    };
+
+                    wrapper.event = ChatEventInternal::RoleChanged(Box::new(event));
+                }
+                _ => (),
+            }
+        }
+    }
+
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
             chat_type: ChatType::Direct,
