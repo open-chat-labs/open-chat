@@ -73,7 +73,7 @@ export function openCache(principal: string): Database | undefined {
         return undefined;
     }
     try {
-        return openDB<ChatSchema>(`openchat_db_${principal}`, 16, {
+        return openDB<ChatSchema>(`openchat_db_${principal}`, 17, {
             upgrade(db, _oldVersion, _newVersion) {
                 try {
                     if (db.objectStoreNames.contains("chat_events")) {
