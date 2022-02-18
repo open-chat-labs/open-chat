@@ -337,5 +337,9 @@
     "insufficientFunds": "Asegúrese de que la cuenta anterior tenga un saldo de al menos {amount} ICP para cubrir el almacenamiento solicitado, luego presione el botón \"Actualizar\".",
     "noChangeToStorage": "Elija un nuevo límite de almacenamiento usando el control deslizante de arriba para que podamos calcular un precio de actualización para usted.",
     "storageUsed": "{used}GB usado de {limit}GB",
-    "unableToLoadSMSUpgrade": "Antes de actualizar su almacenamiento, debemos actualizar OpenChat. Vuelva a cargar y vuelva a intentarlo."
+    "unableToLoadSMSUpgrade": "Antes de actualizar su almacenamiento, debemos actualizar OpenChat. Vuelva a cargar y vuelva a intentarlo.",
+    "roleChanged": "{changedBy} cambió el rol de {changed} de {oldRole} a {newRole}",
+    "yourRoleChanged": "{changedBy} cambió su rol de {oldRole} a {newRole}",
+    "participant": "partícipe",
+    "viewer": "espectador"
 }

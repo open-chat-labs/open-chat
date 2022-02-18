@@ -336,5 +336,9 @@
         "challengeAttemptFailed": "Der eingegebene Wert ist falsch. Bitte versuchen Sie die neue Herausforderung.",
         "challengeThrottled": "Es wurden zu viele Herausforderungen generiert. Bitte versuchen Sie es später erneut.",
         "attemptChallenge": "Bitte geben Sie die angezeigten Zeichen ein"
-    }
+    },
+    "roleChanged": "{changedBy} hat die Rolle von {changed} von {oldRole} zu {newRole} geändert",
+    "yourRoleChanged": "{changedBy} hat Ihre Rolle von {oldRole} zu {newRole} geändert",
+    "participant": "Teilnehmer",
+    "viewer": "Zuschauer"
 }

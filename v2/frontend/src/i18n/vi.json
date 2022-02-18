@@ -337,5 +337,9 @@
     "insufficientFunds": "Vui lòng đảm bảo rằng tài khoản ở trên có số dư ít nhất là {amount} ICP để trang trải bộ nhớ được yêu cầu, sau đó nhấn nút \"Làm mới\".",
     "noChangeToStorage": "Chọn giới hạn bộ nhớ mới bằng cách sử dụng thanh trượt ở trên để chúng tôi có thể tính giá nâng cấp cho bạn.",
     "storageUsed": "{used} GB đã sử dụng trong số {limit} GB",
-    "unableToLoadSMSUpgrade": "Trước khi nâng cấp bộ nhớ của bạn, chúng tôi cần làm mới OpenChat. Vui lòng tải lại và thử lại."
+    "unableToLoadSMSUpgrade": "Trước khi nâng cấp bộ nhớ của bạn, chúng tôi cần làm mới OpenChat. Vui lòng tải lại và thử lại.",
+    "roleChanged": "{changeBy} đã thay đổi vai trò của {change} từ {oldRole} thành {newRole}",
+    "yourRoleChanged": "{changeBy} đã thay đổi vai trò của bạn từ {oldRole} thành {newRole}",
+    "participant": "người tham gia",
+    "viewer": "người xem"
 }

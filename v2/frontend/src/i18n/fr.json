@@ -336,5 +336,9 @@
         "challengeAttemptFailed": "La valeur que vous avez entrée est incorrecte. Veuillez essayer le nouveau défi.",
         "challengeThrottled": "Trop de défis ont été générés. Veuillez réessayer plus tard.",
         "attemptChallenge": "Veuillez saisir les caractères que vous voyez"
-    }
+    },
+    "roleChanged": "{changedBy} a changé le rôle de {changed} de {oldRole} à {newRole}",
+    "yourRoleChanged": "{changedBy} a changé votre rôle de {oldRole} à {newRole}",
+    "participant": "participant",
+    "viewer": "téléspectateur"
 }
