@@ -29,6 +29,8 @@ itertools = "0.10.1"
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
+open_storage_bucket_canister = { path = "../../open_storage_bucket/api" }
+open_storage_bucket_canister_c2c_client = { path = "../../open_storage_bucket/c2c_client" }
 search = { path = "../../../libraries/search" }
 serde = "1.0.126"
 serializer = { path = "../../../libraries/serializer" }
