@@ -15,14 +15,11 @@ fn main() {
     generate_candid_method!(group, change_role, update);
     generate_candid_method!(group, delete_group, update);
     generate_candid_method!(group, delete_messages, update);
-    generate_candid_method!(group, dismiss_admin, update);
     generate_candid_method!(group, edit_message, update);
-    generate_candid_method!(group, make_admin, update);
     generate_candid_method!(group, remove_participant, update);
     generate_candid_method!(group, send_message, update);
     generate_candid_method!(group, set_pinned_message, update);
     generate_candid_method!(group, toggle_reaction, update);
-    generate_candid_method!(group, transfer_ownership, update);
     generate_candid_method!(group, unblock_user, update);
     generate_candid_method!(group, update_group, update);
 
