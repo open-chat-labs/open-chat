@@ -3,19 +3,17 @@ import type {
     ApiEventsResponse,
     ApiEventWrapper,
     ApiGroupChatEvent,
-    ApiMakeAdminResponse,
+    ApiChangeRoleResponse,
     ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
     ApiUpdateGroupResponse,
     ApiToggleReactionResponse,
     ApiDeleteMessageResponse,
     ApiEditMessageResponse,
-    ApiDismissAdminResponse,
     ApiSelectedInitialResponse,
     ApiParticipant,
     ApiSelectedUpdatesResponse,
     ApiRole,
-    ApiTransferOwnershipResponse,
     ApiDeleteGroupResponse,
 } from "./candid/idl";
 import type {
@@ -30,14 +28,12 @@ import type {
     DeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
-    MakeAdminResponse,
-    DismissAdminResponse,
+    ChangeRoleResponse,
     Participant,
     GroupChatDetailsResponse,
     GroupChatDetailsUpdatesResponse,
     UnblockUserResponse,
     ParticipantRole,
-    TransferOwnershipResponse,
     DeleteGroupResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
@@ -48,6 +44,19 @@ import { identity, optional } from "../../utils/mapping";
 
 function principalToString(p: Principal): string {
     return p.toString();
+}
+
+export function apiRole(role: ParticipantRole): ApiRole | undefined {
+    switch (role) {
+        case "admin":
+            return { Admin: null };
+        case "participant":
+            return { Participant: null };
+        case "owner":
+            return { Owner: null };
+        default:
+            return undefined;
+    }
 }
 
 function participantRole(candid: ApiRole): ParticipantRole {
@@ -124,30 +133,6 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
         return "not_authorised";
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteGroupResponse type received", candid);
-}
-
-export function transferOwnershipResponse(
-    candid: ApiTransferOwnershipResponse
-): TransferOwnershipResponse {
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("UserNotInGroup" in candid) {
-        return "user_not_in_group";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorised";
-    }
-    if ("UserAlreadySuperAdmin" in candid) {
-        return "user_already_super_admin";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiTransferOwnershipResponse type received",
-        candid
-    );
 }
 
 export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUserResponse {
@@ -297,7 +282,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
-export function makeAdminResponse(candid: ApiMakeAdminResponse): MakeAdminResponse {
+export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeRoleResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -310,29 +295,10 @@ export function makeAdminResponse(candid: ApiMakeAdminResponse): MakeAdminRespon
     if ("NotAuthorized" in candid) {
         return "not_authorised";
     }
-    throw new UnsupportedValueError("Unexpected ApiMakeAdminResonse type received", candid);
-}
-
-export function dismissAdminResponse(candid: ApiDismissAdminResponse): DismissAdminResponse {
-    if ("Success" in candid) {
-        return "success";
+    if ("Invalid" in candid) {
+        return "invalid";
     }
-    if ("UserNotInGroup" in candid) {
-        return "user_not_in_group";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorised";
-    }
-    if ("CannotDismissSelf" in candid) {
-        return "cannot_dismiss_self";
-    }
-    if ("UserNotAdmin" in candid) {
-        return "user_not_admin";
-    }
-    throw new UnsupportedValueError("Unexpected ApiMakeAdminResonse type received", candid);
+    throw new UnsupportedValueError("Unexpected ApiChangeRoleResponse type received", candid);
 }
 
 export function removeParticipantResponse(
@@ -584,7 +550,8 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "role_changed",
             userIds: candid.RoleChanged.user_ids.map((p) => p.toString()),
             changedBy: candid.RoleChanged.changed_by.toString(),
-            newRole: candid.RoleChanged.new_role,
+            oldRole: participantRole(candid.RoleChanged.old_role),
+            newRole: participantRole(candid.RoleChanged.new_role),
         };
     }
 

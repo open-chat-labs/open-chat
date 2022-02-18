@@ -13,14 +13,13 @@ import type {
     DeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
-    MakeAdminResponse,
-    DismissAdminResponse,
+    ChangeRoleResponse,
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
-    TransferOwnershipResponse,
     DeleteGroupResponse,
     GroupChatSummary,
+    ParticipantRole,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
@@ -47,8 +46,7 @@ export interface IGroupClient {
         message: Message
     ): Promise<SendMessageResponse>;
     editMessage(message: Message): Promise<EditMessageResponse>;
-    makeAdmin(userId: string): Promise<MakeAdminResponse>;
-    dismissAsAdmin(userId: string): Promise<DismissAdminResponse>;
+    changeRole(userId: string, newRole: ParticipantRole): Promise<ChangeRoleResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;
@@ -57,7 +55,6 @@ export interface IGroupClient {
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     getGroupDetails(): Promise<GroupChatDetailsResponse>;
     getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails>;
-    transferOwnership(userId: string): Promise<TransferOwnershipResponse>;
     deleteGroup(): Promise<DeleteGroupResponse>;
     getPublicSummary(): Promise<GroupChatSummary | undefined>;
 }

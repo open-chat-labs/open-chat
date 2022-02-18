@@ -5,6 +5,7 @@
     import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
     import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
     import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
+    import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
     import type { UserSummary } from "../../domain/user/user";
     import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
@@ -16,7 +17,7 @@
 
     export let chatId: string;
     export let chatType: "group_chat" | "direct_chat";
-    export let user: UserSummary | undefined;
+    export let user: UserSummary;
     export let event: EventWrapper<ChatEvent>;
     export let first: boolean;
     export let last: boolean;
@@ -97,6 +98,8 @@
         label={"userJoined"}
         subjectId={event.event.userId}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "role_changed"}
+    <RoleChangedEvent {user} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "participants_promoted_to_admin"}
     <ParticipantsChangedEvent
         {user}

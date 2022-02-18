@@ -47,14 +47,13 @@ import type {
     JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
-    MakeAdminResponse,
-    DismissAdminResponse,
+    ChangeRoleResponse,
     GroupChatDetailsResponse,
     GroupChatDetails,
-    TransferOwnershipResponse,
     DeleteGroupResponse,
     MessageContent,
     GroupChatSummary,
+    ParticipantRole,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
@@ -529,20 +528,16 @@ export class ServiceContainer implements MarkMessagesRead {
         return identity.getPrincipal().toText() !== this.identity.getPrincipal().toText();
     }
 
-    makeAdmin(chatId: string, userId: string): Promise<MakeAdminResponse> {
-        return this.getGroupClient(chatId).makeAdmin(userId);
-    }
-
-    transferOwnership(chatId: string, userId: string): Promise<TransferOwnershipResponse> {
-        return this.getGroupClient(chatId).transferOwnership(userId);
+    changeRole(
+        chatId: string,
+        userId: string,
+        newRole: ParticipantRole
+    ): Promise<ChangeRoleResponse> {
+        return this.getGroupClient(chatId).changeRole(userId, newRole);
     }
 
     deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
         return this.getGroupClient(chatId).deleteGroup();
-    }
-
-    dismissAsAdmin(chatId: string, userId: string): Promise<DismissAdminResponse> {
-        return this.getGroupClient(chatId).dismissAsAdmin(userId);
     }
 
     removeParticipant(chatId: string, userId: string): Promise<RemoveParticipantResponse> {
