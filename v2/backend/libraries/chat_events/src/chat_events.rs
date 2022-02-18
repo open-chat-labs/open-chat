@@ -182,8 +182,8 @@ impl ChatEvents {
                     let event = RoleChanged {
                         user_ids: e.user_ids.clone(),
                         changed_by: e.dismissed_by,
-                        old_role: Role::Participant,
-                        new_role: Role::Admin,
+                        old_role: Role::Admin,
+                        new_role: Role::Participant,
                     };
 
                     wrapper.event = ChatEventInternal::RoleChanged(Box::new(event));
