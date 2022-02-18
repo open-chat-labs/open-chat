@@ -336,5 +336,9 @@
         "roadmap_q": "你有路线图吗？",
         "roadmap_a": "是的，我们现在就做！在此常见问题解答旁边的主菜单中找到它！"
     },
-    "roadmap": "路线图"
+    "roadmap": "路线图",
+    "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",
+    "yourRoleChanged": "{changedBy} 将您的角色从 {oldRole} 更改为 {newRole}",
+    "participant": "参与者",
+    "viewer": "观众"
 }

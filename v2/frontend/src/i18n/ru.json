@@ -336,5 +336,9 @@
         "challengeAttemptFailed": "Введенное вами значение неверно. Пожалуйста, попробуйте новый вызов.",
         "challengeThrottled": "Слишком много проблем было создано. Пожалуйста, повторите попытку позже.",
         "attemptChallenge": "Пожалуйста, введите символы, которые вы видите"
-    }
+    },
+    "roleChanged": "{changedBy} изменил роль {changed} с {oldRole} на {newRole}",
+    "yourRoleChanged": "{changedBy} изменил вашу роль с {oldRole} на {newRole}",
+    "participant": "участник",
+    "viewer": "зритель"
 }
