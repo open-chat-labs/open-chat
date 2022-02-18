@@ -68,15 +68,6 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const DismissAdminArgs = IDL.Record({ 'user_id' : UserId });
-  const DismissAdminResponse = IDL.Variant({
-    'UserNotAdmin' : IDL.Null,
-    'CannotDismissSelf' : IDL.Null,
-    'UserNotInGroup' : IDL.Null,
-    'CallerNotInGroup' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-  });
   const BlobReference = IDL.Record({
     'blob_id' : IDL.Nat,
     'canister_id' : CanisterId,
@@ -335,13 +326,6 @@ export const idlFactory = ({ IDL }) => {
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
   });
-  const MakeAdminArgs = IDL.Record({ 'user_id' : UserId });
-  const MakeAdminResponse = IDL.Variant({
-    'UserNotInGroup' : IDL.Null,
-    'CallerNotInGroup' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-  });
   const PublicSummaryArgs = IDL.Record({});
   const Version = IDL.Record({
     'major' : IDL.Nat32,
@@ -469,14 +453,6 @@ export const idlFactory = ({ IDL }) => {
     'Added' : EventIndex,
     'Removed' : EventIndex,
   });
-  const TransferOwnershipArgs = IDL.Record({ 'new_owner' : UserId });
-  const TransferOwnershipResponse = IDL.Variant({
-    'UserNotInGroup' : IDL.Null,
-    'CallerNotInGroup' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserAlreadySuperAdmin' : IDL.Null,
-  });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({
     'GroupNotPublic' : IDL.Null,
@@ -528,7 +504,6 @@ export const idlFactory = ({ IDL }) => {
         [DeleteMessagesResponse],
         [],
       ),
-    'dismiss_admin' : IDL.Func([DismissAdminArgs], [DismissAdminResponse], []),
     'edit_message' : IDL.Func([EditMessageArgs], [EditMessageResponse], []),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
@@ -538,7 +513,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
-    'make_admin' : IDL.Func([MakeAdminArgs], [MakeAdminResponse], []),
     'public_summary' : IDL.Func(
         [PublicSummaryArgs],
         [PublicSummaryResponse],
@@ -573,11 +547,6 @@ export const idlFactory = ({ IDL }) => {
     'toggle_reaction' : IDL.Func(
         [ToggleReactionArgs],
         [ToggleReactionResponse],
-        [],
-      ),
-    'transfer_ownership' : IDL.Func(
-        [TransferOwnershipArgs],
-        [TransferOwnershipResponse],
         [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),

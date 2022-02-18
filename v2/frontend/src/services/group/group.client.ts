@@ -14,21 +14,21 @@ import type {
     DeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
-    MakeAdminResponse,
-    DismissAdminResponse,
+    ChangeRoleResponse,
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
-    TransferOwnershipResponse,
     DeleteGroupResponse,
     GroupChatSummary,
+    ParticipantRole,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import { CandidService } from "../candidService";
 import {
+    apiRole,
     addParticipantsResponse,
     getEventsResponse,
-    makeAdminResponse,
+    changeRoleResponse,
     sendMessageResponse,
     removeParticipantResponse,
     updateGroupResponse,
@@ -36,11 +36,9 @@ import {
     deleteMessageResponse,
     editMessageResponse,
     blockUserResponse,
-    dismissAdminResponse,
     groupDetailsResponse,
     groupDetailsUpdatesResponse,
     unblockUserResponse,
-    transferOwnershipResponse,
     deleteGroupResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
@@ -161,21 +159,17 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
-    makeAdmin(userId: string): Promise<MakeAdminResponse> {
+    changeRole(userId: string, newRole: ParticipantRole): Promise<ChangeRoleResponse> {
+        const new_role = apiRole(newRole);
+        if (new_role === undefined) {
+            throw new Error(`Cannot change user's role to: ${newRole}`);
+        }
         return this.handleResponse(
-            this.groupService.make_admin({
+            this.groupService.change_role({
                 user_id: Principal.fromText(userId),
+                new_role,
             }),
-            makeAdminResponse
-        );
-    }
-
-    dismissAsAdmin(userId: string): Promise<DismissAdminResponse> {
-        return this.handleResponse(
-            this.groupService.dismiss_admin({
-                user_id: Principal.fromText(userId),
-            }),
-            dismissAdminResponse
+            changeRoleResponse
         );
     }
 
@@ -302,15 +296,6 @@ export class GroupClient extends CandidService implements IGroupClient {
         }
 
         return mergeGroupChatDetails(previous, updatesResponse);
-    }
-
-    transferOwnership(userId: string): Promise<TransferOwnershipResponse> {
-        return this.handleResponse(
-            this.groupService.transfer_ownership({
-                new_owner: Principal.fromText(userId),
-            }),
-            transferOwnershipResponse
-        );
     }
 
     deleteGroup(): Promise<DeleteGroupResponse> {

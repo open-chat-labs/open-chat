@@ -2,7 +2,6 @@ import type DRange from "drange";
 import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
-import type { Role } from "services/userIndex/candid/types";
 
 export type MessageContent =
     | FileContent
@@ -411,7 +410,8 @@ export type RoleChanged = {
     kind: "role_changed";
     userIds: string[];
     changedBy: string;
-    newRole: Role;
+    oldRole: ParticipantRole;
+    newRole: ParticipantRole;
 };
 
 export type PinnedMessageUpdated = {
@@ -770,28 +770,14 @@ export type SendMessageNotInGroup = {
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error";
 
-export type MakeAdminResponse =
+export type ChangeRoleResponse =
     | "user_not_in_group"
     | "caller_not_in_group"
     | "not_authorised"
-    | "success";
-
-export type TransferOwnershipResponse =
-    | "user_not_in_group"
-    | "caller_not_in_group"
-    | "not_authorised"
-    | "user_already_super_admin"
+    | "invalid"
     | "success";
 
 export type DeleteGroupResponse = "internal_error" | "not_authorised" | "success";
-
-export type DismissAdminResponse =
-    | "user_not_in_group"
-    | "caller_not_in_group"
-    | "not_authorised"
-    | "cannot_dismiss_self"
-    | "user_not_admin"
-    | "success";
 
 export type RemoveParticipantResponse =
     | "user_not_in_group"

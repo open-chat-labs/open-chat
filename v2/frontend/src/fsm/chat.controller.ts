@@ -778,7 +778,7 @@ export class ChatController {
             ps.map((p) => (p.userId === userId ? { ...p, role: "participant" } : p))
         );
         return this.api
-            .dismissAsAdmin(this.chatId, userId)
+            .changeRole(this.chatId, userId, "participant")
             .then((resp) => {
                 if (resp !== "success") {
                     rollbar.warn("Unable to dismiss as admin", resp);
@@ -826,7 +826,7 @@ export class ChatController {
     transferOwnership(me: string, them: FullParticipant): Promise<boolean> {
         this.transferOwnershipLocally(me, them.userId);
         return this.api
-            .transferOwnership(this.chatId, them.userId)
+            .changeRole(this.chatId, them.userId, "owner")
             .then((resp) => {
                 if (resp !== "success") {
                     rollbar.warn("Unable to transfer ownership", resp);
@@ -847,7 +847,7 @@ export class ChatController {
             ps.map((p) => (p.userId === userId ? { ...p, role: "admin" } : p))
         );
         return this.api
-            .makeAdmin(this.chatId, userId)
+            .changeRole(this.chatId, userId, "admin")
             .then((resp) => {
                 if (resp !== "success") {
                     rollbar.warn("Unable to make admin", resp);

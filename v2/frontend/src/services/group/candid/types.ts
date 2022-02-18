@@ -211,13 +211,6 @@ export interface DirectMessageNotification {
   'message' : MessageEventWrapper,
   'sender_name' : string,
 }
-export interface DismissAdminArgs { 'user_id' : UserId }
-export type DismissAdminResponse = { 'UserNotAdmin' : null } |
-  { 'CannotDismissSelf' : null } |
-  { 'UserNotInGroup' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null };
 export interface EditMessageArgs {
   'content' : MessageContent,
   'message_id' : MessageId,
@@ -403,11 +396,6 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
-export interface MakeAdminArgs { 'user_id' : UserId }
-export type MakeAdminResponse = { 'UserNotInGroup' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null };
 export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,
@@ -674,12 +662,6 @@ export interface TransactionWrapper {
   'timestamp' : TimestampMillis,
   'index' : number,
 }
-export interface TransferOwnershipArgs { 'new_owner' : UserId }
-export type TransferOwnershipResponse = { 'UserNotInGroup' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'UserAlreadySuperAdmin' : null };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'GroupNotPublic' : null } |
   { 'CannotUnblockSelf' : null } |
@@ -746,13 +728,11 @@ export interface _SERVICE {
   'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
       DeleteMessagesResponse
     >,
-  'dismiss_admin' : (arg_0: DismissAdminArgs) => Promise<DismissAdminResponse>,
   'edit_message' : (arg_0: EditMessageArgs) => Promise<EditMessageResponse>,
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
   'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
   'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
-  'make_admin' : (arg_0: MakeAdminArgs) => Promise<MakeAdminResponse>,
   'public_summary' : (arg_0: PublicSummaryArgs) => Promise<
       PublicSummaryResponse
     >,
@@ -774,9 +754,6 @@ export interface _SERVICE {
     >,
   'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
       ToggleReactionResponse
-    >,
-  'transfer_ownership' : (arg_0: TransferOwnershipArgs) => Promise<
-      TransferOwnershipResponse
     >,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
   'update_group' : (arg_0: UpdateGroupArgs) => Promise<UpdateGroupResponse>,

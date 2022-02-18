@@ -11,14 +11,13 @@ import type {
     DeleteMessageResponse,
     EditMessageResponse,
     BlockUserResponse,
-    MakeAdminResponse,
-    DismissAdminResponse,
+    ChangeRoleResponse,
     GroupChatDetails,
     GroupChatDetailsResponse,
     UnblockUserResponse,
-    TransferOwnershipResponse,
     DeleteGroupResponse,
     GroupChatSummary,
+    ParticipantRole,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -117,12 +116,8 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.editMessage(message);
     }
 
-    makeAdmin(userId: string): Promise<MakeAdminResponse> {
-        return this.client.makeAdmin(userId);
-    }
-
-    dismissAsAdmin(userId: string): Promise<DismissAdminResponse> {
-        return this.client.dismissAsAdmin(userId);
+    changeRole(userId: string, newRole: ParticipantRole): Promise<ChangeRoleResponse> {
+        return this.client.changeRole(userId, newRole);
     }
 
     removeParticipant(userId: string): Promise<RemoveParticipantResponse> {
@@ -168,10 +163,6 @@ export class CachingGroupClient implements IGroupClient {
             await setCachedGroupDetails(this.db, this.chatId, response);
         }
         return response;
-    }
-
-    transferOwnership(userId: string): Promise<TransferOwnershipResponse> {
-        return this.client.transferOwnership(userId);
     }
 
     deleteGroup(): Promise<DeleteGroupResponse> {
