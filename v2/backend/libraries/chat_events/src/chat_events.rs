@@ -166,7 +166,7 @@ pub struct Metrics {
 
 impl ChatEvents {
     pub fn transform_events(&mut self) {
-        for wrapper in &mut self.events {
+        for wrapper in self.events.iter_mut() {
             match &wrapper.event {
                 ChatEventInternal::ParticipantsPromotedToAdmin(e) => {
                     let event = RoleChanged {
