@@ -3,7 +3,6 @@ import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { OpenStorageAgent, UploadFileResponse } from "@open-ic/open-storage-agent";
 import type { IDataClient } from "./data.client.interface";
-import { DataClientMock } from "./data.client.mock";
 import type { MessageContent } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
 import type { BlobReference, StorageStatus, UploadDataResponse } from "../../domain/data/data";
@@ -13,9 +12,6 @@ export class DataClient implements IDataClient {
     private openStorageAgent: OpenStorageAgent;
 
     static create(identity: Identity): IDataClient {
-        if (process.env.MOCK_SERVICES) {
-            return new DataClientMock();
-        }
         const agent = new HttpAgent({ identity });
         if (process.env.NODE_ENV !== "production") {
             agent.fetchRootKey();
