@@ -28,9 +28,9 @@ jobs:
           cd ..
 
       - name: Deploy the frontend to prod test
-              id: deploy
-              uses: fleekhq/ic-deploy-action@master
-              with:
-                identity: ${{ secrets.DFX_IDENTITY }}
-                wallets: ${{ secrets.DFX_WALLETS }}
-                network: ic_test
+        id: deploy
+        uses: fleekhq/ic-deploy-action@master
+        with:
+          identity: ${{ secrets.DFX_IDENTITY }}
+          wallets: ${{ secrets.DFX_WALLETS }}
+          network: ic_test
