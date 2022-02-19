@@ -1,0 +1,43 @@
+name: Deploy frontend
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy_frontend:
+    runs-on: ubuntu-latest
+    env:
+      DFX_VERSION: 0.9.0
+      USERGEEK_APIKEY: ${{ secrets.GH_USERGEEK_APIKEY }}
+      ROLLBAR_ACCESS_TOKEN: ${{ secrets.GH_ROLLBAR_ACCESS_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: 17.x
+
+      - name: Install DFX
+        run: |
+          echo Install DFX Version: "$DFX_VERSION"
+          yes | sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+
+      - name: Show versions
+        run: |
+          echo dfx --version
+          dfx --version
+          echo node --version
+          node --version
+
+      - name: Build the frontend
+        run: |
+          cd v2/frontend
+          npm ci
+          npm build:prod_test
+
+      - name: Deploy the frontend to prod test
+          cd v2
+          dfx deploy --network ic_test website
