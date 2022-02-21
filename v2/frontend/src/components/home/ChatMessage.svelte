@@ -23,6 +23,8 @@
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import Pin from "svelte-material-icons/Pin.svelte";
+    import PinOff from "svelte-material-icons/PinOff.svelte";
     import { fillMessage } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
@@ -55,6 +57,7 @@
     export let admin: boolean;
     export let preview: boolean;
     export let isPublic: boolean;
+    export let pinned: boolean;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
@@ -109,6 +112,14 @@
             messageId: msg.messageId,
             messageIndex: msg.messageIndex,
         };
+    }
+
+    function pinMessage() {
+        dispatch("pinMessage", msg);
+    }
+
+    function unpinMessage() {
+        dispatch("unpinMessage", msg);
     }
 
     function reply() {
@@ -312,6 +323,25 @@
                         </div>
                         <div slot="menu">
                             <Menu>
+                                {#if confirmed && groupChat && admin}
+                                    {#if pinned}
+                                        <MenuItem on:click={unpinMessage}>
+                                            <PinOff
+                                                size={$iconSize}
+                                                color={"var(--icon-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("unpinMessage")}</div>
+                                        </MenuItem>
+                                    {:else}
+                                        <MenuItem on:click={pinMessage}>
+                                            <Pin
+                                                size={$iconSize}
+                                                color={"var(--icon-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("pinMessage")}</div>
+                                        </MenuItem>
+                                    {/if}
+                                {/if}
                                 {#if confirmed}
                                     <MenuItem on:click={reply}>
                                         <Reply
