@@ -2495,8 +2495,9 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk"
-version = "0.3.3"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=4631c0312db3a5abbf21f9338534bcdbfa1a005b#4631c0312db3a5abbf21f9338534bcdbfa1a005b"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e511d1a019e620d5a3dc43bead7d3c46912bf4f4bfb1d602059046c7a22bb1e"
 dependencies = [
  "candid",
  "cfg-if 1.0.0",
@@ -3369,8 +3370,9 @@ dependencies = [
 
 [[package]]
 name = "ic-ledger-types"
-version = "0.1.0"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=4631c0312db3a5abbf21f9338534bcdbfa1a005b#4631c0312db3a5abbf21f9338534bcdbfa1a005b"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b6ed965b39ea4cf482053bfebc8bbe40329b664e0de64109530d6c33d6c708e"
 dependencies = [
  "candid",
  "crc32fast",
@@ -8405,3 +8407,8 @@ dependencies = [
  "cc",
  "libc",
 ]
+
+[[patch.unused]]
+name = "ic-cdk"
+version = "0.3.3"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=4631c0312db3a5abbf21f9338534bcdbfa1a005b#4631c0312db3a5abbf21f9338534bcdbfa1a005b"
