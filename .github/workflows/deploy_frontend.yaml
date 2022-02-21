@@ -1,8 +1,13 @@
 name: Deploy frontend
 
+# on:
+#   release:
+#     types: [published]
+
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - deploy
 
 jobs:
   deploy_frontend:
@@ -25,7 +30,6 @@ jobs:
           cd frontend
           npm ci
           npm run build:prod_test
-          cd ..
 
       - name: Deploy the frontend to prod test
         id: deploy
@@ -33,4 +37,5 @@ jobs:
         with:
           identity: ${{ secrets.DFX_IDENTITY }}
           wallets: ${{ secrets.DFX_WALLETS }}
+          dfx_params: website
           network: ic_test
