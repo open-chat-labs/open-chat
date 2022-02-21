@@ -1,20 +1,7 @@
-# open-chat
+## Testing locally
 
-Welcome to your new open-chat project and to the internet computer development community. By default, creating a new project adds this README and some template files to your project directory. You can edit these template files to customize your project and to include your own code to speed up the development cycle.
+Start dfx using `dfx start`
 
-To get started, you might want to explore the project directory structure and the default configuration file. Working with this project in your development environment will not affect any production deployment or identity tokens.
+To create and install the service canisters run `./deploy-local.sh <DFX_IDENTITY_NAME>` (eg. `./deploy-local.sh default`)
 
-To learn more before you start working with open-chat, see the following documentation available online:
-
-- [Quick Start](https://sdk.dfinity.org/docs/quickstart/quickstart.html)
-- [SDK Developer Tools](https://sdk.dfinity.org/docs/developers-guide/sdk-guide.html)
-- [Motoko Programming Language Guide](https://sdk.dfinity.org/docs/language-guide/motoko.html)
-- [Motoko Language Quick Reference](https://sdk.dfinity.org/docs/language-guide/language-manual.html)
-
-If you want to start working on your project right away, you might want to try the following commands:
-
-```bash
-cd open-chat/
-dfx help
-dfx config --help
-```
+To upgrade a canister run `./upgrade-canister-local.sh <DFX_IDENTITY_NAME> <CANISTER_NAME> [VERSION]` (eg. `./upgrade-canister-local.sh default user 1.0.0`)
