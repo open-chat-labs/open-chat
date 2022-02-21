@@ -5,6 +5,7 @@ use std::cmp::{max, min};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::FromIterator;
+use std::mem::replace;
 use types::*;
 
 #[derive(CandidType, Serialize, Deserialize)]
@@ -135,7 +136,7 @@ pub enum EditMessageResult {
 }
 
 pub enum DeleteMessageResult {
-    Success,
+    Success(MessageContent),
     AlreadyDeleted,
     NotAuthorized,
     NotFound,
@@ -354,10 +355,13 @@ impl ChatEvents {
                 if matches!(message.content, MessageContent::Deleted(_)) {
                     DeleteMessageResult::AlreadyDeleted
                 } else {
-                    message.content = MessageContent::Deleted(DeletedContent {
-                        deleted_by: caller,
-                        timestamp: now,
-                    });
+                    let previous_content = replace(
+                        &mut message.content,
+                        MessageContent::Deleted(DeletedContent {
+                            deleted_by: caller,
+                            timestamp: now,
+                        }),
+                    );
                     message.last_updated = Some(now);
                     self.metrics.deleted_messages += 1;
                     self.push_event(
@@ -367,7 +371,7 @@ impl ChatEvents {
                         })),
                         now,
                     );
-                    DeleteMessageResult::Success
+                    DeleteMessageResult::Success(previous_content)
                 }
             } else {
                 DeleteMessageResult::NotAuthorized
