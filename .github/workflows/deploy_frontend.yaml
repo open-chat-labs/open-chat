@@ -22,7 +22,7 @@ jobs:
 
       - name: Build the frontend
         run: |
-          cd v2/frontend
+          cd frontend
           npm ci
           npm run build:prod_test
           cd ..

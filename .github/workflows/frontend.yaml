@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: v2/frontend
+        working-directory: frontend
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
