@@ -23,7 +23,7 @@ fn public_summary_impl(runtime_state: &RuntimeState) -> Response {
         latest_message: data.events.latest_message(),
         latest_event_index: latest_event.index,
         participant_count: data.participants.len(),
-        pinned_message: runtime_state.data.pinned_message,
+        pinned_message: None,
         wasm_version: WASM_VERSION.with(|v| **v.borrow()),
         owner_id: runtime_state.data.owner_id,
     };

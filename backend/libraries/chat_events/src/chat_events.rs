@@ -49,7 +49,8 @@ pub enum ChatEventInternal {
     RoleChanged(Box<RoleChanged>),
     UsersBlocked(Box<UsersBlocked>),
     UsersUnblocked(Box<UsersUnblocked>),
-    PinnedMessageUpdated(Box<PinnedMessageUpdated>),
+    MessagePinned(Box<MessagePinned>),
+    MessageUnpinned(Box<MessageUnpinned>),
 }
 
 impl ChatEventInternal {
@@ -88,7 +89,8 @@ impl ChatEventInternal {
                 | ChatEventInternal::RoleChanged(_)
                 | ChatEventInternal::UsersBlocked(_)
                 | ChatEventInternal::UsersUnblocked(_)
-                | ChatEventInternal::PinnedMessageUpdated(_)
+                | ChatEventInternal::MessagePinned(_)
+                | ChatEventInternal::MessageUnpinned(_)
         )
     }
 }
