@@ -16,30 +16,6 @@ In a separate terminal in the same directory, run `II_ENV=development dfx deploy
 
 Make a note of the canister ID created for the internet-identity.
 
-## Local environment variables
-
-`cd` back into the frontend directory of this repo and create a .env file.
-
-This should look something like this:
-
-```bash
-INTERNET_IDENTITY_URL=http://localhost:8000?canisterId=rwlgt-iiaaa-aaaaa-aaaaa-cai
-DFX_NETWORK=local
-MOCK_SERVICES=false
-DEV_PORT=5001
-ROLLBAR_ACCESS_TOKEN=...
-CLIENT_CACHING=false
-USER_INDEX_CANISTER=naxa5-eyaaa-aaaaa-aacda-cai
-GROUP_INDEX_CANISTER=nhwgj-jaaaa-aaaaa-aacdq-cai
-NOTIFICATIONS_CANISTER=mkych-giaaa-aaaaa-aacea-cai
-ONLINE_CANISTER=3vlw6-fiaaa-aaaaf-aaa3a-cai
-OPEN_STORAGE_INDEX_CANISTER=rturd-qaaaa-aaaaf-aabaq-cai
-BLOB_URL_PATTERN=http://{canisterId}.localhost:8000/blobs/
-USERGEEK_APIKEY=042386876AB899A32FF13323DEA23098
-```
-
-Where the INTERNET_IDENTITY value should be replaced with a value containing the correct internet identity canister ID for your local environment.
-
 ## Build and deploy server canisters
 
 The frontend depends on both the generated types of the back end services and also requires instances of the relevant canisters to be deployed to the local IC replica.
