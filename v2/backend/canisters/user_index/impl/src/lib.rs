@@ -133,7 +133,6 @@ struct Data {
     pub super_admins: HashSet<UserId>,
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
-    #[serde(default)]
     pub challenges: Challenges,
 }
 
