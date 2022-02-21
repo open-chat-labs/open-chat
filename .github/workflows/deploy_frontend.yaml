@@ -8,7 +8,7 @@ jobs:
   deploy_frontend:
     runs-on: ubuntu-latest
     env:
-      DFX_VERSION: 0.9.0
+      DFX_VERSION: 0.8.4
       USERGEEK_APIKEY: ${{ secrets.GH_USERGEEK_APIKEY }}
       ROLLBAR_ACCESS_TOKEN: ${{ secrets.GH_ROLLBAR_ACCESS_TOKEN }}
 
@@ -22,9 +22,9 @@ jobs:
 
       - name: Build the frontend
         run: |
-          cd v2/frontend
+          cd frontend
           npm ci
-          npm build:prod_test
+          npm run build:prod_test
           cd ..
 
       - name: Deploy the frontend to prod test

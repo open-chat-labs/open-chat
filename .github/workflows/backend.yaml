@@ -23,7 +23,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --manifest-path v2/Cargo.toml --all -- --check
+          args: --all -- --check
 
   clippy:
     name: run clippy
@@ -40,12 +40,10 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v1
-        with:
-          working-directory: ./v2
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --manifest-path v2/Cargo.toml -- -D warnings
+          args: -- -D warnings
 
   test:
     name: run tests
@@ -61,9 +59,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - uses: Swatinem/rust-cache@v1
-        with:
-          working-directory: ./v2
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --manifest-path v2/Cargo.toml

@@ -1,0 +1,830 @@
+type AccountIdentifier = blob;
+type BlockIndex = nat64;
+type CanisterId = principal;
+type ChatId = CanisterId;
+type Cycles = nat;
+type EventIndex = nat32;
+type ICP = record { e8s: nat64; };
+type Memo = nat64;
+type MessageId = nat;
+type MessageIndex = nat32;
+type Milliseconds = nat64;
+type TimestampMillis = nat64;
+type TimestampNanos = nat64;
+type UserId = CanisterId;
+
+type AddedToGroupNotification =
+    record {
+        chat_id: ChatId;
+        group_name: text;
+        added_by: UserId;
+        added_by_name: text;
+    };
+
+type AudioContent =
+    record {
+        caption: opt text;
+        mime_type: text;
+        blob_reference: opt BlobReference;
+    };
+
+type Avatar = 
+    record {
+        id: nat;
+        mime_type: text;
+        data: blob;
+    };
+
+type BlobReference =
+    record {
+        canister_id: CanisterId;
+        blob_id: nat;
+    };
+
+type CanisterUpgradeStatus =
+    variant {
+        InProgress;
+        NotRequired;
+    };
+
+type CanisterWasm =
+    record {
+        module: vec nat8;
+        version: Version;
+        compressed: bool;
+    };
+
+type ChatSummary =
+    variant {
+        Direct: DirectChatSummary;
+        Group: GroupChatSummary;
+    };
+
+type ChatSummaryUpdates =
+    variant {
+        Direct: DirectChatSummaryUpdates;
+        Group: GroupChatSummaryUpdates;
+    };
+
+type ConfirmationCodeSms =
+    record {
+         phone_number: text;
+         confirmation_code: text;
+    };
+
+type CryptocurrencyContent =
+    record {
+        transfer: CryptocurrencyTransfer;
+        caption: opt text;
+    };
+
+type DeletedContent =
+    record {
+        deleted_by: UserId;
+        timestamp: TimestampMillis;
+    };
+
+type DirectChatCreated =
+    record {
+    };
+
+type DirectChatEvent =
+    variant {
+        Message: Message;
+        DirectChatCreated: DirectChatCreated;
+        MessageEdited: UpdatedMessage;
+        MessageDeleted: UpdatedMessage;
+        MessageReactionAdded: UpdatedMessage;
+        MessageReactionRemoved: UpdatedMessage;
+    };
+
+type DirectChatEventWrapper =
+    record {
+        index: EventIndex;
+        timestamp: TimestampMillis;
+        event: DirectChatEvent;
+    };
+
+type DirectChatSummary =
+    record {
+        them: UserId;
+        latest_message: MessageEventWrapper;
+        latest_event_index: EventIndex;
+        date_created: TimestampMillis;
+        read_by_me: vec MessageIndexRange;
+        read_by_them: vec MessageIndexRange;
+        notifications_muted: bool;
+    };
+
+type DirectChatSummaryUpdates =
+    record {
+        chat_id: ChatId;
+        latest_message: opt MessageEventWrapper;
+        latest_event_index: opt EventIndex;
+        read_by_me: opt vec MessageIndexRange;
+        read_by_them: opt vec MessageIndexRange;
+        notifications_muted: opt bool;
+    };
+
+type DirectMessageNotification =
+    record {
+        sender: UserId;
+        sender_name: text;
+        message: MessageEventWrapper;
+    };
+
+type FieldTooLongResult =
+    record {
+        length_provided: nat32;
+        max_length: nat32;
+    };
+
+type FileContent =
+    record {
+        name: text;
+        caption: opt text;
+        mime_type: text;
+        file_size: nat32;
+        blob_reference: opt BlobReference;
+    };
+
+type GroupChatCreated =
+    record {
+        name: text;
+        description: text;
+        created_by: UserId;
+    };
+
+type GroupChatEvent =
+    variant {
+        Message: Message;
+        GroupChatCreated: GroupChatCreated;
+        GroupNameChanged: GroupNameChanged;
+        GroupDescriptionChanged: GroupDescriptionChanged;
+        AvatarChanged: AvatarChanged;
+        OwnershipTransferred: OwnershipTransferred;
+        ParticipantsAdded: ParticipantsAdded;
+        ParticipantsRemoved: ParticipantsRemoved;
+        ParticipantJoined: ParticipantJoined;
+        ParticipantLeft: ParticipantLeft;
+        ParticipantAssumesSuperAdmin: ParticipantAssumesSuperAdmin;
+        ParticipantDismissedAsSuperAdmin: ParticipantDismissedAsSuperAdmin;
+        ParticipantRelinquishesSuperAdmin: ParticipantRelinquishesSuperAdmin;
+        RoleChanged: RoleChanged;
+        MessageEdited: UpdatedMessage;
+        MessageDeleted: UpdatedMessage;
+        MessageReactionAdded: UpdatedMessage;
+        MessageReactionRemoved: UpdatedMessage;
+        UsersBlocked: UsersBlocked;
+        UsersUnblocked: UsersUnblocked;
+        PinnedMessageUpdated: PinnedMessageUpdated;
+    };
+
+type GroupChatEventWrapper =
+    record {
+        index: EventIndex;
+        timestamp: TimestampMillis;
+        event: GroupChatEvent;
+    };
+
+type GroupChatSummary =
+    record {
+        chat_id: ChatId;
+        last_updated: TimestampMillis;
+        name: text;
+        description: text;
+        avatar_id: opt nat;
+        is_public: bool;
+        min_visible_event_index: EventIndex;
+        min_visible_message_index: MessageIndex;
+        latest_message: opt MessageEventWrapper;
+        latest_event_index: EventIndex;
+        joined: TimestampMillis;
+        read_by_me: vec MessageIndexRange;
+        notifications_muted: bool;
+        participant_count: nat32;
+        role: Role;
+        mentions: vec Mention;
+        pinned_message: opt MessageIndex;
+        wasm_version: Version;
+        owner_id: UserId;
+    };
+
+type GroupChatSummaryUpdates =
+    record {
+        chat_id: ChatId;
+        last_updated: TimestampMillis;
+        name: opt text;
+        description: opt text;
+        avatar_id: AvatarIdUpdate;
+        latest_message: opt MessageEventWrapper;
+        latest_event_index: opt EventIndex;
+        read_by_me: opt vec MessageIndexRange;
+        notifications_muted: opt bool;
+        participant_count: opt nat32;
+        role: opt Role;
+        mentions: vec Mention;
+        pinned_message: PinnedMessageUpdate;
+        wasm_version: opt Version;
+        owner_id: opt UserId;
+    };
+
+type GroupDescriptionChanged =
+    record {
+        new_description: text;
+        previous_description: text;
+        changed_by: UserId;
+    };
+
+type AvatarChanged =
+    record {
+        new_avatar: opt nat;
+        previous_avatar: opt nat;
+        changed_by: UserId;
+    };
+
+type AvatarUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: Avatar;
+    };
+
+type AvatarIdUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: nat;
+    };
+
+type Mention =
+    record {
+        message_id: MessageId;
+        message_index: MessageIndex;
+        event_index: EventIndex;
+        mentioned_by: UserId;
+    };
+
+type Message =
+    record {
+        message_index: MessageIndex;
+        message_id: MessageId;
+        sender: UserId;
+        content: MessageContent;
+        replies_to: opt ReplyContext;
+        reactions: vec record { text; vec UserId; };
+        edited: bool;
+        forwarded: bool;
+    };
+
+type MessageEventWrapper =
+    record {
+        index: EventIndex;
+        timestamp: TimestampMillis;
+        event: Message;
+    };
+
+type GroupMessageNotification =
+    record {
+        chat_id: ChatId;
+        group_name: text;
+        sender: UserId;
+        sender_name: text;
+        message: MessageEventWrapper;
+        mentioned: vec User;
+        hide: bool;
+    };
+
+type GroupNameChanged =
+    record {
+        new_name: text;
+        previous_name: text;
+        changed_by: UserId;
+    };
+
+type PinnedMessageUpdated =
+    record {
+        new_value: opt MessageIndex;
+        updated_by: UserId;
+    };
+
+type PinnedMessageUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: MessageIndex;
+    };
+
+type PublicGroupSummary =
+    record {
+        chat_id: ChatId;
+        last_updated: TimestampMillis;
+        name: text;
+        description: text;
+        avatar_id: opt nat;
+        latest_message: opt MessageEventWrapper;
+        latest_event_index: EventIndex;
+        participant_count: nat32;
+        pinned_message: opt MessageIndex;
+        wasm_version: Version;
+        owner_id: UserId;
+    };
+
+type ReplyContext =
+    record {
+        chat_id_if_other: opt ChatId;
+        event_index: EventIndex;
+    };
+
+type ImageContent =
+    record {
+        width: nat32;
+        height: nat32;
+        thumbnail_data: text;
+        caption: opt text;
+        mime_type: text;
+        blob_reference: opt BlobReference;
+    };
+
+type IndexedNotification =
+    record {
+        index: nat64;
+        value: NotificationEnvelope;
+    };
+
+type MessageContent =
+    variant {
+        Text: TextContent;
+        Image: ImageContent;
+        Video: VideoContent;
+        Audio: AudioContent;
+        File: FileContent;
+        Cryptocurrency: CryptocurrencyContent;
+        Deleted: DeletedContent;
+    };
+
+type MessageIndexRange =
+    record {
+        from: MessageIndex;
+        to: MessageIndex;
+    };
+
+type UpdatedMessage =
+    record {
+        updated_by: UserId;
+        event_index: EventIndex;
+        message_id: MessageId;
+    };
+
+type MessageMatch =
+    record {
+        chat_id: ChatId;
+        message_index: MessageIndex;
+        content: MessageContent;
+        sender: UserId;
+        score: nat32;
+    };
+
+type Notification =
+    variant {
+        AddedToGroupNotification: AddedToGroupNotification;
+        DirectMessageNotification: DirectMessageNotification;
+        GroupMessageNotification: GroupMessageNotification;
+    };
+
+type NotificationEnvelope =
+    record {
+        recipients: vec UserId;
+        notification: Notification;
+    };
+
+type PartialUserSummary =
+    record {
+        user_id: UserId;
+        username: opt text;
+        seconds_since_last_online: nat32;
+        avatar_id: opt nat;
+    };
+
+type Participant =
+    record {
+        user_id: UserId;
+        date_added: TimestampMillis;
+        role: Role;
+    };
+
+type ParticipantJoined =
+    record {
+        user_id: UserId;
+        as_super_admin: bool;
+    };
+
+type ParticipantLeft =
+    record {
+        user_id: UserId;
+    };
+
+type ParticipantAssumesSuperAdmin =
+    record {
+        user_id: UserId;
+    };
+
+type ParticipantRelinquishesSuperAdmin =
+    record {
+        user_id: UserId;
+    };
+
+type ParticipantDismissedAsSuperAdmin =
+    record {
+        user_id: UserId;
+    };
+
+type ParticipantsAdded =
+    record {
+        user_ids: vec UserId;
+        added_by: UserId;
+        unblocked: vec UserId;
+    };
+
+type RoleChanged =
+    record {
+        user_ids: vec UserId;
+        changed_by: UserId;
+        old_role: Role;
+        new_role: Role;
+    };
+    
+type OwnershipTransferred =
+    record {
+        old_owner: UserId;
+        new_owner: UserId;
+    };
+
+type ParticipantsRemoved =
+    record {
+        user_ids: vec UserId;
+        removed_by: UserId;
+    };
+
+type UsersBlocked =
+    record {
+        user_ids: vec UserId;
+        blocked_by: UserId;
+    };
+
+type UsersUnblocked =
+    record {
+        user_ids: vec UserId;
+        unblocked_by: UserId;
+    };
+
+type RegistrationFee =
+    variant {
+        ICP: ICPRegistrationFee;
+        Cycles: CyclesRegistrationFee;
+    };
+
+type ICPRegistrationFee =
+    record {
+        amount: ICP;
+        recipient: AccountIdentifier;
+        valid_until: TimestampMillis;
+    };
+
+type CyclesRegistrationFee =
+    record {
+        amount: Cycles;
+        recipient: principal;
+        valid_until: TimestampMillis;
+    };
+
+type Role =
+    variant {
+        SuperAdmin: FallbackRole;
+        Owner;
+        Admin;
+        Participant;
+    };
+
+type FallbackRole =
+    variant {
+        Admin;
+        Participant;
+    };
+
+type Subscription =
+    record {
+        value: SubscriptionInfo;
+        last_active: TimestampMillis;
+    };
+
+type SubscriptionInfo =
+    record {
+        endpoint: text;
+        keys: SubscriptionKeys;
+    };
+
+type SubscriptionKeys =
+    record {
+        p256dh: text;
+        auth: text;
+    };
+
+type TextContent =
+    record {
+        text: text;
+    };
+
+type Transaction =
+    variant {
+        Cryptocurrency: CryptocurrencyTransaction;
+    };
+
+type TransactionStatus =
+    variant {
+        Pending;
+        Complete;
+        Failed: text;
+    };
+
+type TransactionWrapper =
+    record {
+        index: nat32;
+        timestamp: TimestampMillis;
+        transaction: Transaction;
+    };
+
+type UserSummary =
+    record {
+        user_id: UserId;
+        username: text;
+        seconds_since_last_online: nat32;
+        avatar_id: opt nat;
+    };
+
+type Version =
+    record {
+        major: nat32;
+        minor: nat32;
+        patch: nat32;
+    };
+
+// Cryptocurrency.rs
+type Cryptocurrency =
+    variant {
+        ICP;
+        Cycles;
+    };
+
+type CryptocurrencyAccount =
+    variant {
+        ICP: AccountIdentifier;
+        Cycles: CanisterId;
+    };
+
+type CryptocurrencyTransaction =
+    variant {
+        Deposit: CryptocurrencyDeposit;
+        Withdrawal: CryptocurrencyWithdrawal;
+        Transfer: CryptocurrencyTransfer;
+    };
+
+type CryptocurrencyDeposit =
+    variant {
+        Cycles: CyclesDeposit;
+        ICP: ICPDeposit;
+    };
+
+type CryptocurrencyWithdrawal =
+    variant {
+        Cycles: CyclesWithdrawal;
+        ICP: ICPWithdrawal;
+    };
+
+type CyclesDeposit =
+    variant {
+        Completed: CompletedCyclesDeposit;
+    };
+
+type CompletedCyclesDeposit =
+    record {
+        from: CanisterId;
+        cycles: Cycles;
+    };
+
+type ICPDeposit =
+    variant {
+        Completed: CompletedICPDeposit;
+    };
+
+type CompletedICPDeposit =
+    record {
+        from_address: AccountIdentifier;
+        amount: ICP;
+        fee: ICP;
+        memo: Memo;
+        block_index: BlockIndex;
+    };
+
+type CyclesWithdrawal =
+    variant {
+        Pending: PendingCyclesWithdrawal;
+        Completed: CompletedCyclesWithdrawal;
+        Failed: FailedCyclesWithdrawal;
+    };
+
+type PendingCyclesWithdrawal =
+    record {
+        to: CanisterId;
+        cycles: Cycles;
+    };
+
+type CompletedCyclesWithdrawal =
+    record {
+        to: CanisterId;
+        cycles: Cycles;
+    };
+
+type FailedCyclesWithdrawal =
+    record {
+        to: CanisterId;
+        cycles: Cycles;
+        error_message: text;
+    };
+
+type ICPWithdrawal =
+    variant {
+        Pending: PendingICPWithdrawal;
+        Completed: CompletedICPWithdrawal;
+        Failed: FailedICPWithdrawal;
+    };
+
+type PendingICPWithdrawal =
+    record {
+        to: AccountIdentifier;
+        amount: ICP;
+        fee: opt ICP;
+        memo: opt Memo;
+    };
+
+type CompletedICPWithdrawal =
+    record {
+        to: AccountIdentifier;
+        amount: ICP;
+        fee: ICP;
+        memo: Memo;
+        block_index: BlockIndex;
+    };
+
+type FailedICPWithdrawal =
+    record {
+        to: AccountIdentifier;
+        amount: ICP;
+        fee: ICP;
+        memo: Memo;
+        error_message: text;
+    };
+
+type CryptocurrencyTransfer =
+    variant {
+        Cycles: CyclesTransfer;
+        ICP: ICPTransfer;
+    };
+
+type CyclesTransfer =
+    variant {
+        Pending: PendingCyclesTransfer;
+        Completed: CompletedCyclesTransfer;
+        Failed: FailedCyclesTransfer;
+    };
+
+type PendingCyclesTransfer =
+    record {
+        recipient: UserId;
+        cycles: Cycles;
+    };
+
+type CompletedCyclesTransfer =
+    record {
+        sender: UserId;
+        recipient: UserId;
+        cycles: Cycles;
+    };
+
+type FailedCyclesTransfer =
+    record {
+        recipient: UserId;
+        cycles: Cycles;
+        error_message: text;
+    };
+
+type ICPTransfer =
+    variant {
+        Pending: PendingICPTransfer;
+        Completed: CompletedICPTransfer;
+        Failed: FailedICPTransfer;
+    };
+
+type PendingICPTransfer =
+    record {
+        recipient: UserId;
+        amount: ICP;
+        fee: opt ICP;
+        memo: opt Memo;
+    };
+
+type CompletedICPTransfer =
+    record {
+        sender: UserId;
+        recipient: UserId;
+        amount: ICP;
+        fee: ICP;
+        memo: Memo;
+        block_index: BlockIndex;
+    };
+
+type FailedICPTransfer =
+    record {
+        recipient: UserId;
+        amount: ICP;
+        fee: ICP;
+        memo: Memo;
+        error_message: text;
+    };
+
+// Preferences
+type OptionalUserPreferences =
+    record {
+        enter_key_sends: opt bool;
+        enable_animations: opt bool;
+        night_mode: opt NightMode;
+        large_emoji: opt bool;
+        use_system_emoji: opt bool;
+        generate_link_previews: opt bool;
+        notification_preferences: opt record {
+            direct_chats: opt bool;
+            private_group_chats: opt bool;
+            public_group_chats: opt bool;
+            silent: opt bool;
+            vibrate: opt bool;
+        };
+        language: opt text;
+    };
+
+type NightMode =
+    variant {
+        On;
+        Off;
+        Auto;
+    };
+
+// Alerts
+type Alert =
+    record {
+        id: text;
+        elapsed: Milliseconds;
+        details: AlertDetails;
+    };
+
+type AlertDetails =
+    variant {
+        RemovedFromGroup: RemovedFromGroupAlert;
+        BlockedFromGroup: RemovedFromGroupAlert;
+        GroupDeleted: GroupDeletedAlert;
+        CryptocurrencyDepositReceived: CryptocurrencyDeposit;
+    };
+
+type RemovedFromGroupAlert =
+    record {
+        chat_id: ChatId;
+        removed_by: UserId;
+    };
+
+type GroupDeletedAlert =
+    record {
+        chat_id: ChatId;
+        deleted_by: UserId;
+    };
+
+type AlertId =
+    variant {
+        Internal: nat32;
+        GroupDeleted: ChatId;
+    };
+
+type VideoContent =
+    record {
+        width: nat32;
+        height: nat32;
+        thumbnail_data: text;
+        caption: opt text;
+        mime_type: text;
+        image_blob_reference: opt BlobReference;
+        video_blob_reference: opt BlobReference;
+    };
+
+type User =
+    record {
+        user_id: UserId;
+        username: text;
+    };

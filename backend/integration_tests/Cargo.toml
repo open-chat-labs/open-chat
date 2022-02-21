@@ -1,0 +1,47 @@
+[workspace]
+
+[package]
+name = "integration_tests"
+version = "0.1.0"
+authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = "0.7.10"
+canister_client = { path = "../libraries/canister_client" }
+fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
+futures = "0.3.16"
+garcon = "0.2.3"
+group_canister = { path = "../canisters/group/api" }
+group_canister_client = { path = "../canisters/group/client" }
+group_index_canister = { path = "../canisters/group_index/api" }
+group_index_canister_client = { path = "../canisters/group_index/client" }
+ic-agent = "0.12.1"
+ic-fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
+ic-registry-subnet-type = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
+ic-replica = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
+ic-rosetta-api = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
+ic-utils = "0.12.1"
+nodemanager = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
+notifications_canister = { path = "../canisters/notifications/api" }
+notifications_canister_client = { path = "../canisters/notifications/client" }
+online_users_aggregator_canister = { path = "../canisters/online_users_aggregator/api" }
+online_users_aggregator_canister_client = { path = "../canisters/online_users_aggregator/client" }
+serde = "1.0.126"
+serde_bytes = "0.11.5"
+tokio = { version = "1.10.0", features = ["full"] }
+types = { path = "../../backend/libraries/types", default-features = false }
+url = "2.2.2"
+user_canister = { path = "../canisters/user/api" }
+user_canister_client = { path = "../canisters/user/client" }
+user_index_canister = { path = "../canisters/user_index/api" }
+user_index_canister_client = { path = "../canisters/user_index/client" }
+
+[patch.crates-io]
+ic-agent = { git = "https://github.com/hpeebles/agent-rs", rev = "5631f655afb9970742f5356b94f15ab8c1dcf35d" }
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "4631c0312db3a5abbf21f9338534bcdbfa1a005b" }
+
+[patch."https://github.com/dfinity-lab/lmdb-rs"]
+lmdb-rkv = { git = "https://github.com/hpeebles/lmdb-rs", rev = "04f94c27f607b28e181d3965bdebc330c1489c87" }
