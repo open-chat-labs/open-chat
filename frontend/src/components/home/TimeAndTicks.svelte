@@ -4,6 +4,7 @@
     import { toShortTimeString } from "../../utils/date";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
+    import Pin from "svelte-material-icons/Pin.svelte";
     import { rtlStore } from "../../stores/rtl";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
 
@@ -13,8 +14,10 @@
     export let readByThem: boolean;
     export let me: boolean;
     export let fill: boolean;
+    export let pinned: boolean;
 
     let iconColor = fill ? "#fff" : "var(--currentChat-msg-me-txt)";
+    let pinnedColor = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
 
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 </script>
@@ -36,6 +39,9 @@
                 <CheckCircleOutline size={"0.9em"} color={iconColor} />
             {/if}
         {/if}
+    {/if}
+    {#if pinned}
+        <Pin size={"0.9em"} color={pinnedColor} />
     {/if}
 </div>
 
@@ -64,8 +70,16 @@
             margin: $sp1 $sp2 0 $sp3;
         }
 
+        .pinned {
+            margin: 0 $sp2 0 $sp3;
+        }
+
         &.rtl .time {
             margin: $sp1 $sp3 0 $sp2;
+        }
+
+        &.rtl .pinned {
+            margin: 0 $sp3 0 $sp2;
         }
 
         &.fill {

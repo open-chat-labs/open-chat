@@ -25,7 +25,7 @@
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
     import { initNotificationStores } from "../../stores/notifications";
-    import type { EditGroupState } from "../../fsm/editGroup";
+    import type { RightPanelState } from "../../fsm/rightPanel";
     import { rollbar } from "../../utils/logging";
     import type {
         ChatSummary,
@@ -265,7 +265,7 @@
     }
 
     function addParticipants() {
-        editGroupHistory = [...editGroupHistory, "add_participants"];
+        rightPanelHistory = [...rightPanelHistory, "add_participants"];
     }
 
     function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -274,17 +274,23 @@
 
     function showParticipants() {
         if ($selectedChat !== undefined) {
-            editGroupHistory = [...editGroupHistory, "show_participants"];
+            rightPanelHistory = [...rightPanelHistory, "show_participants"];
             $selectedChat.loadDetails();
         }
     }
 
     function showGroupDetails() {
-        editGroupHistory = [...editGroupHistory, "group_details"];
+        rightPanelHistory = [...rightPanelHistory, "group_details"];
     }
 
     function updateChat(ev: CustomEvent<ChatSummary>) {
         controller.addOrReplaceChat(ev.detail);
+    }
+
+    function showPinned() {
+        if ($selectedChat !== undefined) {
+            rightPanelHistory = [...rightPanelHistory, "show_pinned"];
+        }
     }
 
     function joinGroup(ev: CustomEvent<GroupChatSummary>) {
@@ -329,7 +335,7 @@
 
     $: x = $rtlStore ? -300 : 300;
 
-    let editGroupHistory: EditGroupState[] = [];
+    let rightPanelHistory: RightPanelState[] = [];
 
     $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
 
@@ -409,14 +415,15 @@
                 on:cancelRecommendations={cancelRecommendations}
                 on:recommend={whatsHot}
                 on:dismissRecommendation={dismissRecommendation}
-                on:upgrade={upgrade} />
+                on:upgrade={upgrade}
+                on:showPinned={showPinned} />
         {/if}
     </main>
 {/if}
 
 {#if $selectedChat !== undefined}
-    <Overlay active={editGroupHistory.length > 0}>
-        {#if editGroupHistory.length > 0 && groupChat}
+    <Overlay active={rightPanelHistory.length > 0}>
+        {#if rightPanelHistory.length > 0 && groupChat}
             <div
                 transition:fly={{ x, duration: 200, easing: sineInOut }}
                 class="right-wrapper"
@@ -424,7 +431,7 @@
                 <RightPanel
                     {userId}
                     controller={$selectedChat}
-                    bind:editGroupHistory
+                    bind:rightPanelHistory
                     on:addParticipants={addParticipants}
                     on:showParticipants={showParticipants}
                     on:chatWith={chatWith}

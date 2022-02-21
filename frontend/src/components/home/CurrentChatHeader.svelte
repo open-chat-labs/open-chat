@@ -1,9 +1,9 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
-    import type { PartialUserSummary } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import Pin from "svelte-material-icons/Pin.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
@@ -37,6 +37,7 @@
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { formatLastOnlineDate } from "../../domain/user/user.utils";
+    import { localPinned } from "stores/pinned";
 
     const dispatch = createEventDispatcher();
 
@@ -50,6 +51,7 @@
 
     $: userId = $selectedChatSummary.kind === "direct_chat" ? $selectedChatSummary.them : "";
     $: isGroup = $selectedChatSummary.kind === "group_chat";
+    $: hasPinned = $localPinned[$selectedChatSummary.chatId]?.size > 0;
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -157,6 +159,10 @@
         viewProfile = false;
     }
 
+    function showPinned() {
+        dispatch("showPinned");
+    }
+
     $: chat = normaliseChatSummary($now, $selectedChatSummary);
 </script>
 
@@ -214,6 +220,13 @@
             {/if}
         </div>
     </div>
+    {#if hasPinned}
+        <div title={$_("showPinned")} class="pinned" on:click={showPinned}>
+            <HoverIcon>
+                <Pin size={$iconSize} color={"var(--accent)"} />
+            </HoverIcon>
+        </div>
+    {/if}
     {#if !preview}
         <div class="menu">
             <MenuIcon>

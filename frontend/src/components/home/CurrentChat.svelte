@@ -112,6 +112,7 @@
         on:showParticipants
         on:leaveGroup
         on:deleteGroup
+        on:showPinned
         {blocked}
         {preview}
         {unreadMessages}

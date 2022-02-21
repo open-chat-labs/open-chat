@@ -339,5 +339,7 @@
         "roadmap_q": "Do you have a roadmap?",
         "roadmap_a": "Yes, we do now! Find it in the main menu next to this FAQ!"
     },
-    "pinMessage": "Pin message"
+    "pinMessage": "Pin message",
+    "unpinMessage": "Unpin message",
+    "showPinned": "Show pinned messages"
 }

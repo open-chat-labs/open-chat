@@ -299,7 +299,14 @@
             <ChatMessageContent {fill} {me} content={msg.content} height={mediaCalculatedHeight} />
 
             {#if !deleted}
-                <TimeAndTicks {fill} {timestamp} {me} {confirmed} {readByThem} {chatType} />
+                <TimeAndTicks
+                    {pinned}
+                    {fill}
+                    {timestamp}
+                    {me}
+                    {confirmed}
+                    {readByThem}
+                    {chatType} />
             {/if}
 
             {#if debug}
@@ -309,6 +316,7 @@
                 <pre>Confirmed: {confirmed}</pre>
                 <pre>ReadByThem: {readByThem}</pre>
                 <pre>ReadByUs: {readByMe}</pre>
+                <pre>Pinned: {pinned}</pre>
             {/if}
 
             {#if !deleted && !preview}

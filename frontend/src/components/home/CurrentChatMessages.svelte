@@ -30,6 +30,8 @@
     import type { MessageReadState } from "../../stores/markRead";
     import { menuStore } from "../../stores/menu";
     import { iconSize } from "../../stores/iconSize";
+    import { localPinned } from "../../stores/pinned";
+    import type { LocalPinnedByChat } from "../../stores/pinned";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 300;
@@ -426,6 +428,24 @@
         }
         return true;
     }
+
+    function isPinned(store: LocalPinnedByChat, evt: EventWrapper<ChatEventType>): boolean {
+        if (preview) return false;
+
+        if (evt.event.kind === "message") {
+            return !!store[$chat.chatId]?.has(evt.event.messageIndex);
+        }
+
+        return false;
+    }
+
+    function pinMessage(ev: CustomEvent<Message>) {
+        localPinned.pin($chat.chatId, ev.detail.messageIndex);
+    }
+
+    function unpinMessage(ev: CustomEvent<Message>) {
+        localPinned.unpin($chat.chatId, ev.detail.messageIndex);
+    }
 </script>
 
 <div bind:this={messagesDiv} class="chat-messages" on:scroll|passive={onScroll} id="chat-messages">
@@ -452,6 +472,7 @@
                         {admin}
                         {preview}
                         {isPublic}
+                        pinned={isPinned($localPinned, evt)}
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo
@@ -460,6 +481,8 @@
                         on:goToMessageIndex={goToMessageIndex}
                         on:selectReaction={selectReaction}
                         on:blockUser={blockUser}
+                        on:pinMessage={pinMessage}
+                        on:unpinMessage={unpinMessage}
                         event={evt} />
                 {/each}
             {/each}
