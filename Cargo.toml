@@ -1,12 +1,70 @@
 [workspace]
 members = [
-    "src/services/chats",
-    "src/services/p2p",
-    "src/services/shared",
-    "src/services/user_mgmt"
+    "backend/canister_installer",
+    "backend/canister_upgrader",
+    "backend/canisters/group/api",
+    "backend/canisters/group/c2c_client",
+    "backend/canisters/group/client",
+    "backend/canisters/group/impl",
+    "backend/canisters/group_index/api",
+    "backend/canisters/group_index/c2c_client",
+    "backend/canisters/group_index/client",
+    "backend/canisters/group_index/impl",
+    "backend/canisters/notifications/api",
+    "backend/canisters/notifications/c2c_client",
+    "backend/canisters/notifications/client",
+    "backend/canisters/notifications/impl",
+    "backend/canisters/online_users_aggregator/api",
+    "backend/canisters/online_users_aggregator/client",
+    "backend/canisters/online_users_aggregator/impl",
+    "backend/canisters/open_storage_bucket/api",
+    "backend/canisters/open_storage_bucket/c2c_client",
+    "backend/canisters/open_storage_index/api",
+    "backend/canisters/open_storage_index/c2c_client",
+    "backend/canisters/root/api",
+    "backend/canisters/root/client",
+    "backend/canisters/root/impl",
+    "backend/canisters/user/api",
+    "backend/canisters/user/c2c_client",
+    "backend/canisters/user/client",
+    "backend/canisters/user/impl",
+    "backend/canisters/user_index/api",
+    "backend/canisters/user_index/c2c_client",
+    "backend/canisters/user_index/client",
+    "backend/canisters/user_index/impl",
+    "backend/data_generator",
+    "backend/libraries/canister_api_macros",
+    "backend/libraries/canister_client",
+    "backend/libraries/canister_client_macros",
+    "backend/libraries/canister_logger",
+    "backend/libraries/canister_state_macros",
+    "backend/libraries/chat_events",
+    "backend/libraries/dynamodb_index_store",
+    "backend/libraries/http_request",
+    "backend/libraries/index_store",
+    "backend/libraries/ledger_utils",
+    "backend/libraries/open_storage_bucket_client",
+    "backend/libraries/search",
+    "backend/libraries/serializer",
+    "backend/libraries/types",
+    "backend/libraries/utils",
+    "backend/notification_pusher/aws",
+    "backend/notification_pusher/cli",
+    "backend/notification_pusher/core",
+    "backend/sms_sender/aws",
+    "backend/sms_sender/cli",
+    "backend/sms_sender/core"
 ]
 
 [profile.release]
 lto = true
 opt-level = "z"
 codegen-units = 1
+
+[patch.crates-io]
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "fe27fb859ee8080e65a36d16a2d97e446db08654" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "fe27fb859ee8080e65a36d16a2d97e446db08654" }
+web-push = { git = "https://github.com/hpeebles/rust-web-push", rev = "c0424e229fab6094754338e6efb97efb9fcf56e5" }
+# We need a custom lodepng-rust that builds on wasm32-unknown-unknown
+# https://github.com/dfinity/internet-identity/issues/471
+lodepng = { git = 'https://github.com/kornelski/lodepng-rust', rev = '8ceb5b1ffc9c1ab1f8c7ace9bde5f01a5be0aaa2' }

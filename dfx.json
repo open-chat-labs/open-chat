@@ -1,36 +1,52 @@
 {
   "canisters": {
-    "chats": {
+    "root": {
       "type": "custom",
-      "candid": "src/services/chats/chats.did",
-      "wasm": "target/wasm32-unknown-unknown/release/chats-opt.wasm",
-      "build": "./generate-wasm.sh chats"
+      "candid": "backend/canisters/root/api/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/root_canister_impl-opt.wasm",
+      "build": "./generate-wasm.sh root_canister_impl"
     },
-    "p2p": {
+    "notifications": {
       "type": "custom",
-      "candid": "src/services/p2p/p2p.did",
-      "wasm": "target/wasm32-unknown-unknown/release/p2p-opt.wasm",
-      "build": "./generate-wasm.sh p2p"
+      "candid": "backend/canisters/notifications/api/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/notifications_canister_impl-opt.wasm",
+      "build": "./generate-wasm.sh notifications_canister_impl"
     },
-    "user_mgmt": {
+    "user_index": {
       "type": "custom",
-      "candid": "src/services/user_mgmt/user_mgmt.did",
-      "wasm": "target/wasm32-unknown-unknown/release/user_mgmt-opt.wasm",
-      "build": "./generate-wasm.sh user_mgmt"
+      "candid": "backend/canisters/user_index/api/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/user_index_canister_impl-opt.wasm",
+      "build": "./generate-wasm.sh user_index_canister_impl"
+    },
+    "group_index": {
+      "type": "custom",
+      "candid": "backend/canisters/user_index/api/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/group_index_canister_impl-opt.wasm",
+      "build": "./generate-wasm.sh group_index_canister_impl"
+    },
+    "online_users_aggregator": {
+      "type": "custom",
+      "candid": "backend/canisters/online_users_agg/api/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/online_users_aggregator_canister_impl-opt.wasm",
+      "build": "./generate-wasm.sh online_users_aggregator_canister_impl"
+    },
+    "user": {
+      "type": "custom",
+      "candid": "backend/canisters/user/api/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/user_canister_impl-opt.wasm",
+      "build": "./generate-wasm.sh user_canister_impl"
+    },
+    "group": {
+      "type": "custom",
+      "candid": "backend/canisters/group/api/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/group_canister_impl-opt.wasm",
+      "build": "./generate-wasm.sh group_canister_impl"
     },
     "website": {
-      "dependencies": [
-        "chats",
-        "p2p",
-        "user_mgmt"
-      ],
       "frontend": {
-        "sourceDir": "src/website",
-        "entrypoint": "src/website/index.tsx"
+        "entrypoint": "frontend/public/index.html"
       },
-      "source": [
-        "dist/website/"
-      ],
+      "source": ["frontend/public"],
       "type": "assets"
     }
   },
@@ -40,27 +56,21 @@
     }
   },
   "networks": {
-    "alpha": {
-      "providers": [
-        "https://mercury.dfinity.network"
-      ],
-      "type": "persistent"
-    },
-    "ic": {
-      "providers": [
-        "https://ic0.app"
-      ],
-      "type": "persistent"
-    },
-    "messaging": {
-      "providers": [
-        "http://dcs-messaging-1.dfinity.systems:8080"
-      ],
-      "type": "persistent"
-    },
     "local": {
       "bind": "127.0.0.1:8000",
       "type": "ephemeral"
+    },
+    "ic": {
+      "providers": [
+        "https://ic0.app/"
+      ],
+      "type": "persistent"
+    },
+    "ic_test": {
+      "providers": [
+        "https://ic0.app/"
+      ],
+      "type": "persistent"
     }
   },
   "version": 1

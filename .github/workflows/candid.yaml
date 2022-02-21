@@ -23,7 +23,6 @@ jobs:
           name: didc
           version: 0.7.8
       - name: run validate-candid-syntax.sh
-        working-directory: ./v2
         run: ./validate-candid-syntax.sh
         shell: bash
 
@@ -44,6 +43,5 @@ jobs:
           name: didc
           version: 0.7.8
       - name: run validate-candid-matches-rust.sh
-        working-directory: ./v2
         run: ./validate-candid-matches-rust.sh
         shell: bash
