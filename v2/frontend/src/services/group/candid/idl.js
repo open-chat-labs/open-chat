@@ -209,10 +209,6 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'created_by' : UserId,
   });
-  const ParticipantsPromotedToAdmin = IDL.Record({
-    'user_ids' : IDL.Vec(UserId),
-    'promoted_by' : UserId,
-  });
   const MessageIndex = IDL.Nat32;
   const PinnedMessageUpdated = IDL.Record({
     'updated_by' : UserId,
@@ -241,10 +237,6 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(ReplyContext),
     'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
     'message_index' : MessageIndex,
-  });
-  const ParticipantsDismissedAsAdmin = IDL.Record({
-    'user_ids' : IDL.Vec(UserId),
-    'dismissed_by' : UserId,
   });
   const UsersUnblocked = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -283,14 +275,12 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin,
     'GroupDescriptionChanged' : GroupDescriptionChanged,
     'GroupChatCreated' : GroupChatCreated,
-    'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin,
     'PinnedMessageUpdated' : PinnedMessageUpdated,
     'UsersBlocked' : UsersBlocked,
     'MessageReactionAdded' : UpdatedMessage,
     'ParticipantsRemoved' : ParticipantsRemoved,
     'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin,
     'Message' : Message,
-    'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin,
     'UsersUnblocked' : UsersUnblocked,
     'ParticipantLeft' : ParticipantLeft,
     'MessageDeleted' : UpdatedMessage,

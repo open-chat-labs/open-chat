@@ -100,20 +100,6 @@
         timestamp={event.timestamp} />
 {:else if event.event.kind === "role_changed"}
     <RoleChangedEvent {user} event={event.event} timestamp={event.timestamp} />
-{:else if event.event.kind === "participants_promoted_to_admin"}
-    <ParticipantsChangedEvent
-        {user}
-        changed={event.event.userIds}
-        changedBy={event.event.promotedBy}
-        resourceKey={"promotedBy"}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "participants_dismissed_as_admin"}
-    <ParticipantsChangedEvent
-        {user}
-        changed={event.event.userIds}
-        changedBy={event.event.dismissedBy}
-        resourceKey={"dismissedBy"}
-        timestamp={event.timestamp} />
 {:else if event.event.kind === "users_blocked"}
     <ParticipantsChangedEvent
         {user}
