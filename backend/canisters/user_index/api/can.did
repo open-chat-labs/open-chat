@@ -127,6 +127,20 @@ type SetUsernameResponse =
         UsernameTooLong: nat16;
     };
 
+type CheckUsernameArgs =
+    record {
+        username: text;
+    };
+
+type CheckUsernameResponse =
+    variant {
+        Success;
+        UsernameTaken;
+        UsernameInvalid;
+        UsernameTooShort: nat16;
+        UsernameTooLong: nat16;
+    };
+
 type TransferCyclesArgs = 
     record {
         sender: UserId;
@@ -275,6 +289,9 @@ service: {
 
     // This is used to set the initial username and subsequently to change it
     set_username: (SetUsernameArgs) -> (SetUsernameResponse);
+
+    // This is used to check whether the username already exists
+    check_username: (CheckUsernameArgs) -> (CheckUsernameResponse);
 
     // Gets the user based on the caller principal. The user can be in a variety of states
     current_user: (CurrentUserArgs) -> (CurrentUserResponse) query;

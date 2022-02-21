@@ -11,3 +11,4 @@ package-lock.json
 **/*.env
 **/*.env_v1
 **/*.pem
+notes.md
