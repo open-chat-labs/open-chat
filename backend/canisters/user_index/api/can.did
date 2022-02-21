@@ -291,7 +291,7 @@ service: {
     set_username: (SetUsernameArgs) -> (SetUsernameResponse);
 
     // This is used to check whether the username already exists
-    check_username: (CheckUsernameArgs) -> (CheckUsernameResponse);
+    check_username: (CheckUsernameArgs) -> (CheckUsernameResponse) query;
 
     // Gets the user based on the caller principal. The user can be in a variety of states
     current_user: (CurrentUserArgs) -> (CurrentUserResponse) query;
