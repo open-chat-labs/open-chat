@@ -123,8 +123,6 @@
     "userJoined": "{username} がグループに参加しました",
     "addedBy": "{changedBy}は{changed}をグループに追加しました",
     "removedBy": "{changedBy}は{changed}をグループから削除しました",
-    "promotedBy": "{changedBy}が{changed}をグループ管理者に昇格させました",
-    "dismissedBy": "{changedBy}は{changed}をグループ管理者として解任しました",
     "blockedBy": "{changedBy}は{changed}をブロックしました",
     "unblockedBy": "{changedBy}は{changed}のブロックを解除しました",
     "ownershipTransferredBy": "{changedBy} transferred group ownership to {changed} 🎉",

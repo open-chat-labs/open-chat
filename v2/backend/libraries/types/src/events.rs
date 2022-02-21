@@ -17,8 +17,6 @@ pub enum GroupChatEvent {
     ParticipantAssumesSuperAdmin(ParticipantAssumesSuperAdmin),
     ParticipantDismissedAsSuperAdmin(ParticipantDismissedAsSuperAdmin),
     ParticipantRelinquishesSuperAdmin(ParticipantRelinquishesSuperAdmin),
-    ParticipantsPromotedToAdmin(ParticipantsPromotedToAdmin),
-    ParticipantsDismissedAsAdmin(ParticipantsDismissedAsAdmin),
     RoleChanged(RoleChanged),
     UsersBlocked(UsersBlocked),
     UsersUnblocked(UsersUnblocked),
@@ -106,21 +104,9 @@ pub struct ParticipantLeft {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ParticipantsPromotedToAdmin {
-    pub user_ids: Vec<UserId>,
-    pub promoted_by: UserId,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct OwnershipTransferred {
     pub old_owner: UserId,
     pub new_owner: UserId,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ParticipantsDismissedAsAdmin {
-    pub user_ids: Vec<UserId>,
-    pub dismissed_by: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

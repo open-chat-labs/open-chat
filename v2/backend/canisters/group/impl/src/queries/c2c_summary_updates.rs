@@ -102,16 +102,6 @@ fn process_events(
                     updates.role_changed = true;
                 }
             }
-            ChatEventInternal::ParticipantsPromotedToAdmin(p) => {
-                if p.user_ids.contains(&participant.user_id) {
-                    updates.role_changed = true;
-                }
-            }
-            ChatEventInternal::ParticipantsDismissedAsAdmin(p) => {
-                if p.user_ids.contains(&participant.user_id) {
-                    updates.role_changed = true;
-                }
-            }
             ChatEventInternal::ParticipantAssumesSuperAdmin(p) => {
                 if p.user_id == participant.user_id {
                     updates.role_changed = true;

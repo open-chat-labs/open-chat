@@ -423,20 +423,6 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             userId: candid.ParticipantJoined.user_id.toString(),
         };
     }
-    if ("ParticipantsPromotedToAdmin" in candid) {
-        return {
-            kind: "participants_promoted_to_admin",
-            userIds: candid.ParticipantsPromotedToAdmin.user_ids.map((p) => p.toString()),
-            promotedBy: candid.ParticipantsPromotedToAdmin.promoted_by.toString(),
-        };
-    }
-    if ("ParticipantsDismissedAsAdmin" in candid) {
-        return {
-            kind: "participants_dismissed_as_admin",
-            userIds: candid.ParticipantsDismissedAsAdmin.user_ids.map((p) => p.toString()),
-            dismissedBy: candid.ParticipantsDismissedAsAdmin.dismissed_by.toString(),
-        };
-    }
     if ("ParticipantsRemoved" in candid) {
         return {
             kind: "participants_removed",

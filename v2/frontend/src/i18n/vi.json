@@ -118,8 +118,6 @@
     "userJoined": "{username} đã tham gia nhóm",
     "addedBy": "{changedBy} đã thêm {changed} vào nhóm",
     "removedBy": "{changedBy} đã loại bỏ {changed} ra khỏi nhóm",
-    "promotedBy": "{changedBy} đã thăng cấp {changed} lên Quản Trị nhóm",
-    "dismissedBy": "{changedBy} đã từ chối {changed} vị trí Quản Trị nhóm",
     "blockedBy": "{changedBy} đã chặn {changed}",
     "unblockedBy": "{changedBy} đã bỏ chặn {changed}",
     "ownershipTransferredBy": "{changedBy} đã chuyển quyền sở hữu nhóm cho {changed} 🎉",

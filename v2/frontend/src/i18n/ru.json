@@ -123,8 +123,6 @@
     "userJoined": "{username} присоединился к группе",
     "addedBy": "{changedBy} добавил {changed} в группу",
     "removedBy": "{changedBy} удалил {changed} из группы",
-    "promotedBy": "{changedBy} повысил {changed} до администратора группы",
-    "dismissedBy": "{changedBy} разжаловал {changed} администратора группы",
     "blockedBy": "{changedBy} заблокировал {changed}",
     "unblockedBy": "{changedBy} разблокировал  {changed}",
     "ownershipTransferredBy": "{changedBy} передал право собственности на группу {changed} 🎉",

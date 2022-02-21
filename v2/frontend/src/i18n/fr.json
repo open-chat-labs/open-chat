@@ -123,8 +123,6 @@
     "userJoined": "{username} a rejoint le groupe",
     "addedBy": "{changedBy} a ajouté {changed} au groupe",
     "removedBy": "{changedBy} a supprimé {changed} du groupe",
-    "promotedBy": "{changedBy} promu {changed} au groupe admin",
-    "dismissedBy": "{changedBy} a rejeté {changed} en tant qu'administrateur du groupe",
     "blockedBy": "{changedBy} bloqué {changed}",
     "unblockedBy": "{changedBy} débloqué {changed}",
     "ownershipTransferredBy": "{changedBy} a transféré la propriété du groupe à {changed} 🎉",
