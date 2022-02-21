@@ -1,13 +1,13 @@
 name: Deploy frontend
 
-# on:
-#   release:
-#     types: [published]
-
 on:
-  push:
-    branches:
-      - deploy
+  release:
+    types: [published]
+
+# on:
+#   push:
+#     branches:
+#       - deploy
 
 jobs:
   deploy_frontend:
@@ -38,4 +38,4 @@ jobs:
           identity: ${{ secrets.DFX_IDENTITY }}
           wallets: ${{ secrets.DFX_WALLETS }}
           dfx_params: --no-wallet website
-          network: ic
+          network: ic_test
