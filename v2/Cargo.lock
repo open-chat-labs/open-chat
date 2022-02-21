@@ -1462,6 +1462,7 @@ dependencies = [
  "lazy_static",
  "notifications_canister",
  "notifications_canister_c2c_client",
+ "open_storage_bucket_client",
  "regex",
  "search",
  "serde",
@@ -2591,6 +2592,38 @@ name = "opaque-debug"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
+
+[[package]]
+name = "open_storage_bucket_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "open_storage_bucket_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "canister_client_macros",
+ "ic-cdk 0.4.0",
+ "open_storage_bucket_canister",
+ "tracing",
+ "types",
+]
+
+[[package]]
+name = "open_storage_bucket_client"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "ic-cdk 0.4.0",
+ "open_storage_bucket_canister",
+ "open_storage_bucket_canister_c2c_client",
+ "types",
+]
 
 [[package]]
 name = "open_storage_index_canister"
@@ -4243,6 +4276,7 @@ dependencies = [
  "ledger_utils",
  "notifications_canister",
  "notifications_canister_c2c_client",
+ "open_storage_bucket_client",
  "search",
  "serde",
  "serializer",

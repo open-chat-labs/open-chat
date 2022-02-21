@@ -42,6 +42,39 @@ impl MessageContent {
             Ok(())
         }
     }
+
+    pub fn blob_references(&self) -> Vec<BlobReference> {
+        let mut references = Vec::new();
+
+        match self {
+            MessageContent::Image(i) => {
+                if let Some(br) = i.blob_reference.clone() {
+                    references.push(br);
+                }
+            }
+            MessageContent::Video(v) => {
+                if let Some(br) = v.video_blob_reference.clone() {
+                    references.push(br);
+                }
+                if let Some(br) = v.image_blob_reference.clone() {
+                    references.push(br);
+                }
+            }
+            MessageContent::Audio(a) => {
+                if let Some(br) = a.blob_reference.clone() {
+                    references.push(br)
+                }
+            }
+            MessageContent::File(f) => {
+                if let Some(br) = f.blob_reference.clone() {
+                    references.push(br);
+                }
+            }
+            MessageContent::Text(_) | MessageContent::Cryptocurrency(_) | MessageContent::Deleted(_) => {}
+        }
+
+        references
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

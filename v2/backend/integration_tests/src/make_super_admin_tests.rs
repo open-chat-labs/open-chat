@@ -130,13 +130,16 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
 
     {
         print!("6. User3 transfer ownership from user1 to user2... ");
-        let args = group_canister::transfer_ownership::Args { new_owner: user2_id };
-        match group_canister_client::transfer_ownership(&user3_agent, &chat_id.into(), &args)
+        let args = group_canister::change_role::Args {
+            user_id: user2_id,
+            new_role: Role::Owner,
+        };
+        match group_canister_client::change_role(&user3_agent, &chat_id.into(), &args)
             .await
             .unwrap()
         {
-            group_canister::transfer_ownership::Response::Success => {}
-            response => panic!("group::transfer_ownership returned an error: {response:?}"),
+            group_canister::change_role::Response::Success => {}
+            response => panic!("group::change_role returned an error: {response:?}"),
         };
         println!("Ok");
     }
