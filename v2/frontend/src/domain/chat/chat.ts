@@ -272,7 +272,6 @@ export type GroupChatEvent =
     | GroupChatCreated
     | ParticipantsAdded
     | ParticipantJoined
-    | ParticipantsPromotedToAdmin
     | ParticipantsRemoved
     | ParticipantLeft
     | GroupNameChanged
@@ -284,7 +283,6 @@ export type GroupChatEvent =
     | GroupDescChanged
     | UsersBlocked
     | UsersUnblocked
-    | ParticipantsDismissedAsAdmin
     | ParticipantAssumesSuperAdmin
     | ParticipantRelinquishesSuperAdmin
     | ParticipantDismissedAsSuperAdmin
@@ -373,12 +371,6 @@ export type ParticipantsRemoved = {
     removedBy: string;
 };
 
-export type ParticipantsDismissedAsAdmin = {
-    kind: "participants_dismissed_as_admin";
-    userIds: string[];
-    dismissedBy: string;
-};
-
 export type OwnershipTransferred = {
     kind: "ownership_transferred";
     oldOwner: string;
@@ -398,12 +390,6 @@ export type ParticipantRelinquishesSuperAdmin = {
 export type ParticipantDismissedAsSuperAdmin = {
     kind: "participant_dismissed_as_super_admin";
     userId: string;
-};
-
-export type ParticipantsPromotedToAdmin = {
-    kind: "participants_promoted_to_admin";
-    userIds: string[];
-    promotedBy: string;
 };
 
 export type RoleChanged = {

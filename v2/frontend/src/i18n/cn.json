@@ -93,8 +93,6 @@
     "userJoined": "{username} 加入了",
     "addedBy": "{changedBy} 邀请了 {changed} 加入群聊",
     "removedBy": "{changedBy} 移除了 {changed}",
-    "promotedBy": "{changedBy} 将 {changed} 设为管理员",
-    "dismissedBy": "{changedBy} 解除了 {changed} 的管理员权限",
     "blockedBy": "{changedBy} 将 {changed} 加入黑名单",
     "unblockedBy": "{changedBy} 将 {changed} 移出黑名单",
     "ownershipTransferredBy": "{changedBy} 将群主转交给 {changed} 🎉",

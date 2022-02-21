@@ -241,14 +241,12 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
-  { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
   { 'PinnedMessageUpdated' : PinnedMessageUpdated } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'Message' : Message } |
-  { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
@@ -447,14 +445,6 @@ export interface ParticipantsAdded {
   'user_ids' : Array<UserId>,
   'unblocked' : Array<UserId>,
   'added_by' : UserId,
-}
-export interface ParticipantsDismissedAsAdmin {
-  'user_ids' : Array<UserId>,
-  'dismissed_by' : UserId,
-}
-export interface ParticipantsPromotedToAdmin {
-  'user_ids' : Array<UserId>,
-  'promoted_by' : UserId,
 }
 export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,

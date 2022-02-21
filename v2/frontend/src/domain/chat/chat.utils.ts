@@ -114,12 +114,6 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "participants_added":
                 userIds.add(e.event.addedBy);
                 break;
-            case "participants_promoted_to_admin":
-                userIds.add(e.event.promotedBy);
-                break;
-            case "participants_dismissed_as_admin":
-                userIds.add(e.event.dismissedBy);
-                break;
             case "participants_removed":
                 userIds.add(e.event.removedBy);
                 break;
@@ -168,10 +162,6 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.created_by;
         case "participants_added":
             return event.addedBy;
-        case "participants_promoted_to_admin":
-            return event.promotedBy;
-        case "participants_dismissed_as_admin":
-            return event.dismissedBy;
         case "participants_removed":
             return event.removedBy;
         case "users_blocked":

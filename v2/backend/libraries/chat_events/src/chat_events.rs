@@ -46,8 +46,6 @@ pub enum ChatEventInternal {
     ParticipantAssumesSuperAdmin(Box<ParticipantAssumesSuperAdmin>),
     ParticipantDismissedAsSuperAdmin(Box<ParticipantDismissedAsSuperAdmin>),
     ParticipantRelinquishesSuperAdmin(Box<ParticipantRelinquishesSuperAdmin>),
-    ParticipantsPromotedToAdmin(Box<ParticipantsPromotedToAdmin>),
-    ParticipantsDismissedAsAdmin(Box<ParticipantsDismissedAsAdmin>),
     RoleChanged(Box<RoleChanged>),
     UsersBlocked(Box<UsersBlocked>),
     UsersUnblocked(Box<UsersUnblocked>),
@@ -87,8 +85,6 @@ impl ChatEventInternal {
                 | ChatEventInternal::ParticipantAssumesSuperAdmin(_)
                 | ChatEventInternal::ParticipantDismissedAsSuperAdmin(_)
                 | ChatEventInternal::ParticipantRelinquishesSuperAdmin(_)
-                | ChatEventInternal::ParticipantsPromotedToAdmin(_)
-                | ChatEventInternal::ParticipantsDismissedAsAdmin(_)
                 | ChatEventInternal::RoleChanged(_)
                 | ChatEventInternal::UsersBlocked(_)
                 | ChatEventInternal::UsersUnblocked(_)
@@ -166,34 +162,6 @@ pub struct Metrics {
 }
 
 impl ChatEvents {
-    pub fn transform_events(&mut self) {
-        for wrapper in self.events.iter_mut() {
-            match &wrapper.event {
-                ChatEventInternal::ParticipantsPromotedToAdmin(e) => {
-                    let event = RoleChanged {
-                        user_ids: e.user_ids.clone(),
-                        changed_by: e.promoted_by,
-                        old_role: Role::Participant,
-                        new_role: Role::Admin,
-                    };
-
-                    wrapper.event = ChatEventInternal::RoleChanged(Box::new(event));
-                }
-                ChatEventInternal::ParticipantsDismissedAsAdmin(e) => {
-                    let event = RoleChanged {
-                        user_ids: e.user_ids.clone(),
-                        changed_by: e.dismissed_by,
-                        old_role: Role::Admin,
-                        new_role: Role::Participant,
-                    };
-
-                    wrapper.event = ChatEventInternal::RoleChanged(Box::new(event));
-                }
-                _ => (),
-            }
-        }
-    }
-
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
             chat_type: ChatType::Direct,

@@ -170,8 +170,6 @@ type GroupChatEvent =
         ParticipantAssumesSuperAdmin: ParticipantAssumesSuperAdmin;
         ParticipantDismissedAsSuperAdmin: ParticipantDismissedAsSuperAdmin;
         ParticipantRelinquishesSuperAdmin: ParticipantRelinquishesSuperAdmin;
-        ParticipantsPromotedToAdmin: ParticipantsPromotedToAdmin;
-        ParticipantsDismissedAsAdmin: ParticipantsDismissedAsAdmin;
         RoleChanged: RoleChanged;
         MessageEdited: UpdatedMessage;
         MessageDeleted: UpdatedMessage;
@@ -448,12 +446,6 @@ type ParticipantsAdded =
         unblocked: vec UserId;
     };
 
-type ParticipantsDismissedAsAdmin =
-    record {
-        user_ids: vec UserId;
-        dismissed_by: UserId;
-    };
-
 type RoleChanged =
     record {
         user_ids: vec UserId;
@@ -466,12 +458,6 @@ type OwnershipTransferred =
     record {
         old_owner: UserId;
         new_owner: UserId;
-    };
-
-type ParticipantsPromotedToAdmin =
-    record {
-        user_ids: vec UserId;
-        promoted_by: UserId;
     };
 
 type ParticipantsRemoved =
