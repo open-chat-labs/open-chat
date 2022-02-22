@@ -72,6 +72,20 @@ pub async fn create_empty_canister(management_canister: &Canister<'_, Management
     canister_id
 }
 
+pub async fn set_controllers(
+    management_canister: &Canister<'_, ManagementCanister>,
+    canister_id: &CanisterId,
+    controllers: Vec<Principal>,
+) {
+    let mut request = management_canister.update_settings(canister_id);
+    for controller in controllers {
+        request = request.with_controller(controller);
+    }
+    request.call_and_wait(delay())
+        .await
+        .expect("Failed to set controllers");
+}
+
 pub async fn install_wasm<A: CandidType + Sync + Send>(
     management_canister: &Canister<'_, ManagementCanister>,
     canister_id: &CanisterId,
