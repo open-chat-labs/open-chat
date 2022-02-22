@@ -221,7 +221,7 @@ impl ChatEvents {
         self.events.get_mut(index)
     }
 
-    pub fn message_by_index(&self, message_index: MessageIndex) -> Option<EventWrapper<&MessageInternal>> {
+    pub fn message_by_message_index(&self, message_index: MessageIndex) -> Option<EventWrapper<&MessageInternal>> {
         let event_index = self.message_index_map.get(&message_index)?;
         let event_wrapper = self.get(*event_index)?;
 
@@ -229,7 +229,7 @@ impl ChatEvents {
             Some(EventWrapper {
                 index: event_wrapper.index,
                 timestamp: event_wrapper.timestamp,
-                event: m
+                event: m,
             })
         } else {
             None
