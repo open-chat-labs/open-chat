@@ -69,7 +69,7 @@ impl Role {
         self.has_admin_rights()
     }
 
-    pub fn can_set_pinned_message(&self) -> bool {
+    pub fn can_pin_message(&self) -> bool {
         self.has_admin_rights()
     }
 

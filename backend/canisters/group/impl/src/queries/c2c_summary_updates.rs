@@ -35,7 +35,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             },
             role: if updates_from_events.role_changed { Some(participant.role) } else { None },
             mentions: updates_from_events.mentions,
-            pinned_message: updates_from_events.pinned_message,
+            pinned_message: OptionUpdate::NoChange,
             wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(args.updates_since).copied()),
             owner_id: updates_from_events.owner_id,
         };
@@ -56,7 +56,6 @@ struct UpdatesFromEvents {
     participants_changed: bool,
     role_changed: bool,
     mentions: Vec<Mention>,
-    pinned_message: OptionUpdate<MessageIndex>,
     owner_id: Option<UserId>,
 }
 
@@ -124,11 +123,6 @@ fn process_events(
             | ChatEventInternal::UsersBlocked(_)
             | ChatEventInternal::UsersUnblocked(_) => {
                 updates.participants_changed = true;
-            }
-            ChatEventInternal::PinnedMessageUpdated(p) => {
-                if !updates.pinned_message.has_update() {
-                    updates.pinned_message = OptionUpdate::from_update(p.new_value);
-                }
             }
             ChatEventInternal::Message(message) => {
                 lowest_message_index = message.message_index;

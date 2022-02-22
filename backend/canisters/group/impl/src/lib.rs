@@ -96,7 +96,7 @@ impl RuntimeState {
             participant_count: data.participants.len(),
             role: participant.role,
             mentions: participant.get_most_recent_mentions(&data.events),
-            pinned_message: data.pinned_message,
+            pinned_message: None,
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             owner_id: data.owner_id,
         }
@@ -122,6 +122,7 @@ impl RuntimeState {
             total_edits: chat_metrics.total_edits,
             replies: chat_metrics.replies,
             total_reactions: chat_metrics.total_reactions,
+            pinned_messages: self.data.pinned_messages.len() as u32,
             last_active: chat_metrics.last_active,
         }
     }
@@ -142,7 +143,8 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub activity_notification_state: ActivityNotificationState,
-    pub pinned_message: Option<MessageIndex>,
+    #[serde(default)]
+    pub pinned_messages: Vec<MessageIndex>,
     pub test_mode: bool,
     pub owner_id: UserId,
 }
@@ -182,7 +184,7 @@ impl Data {
             user_index_canister_id,
             notifications_canister_ids,
             activity_notification_state: ActivityNotificationState::new(now),
-            pinned_message: None,
+            pinned_messages: Vec::new(),
             test_mode,
             owner_id: creator_user_id,
         }
@@ -218,6 +220,7 @@ pub struct Metrics {
     pub total_edits: u64,
     pub replies: u64,
     pub total_reactions: u64,
+    pub pinned_messages: u32,
     pub last_active: TimestampMillis,
 }
 

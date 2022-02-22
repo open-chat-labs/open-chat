@@ -180,16 +180,29 @@ type UpdateGroupResponse =
         InternalError;
     };
 
-type SetPinnedMessageArgs =
+type PinMessageArgs =
     record {
-        message_index: opt MessageIndex;
+        message_index: MessageIndex;
     };
 
-type SetPinnedMessageResponse =
+type PinMessageResponse =
     variant {
-        Success;
+        Success: EventIndex;
         NoChange;
         MessageIndexOutOfRange;
+        NotAuthorized;
+        CallerNotInGroup;
+    };
+
+type UnpinMessageArgs =
+    record {
+        message_index: MessageIndex;
+    };
+
+type UnpinMessageResponse =
+    variant {
+        Success: EventIndex;
+        NoChange;
         NotAuthorized;
         CallerNotInGroup;
     };
@@ -214,6 +227,7 @@ type SelectedInitialSuccess =
         latest_event_index: EventIndex;
         participants: vec Participant;
         blocked_users: vec UserId;
+        pinned_messages: vec MessageIndex;
     };
 
 type SelectedInitialResponse =
@@ -234,6 +248,8 @@ type SelectedUpdatesSuccess =
         participants_removed: vec UserId;
         blocked_users_added: vec UserId;
         blocked_users_removed: vec UserId;
+        pinned_messages_added: vec MessageIndex;
+        pinned_messages_removed: vec MessageIndex;
     };
 
 type SelectedUpdatesResponse =
@@ -324,7 +340,8 @@ service: {
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group: (UpdateGroupArgs) -> (UpdateGroupResponse);
-    set_pinned_message: (SetPinnedMessageArgs) -> (SetPinnedMessageResponse);
+    pin_message: (PinMessageArgs) -> (PinMessageResponse);
+    unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
 
     // Can be called by admins or regular users of public groups

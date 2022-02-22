@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{EventIndex, Participant, UserId};
+use types::{EventIndex, MessageIndex, Participant, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -21,4 +21,6 @@ pub struct SuccessResult {
     pub participants_removed: Vec<UserId>,
     pub blocked_users_added: Vec<UserId>,
     pub blocked_users_removed: Vec<UserId>,
+    pub pinned_messages_added: Vec<MessageIndex>,
+    pub pinned_messages_removed: Vec<MessageIndex>,
 }

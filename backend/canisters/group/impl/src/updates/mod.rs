@@ -16,11 +16,12 @@ mod change_role;
 mod delete_group;
 mod delete_messages;
 mod edit_message;
+mod pin_message;
 mod remove_participant;
 mod send_message;
-mod set_pinned_message;
 mod toggle_reaction;
 mod unblock_user;
+mod unpin_message;
 mod update_group;
 mod wallet_receive;
 
