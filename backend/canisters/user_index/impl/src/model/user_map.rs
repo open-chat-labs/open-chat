@@ -56,6 +56,10 @@ impl UserMap {
         }
     }
 
+    pub fn does_username_exist(&self, username: &str) -> bool {
+        self.username_to_principal.contains_key(username) || self.reserved_usernames.contains(username)
+    }
+
     // Returns true if the username can be reserved or false if the username is taken
     pub fn reserve_username(&mut self, username: &str) -> bool {
         !self.username_to_principal.contains_key(username) && self.reserved_usernames.insert(username.to_owned())
