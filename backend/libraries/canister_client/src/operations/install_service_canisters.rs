@@ -67,27 +67,12 @@ async fn install_service_canisters_impl(
     management_canister: &Canister<'_, ManagementCanister>,
     test_mode: bool,
 ) {
+    let controllers = vec![principal, canister_ids.root];
     futures::future::join4(
-        set_controllers(
-            &management_canister,
-            &canister_ids.user_index,
-            vec![principal, canister_ids.root],
-        ),
-        set_controllers(
-            &management_canister,
-            &canister_ids.group_index,
-            vec![principal, canister_ids.root],
-        ),
-        set_controllers(
-            &management_canister,
-            &canister_ids.notifications,
-            vec![principal, canister_ids.root],
-        ),
-        set_controllers(
-            &management_canister,
-            &canister_ids.online_users_aggregator,
-            vec![principal, canister_ids.root],
-        ),
+        set_controllers(&management_canister, &canister_ids.user_index, controllers.clone()),
+        set_controllers(&management_canister, &canister_ids.group_index, controllers.clone()),
+        set_controllers(&management_canister, &canister_ids.notifications, controllers.clone()),
+        set_controllers(&management_canister, &canister_ids.online_users_aggregator, controllers),
     )
     .await;
 
