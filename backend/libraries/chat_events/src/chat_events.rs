@@ -49,7 +49,8 @@ pub enum ChatEventInternal {
     RoleChanged(Box<RoleChanged>),
     UsersBlocked(Box<UsersBlocked>),
     UsersUnblocked(Box<UsersUnblocked>),
-    PinnedMessageUpdated(Box<PinnedMessageUpdated>),
+    MessagePinned(Box<MessagePinned>),
+    MessageUnpinned(Box<MessageUnpinned>),
 }
 
 impl ChatEventInternal {
@@ -88,7 +89,8 @@ impl ChatEventInternal {
                 | ChatEventInternal::RoleChanged(_)
                 | ChatEventInternal::UsersBlocked(_)
                 | ChatEventInternal::UsersUnblocked(_)
-                | ChatEventInternal::PinnedMessageUpdated(_)
+                | ChatEventInternal::MessagePinned(_)
+                | ChatEventInternal::MessageUnpinned(_)
         )
     }
 }
@@ -217,6 +219,21 @@ impl ChatEvents {
     pub fn get_mut(&mut self, event_index: EventIndex) -> Option<&mut EventWrapper<ChatEventInternal>> {
         let index = self.get_index(event_index)?;
         self.events.get_mut(index)
+    }
+
+    pub fn message_by_message_index(&self, message_index: MessageIndex) -> Option<EventWrapper<&MessageInternal>> {
+        let event_index = self.message_index_map.get(&message_index)?;
+        let event_wrapper = self.get(*event_index)?;
+
+        if let ChatEventInternal::Message(m) = &event_wrapper.event {
+            Some(EventWrapper {
+                index: event_wrapper.index,
+                timestamp: event_wrapper.timestamp,
+                event: m,
+            })
+        } else {
+            None
+        }
     }
 
     pub fn push_message(&mut self, args: PushMessageArgs) -> EventWrapper<Message> {

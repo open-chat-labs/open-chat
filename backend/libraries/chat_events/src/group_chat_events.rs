@@ -53,10 +53,11 @@ impl GroupChatEvents {
             ChatEventInternal::ParticipantDismissedAsSuperAdmin(p) => {
                 GroupChatEvent::ParticipantDismissedAsSuperAdmin(*p.clone())
             }
-            ChatEventInternal::RoleChanged(p) => GroupChatEvent::RoleChanged(*p.clone()),
+            ChatEventInternal::RoleChanged(r) => GroupChatEvent::RoleChanged(*r.clone()),
             ChatEventInternal::UsersBlocked(u) => GroupChatEvent::UsersBlocked(*u.clone()),
             ChatEventInternal::UsersUnblocked(u) => GroupChatEvent::UsersUnblocked(*u.clone()),
-            ChatEventInternal::PinnedMessageUpdated(p) => GroupChatEvent::PinnedMessageUpdated(*p.clone()),
+            ChatEventInternal::MessagePinned(p) => GroupChatEvent::MessagePinned(*p.clone()),
+            ChatEventInternal::MessageUnpinned(u) => GroupChatEvent::MessageUnpinned(*u.clone()),
             _ => panic!("Unrecognised event type"),
         };
 

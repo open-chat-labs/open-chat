@@ -2,6 +2,7 @@ use canister_client_macros::*;
 use user_index_canister::*;
 
 // Queries
+generate_query_call!(check_username);
 generate_query_call!(current_user);
 generate_query_call!(search);
 generate_query_call!(sms_messages);

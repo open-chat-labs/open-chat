@@ -41,7 +41,6 @@ user_index_canister_client = { path = "../canisters/user_index/client" }
 
 [patch.crates-io]
 ic-agent = { git = "https://github.com/hpeebles/agent-rs", rev = "5631f655afb9970742f5356b94f15ab8c1dcf35d" }
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "4631c0312db3a5abbf21f9338534bcdbfa1a005b" }
 
 [patch."https://github.com/dfinity-lab/lmdb-rs"]
 lmdb-rkv = { git = "https://github.com/hpeebles/lmdb-rs", rev = "04f94c27f607b28e181d3965bdebc330c1489c87" }

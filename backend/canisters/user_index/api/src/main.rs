@@ -1,6 +1,7 @@
 use candid_gen::generate_candid_method;
 
 fn main() {
+    generate_candid_method!(user_index, check_username, query);
     generate_candid_method!(user_index, current_user, query);
     generate_candid_method!(user_index, search, query);
     generate_candid_method!(user_index, super_admins, query);
