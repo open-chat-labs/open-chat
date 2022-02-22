@@ -28,6 +28,7 @@ import {
     getCachedEventsByIndex,
     getCachedEventsWindow,
     getCachedGroupDetails,
+    loadMessagesByMessageIndex,
     setCachedEvents,
     setCachedGroupDetails,
     setCachedMessage,
@@ -171,5 +172,16 @@ export class CachingGroupClient implements IGroupClient {
 
     getPublicSummary(): Promise<GroupChatSummary | undefined> {
         return this.client.getPublicSummary();
+    }
+
+    async getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<Message[]> {
+        const fromCache = await loadMessagesByMessageIndex(this.db, this.chatId, messageIndexes);
+        if (fromCache.missing.size > 0) {
+            console.log("Missing idxs from the cached: ", fromCache.missing);
+            const msgs = await this.client.getMessagesByMessageIndex(fromCache.missing);
+            setCachedEvents(this.db, this.chatId)();
+            return [...fromCache.messages, ...msgs];
+        }
+        return fromCache.messages;
     }
 }

@@ -15,6 +15,7 @@ import type {
 } from "../domain/chat/chat";
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
+import { resolve } from "path/posix";
 
 export const MAX_MSGS = 30;
 
@@ -567,4 +568,41 @@ export function initDb(principal: string): Database | undefined {
 
 export function closeDb(): void {
     db = undefined;
+}
+
+export async function loadMessagesByMessageIndex(
+    db: Database,
+    chatId: string,
+    messagesIndexes: Set<number>
+): Promise<{ messageEvents: Message[]; missing: Set<number> }> {
+    const resolvedDb = await db;
+
+    const missing: Set<number> = new Set();
+    const messages: Message[] = [];
+
+    await Promise.all<Message | undefined>(
+        [...messagesIndexes].map(async (msgIdx) => {
+            const eventIdx = await resolvedDb.get(
+                "message_index_event_index",
+                `${chatId}_${msgIdx}`
+            );
+            if (eventIdx === undefined) return undefined;
+            const evt: EventWrapper<ChatEvent> | undefined = await loadEventByIndex(
+                resolvedDb,
+                chatId,
+                eventIdx
+            );
+            if (evt?.event.kind === "message") {
+                messages.push(evt.event);
+                return evt.event;
+            }
+            missing.add(msgIdx);
+            return undefined;
+        })
+    );
+
+    return {
+        messages,
+        missing,
+    };
 }

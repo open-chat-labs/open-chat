@@ -680,4 +680,11 @@ export class ServiceContainer implements MarkMessagesRead {
     refreshAccountBalance(account: string): Promise<ICP> {
         return this._ledgerClient.accountBalance(account);
     }
+
+    getGroupMessagesByMessageIndex(
+        chatId: string,
+        messageIndexes: Set<number>
+    ): Promise<Message[]> {
+        return this.getGroupClient(chatId).getMessagesByMessageIndex(messageIndexes);
+    }
 }

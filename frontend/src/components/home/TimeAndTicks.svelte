@@ -17,7 +17,11 @@
     export let pinned: boolean;
 
     let iconColor = fill ? "#fff" : "var(--currentChat-msg-me-txt)";
-    let pinnedColor = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
+    let pinnedColor = me
+        ? "var(--currentChat-msg-me-txt)"
+        : fill
+        ? "#fff"
+        : "var(--currentChat-msg-txt)";
 
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 </script>

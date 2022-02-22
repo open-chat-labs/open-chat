@@ -3,6 +3,7 @@
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import AddParticipants from "./groupdetails/AddParticipants.svelte";
     import Participants from "./groupdetails/Participants.svelte";
+    import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import type { RightPanelState } from "../../fsm/rightPanel";
     import type { FullParticipant, GroupChatSummary } from "../../domain/chat/chat";
     import type { Readable } from "svelte/store";
@@ -114,7 +115,6 @@
             on:removeParticipant={removeParticipant}
             on:makeAdmin={makeAdmin} />
     {:else if lastState === "show_pinned"}
-        <h1>Show the pinned messages</h1>
-        <button on:click={pop}>Close</button>
+        <PinnedMessages on:close={pop} />
     {/if}
 </Panel>

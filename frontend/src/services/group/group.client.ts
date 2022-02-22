@@ -311,4 +311,8 @@ export class GroupClient extends CandidService implements IGroupClient {
             return undefined;
         });
     }
+
+    getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<Message[]> {
+        return Promise.resolve([]);
+    }
 }

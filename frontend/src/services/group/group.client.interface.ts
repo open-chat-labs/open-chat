@@ -57,4 +57,5 @@ export interface IGroupClient {
     getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails>;
     deleteGroup(): Promise<DeleteGroupResponse>;
     getPublicSummary(): Promise<GroupChatSummary | undefined>;
+    getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<Message[]>;
 }
