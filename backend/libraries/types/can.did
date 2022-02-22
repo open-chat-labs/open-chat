@@ -177,7 +177,8 @@ type GroupChatEvent =
         MessageReactionRemoved: UpdatedMessage;
         UsersBlocked: UsersBlocked;
         UsersUnblocked: UsersUnblocked;
-        PinnedMessageUpdated: PinnedMessageUpdated;
+        MessagePinned: MessagePinned;
+        MessageUnpinned: MessageUnpinned;
     };
 
 type GroupChatEventWrapper =
@@ -302,10 +303,16 @@ type GroupNameChanged =
         changed_by: UserId;
     };
 
-type PinnedMessageUpdated =
+type MessagePinned =
     record {
-        new_value: opt MessageIndex;
-        updated_by: UserId;
+        message_index: MessageIndex;
+        pinned_by: UserId;
+    };
+
+type MessageUnpinned =
+    record {
+        message_index: MessageIndex;
+        unpinned_by: UserId;
     };
 
 type PinnedMessageUpdate =

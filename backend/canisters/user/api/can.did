@@ -361,6 +361,21 @@ type EventsResponse =
         ChatNotFound;
     };
 
+type MessagesByMessageIndexArgs =
+    record {
+        user_id: UserId;
+        messages: vec MessageIndex;
+    };
+
+type MessagesByMessageIndexResponse =
+    variant {
+        Success: record {
+            messages: vec MessageEventWrapper;
+            latest_event_index: EventIndex;
+        };
+        ChatNotFound;
+    };
+
 type RecommendedGroupsArgs =
     record {
         count: nat8;
@@ -462,6 +477,7 @@ service: {
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
     events_range: (EventsRangeArgs) -> (EventsResponse) query;
     events_window: (EventsWindowArgs) -> (EventsResponse) query;
+    messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
 
     recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     transactions: (TransactionsArgs) -> (TransactionsResponse) query;

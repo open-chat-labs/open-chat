@@ -24,6 +24,8 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         participants_removed: vec![],
         blocked_users_added: vec![],
         blocked_users_removed: vec![],
+        pinned_messages_added: vec![],
+        pinned_messages_removed: vec![],
     };
 
     if latest_event_index <= args.updates_since {
@@ -86,6 +88,16 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                     user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
                 }
             }
+            ChatEventInternal::MessagePinned(p) => {
+                if !result.pinned_messages_removed.contains(&p.message_index) {
+                    result.pinned_messages_added.push(p.message_index);
+                }
+            }
+            ChatEventInternal::MessageUnpinned(u) => {
+                if !result.pinned_messages_added.contains(&u.message_index) {
+                    result.pinned_messages_removed.push(u.message_index);
+                }
+            }
             _ => {}
         }
     }
@@ -94,6 +106,8 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         && result.participants_removed.is_empty()
         && result.blocked_users_added.is_empty()
         && result.blocked_users_removed.is_empty()
+        && result.pinned_messages_added.is_empty()
+        && result.pinned_messages_removed.is_empty()
     {
         SuccessNoUpdates
     } else {

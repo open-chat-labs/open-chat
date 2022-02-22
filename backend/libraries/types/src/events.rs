@@ -24,7 +24,8 @@ pub enum GroupChatEvent {
     MessageDeleted(UpdatedMessage),
     MessageReactionAdded(UpdatedMessage),
     MessageReactionRemoved(UpdatedMessage),
-    PinnedMessageUpdated(PinnedMessageUpdated),
+    MessagePinned(MessagePinned),
+    MessageUnpinned(MessageUnpinned),
 }
 
 impl GroupChatEvent {
@@ -133,9 +134,15 @@ pub struct ParticipantRelinquishesSuperAdmin {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct PinnedMessageUpdated {
-    pub new_value: Option<MessageIndex>,
-    pub updated_by: UserId,
+pub struct MessagePinned {
+    pub message_index: MessageIndex,
+    pub pinned_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MessageUnpinned {
+    pub message_index: MessageIndex,
+    pub unpinned_by: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

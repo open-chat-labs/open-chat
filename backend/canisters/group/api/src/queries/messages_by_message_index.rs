@@ -1,9 +1,11 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{EventIndex, MessageIndex, Participant, UserId};
+use types::{EventIndex, EventWrapper, Message, MessageIndex};
 
 #[derive(CandidType, Deserialize, Debug)]
-pub struct Args {}
+pub struct Args {
+    pub messages: Vec<MessageIndex>,
+}
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
@@ -13,8 +15,6 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
+    pub messages: Vec<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
-    pub participants: Vec<Participant>,
-    pub blocked_users: Vec<UserId>,
-    pub pinned_messages: Vec<MessageIndex>,
 }
