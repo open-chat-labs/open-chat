@@ -81,9 +81,7 @@ pub async fn set_controllers(
     for controller in controllers {
         request = request.with_controller(controller);
     }
-    request.call_and_wait(delay())
-        .await
-        .expect("Failed to set controllers");
+    request.call_and_wait(delay()).await.expect("Failed to set controllers");
 }
 
 pub async fn install_wasm<A: CandidType + Sync + Send>(

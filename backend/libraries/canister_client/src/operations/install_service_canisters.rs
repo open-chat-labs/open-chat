@@ -1,4 +1,6 @@
-use crate::utils::{build_ic_agent, build_management_canister, create_empty_canister, get_canister_wasm, install_wasm, set_controllers};
+use crate::utils::{
+    build_ic_agent, build_management_canister, create_empty_canister, get_canister_wasm, install_wasm, set_controllers,
+};
 use crate::{CanisterIds, CanisterName};
 use candid::Principal;
 use ic_agent::identity::BasicIdentity;
@@ -66,11 +68,28 @@ async fn install_service_canisters_impl(
     test_mode: bool,
 ) {
     futures::future::join4(
-        set_controllers(&management_canister, &canister_ids.user_index, vec![principal, canister_ids.root]),
-        set_controllers(&management_canister, &canister_ids.group_index, vec![principal, canister_ids.root]),
-        set_controllers(&management_canister, &canister_ids.notifications, vec![principal, canister_ids.root]),
-        set_controllers(&management_canister, &canister_ids.online_users_aggregator, vec![principal, canister_ids.root]),
-    ).await;
+        set_controllers(
+            &management_canister,
+            &canister_ids.user_index,
+            vec![principal, canister_ids.root],
+        ),
+        set_controllers(
+            &management_canister,
+            &canister_ids.group_index,
+            vec![principal, canister_ids.root],
+        ),
+        set_controllers(
+            &management_canister,
+            &canister_ids.notifications,
+            vec![principal, canister_ids.root],
+        ),
+        set_controllers(
+            &management_canister,
+            &canister_ids.online_users_aggregator,
+            vec![principal, canister_ids.root],
+        ),
+    )
+    .await;
 
     let version = Version::min();
 
