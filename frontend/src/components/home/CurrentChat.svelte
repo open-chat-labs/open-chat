@@ -20,6 +20,8 @@
     let firstUnreadMessage: number | undefined;
     let firstUnreadMention: Mention | undefined;
 
+    $: pinned = controller.pinnedMessages;
+
     $: {
         if (chatId !== controller.chatId) {
             chatId = controller.chatId;
@@ -116,7 +118,8 @@
         {blocked}
         {preview}
         {unreadMessages}
-        selectedChatSummary={chat} />
+        selectedChatSummary={chat}
+        hasPinned={$pinned.size > 0} />
     <CurrentChatMessages
         on:replyPrivatelyTo
         on:messageRead={messageRead}

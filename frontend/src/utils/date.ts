@@ -71,21 +71,23 @@ export function toShortTimeString(date: Date): string {
     });
 }
 
-export function formatMessageDate(date: Date): string {
-    const startOfToday = getStartOfToday();
-    if (date >= startOfToday) {
-        return toShortTimeString(date);
-    }
-    const startOfYesterday = addDays(startOfToday, -1);
-    if (date >= startOfYesterday) {
-        return "Yesterday";
-    }
-    const useDayNameOnly = date >= addDays(startOfToday, -6);
-    return useDayNameOnly ? toDayOfWeekString(date) : toDateString(date);
-}
-
 function getOrdinal(n: number): string {
     // TODO - Localise
     // Taken from https://stackoverflow.com/a/39466341
     return ["", "st", "nd", "rd"][(n / 10) % 10 ^ 1 && n % 10] || "th";
+}
+
+export function formatMessageDate(timestamp: bigint, today: string, yesterday: string): string {
+    const date = new Date(Number(timestamp));
+
+    const startOfToday = getStartOfToday();
+    if (date >= startOfToday) {
+        return today;
+    }
+    const startOfYesterday = addDays(startOfToday, -1);
+    if (date >= startOfYesterday) {
+        return yesterday;
+    }
+    const useDayNameOnly = date >= addDays(startOfToday, -6);
+    return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
 }

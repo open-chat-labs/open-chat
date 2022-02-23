@@ -63,6 +63,12 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export interface CheckUsernameArgs { 'username' : string }
+export type CheckUsernameResponse = { 'UsernameTaken' : null } |
+  { 'UsernameTooShort' : number } |
+  { 'UsernameInvalid' : null } |
+  { 'UsernameTooLong' : number } |
+  { 'Success' : null };
 export interface CompletedCyclesDeposit {
   'from' : CanisterId,
   'cycles' : Cycles,
@@ -241,8 +247,9 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
-  { 'PinnedMessageUpdated' : PinnedMessageUpdated } |
+  { 'MessagePinned' : MessagePinned } |
   { 'UsersBlocked' : UsersBlocked } |
+  { 'MessageUnpinned' : MessageUnpinned } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
@@ -387,6 +394,14 @@ export interface MessageMatch {
   'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
+export interface MessagePinned {
+  'pinned_by' : UserId,
+  'message_index' : MessageIndex,
+}
+export interface MessageUnpinned {
+  'unpinned_by' : UserId,
+  'message_index' : MessageIndex,
+}
 export type Milliseconds = bigint;
 export type NightMode = { 'On' : null } |
   { 'Off' : null } |
@@ -477,10 +492,6 @@ export type PhoneStatus = { 'Unconfirmed' : UnconfirmedPhoneNumberState } |
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
-export interface PinnedMessageUpdated {
-  'updated_by' : UserId,
-  'new_value' : [] | [MessageIndex],
-}
 export interface PublicGroupSummary {
   'name' : string,
   'wasm_version' : Version,
@@ -656,6 +667,9 @@ export interface VideoContent {
 export interface _SERVICE {
   'add_super_admin' : (arg_0: AddSuperAdminArgs) => Promise<
       AddSuperAdminResponse
+    >,
+  'check_username' : (arg_0: CheckUsernameArgs) => Promise<
+      CheckUsernameResponse
     >,
   'confirm_phone_number' : (arg_0: ConfirmPhoneNumberArgs) => Promise<
       ConfirmPhoneNumberResponse

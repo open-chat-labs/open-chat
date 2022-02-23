@@ -9,6 +9,7 @@
     import { rtlStore } from "../../stores/rtl";
     import {
         addDays,
+        formatMessageDate,
         getStartOfToday,
         toDayOfWeekString,
         toLongDateString,
@@ -30,8 +31,6 @@
     import type { MessageReadState } from "../../stores/markRead";
     import { menuStore } from "../../stores/menu";
     import { iconSize } from "../../stores/iconSize";
-    import { localPinned } from "../../stores/pinned";
-    import type { LocalPinnedByChat } from "../../stores/pinned";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 300;
@@ -51,6 +50,7 @@
     $: chat = controller.chat;
     $: focusMessageIndex = controller.focusMessageIndex;
     $: markRead = controller.markRead;
+    $: pinned = controller.pinnedMessages;
 
     setContext<UserLookup>("userLookup", $userStore);
 
@@ -205,21 +205,6 @@
         return messagesDiv
             ? messagesDiv.scrollHeight - messagesDiv.clientHeight + messagesDiv.scrollTop
             : 0;
-    }
-
-    function formatDate(timestamp: bigint): string {
-        const date = new Date(Number(timestamp));
-
-        const startOfToday = getStartOfToday();
-        if (date >= startOfToday) {
-            return $_("today");
-        }
-        const startOfYesterday = addDays(startOfToday, -1);
-        if (date >= startOfYesterday) {
-            return $_("yesterday");
-        }
-        const useDayNameOnly = date >= addDays(startOfToday, -6);
-        return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
     }
 
     function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
@@ -429,22 +414,22 @@
         return true;
     }
 
-    function isPinned(store: LocalPinnedByChat, evt: EventWrapper<ChatEventType>): boolean {
+    function isPinned(store: Set<number>, evt: EventWrapper<ChatEventType>): boolean {
         if (preview) return false;
 
         if (evt.event.kind === "message") {
-            return !!store[$chat.chatId]?.has(evt.event.messageIndex);
+            return store.has(evt.event.messageIndex);
         }
 
         return false;
     }
 
     function pinMessage(ev: CustomEvent<Message>) {
-        localPinned.pin($chat.chatId, ev.detail.messageIndex);
+        controller.pinMessage(ev.detail.messageIndex);
     }
 
     function unpinMessage(ev: CustomEvent<Message>) {
-        localPinned.unpin($chat.chatId, ev.detail.messageIndex);
+        controller.unpinMessage(ev.detail.messageIndex);
     }
 </script>
 
@@ -452,7 +437,7 @@
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
-                {formatDate(dayGroup[0][0]?.timestamp)}
+                {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
             </div>
             {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
                 {#each userGroup as evt, i (eventKey(evt))}
@@ -472,7 +457,7 @@
                         {admin}
                         {preview}
                         {isPublic}
-                        pinned={isPinned($localPinned, evt)}
+                        pinned={isPinned($pinned, evt)}
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo

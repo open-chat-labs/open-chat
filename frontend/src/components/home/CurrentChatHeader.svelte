@@ -37,7 +37,6 @@
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { formatLastOnlineDate } from "../../domain/user/user.utils";
-    import { localPinned } from "stores/pinned";
 
     const dispatch = createEventDispatcher();
 
@@ -45,13 +44,13 @@
     export let blocked: boolean;
     export let preview: boolean;
     export let unreadMessages: number;
+    export let hasPinned: boolean;
 
     let supportsNotifications = notificationsSupported();
     let viewProfile = false;
 
     $: userId = $selectedChatSummary.kind === "direct_chat" ? $selectedChatSummary.them : "";
     $: isGroup = $selectedChatSummary.kind === "group_chat";
-    $: hasPinned = $localPinned[$selectedChatSummary.chatId]?.size > 0;
 
     function clearSelection() {
         dispatch("clearSelection");

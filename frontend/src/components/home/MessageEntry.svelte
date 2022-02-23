@@ -156,10 +156,7 @@
         const matches = inputContent.match(mentionRegex);
         if (matches !== null) {
             mentionPrefix = matches[1].toLowerCase() || undefined;
-            controller.loadDetails().then(() => {
-                showMentionPicker = true;
-                saveSelection();
-            });
+            saveSelection();
         } else {
             showMentionPicker = false;
             mentionPrefix = undefined;

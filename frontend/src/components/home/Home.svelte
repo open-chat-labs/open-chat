@@ -134,6 +134,10 @@
         }
     }
 
+    function goToMessageIndex(ev: CustomEvent<number>) {
+        $selectedChat?.goToMessageIndex(ev.detail);
+    }
+
     function closeModal() {
         modal = ModalType.None;
     }
@@ -275,7 +279,6 @@
     function showParticipants() {
         if ($selectedChat !== undefined) {
             rightPanelHistory = [...rightPanelHistory, "show_participants"];
-            $selectedChat.loadDetails();
         }
     }
 
@@ -432,6 +435,7 @@
                     {userId}
                     controller={$selectedChat}
                     bind:rightPanelHistory
+                    on:goToMessageIndex={goToMessageIndex}
                     on:addParticipants={addParticipants}
                     on:showParticipants={showParticipants}
                     on:chatWith={chatWith}

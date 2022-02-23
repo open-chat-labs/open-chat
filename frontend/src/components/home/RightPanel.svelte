@@ -10,6 +10,8 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import type { UserSummary } from "../../domain/user/user";
     import { toastStore } from "../../stores/toast";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
 
     export let rightPanelHistory: RightPanelState[];
     export let controller: ChatController;
@@ -82,6 +84,11 @@
         }
         savingParticipants = false;
     }
+
+    function goToMessageIndex(ev: CustomEvent<number>): void {
+        dispatch("goToMessageIndex", ev.detail);
+        pop();
+    }
 </script>
 
 <Panel right>
@@ -115,6 +122,6 @@
             on:removeParticipant={removeParticipant}
             on:makeAdmin={makeAdmin} />
     {:else if lastState === "show_pinned"}
-        <PinnedMessages on:close={pop} />
+        <PinnedMessages on:goToMessageIndex={goToMessageIndex} {controller} on:close={pop} />
     {/if}
 </Panel>

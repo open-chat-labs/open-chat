@@ -143,6 +143,6 @@
         changedBy={event.event.changedBy}
         property={$_("groupAvatar")}
         timestamp={event.timestamp} />
-{:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed"}
+{:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned"}
     <div>Unexpected event type</div>
 {/if}

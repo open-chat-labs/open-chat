@@ -295,8 +295,9 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
-  { 'PinnedMessageUpdated' : PinnedMessageUpdated } |
+  { 'MessagePinned' : MessagePinned } |
   { 'UsersBlocked' : UsersBlocked } |
+  { 'MessageUnpinned' : MessageUnpinned } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
@@ -479,6 +480,25 @@ export interface MessageMatch {
   'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
+export interface MessagePinned {
+  'pinned_by' : UserId,
+  'message_index' : MessageIndex,
+}
+export interface MessageUnpinned {
+  'unpinned_by' : UserId,
+  'message_index' : MessageIndex,
+}
+export interface MessagesByMessageIndexArgs {
+  'messages' : Array<MessageIndex>,
+  'user_id' : UserId,
+}
+export type MessagesByMessageIndexResponse = { 'ChatNotFound' : null } |
+  {
+    'Success' : {
+      'messages' : Array<MessageEventWrapper>,
+      'latest_event_index' : EventIndex,
+    }
+  };
 export type Milliseconds = bigint;
 export interface MuteNotificationsArgs { 'chat_id' : ChatId }
 export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
@@ -568,10 +588,6 @@ export interface PendingICPWithdrawal {
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
-export interface PinnedMessageUpdated {
-  'updated_by' : UserId,
-  'new_value' : [] | [MessageIndex],
-}
 export interface PublicGroupSummary {
   'name' : string,
   'wasm_version' : Version,
@@ -792,6 +808,9 @@ export interface _SERVICE {
   'join_group_v2' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
   'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
+  'messages_by_message_index' : (arg_0: MessagesByMessageIndexArgs) => Promise<
+      MessagesByMessageIndexResponse
+    >,
   'mute_notifications' : (arg_0: MuteNotificationsArgs) => Promise<
       MuteNotificationsResponse
     >,

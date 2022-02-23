@@ -7,6 +7,14 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'AlreadySuperAdmin' : IDL.Null,
   });
+  const CheckUsernameArgs = IDL.Record({ 'username' : IDL.Text });
+  const CheckUsernameResponse = IDL.Variant({
+    'UsernameTaken' : IDL.Null,
+    'UsernameTooShort' : IDL.Nat16,
+    'UsernameInvalid' : IDL.Null,
+    'UsernameTooLong' : IDL.Nat16,
+    'Success' : IDL.Null,
+  });
   const ConfirmPhoneNumberArgs = IDL.Record({ 'confirmation_code' : IDL.Text });
   const SuccessResult = IDL.Record({ 'open_storage_limit_bytes' : IDL.Nat64 });
   const ConfirmPhoneNumberResponse = IDL.Variant({
@@ -183,6 +191,11 @@ export const idlFactory = ({ IDL }) => {
         [AddSuperAdminArgs],
         [AddSuperAdminResponse],
         [],
+      ),
+    'check_username' : IDL.Func(
+        [CheckUsernameArgs],
+        [CheckUsernameResponse],
+        ['query'],
       ),
     'confirm_phone_number' : IDL.Func(
         [ConfirmPhoneNumberArgs],
