@@ -22,17 +22,17 @@
 
     function debounce(fn: () => void) {
         if (timer) clearTimeout(timer);
-        timer = setTimeout(() => fn(), 350);
+        timer = setTimeout(fn, 350);
     }
 
     function checkUsername(value: string) {
         if (value.length < 3 || value.length > 25) {
+            checking = false;
             return;
         }
         
         api.checkUsername(value)
             .then((resp) => {
-                checking = false;
                 switch (resp) {
                     case "success":
                         error = undefined;
@@ -52,7 +52,11 @@
                         break;
                 }
             })
-            .catch((err) => rollbar.error("Unable to check username: ", err));
+            .catch((err) => {
+                error = "register.errorCheckingUsername";
+                rollbar.error("Unable to check username: ", err);
+            })
+            .finally(() => checking = false);
     }
 
     function onChange(ev: CustomEvent<string>) {
