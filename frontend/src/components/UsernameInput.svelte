@@ -33,6 +33,7 @@
         
         api.checkUsername(value)
             .then((resp) => {
+                if (!checking) return;
                 switch (resp) {
                     case "success":
                         error = undefined;
