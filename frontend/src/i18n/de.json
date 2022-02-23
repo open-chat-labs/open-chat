@@ -123,6 +123,8 @@
     "userJoined": "{username} ist der Gruppe beigetreten",
     "addedBy": "{changedBy} hat {changed} zur Gruppe hinzugefügt",
     "removedBy": "{changedBy} hat {changed} aus der Gruppe entfernt",
+    "promotedBy": "{changedBy} hat {changed} zum Gruppenadministrator befördert",
+    "dismissedBy": "{changedBy} hat {changed} als Gruppenadministrator entlassen",
     "blockedBy": "{changedBy} blockiert {changed}",
     "unblockedBy": "{changedBy} entsperrt {changed}",
     "ownershipTransferredBy": "{changedBy} hat den Gruppenbesitz an {changed} 🎉 übertragen",
@@ -338,5 +340,11 @@
     "roleChanged": "{changedBy} hat die Rolle von {changed} von {oldRole} zu {newRole} geändert",
     "yourRoleChanged": "{changedBy} hat Ihre Rolle von {oldRole} zu {newRole} geändert",
     "participant": "Teilnehmer",
-    "viewer": "Zuschauer"
+    "viewer": "Zuschauer",
+    "pinMessage": "Pin-Nachricht",
+    "unpinMessage": "Nachricht loslösen",
+    "showPinned": "Gepinnte Nachrichten anzeigen",
+    "pinnedMessages": "Gepinnte Nachrichten",
+    "pinMessageFailed": "Nachricht kann nicht angeheftet werden",
+    "unpinMessageFailed": "Nachricht kann nicht gelöst werden"
 }
