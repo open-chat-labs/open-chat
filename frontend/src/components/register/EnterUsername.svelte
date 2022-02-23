@@ -10,6 +10,8 @@
     export let error: string | undefined = undefined;
     export let validUsername: string | undefined = undefined;
 
+    let checkingUsername: boolean;
+
     const dispatch = createEventDispatcher();
 
     function submitUsername() {
@@ -25,6 +27,7 @@
     <UsernameInput 
         {api}
         bind:validUsername={validUsername}
+        bind:checking={checkingUsername}
         bind:error={error} />
 </form>
 
@@ -33,14 +36,18 @@
 {/if}
 
 <div class="actions">
-    <Button disabled={validUsername === undefined} on:click={submitUsername}>{$_("register.createUser")}</Button>
+    <Button 
+        loading={checkingUsername}
+        disabled={validUsername === undefined} 
+        on:click={submitUsername}>
+        {$_("register.createUser")}
+    </Button>
 </div>
 
 <style type="text/scss">
     .error {
         @include font(bold, normal, fs-100);
         color: var(--error);
-        margin-bottom: $sp4;
     }
 
     .enter-username {

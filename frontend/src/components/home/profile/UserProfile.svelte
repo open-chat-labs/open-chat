@@ -52,6 +52,7 @@
     let saving = false;
     let validUsername: string | undefined = undefined;
     let usernameInput: UsernameInput;
+    let checkingUsername: boolean;
 
     $: {
         setLocale(selectedLocale);
@@ -177,6 +178,7 @@
             {api}
             originalUsername={user?.username ?? ""}
             bind:validUsername={validUsername}
+            bind:checking={checkingUsername}
             bind:error={usernameError}>
             {#if usernameError !== undefined}
                 <div class="error">{$_(usernameError)}</div>
@@ -196,7 +198,7 @@
         </TextArea>
         <div class="full-width-btn">
             <Button
-                loading={saving}
+                loading={saving || checkingUsername}
                 disabled={(!bioDirty && validUsername === undefined) || saving}
                 fill={true}
                 small={true}>{$_("update")}</Button>

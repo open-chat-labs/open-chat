@@ -11,6 +11,7 @@
     export let originalUsername = "";
     export let validUsername: string | undefined = undefined;
     export let error: string | undefined = undefined;
+    export let checking = false;
 
     let timer: number | undefined = undefined;
     let input: Input;
@@ -31,6 +32,7 @@
         
         api.checkUsername(value)
             .then((resp) => {
+                checking = false;
                 switch (resp) {
                     case "success":
                         error = undefined;
@@ -54,8 +56,10 @@
     }
 
     function onChange(ev: CustomEvent<string>) {
+        checking = true;
         validUsername = undefined;
         if (ev.detail === originalUsername) {
+            checking = false;
             error = undefined;
             if (timer) clearTimeout(timer);
         } else {
@@ -68,7 +72,7 @@
 <Input
     bind:this={input}
     on:change={onChange}
-    invalid={error !== undefined}
+    invalid={false}
     value={originalUsername}
     autofocus={true}
     minlength={MIN_USERNAME_LENGTH}
