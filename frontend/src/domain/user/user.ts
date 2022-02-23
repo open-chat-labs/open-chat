@@ -101,12 +101,17 @@ export type UserNotFound = {
     kind: "unknown_user";
 };
 
+export type CheckUsernameResponse =
+    | "success"
+    | "username_taken"
+    | "username_too_short"
+    | "username_too_long"
+    | "username_invalid";
+
 export type SetUsernameResponse =
     | "success"
-    | "no_change"
     | "username_taken"
     | "user_not_found"
-    | "user_unconfirmed"
     | "username_too_short"
     | "username_too_long"
     | "username_invalid";

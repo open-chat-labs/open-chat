@@ -1,4 +1,5 @@
 import type {
+    CheckUsernameResponse,
     SetUsernameResponse,
     CurrentUserResponse,
     CreateChallengeResponse,
@@ -14,6 +15,7 @@ import type {
     UpgradeStorageResponse,
 } from "../../domain/user/user";
 import type {
+    ApiCheckUsernameResponse,
     ApiConfirmPhoneNumberResponse,
     ApiCreateChallengeResponse,
     ApiCurrentUserResponse,
@@ -267,12 +269,28 @@ export function phoneStatus(candid: ApiPhoneStatus): PhoneStatus {
     throw new UnsupportedValueError("Unexpected ApiPhoneStatus type received", candid);
 }
 
-export function setUsernameResponse(candid: ApiSetUsernameResponse): SetUsernameResponse {
+export function checkUsernameResponse(candid: ApiCheckUsernameResponse): CheckUsernameResponse {
     if ("Success" in candid) {
         return "success";
     }
-    if ("SuccessNoChange" in candid) {
-        return "no_change";
+    if ("UsernameTaken" in candid) {
+        return "username_taken";
+    }
+    if ("UsernameTooShort" in candid) {
+        return "username_too_short";
+    }
+    if ("UsernameTooLong" in candid) {
+        return "username_too_long";
+    }
+    if ("UsernameInvalid" in candid) {
+        return "username_invalid";
+    }
+    throw new UnsupportedValueError("Unexpected ApiCheckUsernameResponse type received", candid);
+}
+
+export function setUsernameResponse(candid: ApiSetUsernameResponse): SetUsernameResponse {
+    if ("Success" in candid) {
+        return "success";
     }
     if ("UsernameTaken" in candid) {
         return "username_taken";
@@ -288,9 +306,6 @@ export function setUsernameResponse(candid: ApiSetUsernameResponse): SetUsername
     }
     if ("UsernameInvalid" in candid) {
         return "username_invalid";
-    }
-    if ("UserUnconfirmed" in candid) {
-        return "user_unconfirmed";
     }
     throw new UnsupportedValueError("Unexpected ApiSetUsernameResponse type received", candid);
 }
