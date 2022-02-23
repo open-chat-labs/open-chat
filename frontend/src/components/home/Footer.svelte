@@ -19,7 +19,6 @@
     import { _ } from "svelte-i18n";
     import { remainingStorage } from "../../stores/storage";
     import { createEventDispatcher } from "svelte";
-    import { draftMessages } from "../../stores/draftMessages";
 
     export let controller: ChatController;
     export let blocked: boolean;
