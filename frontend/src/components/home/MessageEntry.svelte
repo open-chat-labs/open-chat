@@ -209,9 +209,28 @@
         return [expandedText, mentioned];
     }
 
+    /**
+     * Check the message content for special commands
+     * * !poll - crreats a poll
+     * * !pinned - opens pinned messages
+     * * !details - opens group details
+     */
+    function parseCommands(txt: string): boolean {
+        if (/^!poll$/.test(txt)) {
+            console.log("create a poll");
+            return true;
+        }
+        return false;
+    }
+
     function sendMessage() {
-        dispatch("sendMessage", expandMentions(inp.innerText?.trim()));
+        const txt = inp.innerText?.trim();
+
+        if (!parseCommands(txt)) {
+            dispatch("sendMessage", expandMentions(txt));
+        }
         inp.textContent = "";
+        controller.setTextContent(undefined);
         inp.focus();
         inputIsEmpty = true;
         messageIsEmpty = true;
