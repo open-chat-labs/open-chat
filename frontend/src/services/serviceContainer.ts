@@ -1,5 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import type {
+    CheckUsernameResponse,
     CurrentUserResponse,
     SetUsernameResponse,
     SubmitPhoneNumberResponse,
@@ -518,6 +519,10 @@ export class ServiceContainer implements MarkMessagesRead {
 
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
         return this._userIndexClient.confirmPhoneNumber(code);
+    }
+
+    checkUsername(username: string): Promise<CheckUsernameResponse> {
+        return this._userIndexClient.checkUsername(username);
     }
 
     setUsername(username: string): Promise<SetUsernameResponse> {

@@ -1,33 +1,31 @@
 <script lang="ts">
     import Button from "../Button.svelte";
-    import Input from "../Input.svelte";
+    import UsernameInput from "../UsernameInput.svelte";
     import { fade } from "svelte/transition";
     import { createEventDispatcher } from "svelte";
-    const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
+    import type { ServiceContainer } from "../../services/serviceContainer";
+
+    export let api: ServiceContainer;
     export let error: string | undefined = undefined;
-    export let username: string = "";
+    export let validUsername: string | undefined = undefined;
+
+    const dispatch = createEventDispatcher();
 
     function submitUsername() {
-        if (valid) {
-            dispatch("submitUsername", { username: username.trim() });
+        if (validUsername !== undefined) {
+            dispatch("submitUsername", { username: validUsername });
         }
     }
-
-    $: valid = username.length >= 3;
 </script>
 
 <p class="enter-username">{$_("register.usernameRules")}</p>
 
 <form class="username-wrapper" on:submit|preventDefault={submitUsername}>
-    <Input
-        invalid={error !== undefined}
-        autofocus={true}
-        bind:value={username}
-        minlength={3}
-        maxlength={25}
-        countdown={true}
-        placeholder={$_("register.enterUsername")} />
+    <UsernameInput 
+        {api}
+        bind:validUsername={validUsername}
+        bind:error={error} />
 </form>
 
 {#if error}
@@ -35,7 +33,7 @@
 {/if}
 
 <div class="actions">
-    <Button disabled={!valid} on:click={submitUsername}>{$_("register.createUser")}</Button>
+    <Button disabled={validUsername === undefined} on:click={submitUsername}>{$_("register.createUser")}</Button>
 </div>
 
 <style type="text/scss">

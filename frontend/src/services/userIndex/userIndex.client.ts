@@ -2,6 +2,7 @@ import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, UserIndexService } from "./candid/idl";
 import type {
+    CheckUsernameResponse,
     ConfirmPhoneNumberResponse,
     CurrentUserResponse,
     SubmitPhoneNumberResponse,
@@ -18,6 +19,7 @@ import type {
 } from "../../domain/user/user";
 import { CandidService } from "../candidService";
 import {
+    checkUsernameResponse,
     setUsernameResponse,
     createChallengeResponse,
     currentUserResponse,
@@ -114,6 +116,15 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
 
     resendRegistrationCode(): Promise<ResendCodeResponse> {
         return this.handleResponse(this.userService.resend_code({}), resendCodeResponse);
+    }
+
+    checkUsername(username: string): Promise<CheckUsernameResponse> {
+        return this.handleResponse(
+            this.userService.check_username({
+                username: username,
+            }),
+            checkUsernameResponse
+        );
     }
 
     setUsername(username: string): Promise<SetUsernameResponse> {

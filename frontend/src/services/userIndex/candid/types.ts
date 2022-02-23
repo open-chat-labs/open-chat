@@ -63,6 +63,12 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export interface CheckUsernameArgs { 'username' : string }
+export type CheckUsernameResponse = { 'UsernameTaken' : null } |
+  { 'UsernameTooShort' : number } |
+  { 'UsernameInvalid' : null } |
+  { 'UsernameTooLong' : number } |
+  { 'Success' : null };
 export interface CompletedCyclesDeposit {
   'from' : CanisterId,
   'cycles' : Cycles,
@@ -656,6 +662,9 @@ export interface VideoContent {
 export interface _SERVICE {
   'add_super_admin' : (arg_0: AddSuperAdminArgs) => Promise<
       AddSuperAdminResponse
+    >,
+  'check_username' : (arg_0: CheckUsernameArgs) => Promise<
+      CheckUsernameResponse
     >,
   'confirm_phone_number' : (arg_0: ConfirmPhoneNumberArgs) => Promise<
       ConfirmPhoneNumberResponse
