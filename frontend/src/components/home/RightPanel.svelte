@@ -122,6 +122,10 @@
             on:removeParticipant={removeParticipant}
             on:makeAdmin={makeAdmin} />
     {:else if lastState === "show_pinned"}
-        <PinnedMessages on:goToMessageIndex={goToMessageIndex} {controller} on:close={pop} />
+        <PinnedMessages
+            on:chatWith
+            on:goToMessageIndex={goToMessageIndex}
+            {controller}
+            on:close={pop} />
     {/if}
 </Panel>
