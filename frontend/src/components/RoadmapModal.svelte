@@ -12,18 +12,21 @@
             priorities change and new ideas come up so don't hold us to this!
         </p>
         <ul>
-            <li>Squash bugs and improve general usability</li>
-            <li>Remove SMS or payment requirement for registration</li>
-            <li>Support multiple languages (with help from the community)</li>
+            <li><del>Remove SMS or payment requirement for registration</del></li>
+            <li><del>Support multiple languages (with help from the community)</del></li>
+            <li><del>Pinned messages</del></li>
+            <li>Read-only groups</li>
+            <li>Create polls</li>
+            <li>Message forwarding</li>
             <li>
                 Deposit tokens into your OpenChat wallet, send tokens as messages, withdraw tokens<br />
                 (cycles and ICP first, then Bitcoin and Ether later, plus more)
             </li>
-            <li>Message forwarding</li>
-            <li>Subscribe to message feed</li>
-            <li>Pinned messages</li>
             <li>Click to show images full-screen</li>
             <li>Improved UI design</li>
+            <li>Tag messages (eg star) and search/filter by tag</li>
+            <li>Edit sent messages</li>
+            <li>Organise events with calendar</li>
             <li>Performance enhancements (asset caching with etags, WebRTC improvements)</li>
             <li>Streamlined sign-in</li>
             <li>2-way voice calls</li>
@@ -31,8 +34,6 @@
             <li>Send "red-letters" containing tokens</li>
             <li>Native iOS app</li>
             <li>Disappearing messages</li>
-            <li>Edit sent messages</li>
-            <li>Tag messages (eg star) and search/filter by tag</li>
             <li>Tag groups and search/filter by tag</li>
             <li>Optionally sync with phone contacts and invite contacts</li>
             <li>Custom emojis, stickers</li>
@@ -40,8 +41,6 @@
             <li>Report inappropriate content</li>
             <li>Incorporate token swap to allow other tokens to be sent</li>
             <li>Native Android app</li>
-            <li>Organise events with calendar</li>
-            <li>Create polls</li>
             <li>Group video calls (up to some limited number of participants)</li>
             <li>E2E encryption of messages</li>
             <li>
@@ -52,6 +51,7 @@
                     <li>viewers can tip using cycles</li>
                 </ul>
             </li>
+            <li>Squash bugs and improve general usability</li>
             <li>
                 When it becomes available, incorporate the <a
                     target="_blank"
