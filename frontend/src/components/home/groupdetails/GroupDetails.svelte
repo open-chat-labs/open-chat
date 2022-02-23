@@ -9,7 +9,7 @@
     import TextArea from "../../TextArea.svelte";
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../../domain/user/user.utils";
-    import type { UpdatedGroup } from "../../../fsm/editGroup";
+    import type { UpdatedGroup } from "../../../fsm/rightPanel";
     import type { GroupChatSummary } from "../../../domain/chat/chat";
     import { createEventDispatcher } from "svelte";
     import type { Readable } from "svelte/store";

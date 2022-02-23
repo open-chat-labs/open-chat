@@ -211,8 +211,9 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
-  { 'PinnedMessageUpdated' : PinnedMessageUpdated } |
+  { 'MessagePinned' : MessagePinned } |
   { 'UsersBlocked' : UsersBlocked } |
+  { 'MessageUnpinned' : MessageUnpinned } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
@@ -363,6 +364,14 @@ export interface MessageMatch {
   'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
+export interface MessagePinned {
+  'pinned_by' : UserId,
+  'message_index' : MessageIndex,
+}
+export interface MessageUnpinned {
+  'unpinned_by' : UserId,
+  'message_index' : MessageIndex,
+}
 export type Milliseconds = bigint;
 export type NightMode = { 'On' : null } |
   { 'Off' : null } |
@@ -449,10 +458,6 @@ export interface PendingICPWithdrawal {
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
-export interface PinnedMessageUpdated {
-  'updated_by' : UserId,
-  'new_value' : [] | [MessageIndex],
-}
 export interface PublicGroupSummary {
   'name' : string,
   'wasm_version' : Version,

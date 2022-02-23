@@ -3,14 +3,17 @@
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import AddParticipants from "./groupdetails/AddParticipants.svelte";
     import Participants from "./groupdetails/Participants.svelte";
-    import type { EditGroupState } from "../../fsm/editGroup";
+    import PinnedMessages from "./pinned/PinnedMessages.svelte";
+    import type { RightPanelState } from "../../fsm/rightPanel";
     import type { FullParticipant, GroupChatSummary } from "../../domain/chat/chat";
     import type { Readable } from "svelte/store";
     import type { ChatController } from "../../fsm/chat.controller";
     import type { UserSummary } from "../../domain/user/user";
     import { toastStore } from "../../stores/toast";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
 
-    export let editGroupHistory: EditGroupState[];
+    export let rightPanelHistory: RightPanelState[];
     export let controller: ChatController;
     export let userId: string;
 
@@ -19,7 +22,7 @@
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
 
-    $: lastState = editGroupHistory[editGroupHistory.length - 1];
+    $: lastState = rightPanelHistory[rightPanelHistory.length - 1];
 
     let updatedGroup = {
         name: $chat.name,
@@ -46,7 +49,7 @@
     }
 
     function pop() {
-        editGroupHistory = editGroupHistory.slice(0, editGroupHistory.length - 1);
+        rightPanelHistory = rightPanelHistory.slice(0, rightPanelHistory.length - 1);
     }
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
@@ -81,6 +84,11 @@
         }
         savingParticipants = false;
     }
+
+    function goToMessageIndex(ev: CustomEvent<number>): void {
+        dispatch("goToMessageIndex", ev.detail);
+        pop();
+    }
 </script>
 
 <Panel right>
@@ -94,12 +102,12 @@
     {:else if lastState === "add_participants"}
         <AddParticipants
             busy={savingParticipants}
-            closeIcon={editGroupHistory.length > 1 ? "back" : "close"}
+            closeIcon={rightPanelHistory.length > 1 ? "back" : "close"}
             on:saveParticipants={saveParticipants}
             on:cancelAddParticipants={pop} />
     {:else if lastState === "show_participants"}
         <Participants
-            closeIcon={editGroupHistory.length > 1 ? "back" : "close"}
+            closeIcon={rightPanelHistory.length > 1 ? "back" : "close"}
             {participants}
             {blockedUsers}
             {chat}
@@ -113,5 +121,7 @@
             on:dismissAsAdmin={dismissAsAdmin}
             on:removeParticipant={removeParticipant}
             on:makeAdmin={makeAdmin} />
+    {:else if lastState === "show_pinned"}
+        <PinnedMessages on:goToMessageIndex={goToMessageIndex} {controller} on:close={pop} />
     {/if}
 </Panel>

@@ -9,6 +9,7 @@
     import { rtlStore } from "../../stores/rtl";
     import {
         addDays,
+        formatMessageDate,
         getStartOfToday,
         toDayOfWeekString,
         toLongDateString,
@@ -49,6 +50,7 @@
     $: chat = controller.chat;
     $: focusMessageIndex = controller.focusMessageIndex;
     $: markRead = controller.markRead;
+    $: pinned = controller.pinnedMessages;
 
     setContext<UserLookup>("userLookup", $userStore);
 
@@ -203,21 +205,6 @@
         return messagesDiv
             ? messagesDiv.scrollHeight - messagesDiv.clientHeight + messagesDiv.scrollTop
             : 0;
-    }
-
-    function formatDate(timestamp: bigint): string {
-        const date = new Date(Number(timestamp));
-
-        const startOfToday = getStartOfToday();
-        if (date >= startOfToday) {
-            return $_("today");
-        }
-        const startOfYesterday = addDays(startOfToday, -1);
-        if (date >= startOfYesterday) {
-            return $_("yesterday");
-        }
-        const useDayNameOnly = date >= addDays(startOfToday, -6);
-        return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
     }
 
     function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
@@ -426,13 +413,31 @@
         }
         return true;
     }
+
+    function isPinned(store: Set<number>, evt: EventWrapper<ChatEventType>): boolean {
+        if (preview) return false;
+
+        if (evt.event.kind === "message") {
+            return store.has(evt.event.messageIndex);
+        }
+
+        return false;
+    }
+
+    function pinMessage(ev: CustomEvent<Message>) {
+        controller.pinMessage(ev.detail.messageIndex);
+    }
+
+    function unpinMessage(ev: CustomEvent<Message>) {
+        controller.unpinMessage(ev.detail.messageIndex);
+    }
 </script>
 
 <div bind:this={messagesDiv} class="chat-messages" on:scroll|passive={onScroll} id="chat-messages">
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
-                {formatDate(dayGroup[0][0]?.timestamp)}
+                {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
             </div>
             {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
                 {#each userGroup as evt, i (eventKey(evt))}
@@ -452,6 +457,7 @@
                         {admin}
                         {preview}
                         {isPublic}
+                        pinned={isPinned($pinned, evt)}
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo
@@ -460,6 +466,8 @@
                         on:goToMessageIndex={goToMessageIndex}
                         on:selectReaction={selectReaction}
                         on:blockUser={blockUser}
+                        on:pinMessage={pinMessage}
+                        on:unpinMessage={unpinMessage}
                         event={evt} />
                 {/each}
             {/each}

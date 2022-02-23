@@ -40,6 +40,10 @@ import {
     DeleteGroupResponse,
     PublicGroupSummary,
     PublicSummaryResponse,
+    MessagesByMessageIndexResponse,
+    MessageEventWrapper,
+    PinMessageResponse,
+    UnpinMessageResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -81,6 +85,10 @@ export {
     DeleteGroupResponse as ApiDeleteGroupResponse,
     PublicGroupSummary as ApiPublicGroupSummary,
     PublicSummaryResponse as ApiPublicSummaryResponse,
+    MessagesByMessageIndexResponse as ApiMessagesByMessageIndexResponse,
+    MessageEventWrapper as ApiMessageEventWrapper,
+    PinMessageResponse as ApiPinMessageResponse,
+    UnpinMessageResponse as ApiUnpinMessageResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

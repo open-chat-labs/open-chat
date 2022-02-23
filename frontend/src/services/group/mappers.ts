@@ -15,6 +15,10 @@ import type {
     ApiSelectedUpdatesResponse,
     ApiRole,
     ApiDeleteGroupResponse,
+    ApiMessagesByMessageIndexResponse,
+    ApiMessageEventWrapper,
+    ApiPinMessageResponse,
+    ApiUnpinMessageResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -35,6 +39,9 @@ import type {
     UnblockUserResponse,
     ParticipantRole,
     DeleteGroupResponse,
+    Message,
+    PinMessageResponse,
+    UnpinMessageResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -102,6 +109,8 @@ export function groupDetailsUpdatesResponse(
             blockedUsersRemoved: new Set(
                 candid.Success.blocked_users_removed.map((u) => u.toString())
             ),
+            pinnedMessagesAdded: new Set(candid.Success.pinned_messages_added),
+            pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
             latestEventIndex: candid.Success.latest_event_index,
         };
     }
@@ -116,6 +125,7 @@ export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupC
         return {
             participants: candid.Success.participants.map(participant),
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
+            pinnedMessages: new Set(candid.Success.pinned_messages),
             latestEventIndex: candid.Success.latest_event_index,
         };
     }
@@ -381,6 +391,68 @@ export function addParticipantsResponse(
     throw new UnsupportedValueError("Unexpected ApiAddParticipantsResponse type received", candid);
 }
 
+export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    if ("NoChange" in candid) {
+        return "no_change";
+    }
+    if ("MessageIndexOutOfRange" in candid) {
+        return "index_out_of_range";
+    }
+    throw new UnsupportedValueError("Unexpected ApiPinMessageResponse type received", candid);
+}
+
+export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMessageResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    if ("NoChange" in candid) {
+        return "no_change";
+    }
+    throw new UnsupportedValueError("Unexpected ApiUnpinMessageResponse type received", candid);
+}
+
+export function getMessagesByMessageIndexResponse(
+    candid: ApiMessagesByMessageIndexResponse
+): EventsResponse<Message> {
+    if ("Success" in candid) {
+        console.log("event response: ", candid);
+        return {
+            events: candid.Success.messages.map(messageWrapper),
+            affectedEvents: [],
+        };
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "events_failed";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiMessagesByMessageIndexResponse type received",
+        candid
+    );
+}
+
+export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Message> {
+    return {
+        event: message(candid.event),
+        timestamp: candid.timestamp,
+        index: candid.index,
+    };
+}
+
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<GroupChatEvent> {
     if ("Success" in candid) {
         console.log("event response: ", candid);
@@ -541,11 +613,19 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
-    if ("PinnedMessageUpdated" in candid) {
+    if ("MessagePinned" in candid) {
         return {
-            kind: "pinned_message_updated",
-            newValue: optional(candid.PinnedMessageUpdated.new_value, identity),
-            updatedBy: candid.PinnedMessageUpdated.updated_by.toString(),
+            kind: "message_pinned",
+            pinnedBy: candid.MessagePinned.pinned_by.toString(),
+            messageIndex: candid.MessagePinned.message_index,
+        };
+    }
+
+    if ("MessageUnpinned" in candid) {
+        return {
+            kind: "message_unpinned",
+            unpinnedBy: candid.MessageUnpinned.unpinned_by.toString(),
+            messageIndex: candid.MessageUnpinned.message_index,
         };
     }
 

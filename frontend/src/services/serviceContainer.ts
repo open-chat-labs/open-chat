@@ -55,6 +55,8 @@ import type {
     MessageContent,
     GroupChatSummary,
     ParticipantRole,
+    PinMessageResponse,
+    UnpinMessageResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
@@ -684,5 +686,24 @@ export class ServiceContainer implements MarkMessagesRead {
 
     refreshAccountBalance(account: string): Promise<ICP> {
         return this._ledgerClient.accountBalance(account);
+    }
+
+    getGroupMessagesByMessageIndex(
+        chatId: string,
+        messageIndexes: Set<number>
+    ): Promise<EventsResponse<Message>> {
+        return this.rehydrateEventResponse(
+            "group",
+            chatId,
+            this.getGroupClient(chatId).getMessagesByMessageIndex(messageIndexes)
+        );
+    }
+
+    pinMessage(chatId: string, messageIndex: number): Promise<PinMessageResponse> {
+        return this.getGroupClient(chatId).pinMessage(messageIndex);
+    }
+
+    unpinMessage(chatId: string, messageIndex: number): Promise<UnpinMessageResponse> {
+        return this.getGroupClient(chatId).unpinMessage(messageIndex);
     }
 }

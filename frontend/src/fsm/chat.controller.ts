@@ -66,6 +66,7 @@ export class ChatController {
     public chatId: string;
     public participants: Writable<Participant[]>;
     public blockedUsers: Writable<Set<string>>;
+    public pinnedMessages: Writable<Set<number>>;
     public chatUserIds: Set<string>;
     public loading: Writable<boolean>;
 
@@ -93,6 +94,7 @@ export class ChatController {
         this.focusMessageIndex = writable(_focusMessageIndex);
         this.participants = writable([]);
         this.blockedUsers = writable(new Set<string>());
+        this.pinnedMessages = writable(new Set<number>());
         const { chatId, kind } = get(this.chat);
         this.chatId = chatId;
         // If this is a group chat, chatUserIds will be populated when processing the chat events
@@ -114,6 +116,7 @@ export class ChatController {
             this.pruneInterval = window.setInterval(() => {
                 this.localReactions = pruneLocalReactions(this.localReactions);
             }, PRUNE_LOCAL_REACTIONS_INTERVAL);
+            this.loadDetails();
         }
     }
 
@@ -155,7 +158,7 @@ export class ChatController {
         this.onEvent = fn;
     }
 
-    async loadDetails(): Promise<void> {
+    private async loadDetails(): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (this.chatVal.kind === "group_chat") {
             if (this.groupDetails === undefined) {
@@ -164,6 +167,7 @@ export class ChatController {
                     this.groupDetails = resp;
                     this.participants.set(resp.participants);
                     this.blockedUsers.set(resp.blockedUsers);
+                    this.pinnedMessages.set(resp.pinnedMessages);
                 }
                 await this.updateUserStore(userIdsFromEvents(get(this.events)));
             } else {
@@ -184,12 +188,67 @@ export class ChatController {
                 );
                 this.participants.set(this.groupDetails.participants);
                 this.blockedUsers.set(this.groupDetails.blockedUsers);
+                this.pinnedMessages.set(this.groupDetails.pinnedMessages);
                 console.log(
                     "loading chat details updated to: ",
                     this.groupDetails.latestEventIndex
                 );
             }
             await this.updateUserStore(userIdsFromEvents(get(this.events)));
+        }
+    }
+
+    private addPinnedMessage(messageIndex: number): void {
+        this.pinnedMessages.update((s) => {
+            s.add(messageIndex);
+            return new Set(s);
+        });
+    }
+
+    private removePinnedMessage(messageIndex: number): void {
+        this.pinnedMessages.update((s) => {
+            s.delete(messageIndex);
+            return new Set(s);
+        });
+    }
+
+    unpinMessage(messageIndex: number): void {
+        if (this.chatVal.kind === "group_chat") {
+            this.removePinnedMessage(messageIndex);
+            this.api
+                .unpinMessage(this.chatId, messageIndex)
+                .then((resp) => {
+                    if (resp !== "success" && resp !== "no_change") {
+                        toastStore.showFailureToast("unpinMessageFailed");
+                        rollbar.error("Unpin message failed: ", resp);
+                        this.addPinnedMessage(messageIndex);
+                    }
+                })
+                .catch((err) => {
+                    toastStore.showFailureToast("unpinMessageFailed");
+                    rollbar.error("Unpin message failed: ", err);
+                    this.addPinnedMessage(messageIndex);
+                });
+        }
+    }
+
+    pinMessage(messageIndex: number): void {
+        if (this.chatVal.kind === "group_chat") {
+            this.addPinnedMessage(messageIndex);
+            this.api
+                .pinMessage(this.chatId, messageIndex)
+                .then((resp) => {
+                    if (resp !== "success" && resp !== "no_change") {
+                        toastStore.showFailureToast("pinMessageFailed");
+                        rollbar.error("Pin message failed: ", resp);
+                        this.removePinnedMessage(messageIndex);
+                    }
+                })
+                .catch((err) => {
+                    toastStore.showFailureToast("pinMessageFailed");
+                    rollbar.error("Pin message failed: ", err);
+                    this.removePinnedMessage(messageIndex);
+                });
         }
     }
 
