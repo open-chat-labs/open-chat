@@ -21,6 +21,8 @@ import type {
     DeleteGroupResponse,
     GroupChatSummary,
     ParticipantRole,
+    PinMessageResponse,
+    UnpinMessageResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import { CandidService } from "../candidService";
@@ -40,6 +42,9 @@ import {
     groupDetailsUpdatesResponse,
     unblockUserResponse,
     deleteGroupResponse,
+    getMessagesByMessageIndexResponse,
+    pinMessageResponse,
+    unpinMessageResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -310,5 +315,32 @@ export class GroupClient extends CandidService implements IGroupClient {
             // whatever error we get, just assume that we cannot get hold of the group
             return undefined;
         });
+    }
+
+    getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>> {
+        return this.handleResponse(
+            this.groupService.messages_by_message_index({
+                messages: [...messageIndexes],
+            }),
+            getMessagesByMessageIndexResponse
+        );
+    }
+
+    pinMessage(messageIndex: number): Promise<PinMessageResponse> {
+        return this.handleResponse(
+            this.groupService.pin_message({
+                message_index: messageIndex,
+            }),
+            pinMessageResponse
+        );
+    }
+
+    unpinMessage(messageIndex: number): Promise<UnpinMessageResponse> {
+        return this.handleResponse(
+            this.groupService.unpin_message({
+                message_index: messageIndex,
+            }),
+            unpinMessageResponse
+        );
     }
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
-    let inp: HTMLInputElement;
+
     export let disabled: boolean = false;
     export let invalid: boolean = false;
     export let value: string | number = "";
@@ -12,6 +13,10 @@
     export let fontSize: "small" | "normal" | "large" | "huge" = "normal";
     export let align: "left" | "right" | "center" = "left";
     export let countdown: boolean = false;
+
+    const dispatch = createEventDispatcher();
+    
+    let inp: HTMLInputElement;
 
     onMount(() => {
         if (autofocus) {
@@ -25,7 +30,12 @@
         if (type === "number") {
             value = parseInt(e.currentTarget.value, 10);
         }
+        dispatch("change", value);
     };
+
+    export function setValue(text: string) {
+        value = text;
+    }
 
     $: remaining = typeof value === "string" ? maxlength - value.length : 0;
 </script>

@@ -73,7 +73,7 @@ export function openCache(principal: string): Database | undefined {
         return undefined;
     }
     try {
-        return openDB<ChatSchema>(`openchat_db_${principal}`, 18, {
+        return openDB<ChatSchema>(`openchat_db_${principal}`, 19, {
             upgrade(db, _oldVersion, _newVersion) {
                 try {
                     if (db.objectStoreNames.contains("chat_events")) {
@@ -567,4 +567,41 @@ export function initDb(principal: string): Database | undefined {
 
 export function closeDb(): void {
     db = undefined;
+}
+
+export async function loadMessagesByMessageIndex(
+    db: Database,
+    chatId: string,
+    messagesIndexes: Set<number>
+): Promise<{ messageEvents: EventWrapper<Message>[]; missing: Set<number> }> {
+    const resolvedDb = await db;
+
+    const missing: Set<number> = new Set();
+    const messages: EventWrapper<Message>[] = [];
+
+    await Promise.all<Message | undefined>(
+        [...messagesIndexes].map(async (msgIdx) => {
+            const eventIdx = await resolvedDb.get(
+                "message_index_event_index",
+                `${chatId}_${msgIdx}`
+            );
+            if (eventIdx === undefined) return undefined;
+            const evt: EventWrapper<ChatEvent> | undefined = await loadEventByIndex(
+                resolvedDb,
+                chatId,
+                eventIdx
+            );
+            if (evt?.event.kind === "message") {
+                messages.push(evt as EventWrapper<Message>);
+                return evt.event;
+            }
+            missing.add(msgIdx);
+            return undefined;
+        })
+    );
+
+    return {
+        messageEvents: messages,
+        missing,
+    };
 }

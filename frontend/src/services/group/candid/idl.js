@@ -210,13 +210,17 @@ export const idlFactory = ({ IDL }) => {
     'created_by' : UserId,
   });
   const MessageIndex = IDL.Nat32;
-  const PinnedMessageUpdated = IDL.Record({
-    'updated_by' : UserId,
-    'new_value' : IDL.Opt(MessageIndex),
+  const MessagePinned = IDL.Record({
+    'pinned_by' : UserId,
+    'message_index' : MessageIndex,
   });
   const UsersBlocked = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
     'blocked_by' : UserId,
+  });
+  const MessageUnpinned = IDL.Record({
+    'unpinned_by' : UserId,
+    'message_index' : MessageIndex,
   });
   const ParticipantsRemoved = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -275,8 +279,9 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin,
     'GroupDescriptionChanged' : GroupDescriptionChanged,
     'GroupChatCreated' : GroupChatCreated,
-    'PinnedMessageUpdated' : PinnedMessageUpdated,
+    'MessagePinned' : MessagePinned,
     'UsersBlocked' : UsersBlocked,
+    'MessageUnpinned' : MessageUnpinned,
     'MessageReactionAdded' : UpdatedMessage,
     'ParticipantsRemoved' : ParticipantsRemoved,
     'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin,
@@ -316,16 +321,34 @@ export const idlFactory = ({ IDL }) => {
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
   });
-  const PublicSummaryArgs = IDL.Record({});
-  const Version = IDL.Record({
-    'major' : IDL.Nat32,
-    'minor' : IDL.Nat32,
-    'patch' : IDL.Nat32,
+  const MessagesByMessageIndexArgs = IDL.Record({
+    'messages' : IDL.Vec(MessageIndex),
   });
   const MessageEventWrapper = IDL.Record({
     'event' : Message,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
+  });
+  const MessagesByMessageIndexResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : IDL.Record({
+      'messages' : IDL.Vec(MessageEventWrapper),
+      'latest_event_index' : EventIndex,
+    }),
+  });
+  const PinMessageArgs = IDL.Record({ 'message_index' : MessageIndex });
+  const PinMessageResponse = IDL.Variant({
+    'MessageIndexOutOfRange' : IDL.Null,
+    'NoChange' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : EventIndex,
+  });
+  const PublicSummaryArgs = IDL.Record({});
+  const Version = IDL.Record({
+    'major' : IDL.Nat32,
+    'minor' : IDL.Nat32,
+    'patch' : IDL.Nat32,
   });
   const PublicGroupSummary = IDL.Record({
     'name' : IDL.Text,
@@ -384,6 +407,7 @@ export const idlFactory = ({ IDL }) => {
   const SelectedInitialSuccess = IDL.Record({
     'participants' : IDL.Vec(Participant),
     'blocked_users' : IDL.Vec(UserId),
+    'pinned_messages' : IDL.Vec(MessageIndex),
     'latest_event_index' : EventIndex,
   });
   const SelectedInitialResponse = IDL.Variant({
@@ -394,7 +418,9 @@ export const idlFactory = ({ IDL }) => {
   const SelectedUpdatesSuccess = IDL.Record({
     'blocked_users_removed' : IDL.Vec(UserId),
     'participants_added_or_updated' : IDL.Vec(Participant),
+    'pinned_messages_removed' : IDL.Vec(MessageIndex),
     'participants_removed' : IDL.Vec(UserId),
+    'pinned_messages_added' : IDL.Vec(MessageIndex),
     'latest_event_index' : EventIndex,
     'blocked_users_added' : IDL.Vec(UserId),
   });
@@ -422,16 +448,6 @@ export const idlFactory = ({ IDL }) => {
     }),
     'MessageEmpty' : IDL.Null,
   });
-  const SetPinnedMessageArgs = IDL.Record({
-    'message_index' : IDL.Opt(MessageIndex),
-  });
-  const SetPinnedMessageResponse = IDL.Variant({
-    'MessageIndexOutOfRange' : IDL.Null,
-    'NoChange' : IDL.Null,
-    'CallerNotInGroup' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-  });
   const ToggleReactionArgs = IDL.Record({
     'message_id' : MessageId,
     'reaction' : IDL.Text,
@@ -450,6 +466,13 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
+  });
+  const UnpinMessageArgs = IDL.Record({ 'message_index' : MessageIndex });
+  const UnpinMessageResponse = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : EventIndex,
   });
   const Avatar = IDL.Record({
     'id' : IDL.Nat,
@@ -503,6 +526,12 @@ export const idlFactory = ({ IDL }) => {
       ),
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
+    'messages_by_message_index' : IDL.Func(
+        [MessagesByMessageIndexArgs],
+        [MessagesByMessageIndexResponse],
+        ['query'],
+      ),
+    'pin_message' : IDL.Func([PinMessageArgs], [PinMessageResponse], []),
     'public_summary' : IDL.Func(
         [PublicSummaryArgs],
         [PublicSummaryResponse],
@@ -529,17 +558,13 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
-    'set_pinned_message' : IDL.Func(
-        [SetPinnedMessageArgs],
-        [SetPinnedMessageResponse],
-        [],
-      ),
     'toggle_reaction' : IDL.Func(
         [ToggleReactionArgs],
         [ToggleReactionResponse],
         [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
+    'unpin_message' : IDL.Func([UnpinMessageArgs], [UnpinMessageResponse], []),
     'update_group' : IDL.Func([UpdateGroupArgs], [UpdateGroupResponse], []),
   });
 };

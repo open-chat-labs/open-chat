@@ -123,6 +123,8 @@
     "userJoined": "{username} a rejoint le groupe",
     "addedBy": "{changedBy} a ajouté {changed} au groupe",
     "removedBy": "{changedBy} a supprimé {changed} du groupe",
+    "promotedBy": "{changedBy} promu {changed} au groupe admin",
+    "dismissedBy": "{changedBy} a rejeté {changed} en tant qu'administrateur du groupe",
     "blockedBy": "{changedBy} bloqué {changed}",
     "unblockedBy": "{changedBy} débloqué {changed}",
     "ownershipTransferredBy": "{changedBy} a transféré la propriété du groupe à {changed} 🎉",
@@ -338,5 +340,11 @@
     "roleChanged": "{changedBy} a changé le rôle de {changed} de {oldRole} à {newRole}",
     "yourRoleChanged": "{changedBy} a changé votre rôle de {oldRole} à {newRole}",
     "participant": "participant",
-    "viewer": "téléspectateur"
+    "viewer": "téléspectateur",
+    "pinMessage": "Épingler le message",
+    "unpinMessage": "Détacher le message",
+    "showPinned": "Afficher les messages épinglés",
+    "pinnedMessages": "Messages épinglés",
+    "pinMessageFailed": "Impossible d'épingler le message",
+    "unpinMessageFailed": "Impossible de désépingler le message"
 }

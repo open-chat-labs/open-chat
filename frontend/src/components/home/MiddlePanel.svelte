@@ -50,7 +50,8 @@
             on:chatWith
             on:joinGroup
             on:upgrade
-            on:cancelPreview />
+            on:cancelPreview
+            on:showPinned />
     {/if}
 </Panel>
 

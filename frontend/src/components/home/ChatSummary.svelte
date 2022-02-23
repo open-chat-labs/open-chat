@@ -155,7 +155,7 @@
     <!-- this date formatting is OK for now but we might want to use something like this: 
     https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
     <div class:rtl={$rtlStore} class="chat-date">
-        {formatMessageDate(new Date(Number(displayDate)))}
+        {formatMessageDate(displayDate, $_("today"), $_("yesterday"))}
     </div>
     {#if !preview}
         {#if unreadMentions > 0}

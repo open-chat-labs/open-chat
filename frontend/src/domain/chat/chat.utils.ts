@@ -126,8 +126,11 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "ownership_transferred":
                 userIds.add(e.event.oldOwner);
                 break;
-            case "pinned_message_updated":
-                userIds.add(e.event.updatedBy);
+            case "message_pinned":
+                userIds.add(e.event.pinnedBy);
+                break;
+            case "message_unpinned":
+                userIds.add(e.event.unpinnedBy);
                 break;
             case "message_deleted":
             case "message_edited":
@@ -170,8 +173,10 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.unblockedBy;
         case "ownership_transferred":
             return event.oldOwner;
-        case "pinned_message_updated":
-            return event.updatedBy;
+        case "message_pinned":
+            return event.pinnedBy;
+        case "message_unpinned":
+            return event.unpinnedBy;
         case "message_deleted":
         case "message_edited":
         case "reaction_added":
@@ -332,7 +337,22 @@ export function mergeGroupChatDetails(
                 removed: updates.blockedUsersRemoved,
             })
         ),
+        pinnedMessages: mergePinnedMessages(
+            previous.pinnedMessages,
+            updates.pinnedMessagesAdded,
+            updates.pinnedMessagesRemoved
+        ),
     };
+}
+
+function mergePinnedMessages(
+    current: Set<number>,
+    added: Set<number>,
+    removed: Set<number>
+): Set<number> {
+    removed.forEach((m) => current.delete(m));
+    added.forEach((m) => current.add(m));
+    return current;
 }
 
 export function mergeChatUpdates(
@@ -507,6 +527,10 @@ function groupBySender(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEven
 
 export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][][] {
     return groupWhile(sameDate, events.filter(eventIsVisible)).map(groupBySender);
+}
+
+export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapper<Message>[][] {
+    return groupWhile(sameDate, events.filter(eventIsVisible));
 }
 
 export function getNextMessageIndex(

@@ -18,6 +18,8 @@ import type {
     DeleteGroupResponse,
     GroupChatSummary,
     ParticipantRole,
+    PinMessageResponse,
+    UnpinMessageResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -28,6 +30,7 @@ import {
     getCachedEventsByIndex,
     getCachedEventsWindow,
     getCachedGroupDetails,
+    loadMessagesByMessageIndex,
     setCachedEvents,
     setCachedGroupDetails,
     setCachedMessage,
@@ -171,5 +174,35 @@ export class CachingGroupClient implements IGroupClient {
 
     getPublicSummary(): Promise<GroupChatSummary | undefined> {
         return this.client.getPublicSummary();
+    }
+
+    async getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>> {
+        const fromCache = await loadMessagesByMessageIndex(this.db, this.chatId, messageIndexes);
+        if (fromCache.missing.size > 0) {
+            console.log("Missing idxs from the cached: ", fromCache.missing);
+
+            const resp = await this.client
+                .getMessagesByMessageIndex(fromCache.missing)
+                .then(setCachedEvents(this.db, this.chatId));
+
+            return resp === "events_failed"
+                ? "events_failed"
+                : {
+                      events: [...resp.events],
+                      affectedEvents: resp.affectedEvents,
+                  };
+        }
+        return {
+            events: fromCache.messageEvents,
+            affectedEvents: [],
+        };
+    }
+
+    pinMessage(messageIndex: number): Promise<PinMessageResponse> {
+        return this.client.pinMessage(messageIndex);
+    }
+
+    unpinMessage(messageIndex: number): Promise<UnpinMessageResponse> {
+        return this.client.unpinMessage(messageIndex);
     }
 }

@@ -1,4 +1,8 @@
-export type EditGroupState = "group_details" | "add_participants" | "show_participants";
+export type RightPanelState =
+    | "group_details"
+    | "add_participants"
+    | "show_participants"
+    | "show_pinned";
 
 export type UpdatedAvatar = {
     blobUrl?: string;

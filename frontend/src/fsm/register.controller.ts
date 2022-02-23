@@ -2,6 +2,7 @@ import { get, Writable, writable } from "svelte/store";
 import type {
     Challenge,
     ChallengeAttempt,
+    CheckUsernameResponse,
     CreatedUser,
     CurrentUserResponse,
 } from "../domain/user/user";
@@ -38,6 +39,14 @@ export class RegisterController {
             // In parallel goto the "username" panel.
             this.state.set({ kind: "awaiting_username" });
         }
+    }
+
+    api(): ServiceContainer {
+        return this._api;
+    }
+
+    checkUsername(username: string): Promise<CheckUsernameResponse> {
+        return this._api.checkUsername(username);
     }
 
     submitUsername(username: string): void {

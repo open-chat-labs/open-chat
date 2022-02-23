@@ -289,8 +289,9 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
-  { 'PinnedMessageUpdated' : PinnedMessageUpdated } |
+  { 'MessagePinned' : MessagePinned } |
   { 'UsersBlocked' : UsersBlocked } |
+  { 'MessageUnpinned' : MessageUnpinned } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
@@ -436,6 +437,22 @@ export interface MessageMatch {
   'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
+export interface MessagePinned {
+  'pinned_by' : UserId,
+  'message_index' : MessageIndex,
+}
+export interface MessageUnpinned {
+  'unpinned_by' : UserId,
+  'message_index' : MessageIndex,
+}
+export interface MessagesByMessageIndexArgs { 'messages' : Array<MessageIndex> }
+export type MessagesByMessageIndexResponse = { 'CallerNotInGroup' : null } |
+  {
+    'Success' : {
+      'messages' : Array<MessageEventWrapper>,
+      'latest_event_index' : EventIndex,
+    }
+  };
 export type Milliseconds = bigint;
 export type NightMode = { 'On' : null } |
   { 'Off' : null } |
@@ -519,13 +536,15 @@ export interface PendingICPWithdrawal {
   'memo' : [] | [Memo],
   'amount' : ICP,
 }
+export interface PinMessageArgs { 'message_index' : MessageIndex }
+export type PinMessageResponse = { 'MessageIndexOutOfRange' : null } |
+  { 'NoChange' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : EventIndex };
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
-export interface PinnedMessageUpdated {
-  'updated_by' : UserId,
-  'new_value' : [] | [MessageIndex],
-}
 export interface PublicGroupSummary {
   'name' : string,
   'wasm_version' : Version,
@@ -586,6 +605,7 @@ export type SelectedInitialResponse = { 'CallerNotInGroup' : null } |
 export interface SelectedInitialSuccess {
   'participants' : Array<Participant>,
   'blocked_users' : Array<UserId>,
+  'pinned_messages' : Array<MessageIndex>,
   'latest_event_index' : EventIndex,
 }
 export interface SelectedUpdatesArgs { 'updates_since' : EventIndex }
@@ -595,7 +615,9 @@ export type SelectedUpdatesResponse = { 'CallerNotInGroup' : null } |
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'participants_added_or_updated' : Array<Participant>,
+  'pinned_messages_removed' : Array<MessageIndex>,
   'participants_removed' : Array<UserId>,
+  'pinned_messages_added' : Array<MessageIndex>,
   'latest_event_index' : EventIndex,
   'blocked_users_added' : Array<UserId>,
 }
@@ -616,12 +638,6 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
     }
   } |
   { 'MessageEmpty' : null };
-export interface SetPinnedMessageArgs { 'message_index' : [] | [MessageIndex] }
-export type SetPinnedMessageResponse = { 'MessageIndexOutOfRange' : null } |
-  { 'NoChange' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -658,6 +674,11 @@ export type UnblockUserResponse = { 'GroupNotPublic' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null };
+export interface UnpinMessageArgs { 'message_index' : MessageIndex }
+export type UnpinMessageResponse = { 'NoChange' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : EventIndex };
 export interface UpdateGroupArgs {
   'name' : string,
   'description' : string,
@@ -723,6 +744,10 @@ export interface _SERVICE {
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
   'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
   'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
+  'messages_by_message_index' : (arg_0: MessagesByMessageIndexArgs) => Promise<
+      MessagesByMessageIndexResponse
+    >,
+  'pin_message' : (arg_0: PinMessageArgs) => Promise<PinMessageResponse>,
   'public_summary' : (arg_0: PublicSummaryArgs) => Promise<
       PublicSummaryResponse
     >,
@@ -739,12 +764,10 @@ export interface _SERVICE {
       SelectedUpdatesResponse
     >,
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
-  'set_pinned_message' : (arg_0: SetPinnedMessageArgs) => Promise<
-      SetPinnedMessageResponse
-    >,
   'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
       ToggleReactionResponse
     >,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
+  'unpin_message' : (arg_0: UnpinMessageArgs) => Promise<UnpinMessageResponse>,
   'update_group' : (arg_0: UpdateGroupArgs) => Promise<UpdateGroupResponse>,
 }

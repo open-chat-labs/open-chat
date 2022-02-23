@@ -93,6 +93,8 @@
     "userJoined": "{username} 加入了",
     "addedBy": "{changedBy} 邀请了 {changed} 加入群聊",
     "removedBy": "{changedBy} 移除了 {changed}",
+    "promotedBy": "{changedBy} 将 {changed} 设为管理员",
+    "dismissedBy": "{changedBy} 解除了 {changed} 的管理员权限",
     "blockedBy": "{changedBy} 将 {changed} 加入黑名单",
     "unblockedBy": "{changedBy} 将 {changed} 移出黑名单",
     "ownershipTransferredBy": "{changedBy} 将群主转交给 {changed} 🎉",
@@ -338,5 +340,11 @@
     "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",
     "yourRoleChanged": "{changedBy} 将您的角色从 {oldRole} 更改为 {newRole}",
     "participant": "参与者",
-    "viewer": "观众"
+    "viewer": "观众",
+    "pinMessage": "固定消息",
+    "unpinMessage": "取消固定消息",
+    "showPinned": "显示固定消息",
+    "pinnedMessages": "固定消息",
+    "pinMessageFailed": "无法固定消息",
+    "unpinMessageFailed": "无法取消固定消息"
 }

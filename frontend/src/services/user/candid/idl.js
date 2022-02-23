@@ -431,6 +431,17 @@ export const idlFactory = ({ IDL }) => {
     'messages_read' : IDL.Vec(ChatMessagesRead),
   });
   const MarkReadResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const MessagesByMessageIndexArgs = IDL.Record({
+    'messages' : IDL.Vec(MessageIndex),
+    'user_id' : UserId,
+  });
+  const MessagesByMessageIndexResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Record({
+      'messages' : IDL.Vec(MessageEventWrapper),
+      'latest_event_index' : EventIndex,
+    }),
+  });
   const MuteNotificationsArgs = IDL.Record({ 'chat_id' : ChatId });
   const MuteNotificationsResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
@@ -708,6 +719,11 @@ export const idlFactory = ({ IDL }) => {
     'join_group_v2' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
+    'messages_by_message_index' : IDL.Func(
+        [MessagesByMessageIndexArgs],
+        [MessagesByMessageIndexResponse],
+        ['query'],
+      ),
     'mute_notifications' : IDL.Func(
         [MuteNotificationsArgs],
         [MuteNotificationsResponse],

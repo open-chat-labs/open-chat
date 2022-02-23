@@ -288,7 +288,8 @@ export type GroupChatEvent =
     | ParticipantDismissedAsSuperAdmin
     | RoleChanged
     | OwnershipTransferred
-    | PinnedMessageUpdated;
+    | MessagePinned
+    | MessageUnpinned;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -390,6 +391,18 @@ export type ParticipantRelinquishesSuperAdmin = {
 export type ParticipantDismissedAsSuperAdmin = {
     kind: "participant_dismissed_as_super_admin";
     userId: string;
+};
+
+export type MessagePinned = {
+    kind: "message_pinned";
+    pinnedBy: string;
+    messageIndex: number;
+};
+
+export type MessageUnpinned = {
+    kind: "message_unpinned";
+    unpinnedBy: string;
+    messageIndex: number;
 };
 
 export type RoleChanged = {
@@ -542,6 +555,7 @@ export type GroupChatDetailsUpdatesResponse =
 export type GroupChatDetails = {
     participants: Participant[];
     blockedUsers: Set<string>;
+    pinnedMessages: Set<number>;
     latestEventIndex: number;
 };
 
@@ -550,6 +564,8 @@ export type GroupChatDetailsUpdates = {
     participantsRemoved: Set<string>;
     blockedUsersAdded: Set<string>;
     blockedUsersRemoved: Set<string>;
+    pinnedMessagesRemoved: Set<number>;
+    pinnedMessagesAdded: Set<number>;
     latestEventIndex: number;
 };
 
@@ -850,3 +866,16 @@ export type SerializableGroupChatSummary = Omit<GroupChatSummary, "readByMe"> & 
 };
 
 export type ScrollStrategy = "latestMessage" | "firstMessage" | "firstMention";
+
+export type UnpinMessageResponse =
+    | "no_change"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "success";
+
+export type PinMessageResponse =
+    | "index_out_of_range"
+    | "no_change"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "success";
