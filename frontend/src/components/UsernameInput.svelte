@@ -56,13 +56,13 @@
     }
 
     function onChange(ev: CustomEvent<string>) {
-        checking = true;
         validUsername = undefined;
         if (ev.detail === originalUsername) {
             checking = false;
             error = undefined;
             if (timer) clearTimeout(timer);
         } else {
+            checking = true;
             debounce(() => ( checkUsername(ev.detail) ));
         }
     }
