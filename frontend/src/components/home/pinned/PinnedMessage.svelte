@@ -13,7 +13,6 @@
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
     import { fillMessage } from "../../../utils/media";
     import { userStore } from "../../../stores/user";
-    import TimeAndTicks from "../TimeAndTicks.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -22,7 +21,6 @@
     export let senderId: string;
     export let msg: Message;
     export let me: boolean;
-    export let timestamp: bigint;
 
     let sender = $userStore[senderId];
     let username = sender?.username;
@@ -34,6 +32,7 @@
     $: fill = fillMessage(msg);
 
     function chatWithUser() {
+        closeUserProfile();
         dispatch("chatWith", senderId);
     }
 

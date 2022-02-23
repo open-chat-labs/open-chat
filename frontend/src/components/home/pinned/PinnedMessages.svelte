@@ -26,6 +26,11 @@
         dispatch("close");
     }
 
+    function chatWith(ev: CustomEvent<string>) {
+        dispatch("close");
+        dispatch("chatWith", ev.detail);
+    }
+
     onMount(() => {
         messages = { kind: "loading" };
         controller.api
@@ -79,7 +84,7 @@
                         senderId={message.event.sender}
                         msg={message.event}
                         me={controller.user.userId === message.event.sender}
-                        timestamp={message.timestamp}
+                        on:chatWith={chatWith}
                         on:goToMessageIndex />
                 {/each}
             </div>
