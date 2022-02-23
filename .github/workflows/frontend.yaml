@@ -24,6 +24,7 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: ci
+          OPENCHAT_WEBSITE_VERSION: $GITHUB_SHA
       - name: run lint, check and unit tests
         run: |
           npm run lint
