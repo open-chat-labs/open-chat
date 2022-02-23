@@ -20,20 +20,17 @@
         input.setValue(originalUsername);
     }
 
-    function debounce(fn: () => void) {
-        if (timer) clearTimeout(timer);
-        timer = setTimeout(fn, 350);
-    }
-
     function checkUsername(value: string) {
         if (value.length < 3 || value.length > 25) {
-            checking = false;
+            stopChecking();
             return;
         }
         
+        const currTimer = timer;
+
         api.checkUsername(value)
             .then((resp) => {
-                if (!checking) return;
+                if (currTimer !== timer) return;
                 switch (resp) {
                     case "success":
                         error = undefined;
@@ -57,18 +54,30 @@
                 error = "register.errorCheckingUsername";
                 rollbar.error("Unable to check username: ", err);
             })
-            .finally(() => checking = false);
+            .finally(stopChecking);
     }
 
     function onChange(ev: CustomEvent<string>) {
         validUsername = undefined;
+        error = undefined;
         if (ev.detail === originalUsername) {
-            checking = false;
-            error = undefined;
-            if (timer) clearTimeout(timer);
+            stopChecking();
         } else {
-            checking = true;
-            debounce(() => ( checkUsername(ev.detail) ));
+            startChecking(ev.detail);
+        }
+    }
+
+    function startChecking(username: string) {
+        checking = true;
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => checkUsername(username), 350);
+    }
+
+    function stopChecking() {
+        checking = false;
+        if (timer)  {
+            clearTimeout(timer);
+            timer = undefined;
         }
     }
 
