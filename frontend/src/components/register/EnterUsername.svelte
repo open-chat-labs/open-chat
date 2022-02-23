@@ -8,8 +8,9 @@
 
     export let api: ServiceContainer;
     export let error: string | undefined = undefined;
-    export let validUsername: string | undefined = undefined;
+    export let originalUsername: string | undefined = undefined;
 
+    let validUsername: string | undefined = undefined;
     let checkingUsername: boolean;
 
     const dispatch = createEventDispatcher();
@@ -26,6 +27,7 @@
 <form class="username-wrapper" on:submit|preventDefault={submitUsername}>
     <UsernameInput 
         {api}
+        {originalUsername}
         bind:validUsername={validUsername}
         bind:checking={checkingUsername}
         bind:error={error} />
