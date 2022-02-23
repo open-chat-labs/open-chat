@@ -220,7 +220,7 @@ export class ChatController {
                 .then((resp) => {
                     if (resp !== "success" && resp !== "no_change") {
                         toastStore.showFailureToast("unpinMessageFailed");
-                        rollbar.error("Pin message failed: ", resp);
+                        rollbar.error("Unpin message failed: ", resp);
                         this.addPinnedMessage(messageIndex);
                     }
                 })
