@@ -20,6 +20,8 @@ import type {
     DeleteGroupResponse,
     GroupChatSummary,
     ParticipantRole,
+    PinMessageResponse,
+    UnpinMessageResponse,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
@@ -57,4 +59,7 @@ export interface IGroupClient {
     getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails>;
     deleteGroup(): Promise<DeleteGroupResponse>;
     getPublicSummary(): Promise<GroupChatSummary | undefined>;
+    getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>>;
+    pinMessage(messageIndex: number): Promise<PinMessageResponse>;
+    unpinMessage(messageIndex: number): Promise<UnpinMessageResponse>;
 }

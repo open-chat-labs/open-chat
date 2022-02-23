@@ -30,6 +30,7 @@
     export let admin: boolean;
     export let preview: boolean;
     export let isPublic: boolean;
+    export let pinned: boolean;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -57,6 +58,7 @@
         {admin}
         {preview}
         {isPublic}
+        {pinned}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo
@@ -64,6 +66,8 @@
         on:selectReaction
         on:deleteMessage
         on:blockUser
+        on:pinMessage
+        on:unpinMessage
         on:editMessage={editEvent}
         eventIndex={event.index}
         timestamp={event.timestamp}
@@ -139,6 +143,6 @@
         changedBy={event.event.changedBy}
         property={$_("groupAvatar")}
         timestamp={event.timestamp} />
-{:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed"}
+{:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned"}
     <div>Unexpected event type</div>
 {/if}
