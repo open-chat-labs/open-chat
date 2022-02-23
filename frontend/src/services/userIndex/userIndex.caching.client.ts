@@ -3,6 +3,7 @@ import { ChatSchema, getCachedUsers, setCachedUsers } from "../../utils/caching"
 import type { IDBPDatabase } from "idb";
 import type {
     ChallengeAttempt,
+    CheckUsernameResponse,
     ConfirmPhoneNumberResponse,
     CreateChallengeResponse,
     CurrentUserResponse,
@@ -71,6 +72,10 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]> {
         return this.client.searchUsers(searchTerm, maxResults);
+    }
+
+    checkUsername(username: string): Promise<CheckUsernameResponse> {
+        return this.client.checkUsername(username);
     }
 
     setUsername(username: string): Promise<SetUsernameResponse> {

@@ -317,7 +317,8 @@
         "challengeAttemptFailed": "The value you entered is incorrect. Please try the new challenge.",
         "challengeThrottled": "Too many challenges have been generated. Please try again later.",
         "attemptChallenge": "Please type in the characters you see",
-        "createUser": "Create user"
+        "createUser": "Create user",
+        "errorCheckingUsername": "An unexpected error occurred checking your username"
     },
     "faq": {
         "menu": "FAQ",

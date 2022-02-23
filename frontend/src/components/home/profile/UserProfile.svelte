@@ -5,7 +5,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
-    import Input from "../../Input.svelte";
+    import UsernameInput from "../../UsernameInput.svelte";
     import Link from "../../Link.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -35,41 +35,35 @@
     import { userStore } from "../../../stores/user";
     import { ONE_GB, storageStore } from "../../../stores/storage";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
-    import { addListener } from "process";
 
     const api: ServiceContainer = getContext(apiKey);
 
     const dispatch = createEventDispatcher();
-    const MIN_USERNAME_LENGTH = 3;
-    const MAX_USERNAME_LENGTH = 25;
     const MAX_BIO_LENGTH = 2000;
 
     export let user: PartialUserSummary;
 
-    let username = "";
     let originalBio = "";
     let userbio = "";
     let selectedLocale = ($locale as string).substring(0, 2);
-    let dirty = false;
     let usernameError: string | undefined = undefined;
     let bioError: string | undefined = undefined;
     let supportsNotifications = notificationsSupported();
     let saving = false;
+    let validUsername: string | undefined = undefined;
+    let usernameInput: UsernameInput;
+    let checkingUsername: boolean;
 
     $: {
         setLocale(selectedLocale);
     }
 
-    $: usernameDirty = username !== user?.username ?? "";
     $: bioDirty = userbio !== originalBio;
 
-    $: dirty = usernameDirty || bioDirty;
-    $: valid = username.length >= 3;
-
     export function reset(user: PartialUserSummary) {
+        usernameInput.reset();
         usernameError = undefined;
         bioError = undefined;
-        username = user.username ?? "";
         api.getBio().then((bio) => {
             originalBio = userbio = bio;
         });
@@ -101,15 +95,15 @@
             );
         }
 
-        if (usernameDirty) {
+        if (validUsername !== undefined) {
             promises.push(
                 api
-                    .setUsername(username)
+                    .setUsername(validUsername)
                     .then((resp) => {
                         if (resp === "success") {
                             userStore.add({
                                 ...user,
-                                username: username,
+                                username: validUsername,
                             });
                         } else {
                             if (resp === "username_taken") {
@@ -179,18 +173,17 @@
         </div>
 
         <div class="legend">{$_("username")} ({$_("usernameRules")})</div>
-        <Input
-            invalid={false}
-            bind:value={username}
-            autofocus={true}
-            minlength={MIN_USERNAME_LENGTH}
-            maxlength={MAX_USERNAME_LENGTH}
-            countdown={true}
-            placeholder={$_("register.enterUsername")}>
+        <UsernameInput 
+            bind:this={usernameInput}
+            {api}
+            originalUsername={user?.username ?? ""}
+            bind:validUsername={validUsername}
+            bind:checking={checkingUsername}
+            bind:error={usernameError}>
             {#if usernameError !== undefined}
                 <div class="error">{$_(usernameError)}</div>
             {/if}
-        </Input>
+        </UsernameInput>
 
         <div class="legend">{$_("bio")} ({$_("supportsMarkdown")})</div>
         <TextArea
@@ -204,8 +197,11 @@
             {/if}
         </TextArea>
         <div class="full-width-btn">
-            <Button loading={saving} disabled={!dirty || !valid || saving} fill={true} small={true}
-                >{$_("update")}</Button>
+            <Button
+                loading={saving || checkingUsername}
+                disabled={(!bioDirty && validUsername === undefined) || saving}
+                fill={true}
+                small={true}>{$_("update")}</Button>
         </div>
     </div>
 

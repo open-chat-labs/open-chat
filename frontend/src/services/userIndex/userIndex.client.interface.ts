@@ -1,6 +1,7 @@
 import type {
     CreateChallengeResponse,
     ChallengeAttempt,
+    CheckUsernameResponse,
     CurrentUserResponse,
     ConfirmPhoneNumberResponse,
     SubmitPhoneNumberResponse,
@@ -21,6 +22,7 @@ export interface IUserIndexClient {
         username: string,
         challengeAttempt: ChallengeAttempt
     ): Promise<RegisterUserResponse>;
+    checkUsername(username: string): Promise<CheckUsernameResponse>;
     setUsername(username: string): Promise<SetUsernameResponse>;
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse>;
     resendRegistrationCode(): Promise<ResendCodeResponse>;
