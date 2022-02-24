@@ -9,8 +9,7 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, EventIndex, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped,
-    UserId, Version,
+    Avatar, CanisterId, ChatId, Cycles, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::env::Environment;
 use utils::memory;
@@ -89,7 +88,7 @@ impl RuntimeState {
             min_visible_message_index,
             latest_message: data
                 .events
-                .latest_message()
+                .latest_message(Some(participant.user_id))
                 .filter(|m| m.event.message_index >= min_visible_message_index),
             latest_event_index: latest_event.index,
             joined: participant.date_added,
@@ -143,7 +142,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub activity_notification_state: ActivityNotificationState,
-    #[serde(default)]
     pub pinned_messages: Vec<MessageIndex>,
     pub test_mode: bool,
     pub owner_id: UserId,
@@ -187,16 +185,6 @@ impl Data {
             pinned_messages: Vec::new(),
             test_mode,
             owner_id: creator_user_id,
-        }
-    }
-
-    pub fn min_visible_event_index(&self, caller: Principal) -> Option<EventIndex> {
-        if self.is_public {
-            Some(EventIndex::default())
-        } else {
-            self.participants
-                .get_by_principal(&caller)
-                .map(|participant| participant.min_visible_event_index())
         }
     }
 }

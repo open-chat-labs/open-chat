@@ -17,14 +17,16 @@ fn send_message(args: Args) -> Response {
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(&caller) {
-        if let Err(error) = args.content.validate() {
+        let now = runtime_state.env.now();
+
+        if let Err(error) = args.content.validate_for_new_message(now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
+                ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
             };
         }
 
-        let now = runtime_state.env.now();
         let sender = participant.user_id;
         let user_being_replied_to = args
             .replies_to
@@ -35,7 +37,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let push_message_args = PushMessageArgs {
             sender,
             message_id: args.message_id,
-            content: args.content,
+            content: args.content.new_content_into_internal(),
             replies_to: args.replies_to.map(|r| r.into()),
             now,
         };

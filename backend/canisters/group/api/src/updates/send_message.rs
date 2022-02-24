@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{EventIndex, MessageContent, MessageId, MessageIndex, ReplyContext, TimestampMillis, User};
+use types::{EventIndex, InvalidPollReason, MessageContent, MessageId, MessageIndex, ReplyContext, TimestampMillis, User};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -30,6 +30,7 @@ pub enum Response {
     Success(SuccessResult),
     MessageEmpty,
     TextTooLong(u32),
+    InvalidPoll(InvalidPollReason),
     CallerNotInGroup,
 }
 

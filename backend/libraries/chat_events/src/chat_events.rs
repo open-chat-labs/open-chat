@@ -100,7 +100,7 @@ pub struct MessageInternal {
     pub message_index: MessageIndex,
     pub message_id: MessageId,
     pub sender: UserId,
-    pub content: MessageContent,
+    pub content: MessageContentInternal,
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
     pub last_updated: Option<TimestampMillis>,
@@ -115,7 +115,7 @@ pub struct UpdatedMessageInternal {
 pub struct PushMessageArgs {
     pub sender: UserId,
     pub message_id: MessageId,
-    pub content: MessageContent,
+    pub content: MessageContentInternal,
     pub replies_to: Option<ReplyContext>,
     pub now: TimestampMillis,
 }
@@ -153,6 +153,10 @@ pub struct Metrics {
     pub video_messages: u64,
     pub audio_messages: u64,
     pub file_messages: u64,
+    #[serde(default)]
+    pub polls: u64,
+    #[serde(default)]
+    pub poll_votes: u64,
     pub cycles_messages: u64,
     pub icp_messages: u64,
     pub deleted_messages: u64,
@@ -247,7 +251,7 @@ impl ChatEvents {
             reactions: Vec::new(),
             last_updated: None,
         };
-        let message = self.hydrate_message(&message_internal);
+        let message = self.hydrate_message(&message_internal, Some(message_internal.sender));
         let event_index = self.push_event(ChatEventInternal::Message(Box::new(message_internal)), args.now);
 
         EventWrapper {
@@ -278,16 +282,20 @@ impl ChatEvents {
             self.latest_message_event_index = Some(event_index);
 
             match &m.content {
-                MessageContent::Text(_) => self.metrics.text_messages += 1,
-                MessageContent::Image(_) => self.metrics.image_messages += 1,
-                MessageContent::Video(_) => self.metrics.video_messages += 1,
-                MessageContent::Audio(_) => self.metrics.audio_messages += 1,
-                MessageContent::File(_) => self.metrics.file_messages += 1,
-                MessageContent::Cryptocurrency(c) => match c.transfer {
+                MessageContentInternal::Text(_) => self.metrics.text_messages += 1,
+                MessageContentInternal::Image(_) => self.metrics.image_messages += 1,
+                MessageContentInternal::Video(_) => self.metrics.video_messages += 1,
+                MessageContentInternal::Audio(_) => self.metrics.audio_messages += 1,
+                MessageContentInternal::File(_) => self.metrics.file_messages += 1,
+                MessageContentInternal::Poll(p) => {
+                    self.metrics.polls += 1;
+                    self.metrics.poll_votes += p.votes.values().map(|v| v.len() as u64).sum::<u64>();
+                }
+                MessageContentInternal::Cryptocurrency(c) => match c.transfer {
                     CryptocurrencyTransfer::Cycles(_) => self.metrics.cycles_messages += 1,
                     CryptocurrencyTransfer::ICP(_) => self.metrics.icp_messages += 1,
                 },
-                MessageContent::Deleted(_) => self.metrics.deleted_messages += 1,
+                MessageContentInternal::Deleted(_) => self.metrics.deleted_messages += 1,
             }
 
             if m.replies_to.is_some() {
@@ -305,10 +313,10 @@ impl ChatEvents {
     pub fn edit_message(&mut self, args: EditMessageArgs) -> EditMessageResult {
         if let Some(message) = self.get_message_internal_mut(args.message_id) {
             if message.sender == args.sender {
-                if matches!(message.content, MessageContent::Deleted(_)) {
+                if matches!(message.content, MessageContentInternal::Deleted(_)) {
                     EditMessageResult::NotFound
                 } else {
-                    message.content = args.content;
+                    message.content = args.content.new_content_into_internal();
                     message.last_updated = Some(args.now);
                     self.metrics.total_edits += 1;
                     self.push_event(
@@ -337,12 +345,12 @@ impl ChatEvents {
     ) -> DeleteMessageResult {
         if let Some(message) = self.get_message_internal_mut(message_id) {
             if message.sender == caller || is_admin {
-                if matches!(message.content, MessageContent::Deleted(_)) {
+                if matches!(message.content, MessageContentInternal::Deleted(_)) {
                     DeleteMessageResult::AlreadyDeleted
                 } else {
                     let previous_content = replace(
                         &mut message.content,
-                        MessageContent::Deleted(DeletedContent {
+                        MessageContentInternal::Deleted(DeletedContent {
                             deleted_by: caller,
                             timestamp: now,
                         }),
@@ -356,7 +364,7 @@ impl ChatEvents {
                         })),
                         now,
                     );
-                    DeleteMessageResult::Success(previous_content)
+                    DeleteMessageResult::Success(previous_content.hydrate(Some(caller)))
                 }
             } else {
                 DeleteMessageResult::NotAuthorized
@@ -433,11 +441,15 @@ impl ChatEvents {
         false
     }
 
-    pub fn latest_message(&self) -> Option<EventWrapper<Message>> {
-        self.latest_message_if_updated(0)
+    pub fn latest_message(&self, my_user_id: Option<UserId>) -> Option<EventWrapper<Message>> {
+        self.latest_message_if_updated(0, my_user_id)
     }
 
-    pub fn latest_message_if_updated(&self, since: TimestampMillis) -> Option<EventWrapper<Message>> {
+    pub fn latest_message_if_updated(
+        &self,
+        since: TimestampMillis,
+        my_user_id: Option<UserId>,
+    ) -> Option<EventWrapper<Message>> {
         let event_index = self.latest_message_event_index?;
         let event = self.get(event_index)?;
 
@@ -446,7 +458,7 @@ impl ChatEvents {
                 return Some(EventWrapper {
                     index: event.index,
                     timestamp: event.timestamp,
-                    event: self.hydrate_message(m),
+                    event: self.hydrate_message(m, my_user_id),
                 });
             }
         }
@@ -477,12 +489,12 @@ impl ChatEvents {
         }
     }
 
-    pub fn hydrate_message(&self, message: &MessageInternal) -> Message {
+    pub fn hydrate_message(&self, message: &MessageInternal, my_user_id: Option<UserId>) -> Message {
         Message {
             message_index: message.message_index,
             message_id: message.message_id,
             sender: message.sender,
-            content: message.content.clone(),
+            content: message.content.hydrate(my_user_id),
             replies_to: message.replies_to.clone(),
             reactions: message
                 .reactions
@@ -511,6 +523,7 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         search_term: &str,
         max_results: u8,
+        my_user_id: UserId,
     ) -> Vec<MessageMatch> {
         let earliest_event_index: u32 = self.events.first().unwrap().index.into();
         let latest_event_index: u32 = self.events.last().unwrap().index.into();
@@ -547,7 +560,7 @@ impl ChatEvents {
                 chat_id: self.chat_id,
                 message_index: m.1.message_index,
                 sender: m.1.sender,
-                content: m.1.content.clone(),
+                content: m.1.content.hydrate(Some(my_user_id)),
                 score: m.0,
             })
             .collect()
@@ -933,7 +946,7 @@ mod tests {
             events.push_message(PushMessageArgs {
                 sender: user_id,
                 message_id,
-                content: MessageContent::Text(TextContent {
+                content: MessageContentInternal::Text(TextContent {
                     text: "hello".to_owned(),
                 }),
                 replies_to: None,

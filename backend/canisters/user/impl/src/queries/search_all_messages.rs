@@ -61,6 +61,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 fn search_all_direct_chats(args: &Args, runtime_state: &RuntimeState) -> Vec<MessageMatch> {
     let now = runtime_state.env.now();
     let query = Query::parse(&args.search_term);
+    let my_user_id = runtime_state.env.canister_id().into();
 
     let mut matches: Vec<_> = runtime_state
         .data
@@ -78,7 +79,7 @@ fn search_all_direct_chats(args: &Args, runtime_state: &RuntimeState) -> Vec<Mes
                         sender: m.sender,
                         message_index: m.message_index,
                         score: n,
-                        content: m.content.clone(),
+                        content: m.content.hydrate(Some(my_user_id)),
                     }),
                 }
             }

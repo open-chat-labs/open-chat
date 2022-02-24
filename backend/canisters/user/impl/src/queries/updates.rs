@@ -284,11 +284,13 @@ fn finalize(
     let mut chats_added: Vec<_> = group_chats_added.into_values().map(ChatSummary::Group).collect();
     let mut chats_updated: Vec<_> = group_chats_updated.into_values().map(ChatSummaryUpdates::Group).collect();
 
+    let my_user_id = runtime_state.env.canister_id().into();
+
     for direct_chat in runtime_state.data.direct_chats.get_all(Some(updates_since)) {
         if direct_chat.date_created > updates_since {
             chats_added.push(ChatSummary::Direct(DirectChatSummary {
                 them: direct_chat.them,
-                latest_message: direct_chat.events.latest_message().unwrap(),
+                latest_message: direct_chat.events.latest_message(Some(my_user_id)).unwrap(),
                 latest_event_index: direct_chat.events.last().index,
                 date_created: direct_chat.date_created,
                 read_by_me: convert_to_message_index_ranges(direct_chat.read_by_me.value.clone()),
@@ -296,7 +298,7 @@ fn finalize(
                 notifications_muted: direct_chat.notifications_muted.value,
             }));
         } else {
-            let latest_message = direct_chat.events.latest_message_if_updated(updates_since);
+            let latest_message = direct_chat.events.latest_message_if_updated(updates_since, Some(my_user_id));
             let latest_event = direct_chat.events.last();
             let latest_event_index = if latest_event.timestamp > updates_since { Some(latest_event.index) } else { None };
 

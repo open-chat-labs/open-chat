@@ -1,6 +1,9 @@
+use crate::polls::{AnonymousPollVotes, InvalidPollReason, PollConfig, PollVotes};
+use crate::ContentValidationError::InvalidPoll;
 use crate::{CanisterId, CryptocurrencyTransfer, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
 const MAX_TEXT_LENGTH: u32 = 5_000;
@@ -13,6 +16,19 @@ pub enum MessageContent {
     Video(VideoContent),
     Audio(AudioContent),
     File(FileContent),
+    Poll(PollContent),
+    Cryptocurrency(CryptocurrencyContent),
+    Deleted(DeletedContent),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum MessageContentInternal {
+    Text(TextContent),
+    Image(ImageContent),
+    Video(VideoContent),
+    Audio(AudioContent),
+    File(FileContent),
+    Poll(PollContentInternal),
     Cryptocurrency(CryptocurrencyContent),
     Deleted(DeletedContent),
 }
@@ -20,26 +36,55 @@ pub enum MessageContent {
 pub enum ContentValidationError {
     Empty,
     TextTooLong(u32),
+    InvalidPoll(InvalidPollReason),
 }
 
 impl MessageContent {
-    pub fn validate(&self) -> Result<(), ContentValidationError> {
-        let (is_empty, text) = match self {
-            MessageContent::Text(t) => (t.text.is_empty(), Some(&t.text)),
-            MessageContent::Image(i) => (i.blob_reference.is_none(), i.caption.as_ref()),
-            MessageContent::Video(v) => (v.video_blob_reference.is_none(), v.caption.as_ref()),
-            MessageContent::Audio(a) => (a.blob_reference.is_none(), a.caption.as_ref()),
-            MessageContent::File(f) => (f.blob_reference.is_none(), f.caption.as_ref()),
-            MessageContent::Cryptocurrency(c) => (c.transfer.is_zero(), c.caption.as_ref()),
-            MessageContent::Deleted(_) => (true, None),
+    // Determines if the content is valid for a new message, this should not be called on existing
+    // messages
+    pub fn validate_for_new_message(&self, now: TimestampMillis) -> Result<(), ContentValidationError> {
+        if let MessageContent::Poll(p) = self {
+            if let Err(reason) = p.config.validate(now) {
+                return Err(InvalidPoll(reason));
+            }
+        }
+
+        let is_empty = match self {
+            MessageContent::Text(t) => t.text.is_empty(),
+            MessageContent::Image(i) => i.blob_reference.is_none(),
+            MessageContent::Video(v) => v.video_blob_reference.is_none(),
+            MessageContent::Audio(a) => a.blob_reference.is_none(),
+            MessageContent::File(f) => f.blob_reference.is_none(),
+            MessageContent::Poll(p) => p.config.options.is_empty(),
+            MessageContent::Cryptocurrency(c) => c.transfer.is_zero(),
+            MessageContent::Deleted(_) => true,
         };
 
         if is_empty {
             Err(ContentValidationError::Empty)
-        } else if text.map_or(0, |t| t.len()) > MAX_TEXT_LENGTH_USIZE {
+        } else if self.text_length() > MAX_TEXT_LENGTH_USIZE {
             Err(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH))
         } else {
             Ok(())
+        }
+    }
+
+    // This must only be called on the content of new messages, this is because for polls it will
+    // set the votes to empty
+    pub fn new_content_into_internal(self) -> MessageContentInternal {
+        match self {
+            MessageContent::Text(t) => MessageContentInternal::Text(t),
+            MessageContent::Image(i) => MessageContentInternal::Image(i),
+            MessageContent::Video(v) => MessageContentInternal::Video(v),
+            MessageContent::Audio(a) => MessageContentInternal::Audio(a),
+            MessageContent::File(f) => MessageContentInternal::File(f),
+            MessageContent::Poll(p) => MessageContentInternal::Poll(PollContentInternal {
+                config: p.config,
+                votes: HashMap::new(),
+                ended: false,
+            }),
+            MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c),
+            MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
         }
     }
 
@@ -70,10 +115,41 @@ impl MessageContent {
                     references.push(br);
                 }
             }
-            MessageContent::Text(_) | MessageContent::Cryptocurrency(_) | MessageContent::Deleted(_) => {}
+            MessageContent::Text(_)
+            | MessageContent::Poll(_)
+            | MessageContent::Cryptocurrency(_)
+            | MessageContent::Deleted(_) => {}
         }
 
         references
+    }
+
+    fn text_length(&self) -> usize {
+        match self {
+            MessageContent::Text(t) => t.text.len(),
+            MessageContent::Image(i) => i.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::Video(v) => v.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::Audio(a) => a.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
+            MessageContent::Cryptocurrency(c) => c.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::Deleted(_) => 0,
+        }
+    }
+}
+
+impl MessageContentInternal {
+    pub fn hydrate(&self, my_user_id: Option<UserId>) -> MessageContent {
+        match self {
+            MessageContentInternal::Text(t) => MessageContent::Text(t.clone()),
+            MessageContentInternal::Image(i) => MessageContent::Image(i.clone()),
+            MessageContentInternal::Video(v) => MessageContent::Video(v.clone()),
+            MessageContentInternal::Audio(a) => MessageContent::Audio(a.clone()),
+            MessageContentInternal::File(f) => MessageContent::File(f.clone()),
+            MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
+            MessageContentInternal::Cryptocurrency(c) => MessageContent::Cryptocurrency(c.clone()),
+            MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
+        }
     }
 }
 
@@ -117,6 +193,63 @@ pub struct FileContent {
     pub mime_type: String,
     pub file_size: u32,
     pub blob_reference: Option<BlobReference>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PollContent {
+    pub config: PollConfig,
+    pub votes: PollVotes,
+}
+
+impl PollContent {
+    pub fn initialize_votes(&mut self) {
+        if self.config.anonymous {
+            self.votes = PollVotes::Anonymous(AnonymousPollVotes::default());
+        } else if self.config.end_date.is_some() && !self.config.show_votes_before_end_date {
+            self.votes = PollVotes::Hidden(0);
+        } else {
+            self.votes = PollVotes::Visible(HashMap::new());
+        }
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PollContentInternal {
+    pub config: PollConfig,
+    pub votes: HashMap<u32, Vec<UserId>>,
+    pub ended: bool,
+}
+
+impl PollContentInternal {
+    pub fn hydrate(&self, my_user_id: Option<UserId>) -> PollContent {
+        let votes: PollVotes;
+        let show_votes = self.config.end_date.is_none() || self.ended || self.config.show_votes_before_end_date;
+        if !show_votes {
+            votes = PollVotes::Hidden(self.votes.values().map(|v| v.len() as u32).sum());
+        } else if self.config.anonymous {
+            let user_votes = if let Some(user_id) = my_user_id {
+                self.votes
+                    .iter()
+                    .filter(|(_, v)| v.contains(&user_id))
+                    .map(|(k, _)| *k)
+                    .collect()
+            } else {
+                Vec::new()
+            };
+
+            votes = PollVotes::Anonymous(AnonymousPollVotes {
+                totals: self.votes.iter().map(|(k, v)| (*k, v.len() as u32)).collect(),
+                user_votes,
+            });
+        } else {
+            votes = PollVotes::Visible(self.votes.clone());
+        }
+
+        PollContent {
+            config: self.config.clone(),
+            votes,
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
