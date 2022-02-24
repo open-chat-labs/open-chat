@@ -318,7 +318,7 @@
     }
 </script>
 
-<PollBuilder bind:open={creatingPoll} />
+<PollBuilder on:sendPoll bind:open={creatingPoll} />
 
 {#if showMentionPicker}
     <MentionPicker

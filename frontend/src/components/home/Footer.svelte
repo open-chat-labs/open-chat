@@ -9,6 +9,7 @@
         GroupChatSummary,
         Message,
         MessageContent,
+        PollContent,
     } from "../../domain/chat/chat";
     import { getMessageContent, getStorageRequiredForMessage } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
@@ -113,6 +114,10 @@
         }
     }
 
+    function sendPoll(ev: CustomEvent<PollContent>) {
+        sendMessageWithAttachment(undefined, [], ev.detail);
+    }
+
     function fileSelected(ev: CustomEvent<MessageContent>) {
         controller.attachFile(ev.detail);
     }
@@ -185,6 +190,7 @@
         {blocked}
         {joining}
         on:sendMessage={sendMessage}
+        on:sendPoll={sendPoll}
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         on:joinGroup

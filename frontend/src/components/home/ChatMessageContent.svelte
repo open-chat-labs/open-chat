@@ -47,4 +47,7 @@
     <div>Crypto content</div>
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
+{:else if content.kind === "poll_content"}
+    <h1>This is a poll</h1>
+    <p>{content.config.text}</p>
 {/if}

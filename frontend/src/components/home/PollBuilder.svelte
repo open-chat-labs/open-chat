@@ -11,6 +11,7 @@
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../stores/iconSize";
+    import type { PollContent, TotalPollVotes } from "domain/chat/chat";
     const dispatch = createEventDispatcher();
 
     const MAX_QUESTION_LENGTH = 100;
@@ -26,8 +27,8 @@
     let answerError: string | undefined = "";
     let anonymous = true;
     let limitedDuration = true;
-    let showBeforeEnd = false;
-    let allowMultiple = false;
+    let showVotesBeforeEndDate = false;
+    let allowMultipleVotesPerUser = false;
     let selectedTab: "poll" | "settings" = "poll";
     let selectedDuration: Duration = "oneDay";
 
@@ -54,6 +55,51 @@
     function deleteAnswer(answer: string) {
         pollAnswers.delete(answer);
         pollAnswers = new Set(pollAnswers);
+    }
+
+    function createPollVotes(): TotalPollVotes {
+        if (anonymous) {
+            return { kind: "anonymous_poll_votes", votes: {} };
+        } else if (showVotesBeforeEndDate) {
+            return { kind: "visible_poll_votes", votes: {} };
+        } else {
+            return { kind: "hidden_poll_votes", votes: 0 };
+        }
+    }
+
+    const ONE_HOUR = 1000 * 60 * 60;
+    const ONE_DAY = ONE_HOUR * 24;
+    const ONE_WEEK = ONE_DAY * 7;
+
+    function createPollEndDate() {
+        if (!limitedDuration) return undefined;
+        const now = Date.now();
+        if (selectedDuration === "oneHour") return BigInt(now + ONE_HOUR);
+        if (selectedDuration === "oneDay") return BigInt(now + ONE_DAY);
+        if (selectedDuration === "oneWeek") return BigInt(now + ONE_WEEK);
+    }
+
+    function createPollContent(): PollContent {
+        return {
+            kind: "poll_content",
+            votes: {
+                total: createPollVotes(),
+                user: new Set(),
+            },
+            config: {
+                allowMultipleVotesPerUser,
+                text: pollQuestion === "" ? undefined : pollQuestion,
+                showVotesBeforeEndDate,
+                endDate: createPollEndDate(),
+                anonymous,
+                options: [...pollAnswers],
+            },
+        };
+    }
+
+    function start() {
+        dispatch("sendPoll", createPollContent());
+        open = false;
     }
 </script>
 
@@ -157,8 +203,9 @@
                                 <Toggle
                                     small={true}
                                     id={"allow-multiple"}
-                                    on:change={() => (allowMultiple = !allowMultiple)}
-                                    checked={allowMultiple} />
+                                    on:change={() =>
+                                        (allowMultipleVotesPerUser = !allowMultipleVotesPerUser)}
+                                    checked={allowMultipleVotesPerUser} />
                             </td>
                         </tr>
 
@@ -184,8 +231,9 @@
                                     <Toggle
                                         small={true}
                                         id={"show-before-end"}
-                                        on:change={() => (showBeforeEnd = !showBeforeEnd)}
-                                        checked={showBeforeEnd} />
+                                        on:change={() =>
+                                            (showVotesBeforeEndDate = !showVotesBeforeEndDate)}
+                                        checked={showVotesBeforeEndDate} />
                                 </td>
                             </tr>
 
@@ -211,7 +259,7 @@
         </span>
         <span slot="footer">
             <ButtonGroup>
-                <Button disabled={!valid} small={true}>{$_("poll.start")}</Button>
+                <Button disabled={!valid} small={true} on:click={start}>{$_("poll.start")}</Button>
                 <Button small={true} secondary={true} on:click={() => (open = false)}
                     >{$_("cancel")}</Button>
             </ButtonGroup>

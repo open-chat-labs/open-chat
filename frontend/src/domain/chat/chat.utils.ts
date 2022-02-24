@@ -60,6 +60,8 @@ export function getContentAsText(content: MessageContent): string {
         text = "deleted message";
     } else if (content.kind === "placeholder_content") {
         text = "placeholder content";
+    } else if (content.kind === "poll_content") {
+        text = "poll";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
@@ -239,7 +241,8 @@ export function getParticipantsString(
 function addCaption(caption: string | undefined, content: MessageContent): MessageContent {
     return content.kind !== "text_content" &&
         content.kind !== "deleted_content" &&
-        content.kind !== "placeholder_content"
+        content.kind !== "placeholder_content" &&
+        content.kind !== "poll_content"
         ? { ...content, caption }
         : content;
 }
