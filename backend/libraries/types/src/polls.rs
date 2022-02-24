@@ -10,7 +10,13 @@ pub struct PollConfig {
     pub end_date: Option<TimestampMillis>,
     pub anonymous: bool,
     pub show_votes_before_end_date: bool,
-    pub vote_limit_per_user: u32,
+    pub allow_multiple_votes_per_user: bool,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PollVotes {
+    pub total: TotalVotes,
+    pub user: Vec<u32>,
 }
 
 impl PollConfig {
@@ -38,16 +44,16 @@ impl PollConfig {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum PollVotes {
+pub enum TotalVotes {
     Visible(HashMap<u32, Vec<UserId>>),
-    Anonymous(AnonymousPollVotes),
+    Anonymous(HashMap<u32, u32>),
     Hidden(u32),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
-pub struct AnonymousPollVotes {
-    pub totals: HashMap<u32, u32>,
-    pub user_votes: Vec<u32>,
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
+pub enum VoteOperation {
+    RegisterVote,
+    DeleteVote,
 }
 
 const MIN_POLL_OPTIONS: usize = 2;

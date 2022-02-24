@@ -1,6 +1,7 @@
-use crate::polls::{AnonymousPollVotes, InvalidPollReason, PollConfig, PollVotes};
+use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::ContentValidationError::InvalidPoll;
-use crate::{CanisterId, CryptocurrencyTransfer, TimestampMillis, UserId};
+use crate::RegisterVoteResult::SuccessNoChange;
+use crate::{CanisterId, CryptocurrencyTransfer, TimestampMillis, TotalVotes, UserId, VoteOperation};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -203,12 +204,18 @@ pub struct PollContent {
 
 impl PollContent {
     pub fn initialize_votes(&mut self) {
-        if self.config.anonymous {
-            self.votes = PollVotes::Anonymous(AnonymousPollVotes::default());
-        } else if self.config.end_date.is_some() && !self.config.show_votes_before_end_date {
-            self.votes = PollVotes::Hidden(0);
+        let total_votes: TotalVotes;
+        if self.config.end_date.is_some() && !self.config.show_votes_before_end_date {
+            total_votes = TotalVotes::Hidden(0);
+        } else if self.config.anonymous {
+            total_votes = TotalVotes::Anonymous(HashMap::new());
         } else {
-            self.votes = PollVotes::Visible(HashMap::new());
+            total_votes = TotalVotes::Visible(HashMap::new());
+        }
+
+        self.votes = PollVotes {
+            total: total_votes,
+            user: Vec::new(),
         }
     }
 }
@@ -222,34 +229,78 @@ pub struct PollContentInternal {
 
 impl PollContentInternal {
     pub fn hydrate(&self, my_user_id: Option<UserId>) -> PollContent {
-        let votes: PollVotes;
-        let show_votes = self.config.end_date.is_none() || self.ended || self.config.show_votes_before_end_date;
-        if !show_votes {
-            votes = PollVotes::Hidden(self.votes.values().map(|v| v.len() as u32).sum());
-        } else if self.config.anonymous {
-            let user_votes = if let Some(user_id) = my_user_id {
-                self.votes
-                    .iter()
-                    .filter(|(_, v)| v.contains(&user_id))
-                    .map(|(k, _)| *k)
-                    .collect()
-            } else {
-                Vec::new()
-            };
-
-            votes = PollVotes::Anonymous(AnonymousPollVotes {
-                totals: self.votes.iter().map(|(k, v)| (*k, v.len() as u32)).collect(),
-                user_votes,
-            });
+        let user_votes = if let Some(user_id) = my_user_id {
+            self.votes
+                .iter()
+                .filter(|(_, v)| v.contains(&user_id))
+                .map(|(k, _)| *k)
+                .collect()
         } else {
-            votes = PollVotes::Visible(self.votes.clone());
+            Vec::new()
+        };
+
+        let total_votes: TotalVotes;
+        let hide_votes = self.config.end_date.is_some() && !self.ended && !self.config.show_votes_before_end_date;
+        if hide_votes {
+            total_votes = TotalVotes::Hidden(self.votes.values().map(|v| v.len() as u32).sum());
+        } else if self.config.anonymous {
+            total_votes = TotalVotes::Anonymous(self.votes.iter().map(|(k, v)| (*k, v.len() as u32)).collect());
+        } else {
+            total_votes = TotalVotes::Visible(self.votes.clone());
         }
 
         PollContent {
             config: self.config.clone(),
-            votes,
+            votes: PollVotes {
+                total: total_votes,
+                user: user_votes,
+            },
         }
     }
+
+    pub fn register_vote(&mut self, user_id: UserId, option_index: u32, operation: VoteOperation) -> RegisterVoteResult {
+        if self.ended {
+            RegisterVoteResult::PollEnded
+        } else if option_index > (self.config.options.len() as u32) + 1 {
+            RegisterVoteResult::OptionIndexOutOfRange
+        } else {
+            match operation {
+                VoteOperation::RegisterVote => {
+                    let votes = self.votes.entry(option_index).or_default();
+                    if votes.contains(&user_id) {
+                        return SuccessNoChange;
+                    }
+                    votes.push(user_id);
+                    if !self.config.allow_multiple_votes_per_user {
+                        // If the user has already left a vote, remove it
+                        for (_, votes) in self.votes.iter_mut().filter(|(&o, _)| o != option_index) {
+                            if let Some((index, _)) = votes.iter().enumerate().find(|(_, &u)| u == user_id) {
+                                votes.remove(index);
+                                break;
+                            }
+                        }
+                    }
+                    RegisterVoteResult::Success
+                }
+                VoteOperation::DeleteVote => {
+                    if let Some(votes) = self.votes.get_mut(&option_index) {
+                        if let Some((index, _)) = votes.iter().enumerate().find(|(_, &u)| u == user_id) {
+                            votes.remove(index);
+                            return RegisterVoteResult::Success;
+                        }
+                    }
+                    RegisterVoteResult::SuccessNoChange
+                }
+            }
+        }
+    }
+}
+
+pub enum RegisterVoteResult {
+    Success,
+    SuccessNoChange,
+    PollEnded,
+    OptionIndexOutOfRange,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

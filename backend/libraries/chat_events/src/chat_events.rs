@@ -51,6 +51,8 @@ pub enum ChatEventInternal {
     UsersUnblocked(Box<UsersUnblocked>),
     MessagePinned(Box<MessagePinned>),
     MessageUnpinned(Box<MessageUnpinned>),
+    PollVoteRegistered(Box<UpdatedMessageInternal>),
+    PollVoteDeleted(Box<UpdatedMessageInternal>),
 }
 
 impl ChatEventInternal {
@@ -138,6 +140,14 @@ pub enum DeleteMessageResult {
     AlreadyDeleted,
     NotAuthorized,
     NotFound,
+}
+
+pub enum RegisterVoteResult {
+    Success(PollVotes),
+    SuccessNoChange(PollVotes),
+    PollEnded,
+    PollNotFound,
+    OptionIndexOutOfRange,
 }
 
 pub enum ToggleReactionResult {
@@ -311,7 +321,7 @@ impl ChatEvents {
     }
 
     pub fn edit_message(&mut self, args: EditMessageArgs) -> EditMessageResult {
-        if let Some(message) = self.get_message_internal_mut(args.message_id) {
+        if let Some(message) = self.get_message_by_id_internal_mut(args.message_id) {
             if message.sender == args.sender {
                 if matches!(message.content, MessageContentInternal::Deleted(_)) {
                     EditMessageResult::NotFound
@@ -343,7 +353,7 @@ impl ChatEvents {
         message_id: MessageId,
         now: TimestampMillis,
     ) -> DeleteMessageResult {
-        if let Some(message) = self.get_message_internal_mut(message_id) {
+        if let Some(message) = self.get_message_by_id_internal_mut(message_id) {
             if message.sender == caller || is_admin {
                 if matches!(message.content, MessageContentInternal::Deleted(_)) {
                     DeleteMessageResult::AlreadyDeleted
@@ -372,6 +382,41 @@ impl ChatEvents {
         } else {
             DeleteMessageResult::NotFound
         }
+    }
+
+    pub fn register_poll_vote(
+        &mut self,
+        user_id: UserId,
+        message_index: MessageIndex,
+        option_index: u32,
+        operation: VoteOperation,
+        now: TimestampMillis,
+    ) -> RegisterVoteResult {
+        if let Some(message) = self.get_message_by_message_index_internal_mut(message_index) {
+            if let MessageContentInternal::Poll(p) = &mut message.content {
+                return match p.register_vote(user_id, option_index, operation) {
+                    types::RegisterVoteResult::Success => {
+                        let updated_message = Box::new(UpdatedMessageInternal {
+                            updated_by: user_id,
+                            message_id: message.message_id,
+                        });
+                        let event = match operation {
+                            VoteOperation::RegisterVote => ChatEventInternal::PollVoteRegistered(updated_message),
+                            VoteOperation::DeleteVote => ChatEventInternal::PollVoteDeleted(updated_message),
+                        };
+                        let votes = p.hydrate(Some(user_id)).votes;
+                        self.push_event(event, now);
+                        RegisterVoteResult::Success(votes)
+                    }
+                    types::RegisterVoteResult::SuccessNoChange => {
+                        RegisterVoteResult::SuccessNoChange(p.hydrate(Some(user_id)).votes)
+                    }
+                    types::RegisterVoteResult::PollEnded => RegisterVoteResult::PollEnded,
+                    types::RegisterVoteResult::OptionIndexOutOfRange => RegisterVoteResult::OptionIndexOutOfRange,
+                };
+            }
+        }
+        RegisterVoteResult::PollNotFound
     }
 
     pub fn toggle_reaction(
@@ -754,15 +799,23 @@ impl ChatEvents {
         self.events.is_empty()
     }
 
-    fn get_message_internal_mut(&mut self, message_id: MessageId) -> Option<&mut MessageInternal> {
-        if let Some(&event_index) = self.message_id_map.get(&message_id) {
-            if let Some(event) = self.get_mut(event_index) {
-                if let ChatEventInternal::Message(message) = &mut event.event {
-                    return Some(message);
-                };
-            }
+    fn get_message_by_message_index_internal_mut(&mut self, message_index: MessageIndex) -> Option<&mut MessageInternal> {
+        let event_index = *self.message_index_map.get(&message_index)?;
+        self.get_message_internal_mut(event_index)
+    }
+
+    fn get_message_by_id_internal_mut(&mut self, message_id: MessageId) -> Option<&mut MessageInternal> {
+        let event_index = *self.message_id_map.get(&message_id)?;
+        self.get_message_internal_mut(event_index)
+    }
+
+    fn get_message_internal_mut(&mut self, event_index: EventIndex) -> Option<&mut MessageInternal> {
+        let event = self.get_mut(event_index)?;
+        if let ChatEventInternal::Message(message) = &mut event.event {
+            Some(message)
+        } else {
+            None
         }
-        None
     }
 
     fn get_index(&self, event_index: EventIndex) -> Option<usize> {
