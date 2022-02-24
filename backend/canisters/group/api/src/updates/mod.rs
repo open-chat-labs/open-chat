@@ -12,6 +12,7 @@ pub mod delete_group;
 pub mod delete_messages;
 pub mod edit_message;
 pub mod pin_message;
+pub mod register_poll_vote;
 pub mod remove_participant;
 pub mod send_message;
 pub mod toggle_reaction;

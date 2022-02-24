@@ -68,7 +68,10 @@ fn process_events(
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
         // during the iteration below.
-        latest_message: runtime_state.data.events.latest_message_if_updated(since),
+        latest_message: runtime_state
+            .data
+            .events
+            .latest_message_if_updated(since, Some(participant.user_id)),
         ..Default::default()
     };
 

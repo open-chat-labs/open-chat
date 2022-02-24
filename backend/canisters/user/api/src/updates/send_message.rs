@@ -1,6 +1,8 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex, ReplyContext, TimestampMillis, UserId};
+use types::{
+    ChatId, EventIndex, InvalidPollReason, MessageContent, MessageId, MessageIndex, ReplyContext, TimestampMillis, UserId,
+};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -17,6 +19,7 @@ pub enum Response {
     MessageEmpty,
     TextTooLong(u32),
     RecipientBlocked,
+    InvalidPoll(InvalidPollReason),
     InvalidRequest(String),
     TransactionFailed(String),
 }

@@ -2,6 +2,7 @@
 import svelte from "rollup-plugin-svelte";
 import sveltePreprocess from "svelte-preprocess";
 import commonjs from "@rollup/plugin-commonjs";
+import html from "@rollup/plugin-html";
 import resolve from "@rollup/plugin-node-resolve";
 import livereload from "rollup-plugin-livereload";
 import { terser } from "rollup-plugin-terser";
@@ -68,25 +69,25 @@ console.log("URL", process.env.INTERNET_IDENTITY_URL);
 
 function serve() {
     return dev({
-        dirs: ["./public"],
+        dirs: ["./build", "./public"],
         proxy: [
             {
                 from: "/api/*",
                 to: `http://${dfxJson.networks.local.bind}`,
             },
         ],
-        spa: "./public/index.html",
+        spa: "./index.html",
         port: process.env.DEV_PORT || 5000,
     });
 }
 
-rimraf.sync(path.join(__dirname, "public", "build"));
+rimraf.sync(path.join(__dirname, "build"));
 
 export default [
     {
         input: "./src/sw/index.ts",
         output: {
-            file: "public/_/raw/sw.js",
+            file: "build/" + WEBPUSH_SERVICE_WORKER_PATH,
             sourcemap: true,
             format: "iife",
         },
@@ -115,7 +116,7 @@ export default [
             sourcemap: true,
             format: "es",
             name: "app",
-            dir: "public/build",
+            dir: "build",
         },
         plugins: [
             svelte({
@@ -166,6 +167,35 @@ export default [
                 "process.env.BLOB_URL_PATTERN": process.env.BLOB_URL_PATTERN,
                 "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
                 "process.env.USERGEEK_APIKEY": process.env.USERGEEK_APIKEY,
+            }),
+
+            html({
+                template: (_) => `
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="script-src 'self' 'unsafe-eval' http://localhost:* https://api.rollbar.com/api/ 'sha256-F5GJ5FbuDZPD9J7AOUUUTj01dve/ryeBx8hvDgOsAw0='"
+        />
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+        <meta name="apple-mobile-web-app-title" content="OpenChat" />
+        <title>OpenChat</title>
+        <link rel="manifest" href="/openchat.webmanifest" />
+        <link rel="apple-touch-startup-image" href="/_/raw/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/_/raw/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" href="/icon.png" />
+        <link rel="stylesheet" href="/global.css" />
+        <link rel="stylesheet" href="/main.css" />
+        <script type="module" defer src="/main.js"></script>
+        <script>
+            var parcelRequire;
+        </script>
+    </head>
+    <body></body>
+</html>
+`
             }),
 
             // In dev mode, call `npm run start` once

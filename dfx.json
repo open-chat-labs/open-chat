@@ -43,10 +43,7 @@
       "build": "./generate-wasm.sh group_canister_impl"
     },
     "website": {
-      "frontend": {
-        "entrypoint": "frontend/public/index.html"
-      },
-      "source": ["frontend/public"],
+      "source": ["frontend/build", "frontend/public"],
       "type": "assets"
     }
   },

@@ -46,6 +46,7 @@
                 "@babel/preset-env": "^7.14.5",
                 "@rollup/plugin-alias": "^3.1.2",
                 "@rollup/plugin-commonjs": "^17.0.0",
+                "@rollup/plugin-html": "^0.2.4",
                 "@rollup/plugin-json": "^4.1.0",
                 "@rollup/plugin-node-resolve": "^11.0.0",
                 "@rollup/plugin-replace": "^2.4.2",
@@ -2649,6 +2650,18 @@
             },
             "peerDependencies": {
                 "rollup": "^2.30.0"
+            }
+        },
+        "node_modules/@rollup/plugin-html": {
+            "version": "0.2.4",
+            "resolved": "https://registry.npmjs.org/@rollup/plugin-html/-/plugin-html-0.2.4.tgz",
+            "integrity": "sha512-x0qpNXxbmGa9Jnl4OX89AORPe2T/a4DqNK69BGRnEdaPKq6MdiUXSTam/eCkF5DxkQGcRcPq0L4vzr/E3q4mVA==",
+            "dev": true,
+            "engines": {
+                "node": ">= 8.0.0"
+            },
+            "peerDependencies": {
+                "rollup": "^1.20.0||^2.0.0"
             }
         },
         "node_modules/@rollup/plugin-json": {
@@ -15631,6 +15644,13 @@
                 "magic-string": "^0.25.7",
                 "resolve": "^1.17.0"
             }
+        },
+        "@rollup/plugin-html": {
+            "version": "0.2.4",
+            "resolved": "https://registry.npmjs.org/@rollup/plugin-html/-/plugin-html-0.2.4.tgz",
+            "integrity": "sha512-x0qpNXxbmGa9Jnl4OX89AORPe2T/a4DqNK69BGRnEdaPKq6MdiUXSTam/eCkF5DxkQGcRcPq0L4vzr/E3q4mVA==",
+            "dev": true,
+            "requires": {}
         },
         "@rollup/plugin-json": {
             "version": "4.1.0",

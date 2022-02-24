@@ -26,9 +26,13 @@ impl GroupChatEvents {
 
     generate_common_methods!(GroupChatEvent);
 
-    fn hydrate_event(&self, event: &EventWrapper<ChatEventInternal>) -> EventWrapper<GroupChatEvent> {
+    fn hydrate_event(
+        &self,
+        event: &EventWrapper<ChatEventInternal>,
+        my_user_id: Option<UserId>,
+    ) -> EventWrapper<GroupChatEvent> {
         let event_data = match &event.event {
-            ChatEventInternal::Message(m) => GroupChatEvent::Message(Box::new(self.inner.hydrate_message(m))),
+            ChatEventInternal::Message(m) => GroupChatEvent::Message(Box::new(self.inner.hydrate_message(m, my_user_id))),
             ChatEventInternal::MessageEdited(m) => GroupChatEvent::MessageEdited(self.inner.hydrate_updated_message(m)),
             ChatEventInternal::MessageDeleted(m) => GroupChatEvent::MessageDeleted(self.inner.hydrate_updated_message(m)),
             ChatEventInternal::MessageReactionAdded(m) => {
