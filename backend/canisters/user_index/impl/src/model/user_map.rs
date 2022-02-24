@@ -233,15 +233,13 @@ impl UserMap {
     pub fn get_by_user_id(&self, user_id: &UserId) -> Option<&User> {
         self.user_id_to_principal
             .get(user_id)
-            .map(|p| self.users_by_principal.get(p))
-            .flatten()
+            .and_then(|p| self.users_by_principal.get(p))
     }
 
     pub fn get_by_username(&self, username: &str) -> Option<&User> {
         self.username_to_principal
             .get(username)
-            .map(|p| self.users_by_principal.get(p))
-            .flatten()
+            .and_then(|p| self.users_by_principal.get(p))
     }
 
     pub fn is_valid_caller(&self, caller: Principal) -> bool {
