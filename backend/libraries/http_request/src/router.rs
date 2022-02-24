@@ -19,15 +19,15 @@ pub fn extract_route(path: &str) -> Route {
 
     match parts[0] {
         "avatar" => {
-            let blob_id = parts.get(1).map(|p| u128::from_str(p).ok()).flatten();
+            let blob_id = parts.get(1).and_then(|p| u128::from_str(p).ok());
             Route::Avatar(blob_id)
         }
         "logs" => {
-            let since = parts.get(1).map(|p| u64::from_str(p).ok()).flatten();
+            let since = parts.get(1).and_then(|p| u64::from_str(p).ok());
             Route::Logs(since)
         }
         "trace" => {
-            let since = parts.get(1).map(|p| u64::from_str(p).ok()).flatten();
+            let since = parts.get(1).and_then(|p| u64::from_str(p).ok());
             Route::Traces(since)
         }
         "metrics" => Route::Metrics,

@@ -31,8 +31,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let user_being_replied_to = args
             .replies_to
             .as_ref()
-            .map(|r| get_user_being_replied_to(r, &runtime_state.data.events))
-            .flatten();
+            .and_then(|r| get_user_being_replied_to(r, &runtime_state.data.events));
 
         let push_message_args = PushMessageArgs {
             sender,

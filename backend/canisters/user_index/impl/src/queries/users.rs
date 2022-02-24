@@ -15,7 +15,7 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let users = args
         .user_groups
         .into_iter()
-        .map(|g| {
+        .flat_map(|g| {
             let updated_since = g.updated_since;
             g.users
                 .into_iter()
@@ -26,7 +26,6 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                     u.to_partial_summary(include_username, now)
                 })
         })
-        .flatten()
         .collect();
 
     Success(Result { users, timestamp: now })
