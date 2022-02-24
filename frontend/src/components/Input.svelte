@@ -13,9 +13,10 @@
     export let fontSize: "small" | "normal" | "large" | "huge" = "normal";
     export let align: "left" | "right" | "center" = "left";
     export let countdown: boolean = false;
+    export let onEnter: () => void = () => {};
 
     const dispatch = createEventDispatcher();
-    
+
     let inp: HTMLInputElement;
 
     onMount(() => {
@@ -37,6 +38,12 @@
         value = text;
     }
 
+    function keyDown(e: KeyboardEvent) {
+        if (e.key === "Enter") {
+            onEnter();
+        }
+    }
+
     $: remaining = typeof value === "string" ? maxlength - value.length : 0;
 </script>
 
@@ -50,6 +57,7 @@
         {maxlength}
         {placeholder}
         on:input={handleInput}
+        on:keydown={keyDown}
         bind:this={inp}
         {value}
         class={`textbox ${fontSize} ${align}`} />

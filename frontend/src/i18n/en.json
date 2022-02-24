@@ -345,5 +345,26 @@
     "showPinned": "Show pinned messages",
     "pinnedMessages": "Pinned messages",
     "pinMessageFailed": "Unable to pin message",
-    "unpinMessageFailed": "Unable to unpin message"
+    "unpinMessageFailed": "Unable to unpin message",
+    "poll": {
+        "create": "Create a poll",
+        "questionLabel": "Question",
+        "answersLabel": "Answers",
+        "optionalQuestion": "Optionally enter your question here",
+        "addAnswer": "Add at least 2 answers",
+        "answerText": "Enter answer text...",
+        "maxReached": "Maximum 10 answers reached",
+        "invalidAnswer": "Hmmm, do you have a duplicate answer?",
+        "settings": "Settings",
+        "poll": "Poll",
+        "anonymous": "Anonymous",
+        "limitedDuration": "Limited duration",
+        "showBeforeEnd": "Show results before poll ends",
+        "pollDuration": "Poll duration",
+        "oneHour": "1 hour",
+        "oneDay": "1 day",
+        "oneWeek": "1 week",
+        "allowMultipleVotes": "Allow multiple votes",
+        "start": "Start"
+    }
 }

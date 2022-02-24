@@ -312,5 +312,9 @@ export function lightTheme(): Theme {
             },
             bg: "#fff",
         },
+
+        toggle: {
+            bg: "#cccccc",
+        },
     };
 }

@@ -5,15 +5,17 @@
     export let id: string;
     export let label: string;
     export let toggle: boolean = false;
+    export let small: boolean = false; // only applies to toggles
 </script>
 
 <div class="checkbox" class:toggle class:rtl={$rtlStore}>
     <input {id} type="checkbox" bind:checked {disabled} on:change />
-    <label for={id}>{label}</label>
+    <label class:small for={id}>{label}</label>
 </div>
 
 <style type="text/scss">
     $size: 32px;
+    $size-small: 21px;
 
     // todo - this will have rtl issues at the moment
 
@@ -49,10 +51,15 @@
             text-indent: -9999px;
             width: 80px;
             height: 36px;
-            background: var(--button-disabled);
+            background: var(--toggle-bg);
             display: block;
             border-radius: 18px;
             position: relative;
+
+            &.small {
+                width: 50px;
+                height: 25px;
+            }
         }
 
         label:after {
@@ -65,6 +72,11 @@
             background: #fff;
             border-radius: 50%;
             transition: 150ms ease-in-out;
+        }
+
+        label.small:after {
+            width: $size-small !important;
+            height: $size-small;
         }
 
         input:checked + label {
