@@ -42,7 +42,6 @@
     }
 
     function addAnswer() {
-        // TODO - check whether the answer to the *last* question is blank
         if (answerIsValid(nextAnswer)) {
             answerError = undefined;
             pollAnswers = new Set(pollAnswers.add(nextAnswer));
@@ -90,26 +89,6 @@
                                 placeholder={$_("poll.optionalQuestion")} />
                         </div>
 
-                        <div class="section">
-                            <div class="legend">{$_("poll.addAnswer")}</div>
-                            <Input
-                                bind:value={nextAnswer}
-                                disabled={pollAnswers.size >= MAX_ANSWERS}
-                                minlength={1}
-                                maxlength={MAX_ANSWER_LENGTH}
-                                countdown={true}
-                                onEnter={addAnswer}
-                                placeholder={$_(
-                                    pollAnswers.size === MAX_ANSWERS
-                                        ? "poll.maxReached"
-                                        : "poll.answerText"
-                                )}>
-                                {#if answerError !== undefined}
-                                    <div class="error">{$_(answerError)}</div>
-                                {/if}
-                            </Input>
-                        </div>
-
                         {#if pollAnswers.size > 0}
                             <div class="section">
                                 <div class="legend">{$_("poll.answersLabel")}</div>
@@ -123,6 +102,34 @@
                                         </div>
                                     </div>
                                 {/each}
+                            </div>
+                        {/if}
+
+                        {#if pollAnswers.size < MAX_ANSWERS}
+                            <div class="section">
+                                <div class="legend">
+                                    {$_(
+                                        pollAnswers.size < 2
+                                            ? "poll.addAnswer"
+                                            : "poll.addAnotherAnswer"
+                                    )}
+                                </div>
+                                <Input
+                                    bind:value={nextAnswer}
+                                    disabled={pollAnswers.size >= MAX_ANSWERS}
+                                    minlength={1}
+                                    maxlength={MAX_ANSWER_LENGTH}
+                                    countdown={true}
+                                    onEnter={addAnswer}
+                                    placeholder={$_(
+                                        pollAnswers.size === MAX_ANSWERS
+                                            ? "poll.maxReached"
+                                            : "poll.answerText"
+                                    )}>
+                                    {#if answerError !== undefined}
+                                        <div class="error">{$_(answerError)}</div>
+                                    {/if}
+                                </Input>
                             </div>
                         {/if}
                     </form>

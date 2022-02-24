@@ -352,6 +352,7 @@
         "answersLabel": "Answers",
         "optionalQuestion": "Optionally enter your question here",
         "addAnswer": "Add at least 2 answers",
+        "addAnotherAnswer": "Add another answer",
         "answerText": "Enter answer text...",
         "maxReached": "Maximum 10 answers reached",
         "invalidAnswer": "Hmmm, do you have a duplicate answer?",
