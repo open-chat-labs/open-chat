@@ -16,6 +16,26 @@ export const Notification = IDL.Variant({
             ),
             'caption' : IDL.Opt(IDL.Text),
           }),
+          'Poll' : IDL.Record({
+            'votes' : IDL.Record({
+              'total' : IDL.Variant({
+                'Anonymous' : IDL.Vec(IDL.Tuple(IDL.Nat32, IDL.Nat32)),
+                'Visible' : IDL.Vec(
+                  IDL.Tuple(IDL.Nat32, IDL.Vec(IDL.Principal))
+                ),
+                'Hidden' : IDL.Nat32,
+              }),
+              'user' : IDL.Vec(IDL.Nat32),
+            }),
+            'config' : IDL.Record({
+              'allow_multiple_votes_per_user' : IDL.Bool,
+              'text' : IDL.Opt(IDL.Text),
+              'show_votes_before_end_date' : IDL.Bool,
+              'end_date' : IDL.Opt(IDL.Nat64),
+              'anonymous' : IDL.Bool,
+              'options' : IDL.Vec(IDL.Text),
+            }),
+          }),
           'Text' : IDL.Record({ 'text' : IDL.Text }),
           'Image' : IDL.Record({
             'height' : IDL.Nat32,
@@ -131,6 +151,26 @@ export const Notification = IDL.Variant({
               IDL.Record({ 'blob_id' : IDL.Nat, 'canister_id' : IDL.Principal })
             ),
             'caption' : IDL.Opt(IDL.Text),
+          }),
+          'Poll' : IDL.Record({
+            'votes' : IDL.Record({
+              'total' : IDL.Variant({
+                'Anonymous' : IDL.Vec(IDL.Tuple(IDL.Nat32, IDL.Nat32)),
+                'Visible' : IDL.Vec(
+                  IDL.Tuple(IDL.Nat32, IDL.Vec(IDL.Principal))
+                ),
+                'Hidden' : IDL.Nat32,
+              }),
+              'user' : IDL.Vec(IDL.Nat32),
+            }),
+            'config' : IDL.Record({
+              'allow_multiple_votes_per_user' : IDL.Bool,
+              'text' : IDL.Opt(IDL.Text),
+              'show_votes_before_end_date' : IDL.Bool,
+              'end_date' : IDL.Opt(IDL.Nat64),
+              'anonymous' : IDL.Bool,
+              'options' : IDL.Vec(IDL.Text),
+            }),
           }),
           'Text' : IDL.Record({ 'text' : IDL.Text }),
           'Image' : IDL.Record({

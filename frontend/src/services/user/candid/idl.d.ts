@@ -24,6 +24,10 @@ import {
     ImageContent,
     VideoContent,
     AudioContent,
+    PollContent,
+    PollVotes,
+    PollConfig,
+    TotalPollVotes,
     CryptocurrencyContent,
     CryptocurrencyTransfer,
     ICPTransfer,
@@ -150,6 +154,10 @@ export {
     RecommendedGroupsResponse as ApiRecommendedGroupsResponse,
     RecommendedGroupsSuccessResult as ApiRecommendedGroupsSuccessResult,
     SetBioResponse as ApiSetBioResponse,
+    PollContent as ApiPollContent,
+    PollVotes as ApiPollVotes,
+    PollConfig as ApiPollConfig,
+    TotalPollVotes as ApiTotalPollVotes,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

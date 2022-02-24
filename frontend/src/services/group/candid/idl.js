@@ -79,6 +79,28 @@ export const idlFactory = ({ IDL }) => {
     'blob_reference' : IDL.Opt(BlobReference),
     'caption' : IDL.Opt(IDL.Text),
   });
+  const TotalPollVotes = IDL.Variant({
+    'Anonymous' : IDL.Vec(IDL.Tuple(IDL.Nat32, IDL.Nat32)),
+    'Visible' : IDL.Vec(IDL.Tuple(IDL.Nat32, IDL.Vec(UserId))),
+    'Hidden' : IDL.Nat32,
+  });
+  const PollVotes = IDL.Record({
+    'total' : TotalPollVotes,
+    'user' : IDL.Vec(IDL.Nat32),
+  });
+  const TimestampMillis = IDL.Nat64;
+  const PollConfig = IDL.Record({
+    'allow_multiple_votes_per_user' : IDL.Bool,
+    'text' : IDL.Opt(IDL.Text),
+    'show_votes_before_end_date' : IDL.Bool,
+    'end_date' : IDL.Opt(TimestampMillis),
+    'anonymous' : IDL.Bool,
+    'options' : IDL.Vec(IDL.Text),
+  });
+  const PollContent = IDL.Record({
+    'votes' : PollVotes,
+    'config' : PollConfig,
+  });
   const TextContent = IDL.Record({ 'text' : IDL.Text });
   const ImageContent = IDL.Record({
     'height' : IDL.Nat32,
@@ -159,13 +181,13 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
-  const TimestampMillis = IDL.Nat64;
   const DeletedContent = IDL.Record({
     'timestamp' : TimestampMillis,
     'deleted_by' : UserId,
   });
   const MessageContent = IDL.Variant({
     'File' : FileContent,
+    'Poll' : PollContent,
     'Text' : TextContent,
     'Image' : ImageContent,
     'Cryptocurrency' : CryptocurrencyContent,
@@ -367,6 +389,22 @@ export const idlFactory = ({ IDL }) => {
   const PublicSummaryResponse = IDL.Variant({
     'Success' : PublicSummarySuccess,
   });
+  const VoteOperation = IDL.Variant({
+    'RegisterVote' : IDL.Null,
+    'DeleteVote' : IDL.Null,
+  });
+  const RegisterPollVoteArgs = IDL.Record({
+    'poll_option' : IDL.Nat32,
+    'operation' : VoteOperation,
+    'message_index' : MessageIndex,
+  });
+  const RegisterPollVoteResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
+    'PollEnded' : IDL.Null,
+    'Success' : PollVotes,
+    'OptionIndexOutOfRange' : IDL.Null,
+    'PollNotFound' : IDL.Null,
+  });
   const RemoveParticipantArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveParticipantResponse = IDL.Variant({
     'UserNotInGroup' : IDL.Null,
@@ -438,6 +476,13 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(GroupReplyContext),
   });
+  const InvalidPollReason = IDL.Variant({
+    'DuplicateOptions' : IDL.Null,
+    'TooFewOptions' : IDL.Nat32,
+    'TooManyOptions' : IDL.Nat32,
+    'OptionTooLong' : IDL.Nat32,
+    'EndDateInThePast' : IDL.Null,
+  });
   const SendMessageResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
     'CallerNotInGroup' : IDL.Null,
@@ -447,6 +492,7 @@ export const idlFactory = ({ IDL }) => {
       'message_index' : MessageIndex,
     }),
     'MessageEmpty' : IDL.Null,
+    'InvalidPoll' : InvalidPollReason,
   });
   const ToggleReactionArgs = IDL.Record({
     'message_id' : MessageId,
@@ -536,6 +582,11 @@ export const idlFactory = ({ IDL }) => {
         [PublicSummaryArgs],
         [PublicSummaryResponse],
         ['query'],
+      ),
+    'register_poll_vote' : IDL.Func(
+        [RegisterPollVoteArgs],
+        [RegisterPollVoteResponse],
+        [],
       ),
     'remove_participant' : IDL.Func(
         [RemoveParticipantArgs],

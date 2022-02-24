@@ -322,6 +322,11 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
+export type InvalidPollReason = { 'DuplicateOptions' : null } |
+  { 'TooFewOptions' : number } |
+  { 'TooManyOptions' : number } |
+  { 'OptionTooLong' : number } |
+  { 'EndDateInThePast' : null };
 export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,
@@ -340,6 +345,7 @@ export interface Message {
   'message_index' : MessageIndex,
 }
 export type MessageContent = { 'File' : FileContent } |
+  { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Cryptocurrency' : CryptocurrencyContent } |
@@ -458,6 +464,16 @@ export interface PendingICPWithdrawal {
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
+export interface PollConfig {
+  'allow_multiple_votes_per_user' : boolean,
+  'text' : [] | [string],
+  'show_votes_before_end_date' : boolean,
+  'end_date' : [] | [TimestampMillis],
+  'anonymous' : boolean,
+  'options' : Array<string>,
+}
+export interface PollContent { 'votes' : PollVotes, 'config' : PollConfig }
+export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
 export interface PublicGroupSummary {
   'name' : string,
   'wasm_version' : Version,
@@ -509,6 +525,9 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
+export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
+  { 'Visible' : Array<[number, Array<UserId>]> } |
+  { 'Hidden' : number };
 export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
 export type TransactionStatus = { 'Failed' : string } |
   { 'Complete' : null } |
@@ -553,6 +572,8 @@ export interface VideoContent {
   'caption' : [] | [string],
   'width' : number,
 }
+export type VoteOperation = { 'RegisterVote' : null } |
+  { 'DeleteVote' : null };
 export interface _SERVICE {
   'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
 }

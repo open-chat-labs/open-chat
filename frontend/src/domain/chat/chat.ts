@@ -11,6 +11,7 @@ export type MessageContent =
     | AudioContent
     | DeletedContent
     | PlaceholderContent
+    | PollContent
     | CryptocurrencyContent;
 
 export type IndexRange = [number, number];
@@ -196,6 +197,43 @@ export type DeletedContent = {
     kind: "deleted_content";
     deletedBy: string;
     timestamp: bigint;
+};
+
+export type PollContent = {
+    kind: "poll_content";
+    votes: PollVotes;
+    config: PollConfig;
+};
+
+export type PollVotes = {
+    total: TotalPollVotes;
+    user: Set<number>;
+};
+
+export type PollConfig = {
+    allowMultipleVotesPerUser: boolean;
+    text?: string;
+    showVotesBeforeEndDate: boolean;
+    endDate?: bigint;
+    anonymous: boolean;
+    options: string[];
+};
+
+export type TotalPollVotes = AnonymousPollVotes | VisiblePollVotes | HiddenPollVotes;
+
+export type AnonymousPollVotes = {
+    kind: "anonymous_poll_votes";
+    votes: Record<number, number>;
+};
+
+export type VisiblePollVotes = {
+    kind: "visible_poll_votes";
+    votes: Record<number, Set<string>>;
+};
+
+export type HiddenPollVotes = {
+    kind: "hidden_poll_votes";
+    votes: number;
 };
 
 export interface TextContent {

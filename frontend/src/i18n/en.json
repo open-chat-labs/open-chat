@@ -360,7 +360,7 @@
         "poll": "Poll",
         "anonymous": "Anonymous",
         "limitedDuration": "Limited duration",
-        "showBeforeEnd": "Show results before poll ends",
+        "showBeforeEnd": "Show votes before poll ends",
         "pollDuration": "Poll duration",
         "oneHour": "1 hour",
         "oneDay": "1 day",

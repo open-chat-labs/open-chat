@@ -395,6 +395,11 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
+export type InvalidPollReason = { 'DuplicateOptions' : null } |
+  { 'TooFewOptions' : number } |
+  { 'TooManyOptions' : number } |
+  { 'OptionTooLong' : number } |
+  { 'EndDateInThePast' : null };
 export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,
@@ -413,6 +418,7 @@ export interface Message {
   'message_index' : MessageIndex,
 }
 export type MessageContent = { 'File' : FileContent } |
+  { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Cryptocurrency' : CryptocurrencyContent } |
@@ -545,6 +551,16 @@ export type PinMessageResponse = { 'MessageIndexOutOfRange' : null } |
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
+export interface PollConfig {
+  'allow_multiple_votes_per_user' : boolean,
+  'text' : [] | [string],
+  'show_votes_before_end_date' : boolean,
+  'end_date' : [] | [TimestampMillis],
+  'anonymous' : boolean,
+  'options' : Array<string>,
+}
+export interface PollContent { 'votes' : PollVotes, 'config' : PollConfig }
+export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
 export interface PublicGroupSummary {
   'name' : string,
   'wasm_version' : Version,
@@ -561,6 +577,16 @@ export interface PublicGroupSummary {
 export type PublicSummaryArgs = {};
 export type PublicSummaryResponse = { 'Success' : PublicSummarySuccess };
 export interface PublicSummarySuccess { 'summary' : PublicGroupSummary }
+export interface RegisterPollVoteArgs {
+  'poll_option' : number,
+  'operation' : VoteOperation,
+  'message_index' : MessageIndex,
+}
+export type RegisterPollVoteResponse = { 'CallerNotInGroup' : null } |
+  { 'PollEnded' : null } |
+  { 'Success' : PollVotes } |
+  { 'OptionIndexOutOfRange' : null } |
+  { 'PollNotFound' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemoveParticipantArgs { 'user_id' : UserId }
@@ -637,7 +663,8 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
       'message_index' : MessageIndex,
     }
   } |
-  { 'MessageEmpty' : null };
+  { 'MessageEmpty' : null } |
+  { 'InvalidPoll' : InvalidPollReason };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -659,6 +686,9 @@ export type ToggleReactionResponse = { 'MessageNotFound' : null } |
   { 'InvalidReaction' : null } |
   { 'Added' : EventIndex } |
   { 'Removed' : EventIndex };
+export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
+  { 'Visible' : Array<[number, Array<UserId>]> } |
+  { 'Hidden' : number };
 export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
 export type TransactionStatus = { 'Failed' : string } |
   { 'Complete' : null } |
@@ -729,6 +759,8 @@ export interface VideoContent {
   'caption' : [] | [string],
   'width' : number,
 }
+export type VoteOperation = { 'RegisterVote' : null } |
+  { 'DeleteVote' : null };
 export interface _SERVICE {
   'add_participants' : (arg_0: AddParticipantsArgs) => Promise<
       AddParticipantsResponse
@@ -750,6 +782,9 @@ export interface _SERVICE {
   'pin_message' : (arg_0: PinMessageArgs) => Promise<PinMessageResponse>,
   'public_summary' : (arg_0: PublicSummaryArgs) => Promise<
       PublicSummaryResponse
+    >,
+  'register_poll_vote' : (arg_0: RegisterPollVoteArgs) => Promise<
+      RegisterPollVoteResponse
     >,
   'remove_participant' : (arg_0: RemoveParticipantArgs) => Promise<
       RemoveParticipantResponse
