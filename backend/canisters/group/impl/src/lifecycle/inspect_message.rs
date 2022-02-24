@@ -34,7 +34,9 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "unblock_user" => role.can_unblock_user(),
             "unpin_message" => role.can_pin_message(),
             "update_group" => role.can_update_group(),
-            "delete_messages" | "edit_message" | "put_chunk" | "send_message" | "toggle_reaction" => true,
+            "delete_messages" | "edit_message" | "put_chunk" | "register_poll_vote" | "send_message" | "toggle_reaction" => {
+                true
+            }
             _ => false,
         };
 
