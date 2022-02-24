@@ -18,6 +18,7 @@ fn main() {
     generate_candid_method!(group, delete_messages, update);
     generate_candid_method!(group, edit_message, update);
     generate_candid_method!(group, pin_message, update);
+    generate_candid_method!(group, register_poll_vote, update);
     generate_candid_method!(group, remove_participant, update);
     generate_candid_method!(group, send_message, update);
     generate_candid_method!(group, toggle_reaction, update);
