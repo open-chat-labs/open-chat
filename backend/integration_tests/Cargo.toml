@@ -24,6 +24,7 @@ ic-registry-subnet-type = { git = "ssh://github.com/dfinity-lab/dfinity", rev = 
 ic-replica = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 ic-rosetta-api = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 ic-utils = "0.12.1"
+itertools = "0.10.3"
 nodemanager = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 notifications_canister = { path = "../canisters/notifications/api" }
 notifications_canister_client = { path = "../canisters/notifications/client" }
