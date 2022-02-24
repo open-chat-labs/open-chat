@@ -20,9 +20,13 @@ impl DirectChatEvents {
 
     generate_common_methods!(DirectChatEvent);
 
-    fn hydrate_event(&self, event: &EventWrapper<ChatEventInternal>) -> EventWrapper<DirectChatEvent> {
+    fn hydrate_event(
+        &self,
+        event: &EventWrapper<ChatEventInternal>,
+        my_user_id: Option<UserId>,
+    ) -> EventWrapper<DirectChatEvent> {
         let event_data = match &event.event {
-            ChatEventInternal::Message(m) => DirectChatEvent::Message(Box::new(self.inner.hydrate_message(m))),
+            ChatEventInternal::Message(m) => DirectChatEvent::Message(Box::new(self.inner.hydrate_message(m, my_user_id))),
             ChatEventInternal::MessageEdited(m) => DirectChatEvent::MessageEdited(self.inner.hydrate_updated_message(m)),
             ChatEventInternal::MessageDeleted(m) => DirectChatEvent::MessageDeleted(self.inner.hydrate_updated_message(m)),
             ChatEventInternal::MessageReactionAdded(m) => {

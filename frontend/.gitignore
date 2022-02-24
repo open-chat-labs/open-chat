@@ -1,5 +1,3 @@
-node_modules
-public/build
 .env
-public/_/raw/sw.js
-public/_/raw/sw.js.map
+build
+node_modules

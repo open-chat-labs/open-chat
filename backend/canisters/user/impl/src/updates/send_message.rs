@@ -22,10 +22,13 @@ use user_canister::send_message::{Response::*, *};
 async fn send_message(mut args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = args.content.validate() {
+    let now = read_state(|state| state.env.now());
+
+    if let Err(error) = args.content.validate_for_new_message(now) {
         return match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
+            ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
         };
     }
 
@@ -77,7 +80,7 @@ fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>,
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
         sender: my_user_id,
-        content: args.content.clone(),
+        content: args.content.clone().new_content_into_internal(),
         replies_to: args.replies_to.clone(),
         now,
     };

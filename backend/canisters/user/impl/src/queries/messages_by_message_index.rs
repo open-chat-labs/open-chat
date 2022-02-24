@@ -11,6 +11,8 @@ fn messages_by_message_index(args: Args) -> Response {
 
 fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(chat) = runtime_state.data.direct_chats.get(&args.user_id.into()) {
+        let my_user_id = runtime_state.env.canister_id().into();
+
         let messages: Vec<_> = args
             .messages
             .into_iter()
@@ -18,7 +20,7 @@ fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> R
             .map(|e| EventWrapper {
                 index: e.index,
                 timestamp: e.timestamp,
-                event: chat.events.hydrate_message(e.event),
+                event: chat.events.hydrate_message(e.event, Some(my_user_id)),
             })
             .collect();
 

@@ -70,7 +70,7 @@ fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut Runtime
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
         sender,
-        content: args.content,
+        content: args.content.new_content_into_internal(),
         replies_to: args.replies_to,
         now,
     };
