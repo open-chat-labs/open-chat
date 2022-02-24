@@ -65,6 +65,8 @@ impl ChatEventInternal {
                 | ChatEventInternal::MessageReactionAdded(_)
                 | ChatEventInternal::MessageReactionRemoved(_)
                 | ChatEventInternal::DirectChatCreated(_)
+                | ChatEventInternal::PollVoteRegistered(_)
+                | ChatEventInternal::PollVoteDeleted(_)
         )
     }
 
@@ -93,6 +95,8 @@ impl ChatEventInternal {
                 | ChatEventInternal::UsersUnblocked(_)
                 | ChatEventInternal::MessagePinned(_)
                 | ChatEventInternal::MessageUnpinned(_)
+                | ChatEventInternal::PollVoteRegistered(_)
+                | ChatEventInternal::PollVoteDeleted(_)
         )
     }
 }
