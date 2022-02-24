@@ -23,6 +23,7 @@ type SendMessageResponse =
         };
         MessageEmpty;
         TextTooLong: nat32;
+        InvalidPoll: InvalidPollReason;
         CallerNotInGroup;
     };
 
@@ -47,6 +48,22 @@ type DeleteMessagesArgs =
 type DeleteMessagesResponse =
     variant {
         Success;
+        CallerNotInGroup;
+    };
+
+type RegisterPollVoteArgs =
+    record {
+        message_index: MessageIndex;
+        poll_option: nat32;
+        operation: VoteOperation;
+    };
+
+type RegisterPollVoteResponse =
+    variant {
+        Success: PollVotes;
+        PollNotFound;
+        PollEnded;
+        OptionIndexOutOfRange;
         CallerNotInGroup;
     };
 
@@ -365,6 +382,7 @@ service: {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
+    register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
 
     selected_initial: (SelectedInitialArgs) -> (SelectedInitialResponse) query;
