@@ -2,6 +2,7 @@
 
 <script lang="ts">
     import Poll from "svelte-material-icons/Poll.svelte";
+    import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import { config } from "process";
     import Progress from "../Progress.svelte";
     import { _ } from "svelte-i18n";
@@ -9,16 +10,68 @@
     import { userStore } from "../../stores/user";
     import { iconSize } from "../../stores/iconSize";
     import { toLongDateString, toShortTimeString } from "../../utils/date";
+    import { createEventDispatcher } from "svelte";
+    import { now } from "../../stores/time";
+
+    const dispatch = createEventDispatcher();
 
     export let content: PollContent;
-    export let userId: string;
+    export let me: boolean;
+
+    $: txtColor = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
 
     $: date = content.config.endDate ? new Date(Number(content.config.endDate)) : undefined;
 
-    $: canVote = false;
+    $: haveIVoted = content.votes.user.size > 0;
+
+    $: finished = date ? date.getTime() < $now : false;
+
+    let numberOfVotes = totalVotes();
 
     function vote(idx: number) {
-        console.log("voted for ", idx);
+        if (finished) return;
+
+        dispatch("registerVote", {
+            type: votedFor(idx) ? "delete" : "register",
+            answerIndex: idx,
+        });
+    }
+
+    function votedFor(idx: number): boolean {
+        return content.votes.user.has(idx);
+    }
+
+    function totalVotes(): number {
+        if (content.votes.total.kind === "anonymous_poll_votes") {
+            return Object.values(content.votes.total.votes).reduce((total, n) => total + n, 0);
+        }
+        if (content.votes.total.kind === "hidden_poll_votes") {
+            return content.votes.total.votes;
+        }
+        if (content.votes.total.kind === "visible_poll_votes") {
+            return Object.values(content.votes.total.votes).reduce((total, n) => total + n.size, 0);
+        }
+        return 0;
+    }
+
+    function votesForAnswer(idx: number): number {
+        if (content.votes.total.kind === "anonymous_poll_votes") {
+            return content.votes.total.votes[idx] ?? 0;
+        }
+        if (content.votes.total.kind === "hidden_poll_votes") {
+            return 0;
+        }
+        if (content.votes.total.kind === "visible_poll_votes") {
+            return content.votes.total.votes[idx]?.size ?? 0;
+        }
+        return 0;
+    }
+
+    function percentageOfVote(idx: number) {
+        if (!haveIVoted) {
+            return 0;
+        }
+        return (votesForAnswer(idx) / numberOfVotes) * 100;
     }
 </script>
 
@@ -26,23 +79,37 @@
     {#if content.config.text !== undefined}
         <div class="question">
             <div class="icon">
-                <Poll size={$iconSize} color={"#fff"} />
+                <Poll size={$iconSize} color={txtColor} />
             </div>
             <p class="question-txt">{content.config.text}</p>
         </div>
     {/if}
     <div class="answers">
         {#each [...content.config.options] as answer, i (answer)}
-            <div class="answer-text" on:click={() => vote(i)}>
-                <Progress label={answer} bg={"accent"} percent={i * 10} />
+            <div class="answer-text" class:finished on:click={() => vote(i)}>
+                <Progress bg={"button"} percent={percentageOfVote(i)}>
+                    <div class="label">
+                        <span>{answer}</span>
+                        {#if votedFor(i)}
+                            <CheckCircleOutline size={"1em"} color={txtColor} />
+                        {/if}
+                    </div>
+                </Progress>
             </div>
         {/each}
     </div>
+    <p class="total-votes">
+        {$_("poll.totalVotes", { values: { total: numberOfVotes.toString() } })}
+    </p>
     {#if date !== undefined}
         <p class="timestamp">
-            {$_("poll.pollEnds", {
-                values: { end: `${toLongDateString(date)} @ ${toShortTimeString(date)}` },
-            })}
+            {#if finished}
+                {$_("poll.finished")}
+            {:else}
+                {$_("poll.pollEnds", {
+                    values: { end: `${toLongDateString(date)} @ ${toShortTimeString(date)}` },
+                })}
+            {/if}
         </p>
     {/if}
 </div>
@@ -59,6 +126,12 @@
         }
     }
 
+    .label {
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+    }
+
     .answers {
         margin-bottom: $sp3;
     }
@@ -66,6 +139,15 @@
     .answer-text {
         padding: $sp3 0;
         min-width: 300px;
+        cursor: pointer;
+
+        &.finished {
+            cursor: default;
+        }
+    }
+
+    .total-votes {
+        @include font(bold, normal, fs-70);
     }
 
     .timestamp {

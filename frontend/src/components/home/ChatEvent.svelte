@@ -68,6 +68,7 @@
         on:blockUser
         on:pinMessage
         on:unpinMessage
+        on:registerVote
         on:editMessage={editEvent}
         eventIndex={event.index}
         timestamp={event.timestamp}

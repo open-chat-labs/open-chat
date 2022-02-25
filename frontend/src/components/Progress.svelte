@@ -1,7 +1,6 @@
 <script lang="ts">
     export let percent: number;
     export let bg: "button" | "accent" = "button";
-    export let label: string | undefined = undefined;
 </script>
 
 <div class="bar">
@@ -10,9 +9,9 @@
         style={`width: ${percent}%; background-color: ${
             bg === "button" ? "var(--button-bg)" : "var(--accent)"
         }`} />
-    {#if label !== undefined}
-        <span title={label} class="label">{label}</span>
-    {/if}
+    <div class="label">
+        <slot />
+    </div>
 </div>
 
 <style type="text/scss">

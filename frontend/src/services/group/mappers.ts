@@ -19,6 +19,7 @@ import type {
     ApiMessageEventWrapper,
     ApiPinMessageResponse,
     ApiUnpinMessageResponse,
+    ApiRegisterPollVoteResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -42,6 +43,7 @@ import type {
     Message,
     PinMessageResponse,
     UnpinMessageResponse,
+    RegisterPollVoteResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -289,6 +291,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("MessageEmpty" in candid) {
         return { kind: "message_empty" };
     }
+    if ("InvalidPoll" in candid) {
+        return { kind: "invalid_poll" };
+    }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
@@ -424,6 +429,27 @@ export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMess
         return "no_change";
     }
     throw new UnsupportedValueError("Unexpected ApiUnpinMessageResponse type received", candid);
+}
+
+export function registerPollVoteResponse(
+    candid: ApiRegisterPollVoteResponse
+): RegisterPollVoteResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("PollEnded" in candid) {
+        return "poll_ended";
+    }
+    if ("OptionIndexOutOfRange" in candid) {
+        return "out_of_range";
+    }
+    if ("PollNotFound" in candid) {
+        return "poll_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiRegisterPollVoteResponse type received", candid);
 }
 
 export function getMessagesByMessageIndexResponse(
@@ -626,6 +652,20 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "message_unpinned",
             unpinnedBy: candid.MessageUnpinned.unpinned_by.toString(),
             messageIndex: candid.MessageUnpinned.message_index,
+        };
+    }
+
+    if ("PollVoteRegistered" in candid) {
+        return {
+            kind: "poll_vote_registered",
+            message: updatedMessage(candid.PollVoteRegistered),
+        };
+    }
+
+    if ("PollVoteDeleted" in candid) {
+        return {
+            kind: "poll_vote_deleted",
+            message: updatedMessage(candid.PollVoteDeleted),
         };
     }
 

@@ -57,6 +57,7 @@ import type {
     ParticipantRole,
     PinMessageResponse,
     UnpinMessageResponse,
+    RegisterPollVoteResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
@@ -705,5 +706,14 @@ export class ServiceContainer implements MarkMessagesRead {
 
     unpinMessage(chatId: string, messageIndex: number): Promise<UnpinMessageResponse> {
         return this.getGroupClient(chatId).unpinMessage(messageIndex);
+    }
+
+    registerGroupChatPollVote(
+        chatId: string,
+        messageIdx: number,
+        answerIdx: number,
+        voteType: "register" | "delete"
+    ): Promise<RegisterPollVoteResponse> {
+        return this.getGroupClient(chatId).registerPollVote(messageIdx, answerIdx, voteType);
     }
 }

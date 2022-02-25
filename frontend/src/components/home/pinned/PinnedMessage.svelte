@@ -82,7 +82,7 @@
             {/if}
         {/if}
 
-        <ChatMessageContent {userId} {fill} {me} content={msg.content} />
+        <ChatMessageContent {fill} {me} content={msg.content} />
     </div>
 </div>
 

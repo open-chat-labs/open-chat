@@ -7,6 +7,7 @@
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
+    import Poll from "svelte-material-icons/Poll.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import DeleteAlertOutline from "svelte-material-icons/DeleteAlertOutline.svelte";
@@ -58,6 +59,10 @@
 
     function toggleMuteNotifications() {
         dispatch("toggleMuteNotifications");
+    }
+
+    function createPoll() {
+        dispatch("createPoll");
     }
 
     function markAllRead() {
@@ -320,6 +325,10 @@
                                 </MenuItem>
                             {/if}
                         {/if}
+                        <MenuItem on:click={createPoll}>
+                            <Poll size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                            <div slot="text">{$_("poll.create")}</div>
+                        </MenuItem>
                         {#if unreadMessages > 0}
                             <MenuItem on:click={markAllRead}>
                                 <CheckboxMultipleMarked

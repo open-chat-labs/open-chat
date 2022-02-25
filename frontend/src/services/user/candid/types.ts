@@ -177,7 +177,9 @@ export type DirectChatCreated = {};
 export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'Message' : Message } |
+  { 'PollVoteRegistered' : UpdatedMessage } |
   { 'MessageDeleted' : UpdatedMessage } |
+  { 'PollVoteDeleted' : UpdatedMessage } |
   { 'DirectChatCreated' : DirectChatCreated } |
   { 'MessageEdited' : UpdatedMessage };
 export interface DirectChatEventWrapper {
@@ -303,11 +305,13 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'Message' : Message } |
   { 'UsersUnblocked' : UsersUnblocked } |
+  { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'RoleChanged' : RoleChanged } |
+  { 'PollVoteDeleted' : UpdatedMessage } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'MessageEdited' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |

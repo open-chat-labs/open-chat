@@ -138,6 +138,8 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "message_edited":
             case "reaction_added":
             case "reaction_removed":
+            case "poll_vote_registered":
+            case "poll_vote_deleted":
                 userIds.add(e.event.message.updatedBy);
                 break;
             case "direct_chat_created":
@@ -183,6 +185,8 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "message_edited":
         case "reaction_added":
         case "reaction_removed":
+        case "poll_vote_registered":
+        case "poll_vote_deleted":
             return event.message.updatedBy;
         case "direct_chat_created":
         case "participant_dismissed_as_super_admin":
@@ -632,7 +636,11 @@ export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
         ew.event.kind !== "reaction_added" &&
         ew.event.kind !== "message_deleted" &&
         ew.event.kind !== "message_edited" &&
-        ew.event.kind !== "reaction_removed"
+        ew.event.kind !== "reaction_removed" &&
+        ew.event.kind !== "message_pinned" &&
+        ew.event.kind !== "message_unpinned" &&
+        ew.event.kind !== "poll_vote_registered" &&
+        ew.event.kind !== "poll_vote_deleted"
     );
 }
 
@@ -811,7 +819,10 @@ export function replaceAffected(
     });
     if (toCacheBust.length > 0) {
         // Note - this is fire and forget which is a tiny bit dodgy
-        overwriteCachedEvents(chatId, toCacheBust);
+        console.log("Busting: ", toCacheBust);
+        overwriteCachedEvents(chatId, toCacheBust).catch((err) => {
+            console.log("failed to update cache: ", err, toCacheBust);
+        });
     }
     return updated;
 }

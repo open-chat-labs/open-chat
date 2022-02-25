@@ -285,6 +285,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("TransactionFailed" in candid) {
         return { kind: "transaction_failed" };
     }
+    if ("InvalidPoll" in candid) {
+        return { kind: "invalid_poll" };
+    }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 

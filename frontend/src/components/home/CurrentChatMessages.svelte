@@ -431,6 +431,12 @@
     function unpinMessage(ev: CustomEvent<Message>) {
         controller.unpinMessage(ev.detail.messageIndex);
     }
+
+    function registerVote(
+        ev: CustomEvent<{ messageIndex: number; answerIndex: number; type: "register" | "delete" }>
+    ) {
+        controller.registerPollVote(ev.detail.messageIndex, ev.detail.answerIndex, ev.detail.type);
+    }
 </script>
 
 <div bind:this={messagesDiv} class="chat-messages" on:scroll|passive={onScroll} id="chat-messages">
@@ -468,6 +474,7 @@
                         on:blockUser={blockUser}
                         on:pinMessage={pinMessage}
                         on:unpinMessage={unpinMessage}
+                        on:registerVote={registerVote}
                         event={evt} />
                 {/each}
             {/each}

@@ -66,7 +66,7 @@
     let groupChat = chatType === "group_chat";
     let username = sender?.username;
     let showEmojiPicker = false;
-    let debug = false;
+    let debug = true;
     let viewProfile = false;
     let usernameLink: Link;
     let usernameLinkBoundingRect: DOMRect | undefined = undefined;
@@ -206,6 +206,13 @@
         viewProfile = false;
     }
 
+    function registerVote(ev: CustomEvent<{ answerIndex: number; type: "register" | "delete" }>) {
+        dispatch("registerVote", {
+            ...ev.detail,
+            messageIndex: msg.messageIndex,
+        });
+    }
+
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 </script>
 
@@ -298,11 +305,11 @@
             {/if}
 
             <ChatMessageContent
-                {userId}
                 {fill}
                 {me}
                 content={msg.content}
-                height={mediaCalculatedHeight} />
+                height={mediaCalculatedHeight}
+                on:registerVote={registerVote} />
 
             {#if !deleted}
                 <TimeAndTicks

@@ -4,7 +4,6 @@
     import HoverIcon from "../HoverIcon.svelte";
     import FileAttacher from "./FileAttacher.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
-    import PollBuilder from "./PollBuilder.svelte";
     import { emojiStore } from "../../stores/emoji";
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
@@ -27,8 +26,6 @@
     export let preview: boolean;
     export let showEmojiPicker = false;
     export let joining: GroupChatSummary | undefined;
-
-    let creatingPoll = false;
 
     $: textContent = controller.textContent;
     $: editingEvent = controller.editingEvent;
@@ -220,8 +217,7 @@
      */
     function parseCommands(txt: string): boolean {
         if (/^!poll$/.test(txt)) {
-            console.log("create a poll");
-            creatingPoll = true;
+            dispatch("createPoll");
             return true;
         }
         return false;
@@ -317,8 +313,6 @@
         dispatch("cancelPreview", controller.chatId);
     }
 </script>
-
-<PollBuilder on:sendPoll bind:open={creatingPoll} />
 
 {#if showMentionPicker}
     <MentionPicker

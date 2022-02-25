@@ -114,7 +114,7 @@
         }
     }
 
-    function sendPoll(ev: CustomEvent<PollContent>) {
+    export function sendPoll(ev: CustomEvent<PollContent>) {
         sendMessageWithAttachment(undefined, [], ev.detail);
     }
 
@@ -190,7 +190,7 @@
         {blocked}
         {joining}
         on:sendMessage={sendMessage}
-        on:sendPoll={sendPoll}
+        on:createPoll
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         on:joinGroup

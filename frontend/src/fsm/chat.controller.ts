@@ -212,6 +212,25 @@ export class ChatController {
         });
     }
 
+    registerPollVote(messageIndex: number, answerIndex: number, type: "register" | "delete"): void {
+        if (this.chatVal.kind === "group_chat") {
+            this.api
+                .registerGroupChatPollVote(this.chatId, messageIndex, answerIndex, type)
+                .then((resp) => {
+                    if (resp !== "success") {
+                        toastStore.showFailureToast("poll.voteFailed");
+                        rollbar.error("Poll vote failed: ", resp);
+                    } else {
+                        toastStore.showSuccessToast("poll.voteCounted");
+                    }
+                })
+                .catch((err) => {
+                    toastStore.showFailureToast("poll.voteFailed");
+                    rollbar.error("Poll vote failed: ", err);
+                });
+        }
+    }
+
     unpinMessage(messageIndex: number): void {
         if (this.chatVal.kind === "group_chat") {
             this.removePinnedMessage(messageIndex);

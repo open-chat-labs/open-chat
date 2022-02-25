@@ -36,7 +36,6 @@
         {username}
     </h4>
     <ChatMessageContent
-        {userId}
         fill={false}
         {me}
         truncate={true}

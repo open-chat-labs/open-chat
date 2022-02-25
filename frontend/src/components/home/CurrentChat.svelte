@@ -10,6 +10,7 @@
     import { onDestroy } from "svelte";
     import { getMinVisibleMessageIndex, isPreviewing } from "../../domain/chat/chat.utils";
     import type { GroupChatSummary, Mention } from "../../domain/chat/chat";
+    import PollBuilder from "./PollBuilder.svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -19,6 +20,8 @@
     let unreadMessages = 0;
     let firstUnreadMessage: number | undefined;
     let firstUnreadMention: Mention | undefined;
+    let creatingPoll = false;
+    let footer: Footer;
 
     $: pinned = controller.pinnedMessages;
 
@@ -95,12 +98,18 @@
         controller.messageRead(ev.detail.messageIndex, ev.detail.messageId);
     }
 
+    function createPoll() {
+        creatingPoll = true;
+    }
+
     $: chat = controller.chat;
 
     $: preview = isPreviewing($chat);
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
+
+<PollBuilder on:sendPoll={footer.sendPoll} bind:open={creatingPoll} />
 
 <div class="wrapper">
     <CurrentChatHeader
@@ -115,6 +124,7 @@
         on:leaveGroup
         on:deleteGroup
         on:showPinned
+        on:createPoll={createPoll}
         {blocked}
         {preview}
         {unreadMessages}
@@ -129,7 +139,16 @@
         {firstUnreadMention}
         {firstUnreadMessage}
         {unreadMessages} />
-    <Footer {joining} {preview} {blocked} {controller} on:joinGroup on:cancelPreview on:upgrade />
+    <Footer
+        bind:this={footer}
+        {joining}
+        {preview}
+        {blocked}
+        {controller}
+        on:joinGroup
+        on:cancelPreview
+        on:upgrade
+        on:createPoll={createPoll} />
 </div>
 
 <style type="text/scss">

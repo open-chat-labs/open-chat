@@ -235,7 +235,9 @@ export const idlFactory = ({ IDL }) => {
     'MessageReactionRemoved' : UpdatedMessage,
     'MessageReactionAdded' : UpdatedMessage,
     'Message' : Message,
+    'PollVoteRegistered' : UpdatedMessage,
     'MessageDeleted' : UpdatedMessage,
+    'PollVoteDeleted' : UpdatedMessage,
     'DirectChatCreated' : DirectChatCreated,
     'MessageEdited' : UpdatedMessage,
   });
