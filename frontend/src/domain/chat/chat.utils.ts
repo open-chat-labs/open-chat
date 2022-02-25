@@ -718,6 +718,7 @@ function mergeMessageEvents(
                 ...existing,
                 event: {
                     ...existing.event,
+                    content: incoming.event.content,
                     reactions: merged,
                 },
             };

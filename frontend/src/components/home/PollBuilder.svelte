@@ -25,9 +25,9 @@
     let pollQuestion: string = "";
     let nextAnswer: string = "";
     let answerError: string | undefined = "";
-    let anonymous = true;
+    let anonymous = false;
     let limitedDuration = true;
-    let showVotesBeforeEndDate = false;
+    let showVotesBeforeEndDate = true;
     let allowMultipleVotesPerUser = false;
     let selectedTab: "poll" | "settings" = "poll";
     let selectedDuration: Duration = "oneDay";
@@ -84,7 +84,7 @@
             kind: "poll_content",
             votes: {
                 total: createPollVotes(),
-                user: new Set(),
+                user: [],
             },
             config: {
                 allowMultipleVotesPerUser,

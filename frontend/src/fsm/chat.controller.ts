@@ -51,6 +51,7 @@ import { writable } from "svelte/store";
 import { rollbar } from "../utils/logging";
 import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
+import { enterSend } from "stores/settings";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
@@ -212,7 +213,82 @@ export class ChatController {
         });
     }
 
+    /**
+     * In order to get the UI to update immediately, we want to find the poll message that we are referring to,
+     * and update it to reflect the user's vote
+     */
+    private updatePollContent(
+        messageIndex: number,
+        answerIndex: number,
+        type: "register" | "delete"
+    ): void {
+        this.events.update((events) => {
+            return events.map((evt) => {
+                if (
+                    evt.event.kind === "message" &&
+                    evt.event.messageIndex === messageIndex &&
+                    evt.event.content.kind === "poll_content"
+                ) {
+                    const votes = evt.event.content.votes;
+
+                    if (type === "register") {
+                        // TODO - currently this just adds the new vote
+                        // in addition IFF multiple votes are *not* allowed, it needs to remove their previous vote
+                        // write some tests around this!
+                        if (votes.user.includes(answerIndex)) {
+                            // can't vote for the same thing twice
+                            return evt;
+                        }
+                        votes.user.push(answerIndex);
+                        if (votes.total.kind === "anonymous_poll_votes") {
+                            if (votes.total.votes[answerIndex] === undefined) {
+                                votes.total.votes[answerIndex] = 0;
+                            }
+                            votes.total.votes[answerIndex] = votes.total.votes[answerIndex] + 1;
+                        }
+                        if (votes.total.kind === "hidden_poll_votes") {
+                            votes.total.votes = votes.total.votes + 1;
+                        }
+                        if (votes.total.kind === "visible_poll_votes") {
+                            if (votes.total.votes[answerIndex] === undefined) {
+                                votes.total.votes[answerIndex] = [];
+                            }
+                            votes.total.votes[answerIndex].push(this.user.userId);
+                        }
+                    }
+                    if (type === "delete") {
+                        votes.user = votes.user.filter((i) => i !== answerIndex);
+                        if (votes.total.kind === "anonymous_poll_votes") {
+                            votes.total.votes[answerIndex] = votes.total.votes[answerIndex] - 1;
+                        }
+                        if (votes.total.kind === "hidden_poll_votes") {
+                            votes.total.votes = votes.total.votes - 1;
+                        }
+                        if (votes.total.kind === "visible_poll_votes") {
+                            votes.total.votes[answerIndex] = votes.total.votes[answerIndex].filter(
+                                (u) => u !== this.user.userId
+                            );
+                        }
+                    }
+
+                    console.log("Updated poll: ", evt.event.content);
+                    return {
+                        ...evt,
+                        event: {
+                            ...evt.event,
+                            content: {
+                                ...evt.event.content,
+                            },
+                        },
+                    };
+                }
+                return evt;
+            });
+        });
+    }
+
     registerPollVote(messageIndex: number, answerIndex: number, type: "register" | "delete"): void {
+        this.updatePollContent(messageIndex, answerIndex, type);
         if (this.chatVal.kind === "group_chat") {
             this.api
                 .registerGroupChatPollVote(this.chatId, messageIndex, answerIndex, type)

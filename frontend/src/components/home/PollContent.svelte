@@ -1,13 +1,10 @@
-<svelte:options immutable={true} />
-
+<!-- <svelte:options immutable={true} /> -->
 <script lang="ts">
     import Poll from "svelte-material-icons/Poll.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
-    import { config } from "process";
     import Progress from "../Progress.svelte";
     import { _ } from "svelte-i18n";
     import type { PollContent } from "../../domain/chat/chat";
-    import { userStore } from "../../stores/user";
     import { iconSize } from "../../stores/iconSize";
     import { toLongDateString, toShortTimeString } from "../../utils/date";
     import { createEventDispatcher } from "svelte";
@@ -22,11 +19,11 @@
 
     $: date = content.config.endDate ? new Date(Number(content.config.endDate)) : undefined;
 
-    $: haveIVoted = content.votes.user.size > 0;
+    $: haveIVoted = content.votes.user.length > 0;
 
     $: finished = date ? date.getTime() < $now : false;
 
-    let numberOfVotes = totalVotes();
+    $: numberOfVotes = totalVotes(content);
 
     function vote(idx: number) {
         if (finished) return;
@@ -38,10 +35,10 @@
     }
 
     function votedFor(idx: number): boolean {
-        return content.votes.user.has(idx);
+        return content.votes.user.includes(idx);
     }
 
-    function totalVotes(): number {
+    function totalVotes(content: PollContent): number {
         if (content.votes.total.kind === "anonymous_poll_votes") {
             return Object.values(content.votes.total.votes).reduce((total, n) => total + n, 0);
         }
@@ -49,7 +46,10 @@
             return content.votes.total.votes;
         }
         if (content.votes.total.kind === "visible_poll_votes") {
-            return Object.values(content.votes.total.votes).reduce((total, n) => total + n.size, 0);
+            return Object.values(content.votes.total.votes).reduce(
+                (total, n) => total + n.length,
+                0
+            );
         }
         return 0;
     }
@@ -62,7 +62,7 @@
             return 0;
         }
         if (content.votes.total.kind === "visible_poll_votes") {
-            return content.votes.total.votes[idx]?.size ?? 0;
+            return content.votes.total.votes[idx]?.length ?? 0;
         }
         return 0;
     }

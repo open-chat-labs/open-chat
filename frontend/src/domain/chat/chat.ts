@@ -207,7 +207,7 @@ export type PollContent = {
 
 export type PollVotes = {
     total: TotalPollVotes;
-    user: Set<number>;
+    user: number[];
 };
 
 export type PollConfig = {
@@ -228,7 +228,7 @@ export type AnonymousPollVotes = {
 
 export type VisiblePollVotes = {
     kind: "visible_poll_votes";
-    votes: Record<number, Set<string>>;
+    votes: Record<number, string[]>;
 };
 
 export type HiddenPollVotes = {

@@ -136,7 +136,7 @@ function pollConfig(candid: ApiPollConfig): PollConfig {
 function pollVotes(candid: ApiPollVotes): PollVotes {
     return {
         total: totalPollVotes(candid.total),
-        user: new Set(candid.user),
+        user: candid.user,
     };
 }
 
@@ -154,9 +154,9 @@ function totalPollVotes(candid: ApiTotalPollVotes): TotalPollVotes {
         return {
             kind: "visible_poll_votes",
             votes: candid.Visible.reduce((agg, [idx, userIds]) => {
-                agg[idx] = new Set(userIds.map((p) => p.toString()));
+                agg[idx] = userIds.map((p) => p.toString());
                 return agg;
-            }, {} as Record<number, Set<string>>),
+            }, {} as Record<number, string[]>),
         };
     }
     if ("Hidden" in candid) {

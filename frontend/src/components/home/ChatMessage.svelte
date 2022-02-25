@@ -66,7 +66,7 @@
     let groupChat = chatType === "group_chat";
     let username = sender?.username;
     let showEmojiPicker = false;
-    let debug = true;
+    let debug = false;
     let viewProfile = false;
     let usernameLink: Link;
     let usernameLinkBoundingRect: DOMRect | undefined = undefined;
