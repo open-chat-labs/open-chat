@@ -36,6 +36,10 @@ impl DirectChatEvents {
                 DirectChatEvent::MessageReactionRemoved(self.inner.hydrate_updated_message(m))
             }
             ChatEventInternal::DirectChatCreated(d) => DirectChatEvent::DirectChatCreated(*d),
+            ChatEventInternal::PollVoteRegistered(v) => {
+                DirectChatEvent::PollVoteRegistered(self.inner.hydrate_updated_message(v))
+            }
+            ChatEventInternal::PollVoteDeleted(v) => DirectChatEvent::PollVoteDeleted(self.inner.hydrate_updated_message(v)),
             _ => panic!("Unrecognised event type"),
         };
 
