@@ -17,7 +17,7 @@
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
-    export let user: UserSummary | undefined;
+    export let user: UserSummary;
     export let senderId: string;
     export let msg: Message;
     export let me: boolean;
@@ -27,6 +27,7 @@
     let viewProfile = false;
     let usernameLink: Link;
     let usernameLinkBoundingRect: DOMRect | undefined = undefined;
+    let userId = user.userId;
 
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
@@ -81,7 +82,7 @@
             {/if}
         {/if}
 
-        <ChatMessageContent {fill} {me} content={msg.content} />
+        <ChatMessageContent {userId} {fill} {me} content={msg.content} />
     </div>
 </div>
 

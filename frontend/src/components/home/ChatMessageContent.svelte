@@ -5,7 +5,7 @@
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";
     import AudioContent from "./AudioContent.svelte";
-
+    import PollContent from "./PollContent.svelte";
     import FileContent from "./FileContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
@@ -19,6 +19,7 @@
     export let fill: boolean;
     export let reply: boolean = false;
     export let height: number | undefined = undefined;
+    export let userId: string;
 
     function truncateText(text: string): string {
         // todo - we might be able to do something nicer than this with pure css, but we just need to do
@@ -48,6 +49,5 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "poll_content"}
-    <h1>This is a poll</h1>
-    <p>{content.config.text}</p>
+    <PollContent {content} {userId} />
 {/if}

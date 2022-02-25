@@ -366,6 +366,7 @@
         "oneDay": "1 day",
         "oneWeek": "1 week",
         "allowMultipleVotes": "Allow multiple votes",
-        "start": "Start"
+        "start": "Start",
+        "pollEnds": "Poll ends {end}"
     }
 }

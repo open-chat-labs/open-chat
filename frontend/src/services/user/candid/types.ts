@@ -625,6 +625,17 @@ export type RecommendedGroupsResponse = {
 export interface RecommendedGroupsSuccessResult {
   'groups' : Array<PublicGroupSummary>,
 }
+export interface RegisterPollVoteArgs {
+  'user_id' : UserId,
+  'poll_option' : number,
+  'operation' : VoteOperation,
+  'message_index' : MessageIndex,
+}
+export type RegisterPollVoteResponse = { 'ChatNotFound' : null } |
+  { 'PollEnded' : null } |
+  { 'Success' : PollVotes } |
+  { 'OptionIndexOutOfRange' : null } |
+  { 'PollNotFound' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RelinquishGroupSuperAdminArgs { 'chat_id' : ChatId }
@@ -838,6 +849,9 @@ export interface _SERVICE {
     >,
   'recommended_groups' : (arg_0: RecommendedGroupsArgs) => Promise<
       RecommendedGroupsResponse
+    >,
+  'register_poll_vote' : (arg_0: RegisterPollVoteArgs) => Promise<
+      RegisterPollVoteResponse
     >,
   'relinquish_group_super_admin' : (
       arg_0: RelinquishGroupSuperAdminArgs,

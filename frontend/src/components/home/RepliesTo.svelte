@@ -14,10 +14,11 @@
     import { toTitleCase } from "../../utils/string";
 
     export let chatId: string;
-    export let user: UserSummary | undefined;
+    export let user: UserSummary;
     export let repliesTo: RehydratedReplyContext;
 
     let debug = false;
+    let userId = user.userId;
 
     $: me = repliesTo.senderId === user?.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
@@ -31,7 +32,9 @@
     }
 
     function getUsernameFromReplyContext(replyContext: RehydratedReplyContext): string {
-        return me ? toTitleCase($_("you")) : $userStore[replyContext.senderId]?.username ?? $_("unknownUser");
+        return me
+            ? toTitleCase($_("you"))
+            : $userStore[replyContext.senderId]?.username ?? $_("unknownUser");
     }
 </script>
 
@@ -41,7 +44,7 @@
             {getUsernameFromReplyContext(repliesTo)}
         </h4>
         {#if repliesTo.content !== undefined}
-            <ChatMessageContent fill={false} reply={true} content={repliesTo.content} />
+            <ChatMessageContent {userId} fill={false} reply={true} content={repliesTo.content} />
             {#if debug}
                 <pre>EventIdx: {repliesTo.eventIndex}</pre>
                 <pre>MsgId: {repliesTo.messageId}</pre>

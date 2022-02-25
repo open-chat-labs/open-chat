@@ -176,6 +176,10 @@ function extractMessageContent(
         result = {
             text: "TODO - placeholder content",
         };
+    } else if (content.kind === "poll_content") {
+        result = {
+            text: "TODO - poll content",
+        };
     } else {
         throw new UnsupportedValueError(
             "Unexpected message content type received with notification",
