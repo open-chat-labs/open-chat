@@ -96,6 +96,8 @@ type DirectChatEvent =
         MessageDeleted: UpdatedMessage;
         MessageReactionAdded: UpdatedMessage;
         MessageReactionRemoved: UpdatedMessage;
+        PollVoteRegistered: UpdatedMessage;
+        PollVoteDeleted: UpdatedMessage;
     };
 
 type DirectChatEventWrapper =
@@ -179,6 +181,8 @@ type GroupChatEvent =
         UsersUnblocked: UsersUnblocked;
         MessagePinned: MessagePinned;
         MessageUnpinned: MessageUnpinned;
+        PollVoteRegistered: UpdatedMessage;
+        PollVoteDeleted: UpdatedMessage;
     };
 
 type GroupChatEventWrapper =
