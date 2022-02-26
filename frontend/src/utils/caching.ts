@@ -585,7 +585,10 @@ export async function loadMessagesByMessageIndex(
                 "message_index_event_index",
                 `${chatId}_${msgIdx}`
             );
-            if (eventIdx === undefined) return undefined;
+            if (eventIdx === undefined) {
+                missing.add(msgIdx);
+                return undefined;
+            }
             const evt: EventWrapper<ChatEvent> | undefined = await loadEventByIndex(
                 resolvedDb,
                 chatId,

@@ -9,7 +9,8 @@ OPEN_STORAGE_DIR=$3
 # Deploy the Internet Identity service
 pushd $INTERNET_IDENTITY_DIR
 rm -r .dfx/local
-II_ENV=development dfx deploy --no-wallet --argument '(null)'
+# II_ENV=development dfx deploy --no-wallet --argument '(null)'
+II_FETCH_ROOT_KEY=1 dfx deploy --no-wallet --argument '(null)'
 popd
 
 # Create the OpenChat canisters
