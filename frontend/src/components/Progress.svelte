@@ -40,5 +40,9 @@
         top: 6px;
         left: $sp4;
         @include ellipsis();
+
+        @include size-below(xs) {
+            top: 8px;
+        }
     }
 </style>

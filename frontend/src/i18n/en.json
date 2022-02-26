@@ -369,7 +369,6 @@
         "start": "Start",
         "pollEnds": "Poll ends {end}",
         "voteFailed": "Poll vote failed",
-        "voteCounted": "Your vote has been counted",
         "totalVotes": "Total votes: {total}",
         "finished": "Poll has finished"
     }

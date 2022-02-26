@@ -15,7 +15,7 @@
     const dispatch = createEventDispatcher();
 
     const MAX_QUESTION_LENGTH = 100;
-    const MAX_ANSWER_LENGTH = 100;
+    const MAX_ANSWER_LENGTH = 50;
     const MAX_ANSWERS = 10;
     const durations: Duration[] = ["oneHour", "oneDay", "oneWeek"];
 

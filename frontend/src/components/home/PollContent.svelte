@@ -138,7 +138,6 @@
 
     .answer-text {
         padding: $sp3 0;
-        min-width: 300px;
         cursor: pointer;
 
         &.finished {

@@ -29,6 +29,7 @@ import {
     isPreviewing,
     mergeUnconfirmedIntoSummary,
     pruneLocalReactions,
+    updatePollVotes,
     replaceAffected,
     replaceLocal,
     replaceMessageContent,
@@ -229,48 +230,6 @@ export class ChatController {
                     evt.event.messageIndex === messageIndex &&
                     evt.event.content.kind === "poll_content"
                 ) {
-                    const votes = evt.event.content.votes;
-
-                    if (type === "register") {
-                        // TODO - currently this just adds the new vote
-                        // in addition IFF multiple votes are *not* allowed, it needs to remove their previous vote
-                        // write some tests around this!
-                        if (votes.user.includes(answerIndex)) {
-                            // can't vote for the same thing twice
-                            return evt;
-                        }
-                        votes.user.push(answerIndex);
-                        if (votes.total.kind === "anonymous_poll_votes") {
-                            if (votes.total.votes[answerIndex] === undefined) {
-                                votes.total.votes[answerIndex] = 0;
-                            }
-                            votes.total.votes[answerIndex] = votes.total.votes[answerIndex] + 1;
-                        }
-                        if (votes.total.kind === "hidden_poll_votes") {
-                            votes.total.votes = votes.total.votes + 1;
-                        }
-                        if (votes.total.kind === "visible_poll_votes") {
-                            if (votes.total.votes[answerIndex] === undefined) {
-                                votes.total.votes[answerIndex] = [];
-                            }
-                            votes.total.votes[answerIndex].push(this.user.userId);
-                        }
-                    }
-                    if (type === "delete") {
-                        votes.user = votes.user.filter((i) => i !== answerIndex);
-                        if (votes.total.kind === "anonymous_poll_votes") {
-                            votes.total.votes[answerIndex] = votes.total.votes[answerIndex] - 1;
-                        }
-                        if (votes.total.kind === "hidden_poll_votes") {
-                            votes.total.votes = votes.total.votes - 1;
-                        }
-                        if (votes.total.kind === "visible_poll_votes") {
-                            votes.total.votes[answerIndex] = votes.total.votes[answerIndex].filter(
-                                (u) => u !== this.user.userId
-                            );
-                        }
-                    }
-
                     console.log("Updated poll: ", evt.event.content);
                     return {
                         ...evt,
@@ -278,6 +237,12 @@ export class ChatController {
                             ...evt.event,
                             content: {
                                 ...evt.event.content,
+                                votes: updatePollVotes(
+                                    this.user.userId,
+                                    evt.event.content,
+                                    answerIndex,
+                                    type
+                                ),
                             },
                         },
                     };
@@ -296,8 +261,6 @@ export class ChatController {
                     if (resp !== "success") {
                         toastStore.showFailureToast("poll.voteFailed");
                         rollbar.error("Poll vote failed: ", resp);
-                    } else {
-                        toastStore.showSuccessToast("poll.voteCounted");
                     }
                 })
                 .catch((err) => {

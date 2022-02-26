@@ -156,6 +156,7 @@
         const matches = inputContent.match(mentionRegex);
         if (matches !== null) {
             mentionPrefix = matches[1].toLowerCase() || undefined;
+            showMentionPicker = true;
             saveSelection();
         } else {
             showMentionPicker = false;

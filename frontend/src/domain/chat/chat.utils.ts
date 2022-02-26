@@ -24,6 +24,8 @@ import type {
     GroupChatDetailsUpdates,
     Mention,
     CandidateGroupChat,
+    PollVotes,
+    PollContent,
 } from "./chat";
 import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -939,4 +941,73 @@ export function getStorageRequiredForMessage(content: MessageContent | undefined
         default:
             return 0;
     }
+}
+
+export function updatePollVotes(
+    userId: string,
+    poll: PollContent,
+    answerIdx: number,
+    type: "register" | "delete"
+): PollVotes {
+    return type === "delete"
+        ? removeVoteFromPoll(userId, answerIdx, poll.votes)
+        : addVoteToPoll(userId, answerIdx, poll);
+}
+
+export function addVoteToPoll(
+    userId: string,
+    answerIdx: number,
+    { votes, config }: PollContent
+): PollVotes {
+    if (votes.user.includes(answerIdx)) {
+        // can't vote for the same thing twice
+        return votes;
+    }
+
+    // update the total votes
+    if (votes.total.kind === "anonymous_poll_votes") {
+        if (votes.total.votes[answerIdx] === undefined) {
+            votes.total.votes[answerIdx] = 0;
+        }
+        votes.total.votes[answerIdx] = votes.total.votes[answerIdx] + 1;
+    }
+
+    if (votes.total.kind === "hidden_poll_votes") {
+        votes.total.votes = votes.total.votes + 1;
+    }
+
+    if (votes.total.kind === "visible_poll_votes") {
+        if (votes.total.votes[answerIdx] === undefined) {
+            votes.total.votes[answerIdx] = [];
+        }
+        votes.total.votes[answerIdx].push(userId);
+    }
+
+    if (!config.allowMultipleVotesPerUser) {
+        // if we are only allowed a single vote then we also need
+        // to remove anything we may previously have voted for
+        const previousVote = votes.user[0];
+        if (previousVote !== undefined) {
+            votes = removeVoteFromPoll(userId, previousVote, votes);
+        }
+    }
+
+    votes.user.push(answerIdx);
+
+    return votes;
+}
+
+export function removeVoteFromPoll(userId: string, answerIdx: number, votes: PollVotes): PollVotes {
+    votes.user = votes.user.filter((i) => i !== answerIdx);
+    if (votes.total.kind === "anonymous_poll_votes") {
+        votes.total.votes[answerIdx] = votes.total.votes[answerIdx] - 1;
+    }
+    if (votes.total.kind === "hidden_poll_votes") {
+        votes.total.votes = votes.total.votes - 1;
+    }
+    if (votes.total.kind === "visible_poll_votes") {
+        votes.total.votes[answerIdx] = votes.total.votes[answerIdx].filter((u) => u !== userId);
+    }
+    votes.user = votes.user.filter((a) => a !== answerIdx);
+    return votes;
 }
