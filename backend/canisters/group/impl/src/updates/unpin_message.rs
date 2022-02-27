@@ -4,7 +4,6 @@ use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::unpin_message::{Response::*, *};
 use ic_cdk_macros::update;
-use itertools::Itertools;
 use types::MessageUnpinned;
 
 #[update]
@@ -22,12 +21,7 @@ fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
             return NotAuthorized;
         }
 
-        if let Some((index, _)) = runtime_state
-            .data
-            .pinned_messages
-            .iter()
-            .find_position(|&i| *i == args.message_index)
-        {
+        if let Ok(index) = runtime_state.data.pinned_messages.binary_search(&args.message_index) {
             let now = runtime_state.env.now();
 
             runtime_state.data.pinned_messages.remove(index);
@@ -36,6 +30,7 @@ fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
                 ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
                     message_index: args.message_index,
                     unpinned_by: participant.user_id,
+                    due_to_message_deleted: false,
                 })),
                 now,
             );
