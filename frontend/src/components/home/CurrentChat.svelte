@@ -22,6 +22,7 @@
     let firstUnreadMention: Mention | undefined;
     let creatingPoll = false;
     let footer: Footer;
+    let pollBuilder: PollBuilder;
 
     $: pinned = controller.pinnedMessages;
 
@@ -99,6 +100,9 @@
     }
 
     function createPoll() {
+        if (pollBuilder !== undefined) {
+            pollBuilder.resetPoll();
+        }
         creatingPoll = true;
     }
 
@@ -109,7 +113,7 @@
 
 <svelte:window on:focus={onWindowFocus} />
 
-<PollBuilder on:sendPoll={footer.sendPoll} bind:open={creatingPoll} />
+<PollBuilder bind:this={pollBuilder} on:sendPoll={footer.sendPoll} bind:open={creatingPoll} />
 
 <div class="wrapper">
     <CurrentChatHeader

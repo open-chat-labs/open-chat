@@ -1,6 +1,5 @@
 <script lang="ts">
     import Button from "../Button.svelte";
-    import Select from "../Select.svelte";
     import { flip } from "svelte/animate";
     import Input from "../Input.svelte";
     import Toggle from "./profile/Toggle.svelte";
@@ -8,6 +7,7 @@
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import PlusCircleOutline from "svelte-material-icons/PlusCircleOutline.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../stores/iconSize";
@@ -21,31 +21,54 @@
 
     type Duration = "oneHour" | "oneDay" | "oneWeek";
 
+    type CandidatePoll = {
+        pollQuestion: string;
+        anonymous: boolean;
+        limitedDuration: boolean;
+        showVotesBeforeEndDate: boolean;
+        allowMultipleVotesPerUser: boolean;
+        pollAnswers: Set<string>;
+    };
+
     export let open: boolean;
-    let pollQuestion: string = "";
+
+    let poll: CandidatePoll = emptyPoll();
     let nextAnswer: string = "";
     let answerError: string | undefined = "";
-    let anonymous = false;
-    let limitedDuration = true;
-    let showVotesBeforeEndDate = true;
-    let allowMultipleVotesPerUser = false;
     let selectedTab: "poll" | "settings" = "poll";
     let selectedDuration: Duration = "oneDay";
 
-    let pollAnswers: Set<string> = new Set();
+    $: valid = poll.pollAnswers.size >= 2;
 
-    $: valid = pollAnswers.size >= 2;
+    export function resetPoll() {
+        selectedTab = "poll";
+        selectedDuration = "oneDay";
+        answerError = "";
+        nextAnswer = "";
+        poll = emptyPoll();
+    }
+
+    function emptyPoll() {
+        return {
+            pollQuestion: "",
+            anonymous: false,
+            limitedDuration: true,
+            showVotesBeforeEndDate: true,
+            allowMultipleVotesPerUser: false,
+            pollAnswers: new Set<string>(),
+        };
+    }
 
     function answerIsValid(answer: string): boolean {
         if (answer === undefined) return false;
-        if (pollAnswers.has(nextAnswer)) return false;
+        if (poll.pollAnswers.has(nextAnswer)) return false;
         return answer.length > 0 && answer.length <= MAX_ANSWER_LENGTH;
     }
 
     function addAnswer() {
         if (answerIsValid(nextAnswer)) {
             answerError = undefined;
-            pollAnswers = new Set(pollAnswers.add(nextAnswer));
+            poll.pollAnswers = new Set(poll.pollAnswers.add(nextAnswer));
             nextAnswer = "";
         } else {
             answerError = "poll.invalidAnswer";
@@ -53,14 +76,14 @@
     }
 
     function deleteAnswer(answer: string) {
-        pollAnswers.delete(answer);
-        pollAnswers = new Set(pollAnswers);
+        poll.pollAnswers.delete(answer);
+        poll.pollAnswers = new Set(poll.pollAnswers);
     }
 
     function createPollVotes(): TotalPollVotes {
-        if (anonymous) {
+        if (poll.anonymous) {
             return { kind: "anonymous_poll_votes", votes: {} };
-        } else if (showVotesBeforeEndDate) {
+        } else if (poll.showVotesBeforeEndDate) {
             return { kind: "visible_poll_votes", votes: {} };
         } else {
             return { kind: "hidden_poll_votes", votes: 0 };
@@ -72,7 +95,7 @@
     const ONE_WEEK = ONE_DAY * 7;
 
     function createPollEndDate() {
-        if (!limitedDuration) return undefined;
+        if (!poll.limitedDuration) return undefined;
         const now = Date.now();
         if (selectedDuration === "oneHour") return BigInt(now + ONE_HOUR);
         if (selectedDuration === "oneDay") return BigInt(now + ONE_DAY);
@@ -87,12 +110,12 @@
                 user: [],
             },
             config: {
-                allowMultipleVotesPerUser,
-                text: pollQuestion === "" ? undefined : pollQuestion,
-                showVotesBeforeEndDate,
+                allowMultipleVotesPerUser: poll.allowMultipleVotesPerUser,
+                text: poll.pollQuestion === "" ? undefined : poll.pollQuestion,
+                showVotesBeforeEndDate: poll.showVotesBeforeEndDate,
                 endDate: createPollEndDate(),
-                anonymous,
-                options: [...pollAnswers],
+                anonymous: poll.anonymous,
+                options: [...poll.pollAnswers],
             },
         };
     }
@@ -127,7 +150,7 @@
                         <div class="section">
                             <div class="legend">{$_("poll.questionLabel")}</div>
                             <Input
-                                bind:value={pollQuestion}
+                                bind:value={poll.pollQuestion}
                                 autofocus={true}
                                 minlength={0}
                                 maxlength={MAX_QUESTION_LENGTH}
@@ -135,10 +158,10 @@
                                 placeholder={$_("poll.optionalQuestion")} />
                         </div>
 
-                        {#if pollAnswers.size > 0}
+                        {#if poll.pollAnswers.size > 0}
                             <div class="section">
                                 <div class="legend">{$_("poll.answersLabel")}</div>
-                                {#each [...pollAnswers] as answer, i (answer)}
+                                {#each [...poll.pollAnswers] as answer, i (answer)}
                                     <div animate:flip={{ duration: 200 }} class="answer-text">
                                         {answer}
                                         <div class="delete" on:click={() => deleteAnswer(answer)}>
@@ -151,31 +174,40 @@
                             </div>
                         {/if}
 
-                        {#if pollAnswers.size < MAX_ANSWERS}
+                        {#if poll.pollAnswers.size < MAX_ANSWERS}
                             <div class="section">
                                 <div class="legend">
                                     {$_(
-                                        pollAnswers.size < 2
+                                        poll.pollAnswers.size < 2
                                             ? "poll.addAnswer"
                                             : "poll.addAnotherAnswer"
                                     )}
                                 </div>
-                                <Input
-                                    bind:value={nextAnswer}
-                                    disabled={pollAnswers.size >= MAX_ANSWERS}
-                                    minlength={1}
-                                    maxlength={MAX_ANSWER_LENGTH}
-                                    countdown={true}
-                                    onEnter={addAnswer}
-                                    placeholder={$_(
-                                        pollAnswers.size === MAX_ANSWERS
-                                            ? "poll.maxReached"
-                                            : "poll.answerText"
-                                    )}>
-                                    {#if answerError !== undefined}
-                                        <div class="error">{$_(answerError)}</div>
-                                    {/if}
-                                </Input>
+                                <div class="next">
+                                    <div class="next-txt">
+                                        <Input
+                                            bind:value={nextAnswer}
+                                            disabled={poll.pollAnswers.size >= MAX_ANSWERS}
+                                            minlength={1}
+                                            maxlength={MAX_ANSWER_LENGTH}
+                                            countdown={true}
+                                            onEnter={addAnswer}
+                                            placeholder={$_(
+                                                poll.pollAnswers.size === MAX_ANSWERS
+                                                    ? "poll.maxReached"
+                                                    : "poll.answerText"
+                                            )}>
+                                            {#if answerError !== undefined}
+                                                <div class="error">{$_(answerError)}</div>
+                                            {/if}
+                                        </Input>
+                                    </div>
+                                    <div class="add-btn" on:click={addAnswer}>
+                                        <PlusCircleOutline
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"} />
+                                    </div>
+                                </div>
                             </div>
                         {/if}
                     </form>
@@ -190,8 +222,8 @@
                                 <Toggle
                                     small={true}
                                     id={"anonymous"}
-                                    on:change={() => (anonymous = !anonymous)}
-                                    checked={anonymous} />
+                                    on:change={() => (poll.anonymous = !poll.anonymous)}
+                                    checked={poll.anonymous} />
                             </td>
                         </tr>
 
@@ -204,8 +236,9 @@
                                     small={true}
                                     id={"allow-multiple"}
                                     on:change={() =>
-                                        (allowMultipleVotesPerUser = !allowMultipleVotesPerUser)}
-                                    checked={allowMultipleVotesPerUser} />
+                                        (poll.allowMultipleVotesPerUser =
+                                            !poll.allowMultipleVotesPerUser)}
+                                    checked={poll.allowMultipleVotesPerUser} />
                             </td>
                         </tr>
 
@@ -217,12 +250,12 @@
                                 <Toggle
                                     small={true}
                                     id={"limited-duration"}
-                                    on:change={() => (limitedDuration = !limitedDuration)}
-                                    checked={limitedDuration} />
+                                    on:change={() => (poll.limitedDuration = !poll.limitedDuration)}
+                                    checked={poll.limitedDuration} />
                             </td>
                         </tr>
 
-                        {#if limitedDuration}
+                        {#if poll.limitedDuration}
                             <tr>
                                 <td class="label">
                                     {$_("poll.showBeforeEnd")}
@@ -232,8 +265,9 @@
                                         small={true}
                                         id={"show-before-end"}
                                         on:change={() =>
-                                            (showVotesBeforeEndDate = !showVotesBeforeEndDate)}
-                                        checked={showVotesBeforeEndDate} />
+                                            (poll.showVotesBeforeEndDate =
+                                                !poll.showVotesBeforeEndDate)}
+                                        checked={poll.showVotesBeforeEndDate} />
                                 </td>
                             </tr>
 
@@ -326,6 +360,22 @@
         position: absolute;
         right: $sp2;
         top: $sp3;
+        cursor: pointer;
+    }
+
+    .next {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: $sp3;
+    }
+
+    .next-txt {
+        flex: 1;
+    }
+
+    .add-btn {
+        flex: 0 0 30px;
         cursor: pointer;
     }
 

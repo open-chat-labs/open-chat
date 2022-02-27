@@ -31,7 +31,6 @@
         transition: width 300ms;
         display: block;
         height: 100%;
-        // border-radius: math.div($progress-bar-x-large, 2);
         position: relative;
     }
 
