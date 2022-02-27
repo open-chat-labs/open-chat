@@ -3,7 +3,7 @@
     export let checked: boolean = false;
     export let disabled: boolean = false;
     export let id: string;
-    export let label: string;
+    export let label: string | undefined;
     export let toggle: boolean = false;
     export let small: boolean = false; // only applies to toggles
 </script>

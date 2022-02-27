@@ -27,7 +27,6 @@
     let viewProfile = false;
     let usernameLink: Link;
     let usernameLinkBoundingRect: DOMRect | undefined = undefined;
-    let userId = user.userId;
 
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);

@@ -60,7 +60,7 @@
 
     $: bioDirty = userbio !== originalBio;
 
-    export function reset(user: PartialUserSummary) {
+    export function reset() {
         usernameInput.reset();
         usernameError = undefined;
         bioError = undefined;
@@ -173,11 +173,11 @@
         </div>
 
         <div class="legend">{$_("username")} ({$_("usernameRules")})</div>
-        <UsernameInput 
+        <UsernameInput
             bind:this={usernameInput}
             {api}
             originalUsername={user?.username ?? ""}
-            bind:validUsername={validUsername}
+            bind:validUsername
             bind:checking={checkingUsername}
             bind:error={usernameError}>
             {#if usernameError !== undefined}

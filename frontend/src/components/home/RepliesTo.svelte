@@ -18,7 +18,6 @@
     export let repliesTo: RehydratedReplyContext;
 
     let debug = false;
-    let userId = user.userId;
 
     $: me = repliesTo.senderId === user?.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";

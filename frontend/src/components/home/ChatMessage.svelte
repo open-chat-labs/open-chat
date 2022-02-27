@@ -70,7 +70,6 @@
     let viewProfile = false;
     let usernameLink: Link;
     let usernameLinkBoundingRect: DOMRect | undefined = undefined;
-    let userId = user.userId;
 
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;

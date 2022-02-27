@@ -37,10 +37,6 @@
 </ModalContent>
 
 <style type="text/scss">
-    a {
-        text-decoration: underline;
-    }
-
     :global(.faq-body .card) {
         margin-bottom: $sp3;
 

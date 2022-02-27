@@ -161,7 +161,7 @@
                         {#if poll.pollAnswers.size > 0}
                             <div class="section">
                                 <div class="legend">{$_("poll.answersLabel")}</div>
-                                {#each [...poll.pollAnswers] as answer, i (answer)}
+                                {#each [...poll.pollAnswers] as answer, _i (answer)}
                                     <div animate:flip={{ duration: 200 }} class="answer-text">
                                         {answer}
                                         <div class="delete" on:click={() => deleteAnswer(answer)}>

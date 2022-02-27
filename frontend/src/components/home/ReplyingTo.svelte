@@ -15,8 +15,6 @@
     export let replyingTo: EnhancedReplyContext;
     export let user: UserSummary;
 
-    let userId = user.userId;
-
     $: me = replyingTo.sender?.userId === user?.userId;
 
     $: username = me ? toTitleCase($_("you")) : replyingTo.sender?.username ?? "unknownUser";

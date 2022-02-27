@@ -7,13 +7,7 @@
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
-    import {
-        addDays,
-        formatMessageDate,
-        getStartOfToday,
-        toDayOfWeekString,
-        toLongDateString,
-    } from "../../utils/date";
+    import { formatMessageDate } from "../../utils/date";
     import type {
         EventWrapper,
         EnhancedReplyContext,

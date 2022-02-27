@@ -23,7 +23,6 @@
     import { createEventDispatcher } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
-    import type { Version } from "../../domain/version";
 
     const dispatch = createEventDispatcher();
 
