@@ -254,20 +254,29 @@ export class ChatController {
 
     registerPollVote(messageIndex: number, answerIndex: number, type: "register" | "delete"): void {
         this.updatePollContent(messageIndex, answerIndex, type);
-        if (this.chatVal.kind === "group_chat") {
-            this.api
-                .registerGroupChatPollVote(this.chatId, messageIndex, answerIndex, type)
-                .then((resp) => {
-                    if (resp !== "success") {
-                        toastStore.showFailureToast("poll.voteFailed");
-                        rollbar.error("Poll vote failed: ", resp);
-                    }
-                })
-                .catch((err) => {
+        const promise =
+            this.chatVal.kind === "group_chat"
+                ? this.api.registerGroupChatPollVote(this.chatId, messageIndex, answerIndex, type)
+                : this.api.registerDirectChatPollVote(
+                      this.chatVal.them,
+                      messageIndex,
+                      answerIndex,
+                      type
+                  );
+
+        promise
+            .then((resp) => {
+                if (resp !== "success") {
                     toastStore.showFailureToast("poll.voteFailed");
-                    rollbar.error("Poll vote failed: ", err);
-                });
-        }
+                    rollbar.error("Poll vote failed: ", resp);
+                    console.log("poll vote failed: ", resp);
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("poll.voteFailed");
+                rollbar.error("Poll vote failed: ", err);
+                console.log("poll vote failed: ", err);
+            });
     }
 
     unpinMessage(messageIndex: number): void {

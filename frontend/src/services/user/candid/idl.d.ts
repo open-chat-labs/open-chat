@@ -78,6 +78,7 @@ import {
     RecommendedGroupsResponse,
     RecommendedGroupsSuccessResult,
     SetBioResponse,
+    RegisterPollVoteResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -158,6 +159,7 @@ export {
     PollVotes as ApiPollVotes,
     PollConfig as ApiPollConfig,
     TotalPollVotes as ApiTotalPollVotes,
+    RegisterPollVoteResponse as ApiRegisterPollVoteResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

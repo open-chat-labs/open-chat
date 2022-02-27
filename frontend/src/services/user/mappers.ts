@@ -392,6 +392,20 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
             message: updatedMessage(candid.MessageReactionRemoved),
         };
     }
+
+    if ("PollVoteRegistered" in candid) {
+        return {
+            kind: "poll_vote_registered",
+            message: updatedMessage(candid.PollVoteRegistered),
+        };
+    }
+
+    if ("PollVoteDeleted" in candid) {
+        return {
+            kind: "poll_vote_deleted",
+            message: updatedMessage(candid.PollVoteDeleted),
+        };
+    }
     // todo - we know there are other event types that we are not dealing with yet
     throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
 }

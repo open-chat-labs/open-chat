@@ -46,7 +46,6 @@ import {
     getMessagesByMessageIndexResponse,
     pinMessageResponse,
     unpinMessageResponse,
-    registerPollVoteResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -57,6 +56,7 @@ import {
     apiOptional,
     apiUser,
     publicSummaryResponse,
+    registerPollVoteResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import {

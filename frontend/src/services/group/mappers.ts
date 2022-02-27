@@ -431,27 +431,6 @@ export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMess
     throw new UnsupportedValueError("Unexpected ApiUnpinMessageResponse type received", candid);
 }
 
-export function registerPollVoteResponse(
-    candid: ApiRegisterPollVoteResponse
-): RegisterPollVoteResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("CallerNotInGroup" in candid) {
-        return "caller_not_in_group";
-    }
-    if ("PollEnded" in candid) {
-        return "poll_ended";
-    }
-    if ("OptionIndexOutOfRange" in candid) {
-        return "out_of_range";
-    }
-    if ("PollNotFound" in candid) {
-        return "poll_not_found";
-    }
-    throw new UnsupportedValueError("Unexpected ApiRegisterPollVoteResponse type received", candid);
-}
-
 export function getMessagesByMessageIndexResponse(
     candid: ApiMessagesByMessageIndexResponse
 ): EventsResponse<Message> {

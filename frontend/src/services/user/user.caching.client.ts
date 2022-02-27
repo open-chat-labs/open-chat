@@ -19,6 +19,7 @@ import type {
     EditMessageResponse,
     MarkReadRequest,
     GroupChatSummary,
+    RegisterPollVoteResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -216,5 +217,14 @@ export class CachingUserClient implements IUserClient {
 
     setBio(bio: string): Promise<SetBioResponse> {
         return this.client.setBio(bio);
+    }
+
+    registerPollVote(
+        otherUser: string,
+        messageIdx: number,
+        answerIdx: number,
+        voteType: "register" | "delete"
+    ): Promise<RegisterPollVoteResponse> {
+        return this.client.registerPollVote(otherUser, messageIdx, answerIdx, voteType);
     }
 }

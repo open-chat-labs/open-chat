@@ -716,4 +716,13 @@ export class ServiceContainer implements MarkMessagesRead {
     ): Promise<RegisterPollVoteResponse> {
         return this.getGroupClient(chatId).registerPollVote(messageIdx, answerIdx, voteType);
     }
+
+    registerDirectChatPollVote(
+        otherUser: string,
+        messageIdx: number,
+        answerIdx: number,
+        voteType: "register" | "delete"
+    ): Promise<RegisterPollVoteResponse> {
+        return this.userClient.registerPollVote(otherUser, messageIdx, answerIdx, voteType);
+    }
 }

@@ -20,6 +20,7 @@ import type {
     EditMessageResponse,
     MarkReadRequest,
     GroupChatSummary,
+    RegisterPollVoteResponse,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
@@ -76,4 +77,10 @@ export interface IUserClient {
     dismissRecommendation(chatId: string): Promise<void>;
     getBio(): Promise<string>;
     setBio(bio: string): Promise<SetBioResponse>;
+    registerPollVote(
+        otherUser: string,
+        messageIdx: number,
+        answerIdx: number,
+        voteType: "register" | "delete"
+    ): Promise<RegisterPollVoteResponse>;
 }

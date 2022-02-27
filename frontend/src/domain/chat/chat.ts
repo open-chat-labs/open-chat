@@ -303,6 +303,8 @@ export type DirectChatEvent =
     | MessageEdited
     | ReactionAdded
     | ReactionRemoved
+    | PollVoteDeleted
+    | PollVoteRegistered
     | DirectChatCreated;
 
 export type GroupChatEvent =
@@ -940,4 +942,5 @@ export type RegisterPollVoteResponse =
     | "poll_ended"
     | "success"
     | "out_of_range"
-    | "poll_not_found";
+    | "poll_not_found"
+    | "chat_not_found";
