@@ -11,6 +11,7 @@ async fn main() {
     let identity = get_dfx_identity(&opts.controller);
 
     match opts.canister_to_upgrade {
+        CanisterName::Callback => {} //upgrade_group_canister(identity, opts.url, opts.group_index, opts.version).await,
         CanisterName::Group => upgrade_group_canister(identity, opts.url, opts.group_index, opts.version).await,
         CanisterName::GroupIndex => upgrade_group_index_canister(identity, opts.url, opts.group_index, opts.version).await,
         CanisterName::Notifications => {

@@ -53,6 +53,7 @@ pub enum ChatEventInternal {
     MessageUnpinned(Box<MessageUnpinned>),
     PollVoteRegistered(Box<UpdatedMessageInternal>),
     PollVoteDeleted(Box<UpdatedMessageInternal>),
+    PollEnded(Box<MessageIndex>),
 }
 
 impl ChatEventInternal {
@@ -152,6 +153,12 @@ pub enum RegisterVoteResult {
     PollEnded,
     PollNotFound,
     OptionIndexOutOfRange,
+}
+
+pub enum EndPollResult {
+    Success,
+    PollNotFound,
+    UnableToEndPoll,
 }
 
 pub enum ToggleReactionResult {
@@ -423,6 +430,22 @@ impl ChatEvents {
         RegisterVoteResult::PollNotFound
     }
 
+    pub fn end_poll(&mut self, message_index: MessageIndex, now: TimestampMillis) -> EndPollResult {
+        if let Some(message) = self.get_message_by_message_index_internal_mut(message_index) {
+            if let MessageContentInternal::Poll(p) = &mut message.content {
+                return if p.ended || p.config.end_date.is_none() {
+                    EndPollResult::UnableToEndPoll
+                } else {
+                    p.ended = true;
+                    let event = ChatEventInternal::PollEnded(Box::new(message_index));
+                    self.push_event(event, now);
+                    EndPollResult::Success
+                };
+            }
+        }
+        EndPollResult::PollNotFound
+    }
+
     pub fn toggle_reaction(
         &mut self,
         user_id: UserId,
@@ -563,6 +586,15 @@ impl ChatEvents {
                 .get(&message.message_id)
                 .map_or(EventIndex::default(), |e| *e),
             message_id: message.message_id,
+        }
+    }
+
+    pub fn hydrate_poll_ended(&self, message_index: MessageIndex) -> PollEnded {
+        let event_index = self.message_index_map.get(&message_index).copied().unwrap_or_default();
+
+        PollEnded {
+            message_index,
+            event_index,
         }
     }
 

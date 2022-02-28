@@ -61,6 +61,10 @@ impl RuntimeState {
         self.env.caller() == self.data.user_index_canister_id
     }
 
+    pub fn is_caller_callback_canister(&self) -> bool {
+        self.env.caller() == self.data.callback_canister_id
+    }
+
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
         let random = self.env.random_u32() as usize;
 
@@ -113,6 +117,7 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
+    pub callback_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
     pub user_cycles_balance: UserCyclesBalance,
     pub transactions: Transactions,
@@ -131,6 +136,7 @@ impl Data {
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
+        callback_canister_id: CanisterId,
         now: TimestampMillis,
         test_mode: bool,
     ) -> Data {
@@ -142,6 +148,7 @@ impl Data {
             user_index_canister_id,
             group_index_canister_id,
             notifications_canister_ids,
+            callback_canister_id,
             avatar: Timestamped::default(),
             user_cycles_balance: UserCyclesBalance::new(now),
             transactions: Transactions::default(),

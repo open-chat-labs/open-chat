@@ -16,6 +16,7 @@ mod change_role;
 mod delete_group;
 mod delete_messages;
 mod edit_message;
+mod end_poll;
 mod pin_message;
 mod register_poll_vote;
 mod remove_participant;
