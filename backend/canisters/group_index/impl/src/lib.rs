@@ -166,6 +166,7 @@ impl Default for Data {
             group_canister_wasm: CanisterWasm::default(),
             notifications_canister_ids: vec![Principal::anonymous()],
             user_index_canister_id: Principal::anonymous(),
+            callback_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(0),
             test_mode: true,
