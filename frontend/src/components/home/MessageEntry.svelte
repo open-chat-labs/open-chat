@@ -212,9 +212,9 @@
 
     /**
      * Check the message content for special commands
-     * * !poll - crreats a poll
-     * * !pinned - opens pinned messages
-     * * !details - opens group details
+     * * !poll - creats a poll
+     * * !pinned - opens pinned messages (not yet)
+     * * !details - opens group details (not yet)
      */
     function parseCommands(txt: string): boolean {
         if (/^!poll$/.test(txt)) {
