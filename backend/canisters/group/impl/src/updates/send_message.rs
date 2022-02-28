@@ -1,10 +1,15 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use candid::Encode;
 use canister_api_macros::trace;
 use chat_events::{ChatEventInternal, GroupChatEvents, PushMessageArgs};
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
-use types::{ContentValidationError, GroupMessageNotification, Notification, UserId};
+use serde_bytes::ByteBuf;
+use types::{
+    CanisterId, ContentValidationError, EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex,
+    Notification, TimestampMillis, UserId,
+};
 
 #[update]
 #[trace]
@@ -17,25 +22,26 @@ fn send_message(args: Args) -> Response {
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(&caller) {
-        if let Err(error) = args.content.validate() {
+        let now = runtime_state.env.now();
+
+        if let Err(error) = args.content.validate_for_new_message(now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
+                ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
             };
         }
 
-        let now = runtime_state.env.now();
         let sender = participant.user_id;
         let user_being_replied_to = args
             .replies_to
             .as_ref()
-            .map(|r| get_user_being_replied_to(r, &runtime_state.data.events))
-            .flatten();
+            .and_then(|r| get_user_being_replied_to(r, &runtime_state.data.events));
 
         let push_message_args = PushMessageArgs {
             sender,
             message_id: args.message_id,
-            content: args.content,
+            content: args.content.new_content_into_internal(),
             replies_to: args.replies_to.map(|r| r.into()),
             now,
         };
@@ -46,6 +52,8 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let event_index = message_event.index;
         let message_index = message_event.event.message_index;
+
+        register_callbacks_if_required(&message_event, runtime_state);
 
         let mut notification_recipients = runtime_state.data.participants.users_to_notify(sender);
 
@@ -85,6 +93,28 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     } else {
         CallerNotInGroup
     }
+}
+
+fn register_callbacks_if_required(message_event: &EventWrapper<Message>, runtime_state: &mut RuntimeState) {
+    if let MessageContent::Poll(p) = &message_event.event.content {
+        if let Some(end_date) = p.config.end_date {
+            ic_cdk::spawn(register_end_poll_callback(
+                runtime_state.data.callback_canister_id,
+                message_event.event.message_index,
+                end_date,
+            ));
+        }
+    }
+}
+
+async fn register_end_poll_callback(canister_id: CanisterId, message_index: MessageIndex, end_date: TimestampMillis) {
+    let payload = ByteBuf::from(Encode!(&group_canister::c2c_end_poll::Args { message_index }).unwrap());
+    let args = callback_canister::c2c_register_callback::Args {
+        method_name: "c2c_end_poll".to_string(),
+        payload,
+        timestamp: end_date,
+    };
+    let _ = callback_canister_c2c_client::c2c_register_callback(canister_id, &args).await;
 }
 
 fn get_user_being_replied_to(replies_to: &GroupReplyContext, events: &GroupChatEvents) -> Option<UserId> {

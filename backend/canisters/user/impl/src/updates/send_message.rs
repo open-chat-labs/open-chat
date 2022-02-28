@@ -3,6 +3,7 @@ use super::crypto::cycles::{
 };
 use super::crypto::icp::send_icp;
 use crate::guards::caller_is_owner;
+use crate::updates::send_message_common::register_callbacks_if_required;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
@@ -22,10 +23,13 @@ use user_canister::send_message::{Response::*, *};
 async fn send_message(mut args: Args) -> Response {
     run_regular_jobs();
 
-    if let Err(error) = args.content.validate() {
+    let now = read_state(|state| state.env.now());
+
+    if let Err(error) = args.content.validate_for_new_message(now) {
         return match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
+            ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
         };
     }
 
@@ -77,7 +81,7 @@ fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>,
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
         sender: my_user_id,
-        content: args.content.clone(),
+        content: args.content.clone().new_content_into_internal(),
         replies_to: args.replies_to.clone(),
         now,
     };
@@ -86,6 +90,8 @@ fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>,
         .data
         .direct_chats
         .push_message(true, recipient, None, push_message_args);
+
+    register_callbacks_if_required(recipient, &message_event, runtime_state);
 
     let c2c_args = build_c2c_args(args, message_event.event.message_index);
     ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, cycles_transfer, false));

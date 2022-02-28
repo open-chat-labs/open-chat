@@ -4,19 +4,24 @@ macro_rules! generate_common_methods {
             &self,
             from_event_index: EventIndex,
             to_event_index: EventIndex,
+            my_user_id: Option<UserId>,
         ) -> Vec<EventWrapper<$chat_event_event>> {
             self.inner
                 .get_range(from_event_index, to_event_index)
                 .iter()
-                .map(|e| self.hydrate_event(e))
+                .map(|e| self.hydrate_event(e, my_user_id))
                 .collect()
         }
 
-        pub fn get_by_index(&self, indexes: Vec<EventIndex>) -> Vec<EventWrapper<$chat_event_event>> {
+        pub fn get_by_index(
+            &self,
+            indexes: Vec<EventIndex>,
+            my_user_id: Option<UserId>,
+        ) -> Vec<EventWrapper<$chat_event_event>> {
             self.inner
                 .get_by_index(indexes)
                 .iter()
-                .map(|e| self.hydrate_event(e))
+                .map(|e| self.hydrate_event(e, my_user_id))
                 .collect()
         }
 
@@ -27,11 +32,12 @@ macro_rules! generate_common_methods {
             max_messages: usize,
             max_events: usize,
             min_visible_event_index: EventIndex,
+            my_user_id: Option<UserId>,
         ) -> Vec<EventWrapper<$chat_event_event>> {
             self.inner
                 .from_index(start, ascending, max_messages, max_events, min_visible_event_index)
                 .into_iter()
-                .map(|e| self.hydrate_event(e))
+                .map(|e| self.hydrate_event(e, my_user_id))
                 .collect()
         }
 
@@ -41,15 +47,20 @@ macro_rules! generate_common_methods {
             max_messages: usize,
             max_events: usize,
             min_visible_event_index: EventIndex,
+            my_user_id: Option<UserId>,
         ) -> Vec<EventWrapper<$chat_event_event>> {
             self.inner
                 .get_events_window(mid_point, max_messages, max_events, min_visible_event_index)
                 .into_iter()
-                .map(|e| self.hydrate_event(e))
+                .map(|e| self.hydrate_event(e, my_user_id))
                 .collect()
         }
 
-        pub fn affected_events(&self, events: &[EventWrapper<$chat_event_event>]) -> Vec<EventWrapper<$chat_event_event>> {
+        pub fn affected_events(
+            &self,
+            events: &[EventWrapper<$chat_event_event>],
+            my_user_id: Option<UserId>,
+        ) -> Vec<EventWrapper<$chat_event_event>> {
             // We use this set to exclude events that are already in the input list
             let event_indexes_set: HashSet<_> = events.iter().map(|e| e.index).collect();
 
@@ -66,7 +77,7 @@ macro_rules! generate_common_methods {
                 .unique()
                 .collect();
 
-            self.get_by_index(affected_event_indexes)
+            self.get_by_index(affected_event_indexes, my_user_id)
         }
     };
 }

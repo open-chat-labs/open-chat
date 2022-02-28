@@ -28,11 +28,14 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         Some(dc) => dc,
     };
 
+    let my_user_id = runtime_state.env.canister_id().into();
+
     let matches = direct_chat.events.search_messages(
         runtime_state.env.now(),
         EventIndex::default(),
         &args.search_term,
         args.max_results,
+        my_user_id,
     );
 
     Success(SuccessResult { matches })

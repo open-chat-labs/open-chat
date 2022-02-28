@@ -10,7 +10,8 @@ fn messages_by_message_index(args: Args) -> Response {
 
 fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller) {
+    if let Some(participant) = runtime_state.data.participants.get(caller) {
+        let min_visible_event_index = participant.min_visible_event_index();
         let events = &runtime_state.data.events;
 
         let messages: Vec<_> = args
@@ -21,7 +22,7 @@ fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> R
             .map(|e| EventWrapper {
                 index: e.index,
                 timestamp: e.timestamp,
-                event: events.hydrate_message(e.event),
+                event: events.hydrate_message(e.event, Some(participant.user_id)),
             })
             .collect();
 

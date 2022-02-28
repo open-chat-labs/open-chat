@@ -26,6 +26,9 @@ pub enum GroupChatEvent {
     MessageReactionRemoved(UpdatedMessage),
     MessagePinned(MessagePinned),
     MessageUnpinned(MessageUnpinned),
+    PollVoteRegistered(UpdatedMessage),
+    PollVoteDeleted(UpdatedMessage),
+    PollEnded(PollEnded),
 }
 
 impl GroupChatEvent {
@@ -35,6 +38,9 @@ impl GroupChatEvent {
             GroupChatEvent::MessageDeleted(m) => Some(m.event_index),
             GroupChatEvent::MessageReactionAdded(r) => Some(r.event_index),
             GroupChatEvent::MessageReactionRemoved(r) => Some(r.event_index),
+            GroupChatEvent::PollVoteRegistered(v) => Some(v.event_index),
+            GroupChatEvent::PollVoteDeleted(v) => Some(v.event_index),
+            GroupChatEvent::PollEnded(p) => Some(p.event_index),
             _ => None,
         }
     }
@@ -143,6 +149,8 @@ pub struct MessagePinned {
 pub struct MessageUnpinned {
     pub message_index: MessageIndex,
     pub unpinned_by: UserId,
+    #[serde(default)]
+    pub due_to_message_deleted: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -153,6 +161,12 @@ pub struct UpdatedMessage {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PollEnded {
+    pub event_index: EventIndex,
+    pub message_index: MessageIndex,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum DirectChatEvent {
     Message(Box<Message>),
     DirectChatCreated(DirectChatCreated),
@@ -160,6 +174,9 @@ pub enum DirectChatEvent {
     MessageDeleted(UpdatedMessage),
     MessageReactionAdded(UpdatedMessage),
     MessageReactionRemoved(UpdatedMessage),
+    PollVoteRegistered(UpdatedMessage),
+    PollVoteDeleted(UpdatedMessage),
+    PollEnded(PollEnded),
 }
 
 impl DirectChatEvent {
@@ -169,6 +186,9 @@ impl DirectChatEvent {
             DirectChatEvent::MessageDeleted(m) => Some(m.event_index),
             DirectChatEvent::MessageReactionAdded(r) => Some(r.event_index),
             DirectChatEvent::MessageReactionRemoved(r) => Some(r.event_index),
+            DirectChatEvent::PollVoteRegistered(v) => Some(v.event_index),
+            DirectChatEvent::PollVoteDeleted(v) => Some(v.event_index),
+            DirectChatEvent::PollEnded(p) => Some(p.event_index),
             _ => None,
         }
     }

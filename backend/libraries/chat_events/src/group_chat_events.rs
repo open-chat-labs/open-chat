@@ -26,9 +26,13 @@ impl GroupChatEvents {
 
     generate_common_methods!(GroupChatEvent);
 
-    fn hydrate_event(&self, event: &EventWrapper<ChatEventInternal>) -> EventWrapper<GroupChatEvent> {
+    fn hydrate_event(
+        &self,
+        event: &EventWrapper<ChatEventInternal>,
+        my_user_id: Option<UserId>,
+    ) -> EventWrapper<GroupChatEvent> {
         let event_data = match &event.event {
-            ChatEventInternal::Message(m) => GroupChatEvent::Message(Box::new(self.inner.hydrate_message(m))),
+            ChatEventInternal::Message(m) => GroupChatEvent::Message(Box::new(self.inner.hydrate_message(m, my_user_id))),
             ChatEventInternal::MessageEdited(m) => GroupChatEvent::MessageEdited(self.inner.hydrate_updated_message(m)),
             ChatEventInternal::MessageDeleted(m) => GroupChatEvent::MessageDeleted(self.inner.hydrate_updated_message(m)),
             ChatEventInternal::MessageReactionAdded(m) => {
@@ -58,6 +62,11 @@ impl GroupChatEvents {
             ChatEventInternal::UsersUnblocked(u) => GroupChatEvent::UsersUnblocked(*u.clone()),
             ChatEventInternal::MessagePinned(p) => GroupChatEvent::MessagePinned(*p.clone()),
             ChatEventInternal::MessageUnpinned(u) => GroupChatEvent::MessageUnpinned(*u.clone()),
+            ChatEventInternal::PollVoteRegistered(v) => {
+                GroupChatEvent::PollVoteRegistered(self.inner.hydrate_updated_message(v))
+            }
+            ChatEventInternal::PollVoteDeleted(v) => GroupChatEvent::PollVoteDeleted(self.inner.hydrate_updated_message(v)),
+            ChatEventInternal::PollEnded(m) => GroupChatEvent::PollEnded(self.inner.hydrate_poll_ended(**m)),
             _ => panic!("Unrecognised event type"),
         };
 

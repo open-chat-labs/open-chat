@@ -10,14 +10,19 @@ fn events_by_index(args: Args) -> Response {
 
 fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller) {
+    if let Some(participant) = runtime_state.data.participants.get(caller) {
+        let min_visible_event_index = participant.min_visible_event_index();
+
         let mut event_indexes = args.events;
         if min_visible_event_index > EventIndex::default() {
             event_indexes.retain(|e| *e >= min_visible_event_index);
         }
 
-        let events = runtime_state.data.events.get_by_index(event_indexes);
-        let affected_events = runtime_state.data.events.affected_events(&events);
+        let events = runtime_state
+            .data
+            .events
+            .get_by_index(event_indexes, Some(participant.user_id));
+        let affected_events = runtime_state.data.events.affected_events(&events, Some(participant.user_id));
         let latest_event_index = runtime_state.data.events.last().index;
 
         Success(SuccessResult {

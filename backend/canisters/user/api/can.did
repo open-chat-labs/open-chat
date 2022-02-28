@@ -20,6 +20,7 @@ type SendMessageResponse =
         MessageEmpty;
         TextTooLong: nat32;
         RecipientBlocked;
+        InvalidPoll: InvalidPollReason;
         InvalidRequest: text;
         TransactionFailed: text;
     };
@@ -48,6 +49,23 @@ type DeleteMessagesArgs =
 type DeleteMessagesResponse =
     variant {
         Success;
+        ChatNotFound;
+    };
+
+type RegisterPollVoteArgs =
+    record {
+        user_id: UserId;
+        message_index: MessageIndex;
+        poll_option: nat32;
+        operation: VoteOperation;
+    };
+
+type RegisterPollVoteResponse =
+    variant {
+        Success: PollVotes;
+        PollNotFound;
+        PollEnded;
+        OptionIndexOutOfRange;
         ChatNotFound;
     };
 
@@ -456,6 +474,7 @@ service: {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
+    register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse);

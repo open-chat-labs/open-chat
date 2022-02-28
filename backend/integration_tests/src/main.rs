@@ -5,13 +5,14 @@ use ic_registry_subnet_type::SubnetType;
 use std::future::Future;
 use tokio::runtime::Runtime as TRuntime;
 
-mod create_group_tests;
 mod change_role_tests;
+mod create_group_tests;
 mod get_updates_tests;
 mod make_super_admin_tests;
 mod mentions_tests;
 mod online_users_aggregator_tests;
 mod pinned_messages_tests;
+mod poll_tests;
 mod send_cycles_tests;
 mod send_message_tests;
 mod verify_user_tests;
@@ -46,6 +47,7 @@ fn tests_pot() -> pot::Pot<IcManager> {
             mentions_tests::mentions_tests,
             online_users_aggregator_tests::online_users_aggregator_tests,
             pinned_messages_tests::pinned_messages_tests,
+            poll_tests::poll_tests,
             send_cycles_tests::send_cycles_tests,
             send_message_tests::send_message_tests,
             verify_user_tests::verify_user_tests

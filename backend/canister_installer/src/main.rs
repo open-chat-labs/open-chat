@@ -14,6 +14,7 @@ async fn main() {
         group_index: opts.group_index,
         notifications: opts.notifications,
         online_users_aggregator: opts.online_users_aggregator,
+        callback: opts.callback,
         open_storage_index: opts.open_storage_index,
     };
 
@@ -33,5 +34,6 @@ struct Opts {
     group_index: CanisterId,
     notifications: CanisterId,
     online_users_aggregator: CanisterId,
+    callback: CanisterId,
     open_storage_index: CanisterId,
 }

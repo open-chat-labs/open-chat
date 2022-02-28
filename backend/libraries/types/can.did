@@ -96,6 +96,9 @@ type DirectChatEvent =
         MessageDeleted: UpdatedMessage;
         MessageReactionAdded: UpdatedMessage;
         MessageReactionRemoved: UpdatedMessage;
+        PollVoteRegistered: UpdatedMessage;
+        PollVoteDeleted: UpdatedMessage;
+        PollEnded: PollEnded;
     };
 
 type DirectChatEventWrapper =
@@ -179,6 +182,9 @@ type GroupChatEvent =
         UsersUnblocked: UsersUnblocked;
         MessagePinned: MessagePinned;
         MessageUnpinned: MessageUnpinned;
+        PollVoteRegistered: UpdatedMessage;
+        PollVoteDeleted: UpdatedMessage;
+        PollEnded: PollEnded;
     };
 
 type GroupChatEventWrapper =
@@ -313,6 +319,7 @@ type MessageUnpinned =
     record {
         message_index: MessageIndex;
         unpinned_by: UserId;
+        due_to_message_deleted: bool;
     };
 
 type PinnedMessageUpdate =
@@ -359,6 +366,15 @@ type IndexedNotification =
         value: NotificationEnvelope;
     };
 
+type InvalidPollReason =
+    variant {
+        TooFewOptions: nat32;
+        TooManyOptions: nat32;
+        OptionTooLong: nat32;
+        DuplicateOptions;
+        EndDateInThePast;
+    };
+
 type MessageContent =
     variant {
         Text: TextContent;
@@ -366,6 +382,7 @@ type MessageContent =
         Video: VideoContent;
         Audio: AudioContent;
         File: FileContent;
+        Poll: PollContent;
         Cryptocurrency: CryptocurrencyContent;
         Deleted: DeletedContent;
     };
@@ -453,6 +470,35 @@ type ParticipantsAdded =
         unblocked: vec UserId;
     };
 
+type PollConfig =
+    record {
+        text: opt text;
+        options: vec text;
+        end_date: opt TimestampMillis;
+        anonymous: bool;
+        show_votes_before_end_date: bool;
+        allow_multiple_votes_per_user: bool;
+    };
+
+type PollContent =
+    record {
+        config: PollConfig;
+        votes: PollVotes;
+        ended: bool;
+    };
+
+type PollEnded =
+    record {
+        event_index: EventIndex;
+        message_index: MessageIndex;
+    };
+
+type PollVotes =
+    record {
+        total: TotalPollVotes;
+        user: vec nat32;
+    };
+
 type RoleChanged =
     record {
         user_ids: vec UserId;
@@ -473,6 +519,13 @@ type ParticipantsRemoved =
         removed_by: UserId;
     };
 
+type TotalPollVotes =
+    variant {
+        Visible: vec record { nat32; vec UserId };
+        Anonymous: vec record { nat32; nat32 };
+        Hidden: nat32;
+    };
+
 type UsersBlocked =
     record {
         user_ids: vec UserId;
@@ -483,6 +536,12 @@ type UsersUnblocked =
     record {
         user_ids: vec UserId;
         unblocked_by: UserId;
+    };
+
+type VoteOperation =
+    variant {
+        RegisterVote;
+        DeleteVote;
     };
 
 type RegistrationFee =

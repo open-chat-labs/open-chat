@@ -9,8 +9,7 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, EventIndex, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped,
-    UserId, Version,
+    Avatar, CanisterId, ChatId, Cycles, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::env::Environment;
 use utils::memory;
@@ -57,6 +56,10 @@ impl RuntimeState {
         self.env.caller() == self.data.user_index_canister_id
     }
 
+    pub fn is_caller_callback_canister(&self) -> bool {
+        self.env.caller() == self.data.callback_canister_id
+    }
+
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
         let random = self.env.random_u32() as usize;
 
@@ -89,7 +92,7 @@ impl RuntimeState {
             min_visible_message_index,
             latest_message: data
                 .events
-                .latest_message()
+                .latest_message(Some(participant.user_id))
                 .filter(|m| m.event.message_index >= min_visible_message_index),
             latest_event_index: latest_event.index,
             joined: participant.date_added,
@@ -142,8 +145,8 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
+    pub callback_canister_id: CanisterId,
     pub activity_notification_state: ActivityNotificationState,
-    #[serde(default)]
     pub pinned_messages: Vec<MessageIndex>,
     pub test_mode: bool,
     pub owner_id: UserId,
@@ -165,6 +168,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
+        callback_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
@@ -183,20 +187,11 @@ impl Data {
             group_index_canister_id,
             user_index_canister_id,
             notifications_canister_ids,
+            callback_canister_id,
             activity_notification_state: ActivityNotificationState::new(now),
             pinned_messages: Vec::new(),
             test_mode,
             owner_id: creator_user_id,
-        }
-    }
-
-    pub fn min_visible_event_index(&self, caller: Principal) -> Option<EventIndex> {
-        if self.is_public {
-            Some(EventIndex::default())
-        } else {
-            self.participants
-                .get_by_principal(&caller)
-                .map(|participant| participant.min_visible_event_index())
         }
     }
 }
