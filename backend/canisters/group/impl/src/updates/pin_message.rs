@@ -21,36 +21,35 @@ fn pin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             return NotAuthorized;
         }
 
-        if runtime_state.data.pinned_messages.contains(&args.message_index) {
-            return NoChange;
+        if let Err(index) = runtime_state.data.pinned_messages.binary_search(&args.message_index) {
+            let is_valid_message_index = runtime_state
+                .data
+                .events
+                .latest_message_index()
+                .map_or(false, |i| i >= args.message_index);
+
+            if !is_valid_message_index {
+                return MessageIndexOutOfRange;
+            }
+
+            let now = runtime_state.env.now();
+
+            runtime_state.data.pinned_messages.insert(index, args.message_index);
+
+            let event_index = runtime_state.data.events.push_event(
+                ChatEventInternal::MessagePinned(Box::new(MessagePinned {
+                    message_index: args.message_index,
+                    pinned_by: participant.user_id,
+                })),
+                now,
+            );
+
+            handle_activity_notification(runtime_state);
+
+            Success(event_index)
+        } else {
+            NoChange
         }
-
-        let is_valid_message_index = runtime_state
-            .data
-            .events
-            .latest_message_index()
-            .map_or(false, |i| i >= args.message_index);
-
-        if !is_valid_message_index {
-            return MessageIndexOutOfRange;
-        }
-
-        let now = runtime_state.env.now();
-
-        runtime_state.data.pinned_messages.push(args.message_index);
-        runtime_state.data.pinned_messages.sort();
-
-        let event_index = runtime_state.data.events.push_event(
-            ChatEventInternal::MessagePinned(Box::new(MessagePinned {
-                message_index: args.message_index,
-                pinned_by: participant.user_id,
-            })),
-            now,
-        );
-
-        handle_activity_notification(runtime_state);
-
-        Success(event_index)
     } else {
         CallerNotInGroup
     }
