@@ -15,18 +15,22 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     let management_canister = build_management_canister(&agent);
 
     // futures::future::joinN is only defined for N <= 5
-    let root_canister_id = create_empty_canister(&management_canister).await;
-
     let (
+        root_canister_id,
         user_index_canister_id,
         group_index_canister_id,
         notifications_canister_id,
         online_users_aggregator_canister_id,
-        open_storage_index_canister_id,
     ) = futures::future::join5(
         create_empty_canister(&management_canister),
         create_empty_canister(&management_canister),
         create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+    )
+    .await;
+
+    let (callback_canister_id, open_storage_index_canister_id) = futures::future::join(
         create_empty_canister(&management_canister),
         create_empty_canister(&management_canister),
     )
@@ -37,6 +41,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     println!("group_index canister id: {group_index_canister_id}");
     println!("notifications canister id: {notifications_canister_id}");
     println!("users online aggregator canister id: {online_users_aggregator_canister_id}");
+    println!("callback canister id: {callback_canister_id}");
     println!("open_storage_index canister id: {open_storage_index_canister_id}");
 
     let canister_ids = CanisterIds {
@@ -45,6 +50,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
         group_index: group_index_canister_id,
         notifications: notifications_canister_id,
         online_users_aggregator: online_users_aggregator_canister_id,
+        callback: callback_canister_id,
         open_storage_index: open_storage_index_canister_id,
     };
 
@@ -68,11 +74,16 @@ async fn install_service_canisters_impl(
     test_mode: bool,
 ) {
     let controllers = vec![principal, canister_ids.root];
-    futures::future::join4(
+    futures::future::join5(
         set_controllers(management_canister, &canister_ids.user_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.group_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.notifications, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.online_users_aggregator, controllers),
+        set_controllers(
+            management_canister,
+            &canister_ids.online_users_aggregator,
+            controllers.clone(),
+        ),
+        set_controllers(management_canister, &canister_ids.callback, controllers),
     )
     .await;
 
@@ -86,7 +97,7 @@ async fn install_service_canisters_impl(
         notifications_canister_id: canister_ids.notifications,
         online_users_aggregator_canister_id: canister_ids.online_users_aggregator,
         open_storage_index_canister_id: canister_ids.open_storage_index,
-        wasm_version: Version::min(),
+        wasm_version: version,
         test_mode,
     };
 
@@ -99,8 +110,9 @@ async fn install_service_canisters_impl(
         group_index_canister_id: canister_ids.group_index,
         notifications_canister_ids: vec![canister_ids.notifications],
         online_users_aggregator_canister_id: canister_ids.online_users_aggregator,
+        callback_canister_id: canister_ids.callback,
         open_storage_index_canister_id: canister_ids.open_storage_index,
-        wasm_version: Version::min(),
+        wasm_version: version,
         test_mode,
     };
 
@@ -111,7 +123,8 @@ async fn install_service_canisters_impl(
         group_canister_wasm,
         notifications_canister_ids: vec![canister_ids.notifications],
         user_index_canister_id: canister_ids.user_index,
-        wasm_version: Version::min(),
+        callback_canister_id: canister_ids.callback,
+        wasm_version: version,
         test_mode,
     };
 
@@ -119,14 +132,20 @@ async fn install_service_canisters_impl(
     let notifications_init_args = notifications_canister::init::Args {
         push_service_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
-        wasm_version: Version::min(),
+        wasm_version: version,
         test_mode,
     };
 
     let online_users_aggregator_canister_wasm = get_canister_wasm(CanisterName::OnlineUsersAggregator, version, false);
     let online_users_aggregator_init_args = online_users_aggregator_canister::init::Args {
         user_index_canister_id: canister_ids.user_index,
-        wasm_version: Version::min(),
+        wasm_version: version,
+        test_mode,
+    };
+
+    let callback_canister_wasm = get_canister_wasm(CanisterName::Callback, version, false);
+    let callback_init_args = callback_canister::init::Args {
+        wasm_version: version,
         test_mode,
     };
 
@@ -161,6 +180,14 @@ async fn install_service_canisters_impl(
             &online_users_aggregator_canister_wasm.module,
             online_users_aggregator_init_args,
         ),
+    )
+    .await;
+
+    install_wasm(
+        management_canister,
+        &canister_ids.callback,
+        &callback_canister_wasm.module,
+        callback_init_args,
     )
     .await;
 

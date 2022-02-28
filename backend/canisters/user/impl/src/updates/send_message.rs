@@ -3,6 +3,7 @@ use super::crypto::cycles::{
 };
 use super::crypto::icp::send_icp;
 use crate::guards::caller_is_owner;
+use crate::updates::send_message_common::register_callbacks_if_required;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
@@ -89,6 +90,8 @@ fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>,
         .data
         .direct_chats
         .push_message(true, recipient, None, push_message_args);
+
+    register_callbacks_if_required(recipient, &message_event, runtime_state);
 
     let c2c_args = build_c2c_args(args, message_event.event.message_index);
     ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, cycles_transfer, false));

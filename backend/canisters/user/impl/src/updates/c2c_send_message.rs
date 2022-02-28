@@ -1,3 +1,4 @@
+use crate::updates::send_message_common::register_callbacks_if_required;
 use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
@@ -81,7 +82,9 @@ fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut Runtime
             .direct_chats
             .push_message(false, sender, Some(args.sender_message_index), push_message_args);
 
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&sender.into()) {
+    register_callbacks_if_required(sender, &message_event, runtime_state);
+
+    if let Some(chat) = runtime_state.data.direct_chats.get(&sender.into()) {
         if !chat.notifications_muted.value {
             let notification = Notification::DirectMessageNotification(DirectMessageNotification {
                 sender,

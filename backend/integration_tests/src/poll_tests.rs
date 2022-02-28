@@ -43,7 +43,8 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     let chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id]).await;
 
-    let send_message_args = group_canister::send_message::Args {
+    print!("1. Create a poll... ");
+    let send_message_args1 = group_canister::send_message::Args {
         message_id: 1.into(),
         sender_name: "TEST!".to_string(),
         content: MessageContent::Poll(PollContent {
@@ -63,9 +64,10 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         replies_to: None,
         mentioned: Vec::new(),
     };
-    let _ = send_group_message(&user1_agent, chat_id, &send_message_args).await;
+    let _ = send_group_message(&user1_agent, chat_id, &send_message_args1).await;
+    println!("Ok");
 
-    print!("1. Register a vote... ");
+    print!("2. Register a vote... ");
     let register_poll_vote_args = group_canister::register_poll_vote::Args {
         message_index: 0.into(),
         poll_option: 0,
@@ -86,7 +88,7 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     };
     println!("Ok");
 
-    print!("2. Register a vote from user2... ");
+    print!("3. Register a vote from user2... ");
     match group_canister_client::register_poll_vote(&user2_agent, &chat_id.into(), &register_poll_vote_args)
         .await
         .unwrap()
@@ -102,7 +104,7 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     };
     println!("Ok");
 
-    print!("3. Register a vote for a different option... ");
+    print!("4. Register a vote for a different option... ");
     let register_poll_vote_args = group_canister::register_poll_vote::Args {
         message_index: 0.into(),
         poll_option: 1,
@@ -124,7 +126,7 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     };
     println!("Ok");
 
-    print!("4. Delete a vote... ");
+    print!("5. Delete a vote... ");
     let register_poll_vote_args = group_canister::register_poll_vote::Args {
         message_index: 0.into(),
         poll_option: 1,
@@ -145,7 +147,7 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     };
     println!("Ok");
 
-    print!("5. Check the events were recorded correctly... ");
+    print!("6. Check the events were recorded correctly... ");
     let events_range_args = group_canister::events_range::Args {
         from_index: 0.into(),
         to_index: 10.into(),

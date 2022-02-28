@@ -122,6 +122,7 @@ if [[ "$no_build" != true ]]; then
 
     ## Build the canister wasms
     pushd ../..
+    ./generate-wasm.sh callback_canister_impl
     ./generate-wasm.sh group_canister_impl
     ./generate-wasm.sh group_index_canister_impl
     ./generate-wasm.sh notifications_canister_impl
@@ -161,6 +162,7 @@ ln -fs "${target}/replica" local-bin/replica_base
 ln -fs "${target}/nodemanager" local-bin/nodemanager_base
 ln -fs "${target}/ic-rosetta-api" local-bin/
 
+ln -fs ../../../target/wasm32-unknown-unknown/release/callback_canister_impl-opt.wasm local-bin/
 ln -fs ../../../target/wasm32-unknown-unknown/release/group_index_canister_impl-opt.wasm local-bin/
 ln -fs ../../../target/wasm32-unknown-unknown/release/notifications_canister_impl-opt.wasm local-bin/
 ln -fs ../../../target/wasm32-unknown-unknown/release/online_users_aggregator_canister_impl-opt.wasm local-bin/
