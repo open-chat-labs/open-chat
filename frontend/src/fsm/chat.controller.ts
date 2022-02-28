@@ -52,7 +52,6 @@ import { writable } from "svelte/store";
 import { rollbar } from "../utils/logging";
 import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
-import { enterSend } from "stores/settings";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
