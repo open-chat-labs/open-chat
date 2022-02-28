@@ -484,6 +484,7 @@ type PollContent =
     record {
         config: PollConfig;
         votes: PollVotes;
+        ended: bool;
     };
 
 type PollEnded =

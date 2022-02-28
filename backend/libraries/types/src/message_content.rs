@@ -200,6 +200,7 @@ pub struct FileContent {
 pub struct PollContent {
     pub config: PollConfig,
     pub votes: PollVotes,
+    pub ended: bool,
 }
 
 impl PollContent {
@@ -255,6 +256,7 @@ impl PollContentInternal {
                 total: total_votes,
                 user: user_votes,
             },
+            ended: self.ended,
         }
     }
 
