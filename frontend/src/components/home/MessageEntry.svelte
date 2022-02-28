@@ -212,7 +212,7 @@
 
     /**
      * Check the message content for special commands
-     * * !poll - creats a poll
+     * * !poll - creates a poll
      * * !pinned - opens pinned messages (not yet)
      * * !details - opens group details (not yet)
      */
