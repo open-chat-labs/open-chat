@@ -7,11 +7,18 @@ use types::{CanisterId, TimestampMillis};
 pub struct Callbacks {
     callbacks: BTreeMap<TimestampMillis, VecDeque<Callback>>,
     failed: Vec<FailedCallback>,
+    pending: u64,
+    completed: u64,
 }
 
 impl Callbacks {
     pub fn add(&mut self, callback: Callback, timestamp: TimestampMillis) {
         self.callbacks.entry(timestamp).or_default().push_back(callback);
+        self.pending += 1;
+    }
+
+    pub fn record_callback_completed(&mut self) {
+        self.completed += 1;
     }
 
     pub fn record_failed_callback(&mut self, callback: FailedCallback) {
@@ -36,7 +43,17 @@ impl Callbacks {
                 break;
             }
         }
+        self.pending -= callbacks_due.len() as u64;
         callbacks_due
+    }
+
+    pub fn metrics(&self) -> Metrics {
+        Metrics {
+            pending: self.pending,
+            completed: self.completed,
+            failed: self.failed.len() as u64,
+            next_callback_due: self.callbacks.keys().copied().next().unwrap_or_default(),
+        }
     }
 }
 
@@ -53,4 +70,11 @@ pub struct FailedCallback {
     pub timestamp: TimestampMillis,
     pub callback: Callback,
     pub error_message: String,
+}
+
+pub struct Metrics {
+    pub pending: u64,
+    pub completed: u64,
+    pub failed: u64,
+    pub next_callback_due: TimestampMillis,
 }

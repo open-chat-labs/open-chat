@@ -38,11 +38,17 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
+        let callback_metrics = self.data.callbacks.metrics();
+
         Metrics {
             memory_used: memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            callbacks_pending: callback_metrics.pending,
+            callbacks_completed: callback_metrics.completed,
+            callbacks_failed: callback_metrics.failed,
+            next_callback_due: callback_metrics.next_callback_due,
         }
     }
 }
@@ -68,4 +74,8 @@ pub struct Metrics {
     pub memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
+    pub callbacks_pending: u64,
+    pub callbacks_completed: u64,
+    pub callbacks_failed: u64,
+    pub next_callback_due: TimestampMillis,
 }

@@ -29,7 +29,7 @@ mod execute_callbacks {
     }
 
     async fn execute_callback(callback: Callback) {
-        if let Err((_, error_message)) = ic_cdk::api::call::call_raw(
+        match ic_cdk::api::call::call_raw(
             callback.canister_id,
             &callback.method_name,
             callback.payload.clone().into_vec(),
@@ -37,28 +37,31 @@ mod execute_callbacks {
         )
         .await
         {
-            // If it failed due to the target canister being stopped, try again in 1 minute
-            if !callback.is_retry && error_message.to_uppercase().contains("STOPPED") {
-                let retry = Callback {
-                    canister_id: callback.canister_id,
-                    method_name: callback.method_name,
-                    payload: callback.payload,
-                    is_retry: true,
-                };
-                mutate_state(|state| {
-                    let now = state.env.now();
-                    state.data.callbacks.add(retry, now + MINUTE_IN_MS);
-                })
-            } else {
-                mutate_state(|state| {
-                    let now = state.env.now();
-                    let failed_callback = FailedCallback {
-                        timestamp: now,
-                        callback,
-                        error_message,
+            Ok(_) => mutate_state(|state| state.data.callbacks.record_callback_completed()),
+            Err((_, error_message)) => {
+                // If it failed due to the target canister being stopped, try again in 1 minute
+                if !callback.is_retry && error_message.to_uppercase().contains("STOPPED") {
+                    let retry = Callback {
+                        canister_id: callback.canister_id,
+                        method_name: callback.method_name,
+                        payload: callback.payload,
+                        is_retry: true,
                     };
-                    state.data.callbacks.record_failed_callback(failed_callback);
-                })
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.callbacks.add(retry, now + MINUTE_IN_MS);
+                    })
+                } else {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        let failed_callback = FailedCallback {
+                            timestamp: now,
+                            callback,
+                            error_message,
+                        };
+                        state.data.callbacks.record_failed_callback(failed_callback);
+                    })
+                }
             }
         }
     }
