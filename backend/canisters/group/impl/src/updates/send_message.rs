@@ -31,6 +31,16 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             };
         }
 
+        let permissions = &runtime_state.data.permissions;
+
+        if !participant.role.can_send_messages(permissions) {
+            return NotAuthorized;
+        }
+
+        if matches!(args.content, MessageContent::Poll(_)) && !participant.role.can_create_polls(permissions) {
+            return NotAuthorized;
+        }
+
         let sender = participant.user_id;
         let user_being_replied_to = args
             .replies_to

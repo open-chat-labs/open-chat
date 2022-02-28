@@ -31,6 +31,7 @@ pub enum Response {
     MessageEmpty,
     TextTooLong(u32),
     InvalidPoll(InvalidPollReason),
+    NotAuthorized,
     CallerNotInGroup,
 }
 
