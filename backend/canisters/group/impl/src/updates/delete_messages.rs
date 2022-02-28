@@ -1,9 +1,10 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
-use chat_events::DeleteMessageResult;
+use chat_events::{ChatEventInternal, DeleteMessageResult};
 use group_canister::delete_messages::{Response::*, *};
 use ic_cdk_macros::update;
+use types::MessageUnpinned;
 
 #[update]
 #[trace]
@@ -21,6 +22,22 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         let mut files_to_delete = Vec::new();
 
         for message_id in args.message_ids {
+            if let Some(message_index) = runtime_state.data.events.get_message_index(message_id) {
+                // If the message being deleted is pinned, unpin it
+                if let Ok(index) = runtime_state.data.pinned_messages.binary_search(&message_index) {
+                    runtime_state.data.pinned_messages.remove(index);
+
+                    runtime_state.data.events.push_event(
+                        ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
+                            message_index,
+                            unpinned_by: participant.user_id,
+                            due_to_message_deleted: true,
+                        })),
+                        runtime_state.env.now(),
+                    );
+                }
+            }
+
             if let DeleteMessageResult::Success(content) = runtime_state.data.events.delete_message(
                 participant.user_id,
                 participant.role.can_delete_messages(),
