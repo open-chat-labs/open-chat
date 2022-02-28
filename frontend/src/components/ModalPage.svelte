@@ -55,7 +55,7 @@
         top: $sp3;
     }
     .powered-by {
-        background-image: url("../assets/ic-badge-built-on-crypto_label-stripe-for-dark.svg");
+        background-image: url("../assets/ic-badge-powered-by_label-stripe-white-text.svg");
         position: absolute;
         bottom: 0;
         height: 40px;
