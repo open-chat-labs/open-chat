@@ -7,7 +7,8 @@ use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
 use serde_bytes::ByteBuf;
 use types::{
-    CanisterId, ContentValidationError, EventWrapper, GroupMessageNotification, Message, MessageContent, Notification, UserId,
+    CanisterId, ContentValidationError, EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex,
+    Notification, TimestampMillis, UserId,
 };
 
 #[update]
@@ -97,24 +98,22 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 fn register_callbacks_if_required(message_event: &EventWrapper<Message>, runtime_state: &mut RuntimeState) {
     if let MessageContent::Poll(p) = &message_event.event.content {
         if let Some(end_date) = p.config.end_date {
-            let payload = ByteBuf::from(
-                Encode!(&group_canister::end_poll::Args {
-                    message_index: message_event.event.message_index,
-                })
-                .unwrap(),
-            );
-
-            let args = callback_canister::c2c_register_callback::Args {
-                method_name: "end_poll".to_string(),
-                payload,
-                timestamp: end_date,
-            };
-            ic_cdk::spawn(register_end_poll_callback(runtime_state.data.callback_canister_id, args));
+            ic_cdk::spawn(register_end_poll_callback(
+                runtime_state.data.callback_canister_id,
+                message_event.event.message_index,
+                end_date,
+            ));
         }
     }
 }
 
-async fn register_end_poll_callback(canister_id: CanisterId, args: callback_canister::c2c_register_callback::Args) {
+async fn register_end_poll_callback(canister_id: CanisterId, message_index: MessageIndex, end_date: TimestampMillis) {
+    let payload = ByteBuf::from(Encode!(&group_canister::c2c_end_poll::Args { message_index }).unwrap());
+    let args = callback_canister::c2c_register_callback::Args {
+        method_name: "c2c_end_poll".to_string(),
+        payload,
+        timestamp: end_date,
+    };
     let _ = callback_canister_c2c_client::c2c_register_callback(canister_id, &args).await;
 }
 
