@@ -16,24 +16,22 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
     }
 
     let caller = runtime_state.env.caller();
+    let permissions = &runtime_state.data.permissions;
     if let Some(role) = runtime_state.data.participants.get_by_principal(&caller).map(|p| p.role) {
         let is_public_group = runtime_state.data.is_public;
         let is_valid = match method_name.as_str() {
-            "add_participants" => role.can_add_participants(is_public_group),
-            "block_user" => role.can_block_user(),
+            "add_participants" => role.can_add_members(permissions, is_public_group),
+            "block_user" => role.can_block_users(permissions),
             "change_role" => {
                 let (args,) = ic_cdk::api::call::arg_data::<(group_canister::change_role::Args,)>();
-                role.can_change_role(args.new_role)
+                role.can_change_roles(args.new_role, permissions)
             }
             "delete_group" => role.can_delete_group(),
-            "dismiss_admin" => role.can_dismiss_admin(),
-            "make_admin" => role.can_make_admin(),
-            "pin_message" => role.can_pin_message(),
-            "remove_participant" => role.can_remove_participants(),
-            "transfer_ownership" => role.can_transfer_ownership(),
-            "unblock_user" => role.can_unblock_user(),
-            "unpin_message" => role.can_pin_message(),
-            "update_group" => role.can_update_group(),
+            "pin_message" => role.can_pin_messages(permissions),
+            "remove_participant" => role.can_remove_members(permissions),
+            "unblock_user" => role.can_block_users(permissions),
+            "unpin_message" => role.can_pin_messages(permissions),
+            "update_group" => role.can_update_group(permissions),
             "delete_messages" | "edit_message" | "put_chunk" | "register_poll_vote" | "send_message" | "toggle_reaction" => {
                 true
             }

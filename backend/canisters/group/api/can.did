@@ -183,6 +183,7 @@ type UpdateGroupArgs =
         name: text;
         description: text;
         avatar: AvatarUpdate;
+        permissions: opt GroupPermissions;
     };
 
 type UpdateGroupResponse =

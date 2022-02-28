@@ -33,6 +33,7 @@ fn init(args: Args) {
         args.notifications_canister_ids,
         args.callback_canister_id,
         args.test_mode,
+        args.permissions,
     );
 
     init_state(env, data, args.wasm_version);

@@ -61,6 +61,7 @@ impl GroupChatEvents {
             ChatEventInternal::UsersBlocked(u) => GroupChatEvent::UsersBlocked(*u.clone()),
             ChatEventInternal::UsersUnblocked(u) => GroupChatEvent::UsersUnblocked(*u.clone()),
             ChatEventInternal::MessagePinned(p) => GroupChatEvent::MessagePinned(*p.clone()),
+            ChatEventInternal::PermissionsChanged(p) => GroupChatEvent::PermissionsChanged(*p.clone()),
             ChatEventInternal::MessageUnpinned(u) => GroupChatEvent::MessageUnpinned(*u.clone()),
             ChatEventInternal::PollVoteRegistered(v) => {
                 GroupChatEvent::PollVoteRegistered(self.inner.hydrate_updated_message(v))
