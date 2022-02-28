@@ -2,6 +2,9 @@
 members = [
     "backend/canister_installer",
     "backend/canister_upgrader",
+    "backend/canisters/callback/api",
+    "backend/canisters/callback/c2c_client",
+    "backend/canisters/callback/impl",
     "backend/canisters/group/api",
     "backend/canisters/group/c2c_client",
     "backend/canisters/group/client",

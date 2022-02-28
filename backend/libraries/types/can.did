@@ -98,6 +98,7 @@ type DirectChatEvent =
         MessageReactionRemoved: UpdatedMessage;
         PollVoteRegistered: UpdatedMessage;
         PollVoteDeleted: UpdatedMessage;
+        PollEnded: PollEnded;
     };
 
 type DirectChatEventWrapper =
@@ -183,6 +184,7 @@ type GroupChatEvent =
         MessageUnpinned: MessageUnpinned;
         PollVoteRegistered: UpdatedMessage;
         PollVoteDeleted: UpdatedMessage;
+        PollEnded: PollEnded;
     };
 
 type GroupChatEventWrapper =
@@ -482,6 +484,12 @@ type PollContent =
     record {
         config: PollConfig;
         votes: PollVotes;
+    };
+
+type PollEnded =
+    record {
+        event_index: EventIndex;
+        message_index: MessageIndex;
     };
 
 type PollVotes =

@@ -16,6 +16,7 @@ pub mod create_group;
 pub mod delete_messages;
 pub mod dismiss_alerts;
 pub mod edit_message;
+pub mod end_poll;
 pub mod join_group;
 pub mod join_group_v2;
 pub mod leave_group;

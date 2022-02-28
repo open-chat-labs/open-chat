@@ -519,6 +519,50 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1db59621ec70f09c5e9b597b220c7a2b43611f4710dc03ceb8748637775692c"
 
 [[package]]
+name = "callback_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "serde_bytes",
+ "types",
+]
+
+[[package]]
+name = "callback_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "callback_canister",
+ "candid",
+ "canister_client_macros",
+ "ic-cdk",
+ "tracing",
+ "types",
+]
+
+[[package]]
+name = "callback_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "callback_canister",
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "futures",
+ "http_request",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "serde",
+ "serde_bytes",
+ "serializer",
+ "tracing",
+ "types",
+ "utils",
+]
+
+[[package]]
 name = "candid"
 version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -578,6 +622,7 @@ dependencies = [
 name = "canister_client"
 version = "0.1.0"
 dependencies = [
+ "callback_canister",
  "candid",
  "canister_client_macros",
  "dirs",
@@ -1446,6 +1491,8 @@ dependencies = [
 name = "group_canister_impl"
 version = "0.1.0"
 dependencies = [
+ "callback_canister",
+ "callback_canister_c2c_client",
  "candid",
  "canister_api_macros",
  "canister_logger",
@@ -1466,6 +1513,7 @@ dependencies = [
  "regex",
  "search",
  "serde",
+ "serde_bytes",
  "serializer",
  "tracing",
  "types",
@@ -4249,6 +4297,8 @@ dependencies = [
 name = "user_canister_impl"
 version = "0.1.0"
 dependencies = [
+ "callback_canister",
+ "callback_canister_c2c_client",
  "candid",
  "canister_api_macros",
  "canister_logger",
@@ -4270,6 +4320,7 @@ dependencies = [
  "open_storage_bucket_client",
  "search",
  "serde",
+ "serde_bytes",
  "serializer",
  "tracing",
  "types",
