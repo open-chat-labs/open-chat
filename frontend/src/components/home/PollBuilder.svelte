@@ -191,7 +191,7 @@
                                             minlength={1}
                                             maxlength={MAX_ANSWER_LENGTH}
                                             countdown={true}
-                                            onEnter={addAnswer}
+                                            on:enter={addAnswer}
                                             placeholder={$_(
                                                 poll.pollAnswers.size === MAX_ANSWERS
                                                     ? "poll.maxReached"

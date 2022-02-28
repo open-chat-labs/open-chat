@@ -13,7 +13,6 @@
     export let fontSize: "small" | "normal" | "large" | "huge" = "normal";
     export let align: "left" | "right" | "center" = "left";
     export let countdown: boolean = false;
-    export let onEnter: () => void = () => {};
 
     const dispatch = createEventDispatcher();
 
@@ -40,7 +39,7 @@
 
     function keyDown(e: KeyboardEvent) {
         if (e.key === "Enter") {
-            onEnter();
+            dispatch("enter");
         }
     }
 
