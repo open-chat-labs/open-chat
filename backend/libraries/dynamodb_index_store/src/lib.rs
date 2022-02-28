@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use aws_sdk_dynamodb::model::AttributeValue;
-use aws_sdk_dynamodb::{Blob, Client};
+use aws_sdk_dynamodb::Client;
 use aws_types::config::Config;
 use index_store::IndexStore;
 use std::str::FromStr;
@@ -19,7 +19,7 @@ impl DynamoDbIndexStore {
         DynamoDbIndexStore {
             client,
             table_name,
-            canister_id_attr: AttributeValue::B(Blob::new(canister_id.as_slice().to_vec())),
+            canister_id_attr: AttributeValue::S(canister_id.to_string()),
         }
     }
 }
