@@ -117,6 +117,7 @@
                 anonymous: poll.anonymous,
                 options: [...poll.pollAnswers],
             },
+            ended: false,
         };
     }
 

@@ -122,6 +122,7 @@ function pollContent(candid: ApiPollContent): PollContent {
         kind: "poll_content",
         votes: pollVotes(candid.votes),
         config: pollConfig(candid.config),
+        ended: candid.ended,
     };
 }
 
@@ -387,6 +388,7 @@ function apiPollContent(domain: PollContent): ApiPollContent {
     return {
         votes: apiPollVotes(domain.votes),
         config: apiPollConfig(domain.config),
+        ended: domain.ended,
     };
 }
 

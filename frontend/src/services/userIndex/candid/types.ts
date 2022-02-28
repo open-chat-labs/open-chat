@@ -169,6 +169,7 @@ export type DirectChatCreated = {};
 export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'Message' : Message } |
+  { 'PollEnded' : PollEnded } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'PollVoteDeleted' : UpdatedMessage } |
@@ -256,6 +257,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'Message' : Message } |
+  { 'PollEnded' : PollEnded } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
@@ -409,6 +411,7 @@ export interface MessagePinned {
   'message_index' : MessageIndex,
 }
 export interface MessageUnpinned {
+  'due_to_message_deleted' : boolean,
   'unpinned_by' : UserId,
   'message_index' : MessageIndex,
 }
@@ -510,7 +513,15 @@ export interface PollConfig {
   'anonymous' : boolean,
   'options' : Array<string>,
 }
-export interface PollContent { 'votes' : PollVotes, 'config' : PollConfig }
+export interface PollContent {
+  'votes' : PollVotes,
+  'ended' : boolean,
+  'config' : PollConfig,
+}
+export interface PollEnded {
+  'event_index' : EventIndex,
+  'message_index' : MessageIndex,
+}
 export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
 export interface PublicGroupSummary {
   'name' : string,

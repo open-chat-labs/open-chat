@@ -19,7 +19,6 @@ import type {
     ApiMessageEventWrapper,
     ApiPinMessageResponse,
     ApiUnpinMessageResponse,
-    ApiRegisterPollVoteResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -43,13 +42,11 @@ import type {
     Message,
     PinMessageResponse,
     UnpinMessageResponse,
-    RegisterPollVoteResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
 import { message, updatedMessage } from "../common/chatMappers";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
-import { identity, optional } from "../../utils/mapping";
 
 function principalToString(p: Principal): string {
     return p.toString();
@@ -645,6 +642,14 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         return {
             kind: "poll_vote_deleted",
             message: updatedMessage(candid.PollVoteDeleted),
+        };
+    }
+
+    if ("PollEnded" in candid) {
+        return {
+            kind: "poll_ended",
+            messageIndex: candid.PollEnded.message_index,
+            eventIndex: candid.PollEnded.event_index,
         };
     }
 

@@ -136,7 +136,7 @@ describe("updating poll votes", () => {
         user: [],
     };
 
-    const poll: PollContent = { kind: "poll_content", votes: anonVotes, config };
+    const poll: PollContent = { kind: "poll_content", votes: anonVotes, config, ended: false };
 
     describe("adding a vote", () => {
         describe("when multiple votes are allowed", () => {

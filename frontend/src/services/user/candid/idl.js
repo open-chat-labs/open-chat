@@ -95,6 +95,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const PollContent = IDL.Record({
     'votes' : PollVotes,
+    'ended' : IDL.Bool,
     'config' : PollConfig,
   });
   const TextContent = IDL.Record({ 'text' : IDL.Text });
@@ -230,11 +231,16 @@ export const idlFactory = ({ IDL }) => {
     'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
     'message_index' : MessageIndex,
   });
+  const PollEnded = IDL.Record({
+    'event_index' : EventIndex,
+    'message_index' : MessageIndex,
+  });
   const DirectChatCreated = IDL.Record({});
   const DirectChatEvent = IDL.Variant({
     'MessageReactionRemoved' : UpdatedMessage,
     'MessageReactionAdded' : UpdatedMessage,
     'Message' : Message,
+    'PollEnded' : PollEnded,
     'PollVoteRegistered' : UpdatedMessage,
     'MessageDeleted' : UpdatedMessage,
     'PollVoteDeleted' : UpdatedMessage,

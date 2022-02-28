@@ -21,12 +21,10 @@
 
     $: haveIVoted = content.votes.user.length > 0;
 
-    $: finished = date ? date.getTime() < $now : false;
-
     $: numberOfVotes = totalVotes(content);
 
     function vote(idx: number) {
-        if (finished) return;
+        if (content.ended) return;
 
         dispatch("registerVote", {
             type: votedFor(idx) ? "delete" : "register",
@@ -71,6 +69,11 @@
         if (!haveIVoted) {
             return 0;
         }
+
+        if (!content.ended && !content.config.showVotesBeforeEndDate) {
+            return 0;
+        }
+
         return (votesForAnswer(idx) / numberOfVotes) * 100;
     }
 </script>
@@ -86,7 +89,7 @@
     {/if}
     <div class="answers">
         {#each [...content.config.options] as answer, i (answer)}
-            <div class="answer-text" class:finished on:click={() => vote(i)}>
+            <div class="answer-text" class:finished={content.ended} on:click={() => vote(i)}>
                 <Progress bg={"button"} percent={percentageOfVote(i)}>
                     <div class="label">
                         <span>{answer}</span>
@@ -103,7 +106,7 @@
     </p>
     {#if date !== undefined}
         <p class="timestamp">
-            {#if finished}
+            {#if content.ended}
                 {$_("poll.finished")}
             {:else}
                 {$_("poll.pollEnds", {

@@ -203,6 +203,7 @@ export type PollContent = {
     kind: "poll_content";
     votes: PollVotes;
     config: PollConfig;
+    ended: boolean;
 };
 
 export type PollVotes = {
@@ -305,6 +306,7 @@ export type DirectChatEvent =
     | ReactionRemoved
     | PollVoteDeleted
     | PollVoteRegistered
+    | PollEnded
     | DirectChatCreated;
 
 export type GroupChatEvent =
@@ -331,7 +333,8 @@ export type GroupChatEvent =
     | MessagePinned
     | MessageUnpinned
     | PollVoteRegistered
-    | PollVoteDeleted;
+    | PollVoteDeleted
+    | PollEnded;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -443,6 +446,12 @@ export type PollVoteRegistered = {
 export type PollVoteDeleted = {
     kind: "poll_vote_deleted";
     message: StaleMessage;
+};
+
+export type PollEnded = {
+    kind: "poll_ended";
+    messageIndex: number;
+    eventIndex: number;
 };
 
 export type MessagePinned = {

@@ -42,8 +42,7 @@
                 } else {
                     messages = {
                         kind: "success",
-                        // data: resp.events.sort((a, b) => b.index - a.index),
-                        data: groupMessagesByDate(resp.events.sort((a, b) => b.index - a.index)),
+                        data: groupMessagesByDate(resp.events.sort((a, b) => a.index - b.index)),
                     };
                 }
             })

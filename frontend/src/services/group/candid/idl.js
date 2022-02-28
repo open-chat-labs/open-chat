@@ -99,6 +99,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const PollContent = IDL.Record({
     'votes' : PollVotes,
+    'ended' : IDL.Bool,
     'config' : PollConfig,
   });
   const TextContent = IDL.Record({ 'text' : IDL.Text });
@@ -241,6 +242,7 @@ export const idlFactory = ({ IDL }) => {
     'blocked_by' : UserId,
   });
   const MessageUnpinned = IDL.Record({
+    'due_to_message_deleted' : IDL.Bool,
     'unpinned_by' : UserId,
     'message_index' : MessageIndex,
   });
@@ -262,6 +264,10 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(ReplyContext),
     'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
+    'message_index' : MessageIndex,
+  });
+  const PollEnded = IDL.Record({
+    'event_index' : EventIndex,
     'message_index' : MessageIndex,
   });
   const UsersUnblocked = IDL.Record({
@@ -308,6 +314,7 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantsRemoved' : ParticipantsRemoved,
     'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin,
     'Message' : Message,
+    'PollEnded' : PollEnded,
     'UsersUnblocked' : UsersUnblocked,
     'PollVoteRegistered' : UpdatedMessage,
     'ParticipantLeft' : ParticipantLeft,
