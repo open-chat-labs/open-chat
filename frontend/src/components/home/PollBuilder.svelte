@@ -51,7 +51,7 @@
     function emptyPoll() {
         return {
             pollQuestion: "",
-            anonymous: false,
+            anonymous: true,
             limitedDuration: true,
             showVotesBeforeEndDate: true,
             allowMultipleVotesPerUser: false,
@@ -214,7 +214,7 @@
                 </div>
                 <div class="tab-page" class:selected={selectedTab === "settings"}>
                     <table>
-                        <tr>
+                        <!-- <tr>
                             <td class="label">
                                 {$_("poll.anonymous")}
                             </td>
@@ -225,7 +225,7 @@
                                     on:change={() => (poll.anonymous = !poll.anonymous)}
                                     checked={poll.anonymous} />
                             </td>
-                        </tr>
+                        </tr> -->
 
                         <tr>
                             <td class="label">
