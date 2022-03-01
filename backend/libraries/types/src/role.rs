@@ -50,7 +50,7 @@ impl Default for GroupPermissions {
             delete_messages: PermissionRole::Admins,
             update_group: PermissionRole::Admins,
             pin_messages: PermissionRole::Admins,
-            create_polls: PermissionRole::Admins,
+            create_polls: PermissionRole::Members,
             send_messages: PermissionRole::Members,
             react_to_messages: PermissionRole::Members,
         }
