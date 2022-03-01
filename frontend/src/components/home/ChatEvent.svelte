@@ -5,6 +5,7 @@
     import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
     import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
     import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
+    import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
     import type { UserSummary } from "../../domain/user/user";
@@ -144,6 +145,8 @@
         changedBy={event.event.changedBy}
         property={$_("groupAvatar")}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "permissions_changed"}
+    <PermissionsChangedEvent {user} event={event.event} timestamp={event.timestamp} />    
 {:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "poll_ended"}
     <div>Unexpected event type</div>
 {/if}

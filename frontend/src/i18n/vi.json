@@ -170,12 +170,6 @@
     "enterMessage": "Nhập tin nhắn",
     "dropFile": "Thả một tập tin vào đây",
     "cancel": "Hủy bỏ",
-    "addGroupPhoto": "Thêm ảnh nhóm",
-    "editGroupPhoto": "Chỉnh sửa ảnh nhóm",
-    "public": "Mở",
-    "private": "Kín",
-    "publicGroup": "Nhóm mở",
-    "privateGroup": "Nhóm kín",
     "unknownUser": "Người dùng không xác định",
     "unknown": "Không xác định",
     "update": "Cập nhật",
@@ -373,5 +367,13 @@
         "voteFailed": "Cuộc bỏ phiếu thăm dò không thành công",
         "totalVotes": "Tổng số phiếu bầu: {total}",
         "finished": "Cuộc thăm dò đã kết thúc"
+    },
+    "group": {
+        "addGroupPhoto": "Thêm ảnh nhóm",
+        "editGroupPhoto": "Chỉnh sửa ảnh nhóm",
+        "public": "Mở",
+        "private": "Kín",
+        "publicGroup": "Nhóm mở",
+        "privateGroup": "Nhóm kín"    
     }
 }

@@ -266,6 +266,29 @@ export const idlFactory = ({ IDL }) => {
     'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
     'message_index' : MessageIndex,
   });
+  const PermissionRole = IDL.Variant({
+    'Owner' : IDL.Null,
+    'Admins' : IDL.Null,
+    'Members' : IDL.Null,
+  });
+  const GroupPermissions = IDL.Record({
+    'block_users' : PermissionRole,
+    'change_permissions' : PermissionRole,
+    'delete_messages' : PermissionRole,
+    'send_messages' : PermissionRole,
+    'remove_members' : PermissionRole,
+    'update_group' : PermissionRole,
+    'change_roles' : PermissionRole,
+    'add_members' : PermissionRole,
+    'create_polls' : PermissionRole,
+    'pin_messages' : PermissionRole,
+    'react_to_messages' : PermissionRole,
+  });
+  const PermissionsChanged = IDL.Record({
+    'changed_by' : UserId,
+    'old_permissions' : GroupPermissions,
+    'new_permissions' : GroupPermissions,
+  });
   const PollEnded = IDL.Record({
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
@@ -314,6 +337,7 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantsRemoved' : ParticipantsRemoved,
     'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin,
     'Message' : Message,
+    'PermissionsChanged' : PermissionsChanged,
     'PollEnded' : PollEnded,
     'UsersUnblocked' : UsersUnblocked,
     'PollVoteRegistered' : UpdatedMessage,
@@ -495,6 +519,7 @@ export const idlFactory = ({ IDL }) => {
   const SendMessageResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
     'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
@@ -510,6 +535,7 @@ export const idlFactory = ({ IDL }) => {
   const ToggleReactionResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
     'InvalidReaction' : IDL.Null,
     'Added' : EventIndex,
     'Removed' : EventIndex,
@@ -540,6 +566,7 @@ export const idlFactory = ({ IDL }) => {
     'SetToSome' : Avatar,
   });
   const UpdateGroupArgs = IDL.Record({
+    'permissions' : IDL.Opt(GroupPermissions),
     'name' : IDL.Text,
     'description' : IDL.Text,
     'avatar' : AvatarUpdate,

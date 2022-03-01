@@ -169,12 +169,6 @@
     "enterMessage": "Introduce un mensaje",
     "dropFile": "Suelta un archivo aquí",
     "cancel": "Cancelar",
-    "addGroupPhoto": "Añadir foto de grupo",
-    "editGroupPhoto": "Editar foto de grupo",
-    "public": "Publico",
-    "private": "Privado",
-    "publicGroup": "Grupo público",
-    "privateGroup": "Grupo privado",
     "unknownUser": "Usuario desconocido",
     "unknown": "Desconocido",
     "update": "Actualizar",
@@ -373,5 +367,13 @@
         "voteFailed": "Voto de encuesta fallido",
         "totalVotes": "Votos totales: {total}",
         "finished": "La encuesta ha terminado"
+    },
+    "group": {
+        "addGroupPhoto": "Añadir foto de grupo",
+        "editGroupPhoto": "Editar foto de grupo",
+        "public": "Publico",
+        "private": "Privado",
+        "publicGroup": "Grupo público",
+        "privateGroup": "Grupo privado"
     }
 }

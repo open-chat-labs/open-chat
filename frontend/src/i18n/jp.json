@@ -175,12 +175,6 @@
     "enterMessage": "メッセージを入力する",
     "dropFile": "ここにファイルをドロップしてください",
     "cancel": "キャンセル",
-    "addGroupPhoto": "グループ写真を追加",
-    "editGroupPhoto": "グループ写真を編集",
-    "public": "公開",
-    "private": "プライベート",
-    "publicGroup": "公開グループ",
-    "privateGroup": "プライベートグループ",
     "unknownUser": "不明なユーザー",
     "unknown": "不明",
     "update": "アップデート",
@@ -372,5 +366,13 @@
         "voteFailed": "投票に失敗しました",
         "totalVotes": "総投票数：{total}",
         "finished": "投票が終了しました"
+    },
+    "group": {
+        "addGroupPhoto": "グループ写真を追加",
+        "editGroupPhoto": "グループ写真を編集",
+        "public": "公開",
+        "private": "プライベート",
+        "publicGroup": "公開グループ",
+        "privateGroup": "プライベートグループ"    
     }
 }

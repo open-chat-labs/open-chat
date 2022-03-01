@@ -299,6 +299,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'Message' : Message } |
+  { 'PermissionsChanged' : PermissionsChanged } |
   { 'PollEnded' : PollEnded } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'PollVoteRegistered' : UpdatedMessage } |
@@ -319,6 +320,7 @@ export interface GroupChatEventWrapper {
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
+  'permissions' : GroupPermissions,
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
@@ -339,6 +341,7 @@ export interface GroupChatSummary {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
+  'permissions' : [] | [GroupPermissions],
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -374,6 +377,19 @@ export interface GroupNameChanged {
   'changed_by' : UserId,
   'new_name' : string,
   'previous_name' : string,
+}
+export interface GroupPermissions {
+  'block_users' : PermissionRole,
+  'change_permissions' : PermissionRole,
+  'delete_messages' : PermissionRole,
+  'send_messages' : PermissionRole,
+  'remove_members' : PermissionRole,
+  'update_group' : PermissionRole,
+  'change_roles' : PermissionRole,
+  'add_members' : PermissionRole,
+  'create_polls' : PermissionRole,
+  'pin_messages' : PermissionRole,
+  'react_to_messages' : PermissionRole,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
 export interface ICP { 'e8s' : bigint }
@@ -549,6 +565,14 @@ export interface PendingICPWithdrawal {
   'memo' : [] | [Memo],
   'amount' : ICP,
 }
+export type PermissionRole = { 'Owner' : null } |
+  { 'Admins' : null } |
+  { 'Members' : null };
+export interface PermissionsChanged {
+  'changed_by' : UserId,
+  'old_permissions' : GroupPermissions,
+  'new_permissions' : GroupPermissions,
+}
 export interface PinMessageArgs { 'message_index' : MessageIndex }
 export type PinMessageResponse = { 'MessageIndexOutOfRange' : null } |
   { 'NoChange' : null } |
@@ -671,6 +695,7 @@ export interface SendMessageArgs {
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,
@@ -698,6 +723,7 @@ export interface ToggleReactionArgs {
 }
 export type ToggleReactionResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
   { 'InvalidReaction' : null } |
   { 'Added' : EventIndex } |
   { 'Removed' : EventIndex };
@@ -725,6 +751,7 @@ export type UnpinMessageResponse = { 'NoChange' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : EventIndex };
 export interface UpdateGroupArgs {
+  'permissions' : [] | [GroupPermissions],
   'name' : string,
   'description' : string,
   'avatar' : AvatarUpdate,

@@ -2,10 +2,10 @@
     export let value: string = "";
     export let invalid: boolean = false;
     export let disabled: boolean = false;
-    let select: HTMLSelectElement;
+    export let marginBottom: number = 16;
 </script>
 
-<select class:invalid {disabled} bind:value bind:this={select} class={`select`}>
+<select class:invalid {disabled} bind:value class={`select`} style="margin-bottom: {marginBottom}px">
     <slot />
 </select>
 
@@ -27,7 +27,6 @@
         border: 1px solid var(--input-bd);
         outline: none;
         border-radius: $sp2;
-        margin-bottom: $sp4;
 
         &.invalid {
             border: 1px solid var(--error);

@@ -334,7 +334,8 @@ export type GroupChatEvent =
     | MessageUnpinned
     | PollVoteRegistered
     | PollVoteDeleted
-    | PollEnded;
+    | PollEnded
+    | PermissionsChanged;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -452,6 +453,13 @@ export type PollEnded = {
     kind: "poll_ended";
     messageIndex: number;
     eventIndex: number;
+};
+
+export type PermissionsChanged = {
+    kind: "permissions_changed";
+    oldPermissions: GroupPermissions;
+    newPermissions: GroupPermissions;
+    changedBy: string;
 };
 
 export type MessagePinned = {
@@ -594,6 +602,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     myRole?: ParticipantRole;
     mentions: Mention[];
     ownerId?: string;
+    permissions?: GroupPermissions;
 };
 
 export type ParticipantRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
@@ -605,6 +614,22 @@ export type Participant = {
 
 export type FullParticipant = Participant & PartialUserSummary & { kind: "full_participant" };
 export type BlockedParticipant = Participant & PartialUserSummary & { kind: "blocked_participant" };
+
+export type PermissionRole = "owner" | "admins" | "members";
+
+export type GroupPermissions = {
+    changePermissions: PermissionRole;
+    changeRoles: PermissionRole;
+    addMembers: PermissionRole;
+    removeMembers: PermissionRole;
+    blockUsers: PermissionRole;
+    deleteMessages: PermissionRole;
+    updateGroup: PermissionRole;
+    pinMessages: PermissionRole;
+    createPolls: PermissionRole;
+    sendMessages: PermissionRole;
+    reactToMessages: PermissionRole;
+};
 
 export type GroupChatDetailsResponse = "caller_not_in_group" | GroupChatDetails;
 
@@ -661,6 +686,7 @@ export type GroupChatSummary = DataContent &
         myRole: ParticipantRole;
         mentions: Mention[];
         ownerId: string;
+        permissions: GroupPermissions;
     };
 
 export type Mention = {
@@ -682,6 +708,7 @@ export type CandidateGroupChat = {
     isPublic: boolean;
     participants: CandidateParticipant[];
     avatar?: DataContent;
+    permissions: GroupPermissions;
 };
 
 // todo - there are all sorts of error conditions here that we need to deal with but - later
@@ -791,7 +818,8 @@ export type SendMessageResponse =
     | SendMessageRecipientNotFound
     | TransationFailed
     | InvalidPoll
-    | SendMessageNotInGroup;
+    | SendMessageNotInGroup
+    | NotAuthorised;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -834,6 +862,10 @@ export type SendMessageBalanceExceeded = {
 
 export type SendMessageNotInGroup = {
     kind: "not_in_group";
+};
+
+export type NotAuthorised = {
+    kind: "not_authorised";
 };
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error";
@@ -915,6 +947,7 @@ export type ToggleReactionResponse =
     | "invalid"
     | "message_not_found"
     | "not_in_group"
+    | "not_authorised"
     | "chat_not_found";
 
 export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";

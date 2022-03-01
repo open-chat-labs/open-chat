@@ -14,6 +14,8 @@
     import { createEventDispatcher } from "svelte";
     import type { CandidateGroupChat } from "../../../domain/chat/chat";
     import { iconSize } from "../../../stores/iconSize";
+    import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
+    import CollapsibleCard from "../../CollapsibleCard.svelte";
 
     const dispatch = createEventDispatcher();
     const MIN_LENGTH = 3;
@@ -22,6 +24,10 @@
 
     export let candidateGroup: CandidateGroupChat;
     export let creatingCanister: boolean;
+
+    let groupInfoOpen = true;
+    let visibilityOpen = true;
+    let permissionsOpen = false;
 
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
 
@@ -60,87 +66,79 @@
 
 <form class="group-form" on:submit|preventDefault={createGroup}>
     <div class="form-fields">
-        <div class="sub-section photo">
-            <EditableAvatar
-                image={avatarUrl(candidateGroup.avatar, "../assets/group.svg")}
-                on:imageSelected={groupAvatarSelected} />
-            <p class="photo-legend">{$_("addGroupPhoto")}</p>
-        </div>
-
-        <Input
-            invalid={false}
-            autofocus={false}
-            bind:value={candidateGroup.name}
-            minlength={MIN_LENGTH}
-            maxlength={MAX_LENGTH}
-            countdown={true}
-            placeholder={$_("newGroupName")} />
-
-        <TextArea
-            rows={3}
-            invalid={false}
-            bind:value={candidateGroup.description}
-            maxlength={MAX_DESC_LENGTH}
-            placeholder={$_("newGroupDesc")} />
-
-        <div class="sub-section">
-            <div class="scope">
-                <span
-                    class="scope-label"
-                    class:selected={!candidateGroup.isPublic}
-                    on:click={() => (candidateGroup.isPublic = false)}>{$_("private")}</span>
-
-                <Checkbox
-                    id="is-public"
-                    toggle={true}
-                    on:change={toggleScope}
-                    label={$_("public")}
-                    checked={candidateGroup.isPublic} />
-
-                <span
-                    class="scope-label"
-                    class:selected={candidateGroup.isPublic}
-                    on:click={() => (candidateGroup.isPublic = true)}>{$_("public")}</span>
+        <CollapsibleCard open={groupInfoOpen} headerText={$_("group.groupInfo")}>
+            <div class="sub-section photo">
+                <EditableAvatar
+                    image={avatarUrl(candidateGroup.avatar, "../assets/group.svg")}
+                    on:imageSelected={groupAvatarSelected} />
+                <p class="photo-legend">{$_("group.addGroupPhoto")}</p>
             </div>
+            <Input
+                invalid={false}
+                autofocus={false}
+                bind:value={candidateGroup.name}
+                minlength={MIN_LENGTH}
+                maxlength={MAX_LENGTH}
+                countdown={true}
+                placeholder={$_("newGroupName")} />
+            <TextArea
+                rows={3}
+                invalid={false}
+                bind:value={candidateGroup.description}
+                maxlength={MAX_DESC_LENGTH}
+                placeholder={$_("newGroupDesc")} />
+        </CollapsibleCard>
+        <CollapsibleCard open={visibilityOpen} headerText={$_("group.visibility")}>
+            <div class="sub-section">
+                <div class="scope">
+                    <span
+                        class="scope-label"
+                        class:selected={!candidateGroup.isPublic}
+                        on:click={() => (candidateGroup.isPublic = false)}>{$_("group.private")}</span>
 
-            <div class="info">
-                {#if candidateGroup.isPublic}
-                    <p>
-                        {$_("publicGroupInfo")}
-                    </p>
-                    <p>
-                        {$_("publicGroupUnique")}
-                    </p>
-                {:else}
-                    <p>
-                        {$_("privateGroupInfo")}
-                    </p>
-                {/if}
-            </div>
-        </div>
+                    <Checkbox
+                        id="is-public"
+                        toggle={true}
+                        on:change={toggleScope}
+                        label={$_("group.public")}
+                        checked={candidateGroup.isPublic} />
 
-        <div class="sub-section">
-            <div class="history">
-                <Checkbox
-                    id="history-visible"
-                    disabled={candidateGroup.isPublic}
-                    on:change={() =>
-                        (candidateGroup.historyVisible = !candidateGroup.historyVisible)}
-                    label={$_("historyVisible")}
-                    checked={candidateGroup.historyVisible} />
+                    <span
+                        class="scope-label"
+                        class:selected={candidateGroup.isPublic}
+                        on:click={() => (candidateGroup.isPublic = true)}>{$_("group.public")}</span>
+                </div>
+                <div class="info">
+                    {#if candidateGroup.isPublic}
+                        <p>{$_("publicGroupInfo")}</p>
+                        <p>{$_("publicGroupUnique")}</p>
+                    {:else}
+                        <p>{$_("privateGroupInfo")}</p>
+                    {/if}
+                </div>
             </div>
-            <div class="info">
-                {#if candidateGroup.historyVisible}
-                    <p>
-                        {$_("historyOnInfo")}
-                    </p>
-                {:else}
-                    <p>
-                        {$_("historyOffInfo")}
-                    </p>
-                {/if}
+            <div class="sub-section">
+                <div class="history">
+                    <Checkbox
+                        id="history-visible"
+                        disabled={candidateGroup.isPublic}
+                        on:change={() =>
+                            (candidateGroup.historyVisible = !candidateGroup.historyVisible)}
+                        label={$_("historyVisible")}
+                        checked={candidateGroup.historyVisible} />
+                </div>
+                <div class="info">
+                    {#if candidateGroup.historyVisible}
+                        <p>{$_("historyOnInfo")}</p>
+                    {:else}
+                        <p>{$_("historyOffInfo")}</p>
+                    {/if}
+                </div>
             </div>
-        </div>
+        </CollapsibleCard>
+        <CollapsibleCard open={permissionsOpen} headerText={$_("group.permissions.permissions")}>
+            <GroupPermissionsEditor bind:permissions={candidateGroup.permissions} isPublic={candidateGroup.isPublic} />
+        </CollapsibleCard>
     </div>
 </form>
 <div class="cta">
@@ -152,6 +150,14 @@
 </div>
 
 <style type="text/scss">
+    :global(.group-form .form-fields .card) {
+        margin-bottom: $sp3;
+    }
+
+    :global(.group-form .form-fields .card .outer-wrapper) {
+        margin-bottom: 0;
+    }
+
     h4 {
         flex: 1;
         padding: 0 $sp4;
@@ -193,8 +199,11 @@
     .sub-section {
         padding: $sp4;
         background-color: var(--sub-section-bg);
-        margin-bottom: $sp3;
         @include box-shadow(1);
+        margin-bottom: $sp3;
+        &:last-child {
+            margin-bottom: 0;
+        }
     }
 
     .scope {
@@ -218,7 +227,10 @@
         @include font(light, normal, fs-90);
 
         p {
-            margin-bottom: $sp4;
+            margin-bottom: $sp4;            
+            &:last-child {
+                margin-bottom: 0;
+            }
         }
     }
 

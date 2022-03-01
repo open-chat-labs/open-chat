@@ -221,6 +221,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'Message' : Message } |
+  { 'PermissionsChanged' : PermissionsChanged } |
   { 'PollEnded' : PollEnded } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'PollVoteRegistered' : UpdatedMessage } |
@@ -241,6 +242,7 @@ export interface GroupChatEventWrapper {
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
+  'permissions' : GroupPermissions,
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
@@ -261,6 +263,7 @@ export interface GroupChatSummary {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
+  'permissions' : [] | [GroupPermissions],
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -296,6 +299,19 @@ export interface GroupNameChanged {
   'changed_by' : UserId,
   'new_name' : string,
   'previous_name' : string,
+}
+export interface GroupPermissions {
+  'block_users' : PermissionRole,
+  'change_permissions' : PermissionRole,
+  'delete_messages' : PermissionRole,
+  'send_messages' : PermissionRole,
+  'remove_members' : PermissionRole,
+  'update_group' : PermissionRole,
+  'change_roles' : PermissionRole,
+  'add_members' : PermissionRole,
+  'create_polls' : PermissionRole,
+  'pin_messages' : PermissionRole,
+  'react_to_messages' : PermissionRole,
 }
 export interface ICP { 'e8s' : bigint }
 export type ICPDeposit = { 'Completed' : CompletedICPDeposit };
@@ -461,6 +477,14 @@ export interface PendingICPWithdrawal {
   'fee' : [] | [ICP],
   'memo' : [] | [Memo],
   'amount' : ICP,
+}
+export type PermissionRole = { 'Owner' : null } |
+  { 'Admins' : null } |
+  { 'Members' : null };
+export interface PermissionsChanged {
+  'changed_by' : UserId,
+  'old_permissions' : GroupPermissions,
+  'new_permissions' : GroupPermissions,
 }
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |

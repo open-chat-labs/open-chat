@@ -110,6 +110,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "desc_changed":
             case "avatar_changed":
             case "role_changed":
+            case "permissions_changed":
                 userIds.add(e.event.changedBy);
                 break;
             case "group_chat_created":
@@ -167,6 +168,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "desc_changed":
         case "avatar_changed":
         case "role_changed":
+        case "permissions_changed":
             return event.changedBy;
         case "group_chat_created":
             return event.created_by;
@@ -416,6 +418,7 @@ function mergeUpdatedGroupChat(
     chat.myRole = updatedChat.myRole ?? (chat.myRole === "previewer" ? "participant" : chat.myRole);
     chat.mentions = mergeMentions(chat.mentions, updatedChat.mentions);
     chat.ownerId = updatedChat.ownerId ?? chat.ownerId;
+    chat.permissions = updatedChat.permissions ?? chat.permissions;
     return chat;
 }
 
@@ -924,6 +927,7 @@ export function groupChatFromCandidate(
         mentions: [],
         ...candidate.avatar,
         ownerId: userId,
+        permissions: candidate.permissions,
     };
 }
 

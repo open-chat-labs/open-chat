@@ -58,6 +58,7 @@ import { identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
 import {
     apiMessageIndexRanges,
+    groupPermissions,
     message,
     messageContent,
     publicGroupSummary,
@@ -529,6 +530,9 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             myRole: optional(candid.Group.role, participantRole),
             mentions: candid.Group.mentions.map(mention),
             ownerId: optional(candid.Group.owner_id, (id) => id.toString()),
+            permissions: optional(candid.Group.permissions, (permissions) =>
+                groupPermissions(permissions)
+            ),
         };
     }
     if ("Direct" in candid) {
@@ -614,6 +618,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         myRole: participantRole(candid.role),
         mentions: candid.mentions.map(mention),
         ownerId: candid.owner_id.toString(),
+        permissions: groupPermissions(candid.permissions),
     };
 }
 

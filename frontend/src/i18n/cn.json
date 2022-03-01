@@ -145,12 +145,6 @@
     "enterMessage": "请输入消息",
     "dropFile": "拖拽文件到此处",
     "cancel": "取消",
-    "addGroupPhoto": "添加群聊图片",
-    "editGroupPhoto": "更改群聊图片",
-    "public": "公开的",
-    "private": "私密的",
-    "publicGroup": "公开群聊",
-    "privateGroup": "私有群聊",
     "unknownUser": "未知用户",
     "unknown": "未知的",
     "update": "更新",
@@ -372,5 +366,13 @@
         "voteFailed": "投票表决失败",
         "totalVotes": "总票数：{total}",
         "finished": "投票已结束"
+    },
+    "group": {
+        "addGroupPhoto": "添加群聊图片",
+        "editGroupPhoto": "更改群聊图片",
+        "public": "公开的",
+        "private": "私密的",
+        "publicGroup": "公开群聊",
+        "privateGroup": "私有群聊"    
     }
 }

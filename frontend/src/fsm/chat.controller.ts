@@ -10,6 +10,7 @@ import type {
     EventWrapper,
     FullParticipant,
     GroupChatDetails,
+    GroupPermissions,
     LocalReaction,
     Message,
     MessageContent,
@@ -1130,9 +1131,14 @@ export class ChatController {
             });
     }
 
-    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<boolean> {
+    updateGroup(
+        name: string,
+        desc: string,
+        avatar?: Uint8Array,
+        permissions?: GroupPermissions
+    ): Promise<boolean> {
         return this.api
-            .updateGroup(this.chatId, name, desc, avatar)
+            .updateGroup(this.chatId, name, desc, avatar, permissions)
             .then((resp) => {
                 const err = this.groupUpdateErrorMessage(resp);
                 if (err) {

@@ -23,6 +23,8 @@ import type {
     TotalPollVotes,
     PollConfig,
     RegisterPollVoteResponse,
+    GroupPermissions,
+    PermissionRole,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { User } from "../../domain/user/user";
@@ -52,6 +54,8 @@ import type {
     ApiTotalPollVotes,
     ApiPollConfig,
     ApiRegisterPollVoteResponse as ApiRegisterUserPollVoteResponse,
+    ApiGroupPermissions,
+    ApiPermissionRole,
 } from "../user/candid/idl";
 import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
 
@@ -343,6 +347,55 @@ function reactions(candid: [string, Principal[]][]): Reaction[] {
     }));
 }
 
+export function groupPermissions(candid: ApiGroupPermissions): GroupPermissions {
+    return {
+        changePermissions: permissionRole(candid.change_permissions),
+        changeRoles: permissionRole(candid.change_roles),
+        addMembers: permissionRole(candid.add_members),
+        removeMembers: permissionRole(candid.remove_members),
+        blockUsers: permissionRole(candid.block_users),
+        deleteMessages: permissionRole(candid.delete_messages),
+        updateGroup: permissionRole(candid.update_group),
+        pinMessages: permissionRole(candid.pin_messages),
+        createPolls: permissionRole(candid.create_polls),
+        sendMessages: permissionRole(candid.send_messages),
+        reactToMessages: permissionRole(candid.react_to_messages),
+    };
+}
+
+export function apiGroupPermissions(permissions: GroupPermissions): ApiGroupPermissions {
+    return {
+        change_permissions: apiPermissionRole(permissions.changePermissions),
+        change_roles: apiPermissionRole(permissions.changeRoles),
+        add_members: apiPermissionRole(permissions.addMembers),
+        remove_members: apiPermissionRole(permissions.removeMembers),
+        block_users: apiPermissionRole(permissions.blockUsers),
+        delete_messages: apiPermissionRole(permissions.deleteMessages),
+        update_group: apiPermissionRole(permissions.updateGroup),
+        pin_messages: apiPermissionRole(permissions.pinMessages),
+        create_polls: apiPermissionRole(permissions.createPolls),
+        send_messages: apiPermissionRole(permissions.sendMessages),
+        react_to_messages: apiPermissionRole(permissions.reactToMessages),
+    };
+}
+
+export function apiPermissionRole(permissionRole: PermissionRole): ApiPermissionRole {
+    switch (permissionRole) {
+        case "owner":
+            return { Owner: null };
+        case "admins":
+            return { Admins: null };
+        case "members":
+            return { Members: null };
+    }
+}
+
+export function permissionRole(candid: ApiPermissionRole): PermissionRole {
+    if ("Owner" in candid) return "owner";
+    if ("Admins" in candid) return "admins";
+    return "members";
+}
+
 export function apiReplyContextArgs(
     domain: ReplyContext,
     replyingToChatId?: string
@@ -623,6 +676,19 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
             canisterId: candid.chat_id.toString(),
         })),
         ownerId: candid.owner_id.toString(),
+        permissions: {
+            changePermissions: "owner",
+            changeRoles: "owner",
+            addMembers: "owner",
+            removeMembers: "owner",
+            blockUsers: "owner",
+            deleteMessages: "owner",
+            updateGroup: "owner",
+            pinMessages: "owner",
+            createPolls: "owner",
+            sendMessages: "owner",
+            reactToMessages: "owner",
+        },
     };
 }
 

@@ -1,3 +1,5 @@
+import type { GroupPermissions } from "domain/chat/chat";
+
 export type RightPanelState =
     | "group_details"
     | "add_participants"
@@ -13,4 +15,5 @@ export type UpdatedGroup = {
     name: string;
     desc: string;
     avatar?: UpdatedAvatar;
+    permissions: GroupPermissions;
 };

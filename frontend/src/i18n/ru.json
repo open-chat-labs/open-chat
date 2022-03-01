@@ -175,12 +175,6 @@
     "enterMessage": "Введите сообщение",
     "dropFile": "Перетащите сюда файл",
     "cancel": "Отмена",
-    "addGroupPhoto": "Добавить фото группы",
-    "editGroupPhoto": "Редактировать фото группы",
-    "public": "Публичная",
-    "private": "Частная",
-    "publicGroup": "Публичная группа",
-    "privateGroup": "Частная группа",
     "unknownUser": "Неизвестный пользователь",
     "unknown": "Неизвестно",
     "update": "Обновить",
@@ -372,5 +366,13 @@
         "voteFailed": "Голосование в опросе не удалось",
         "totalVotes": "Всего голосов: {total}",
         "finished": "Голосование завершено"
+    },
+    "group": {
+        "addGroupPhoto": "Добавить фото группы",
+        "editGroupPhoto": "Редактировать фото группы",
+        "public": "Публичная",
+        "private": "Частная",
+        "publicGroup": "Публичная группа",
+        "privateGroup": "Частная группа"    
     }
 }

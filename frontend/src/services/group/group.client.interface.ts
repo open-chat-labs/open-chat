@@ -23,6 +23,7 @@ import type {
     PinMessageResponse,
     UnpinMessageResponse,
     RegisterPollVoteResponse,
+    GroupPermissions,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
@@ -51,7 +52,12 @@ export interface IGroupClient {
     editMessage(message: Message): Promise<EditMessageResponse>;
     changeRole(userId: string, newRole: ParticipantRole): Promise<ChangeRoleResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
-    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
+    updateGroup(
+        name: string,
+        desc: string,
+        avatar?: Uint8Array,
+        permissions?: GroupPermissions
+    ): Promise<UpdateGroupResponse>;
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;
     deleteMessage(messageId: bigint): Promise<DeleteMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;
