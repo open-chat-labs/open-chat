@@ -14,7 +14,7 @@
     import { toTitleCase } from "../../utils/string";
 
     export let chatId: string;
-    export let user: UserSummary | undefined;
+    export let user: UserSummary;
     export let repliesTo: RehydratedReplyContext;
 
     let debug = false;
@@ -31,7 +31,9 @@
     }
 
     function getUsernameFromReplyContext(replyContext: RehydratedReplyContext): string {
-        return me ? toTitleCase($_("you")) : $userStore[replyContext.senderId]?.username ?? $_("unknownUser");
+        return me
+            ? toTitleCase($_("you"))
+            : $userStore[replyContext.senderId]?.username ?? $_("unknownUser");
     }
 </script>
 

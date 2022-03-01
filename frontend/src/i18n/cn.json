@@ -346,5 +346,31 @@
     "showPinned": "显示固定消息",
     "pinnedMessages": "固定消息",
     "pinMessageFailed": "无法固定消息",
-    "unpinMessageFailed": "无法取消固定消息"
+    "unpinMessageFailed": "无法取消固定消息",
+    "poll": {
+        "create": "创建投票",
+        "questionLabel": "题",
+        "answersLabel": "答案",
+        "optionalQuestion": "可选择在此处输入您的问题",
+        "addAnswer": "添加至少 2 个答案",
+        "addAnotherAnswer": "添加另一个答案",
+        "answerText": "输入答案文本...",
+        "maxReached": "已达到最多 10 个答案",
+        "invalidAnswer": "嗯，你有重复的答案吗？",
+        "settings": "设置",
+        "poll": "轮询",
+        "anonymous": "匿名的",
+        "limitedDuration": "限时",
+        "showBeforeEnd": "在投票结束前显示投票",
+        "pollDuration": "轮询持续时间",
+        "oneHour": "1小时",
+        "oneDay": "1天",
+        "oneWeek": "1周",
+        "allowMultipleVotes": "允许多票",
+        "start": "开始",
+        "pollEnds": "投票结束 {end}",
+        "voteFailed": "投票表决失败",
+        "totalVotes": "总票数：{total}",
+        "finished": "投票已结束"
+    }
 }

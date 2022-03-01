@@ -16,7 +16,7 @@
             <li><del>Support multiple languages (with help from the community)</del></li>
             <li><del>Pinned messages</del></li>
             <li>Read-only groups</li>
-            <li>Create polls</li>
+            <li><del>Create polls</del></li>
             <li>Message forwarding</li>
             <li>
                 Deposit tokens into your OpenChat wallet, send tokens as messages, withdraw tokens<br />

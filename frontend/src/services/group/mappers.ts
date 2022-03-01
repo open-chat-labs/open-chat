@@ -47,7 +47,6 @@ import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
 import { message, updatedMessage } from "../common/chatMappers";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
-import { identity, optional } from "../../utils/mapping";
 
 function principalToString(p: Principal): string {
     return p.toString();
@@ -288,6 +287,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     }
     if ("MessageEmpty" in candid) {
         return { kind: "message_empty" };
+    }
+    if ("InvalidPoll" in candid) {
+        return { kind: "invalid_poll" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
@@ -626,6 +628,28 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "message_unpinned",
             unpinnedBy: candid.MessageUnpinned.unpinned_by.toString(),
             messageIndex: candid.MessageUnpinned.message_index,
+        };
+    }
+
+    if ("PollVoteRegistered" in candid) {
+        return {
+            kind: "poll_vote_registered",
+            message: updatedMessage(candid.PollVoteRegistered),
+        };
+    }
+
+    if ("PollVoteDeleted" in candid) {
+        return {
+            kind: "poll_vote_deleted",
+            message: updatedMessage(candid.PollVoteDeleted),
+        };
+    }
+
+    if ("PollEnded" in candid) {
+        return {
+            kind: "poll_ended",
+            messageIndex: candid.PollEnded.message_index,
+            eventIndex: candid.PollEnded.event_index,
         };
     }
 

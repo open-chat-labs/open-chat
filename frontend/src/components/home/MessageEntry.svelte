@@ -156,6 +156,7 @@
         const matches = inputContent.match(mentionRegex);
         if (matches !== null) {
             mentionPrefix = matches[1].toLowerCase() || undefined;
+            showMentionPicker = true;
             saveSelection();
         } else {
             showMentionPicker = false;
@@ -209,9 +210,28 @@
         return [expandedText, mentioned];
     }
 
+    /**
+     * Check the message content for special commands
+     * * !poll - creates a poll
+     * * !pinned - opens pinned messages (not yet)
+     * * !details - opens group details (not yet)
+     */
+    function parseCommands(txt: string): boolean {
+        if (/^!poll$/.test(txt)) {
+            dispatch("createPoll");
+            return true;
+        }
+        return false;
+    }
+
     function sendMessage() {
-        dispatch("sendMessage", expandMentions(inp.innerText?.trim()));
+        const txt = inp.innerText?.trim();
+
+        if (!parseCommands(txt)) {
+            dispatch("sendMessage", expandMentions(txt));
+        }
         inp.textContent = "";
+        controller.setTextContent(undefined);
         inp.focus();
         inputIsEmpty = true;
         messageIsEmpty = true;

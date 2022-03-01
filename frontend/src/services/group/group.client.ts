@@ -23,6 +23,7 @@ import type {
     ParticipantRole,
     PinMessageResponse,
     UnpinMessageResponse,
+    RegisterPollVoteResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import { CandidService } from "../candidService";
@@ -55,6 +56,7 @@ import {
     apiOptional,
     apiUser,
     publicSummaryResponse,
+    registerPollVoteResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import {
@@ -341,6 +343,21 @@ export class GroupClient extends CandidService implements IGroupClient {
                 message_index: messageIndex,
             }),
             unpinMessageResponse
+        );
+    }
+
+    registerPollVote(
+        messageIdx: number,
+        answerIdx: number,
+        voteType: "register" | "delete"
+    ): Promise<RegisterPollVoteResponse> {
+        return this.handleResponse(
+            this.groupService.register_poll_vote({
+                poll_option: answerIdx,
+                operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
+                message_index: messageIdx,
+            }),
+            registerPollVoteResponse
         );
     }
 }

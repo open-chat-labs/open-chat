@@ -24,6 +24,8 @@ import type {
     GroupChatDetailsUpdates,
     Mention,
     CandidateGroupChat,
+    PollVotes,
+    PollContent,
 } from "./chat";
 import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -60,6 +62,8 @@ export function getContentAsText(content: MessageContent): string {
         text = "deleted message";
     } else if (content.kind === "placeholder_content") {
         text = "placeholder content";
+    } else if (content.kind === "poll_content") {
+        text = "poll";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
@@ -136,9 +140,12 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "message_edited":
             case "reaction_added":
             case "reaction_removed":
+            case "poll_vote_registered":
+            case "poll_vote_deleted":
                 userIds.add(e.event.message.updatedBy);
                 break;
             case "direct_chat_created":
+            case "poll_ended":
                 break;
             default:
                 throw new UnsupportedValueError("Unexpected ChatEvent type received", e.event);
@@ -181,8 +188,11 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "message_edited":
         case "reaction_added":
         case "reaction_removed":
+        case "poll_vote_registered":
+        case "poll_vote_deleted":
             return event.message.updatedBy;
         case "direct_chat_created":
+        case "poll_ended":
         case "participant_dismissed_as_super_admin":
         case "participant_left": // We exclude participant_left events since the user is no longer in the group
             return undefined;
@@ -239,7 +249,8 @@ export function getParticipantsString(
 function addCaption(caption: string | undefined, content: MessageContent): MessageContent {
     return content.kind !== "text_content" &&
         content.kind !== "deleted_content" &&
-        content.kind !== "placeholder_content"
+        content.kind !== "placeholder_content" &&
+        content.kind !== "poll_content"
         ? { ...content, caption }
         : content;
 }
@@ -629,7 +640,12 @@ export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
         ew.event.kind !== "reaction_added" &&
         ew.event.kind !== "message_deleted" &&
         ew.event.kind !== "message_edited" &&
-        ew.event.kind !== "reaction_removed"
+        ew.event.kind !== "reaction_removed" &&
+        ew.event.kind !== "message_pinned" &&
+        ew.event.kind !== "message_unpinned" &&
+        ew.event.kind !== "poll_vote_registered" &&
+        ew.event.kind !== "poll_vote_deleted" &&
+        ew.event.kind !== "poll_ended"
     );
 }
 
@@ -707,6 +723,7 @@ function mergeMessageEvents(
                 ...existing,
                 event: {
                     ...existing.event,
+                    content: incoming.event.content,
                     reactions: merged,
                 },
             };
@@ -808,7 +825,10 @@ export function replaceAffected(
     });
     if (toCacheBust.length > 0) {
         // Note - this is fire and forget which is a tiny bit dodgy
-        overwriteCachedEvents(chatId, toCacheBust);
+        console.log("Busting: ", toCacheBust);
+        overwriteCachedEvents(chatId, toCacheBust).catch((err) => {
+            console.log("failed to update cache: ", err, toCacheBust);
+        });
     }
     return updated;
 }
@@ -924,4 +944,73 @@ export function getStorageRequiredForMessage(content: MessageContent | undefined
         default:
             return 0;
     }
+}
+
+export function updatePollVotes(
+    userId: string,
+    poll: PollContent,
+    answerIdx: number,
+    type: "register" | "delete"
+): PollVotes {
+    return type === "delete"
+        ? removeVoteFromPoll(userId, answerIdx, poll.votes)
+        : addVoteToPoll(userId, answerIdx, poll);
+}
+
+export function addVoteToPoll(
+    userId: string,
+    answerIdx: number,
+    { votes, config }: PollContent
+): PollVotes {
+    if (votes.user.includes(answerIdx)) {
+        // can't vote for the same thing twice
+        return votes;
+    }
+
+    // update the total votes
+    if (votes.total.kind === "anonymous_poll_votes") {
+        if (votes.total.votes[answerIdx] === undefined) {
+            votes.total.votes[answerIdx] = 0;
+        }
+        votes.total.votes[answerIdx] = votes.total.votes[answerIdx] + 1;
+    }
+
+    if (votes.total.kind === "hidden_poll_votes") {
+        votes.total.votes = votes.total.votes + 1;
+    }
+
+    if (votes.total.kind === "visible_poll_votes") {
+        if (votes.total.votes[answerIdx] === undefined) {
+            votes.total.votes[answerIdx] = [];
+        }
+        votes.total.votes[answerIdx].push(userId);
+    }
+
+    if (!config.allowMultipleVotesPerUser) {
+        // if we are only allowed a single vote then we also need
+        // to remove anything we may previously have voted for
+        const previousVote = votes.user[0];
+        if (previousVote !== undefined) {
+            votes = removeVoteFromPoll(userId, previousVote, votes);
+        }
+    }
+
+    votes.user.push(answerIdx);
+
+    return votes;
+}
+
+export function removeVoteFromPoll(userId: string, answerIdx: number, votes: PollVotes): PollVotes {
+    votes.user = votes.user.filter((i) => i !== answerIdx);
+    if (votes.total.kind === "anonymous_poll_votes") {
+        votes.total.votes[answerIdx] = votes.total.votes[answerIdx] - 1;
+    }
+    if (votes.total.kind === "hidden_poll_votes") {
+        votes.total.votes = votes.total.votes - 1;
+    }
+    if (votes.total.kind === "visible_poll_votes") {
+        votes.total.votes[answerIdx] = votes.total.votes[answerIdx].filter((u) => u !== userId);
+    }
+    votes.user = votes.user.filter((a) => a !== answerIdx);
+    return votes;
 }

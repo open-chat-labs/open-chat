@@ -311,6 +311,10 @@ export interface Theme {
         };
         bg: string;
     };
+
+    toggle: {
+        bg: string;
+    };
 }
 
 export type Themes = {

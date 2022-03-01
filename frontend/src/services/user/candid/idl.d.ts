@@ -24,6 +24,10 @@ import {
     ImageContent,
     VideoContent,
     AudioContent,
+    PollContent,
+    PollVotes,
+    PollConfig,
+    TotalPollVotes,
     CryptocurrencyContent,
     CryptocurrencyTransfer,
     ICPTransfer,
@@ -74,6 +78,7 @@ import {
     RecommendedGroupsResponse,
     RecommendedGroupsSuccessResult,
     SetBioResponse,
+    RegisterPollVoteResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -150,6 +155,11 @@ export {
     RecommendedGroupsResponse as ApiRecommendedGroupsResponse,
     RecommendedGroupsSuccessResult as ApiRecommendedGroupsSuccessResult,
     SetBioResponse as ApiSetBioResponse,
+    PollContent as ApiPollContent,
+    PollVotes as ApiPollVotes,
+    PollConfig as ApiPollConfig,
+    TotalPollVotes as ApiTotalPollVotes,
+    RegisterPollVoteResponse as ApiRegisterPollVoteResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

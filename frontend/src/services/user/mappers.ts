@@ -285,6 +285,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("TransactionFailed" in candid) {
         return { kind: "transaction_failed" };
     }
+    if ("InvalidPoll" in candid) {
+        return { kind: "invalid_poll" };
+    }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
@@ -387,6 +390,28 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
         return {
             kind: "reaction_removed",
             message: updatedMessage(candid.MessageReactionRemoved),
+        };
+    }
+
+    if ("PollVoteRegistered" in candid) {
+        return {
+            kind: "poll_vote_registered",
+            message: updatedMessage(candid.PollVoteRegistered),
+        };
+    }
+
+    if ("PollVoteDeleted" in candid) {
+        return {
+            kind: "poll_vote_deleted",
+            message: updatedMessage(candid.PollVoteDeleted),
+        };
+    }
+
+    if ("PollEnded" in candid) {
+        return {
+            kind: "poll_ended",
+            messageIndex: candid.PollEnded.message_index,
+            eventIndex: candid.PollEnded.event_index,
         };
     }
     // todo - we know there are other event types that we are not dealing with yet

@@ -18,6 +18,11 @@ import type {
     ICPTransfer,
     CyclesTransfer,
     GroupChatSummary,
+    PollContent,
+    PollVotes,
+    TotalPollVotes,
+    PollConfig,
+    RegisterPollVoteResponse,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { User } from "../../domain/user/user";
@@ -42,7 +47,13 @@ import type {
     ApiMessageIndexRange,
     ApiUser,
     ApiICP,
+    ApiPollContent,
+    ApiPollVotes,
+    ApiTotalPollVotes,
+    ApiPollConfig,
+    ApiRegisterPollVoteResponse as ApiRegisterUserPollVoteResponse,
 } from "../user/candid/idl";
+import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
 
 export function message(candid: ApiMessage): Message {
     return {
@@ -93,6 +104,9 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
     if ("Cryptocurrency" in candid) {
         return cryptoContent(candid.Cryptocurrency);
     }
+    if ("Poll" in candid) {
+        return pollContent(candid.Poll);
+    }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
@@ -101,6 +115,61 @@ export function apiUser(domain: User): ApiUser {
         user_id: Principal.fromText(domain.userId),
         username: domain.username,
     };
+}
+
+function pollContent(candid: ApiPollContent): PollContent {
+    return {
+        kind: "poll_content",
+        votes: pollVotes(candid.votes),
+        config: pollConfig(candid.config),
+        ended: candid.ended,
+    };
+}
+
+function pollConfig(candid: ApiPollConfig): PollConfig {
+    return {
+        allowMultipleVotesPerUser: candid.allow_multiple_votes_per_user,
+        text: optional(candid.text, identity),
+        showVotesBeforeEndDate: candid.show_votes_before_end_date,
+        endDate: optional(candid.end_date, identity),
+        anonymous: candid.anonymous,
+        options: candid.options,
+    };
+}
+
+function pollVotes(candid: ApiPollVotes): PollVotes {
+    return {
+        total: totalPollVotes(candid.total),
+        user: candid.user,
+    };
+}
+
+function totalPollVotes(candid: ApiTotalPollVotes): TotalPollVotes {
+    if ("Anonymous" in candid) {
+        return {
+            kind: "anonymous_poll_votes",
+            votes: candid.Anonymous.reduce((agg, [idx, num]) => {
+                agg[idx] = num;
+                return agg;
+            }, {} as Record<number, number>),
+        };
+    }
+    if ("Visible" in candid) {
+        return {
+            kind: "visible_poll_votes",
+            votes: candid.Visible.reduce((agg, [idx, userIds]) => {
+                agg[idx] = userIds.map((p) => p.toString());
+                return agg;
+            }, {} as Record<number, string[]>),
+        };
+    }
+    if ("Hidden" in candid) {
+        return {
+            kind: "hidden_poll_votes",
+            votes: candid.Hidden,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiTotalPollVotes type received", candid);
 }
 
 function deletedContent(candid: ApiDeletedContent): DeletedContent {
@@ -307,9 +376,62 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
         case "deleted_content":
             return { Deleted: apiDeletedContent(domain) };
 
+        case "poll_content":
+            return { Poll: apiPollContent(domain) };
+
         case "placeholder_content":
             throw new Error("Incorrectly attempting to send placeholder content to the server");
     }
+}
+
+function apiPollContent(domain: PollContent): ApiPollContent {
+    return {
+        votes: apiPollVotes(domain.votes),
+        config: apiPollConfig(domain.config),
+        ended: domain.ended,
+    };
+}
+
+function apiPollConfig(domain: PollConfig): ApiPollConfig {
+    return {
+        allow_multiple_votes_per_user: domain.allowMultipleVotesPerUser,
+        text: apiOptional(identity, domain.text),
+        show_votes_before_end_date: domain.showVotesBeforeEndDate,
+        end_date: apiOptional(identity, domain.endDate),
+        anonymous: domain.anonymous,
+        options: domain.options,
+    };
+}
+
+function apiPollVotes(domain: PollVotes): ApiPollVotes {
+    return {
+        total: apiTotalPollVotes(domain.total),
+        user: [...domain.user],
+    };
+}
+
+function apiTotalPollVotes(domain: TotalPollVotes): ApiTotalPollVotes {
+    if (domain.kind === "anonymous_poll_votes") {
+        return {
+            Anonymous: Object.entries(domain.votes).map(([idx, votes]) => [Number(idx), votes]),
+        };
+    }
+
+    if (domain.kind === "hidden_poll_votes") {
+        return {
+            Hidden: domain.votes,
+        };
+    }
+
+    if (domain.kind === "visible_poll_votes") {
+        return {
+            Visible: Object.entries(domain.votes).map(([idx, userIds]) => [
+                Number(idx),
+                [...userIds].map((u) => Principal.fromText(u)),
+            ]),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected TotalPollVotes type received", domain);
 }
 
 function apiImageContent(domain: ImageContent): ApiImageContent {
@@ -510,4 +632,28 @@ export function publicSummaryResponse(
     if ("Success" in candid) {
         return publicGroupSummary(candid.Success.summary);
     }
+}
+
+export function registerPollVoteResponse(
+    candid: ApiRegisterUserPollVoteResponse | ApiRegisterGroupPollVoteResponse
+): RegisterPollVoteResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("PollEnded" in candid) {
+        return "poll_ended";
+    }
+    if ("OptionIndexOutOfRange" in candid) {
+        return "out_of_range";
+    }
+    if ("PollNotFound" in candid) {
+        return "poll_not_found";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiRegisterPollVoteResponse type received", candid);
 }

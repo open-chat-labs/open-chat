@@ -5,7 +5,7 @@
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";
     import AudioContent from "./AudioContent.svelte";
-
+    import PollContent from "./PollContent.svelte";
     import FileContent from "./FileContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
@@ -47,4 +47,6 @@
     <div>Crypto content</div>
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
+{:else if content.kind === "poll_content"}
+    <PollContent {me} {content} on:registerVote />
 {/if}

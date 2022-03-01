@@ -186,5 +186,9 @@ export function originalTheme(defaultTheme: Theme): Theme {
             },
             bg: "#f6f6f6",
         },
+
+        toggle: {
+            bg: "#cccccc",
+        },
     };
 }

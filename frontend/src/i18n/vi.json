@@ -347,5 +347,31 @@
     "showPinned": "Hiển thị tin nhắn đã ghim",
     "pinnedMessages": "Tin nhắn đã ghim",
     "pinMessageFailed": "Không thể ghim tin nhắn",
-    "unpinMessageFailed": "Không thể bỏ ghim tin nhắn"
+    "unpinMessageFailed": "Không thể bỏ ghim tin nhắn",
+    "poll": {
+        "create": "Tạo một cuộc thăm dò",
+        "questionLabel": "Câu hỏi",
+        "answersLabel": "Câu trả lời",
+        "optionalQuestion": "Tùy ý nhập câu hỏi của bạn tại đây",
+        "addAnswer": "Thêm ít nhất 2 câu trả lời",
+        "addAnotherAnswer": "Thêm câu trả lời khác",
+        "answerText": "Nhập văn bản câu trả lời ...",
+        "maxReached": "Đã đạt được tối đa 10 câu trả lời",
+        "invalidAnswer": "Hmmm, bạn có câu trả lời trùng lặp không?",
+        "settings": "Cài đặt",
+        "poll": "Thăm dò ý kiến",
+        "anonymous": "Vô danh",
+        "limitedDuration": "Thời hạn có hạn",
+        "showBeforeEnd": "Hiển thị phiếu bầu trước khi cuộc thăm dò kết thúc",
+        "pollDuration": "Thời gian thăm dò ý kiến",
+        "oneHour": "1 giờ",
+        "oneDay": "1 ngày",
+        "oneWeek": "1 tuần",
+        "allowMultipleVotes": "Cho phép nhiều phiếu bầu",
+        "start": "Bắt đầu",
+        "pollEnds": "Cuộc thăm dò ý kiến kết thúc vào {end}",
+        "voteFailed": "Cuộc bỏ phiếu thăm dò không thành công",
+        "totalVotes": "Tổng số phiếu bầu: {total}",
+        "finished": "Cuộc thăm dò đã kết thúc"
+    }
 }

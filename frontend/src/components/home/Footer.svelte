@@ -9,6 +9,7 @@
         GroupChatSummary,
         Message,
         MessageContent,
+        PollContent,
     } from "../../domain/chat/chat";
     import { getMessageContent, getStorageRequiredForMessage } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
@@ -19,7 +20,6 @@
     import { _ } from "svelte-i18n";
     import { remainingStorage } from "../../stores/storage";
     import { createEventDispatcher } from "svelte";
-    import { draftMessages } from "../../stores/draftMessages";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -114,6 +114,10 @@
         }
     }
 
+    export function sendPoll(ev: CustomEvent<PollContent>) {
+        sendMessageWithAttachment(undefined, [], ev.detail);
+    }
+
     function fileSelected(ev: CustomEvent<MessageContent>) {
         controller.attachFile(ev.detail);
     }
@@ -186,6 +190,7 @@
         {blocked}
         {joining}
         on:sendMessage={sendMessage}
+        on:createPoll
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         on:joinGroup

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { getContext } from "svelte";
     import FindUser from "../FindUser.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import UserPill from "../UserPill.svelte";

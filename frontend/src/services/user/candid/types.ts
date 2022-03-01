@@ -177,7 +177,10 @@ export type DirectChatCreated = {};
 export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'Message' : Message } |
+  { 'PollEnded' : PollEnded } |
+  { 'PollVoteRegistered' : UpdatedMessage } |
   { 'MessageDeleted' : UpdatedMessage } |
+  { 'PollVoteDeleted' : UpdatedMessage } |
   { 'DirectChatCreated' : DirectChatCreated } |
   { 'MessageEdited' : UpdatedMessage };
 export interface DirectChatEventWrapper {
@@ -302,12 +305,15 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
   { 'Message' : Message } |
+  { 'PollEnded' : PollEnded } |
   { 'UsersUnblocked' : UsersUnblocked } |
+  { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'RoleChanged' : RoleChanged } |
+  { 'PollVoteDeleted' : UpdatedMessage } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'MessageEdited' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
@@ -417,6 +423,11 @@ export type InitialStateResponse = {
     }
   } |
   { 'InternalError' : string };
+export type InvalidPollReason = { 'DuplicateOptions' : null } |
+  { 'TooFewOptions' : number } |
+  { 'TooManyOptions' : number } |
+  { 'OptionTooLong' : number } |
+  { 'EndDateInThePast' : null };
 export interface JoinGroupArgs {
   'as_super_admin' : boolean,
   'chat_id' : ChatId,
@@ -456,6 +467,7 @@ export interface Message {
   'message_index' : MessageIndex,
 }
 export type MessageContent = { 'File' : FileContent } |
+  { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Cryptocurrency' : CryptocurrencyContent } |
@@ -485,6 +497,7 @@ export interface MessagePinned {
   'message_index' : MessageIndex,
 }
 export interface MessageUnpinned {
+  'due_to_message_deleted' : boolean,
   'unpinned_by' : UserId,
   'message_index' : MessageIndex,
 }
@@ -588,6 +601,24 @@ export interface PendingICPWithdrawal {
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
+export interface PollConfig {
+  'allow_multiple_votes_per_user' : boolean,
+  'text' : [] | [string],
+  'show_votes_before_end_date' : boolean,
+  'end_date' : [] | [TimestampMillis],
+  'anonymous' : boolean,
+  'options' : Array<string>,
+}
+export interface PollContent {
+  'votes' : PollVotes,
+  'ended' : boolean,
+  'config' : PollConfig,
+}
+export interface PollEnded {
+  'event_index' : EventIndex,
+  'message_index' : MessageIndex,
+}
+export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
 export interface PublicGroupSummary {
   'name' : string,
   'wasm_version' : Version,
@@ -609,6 +640,17 @@ export type RecommendedGroupsResponse = {
 export interface RecommendedGroupsSuccessResult {
   'groups' : Array<PublicGroupSummary>,
 }
+export interface RegisterPollVoteArgs {
+  'user_id' : UserId,
+  'poll_option' : number,
+  'operation' : VoteOperation,
+  'message_index' : MessageIndex,
+}
+export type RegisterPollVoteResponse = { 'ChatNotFound' : null } |
+  { 'PollEnded' : null } |
+  { 'Success' : PollVotes } |
+  { 'OptionIndexOutOfRange' : null } |
+  { 'PollNotFound' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RelinquishGroupSuperAdminArgs { 'chat_id' : ChatId }
@@ -671,6 +713,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
     }
   } |
   { 'MessageEmpty' : null } |
+  { 'InvalidPoll' : InvalidPollReason } |
   { 'RecipientBlocked' : null } |
   { 'InvalidRequest' : string };
 export interface SetAvatarArgs { 'avatar' : [] | [Avatar] }
@@ -703,6 +746,9 @@ export type ToggleReactionResponse = { 'MessageNotFound' : null } |
   { 'InvalidReaction' : null } |
   { 'Added' : EventIndex } |
   { 'Removed' : EventIndex };
+export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
+  { 'Visible' : Array<[number, Array<UserId>]> } |
+  { 'Hidden' : number };
 export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
 export type TransactionStatus = { 'Failed' : string } |
   { 'Complete' : null } |
@@ -783,6 +829,8 @@ export interface VideoContent {
   'caption' : [] | [string],
   'width' : number,
 }
+export type VoteOperation = { 'RegisterVote' : null } |
+  { 'DeleteVote' : null };
 export interface _SERVICE {
   'add_recommended_group_exclusions' : (
       arg_0: AddRecommendedGroupExclusionsArgs,
@@ -816,6 +864,9 @@ export interface _SERVICE {
     >,
   'recommended_groups' : (arg_0: RecommendedGroupsArgs) => Promise<
       RecommendedGroupsResponse
+    >,
+  'register_poll_vote' : (arg_0: RegisterPollVoteArgs) => Promise<
+      RegisterPollVoteResponse
     >,
   'relinquish_group_super_admin' : (
       arg_0: RelinquishGroupSuperAdminArgs,

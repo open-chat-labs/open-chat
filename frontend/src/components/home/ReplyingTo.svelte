@@ -13,7 +13,7 @@
     const dispatch = createEventDispatcher();
 
     export let replyingTo: EnhancedReplyContext;
-    export let user: UserSummary | undefined;
+    export let user: UserSummary;
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
@@ -33,7 +33,12 @@
     <h4 class="username">
         {username}
     </h4>
-    <ChatMessageContent fill={false} {me} truncate={true} content={replyingTo.content} reply={true} />
+    <ChatMessageContent
+        fill={false}
+        {me}
+        truncate={true}
+        content={replyingTo.content}
+        reply={true} />
 </div>
 
 <style type="text/scss">

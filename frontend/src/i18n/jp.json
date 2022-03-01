@@ -346,5 +346,31 @@
     "showPinned": "固定されたメッセージを表示する",
     "pinnedMessages": "固定されたメッセージ",
     "pinMessageFailed": "メッセージを固定できません",
-    "unpinMessageFailed": "メッセージの固定を解除できません"
+    "unpinMessageFailed": "メッセージの固定を解除できません",
+    "poll": {
+        "create": "投票を作成する",
+        "questionLabel": "質問",
+        "answersLabel": "回答",
+        "optionalQuestion": "オプションで、ここに質問を入力してください",
+        "addAnswer": "少なくとも2つの答えを追加してください",
+        "addAnotherAnswer": "別の答えを追加",
+        "answerText": "回答テキストを入力してください...",
+        "maxReached": "最大10の回答に達しました",
+        "invalidAnswer": "うーん、重複した答えはありますか？",
+        "settings": "設定",
+        "poll": "投票",
+        "anonymous": "匿名",
+        "limitedDuration": "期間限定",
+        "showBeforeEnd": "投票が終了する前に投票を表示する",
+        "pollDuration": "ポーリング期間",
+        "oneHour": "1時間",
+        "oneDay": "1日",
+        "oneWeek": "1週間",
+        "allowMultipleVotes": "複数の投票を許可する",
+        "start": "始める",
+        "pollEnds": "ポーリングが終了します{end}",
+        "voteFailed": "投票に失敗しました",
+        "totalVotes": "総投票数：{total}",
+        "finished": "投票が終了しました"
+    }
 }

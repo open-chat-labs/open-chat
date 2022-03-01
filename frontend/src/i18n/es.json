@@ -347,5 +347,31 @@
     "showPinned": "Mostrar mensajes anclados",
     "pinnedMessages": "Mensajes fijados",
     "pinMessageFailed": "No se puede anclar el mensaje",
-    "unpinMessageFailed": "No se puede desanclar el mensaje"
+    "unpinMessageFailed": "No se puede desanclar el mensaje",
+    "poll": {
+        "create": "crear una encuesta",
+        "questionLabel": "Pregunta",
+        "answersLabel": "respuestas",
+        "optionalQuestion": "Opcionalmente ingrese su pregunta aquí",
+        "addAnswer": "Agregar al menos 2 respuestas",
+        "addAnotherAnswer": "Agregar otra respuesta",
+        "answerText": "Introduce el texto de la respuesta...",
+        "maxReached": "Máximo de 10 respuestas alcanzadas",
+        "invalidAnswer": "Hmmm, ¿tienes una respuesta duplicada?",
+        "settings": "Ajustes",
+        "poll": "Encuesta",
+        "anonymous": "Anónimo",
+        "limitedDuration": "Duración limitada",
+        "showBeforeEnd": "Mostrar votos antes de que finalice la encuesta",
+        "pollDuration": "Duración de la encuesta",
+        "oneHour": "1 hora",
+        "oneDay": "1 día",
+        "oneWeek": "1 semana",
+        "allowMultipleVotes": "Permitir múltiples votos",
+        "start": "Comienzo",
+        "pollEnds": "La encuesta termina {end}",
+        "voteFailed": "Voto de encuesta fallido",
+        "totalVotes": "Votos totales: {total}",
+        "finished": "La encuesta ha terminado"
+    }
 }

@@ -41,7 +41,7 @@
 
     export let chatId: string;
     export let chatType: "group_chat" | "direct_chat";
-    export let user: UserSummary | undefined;
+    export let user: UserSummary;
     export let senderId: string;
     export let msg: Message;
     export let me: boolean;
@@ -205,6 +205,13 @@
         viewProfile = false;
     }
 
+    function registerVote(ev: CustomEvent<{ answerIndex: number; type: "register" | "delete" }>) {
+        dispatch("registerVote", {
+            ...ev.detail,
+            messageIndex: msg.messageIndex,
+        });
+    }
+
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 </script>
 
@@ -296,7 +303,12 @@
                 {/if}
             {/if}
 
-            <ChatMessageContent {fill} {me} content={msg.content} height={mediaCalculatedHeight} />
+            <ChatMessageContent
+                {fill}
+                {me}
+                content={msg.content}
+                height={mediaCalculatedHeight}
+                on:registerVote={registerVote} />
 
             {#if !deleted}
                 <TimeAndTicks

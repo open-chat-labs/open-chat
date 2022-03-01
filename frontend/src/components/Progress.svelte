@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { rtlStore } from "../stores/rtl";
+
     export let percent: number;
     export let bg: "button" | "accent" = "button";
 </script>
@@ -6,9 +8,13 @@
 <div class="bar">
     <span
         class="meter"
+        class:rtl={$rtlStore}
         style={`width: ${percent}%; background-color: ${
             bg === "button" ? "var(--button-bg)" : "var(--accent)"
         }`} />
+    <div class="label">
+        <slot />
+    </div>
 </div>
 
 <style type="text/scss">
@@ -28,7 +34,23 @@
         transition: width 300ms;
         display: block;
         height: 100%;
-        // border-radius: math.div($progress-bar-x-large, 2);
+
+        position: absolute;
+        left: 0;
+        top: 0;
+
+        &.rtl {
+            left: unset;
+            right: 0;
+        }
+    }
+
+    .label {
+        display: flex;
+        align-items: center;
+        height: 100%;
+        padding: 0 $sp4;
         position: relative;
+        @include ellipsis();
     }
 </style>
