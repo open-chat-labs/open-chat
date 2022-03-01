@@ -1,6 +1,6 @@
 <script lang="ts">
     import { menuStore } from "../stores/menu";
-    import { onMount, tick } from "svelte";
+    import { tick } from "svelte";
 
     let menu: HTMLElement;
     let contextMenu: HTMLElement;

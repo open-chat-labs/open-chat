@@ -60,7 +60,7 @@
     }
 </script>
 
-<div class="mention-picker" style={`bottom: ${offset}px; height: ${filtered.length * 51}px`}>
+<div class="mention-picker" style={`bottom: ${offset}px; height: ${filtered.length * 55}px`}>
     <Menu>
         <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
             <MenuItem selected={itemIndex === index} on:click={() => mention(item.userId)}>

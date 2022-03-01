@@ -44,6 +44,7 @@ import {
     MessageEventWrapper,
     PinMessageResponse,
     UnpinMessageResponse,
+    RegisterPollVoteResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -89,6 +90,7 @@ export {
     MessageEventWrapper as ApiMessageEventWrapper,
     PinMessageResponse as ApiPinMessageResponse,
     UnpinMessageResponse as ApiUnpinMessageResponse,
+    RegisterPollVoteResponse as ApiRegisterPollVoteResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

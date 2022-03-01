@@ -11,6 +11,7 @@ export type MessageContent =
     | AudioContent
     | DeletedContent
     | PlaceholderContent
+    | PollContent
     | CryptocurrencyContent;
 
 export type IndexRange = [number, number];
@@ -198,6 +199,44 @@ export type DeletedContent = {
     timestamp: bigint;
 };
 
+export type PollContent = {
+    kind: "poll_content";
+    votes: PollVotes;
+    config: PollConfig;
+    ended: boolean;
+};
+
+export type PollVotes = {
+    total: TotalPollVotes;
+    user: number[];
+};
+
+export type PollConfig = {
+    allowMultipleVotesPerUser: boolean;
+    text?: string;
+    showVotesBeforeEndDate: boolean;
+    endDate?: bigint;
+    anonymous: boolean;
+    options: string[];
+};
+
+export type TotalPollVotes = AnonymousPollVotes | VisiblePollVotes | HiddenPollVotes;
+
+export type AnonymousPollVotes = {
+    kind: "anonymous_poll_votes";
+    votes: Record<number, number>;
+};
+
+export type VisiblePollVotes = {
+    kind: "visible_poll_votes";
+    votes: Record<number, string[]>;
+};
+
+export type HiddenPollVotes = {
+    kind: "hidden_poll_votes";
+    votes: number;
+};
+
 export interface TextContent {
     kind: "text_content";
     text: string;
@@ -265,6 +304,9 @@ export type DirectChatEvent =
     | MessageEdited
     | ReactionAdded
     | ReactionRemoved
+    | PollVoteDeleted
+    | PollVoteRegistered
+    | PollEnded
     | DirectChatCreated;
 
 export type GroupChatEvent =
@@ -289,7 +331,10 @@ export type GroupChatEvent =
     | RoleChanged
     | OwnershipTransferred
     | MessagePinned
-    | MessageUnpinned;
+    | MessageUnpinned
+    | PollVoteRegistered
+    | PollVoteDeleted
+    | PollEnded;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -391,6 +436,22 @@ export type ParticipantRelinquishesSuperAdmin = {
 export type ParticipantDismissedAsSuperAdmin = {
     kind: "participant_dismissed_as_super_admin";
     userId: string;
+};
+
+export type PollVoteRegistered = {
+    kind: "poll_vote_registered";
+    message: StaleMessage;
+};
+
+export type PollVoteDeleted = {
+    kind: "poll_vote_deleted";
+    message: StaleMessage;
+};
+
+export type PollEnded = {
+    kind: "poll_ended";
+    messageIndex: number;
+    eventIndex: number;
 };
 
 export type MessagePinned = {
@@ -729,6 +790,7 @@ export type SendMessageResponse =
     | SendMessageBalanceExceeded
     | SendMessageRecipientNotFound
     | TransationFailed
+    | InvalidPoll
     | SendMessageNotInGroup;
 
 export type SendMessageSuccess = {
@@ -736,6 +798,10 @@ export type SendMessageSuccess = {
     timestamp: bigint;
     messageIndex: number;
     eventIndex: number;
+};
+
+export type InvalidPoll = {
+    kind: "invalid_poll";
 };
 
 export type TransationFailed = {
@@ -879,3 +945,11 @@ export type PinMessageResponse =
     | "caller_not_in_group"
     | "not_authorised"
     | "success";
+
+export type RegisterPollVoteResponse =
+    | "caller_not_in_group"
+    | "poll_ended"
+    | "success"
+    | "out_of_range"
+    | "poll_not_found"
+    | "chat_not_found";

@@ -45,7 +45,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         if participant.user_id == args.user_id {
             Err(CannotBlockSelf)
-        } else if participant.role.can_block_user() {
+        } else if participant.role.can_block_users(&runtime_state.data.permissions) {
             match runtime_state.data.participants.get_by_user_id(&args.user_id) {
                 None => Ok(PrepareResult {
                     my_user_id: participant.user_id,

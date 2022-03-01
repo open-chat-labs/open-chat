@@ -21,7 +21,6 @@
     import { userStore } from "../../stores/user";
     import NotificationsBar from "./NotificationsBar.svelte";
     import type { HomeController } from "../../fsm/home.controller";
-    import type { Version } from "../../domain/version";
     import Markdown from "./Markdown.svelte";
 
     export let controller: HomeController;

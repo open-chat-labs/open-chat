@@ -317,8 +317,7 @@
         "challengeAttemptFailed": "The value you entered is incorrect. Please try the new challenge.",
         "challengeThrottled": "Too many challenges have been generated. Please try again later.",
         "attemptChallenge": "Please type in the characters you see",
-        "createUser": "Create user",
-        "errorCheckingUsername": "An unexpected error occurred checking your username"
+        "createUser": "Create user"
     },
     "faq": {
         "menu": "FAQ",
@@ -345,5 +344,31 @@
     "showPinned": "Show pinned messages",
     "pinnedMessages": "Pinned messages",
     "pinMessageFailed": "Unable to pin message",
-    "unpinMessageFailed": "Unable to unpin message"
+    "unpinMessageFailed": "Unable to unpin message",
+    "poll": {
+        "create": "Create a poll",
+        "questionLabel": "Question",
+        "answersLabel": "Answers",
+        "optionalQuestion": "Optionally enter your question here",
+        "addAnswer": "Add at least 2 answers",
+        "addAnotherAnswer": "Add another answer",
+        "answerText": "Enter answer text...",
+        "maxReached": "Maximum 10 answers reached",
+        "invalidAnswer": "Hmmm, do you have a duplicate answer?",
+        "settings": "Settings",
+        "poll": "Poll",
+        "anonymous": "Anonymous",
+        "limitedDuration": "Limited duration",
+        "showBeforeEnd": "Show votes before poll ends",
+        "pollDuration": "Poll duration",
+        "oneHour": "1 hour",
+        "oneDay": "1 day",
+        "oneWeek": "1 week",
+        "allowMultipleVotes": "Allow multiple votes",
+        "start": "Start",
+        "pollEnds": "Poll ends {end}",
+        "voteFailed": "Poll vote failed",
+        "totalVotes": "Total votes: {total}",
+        "finished": "Poll has finished"
+    }
 }

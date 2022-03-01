@@ -9,7 +9,8 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
+    Avatar, CanisterId, ChatId, Cycles, GroupPermissions, MessageIndex, Milliseconds, Notification, TimestampMillis,
+    Timestamped, UserId, Version,
 };
 use utils::env::Environment;
 use utils::memory;
@@ -102,6 +103,7 @@ impl RuntimeState {
             pinned_message: None,
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             owner_id: data.owner_id,
+            permissions: data.permissions.clone(),
         }
     }
 
@@ -145,11 +147,18 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
+    #[serde(default = "callback_canister_id")]
     pub callback_canister_id: CanisterId,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
     pub test_mode: bool,
     pub owner_id: UserId,
+    #[serde(default)]
+    pub permissions: GroupPermissions,
+}
+
+fn callback_canister_id() -> CanisterId {
+    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -170,6 +179,7 @@ impl Data {
         notifications_canister_ids: Vec<CanisterId>,
         callback_canister_id: CanisterId,
         test_mode: bool,
+        permissions: Option<GroupPermissions>,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
         let events = GroupChatEvents::new(chat_id, name.clone(), description.clone(), creator_user_id, now);
@@ -192,6 +202,7 @@ impl Data {
             pinned_messages: Vec::new(),
             test_mode,
             owner_id: creator_user_id,
+            permissions: permissions.unwrap_or_default(),
         }
     }
 }

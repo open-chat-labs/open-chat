@@ -346,5 +346,31 @@
     "showPinned": "Gepinnte Nachrichten anzeigen",
     "pinnedMessages": "Gepinnte Nachrichten",
     "pinMessageFailed": "Nachricht kann nicht angeheftet werden",
-    "unpinMessageFailed": "Nachricht kann nicht gelöst werden"
+    "unpinMessageFailed": "Nachricht kann nicht gelöst werden",
+    "poll": {
+        "create": "Erstellen Sie eine Umfrage",
+        "questionLabel": "Frage",
+        "answersLabel": "Antworten",
+        "optionalQuestion": "Geben Sie hier optional Ihre Frage ein",
+        "addAnswer": "Fügen Sie mindestens 2 Antworten hinzu",
+        "addAnotherAnswer": "Fügen Sie eine weitere Antwort hinzu",
+        "answerText": "Antworttext eingeben...",
+        "maxReached": "Maximal 10 Antworten erreicht",
+        "invalidAnswer": "Hmmm, hast du eine doppelte Antwort?",
+        "settings": "Einstellungen",
+        "poll": "Umfrage",
+        "anonymous": "Anonym",
+        "limitedDuration": "Begrenzte Dauer",
+        "showBeforeEnd": "Stimmen anzeigen, bevor die Umfrage endet",
+        "pollDuration": "Umfragedauer",
+        "oneHour": "1 Stunde",
+        "oneDay": "1 Tag",
+        "oneWeek": "1 Woche",
+        "allowMultipleVotes": "Mehrfachstimmen zulassen",
+        "start": "Start",
+        "pollEnds": "Umfrage endet {end}",
+        "voteFailed": "Abstimmung fehlgeschlagen",
+        "totalVotes": "Stimmen insgesamt: {total}",
+        "finished": "Umfrage ist beendet"
+    }
 }

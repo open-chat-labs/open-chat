@@ -2397,6 +2397,7 @@ dependencies = [
  "ic-agent",
  "index_store",
  "notifications_canister",
+ "notifications_canister_client",
  "openssl",
  "serde",
  "tokio",

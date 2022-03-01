@@ -22,6 +22,7 @@ import type {
     ParticipantRole,
     PinMessageResponse,
     UnpinMessageResponse,
+    RegisterPollVoteResponse,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
@@ -62,4 +63,9 @@ export interface IGroupClient {
     getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>>;
     pinMessage(messageIndex: number): Promise<PinMessageResponse>;
     unpinMessage(messageIndex: number): Promise<UnpinMessageResponse>;
+    registerPollVote(
+        messageIdx: number,
+        answerIdx: number,
+        voteType: "register" | "delete"
+    ): Promise<RegisterPollVoteResponse>;
 }

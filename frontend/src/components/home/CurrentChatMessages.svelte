@@ -7,13 +7,7 @@
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
-    import {
-        addDays,
-        formatMessageDate,
-        getStartOfToday,
-        toDayOfWeekString,
-        toLongDateString,
-    } from "../../utils/date";
+    import { formatMessageDate } from "../../utils/date";
     import type {
         EventWrapper,
         EnhancedReplyContext,
@@ -431,6 +425,12 @@
     function unpinMessage(ev: CustomEvent<Message>) {
         controller.unpinMessage(ev.detail.messageIndex);
     }
+
+    function registerVote(
+        ev: CustomEvent<{ messageIndex: number; answerIndex: number; type: "register" | "delete" }>
+    ) {
+        controller.registerPollVote(ev.detail.messageIndex, ev.detail.answerIndex, ev.detail.type);
+    }
 </script>
 
 <div bind:this={messagesDiv} class="chat-messages" on:scroll|passive={onScroll} id="chat-messages">
@@ -468,6 +468,7 @@
                         on:blockUser={blockUser}
                         on:pinMessage={pinMessage}
                         on:unpinMessage={unpinMessage}
+                        on:registerVote={registerVote}
                         event={evt} />
                 {/each}
             {/each}

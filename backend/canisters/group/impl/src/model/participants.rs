@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::{
-    EventIndex, FallbackRole, Mention, MessageIndex, Participant, Role, TimestampMillis, UserId, MAX_RETURNED_MENTIONS,
+    EventIndex, FallbackRole, GroupPermissions, Mention, MessageIndex, Participant, Role, TimestampMillis, UserId,
+    MAX_RETURNED_MENTIONS,
 };
 
 const MAX_PARTICIPANTS_PER_PUBLIC_GROUP: u32 = 100_000;
@@ -159,7 +160,13 @@ impl Participants {
         self.user_id_to_principal_map.len() as u32
     }
 
-    pub fn change_role(&mut self, caller: Principal, user_id: &UserId, new_role: Role) -> ChangeRoleResult {
+    pub fn change_role(
+        &mut self,
+        caller: Principal,
+        user_id: &UserId,
+        new_role: Role,
+        permissions: &GroupPermissions,
+    ) -> ChangeRoleResult {
         // This function cannot be used to make a user a SuperAdmin
         if matches!(new_role, Role::SuperAdmin(_)) {
             return ChangeRoleResult::Invalid;
@@ -168,7 +175,7 @@ impl Participants {
         // Is the caller authorized to change the user to this role
         let caller_id = match self.get_by_principal(&caller) {
             Some(p) => {
-                if !p.role.can_change_role(new_role) {
+                if !p.role.can_change_roles(new_role, permissions) {
                     return ChangeRoleResult::NotAuthorized;
                 }
                 p.user_id

@@ -17,7 +17,7 @@
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
-    export let user: UserSummary | undefined;
+    export let user: UserSummary;
     export let senderId: string;
     export let msg: Message;
     export let me: boolean;

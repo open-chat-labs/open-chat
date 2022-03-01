@@ -29,6 +29,7 @@ import {
     isPreviewing,
     mergeUnconfirmedIntoSummary,
     pruneLocalReactions,
+    updatePollVotes,
     replaceAffected,
     replaceLocal,
     replaceMessageContent,
@@ -210,6 +211,71 @@ export class ChatController {
             s.delete(messageIndex);
             return new Set(s);
         });
+    }
+
+    /**
+     * In order to get the UI to update immediately, we want to find the poll message that we are referring to,
+     * and update it to reflect the user's vote
+     */
+    private updatePollContent(
+        messageIndex: number,
+        answerIndex: number,
+        type: "register" | "delete"
+    ): void {
+        this.events.update((events) => {
+            return events.map((evt) => {
+                if (
+                    evt.event.kind === "message" &&
+                    evt.event.messageIndex === messageIndex &&
+                    evt.event.content.kind === "poll_content"
+                ) {
+                    console.log("Updated poll: ", evt.event.content);
+                    return {
+                        ...evt,
+                        event: {
+                            ...evt.event,
+                            content: {
+                                ...evt.event.content,
+                                votes: updatePollVotes(
+                                    this.user.userId,
+                                    evt.event.content,
+                                    answerIndex,
+                                    type
+                                ),
+                            },
+                        },
+                    };
+                }
+                return evt;
+            });
+        });
+    }
+
+    registerPollVote(messageIndex: number, answerIndex: number, type: "register" | "delete"): void {
+        this.updatePollContent(messageIndex, answerIndex, type);
+        const promise =
+            this.chatVal.kind === "group_chat"
+                ? this.api.registerGroupChatPollVote(this.chatId, messageIndex, answerIndex, type)
+                : this.api.registerDirectChatPollVote(
+                      this.chatVal.them,
+                      messageIndex,
+                      answerIndex,
+                      type
+                  );
+
+        promise
+            .then((resp) => {
+                if (resp !== "success") {
+                    toastStore.showFailureToast("poll.voteFailed");
+                    rollbar.error("Poll vote failed: ", resp);
+                    console.log("poll vote failed: ", resp);
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("poll.voteFailed");
+                rollbar.error("Poll vote failed: ", err);
+                console.log("poll vote failed: ", err);
+            });
     }
 
     unpinMessage(messageIndex: number): void {

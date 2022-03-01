@@ -260,5 +260,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
             },
             bg: dark25,
         },
+
+        toggle: {
+            bg: dark45,
+        },
     };
 }

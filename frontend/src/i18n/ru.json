@@ -346,5 +346,31 @@
     "showPinned": "Показать закрепленные сообщения",
     "pinnedMessages": "Закрепленные сообщения",
     "pinMessageFailed": "Не удалось закрепить сообщение",
-    "unpinMessageFailed": "Не удалось открепить сообщение"
+    "unpinMessageFailed": "Не удалось открепить сообщение",
+    "poll": {
+        "create": "Создать опрос",
+        "questionLabel": "Вопрос",
+        "answersLabel": "Ответы",
+        "optionalQuestion": "При желании введите свой вопрос здесь",
+        "addAnswer": "Добавьте не менее 2 ответов",
+        "addAnotherAnswer": "Добавить еще один ответ",
+        "answerText": "Введите текст ответа...",
+        "maxReached": "Достигнуто максимум 10 ответов",
+        "invalidAnswer": "Хм, у вас есть дубликат ответа?",
+        "settings": "Настройки",
+        "poll": "Опрос",
+        "anonymous": "Анонимный",
+        "limitedDuration": "Ограниченная продолжительность",
+        "showBeforeEnd": "Показать голоса до окончания опроса",
+        "pollDuration": "Продолжительность опроса",
+        "oneHour": "1 час",
+        "oneDay": "1 день",
+        "oneWeek": "1 неделя",
+        "allowMultipleVotes": "Разрешить несколько голосов",
+        "start": "Начинать",
+        "pollEnds": "Опрос заканчивается {end}",
+        "voteFailed": "Голосование в опросе не удалось",
+        "totalVotes": "Всего голосов: {total}",
+        "finished": "Голосование завершено"
+    }
 }

@@ -40,7 +40,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         if participant.user_id == args.user_id {
             Err(CannotRemoveSelf)
-        } else if participant.role.can_remove_participants() {
+        } else if participant.role.can_remove_members(&runtime_state.data.permissions) {
             match runtime_state.data.participants.get_by_user_id(&args.user_id) {
                 None => Err(UserNotInGroup),
                 Some(participant_to_remove) => {

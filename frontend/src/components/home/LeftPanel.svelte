@@ -33,7 +33,7 @@
 
     export function showProfile() {
         view = "showing-profile";
-        profileComponent.reset(user);
+        profileComponent.reset();
     }
 
     function groupCreated(ev: CustomEvent<GroupChatSummary>) {

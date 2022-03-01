@@ -20,6 +20,7 @@ import type {
     ParticipantRole,
     PinMessageResponse,
     UnpinMessageResponse,
+    RegisterPollVoteResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -204,5 +205,13 @@ export class CachingGroupClient implements IGroupClient {
 
     unpinMessage(messageIndex: number): Promise<UnpinMessageResponse> {
         return this.client.unpinMessage(messageIndex);
+    }
+
+    registerPollVote(
+        messageIdx: number,
+        answerIdx: number,
+        voteType: "register" | "delete"
+    ): Promise<RegisterPollVoteResponse> {
+        return this.client.registerPollVote(messageIdx, answerIdx, voteType);
     }
 }

@@ -6,8 +6,12 @@ import type {
     DirectChatSummaryUpdates,
     GroupChatSummaryUpdates,
     UpdatesResponse,
+    PollConfig,
+    PollVotes,
+    PollContent,
 } from "./chat";
 import {
+    addVoteToPoll,
     enoughVisibleMessages,
     getParticipantsString,
     indexIsInRanges,
@@ -86,6 +90,139 @@ function createUser(userId: string, username: string, seconds: number): PartialU
         updated: BigInt(0),
     };
 }
+
+describe("updating poll votes", () => {
+    const config: PollConfig = {
+        allowMultipleVotesPerUser: true,
+        text: "Who's the best",
+        showVotesBeforeEndDate: true,
+        endDate: BigInt(Date.now() + 1000 * 60 * 60 * 24),
+        anonymous: false,
+        options: ["me", "you", "neither"],
+    };
+
+    const singleVote: PollConfig = {
+        ...config,
+        allowMultipleVotesPerUser: false,
+    };
+
+    const anonVotes: PollVotes = {
+        total: { kind: "anonymous_poll_votes", votes: { 0: 1, 1: 0, 2: 10 } },
+        user: [0],
+    };
+
+    const anonVotesNoPrev: PollVotes = {
+        ...anonVotes,
+        user: [],
+    };
+
+    const visibleVotes: PollVotes = {
+        total: { kind: "visible_poll_votes", votes: { 0: ["abcdef"], 1: [] } },
+        user: [0],
+    };
+
+    const visibleVotesNoPrev: PollVotes = {
+        total: { kind: "visible_poll_votes", votes: { 0: ["123456"], 1: [] } },
+        user: [],
+    };
+
+    const hiddenVotes: PollVotes = {
+        total: { kind: "hidden_poll_votes", votes: 3 },
+        user: [0],
+    };
+
+    const hiddenVotesNoPrev: PollVotes = {
+        ...hiddenVotes,
+        user: [],
+    };
+
+    const poll: PollContent = { kind: "poll_content", votes: anonVotes, config, ended: false };
+
+    describe("adding a vote", () => {
+        describe("when multiple votes are allowed", () => {
+            test("when I have already voted", () => {
+                const updated = addVoteToPoll("abcdef", 0, poll);
+                expect(updated).toEqual(anonVotes);
+            });
+            test("when votes are anonymous", () => {
+                const updated = addVoteToPoll("abcdef", 1, poll);
+                expect(updated.user).toEqual([0, 1]);
+                expect(updated.total.votes).toEqual({ 0: 1, 1: 1, 2: 10 });
+            });
+            test("when votes are hidden", () => {
+                const updated = addVoteToPoll("abcdef", 1, { ...poll, votes: hiddenVotes });
+                expect(updated.user).toEqual([0, 1]);
+                expect(updated.total.votes).toEqual(4);
+            });
+            test("when votes are visible", () => {
+                const updated = addVoteToPoll("abcdef", 1, { ...poll, votes: visibleVotes });
+                expect(updated.user).toEqual([0, 1]);
+                expect(updated.total.votes).toEqual({ 0: ["abcdef"], 1: ["abcdef"] });
+            });
+        });
+        describe("when only one vote is allowed", () => {
+            describe.only("when user has previously voted", () => {
+                test("when I have already voted", () => {
+                    const updated = addVoteToPoll("abcdef", 0, { ...poll, config: singleVote });
+                    expect(updated).toEqual(anonVotes);
+                });
+                test("when votes are anonymous", () => {
+                    const updated = addVoteToPoll("abcdef", 1, { ...poll, config: singleVote });
+                    expect(updated.user).toEqual([1]);
+                    expect(updated.total.votes).toEqual({ 0: 0, 1: 1, 2: 10 });
+                });
+                test("when votes are hidden", () => {
+                    const updated = addVoteToPoll("abcdef", 1, {
+                        ...poll,
+                        config: singleVote,
+                        votes: hiddenVotes,
+                    });
+                    expect(updated.user).toEqual([1]);
+                    expect(updated.total.votes).toEqual(3);
+                });
+                test("when votes are visible", () => {
+                    const updated = addVoteToPoll("abcdef", 1, {
+                        ...poll,
+                        config: singleVote,
+                        votes: visibleVotes,
+                    });
+                    expect(updated.user).toEqual([1]);
+                    expect(updated.total.votes).toEqual({ 0: [], 1: ["abcdef"] });
+                });
+            });
+
+            describe("when user has not previously voted", () => {
+                test("when votes are anonymous", () => {
+                    const updated = addVoteToPoll("abcdef", 1, {
+                        ...poll,
+                        votes: anonVotesNoPrev,
+                        config: singleVote,
+                    });
+                    expect(updated.user).toEqual([1]);
+                    expect(updated.total.votes).toEqual({ 0: 1, 1: 1, 2: 10 });
+                });
+                test("when votes are hidden", () => {
+                    const updated = addVoteToPoll("abcdef", 1, {
+                        ...poll,
+                        config: singleVote,
+                        votes: hiddenVotesNoPrev,
+                    });
+                    expect(updated.user).toEqual([1]);
+                    expect(updated.total.votes).toEqual(4);
+                });
+                test("when votes are visible", () => {
+                    const updated = addVoteToPoll("abcdef", 1, {
+                        ...poll,
+                        config: singleVote,
+                        votes: visibleVotesNoPrev,
+                    });
+                    expect(updated.user).toEqual([1]);
+                    expect(updated.total.votes).toEqual({ 0: ["123456"], 1: ["abcdef"] });
+                });
+            });
+        });
+    });
+});
 
 describe("enough visible messages", () => {
     test("returns false when there are no messages", () => {

@@ -73,7 +73,7 @@ export function openCache(principal: string): Database | undefined {
         return undefined;
     }
     try {
-        return openDB<ChatSchema>(`openchat_db_${principal}`, 19, {
+        return openDB<ChatSchema>(`openchat_db_${principal}`, 20, {
             upgrade(db, _oldVersion, _newVersion) {
                 try {
                     if (db.objectStoreNames.contains("chat_events")) {
@@ -585,7 +585,10 @@ export async function loadMessagesByMessageIndex(
                 "message_index_event_index",
                 `${chatId}_${msgIdx}`
             );
-            if (eventIdx === undefined) return undefined;
+            if (eventIdx === undefined) {
+                missing.add(msgIdx);
+                return undefined;
+            }
             const evt: EventWrapper<ChatEvent> | undefined = await loadEventByIndex(
                 resolvedDb,
                 chatId,

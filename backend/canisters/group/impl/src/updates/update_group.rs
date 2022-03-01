@@ -9,8 +9,8 @@ use group_index_canister::c2c_update_group;
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged, UserId,
-    MAX_AVATAR_SIZE,
+    Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged,
+    PermissionsChanged, UserId, MAX_AVATAR_SIZE,
 };
 
 #[update]
@@ -78,7 +78,10 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             max_length: MAX_AVATAR_SIZE,
         }))
     } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if !participant.role.can_update_group() {
+        let permissions = &runtime_state.data.permissions;
+        if !participant.role.can_update_group(permissions)
+            || (args.permissions.is_some() && !participant.role.can_change_permissions(permissions))
+        {
             Err(NotAuthorized)
         } else {
             Ok(PrepareResult {
@@ -140,6 +143,19 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
 
             runtime_state.data.avatar = avatar;
         }
+    }
+
+    if let Some(permissions) = args.permissions {
+        events.push_event(
+            ChatEventInternal::PermissionsChanged(Box::new(PermissionsChanged {
+                old_permissions: runtime_state.data.permissions.clone(),
+                new_permissions: permissions.clone(),
+                changed_by: my_user_id,
+            })),
+            now,
+        );
+
+        runtime_state.data.permissions = permissions;
     }
 
     handle_activity_notification(runtime_state);
