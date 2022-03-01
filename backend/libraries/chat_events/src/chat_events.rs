@@ -54,6 +54,7 @@ pub enum ChatEventInternal {
     PollVoteRegistered(Box<UpdatedMessageInternal>),
     PollVoteDeleted(Box<UpdatedMessageInternal>),
     PollEnded(Box<MessageIndex>),
+    PermissionsChanged(Box<PermissionsChanged>),
 }
 
 impl ChatEventInternal {
@@ -100,6 +101,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::PollVoteRegistered(_)
                 | ChatEventInternal::PollVoteDeleted(_)
                 | ChatEventInternal::PollEnded(_)
+                | ChatEventInternal::PermissionsChanged(_)
         )
     }
 }

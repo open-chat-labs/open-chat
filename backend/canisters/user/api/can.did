@@ -128,6 +128,7 @@ type CreateGroupArgs =
         description: text;
         avatar: opt Avatar;
         history_visible_to_new_joiners: bool;
+        permissions: opt GroupPermissions;
     };
 
 type CreateGroupSuccessResult =

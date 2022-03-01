@@ -1,4 +1,4 @@
-use crate::{EventIndex, Message, MessageId, MessageIndex, Role, UserId};
+use crate::{EventIndex, GroupPermissions, Message, MessageId, MessageIndex, Role, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -29,6 +29,7 @@ pub enum GroupChatEvent {
     PollVoteRegistered(UpdatedMessage),
     PollVoteDeleted(UpdatedMessage),
     PollEnded(PollEnded),
+    PermissionsChanged(PermissionsChanged),
 }
 
 impl GroupChatEvent {
@@ -164,6 +165,13 @@ pub struct UpdatedMessage {
 pub struct PollEnded {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PermissionsChanged {
+    pub old_permissions: GroupPermissions,
+    pub new_permissions: GroupPermissions,
+    pub changed_by: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

@@ -185,6 +185,7 @@ type GroupChatEvent =
         PollVoteRegistered: UpdatedMessage;
         PollVoteDeleted: UpdatedMessage;
         PollEnded: PollEnded;
+        PermissionsChanged: PermissionsChanged;
     };
 
 type GroupChatEventWrapper =
@@ -215,6 +216,7 @@ type GroupChatSummary =
         pinned_message: opt MessageIndex;
         wasm_version: Version;
         owner_id: UserId;
+        permissions: GroupPermissions;
     };
 
 type GroupChatSummaryUpdates =
@@ -234,6 +236,7 @@ type GroupChatSummaryUpdates =
         pinned_message: PinnedMessageUpdate;
         wasm_version: opt Version;
         owner_id: opt UserId;
+        permissions: opt GroupPermissions;
     };
 
 type GroupDescriptionChanged =
@@ -468,6 +471,13 @@ type ParticipantsAdded =
         user_ids: vec UserId;
         added_by: UserId;
         unblocked: vec UserId;
+    };
+
+type PermissionsChanged =
+    record {
+        old_permissions: GroupPermissions;
+        new_permissions: GroupPermissions;
+        changed_by: UserId;
     };
 
 type PollConfig =
@@ -893,4 +903,26 @@ type User =
     record {
         user_id: UserId;
         username: text;
+    };
+
+type GroupPermissions =
+    record {
+        change_permissions: PermissionRole;
+        change_roles: PermissionRole;
+        add_members: PermissionRole;
+        remove_members: PermissionRole;
+        block_users: PermissionRole;
+        delete_messages: PermissionRole;
+        update_group: PermissionRole;
+        pin_messages: PermissionRole;
+        create_polls: PermissionRole;
+        send_messages: PermissionRole;
+        react_to_messages: PermissionRole;
+    };
+
+type PermissionRole =
+    variant {
+        Owner;
+        Admins;
+        Members;
     };

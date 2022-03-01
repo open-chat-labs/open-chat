@@ -40,7 +40,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
             if let DeleteMessageResult::Success(content) = runtime_state.data.events.delete_message(
                 participant.user_id,
-                participant.role.can_delete_messages(),
+                participant.role.can_delete_messages(&runtime_state.data.permissions),
                 message_id,
                 now,
             ) {

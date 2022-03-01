@@ -51,6 +51,7 @@ impl From<&GroupChat> for GroupChatSummaryUpdates {
             pinned_message: OptionUpdate::NoChange,
             wasm_version: None,
             owner_id: None,
+            permissions: None,
         }
     }
 }

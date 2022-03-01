@@ -9,7 +9,8 @@ pub use updates::*;
 use candid::CandidType;
 use serde::Deserialize;
 use types::{
-    ChatId, EventIndex, EventWrapper, GroupChatSummary, Mention, Message, MessageIndex, Role, TimestampMillis, UserId, Version,
+    ChatId, EventIndex, EventWrapper, GroupChatSummary, GroupPermissions, Mention, Message, MessageIndex, Role,
+    TimestampMillis, UserId, Version,
 };
 
 pub const MAX_GROUP_NAME_LENGTH: u32 = 25;
@@ -34,6 +35,7 @@ pub struct Summary {
     pub pinned_message: Option<MessageIndex>,
     pub wasm_version: Version,
     pub owner_id: UserId,
+    pub permissions: GroupPermissions,
 }
 
 impl From<Summary> for GroupChatSummary {
@@ -58,6 +60,7 @@ impl From<Summary> for GroupChatSummary {
             pinned_message: s.pinned_message,
             wasm_version: s.wasm_version,
             owner_id: s.owner_id,
+            permissions: s.permissions,
         }
     }
 }

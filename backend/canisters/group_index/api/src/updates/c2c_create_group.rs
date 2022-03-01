@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::Deserialize;
-use types::{Avatar, ChatId};
+use types::{Avatar, ChatId, GroupPermissions};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -10,6 +10,7 @@ pub struct Args {
     pub description: String,
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
+    pub permissions: Option<GroupPermissions>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
