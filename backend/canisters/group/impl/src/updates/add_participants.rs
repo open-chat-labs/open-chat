@@ -97,9 +97,10 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     {
         Err(ParticipantLimitReached(limit))
     } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        let can_add_participants = participant.role.can_add_participants(runtime_state.data.is_public);
+        let permissions = &runtime_state.data.permissions;
+        let can_add_participants = participant.role.can_add_members(permissions, runtime_state.data.is_public);
         if can_add_participants {
-            let can_unblock_user = participant.role.can_unblock_user();
+            let can_unblock_user = participant.role.can_block_users(permissions);
             let mut users_to_add = Vec::new();
             let mut users_already_in_group = Vec::new();
             let mut users_blocked_from_group = Vec::new();

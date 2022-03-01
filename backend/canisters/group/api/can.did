@@ -24,6 +24,7 @@ type SendMessageResponse =
         MessageEmpty;
         TextTooLong: nat32;
         InvalidPoll: InvalidPollReason;
+        NotAuthorized;
         CallerNotInGroup;
     };
 
@@ -80,6 +81,7 @@ type ToggleReactionResponse =
         InvalidReaction;
         MessageNotFound;
         CallerNotInGroup;
+        NotAuthorized;
     };
 
 type BlockUserArgs =
@@ -183,6 +185,7 @@ type UpdateGroupArgs =
         name: text;
         description: text;
         avatar: AvatarUpdate;
+        permissions: opt GroupPermissions;
     };
 
 type UpdateGroupResponse =

@@ -22,6 +22,10 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         let now = runtime_state.env.now();
 
+        if !participant.role.can_react_to_messages(&runtime_state.data.permissions) {
+            return NotAuthorized;
+        }
+
         match runtime_state
             .data
             .events

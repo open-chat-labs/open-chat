@@ -1,6 +1,6 @@
 use crate::{
-    ChatId, EventIndex, EventWrapper, Mention, Message, MessageIndex, MessageIndexRange, OptionUpdate, Role, TimestampMillis,
-    UserId, Version,
+    ChatId, EventIndex, EventWrapper, GroupPermissions, Mention, Message, MessageIndex, MessageIndexRange, OptionUpdate, Role,
+    TimestampMillis, UserId, Version,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -65,6 +65,7 @@ pub struct GroupChatSummary {
     pub pinned_message: Option<MessageIndex>,
     pub wasm_version: Version,
     pub owner_id: UserId,
+    pub permissions: GroupPermissions,
 }
 
 impl GroupChatSummary {
@@ -106,6 +107,7 @@ pub struct GroupChatSummaryUpdates {
     pub pinned_message: OptionUpdate<MessageIndex>,
     pub wasm_version: Option<Version>,
     pub owner_id: Option<UserId>,
+    pub permissions: Option<GroupPermissions>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

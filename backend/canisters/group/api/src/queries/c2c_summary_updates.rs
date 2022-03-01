@@ -34,6 +34,7 @@ pub struct SummaryUpdates {
     pub pinned_message: OptionUpdate<MessageIndex>,
     pub wasm_version: Option<Version>,
     pub owner_id: Option<UserId>,
+    pub permissions: Option<GroupPermissions>,
 }
 
 impl From<SummaryUpdates> for GroupChatSummaryUpdates {
@@ -54,6 +55,7 @@ impl From<SummaryUpdates> for GroupChatSummaryUpdates {
             pinned_message: s.pinned_message,
             wasm_version: s.wasm_version,
             owner_id: s.owner_id,
+            permissions: s.permissions,
         }
     }
 }

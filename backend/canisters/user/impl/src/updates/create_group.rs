@@ -82,6 +82,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             description: args.description,
             history_visible_to_new_joiners: args.history_visible_to_new_joiners,
             avatar: args.avatar,
+            permissions: args.permissions,
         };
         Ok(PrepareResult {
             group_index_canister_id: runtime_state.data.group_index_canister_id,

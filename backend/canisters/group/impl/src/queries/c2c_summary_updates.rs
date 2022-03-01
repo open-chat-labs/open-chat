@@ -3,7 +3,8 @@ use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use types::{
-    EventIndex, EventWrapper, Mention, Message, MessageIndex, OptionUpdate, TimestampMillis, UserId, MAX_RETURNED_MENTIONS,
+    EventIndex, EventWrapper, GroupPermissions, Mention, Message, MessageIndex, OptionUpdate, TimestampMillis, UserId,
+    MAX_RETURNED_MENTIONS,
 };
 
 #[query]
@@ -38,6 +39,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             pinned_message: OptionUpdate::NoChange,
             wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(args.updates_since).copied()),
             owner_id: updates_from_events.owner_id,
+            permissions: updates_from_events.permissions,
         };
         Success(Box::new(SuccessResult { updates }))
     } else {
@@ -57,6 +59,7 @@ struct UpdatesFromEvents {
     role_changed: bool,
     mentions: Vec<Mention>,
     owner_id: Option<UserId>,
+    permissions: Option<GroupPermissions>,
 }
 
 fn process_events(
@@ -137,6 +140,11 @@ fn process_events(
                 }
                 if updates.owner_id == None {
                     updates.owner_id = Some(ownership.new_owner);
+                }
+            }
+            ChatEventInternal::PermissionsChanged(p) => {
+                if updates.permissions.is_none() {
+                    updates.permissions = Some(p.new_permissions.clone());
                 }
             }
             _ => {}
