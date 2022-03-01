@@ -1,11 +1,8 @@
-use candid::{Decode, Encode};
-use garcon::ThrottleWaiter;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
-use notifications_canister::{notifications, remove_notifications, remove_subscriptions};
+use notifications_canister::{latest_notification_index, notifications, remove_notifications, remove_subscriptions};
 use std::collections::HashMap;
-use std::time::Duration;
 use tracing::trace;
 use types::{CanisterId, Error, UserId};
 
@@ -42,23 +39,26 @@ impl IcAgent {
         })
     }
 
-    pub async fn get_notifications(&self, from_notification_index: u64) -> Result<notifications::SuccessResult, Error> {
+    pub async fn notifications(&self, from_notification_index: u64) -> Result<notifications::SuccessResult, Error> {
         let args = notifications::Args { from_notification_index };
 
         trace!(?args, "notifications::args");
 
-        let response = self
-            .agent
-            .query(&self.canister_id, "notifications")
-            .with_arg(Encode!(&args)?)
-            .call()
-            .await?;
-
-        let notifications::Response::Success(result) = Decode!(&response, notifications::Response)?;
+        let notifications::Response::Success(result) =
+            notifications_canister_client::notifications(&self.agent, &self.canister_id, &args).await?;
 
         trace!(?result, "notifications::result");
 
         Ok(result)
+    }
+
+    pub async fn latest_notifications_index(&self) -> Result<u64, Error> {
+        let args = latest_notification_index::Args {};
+
+        let latest_notification_index::Response::Success(index) =
+            notifications_canister_client::latest_notification_index(&self.agent, &self.canister_id, &args).await?;
+
+        Ok(index)
     }
 
     pub async fn remove_notifications(&self, up_to_notification_index: u64) -> Result<(), Error> {
@@ -68,15 +68,8 @@ impl IcAgent {
 
         trace!(?args, "remove_notifications::args");
 
-        let request_id = self
-            .agent
-            .update(&self.canister_id, "remove_notifications")
-            .with_arg(Encode!(&args)?)
-            .call()
-            .await?;
+        notifications_canister_client::remove_notifications(&self.agent, &self.canister_id, &args).await?;
 
-        let waiter = ThrottleWaiter::new(Duration::from_secs(1));
-        self.agent.wait(request_id, &self.canister_id, waiter).await?;
         Ok(())
     }
 
@@ -94,15 +87,8 @@ impl IcAgent {
 
         trace!(?args, "remove_subscriptions::args");
 
-        let request_id = self
-            .agent
-            .update(&self.canister_id, "remove_subscriptions")
-            .with_arg(Encode!(&args)?)
-            .call()
-            .await?;
+        notifications_canister_client::remove_subscriptions(&self.agent, &self.canister_id, &args).await?;
 
-        let waiter = ThrottleWaiter::new(Duration::from_secs(1));
-        self.agent.wait(request_id, &self.canister_id, waiter).await?;
         Ok(())
     }
 

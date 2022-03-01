@@ -18,9 +18,8 @@ pub async fn run<'a>(
     vapid_private_pem: &'a str,
 ) -> Result<(), Error> {
     let ic_agent = IcAgent::build(config).await?;
-    let from_notification_index = index_store.get().await?.map_or(0, |i| i + 1);
-
-    let ic_response = ic_agent.get_notifications(from_notification_index).await?;
+    let from_notification_index = index_processed_up_to(&ic_agent, index_store).await?;
+    let ic_response = ic_agent.notifications(from_notification_index).await?;
 
     if let Some(latest_notification_index) = ic_response.notifications.last().map(|e| e.index) {
         let client = WebPushClient::new()?;
@@ -170,6 +169,16 @@ async fn push_notification_to_user<'a>(
     subscription: &'a SubscriptionInfo,
 ) -> Result<(), (WebPushError, &'a SubscriptionInfo)> {
     client.send(message).await.map_err(|e| (e, subscription))
+}
+
+async fn index_processed_up_to(ic_agent: &IcAgent, index_store: &dyn IndexStore) -> Result<u64, Error> {
+    if let Some(index) = index_store.get().await? {
+        Ok(index)
+    } else {
+        let index = ic_agent.latest_notifications_index().await?;
+        index_store.set(index).await?;
+        Ok(index)
+    }
 }
 
 fn convert_subscription_info(value: types::SubscriptionInfo) -> SubscriptionInfo {

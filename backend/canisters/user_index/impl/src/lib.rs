@@ -127,6 +127,7 @@ struct Data {
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub online_users_aggregator_canister_ids: HashSet<CanisterId>,
+    #[serde(default = "callback_canister_id")]
     pub callback_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
@@ -135,6 +136,10 @@ struct Data {
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
     pub challenges: Challenges,
+}
+
+fn callback_canister_id() -> CanisterId {
+    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
 
 impl Data {
