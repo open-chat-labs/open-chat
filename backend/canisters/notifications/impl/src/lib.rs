@@ -53,6 +53,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             queued_notifications: self.data.notifications.len() as u32,
+            latest_notification_index: self.data.notifications.latest_event_index(),
             subscriptions: self.data.subscriptions.total(),
             users: self.data.principal_to_user_id.len() as u64,
         }
@@ -89,6 +90,7 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
     pub queued_notifications: u32,
+    pub latest_notification_index: u64,
     pub subscriptions: u64,
     pub users: u64,
 }

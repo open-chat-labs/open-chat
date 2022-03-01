@@ -55,6 +55,10 @@ impl<T: CandidType + Clone> EventStream<T> {
         0
     }
 
+    pub fn latest_event_index(&self) -> u64 {
+        self.latest_event_index
+    }
+
     pub fn len(&self) -> usize {
         self.events.len()
     }
