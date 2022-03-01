@@ -117,6 +117,7 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
+    #[serde(default = "callback_canister_id")]
     pub callback_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
     pub user_cycles_balance: UserCyclesBalance,
@@ -128,6 +129,10 @@ struct Data {
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
     pub bio: String,
+}
+
+fn callback_canister_id() -> CanisterId {
+    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
 
 impl Data {

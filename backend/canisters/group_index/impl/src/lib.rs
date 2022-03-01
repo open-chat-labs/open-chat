@@ -87,6 +87,7 @@ struct Data {
     pub group_canister_wasm: CanisterWasm,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub user_index_canister_id: CanisterId,
+    #[serde(default = "callback_canister_id")]
     pub callback_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
@@ -94,6 +95,10 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
+}
+
+fn callback_canister_id() -> CanisterId {
+    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
 
 impl Data {

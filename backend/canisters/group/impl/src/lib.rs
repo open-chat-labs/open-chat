@@ -147,6 +147,7 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
+    #[serde(default = "callback_canister_id")]
     pub callback_canister_id: CanisterId,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
@@ -154,6 +155,10 @@ struct Data {
     pub owner_id: UserId,
     #[serde(default)]
     pub permissions: GroupPermissions,
+}
+
+fn callback_canister_id() -> CanisterId {
+    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
 
 #[allow(clippy::too_many_arguments)]
