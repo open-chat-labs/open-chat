@@ -179,7 +179,7 @@ export default [
             }),
 
             html({
-                template: ({files}) => {
+                template: (_) => {
                     function generateCspHashValue(text) {
                         const hash = sha256.update(text).arrayBuffer();
                         const base64 = Buffer.from(hash).toString("base64");
