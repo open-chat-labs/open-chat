@@ -60,12 +60,16 @@ if (dfxNetwork) {
 
 const production = !process.env.ROLLUP_WATCH;
 const env = process.env.NODE_ENV ?? (production ? "production" : "development");
-
+const version = process.env.OPENCHAT_WEBSITE_VERSION;
+if (production && !version) {
+    throw Error("OPENCHAT_WEBSITE_VERSION environment variable not set");
+}
 const WEBPUSH_SERVICE_WORKER_PATH = "_/raw/sw.js";
 
 console.log("PROD", production);
 console.log("ENV", env);
-console.log("URL", process.env.INTERNET_IDENTITY_URL);
+console.log("INTERNET IDENTITY URL", process.env.INTERNET_IDENTITY_URL);
+console.log("VERSION", version ?? "undefined");
 
 function serve() {
     return dev({
@@ -82,6 +86,11 @@ function serve() {
 }
 
 rimraf.sync(path.join(__dirname, "build"));
+fs.mkdirSync("build");
+
+if (version) {
+    fs.writeFileSync("build/version", version);
+}
 
 export default [
     {
@@ -176,7 +185,7 @@ export default [
     <head>
         <meta
             http-equiv="Content-Security-Policy"
-            content="script-src 'self' 'unsafe-eval' http://localhost:* https://api.rollbar.com/api/ 'sha256-F5GJ5FbuDZPD9J7AOUUUTj01dve/ryeBx8hvDgOsAw0='"
+            content="script-src 'self' 'unsafe-eval' http://localhost:* https://api.rollbar.com/api/ 'sha256-F5GJ5FbuDZPD9J7AOUUUTj01dve/ryeBx8hvDgOsAw0=' 'sha256-Uet5+rhphBcFr+fiuIc0wfl47KrhBsBLENHSp2sC25Q='"
         />
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
@@ -189,6 +198,9 @@ export default [
         <link rel="stylesheet" href="/global.css" />
         <link rel="stylesheet" href="/main.css" />
         <script type="module" defer src="/main.js"></script>
+        <script>
+            window.OPENCHAT_VERSION = "${version}";
+        </script>
         <script>
             var parcelRequire;
         </script>
