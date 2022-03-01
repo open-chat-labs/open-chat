@@ -6,6 +6,7 @@ TEST_MODE=$3
 
 # Pass in the dfx identity name, the OpenStorage index canisterId, and test mode (true or false)
 # eg './deploy-local openchat rturd-qaaaa-aaaaf-aabaq-cai true'
+./generate-wasm.sh callback_canister_impl
 ./generate-wasm.sh group_canister_impl
 ./generate-wasm.sh group_index_canister_impl
 ./generate-wasm.sh notifications_canister_impl
@@ -22,6 +23,7 @@ USER_INDEX_CANISTER_ID=$(dfx canister --network ic id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --network ic id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network ic id notifications)
 ONLINE_USERS_AGGREGATOR_CANISTER_ID=$(dfx canister --network ic id online_users_aggregator)
+CALLBACK_CANISTER_ID=$(dfx canister --network ic id callback)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml \
@@ -33,4 +35,5 @@ cargo run \
   $GROUP_INDEX_CANISTER_ID \
   $NOTIFICATIONS_INDEX_CANISTER_ID \
   $ONLINE_USERS_AGGREGATOR_CANISTER_ID \
+  $CALLBACK_CANISTER_ID \
   $OPEN_STORAGE_INDEX_CANISTER_ID \
