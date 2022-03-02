@@ -7,7 +7,6 @@
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
-    import Poll from "svelte-material-icons/Poll.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import DeleteAlertOutline from "svelte-material-icons/DeleteAlertOutline.svelte";
