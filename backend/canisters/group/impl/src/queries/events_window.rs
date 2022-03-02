@@ -9,18 +9,18 @@ fn events_window(args: Args) -> Response {
 
 fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get(caller) {
-        let min_visible_event_index = participant.min_visible_event_index();
+    if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller) {
+        let user_id = runtime_state.data.participants.get(caller).map(|p| p.user_id);
 
         let events = runtime_state.data.events.get_events_window(
             args.mid_point,
             args.max_messages as usize,
             args.max_events as usize,
             min_visible_event_index,
-            Some(participant.user_id),
+            user_id,
         );
 
-        let affected_events = runtime_state.data.events.affected_events(&events, Some(participant.user_id));
+        let affected_events = runtime_state.data.events.affected_events(&events, user_id);
         let latest_event_index = runtime_state.data.events.last().index;
 
         Success(SuccessResult {

@@ -9,8 +9,8 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, GroupPermissions, MessageIndex, Milliseconds, Notification, TimestampMillis,
-    Timestamped, UserId, Version,
+    Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupPermissions, MessageIndex, Milliseconds, Notification,
+    TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::env::Environment;
 use utils::memory;
@@ -203,6 +203,16 @@ impl Data {
             test_mode,
             owner_id: creator_user_id,
             permissions: permissions.unwrap_or_default(),
+        }
+    }
+
+    pub fn min_visible_event_index(&self, caller: Principal) -> Option<EventIndex> {
+        if self.is_public {
+            Some(EventIndex::default())
+        } else {
+            self.participants
+                .get_by_principal(&caller)
+                .map(|participant| participant.min_visible_event_index())
         }
     }
 }
