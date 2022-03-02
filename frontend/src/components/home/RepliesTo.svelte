@@ -16,6 +16,7 @@
     export let chatId: string;
     export let user: UserSummary;
     export let repliesTo: RehydratedReplyContext;
+    export let preview: boolean;
 
     let debug = false;
 
@@ -43,7 +44,7 @@
             {getUsernameFromReplyContext(repliesTo)}
         </h4>
         {#if repliesTo.content !== undefined}
-            <ChatMessageContent fill={false} reply={true} content={repliesTo.content} />
+            <ChatMessageContent {preview} fill={false} reply={true} content={repliesTo.content} />
             {#if debug}
                 <pre>EventIdx: {repliesTo.eventIndex}</pre>
                 <pre>MsgId: {repliesTo.messageId}</pre>

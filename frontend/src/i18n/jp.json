@@ -374,5 +374,7 @@
         "private": "プライベート",
         "publicGroup": "公開グループ",
         "privateGroup": "プライベートグループ"    
-    }
+    },
+    "updateNow": "今すぐリロード",
+    "updateRequired": "OpenChatの新しいバージョンが利用可能です-{countdown}でリロード"
 }

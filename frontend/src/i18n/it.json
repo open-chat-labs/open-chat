@@ -374,5 +374,7 @@
         "private": "Privato",
         "publicGroup": "Gruppo pubblico",
         "privateGroup": "Gruppo privato"
-    }
+    },
+    "updateNow": "ricarica ora",
+    "updateRequired": "È disponibile una nuova versione di OpenChat, che si ricarica tra {countdown}s"
 }

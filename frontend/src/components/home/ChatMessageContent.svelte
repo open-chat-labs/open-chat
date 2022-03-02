@@ -19,6 +19,7 @@
     export let fill: boolean;
     export let reply: boolean = false;
     export let height: number | undefined = undefined;
+    export let preview: boolean;
 
     function truncateText(text: string): string {
         // todo - we might be able to do something nicer than this with pure css, but we just need to do
@@ -48,5 +49,5 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "poll_content"}
-    <PollContent {me} {content} on:registerVote />
+    <PollContent {preview} {me} {content} on:registerVote />
 {/if}

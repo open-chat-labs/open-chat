@@ -392,5 +392,7 @@
             "sendMessages": "Who can send messages",
             "reactToMessages": "Who can react to messages"
         }        
-    }
+    },
+    "updateNow": "reload now",
+    "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s"
 }

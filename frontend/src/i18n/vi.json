@@ -375,5 +375,7 @@
         "private": "Kín",
         "publicGroup": "Nhóm mở",
         "privateGroup": "Nhóm kín"    
-    }
+    },
+    "updateNow": "tải lại ngay bây giờ",
+    "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây"
 }

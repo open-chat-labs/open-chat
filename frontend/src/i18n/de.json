@@ -374,5 +374,7 @@
         "private": "Privatgelände",
         "publicGroup": "Öffentliche Gruppe",
         "privateGroup": "Private Gruppe"
-    }
+    },
+    "updateNow": "jetzt neu laden",
+    "updateRequired": "Eine neue Version von OpenChat ist verfügbar - Neuladen in {countdown}s"
 }

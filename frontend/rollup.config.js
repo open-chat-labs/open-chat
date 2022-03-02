@@ -89,7 +89,7 @@ rimraf.sync(path.join(__dirname, "build"));
 fs.mkdirSync("build");
 
 if (version) {
-    fs.writeFileSync("build/version", version);
+    fs.writeFileSync("build/version", JSON.stringify({ version }));
 }
 
 export default [
@@ -188,36 +188,39 @@ export default [
 
                     const inlineScripts = [
                         `window.OPENCHAT_WEBSITE_VERSION = "${version}";`,
-                        `var parcelRequire;`
+                        `var parcelRequire;`,
                     ];
                     const cspHashValues = inlineScripts.map(generateCspHashValue);
-                    let csp = `script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ ${cspHashValues.join(" ")}`;
+                    let csp = `script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ ${cspHashValues.join(
+                        " "
+                    )}`;
                     if (!production) {
                         csp += " http://localhost:* http://127.0.0.1:*";
                     }
 
                     return `
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta http-equiv="Content-Security-Policy" content="${csp}" />
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-        <meta name="apple-mobile-web-app-title" content="OpenChat" />
-        <title>OpenChat</title>
-        <link rel="manifest" href="/openchat.webmanifest" />
-        <link rel="apple-touch-startup-image" href="/_/raw/apple-touch-icon.png" />
-        <link rel="apple-touch-icon" href="/_/raw/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" href="/icon.png" />
-        <link rel="stylesheet" href="/global.css" />
-        <link rel="stylesheet" href="/main.css" />
-        <script type="module" defer src="/main.js"></script>
-        ${inlineScripts.map(s => `<script>${s}</script>`)}
-    </head>
-    <body></body>
-</html>
-`
-            }}),
+                        <!DOCTYPE html>
+                        <html lang="en">
+                            <head>
+                                <meta http-equiv="Content-Security-Policy" content="${csp}" />
+                                <meta charset="utf-8" />
+                                <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+                                <meta name="apple-mobile-web-app-title" content="OpenChat" />
+                                <title>OpenChat</title>
+                                <link rel="manifest" href="/openchat.webmanifest" />
+                                <link rel="apple-touch-startup-image" href="/_/raw/apple-touch-icon.png" />
+                                <link rel="apple-touch-icon" href="/_/raw/apple-touch-icon.png" />
+                                <link rel="icon" type="image/png" href="/icon.png" />
+                                <link rel="stylesheet" href="/global.css" />
+                                <link rel="stylesheet" href="/main.css" />
+                                <script type="module" defer src="/main.js"></script>
+                                ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
+                            </head>
+                            <body></body>
+                        </html>
+                    `;
+                },
+            }),
 
             // In dev mode, call `npm run start` once
             // the bundle has been generated
