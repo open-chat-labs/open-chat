@@ -14,6 +14,7 @@
 
     export let replyingTo: EnhancedReplyContext;
     export let user: UserSummary;
+    export let preview: boolean;
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
@@ -34,6 +35,7 @@
         {username}
     </h4>
     <ChatMessageContent
+        {preview}
         fill={false}
         {me}
         truncate={true}

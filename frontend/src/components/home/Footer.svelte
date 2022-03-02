@@ -158,6 +158,7 @@
             <div class="draft-container">
                 {#if $replyingTo}
                     <ReplyingTo
+                        preview={true}
                         on:cancelReply={cancelReply}
                         user={controller.user}
                         replyingTo={$replyingTo} />
