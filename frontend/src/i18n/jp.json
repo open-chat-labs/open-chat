@@ -372,5 +372,7 @@
         "voteFailed": "投票に失敗しました",
         "totalVotes": "総投票数：{total}",
         "finished": "投票が終了しました"
-    }
+    },
+    "updateNow": "今すぐリロード",
+    "updateRequired": "OpenChatの新しいバージョンが利用可能です-{countdown}でリロード"
 }

@@ -373,5 +373,7 @@
         "voteFailed": "Cuộc bỏ phiếu thăm dò không thành công",
         "totalVotes": "Tổng số phiếu bầu: {total}",
         "finished": "Cuộc thăm dò đã kết thúc"
-    }
+    },
+    "updateNow": "tải lại ngay bây giờ",
+    "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây"
 }

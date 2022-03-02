@@ -370,5 +370,7 @@
         "voteFailed": "Poll vote failed",
         "totalVotes": "Total votes: {total}",
         "finished": "Poll has finished"
-    }
+    },
+    "updateNow": "reload now",
+    "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s"
 }
