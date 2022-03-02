@@ -14,7 +14,7 @@ import dev from "rollup-plugin-dev";
 import json from "@rollup/plugin-json";
 import analyze from "rollup-plugin-analyzer";
 import filesize from "rollup-plugin-filesize";
-// import copy from 'rollup-plugin-copy';
+import { sha256 } from "js-sha256";
 import dotenv from "dotenv";
 import replace from "@rollup/plugin-replace";
 import * as fs from "fs";
@@ -179,14 +179,28 @@ export default [
             }),
 
             html({
-                template: (_) => `
+                template: (_) => {
+                    function generateCspHashValue(text) {
+                        const hash = sha256.update(text).arrayBuffer();
+                        const base64 = Buffer.from(hash).toString("base64");
+                        return `'sha256-${base64}'`;
+                    }
+
+                    const inlineScripts = [
+                        `window.OPENCHAT_WEBSITE_VERSION = "${version}";`,
+                        `var parcelRequire;`
+                    ];
+                    const cspHashValues = inlineScripts.map(generateCspHashValue);
+                    let csp = `script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ ${cspHashValues.join(" ")}`;
+                    if (!production) {
+                        csp += " http://localhost:* http://127.0.0.1:*";
+                    }
+
+                    return `
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta
-            http-equiv="Content-Security-Policy"
-            content="script-src 'self' 'unsafe-eval' http://localhost:* https://api.rollbar.com/api/ 'sha256-F5GJ5FbuDZPD9J7AOUUUTj01dve/ryeBx8hvDgOsAw0=' 'sha256-Uet5+rhphBcFr+fiuIc0wfl47KrhBsBLENHSp2sC25Q='"
-        />
+        <meta http-equiv="Content-Security-Policy" content="${csp}" />
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
         <meta name="apple-mobile-web-app-title" content="OpenChat" />
@@ -198,17 +212,12 @@ export default [
         <link rel="stylesheet" href="/global.css" />
         <link rel="stylesheet" href="/main.css" />
         <script type="module" defer src="/main.js"></script>
-        <script>
-            window.OPENCHAT_VERSION = "${version}";
-        </script>
-        <script>
-            var parcelRequire;
-        </script>
+        ${inlineScripts.map(s => `<script>${s}</script>`)}
     </head>
     <body></body>
 </html>
-`,
-            }),
+`
+            }}),
 
             // In dev mode, call `npm run start` once
             // the bundle has been generated
