@@ -16,15 +16,7 @@
     import { _ } from "svelte-i18n";
     import { avatarUrl, getUserStatus } from "../../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
-    import {
-        BlockedParticipant,
-        canBlockUsers,
-        canChangeRoles,
-        canRemoveMembers,
-        canUnblockUsers,
-        FullParticipant,
-        GroupChatSummary,
-    } from "../../../domain/chat/chat";
+    import type { BlockedParticipant, FullParticipant } from "../../../domain/chat/chat";
     import { userStore } from "../../../stores/user";
     import { iconSize } from "../../../stores/iconSize";
     import { now } from "../../../stores/time";
@@ -34,20 +26,16 @@
 
     export let me: boolean;
     export let participant: FullParticipant | BlockedParticipant;
-    export let group: GroupChatSummary;
+    export let canDismissAdmin: boolean = false;
+    export let canMakeAdmin: boolean = false;
+    export let canTransferOwnership: boolean = false;
+    export let canRemoveMember: boolean = false;
+    export let canBlockUser: boolean = false;
+    export let canUnblockUser: boolean = false;
 
     let hovering = false;
     let viewProfile = false;
 
-    $: canDismissAdmin =
-        !me &&
-        canChangeRoles(group, participant.role, "participant") &&
-        participant.role === "admin";
-    $: canMakeAdmin = !me && canChangeRoles(group, participant.role, "admin");
-    $: canTransferOwnership = !me && canChangeRoles(group, participant.role, "owner");
-    $: canRemoveMember = !me && canRemoveMembers(group);
-    $: canBlockUser = !me && canBlockUsers(group);
-    $: canUnblockUser = !me && canUnblockUsers(group);
     $: showMenu =
         canDismissAdmin ||
         canMakeAdmin ||

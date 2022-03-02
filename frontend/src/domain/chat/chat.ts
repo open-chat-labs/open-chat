@@ -672,14 +672,7 @@ export type DirectChatSummary = ChatSummaryCommon & {
     dateCreated: bigint;
 };
 
-export type GroupSecurity = {
-    public: boolean;
-    myRole: MemberRole;
-    permissions: GroupPermissions;
-};
-
 export type GroupChatSummary = DataContent &
-    GroupSecurity &
     ChatSummaryCommon & {
         kind: "group_chat";
         name: string;
@@ -691,6 +684,9 @@ export type GroupChatSummary = DataContent &
         participantCount: number;
         mentions: Mention[];
         ownerId: string;
+        public: boolean;
+        myRole: MemberRole;
+        permissions: GroupPermissions;
     };
 
 export type Mention = {
@@ -1014,56 +1010,108 @@ export function canChangeRoles(
     }
 }
 
-export function canAddMembers(group: GroupSecurity): boolean {
-    return !group.public && isPermitted(group.myRole, group.permissions.addMembers);
+export function canAddMembers(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return !chat.public && isPermitted(chat.myRole, chat.permissions.addMembers);
+    } else {
+        return false;
+    }
 }
 
-export function canRemoveMembers(group: GroupSecurity): boolean {
-    return !group.public && isPermitted(group.myRole, group.permissions.removeMembers);
+export function canRemoveMembers(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return !chat.public && isPermitted(chat.myRole, chat.permissions.removeMembers);
+    } else {
+        return false;
+    }
 }
 
-export function canBlockUsers(group: GroupSecurity): boolean {
-    return group.public && isPermitted(group.myRole, group.permissions.blockUsers);
+export function canBlockUsers(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return chat.public && isPermitted(chat.myRole, chat.permissions.blockUsers);
+    } else {
+        return true;
+    }
 }
 
-export function canUnblockUsers(group: GroupSecurity): boolean {
-    return group.public && isPermitted(group.myRole, group.permissions.blockUsers);
+export function canUnblockUsers(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return chat.public && isPermitted(chat.myRole, chat.permissions.blockUsers);
+    } else {
+        return true;
+    }
 }
 
-export function canDeleteMessages(group: GroupSecurity): boolean {
-    return isPermitted(group.myRole, group.permissions.deleteMessages);
+export function canDeleteMessages(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.deleteMessages);
+    } else {
+        return true;
+    }
 }
 
-export function canEditGroupDetails(group: GroupSecurity): boolean {
-    return isPermitted(group.myRole, group.permissions.updateGroup);
+export function canEditGroupDetails(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.updateGroup);
+    } else {
+        return false;
+    }
 }
 
-export function canPinMessages(group: GroupSecurity): boolean {
-    return isPermitted(group.myRole, group.permissions.pinMessages);
+export function canPinMessages(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.pinMessages);
+    } else {
+        return false;
+    }
 }
 
-export function canCreatePolls(group: GroupSecurity): boolean {
-    return isPermitted(group.myRole, group.permissions.createPolls);
+export function canCreatePolls(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.createPolls);
+    } else {
+        return true;
+    }
 }
 
-export function canSendMessages(group: GroupSecurity): boolean {
-    return isPermitted(group.myRole, group.permissions.sendMessages);
+export function canSendMessages(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.sendMessages);
+    } else {
+        return true;
+    }
 }
 
-export function canReactToMessages(group: GroupSecurity): boolean {
-    return isPermitted(group.myRole, group.permissions.reactToMessages);
+export function canReactToMessages(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.reactToMessages);
+    } else {
+        return true;
+    }
 }
 
-export function canBeRemoved(group: GroupSecurity): boolean {
-    return !hasOwnerRights(group.myRole);
+export function canBeRemoved(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return !hasOwnerRights(chat.myRole);
+    } else {
+        return false;
+    }
 }
 
-export function canLeaveGroup(group: GroupSecurity): boolean {
-    return group.myRole !== "owner";
+export function canLeaveGroup(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return chat.myRole !== "owner";
+    } else {
+        return false;
+    }
 }
 
-export function canDeleteGroup(group: GroupSecurity): boolean {
-    return hasOwnerRights(group.myRole);
+export function canDeleteGroup(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return hasOwnerRights(chat.myRole);
+    } else {
+        return false;
+    }
 }
 
 function hasOwnerRights(role: MemberRole): boolean {

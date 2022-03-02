@@ -16,6 +16,7 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Bell from "svelte-material-icons/Bell.svelte";
+    import Poll from "svelte-material-icons/Poll.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -25,12 +26,12 @@
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
+    import type { ChatSummary } from "../../domain/chat/chat";
     import {
         canAddMembers,
         canCreatePolls,
         canDeleteGroup,
         canLeaveGroup,
-        ChatSummary,
     } from "../../domain/chat/chat";
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
@@ -316,7 +317,7 @@
                                 </MenuItem>
                             {/if}
                         {/if}
-                        {#if $selectedChatSummary.kind !== "group_chat" || canCreatePolls($selectedChatSummary)}
+                        {#if canCreatePolls($selectedChatSummary)}
                             <MenuItem on:click={createPoll}>
                                 <Poll size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                                 <div slot="text">{$_("poll.create")}</div>

@@ -9,6 +9,12 @@
         GroupChatSummary,
         Participant as ParticipantType,
     } from "../../../domain/chat/chat";
+    import {
+        canBlockUsers,
+        canChangeRoles,
+        canRemoveMembers,
+        canUnblockUsers,
+    } from "../../../domain/chat/chat";
     import { userStore } from "../../../stores/user";
     import { createEventDispatcher } from "svelte";
     import type { Readable, Writable } from "svelte/store";
@@ -93,14 +99,19 @@
 </div>
 
 {#if me !== undefined && me.kind === "full_participant"}
-    <Participant me={true} participant={me} group={$chat} on:blockUser on:chatWith />
+    <Participant me={true} participant={me} />
 {/if}
 
 <VirtualList keyFn={(user) => user.userId} items={others} let:item>
     <Participant
         me={false}
         participant={item}
-        group={$chat}
+        canTransferOwnership={canChangeRoles($chat, item.role, "owner")}
+        canMakeAdmin={canChangeRoles($chat, item.role, "admin")}
+        canDismissAdmin={item.role === "admin" && canChangeRoles($chat, "admin", "participant")}
+        canBlockUser={canBlockUsers($chat)}
+        canUnblockUser={canUnblockUsers($chat)}
+        canRemoveMember={canRemoveMembers($chat)}
         on:blockUser
         on:unblockUser
         on:chatWith
