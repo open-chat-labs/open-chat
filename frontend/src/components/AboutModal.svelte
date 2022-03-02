@@ -8,6 +8,9 @@
     const dispatch = createEventDispatcher();
 
     export let canister: Canister | undefined = undefined;
+
+    //@ts-ignore
+    let version = window.OPENCHAT_WEBSITE_VERSION;
 </script>
 
 <ModalContent large={true} compactFooter={canister !== undefined} on:close>
@@ -72,7 +75,7 @@
                     </tr>
                     <tr>
                         <td>version</td>
-                        <td><code><strong>{canister.wasmVersion.toText()}</strong></code></td>
+                        <td><code><strong>{version}</strong></code></td>
                     </tr>
                 </table>
             </div>

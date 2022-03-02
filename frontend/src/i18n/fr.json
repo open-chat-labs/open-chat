@@ -372,5 +372,7 @@
         "voteFailed": "Le vote du sondage a échoué",
         "totalVotes": "Total des votes : {total}",
         "finished": "Le sondage est terminé"
-    }
+    },
+    "updateNow": "recharger maintenant",
+    "updateRequired": "Une nouvelle version d'OpenChat est disponible - rechargement dans {countdown}s"
 }
