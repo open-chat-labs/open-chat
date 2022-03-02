@@ -304,6 +304,7 @@
             {/if}
 
             <ChatMessageContent
+                {preview}
                 {fill}
                 {me}
                 content={msg.content}

@@ -8,12 +8,12 @@
     import { iconSize } from "../../stores/iconSize";
     import { toLongDateString, toShortTimeString } from "../../utils/date";
     import { createEventDispatcher } from "svelte";
-    import { now } from "../../stores/time";
 
     const dispatch = createEventDispatcher();
 
     export let content: PollContent;
     export let me: boolean;
+    export let preview: boolean;
 
     $: txtColor = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
 
@@ -24,7 +24,7 @@
     $: numberOfVotes = totalVotes(content);
 
     function vote(idx: number) {
-        if (content.ended) return;
+        if (content.ended || preview) return;
 
         dispatch("registerVote", {
             type: votedFor(idx) ? "delete" : "register",
@@ -89,7 +89,11 @@
     {/if}
     <div class="answers">
         {#each [...content.config.options] as answer, i (answer)}
-            <div class="answer-text" class:finished={content.ended} on:click={() => vote(i)}>
+            <div
+                class:preview
+                class="answer-text"
+                class:finished={content.ended}
+                on:click={() => vote(i)}>
                 <Progress bg={"button"} percent={percentageOfVote(i)}>
                     <div class="label">
                         <span>{answer}</span>
@@ -144,6 +148,10 @@
         cursor: pointer;
 
         &.finished {
+            cursor: default;
+        }
+
+        &.preview {
             cursor: default;
         }
     }
