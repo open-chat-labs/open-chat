@@ -187,7 +187,7 @@ export default [
                     }
 
                     const inlineScripts = [
-                        `window.OPENCHAT_VERSION = "${version}";`,
+                        `window.OPENCHAT_WEBSITE_VERSION = "${version}";`,
                         `var parcelRequire;`
                     ];
                     const cspHashValues = inlineScripts.map(generateCspHashValue);
