@@ -16,7 +16,7 @@
 
     function checkVersion(): Promise<void> {
         if (process.env.NODE_ENV !== "production") return Promise.resolve();
-        getServerVersion().then((serverVersion) => {
+        return getServerVersion().then((serverVersion) => {
             if (serverVersion !== clientVersion) {
                 poller.stop();
                 countdown = 30;
@@ -30,7 +30,6 @@
                 }, 1000);
             }
         });
-        return Promise.resolve();
     }
 
     function getServerVersion(): Promise<string> {
