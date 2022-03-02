@@ -12,7 +12,12 @@
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../../domain/user/user.utils";
     import type { UpdatedGroup } from "../../../fsm/rightPanel";
-    import type { GroupChatSummary, GroupPermissions } from "../../../domain/chat/chat";
+    import {
+        canChangePermissions,
+        canEditGroupDetails,
+        GroupChatSummary,
+        GroupPermissions,
+    } from "../../../domain/chat/chat";
     import { createEventDispatcher } from "svelte";
     import type { Readable } from "svelte/store";
     import type { ChatController } from "../../../fsm/chat.controller";
@@ -41,7 +46,8 @@
     $: avatarDirty = updatedGroup.avatar?.blobUrl !== $chat.blobUrl;
     $: permissionsDirty = havePermissionsChanged($chat.permissions, updatedGroup.permissions);
     $: dirty = nameDirty || descDirty || avatarDirty || permissionsDirty;
-    $: canEdit = $chat.myRole === "admin" || $chat.myRole === "owner";
+    $: canEdit = canEditGroupDetails($chat);
+    $: canEditPermissions = canChangePermissions($chat);
     $: avatarSrc = avatarUrl(updatedGroup.avatar, "../assets/group.svg");
 
     function havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
@@ -163,14 +169,17 @@
             <GroupPermissionsEditor
                 bind:permissions={updatedGroup.permissions}
                 isPublic={$chat.public}
-                viewMode={!canEdit} />
+                viewMode={!canEditPermissions} />
         </CollapsibleCard>
     </div>
 </form>
 <div class="cta">
     <Button
         on:click={updateGroup}
-        disabled={!dirty || saving || !canEdit}
+        disabled={(permissionsDirty && !canEditPermissions) ||
+            (!permissionsDirty && dirty && !canEdit) ||
+            !dirty ||
+            saving}
         fill={true}
         loading={saving}>{$_("update")}</Button>
 </div>

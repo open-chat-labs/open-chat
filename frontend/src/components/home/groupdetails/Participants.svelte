@@ -93,21 +93,14 @@
 </div>
 
 {#if me !== undefined && me.kind === "full_participant"}
-    <Participant
-        {publicGroup}
-        me={true}
-        participant={me}
-        myRole={$chat.myRole}
-        on:blockUser
-        on:chatWith />
+    <Participant me={true} participant={me} group={$chat} on:blockUser on:chatWith />
 {/if}
 
 <VirtualList keyFn={(user) => user.userId} items={others} let:item>
     <Participant
         me={false}
         participant={item}
-        myRole={$chat.myRole}
-        {publicGroup}
+        group={$chat}
         on:blockUser
         on:unblockUser
         on:chatWith

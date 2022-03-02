@@ -16,10 +16,14 @@
     import { _ } from "svelte-i18n";
     import { avatarUrl, getUserStatus } from "../../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
-    import type {
+    import {
         BlockedParticipant,
+        canBlockUsers,
+        canChangeRoles,
+        canRemoveMembers,
+        canUnblockUsers,
         FullParticipant,
-        ParticipantRole,
+        GroupChatSummary,
     } from "../../../domain/chat/chat";
     import { userStore } from "../../../stores/user";
     import { iconSize } from "../../../stores/iconSize";
@@ -30,11 +34,27 @@
 
     export let me: boolean;
     export let participant: FullParticipant | BlockedParticipant;
-    export let myRole: ParticipantRole;
-    export let publicGroup: boolean;
+    export let group: GroupChatSummary;
 
     let hovering = false;
     let viewProfile = false;
+
+    $: canDismissAdmin =
+        !me &&
+        canChangeRoles(group, participant.role, "participant") &&
+        participant.role === "admin";
+    $: canMakeAdmin = !me && canChangeRoles(group, participant.role, "admin");
+    $: canTransferOwnership = !me && canChangeRoles(group, participant.role, "owner");
+    $: canRemoveMember = !me && canRemoveMembers(group);
+    $: canBlockUser = !me && canBlockUsers(group);
+    $: canUnblockUser = !me && canUnblockUsers(group);
+    $: showMenu =
+        canDismissAdmin ||
+        canMakeAdmin ||
+        canTransferOwnership ||
+        canRemoveMember ||
+        canBlockUser ||
+        canUnblockUser;
 
     function removeUser() {
         dispatch("removeParticipant", participant.userId);
@@ -113,7 +133,7 @@
             {/if}
         </span>
     </div>
-    {#if !me && (myRole === "admin" || myRole === "owner")}
+    {#if showMenu}
         <span class="menu">
             <MenuIcon>
                 <span slot="icon">
@@ -123,58 +143,53 @@
                 </span>
                 <span slot="menu">
                     <Menu>
-                        {#if participant.kind === "blocked_participant" && publicGroup}
+                        {#if canUnblockUser}
                             <MenuItem on:click={unblockUser}>
                                 <Cancel size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                                 <div slot="text">{$_("unblockUser")}</div>
                             </MenuItem>
-                        {:else}
-                            {#if participant.role === "admin"}
-                                <MenuItem on:click={dismissAsAdmin}>
-                                    <AccountRemoveOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("dismissAsAdmin")}</div>
-                                </MenuItem>
-                            {/if}
-                            {#if participant.role === "participant"}
-                                <MenuItem on:click={makeAdmin}>
-                                    <AccountPlusOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("makeAdmin")}</div>
-                                </MenuItem>
-                            {/if}
-                            {#if participant.role !== "owner"}
-                                {#if publicGroup}
-                                    <MenuItem on:click={blockUser}>
-                                        <Cancel
-                                            size={$iconSize}
-                                            color={"var(--icon-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("blockUser")}</div>
-                                    </MenuItem>
-                                {:else}
-                                    <MenuItem on:click={removeUser}>
-                                        <MinusCircleOutline
-                                            size={$iconSize}
-                                            color={"var(--icon-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("remove")}</div>
-                                    </MenuItem>
-                                {/if}
-                            {/if}
-                            {#if myRole === "owner"}
-                                <MenuItem on:click={transferOwnership}>
-                                    <AccountArrowLeftOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("transferOwnership")}</div>
-                                </MenuItem>
-                            {/if}
+                        {/if}
+                        {#if canDismissAdmin}
+                            <MenuItem on:click={dismissAsAdmin}>
+                                <AccountRemoveOutline
+                                    size={$iconSize}
+                                    color={"var(--icon-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("dismissAsAdmin")}</div>
+                            </MenuItem>
+                        {/if}
+                        {#if canMakeAdmin}
+                            <MenuItem on:click={makeAdmin}>
+                                <AccountPlusOutline
+                                    size={$iconSize}
+                                    color={"var(--icon-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("makeAdmin")}</div>
+                            </MenuItem>
+                        {/if}
+                        {#if canBlockUser}
+                            <MenuItem on:click={blockUser}>
+                                <Cancel size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                                <div slot="text">{$_("blockUser")}</div>
+                            </MenuItem>
+                        {/if}
+                        {#if canRemoveMember}
+                            <MenuItem on:click={removeUser}>
+                                <MinusCircleOutline
+                                    size={$iconSize}
+                                    color={"var(--icon-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("remove")}</div>
+                            </MenuItem>
+                        {/if}
+                        {#if canTransferOwnership}
+                            <MenuItem on:click={transferOwnership}>
+                                <AccountArrowLeftOutline
+                                    size={$iconSize}
+                                    color={"var(--icon-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("transferOwnership")}</div>
+                            </MenuItem>
                         {/if}
                     </Menu>
                 </span>

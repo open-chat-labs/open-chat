@@ -15,7 +15,7 @@ import type {
     Message,
     MessageContent,
     Participant,
-    ParticipantRole,
+    MemberRole,
     SendMessageSuccess,
     UpdateGroupResponse,
 } from "../domain/chat/chat";
@@ -931,11 +931,7 @@ export class ChatController {
         );
     }
 
-    private undoTransferOwnershipLocally(
-        me: string,
-        them: string,
-        theirRole: ParticipantRole
-    ): void {
+    private undoTransferOwnershipLocally(me: string, them: string, theirRole: MemberRole): void {
         this.participants.update((ps) =>
             ps.map((p) => {
                 if (p.userId === them) {
@@ -1081,7 +1077,7 @@ export class ChatController {
         this.participants.update((ps) => [
             ...users.map((u) => ({
                 userId: u.userId,
-                role: "participant" as ParticipantRole,
+                role: "participant" as MemberRole,
             })),
             ...ps,
         ]);

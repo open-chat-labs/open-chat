@@ -19,7 +19,7 @@ import type {
     UnblockUserResponse,
     DeleteGroupResponse,
     GroupChatSummary,
-    ParticipantRole,
+    MemberRole,
     PinMessageResponse,
     UnpinMessageResponse,
     RegisterPollVoteResponse,
@@ -50,7 +50,7 @@ export interface IGroupClient {
         message: Message
     ): Promise<SendMessageResponse>;
     editMessage(message: Message): Promise<EditMessageResponse>;
-    changeRole(userId: string, newRole: ParticipantRole): Promise<ChangeRoleResponse>;
+    changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
     updateGroup(
         name: string,

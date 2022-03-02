@@ -17,7 +17,7 @@ import type {
     UnblockUserResponse,
     DeleteGroupResponse,
     GroupChatSummary,
-    ParticipantRole,
+    MemberRole,
     PinMessageResponse,
     UnpinMessageResponse,
     RegisterPollVoteResponse,
@@ -121,7 +121,7 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.editMessage(message);
     }
 
-    changeRole(userId: string, newRole: ParticipantRole): Promise<ChangeRoleResponse> {
+    changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
         return this.client.changeRole(userId, newRole);
     }
 

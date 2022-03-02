@@ -54,7 +54,7 @@ import type {
     DeleteGroupResponse,
     MessageContent,
     GroupChatSummary,
-    ParticipantRole,
+    MemberRole,
     PinMessageResponse,
     UnpinMessageResponse,
     RegisterPollVoteResponse,
@@ -538,11 +538,7 @@ export class ServiceContainer implements MarkMessagesRead {
         return identity.getPrincipal().toText() !== this.identity.getPrincipal().toText();
     }
 
-    changeRole(
-        chatId: string,
-        userId: string,
-        newRole: ParticipantRole
-    ): Promise<ChangeRoleResponse> {
+    changeRole(chatId: string, userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
         return this.getGroupClient(chatId).changeRole(userId, newRole);
     }
 

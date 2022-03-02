@@ -17,6 +17,7 @@ import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 
 export const MAX_MSGS = 30;
+const CACHE_VERSION = 21;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -73,7 +74,7 @@ export function openCache(principal: string): Database | undefined {
         return undefined;
     }
     try {
-        return openDB<ChatSchema>(`openchat_db_${principal}`, 20, {
+        return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
             upgrade(db, _oldVersion, _newVersion) {
                 try {
                     if (db.objectStoreNames.contains("chat_events")) {

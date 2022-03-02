@@ -49,7 +49,7 @@ import type {
     Alert,
     AlertDetails,
     CryptocurrencyDeposit,
-    ParticipantRole,
+    MemberRole,
     Mention,
     GroupChatSummary,
     DirectChatSummary,
@@ -554,7 +554,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
     throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
 }
 
-function participantRole(candid: ApiRole): ParticipantRole {
+function participantRole(candid: ApiRole): MemberRole {
     if ("Admin" in candid) {
         return "admin";
     }

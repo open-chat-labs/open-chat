@@ -37,7 +37,7 @@ import type {
     GroupChatDetailsResponse,
     GroupChatDetailsUpdatesResponse,
     UnblockUserResponse,
-    ParticipantRole,
+    MemberRole,
     DeleteGroupResponse,
     Message,
     PinMessageResponse,
@@ -52,7 +52,7 @@ function principalToString(p: Principal): string {
     return p.toString();
 }
 
-export function apiRole(role: ParticipantRole): ApiRole | undefined {
+export function apiRole(role: MemberRole): ApiRole | undefined {
     switch (role) {
         case "admin":
             return { Admin: null };
@@ -65,7 +65,7 @@ export function apiRole(role: ParticipantRole): ApiRole | undefined {
     }
 }
 
-function participantRole(candid: ApiRole): ParticipantRole {
+function participantRole(candid: ApiRole): MemberRole {
     if ("Admin" in candid) {
         return "admin";
     }

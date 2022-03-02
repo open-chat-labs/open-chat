@@ -20,7 +20,7 @@ import type {
     UnblockUserResponse,
     DeleteGroupResponse,
     GroupChatSummary,
-    ParticipantRole,
+    MemberRole,
     PinMessageResponse,
     UnpinMessageResponse,
     RegisterPollVoteResponse,
@@ -168,7 +168,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
-    changeRole(userId: string, newRole: ParticipantRole): Promise<ChangeRoleResponse> {
+    changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
         const new_role = apiRole(newRole);
         if (new_role === undefined) {
             throw new Error(`Cannot change user's role to: ${newRole}`);

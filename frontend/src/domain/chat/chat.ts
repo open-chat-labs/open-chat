@@ -478,8 +478,8 @@ export type RoleChanged = {
     kind: "role_changed";
     userIds: string[];
     changedBy: string;
-    oldRole: ParticipantRole;
-    newRole: ParticipantRole;
+    oldRole: MemberRole;
+    newRole: MemberRole;
 };
 
 export type PinnedMessageUpdated = {
@@ -599,16 +599,16 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     description?: string;
     avatarBlobReferenceUpdate?: OptionUpdate<BlobReference>;
     participantCount?: number;
-    myRole?: ParticipantRole;
+    myRole?: MemberRole;
     mentions: Mention[];
     ownerId?: string;
     permissions?: GroupPermissions;
 };
 
-export type ParticipantRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
+export type MemberRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
 
 export type Participant = {
-    role: ParticipantRole;
+    role: MemberRole;
     userId: string;
 };
 
@@ -672,21 +672,25 @@ export type DirectChatSummary = ChatSummaryCommon & {
     dateCreated: bigint;
 };
 
+export type GroupSecurity = {
+    public: boolean;
+    myRole: MemberRole;
+    permissions: GroupPermissions;
+};
+
 export type GroupChatSummary = DataContent &
+    GroupSecurity &
     ChatSummaryCommon & {
         kind: "group_chat";
         name: string;
         description: string;
-        public: boolean;
         joined: bigint;
         minVisibleEventIndex: number;
         minVisibleMessageIndex: number;
         lastUpdated: bigint;
         participantCount: number;
-        myRole: ParticipantRole;
         mentions: Mention[];
         ownerId: string;
-        permissions: GroupPermissions;
     };
 
 export type Mention = {
@@ -697,7 +701,7 @@ export type Mention = {
 };
 
 export type CandidateParticipant = {
-    role: ParticipantRole;
+    role: MemberRole;
     user: UserSummary;
 };
 
@@ -986,3 +990,97 @@ export type RegisterPollVoteResponse =
     | "out_of_range"
     | "poll_not_found"
     | "chat_not_found";
+
+export function canChangePermissions(group: GroupChatSummary): boolean {
+    return isPermitted(group.myRole, group.permissions.changePermissions);
+}
+
+export function canChangeRoles(
+    group: GroupChatSummary,
+    currRole: MemberRole,
+    newRole: MemberRole
+): boolean {
+    if (currRole === newRole) {
+        return false;
+    }
+
+    switch (newRole) {
+        case "super_admin":
+            return false;
+        case "owner":
+            return hasOwnerRights(group.myRole);
+        default:
+            return isPermitted(group.myRole, group.permissions.changeRoles);
+    }
+}
+
+export function canAddMembers(group: GroupSecurity): boolean {
+    return !group.public && isPermitted(group.myRole, group.permissions.addMembers);
+}
+
+export function canRemoveMembers(group: GroupSecurity): boolean {
+    return !group.public && isPermitted(group.myRole, group.permissions.removeMembers);
+}
+
+export function canBlockUsers(group: GroupSecurity): boolean {
+    return group.public && isPermitted(group.myRole, group.permissions.blockUsers);
+}
+
+export function canUnblockUsers(group: GroupSecurity): boolean {
+    return group.public && isPermitted(group.myRole, group.permissions.blockUsers);
+}
+
+export function canDeleteMessages(group: GroupSecurity): boolean {
+    return isPermitted(group.myRole, group.permissions.deleteMessages);
+}
+
+export function canEditGroupDetails(group: GroupSecurity): boolean {
+    return isPermitted(group.myRole, group.permissions.updateGroup);
+}
+
+export function canPinMessages(group: GroupSecurity): boolean {
+    return isPermitted(group.myRole, group.permissions.pinMessages);
+}
+
+export function canCreatePolls(group: GroupSecurity): boolean {
+    return isPermitted(group.myRole, group.permissions.createPolls);
+}
+
+export function canSendMessages(group: GroupSecurity): boolean {
+    return isPermitted(group.myRole, group.permissions.sendMessages);
+}
+
+export function canReactToMessages(group: GroupSecurity): boolean {
+    return isPermitted(group.myRole, group.permissions.reactToMessages);
+}
+
+export function canBeRemoved(group: GroupSecurity): boolean {
+    return !hasOwnerRights(group.myRole);
+}
+
+export function canLeaveGroup(group: GroupSecurity): boolean {
+    return group.myRole !== "owner";
+}
+
+export function canDeleteGroup(group: GroupSecurity): boolean {
+    return hasOwnerRights(group.myRole);
+}
+
+function hasOwnerRights(role: MemberRole): boolean {
+    return role === "owner" || role === "super_admin";
+}
+
+function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean {
+    if (role === "previewer") {
+        return false;
+    }
+
+    switch (permissionRole) {
+        case "owner":
+            return hasOwnerRights(role);
+        case "admins":
+            return role !== "participant";
+        case "members":
+            return true;
+    }
+}
