@@ -16,8 +16,6 @@
 
     function checkVersion(): Promise<void> {
         if (process.env.NODE_ENV !== "production") return Promise.resolve();
-
-        console.log("checking fe version against deployed version", clientVersion);
         getServerVersion().then((serverVersion) => {
             if (serverVersion !== clientVersion) {
                 poller.stop();
