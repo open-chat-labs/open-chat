@@ -34,6 +34,7 @@
         "@types/intl-tel-input": "^17.0.4",
         "@types/md5": "^2.3.1",
         "@types/node": "^15.12.2",
+        "@types/uuid": "^8.3.4",
         "@typescript-eslint/eslint-plugin": "^4.27.0",
         "@typescript-eslint/parser": "^4.27.0",
         "assert": "2.0.0",

@@ -14,6 +14,8 @@
     import Lazy from "./components/Lazy.svelte";
     import { IdentityController } from "./fsm/identity.controller";
     import { SessionExpiryError } from "./services/httpError";
+    import UpgradeBanner from "./components/UpgradeBanner.svelte";
+
     import "./theme/themes";
 
     let controller: IdentityController = new IdentityController();
@@ -62,5 +64,7 @@
 {:else}
     <Loading />
 {/if}
+
+<UpgradeBanner />
 
 <svelte:window on:resize={calculateHeight} on:error={unhandledError} />
