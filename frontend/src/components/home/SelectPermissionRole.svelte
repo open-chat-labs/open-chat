@@ -9,9 +9,12 @@
 
     function permissionRoleText() {
         switch (rolePermission) {
-            case "owner": return $_("group.permissions.ownerOnly");
-            case "admins": return $_("group.permissions.ownerAndAdmins");
-            case "members": return $_("group.permissions.allMembers");
+            case "owner":
+                return $_("group.permissions.ownerOnly");
+            case "admins":
+                return $_("group.permissions.ownerAndAdmins");
+            case "members":
+                return $_("group.permissions.allMembers");
         }
     }
 </script>
@@ -27,12 +30,15 @@
             <option value={"members"}>{$_("group.permissions.allMembers")}</option>
         </Select>
     {/if}
-
 </li>
 
 <style type="text/scss">
     li {
-        @include font(mediumBold, normal, fs-90);
+        @include font(book, normal, fs-90);
+
+        span {
+            @include font(mediumBold, normal, fs-90);
+        }
 
         margin-bottom: $sp4;
 

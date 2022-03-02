@@ -43,9 +43,10 @@
     $: dirty = nameDirty || descDirty || avatarDirty || permissionsDirty;
     $: canEdit = $chat.myRole === "admin" || $chat.myRole === "owner";
     $: avatarSrc = avatarUrl(updatedGroup.avatar, "../assets/group.svg");
-    
+
     function havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
-        return p1.changePermissions != p2.changePermissions ||
+        return (
+            p1.changePermissions != p2.changePermissions ||
             p1.changeRoles != p2.changeRoles ||
             p1.addMembers != p2.addMembers ||
             p1.removeMembers != p2.removeMembers ||
@@ -55,7 +56,8 @@
             p1.pinMessages != p2.pinMessages ||
             p1.createPolls != p2.createPolls ||
             p1.sendMessages != p2.sendMessages ||
-            p1.reactToMessages != p2.reactToMessages;
+            p1.reactToMessages != p2.reactToMessages
+        );
     }
 
     function close() {
@@ -81,12 +83,14 @@
 
     function updateGroup() {
         saving = true;
+
         controller
             .updateGroup(
-                updatedGroup.name, 
-                updatedGroup.desc, 
-                updatedGroup.avatar?.blobData, 
-                permissionsDirty ? updatedGroup.permissions : undefined)
+                updatedGroup.name,
+                updatedGroup.desc,
+                updatedGroup.avatar?.blobData,
+                permissionsDirty ? updatedGroup.permissions : undefined
+            )
             .then((success) => {
                 if (success) {
                     dispatch("updateChat", {
@@ -137,7 +141,7 @@
                 maxlength={MAX_DESC_LENGTH}
                 placeholder={$_("newGroupDesc")} />
         </CollapsibleCard>
-        <CollapsibleCard open={visibilityOpen} headerText={$_("group.visibility")}>    
+        <CollapsibleCard open={visibilityOpen} headerText={$_("group.visibility")}>
             <div class="sub-section">
                 {#if $chat.public}
                     <h4>{$_("group.publicGroup")}</h4>
@@ -156,18 +160,20 @@
             </div>
         </CollapsibleCard>
         <CollapsibleCard open={permissionsOpen} headerText={$_("group.permissions.permissions")}>
-            <GroupPermissionsEditor bind:permissions={updatedGroup.permissions} isPublic={$chat.public} viewMode={!canEdit} />
+            <GroupPermissionsEditor
+                bind:permissions={updatedGroup.permissions}
+                isPublic={$chat.public}
+                viewMode={!canEdit} />
         </CollapsibleCard>
     </div>
 </form>
 <div class="cta">
-    <Button 
+    <Button
         on:click={updateGroup}
-        disabled={!dirty || saving || !canEdit} 
+        disabled={!dirty || saving || !canEdit}
         fill={true}
         loading={saving}>{$_("update")}</Button>
 </div>
-
 
 <Overlay bind:active={showConfirmation}>
     <ModalContent fill={true}>
@@ -229,7 +235,7 @@
         padding: $sp4;
         background-color: var(--sub-section-bg);
         margin-bottom: $sp3;
-       
+
         &:last-child {
             margin-bottom: 0;
         }
