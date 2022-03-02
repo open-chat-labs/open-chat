@@ -325,10 +325,10 @@
                                 </MenuItem>
                             {/if}
                         {/if}
-                        <MenuItem on:click={createPoll}>
+                        <!-- <MenuItem on:click={createPoll}>
                             <Poll size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                             <div slot="text">{$_("poll.create")}</div>
-                        </MenuItem>
+                        </MenuItem> -->
                         {#if unreadMessages > 0}
                             <MenuItem on:click={markAllRead}>
                                 <CheckboxMultipleMarked
