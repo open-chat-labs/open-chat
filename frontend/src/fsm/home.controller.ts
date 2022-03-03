@@ -13,6 +13,7 @@ import type {
 } from "../domain/chat/chat";
 import {
     compareChats,
+    getContentAsText,
     getMinVisibleMessageIndex,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
@@ -20,7 +21,7 @@ import {
 import type { DataContent } from "../domain/data/data";
 import type { Notification } from "../domain/notifications";
 import type { CreatedUser } from "../domain/user/user";
-import { missingUserIds } from "../domain/user/user.utils";
+import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.utils";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type {
     WebRtcMessage,
@@ -209,6 +210,9 @@ export class HomeController {
                 userIds.add(chat.them);
             } else if (chat.latestMessage !== undefined) {
                 userIds.add(chat.latestMessage.event.sender);
+                extractUserIdsFromMentions(getContentAsText(chat.latestMessage.event.content)).forEach((id) =>
+                    userIds.add(id)
+                );
             }
         });
         return userIds;
