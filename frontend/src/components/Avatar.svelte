@@ -49,6 +49,7 @@
         background-size: cover;
         border-radius: 50%;
         position: relative;
+        margin: 0 auto;
 
         &.tiny {
             width: 35px;

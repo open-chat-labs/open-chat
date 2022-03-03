@@ -17,8 +17,12 @@
     import { createEventDispatcher } from "svelte";
     import type { Readable } from "svelte/store";
     import type { ChatController } from "../../../fsm/chat.controller";
+    import { userStore } from "../../../stores/user";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
+    import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
+    import Legend from "../../Legend.svelte";
+    import { chatsSectionOpen } from "stores/settings";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -29,6 +33,7 @@
     export let updatedGroup: UpdatedGroup;
 
     $: chat = controller.chat as Readable<GroupChatSummary>;
+    $: participants = controller.participants;
 
     let showConfirmation = false;
     let confirmed = false;
@@ -124,61 +129,88 @@
                 {:else}
                     <Avatar url={avatarSrc} size={AvatarSize.ExtraLarge} />
                 {/if}
+
+                {#if !canEdit}
+                    <h3>{$chat.name}</h3>
+                    <p class="members">
+                        {$_("memberCount", { values: { count: $participants.length } })}
+                    </p>
+                    <p class="owned-by">
+                        {$_("ownedBy", {
+                            values: { username: $userStore[$chat.ownerId]?.username ?? "uknown" },
+                        })}
+                    </p>
+                {/if}
             </div>
 
-            <Input
-                invalid={false}
-                disabled={saving || !canEdit}
-                autofocus={false}
-                bind:value={updatedGroup.name}
-                minlength={MIN_LENGTH}
-                maxlength={MAX_LENGTH}
-                countdown={true}
-                placeholder={$_("newGroupName")} />
+            {#if canEdit}
+                <Input
+                    invalid={false}
+                    disabled={saving || !canEdit}
+                    autofocus={false}
+                    bind:value={updatedGroup.name}
+                    minlength={MIN_LENGTH}
+                    maxlength={MAX_LENGTH}
+                    countdown={true}
+                    placeholder={$_("newGroupName")} />
 
-            <TextArea
-                disabled={saving || !canEdit}
-                bind:value={updatedGroup.desc}
-                invalid={false}
-                maxlength={MAX_DESC_LENGTH}
-                placeholder={$_("newGroupDesc")} />
+                <TextArea
+                    disabled={saving || !canEdit}
+                    bind:value={updatedGroup.desc}
+                    invalid={false}
+                    maxlength={MAX_DESC_LENGTH}
+                    placeholder={$_("newGroupDesc")} />
+            {:else if $chat.description !== ""}
+                <fieldset>
+                    <legend>
+                        <Legend>{$_("groupDesc")}</Legend>
+                    </legend>
+                    {$chat.description}
+                </fieldset>
+            {/if}
         </CollapsibleCard>
         <CollapsibleCard open={visibilityOpen} headerText={$_("group.visibility")}>
-            <div class="sub-section">
-                {#if $chat.public}
-                    <h4>{$_("group.publicGroup")}</h4>
-                {:else}
-                    <h4>{$_("group.privateGroup")}</h4>
-                {/if}
+            {#if $chat.public}
+                <h4>{$_("group.publicGroup")}</h4>
+            {:else}
+                <h4>{$_("group.privateGroup")}</h4>
+            {/if}
 
-                <div class="info">
-                    {#if $chat.public}
-                        <p>{$_("publicGroupInfo")}</p>
-                        <p>{$_("publicGroupUnique")}</p>
-                    {:else}
-                        <p>{$_("privateGroupInfo")}</p>
-                    {/if}
-                </div>
+            <div class="info">
+                {#if $chat.public}
+                    <p>{$_("publicGroupInfo")}</p>
+                    <p>{$_("publicGroupUnique")}</p>
+                {:else}
+                    <p>{$_("privateGroupInfo")}</p>
+                {/if}
             </div>
         </CollapsibleCard>
         <CollapsibleCard open={permissionsOpen} headerText={$_("group.permissions.permissions")}>
-            <GroupPermissionsEditor
-                bind:permissions={updatedGroup.permissions}
-                isPublic={$chat.public}
-                viewMode={!canEditPermissions} />
+            {#if canEditPermissions}
+                <GroupPermissionsEditor
+                    bind:permissions={updatedGroup.permissions}
+                    isPublic={$chat.public} />
+            {:else}
+                <GroupPermissionsViewer
+                    bind:permissions={updatedGroup.permissions}
+                    isPublic={$chat.public} />
+            {/if}
         </CollapsibleCard>
     </div>
 </form>
-<div class="cta">
-    <Button
-        on:click={updateGroup}
-        disabled={(permissionsDirty && !canEditPermissions) ||
-            (!permissionsDirty && dirty && !canEdit) ||
-            !dirty ||
-            saving}
-        fill={true}
-        loading={saving}>{$_("update")}</Button>
-</div>
+
+{#if canEdit || canEditPermissions}
+    <div class="cta">
+        <Button
+            on:click={updateGroup}
+            disabled={(permissionsDirty && !canEditPermissions) ||
+                (!permissionsDirty && dirty && !canEdit) ||
+                !dirty ||
+                saving}
+            fill={true}
+            loading={saving}>{$_("update")}</Button>
+    </div>
+{/if}
 
 <Overlay bind:active={showConfirmation}>
     <ModalContent fill={true}>
@@ -219,6 +251,13 @@
         width: 100%;
     }
 
+    fieldset {
+        border: 1px solid var(--input-bd);
+        border-radius: $sp2;
+        padding: $sp3;
+        @include font(light, normal, fs-100);
+    }
+
     .group-form {
         flex: 1;
         color: var(--section-txt);
@@ -236,20 +275,29 @@
         }
     }
 
+    h4,
+    h3 {
+        margin-bottom: $sp3;
+    }
+
+    h3 {
+        @include font(bold, normal, fs-120);
+    }
+
+    .members {
+        @include font(light, normal, fs-90);
+    }
+
+    .owned-by {
+        @include font(book, normal, fs-90);
+    }
+
     .sub-section {
         padding: $sp4;
-        background-color: var(--sub-section-bg);
+        // background-color: var(--sub-section-bg);
         margin-bottom: $sp3;
-
-        &:last-child {
-            margin-bottom: 0;
-        }
-
-        @include box-shadow(1);
-
-        h4 {
-            margin-bottom: $sp4;
-        }
+        border: 1px solid var(--input-bd);
+        border-radius: $sp2;
     }
 
     .info {

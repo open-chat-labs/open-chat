@@ -94,7 +94,8 @@
                     <span
                         class="scope-label"
                         class:selected={!candidateGroup.isPublic}
-                        on:click={() => (candidateGroup.isPublic = false)}>{$_("group.private")}</span>
+                        on:click={() => (candidateGroup.isPublic = false)}
+                        >{$_("group.private")}</span>
 
                     <Checkbox
                         id="is-public"
@@ -106,7 +107,8 @@
                     <span
                         class="scope-label"
                         class:selected={candidateGroup.isPublic}
-                        on:click={() => (candidateGroup.isPublic = true)}>{$_("group.public")}</span>
+                        on:click={() => (candidateGroup.isPublic = true)}
+                        >{$_("group.public")}</span>
                 </div>
                 <div class="info">
                     {#if candidateGroup.isPublic}
@@ -137,7 +139,9 @@
             </div>
         </CollapsibleCard>
         <CollapsibleCard open={permissionsOpen} headerText={$_("group.permissions.permissions")}>
-            <GroupPermissionsEditor bind:permissions={candidateGroup.permissions} isPublic={candidateGroup.isPublic} />
+            <GroupPermissionsEditor
+                bind:permissions={candidateGroup.permissions}
+                isPublic={candidateGroup.isPublic} />
         </CollapsibleCard>
     </div>
 </form>
@@ -199,7 +203,8 @@
     .sub-section {
         padding: $sp4;
         background-color: var(--sub-section-bg);
-        @include box-shadow(1);
+        border: 1px solid var(--input-bd);
+        border-radius: $sp2;
         margin-bottom: $sp3;
         &:last-child {
             margin-bottom: 0;
@@ -227,7 +232,7 @@
         @include font(light, normal, fs-90);
 
         p {
-            margin-bottom: $sp4;            
+            margin-bottom: $sp4;
             &:last-child {
                 margin-bottom: 0;
             }

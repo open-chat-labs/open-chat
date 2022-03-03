@@ -339,10 +339,6 @@
         <div class="blocked">
             {$_("userIsBlocked")}
         </div>
-    {:else if !canSend}
-        <div class="disabled">
-            {$_("readOnlyGroup")}
-        </div>
     {:else if preview}
         <div class="preview">
             <Button secondary={true} small={true} on:click={cancelPreview}>
@@ -355,6 +351,10 @@
                 on:click={joinGroup}>
                 {$_("joinGroup")}
             </Button>
+        </div>
+    {:else if !canSend}
+        <div class="disabled">
+            {$_("readOnlyGroup")}
         </div>
     {:else}
         <div class="emoji" on:click={toggleEmojiPicker}>
