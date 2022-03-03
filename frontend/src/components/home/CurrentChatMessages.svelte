@@ -264,8 +264,6 @@
     }
 
     function deleteMessage(ev: CustomEvent<Message>) {
-        console.log(`canDelete: ${canDelete}`);
-
         if (!canDelete) return;
         controller.deleteMessage(ev.detail.messageId, controller.user.userId);
 
