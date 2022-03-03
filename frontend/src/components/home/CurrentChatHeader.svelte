@@ -3,6 +3,7 @@
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import Poll from "svelte-material-icons/Poll.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import SectionHeader from "../SectionHeader.svelte";
@@ -324,10 +325,10 @@
                                 </MenuItem>
                             {/if}
                         {/if}
-                        <!-- <MenuItem on:click={createPoll}>
+                        <MenuItem on:click={createPoll}>
                             <Poll size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                             <div slot="text">{$_("poll.create")}</div>
-                        </MenuItem> -->
+                        </MenuItem>
                         {#if unreadMessages > 0}
                             <MenuItem on:click={markAllRead}>
                                 <CheckboxMultipleMarked
