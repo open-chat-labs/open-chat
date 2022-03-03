@@ -361,8 +361,49 @@
         "public": "Publique",
         "private": "Privé",
         "publicGroup": "Groupe public",
-        "privateGroup": "Groupe privé"
+        "privateGroup": "Groupe privé",
+        "groupInfo": "Informations sur le groupe",
+        "visibility": "Visibilité",
+        "role": {
+            "owner": "Propriétaire",
+            "admins": "Administrateurs",
+            "members": "Membres"
+        },
+        "permissions": {
+            "whoCan": "Qui peut",
+            "permissions": "Autorisations",
+            "ownerOnly": "Le propriétaire peut",
+            "ownerAndAdmins": "Le propriétaire et les administrateurs peuvent",
+            "allMembers": "Tous les membres peuvent",
+            "changePermissions": "modifier les autorisations",
+            "changeRoles": "changer les rôles des membres",
+            "addMembers": "ajouter des membres",
+            "removeMembers": "supprimer des membres",
+            "blockUsers": "bloquer/débloquer des utilisateurs",
+            "deleteMessages": "supprimer des messages",
+            "updateGroup": "modifier les informations du groupe",
+            "pinMessages": "épingler des messages",
+            "createPolls": "créer des sondages",
+            "sendMessages": "envoyer des messages",
+            "reactToMessages": "réagir aux messages"
+        }
     },
     "updateNow": "recharger maintenant",
-    "updateRequired": "Une nouvelle version d'OpenChat est disponible - rechargement dans {countdown}s"
+    "updateRequired": "Une nouvelle version d'OpenChat est disponible - rechargement dans {countdown}s",
+    "chooseParticipants": "Choisissez les membres",
+    "confirmParticipants": "Confirmer les membres",
+    "permissionsChangedBy": "{changedBy} a modifié les autorisations du groupe",
+    "addParticipantsFailed": "Une erreur s'est produite lors de l'ajout de membres",
+    "filterParticipants": "filtrer les membres",
+    "markAllRead": "tout marquer comme lu",
+    "publicGroupWithN": "Groupe public avec {number} membre(s)",
+    "privateGroupWithN": "Groupe privé avec {number} membre(s)",
+    "groupWithN": "{number} membre(s)",
+    "participants": "Membres",
+    "addParticipants": "Ajouter des membres",
+    "removeParticipantFailed": "Impossible de supprimer le membre",
+    "participant": "membre",
+    "readOnlyGroup": "Ceci est un groupe en lecture seule",
+    "memberCount": "{count} membre(s)",
+    "ownedBy": "Propriété de @{username}"
 }

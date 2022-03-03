@@ -362,8 +362,48 @@
         "public": "公开的",
         "private": "私密的",
         "publicGroup": "公开群聊",
-        "privateGroup": "私有群聊"
+        "privateGroup": "私有群聊",
+        "groupInfo": "组信息",
+        "visibility": "能见度",
+        "role": {
+            "owner": "所有者",
+            "admins": "管理员",
+            "members": "成员"
+        },
+        "permissions": {
+            "whoCan": "谁可以",
+            "permissions": "许可",
+            "ownerOnly": "楼主可以",
+            "ownerAndAdmins": "所有者和管理员可以",
+            "allMembers": "所有成员都可以",
+            "changePermissions": "更改权限",
+            "changeRoles": "改变成员角色",
+            "addMembers": "添加成员",
+            "removeMembers": "删除成员",
+            "blockUsers": "阻止/取消阻止用户",
+            "deleteMessages": "删除消息",
+            "updateGroup": "编辑群组信息",
+            "pinMessages": "固定消息",
+            "createPolls": "创建民意调查",
+            "sendMessages": "发送信息",
+            "reactToMessages": "对消息做出反应"
+        }
     },
     "updateNow": "现在重新加载",
-    "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载"
+    "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",
+    "chooseParticipants": "选择成员",
+    "confirmParticipants": "确认成员",
+    "permissionsChangedBy": "{changedBy} 更改了组权限",
+    "addParticipantsFailed": "添加成员时出错",
+    "filterParticipants": "过滤成员",
+    "publicGroupWithN": "有 {number} 个成员的公共群组",
+    "privateGroupWithN": "有 {number} 个成员的私人群组",
+    "groupWithN": "{number} 个成员",
+    "participants": "成员",
+    "addParticipants": "添加成员",
+    "removeParticipantFailed": "无法删除成员",
+    "participant": "成员",
+    "readOnlyGroup": "这是一个只读组",
+    "memberCount": "{count} 个成员",
+    "ownedBy": "归@{username}所有"
 }

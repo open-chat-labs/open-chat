@@ -362,8 +362,48 @@
         "public": "Публичная",
         "private": "Частная",
         "publicGroup": "Публичная группа",
-        "privateGroup": "Частная группа"
+        "privateGroup": "Частная группа",
+        "groupInfo": "Информация о группе",
+        "visibility": "Видимость",
+        "role": {
+            "owner": "Владелец",
+            "admins": "Админы",
+            "members": "Члены"
+        },
+        "permissions": {
+            "whoCan": "Кто может",
+            "permissions": "Разрешения",
+            "ownerOnly": "Владелец может",
+            "ownerAndAdmins": "Владелец и администраторы могут",
+            "allMembers": "Все участники могут",
+            "changePermissions": "изменить разрешения",
+            "changeRoles": "изменить роли участников",
+            "addMembers": "добавить участников",
+            "removeMembers": "удалить участников",
+            "blockUsers": "блокировать/разблокировать пользователей",
+            "deleteMessages": "удалять сообщения",
+            "updateGroup": "отредактировать информацию о группе",
+            "pinMessages": "пин-сообщения",
+            "createPolls": "создавать опросы",
+            "sendMessages": "отправлять сообщения",
+            "reactToMessages": "реагировать на сообщения"
+        }
     },
     "updateNow": "перезагрузить сейчас",
-    "updateRequired": "Доступна новая версия OpenChat — перезагрузка через {countdown} с."
+    "updateRequired": "Доступна новая версия OpenChat — перезагрузка через {countdown} с.",
+    "chooseParticipants": "Выберите участников",
+    "confirmParticipants": "Подтвердить членов",
+    "permissionsChangedBy": "{changedBy} изменил права группы",
+    "addParticipantsFailed": "Не удалось добавить участников.",
+    "filterParticipants": "отфильтровать участников",
+    "publicGroupWithN": "Открытая группа с участниками: {number}",
+    "privateGroupWithN": "Частная группа с участниками: {number}",
+    "groupWithN": "{number} участников",
+    "participants": "Члены",
+    "addParticipants": "Добавить участников",
+    "removeParticipantFailed": "Не удалось удалить участника",
+    "participant": "член",
+    "readOnlyGroup": "Это группа только для чтения",
+    "memberCount": "{count} участников",
+    "ownedBy": "Владелец @ {username}"
 }

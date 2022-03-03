@@ -362,8 +362,48 @@
         "public": "公開",
         "private": "プライベート",
         "publicGroup": "公開グループ",
-        "privateGroup": "プライベートグループ"
+        "privateGroup": "プライベートグループ",
+        "groupInfo": "グループ情報",
+        "visibility": "可視性",
+        "role": {
+            "owner": "オーナー",
+            "admins": "管理者",
+            "members": "メンバー"
+        },
+        "permissions": {
+            "whoCan": "誰ができますか",
+            "permissions": "許可",
+            "ownerOnly": "所有者はできます",
+            "ownerAndAdmins": "所有者と管理者は",
+            "allMembers": "すべてのメンバーができます",
+            "changePermissions": "権限の変更",
+            "changeRoles": "メンバーの役割を変更する",
+            "addMembers": "メンバーを追加する",
+            "removeMembers": "メンバーを削除する",
+            "blockUsers": "ユーザーのブロック/ブロック解除",
+            "deleteMessages": "メッセージを削除する",
+            "updateGroup": "グループ情報を編集する",
+            "pinMessages": "ピンメッセージ",
+            "createPolls": "投票を作成する",
+            "sendMessages": "メッセージを送る",
+            "reactToMessages": "メッセージに反応する"
+        }
     },
     "updateNow": "今すぐリロード",
-    "updateRequired": "OpenChatの新しいバージョンが利用可能です-{countdown}でリロード"
+    "updateRequired": "OpenChatの新しいバージョンが利用可能です-{countdown}でリロード",
+    "chooseParticipants": "メンバーを選択",
+    "confirmParticipants": "メンバーを確認する",
+    "permissionsChangedBy": "{changedBy}がグループの権限を変更しました",
+    "addParticipantsFailed": "メンバーの追加中にエラーが発生しました",
+    "filterParticipants": "フィルターメンバー",
+    "publicGroupWithN": "{number}メンバーのパブリックグループ",
+    "privateGroupWithN": "{number}メンバーのプライベートグループ",
+    "groupWithN": "{number}メンバー",
+    "participants": "メンバー",
+    "addParticipants": "メンバーを追加する",
+    "removeParticipantFailed": "メンバーを削除できません",
+    "participant": "メンバー",
+    "readOnlyGroup": "これは読み取り専用グループです",
+    "memberCount": "{count}メンバー",
+    "ownedBy": "@ {username}が所有"
 }

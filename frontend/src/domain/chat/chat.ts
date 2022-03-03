@@ -987,6 +987,8 @@ export type RegisterPollVoteResponse =
     | "poll_not_found"
     | "chat_not_found";
 
+//TODO - all these functions should be in utils and we should have a few tests
+
 export function canChangePermissions(group: GroupChatSummary): boolean {
     return isPermitted(group.myRole, group.permissions.changePermissions);
 }
