@@ -15,14 +15,14 @@
     import type { GroupChatSummary, GroupPermissions } from "../../../domain/chat/chat";
     import { canChangePermissions, canEditGroupDetails } from "../../../domain/chat/chat";
     import { createEventDispatcher } from "svelte";
-    import type { Readable } from "svelte/store";
     import type { ChatController } from "../../../fsm/chat.controller";
     import { userStore } from "../../../stores/user";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
     import Legend from "../../Legend.svelte";
-    import { chatsSectionOpen } from "stores/settings";
+    import ViewUserProfile from "../profile/ViewUserProfile.svelte";
+    import Markdown from "../Markdown.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -31,8 +31,8 @@
 
     export let controller: ChatController;
     export let updatedGroup: UpdatedGroup;
+    export let originalGroup: GroupChatSummary;
 
-    $: chat = controller.chat as Readable<GroupChatSummary>;
     $: participants = controller.participants;
 
     let showConfirmation = false;
@@ -41,15 +41,30 @@
     let groupInfoOpen = true;
     let visibilityOpen = true;
     let permissionsOpen = false;
+    let viewProfile = false;
+    let myGroup = controller.user.userId === originalGroup.ownerId;
 
-    $: nameDirty = updatedGroup.name !== $chat.name;
-    $: descDirty = updatedGroup.desc !== $chat.description;
-    $: avatarDirty = updatedGroup.avatar?.blobUrl !== $chat.blobUrl;
-    $: permissionsDirty = havePermissionsChanged($chat.permissions, updatedGroup.permissions);
+    $: nameDirty = updatedGroup.name !== originalGroup.name;
+    $: descDirty = updatedGroup.desc !== originalGroup.description;
+    $: avatarDirty = updatedGroup.avatar?.blobUrl !== originalGroup.blobUrl;
+    $: permissionsDirty = havePermissionsChanged(
+        originalGroup.permissions,
+        updatedGroup.permissions
+    );
     $: dirty = nameDirty || descDirty || avatarDirty || permissionsDirty;
-    $: canEdit = canEditGroupDetails($chat);
-    $: canEditPermissions = canChangePermissions($chat);
+    $: canEdit = canEditGroupDetails(originalGroup);
+    $: canEditPermissions = canChangePermissions(originalGroup);
     $: avatarSrc = avatarUrl(updatedGroup.avatar, "../assets/group.svg");
+
+    function openUserProfile() {
+        if (!myGroup) {
+            viewProfile = true;
+        }
+    }
+
+    function closeUserProfile() {
+        viewProfile = false;
+    }
 
     function havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
         return (
@@ -101,7 +116,7 @@
             .then((success) => {
                 if (success) {
                     dispatch("updateChat", {
-                        ...$chat,
+                        ...originalGroup,
                         name: updatedGroup.name,
                         description: updatedGroup.desc,
                         blobUrl: updatedGroup.avatar?.blobUrl,
@@ -112,7 +127,22 @@
             })
             .finally(() => (showConfirmation = saving = false));
     }
+
+    function chatWithOwner() {
+        if (!myGroup) {
+            closeUserProfile();
+            dispatch("chatWith", originalGroup.ownerId);
+            dispatch("close");
+        }
+    }
 </script>
+
+{#if viewProfile}
+    <ViewUserProfile
+        userId={originalGroup.ownerId}
+        on:openDirectChat={chatWithOwner}
+        on:close={closeUserProfile} />
+{/if}
 
 <GroupDetailsHeader {saving} on:showParticipants={showParticipants} on:close={close} />
 
@@ -131,13 +161,15 @@
                 {/if}
 
                 {#if !canEdit}
-                    <h3>{$chat.name}</h3>
+                    <h3>{originalGroup.name}</h3>
                     <p class="members">
                         {$_("memberCount", { values: { count: $participants.length } })}
                     </p>
-                    <p class="owned-by">
+                    <p class="owned-by" on:click={openUserProfile} class:my-group={myGroup}>
                         {$_("ownedBy", {
-                            values: { username: $userStore[$chat.ownerId]?.username ?? "uknown" },
+                            values: {
+                                username: $userStore[originalGroup.ownerId]?.username ?? "uknown",
+                            },
                         })}
                     </p>
                 {/if}
@@ -160,24 +192,24 @@
                     invalid={false}
                     maxlength={MAX_DESC_LENGTH}
                     placeholder={$_("newGroupDesc")} />
-            {:else if $chat.description !== ""}
+            {:else if originalGroup.description !== ""}
                 <fieldset>
                     <legend>
                         <Legend>{$_("groupDesc")}</Legend>
                     </legend>
-                    {$chat.description}
+                    <Markdown text={originalGroup.description} />
                 </fieldset>
             {/if}
         </CollapsibleCard>
         <CollapsibleCard open={visibilityOpen} headerText={$_("group.visibility")}>
-            {#if $chat.public}
+            {#if originalGroup.public}
                 <h4>{$_("group.publicGroup")}</h4>
             {:else}
                 <h4>{$_("group.privateGroup")}</h4>
             {/if}
 
             <div class="info">
-                {#if $chat.public}
+                {#if originalGroup.public}
                     <p>{$_("publicGroupInfo")}</p>
                     <p>{$_("publicGroupUnique")}</p>
                 {:else}
@@ -189,11 +221,11 @@
             {#if canEditPermissions}
                 <GroupPermissionsEditor
                     bind:permissions={updatedGroup.permissions}
-                    isPublic={$chat.public} />
+                    isPublic={originalGroup.public} />
             {:else}
                 <GroupPermissionsViewer
                     bind:permissions={updatedGroup.permissions}
-                    isPublic={$chat.public} />
+                    isPublic={originalGroup.public} />
             {/if}
         </CollapsibleCard>
     </div>
@@ -290,6 +322,11 @@
 
     .owned-by {
         @include font(book, normal, fs-90);
+        cursor: pointer;
+
+        &.my-group {
+            cursor: auto;
+        }
     }
 
     .sub-section {

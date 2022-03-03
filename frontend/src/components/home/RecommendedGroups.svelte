@@ -18,6 +18,7 @@
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../stores/iconSize";
+    import Markdown from "./Markdown.svelte";
 
     export let groups: GroupChatSummary[];
     export let joining: GroupChatSummary | undefined;
@@ -107,7 +108,7 @@
                         </span>
                     </div>
                     <p class="group-desc">
-                        {group.description}
+                        <Markdown text={group.description} />
                     </p>
                     <div class="footer">
                         <p class="user-count">

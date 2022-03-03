@@ -117,7 +117,6 @@ export function originalTheme(defaultTheme: Theme): Theme {
                 pd: "4px 8px 0 8px",
             },
             edit: {
-                // pd: "4px 8px 0 8px",
                 pd: "8px",
             },
         },
