@@ -54,10 +54,11 @@ import type {
     DeleteGroupResponse,
     MessageContent,
     GroupChatSummary,
-    ParticipantRole,
+    MemberRole,
     PinMessageResponse,
     UnpinMessageResponse,
     RegisterPollVoteResponse,
+    GroupPermissions,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
@@ -195,9 +196,10 @@ export class ServiceContainer implements MarkMessagesRead {
         chatId: string,
         name: string,
         desc: string,
-        avatar?: Uint8Array
+        avatar?: Uint8Array,
+        permissions?: GroupPermissions
     ): Promise<UpdateGroupResponse> {
-        return this.getGroupClient(chatId).updateGroup(name, desc, avatar);
+        return this.getGroupClient(chatId).updateGroup(name, desc, avatar, permissions);
     }
 
     addParticipants(
@@ -536,11 +538,7 @@ export class ServiceContainer implements MarkMessagesRead {
         return identity.getPrincipal().toText() !== this.identity.getPrincipal().toText();
     }
 
-    changeRole(
-        chatId: string,
-        userId: string,
-        newRole: ParticipantRole
-    ): Promise<ChangeRoleResponse> {
+    changeRole(chatId: string, userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
         return this.getGroupClient(chatId).changeRole(userId, newRole);
     }
 

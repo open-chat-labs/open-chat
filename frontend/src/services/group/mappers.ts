@@ -37,7 +37,7 @@ import type {
     GroupChatDetailsResponse,
     GroupChatDetailsUpdatesResponse,
     UnblockUserResponse,
-    ParticipantRole,
+    MemberRole,
     DeleteGroupResponse,
     Message,
     PinMessageResponse,
@@ -45,14 +45,14 @@ import type {
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
-import { message, updatedMessage } from "../common/chatMappers";
+import { groupPermissions, message, updatedMessage } from "../common/chatMappers";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 
 function principalToString(p: Principal): string {
     return p.toString();
 }
 
-export function apiRole(role: ParticipantRole): ApiRole | undefined {
+export function apiRole(role: MemberRole): ApiRole | undefined {
     switch (role) {
         case "admin":
             return { Admin: null };
@@ -65,7 +65,7 @@ export function apiRole(role: ParticipantRole): ApiRole | undefined {
     }
 }
 
-function participantRole(candid: ApiRole): ParticipantRole {
+function participantRole(candid: ApiRole): MemberRole {
     if ("Admin" in candid) {
         return "admin";
     }
@@ -220,6 +220,9 @@ export function toggleReactionResponse(candid: ApiToggleReactionResponse): Toggl
     if ("CallerNotInGroup" in candid) {
         return "not_in_group";
     }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
     throw new UnsupportedValueError("Unexpected ApiToggleReactionResponse type received", candid);
 }
 
@@ -290,6 +293,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     }
     if ("InvalidPoll" in candid) {
         return { kind: "invalid_poll" };
+    }
+    if ("NotAuthorized" in candid) {
+        return { kind: "not_authorised" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
@@ -650,6 +656,15 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "poll_ended",
             messageIndex: candid.PollEnded.message_index,
             eventIndex: candid.PollEnded.event_index,
+        };
+    }
+
+    if ("PermissionsChanged" in candid) {
+        return {
+            kind: "permissions_changed",
+            oldPermissions: groupPermissions(candid.PermissionsChanged.old_permissions),
+            newPermissions: groupPermissions(candid.PermissionsChanged.new_permissions),
+            changedBy: candid.PermissionsChanged.changed_by.toString(),
         };
     }
 

@@ -2,7 +2,9 @@
     import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
+    import Avatar from "../../Avatar.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
+    import { AvatarSize } from "../../../domain/user/user";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Input from "../../Input.svelte";
@@ -10,10 +12,13 @@
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../../domain/user/user.utils";
     import type { UpdatedGroup } from "../../../fsm/rightPanel";
-    import type { GroupChatSummary } from "../../../domain/chat/chat";
+    import type { GroupChatSummary, GroupPermissions } from "../../../domain/chat/chat";
+    import { canChangePermissions, canEditGroupDetails } from "../../../domain/chat/chat";
     import { createEventDispatcher } from "svelte";
     import type { Readable } from "svelte/store";
     import type { ChatController } from "../../../fsm/chat.controller";
+    import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -28,12 +33,34 @@
     let showConfirmation = false;
     let confirmed = false;
     let saving = false;
+    let groupInfoOpen = true;
+    let visibilityOpen = true;
+    let permissionsOpen = false;
 
     $: nameDirty = updatedGroup.name !== $chat.name;
     $: descDirty = updatedGroup.desc !== $chat.description;
     $: avatarDirty = updatedGroup.avatar?.blobUrl !== $chat.blobUrl;
-    $: dirty = nameDirty || descDirty || avatarDirty;
-    $: canEdit = $chat.myRole === "admin" || $chat.myRole === "owner";
+    $: permissionsDirty = havePermissionsChanged($chat.permissions, updatedGroup.permissions);
+    $: dirty = nameDirty || descDirty || avatarDirty || permissionsDirty;
+    $: canEdit = canEditGroupDetails($chat);
+    $: canEditPermissions = canChangePermissions($chat);
+    $: avatarSrc = avatarUrl(updatedGroup.avatar, "../assets/group.svg");
+
+    function havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
+        return (
+            p1.changePermissions !== p2.changePermissions ||
+            p1.changeRoles !== p2.changeRoles ||
+            p1.addMembers !== p2.addMembers ||
+            p1.removeMembers !== p2.removeMembers ||
+            p1.blockUsers !== p2.blockUsers ||
+            p1.deleteMessages !== p2.deleteMessages ||
+            p1.updateGroup !== p2.updateGroup ||
+            p1.pinMessages !== p2.pinMessages ||
+            p1.createPolls !== p2.createPolls ||
+            p1.sendMessages !== p2.sendMessages ||
+            p1.reactToMessages !== p2.reactToMessages
+        );
+    }
 
     function close() {
         if (dirty && !confirmed) {
@@ -58,8 +85,14 @@
 
     function updateGroup() {
         saving = true;
+
         controller
-            .updateGroup(updatedGroup.name, updatedGroup.desc, updatedGroup.avatar?.blobData)
+            .updateGroup(
+                updatedGroup.name,
+                updatedGroup.desc,
+                updatedGroup.avatar?.blobData,
+                permissionsDirty ? updatedGroup.permissions : undefined
+            )
             .then((success) => {
                 if (success) {
                     dispatch("updateChat", {
@@ -67,6 +100,7 @@
                         name: updatedGroup.name,
                         description: updatedGroup.desc,
                         blobUrl: updatedGroup.avatar?.blobUrl,
+                        permissions: updatedGroup.permissions,
                     });
                     dispatch("close");
                 }
@@ -79,59 +113,72 @@
 
 <form class="group-form" on:submit|preventDefault={updateGroup}>
     <div class="form-fields">
-        <div class="sub-section photo">
-            <EditableAvatar
-                disabled={saving}
-                image={avatarUrl(updatedGroup.avatar, "../assets/group.svg")}
-                on:imageSelected={groupAvatarSelected} />
-            <p class="photo-legend">{$_("addGroupPhoto")}</p>
-        </div>
-
-        <Input
-            invalid={false}
-            disabled={saving || !canEdit}
-            autofocus={false}
-            bind:value={updatedGroup.name}
-            minlength={MIN_LENGTH}
-            maxlength={MAX_LENGTH}
-            countdown={true}
-            placeholder={$_("newGroupName")} />
-
-        <TextArea
-            disabled={saving || !canEdit}
-            bind:value={updatedGroup.desc}
-            invalid={false}
-            maxlength={MAX_DESC_LENGTH}
-            placeholder={$_("newGroupDesc")} />
-
-        <div class="sub-section">
-            {#if $chat.public}
-                <h4>{$_("publicGroup")}</h4>
-            {:else}
-                <h4>{$_("privateGroup")}</h4>
-            {/if}
-
-            <div class="info">
-                {#if $chat.public}
-                    <p>
-                        {$_("publicGroupInfo")}
-                    </p>
-                    <p>
-                        {$_("publicGroupUnique")}
-                    </p>
+        <CollapsibleCard open={groupInfoOpen} headerText={$_("group.groupInfo")}>
+            <div class="sub-section photo">
+                {#if canEdit}
+                    <EditableAvatar
+                        disabled={saving}
+                        image={avatarSrc}
+                        on:imageSelected={groupAvatarSelected} />
+                    <p class="photo-legend">{$_("group.addGroupPhoto")}</p>
                 {:else}
-                    <p>
-                        {$_("privateGroupInfo")}
-                    </p>
+                    <Avatar url={avatarSrc} size={AvatarSize.ExtraLarge} />
                 {/if}
             </div>
-        </div>
-    </div>
-    <div class="cta">
-        <Button loading={saving} disabled={!dirty || saving || !canEdit} fill={true}
-            >{$_("update")}</Button>
+
+            <Input
+                invalid={false}
+                disabled={saving || !canEdit}
+                autofocus={false}
+                bind:value={updatedGroup.name}
+                minlength={MIN_LENGTH}
+                maxlength={MAX_LENGTH}
+                countdown={true}
+                placeholder={$_("newGroupName")} />
+
+            <TextArea
+                disabled={saving || !canEdit}
+                bind:value={updatedGroup.desc}
+                invalid={false}
+                maxlength={MAX_DESC_LENGTH}
+                placeholder={$_("newGroupDesc")} />
+        </CollapsibleCard>
+        <CollapsibleCard open={visibilityOpen} headerText={$_("group.visibility")}>
+            <div class="sub-section">
+                {#if $chat.public}
+                    <h4>{$_("group.publicGroup")}</h4>
+                {:else}
+                    <h4>{$_("group.privateGroup")}</h4>
+                {/if}
+
+                <div class="info">
+                    {#if $chat.public}
+                        <p>{$_("publicGroupInfo")}</p>
+                        <p>{$_("publicGroupUnique")}</p>
+                    {:else}
+                        <p>{$_("privateGroupInfo")}</p>
+                    {/if}
+                </div>
+            </div>
+        </CollapsibleCard>
+        <CollapsibleCard open={permissionsOpen} headerText={$_("group.permissions.permissions")}>
+            <GroupPermissionsEditor
+                bind:permissions={updatedGroup.permissions}
+                isPublic={$chat.public}
+                viewMode={!canEditPermissions} />
+        </CollapsibleCard>
     </div>
 </form>
+<div class="cta">
+    <Button
+        on:click={updateGroup}
+        disabled={(permissionsDirty && !canEditPermissions) ||
+            (!permissionsDirty && dirty && !canEdit) ||
+            !dirty ||
+            saving}
+        fill={true}
+        loading={saving}>{$_("update")}</Button>
+</div>
 
 <Overlay bind:active={showConfirmation}>
     <ModalContent fill={true}>
@@ -166,7 +213,7 @@
     }
 
     .cta {
-        position: absolute;
+        position: sticky;
         bottom: 0;
         height: 57px;
         width: 100%;
@@ -176,11 +223,14 @@
         flex: 1;
         color: var(--section-txt);
         overflow: auto;
+        overflow-x: hidden;
+        @include nice-scrollbar();
         background-color: transparent;
     }
 
     .form-fields {
         padding: var(--groupForm-edit-pd);
+        padding-bottom: 0;
         @include size-below(xs) {
             padding: 0 $sp3;
         }
@@ -190,6 +240,11 @@
         padding: $sp4;
         background-color: var(--sub-section-bg);
         margin-bottom: $sp3;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
         @include box-shadow(1);
 
         h4 {
@@ -202,6 +257,9 @@
 
         p {
             margin-bottom: $sp4;
+            &:last-child {
+                margin-bottom: 0;
+            }
         }
     }
 </style>

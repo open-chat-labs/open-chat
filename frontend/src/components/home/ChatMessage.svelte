@@ -54,10 +54,13 @@
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
     export let focused: boolean;
-    export let admin: boolean;
     export let preview: boolean;
-    export let isPublic: boolean;
     export let pinned: boolean;
+    export let canPin: boolean;
+    export let canBlockUser: boolean;
+    export let canDelete: boolean;
+    export let canSend: boolean;
+    export let canReact: boolean;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
@@ -76,6 +79,7 @@
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
+    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 
     afterUpdate(() => {
         console.log("updating ChatMessage component");
@@ -143,10 +147,12 @@
     }
 
     function toggleReaction(reaction: string) {
-        dispatch("selectReaction", {
-            message: msg,
-            reaction,
-        });
+        if (canReact) {
+            dispatch("selectReaction", {
+                message: msg,
+                reaction,
+            });
+        }
         showEmojiPicker = false;
     }
 
@@ -211,13 +217,11 @@
             messageIndex: msg.messageIndex,
         });
     }
-
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 </script>
 
 <svelte:window on:resize={recalculateMediaDimensions} />
 
-{#if showEmojiPicker}
+{#if showEmojiPicker && canReact}
     <Overlay dismissible={true} bind:active={showEmojiPicker}>
         <ModalContent hideFooter={true} hideHeader={true} fill={true}>
             <span slot="body">
@@ -264,7 +268,7 @@
         data-index={msg.messageIndex}
         data-id={msg.messageId}
         id={`event-${eventIndex}`}>
-        {#if me && !deleted && !preview}
+        {#if me && !deleted && canReact}
             <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
@@ -349,7 +353,7 @@
                         </div>
                         <div slot="menu">
                             <Menu>
-                                {#if confirmed && groupChat && admin}
+                                {#if confirmed && canPin}
                                     {#if pinned}
                                         <MenuItem on:click={unpinMessage}>
                                             <PinOff
@@ -368,7 +372,7 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                {#if confirmed}
+                                {#if confirmed && canSend}
                                     <MenuItem on:click={reply}>
                                         <Reply
                                             size={$iconSize}
@@ -385,7 +389,7 @@
                                             slot="icon" />
                                         <div slot="text">{$_("replyPrivately")}</div>
                                     </MenuItem>
-                                    {#if admin && isPublic}
+                                    {#if canBlockUser}
                                         <MenuItem on:click={blockUser}>
                                             <Cancel
                                                 size={$iconSize}
@@ -395,11 +399,11 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                {#if me || admin}
-                                    <!-- <MenuItem on:click={editMessage}>
-                                        <PencilOutline size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
-                                        <div slot="text">{$_("editMessage")}</div>
-                                    </MenuItem> -->
+                                <!-- <MenuItem on:click={editMessage}>
+                                    <PencilOutline size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
+                                    <div slot="text">{$_("editMessage")}</div>
+                                </MenuItem> -->
+                                {#if canDelete}
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline
                                             size={$iconSize}
@@ -414,7 +418,7 @@
                 </div>
             {/if}
         </div>
-        {#if !me && !deleted && !preview}
+        {#if !me && !deleted && canReact}
             <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>

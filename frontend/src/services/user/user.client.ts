@@ -55,6 +55,7 @@ import {
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
+    apiGroupPermissions,
     apiMessageContent,
     apiOptional,
     apiReplyContextArgs,
@@ -100,6 +101,7 @@ export class UserClient extends CandidService implements IUserClient {
                         mime_type: "image/jpg",
                     };
                 }, group.avatar?.blobData),
+                permissions: [apiGroupPermissions(group.permissions)],
             }),
             createGroupResponse
         );

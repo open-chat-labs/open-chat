@@ -23,6 +23,24 @@ export const idlFactory = ({ IDL }) => {
   const UserId = CanisterId;
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const PermissionRole = IDL.Variant({
+    'Owner' : IDL.Null,
+    'Admins' : IDL.Null,
+    'Members' : IDL.Null,
+  });
+  const GroupPermissions = IDL.Record({
+    'block_users' : PermissionRole,
+    'change_permissions' : PermissionRole,
+    'delete_messages' : PermissionRole,
+    'send_messages' : PermissionRole,
+    'remove_members' : PermissionRole,
+    'update_group' : PermissionRole,
+    'change_roles' : PermissionRole,
+    'add_members' : PermissionRole,
+    'create_polls' : PermissionRole,
+    'pin_messages' : PermissionRole,
+    'react_to_messages' : PermissionRole,
+  });
   const Avatar = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -30,6 +48,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateGroupArgs = IDL.Record({
     'is_public' : IDL.Bool,
+    'permissions' : IDL.Opt(GroupPermissions),
     'name' : IDL.Text,
     'description' : IDL.Text,
     'history_visible_to_new_joiners' : IDL.Bool,
@@ -308,6 +327,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
+    'permissions' : GroupPermissions,
     'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
     'role' : Role,
@@ -689,6 +709,7 @@ export const idlFactory = ({ IDL }) => {
     'SetToSome' : IDL.Nat,
   });
   const GroupChatSummaryUpdates = IDL.Record({
+    'permissions' : IDL.Opt(GroupPermissions),
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
     'wasm_version' : IDL.Opt(Version),

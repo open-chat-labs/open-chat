@@ -11,6 +11,14 @@
     import { getMinVisibleMessageIndex, isPreviewing } from "../../domain/chat/chat.utils";
     import type { GroupChatSummary, Mention } from "../../domain/chat/chat";
     import PollBuilder from "./PollBuilder.svelte";
+    import {
+        canBlockUsers,
+        canCreatePolls,
+        canDeleteMessages,
+        canPinMessages,
+        canReactToMessages,
+        canSendMessages,
+    } from "../../domain/chat/chat";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -100,6 +108,8 @@
     }
 
     function createPoll() {
+        if (!canCreatePolls($chat)) return;
+
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
         }
@@ -139,6 +149,11 @@
         on:messageRead={messageRead}
         on:chatWith
         {controller}
+        canPin={canPinMessages($chat)}
+        canBlockUser={canBlockUsers($chat)}
+        canDelete={canDeleteMessages($chat)}
+        canSend={canSendMessages($chat)}
+        canReact={canReactToMessages($chat)}
         {preview}
         {firstUnreadMention}
         {firstUnreadMessage}

@@ -334,7 +334,8 @@ export type GroupChatEvent =
     | MessageUnpinned
     | PollVoteRegistered
     | PollVoteDeleted
-    | PollEnded;
+    | PollEnded
+    | PermissionsChanged;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -454,6 +455,13 @@ export type PollEnded = {
     eventIndex: number;
 };
 
+export type PermissionsChanged = {
+    kind: "permissions_changed";
+    oldPermissions: GroupPermissions;
+    newPermissions: GroupPermissions;
+    changedBy: string;
+};
+
 export type MessagePinned = {
     kind: "message_pinned";
     pinnedBy: string;
@@ -470,8 +478,8 @@ export type RoleChanged = {
     kind: "role_changed";
     userIds: string[];
     changedBy: string;
-    oldRole: ParticipantRole;
-    newRole: ParticipantRole;
+    oldRole: MemberRole;
+    newRole: MemberRole;
 };
 
 export type PinnedMessageUpdated = {
@@ -591,20 +599,37 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     description?: string;
     avatarBlobReferenceUpdate?: OptionUpdate<BlobReference>;
     participantCount?: number;
-    myRole?: ParticipantRole;
+    myRole?: MemberRole;
     mentions: Mention[];
     ownerId?: string;
+    permissions?: GroupPermissions;
 };
 
-export type ParticipantRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
+export type MemberRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
 
 export type Participant = {
-    role: ParticipantRole;
+    role: MemberRole;
     userId: string;
 };
 
 export type FullParticipant = Participant & PartialUserSummary & { kind: "full_participant" };
 export type BlockedParticipant = Participant & PartialUserSummary & { kind: "blocked_participant" };
+
+export type PermissionRole = "owner" | "admins" | "members";
+
+export type GroupPermissions = {
+    changePermissions: PermissionRole;
+    changeRoles: PermissionRole;
+    addMembers: PermissionRole;
+    removeMembers: PermissionRole;
+    blockUsers: PermissionRole;
+    deleteMessages: PermissionRole;
+    updateGroup: PermissionRole;
+    pinMessages: PermissionRole;
+    createPolls: PermissionRole;
+    sendMessages: PermissionRole;
+    reactToMessages: PermissionRole;
+};
 
 export type GroupChatDetailsResponse = "caller_not_in_group" | GroupChatDetails;
 
@@ -652,15 +677,16 @@ export type GroupChatSummary = DataContent &
         kind: "group_chat";
         name: string;
         description: string;
-        public: boolean;
         joined: bigint;
         minVisibleEventIndex: number;
         minVisibleMessageIndex: number;
         lastUpdated: bigint;
         participantCount: number;
-        myRole: ParticipantRole;
         mentions: Mention[];
         ownerId: string;
+        public: boolean;
+        myRole: MemberRole;
+        permissions: GroupPermissions;
     };
 
 export type Mention = {
@@ -671,7 +697,7 @@ export type Mention = {
 };
 
 export type CandidateParticipant = {
-    role: ParticipantRole;
+    role: MemberRole;
     user: UserSummary;
 };
 
@@ -682,6 +708,7 @@ export type CandidateGroupChat = {
     isPublic: boolean;
     participants: CandidateParticipant[];
     avatar?: DataContent;
+    permissions: GroupPermissions;
 };
 
 // todo - there are all sorts of error conditions here that we need to deal with but - later
@@ -791,7 +818,8 @@ export type SendMessageResponse =
     | SendMessageRecipientNotFound
     | TransationFailed
     | InvalidPoll
-    | SendMessageNotInGroup;
+    | SendMessageNotInGroup
+    | NotAuthorised;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -834,6 +862,10 @@ export type SendMessageBalanceExceeded = {
 
 export type SendMessageNotInGroup = {
     kind: "not_in_group";
+};
+
+export type NotAuthorised = {
+    kind: "not_authorised";
 };
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error";
@@ -915,6 +947,7 @@ export type ToggleReactionResponse =
     | "invalid"
     | "message_not_found"
     | "not_in_group"
+    | "not_authorised"
     | "chat_not_found";
 
 export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";
@@ -953,3 +986,149 @@ export type RegisterPollVoteResponse =
     | "out_of_range"
     | "poll_not_found"
     | "chat_not_found";
+
+export function canChangePermissions(group: GroupChatSummary): boolean {
+    return isPermitted(group.myRole, group.permissions.changePermissions);
+}
+
+export function canChangeRoles(
+    group: GroupChatSummary,
+    currRole: MemberRole,
+    newRole: MemberRole
+): boolean {
+    if (currRole === newRole) {
+        return false;
+    }
+
+    switch (newRole) {
+        case "super_admin":
+            return false;
+        case "owner":
+            return hasOwnerRights(group.myRole);
+        default:
+            return isPermitted(group.myRole, group.permissions.changeRoles);
+    }
+}
+
+export function canAddMembers(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return !chat.public && isPermitted(chat.myRole, chat.permissions.addMembers);
+    } else {
+        return false;
+    }
+}
+
+export function canRemoveMembers(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return !chat.public && isPermitted(chat.myRole, chat.permissions.removeMembers);
+    } else {
+        return false;
+    }
+}
+
+export function canBlockUsers(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return chat.public && isPermitted(chat.myRole, chat.permissions.blockUsers);
+    } else {
+        return true;
+    }
+}
+
+export function canUnblockUsers(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return chat.public && isPermitted(chat.myRole, chat.permissions.blockUsers);
+    } else {
+        return true;
+    }
+}
+
+export function canDeleteMessages(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.deleteMessages);
+    } else {
+        return true;
+    }
+}
+
+export function canEditGroupDetails(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.updateGroup);
+    } else {
+        return false;
+    }
+}
+
+export function canPinMessages(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.pinMessages);
+    } else {
+        return false;
+    }
+}
+
+export function canCreatePolls(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.createPolls);
+    } else {
+        return true;
+    }
+}
+
+export function canSendMessages(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.sendMessages);
+    } else {
+        return true;
+    }
+}
+
+export function canReactToMessages(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.reactToMessages);
+    } else {
+        return true;
+    }
+}
+
+export function canBeRemoved(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return !hasOwnerRights(chat.myRole);
+    } else {
+        return false;
+    }
+}
+
+export function canLeaveGroup(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return chat.myRole !== "owner";
+    } else {
+        return false;
+    }
+}
+
+export function canDeleteGroup(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return hasOwnerRights(chat.myRole);
+    } else {
+        return false;
+    }
+}
+
+function hasOwnerRights(role: MemberRole): boolean {
+    return role === "owner" || role === "super_admin";
+}
+
+function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean {
+    if (role === "previewer") {
+        return false;
+    }
+
+    switch (permissionRole) {
+        case "owner":
+            return hasOwnerRights(role);
+        case "admins":
+            return role !== "participant";
+        case "members":
+            return true;
+    }
+}

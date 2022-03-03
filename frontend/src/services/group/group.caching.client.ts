@@ -17,10 +17,11 @@ import type {
     UnblockUserResponse,
     DeleteGroupResponse,
     GroupChatSummary,
-    ParticipantRole,
+    MemberRole,
     PinMessageResponse,
     UnpinMessageResponse,
     RegisterPollVoteResponse,
+    GroupPermissions,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -120,7 +121,7 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.editMessage(message);
     }
 
-    changeRole(userId: string, newRole: ParticipantRole): Promise<ChangeRoleResponse> {
+    changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
         return this.client.changeRole(userId, newRole);
     }
 
@@ -128,8 +129,13 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.removeParticipant(userId);
     }
 
-    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
-        return this.client.updateGroup(name, desc, avatar);
+    updateGroup(
+        name: string,
+        desc: string,
+        avatar?: Uint8Array,
+        permissions?: GroupPermissions
+    ): Promise<UpdateGroupResponse> {
+        return this.client.updateGroup(name, desc, avatar, permissions);
     }
 
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse> {

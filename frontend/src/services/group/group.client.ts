@@ -20,10 +20,11 @@ import type {
     UnblockUserResponse,
     DeleteGroupResponse,
     GroupChatSummary,
-    ParticipantRole,
+    MemberRole,
     PinMessageResponse,
     UnpinMessageResponse,
     RegisterPollVoteResponse,
+    GroupPermissions,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import { CandidService } from "../candidService";
@@ -52,6 +53,7 @@ import { CachingGroupClient } from "./group.caching.client";
 import type { Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
 import {
+    apiGroupPermissions,
     apiMessageContent,
     apiOptional,
     apiUser,
@@ -166,7 +168,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
-    changeRole(userId: string, newRole: ParticipantRole): Promise<ChangeRoleResponse> {
+    changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
         const new_role = apiRole(newRole);
         if (new_role === undefined) {
             throw new Error(`Cannot change user's role to: ${newRole}`);
@@ -229,7 +231,12 @@ export class GroupClient extends CandidService implements IGroupClient {
             });
     }
 
-    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
+    updateGroup(
+        name: string,
+        desc: string,
+        avatar?: Uint8Array,
+        permissions?: GroupPermissions
+    ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group({
                 name: name,
@@ -244,6 +251,10 @@ export class GroupClient extends CandidService implements IGroupClient {
                                   data: Array.from(avatar),
                               },
                           },
+                permissions: apiOptional(
+                    (permissions) => apiGroupPermissions(permissions),
+                    permissions
+                ),
             }),
             updateGroupResponse
         );

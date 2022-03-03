@@ -65,6 +65,19 @@ const defaultGroupChat: GroupChatSummary = {
     myRole: "admin",
     mentions: [],
     ownerId: "some_owner",
+    permissions: {
+        changePermissions: "admins",
+        changeRoles: "admins",
+        addMembers: "admins",
+        removeMembers: "admins",
+        blockUsers: "admins",
+        deleteMessages: "admins",
+        updateGroup: "admins",
+        pinMessages: "admins",
+        createPolls: "members",
+        sendMessages: "members",
+        reactToMessages: "members",
+    },
 };
 
 function directChatId(id: number): DirectChatSummary {

@@ -9,7 +9,7 @@ import type {
     GroupChatSummary,
     Mention,
     Message,
-    ParticipantRole,
+    MemberRole,
 } from "../domain/chat/chat";
 import {
     compareChats,
@@ -653,7 +653,7 @@ export class HomeController {
                 } else if (resp.kind === "already_in_group") {
                     this.addOrReplaceChat({
                         ...group,
-                        myRole: "participant" as ParticipantRole,
+                        myRole: "participant" as MemberRole,
                     });
                     this.selectChat(group.chatId);
                     return true;

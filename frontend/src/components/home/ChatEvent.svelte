@@ -5,6 +5,7 @@
     import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
     import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
     import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
+    import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
     import type { UserSummary } from "../../domain/user/user";
@@ -27,10 +28,13 @@
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
     export let focused: boolean;
-    export let admin: boolean;
     export let preview: boolean;
-    export let isPublic: boolean;
     export let pinned: boolean;
+    export let canPin: boolean;
+    export let canBlockUser: boolean;
+    export let canDelete: boolean;
+    export let canSend: boolean;
+    export let canReact: boolean;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -55,10 +59,13 @@
         {me}
         {first}
         {last}
-        {admin}
         {preview}
-        {isPublic}
         {pinned}
+        {canPin}
+        {canBlockUser}
+        {canDelete}
+        {canSend}
+        {canReact}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo
@@ -144,6 +151,8 @@
         changedBy={event.event.changedBy}
         property={$_("groupAvatar")}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "permissions_changed"}
+    <PermissionsChangedEvent {user} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "poll_ended"}
     <div>Unexpected event type</div>
 {/if}

@@ -11,6 +11,7 @@
         MessageContent,
         PollContent,
     } from "../../domain/chat/chat";
+    import { canSendMessages } from "../../domain/chat/chat";
     import { getMessageContent, getStorageRequiredForMessage } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import Loading from "../Loading.svelte";
@@ -33,6 +34,7 @@
     $: fileToAttach = controller.fileToAttach;
     $: editingEvent = controller.editingEvent;
     $: replyingTo = controller.replyingTo;
+    $: canSend = canSendMessages($chat);
 
     function cancelReply() {
         controller.cancelReply();
@@ -73,6 +75,7 @@
         mentioned: User[],
         fileToAttach: MessageContent | undefined
     ) {
+        if (!canSend) return;
         if (textContent || fileToAttach) {
             const nextEventIndex = controller.getNextEventIndex();
             const storageRequired = getStorageRequiredForMessage(fileToAttach);
@@ -106,6 +109,7 @@
     }
 
     function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
+        if (!canSend) return;
         let [text, mentioned] = ev.detail;
         if ($editingEvent !== undefined) {
             editMessageWithAttachment(text, $fileToAttach, $editingEvent);
@@ -187,6 +191,7 @@
         bind:showEmojiPicker
         on:paste={onPaste}
         on:drop={onDrop}
+        {canSend}
         {preview}
         {blocked}
         {joining}

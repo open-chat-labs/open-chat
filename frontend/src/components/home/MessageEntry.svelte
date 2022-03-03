@@ -24,6 +24,7 @@
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
+    export let canSend: boolean;
     export let showEmojiPicker = false;
     export let joining: GroupChatSummary | undefined;
 
@@ -338,6 +339,10 @@
         <div class="blocked">
             {$_("userIsBlocked")}
         </div>
+    {:else if !canSend}
+        <div class="disabled">
+            {$_("readOnlyGroup")}
+        </div>
     {:else if preview}
         <div class="preview">
             <Button secondary={true} small={true} on:click={cancelPreview}>
@@ -462,6 +467,7 @@
     }
 
     .blocked,
+    .disabled,
     .preview {
         height: 42px;
         color: var(--entry-input-txt);

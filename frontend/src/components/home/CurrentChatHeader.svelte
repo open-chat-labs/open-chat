@@ -3,7 +3,6 @@
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import Poll from "svelte-material-icons/Poll.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import SectionHeader from "../SectionHeader.svelte";
@@ -17,6 +16,7 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Bell from "svelte-material-icons/Bell.svelte";
+    import Poll from "svelte-material-icons/Poll.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -26,7 +26,13 @@
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary, GroupChatSummary } from "../../domain/chat/chat";
+    import type { ChatSummary } from "../../domain/chat/chat";
+    import {
+        canAddMembers,
+        canCreatePolls,
+        canDeleteGroup,
+        canLeaveGroup,
+    } from "../../domain/chat/chat";
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
@@ -86,21 +92,15 @@
     }
 
     function showGroupDetails() {
-        if ($selectedChatSummary.kind === "group_chat") {
-            dispatch("showGroupDetails");
-        }
+        dispatch("showGroupDetails");
     }
 
     function showParticipants() {
-        if ($selectedChatSummary.kind === "group_chat") {
-            dispatch("showParticipants");
-        }
+        dispatch("showParticipants");
     }
 
     function addParticipants() {
-        if ($selectedChatSummary.kind === "group_chat") {
-            dispatch("addParticipants");
-        }
+        dispatch("addParticipants");
     }
 
     function copyUrl() {
@@ -119,13 +119,7 @@
     }
 
     function leaveGroup() {
-        if ($selectedChatSummary.kind === "group_chat") {
-            if ($selectedChatSummary.myRole === "owner") {
-                toastStore.showFailureToast("ownerCantLeave");
-            } else {
-                dispatch("leaveGroup", $selectedChatSummary.chatId);
-            }
-        }
+        dispatch("leaveGroup", $selectedChatSummary.chatId);
     }
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
@@ -147,10 +141,6 @@
                 : $_("privateGroupWithN", { values: { number: chatSummary.participantCount } }),
             typing: false,
         };
-    }
-
-    function canAddParticipants(chat: GroupChatSummary): boolean {
-        return !chat.public && (chat.myRole === "admin" || chat.myRole === "owner");
     }
 
     function openUserProfile() {
@@ -260,7 +250,7 @@
                                 </MenuItem>
                             {/if}
                         {:else if $selectedChatSummary.kind === "group_chat"}
-                            {#if $selectedChatSummary.myRole === "owner"}
+                            {#if canDeleteGroup($selectedChatSummary)}
                                 <MenuItem on:click={deleteGroup}>
                                     <DeleteAlertOutline
                                         size={$iconSize}
@@ -276,13 +266,15 @@
                                     slot="icon" />
                                 <div slot="text">{$_("groupDetails")}</div>
                             </MenuItem>
-                            <MenuItem on:click={leaveGroup}>
-                                <LocationExit
-                                    size={$iconSize}
-                                    color={"var(--icon-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("leaveGroup")}</div>
-                            </MenuItem>
+                            {#if canLeaveGroup($selectedChatSummary)}
+                                <MenuItem on:click={leaveGroup}>
+                                    <LocationExit
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("leaveGroup")}</div>
+                                </MenuItem>
+                            {/if}
                             <MenuItem on:click={showParticipants}>
                                 <AccountMultiple
                                     size={$iconSize}
@@ -290,7 +282,7 @@
                                     slot="icon" />
                                 <div slot="text">{$_("participants")}</div>
                             </MenuItem>
-                            {#if canAddParticipants($selectedChatSummary)}
+                            {#if canAddMembers($selectedChatSummary)}
                                 <MenuItem on:click={addParticipants}>
                                     <AccountPlusOutline
                                         size={$iconSize}
@@ -325,10 +317,12 @@
                                 </MenuItem>
                             {/if}
                         {/if}
-                        <MenuItem on:click={createPoll}>
-                            <Poll size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                            <div slot="text">{$_("poll.create")}</div>
-                        </MenuItem>
+                        {#if canCreatePolls($selectedChatSummary)}
+                            <MenuItem on:click={createPoll}>
+                                <Poll size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                                <div slot="text">{$_("poll.create")}</div>
+                            </MenuItem>
+                        {/if}
                         {#if unreadMessages > 0}
                             <MenuItem on:click={markAllRead}>
                                 <CheckboxMultipleMarked

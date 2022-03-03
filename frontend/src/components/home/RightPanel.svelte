@@ -33,6 +33,7 @@
                   blobData: $chat.blobData,
               }
             : undefined,
+        permissions: {...$chat.permissions},
     };
 
     function dismissAsAdmin(ev: CustomEvent<string>): void {

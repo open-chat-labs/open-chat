@@ -38,10 +38,15 @@
     export let preview: boolean;
     export let firstUnreadMention: Mention | undefined;
     export let firstUnreadMessage: number | undefined;
+    export let canPin: boolean;
+    export let canBlockUser: boolean;
+    export let canDelete: boolean;
+    export let canSend: boolean;
+    export let canReact: boolean;
 
+    $: chat = controller.chat;
     $: loading = controller.loading;
     $: events = controller.events;
-    $: chat = controller.chat;
     $: focusMessageIndex = controller.focusMessageIndex;
     $: markRead = controller.markRead;
     $: pinned = controller.pinnedMessages;
@@ -202,6 +207,7 @@
     }
 
     function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
+        if (!canReact) return;
         // optimistic update
         controller.toggleReaction(
             ev.detail.message.messageId,
@@ -249,6 +255,7 @@
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
+        if (!canSend) return;
         controller.replyTo(ev.detail);
     }
 
@@ -257,6 +264,7 @@
     }
 
     function deleteMessage(ev: CustomEvent<Message>) {
+        if (!canDelete) return;
         controller.deleteMessage(ev.detail.messageId, controller.user.userId);
 
         const apiPromise =
@@ -306,15 +314,11 @@
     }
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
+        if (!canBlockUser) return;
         controller.blockUser(ev.detail.userId);
     }
 
     $: groupedEvents = groupEvents($events).reverse();
-
-    $: admin =
-        $chat.kind === "group_chat" && ($chat.myRole === "admin" || $chat.myRole === "owner");
-
-    $: isPublic = $chat.kind === "group_chat" && $chat.public;
 
     $: {
         if (controller.chatId !== currentChatId) {
@@ -419,10 +423,12 @@
     }
 
     function pinMessage(ev: CustomEvent<Message>) {
+        if (!canPin) return;
         controller.pinMessage(ev.detail.messageIndex);
     }
 
     function unpinMessage(ev: CustomEvent<Message>) {
+        if (!canPin) return;
         controller.unpinMessage(ev.detail.messageIndex);
     }
 
@@ -454,9 +460,12 @@
                         me={isMe(evt)}
                         first={i === 0}
                         last={i + 1 === userGroup.length}
-                        {admin}
                         {preview}
-                        {isPublic}
+                        {canPin}
+                        {canBlockUser}
+                        {canDelete}
+                        {canSend}
+                        {canReact}
                         pinned={isPinned($pinned, evt)}
                         on:chatWith
                         on:replyTo={replyTo}

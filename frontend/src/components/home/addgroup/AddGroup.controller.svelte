@@ -20,25 +20,36 @@
     let creatingCanister = false;
     let addingParticipants = false;
     let canisterId: string | undefined;
-    let candidateGroup: CandidateGroupChat = {
-        name: "",
-        description: "",
-        historyVisible: false,
-        isPublic: false,
-        participants: [],
-    };
+    let candidateGroup: CandidateGroupChat = defaultCandidateGroup();
 
     function reset() {
         newGroupState = "group_form";
         creatingCanister = false;
         addingParticipants = false;
         canisterId = undefined;
-        candidateGroup = {
+        candidateGroup = defaultCandidateGroup();
+    }
+
+    function defaultCandidateGroup(): CandidateGroupChat {
+        return {
             name: "",
             description: "",
             historyVisible: false,
             isPublic: false,
             participants: [],
+            permissions: {
+                changePermissions: "admins",
+                changeRoles: "admins",
+                addMembers: "admins",
+                removeMembers: "admins",
+                blockUsers: "admins",
+                deleteMessages: "admins",
+                updateGroup: "admins",
+                pinMessages: "admins",
+                createPolls: "members",
+                sendMessages: "members",
+                reactToMessages: "members",
+            }
         };
     }
 

@@ -10,11 +10,12 @@ import type {
     EventWrapper,
     FullParticipant,
     GroupChatDetails,
+    GroupPermissions,
     LocalReaction,
     Message,
     MessageContent,
     Participant,
-    ParticipantRole,
+    MemberRole,
     SendMessageSuccess,
     UpdateGroupResponse,
 } from "../domain/chat/chat";
@@ -930,11 +931,7 @@ export class ChatController {
         );
     }
 
-    private undoTransferOwnershipLocally(
-        me: string,
-        them: string,
-        theirRole: ParticipantRole
-    ): void {
+    private undoTransferOwnershipLocally(me: string, them: string, theirRole: MemberRole): void {
         this.participants.update((ps) =>
             ps.map((p) => {
                 if (p.userId === them) {
@@ -1080,7 +1077,7 @@ export class ChatController {
         this.participants.update((ps) => [
             ...users.map((u) => ({
                 userId: u.userId,
-                role: "participant" as ParticipantRole,
+                role: "participant" as MemberRole,
             })),
             ...ps,
         ]);
@@ -1130,9 +1127,14 @@ export class ChatController {
             });
     }
 
-    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<boolean> {
+    updateGroup(
+        name: string,
+        desc: string,
+        avatar?: Uint8Array,
+        permissions?: GroupPermissions
+    ): Promise<boolean> {
         return this.api
-            .updateGroup(this.chatId, name, desc, avatar)
+            .updateGroup(this.chatId, name, desc, avatar, permissions)
             .then((resp) => {
                 const err = this.groupUpdateErrorMessage(resp);
                 if (err) {
