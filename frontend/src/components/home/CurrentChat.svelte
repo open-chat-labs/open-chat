@@ -13,6 +13,7 @@
     import PollBuilder from "./PollBuilder.svelte";
     import {
         canBlockUsers,
+        canCreatePolls,
         canDeleteMessages,
         canPinMessages,
         canReactToMessages,
@@ -107,6 +108,8 @@
     }
 
     function createPoll() {
+        if (!canCreatePolls($chat)) return;
+
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
         }

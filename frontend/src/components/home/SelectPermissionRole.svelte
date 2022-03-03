@@ -7,27 +7,22 @@
     export let rolePermission: PermissionRole;
     export let viewMode: boolean = false;
 
-    function permissionRoleText() {
-        switch (rolePermission) {
-            case "owner":
-                return $_("group.permissions.ownerOnly");
-            case "admins":
-                return $_("group.permissions.ownerAndAdmins");
-            case "members":
-                return $_("group.permissions.allMembers");
-        }
-    }
+    let textLookup: Record<PermissionRole, string> = {
+        owner: $_("group.permissions.ownerOnly"),
+        admins: $_("group.permissions.ownerAndAdmins"),
+        members: $_("group.permissions.allMembers"),
+    };
 </script>
 
 <li>
     <span>{label}</span>
     {#if viewMode}
-        <div>{permissionRoleText()}</div>
+        <div>{textLookup[rolePermission]}</div>
     {:else}
-        <Select bind:value={rolePermission} marginBottom={0}>
-            <option value={"owner"}>{$_("group.permissions.ownerOnly")}</option>
-            <option value={"admins"}>{$_("group.permissions.ownerAndAdmins")}</option>
-            <option value={"members"}>{$_("group.permissions.allMembers")}</option>
+        <Select bind:value={rolePermission} margin={false}>
+            <option value={"owner"}>{textLookup["owner"]}</option>
+            <option value={"admins"}>{textLookup["admins"]}</option>
+            <option value={"members"}>{textLookup["members"]}</option>
         </Select>
     {/if}
 </li>
