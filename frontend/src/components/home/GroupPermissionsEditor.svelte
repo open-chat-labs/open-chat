@@ -5,57 +5,45 @@
 
     export let permissions: GroupPermissions;
     export let isPublic: boolean;
-    export let viewMode: boolean = false;
 </script>
 
 <ul>
     <SelectPermissionRole
         label={$_("group.permissions.changePermissions")}
-        bind:rolePermission={permissions.changePermissions}
-        {viewMode} />
+        bind:rolePermission={permissions.changePermissions} />
     <SelectPermissionRole
         label={$_("group.permissions.changeRoles")}
-        bind:rolePermission={permissions.changeRoles}
-        {viewMode} />
+        bind:rolePermission={permissions.changeRoles} />
     {#if isPublic}
         <SelectPermissionRole
             label={$_("group.permissions.blockUsers")}
-            bind:rolePermission={permissions.blockUsers}
-            {viewMode} />
+            bind:rolePermission={permissions.blockUsers} />
     {:else}
         <SelectPermissionRole
             label={$_("group.permissions.addMembers")}
-            bind:rolePermission={permissions.addMembers}
-            {viewMode} />
+            bind:rolePermission={permissions.addMembers} />
         <SelectPermissionRole
             label={$_("group.permissions.removeMembers")}
-            bind:rolePermission={permissions.removeMembers}
-            {viewMode} />
+            bind:rolePermission={permissions.removeMembers} />
     {/if}
     <SelectPermissionRole
         label={$_("group.permissions.deleteMessages")}
-        bind:rolePermission={permissions.deleteMessages}
-        {viewMode} />
+        bind:rolePermission={permissions.deleteMessages} />
     <SelectPermissionRole
         label={$_("group.permissions.updateGroup")}
-        bind:rolePermission={permissions.updateGroup}
-        {viewMode} />
+        bind:rolePermission={permissions.updateGroup} />
     <SelectPermissionRole
         label={$_("group.permissions.pinMessages")}
-        bind:rolePermission={permissions.pinMessages}
-        {viewMode} />
+        bind:rolePermission={permissions.pinMessages} />
     <SelectPermissionRole
         label={$_("group.permissions.createPolls")}
-        bind:rolePermission={permissions.createPolls}
-        {viewMode} />
+        bind:rolePermission={permissions.createPolls} />
     <SelectPermissionRole
         label={$_("group.permissions.sendMessages")}
-        bind:rolePermission={permissions.sendMessages}
-        {viewMode} />
+        bind:rolePermission={permissions.sendMessages} />
     <SelectPermissionRole
         label={$_("group.permissions.reactToMessages")}
-        bind:rolePermission={permissions.reactToMessages}
-        {viewMode} />
+        bind:rolePermission={permissions.reactToMessages} />
 </ul>
 
 <style type="text/scss">

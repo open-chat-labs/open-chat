@@ -26,6 +26,8 @@ import type {
     CandidateGroupChat,
     PollVotes,
     PollContent,
+    MemberRole,
+    PermissionRole,
 } from "./chat";
 import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -1017,4 +1019,150 @@ export function removeVoteFromPoll(userId: string, answerIdx: number, votes: Pol
     }
     votes.user = votes.user.filter((a) => a !== answerIdx);
     return votes;
+}
+
+export function canChangePermissions(group: GroupChatSummary): boolean {
+    return isPermitted(group.myRole, group.permissions.changePermissions);
+}
+
+export function canChangeRoles(
+    group: GroupChatSummary,
+    currRole: MemberRole,
+    newRole: MemberRole
+): boolean {
+    if (currRole === newRole) {
+        return false;
+    }
+
+    switch (newRole) {
+        case "super_admin":
+            return false;
+        case "owner":
+            return hasOwnerRights(group.myRole);
+        default:
+            return isPermitted(group.myRole, group.permissions.changeRoles);
+    }
+}
+
+export function canAddMembers(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return !chat.public && isPermitted(chat.myRole, chat.permissions.addMembers);
+    } else {
+        return false;
+    }
+}
+
+export function canRemoveMembers(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return !chat.public && isPermitted(chat.myRole, chat.permissions.removeMembers);
+    } else {
+        return false;
+    }
+}
+
+export function canBlockUsers(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return chat.public && isPermitted(chat.myRole, chat.permissions.blockUsers);
+    } else {
+        return true;
+    }
+}
+
+export function canUnblockUsers(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return chat.public && isPermitted(chat.myRole, chat.permissions.blockUsers);
+    } else {
+        return true;
+    }
+}
+
+export function canDeleteMessages(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.deleteMessages);
+    } else {
+        return true;
+    }
+}
+
+export function canEditGroupDetails(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.updateGroup);
+    } else {
+        return false;
+    }
+}
+
+export function canPinMessages(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.pinMessages);
+    } else {
+        return false;
+    }
+}
+
+export function canCreatePolls(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.createPolls);
+    } else {
+        return true;
+    }
+}
+
+export function canSendMessages(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.sendMessages);
+    } else {
+        return true;
+    }
+}
+
+export function canReactToMessages(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.reactToMessages);
+    } else {
+        return true;
+    }
+}
+
+export function canBeRemoved(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return !hasOwnerRights(chat.myRole);
+    } else {
+        return false;
+    }
+}
+
+export function canLeaveGroup(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return chat.myRole !== "owner";
+    } else {
+        return false;
+    }
+}
+
+export function canDeleteGroup(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return hasOwnerRights(chat.myRole);
+    } else {
+        return false;
+    }
+}
+
+function hasOwnerRights(role: MemberRole): boolean {
+    return role === "owner" || role === "super_admin";
+}
+
+function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean {
+    if (role === "previewer") {
+        return false;
+    }
+
+    switch (permissionRole) {
+        case "owner":
+            return hasOwnerRights(role);
+        case "admins":
+            return role !== "participant";
+        case "members":
+            return true;
+    }
 }

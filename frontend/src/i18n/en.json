@@ -375,25 +375,33 @@
         "privateGroup": "Private group",
         "groupInfo": "Group info",
         "visibility": "Visibility",
+        "role": {
+            "owner": "Owner",
+            "admins": "Admins",
+            "members": "Members"
+        },
         "permissions": {
+            "whoCan": "Who can ",
             "permissions": "Permissons",
-            "ownerOnly": "Owner",
-            "ownerAndAdmins": "Owner and admins",
-            "allMembers": "All members",
-            "changePermissions": "Who can change permissions",
-            "changeRoles": "Who can change member roles",
-            "addMembers": "Who can add members",
-            "removeMembers": "Who can remove members",
-            "blockUsers": "Who can block/unblock users",
-            "deleteMessages": "Who can delete messages",
-            "updateGroup": "Who can edit group info",
-            "pinMessages": "Who can pin messages",
-            "createPolls": "Who can create polls",
-            "sendMessages": "Who can send messages",
-            "reactToMessages": "Who can react to messages"
+            "ownerOnly": "Owner can",
+            "ownerAndAdmins": "Owner and admins can",
+            "allMembers": "All members can",
+            "changePermissions": "change permissions",
+            "changeRoles": "change member roles",
+            "addMembers": "add members",
+            "removeMembers": "remove members",
+            "blockUsers": "block/unblock users",
+            "deleteMessages": "delete messages",
+            "updateGroup": "edit group info",
+            "pinMessages": "pin messages",
+            "createPolls": "create polls",
+            "sendMessages": "send messages",
+            "reactToMessages": "react to messages"
         }
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",
-    "readOnlyGroup": "This a read-only group"
+    "readOnlyGroup": "This a read-only group",
+    "memberCount": "{count} member(s)",
+    "ownedBy": "Owned by @{username}"
 }

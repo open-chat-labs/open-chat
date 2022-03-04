@@ -44,6 +44,8 @@
         canBlockUser ||
         canUnblockUser;
 
+    $: isBlocked = participant.kind === "blocked_participant";
+
     function removeUser() {
         dispatch("removeParticipant", participant.userId);
     }
@@ -131,53 +133,62 @@
                 </span>
                 <span slot="menu">
                     <Menu>
-                        {#if canUnblockUser}
-                            <MenuItem on:click={unblockUser}>
-                                <Cancel size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                                <div slot="text">{$_("unblockUser")}</div>
-                            </MenuItem>
-                        {/if}
-                        {#if canDismissAdmin}
-                            <MenuItem on:click={dismissAsAdmin}>
-                                <AccountRemoveOutline
-                                    size={$iconSize}
-                                    color={"var(--icon-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("dismissAsAdmin")}</div>
-                            </MenuItem>
-                        {/if}
-                        {#if canMakeAdmin}
-                            <MenuItem on:click={makeAdmin}>
-                                <AccountPlusOutline
-                                    size={$iconSize}
-                                    color={"var(--icon-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("makeAdmin")}</div>
-                            </MenuItem>
-                        {/if}
-                        {#if canBlockUser}
-                            <MenuItem on:click={blockUser}>
-                                <Cancel size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
-                                <div slot="text">{$_("blockUser")}</div>
-                            </MenuItem>
-                        {/if}
-                        {#if canRemoveMember}
-                            <MenuItem on:click={removeUser}>
-                                <MinusCircleOutline
-                                    size={$iconSize}
-                                    color={"var(--icon-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("remove")}</div>
-                            </MenuItem>
-                        {/if}
-                        {#if canTransferOwnership}
-                            <MenuItem on:click={transferOwnership}>
-                                <AccountArrowLeftOutline
-                                    size={$iconSize}
-                                    color={"var(--icon-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("transferOwnership")}</div>
-                            </MenuItem>
+                        {#if isBlocked}
+                            {#if canUnblockUser}
+                                <MenuItem on:click={unblockUser}>
+                                    <Cancel
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("unblockUser")}</div>
+                                </MenuItem>
+                            {/if}
+                        {:else}
+                            {#if canDismissAdmin}
+                                <MenuItem on:click={dismissAsAdmin}>
+                                    <AccountRemoveOutline
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("dismissAsAdmin")}</div>
+                                </MenuItem>
+                            {/if}
+                            {#if canMakeAdmin}
+                                <MenuItem on:click={makeAdmin}>
+                                    <AccountPlusOutline
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("makeAdmin")}</div>
+                                </MenuItem>
+                            {/if}
+                            {#if canBlockUser}
+                                <MenuItem on:click={blockUser}>
+                                    <Cancel
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("blockUser")}</div>
+                                </MenuItem>
+                            {/if}
+                            {#if canRemoveMember}
+                                <MenuItem on:click={removeUser}>
+                                    <MinusCircleOutline
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("remove")}</div>
+                                </MenuItem>
+                            {/if}
+                            {#if canTransferOwnership}
+                                <MenuItem on:click={transferOwnership}>
+                                    <AccountArrowLeftOutline
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("transferOwnership")}</div>
+                                </MenuItem>
+                            {/if}
                         {/if}
                     </Menu>
                 </span>

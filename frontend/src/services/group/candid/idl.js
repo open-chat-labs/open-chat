@@ -15,6 +15,7 @@ export const idlFactory = ({ IDL }) => {
   const AddParticipantsPartialSuccessResult = IDL.Record({
     'errors' : IDL.Vec(UserId),
     'users_blocked_from_group' : IDL.Vec(UserId),
+    'users_not_authorized_to_add' : IDL.Vec(UserId),
     'users_added' : IDL.Vec(UserId),
     'users_who_blocked_request' : IDL.Vec(UserId),
     'users_already_in_group' : IDL.Vec(UserId),

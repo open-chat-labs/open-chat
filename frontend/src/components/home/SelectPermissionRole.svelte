@@ -1,44 +1,72 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import type { PermissionRole } from "../../domain/chat/chat";
-    import Select from "../Select.svelte";
+    import Legend from "../Legend.svelte";
 
     export let label: string;
     export let rolePermission: PermissionRole;
-    export let viewMode: boolean = false;
 
-    let textLookup: Record<PermissionRole, string> = {
-        owner: $_("group.permissions.ownerOnly"),
-        admins: $_("group.permissions.ownerAndAdmins"),
-        members: $_("group.permissions.allMembers"),
-    };
+    let roles: PermissionRole[] = ["owner", "admins", "members"];
 </script>
 
 <li>
-    <span>{label}</span>
-    {#if viewMode}
-        <div>{textLookup[rolePermission]}</div>
-    {:else}
-        <Select bind:value={rolePermission} margin={false}>
-            <option value={"owner"}>{textLookup["owner"]}</option>
-            <option value={"admins"}>{textLookup["admins"]}</option>
-            <option value={"members"}>{textLookup["members"]}</option>
-        </Select>
-    {/if}
+    <fieldset>
+        <legend>
+            <Legend>{`${$_("group.permissions.whoCan")} ${label}`}</Legend>
+        </legend>
+        <div class="roles">
+            {#each roles as r, i (r)}
+                <div
+                    class="role"
+                    on:click={() => (rolePermission = r)}
+                    class:selected={roles.indexOf(rolePermission) >= roles.indexOf(r)}>
+                    {$_(`group.role.${r}`)}
+                </div>
+                <div class="arrow">></div>
+            {/each}
+        </div>
+    </fieldset>
 </li>
 
 <style type="text/scss">
     li {
         @include font(book, normal, fs-90);
 
-        span {
-            @include font(mediumBold, normal, fs-90);
-        }
-
         margin-bottom: $sp4;
 
         &:last-child {
             margin-bottom: 0;
+        }
+    }
+
+    fieldset {
+        border: 1px solid var(--input-bd);
+        border-radius: $sp2;
+        padding: $sp3;
+    }
+
+    .roles {
+        display: flex;
+        gap: $sp3;
+        align-items: center;
+
+        .arrow:last-child {
+            display: none;
+        }
+
+        .role {
+            border-radius: 22px;
+            border: 1px solid var(--accent);
+            @include font(book, normal, fs-80);
+            text-transform: lowercase;
+            padding: $sp2 $sp3;
+            text-align: center;
+            cursor: pointer;
+
+            &.selected {
+                background-color: var(--accent);
+                color: #fff;
+            }
         }
     }
 </style>

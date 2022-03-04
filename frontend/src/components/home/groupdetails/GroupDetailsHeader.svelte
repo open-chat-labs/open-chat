@@ -6,6 +6,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
+    import { ScreenWidth, screenWidth } from "../../../stores/screenDimensions";
 
     export let saving: boolean;
 
@@ -22,7 +23,7 @@
     }
 </script>
 
-<SectionHeader flush={true}>
+<SectionHeader flush={$screenWidth !== ScreenWidth.ExtraSmall}>
     <span title={$_("participants")} class="participants" on:click={showParticipants}>
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />

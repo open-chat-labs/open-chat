@@ -18,7 +18,7 @@
         canPinMessages,
         canReactToMessages,
         canSendMessages,
-    } from "../../domain/chat/chat";
+    } from "../../domain/chat/chat.utils";
 
     export let controller: ChatController;
     export let blocked: boolean;

@@ -13,12 +13,16 @@
     import { avatarUrl } from "../../../domain/user/user.utils";
     import type { UpdatedGroup } from "../../../fsm/rightPanel";
     import type { GroupChatSummary, GroupPermissions } from "../../../domain/chat/chat";
-    import { canChangePermissions, canEditGroupDetails } from "../../../domain/chat/chat";
+    import { canChangePermissions, canEditGroupDetails } from "../../../domain/chat/chat.utils";
     import { createEventDispatcher } from "svelte";
-    import type { Readable } from "svelte/store";
     import type { ChatController } from "../../../fsm/chat.controller";
+    import { userStore } from "../../../stores/user";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
+    import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
+    import Legend from "../../Legend.svelte";
+    import ViewUserProfile from "../profile/ViewUserProfile.svelte";
+    import Markdown from "../Markdown.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -27,8 +31,9 @@
 
     export let controller: ChatController;
     export let updatedGroup: UpdatedGroup;
+    export let originalGroup: GroupChatSummary;
 
-    $: chat = controller.chat as Readable<GroupChatSummary>;
+    $: participants = controller.participants;
 
     let showConfirmation = false;
     let confirmed = false;
@@ -36,15 +41,30 @@
     let groupInfoOpen = true;
     let visibilityOpen = true;
     let permissionsOpen = false;
+    let viewProfile = false;
+    let myGroup = controller.user.userId === originalGroup.ownerId;
 
-    $: nameDirty = updatedGroup.name !== $chat.name;
-    $: descDirty = updatedGroup.desc !== $chat.description;
-    $: avatarDirty = updatedGroup.avatar?.blobUrl !== $chat.blobUrl;
-    $: permissionsDirty = havePermissionsChanged($chat.permissions, updatedGroup.permissions);
+    $: nameDirty = updatedGroup.name !== originalGroup.name;
+    $: descDirty = updatedGroup.desc !== originalGroup.description;
+    $: avatarDirty = updatedGroup.avatar?.blobUrl !== originalGroup.blobUrl;
+    $: permissionsDirty = havePermissionsChanged(
+        originalGroup.permissions,
+        updatedGroup.permissions
+    );
     $: dirty = nameDirty || descDirty || avatarDirty || permissionsDirty;
-    $: canEdit = canEditGroupDetails($chat);
-    $: canEditPermissions = canChangePermissions($chat);
+    $: canEdit = canEditGroupDetails(originalGroup);
+    $: canEditPermissions = canChangePermissions(originalGroup);
     $: avatarSrc = avatarUrl(updatedGroup.avatar, "../assets/group.svg");
+
+    function openUserProfile() {
+        if (!myGroup) {
+            viewProfile = true;
+        }
+    }
+
+    function closeUserProfile() {
+        viewProfile = false;
+    }
 
     function havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
         return (
@@ -96,7 +116,7 @@
             .then((success) => {
                 if (success) {
                     dispatch("updateChat", {
-                        ...$chat,
+                        ...originalGroup,
                         name: updatedGroup.name,
                         description: updatedGroup.desc,
                         blobUrl: updatedGroup.avatar?.blobUrl,
@@ -107,7 +127,22 @@
             })
             .finally(() => (showConfirmation = saving = false));
     }
+
+    function chatWithOwner() {
+        if (!myGroup) {
+            closeUserProfile();
+            dispatch("chatWith", originalGroup.ownerId);
+            dispatch("close");
+        }
+    }
 </script>
+
+{#if viewProfile}
+    <ViewUserProfile
+        userId={originalGroup.ownerId}
+        on:openDirectChat={chatWithOwner}
+        on:close={closeUserProfile} />
+{/if}
 
 <GroupDetailsHeader {saving} on:showParticipants={showParticipants} on:close={close} />
 
@@ -124,61 +159,90 @@
                 {:else}
                     <Avatar url={avatarSrc} size={AvatarSize.ExtraLarge} />
                 {/if}
+
+                {#if !canEdit}
+                    <h3>{originalGroup.name}</h3>
+                    <p class="members">
+                        {$_("memberCount", { values: { count: $participants.length } })}
+                    </p>
+                    <p class="owned-by" on:click={openUserProfile} class:my-group={myGroup}>
+                        {$_("ownedBy", {
+                            values: {
+                                username: $userStore[originalGroup.ownerId]?.username ?? "uknown",
+                            },
+                        })}
+                    </p>
+                {/if}
             </div>
 
-            <Input
-                invalid={false}
-                disabled={saving || !canEdit}
-                autofocus={false}
-                bind:value={updatedGroup.name}
-                minlength={MIN_LENGTH}
-                maxlength={MAX_LENGTH}
-                countdown={true}
-                placeholder={$_("newGroupName")} />
+            {#if canEdit}
+                <Input
+                    invalid={false}
+                    disabled={saving || !canEdit}
+                    autofocus={false}
+                    bind:value={updatedGroup.name}
+                    minlength={MIN_LENGTH}
+                    maxlength={MAX_LENGTH}
+                    countdown={true}
+                    placeholder={$_("newGroupName")} />
 
-            <TextArea
-                disabled={saving || !canEdit}
-                bind:value={updatedGroup.desc}
-                invalid={false}
-                maxlength={MAX_DESC_LENGTH}
-                placeholder={$_("newGroupDesc")} />
+                <TextArea
+                    disabled={saving || !canEdit}
+                    bind:value={updatedGroup.desc}
+                    invalid={false}
+                    maxlength={MAX_DESC_LENGTH}
+                    placeholder={$_("newGroupDesc")} />
+            {:else if originalGroup.description !== ""}
+                <fieldset>
+                    <legend>
+                        <Legend>{$_("groupDesc")}</Legend>
+                    </legend>
+                    <Markdown text={originalGroup.description} />
+                </fieldset>
+            {/if}
         </CollapsibleCard>
         <CollapsibleCard open={visibilityOpen} headerText={$_("group.visibility")}>
-            <div class="sub-section">
-                {#if $chat.public}
-                    <h4>{$_("group.publicGroup")}</h4>
-                {:else}
-                    <h4>{$_("group.privateGroup")}</h4>
-                {/if}
+            {#if originalGroup.public}
+                <h4>{$_("group.publicGroup")}</h4>
+            {:else}
+                <h4>{$_("group.privateGroup")}</h4>
+            {/if}
 
-                <div class="info">
-                    {#if $chat.public}
-                        <p>{$_("publicGroupInfo")}</p>
-                        <p>{$_("publicGroupUnique")}</p>
-                    {:else}
-                        <p>{$_("privateGroupInfo")}</p>
-                    {/if}
-                </div>
+            <div class="info">
+                {#if originalGroup.public}
+                    <p>{$_("publicGroupInfo")}</p>
+                    <p>{$_("publicGroupUnique")}</p>
+                {:else}
+                    <p>{$_("privateGroupInfo")}</p>
+                {/if}
             </div>
         </CollapsibleCard>
         <CollapsibleCard open={permissionsOpen} headerText={$_("group.permissions.permissions")}>
-            <GroupPermissionsEditor
-                bind:permissions={updatedGroup.permissions}
-                isPublic={$chat.public}
-                viewMode={!canEditPermissions} />
+            {#if canEditPermissions}
+                <GroupPermissionsEditor
+                    bind:permissions={updatedGroup.permissions}
+                    isPublic={originalGroup.public} />
+            {:else}
+                <GroupPermissionsViewer
+                    bind:permissions={updatedGroup.permissions}
+                    isPublic={originalGroup.public} />
+            {/if}
         </CollapsibleCard>
     </div>
 </form>
-<div class="cta">
-    <Button
-        on:click={updateGroup}
-        disabled={(permissionsDirty && !canEditPermissions) ||
-            (!permissionsDirty && dirty && !canEdit) ||
-            !dirty ||
-            saving}
-        fill={true}
-        loading={saving}>{$_("update")}</Button>
-</div>
+
+{#if canEdit || canEditPermissions}
+    <div class="cta">
+        <Button
+            on:click={updateGroup}
+            disabled={(permissionsDirty && !canEditPermissions) ||
+                (!permissionsDirty && dirty && !canEdit) ||
+                !dirty ||
+                saving}
+            fill={true}
+            loading={saving}>{$_("update")}</Button>
+    </div>
+{/if}
 
 <Overlay bind:active={showConfirmation}>
     <ModalContent fill={true}>
@@ -219,6 +283,13 @@
         width: 100%;
     }
 
+    fieldset {
+        border: 1px solid var(--input-bd);
+        border-radius: $sp2;
+        padding: $sp3;
+        @include font(light, normal, fs-100);
+    }
+
     .group-form {
         flex: 1;
         color: var(--section-txt);
@@ -236,20 +307,34 @@
         }
     }
 
+    h4,
+    h3 {
+        margin-bottom: $sp3;
+    }
+
+    h3 {
+        @include font(bold, normal, fs-120);
+    }
+
+    .members {
+        @include font(light, normal, fs-90);
+    }
+
+    .owned-by {
+        @include font(book, normal, fs-90);
+        cursor: pointer;
+
+        &.my-group {
+            cursor: auto;
+        }
+    }
+
     .sub-section {
         padding: $sp4;
-        background-color: var(--sub-section-bg);
+        // background-color: var(--sub-section-bg);
         margin-bottom: $sp3;
-
-        &:last-child {
-            margin-bottom: 0;
-        }
-
-        @include box-shadow(1);
-
-        h4 {
-            margin-bottom: $sp4;
-        }
+        border: 1px solid var(--input-bd);
+        border-radius: $sp2;
     }
 
     .info {

@@ -363,8 +363,48 @@
         "public": "Mở",
         "private": "Kín",
         "publicGroup": "Nhóm mở",
-        "privateGroup": "Nhóm kín"
+        "privateGroup": "Nhóm kín",
+        "groupInfo": "Thông tin nhóm",
+        "visibility": "Hiển thị",
+        "role": {
+            "owner": "Chủ nhân",
+            "admins": "Quản trị viên",
+            "members": "Các thành viên"
+        },
+        "permissions": {
+            "whoCan": "Ai có thể",
+            "permissions": "Giấy phép",
+            "ownerOnly": "Chủ sở hữu có thể",
+            "ownerAndAdmins": "Chủ sở hữu và quản trị viên có thể",
+            "allMembers": "Tất cả các thành viên có thể",
+            "changePermissions": "thay đổi quyền",
+            "changeRoles": "thay đổi vai trò thành viên",
+            "addMembers": "thêm thành viên",
+            "removeMembers": "xóa thành viên",
+            "blockUsers": "chặn / bỏ chặn người dùng",
+            "deleteMessages": "xóa tin nhắn",
+            "updateGroup": "chỉnh sửa thông tin nhóm",
+            "pinMessages": "ghim tin nhắn",
+            "createPolls": "tạo các cuộc thăm dò",
+            "sendMessages": "gửi tin nhắn",
+            "reactToMessages": "phản ứng với tin nhắn"
+        }
     },
     "updateNow": "tải lại ngay bây giờ",
-    "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây"
+    "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",
+    "chooseParticipants": "Chọn thành viên",
+    "confirmParticipants": "Xác nhận thành viên",
+    "permissionsChangedBy": "{changeBy} đã thay đổi các quyền của nhóm",
+    "addParticipantsFailed": "Đã xảy ra lỗi khi thêm thành viên",
+    "filterParticipants": "lọc thành viên",
+    "publicGroupWithN": "Nhóm công khai có {number} thành viên",
+    "privateGroupWithN": "Nhóm riêng tư với {number} thành viên",
+    "groupWithN": "{number} thành viên",
+    "participants": "Các thành viên",
+    "addParticipants": "Thêm thành viên",
+    "removeParticipantFailed": "Không thể xóa thành viên",
+    "participant": "hội viên",
+    "readOnlyGroup": "Đây là nhóm chỉ đọc",
+    "memberCount": "{count} thành viên",
+    "ownedBy": "Thuộc sở hữu của @ {username}"
 }

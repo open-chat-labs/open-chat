@@ -362,8 +362,48 @@
         "public": "Pubblico",
         "private": "Privato",
         "publicGroup": "Gruppo pubblico",
-        "privateGroup": "Gruppo privato"
+        "privateGroup": "Gruppo privato",
+        "groupInfo": "Informazioni sul gruppo",
+        "visibility": "Visibilità",
+        "role": {
+            "owner": "Proprietario",
+            "admins": "Amministratori",
+            "members": "Membri"
+        },
+        "permissions": {
+            "whoCan": "Chi può",
+            "permissions": "Permessi",
+            "ownerOnly": "Il proprietario può",
+            "ownerAndAdmins": "Il proprietario e gli amministratori possono",
+            "allMembers": "Tutti i membri possono",
+            "changePermissions": "modificare i permessi",
+            "changeRoles": "cambiare i ruoli dei membri",
+            "addMembers": "aggiungi membri",
+            "removeMembers": "rimuovere membri",
+            "blockUsers": "bloccare/sbloccare gli utenti",
+            "deleteMessages": "eliminare i messaggi",
+            "updateGroup": "modifica le informazioni sul gruppo",
+            "pinMessages": "appuntare i messaggi",
+            "createPolls": "creare sondaggi",
+            "sendMessages": "Manda messaggi",
+            "reactToMessages": "reagire ai messaggi"
+        }
     },
     "updateNow": "ricarica ora",
-    "updateRequired": "È disponibile una nuova versione di OpenChat, che si ricarica tra {countdown}s"
+    "updateRequired": "È disponibile una nuova versione di OpenChat, che si ricarica tra {countdown}s",
+    "chooseParticipants": "Scegli i membri",
+    "confirmParticipants": "Conferma membri",
+    "permissionsChangedBy": "{changedBy} ha cambiato le autorizzazioni del gruppo",
+    "addParticipantsFailed": "Si è verificato un errore durante l'aggiunta di membri",
+    "filterParticipants": "membri del filtro",
+    "publicGroupWithN": "Gruppo pubblico con {number} membri",
+    "privateGroupWithN": "Gruppo privato con {number} membri",
+    "groupWithN": "{number} membro/i",
+    "participants": "Membri",
+    "addParticipants": "Aggiungi membri",
+    "removeParticipantFailed": "Impossibile rimuovere il membro",
+    "participant": "membro",
+    "readOnlyGroup": "Questo è un gruppo di sola lettura",
+    "memberCount": "{count} membro/i",
+    "ownedBy": "Di proprietà di @{username}"
 }

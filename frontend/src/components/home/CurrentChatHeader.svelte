@@ -32,7 +32,7 @@
         canCreatePolls,
         canDeleteGroup,
         canLeaveGroup,
-    } from "../../domain/chat/chat";
+    } from "../../domain/chat/chat.utils";
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";

@@ -24,6 +24,9 @@
 
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1];
 
+    // capture a snapshot of the chat as it is right now
+    let originalGroup = { ...$chat };
+
     let updatedGroup = {
         name: $chat.name,
         desc: $chat.description,
@@ -33,7 +36,7 @@
                   blobData: $chat.blobData,
               }
             : undefined,
-        permissions: {...$chat.permissions},
+        permissions: { ...$chat.permissions },
     };
 
     function dismissAsAdmin(ev: CustomEvent<string>): void {
@@ -96,8 +99,10 @@
     {#if lastState === "group_details"}
         <GroupDetails
             {controller}
+            {originalGroup}
             {updatedGroup}
             on:close={pop}
+            on:chatWith
             on:showParticipants
             on:updateChat />
     {:else if lastState === "add_participants"}

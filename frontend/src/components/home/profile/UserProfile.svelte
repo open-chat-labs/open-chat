@@ -8,6 +8,7 @@
     import UsernameInput from "../../UsernameInput.svelte";
     import Link from "../../Link.svelte";
     import Button from "../../Button.svelte";
+    import Legend from "../../Legend.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Radio from "../../Radio.svelte";
     import Select from "../../Select.svelte";
@@ -172,7 +173,7 @@
             </HoverIcon>
         </div>
 
-        <div class="legend">{$_("username")} ({$_("usernameRules")})</div>
+        <Legend>{$_("username")} ({$_("usernameRules")})</Legend>
         <UsernameInput
             bind:this={usernameInput}
             {api}
@@ -185,7 +186,7 @@
             {/if}
         </UsernameInput>
 
-        <div class="legend">{$_("bio")} ({$_("supportsMarkdown")})</div>
+        <Legend>{$_("bio")} ({$_("supportsMarkdown")})</Legend>
         <TextArea
             rows={3}
             bind:value={userbio}
@@ -210,14 +211,14 @@
             on:toggle={appearanceSectionOpen.toggle}
             open={$appearanceSectionOpen}
             headerText={$_("appearance")}>
-            <div class="legend">{$_("preferredLanguage")}</div>
+            <Legend>{$_("preferredLanguage")}</Legend>
             <Select bind:value={selectedLocale}>
                 {#each supportedLanguages as lang}
                     <option value={lang.code}>{lang.name}</option>
                 {/each}
             </Select>
 
-            <div class="legend">{$_("theme")}</div>
+            <Legend>{$_("theme")}</Legend>
             <Toggle
                 id={"inherit-system"}
                 on:change={toggleSystemTheme}
@@ -263,7 +264,7 @@
                         : $_("enableNotificationsMenu")}
                     checked={$notificationStatus === "granted"} />
             {/if}
-            <div class="legend">{$_("scrollPosition")}</div>
+            <Legend>{$_("scrollPosition")}</Legend>
             {#each ["latestMessage", "firstMessage", "firstMention"] as strategy}
                 <Radio
                     group="scrollPosition"
@@ -281,7 +282,7 @@
             on:toggle={accountSectionOpen.toggle}
             open={$accountSectionOpen}
             headerText={$_("account")}>
-            <div class="legend">{$_("storage")}</div>
+            <Legend>{$_("storage")}</Legend>
             {#if $storageStore.byteLimit === 0}
                 <p class="para">
                     {$_("noStorageAdvice")}
@@ -401,12 +402,6 @@
         padding: $sp4;
         background-color: var(--profile-section-bg);
         position: relative;
-    }
-
-    .legend {
-        @include font(light, normal, fs-60);
-        margin-bottom: $sp2;
-        text-transform: lowercase;
     }
 
     .close {
