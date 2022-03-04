@@ -15,8 +15,8 @@
             <li><del>Remove SMS or payment requirement for registration</del></li>
             <li><del>Support multiple languages (with help from the community)</del></li>
             <li><del>Pinned messages</del></li>
-            <li>Read-only groups</li>
             <li><del>Create polls</del></li>
+            <li><del>Group permissions including read-only groups</del></li>
             <li>Message forwarding</li>
             <li>
                 Deposit tokens into your OpenChat wallet, send tokens as messages, withdraw tokens<br />
@@ -38,6 +38,7 @@
             <li>Optionally sync with phone contacts and invite contacts</li>
             <li>Custom emojis, stickers</li>
             <li>Link previews</li>
+            <li>Communities (think Slack workspaces or Discord servers)</li>
             <li>Report inappropriate content</li>
             <li>Incorporate token swap to allow other tokens to be sent</li>
             <li>Native Android app</li>

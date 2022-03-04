@@ -77,12 +77,17 @@ function getOrdinal(n: number): string {
     return ["", "st", "nd", "rd"][(n / 10) % 10 ^ 1 && n % 10] || "th";
 }
 
-export function formatMessageDate(timestamp: bigint, today: string, yesterday: string): string {
+export function formatMessageDate(
+    timestamp: bigint,
+    today: string,
+    yesterday: string,
+    timeIfToday = false
+): string {
     const date = new Date(Number(timestamp));
 
     const startOfToday = getStartOfToday();
     if (date >= startOfToday) {
-        return today;
+        return timeIfToday ? toShortTimeString(date) : today;
     }
     const startOfYesterday = addDays(startOfToday, -1);
     if (date >= startOfYesterday) {
