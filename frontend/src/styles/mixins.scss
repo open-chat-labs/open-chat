@@ -143,8 +143,8 @@ $sp11: 192px;
     }
 }
 
-@mixin spin() {
-    animation: loading-spinner 0.8s linear infinite;
+@mixin spin($speed: 0.8s) {
+    animation: loading-spinner $speed linear infinite;
 }
 
 @mixin pop() {
@@ -168,7 +168,8 @@ $sp11: 192px;
         position: absolute;
         // border: 3px solid;
         opacity: 0.5;
-        background-image: url("../assets/spinner.svg");
+        // background-image: url("../assets/spinner.svg");
+        background-image: url("../assets/new-logo.svg");
         left: calc(50% - #{$offset});
         top: calc(50% - #{$offset});
         // border-color: transparent transparent currentColor currentColor;

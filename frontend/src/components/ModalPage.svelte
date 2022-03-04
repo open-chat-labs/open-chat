@@ -2,6 +2,11 @@
     import Select from "./Select.svelte";
     import { setLocale, supportedLanguages } from "../i18n/i18n";
     import { locale } from "svelte-i18n";
+    import { ScreenWidth, screenWidth } from "../stores/screenDimensions";
+
+    export let design: "current" | "next" = "current";
+    export let bottomBar: "turquoise" | "magenta" | "gold" | "lime" | "none" = "none";
+
     export let minHeight: string | undefined = undefined;
     export let bgClass:
         | "none"
@@ -11,6 +16,7 @@
         | "error"
         | "expired"
         | "upgrade"
+        | "home"
         | "empty" = "underwater";
 
     let selectedLocale = ($locale as string).substring(0, 2);
@@ -19,8 +25,15 @@
     }
 </script>
 
-<div class={`modal-page ${bgClass}`}>
-    <div class="modal-page-panel" style="min-height: {minHeight}">
+<div class={`modal-page ${bgClass}`} class:mobile={$screenWidth === ScreenWidth.ExtraSmall}>
+    <div
+        class="modal-page-panel"
+        style="min-height: {minHeight}"
+        class:turquoise={bottomBar === "turquoise"}
+        class:magenta={bottomBar === "magenta"}
+        class:gold={bottomBar === "gold"}
+        class:lime={bottomBar === "lime"}
+        class:next={design === "next"}>
         <slot />
     </div>
     <div class="powered-by" />
@@ -69,6 +82,14 @@
         justify-content: center;
         align-items: center;
         width: 100%;
+
+        &.home {
+            @include fullScreenImg("../assets/home_large.png");
+
+            &.mobile {
+                @include fullScreenImg("../assets/home_small.png");
+            }
+        }
 
         &.underwater {
             @include fullScreenImg("../assets/underwater.jpg");
@@ -121,6 +142,28 @@
             width: 100%;
             margin: 0 $sp4;
             padding: $sp4 $sp4;
+        }
+
+        &.next {
+            background-color: #111;
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
+            width: auto;
+            padding: $sp4 $sp6;
+
+            &.turquoise {
+                border-bottom: 6px solid #05bcc3;
+            }
+            &.magenta {
+                border-bottom: 6px solid #970c80;
+            }
+            &.gold {
+                border-bottom: 6px solid #d79323;
+            }
+            &.lime {
+                border-bottom: 6px solid #59cd07;
+            }
         }
     }
 </style>

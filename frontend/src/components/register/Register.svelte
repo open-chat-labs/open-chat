@@ -1,5 +1,6 @@
 <script lang="ts">
     import Logo from "../Logo.svelte";
+    import OpenChat from "../ModalTitle.svelte";
     import { _ } from "svelte-i18n";
     import Toast from "../Toast.svelte";
     import ModalPage from "../ModalPage.svelte";
@@ -33,22 +34,11 @@
     function complete() {
         controller.complete();
     }
-
-    let bgClass: "underwater" | "sunset" = "underwater";
-    $: {
-        switch ($state.kind) {
-            case "awaiting_completion":
-                bgClass = "sunset";
-                break;
-            default:
-                bgClass = "underwater";
-        }
-    }
 </script>
 
-<ModalPage {bgClass} minHeight="380px">
+<ModalPage bgClass={"home"} design={"next"} bottomBar={"lime"}>
     {#if $state.kind === "spinning"}
-        <div class="spinner" />
+        <Logo loading={true} />
     {:else if $state.kind === "awaiting_completion"}
         <Complete on:complete={complete} />
     {:else if $state.kind === "awaiting_challenge_attempt"}
@@ -58,11 +48,12 @@
             on:confirm={confirmChallenge}
             on:cancel={cancelChallenge} />
     {:else}
-        <h4 class="subtitle">{$_("register.registerUser")}</h4>
-        <div class="logo">
-            <Logo />
-        </div>
-        <EnterUsername api={controller.api()} originalUsername={$username} error={$error} on:submitUsername={submitUsername} />
+        <OpenChat text={$_("register.registerUser")} />
+        <EnterUsername
+            api={controller.api()}
+            originalUsername={$username}
+            error={$error}
+            on:submitUsername={submitUsername} />
     {/if}
 </ModalPage>
 

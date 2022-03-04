@@ -1,51 +1,32 @@
 <script lang="ts">
-    import Button from "./Button.svelte";
-    import Logo from "./Logo.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import ModalPage from "./ModalPage.svelte";
+    import Logo from "./Logo.svelte";
+    import OpenChat from "./ModalTitle.svelte";
     const dispatch = createEventDispatcher();
     export let loading: boolean = false;
 </script>
 
-<ModalPage>
-    <h4 class="subtitle">{$_("login.welcomeTo")}</h4>
-    <Logo />
-    <h1 class="title">{$_("openChat")}</h1>
-    <p class="blurb">
-        {$_("login.blurbPartOne")}<a target="_blank" href="https://internetcomputer.org/"
-            >{$_("theInternetComputer")}</a
-        >{$_("login.blurbPartTwo")}
-        <a
-            target="_blank"
-            href="https://medium.com/dfinity/openchat-a-truly-decentralized-alternative-to-whatsapp-d0d051479b9a"
-            >{$_("here")}</a
-        >.
-    </p>
-    <Button disabled={loading} {loading} on:click={() => dispatch("login")}
-        >{$_("login.signIn")}</Button>
+<ModalPage bgClass="home" design="next" bottomBar={loading ? "magenta" : "turquoise"}>
+    <OpenChat text={$_("open_chat")} />
+    <Logo {loading} />
+    <div class:loading class="sign-in" on:click={() => dispatch("login")}>{$_("login.signIn")}</div>
 </ModalPage>
 
 <style type="text/scss">
-    .subtitle {
-        @include font(bold, normal, fs-140);
-        margin-bottom: $sp5;
-    }
-
-    .title {
-        @include font(bold, normal, fs-220);
-        margin: $sp5 0;
-    }
-    .blurb {
-        text-align: center;
-        margin-bottom: $sp5;
-        @include font(light, italic, fs-100);
-    }
-
-    a {
-        text-decoration: underline;
-        text-decoration-color: var(--link-underline);
-        text-underline-offset: $sp1;
+    .sign-in {
+        @include font(light, normal, fs-80);
+        margin-top: $sp3;
+        font-weight: 300;
+        letter-spacing: 4px;
+        color: #c6c3d0;
+        text-transform: lowercase;
+        padding: $sp4;
         cursor: pointer;
+
+        &.loading {
+            visibility: hidden;
+        }
     }
 </style>

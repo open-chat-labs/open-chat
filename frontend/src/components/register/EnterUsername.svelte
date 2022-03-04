@@ -22,15 +22,15 @@
     }
 </script>
 
-<p class="enter-username">{$_("register.usernameRules")}</p>
+<p class="enter-username">{$_("usernameRules")}</p>
 
 <form class="username-wrapper" on:submit|preventDefault={submitUsername}>
-    <UsernameInput 
+    <UsernameInput
         {api}
         {originalUsername}
-        bind:validUsername={validUsername}
+        bind:validUsername
         bind:checking={checkingUsername}
-        bind:error={error} />
+        bind:error />
 </form>
 
 {#if error}
@@ -38,9 +38,10 @@
 {/if}
 
 <div class="actions">
-    <Button 
+    <Button
         loading={checkingUsername}
-        disabled={validUsername === undefined} 
+        disabled={validUsername === undefined}
+        design={"next"}
         on:click={submitUsername}>
         {$_("register.createUser")}
     </Button>
@@ -53,16 +54,22 @@
     }
 
     .enter-username {
-        @include font(light, normal, fs-100);
+        @include font(light, normal, fs-80);
         margin-bottom: $sp4;
+        font-weight: 300;
+        letter-spacing: 4px;
+        color: #717278;
+        text-transform: lowercase;
     }
     .username-wrapper {
         width: 80%;
+        margin: $sp5 0;
         @include size-below(xs) {
             width: 100%;
         }
     }
     .actions {
         margin-top: auto;
+        margin-bottom: $sp4;
     }
 </style>

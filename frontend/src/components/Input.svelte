@@ -13,6 +13,7 @@
     export let fontSize: "small" | "normal" | "large" | "huge" = "normal";
     export let align: "left" | "right" | "center" = "left";
     export let countdown: boolean = false;
+    export let design: "current" | "next" = "current";
 
     const dispatch = createEventDispatcher();
 
@@ -48,6 +49,7 @@
 
 <div class="input-wrapper">
     <input
+        class:next={design === "next"}
         class:invalid
         spellcheck="false"
         {disabled}
@@ -103,6 +105,13 @@
         overflow: hidden;
         text-overflow: ellipsis;
         border-radius: $sp2;
+
+        &.next {
+            background-color: #a6a9a7;
+            letter-spacing: 4px;
+            border: none;
+            border-radius: 0;
+        }
 
         &.small {
             @include font(book, normal, fs-80);

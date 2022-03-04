@@ -5,6 +5,7 @@
     export let secondary: boolean = false;
     export let small: boolean = false;
     export let fill: boolean = false;
+    export let design: "current" | "next" = "current";
 </script>
 
 <button
@@ -13,6 +14,7 @@
     class:loading
     class:disabled
     class:small
+    class:next={design === "next"}
     {disabled}
     class:secondary
     class:fill>
@@ -33,6 +35,12 @@
         min-width: 150px;
         @include font(book, normal, fs-100);
 
+        &.next {
+            background: #59cd07;
+            letter-spacing: 4px;
+            color: #ade585;
+        }
+
         &.small {
             padding: $sp2 $sp5;
             height: 25px;
@@ -41,6 +49,10 @@
 
         &:hover {
             background: var(--button-hv);
+
+            &.next {
+                background: darken(#59cd07, 10%);
+            }
         }
 
         &.loading {

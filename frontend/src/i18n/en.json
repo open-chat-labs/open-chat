@@ -1,5 +1,6 @@
 {
     "openChat": "OpenChat",
+    "open_chat": "Open Chat",
     "home": "home",
     "tellMeMore": "More information",
     "inheritSystem": "Inherit system theme",
@@ -275,7 +276,7 @@
         "choosePath": "How would you like to register?",
         "usernameRules": "Choose a username using only alphanumeric characters or underscores",
         "regOptions": "Would you prefer to verify via an SMS code (recommended) or by making a small ICP transfer?",
-        "registerUser": "Register user...",
+        "registerUser": "Register user",
         "preparingUser": "Preparing user ...",
         "registerAs": "To register as a user",
         "enterCodeSentTo": "code sent to ",
@@ -312,7 +313,7 @@
         "challengeAttemptFailed": "The value you entered is incorrect. Please try the new challenge.",
         "challengeThrottled": "Too many challenges have been generated. Please try again later.",
         "attemptChallenge": "Please type in the characters you see",
-        "createUser": "Create user"
+        "createUser": "Create!"
     },
     "faq": {
         "menu": "FAQ",

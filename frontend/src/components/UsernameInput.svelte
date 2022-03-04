@@ -25,7 +25,7 @@
             stopChecking();
             return;
         }
-        
+
         const currTimer = timer;
 
         api.checkUsername(value)
@@ -75,22 +75,22 @@
 
     function stopChecking() {
         checking = false;
-        if (timer)  {
+        if (timer) {
             clearTimeout(timer);
             timer = undefined;
         }
     }
-
 </script>
 
 <Input
     bind:this={input}
     on:change={onChange}
     invalid={false}
+    design={"next"}
     value={originalUsername}
     autofocus={true}
     minlength={MIN_USERNAME_LENGTH}
-    maxlength={MAX_USERNAME_LENGTH} 
+    maxlength={MAX_USERNAME_LENGTH}
     countdown={true}
     placeholder={$_("register.enterUsername")}>
     <slot />

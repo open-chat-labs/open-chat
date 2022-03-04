@@ -210,7 +210,7 @@ export default [
                                 <link rel="manifest" href="/openchat.webmanifest" />
                                 <link rel="apple-touch-startup-image" href="/_/raw/apple-touch-icon.png" />
                                 <link rel="apple-touch-icon" href="/_/raw/apple-touch-icon.png" />
-                                <link rel="icon" type="image/png" href="/icon.png" />
+                                <link rel="icon" type="image/png" href="/new-logo.png" />
                                 <link rel="stylesheet" href="/global.css" />
                                 <link rel="stylesheet" href="/main.css" />
                                 <script type="module" defer src="/main.js"></script>
