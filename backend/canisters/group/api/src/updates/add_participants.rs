@@ -25,6 +25,7 @@ pub struct PartialSuccessResult {
     pub users_already_in_group: Vec<UserId>,
     pub users_blocked_from_group: Vec<UserId>,
     pub users_who_blocked_request: Vec<UserId>,
+    pub users_not_authorized_to_add: Vec<UserId>,
     pub errors: Vec<UserId>,
 }
 
