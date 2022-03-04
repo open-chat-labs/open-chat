@@ -11,7 +11,7 @@
         MessageContent,
         PollContent,
     } from "../../domain/chat/chat";
-    import { canSendMessages } from "../../domain/chat/chat";
+    import { canSendMessages } from "../../domain/chat/chat.utils";
     import { getMessageContent, getStorageRequiredForMessage } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import Loading from "../Loading.svelte";

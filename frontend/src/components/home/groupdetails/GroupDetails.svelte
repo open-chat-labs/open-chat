@@ -13,7 +13,7 @@
     import { avatarUrl } from "../../../domain/user/user.utils";
     import type { UpdatedGroup } from "../../../fsm/rightPanel";
     import type { GroupChatSummary, GroupPermissions } from "../../../domain/chat/chat";
-    import { canChangePermissions, canEditGroupDetails } from "../../../domain/chat/chat";
+    import { canChangePermissions, canEditGroupDetails } from "../../../domain/chat/chat.utils";
     import { createEventDispatcher } from "svelte";
     import type { ChatController } from "../../../fsm/chat.controller";
     import { userStore } from "../../../stores/user";

@@ -14,7 +14,7 @@
         canChangeRoles,
         canRemoveMembers,
         canUnblockUsers,
-    } from "../../../domain/chat/chat";
+    } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
     import { createEventDispatcher } from "svelte";
     import type { Readable, Writable } from "svelte/store";
