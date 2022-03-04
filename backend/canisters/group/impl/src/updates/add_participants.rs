@@ -74,6 +74,7 @@ async fn add_participants(args: Args) -> Response {
                 users_already_in_group: prepare_result.users_already_in_group,
                 users_blocked_from_group: prepare_result.users_blocked_from_group,
                 users_who_blocked_request,
+                users_not_authorized_to_add: prepare_result.users_not_authorized_to_add,
                 errors,
             })
         }
@@ -86,6 +87,7 @@ struct PrepareResult {
     users_to_add: Vec<UserId>,
     users_already_in_group: Vec<UserId>,
     users_blocked_from_group: Vec<UserId>,
+    users_not_authorized_to_add: Vec<UserId>,
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -99,30 +101,44 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         let permissions = &runtime_state.data.permissions;
         let can_add_participants = participant.role.can_add_members(permissions, runtime_state.data.is_public);
-        if can_add_participants {
-            let can_unblock_user = participant.role.can_block_users(permissions);
-            let mut users_to_add = Vec::new();
-            let mut users_already_in_group = Vec::new();
-            let mut users_blocked_from_group = Vec::new();
-            for user_id in args.user_ids.iter() {
-                if !(args.allow_blocked_users && can_unblock_user) && runtime_state.data.participants.is_blocked(user_id) {
-                    users_blocked_from_group.push(*user_id);
-                } else if runtime_state.data.participants.get_by_user_id(user_id).is_none() {
+        let can_unblock_users = args.allow_blocked_users && participant.role.can_block_users(permissions);
+
+        if !can_add_participants && !can_unblock_users {
+            return Err(NotAuthorized);
+        }
+
+        let mut users_to_add = Vec::new();
+        let mut users_already_in_group = Vec::new();
+        let mut users_blocked_from_group = Vec::new();
+        let mut users_not_authorized_to_add = Vec::new();
+        for user_id in args.user_ids.iter() {
+            if runtime_state.data.participants.get_by_user_id(user_id).is_some() {
+                users_already_in_group.push(*user_id);
+            } else if runtime_state.data.participants.is_blocked(user_id) {
+                if can_unblock_users {
                     users_to_add.push(*user_id);
                 } else {
-                    users_already_in_group.push(*user_id);
+                    users_blocked_from_group.push(*user_id);
                 }
+            } else if !can_add_participants {
+                users_not_authorized_to_add.push(*user_id);
+            } else {
+                users_to_add.push(*user_id);
             }
-            Ok(PrepareResult {
-                added_by: participant.user_id,
-                latest_message_index: runtime_state.data.events.latest_message_index(),
-                users_to_add,
-                users_already_in_group,
-                users_blocked_from_group,
-            })
-        } else {
-            Err(NotAuthorized)
         }
+
+        if users_not_authorized_to_add.len() == args.user_ids.len() {
+            return Err(NotAuthorized);
+        }
+
+        Ok(PrepareResult {
+            added_by: participant.user_id,
+            latest_message_index: runtime_state.data.events.latest_message_index(),
+            users_to_add,
+            users_already_in_group,
+            users_blocked_from_group,
+            users_not_authorized_to_add,
+        })
     } else {
         Err(CallerNotInGroup)
     }
