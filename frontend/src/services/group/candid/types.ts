@@ -14,6 +14,7 @@ export interface AddParticipantsFailedResult {
 export interface AddParticipantsPartialSuccessResult {
   'errors' : Array<UserId>,
   'users_blocked_from_group' : Array<UserId>,
+  'users_not_authorized_to_add' : Array<UserId>,
   'users_added' : Array<UserId>,
   'users_who_blocked_request' : Array<UserId>,
   'users_already_in_group' : Array<UserId>,

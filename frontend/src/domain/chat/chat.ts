@@ -986,5 +986,3 @@ export type RegisterPollVoteResponse =
     | "out_of_range"
     | "poll_not_found"
     | "chat_not_found";
-
-//TODO - all these functions should be in utils and we should have a few tests
