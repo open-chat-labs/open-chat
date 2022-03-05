@@ -403,7 +403,7 @@
                                     <PencilOutline size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                                     <div slot="text">{$_("editMessage")}</div>
                                 </MenuItem> -->
-                                {#if canDelete}
+                                {#if canDelete || me}
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline
                                             size={$iconSize}
