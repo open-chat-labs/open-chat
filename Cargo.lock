@@ -2128,6 +2128,51 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "884e2677b40cc8c339eaefcb701c32ef1fd2493d71118dc0ca4b6a736c93bd67"
 
 [[package]]
+name = "ledger_sync_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "serde_bytes",
+ "types",
+]
+
+[[package]]
+name = "ledger_sync_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client_macros",
+ "ic-cdk",
+ "ledger_sync_canister",
+ "tracing",
+ "types",
+]
+
+[[package]]
+name = "ledger_sync_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "futures",
+ "http_request",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "ic-ledger-types",
+ "ledger_sync_canister",
+ "serde",
+ "serde_bytes",
+ "serializer",
+ "tracing",
+ "types",
+ "utils",
+]
+
+[[package]]
 name = "ledger_utils"
 version = "0.1.0"
 dependencies = [
