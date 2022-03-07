@@ -264,7 +264,8 @@
     }
 
     function deleteMessage(ev: CustomEvent<Message>) {
-        if (!canDelete) return;
+        if (!canDelete && controller.user.userId !== ev.detail.sender) return;
+
         controller.deleteMessage(ev.detail.messageId, controller.user.userId);
 
         const apiPromise =
