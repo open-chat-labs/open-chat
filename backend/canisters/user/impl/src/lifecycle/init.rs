@@ -23,6 +23,7 @@ fn init(args: Args) {
         args.group_index_canister_id,
         args.notifications_canister_ids,
         args.callback_canister_id,
+        args.ledger_sync_canister_id,
         env.now(),
         args.test_mode,
     );

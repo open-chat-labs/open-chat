@@ -13,6 +13,7 @@ impl Accounts {
         self.accounts.insert(account_identifier, canister_id);
     }
 
+    #[allow(dead_code)]
     pub fn get_canister_id(&self, account_identifier: &AccountIdentifier) -> Option<CanisterId> {
         self.accounts.get(account_identifier).copied()
     }

@@ -27,6 +27,7 @@ fn init(args: Args) {
         args.notifications_canister_ids,
         args.online_users_aggregator_canister_id,
         args.callback_canister_id,
+        args.ledger_sync_canister_id,
         args.open_storage_index_canister_id,
         canister_pool_target_size,
         args.test_mode,

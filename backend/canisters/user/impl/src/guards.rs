@@ -23,3 +23,11 @@ pub fn caller_is_callback_canister() -> Result<(), String> {
         Err("Caller is not the callback canister".to_string())
     }
 }
+
+pub fn caller_is_ledger_sync_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_ledger_sync_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not the ledger_sync canister".to_string())
+    }
+}

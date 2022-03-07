@@ -1,28 +1,24 @@
-use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens};
+use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use types::{CanisterId, TimestampMillis};
+use types::{CanisterId, CryptocurrencyDeposit};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct NotificationsQueue {
-    queue: VecDeque<TransferNotification>,
+    queue: VecDeque<DepositNotification>,
 }
 
 impl NotificationsQueue {
-    pub fn add(&mut self, notification: TransferNotification) {
+    pub fn add(&mut self, notification: DepositNotification) {
         self.queue.push_back(notification);
     }
 
-    pub fn take(&mut self) -> Option<TransferNotification> {
+    pub fn take(&mut self) -> Option<DepositNotification> {
         self.queue.pop_front()
     }
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct TransferNotification {
+pub struct DepositNotification {
     pub canister_id: CanisterId,
-    pub from: AccountIdentifier,
-    pub to: AccountIdentifier,
-    pub account: Tokens,
-    pub block_index: BlockIndex,
-    pub timestamp: TimestampMillis,
+    pub deposit: CryptocurrencyDeposit,
 }

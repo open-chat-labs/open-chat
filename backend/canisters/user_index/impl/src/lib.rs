@@ -127,8 +127,9 @@ struct Data {
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub online_users_aggregator_canister_ids: HashSet<CanisterId>,
-    #[serde(default = "callback_canister_id")]
     pub callback_canister_id: CanisterId,
+    #[serde(default = "ledger_sync_canister_id")]
+    pub ledger_sync_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
@@ -138,8 +139,8 @@ struct Data {
     pub challenges: Challenges,
 }
 
-fn callback_canister_id() -> CanisterId {
-    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
+fn ledger_sync_canister_id() -> CanisterId {
+    Principal::from_text("osltm-ciaaa-aaaaf-adtbq-cai").unwrap()
 }
 
 impl Data {
@@ -152,6 +153,7 @@ impl Data {
         notifications_canister_ids: Vec<CanisterId>,
         online_users_aggregator_canister_id: CanisterId,
         callback_canister_id: CanisterId,
+        ledger_sync_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
         canister_pool_target_size: u16,
         test_mode: bool,
@@ -166,6 +168,7 @@ impl Data {
             notifications_canister_ids,
             online_users_aggregator_canister_ids: HashSet::from([online_users_aggregator_canister_id]),
             callback_canister_id,
+            ledger_sync_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
@@ -194,6 +197,7 @@ impl Default for Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             online_users_aggregator_canister_ids: HashSet::new(),
             callback_canister_id: Principal::anonymous(),
+            ledger_sync_canister_id: Principal::anonymous(),
             canister_pool: canister::Pool::new(5),
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id: Principal::anonymous(),

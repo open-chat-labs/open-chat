@@ -1,5 +1,6 @@
 use crate::model::accounts::Accounts;
 use crate::model::ledger_sync_state::LedgerSyncState;
+use crate::model::notifications_queue::NotificationsQueue;
 use candid::CandidType;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
@@ -53,6 +54,7 @@ struct Data {
     pub ledger_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub accounts: Accounts,
+    pub notifications_queue: NotificationsQueue,
     pub ledger_sync_state: LedgerSyncState,
     pub test_mode: bool,
 }
@@ -63,6 +65,7 @@ impl Data {
             ledger_canister_id,
             user_index_canister_id,
             accounts: Accounts::default(),
+            notifications_queue: NotificationsQueue::default(),
             ledger_sync_state: LedgerSyncState::default(),
             test_mode,
         }

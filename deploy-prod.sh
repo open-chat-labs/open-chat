@@ -9,6 +9,7 @@ TEST_MODE=$3
 ./generate-wasm.sh callback_canister_impl
 ./generate-wasm.sh group_canister_impl
 ./generate-wasm.sh group_index_canister_impl
+./generate-wasm.sh ledger_sync_canister_impl
 ./generate-wasm.sh notifications_canister_impl
 ./generate-wasm.sh online_users_aggregator_canister_impl
 ./generate-wasm.sh root_canister_impl
@@ -24,6 +25,7 @@ GROUP_INDEX_CANISTER_ID=$(dfx canister --network ic id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network ic id notifications)
 ONLINE_USERS_AGGREGATOR_CANISTER_ID=$(dfx canister --network ic id online_users_aggregator)
 CALLBACK_CANISTER_ID=$(dfx canister --network ic id callback)
+LEDGER_SYNC_CANISTER_ID=$(dfx canister --network ic id ledger_sync)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml \
@@ -36,4 +38,5 @@ cargo run \
   $NOTIFICATIONS_INDEX_CANISTER_ID \
   $ONLINE_USERS_AGGREGATOR_CANISTER_ID \
   $CALLBACK_CANISTER_ID \
+  $LEDGER_SYNC_CANISTER_ID \
   $OPEN_STORAGE_INDEX_CANISTER_ID \

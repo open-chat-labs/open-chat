@@ -65,6 +65,10 @@ impl RuntimeState {
         self.env.caller() == self.data.callback_canister_id
     }
 
+    pub fn is_caller_ledger_sync_canister(&self) -> bool {
+        self.env.caller() == self.data.callback_canister_id
+    }
+
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
         let random = self.env.random_u32() as usize;
 
@@ -117,8 +121,9 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
-    #[serde(default = "callback_canister_id")]
     pub callback_canister_id: CanisterId,
+    #[serde(default = "ledger_sync_canister_id")]
+    pub ledger_sync_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
     pub user_cycles_balance: UserCyclesBalance,
     pub transactions: Transactions,
@@ -131,8 +136,8 @@ struct Data {
     pub bio: String,
 }
 
-fn callback_canister_id() -> CanisterId {
-    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
+fn ledger_sync_canister_id() -> CanisterId {
+    Principal::from_text("osltm-ciaaa-aaaaf-adtbq-cai").unwrap()
 }
 
 impl Data {
@@ -142,6 +147,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         callback_canister_id: CanisterId,
+        ledger_sync_canister_id: CanisterId,
         now: TimestampMillis,
         test_mode: bool,
     ) -> Data {
@@ -154,6 +160,7 @@ impl Data {
             group_index_canister_id,
             notifications_canister_ids,
             callback_canister_id,
+            ledger_sync_canister_id,
             avatar: Timestamped::default(),
             user_cycles_balance: UserCyclesBalance::new(now),
             transactions: Transactions::default(),

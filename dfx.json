@@ -36,6 +36,12 @@
       "wasm": "target/wasm32-unknown-unknown/release/callback_canister_impl-opt.wasm",
       "build": "./generate-wasm.sh callback_canister_impl"
     },
+    "ledger_sync": {
+      "type": "custom",
+      "candid": "backend/canisters/ledger_sync/api/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/ledger_sync_canister_impl-opt.wasm",
+      "build": "./generate-wasm.sh ledger_sync_canister_impl"
+    },
     "user": {
       "type": "custom",
       "candid": "backend/canisters/user/api/can.did",

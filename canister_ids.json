@@ -24,6 +24,10 @@
     "ic": "dobi3-tyaaa-aaaaf-adnna-cai",
     "ic_test": "dhcdh-fqaaa-aaaaf-adnmq-cai"
   },
+  "ledger_sync": {
+    "ic": "osltm-ciaaa-aaaaf-adtbq-cai",
+    "ic_test": "ohmcb-daaaa-aaaaf-adtca-cai"
+  },
   "website": {
     "ic": "6hsbt-vqaaa-aaaaf-aaafq-cai",
     "ic_test": "pfs7b-iqaaa-aaaaf-abs7q-cai"

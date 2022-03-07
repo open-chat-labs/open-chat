@@ -30,7 +30,8 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     )
     .await;
 
-    let (callback_canister_id, open_storage_index_canister_id) = futures::future::join(
+    let (callback_canister_id, ledger_sync_canister_id, open_storage_index_canister_id) = futures::future::join3(
+        create_empty_canister(&management_canister),
         create_empty_canister(&management_canister),
         create_empty_canister(&management_canister),
     )
@@ -42,6 +43,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     println!("notifications canister id: {notifications_canister_id}");
     println!("users online aggregator canister id: {online_users_aggregator_canister_id}");
     println!("callback canister id: {callback_canister_id}");
+    println!("ledger_sync canister id: {ledger_sync_canister_id}");
     println!("open_storage_index canister id: {open_storage_index_canister_id}");
 
     let canister_ids = CanisterIds {
@@ -51,6 +53,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
         notifications: notifications_canister_id,
         online_users_aggregator: online_users_aggregator_canister_id,
         callback: callback_canister_id,
+        ledger_sync: ledger_sync_canister_id,
         open_storage_index: open_storage_index_canister_id,
     };
 
@@ -111,6 +114,7 @@ async fn install_service_canisters_impl(
         notifications_canister_ids: vec![canister_ids.notifications],
         online_users_aggregator_canister_id: canister_ids.online_users_aggregator,
         callback_canister_id: canister_ids.callback,
+        ledger_sync_canister_id: canister_ids.ledger_sync,
         open_storage_index_canister_id: canister_ids.open_storage_index,
         wasm_version: version,
         test_mode,

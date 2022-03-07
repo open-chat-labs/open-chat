@@ -9,6 +9,7 @@ OPEN_STORAGE_INDEX_CANISTER_ID=$2
 ./generate-wasm.sh callback_canister_impl
 ./generate-wasm.sh group_canister_impl
 ./generate-wasm.sh group_index_canister_impl
+./generate-wasm.sh ledger_sync_canister_impl
 ./generate-wasm.sh notifications_canister_impl
 ./generate-wasm.sh online_users_aggregator_canister_impl
 ./generate-wasm.sh root_canister_impl
@@ -21,6 +22,7 @@ OPEN_STORAGE_INDEX_CANISTER_ID=$2
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 root
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 user_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 group_index
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 ledger_sync
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 online_users_aggregator
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 callback
@@ -31,6 +33,7 @@ GROUP_INDEX_CANISTER_ID=$(dfx canister id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister id notifications)
 ONLINE_USERS_AGGREGATOR=$(dfx canister id online_users_aggregator)
 CALLBACK_CANISTER_ID=$(dfx canister id callback)
+LEDGER_SYNC_CANISTER_ID=$(dfx canister id ledger_sync)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml \
@@ -43,4 +46,5 @@ cargo run \
   $NOTIFICATIONS_INDEX_CANISTER_ID \
   $ONLINE_USERS_AGGREGATOR \
   $CALLBACK_CANISTER_ID \
+  $LEDGER_SYNC_CANISTER_ID \
   $OPEN_STORAGE_INDEX_CANISTER_ID \

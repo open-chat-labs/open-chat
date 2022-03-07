@@ -2169,6 +2169,8 @@ dependencies = [
  "serializer",
  "tracing",
  "types",
+ "user_canister",
+ "user_canister_c2c_client",
  "utils",
 ]
 
