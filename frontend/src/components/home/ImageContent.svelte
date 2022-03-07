@@ -36,9 +36,11 @@
             src={content.blobUrl}
             alt={content.caption} />
 
-        <div class="expand" class:rtl={$rtlStore} on:click={() => (zoom = !zoom)}>
-            <ArrowExpand size={"1em"} color={"#fff"} />
-        </div>
+        {#if !draft}
+            <div class="expand" class:rtl={$rtlStore} on:click={() => (zoom = !zoom)}>
+                <ArrowExpand size={"1em"} color={"#fff"} />
+            </div>
+        {/if}
     </div>
 {/if}
 
@@ -46,26 +48,28 @@
     <Markdown text={content.caption} inline={!reply} />
 {/if}
 
-<Overlay dismissible={true} bind:active={zoom}>
-    <ModalContent large={true} hideHeader={true} hideFooter={true} fill={true}>
-        <span class="body" slot="body">
-            <img
-                class={"zoomed"}
-                on:error={() => (imgElement.src = content.thumbnailData)}
-                src={content.blobUrl}
-                alt={content.caption} />
-            <div class="expand" class:rtl={$rtlStore} on:click={() => (zoom = !zoom)}>
-                <ArrowCollapse size={"1em"} color={"#fff"} />
-            </div>
-
-            {#if withCaption}
-                <div class="caption">
-                    {content.caption}
+{#if !draft}
+    <Overlay dismissible={true} bind:active={zoom}>
+        <ModalContent large={true} hideHeader={true} hideFooter={true} fill={true}>
+            <span class="body" slot="body">
+                <img
+                    class={"zoomed"}
+                    on:error={() => (imgElement.src = content.thumbnailData)}
+                    src={content.blobUrl}
+                    alt={content.caption} />
+                <div class="expand" class:rtl={$rtlStore} on:click={() => (zoom = !zoom)}>
+                    <ArrowCollapse size={"1em"} color={"#fff"} />
                 </div>
-            {/if}
-        </span>
-    </ModalContent>
-</Overlay>
+
+                {#if withCaption}
+                    <div class="caption">
+                        {content.caption}
+                    </div>
+                {/if}
+            </span>
+        </ModalContent>
+    </Overlay>
+{/if}
 
 <style type="text/scss">
     .img-wrapper {
