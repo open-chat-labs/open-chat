@@ -164,6 +164,7 @@ ln -fs "${target}/ic-rosetta-api" local-bin/
 
 ln -fs ../../../target/wasm32-unknown-unknown/release/callback_canister_impl-opt.wasm local-bin/
 ln -fs ../../../target/wasm32-unknown-unknown/release/group_index_canister_impl-opt.wasm local-bin/
+ln -fs ../../../target/wasm32-unknown-unknown/release/ledger_sync_canister_impl-opt.wasm local-bin/
 ln -fs ../../../target/wasm32-unknown-unknown/release/notifications_canister_impl-opt.wasm local-bin/
 ln -fs ../../../target/wasm32-unknown-unknown/release/online_users_aggregator_canister_impl-opt.wasm local-bin/
 ln -fs ../../../target/wasm32-unknown-unknown/release/root_canister_impl-opt.wasm local-bin/

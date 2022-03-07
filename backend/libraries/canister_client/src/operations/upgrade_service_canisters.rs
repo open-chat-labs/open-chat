@@ -94,6 +94,25 @@ pub async fn upgrade_callback_canister(
     println!("Callback canister upgraded");
 }
 
+pub async fn upgrade_ledger_sync_canister(
+    identity: BasicIdentity,
+    url: String,
+    ledger_sync_canister_id: CanisterId,
+    version: Version,
+) {
+    upgrade_root_canister(
+        identity,
+        url,
+        ledger_sync_canister_id,
+        version,
+        ledger_sync_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::LedgerSync,
+    )
+    .await;
+
+    println!("Ledger sync canister upgraded");
+}
+
 pub async fn upgrade_group_canister(
     identity: BasicIdentity,
     url: String,

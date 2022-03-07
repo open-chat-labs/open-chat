@@ -128,6 +128,8 @@ fn commit(caller: Principal, username: String, wasm_version: Version, user_id: U
         .data
         .users
         .register(caller, user_id, wasm_version, username, now);
+
+    runtime_state.data.ledger_sync_canister_user_sync_queue.push(user_id);
 }
 
 fn rollback(username: &str, canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {

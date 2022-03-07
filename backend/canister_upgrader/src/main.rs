@@ -14,13 +14,14 @@ async fn main() {
         CanisterName::Callback => upgrade_callback_canister(identity, opts.url, opts.callback, opts.version).await,
         CanisterName::Group => upgrade_group_canister(identity, opts.url, opts.group_index, opts.version).await,
         CanisterName::GroupIndex => upgrade_group_index_canister(identity, opts.url, opts.group_index, opts.version).await,
+        CanisterName::LedgerSync => upgrade_ledger_sync_canister(identity, opts.url, opts.ledger_sync, opts.version).await,
         CanisterName::Notifications => {
             upgrade_notifications_canister(identity, opts.url, opts.notifications, opts.version).await
         }
-        CanisterName::Root => unimplemented!(),
         CanisterName::OnlineUsersAggregator => {
             upgrade_online_users_aggregator_canister(identity, opts.url, opts.online_users_aggregator, opts.version).await
         }
+        CanisterName::Root => unimplemented!(),
         CanisterName::User => upgrade_user_canister(identity, opts.url, opts.user_index, opts.version).await,
         CanisterName::UserIndex => upgrade_user_index_canister(identity, opts.url, opts.root, opts.version).await,
     };
@@ -36,6 +37,7 @@ struct Opts {
     notifications: CanisterId,
     online_users_aggregator: CanisterId,
     callback: CanisterId,
+    ledger_sync: CanisterId,
     canister_to_upgrade: CanisterName,
     version: Version,
 }

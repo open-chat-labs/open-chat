@@ -22,6 +22,10 @@ fn post_upgrade(args: Args) {
 
             data.users.rehydrate();
 
+            for user_id in data.users.iter().map(|u| u.user_id) {
+                data.ledger_sync_canister_user_sync_queue.push(user_id);
+            }
+
             init_logger(data.test_mode);
             init_state(env, data, args.wasm_version);
 

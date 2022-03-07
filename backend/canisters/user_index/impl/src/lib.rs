@@ -1,5 +1,6 @@
 use crate::model::challenges::Challenges;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
+use crate::model::ledger_sync_canister_user_sync_queue::LedgerSyncCanisterUserSyncQueue;
 use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
 use candid::{CandidType, Principal};
@@ -131,6 +132,8 @@ struct Data {
     #[serde(default = "ledger_sync_canister_id")]
     pub ledger_sync_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
+    #[serde(default)]
+    pub ledger_sync_canister_user_sync_queue: LedgerSyncCanisterUserSyncQueue,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub super_admins: HashSet<UserId>,
@@ -169,6 +172,7 @@ impl Data {
             online_users_aggregator_canister_ids: HashSet::from([online_users_aggregator_canister_id]),
             callback_canister_id,
             ledger_sync_canister_id,
+            ledger_sync_canister_user_sync_queue: LedgerSyncCanisterUserSyncQueue::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,

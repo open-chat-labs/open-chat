@@ -5,6 +5,7 @@ use crate::{CanisterIds, CanisterName};
 use candid::Principal;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::Identity;
+use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
 use types::Version;
@@ -86,9 +87,11 @@ async fn install_service_canisters_impl(
             &canister_ids.online_users_aggregator,
             controllers.clone(),
         ),
-        set_controllers(management_canister, &canister_ids.callback, controllers),
+        set_controllers(management_canister, &canister_ids.callback, controllers.clone()),
     )
     .await;
+
+    set_controllers(management_canister, &canister_ids.ledger_sync, controllers).await;
 
     let version = Version::min();
 
@@ -153,6 +156,14 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
+    let ledger_sync_canister_wasm = get_canister_wasm(CanisterName::LedgerSync, version, false);
+    let ledger_sync_init_args = ledger_sync_canister::init::Args {
+        ledger_canister_id: MAINNET_LEDGER_CANISTER_ID,
+        user_index_canister_id: canister_ids.user_index,
+        wasm_version: version,
+        test_mode,
+    };
+
     futures::future::join5(
         install_wasm(
             management_canister,
@@ -187,11 +198,19 @@ async fn install_service_canisters_impl(
     )
     .await;
 
-    install_wasm(
-        management_canister,
-        &canister_ids.callback,
-        &callback_canister_wasm.module,
-        callback_init_args,
+    futures::future::join(
+        install_wasm(
+            management_canister,
+            &canister_ids.callback,
+            &callback_canister_wasm.module,
+            callback_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.ledger_sync,
+            &ledger_sync_canister_wasm.module,
+            ledger_sync_init_args,
+        ),
     )
     .await;
 

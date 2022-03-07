@@ -17,6 +17,7 @@ fn heartbeat() {
     topup_canister_pool::run();
     retry_failed_messages::run();
     sync_users_to_open_storage::run();
+    sync_users_to_ledger_sync_canister::run();
     calculate_metrics::run();
     dismiss_removed_super_admins::run();
     prune_unconfirmed_phone_numbers::run();
@@ -243,6 +244,41 @@ mod sync_users_to_open_storage {
 
     fn on_failure(users: Vec<UserConfig>, runtime_state: &mut RuntimeState) {
         runtime_state.data.open_storage_user_sync_queue.mark_sync_failed(users);
+    }
+}
+
+mod sync_users_to_ledger_sync_canister {
+    use super::*;
+
+    pub fn run() {
+        if let Some((canister_id, users)) = mutate_state(next_batch) {
+            ic_cdk::spawn(sync_users(canister_id, users));
+        }
+    }
+
+    fn next_batch(runtime_state: &mut RuntimeState) -> Option<(CanisterId, Vec<UserId>)> {
+        let users = runtime_state.data.ledger_sync_canister_user_sync_queue.try_start_sync()?;
+
+        Some((runtime_state.data.ledger_sync_canister_id, users))
+    }
+
+    async fn sync_users(ledger_sync_canister_id: CanisterId, users: Vec<UserId>) {
+        let args = ledger_sync_canister::c2c_track_user_accounts::Args { users: users.clone() };
+        match ledger_sync_canister_c2c_client::c2c_track_user_accounts(ledger_sync_canister_id, &args).await {
+            Ok(_) => mutate_state(on_success),
+            Err(_) => mutate_state(|state| on_failure(users, state)),
+        }
+    }
+
+    fn on_success(runtime_state: &mut RuntimeState) {
+        runtime_state.data.ledger_sync_canister_user_sync_queue.mark_sync_completed();
+    }
+
+    fn on_failure(users: Vec<UserId>, runtime_state: &mut RuntimeState) {
+        for user_id in users {
+            runtime_state.data.ledger_sync_canister_user_sync_queue.push(user_id);
+        }
+        runtime_state.data.ledger_sync_canister_user_sync_queue.mark_sync_completed();
     }
 }
 

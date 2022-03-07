@@ -18,7 +18,9 @@ group_canister_client = { path = "../../canisters/group/client" }
 group_index_canister = { path = "../../canisters/group_index/api" }
 group_index_canister_client = { path = "../../canisters/group_index/client" }
 ic-agent = "0.12.1"
+ic-ledger-types = "0.1.1"
 ic-utils = "0.12.1"
+ledger_sync_canister = { path = "../../canisters/ledger_sync/api" }
 notifications_canister = { path = "../../canisters/notifications/api" }
 root_canister = { path = "../../canisters/root/api" }
 root_canister_client = { path = "../../canisters/root/client" }
