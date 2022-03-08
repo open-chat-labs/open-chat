@@ -16,7 +16,7 @@ pub fn convert_to_subaccount(principal: &Principal) -> Subaccount {
     Subaccount(subaccount)
 }
 
-pub fn transaction_hash(sender: UserId, args: &TransferArgs) -> TransactionHash {
+pub fn calculate_transaction_hash(sender: UserId, args: &TransferArgs) -> TransactionHash {
     let from = default_ledger_account(sender.into());
 
     let transaction = Transaction {

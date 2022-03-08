@@ -36,6 +36,7 @@ pub mod set_preferences;
 pub mod toggle_reaction;
 pub mod unblock_user;
 pub mod wallet_receive;
+pub mod withdraw_cryptocurrency;
 
 mod send_message_common {
     use super::*;

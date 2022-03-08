@@ -678,6 +678,24 @@ type CryptocurrencyWithdrawal =
         ICP: ICPWithdrawal;
     };
 
+type PendingCryptocurrencyWithdrawal =
+    variant {
+        ICP: PendingICPWithdrawal;
+        Cycles: PendingCyclesWithdrawal;
+    };
+
+type CompletedCryptocurrencyWithdrawal =
+    variant {
+        ICP: CompletedICPWithdrawal;
+        Cycles: CompletedCyclesWithdrawal;
+    };
+
+type FailedCryptocurrencyWithdrawal =
+    variant {
+        ICP: FailedICPWithdrawal;
+        Cycles: FailedCyclesWithdrawal;
+    };
+
 type CyclesDeposit =
     variant {
         Completed: CompletedCyclesDeposit;
@@ -751,6 +769,7 @@ type CompletedICPWithdrawal =
         fee: ICP;
         memo: Memo;
         block_index: BlockIndex;
+        transaction_hash: TransactionHash;
     };
 
 type FailedICPWithdrawal =
