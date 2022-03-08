@@ -1,7 +1,10 @@
 use crate::model::notifications_queue::DepositNotification;
-use crate::mutate_state;
+use crate::{mutate_state, read_state, RuntimeState};
 use ic_cdk_macros::heartbeat;
-use types::{CanisterId, CryptocurrencyDeposit};
+use ic_ledger_types::BlockIndex;
+use ledger_utils::{blocks_since, latest_block_index, CandidBlock, CandidOperation};
+use tracing::error;
+use types::{CanisterId, CompletedICPDeposit, CryptocurrencyDeposit, ICPDeposit};
 
 #[heartbeat]
 fn heartbeat() {
@@ -21,17 +24,64 @@ mod sync_ledger_transactions {
     }
 
     async fn init_block_index() {
-        let block_index = get_latest_block_index().await;
+        let ledger_canister_id = read_state(|state| state.data.ledger_canister_id);
+
+        let block_index = latest_block_index(ledger_canister_id).await.unwrap_or_else(|error| {
+            error!(?error, "Failed to get latest block index from ledger");
+            0
+        });
 
         mutate_state(|state| state.data.ledger_sync_state.mark_complete(block_index));
     }
 
-    async fn get_latest_block_index() -> u64 {
-        todo!()
+    async fn sync_transactions(from_block_index: BlockIndex) {
+        let ledger_canister_id = read_state(|state| state.data.ledger_canister_id);
+
+        match blocks_since(ledger_canister_id, from_block_index, 1000).await {
+            Ok(blocks) => mutate_state(|state| process_blocks(blocks, from_block_index, state)),
+            Err(error) => error!(?error, "Failed to get blocks from ledger"),
+        }
     }
 
-    async fn sync_transactions(_from_block_index: u64) {
-        todo!()
+    fn process_blocks(blocks: Vec<CandidBlock>, from_block_index: BlockIndex, runtime_state: &mut RuntimeState) {
+        let deposits = extract_deposits(blocks, from_block_index, runtime_state);
+
+        for deposit in deposits {
+            runtime_state.data.notifications_queue.add(deposit);
+        }
+    }
+
+    fn extract_deposits(
+        blocks: Vec<CandidBlock>,
+        from_block_index: BlockIndex,
+        runtime_state: &RuntimeState,
+    ) -> Vec<DepositNotification> {
+        let mut deposits = Vec::new();
+
+        for (block_index, block) in blocks
+            .into_iter()
+            .enumerate()
+            .map(|(index, block)| ((index as u64) + from_block_index, block))
+        {
+            if let CandidOperation::Transfer { from, to, amount, fee } = block.transaction.operation {
+                if let Some(canister_id) = runtime_state.data.accounts.get_canister_id(&to) {
+                    if runtime_state.data.accounts.get_canister_id(&from).is_none() {
+                        deposits.push(DepositNotification {
+                            canister_id,
+                            deposit: CryptocurrencyDeposit::ICP(ICPDeposit::Completed(CompletedICPDeposit {
+                                from_address: from,
+                                amount,
+                                fee,
+                                memo: block.transaction.memo,
+                                block_index,
+                            })),
+                        });
+                    }
+                }
+            }
+        }
+
+        deposits
     }
 }
 

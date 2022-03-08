@@ -2166,6 +2166,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-ledger-types",
  "ledger_sync_canister",
+ "ledger_utils",
  "serde",
  "serde_bytes",
  "serializer",
@@ -2181,7 +2182,12 @@ name = "ledger_utils"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "futures",
+ "ic-cdk",
  "ic-ledger-types",
+ "itertools",
+ "serde",
+ "serde_bytes",
  "types",
  "utils",
 ]
