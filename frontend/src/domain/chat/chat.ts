@@ -986,3 +986,5 @@ export type RegisterPollVoteResponse =
     | "out_of_range"
     | "poll_not_found"
     | "chat_not_found";
+
+export type MessageAction = "emoji" | "transfer" | "file" | undefined;

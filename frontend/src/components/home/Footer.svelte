@@ -8,6 +8,7 @@
         EventWrapper,
         GroupChatSummary,
         Message,
+        MessageAction,
         MessageContent,
         PollContent,
     } from "../../domain/chat/chat";
@@ -28,7 +29,7 @@
     export let joining: GroupChatSummary | undefined;
 
     const dispatch = createEventDispatcher();
-    let showEmojiPicker = false;
+    let messageAction: MessageAction = undefined;
     let messageEntry: MessageEntry;
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
@@ -176,7 +177,7 @@
                 {/if}
             </div>
         {/if}
-        {#if showEmojiPicker}
+        {#if messageAction === "emoji"}
             {#await import("./EmojiPicker.svelte")}
                 <div class="loading-emoji"><Loading /></div>
             {:then picker}
@@ -188,7 +189,7 @@
     </div>
     <MessageEntry
         bind:this={messageEntry}
-        bind:showEmojiPicker
+        bind:messageAction
         on:paste={onPaste}
         on:drop={onDrop}
         {canSend}
