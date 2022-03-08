@@ -7,7 +7,6 @@ use types::{
     CompletedICPTransfer, CompletedICPWithdrawal, CryptocurrencyTransfer, CryptocurrencyWithdrawal, FailedICPTransfer,
     FailedICPWithdrawal, ICPTransfer, ICPWithdrawal, PendingICPTransfer, PendingICPWithdrawal,
 };
-use utils::consts::DEFAULT_MEMO;
 
 pub async fn send_icp(pending_transfer: PendingICPTransfer) -> Result<CompletedICPTransfer, FailedICPTransfer> {
     let (my_user_id, transaction_index, now) = mutate_state(|state| {
@@ -19,7 +18,7 @@ pub async fn send_icp(pending_transfer: PendingICPTransfer) -> Result<CompletedI
         (my_user_id, transaction_index, now)
     });
 
-    let memo = pending_transfer.memo.unwrap_or(Memo(DEFAULT_MEMO));
+    let memo = pending_transfer.memo.unwrap_or(Memo(0));
     let fee = pending_transfer.fee.unwrap_or(DEFAULT_FEE);
 
     let transfer_args = TransferArgs {
