@@ -189,6 +189,26 @@ export class HomeController {
                     }, {})
                 );
 
+                if (chatsResponse.avatarIdUpdate !== undefined) {
+                    const blobReference =
+                        chatsResponse.avatarIdUpdate === "set_to_none"
+                            ? undefined
+                            : {
+                                  canisterId: this.user.userId,
+                                  blobId: chatsResponse.avatarIdUpdate.value,
+                              };
+                    const dataContent = {
+                        blobReference,
+                        blobData: undefined,
+                        blobUrl: undefined,
+                    };
+                    const user = {
+                        ...get(userStore)[this.user.userId],
+                        ...dataContent,
+                    };
+                    userStore.add(this.api.rehydrateDataContent(user, "avatar"));
+                }
+
                 if (selectedChatInvalid) {
                     this.clearSelectedChat();
                 }

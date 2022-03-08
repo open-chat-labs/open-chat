@@ -203,6 +203,7 @@ export class UserClient extends CandidService implements IUserClient {
             chatSummaries: resp.chats.sort(compareChats),
             timestamp: resp.timestamp,
             blockedUsers: resp.blockedUsers,
+            avatarIdUpdate: undefined,
         };
     }
 
@@ -229,6 +230,7 @@ export class UserClient extends CandidService implements IUserClient {
             updatesResponse.chatsUpdated.length > 0 ||
             updatesResponse.chatsAdded.length > 0 ||
             updatesResponse.chatsRemoved.size > 0 ||
+            updatesResponse.avatarIdUpdate !== undefined ||
             updatesResponse.cyclesBalance !== undefined ||
             updatesResponse.transactions.length > 0 ||
             updatesResponse.alerts.length > 0;
@@ -240,6 +242,7 @@ export class UserClient extends CandidService implements IUserClient {
                 : chatSummaries,
             timestamp: updatesResponse.timestamp,
             blockedUsers: updatesResponse.blockedUsers,
+            avatarIdUpdate: updatesResponse.avatarIdUpdate,
         };
     }
 
