@@ -59,7 +59,7 @@ async fn send_message(mut args: Args) -> Response {
                 if pending_transfer.recipient != args.recipient {
                     return InvalidRequest("Transfer recipient does not match message recipient".to_owned());
                 }
-                match send_icp(pending_transfer).await {
+                match send_icp(pending_transfer, now).await {
                     Ok(completed_transfer) => {
                         c.transfer = CryptocurrencyTransfer::ICP(ICPTransfer::Completed(completed_transfer))
                     }

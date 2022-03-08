@@ -1,9 +1,17 @@
 use crate::mutate_state;
-use ic_ledger_types::{AccountIdentifier, Memo, TransferArgs, DEFAULT_FEE, DEFAULT_SUBACCOUNT, MAINNET_LEDGER_CANISTER_ID};
-use types::{CompletedICPTransfer, CryptocurrencyTransfer, FailedICPTransfer, ICPTransfer, PendingICPTransfer};
+use ic_ledger_types::{
+    AccountIdentifier, Memo, Timestamp, TransferArgs, DEFAULT_FEE, DEFAULT_SUBACCOUNT, MAINNET_LEDGER_CANISTER_ID,
+};
+use ledger_utils::transaction_hash;
+use types::{
+    CompletedICPTransfer, CryptocurrencyTransfer, FailedICPTransfer, ICPTransfer, PendingICPTransfer, TimestampMillis,
+};
 use utils::consts::DEFAULT_MEMO;
 
-pub async fn send_icp(pending_transfer: PendingICPTransfer) -> Result<CompletedICPTransfer, FailedICPTransfer> {
+pub async fn send_icp(
+    pending_transfer: PendingICPTransfer,
+    now: TimestampMillis,
+) -> Result<CompletedICPTransfer, FailedICPTransfer> {
     let (my_user_id, index) = mutate_state(|state| {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
@@ -22,12 +30,16 @@ pub async fn send_icp(pending_transfer: PendingICPTransfer) -> Result<CompletedI
         fee,
         from_subaccount: None,
         to: AccountIdentifier::new(&pending_transfer.recipient.into(), &DEFAULT_SUBACCOUNT),
-        created_at_time: None,
+        created_at_time: Some(Timestamp {
+            timestamp_nanos: now * 1000 * 1000,
+        }),
     };
+
+    let transaction_hash = transaction_hash(my_user_id, &transfer_args);
 
     let transfer_result = match ic_ledger_types::transfer(MAINNET_LEDGER_CANISTER_ID, transfer_args).await {
         Ok(Ok(block_index)) => {
-            let completed_transfer = pending_transfer.completed(my_user_id, fee, memo, block_index);
+            let completed_transfer = pending_transfer.completed(my_user_id, fee, memo, block_index, transaction_hash);
             Ok(completed_transfer)
         }
         Ok(Err(transfer_error)) => {

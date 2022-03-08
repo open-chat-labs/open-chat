@@ -11,6 +11,7 @@ type MessageIndex = nat32;
 type Milliseconds = nat64;
 type TimestampMillis = nat64;
 type TimestampNanos = nat64;
+type TransactionHash = blob;
 type UserId = CanisterId;
 
 type AddedToGroupNotification =
@@ -817,6 +818,7 @@ type CompletedICPTransfer =
         fee: ICP;
         memo: Memo;
         block_index: BlockIndex;
+        transaction_hash: TransactionHash;
     };
 
 type FailedICPTransfer =
