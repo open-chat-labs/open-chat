@@ -214,7 +214,14 @@ pub struct PendingICPTransfer {
 }
 
 impl PendingICPTransfer {
-    pub fn completed(&self, sender: UserId, fee: ICP, memo: Memo, block_index: BlockIndex) -> CompletedICPTransfer {
+    pub fn completed(
+        &self,
+        sender: UserId,
+        fee: ICP,
+        memo: Memo,
+        block_index: BlockIndex,
+        transaction_hash: TransactionHash,
+    ) -> CompletedICPTransfer {
         CompletedICPTransfer {
             sender,
             recipient: self.recipient,
@@ -222,6 +229,7 @@ impl PendingICPTransfer {
             fee,
             memo,
             block_index,
+            transaction_hash,
         }
     }
 
@@ -244,6 +252,7 @@ pub struct CompletedICPTransfer {
     pub fee: ICP,
     pub memo: Memo,
     pub block_index: BlockIndex,
+    pub transaction_hash: TransactionHash,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -254,3 +263,5 @@ pub struct FailedICPTransfer {
     pub memo: Memo,
     pub error_message: String,
 }
+
+pub type TransactionHash = [u8; 32];
