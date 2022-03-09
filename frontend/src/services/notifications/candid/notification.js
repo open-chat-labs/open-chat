@@ -61,6 +61,7 @@ export const Notification = IDL.Variant({
                 }),
                 'Completed' : IDL.Record({
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                  'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'block_index' : IDL.Nat64,
                   'memo' : IDL.Nat64,
                   'recipient' : IDL.Principal,
@@ -198,6 +199,7 @@ export const Notification = IDL.Variant({
                 }),
                 'Completed' : IDL.Record({
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                  'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'block_index' : IDL.Nat64,
                   'memo' : IDL.Nat64,
                   'recipient' : IDL.Principal,
