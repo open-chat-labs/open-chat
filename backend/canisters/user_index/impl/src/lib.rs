@@ -202,6 +202,7 @@ impl Default for Data {
             online_users_aggregator_canister_ids: HashSet::new(),
             callback_canister_id: Principal::anonymous(),
             ledger_sync_canister_id: Principal::anonymous(),
+            ledger_sync_canister_user_sync_queue: LedgerSyncCanisterUserSyncQueue::default(),
             canister_pool: canister::Pool::new(5),
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id: Principal::anonymous(),
