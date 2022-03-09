@@ -32,4 +32,4 @@ pub mod set_preferences;
 pub mod toggle_reaction;
 pub mod unblock_user;
 pub mod unmute_notifications;
-pub mod withdraw;
+pub mod withdraw_cryptocurrency;

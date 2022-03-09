@@ -1,7 +1,6 @@
 use candid::CandidType;
-use ic_ledger_types::BlockIndex;
 use serde::Deserialize;
-use types::PendingCryptocurrencyWithdrawal;
+use types::{CompletedCryptocurrencyWithdrawal, FailedCryptocurrencyWithdrawal, PendingCryptocurrencyWithdrawal};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -10,8 +9,7 @@ pub struct Args {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
-    Success(BlockIndex),
+    Success(CompletedCryptocurrencyWithdrawal),
+    TransactionFailed(FailedCryptocurrencyWithdrawal),
     CurrencyNotSupported,
-    TransactionFailed(String),
-    InternalError(String),
 }
