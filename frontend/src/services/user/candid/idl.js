@@ -135,9 +135,11 @@ export const idlFactory = ({ IDL }) => {
     'recipient' : UserId,
     'amount' : ICP,
   });
+  const TransactionHash = IDL.Vec(IDL.Nat8);
   const BlockIndex = IDL.Nat64;
   const CompletedICPTransfer = IDL.Record({
     'fee' : ICP,
+    'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
     'memo' : Memo,
     'recipient' : UserId,

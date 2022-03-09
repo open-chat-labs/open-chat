@@ -89,6 +89,7 @@ export type CompletedICPTransfer = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
+    transactionHash: number[];
 };
 
 export type CompletedICPDeposit = {
@@ -987,4 +988,4 @@ export type RegisterPollVoteResponse =
     | "poll_not_found"
     | "chat_not_found";
 
-export type MessageAction = "emoji" | "transfer" | "file" | undefined;
+export type MessageAction = "emoji" | "file" | undefined;

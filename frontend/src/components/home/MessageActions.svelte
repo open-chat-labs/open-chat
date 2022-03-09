@@ -1,6 +1,5 @@
 <script lang="ts">
     import FileAttacher from "./FileAttacher.svelte";
-    import { fade, fly } from "svelte/transition";
     import HoverIcon from "../HoverIcon.svelte";
     import Smiley from "./Smiley.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -23,32 +22,35 @@
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall && $chat.kind === "direct_chat";
+    $: showActions = !mobile || (drawOpen && messageAction === undefined);
 
     export function close() {
         drawOpen = false;
+        if (messageAction === "file") {
+            controller.clearAttachment();
+        }
         messageAction = undefined;
     }
 
     function toggleAction(action: MessageAction) {
         if (messageAction === action) {
             messageAction = undefined;
+            if ($fileToAttach !== undefined) {
+                controller.clearAttachment();
+            }
         } else {
             messageAction = action;
         }
     }
 
+    function createICPTransfer() {
+        dispatch("icpTransfer", 0);
+        drawOpen = false;
+    }
+
     function toggleEmojiPicker() {
         toggleAction("emoji");
     }
-
-    function toggleCryptoTransfer() {
-        toggleAction("transfer");
-        if (messageAction === "transfer") {
-            controller.createDraftICPTransfer();
-        }
-    }
-
-    function clearAttachment() {}
 
     function toggleDraw() {
         if (drawOpen) {
@@ -73,51 +75,53 @@
     </div>
 {/if}
 
-{#if !mobile || (drawOpen && messageAction === undefined)}
-    <div in:fly={{ y: 100, duration: 200 }} class="message-actions" class:mobile>
-        <div class="emoji" on:click={toggleEmojiPicker}>
-            {#if messageAction === "emoji"}
-                <HoverIcon>
-                    <Close size={$iconSize} color={"var(--icon-txt)"} />
-                </HoverIcon>
-            {:else}
-                <HoverIcon>
-                    <Smiley />
-                </HoverIcon>
-            {/if}
-        </div>
-        <div class="attach">
-            <FileAttacher
-                open={$fileToAttach !== undefined}
-                on:fileSelected
-                on:close={clearAttachment} />
-        </div>
-        {#if $chat.kind === "direct_chat"}
-            <div class="send-icp" on:click={toggleCryptoTransfer}>
-                {#if messageAction === "transfer"}
-                    <HoverIcon>
-                        <Close size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                {:else}
-                    <HoverIcon title={"Send Crypto"}>
-                        <SwapHorizontal size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                {/if}
-            </div>
+<div class:visible={showActions} class="message-actions" class:mobile>
+    <div class="emoji" on:click={toggleEmojiPicker}>
+        {#if messageAction === "emoji"}
+            <HoverIcon>
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
+            </HoverIcon>
+        {:else}
+            <HoverIcon>
+                <Smiley />
+            </HoverIcon>
         {/if}
     </div>
-{/if}
+    <div class="attach">
+        <FileAttacher
+            open={$fileToAttach !== undefined && messageAction === "file"}
+            on:fileSelected
+            on:open={() => (messageAction = "file")}
+            on:close={close} />
+    </div>
+    {#if $chat.kind === "direct_chat"}
+        <div class="send-icp" on:click={createICPTransfer}>
+            <HoverIcon title={"Send Crypto"}>
+                <SwapHorizontal size={$iconSize} color={"var(--icon-txt)"} />
+            </HoverIcon>
+        </div>
+    {/if}
+</div>
 
 <style type="text/scss">
     .message-actions {
-        display: flex;
+        display: none;
         align-items: center;
+        transition: top 200ms ease-in-out;
 
         &.mobile {
-            flex-direction: column;
             position: absolute;
-            top: -110px;
+            flex-direction: column;
+            top: 0px;
             background-color: var(--entry-bg);
+
+            &.visible {
+                top: -110px;
+            }
+        }
+
+        &.visible {
+            display: flex;
         }
     }
     .emoji,

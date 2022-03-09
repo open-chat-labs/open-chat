@@ -403,5 +403,14 @@
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",
     "readOnlyGroup": "This a read-only group",
     "memberCount": "{count} member(s)",
-    "ownedBy": "Owned by @{username}"
+    "ownedBy": "Owned by @{username}",
+    "icpTransfer": {
+        "title": "Send ICP to {username}",
+        "amount": "amount (icp)",
+        "balance": "remaining balance (icp)",
+        "send": "Send",
+        "message": "Message",
+        "messagePlaceholder": "Include an optional message",
+        "fee": "* a fee of {fee} ICP applies"
+    }
 }

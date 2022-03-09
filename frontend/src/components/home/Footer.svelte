@@ -5,6 +5,7 @@
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
     import type {
+        CryptocurrencyContent,
         EventWrapper,
         GroupChatSummary,
         Message,
@@ -22,6 +23,7 @@
     import { _ } from "svelte-i18n";
     import { remainingStorage } from "../../stores/storage";
     import { createEventDispatcher } from "svelte";
+    import CryptoContent from "./CryptoContent.svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -123,6 +125,10 @@
         sendMessageWithAttachment(undefined, [], ev.detail);
     }
 
+    export function sendICPTransfer(ev: CustomEvent<CryptocurrencyContent>) {
+        sendMessageWithAttachment(undefined, [], ev.detail);
+    }
+
     function fileSelected(ev: CustomEvent<MessageContent>) {
         controller.attachFile(ev.detail);
     }
@@ -160,7 +166,9 @@
 <div class="footer">
     <div class="footer-overlay">
         {#if $replyingTo || $fileToAttach !== undefined}
-            <div class="draft-container">
+            <div
+                class="draft-container"
+                class:fill={$fileToAttach !== undefined && $fileToAttach.kind === "crypto_content"}>
                 {#if $replyingTo}
                     <ReplyingTo
                         preview={true}
@@ -169,10 +177,8 @@
                         replyingTo={$replyingTo} />
                 {/if}
                 {#if $fileToAttach !== undefined}
-                    {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content" || $fileToAttach.kind === "file_content"}
+                    {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content" || $fileToAttach.kind === "file_content" || $fileToAttach.kind === "crypto_content"}
                         <DraftMediaMessage content={$fileToAttach} />
-                    {:else if $fileToAttach.kind === "crypto_content"}
-                        <div>Crypto transfer preview</div>
                     {/if}
                 {/if}
             </div>
@@ -198,6 +204,7 @@
         {joining}
         on:sendMessage={sendMessage}
         on:createPoll
+        on:icpTransfer
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         on:joinGroup
@@ -227,6 +234,12 @@
     .draft-container {
         max-width: 80%;
         padding-bottom: 8px;
+
+        &.fill {
+            max-width: 100%;
+            width: 100%;
+            padding: $sp3 $sp4;
+        }
     }
 
     :global(.footer-overlay emoji-picker) {

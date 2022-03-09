@@ -805,20 +805,6 @@ export class ChatController {
         draftMessages.setAttachment(this.chatId, content);
     }
 
-    createDraftICPTransfer(): void {
-        if (this.chatVal.kind === "direct_chat") {
-            draftMessages.setAttachment(this.chatId, {
-                kind: "crypto_content",
-                transfer: {
-                    transferKind: "icp_transfer",
-                    kind: "pending_icp_transfer",
-                    recipient: this.chatVal.them,
-                    amountE8s: BigInt(0),
-                },
-            });
-        }
-    }
-
     startTyping(): void {
         rtcConnectionsManager.sendMessage([...this.chatUserIds], {
             kind: "remote_user_typing",

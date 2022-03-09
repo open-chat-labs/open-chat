@@ -78,6 +78,7 @@ export interface CompletedICPDeposit {
 }
 export interface CompletedICPTransfer {
   'fee' : ICP,
+  'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'memo' : Memo,
   'recipient' : UserId,
@@ -568,6 +569,7 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
+export type TransactionHash = Array<number>;
 export type TransactionStatus = { 'Failed' : string } |
   { 'Complete' : null } |
   { 'Pending' : null };

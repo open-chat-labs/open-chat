@@ -32,6 +32,7 @@
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
     $: replyingTo = controller.replyingTo;
+    $: chat = controller.chat;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -221,6 +222,14 @@
             dispatch("createPoll");
             return true;
         }
+
+        if ($chat.kind === "direct_chat") {
+            const icpMatch = txt.match(/^!icp *(\d*\.?\d*)$/);
+            if (icpMatch && icpMatch[1] !== undefined) {
+                dispatch("icpTransfer", Number(icpMatch[1]));
+                return true;
+            }
+        }
         return false;
     }
 
@@ -348,7 +357,12 @@
             {$_("readOnlyGroup")}
         </div>
     {:else}
-        <MessageActions bind:this={messageActions} bind:messageAction {controller} />
+        <MessageActions
+            bind:this={messageActions}
+            bind:messageAction
+            {controller}
+            on:icpTransfer
+            on:fileSelected />
 
         {#if recording}
             <div class="recording">
