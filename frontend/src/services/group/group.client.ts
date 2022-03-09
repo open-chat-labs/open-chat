@@ -309,8 +309,15 @@ export class GroupClient extends CandidService implements IGroupClient {
             groupDetailsUpdatesResponse
         );
 
-        if (updatesResponse === "caller_not_in_group" || updatesResponse === "success_no_updates") {
+        if (updatesResponse === "caller_not_in_group") {
             return previous;
+        }
+
+        if (updatesResponse.kind === "success_no_updates") {
+            return {
+                ...previous,
+                latestEventIndex: updatesResponse.latestEventIndex
+            };
         }
 
         return mergeGroupChatDetails(previous, updatesResponse);

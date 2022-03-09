@@ -687,7 +687,7 @@ export interface SelectedInitialSuccess {
 export interface SelectedUpdatesArgs { 'updates_since' : EventIndex }
 export type SelectedUpdatesResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : SelectedUpdatesSuccess } |
-  { 'SuccessNoUpdates' : null };
+  { 'SuccessNoUpdates' : EventIndex };
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'participants_added_or_updated' : Array<Participant>,
