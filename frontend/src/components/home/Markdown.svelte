@@ -7,6 +7,7 @@
     import { rollbar } from "../../utils/logging";
     import { userStore } from "../../stores/user";
     import { _ } from "svelte-i18n";
+    import { isAbsoluteUrl } from "../../utils/urls";
 
     export let text: string;
     export let inline: boolean = true;
@@ -52,10 +53,15 @@
 
     const renderer = {
         link(href: string | null, title: string | null, text: string) {
-            if (suppressLinks) {
+            if (suppressLinks || href === null) {
                 return `<span class="fake-link" ${title && `title=${title}`}>${text}</span>`;
             } else {
-                return `<a href=${href} ${title && `title=${title}`} target="_blank">${text}</a>`;
+                const target =
+                    isAbsoluteUrl(href) && !href.startsWith(window.location.origin)
+                        ? 'target="_blank"'
+                        : "";
+
+                return `<a href=${href} ${title && `title=${title}`} ${target}>${text}</a>`;
             }
         },
     };
@@ -87,7 +93,6 @@
 <style type="text/scss">
     :global(.markdown-wrapper a) {
         text-decoration: underline;
-        word-break: break-all;
     }
 
     :global(.markdown-wrapper .fake-link) {
