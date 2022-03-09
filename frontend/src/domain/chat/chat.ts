@@ -524,6 +524,7 @@ export type MergedUpdatesResponse = {
     wasUpdated: boolean;
     chatSummaries: ChatSummary[];
     blockedUsers: Set<string>;
+    avatarIdUpdate: OptionUpdate<bigint>;
     timestamp: bigint;
 };
 
@@ -532,6 +533,7 @@ export type UpdatesResponse = {
     chatsUpdated: ChatSummaryUpdates[];
     chatsAdded: ChatSummary[];
     chatsRemoved: Set<string>;
+    avatarIdUpdate: OptionUpdate<bigint>;
     timestamp: bigint;
     cyclesBalance?: bigint;
     transactions: CryptocurrencyTransfer[];
