@@ -44,29 +44,18 @@ mod sync_ledger_transactions {
     }
 
     fn process_blocks(blocks: Vec<CandidBlock>, from_block_index: BlockIndex, runtime_state: &mut RuntimeState) {
-        let deposits = extract_deposits(blocks, from_block_index, runtime_state);
-
-        for deposit in deposits {
-            runtime_state.data.notifications_queue.add(deposit);
-        }
-    }
-
-    fn extract_deposits(
-        blocks: Vec<CandidBlock>,
-        from_block_index: BlockIndex,
-        runtime_state: &RuntimeState,
-    ) -> Vec<DepositNotification> {
-        let mut deposits = Vec::new();
-
         for (block_index, block) in blocks
             .into_iter()
             .enumerate()
             .map(|(index, block)| ((index as u64) + from_block_index, block))
         {
             if let CandidOperation::Transfer { from, to, amount, fee } = block.transaction.operation {
-                if let Some(canister_id) = runtime_state.data.accounts.get_canister_id(&to) {
-                    if runtime_state.data.accounts.get_canister_id(&from).is_none() {
-                        deposits.push(DepositNotification {
+                if let Some(canister_id) = runtime_state.data.accounts.canister_id(&to) {
+                    if runtime_state.data.accounts.canister_id(&from).is_some() {
+                        runtime_state.data.transaction_metrics.mark_transfer(amount);
+                    } else {
+                        runtime_state.data.transaction_metrics.mark_deposit(amount);
+                        runtime_state.data.notifications_queue.add(DepositNotification {
                             canister_id,
                             deposit: CryptocurrencyDeposit::ICP(ICPDeposit::Completed(CompletedICPDeposit {
                                 from_address: from,
@@ -77,11 +66,11 @@ mod sync_ledger_transactions {
                             })),
                         });
                     }
+                } else if runtime_state.data.accounts.canister_id(&from).is_some() {
+                    runtime_state.data.transaction_metrics.mark_withdrawal(amount);
                 }
             }
         }
-
-        deposits
     }
 }
 

@@ -1,6 +1,7 @@
 use crate::model::accounts::Accounts;
 use crate::model::ledger_sync_state::LedgerSyncState;
 use crate::model::notifications_queue::NotificationsQueue;
+use crate::model::transaction_metrics::TransactionMetrics;
 use candid::CandidType;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
@@ -40,11 +41,26 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
+        let TransactionMetrics {
+            deposits,
+            total_deposited_e8s,
+            transfers,
+            total_transferred_e8s,
+            withdrawals,
+            total_withdrawn_e8s,
+        } = self.data.transaction_metrics;
+
         Metrics {
             memory_used: memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            deposits,
+            total_deposited_e8s,
+            transfers,
+            total_transferred_e8s,
+            withdrawals,
+            total_withdrawn_e8s,
         }
     }
 }
@@ -56,6 +72,7 @@ struct Data {
     pub accounts: Accounts,
     pub notifications_queue: NotificationsQueue,
     pub ledger_sync_state: LedgerSyncState,
+    pub transaction_metrics: TransactionMetrics,
     pub test_mode: bool,
 }
 
@@ -67,6 +84,7 @@ impl Data {
             accounts: Accounts::default(),
             notifications_queue: NotificationsQueue::default(),
             ledger_sync_state: LedgerSyncState::default(),
+            transaction_metrics: TransactionMetrics::default(),
             test_mode,
         }
     }
@@ -78,4 +96,10 @@ pub struct Metrics {
     pub memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
+    pub deposits: u64,
+    pub total_deposited_e8s: u128,
+    pub transfers: u64,
+    pub total_transferred_e8s: u128,
+    pub withdrawals: u64,
+    pub total_withdrawn_e8s: u128,
 }
