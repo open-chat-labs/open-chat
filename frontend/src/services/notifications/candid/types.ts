@@ -56,6 +56,10 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export type CompletedCryptocurrencyWithdrawal = {
+    'ICP' : CompletedICPWithdrawal
+  } |
+  { 'Cycles' : CompletedCyclesWithdrawal };
 export interface CompletedCyclesDeposit {
   'from' : CanisterId,
   'cycles' : Cycles,
@@ -78,6 +82,7 @@ export interface CompletedICPDeposit {
 }
 export interface CompletedICPTransfer {
   'fee' : ICP,
+  'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'memo' : Memo,
   'recipient' : UserId,
@@ -87,6 +92,7 @@ export interface CompletedICPTransfer {
 export interface CompletedICPWithdrawal {
   'to' : AccountIdentifier,
   'fee' : ICP,
+  'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'memo' : Memo,
   'amount' : ICP,
@@ -167,6 +173,8 @@ export interface DirectMessageNotification {
   'sender_name' : string,
 }
 export type EventIndex = number;
+export type FailedCryptocurrencyWithdrawal = { 'ICP' : FailedICPWithdrawal } |
+  { 'Cycles' : FailedCyclesWithdrawal };
 export interface FailedCyclesTransfer {
   'error_message' : string,
   'recipient' : UserId,
@@ -458,6 +466,8 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
+export type PendingCryptocurrencyWithdrawal = { 'ICP' : PendingICPWithdrawal } |
+  { 'Cycles' : PendingCyclesWithdrawal };
 export interface PendingCyclesTransfer {
   'recipient' : UserId,
   'cycles' : Cycles,
@@ -566,6 +576,7 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
+export type TransactionHash = Array<number>;
 export type TransactionStatus = { 'Failed' : string } |
   { 'Complete' : null } |
   { 'Pending' : null };

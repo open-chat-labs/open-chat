@@ -183,11 +183,16 @@ export class HomeController {
                         rec[chat.chatId] = chat;
                         if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
                             selectedChatInvalid = false;
-                            selectedChat.chatUpdated();
                         }
                         return rec;
                     }, {})
                 );
+
+                if (selectedChatInvalid) {
+                    this.clearSelectedChat();
+                } else if (selectedChat !== undefined) {
+                    selectedChat.updateDetails();
+                }
 
                 if (chatsResponse.avatarIdUpdate !== undefined) {
                     const blobReference =
@@ -207,10 +212,6 @@ export class HomeController {
                         ...dataContent,
                     };
                     userStore.add(this.api.rehydrateDataContent(user, "avatar"));
-                }
-
-                if (selectedChatInvalid) {
-                    this.clearSelectedChat();
                 }
 
                 this.initialised = true;

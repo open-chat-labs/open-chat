@@ -610,6 +610,7 @@ function apiICPTransfer(domain: ICPTransfer): ApiICPTransfer {
                 fee: apiICP(domain.feeE8s),
                 memo: domain.memo,
                 block_index: domain.blockIndex,
+                transaction_hash: [] // TODO
             },
         };
     }
