@@ -76,6 +76,10 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export type CompletedCryptocurrencyWithdrawal = {
+    'ICP' : CompletedICPWithdrawal
+  } |
+  { 'Cycles' : CompletedCyclesWithdrawal };
 export interface CompletedCyclesDeposit {
   'from' : CanisterId,
   'cycles' : Cycles,
@@ -98,6 +102,7 @@ export interface CompletedICPDeposit {
 }
 export interface CompletedICPTransfer {
   'fee' : ICP,
+  'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'memo' : Memo,
   'recipient' : UserId,
@@ -107,6 +112,7 @@ export interface CompletedICPTransfer {
 export interface CompletedICPWithdrawal {
   'to' : AccountIdentifier,
   'fee' : ICP,
+  'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'memo' : Memo,
   'amount' : ICP,
@@ -252,6 +258,8 @@ export interface EventsWindowArgs {
   'max_messages' : number,
   'max_events' : number,
 }
+export type FailedCryptocurrencyWithdrawal = { 'ICP' : FailedICPWithdrawal } |
+  { 'Cycles' : FailedCyclesWithdrawal };
 export interface FailedCyclesTransfer {
   'error_message' : string,
   'recipient' : UserId,
@@ -595,6 +603,8 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
+export type PendingCryptocurrencyWithdrawal = { 'ICP' : PendingICPWithdrawal } |
+  { 'Cycles' : PendingCyclesWithdrawal };
 export interface PendingCyclesTransfer {
   'recipient' : UserId,
   'cycles' : Cycles,
@@ -775,6 +785,7 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
+export type TransactionHash = Array<number>;
 export type TransactionStatus = { 'Failed' : string } |
   { 'Complete' : null } |
   { 'Pending' : null };
@@ -856,6 +867,12 @@ export interface VideoContent {
 }
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
+export interface WithdrawCryptocurrencyRequest {
+  'withdrawal' : PendingCryptocurrencyWithdrawal,
+}
+export type WithdrawCryptocurrencyResponse = { 'CurrencyNotSupported' : null } |
+  { 'TransactionFailed' : FailedCryptocurrencyWithdrawal } |
+  { 'Success' : CompletedCryptocurrencyWithdrawal };
 export interface _SERVICE {
   'add_recommended_group_exclusions' : (
       arg_0: AddRecommendedGroupExclusionsArgs,
@@ -917,4 +934,7 @@ export interface _SERVICE {
       UnmuteNotificationsResponse
     >,
   'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
+  'withdraw_cryptocurrency' : (arg_0: WithdrawCryptocurrencyRequest) => Promise<
+      WithdrawCryptocurrencyResponse
+    >,
 }

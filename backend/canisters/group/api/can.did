@@ -276,7 +276,7 @@ type SelectedUpdatesSuccess =
 type SelectedUpdatesResponse =
     variant {
         Success: SelectedUpdatesSuccess;
-        SuccessNoUpdates;
+        SuccessNoUpdates: EventIndex;
         CallerNotInGroup;
     };
 
