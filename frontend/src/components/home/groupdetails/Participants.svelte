@@ -80,9 +80,22 @@
 
     $: me = knownUsers.find((u) => u.userId === userId);
 
-    $: others = knownUsers.filter((u) => {
-        return matchesSearch(searchTerm, u) && u.userId !== userId;
-    });
+    $: others = knownUsers
+        .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId)
+        .sort(compareParticipants);
+
+    function compareParticipants(a: FullParticipant | BlockedParticipant, b: FullParticipant | BlockedParticipant): number {
+        if (a.kind !== b.kind) {
+            return a.kind === "full_participant" ? -1 : 1;
+        }
+        if (a.role !== b.role) {
+            if (a.role === "owner") return -1;
+            if (b.role === "owner") return 1;
+            if (a.role === "admin") return -1;
+            if (b.role === "admin") return 1;
+        }
+        return 0;
+    }
 
     let publicGroup = $chat.public;
 </script>
