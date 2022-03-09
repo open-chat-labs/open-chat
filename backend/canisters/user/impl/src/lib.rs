@@ -141,6 +141,7 @@ fn ledger_sync_canister_id() -> CanisterId {
 }
 
 impl Data {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         owner: Principal,
         user_index_canister_id: CanisterId,
