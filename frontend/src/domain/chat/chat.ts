@@ -636,8 +636,8 @@ export type GroupPermissions = {
 export type GroupChatDetailsResponse = "caller_not_in_group" | GroupChatDetails;
 
 export type GroupChatDetailsUpdatesResponse =
-    | { kind: "success" } & GroupChatDetailsUpdates
-    | { kind: "success_no_updates", latestEventIndex: number }
+    | ({ kind: "success" } & GroupChatDetailsUpdates)
+    | { kind: "success_no_updates"; latestEventIndex: number }
     | "caller_not_in_group";
 
 export type GroupChatDetails = {

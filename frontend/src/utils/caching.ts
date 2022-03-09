@@ -190,7 +190,7 @@ export function setCachedChats(
                 chatSummaries: serialisable,
                 timestamp: data.timestamp,
                 blockedUsers: data.blockedUsers,
-                avatarIdUpdate: undefined
+                avatarIdUpdate: undefined,
             },
             userId
         );

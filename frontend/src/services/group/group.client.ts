@@ -316,7 +316,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         if (updatesResponse.kind === "success_no_updates") {
             return {
                 ...previous,
-                latestEventIndex: updatesResponse.latestEventIndex
+                latestEventIndex: updatesResponse.latestEventIndex,
             };
         }
 

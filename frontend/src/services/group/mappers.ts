@@ -97,7 +97,7 @@ export function groupDetailsUpdatesResponse(
     if ("SuccessNoUpdates" in candid) {
         return {
             kind: "success_no_updates",
-            latestEventIndex: candid.SuccessNoUpdates
+            latestEventIndex: candid.SuccessNoUpdates,
         };
     }
     if ("Success" in candid) {
