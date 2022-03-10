@@ -17,6 +17,7 @@ import {
     getMinVisibleMessageIndex,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
+    userIdsFromEvents,
 } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
 import type { Notification } from "../domain/notifications";
@@ -231,9 +232,9 @@ export class HomeController {
                 userIds.add(chat.them);
             } else if (chat.latestMessage !== undefined) {
                 userIds.add(chat.latestMessage.event.sender);
-                extractUserIdsFromMentions(getContentAsText(chat.latestMessage.event.content)).forEach((id) =>
-                    userIds.add(id)
-                );
+                extractUserIdsFromMentions(
+                    getContentAsText(chat.latestMessage.event.content)
+                ).forEach((id) => userIds.add(id));
             }
         });
         return userIds;
@@ -603,8 +604,11 @@ export class HomeController {
         const selectedChat = get(this.selectedChat);
         if (selectedChat?.chatId === chatId) {
             selectedChat.sendMessage(message, sender, true);
+        } else {
+            this.addMissingUsersFromMessage(message).then(() =>
+                this.onConfirmedMessage(chatId, message)
+            );
         }
-        this.onConfirmedMessage(chatId, message);
     }
 
     private delegateToChatController(
@@ -692,5 +696,21 @@ export class HomeController {
                 toastStore.showFailureToast("joinGroupFailed");
                 return false;
             });
+    }
+
+    private async addMissingUsersFromMessage(message: EventWrapper<Message>) {
+        const users = userIdsFromEvents([message]);
+        const missingUsers = missingUserIds(get(userStore), users);
+        if (missingUsers.length > 0) {
+            const usersResp = await this.api.getUsers({
+                userGroups: [
+                    {
+                        users: missingUsers,
+                        updatedSince: BigInt(0),
+                    },
+                ],
+            });
+            userStore.addMany(usersResp.users);
+        }
     }
 }
