@@ -250,15 +250,6 @@
                                 </MenuItem>
                             {/if}
                         {:else if $selectedChatSummary.kind === "group_chat"}
-                            {#if canDeleteGroup($selectedChatSummary)}
-                                <MenuItem on:click={deleteGroup}>
-                                    <DeleteAlertOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("deleteGroup")}</div>
-                                </MenuItem>
-                            {/if}
                             <MenuItem on:click={showGroupDetails}>
                                 <AccountMultiplePlus
                                     size={$iconSize}
@@ -338,6 +329,15 @@
                                     color={"var(--icon-txt)"}
                                     slot="icon" />
                                 <div slot="text">{$_("markAllRead")}</div>
+                            </MenuItem>
+                        {/if}
+                        {#if canDeleteGroup($selectedChatSummary)}
+                            <MenuItem on:click={deleteGroup}>
+                                <DeleteAlertOutline
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                <div slot="text">{$_("deleteGroup")}</div>
                             </MenuItem>
                         {/if}
                     </Menu>
