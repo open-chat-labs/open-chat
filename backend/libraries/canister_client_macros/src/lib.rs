@@ -30,7 +30,7 @@ macro_rules! generate_query_call {
             agent: &ic_agent::Agent,
             canister_id: &candid::Principal,
             args: &$method_name::Args,
-        ) -> Result<$method_name::Response, Box<dyn std::error::Error + Sync + std::marker::Send>> {
+        ) -> Result<$method_name::Response, Box<dyn std::error::Error + std::marker::Send + std::marker::Sync>> {
             use candid::{Decode, Encode};
 
             let candid_args = Encode!(args)?;
