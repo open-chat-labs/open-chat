@@ -501,7 +501,7 @@ export const idlFactory = ({ IDL }) => {
   const SelectedUpdatesResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
     'Success' : SelectedUpdatesSuccess,
-    'SuccessNoUpdates' : IDL.Null,
+    'SuccessNoUpdates' : EventIndex,
   });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });

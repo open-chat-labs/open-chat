@@ -4,7 +4,6 @@ use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{Memo, TransferArgs, DEFAULT_FEE, MAINNET_LEDGER_CANISTER_ID};
 use user_canister::c2c_charge_user_account::{Response::*, *};
-use utils::consts::DEFAULT_MEMO;
 
 #[update(guard = "caller_is_user_index")]
 #[trace]
@@ -16,7 +15,7 @@ async fn c2c_charge_user_account(args: Args) -> Response {
     match ic_ledger_types::transfer(
         MAINNET_LEDGER_CANISTER_ID,
         TransferArgs {
-            memo: Memo(DEFAULT_MEMO),
+            memo: Memo(0),
             amount: args.amount - DEFAULT_FEE,
             fee: DEFAULT_FEE,
             from_subaccount: None,

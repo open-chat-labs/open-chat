@@ -390,6 +390,7 @@ export const idlFactory = ({ IDL }) => {
   const CompletedICPWithdrawal = IDL.Record({
     'to' : AccountIdentifier,
     'fee' : ICP,
+    'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
     'memo' : Memo,
     'amount' : ICP,
@@ -756,6 +757,26 @@ export const idlFactory = ({ IDL }) => {
     }),
     'InternalError' : IDL.Text,
   });
+  const PendingCryptocurrencyWithdrawal = IDL.Variant({
+    'ICP' : PendingICPWithdrawal,
+    'Cycles' : PendingCyclesWithdrawal,
+  });
+  const WithdrawCryptocurrencyRequest = IDL.Record({
+    'withdrawal' : PendingCryptocurrencyWithdrawal,
+  });
+  const FailedCryptocurrencyWithdrawal = IDL.Variant({
+    'ICP' : FailedICPWithdrawal,
+    'Cycles' : FailedCyclesWithdrawal,
+  });
+  const CompletedCryptocurrencyWithdrawal = IDL.Variant({
+    'ICP' : CompletedICPWithdrawal,
+    'Cycles' : CompletedCyclesWithdrawal,
+  });
+  const WithdrawCryptocurrencyResponse = IDL.Variant({
+    'CurrencyNotSupported' : IDL.Null,
+    'TransactionFailed' : FailedCryptocurrencyWithdrawal,
+    'Success' : CompletedCryptocurrencyWithdrawal,
+  });
   return IDL.Service({
     'add_recommended_group_exclusions' : IDL.Func(
         [AddRecommendedGroupExclusionsArgs],
@@ -857,6 +878,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
+    'withdraw_cryptocurrency' : IDL.Func(
+        [WithdrawCryptocurrencyRequest],
+        [WithdrawCryptocurrencyResponse],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => { return []; };

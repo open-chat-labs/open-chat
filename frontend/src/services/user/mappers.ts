@@ -438,6 +438,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             chatsUpdated: candid.Success.chats_updated.map(updatedChatSummary),
             chatsAdded: candid.Success.chats_added.map(chatSummary),
             chatsRemoved: new Set(candid.Success.chats_removed.map((p) => p.toString())),
+            avatarIdUpdate: optionUpdate(candid.Success.avatar_id, (id) => id),
             timestamp: candid.Success.timestamp,
             cyclesBalance: optional(candid.Success.cycles_balance, identity),
             transactions: [], // todo - come back when we need this

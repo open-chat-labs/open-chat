@@ -191,12 +191,12 @@ export class ChatController {
                 this.participants.set(this.groupDetails.participants);
                 this.blockedUsers.set(this.groupDetails.blockedUsers);
                 this.pinnedMessages.set(this.groupDetails.pinnedMessages);
+                await this.updateUserStore(userIdsFromEvents(get(this.events)));
                 console.log(
                     "loading chat details updated to: ",
                     this.groupDetails.latestEventIndex
                 );
             }
-            await this.updateUserStore(userIdsFromEvents(get(this.events)));
         }
     }
 

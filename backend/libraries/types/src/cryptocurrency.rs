@@ -35,6 +35,24 @@ pub enum CryptocurrencyWithdrawal {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum PendingCryptocurrencyWithdrawal {
+    Cycles(PendingCyclesWithdrawal),
+    ICP(PendingICPWithdrawal),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum CompletedCryptocurrencyWithdrawal {
+    Cycles(CompletedCyclesWithdrawal),
+    ICP(CompletedICPWithdrawal),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum FailedCryptocurrencyWithdrawal {
+    Cycles(FailedCyclesWithdrawal),
+    ICP(FailedICPWithdrawal),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CyclesDeposit {
     Completed(CompletedCyclesDeposit),
 }
@@ -100,6 +118,35 @@ pub struct PendingICPWithdrawal {
     pub memo: Option<Memo>,
 }
 
+impl PendingICPWithdrawal {
+    pub fn completed(
+        &self,
+        fee: ICP,
+        memo: Memo,
+        block_index: BlockIndex,
+        transaction_hash: TransactionHash,
+    ) -> CompletedICPWithdrawal {
+        CompletedICPWithdrawal {
+            to: self.to,
+            amount: self.amount,
+            fee,
+            memo,
+            block_index,
+            transaction_hash,
+        }
+    }
+
+    pub fn failed(&self, fee: ICP, memo: Memo, error_message: String) -> FailedICPWithdrawal {
+        FailedICPWithdrawal {
+            to: self.to,
+            amount: self.amount,
+            fee,
+            memo,
+            error_message,
+        }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CompletedICPWithdrawal {
     pub to: AccountIdentifier,
@@ -107,6 +154,7 @@ pub struct CompletedICPWithdrawal {
     pub fee: ICP,
     pub memo: Memo,
     pub block_index: BlockIndex,
+    pub transaction_hash: TransactionHash,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

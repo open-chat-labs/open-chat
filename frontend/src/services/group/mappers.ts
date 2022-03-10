@@ -95,10 +95,14 @@ export function groupDetailsUpdatesResponse(
         return "caller_not_in_group";
     }
     if ("SuccessNoUpdates" in candid) {
-        return "success_no_updates";
+        return {
+            kind: "success_no_updates",
+            latestEventIndex: candid.SuccessNoUpdates,
+        };
     }
     if ("Success" in candid) {
         return {
+            kind: "success",
             participantsAddedOrUpdated:
                 candid.Success.participants_added_or_updated.map(participant),
             participantsRemoved: new Set(
