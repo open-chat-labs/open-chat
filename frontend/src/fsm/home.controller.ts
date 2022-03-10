@@ -605,9 +605,13 @@ export class HomeController {
         if (selectedChat?.chatId === chatId) {
             selectedChat.sendMessage(message, sender, true);
         } else {
-            this.addMissingUsersFromMessage(message).then(() =>
-                this.onConfirmedMessage(chatId, message)
-            );
+            const chat = this.findChatById(chatId);
+            if (chat !== undefined) {
+                const chatType = chat.kind === "direct_chat" ? "direct" : "group";
+                this.addMissingUsersFromMessage(message)
+                    .then(() => this.api.rehydrateMessage(chatType, chatId, message))
+                    .then((m) => this.onConfirmedMessage(chatId, m));
+            }
         }
     }
 
@@ -698,7 +702,7 @@ export class HomeController {
             });
     }
 
-    private async addMissingUsersFromMessage(message: EventWrapper<Message>) {
+    private async addMissingUsersFromMessage(message: EventWrapper<Message>) : Promise<void> {
         const users = userIdsFromEvents([message]);
         const missingUsers = missingUserIds(get(userStore), users);
         if (missingUsers.length > 0) {
