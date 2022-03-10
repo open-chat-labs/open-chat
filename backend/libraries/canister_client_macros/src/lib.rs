@@ -42,8 +42,7 @@ macro_rules! generate_query_call {
                 .call()
                 .await?;
 
-            let result = Decode!(response.as_slice(), $method_name::Response)?;
-            Ok(result)
+            Ok(Decode!(response.as_slice(), $method_name::Response)?)
         }
     };
 }
