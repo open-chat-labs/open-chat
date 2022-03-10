@@ -702,7 +702,7 @@ export class HomeController {
             });
     }
 
-    private async addMissingUsersFromMessage(message: EventWrapper<Message>) : Promise<void> {
+    private async addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
         const users = userIdsFromEvents([message]);
         const missingUsers = missingUserIds(get(userStore), users);
         if (missingUsers.length > 0) {
