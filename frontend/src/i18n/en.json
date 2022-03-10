@@ -411,6 +411,16 @@
         "send": "Send",
         "message": "Message",
         "messagePlaceholder": "Include an optional message",
-        "fee": "* a fee of {fee} ICP applies"
+        "fee": "* a fee of {fee} ICP applies",
+        "unexpected": "An unexpected crypto transfer type was received",
+        "confirmedReceived": "You received {amount} ICP",
+        "confirmedSent": "You sent {amount} ICP",
+        "pendingReceived": "{amount} ICP is on its way to you",
+        "pendingSent": "You are sending {amount} ICP"
+    },
+    "icpAccount": {
+        "balanceLabel": "ICP account balance",
+        "manage": "Manage",
+        "manageHeader": "Manage your ICP account"
     }
 }

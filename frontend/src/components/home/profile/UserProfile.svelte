@@ -36,6 +36,7 @@
     import { userStore } from "../../../stores/user";
     import { ONE_GB, storageStore } from "../../../stores/storage";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
+    import ManageIcpAccount from "./ManageICPAccount.svelte";
 
     const api: ServiceContainer = getContext(apiKey);
 
@@ -54,6 +55,9 @@
     let validUsername: string | undefined = undefined;
     let usernameInput: UsernameInput;
     let checkingUsername: boolean;
+    let currentIcpBalance = 0;
+    let manageIcpAccount: ManageIcpAccount;
+    let managingIcpAccount = false;
 
     $: {
         setLocale(selectedLocale);
@@ -158,6 +162,8 @@
         dispatch("closeProfile");
     }
 </script>
+
+<ManageIcpAccount bind:this={manageIcpAccount} bind:open={managingIcpAccount} />
 
 <form class="user-form" on:submit|preventDefault={saveUser}>
     <div class="user">
@@ -282,34 +288,47 @@
             on:toggle={accountSectionOpen.toggle}
             open={$accountSectionOpen}
             headerText={$_("account")}>
-            <Legend>{$_("storage")}</Legend>
-            {#if $storageStore.byteLimit === 0}
-                <p class="para">
-                    {$_("noStorageAdvice")}
-                </p>
-                <p class="para last">
-                    {$_("chooseUpgrade")}
+            <div class="storage">
+                <Legend>{$_("storage")}</Legend>
+                {#if $storageStore.byteLimit === 0}
+                    <p class="para">
+                        {$_("noStorageAdvice")}
+                    </p>
+                    <p class="para last">
+                        {$_("chooseUpgrade")}
 
-                    <Link underline={"always"} on:click={whySms}>
-                        {$_("tellMeMore")}
-                    </Link>
-                </p>
-                <ButtonGroup align={"fill"}>
-                    <Button on:click={() => dispatch("upgrade", "sms")} small={true}
-                        >{$_("upgradeBySMS")}</Button>
-                    <Button on:click={() => dispatch("upgrade", "icp")} small={true}
-                        >{$_("upgradeByTransfer")}</Button>
-                </ButtonGroup>
-            {:else}
-                <StorageUsage />
-                {#if $storageStore.byteLimit < ONE_GB}
-                    <p class="para">{$_("chooseTransfer")}</p>
-                    <div class="full-width-btn">
-                        <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small={true}
-                            >{$_("upgradeStorage")}</Button>
-                    </div>
+                        <Link underline={"always"} on:click={whySms}>
+                            {$_("tellMeMore")}
+                        </Link>
+                    </p>
+                    <ButtonGroup align={"fill"}>
+                        <Button on:click={() => dispatch("upgrade", "sms")} small={true}
+                            >{$_("upgradeBySMS")}</Button>
+                        <Button on:click={() => dispatch("upgrade", "icp")} small={true}
+                            >{$_("upgradeByTransfer")}</Button>
+                    </ButtonGroup>
+                {:else}
+                    <StorageUsage />
+                    {#if $storageStore.byteLimit < ONE_GB}
+                        <p class="para">{$_("chooseTransfer")}</p>
+                        <div class="full-width-btn">
+                            <Button
+                                on:click={() => dispatch("upgrade", "icp")}
+                                fill={true}
+                                small={true}>{$_("upgradeStorage")}</Button>
+                        </div>
+                    {/if}
                 {/if}
-            {/if}
+            </div>
+
+            <div class="icp">
+                <Legend>{$_("icpAccount.balanceLabel")}</Legend>
+                <div class="icp-balance">
+                    <div class="icp-balance-value">{currentIcpBalance.toFixed(4)}</div>
+                    <Button on:click={() => (managingIcpAccount = true)} fill={true} small={true}
+                        >{$_("icpAccount.manage")}</Button>
+                </div>
+            </div>
         </CollapsibleCard>
     </div>
 </form>
@@ -408,5 +427,27 @@
         position: absolute;
         top: $sp3;
         right: $sp3;
+    }
+
+    .storage {
+        margin-bottom: $sp5;
+    }
+
+    .icp-balance {
+        display: flex;
+        gap: $sp3;
+        justify-content: space-between;
+    }
+
+    .icp-balance-value {
+        @include font(book, normal, fs-140);
+        color: var(--input-txt);
+        height: 45px;
+        padding: $sp3;
+        width: 100%;
+        background-color: var(--input-bg);
+        border: 1px solid var(--input-bd);
+        border-radius: $sp2;
+        text-align: right;
     }
 </style>

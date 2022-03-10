@@ -58,9 +58,9 @@
                 error = undefined;
             })
             .catch((err) => {
-                error = "unableToRefreshAccountBalance";
-                // accountBalance = 1234567864;
+                // error = "unableToRefreshAccountBalance";
                 accountBalance = 0;
+                accountBalance = 1234567864;
                 draftAmount = amount;
                 rollbar.error("Unable to refresh user's account balance", err);
             })
@@ -75,9 +75,10 @@
                 transferKind: "icp_transfer",
                 kind: "pending_icp_transfer",
                 recipient: receiverId,
-                amountE8s: BigInt(draftAmount),
+                amountE8s: BigInt(draftAmount * E8S_PER_ICP),
             },
         };
+        console.log("ICPTransfer: ", content);
         dispatch("sendTransfer", content);
         open = false;
     }
