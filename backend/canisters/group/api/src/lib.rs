@@ -36,6 +36,7 @@ pub struct Summary {
     pub wasm_version: Version,
     pub owner_id: UserId,
     pub permissions: GroupPermissions,
+    pub notifications_muted: bool,
 }
 
 impl From<Summary> for GroupChatSummary {
@@ -53,7 +54,7 @@ impl From<Summary> for GroupChatSummary {
             latest_event_index: s.latest_event_index,
             joined: s.joined,
             read_by_me: vec![],
-            notifications_muted: false,
+            notifications_muted: s.notifications_muted,
             participant_count: s.participant_count,
             role: s.role,
             mentions: s.mentions,

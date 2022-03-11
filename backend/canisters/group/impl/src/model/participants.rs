@@ -47,6 +47,7 @@ impl Participants {
         min_visible_event_index: EventIndex,
         min_visible_message_index: MessageIndex,
         as_super_admin: bool,
+        notifications_muted: bool,
     ) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
@@ -59,7 +60,7 @@ impl Participants {
                         role: if as_super_admin { Role::SuperAdmin(FallbackRole::Participant) } else { Role::Participant },
                         min_visible_event_index,
                         min_visible_message_index,
-                        notifications_muted: false,
+                        notifications_muted,
                         mentions: Vec::new(),
                     };
                     e.insert(participant.clone());
