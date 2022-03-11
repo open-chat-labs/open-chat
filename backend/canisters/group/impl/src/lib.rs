@@ -104,6 +104,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             owner_id: data.owner_id,
             permissions: data.permissions.clone(),
+            notifications_muted: participant.notifications_muted,
         }
     }
 
