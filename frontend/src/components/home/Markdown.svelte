@@ -56,14 +56,15 @@
             if (suppressLinks || href === null) {
                 return `<span class="fake-link" ${title && `title=${title}`}>${text}</span>`;
             } else {
+                let target = "";
                 if (href.startsWith(friendlyUrl)) {
-                    href = window.location.origin + href.substring(friendlyUrl.length);
+                    href = href.substring(friendlyUrl.length);
+                    if (href === "" || href === "/") {
+                        href = "/#";
+                    }
+                } else if (isAbsoluteUrl(href) && !href.startsWith(window.location.origin)) {
+                    target = 'target="_blank"';
                 }
-
-                const target =
-                    isAbsoluteUrl(href) && !href.startsWith(window.location.origin)
-                        ? 'target="_blank"'
-                        : "";
 
                 return `<a href=${href} ${title && `title=${title}`} ${target}>${text}</a>`;
             }
