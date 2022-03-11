@@ -7,7 +7,7 @@
     import { rollbar } from "../../utils/logging";
     import { userStore } from "../../stores/user";
     import { _ } from "svelte-i18n";
-    import { isAbsoluteUrl } from "../../utils/urls";
+    import { friendlyUrl, isAbsoluteUrl } from "../../utils/urls";
 
     export let text: string;
     export let inline: boolean = true;
@@ -56,10 +56,21 @@
             if (suppressLinks || href === null) {
                 return `<span class="fake-link" ${title && `title=${title}`}>${text}</span>`;
             } else {
-                const target =
-                    isAbsoluteUrl(href) && !href.startsWith(window.location.origin)
-                        ? 'target="_blank"'
-                        : "";
+                let target = "";
+                let isOpenChatLink = false;
+                if (href.startsWith(friendlyUrl)) {
+                    href = href.substring(friendlyUrl.length);
+                    isOpenChatLink = true;
+                } else if (href.startsWith(window.location.origin)) {
+                    href = href.substring(window.location.origin.length);
+                    isOpenChatLink = true;
+                } else if (isAbsoluteUrl(href)) {
+                    target = 'target="_blank"';
+                }
+
+                if (isOpenChatLink && (href === "" || href === "/")) {
+                    href = "/#";
+                }
 
                 return `<a href=${href} ${title && `title=${title}`} ${target}>${text}</a>`;
             }
