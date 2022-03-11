@@ -7,7 +7,6 @@
     import type { CreatedUser } from "../../domain/user/user";
     import type { ServiceContainer } from "../../services/serviceContainer";
 
-    export let api: ServiceContainer;
     export let user: CreatedUser;
     export let qrSize: "default" | "smaller" = "default";
 

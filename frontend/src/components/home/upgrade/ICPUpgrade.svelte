@@ -2,7 +2,6 @@
     import { _ } from "svelte-i18n";
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { fade } from "svelte/transition";
     import { createEventDispatcher, onMount } from "svelte";
     import Footer from "./Footer.svelte";
     import { ONE_GB, storageInGb, storageStore, updateStorageLimit } from "../../../stores/storage";
@@ -99,7 +98,7 @@
     {:else if confirmed}
         <Congratulations />
     {:else}
-        <AccountInfo {api} {user} />
+        <AccountInfo {user} />
 
         <p class="choose">
             {$_("chooseAStorageLevel")}

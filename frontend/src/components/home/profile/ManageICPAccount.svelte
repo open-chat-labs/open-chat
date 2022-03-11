@@ -112,7 +112,7 @@
         </span>
         <form class="body" slot="body">
             <h4 class="title">{$_("icpAccount.topUp")}</h4>
-            <AccountInfo qrSize={"smaller"} {api} {user} />
+            <AccountInfo qrSize={"smaller"} {user} />
 
             <div class="or">
                 <hr />
@@ -148,9 +148,9 @@
             <div class="fee">
                 {$_("icpTransfer.fee", { values: { fee: ICP_TRANSFER_FEE.toString() } })}
             </div>
-            <!-- {#if error}
+            {#if error}
                 <ErrorMessage>{$_(error)}</ErrorMessage>
-            {/if} -->
+            {/if}
         </form>
         <span class="footer" slot="footer">
             <a

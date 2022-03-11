@@ -23,7 +23,6 @@
     import { _ } from "svelte-i18n";
     import { remainingStorage } from "../../stores/storage";
     import { createEventDispatcher } from "svelte";
-    import CryptoContent from "./CryptoContent.svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
