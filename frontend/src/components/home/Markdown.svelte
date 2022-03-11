@@ -57,13 +57,19 @@
                 return `<span class="fake-link" ${title && `title=${title}`}>${text}</span>`;
             } else {
                 let target = "";
+                let isOpenChatLink = false;
                 if (href.startsWith(friendlyUrl)) {
                     href = href.substring(friendlyUrl.length);
-                    if (href === "" || href === "/") {
-                        href = "/#";
-                    }
-                } else if (isAbsoluteUrl(href) && !href.startsWith(window.location.origin)) {
+                    isOpenChatLink = true;
+                } else if (href.startsWith(window.location.origin)) {
+                    href = href.substring(window.location.origin.length);
+                    isOpenChatLink = true;
+                } else if (isAbsoluteUrl(href)) {
                     target = 'target="_blank"';
+                }
+
+                if (isOpenChatLink && (href === "" || href === "/")) {
+                    href = "/#";
                 }
 
                 return `<a href=${href} ${title && `title=${title}`} ${target}>${text}</a>`;
