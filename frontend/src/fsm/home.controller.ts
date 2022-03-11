@@ -608,9 +608,10 @@ export class HomeController {
             const chat = this.findChatById(chatId);
             if (chat !== undefined) {
                 const chatType = chat.kind === "direct_chat" ? "direct" : "group";
-                this.addMissingUsersFromMessage(message)
-                    .then(() => this.api.rehydrateMessage(chatType, chatId, message))
-                    .then((m) => this.onConfirmedMessage(chatId, m));
+                Promise.all([
+                    this.api.rehydrateMessage(chatType, chatId, message),
+                    this.addMissingUsersFromMessage(message),
+                ]).then(([m, _]) => this.onConfirmedMessage(chatId, m));
             }
         }
     }
