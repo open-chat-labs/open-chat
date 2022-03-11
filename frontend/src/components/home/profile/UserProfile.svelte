@@ -1,6 +1,7 @@
 <script lang="ts">
     import { avatarUrl } from "../../../domain/user/user.utils";
     import type { CreatedUser, PartialUserSummary } from "../../../domain/user/user";
+    import { E8S_PER_ICP } from "../../../domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -345,7 +346,9 @@
             <div class="icp">
                 <Legend>{$_("icpAccount.balanceLabel")}</Legend>
                 <div class="icp-balance">
-                    <div class="icp-balance-value">{currentIcpBalance.toFixed(4)}</div>
+                    <div class="icp-balance-value">
+                        {(currentIcpBalance / E8S_PER_ICP).toFixed(4)}
+                    </div>
                     <Button on:click={showManageIcp} fill={true} small={true}
                         >{$_("icpAccount.manage")}</Button>
                 </div>

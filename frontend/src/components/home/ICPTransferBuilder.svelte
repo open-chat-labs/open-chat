@@ -7,8 +7,8 @@
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
     import Legend from "../Legend.svelte";
-    import Loading from "../Loading.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
     import { apiKey } from "../../services/serviceContainer";
@@ -20,6 +20,7 @@
     import { currentUserKey } from "../../fsm/home.controller";
     import { rollbar } from "../../utils/logging";
     import ErrorMessage from "../ErrorMessage.svelte";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     const dispatch = createEventDispatcher();
 
     export let open: boolean;
@@ -38,6 +39,7 @@
     $: remainingBalance = Math.max(0, icpBalance - draftAmount - ICP_TRANSFER_FEE);
     $: valid = error === undefined && draftAmount > 0;
     $: receiver = $userStore[receiverId];
+    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 
     $: {
         if (draftAmount > icpBalance - ICP_TRANSFER_FEE) {
@@ -87,48 +89,49 @@
 <Overlay dismissible={true} bind:active={open}>
     <ModalContent>
         <span class="header" slot="header">
-            <span class="avatar">
-                <Avatar
-                    url={avatarUrl(receiver)}
-                    status={getUserStatus($now, $userStore, receiverId)}
-                    size={AvatarSize.Tiny} />
-            </span>
-            {$_("icpTransfer.title", { values: { username: receiver?.username ?? "unknown" } })}
+            <div class="left">
+                <span class="avatar">
+                    <Avatar
+                        url={avatarUrl(receiver)}
+                        status={getUserStatus($now, $userStore, receiverId)}
+                        size={AvatarSize.Small} />
+                </span>
+                <div class="main-title">
+                    {$_("icpTransfer.title")}
+                </div>
+            </div>
+            <div class="balance">
+                <div class="amount">{remainingBalance.toFixed(4)}</div>
+                <div class="label">{$_("icpAccount.shortBalanceLabel")}</div>
+            </div>
+            <div class="refresh" class:refreshing class:mobile on:click={() => reset(draftAmount)}>
+                <Refresh size={"1em"} color={"var(--accent)"} />
+            </div>
         </span>
-        <form slot="body">
-            {#if refreshing}
-                <Loading />
-            {:else}
-                <div class="transfer">
-                    <div class="left">
-                        <Legend>{$_("icpTransfer.amount")}</Legend>
-                        <input
-                            autofocus={true}
-                            class="amount"
-                            min={0}
-                            max={icpBalance}
-                            type="number"
-                            bind:value={draftAmount} />
-                    </div>
-                    <div class="right">
-                        <Legend>{$_("icpTransfer.balance")}</Legend>
-                        <div class="balance">{remainingBalance.toFixed(4)}</div>
-                    </div>
-                </div>
-                <div class="message">
-                    <Legend>{$_("icpTransfer.message")}</Legend>
-                    <Input
-                        maxlength={100}
-                        type={"text"}
-                        autofocus={false}
-                        countdown={true}
-                        placeholder={$_("icpTransfer.messagePlaceholder")}
-                        bind:value={message} />
-                </div>
-                <div class="fee">
-                    {$_("icpTransfer.fee", { values: { fee: ICP_TRANSFER_FEE.toString() } })}
-                </div>
-            {/if}
+        <form class="body" slot="body">
+            <div class="transfer">
+                <Legend>{$_("icpTransfer.amount")}</Legend>
+                <input
+                    autofocus={true}
+                    class="amount-val"
+                    min={0}
+                    max={icpBalance}
+                    type="number"
+                    bind:value={draftAmount} />
+            </div>
+            <div class="message">
+                <Legend>{$_("icpTransfer.message")}</Legend>
+                <Input
+                    maxlength={100}
+                    type={"text"}
+                    autofocus={false}
+                    countdown={true}
+                    placeholder={$_("icpTransfer.messagePlaceholder")}
+                    bind:value={message} />
+            </div>
+            <div class="fee">
+                {$_("icpTransfer.fee", { values: { fee: ICP_TRANSFER_FEE.toString() } })}
+            </div>
             {#if error}
                 <ErrorMessage>{$_(error)}</ErrorMessage>
             {/if}
@@ -153,15 +156,54 @@
 <style type="text/scss">
     .header {
         display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: $sp4;
-    }
-    .transfer {
-        display: flex;
-        gap: $sp4;
+        align-items: flex-start;
         justify-content: space-between;
-        align-items: center;
+        gap: $sp2;
+
+        .left {
+            flex: auto;
+            display: flex;
+            align-items: center;
+            gap: $sp4;
+
+            .main-title {
+                flex: auto;
+            }
+        }
+
+        .balance {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            .amount {
+                @include font(bold, normal, fs-100);
+            }
+            .label {
+                @include font(light, normal, fs-70);
+            }
+        }
+
+        .refresh {
+            cursor: pointer;
+            height: $sp5;
+            width: $sp5;
+
+            &.refreshing {
+                @include spin();
+            }
+
+            &.mobile {
+                height: 21.59px;
+                width: 21.59px;
+            }
+        }
+    }
+
+    .body {
+        padding: 0 $sp3;
+    }
+
+    .transfer {
         margin-bottom: $sp4;
     }
     .how-to {
@@ -172,15 +214,7 @@
         text-decoration-thickness: 2px;
     }
 
-    .balance {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        padding: 0 $sp2;
-    }
-
-    .balance,
-    .amount {
+    .amount-val {
         height: 40px;
         @include font(book, normal, fs-140);
         color: var(--input-txt);
@@ -193,21 +227,14 @@
         text-overflow: ellipsis;
         border-radius: $sp2;
         text-align: right;
-    }
-    .amount {
         display: block;
         outline: none;
-    }
-
-    .left,
-    .right {
-        flex: 1;
     }
 
     .footer {
         position: relative;
         display: flex;
-        align-items: center;
+        align-items: flex-end;
         justify-content: space-between;
     }
     .fee {

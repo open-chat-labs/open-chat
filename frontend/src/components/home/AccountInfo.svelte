@@ -9,6 +9,7 @@
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
+    export let qrSize: "default" | "smaller" = "default";
 
     let accountSummary = collapseAccount(user.icpAccount);
     function collapseAccount(account: string) {
@@ -33,7 +34,7 @@
 </script>
 
 <div class="account-info">
-    <div class="qr">
+    <div class="qr" class:smaller={qrSize === "smaller"}>
         <QR text={user.icpAccount} />
     </div>
     <div class="receiver">
@@ -51,6 +52,11 @@
         background-color: #fff;
         width: 140px;
         height: 140px;
+
+        &.smaller {
+            width: 120px;
+            height: 120px;
+        }
     }
 
     .account-info {

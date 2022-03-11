@@ -5,7 +5,6 @@
     import type { CryptocurrencyContent } from "../../domain/chat/chat";
     import { E8S_PER_ICP } from "../../domain/user/user";
     import Markdown from "./Markdown.svelte";
-    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import ChevronDoubleRight from "svelte-material-icons/ChevronDoubleRight.svelte";
     import ChevronDoubleLeft from "svelte-material-icons/ChevronDoubleLeft.svelte";
     import { iconSize } from "stores/iconSize";
@@ -33,6 +32,15 @@
             <ChevronDoubleLeft size={$iconSize} color={"var(--icon-txt)"} />
         {/if}
     </div>
+    <div class="link">
+        <Markdown
+            text={$_("icpTransfer.viewTransaction", {
+                values: {
+                    hash: content.transfer.transactionHash.join(),
+                },
+            })}
+            inline={!reply} />
+    </div>
 {:else if content.transfer.kind === "pending_icp_transfer"}
     <div class="message">
         {#if me}
@@ -56,6 +64,10 @@
 <style type="text/scss">
     .unexpected {
         @include font(light, italic, fs-90);
+    }
+
+    .link {
+        margin-bottom: $sp3;
     }
 
     .message {

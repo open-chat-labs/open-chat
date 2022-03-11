@@ -686,6 +686,15 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     refreshAccountBalance(account: string): Promise<ICP> {
+        if (process.env.NODE_ENV !== "production") {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve({
+                        e8s: BigInt(1345764648),
+                    });
+                }, 1000);
+            });
+        }
         return this._ledgerClient.accountBalance(account);
     }
 

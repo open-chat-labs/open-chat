@@ -405,22 +405,30 @@
     "memberCount": "{count} member(s)",
     "ownedBy": "Owned by @{username}",
     "icpTransfer": {
-        "title": "Send ICP to {username}",
-        "amount": "amount (icp)",
+        "title": "Send ICP",
+        "amount": "amount (icp) *",
         "balance": "remaining balance (icp)",
         "send": "Send",
         "message": "Message",
         "messagePlaceholder": "Include an optional message",
-        "fee": "* a fee of {fee} ICP applies",
+        "fee": "* a fee of {fee} ICP will be added",
         "unexpected": "An unexpected crypto transfer type was received",
         "confirmedReceived": "You received {amount} ICP",
         "confirmedSent": "You sent {amount} ICP",
         "pendingReceived": "{amount} ICP is on its way to you",
-        "pendingSent": "You are sending {amount} ICP"
+        "pendingSent": "You are sending {amount} ICP",
+        "viewTransaction": "[View the transaction](https://dashboard.internetcomputer.org/transaction/{hash})"
     },
     "icpAccount": {
         "balanceLabel": "ICP account balance",
+        "shortBalanceLabel": "remaining balance",
         "manage": "Manage",
-        "manageHeader": "Manage your ICP account"
+        "manageHeader": "Manage account",
+        "topUp": "Top up",
+        "topUpBlurb": "To top up, simply transfer some ICP into the account above.",
+        "withdraw": "Withdraw",
+        "withdrawTarget": "enter an address to withdraw to",
+        "withdrawalSucceeded": "Your withdrawal succeeded!",
+        "withdrawalFailed": "Your withdrawal failed!"
     }
 }
