@@ -916,7 +916,7 @@ export function groupChatFromCandidate(
         readByMe: new DRange(),
         latestEventIndex: 0,
         latestMessage: undefined,
-        notificationsMuted: candidate.isPublic,
+        notificationsMuted: false,
         name: candidate.name,
         description: candidate.description,
         public: candidate.isPublic,
