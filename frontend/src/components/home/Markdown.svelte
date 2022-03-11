@@ -7,7 +7,7 @@
     import { rollbar } from "../../utils/logging";
     import { userStore } from "../../stores/user";
     import { _ } from "svelte-i18n";
-    import { isAbsoluteUrl } from "../../utils/urls";
+    import { friendlyUrl, isAbsoluteUrl } from "../../utils/urls";
 
     export let text: string;
     export let inline: boolean = true;
@@ -56,6 +56,10 @@
             if (suppressLinks || href === null) {
                 return `<span class="fake-link" ${title && `title=${title}`}>${text}</span>`;
             } else {
+                if (href.startsWith(friendlyUrl)) {
+                    href = window.location.origin + href.substring(friendlyUrl.length);
+                }
+
                 const target =
                     isAbsoluteUrl(href) && !href.startsWith(window.location.origin)
                         ? 'target="_blank"'
