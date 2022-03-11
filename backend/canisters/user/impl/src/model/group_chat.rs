@@ -13,7 +13,13 @@ pub struct GroupChat {
 }
 
 impl GroupChat {
-    pub fn new(chat_id: ChatId, is_super_admin: bool, notifications_muted: bool, read_up_to: Option<MessageIndex>, now: TimestampMillis) -> GroupChat {
+    pub fn new(
+        chat_id: ChatId,
+        is_super_admin: bool,
+        notifications_muted: bool,
+        read_up_to: Option<MessageIndex>,
+        now: TimestampMillis,
+    ) -> GroupChat {
         let mut read_by_me = RangeSet::new();
         if let Some(index) = read_up_to {
             read_by_me.insert_range(0..=index.into());
