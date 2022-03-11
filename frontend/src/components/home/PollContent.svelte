@@ -118,6 +118,10 @@
 </div>
 
 <style type="text/scss">
+    .poll {
+      min-width: 300px;
+    }
+
     .question {
         display: flex;
         align-items: flex-start;
