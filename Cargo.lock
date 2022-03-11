@@ -2196,9 +2196,11 @@ dependencies = [
 
 [[package]]
 name = "lodepng"
-version = "3.4.7"
-source = "git+https://github.com/kornelski/lodepng-rust?rev=8ceb5b1ffc9c1ab1f8c7ace9bde5f01a5be0aaa2#8ceb5b1ffc9c1ab1f8c7ace9bde5f01a5be0aaa2"
+version = "3.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f84e1fdcdbe8b3f0f9caaadb6b86d0e0647786e993f6ea70686f6837b989ec7"
 dependencies = [
+ "crc32fast",
  "fallible_collections",
  "flate2",
  "libc",
@@ -4388,6 +4390,7 @@ dependencies = [
  "ic-ledger-types",
  "itertools",
  "ledger_utils",
+ "lodepng",
  "open_storage_index_canister",
  "open_storage_index_canister_c2c_client",
  "rand 0.7.3",
