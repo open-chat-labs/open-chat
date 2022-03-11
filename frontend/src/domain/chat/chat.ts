@@ -128,6 +128,7 @@ export type CompletedICPWithdrawal = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
+    transactionHash: number[];
 };
 
 export type FailedICPWithdrawal = {
@@ -139,6 +140,13 @@ export type FailedICPWithdrawal = {
     memo: bigint;
     errorMessage: string;
 };
+
+export type WithdrawCryptocurrencyResponse =
+    | { kind: "currency_not_supported" }
+    | FailedCryptocurrencyWithdrawal
+    | CompletedCryptocurrencyWithdrawal;
+export type FailedCryptocurrencyWithdrawal = FailedICPWithdrawal | FailedCyclesWithdrawal;
+export type CompletedCryptocurrencyWithdrawal = CompletedICPWithdrawal | CompletedCyclesWithdrawal;
 
 export type CyclesTransfer = PendingCyclesTransfer | CompletedCyclesTransfer | FailedCyclesTransfer;
 export type CyclesWithdrawal =

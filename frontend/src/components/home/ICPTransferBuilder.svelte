@@ -1,6 +1,5 @@
 <script lang="ts">
     import Button from "../Button.svelte";
-    import { fade } from "svelte/transition";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize, ICP_TRANSFER_FEE } from "../../domain/user/user";
@@ -20,6 +19,7 @@
     import { userStore } from "../../stores/user";
     import { currentUserKey } from "../../fsm/home.controller";
     import { rollbar } from "../../utils/logging";
+    import ErrorMessage from "../ErrorMessage.svelte";
     const dispatch = createEventDispatcher();
 
     export let open: boolean;
@@ -130,7 +130,7 @@
                 </div>
             {/if}
             {#if error}
-                <h4 in:fade class="error">{$_(error)}</h4>
+                <ErrorMessage>{$_(error)}</ErrorMessage>
             {/if}
         </form>
         <span class="footer" slot="footer">
@@ -163,11 +163,6 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: $sp4;
-    }
-    .error {
-        @include font(bold, normal, fs-100);
-        color: var(--error);
-        text-align: center;
     }
     .how-to {
         @include font(light, normal, fs-90);

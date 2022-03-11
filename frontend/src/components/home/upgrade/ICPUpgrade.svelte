@@ -1,6 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import Button from "../../Button.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
     import { fade } from "svelte/transition";
     import { createEventDispatcher, onMount } from "svelte";
     import Footer from "./Footer.svelte";
@@ -147,7 +148,7 @@
         </p>
 
         {#if error}
-            <h4 in:fade class="error">{$_(error)}</h4>
+            <ErrorMessage>{$_(error)}</ErrorMessage>
         {/if}
     {/if}
 </div>
@@ -229,11 +230,5 @@
         position: absolute;
         left: $sp4;
         bottom: $sp4;
-    }
-
-    .error {
-        @include font(bold, normal, fs-100);
-        color: var(--error);
-        margin-bottom: $sp4;
     }
 </style>

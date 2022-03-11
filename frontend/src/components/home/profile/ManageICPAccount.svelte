@@ -1,7 +1,10 @@
 <script lang="ts">
     import Button from "../../Button.svelte";
+    import TabControl from "../../TabControl.svelte";
+    import Tab from "../../Tab.svelte";
     import { fade } from "svelte/transition";
     import ButtonGroup from "../../ButtonGroup.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Loading from "../../Loading.svelte";
@@ -52,10 +55,20 @@
             {#if refreshing}
                 <Loading />
             {:else}
-                <AccountInfo {api} {user} />
+                <TabControl let:isTitle let:isContent>
+                    <Tab id={0} {isTitle} {isContent}>
+                        <span slot="title">Withdraw</span>
+                        <h1>Withdraw body</h1>
+                    </Tab>
+                    <Tab id={1} {isTitle} {isContent}>
+                        <span slot="title">Top up</span>
+                        <h1>Top up body</h1>
+                        <AccountInfo {api} {user} />
+                    </Tab>
+                </TabControl>
             {/if}
             {#if error}
-                <h4 in:fade class="error">{$_(error)}</h4>
+                <ErrorMessage>{$_(error)}</ErrorMessage>
             {/if}
         </form>
         <span class="footer" slot="footer">
@@ -80,11 +93,6 @@
         justify-content: flex-start;
         gap: $sp4;
     }
-    .error {
-        @include font(bold, normal, fs-100);
-        color: var(--error);
-        text-align: center;
-    }
     .how-to {
         @include font(light, normal, fs-90);
         text-decoration: underline;
@@ -92,7 +100,6 @@
         text-underline-offset: $sp1;
         text-decoration-thickness: 2px;
     }
-
     .footer {
         position: relative;
         display: flex;

@@ -31,6 +31,8 @@ import {
     CryptocurrencyContent,
     CryptocurrencyTransfer,
     ICPTransfer,
+    ICPWithdrawal,
+    PendingICPWithdrawal,
     CyclesTransfer,
     PendingCyclesTransfer,
     CompletedCyclesTransfer,
@@ -81,6 +83,9 @@ import {
     RegisterPollVoteResponse,
     GroupPermissions,
     PermissionRole,
+    WithdrawCryptocurrencyResponse,
+    FailedCryptocurrencyWithdrawal,
+    CompletedCryptocurrencyWithdrawal,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -114,6 +119,8 @@ export {
     CryptocurrencyContent as ApiCryptocurrencyContent,
     CryptocurrencyTransfer as ApiCryptocurrencyTransfer,
     ICPTransfer as ApiICPTransfer,
+    ICPWithdrawal as ApiICPWithdrawal,
+    PendingICPWithdrawal as ApiPendingICPWithdrawal,
     CyclesTransfer as ApiCyclesTransfer,
     PendingCyclesTransfer as ApiPendingCyclesTransfer,
     CompletedCyclesTransfer as ApiCompletedCyclesTransfer,
@@ -164,6 +171,9 @@ export {
     RegisterPollVoteResponse as ApiRegisterPollVoteResponse,
     GroupPermissions as ApiGroupPermissions,
     PermissionRole as ApiPermissionRole,
+    WithdrawCryptocurrencyResponse as ApiWithdrawCryptocurrencyResponse,
+    FailedCryptocurrencyWithdrawal as ApiFailedCryptocurrencyWithdrawal,
+    CompletedCryptocurrencyWithdrawal as ApiCompletedCryptocurrencyWithdrawal,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

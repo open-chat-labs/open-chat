@@ -59,6 +59,8 @@ import type {
     UnpinMessageResponse,
     RegisterPollVoteResponse,
     GroupPermissions,
+    PendingICPWithdrawal,
+    WithdrawCryptocurrencyResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
@@ -722,5 +724,9 @@ export class ServiceContainer implements MarkMessagesRead {
         voteType: "register" | "delete"
     ): Promise<RegisterPollVoteResponse> {
         return this.userClient.registerPollVote(otherUser, messageIdx, answerIdx, voteType);
+    }
+
+    withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
+        return this.userClient.withdrawICP(domain);
     }
 }

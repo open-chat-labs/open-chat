@@ -1,6 +1,6 @@
 <script lang="ts">
     import { avatarUrl } from "../../../domain/user/user.utils";
-    import type { PartialUserSummary } from "../../../domain/user/user";
+    import type { CreatedUser, PartialUserSummary } from "../../../domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -26,7 +26,7 @@
         enterSend,
         scrollStrategy,
     } from "../../../stores/settings";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "./Toggle.svelte";
     import { setLocale, supportedLanguages } from "i18n/i18n";
@@ -37,8 +37,11 @@
     import { ONE_GB, storageStore } from "../../../stores/storage";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import ManageIcpAccount from "./ManageICPAccount.svelte";
+    import { currentUserKey } from "../../../fsm/home.controller";
+    import ErrorMessage from "../../ErrorMessage.svelte";
 
     const api: ServiceContainer = getContext(apiKey);
+    const createdUser: CreatedUser = getContext(currentUserKey);
 
     const dispatch = createEventDispatcher();
     const MAX_BIO_LENGTH = 2000;
@@ -58,6 +61,7 @@
     let currentIcpBalance = 0;
     let manageIcpAccount: ManageIcpAccount;
     let managingIcpAccount = false;
+    let balanceError: string | undefined = undefined;
 
     $: {
         setLocale(selectedLocale);
@@ -73,6 +77,18 @@
             originalBio = userbio = bio;
         });
     }
+
+    onMount(() => {
+        api.refreshAccountBalance(createdUser.icpAccount)
+            .then((resp) => {
+                currentIcpBalance = Number(resp.e8s);
+            })
+            .catch((err) => {
+                balanceError = "unableToRefreshAccountBalance";
+                currentIcpBalance = 0;
+                rollbar.error("Unable to refresh user's account balance", err);
+            });
+    });
 
     function whySms() {
         dispatch("showFaqQuestion", "sms_icp");
@@ -161,6 +177,11 @@
     function closeProfile() {
         dispatch("closeProfile");
     }
+
+    function showManageIcp() {
+        manageIcpAccount.reset();
+        managingIcpAccount = true;
+    }
 </script>
 
 <ManageIcpAccount bind:this={manageIcpAccount} bind:open={managingIcpAccount} />
@@ -188,7 +209,7 @@
             bind:checking={checkingUsername}
             bind:error={usernameError}>
             {#if usernameError !== undefined}
-                <div class="error">{$_(usernameError)}</div>
+                <ErrorMessage>{$_(usernameError)}</ErrorMessage>
             {/if}
         </UsernameInput>
 
@@ -200,7 +221,7 @@
             maxlength={MAX_BIO_LENGTH}
             placeholder={$_("enterBio")}>
             {#if bioError !== undefined}
-                <div class="error">{bioError}</div>
+                <ErrorMessage>{bioError}</ErrorMessage>
             {/if}
         </TextArea>
         <div class="full-width-btn">
@@ -325,9 +346,12 @@
                 <Legend>{$_("icpAccount.balanceLabel")}</Legend>
                 <div class="icp-balance">
                     <div class="icp-balance-value">{currentIcpBalance.toFixed(4)}</div>
-                    <Button on:click={() => (managingIcpAccount = true)} fill={true} small={true}
+                    <Button on:click={showManageIcp} fill={true} small={true}
                         >{$_("icpAccount.manage")}</Button>
                 </div>
+                {#if balanceError !== undefined}
+                    <ErrorMessage>{$_(balanceError)}</ErrorMessage>
+                {/if}
             </div>
         </CollapsibleCard>
     </div>
@@ -340,13 +364,6 @@
         display: flex;
         justify-content: center;
         margin-top: $sp4;
-    }
-
-    .error {
-        @include font(bold, normal, fs-100);
-        text-transform: lowercase;
-        color: var(--error);
-        margin-bottom: $sp4;
     }
 
     .theme-selection {
