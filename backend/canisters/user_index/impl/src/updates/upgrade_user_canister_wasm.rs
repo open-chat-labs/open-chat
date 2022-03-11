@@ -14,18 +14,14 @@ fn upgrade_user_canister_wasm(args: Args) -> Response {
 fn upgrade_user_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let version = args.user_canister_wasm.version;
 
-    if version <= runtime_state.data.user_canister_wasm.version {
-        VersionNotHigher
-    } else {
-        runtime_state.data.canisters_requiring_upgrade.clear();
-        runtime_state.data.user_canister_wasm = args.user_canister_wasm.decompress();
+    runtime_state.data.canisters_requiring_upgrade.clear();
+    runtime_state.data.user_canister_wasm = args.user_canister_wasm.decompress();
 
-        for user_id in runtime_state.data.users.iter().map(|u| u.user_id) {
-            runtime_state.data.canisters_requiring_upgrade.enqueue(user_id.into())
-        }
-
-        let canisters_queued_for_upgrade = runtime_state.data.canisters_requiring_upgrade.count_pending();
-        info!(%version, canisters_queued_for_upgrade, "User canister wasm upgraded");
-        Success
+    for user_id in runtime_state.data.users.iter().map(|u| u.user_id) {
+        runtime_state.data.canisters_requiring_upgrade.enqueue(user_id.into())
     }
+
+    let canisters_queued_for_upgrade = runtime_state.data.canisters_requiring_upgrade.count_pending();
+    info!(%version, canisters_queued_for_upgrade, "User canister wasm upgraded");
+    Success
 }

@@ -20,24 +20,20 @@ fn upgrade_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState
 
     let version = args.group_canister_wasm.version;
 
-    if version <= runtime_state.data.group_canister_wasm.version {
-        VersionNotHigher
-    } else {
-        runtime_state.data.canisters_requiring_upgrade.clear();
-        runtime_state.data.group_canister_wasm = args.group_canister_wasm.decompress();
+    runtime_state.data.canisters_requiring_upgrade.clear();
+    runtime_state.data.group_canister_wasm = args.group_canister_wasm.decompress();
 
-        for chat_id in runtime_state
-            .data
-            .public_groups
-            .iter()
-            .map(|g| g.id())
-            .chain(runtime_state.data.private_groups.iter().map(|g| g.id()))
-        {
-            runtime_state.data.canisters_requiring_upgrade.enqueue(chat_id.into());
-        }
-
-        let canisters_queued_for_upgrade = runtime_state.data.canisters_requiring_upgrade.count_pending();
-        info!(%version, canisters_queued_for_upgrade, "Group canister wasm upgraded");
-        Success
+    for chat_id in runtime_state
+        .data
+        .public_groups
+        .iter()
+        .map(|g| g.id())
+        .chain(runtime_state.data.private_groups.iter().map(|g| g.id()))
+    {
+        runtime_state.data.canisters_requiring_upgrade.enqueue(chat_id.into());
     }
+
+    let canisters_queued_for_upgrade = runtime_state.data.canisters_requiring_upgrade.count_pending();
+    info!(%version, canisters_queued_for_upgrade, "Group canister wasm upgraded");
+    Success
 }
