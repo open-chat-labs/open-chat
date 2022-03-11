@@ -166,9 +166,7 @@
 <div class="footer">
     <div class="footer-overlay">
         {#if $replyingTo || $fileToAttach !== undefined}
-            <div
-                class="draft-container"
-                class:fill={$fileToAttach !== undefined && $fileToAttach.kind === "crypto_content"}>
+            <div class="draft-container">
                 {#if $replyingTo}
                     <ReplyingTo
                         preview={true}
@@ -234,12 +232,6 @@
     .draft-container {
         max-width: 80%;
         padding-bottom: 8px;
-
-        &.fill {
-            max-width: 100%;
-            width: 100%;
-            padding: $sp3 $sp4;
-        }
     }
 
     :global(.footer-overlay emoji-picker) {

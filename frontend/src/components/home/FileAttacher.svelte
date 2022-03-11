@@ -28,7 +28,6 @@
             if (target.files && target.files[0]) {
                 messageContentFromFile(target.files[0])
                     .then((content) => {
-                        console.log("So this is probably happening");
                         dispatch("fileSelected", content);
                     })
                     .catch((err) => toastStore.showFailureToast(err));
