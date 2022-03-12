@@ -36,7 +36,7 @@
         <Markdown
             text={$_("icpTransfer.viewTransaction", {
                 values: {
-                    hash: content.transfer.transactionHash.join(),
+                    url: `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash.join()}`,
                 },
             })}
             inline={!reply} />
@@ -44,13 +44,13 @@
 {:else if content.transfer.kind === "pending_icp_transfer"}
     <div class="message">
         {#if me}
-            <ChevronDoubleRight size={$iconSize} color={"#fff"} />
+            <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
             {$_("icpTransfer.pendingSent", { values: { amount: amount.toFixed(4) } })}
-            <ChevronDoubleRight size={$iconSize} color={"#fff"} />
+            <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
         {:else}
-            <ChevronDoubleLeft size={$iconSize} color={"var(--icon-txt)"} />
+            <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
             {$_("icpTransfer.pendingReceived", { values: { amount: amount.toFixed(4) } })}
-            <ChevronDoubleLeft size={$iconSize} color={"var(--icon-txt)"} />
+            <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
         {/if}
     </div>
 {:else}

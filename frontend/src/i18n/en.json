@@ -417,7 +417,7 @@
         "confirmedSent": "You sent {amount} ICP",
         "pendingReceived": "{amount} ICP is on its way to you",
         "pendingSent": "You are sending {amount} ICP",
-        "viewTransaction": "[View the transaction](https://dashboard.internetcomputer.org/transaction/{hash})"
+        "viewTransaction": "[View the transaction]({url})"
     },
     "icpAccount": {
         "balanceLabel": "ICP account balance",
