@@ -435,6 +435,17 @@ export class ServiceContainer implements MarkMessagesRead {
         return dataContent;
     }
 
+    async rehydrateMessage(
+        chatType: "direct" | "group",
+        currentChatId: string,
+        message: EventWrapper<Message>
+    ): Promise<EventWrapper<Message>> {
+        const missing = await this.resolveMissingIndexes(chatType, currentChatId, [message]);
+        [message] = this.rehydrateMissingReplies(currentChatId, [message], missing);
+        [message] = this.reydrateEventList([message]);
+        return message;
+    }
+
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
         return this._userIndexClient
             .searchUsers(searchTerm, maxResults)

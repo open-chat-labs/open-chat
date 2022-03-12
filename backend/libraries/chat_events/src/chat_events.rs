@@ -147,6 +147,7 @@ pub enum EditMessageResult {
 pub enum DeleteMessageResult {
     Success(MessageContent),
     AlreadyDeleted,
+    MessageTypeCannotBeDeleted,
     NotAuthorized,
     NotFound,
 }
@@ -370,26 +371,28 @@ impl ChatEvents {
     ) -> DeleteMessageResult {
         if let Some(message) = self.get_message_by_id_internal_mut(message_id) {
             if message.sender == caller || is_admin {
-                if matches!(message.content, MessageContentInternal::Deleted(_)) {
-                    DeleteMessageResult::AlreadyDeleted
-                } else {
-                    let previous_content = replace(
-                        &mut message.content,
-                        MessageContentInternal::Deleted(DeletedContent {
-                            deleted_by: caller,
-                            timestamp: now,
-                        }),
-                    );
-                    message.last_updated = Some(now);
-                    self.metrics.deleted_messages += 1;
-                    self.push_event(
-                        ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
-                            updated_by: caller,
-                            message_id,
-                        })),
-                        now,
-                    );
-                    DeleteMessageResult::Success(previous_content.hydrate(Some(caller)))
+                match message.content {
+                    MessageContentInternal::Deleted(_) => DeleteMessageResult::AlreadyDeleted,
+                    MessageContentInternal::Cryptocurrency(_) => DeleteMessageResult::MessageTypeCannotBeDeleted,
+                    _ => {
+                        let previous_content = replace(
+                            &mut message.content,
+                            MessageContentInternal::Deleted(DeletedContent {
+                                deleted_by: caller,
+                                timestamp: now,
+                            }),
+                        );
+                        message.last_updated = Some(now);
+                        self.metrics.deleted_messages += 1;
+                        self.push_event(
+                            ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
+                                updated_by: caller,
+                                message_id,
+                            })),
+                            now,
+                        );
+                        DeleteMessageResult::Success(previous_content.hydrate(Some(caller)))
+                    }
                 }
             } else {
                 DeleteMessageResult::NotAuthorized

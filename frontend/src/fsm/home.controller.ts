@@ -194,7 +194,7 @@ export class HomeController {
                 if (selectedChatInvalid) {
                     this.clearSelectedChat();
                 } else if (selectedChat !== undefined) {
-                    selectedChat.updateDetails();
+                    selectedChat.chatUpdated();
                 }
 
                 if (chatsResponse.avatarIdUpdate !== undefined) {
@@ -607,9 +607,14 @@ export class HomeController {
         if (selectedChat?.chatId === chatId) {
             selectedChat.sendMessage(message, sender, true);
         } else {
-            this.addMissingUsersFromMessage(message).then(() =>
-                this.onConfirmedMessage(chatId, message)
-            );
+            const chat = this.findChatById(chatId);
+            if (chat !== undefined) {
+                const chatType = chat.kind === "direct_chat" ? "direct" : "group";
+                Promise.all([
+                    this.api.rehydrateMessage(chatType, chatId, message),
+                    this.addMissingUsersFromMessage(message),
+                ]).then(([m, _]) => this.onConfirmedMessage(chatId, m));
+            }
         }
     }
 
@@ -700,7 +705,7 @@ export class HomeController {
             });
     }
 
-    private async addMissingUsersFromMessage(message: EventWrapper<Message>) {
+    private async addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
         const users = userIdsFromEvents([message]);
         const missingUsers = missingUserIds(get(userStore), users);
         if (missingUsers.length > 0) {
