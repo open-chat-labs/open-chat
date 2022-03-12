@@ -7,7 +7,7 @@
     import { rollbar } from "../../utils/logging";
     import { userStore } from "../../stores/user";
     import { _ } from "svelte-i18n";
-    import { friendlyUrl, isAbsoluteUrl } from "../../utils/urls";
+    import { isAbsoluteUrl, synonymousUrlRegex } from "../../utils/urls";
 
     export let text: string;
     export let inline: boolean = true;
@@ -57,19 +57,15 @@
                 return `<span class="fake-link" ${title && `title=${title}`}>${text}</span>`;
             } else {
                 let target = "";
-                let isOpenChatLink = false;
-                if (href.startsWith(friendlyUrl)) {
-                    href = href.substring(friendlyUrl.length);
-                    isOpenChatLink = true;
-                } else if (href.startsWith(window.location.origin)) {
-                    href = href.substring(window.location.origin.length);
-                    isOpenChatLink = true;
+                // Check if the link is to a synonymous url (eg. https://oc.app), if so, convert it to a relative link
+                const synonymousUrlMatches = href.match(synonymousUrlRegex);
+                if (synonymousUrlMatches?.length > 0) {
+                    href = href.replace(synonymousUrlMatches[0], "");
+                    if (href === "" || href === "/") {
+                        href = "/#";
+                    }
                 } else if (isAbsoluteUrl(href)) {
                     target = 'target="_blank"';
-                }
-
-                if (isOpenChatLink && (href === "" || href === "/")) {
-                    href = "/#";
                 }
 
                 return `<a href=${href} ${title && `title=${title}`} ${target}>${text}</a>`;
