@@ -13,5 +13,5 @@ ssh -i "./backend/notification_pusher/aws/notification_pusher.pem" ec2-user@ec2-
 scp ./target/x86_64-unknown-linux-musl/release/notification_pusher_aws ec2-user@ec2-44-202-133-70.compute-1.amazonaws.com:~/notification_pusher
 
 ### To run the service
-cd ~/v2/notification_pusher
+cd ~/notification_pusher
 nohup ./notification_pusher_aws &

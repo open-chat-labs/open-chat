@@ -13,5 +13,5 @@ ssh -i "./backend/sms_sender/aws/sms_sender.pem" ec2-user@ec2-44-202-133-70.comp
 scp ./target/x86_64-unknown-linux-musl/release/sms_sender_aws ec2-user@ec2-44-202-133-70.compute-1.amazonaws.com:~/sms_sender
 
 ### To run the service
-cd ~/v2/sms_sender
+cd ~/sms_sender
 nohup ./sms_sender_aws &
