@@ -23,13 +23,13 @@
 {#if content.transfer.kind === "completed_icp_transfer"}
     <div class="message">
         {#if me}
-            <ChevronDoubleRight size={$iconSize} color={"#fff"} />
+            <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
             {$_("icpTransfer.confirmedSent", { values: { amount: amount.toFixed(4) } })}
-            <ChevronDoubleRight size={$iconSize} color={"#fff"} />
+            <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
         {:else}
-            <ChevronDoubleLeft size={$iconSize} color={"var(--icon-txt)"} />
+            <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
             {$_("icpTransfer.confirmedReceived", { values: { amount: amount.toFixed(4) } })}
-            <ChevronDoubleLeft size={$iconSize} color={"var(--icon-txt)"} />
+            <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
         {/if}
     </div>
     <div class="link">
