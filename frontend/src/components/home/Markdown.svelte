@@ -59,7 +59,7 @@
                 let target = "";
                 // Check if the link is to a synonymous url (eg. https://oc.app), if so, convert it to a relative link
                 const synonymousUrlMatches = href.match(synonymousUrlRegex);
-                if (synonymousUrlMatches?.length > 0) {
+                if (synonymousUrlMatches != null && synonymousUrlMatches.length > 0) {
                     href = href.replace(synonymousUrlMatches[0], "");
                     if (href === "" || href === "/") {
                         href = "/#";
