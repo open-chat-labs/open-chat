@@ -73,6 +73,7 @@ fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Resp
             min_visible_event_index,
             min_visible_message_index,
             args.as_super_admin,
+            runtime_state.data.is_public,
         ) {
             AddResult::Success(participant) => {
                 let event = ParticipantJoined {

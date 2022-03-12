@@ -13,7 +13,7 @@ function boolFromLS(key: string, def: boolean): boolean {
     }
 }
 
-export const enterSend = createLsBoolStore("openchat_entersend", true);
+export const enterSend = createLsBoolStore("openchat_entersend", !isTouchDevice());
 
 export const appearanceSectionOpen = createLsBoolStore("openchat_appearance_section", false);
 export const chatsSectionOpen = createLsBoolStore("openchat_chats_section", false);
@@ -42,3 +42,9 @@ export const scrollStrategy = {
         localStorage.setItem("openchat_scrollstrategy", strategy);
     },
 };
+
+function isTouchDevice() {
+    return (
+        "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0
+    );
+}
