@@ -818,24 +818,12 @@ export function replaceAffected(
     affectedEvents: EventWrapper<ChatEvent>[],
     localReactions: Record<string, LocalReaction[]>
 ): EventWrapper<ChatEvent>[] {
-    const toCacheBust: EventWrapper<ChatEvent>[] = [];
-    const updated = events.map((ev) => {
+    return events.map((ev) => {
         const aff = affectedEvents.find((a) => a.index === ev.index);
-        if (aff !== undefined) {
-            const merged = mergeMessageEvents(ev, aff, localReactions);
-            toCacheBust.push(merged);
-            return merged;
-        }
-        return ev;
+        return aff !== undefined
+            ? mergeMessageEvents(ev, aff, localReactions)
+            : ev;
     });
-    if (toCacheBust.length > 0) {
-        // Note - this is fire and forget which is a tiny bit dodgy
-        console.log("Busting: ", toCacheBust);
-        overwriteCachedEvents(chatId, toCacheBust).catch((err) => {
-            console.log("failed to update cache: ", err, toCacheBust);
-        });
-    }
-    return updated;
 }
 
 export function pruneLocalReactions(

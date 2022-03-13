@@ -39,7 +39,7 @@ import {
 } from "../../utils/caching";
 
 /**
- * This exists to decorate the user client so that we can provide a write through cache to
+ * This exists to decorate the group client so that we can provide a write through cache to
  * indexDB for holding chat events
  */
 export class CachingGroupClient implements IGroupClient {
