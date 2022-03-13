@@ -33,7 +33,6 @@ import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
-import { overwriteCachedEvents } from "../../utils/caching";
 import { unconfirmed } from "../../stores/unconfirmed";
 import type { IMessageReadTracker } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
