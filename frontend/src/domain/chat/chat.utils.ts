@@ -1,5 +1,6 @@
 import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
 import { compareUsersOnlineFirst, extractUserIdsFromMentions, nullUser } from "../user/user.utils";
+import bs from "binary-search";
 import DRange from "drange";
 import type {
     ChatSummary,
@@ -810,19 +811,19 @@ function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
     }
 }
 
-// todo - this is not very efficient at the moment
 export function replaceAffected(
     chatId: string,
     events: EventWrapper<ChatEvent>[],
     affectedEvents: EventWrapper<ChatEvent>[],
     localReactions: Record<string, LocalReaction[]>
 ): EventWrapper<ChatEvent>[] {
-    return events.map((ev) => {
-        const aff = affectedEvents.find((a) => a.index === ev.index);
-        return aff !== undefined
-            ? mergeMessageEvents(ev, aff, localReactions)
-            : ev;
-    });
+    affectedEvents.forEach((aff) => {
+        const index = bs(events, aff.index, (event, target) => event.index - target);
+        if (index > 0) {
+            events[index] = mergeMessageEvents(events[index], aff, localReactions);
+        }
+    })
+    return events;
 }
 
 export function pruneLocalReactions(
