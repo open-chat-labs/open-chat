@@ -28,7 +28,6 @@ import type {
     PollContent,
     MemberRole,
     PermissionRole,
-    CryptocurrencyContent,
 } from "./chat";
 import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
