@@ -25,11 +25,13 @@ import type {
     RegisterPollVoteResponse,
     GroupPermissions,
     PermissionRole,
+    ICPWithdrawal,
+    PendingICPWithdrawal,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { User } from "../../domain/user/user";
 import { UnsupportedValueError } from "../../utils/error";
-import { identity, optional } from "../../utils/mapping";
+import { bytesToHexString, hexStringToBytes, identity, optional } from "../../utils/mapping";
 import type {
     ApiBlobReference,
     ApiFileContent,
@@ -56,6 +58,9 @@ import type {
     ApiRegisterPollVoteResponse as ApiRegisterUserPollVoteResponse,
     ApiGroupPermissions,
     ApiPermissionRole,
+    ApiICPWithdrawal,
+    ApiPendingICPTransfer,
+    ApiPendingICPWithdrawal,
 } from "../user/candid/idl";
 import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
 
@@ -253,6 +258,7 @@ function icpTransfer(candid: ApiICPTransfer): ICPTransfer {
             feeE8s: candid.Completed.fee.e8s,
             memo: candid.Completed.memo,
             blockIndex: candid.Completed.block_index,
+            transactionHash: bytesToHexString(candid.Completed.transaction_hash),
         };
     }
     if ("Failed" in candid) {
@@ -590,6 +596,48 @@ function apiCyclesTransfer(domain: CyclesTransfer): ApiCyclesTransfer {
     throw new UnsupportedValueError("Unexpected cycles transfer kind", domain);
 }
 
+export function apiPendingICPWithdrawal(domain: PendingICPWithdrawal): ApiPendingICPWithdrawal {
+    return {
+        to: hexStringToBytes(domain.to),
+        amount: apiICP(domain.amountE8s),
+        fee: apiOptional(apiICP, domain.feeE8s),
+        memo: apiOptional(identity, domain.memo),
+    };
+}
+
+export function apiICPWithdrawal(domain: ICPWithdrawal): ApiICPWithdrawal {
+    if (domain.kind === "pending_icp_withdrawal") {
+        return {
+            Pending: apiPendingICPWithdrawal(domain),
+        };
+    }
+
+    if (domain.kind === "completed_icp_withdrawal") {
+        return {
+            Completed: {
+                to: hexStringToBytes(domain.to),
+                amount: apiICP(domain.amountE8s),
+                fee: apiICP(domain.feeE8s),
+                memo: domain.memo,
+                block_index: domain.blockIndex,
+                transaction_hash: domain.transactionHash,
+            },
+        };
+    }
+    if (domain.kind === "failed_icp_withdrawal") {
+        return {
+            Failed: {
+                to: hexStringToBytes(domain.to),
+                amount: apiICP(domain.amountE8s),
+                fee: apiICP(domain.feeE8s),
+                memo: domain.memo,
+                error_message: domain.errorMessage,
+            },
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ICPWithdrawal kind", domain);
+}
+
 function apiICPTransfer(domain: ICPTransfer): ApiICPTransfer {
     if (domain.kind === "pending_icp_transfer") {
         return {
@@ -610,7 +658,7 @@ function apiICPTransfer(domain: ICPTransfer): ApiICPTransfer {
                 fee: apiICP(domain.feeE8s),
                 memo: domain.memo,
                 block_index: domain.blockIndex,
-                transaction_hash: [], // TODO
+                transaction_hash: hexStringToBytes(domain.transactionHash),
             },
         };
     }

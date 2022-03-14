@@ -24,6 +24,8 @@ import type {
     MarkReadRequest,
     GroupChatSummary,
     RegisterPollVoteResponse,
+    PendingICPWithdrawal,
+    WithdrawCryptocurrencyResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -44,6 +46,7 @@ import {
     setBioResponse,
     toggleReactionResponse,
     unblockResponse,
+    withdrawCryptoResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -58,6 +61,7 @@ import {
     apiGroupPermissions,
     apiMessageContent,
     apiOptional,
+    apiPendingICPWithdrawal,
     apiReplyContextArgs,
     registerPollVoteResponse,
 } from "../common/chatMappers";
@@ -453,6 +457,17 @@ export class UserClient extends CandidService implements IUserClient {
                 message_index: messageIdx,
             }),
             registerPollVoteResponse
+        );
+    }
+
+    withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
+        return this.handleResponse(
+            this.userService.withdraw_cryptocurrency({
+                withdrawal: {
+                    ICP: apiPendingICPWithdrawal(domain),
+                },
+            }),
+            withdrawCryptoResponse
         );
     }
 }

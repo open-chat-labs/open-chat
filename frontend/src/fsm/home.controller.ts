@@ -55,6 +55,8 @@ const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 1000;
 
+export const currentUserKey = Symbol();
+
 export class HomeController {
     public messagesRead: IMessageReadTracker;
     private chatUpdatesSince?: bigint;

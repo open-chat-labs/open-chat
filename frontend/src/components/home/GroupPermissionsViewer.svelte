@@ -19,7 +19,7 @@
 
     let partitioned = partitionPermissions();
 
-    function filterPermissions([key, val]: PermissionsEntry): boolean {
+    function filterPermissions([key, _]: PermissionsEntry): boolean {
         if (isPublic && (key === "addMembers" || key === "removeMembers")) {
             return false;
         }

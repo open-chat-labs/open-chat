@@ -1,20 +1,17 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import Button from "../../Button.svelte";
-    import { fade } from "svelte/transition";
+    import ErrorMessage from "../../ErrorMessage.svelte";
     import { createEventDispatcher, onMount } from "svelte";
     import Footer from "./Footer.svelte";
     import { ONE_GB, storageInGb, storageStore, updateStorageLimit } from "../../../stores/storage";
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
-    import QR from "svelte-qr";
-    import { toastStore } from "../../../stores/toast";
-    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
-    import { iconSize } from "../../../stores/iconSize";
     import type { CreatedUser } from "../../../domain/user/user";
     import type { ServiceContainer } from "../../../services/serviceContainer";
     import { E8S_PER_ICP } from "../../../domain/user/user";
     import { rollbar } from "utils/logging";
+    import AccountInfo from "../AccountInfo.svelte";
 
     const dispatch = createEventDispatcher();
     const icpDecimals = 2;
@@ -28,7 +25,6 @@
     let confirming = false;
     let confirmed = false;
     let refreshing = false;
-    let accountSummary = collapseAccount(user.icpAccount);
     let accountBalance = 0;
 
     $: icpBalance = accountBalance / E8S_PER_ICP; //balance in the user's account expressed as ICP
@@ -36,13 +32,6 @@
     $: newLimit = min;
     $: toPay = (newLimit - min) * icpPrice;
     $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
-
-    function collapseAccount(account: string) {
-        if (account.length > 20) {
-            return account.slice(0, 10) + "..." + account.slice(account.length - 10);
-        }
-        return account;
-    }
 
     onMount(refreshBalance);
 
@@ -101,19 +90,6 @@
             })
             .finally(() => (confirming = false));
     }
-
-    function copyToClipboard() {
-        navigator.clipboard.writeText(user.icpAccount).then(
-            () => {
-                toastStore.showSuccessToast("copiedToClipboard");
-            },
-            () => {
-                toastStore.showFailureToast("failedToCopyToClipboard", {
-                    values: { account: user.icpAccount },
-                });
-            }
-        );
-    }
 </script>
 
 <div class="body" class:confirming class:is-confirmed={confirmed}>
@@ -122,19 +98,7 @@
     {:else if confirmed}
         <Congratulations />
     {:else}
-        <div class="account-info">
-            <div class="qr">
-                <QR text={user.icpAccount} />
-            </div>
-            <div class="receiver">
-                <div class="account">
-                    {accountSummary}
-                </div>
-                <div class="copy" title={$_("copyToClipboard")} on:click={copyToClipboard}>
-                    <ContentCopy size={$iconSize} color={"#555"} />
-                </div>
-            </div>
-        </div>
+        <AccountInfo {user} />
 
         <p class="choose">
             {$_("chooseAStorageLevel")}
@@ -183,7 +147,7 @@
         </p>
 
         {#if error}
-            <h4 in:fade class="error">{$_(error)}</h4>
+            <ErrorMessage>{$_(error)}</ErrorMessage>
         {/if}
     {/if}
 </div>
@@ -256,35 +220,6 @@
         margin-bottom: $sp3;
     }
 
-    .qr {
-        background-color: #fff;
-        width: 140px;
-        height: 140px;
-    }
-
-    .account-info {
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .receiver {
-        display: flex;
-        align-items: center;
-        .account {
-            @include ellipsis();
-            @include font(book, normal, fs-80);
-            width: 200px;
-        }
-
-        .copy {
-            cursor: pointer;
-            width: 30px;
-        }
-        margin: $sp4 0;
-    }
-
     .how-to {
         @include font(light, normal, fs-90);
         text-decoration: underline;
@@ -294,11 +229,5 @@
         position: absolute;
         left: $sp4;
         bottom: $sp4;
-    }
-
-    .error {
-        @include font(bold, normal, fs-100);
-        color: var(--error);
-        margin-bottom: $sp4;
     }
 </style>

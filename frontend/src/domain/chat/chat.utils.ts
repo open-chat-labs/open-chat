@@ -253,7 +253,8 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
     return content.kind !== "text_content" &&
         content.kind !== "deleted_content" &&
         content.kind !== "placeholder_content" &&
-        content.kind !== "poll_content"
+        content.kind !== "poll_content" &&
+        content.kind !== "crypto_content"
         ? { ...content, caption }
         : content;
 }
