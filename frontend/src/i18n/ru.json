@@ -411,7 +411,6 @@
     "icpTransfer": {
         "title": "Отправить ICP",
         "amount": "сумма (ИКП) *",
-        "balance": "остаточный баланс (ICP)",
         "send": "Отправлять",
         "message": "Сообщение",
         "messagePlaceholder": "Включить необязательное сообщение",
@@ -423,11 +422,11 @@
         "pendingSent": "Вы отправляете {amount} ICP",
         "viewTransaction": "[Просмотреть транзакцию]({url})",
         "warning": "Предупреждение. Вы обязаны убедиться, что доверяете личности и мотивам получателя. OpenChat не может отменить передачу ICP.",
-        "confirm": "Подтверждать"
+        "confirm": "Подтверждать",
+        "transfer": "ICP-перевод"
     },
     "icpAccount": {
         "balanceLabel": "Баланс ICP-счета",
-        "shortBalanceLabel": "остаток средств",
         "manage": "Управлять",
         "manageHeader": "Управлять счетом",
         "topUp": "Пополнить",
@@ -435,6 +434,8 @@
         "withdraw": "Снять со счета",
         "withdrawTarget": "введите адрес для вывода",
         "withdrawalSucceeded": "Ваш вывод прошел успешно!",
-        "withdrawalFailed": "Ваш вывод не удался!"
+        "withdrawalFailed": "Ваш вывод не удался!",
+        "shortRemainingBalanceLabel": "остаток средств",
+        "shortBalanceLabel": "остаток средств"
     }
 }

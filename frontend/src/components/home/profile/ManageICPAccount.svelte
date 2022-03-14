@@ -19,7 +19,8 @@
     import AccountInfo from "../AccountInfo.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { ScreenWidth, screenWidth } from "../../../stores/screenDimensions";
-    import { toastStore } from "stores/toast";
+    import { toastStore } from "../../../stores/toast";
+    import { icpBalanceStore } from "../../../stores/balance";
 
     export let open: boolean;
 
@@ -28,7 +29,6 @@
 
     let refreshing = false;
     let error: string | undefined = undefined;
-    let accountBalance: number = 0;
     let targetAccount: string = "";
     let amountToWithdraw = 0;
     let withdrawing = false;
@@ -36,12 +36,11 @@
     // make sure that they are not trying to withdraw to the same account - I can see people trying to do that
     $: valid = amountToWithdraw > 0 && targetAccount !== "" && targetAccount !== user.icpAccount;
 
-    $: icpBalance = accountBalance / E8S_PER_ICP; //balance in the user's account expressed as ICP
-    $: remainingBalance = Math.max(0, icpBalance - amountToWithdraw - ICP_TRANSFER_FEE);
+    $: remainingBalance = Math.max(0, $icpBalanceStore - amountToWithdraw - ICP_TRANSFER_FEE);
 
     $: {
-        if (amountToWithdraw > icpBalance - ICP_TRANSFER_FEE) {
-            amountToWithdraw = icpBalance - ICP_TRANSFER_FEE;
+        if (amountToWithdraw > $icpBalanceStore - ICP_TRANSFER_FEE) {
+            amountToWithdraw = $icpBalanceStore - ICP_TRANSFER_FEE;
         }
         if (amountToWithdraw < 0) {
             amountToWithdraw = 0;
@@ -54,12 +53,8 @@
         refreshing = true;
         error = undefined;
         api.refreshAccountBalance(user.icpAccount)
-            .then((resp) => {
-                accountBalance = Number(resp.e8s);
-            })
             .catch((err) => {
                 error = "unableToRefreshAccountBalance";
-                accountBalance = 0;
                 rollbar.error("Unable to refresh user's account balance", err);
             })
             .finally(() => (refreshing = false));
@@ -126,7 +121,7 @@
             <input
                 class="amount-val"
                 min={0}
-                max={icpBalance}
+                max={$icpBalanceStore}
                 type="number"
                 bind:value={amountToWithdraw} />
 

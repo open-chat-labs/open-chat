@@ -411,7 +411,6 @@
     "icpTransfer": {
         "title": "Invia ICP",
         "amount": "importo (icp) *",
-        "balance": "saldo residuo (icp)",
         "send": "Spedire",
         "message": "Messaggio",
         "messagePlaceholder": "Includi un messaggio facoltativo",
@@ -423,11 +422,11 @@
         "pendingSent": "Stai inviando {amount} ICP",
         "viewTransaction": "[Visualizza transazione]({url})",
         "warning": "Avvertenza: è tua responsabilità assicurarti di fidarti dell'identità e delle motivazioni del destinatario. OpenChat non può annullare alcun trasferimento ICP.",
-        "confirm": "Confermare"
+        "confirm": "Confermare",
+        "transfer": "Trasferimento ICP"
     },
     "icpAccount": {
         "balanceLabel": "Saldo del conto ICP",
-        "shortBalanceLabel": "equilibrio restante",
         "manage": "Gestire",
         "manageHeader": "Gestisci profilo",
         "topUp": "Riempire",
@@ -435,6 +434,8 @@
         "withdraw": "Ritirare",
         "withdrawTarget": "inserisci un indirizzo a cui ritirare",
         "withdrawalSucceeded": "Il tuo prelievo è riuscito!",
-        "withdrawalFailed": "Il tuo prelievo è fallito!"
+        "withdrawalFailed": "Il tuo prelievo è fallito!",
+        "shortRemainingBalanceLabel": "equilibrio restante",
+        "shortBalanceLabel": "equilibrio"
     }
 }

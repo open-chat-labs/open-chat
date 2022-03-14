@@ -83,6 +83,7 @@ import { storageStore } from "../stores/storage";
 import type { ILedgerClient } from "./ledger/ledger.client.interface";
 import { LedgerClient } from "./ledger/ledger.client";
 import type { ICP } from "../domain/crypto/crypto";
+import { icpBalanceE8sStore } from "../stores/balance";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -700,13 +701,24 @@ export class ServiceContainer implements MarkMessagesRead {
         if (process.env.NODE_ENV !== "production") {
             return new Promise((resolve) => {
                 setTimeout(() => {
-                    resolve({
+                    const fakeVal = {
                         e8s: BigInt(1345764648),
-                    });
+                    };
+                    icpBalanceE8sStore.set(fakeVal);
+                    resolve(fakeVal);
                 }, 1000);
             });
         }
-        return this._ledgerClient.accountBalance(account);
+        return this._ledgerClient
+            .accountBalance(account)
+            .then((val) => {
+                icpBalanceE8sStore.set(val);
+                return val;
+            })
+            .catch((err) => {
+                icpBalanceE8sStore.set({ e8s: BigInt(0) });
+                throw err;
+            });
     }
 
     getGroupMessagesByMessageIndex(

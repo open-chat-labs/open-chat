@@ -18,17 +18,19 @@
     import { rollbar } from "../../utils/logging";
     import Loading from "../Loading.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
-    import type { User } from "../../domain/user/user";
+    import type { CreatedUser, User } from "../../domain/user/user";
     import Reload from "../Reload.svelte";
     import { _ } from "svelte-i18n";
     import { remainingStorage } from "../../stores/storage";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
+    import { currentUserKey } from "../../fsm/home.controller";
 
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
     export let joining: GroupChatSummary | undefined;
 
+    const createdUser = getContext<CreatedUser>(currentUserKey);
     const dispatch = createEventDispatcher();
     let messageAction: MessageAction = undefined;
     let messageEntry: MessageEntry;
@@ -92,6 +94,9 @@
                 .then((resp) => {
                     if (resp.kind === "success") {
                         controller.confirmMessage(msg, resp);
+                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                            controller.api.refreshAccountBalance(createdUser.icpAccount);
+                        }
                     } else {
                         controller.removeMessage(msg.messageId, controller.user.userId);
                         rollbar.warn("Error response sending message", resp);
