@@ -810,18 +810,25 @@ function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
     }
 }
 
-// todo - this is not very efficient at the moment
 export function replaceAffected(
     chatId: string,
     events: EventWrapper<ChatEvent>[],
     affectedEvents: EventWrapper<ChatEvent>[],
     localReactions: Record<string, LocalReaction[]>
 ): EventWrapper<ChatEvent>[] {
-    return events.map((ev) => {
-        const aff = affectedEvents.find((a) => a.index === ev.index);
-        return aff !== undefined
-            ? mergeMessageEvents(ev, aff, localReactions)
-            : ev;
+    if (affectedEvents.length === 0) {
+        return events;
+    }
+    const affectedEventsLookup = affectedEvents.reduce((lookup, event) => {
+        lookup[event.index] = event;
+        return lookup;
+    }, {} as Record<number, EventWrapper<ChatEvent>>);
+
+    return events.map((event) => {
+        const affectedEvent = affectedEventsLookup[event.index];
+        return affectedEvent !== undefined
+            ? mergeMessageEvents(event, affectedEvent, localReactions)
+            : event;
     });
 }
 
