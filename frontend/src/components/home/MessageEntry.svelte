@@ -1,8 +1,6 @@
 <script lang="ts">
-    import Close from "svelte-material-icons/Close.svelte";
     import Send from "svelte-material-icons/Send.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import FileAttacher from "./FileAttacher.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import { emojiStore } from "../../stores/emoji";
     import { createEventDispatcher } from "svelte";
@@ -11,21 +9,21 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import { iconSize } from "../../stores/iconSize";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    import Smiley from "./Smiley.svelte";
     import { audioRecordingMimeType } from "../../utils/media";
     import MentionPicker from "./MentionPicker.svelte";
     import { userStore } from "stores/user";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import type { User } from "../../domain/user/user";
     import Button from "../Button.svelte";
-    import type { GroupChatSummary } from "../../domain/chat/chat";
+    import type { GroupChatSummary, MessageAction } from "../../domain/chat/chat";
     import { enterSend } from "../../stores/settings";
+    import MessageActions from "./MessageActions.svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
     export let canSend: boolean;
-    export let showEmojiPicker = false;
+    export let messageAction: MessageAction = undefined;
     export let joining: GroupChatSummary | undefined;
 
     $: textContent = controller.textContent;
@@ -34,6 +32,7 @@
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
     $: replyingTo = controller.replyingTo;
+    $: chat = controller.chat;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -58,6 +57,7 @@
     let mentionPrefix: string | undefined;
     let emojiQuery: string | undefined;
     let messageEntry: HTMLDivElement;
+    let messageActions: MessageActions;
 
     $: messageIsEmpty = true;
 
@@ -222,6 +222,14 @@
             dispatch("createPoll");
             return true;
         }
+
+        if ($chat.kind === "direct_chat") {
+            const icpMatch = txt.match(/^!icp *(\d*\.?\d*)$/);
+            if (icpMatch && icpMatch[1] !== undefined) {
+                dispatch("icpTransfer", Number(icpMatch[1]));
+                return true;
+            }
+        }
         return false;
     }
 
@@ -236,11 +244,7 @@
         inp.focus();
         inputIsEmpty = true;
         messageIsEmpty = true;
-        showEmojiPicker = false;
-    }
-
-    function toggleEmojiPicker() {
-        showEmojiPicker = !showEmojiPicker;
+        messageActions.close();
     }
 
     function saveSelection() {
@@ -276,10 +280,6 @@
     function onDrop(e: DragEvent) {
         dragging = false;
         dispatch("drop", e);
-    }
-
-    function clearAttachment() {
-        controller.clearAttachment();
     }
 
     function mention(ev: CustomEvent<string>): void {
@@ -357,23 +357,12 @@
             {$_("readOnlyGroup")}
         </div>
     {:else}
-        <div class="emoji" on:click={toggleEmojiPicker}>
-            {#if showEmojiPicker}
-                <HoverIcon>
-                    <Close size={$iconSize} color={"var(--icon-txt)"} />
-                </HoverIcon>
-            {:else}
-                <HoverIcon>
-                    <Smiley />
-                </HoverIcon>
-            {/if}
-        </div>
-        <div class="attach">
-            <FileAttacher
-                open={$fileToAttach !== undefined}
-                on:fileSelected
-                on:close={clearAttachment} />
-        </div>
+        <MessageActions
+            bind:this={messageActions}
+            bind:messageAction
+            {controller}
+            on:icpTransfer
+            on:fileSelected />
 
         {#if recording}
             <div class="recording">
@@ -426,8 +415,6 @@
         background-color: var(--entry-bg);
         padding: $sp3;
     }
-    .emoji,
-    .attach,
     .send {
         flex: 0 0 15px;
     }

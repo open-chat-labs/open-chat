@@ -1,7 +1,10 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { VideoContent as VideoContentType } from "../../domain/chat/chat";
+    import type {
+        CryptocurrencyContent as CryptoContentType,
+        VideoContent as VideoContentType,
+    } from "../../domain/chat/chat";
     import type { ImageContent as ImageContentType } from "../../domain/chat/chat";
     import type { AudioContent as AudioContentType } from "../../domain/chat/chat";
     import type { FileContent as FileContentType } from "../../domain/chat/chat";
@@ -10,16 +13,21 @@
     import AudioContent from "./AudioContent.svelte";
     import FileContent from "./FileContent.svelte";
 
-    export let content: VideoContentType | ImageContentType | AudioContentType | FileContentType;
+    export let content:
+        | VideoContentType
+        | ImageContentType
+        | AudioContentType
+        | FileContentType
+        | CryptoContentType;
 </script>
 
 <div class="msg-preview">
     {#if content.kind === "video_content"}
-        <VideoContent fill={false} content={content} draft={true} />
+        <VideoContent fill={false} {content} draft={true} />
     {:else if content.kind === "audio_content"}
-        <AudioContent content={content} />
+        <AudioContent {content} />
     {:else if content.kind === "image_content"}
-        <ImageContent fill={false} content={content} draft={true} />
+        <ImageContent fill={false} {content} draft={true} />
     {:else if content.kind === "file_content"}
         <div class="file-preview">
             <FileContent me={true} {content} draft={true} />

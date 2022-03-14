@@ -7,6 +7,7 @@
     import AudioContent from "./AudioContent.svelte";
     import PollContent from "./PollContent.svelte";
     import FileContent from "./FileContent.svelte";
+    import CryptoContent from "./CryptoContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
     import type { MessageContent } from "../../domain/chat/chat";
@@ -45,7 +46,7 @@
 {:else if content.kind === "deleted_content"}
     <DeletedContent {content} />
 {:else if content.kind === "crypto_content"}
-    <div>Crypto content</div>
+    <CryptoContent {content} {me} />
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "poll_content"}

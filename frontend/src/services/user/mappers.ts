@@ -26,6 +26,9 @@ import type {
     ApiMention,
     ApiRecommendedGroupsResponse,
     ApiSetBioResponse,
+    ApiWithdrawCryptocurrencyResponse,
+    ApiFailedCryptocurrencyWithdrawal,
+    ApiCompletedCryptocurrencyWithdrawal,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -53,8 +56,11 @@ import type {
     Mention,
     GroupChatSummary,
     DirectChatSummary,
+    WithdrawCryptocurrencyResponse,
+    FailedCryptocurrencyWithdrawal,
+    CompletedCryptocurrencyWithdrawal,
 } from "../../domain/chat/chat";
-import { identity, optional, optionUpdate } from "../../utils/mapping";
+import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
 import {
     apiMessageIndexRanges,
@@ -639,4 +645,79 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
         dateCreated: candid.date_created,
         notificationsMuted: candid.notifications_muted,
     };
+}
+
+export function failedCryptoWithdrawal(
+    candid: ApiFailedCryptocurrencyWithdrawal
+): FailedCryptocurrencyWithdrawal {
+    if ("ICP" in candid) {
+        return {
+            transferKind: "icp_withdrawal",
+            kind: "failed_icp_withdrawal",
+            to: bytesToHexString(candid.ICP.to),
+            amountE8s: candid.ICP.amount.e8s,
+            feeE8s: candid.ICP.fee.e8s,
+            memo: candid.ICP.memo,
+            errorMessage: candid.ICP.error_message,
+        };
+    }
+    if ("Cycles" in candid) {
+        return {
+            transferKind: "cycles_withdrawal",
+            kind: "failed_cycles_withdrawal",
+            cycles: candid.Cycles.cycles,
+            errorMessage: candid.Cycles.error_message,
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiFailedCryptocurrencyWithdrawal type received",
+        candid
+    );
+}
+
+export function completedCryptoWithdrawal(
+    candid: ApiCompletedCryptocurrencyWithdrawal
+): CompletedCryptocurrencyWithdrawal {
+    if ("ICP" in candid) {
+        return {
+            transferKind: "icp_withdrawal",
+            kind: "completed_icp_withdrawal",
+            to: bytesToHexString(candid.ICP.to),
+            amountE8s: candid.ICP.amount.e8s,
+            feeE8s: candid.ICP.fee.e8s,
+            memo: candid.ICP.memo,
+            blockIndex: candid.ICP.block_index,
+            transactionHash: candid.ICP.transaction_hash,
+        };
+    }
+    if ("Cycles" in candid) {
+        return {
+            transferKind: "cycles_withdrawal",
+            kind: "completed_cycles_withdrawal",
+            to: candid.Cycles.to.toString(),
+            cycles: candid.Cycles.cycles,
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiCompletedCryptocurrencyWithdrawal type received",
+        candid
+    );
+}
+
+export function withdrawCryptoResponse(
+    candid: ApiWithdrawCryptocurrencyResponse
+): WithdrawCryptocurrencyResponse {
+    if ("CurrencyNotSupported" in candid) {
+        return { kind: "currency_not_supported" };
+    }
+    if ("TransactionFailed" in candid) {
+        return failedCryptoWithdrawal(candid.TransactionFailed);
+    }
+    if ("Success" in candid) {
+        return completedCryptoWithdrawal(candid.Success);
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiWithdrawCryptocurrencyResponse type received",
+        candid
+    );
 }

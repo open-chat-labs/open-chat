@@ -17,6 +17,7 @@
         if (open) {
             dispatch("close");
         } else {
+            dispatch("open");
             fileinput.click();
         }
     }
@@ -26,7 +27,9 @@
             const target = e.currentTarget;
             if (target.files && target.files[0]) {
                 messageContentFromFile(target.files[0])
-                    .then((content) => dispatch("fileSelected", content))
+                    .then((content) => {
+                        dispatch("fileSelected", content);
+                    })
                     .catch((err) => toastStore.showFailureToast(err));
 
                 e.currentTarget.value = "";

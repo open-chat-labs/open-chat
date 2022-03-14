@@ -33,7 +33,7 @@
         GroupChatSummary,
     } from "../../domain/chat/chat";
     import type { Writable } from "svelte/store";
-    import type { HomeController } from "../../fsm/home.controller";
+    import { currentUserKey, HomeController } from "../../fsm/home.controller";
     import { _ } from "svelte-i18n";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
@@ -58,6 +58,7 @@
     let faqQuestion: Questions | undefined = undefined;
     let modal = ModalType.None;
     setContext(apiKey, controller.api);
+    setContext(currentUserKey, controller.user);
 
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;

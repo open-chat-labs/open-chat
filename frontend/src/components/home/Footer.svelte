@@ -5,9 +5,11 @@
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
     import type {
+        CryptocurrencyContent,
         EventWrapper,
         GroupChatSummary,
         Message,
+        MessageAction,
         MessageContent,
         PollContent,
     } from "../../domain/chat/chat";
@@ -28,7 +30,7 @@
     export let joining: GroupChatSummary | undefined;
 
     const dispatch = createEventDispatcher();
-    let showEmojiPicker = false;
+    let messageAction: MessageAction = undefined;
     let messageEntry: MessageEntry;
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
@@ -122,6 +124,10 @@
         sendMessageWithAttachment(undefined, [], ev.detail);
     }
 
+    export function sendICPTransfer(ev: CustomEvent<CryptocurrencyContent>) {
+        sendMessageWithAttachment(undefined, [], ev.detail);
+    }
+
     function fileSelected(ev: CustomEvent<MessageContent>) {
         controller.attachFile(ev.detail);
     }
@@ -168,15 +174,13 @@
                         replyingTo={$replyingTo} />
                 {/if}
                 {#if $fileToAttach !== undefined}
-                    {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content" || $fileToAttach.kind === "file_content"}
+                    {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content" || $fileToAttach.kind === "file_content" || $fileToAttach.kind === "crypto_content"}
                         <DraftMediaMessage content={$fileToAttach} />
-                    {:else if $fileToAttach.kind === "crypto_content"}
-                        <div>Crypto transfer preview</div>
                     {/if}
                 {/if}
             </div>
         {/if}
-        {#if showEmojiPicker}
+        {#if messageAction === "emoji"}
             {#await import("./EmojiPicker.svelte")}
                 <div class="loading-emoji"><Loading /></div>
             {:then picker}
@@ -188,7 +192,7 @@
     </div>
     <MessageEntry
         bind:this={messageEntry}
-        bind:showEmojiPicker
+        bind:messageAction
         on:paste={onPaste}
         on:drop={onDrop}
         {canSend}
@@ -197,6 +201,7 @@
         {joining}
         on:sendMessage={sendMessage}
         on:createPoll
+        on:icpTransfer
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         on:joinGroup

@@ -246,7 +246,9 @@
         "security_q": "Sind meine Nachrichten sicher?",
         "security_a": "Kurz gesagt bietet der Internet-Computer sehr starke Sicherheitsgarantien. Es gibt jedoch einen besonders bekannten Schwachpunkt, den Dfinity angeht. Mit einigem Aufwand könnte ein bösartiger Node-Anbieter eine gehackte Version der Node-Software installieren, die es ihm ermöglicht, eingehende Nachrichten abzufangen und zu lesen und den Speicher direkt zu lesen. Einmal jedoch <a target=\"_blank\" href=\"https://www.amd.com/system/files/TechDocs/SEV-SNP-strengthening-vm-isolation-with-integrity-protection-and-more.pdf \">SEV-SNP</a> auf Node-Rechnern verfügbar ist, können sich die Benutzer sehr sicher sein, dass ihre Daten außer den Empfängern ihrer Nachrichten nur für sie selbst zugänglich sind. Zu einem späteren Zeitpunkt werden wir die e2e-Verschlüsselung implementieren, sodass die Daten tatsächlich in verschlüsselter Form im Kanisterspeicher gespeichert werden und daher nicht für böswillige Knotenbetreiber zugänglich sind, unabhängig davon, ob SEV-SNP vorhanden ist. Dies wird wahrscheinlich einige Einschränkungen mit sich bringen, z. B. dass Sie Ihren Nachrichtenverlauf nicht durchsuchen können, sodass Sie sich für ausgewählte Chats für die e2e-Sicherheit entscheiden können.",
         "roadmap_q": "Haben Sie eine Straßenkarte?",
-        "roadmap_a": "Ja, das tun wir jetzt! Finden Sie es im Hauptmenü neben dieser FAQ!"
+        "roadmap_a": "Ja, das tun wir jetzt! Finden Sie es im Hauptmenü neben dieser FAQ!",
+        "send_icp_q": "Warum wird mir beim Senden von ICP eine Transaktionsgebühr berechnet?",
+        "send_icp_a": "Beim Senden von ICP als Chat-Nachricht wird die Übertragung vom ICP-Ledger durchgeführt, für das eine obligatorische Gebühr von 0,0001 ICP anfällt. Diese Gebühr wird als Teil des IC-Protokolls verbrannt und wird von keiner Partei empfangen."
     },
     "roadmap": "Fahrplan",
     "here": "Hier",
@@ -405,5 +407,34 @@
     "participant": "Mitglied",
     "readOnlyGroup": "Dies ist eine schreibgeschützte Gruppe",
     "memberCount": "{count} Mitglied(er)",
-    "ownedBy": "Im Besitz von @{username}"
+    "ownedBy": "Im Besitz von @{Benutzername}",
+    "icpTransfer": {
+        "title": "ICP senden",
+        "amount": "Menge (icp) *",
+        "balance": "Restguthaben (icp)",
+        "send": "Schicken",
+        "message": "Nachricht",
+        "messagePlaceholder": "Fügen Sie eine optionale Nachricht hinzu",
+        "fee": "* Eine Gebühr von {fee} ICP wird hinzugefügt",
+        "unexpected": "Ein unerwarteter Kryptoübertragungstyp wurde empfangen",
+        "confirmedReceived": "Sie haben {amount} ICP erhalten",
+        "confirmedSent": "Sie haben {amount} ICP gesendet",
+        "pendingReceived": "{amount} ICP ist auf dem Weg zu Ihnen",
+        "pendingSent": "Sie senden {amount} ICP",
+        "viewTransaction": "[Transaktion anzeigen]({url})",
+        "warning": "Warnung – Es liegt in Ihrer Verantwortung sicherzustellen, dass Sie der Identität und den Motiven des Empfängers vertrauen. OpenChat kann keine ICP-Übertragungen rückgängig machen.",
+        "confirm": "Bestätigen Sie"
+    },
+    "icpAccount": {
+        "balanceLabel": "ICP-Kontostand",
+        "shortBalanceLabel": "Restbetrag",
+        "manage": "Verwalten",
+        "manageHeader": "Konto verwalten",
+        "topUp": "Nachfüllen",
+        "topUpBlurb": "Zum Aufladen einfach etwas ICP auf das oben genannte Konto überweisen.",
+        "withdraw": "Zurückziehen",
+        "withdrawTarget": "Geben Sie eine Adresse ein, an die Sie sich zurückziehen möchten",
+        "withdrawalSucceeded": "Ihre Auszahlung war erfolgreich!",
+        "withdrawalFailed": "Ihre Auszahlung ist fehlgeschlagen!"
+    }
 }

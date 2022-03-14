@@ -11,6 +11,7 @@
     import { getMinVisibleMessageIndex, isPreviewing } from "../../domain/chat/chat.utils";
     import type { GroupChatSummary, Mention } from "../../domain/chat/chat";
     import PollBuilder from "./PollBuilder.svelte";
+    import ICPTransferBuilder from "./ICPTransferBuilder.svelte";
     import {
         canBlockUsers,
         canCreatePolls,
@@ -29,8 +30,10 @@
     let firstUnreadMessage: number | undefined;
     let firstUnreadMention: Mention | undefined;
     let creatingPoll = false;
+    let creatingICPTransfer = false;
     let footer: Footer;
     let pollBuilder: PollBuilder;
+    let icpTransferBuilder: ICPTransferBuilder;
 
     $: pinned = controller.pinnedMessages;
 
@@ -116,6 +119,13 @@
         creatingPoll = true;
     }
 
+    function icpTransfer(ev: CustomEvent<number>) {
+        if (icpTransferBuilder !== undefined) {
+            icpTransferBuilder.reset(ev.detail);
+        }
+        creatingICPTransfer = true;
+    }
+
     $: chat = controller.chat;
 
     $: preview = isPreviewing($chat);
@@ -124,6 +134,14 @@
 <svelte:window on:focus={onWindowFocus} />
 
 <PollBuilder bind:this={pollBuilder} on:sendPoll={footer.sendPoll} bind:open={creatingPoll} />
+
+{#if $chat.kind === "direct_chat"}
+    <ICPTransferBuilder
+        receiverId={$chat.them}
+        bind:this={icpTransferBuilder}
+        on:sendTransfer={footer.sendICPTransfer}
+        bind:open={creatingICPTransfer} />
+{/if}
 
 <div class="wrapper">
     <CurrentChatHeader
@@ -167,6 +185,7 @@
         on:joinGroup
         on:cancelPreview
         on:upgrade
+        on:icpTransfer={icpTransfer}
         on:createPoll={createPoll} />
 </div>
 
