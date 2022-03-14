@@ -21,6 +21,8 @@ import type {
     MarkReadRequest,
     GroupChatSummary,
     RegisterPollVoteResponse,
+    PendingICPWithdrawal,
+    WithdrawCryptocurrencyResponse,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
@@ -83,4 +85,5 @@ export interface IUserClient {
         answerIdx: number,
         voteType: "register" | "delete"
     ): Promise<RegisterPollVoteResponse>;
+    withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse>;
 }

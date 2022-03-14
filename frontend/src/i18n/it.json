@@ -246,7 +246,9 @@
         "security_q": "I miei messaggi sono al sicuro?",
         "security_a": "In breve, il computer Internet fornisce garanzie di sicurezza molto forti. C'è tuttavia una particolare area di debolezza che Dfinity sta affrontando. Con un certo sforzo un provider di nodi canaglia potrebbe installare una versione compromessa del software del nodo consentendo loro di intercettare e leggere i messaggi in ingresso e leggere direttamente la memoria. Tuttavia, una volta <a target=\"_blank\" href=\"https://www.amd.com/system/files/TechDocs/SEV-SNP-strengthening-vm-isolation-with-integrity-protection-and-more.pdf \">SEV-SNP</a> è disponibile sulle macchine dei nodi, gli utenti possono essere estremamente sicuri che, a parte i destinatari dei loro messaggi, i loro dati non saranno accessibili a nessuno tranne che a loro stessi. In un secondo momento implementeremo la crittografia e2e in modo che i dati siano effettivamente archiviati in forma crittografata nella memoria del contenitore e quindi non siano accessibili agli operatori di nodi canaglia indipendentemente dal fatto che SEV-SNP sia in atto. Ciò comporterà probabilmente alcune limitazioni, come non essere in grado di cercare nella cronologia dei messaggi, quindi potresti scegliere di attivare la sicurezza e2e per le chat selezionate.",
         "roadmap_q": "Avete una mappa stradale?",
-        "roadmap_a": "Sì, lo facciamo ora! Lo trovi nel menu principale accanto a questa FAQ!"
+        "roadmap_a": "Sì, lo facciamo ora! Lo trovi nel menu principale accanto a questa FAQ!",
+        "send_icp_q": "Perché mi viene addebitata una commissione di transazione quando invio ICP?",
+        "send_icp_a": "Quando si invia ICP come messaggio di chat, il trasferimento viene eseguito dal registro ICP che comporta una commissione obbligatoria di 0,0001 ICP. Questa commissione viene bruciata come parte del protocollo IC e non viene ricevuta da nessuna parte."
     },
     "roadmap": "Tabella di marcia",
     "here": "qui",
@@ -398,12 +400,42 @@
     "filterParticipants": "membri del filtro",
     "publicGroupWithN": "Gruppo pubblico con {number} membri",
     "privateGroupWithN": "Gruppo privato con {number} membri",
-    "groupWithN": "{number} membro/i",
+    "groupWithN": "{numero} membro/i",
     "participants": "Membri",
     "addParticipants": "Aggiungi membri",
     "removeParticipantFailed": "Impossibile rimuovere il membro",
     "participant": "membro",
     "readOnlyGroup": "Questo è un gruppo di sola lettura",
     "memberCount": "{count} membro/i",
-    "ownedBy": "Di proprietà di @{username}"
+    "ownedBy": "Di proprietà di @{nomeutente}",
+    "icpTransfer": {
+        "title": "Invia ICP",
+        "amount": "importo (icp) *",
+        "send": "Spedire",
+        "message": "Messaggio",
+        "messagePlaceholder": "Includi un messaggio facoltativo",
+        "fee": "* verrà aggiunta una commissione di {fee} ICP",
+        "unexpected": "È stato ricevuto un tipo di trasferimento crittografico imprevisto",
+        "confirmedReceived": "Hai ricevuto {amount} ICP",
+        "confirmedSent": "Hai inviato {amount} ICP",
+        "pendingReceived": "{amount} ICP sta arrivando a te",
+        "pendingSent": "Stai inviando {amount} ICP",
+        "viewTransaction": "[Visualizza transazione]({url})",
+        "warning": "Avvertenza: è tua responsabilità assicurarti di fidarti dell'identità e delle motivazioni del destinatario. OpenChat non può annullare alcun trasferimento ICP.",
+        "confirm": "Confermare",
+        "transfer": "Trasferimento ICP"
+    },
+    "icpAccount": {
+        "balanceLabel": "Saldo del conto ICP",
+        "manage": "Gestire",
+        "manageHeader": "Gestisci profilo",
+        "topUp": "Riempire",
+        "topUpBlurb": "Per ricaricare, trasferisci semplicemente un po' di ICP sul conto sopra.",
+        "withdraw": "Ritirare",
+        "withdrawTarget": "inserisci un indirizzo a cui ritirare",
+        "withdrawalSucceeded": "Il tuo prelievo è riuscito!",
+        "withdrawalFailed": "Il tuo prelievo è fallito!",
+        "shortRemainingBalanceLabel": "equilibrio restante",
+        "shortBalanceLabel": "equilibrio"
+    }
 }

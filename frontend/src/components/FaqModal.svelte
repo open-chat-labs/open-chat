@@ -17,6 +17,7 @@
         "sms_icp",
         "airdrop",
         "security",
+        "send_icp",
         "roadmap",
     ];
 </script>

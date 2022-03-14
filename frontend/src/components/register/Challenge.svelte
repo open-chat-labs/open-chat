@@ -1,8 +1,8 @@
 <script lang="ts">
     import Button from "../Button.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Input from "../Input.svelte";
-    import { fade } from "svelte/transition";
     import { createEventDispatcher } from "svelte";
     import type { Challenge } from "../../domain/user/user";
     import { _ } from "svelte-i18n";
@@ -48,7 +48,7 @@
 </form>
 
 {#if error}
-    <h4 in:fade class="error">{$_(error)}</h4>
+    <ErrorMessage>{$_(error)}</ErrorMessage>
 {/if}
 
 <div class="actions">
@@ -64,12 +64,6 @@
         justify-content: center;
         margin-bottom: $sp4;
         height: 120px;
-    }
-
-    .error {
-        @include font(bold, normal, fs-100);
-        color: var(--error);
-        margin-bottom: $sp4;
     }
 
     .attempt_challenge {

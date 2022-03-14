@@ -245,7 +245,9 @@
         "security_q": "Mes messages sont-ils sécurisés ?",
         "security_a": "En bref, l'ordinateur Internet offre des garanties de sécurité très fortes. Il existe cependant une zone de faiblesse bien connue à laquelle Dfinity s'attaque. Avec quelques efforts, un fournisseur de nœuds malveillants pourrait installer une version piratée du logiciel du nœud lui permettant d'intercepter et de lire les messages d'entrée et de lire directement la mémoire. Cependant, une fois <a target=\"_blank\" href=\"https://www.amd.com/system/files/TechDocs/SEV-SNP-strengthening-vm-isolation-with-integrity-protection-and-more.pdf \">SEV-SNP</a> est disponible sur les machines nœuds, les utilisateurs peuvent être extrêmement sûrs que, mis à part les destinataires de leurs messages, leurs données ne seront accessibles qu'à eux-mêmes. À une date ultérieure, nous mettrons en œuvre le cryptage e2e afin que les données soient réellement stockées sous forme cryptée dans la mémoire du canister et ne soient donc pas accessibles par les opérateurs de nœuds malveillants, que SEV-SNP soit en place. Cela impliquera probablement certaines limitations, telles que l'impossibilité de rechercher l'historique de vos messages, vous pouvez donc choisir d'activer la sécurité e2e pour les discussions sélectionnées.",
         "roadmap_q": "Avez-vous une feuille de route?",
-        "roadmap_a": "Oui, nous le faisons maintenant ! Trouvez-le dans le menu principal à côté de cette FAQ !"
+        "roadmap_a": "Oui, nous le faisons maintenant ! Trouvez-le dans le menu principal à côté de cette FAQ !",
+        "send_icp_q": "Pourquoi suis-je facturé des frais de transaction lors de l'envoi d'ICP ?",
+        "send_icp_a": "Lors de l'envoi d'ICP sous forme de message de chat, le transfert est effectué par le registre ICP qui entraîne des frais obligatoires de 0,0001 ICP. Ces frais sont brûlés dans le cadre du protocole IC et ne sont perçus par aucune partie."
     },
     "roadmap": "Feuille de route",
     "here": "ici",
@@ -398,12 +400,42 @@
     "markAllRead": "tout marquer comme lu",
     "publicGroupWithN": "Groupe public avec {number} membre(s)",
     "privateGroupWithN": "Groupe privé avec {number} membre(s)",
-    "groupWithN": "{number} membre(s)",
+    "groupWithN": "{nombre} membre(s)",
     "participants": "Membres",
     "addParticipants": "Ajouter des membres",
     "removeParticipantFailed": "Impossible de supprimer le membre",
     "participant": "membre",
     "readOnlyGroup": "Ceci est un groupe en lecture seule",
     "memberCount": "{count} membre(s)",
-    "ownedBy": "Propriété de @{username}"
+    "ownedBy": "Propriété de @{username}",
+    "icpTransfer": {
+        "title": "Envoyer ICP",
+        "amount": "montant (icp) *",
+        "send": "Envoyer",
+        "message": "Un message",
+        "messagePlaceholder": "Inclure un message facultatif",
+        "fee": "* des frais de {fee} ICP seront ajoutés",
+        "unexpected": "Un type de transfert crypto inattendu a été reçu",
+        "confirmedReceived": "Vous avez reçu {amount} ICP",
+        "confirmedSent": "Vous avez envoyé {amount} ICP",
+        "pendingReceived": "{amount} ICP est en route vers vous",
+        "pendingSent": "Vous envoyez {amount} ICP",
+        "viewTransaction": "[Voir la transaction]({url})",
+        "warning": "Avertissement - il est de votre responsabilité de vous assurer que vous faites confiance à l'identité et aux motivations du destinataire. OpenChat ne peut annuler aucun transfert ICP.",
+        "confirm": "Confirmer",
+        "transfer": "Transfert ICP"
+    },
+    "icpAccount": {
+        "balanceLabel": "Solde du compte ICP",
+        "manage": "Faire en sorte",
+        "manageHeader": "Gérer son compte",
+        "topUp": "Recharger",
+        "topUpBlurb": "Pour recharger, transférez simplement des ICP sur le compte ci-dessus.",
+        "withdraw": "Retirer",
+        "withdrawTarget": "entrez une adresse pour vous retirer",
+        "withdrawalSucceeded": "Votre retrait a réussi !",
+        "withdrawalFailed": "Votre retrait a échoué !",
+        "shortRemainingBalanceLabel": "solde restant",
+        "shortBalanceLabel": "équilibre"
+    }
 }

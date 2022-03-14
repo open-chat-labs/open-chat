@@ -5,9 +5,11 @@
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
     import type {
+        CryptocurrencyContent,
         EventWrapper,
         GroupChatSummary,
         Message,
+        MessageAction,
         MessageContent,
         PollContent,
     } from "../../domain/chat/chat";
@@ -16,19 +18,21 @@
     import { rollbar } from "../../utils/logging";
     import Loading from "../Loading.svelte";
     import type { ChatController } from "../../fsm/chat.controller";
-    import type { User } from "../../domain/user/user";
+    import type { CreatedUser, User } from "../../domain/user/user";
     import Reload from "../Reload.svelte";
     import { _ } from "svelte-i18n";
     import { remainingStorage } from "../../stores/storage";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
+    import { currentUserKey } from "../../fsm/home.controller";
 
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
     export let joining: GroupChatSummary | undefined;
 
+    const createdUser = getContext<CreatedUser>(currentUserKey);
     const dispatch = createEventDispatcher();
-    let showEmojiPicker = false;
+    let messageAction: MessageAction = undefined;
     let messageEntry: MessageEntry;
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
@@ -90,6 +94,9 @@
                 .then((resp) => {
                     if (resp.kind === "success") {
                         controller.confirmMessage(msg, resp);
+                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                            controller.api.refreshAccountBalance(createdUser.icpAccount);
+                        }
                     } else {
                         controller.removeMessage(msg.messageId, controller.user.userId);
                         rollbar.warn("Error response sending message", resp);
@@ -119,6 +126,10 @@
     }
 
     export function sendPoll(ev: CustomEvent<PollContent>) {
+        sendMessageWithAttachment(undefined, [], ev.detail);
+    }
+
+    export function sendICPTransfer(ev: CustomEvent<CryptocurrencyContent>) {
         sendMessageWithAttachment(undefined, [], ev.detail);
     }
 
@@ -168,15 +179,13 @@
                         replyingTo={$replyingTo} />
                 {/if}
                 {#if $fileToAttach !== undefined}
-                    {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content" || $fileToAttach.kind === "file_content"}
+                    {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content" || $fileToAttach.kind === "file_content" || $fileToAttach.kind === "crypto_content"}
                         <DraftMediaMessage content={$fileToAttach} />
-                    {:else if $fileToAttach.kind === "crypto_content"}
-                        <div>Crypto transfer preview</div>
                     {/if}
                 {/if}
             </div>
         {/if}
-        {#if showEmojiPicker}
+        {#if messageAction === "emoji"}
             {#await import("./EmojiPicker.svelte")}
                 <div class="loading-emoji"><Loading /></div>
             {:then picker}
@@ -188,7 +197,7 @@
     </div>
     <MessageEntry
         bind:this={messageEntry}
-        bind:showEmojiPicker
+        bind:messageAction
         on:paste={onPaste}
         on:drop={onDrop}
         {canSend}
@@ -197,6 +206,7 @@
         {joining}
         on:sendMessage={sendMessage}
         on:createPoll
+        on:icpTransfer
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         on:joinGroup

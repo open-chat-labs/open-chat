@@ -241,7 +241,9 @@
         "security_q": "Tin nhắn của tôi có an toàn không?",
         "security_a": "Tóm lại, Máy tính Internet cung cấp tính năng bảo mật rất mạnh mẽ. Tuy nhiên, có một điểm yếu đặc biệt nổi tiếng mà Dfinity đang giải quyết. Với một số nỗ lực, nhà cung cấp nút giả mạo có thể cài đặt phiên bản bị tấn công của phần mềm nút cho phép họ chặn và đọc các thông báo xâm nhập và đọc trực tiếp bộ nhớ. Tuy nhiên, khi <a target = \"_ blank\" href = \"https://www.amd.com/system/files/TechDocs/SEV-SNP-strengtning-vm-isolation-with-integrity-protection-and-more.pdf \"> SEV-SNP </a> có sẵn trên các máy nút, người dùng có thể cực kỳ tin tưởng rằng, ngoài những người nhận tin nhắn của họ, dữ liệu của họ sẽ không thể truy cập được cho bất kỳ ai ngoài chính họ. Vào một ngày sau đó, chúng tôi sẽ triển khai mã hóa e2e để dữ liệu thực sự được lưu trữ ở dạng mã hóa trong bộ nhớ canister và do đó, các nhà khai thác nút giả mạo sẽ không thể truy cập được bất kể SEV-SNP đang ở đâu. Điều này có thể sẽ liên quan đến một số hạn chế, chẳng hạn như không thể tìm kiếm lịch sử tin nhắn của bạn, vì vậy bạn có thể chọn tham gia bảo mật e2e cho các cuộc trò chuyện đã chọn.",
         "roadmap_q": "Bạn có một lộ trình?",
-        "roadmap_a": "Có, chúng tôi làm ngay bây giờ! Tìm nó trong menu chính bên cạnh Câu hỏi thường gặp này!"
+        "roadmap_a": "Có, chúng tôi làm ngay bây giờ! Tìm nó trong menu chính bên cạnh Câu hỏi thường gặp này!",
+        "send_icp_q": "Tại sao tôi bị tính phí giao dịch khi gửi ICP?",
+        "send_icp_a": "Khi gửi ICP dưới dạng tin nhắn trò chuyện, quá trình chuyển được thực hiện bởi sổ cái ICP, khoản phí này phải chịu khoản phí bắt buộc là 0,0001 ICP. Phí này được ghi như một phần của giao thức IC và không được nhận bởi bất kỳ bên nào."
     },
     "roadmap": "Lộ trình",
     "here": "tại đây",
@@ -406,5 +408,35 @@
     "participant": "hội viên",
     "readOnlyGroup": "Đây là nhóm chỉ đọc",
     "memberCount": "{count} thành viên",
-    "ownedBy": "Thuộc sở hữu của @ {username}"
+    "ownedBy": "Thuộc sở hữu của @ {username}",
+    "icpTransfer": {
+        "title": "Gửi ICP",
+        "amount": "số tiền (icp) *",
+        "send": "Gửi",
+        "message": "Tin nhắn",
+        "messagePlaceholder": "Bao gồm một tin nhắn tùy chọn",
+        "fee": "* phí ICP sẽ được thêm vào",
+        "unexpected": "Đã nhận được một loại chuyển tiền điện tử không mong muốn",
+        "confirmedReceived": "Bạn đã nhận được ICP {amount}",
+        "confirmedSent": "Bạn đã gửi ICP {amount}",
+        "pendingReceived": "{amount} ICP đang đến với bạn",
+        "pendingSent": "Bạn đang gửi ICP {amount}",
+        "viewTransaction": "[Xem giao dịch] ({url})",
+        "warning": "Cảnh báo - bạn có trách nhiệm đảm bảo rằng bạn tin tưởng danh tính và động cơ của người nhận. OpenChat không thể đảo ngược bất kỳ quá trình chuyển ICP nào.",
+        "confirm": "Xác nhận",
+        "transfer": "Chuyển ICP"
+    },
+    "icpAccount": {
+        "balanceLabel": "Số dư tài khoản ICP",
+        "manage": "Quản lý",
+        "manageHeader": "Quản lý tài khoản",
+        "topUp": "Nạp tiền",
+        "topUpBlurb": "Để nạp tiền, bạn chỉ cần chuyển một số ICP vào tài khoản trên.",
+        "withdraw": "Rút",
+        "withdrawTarget": "nhập địa chỉ để rút tiền về",
+        "withdrawalSucceeded": "Rút tiền của bạn đã thành công!",
+        "withdrawalFailed": "Rút tiền của bạn không thành công!",
+        "shortRemainingBalanceLabel": "số dư còn lại",
+        "shortBalanceLabel": "sự cân bằng"
+    }
 }

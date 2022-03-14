@@ -15,7 +15,7 @@
             <Legend>{`${$_("group.permissions.whoCan")} ${label}`}</Legend>
         </legend>
         <div class="roles">
-            {#each roles as r, i (r)}
+            {#each roles as r, _i (r)}
                 <div
                     class="role"
                     on:click={() => (rolePermission = r)}

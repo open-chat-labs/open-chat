@@ -33,10 +33,11 @@ import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
-import { overwriteCachedEvents } from "../../utils/caching";
+import { _ } from "svelte-i18n";
 import { unconfirmed } from "../../stores/unconfirmed";
 import type { IMessageReadTracker } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
+import { get } from "svelte/store";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 const EVENT_PAGE_SIZE = 20;
@@ -58,8 +59,7 @@ export function getContentAsText(content: MessageContent): string {
     } else if (content.kind === "file_content") {
         text = captionedContent(content.name, content.caption);
     } else if (content.kind === "crypto_content") {
-        // todo - format crypto
-        text = "crypto_content";
+        text = captionedContent(get(_)("icpTransfer.transfer"), content.caption);
     } else if (content.kind === "deleted_content") {
         text = "deleted message";
     } else if (content.kind === "placeholder_content") {
@@ -254,7 +254,8 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
     return content.kind !== "text_content" &&
         content.kind !== "deleted_content" &&
         content.kind !== "placeholder_content" &&
-        content.kind !== "poll_content"
+        content.kind !== "poll_content" &&
+        content.kind !== "crypto_content"
         ? { ...content, caption }
         : content;
 }
@@ -811,31 +812,26 @@ function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
     }
 }
 
-// todo - this is not very efficient at the moment
 export function replaceAffected(
     chatId: string,
     events: EventWrapper<ChatEvent>[],
     affectedEvents: EventWrapper<ChatEvent>[],
     localReactions: Record<string, LocalReaction[]>
 ): EventWrapper<ChatEvent>[] {
-    const toCacheBust: EventWrapper<ChatEvent>[] = [];
-    const updated = events.map((ev) => {
-        const aff = affectedEvents.find((a) => a.index === ev.index);
-        if (aff !== undefined) {
-            const merged = mergeMessageEvents(ev, aff, localReactions);
-            toCacheBust.push(merged);
-            return merged;
-        }
-        return ev;
-    });
-    if (toCacheBust.length > 0) {
-        // Note - this is fire and forget which is a tiny bit dodgy
-        console.log("Busting: ", toCacheBust);
-        overwriteCachedEvents(chatId, toCacheBust).catch((err) => {
-            console.log("failed to update cache: ", err, toCacheBust);
-        });
+    if (affectedEvents.length === 0) {
+        return events;
     }
-    return updated;
+    const affectedEventsLookup = affectedEvents.reduce((lookup, event) => {
+        lookup[event.index] = event;
+        return lookup;
+    }, {} as Record<number, EventWrapper<ChatEvent>>);
+
+    return events.map((event) => {
+        const affectedEvent = affectedEventsLookup[event.index];
+        return affectedEvent !== undefined
+            ? mergeMessageEvents(event, affectedEvent, localReactions)
+            : event;
+    });
 }
 
 export function pruneLocalReactions(
