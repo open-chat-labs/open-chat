@@ -1,6 +1,5 @@
 import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
 import { compareUsersOnlineFirst, extractUserIdsFromMentions, nullUser } from "../user/user.utils";
-import bs from "binary-search";
 import DRange from "drange";
 import type {
     ChatSummary,
