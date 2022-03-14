@@ -19,7 +19,8 @@
     import AccountInfo from "../AccountInfo.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { ScreenWidth, screenWidth } from "../../../stores/screenDimensions";
-    import { toastStore } from "stores/toast";
+    import { toastStore } from "../../../stores/toast";
+    import { icpBalanceStore } from "../../../stores/balance";
 
     export let open: boolean;
 
@@ -28,7 +29,6 @@
 
     let refreshing = false;
     let error: string | undefined = undefined;
-    let accountBalance: number = 0;
     let targetAccount: string = "";
     let amountToWithdraw = 0;
     let withdrawing = false;
@@ -36,12 +36,14 @@
     // make sure that they are not trying to withdraw to the same account - I can see people trying to do that
     $: valid = amountToWithdraw > 0 && targetAccount !== "" && targetAccount !== user.icpAccount;
 
-    $: icpBalance = accountBalance / E8S_PER_ICP; //balance in the user's account expressed as ICP
-    $: remainingBalance = Math.max(0, icpBalance - amountToWithdraw - ICP_TRANSFER_FEE);
+    $: remainingBalance =
+        amountToWithdraw > 0
+            ? Math.max(0, $icpBalanceStore - amountToWithdraw - ICP_TRANSFER_FEE)
+            : $icpBalanceStore;
 
     $: {
-        if (amountToWithdraw > icpBalance - ICP_TRANSFER_FEE) {
-            amountToWithdraw = icpBalance - ICP_TRANSFER_FEE;
+        if (amountToWithdraw > $icpBalanceStore - ICP_TRANSFER_FEE) {
+            amountToWithdraw = $icpBalanceStore - ICP_TRANSFER_FEE;
         }
         if (amountToWithdraw < 0) {
             amountToWithdraw = 0;
@@ -54,12 +56,8 @@
         refreshing = true;
         error = undefined;
         api.refreshAccountBalance(user.icpAccount)
-            .then((resp) => {
-                accountBalance = Number(resp.e8s);
-            })
             .catch((err) => {
                 error = "unableToRefreshAccountBalance";
-                accountBalance = 0;
                 rollbar.error("Unable to refresh user's account balance", err);
             })
             .finally(() => (refreshing = false));
@@ -84,13 +82,13 @@
                     reset();
                     toastStore.showSuccessToast("icpAccount.withdrawalSucceeded");
                 } else {
-                    error = "withdrawalFailed";
+                    error = "icpAccount.withdrawalFailed";
                     rollbar.error("Unable to withdraw ICP", resp);
                     toastStore.showFailureToast("icpAccount.withdrawalFailed");
                 }
             })
             .catch((err) => {
-                error = "withdrawalFailed";
+                error = "icpAccount.withdrawalFailed";
                 rollbar.error("Unable to withdraw ICP", err);
                 toastStore.showFailureToast("icpAccount.withdrawalFailed");
             })
@@ -104,7 +102,11 @@
             <div class="main-title">{$_("icpAccount.manageHeader")}</div>
             <div class="balance">
                 <div class="amount">{remainingBalance.toFixed(4)}</div>
-                <div class="label">{$_("icpAccount.shortBalanceLabel")}</div>
+                <div class="label">
+                    {amountToWithdraw > 0
+                        ? $_("icpAccount.shortRemainingBalanceLabel")
+                        : $_("icpAccount.shortBalanceLabel")}
+                </div>
             </div>
             <div class="refresh" class:refreshing class:mobile on:click={reset}>
                 <Refresh size={"1em"} color={"var(--accent)"} />
@@ -126,7 +128,7 @@
             <input
                 class="amount-val"
                 min={0}
-                max={icpBalance}
+                max={$icpBalanceStore - ICP_TRANSFER_FEE}
                 type="number"
                 bind:value={amountToWithdraw} />
 

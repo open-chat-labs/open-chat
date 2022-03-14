@@ -411,7 +411,6 @@
     "icpTransfer": {
         "title": "发ICP",
         "amount": "金额 (ICP) *",
-        "balance": "余额（ICP）",
         "send": "发送",
         "message": "信息",
         "messagePlaceholder": "包括可选消息",
@@ -423,11 +422,11 @@
         "pendingSent": "您发送 {amount} ICP",
         "viewTransaction": "[查看交易]({url})",
         "warning": "警告 - 您有责任确保您信任收件人的身份和动机。 OpenChat 无法撤销任何 ICP 传输。",
-        "confirm": "确认"
+        "confirm": "确认",
+        "transfer": "ICP转移"
     },
     "icpAccount": {
         "balanceLabel": "ICP账户余额",
-        "shortBalanceLabel": "保持平衡",
         "manage": "管理",
         "manageHeader": "管理帐户",
         "topUp": "充值",
@@ -435,6 +434,8 @@
         "withdraw": "提取",
         "withdrawTarget": "输入提款地址",
         "withdrawalSucceeded": "您的提现成功！",
-        "withdrawalFailed": "您的提款失败！"
+        "withdrawalFailed": "您的提款失败！",
+        "shortRemainingBalanceLabel": "保持平衡",
+        "shortBalanceLabel": "平衡"
     }
 }

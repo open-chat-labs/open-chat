@@ -411,7 +411,6 @@
     "icpTransfer": {
         "title": "ICP senden",
         "amount": "Menge (icp) *",
-        "balance": "Restguthaben (icp)",
         "send": "Schicken",
         "message": "Nachricht",
         "messagePlaceholder": "Fügen Sie eine optionale Nachricht hinzu",
@@ -423,11 +422,11 @@
         "pendingSent": "Sie senden {amount} ICP",
         "viewTransaction": "[Transaktion anzeigen]({url})",
         "warning": "Warnung – Es liegt in Ihrer Verantwortung sicherzustellen, dass Sie der Identität und den Motiven des Empfängers vertrauen. OpenChat kann keine ICP-Übertragungen rückgängig machen.",
-        "confirm": "Bestätigen Sie"
+        "confirm": "Bestätigen Sie",
+        "transfer": "ICP-Übertragung"
     },
     "icpAccount": {
         "balanceLabel": "ICP-Kontostand",
-        "shortBalanceLabel": "Restbetrag",
         "manage": "Verwalten",
         "manageHeader": "Konto verwalten",
         "topUp": "Nachfüllen",
@@ -435,6 +434,8 @@
         "withdraw": "Zurückziehen",
         "withdrawTarget": "Geben Sie eine Adresse ein, an die Sie sich zurückziehen möchten",
         "withdrawalSucceeded": "Ihre Auszahlung war erfolgreich!",
-        "withdrawalFailed": "Ihre Auszahlung ist fehlgeschlagen!"
+        "withdrawalFailed": "Ihre Auszahlung ist fehlgeschlagen!",
+        "shortRemainingBalanceLabel": "Restbetrag",
+        "shortBalanceLabel": "Balance"
     }
 }
