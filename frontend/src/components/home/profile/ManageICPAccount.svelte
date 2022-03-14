@@ -121,7 +121,7 @@
             <input
                 class="amount-val"
                 min={0}
-                max={$icpBalanceStore}
+                max={$icpBalanceStore - ICP_TRANSFER_FEE}
                 type="number"
                 bind:value={amountToWithdraw} />
 
