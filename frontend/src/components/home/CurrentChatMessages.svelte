@@ -61,8 +61,7 @@
     let currentChatId = "";
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
-    let fromBottom: number = 0;
-    let fromTop: number = 0;
+    let showGoToFirst: boolean = false;
 
     onMount(() => {
         const options = {
@@ -155,11 +154,11 @@
     }
 
     function shouldLoadPreviousMessages() {
-        return fromTop < MESSAGE_LOAD_THRESHOLD && controller.morePreviousMessagesAvailable();
+        return calculateFromTop() < MESSAGE_LOAD_THRESHOLD && controller.morePreviousMessagesAvailable();
     }
 
     function shouldLoadNewMessages() {
-        return fromBottom < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable();
+        return calculateFromBottom() < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable();
     }
 
     function onScroll() {
@@ -183,9 +182,6 @@
             return;
         }
 
-        fromBottom = -(messagesDiv?.scrollTop ?? 0);
-        fromTop = calculateFromTop();
-
         if (!$loading) {
             if (shouldLoadPreviousMessages()) {
                 controller.loadPreviousMessages();
@@ -198,12 +194,18 @@
                 controller.loadNewMessages();
             }
         }
+
+        showGoToFirst = calculateFromBottom() > FROM_BOTTOM_THRESHOLD || unreadMessages > 0;
     }
 
     function calculateFromTop(): number {
         return messagesDiv
             ? messagesDiv.scrollHeight - messagesDiv.clientHeight + messagesDiv.scrollTop
             : 0;
+    }
+
+    function calculateFromBottom(): number {
+        return -(messagesDiv?.scrollTop ?? 0);
     }
 
     function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
@@ -292,28 +294,6 @@
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
-    function eventKey(e: EventWrapper<ChatEventType>): string | ChatEventType {
-        if (e.event.kind === "message") {
-            return e.event.messageId.toString();
-        } else {
-            return e.event;
-        }
-    }
-
-    function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
-        const first = group[0]!;
-        if (first.event.kind === "message") {
-            return `${first.event.sender}_${first.event.messageId}`;
-        }
-        if (first.event.kind === "direct_chat_created") {
-            return `${first.event.kind}_${first.index}`;
-        }
-        if (first.event.kind === "group_chat_created") {
-            return `${first.event.created_by}_${first.index}`;
-        }
-        return `${first.timestamp}_${first.index}`;
-    }
-
     function blockUser(ev: CustomEvent<{ userId: string }>) {
         if (!canBlockUser) return;
         controller.blockUser(ev.detail.userId);
@@ -325,7 +305,6 @@
         if (controller.chatId !== currentChatId) {
             currentChatId = controller.chatId;
             initialised = false;
-            fromBottom = 0;
 
             controller.subscribe((evt) => {
                 switch (evt.event.kind) {
@@ -340,9 +319,7 @@
                     case "loaded_new_messages":
                         // wait until the events are rendered
                         tick().then(() => {
-                            // recalculate fromBottom
-                            fromBottom = -(messagesDiv?.scrollTop ?? 0);
-                            if (fromBottom < FROM_BOTTOM_THRESHOLD) {
+                            if (calculateFromBottom() < FROM_BOTTOM_THRESHOLD) {
                                 // only scroll if we are now within threshold from the bottom
                                 scrollBottom("smooth");
                             }
@@ -351,7 +328,7 @@
                     case "sending_message":
                         // if we are within the from bottom threshold *or* if the new message
                         // was sent by us, then scroll to the bottom
-                        if (evt.event.sentByMe || fromBottom < FROM_BOTTOM_THRESHOLD) {
+                        if (evt.event.sentByMe || calculateFromBottom() < FROM_BOTTOM_THRESHOLD) {
                             // smooth scroll doesn't work here when we are leaping from the top
                             // which means we are stuck with abrupt scroll which is disappointing
                             const { scroll } = evt.event;
@@ -361,7 +338,7 @@
                     case "chat_updated":
                         if (
                             initialised &&
-                            fromBottom < FROM_BOTTOM_THRESHOLD &&
+                            calculateFromBottom() < FROM_BOTTOM_THRESHOLD &&
                             shouldLoadNewMessages()
                         ) {
                             controller.loadNewMessages();
@@ -446,8 +423,8 @@
             <div class="date-label">
                 {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
             </div>
-            {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
-                {#each userGroup as evt, i (eventKey(evt))}
+            {#each dayGroup as userGroup, _ui (controller.userGroupKey(userGroup))}
+                {#each userGroup as evt, i (evt.index)}
                     <ChatEvent
                         {observer}
                         focused={evt.event.kind === "message" &&
@@ -502,7 +479,7 @@
 
 <div
     title={$_("goToFirstMessage")}
-    class:show={fromBottom > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
+    class:show={showGoToFirst}
     class="fab to-bottom"
     class:rtl={$rtlStore}>
     <Fab on:click={() => scrollToNew()}>
