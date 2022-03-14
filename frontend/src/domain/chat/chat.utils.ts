@@ -817,13 +817,18 @@ export function replaceAffected(
     affectedEvents: EventWrapper<ChatEvent>[],
     localReactions: Record<string, LocalReaction[]>
 ): EventWrapper<ChatEvent>[] {
-    affectedEvents.forEach((aff) => {
-        const index = bs(events, aff.index, (event, target) => event.index - target);
-        if (index > 0) {
-            events[index] = mergeMessageEvents(events[index], aff, localReactions);
-        }
-    })
-    return events;
+    if (affectedEvents.length === 0) {
+        return events;
+    }
+    const affectedEventsLookup = affectedEvents.reduce((lookup, event) => {
+        lookup[event.index] = event;
+        return lookup;
+    }, {} as Record<number, EventWrapper<ChatEvent>>);
+
+    return events.map((event) => {
+        const affectedEvent = affectedEventsLookup[event.index];
+        return affectedEvent !== undefined ? mergeMessageEvents(event, affectedEvent, localReactions) : event;
+    });
 }
 
 export function pruneLocalReactions(
