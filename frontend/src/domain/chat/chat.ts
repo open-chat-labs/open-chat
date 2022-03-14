@@ -128,7 +128,7 @@ export type CompletedICPWithdrawal = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
-    transactionHash: number[];
+    transactionHash: string;
 };
 
 export type FailedICPWithdrawal = {
