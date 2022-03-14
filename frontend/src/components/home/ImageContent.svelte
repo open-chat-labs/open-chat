@@ -4,6 +4,10 @@
     import { rtlStore } from "../../stores/rtl";
     import type { ImageContent } from "../../domain/chat/chat";
     import Markdown from "./Markdown.svelte";
+    import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
+    import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
+    import Overlay from "../Overlay.svelte";
+    import ModalContent from "../ModalContent.svelte";
 
     export let content: ImageContent;
     export let fill: boolean;
@@ -12,32 +16,143 @@
     export let height: number | undefined = undefined;
 
     let imgElement: HTMLImageElement;
-
+    let zoom = false;
     let withCaption = content.caption !== undefined && content.caption !== "";
     let landscape = content.height < content.width;
+    let zoomedWidth: number;
+    let zoomedHeight: number;
+
+    $: {
+        if (zoom) {
+            recalculateZoomedDimensions();
+        }
+    }
+
+    function recalculateZoomedDimensions() {
+        if (!zoom) return;
+        const contentAspectRatio = content.width / content.height;
+        let imageWidth = Math.max(400, content.width);
+        let imageHeight = Math.max(400, content.height);
+
+        if (landscape) {
+            imageWidth = Math.min(window.innerWidth, imageWidth);
+            imageHeight = imageWidth / contentAspectRatio;
+            if (imageHeight > window.innerHeight) {
+                imageHeight = window.innerHeight;
+                imageWidth = imageHeight * contentAspectRatio;
+            }
+        } else {
+            imageHeight = Math.min(window.innerHeight, imageHeight);
+            imageWidth = imageHeight * contentAspectRatio;
+            if (imageWidth > window.innerWidth) {
+                imageWidth = window.innerWidth;
+                imageHeight = imageWidth / contentAspectRatio;
+            }
+        }
+
+        zoomedWidth = imageWidth;
+        zoomedHeight = imageHeight;
+    }
 </script>
 
+<svelte:window on:resize={recalculateZoomedDimensions} />
+
 {#if content.blobUrl !== undefined}
-    <img
-        bind:this={imgElement}
-        on:error={() => (imgElement.src = content.thumbnailData)}
-        class:landscape
-        class:fill
-        class:withCaption
-        class:draft
-        class:reply
-        class:rtl={$rtlStore}
-        style={height === undefined ? undefined : `height: ${height}px`}
-        src={content.blobUrl}
-        alt={content.caption} />
+    <div class="img-wrapper">
+        <img
+            bind:this={imgElement}
+            on:error={() => (imgElement.src = content.thumbnailData)}
+            class:landscape
+            class:fill
+            class:withCaption
+            class:draft
+            class:reply
+            class:rtl={$rtlStore}
+            style={height === undefined ? undefined : `height: ${height}px`}
+            src={content.blobUrl}
+            alt={content.caption} />
+
+        {#if !draft}
+            <div class="expand" class:rtl={$rtlStore} on:click={() => (zoom = !zoom)}>
+                <ArrowExpand size={"1em"} color={"#fff"} />
+            </div>
+        {/if}
+    </div>
 {/if}
 
 {#if content.caption !== undefined}
     <Markdown text={content.caption} inline={!reply} />
 {/if}
 
+{#if !draft}
+    <Overlay dismissible={true} alignBottomOnMobile={false} bind:active={zoom}>
+        <ModalContent
+            hideHeader={true}
+            hideFooter={true}
+            fill={true}
+            fitToContent={true}
+            fixedWidth={false}>
+            <span class="body" slot="body">
+                <img
+                    class="zoomed"
+                    width={zoomedWidth}
+                    height={zoomedHeight}
+                    on:error={() => (imgElement.src = content.thumbnailData)}
+                    src={content.blobUrl}
+                    alt={content.caption} />
+                <div class="expand" class:rtl={$rtlStore} on:click={() => (zoom = !zoom)}>
+                    <ArrowCollapse size={"1em"} color={"#fff"} />
+                </div>
+
+                {#if withCaption}
+                    <div class="caption">
+                        {content.caption}
+                    </div>
+                {/if}
+            </span>
+        </ModalContent>
+    </Overlay>
+{/if}
+
 <style type="text/scss">
-    img {
+    .img-wrapper {
+        position: relative;
+    }
+
+    .body {
+        display: flex;
+        position: relative;
+    }
+
+    .caption {
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0.2);
+        color: #fff;
+        width: 100%;
+        padding: $sp2 $sp4;
+        @include font(light, normal, fs-80);
+        top: 0;
+        text-align: center;
+    }
+
+    .expand {
+        position: absolute;
+        padding: $sp2 $sp4;
+        cursor: pointer;
+        bottom: 0;
+        left: 0;
+        background-color: rgba(0, 0, 0, 0.3);
+        color: #fff;
+        border-radius: 0 $sp4 0 0;
+
+        &.rtl {
+            right: 0;
+            left: unset;
+            border-radius: $sp4 0 0 0;
+        }
+    }
+
+    img:not(.zoomed) {
         width: 100%;
         display: block;
 
