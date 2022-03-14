@@ -79,13 +79,13 @@
                     reset();
                     toastStore.showSuccessToast("icpAccount.withdrawalSucceeded");
                 } else {
-                    error = "withdrawalFailed";
+                    error = "icpAccount.withdrawalFailed";
                     rollbar.error("Unable to withdraw ICP", resp);
                     toastStore.showFailureToast("icpAccount.withdrawalFailed");
                 }
             })
             .catch((err) => {
-                error = "withdrawalFailed";
+                error = "icpAccount.withdrawalFailed";
                 rollbar.error("Unable to withdraw ICP", err);
                 toastStore.showFailureToast("icpAccount.withdrawalFailed");
             })
