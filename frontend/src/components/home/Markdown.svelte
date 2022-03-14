@@ -7,7 +7,7 @@
     import { rollbar } from "../../utils/logging";
     import { userStore } from "../../stores/user";
     import { _ } from "svelte-i18n";
-    import { isAbsoluteUrl } from "../../utils/urls";
+    import { isAbsoluteUrl, synonymousUrlRegex } from "../../utils/urls";
 
     export let text: string;
     export let inline: boolean = true;
@@ -56,10 +56,16 @@
             if (suppressLinks || href === null) {
                 return `<span class="fake-link" ${title && `title=${title}`}>${text}</span>`;
             } else {
-                const target =
-                    isAbsoluteUrl(href) && !href.startsWith(window.location.origin)
-                        ? 'target="_blank"'
-                        : "";
+                let target = "";
+                // Check if the link is to a synonymous url (eg. https://oc.app), if so, convert it to a relative link
+                if (synonymousUrlRegex.test(href)) {
+                    href = href.replace(synonymousUrlRegex, "");
+                    if (href === "" || href === "/") {
+                        href = "/#";
+                    }
+                } else if (isAbsoluteUrl(href)) {
+                    target = 'target="_blank"';
+                }
 
                 return `<a href=${href} ${title && `title=${title}`} ${target}>${text}</a>`;
             }
