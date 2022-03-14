@@ -298,7 +298,7 @@
         if (e.event.kind === "message") {
             return e.event.messageId.toString();
         } else {
-            return e.event.toString();
+            return e.index.toString();
         }
     }
 
