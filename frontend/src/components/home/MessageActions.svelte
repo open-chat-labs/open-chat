@@ -21,7 +21,10 @@
 
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall && $chat.kind === "direct_chat";
+
+    // TODO - temporarilty disable the tray icon
+    // $: mobile = $screenWidth === ScreenWidth.ExtraSmall && $chat.kind === "direct_chat";
+    $: mobile = false;
     $: showActions = !mobile || (drawOpen && messageAction === undefined);
 
     export function close() {
@@ -94,13 +97,13 @@
             on:open={() => (messageAction = "file")}
             on:close={close} />
     </div>
-    {#if $chat.kind === "direct_chat"}
+    <!-- {#if $chat.kind === "direct_chat"}
         <div class="send-icp" on:click={createICPTransfer}>
             <HoverIcon title={"Send Crypto"}>
                 <SwapHorizontal size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </div>
-    {/if}
+    {/if} -->
 </div>
 
 <style type="text/scss">

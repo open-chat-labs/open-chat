@@ -319,7 +319,9 @@
         "security_q": "メッセージは安全ですか？",
         "security_a": "端的に言うと、インターネットコンピューターは、非常に強力なセキュリティ保証を提供してくれます。 しかし、よく知られた弱点があり、Dfinityはこれに対処しているところです。不正なノードプロバイダが、ハッキングしたバージョンのノードソフトウェアをインストールし、入力メッセージを傍受して読んだり、メモリを直接読み取ったりすることができるという問題です。 ただ、SEV-SNP（Secure Encrypted Virtualization-Secure Nested Paging）がノードマシンで利用可能になれば、メッセージの受信者を除いて、自分以外の誰もが自分のデータにアクセスできないことを強く確信できます。 後日、私たちはE2E暗号化を実装する予定です。データはキャニスタメモリに暗号化された形で保存されるため、SEV-SNPの設置いかんに関わらず、不正なノードオペレータがアクセスすることはできません。 この場合、メッセージの履歴を検索できないなど、いくつかの制限が発生する可能性があるため、選択したチャットに対し、オプションとして、E2Eセキュリティのオプトインを提供する予定です。",
         "roadmap_q": "ロードマップはありますか？",
-        "roadmap_a": "もちろんです！メインメニューにあるFAQの次にあります。"
+        "roadmap_a": "もちろんです！メインメニューにあるFAQの次にあります。",
+        "send_icp_q": "ICPを送信するときに取引手数料が請求されるのはなぜですか？",
+        "send_icp_a": "ICPをチャットメッセージとして送信する場合、転送はICP元帳によって実行され、0.0001ICPの必須料金が発生します。この料金はICプロトコルの一部として燃やされ、いかなる当事者も受け取りません。"
     },
     "roleChanged": "{changedBy}は、{changed}の役割を{oldRole}から{newRole}に変更しました",
     "yourRoleChanged": "{changedBy}が役割を{oldRole}から{newRole}に変更しました",
@@ -398,12 +400,41 @@
     "filterParticipants": "フィルターメンバー",
     "publicGroupWithN": "{number}メンバーのパブリックグループ",
     "privateGroupWithN": "{number}メンバーのプライベートグループ",
-    "groupWithN": "{number}メンバー",
+    "groupWithN": "{番号}メンバー",
     "participants": "メンバー",
     "addParticipants": "メンバーを追加する",
     "removeParticipantFailed": "メンバーを削除できません",
     "participant": "メンバー",
     "readOnlyGroup": "これは読み取り専用グループです",
-    "memberCount": "{count}メンバー",
-    "ownedBy": "@ {username}が所有"
+    "memberCount": "{カウント}メンバー",
+    "ownedBy": "@ {username}が所有",
+    "icpTransfer": {
+        "title": "ICPを送信する",
+        "amount": "金額（icp）*",
+        "balance": "残りのバランス（icp）",
+        "send": "送信",
+        "message": "メッセージ",
+        "messagePlaceholder": "オプションのメッセージを含める",
+        "fee": "*{fee}ICPの料金が追加されます",
+        "unexpected": "予期しない暗号転送タイプを受信しました",
+        "confirmedReceived": "{amount}ICPを受け取りました",
+        "confirmedSent": "{amount}ICPを送信しました",
+        "pendingReceived": "{金額}ICPがあなたに向かっています",
+        "pendingSent": "{amount}ICPを送信しています",
+        "viewTransaction": "[トランザクションを表示]（{url}）",
+        "warning": "警告-受信者の身元と動機を確実に信頼するのはあなたの責任です。 OpenChatはICP転送を元に戻すことはできません。",
+        "confirm": "確認"
+    },
+    "icpAccount": {
+        "balanceLabel": "ICPアカウントの残高",
+        "shortBalanceLabel": "保たれているバランス",
+        "manage": "管理",
+        "manageHeader": "アカウントを管理する",
+        "topUp": "補充",
+        "topUpBlurb": "補充するには、ICPを上記のアカウントに転送するだけです。",
+        "withdraw": "撤退",
+        "withdrawTarget": "撤回する住所を入力してください",
+        "withdrawalSucceeded": "あなたの撤退は成功しました！",
+        "withdrawalFailed": "引き出しに失敗しました！"
+    }
 }

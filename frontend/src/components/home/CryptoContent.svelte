@@ -36,7 +36,7 @@
         <Markdown
             text={$_("icpTransfer.viewTransaction", {
                 values: {
-                    url: `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash.join()}`,
+                    url: `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`,
                 },
             })}
             inline={!reply} />

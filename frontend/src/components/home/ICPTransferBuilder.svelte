@@ -8,6 +8,7 @@
     import ModalContent from "../ModalContent.svelte";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import Refresh from "svelte-material-icons/Refresh.svelte";
+    import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import Legend from "../Legend.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
@@ -21,6 +22,7 @@
     import { rollbar } from "../../utils/logging";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { iconSize } from "stores/iconSize";
     const dispatch = createEventDispatcher();
 
     export let open: boolean;
@@ -34,6 +36,7 @@
     let accountBalance: number = 0;
     let draftAmount = 0;
     let message = "";
+    let confirming = false;
 
     $: icpBalance = accountBalance / E8S_PER_ICP; //balance in the user's account expressed as ICP
     $: remainingBalance = Math.max(0, icpBalance - draftAmount - ICP_TRANSFER_FEE);
@@ -53,23 +56,29 @@
     export function reset(amount: number) {
         refreshing = true;
         error = undefined;
+        draftAmount = 0;
+        confirming = false;
         message = "";
         api.refreshAccountBalance(user.icpAccount)
             .then((resp) => {
                 accountBalance = Number(resp.e8s);
+                draftAmount = amount;
                 error = undefined;
             })
             .catch((err) => {
                 // error = "unableToRefreshAccountBalance";
                 accountBalance = 0;
                 accountBalance = 1234567864;
-                draftAmount = amount;
                 rollbar.error("Unable to refresh user's account balance", err);
             })
             .finally(() => (refreshing = false));
     }
 
     function send() {
+        if (!confirming) {
+            confirming = true;
+            return;
+        }
         const content = {
             kind: "crypto_content",
             caption: message === "" ? undefined : message,
@@ -80,14 +89,13 @@
                 amountE8s: BigInt(draftAmount * E8S_PER_ICP),
             },
         };
-        console.log("ICPTransfer: ", content);
         dispatch("sendTransfer", content);
         open = false;
     }
 </script>
 
 <Overlay dismissible={true} bind:active={open}>
-    <ModalContent>
+    <ModalContent fill={confirming}>
         <span class="header" slot="header">
             <div class="left">
                 <span class="avatar">
@@ -108,33 +116,44 @@
                 <Refresh size={"1em"} color={"var(--accent)"} />
             </div>
         </span>
-        <form class="body" slot="body">
-            <div class="transfer">
-                <Legend>{$_("icpTransfer.amount")}</Legend>
-                <input
-                    autofocus={true}
-                    class="amount-val"
-                    min={0}
-                    max={icpBalance}
-                    type="number"
-                    bind:value={draftAmount} />
+        <form slot="body">
+            <div class="body" class:confirming>
+                {#if confirming}
+                    <div class="alert">
+                        <AlertOutline size={$iconSize} color={"var(--toast-failure-txt"} />
+                    </div>
+                    <div class="alert-txt">
+                        {$_("icpTransfer.warning")}
+                    </div>
+                {:else}
+                    <div class="transfer">
+                        <Legend>{$_("icpTransfer.amount")}</Legend>
+                        <input
+                            autofocus={true}
+                            class="amount-val"
+                            min={0}
+                            max={icpBalance}
+                            type="number"
+                            bind:value={draftAmount} />
+                    </div>
+                    <div class="message">
+                        <Legend>{$_("icpTransfer.message")}</Legend>
+                        <Input
+                            maxlength={100}
+                            type={"text"}
+                            autofocus={false}
+                            countdown={true}
+                            placeholder={$_("icpTransfer.messagePlaceholder")}
+                            bind:value={message} />
+                    </div>
+                    <div class="fee">
+                        {$_("icpTransfer.fee", { values: { fee: ICP_TRANSFER_FEE.toString() } })}
+                    </div>
+                    {#if error}
+                        <ErrorMessage>{$_(error)}</ErrorMessage>
+                    {/if}
+                {/if}
             </div>
-            <div class="message">
-                <Legend>{$_("icpTransfer.message")}</Legend>
-                <Input
-                    maxlength={100}
-                    type={"text"}
-                    autofocus={false}
-                    countdown={true}
-                    placeholder={$_("icpTransfer.messagePlaceholder")}
-                    bind:value={message} />
-            </div>
-            <div class="fee">
-                {$_("icpTransfer.fee", { values: { fee: ICP_TRANSFER_FEE.toString() } })}
-            </div>
-            {#if error}
-                <ErrorMessage>{$_(error)}</ErrorMessage>
-            {/if}
         </form>
         <span class="footer" slot="footer">
             <a
@@ -145,7 +164,7 @@
             </a>
             <ButtonGroup>
                 <Button disabled={!valid} small={true} on:click={send}
-                    >{$_("icpTransfer.send")}</Button>
+                    >{confirming ? $_("icpTransfer.confirm") : $_("icpTransfer.send")}</Button>
                 <Button small={true} secondary={true} on:click={() => (open = false)}
                     >{$_("cancel")}</Button>
             </ButtonGroup>
@@ -201,6 +220,23 @@
 
     .body {
         padding: 0 $sp3;
+        transition: background-color 100ms ease-in-out;
+
+        &.confirming {
+            display: flex;
+            gap: $sp4;
+            justify-content: space-evenly;
+            align-items: center;
+            padding: $sp5;
+            height: 200px;
+            @include font(book, normal, fs-120);
+            background-color: var(--toast-failure-bg);
+            color: var(--toast-failure-txt);
+
+            .alert {
+                flex: 0 0 50px;
+            }
+        }
     }
 
     .transfer {
