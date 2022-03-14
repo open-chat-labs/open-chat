@@ -79,6 +79,9 @@ export class ChatController {
     private onEvent?: (evt: ChatState) => void;
     private confirmedEventIndexesLoaded = new DRange();
 
+    // This set will contain 1 key for each rendered user event group which is used as that group's key
+    private userGroupKeys = new Set<string>();
+
     constructor(
         public api: ServiceContainer,
         public user: UserSummary,
@@ -191,12 +194,12 @@ export class ChatController {
                 this.participants.set(this.groupDetails.participants);
                 this.blockedUsers.set(this.groupDetails.blockedUsers);
                 this.pinnedMessages.set(this.groupDetails.pinnedMessages);
+                await this.updateUserStore(userIdsFromEvents(get(this.events)));
                 console.log(
                     "loading chat details updated to: ",
                     this.groupDetails.latestEventIndex
                 );
             }
-            await this.updateUserStore(userIdsFromEvents(get(this.events)));
         }
     }
 
@@ -358,6 +361,7 @@ export class ChatController {
         const keepCurrentEvents = get(this.focusMessageIndex) === undefined;
         if (!keepCurrentEvents) {
             this.confirmedEventIndexesLoaded = new DRange();
+            this.userGroupKeys.clear();
         }
 
         const updated = replaceAffected(
@@ -1174,6 +1178,26 @@ export class ChatController {
         };
 
         rtcConnectionsManager.sendMessage([...this.chatUserIds], rtc);
+    }
+
+    // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the
+    // new version with the old version, if not, a new key will be created for the group.
+    userGroupKey(group: EventWrapper<ChatEvent>[]): string {
+        const first = group[0];
+        let prefix = "";
+        if (first.event.kind === "message") {
+            const sender = first.event.sender;
+            prefix = sender + "_";
+        }
+        for (const { index } of group) {
+            const key = prefix + index;
+            if (this.userGroupKeys.has(key)) {
+                return key;
+            }
+        }
+        const firstKey = prefix + first.index;
+        this.userGroupKeys.add(firstKey);
+        return firstKey;
     }
 
     // Returns the most recently active users, only considering users who have been active within the last 10 minutes

@@ -164,6 +164,7 @@ export default [
                 "process.env.INTERNET_IDENTITY_URL": JSON.stringify(
                     process.env.INTERNET_IDENTITY_URL
                 ),
+                "process.env.DFX_NETWORK": JSON.stringify(dfxNetwork),
                 "process.env.NODE_ENV": JSON.stringify(env),
                 "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
                 "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,

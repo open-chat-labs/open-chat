@@ -121,9 +121,11 @@ export const idlFactory = ({ IDL }) => {
     'recipient' : UserId,
     'amount' : ICP,
   });
+  const TransactionHash = IDL.Vec(IDL.Nat8);
   const BlockIndex = IDL.Nat64;
   const CompletedICPTransfer = IDL.Record({
     'fee' : ICP,
+    'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
     'memo' : Memo,
     'recipient' : UserId,
@@ -499,7 +501,7 @@ export const idlFactory = ({ IDL }) => {
   const SelectedUpdatesResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
     'Success' : SelectedUpdatesSuccess,
-    'SuccessNoUpdates' : IDL.Null,
+    'SuccessNoUpdates' : EventIndex,
   });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });

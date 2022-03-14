@@ -524,6 +524,7 @@ export type MergedUpdatesResponse = {
     wasUpdated: boolean;
     chatSummaries: ChatSummary[];
     blockedUsers: Set<string>;
+    avatarIdUpdate: OptionUpdate<bigint>;
     timestamp: bigint;
 };
 
@@ -532,6 +533,7 @@ export type UpdatesResponse = {
     chatsUpdated: ChatSummaryUpdates[];
     chatsAdded: ChatSummary[];
     chatsRemoved: Set<string>;
+    avatarIdUpdate: OptionUpdate<bigint>;
     timestamp: bigint;
     cyclesBalance?: bigint;
     transactions: CryptocurrencyTransfer[];
@@ -634,9 +636,9 @@ export type GroupPermissions = {
 export type GroupChatDetailsResponse = "caller_not_in_group" | GroupChatDetails;
 
 export type GroupChatDetailsUpdatesResponse =
-    | "success_no_updates"
-    | "caller_not_in_group"
-    | GroupChatDetailsUpdates;
+    | ({ kind: "success" } & GroupChatDetailsUpdates)
+    | { kind: "success_no_updates"; latestEventIndex: number }
+    | "caller_not_in_group";
 
 export type GroupChatDetails = {
     participants: Participant[];

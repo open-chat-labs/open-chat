@@ -190,6 +190,7 @@ export function setCachedChats(
                 chatSummaries: serialisable,
                 timestamp: data.timestamp,
                 blockedUsers: data.blockedUsers,
+                avatarIdUpdate: undefined,
             },
             userId
         );
@@ -432,7 +433,7 @@ export function setCachedEvents<T extends ChatEvent>(
         const eventStore = tx.objectStore("chat_events");
         const mapStore = tx.objectStore("message_index_event_index");
         await Promise.all(
-            resp.events.map(async (event) => {
+            resp.events.concat(resp.affectedEvents).map(async (event) => {
                 await eventStore.put(
                     makeSerialisable<T>(event),
                     createCacheKey(chatId, event.index)

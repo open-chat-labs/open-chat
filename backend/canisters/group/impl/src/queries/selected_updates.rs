@@ -18,6 +18,10 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let data = &runtime_state.data;
     let latest_event_index = data.events.last().index;
 
+    if latest_event_index <= args.updates_since {
+        return SuccessNoUpdates(latest_event_index);
+    }
+
     let mut result = SuccessResult {
         latest_event_index,
         participants_added_or_updated: vec![],
@@ -27,10 +31,6 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         pinned_messages_added: vec![],
         pinned_messages_removed: vec![],
     };
-
-    if latest_event_index <= args.updates_since {
-        return SuccessNoUpdates;
-    }
 
     let mut user_updates_handler = UserUpdatesHandler {
         data,
@@ -109,7 +109,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         && result.pinned_messages_added.is_empty()
         && result.pinned_messages_removed.is_empty()
     {
-        SuccessNoUpdates
+        SuccessNoUpdates(latest_event_index)
     } else {
         Success(result)
     }

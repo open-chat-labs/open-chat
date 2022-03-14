@@ -18,7 +18,7 @@ pub async fn run<'a>(
     vapid_private_pem: &'a str,
 ) -> Result<(), Error> {
     let ic_agent = IcAgent::build(config).await?;
-    let from_notification_index = index_processed_up_to(&ic_agent, index_store).await?;
+    let from_notification_index = index_processed_up_to(&ic_agent, index_store).await? + 1;
     let ic_response = ic_agent.notifications(from_notification_index).await?;
 
     if let Some(latest_notification_index) = ic_response.notifications.last().map(|e| e.index) {

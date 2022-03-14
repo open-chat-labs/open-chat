@@ -17,6 +17,7 @@ import {
     getMinVisibleMessageIndex,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
+    userIdsFromEvents,
 } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
 import type { Notification } from "../domain/notifications";
@@ -183,7 +184,6 @@ export class HomeController {
                         rec[chat.chatId] = chat;
                         if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
                             selectedChatInvalid = false;
-                            selectedChat.chatUpdated();
                         }
                         return rec;
                     }, {})
@@ -191,6 +191,28 @@ export class HomeController {
 
                 if (selectedChatInvalid) {
                     this.clearSelectedChat();
+                } else if (selectedChat !== undefined) {
+                    selectedChat.chatUpdated();
+                }
+
+                if (chatsResponse.avatarIdUpdate !== undefined) {
+                    const blobReference =
+                        chatsResponse.avatarIdUpdate === "set_to_none"
+                            ? undefined
+                            : {
+                                  canisterId: this.user.userId,
+                                  blobId: chatsResponse.avatarIdUpdate.value,
+                              };
+                    const dataContent = {
+                        blobReference,
+                        blobData: undefined,
+                        blobUrl: undefined,
+                    };
+                    const user = {
+                        ...get(userStore)[this.user.userId],
+                        ...dataContent,
+                    };
+                    userStore.add(this.api.rehydrateDataContent(user, "avatar"));
                 }
 
                 this.initialised = true;
@@ -210,9 +232,9 @@ export class HomeController {
                 userIds.add(chat.them);
             } else if (chat.latestMessage !== undefined) {
                 userIds.add(chat.latestMessage.event.sender);
-                extractUserIdsFromMentions(getContentAsText(chat.latestMessage.event.content)).forEach((id) =>
-                    userIds.add(id)
-                );
+                extractUserIdsFromMentions(
+                    getContentAsText(chat.latestMessage.event.content)
+                ).forEach((id) => userIds.add(id));
             }
         });
         return userIds;
@@ -582,8 +604,16 @@ export class HomeController {
         const selectedChat = get(this.selectedChat);
         if (selectedChat?.chatId === chatId) {
             selectedChat.sendMessage(message, sender, true);
+        } else {
+            const chat = this.findChatById(chatId);
+            if (chat !== undefined) {
+                const chatType = chat.kind === "direct_chat" ? "direct" : "group";
+                Promise.all([
+                    this.api.rehydrateMessage(chatType, chatId, message),
+                    this.addMissingUsersFromMessage(message),
+                ]).then(([m, _]) => this.onConfirmedMessage(chatId, m));
+            }
         }
-        this.onConfirmedMessage(chatId, message);
     }
 
     private delegateToChatController(
@@ -671,5 +701,21 @@ export class HomeController {
                 toastStore.showFailureToast("joinGroupFailed");
                 return false;
             });
+    }
+
+    private async addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
+        const users = userIdsFromEvents([message]);
+        const missingUsers = missingUserIds(get(userStore), users);
+        if (missingUsers.length > 0) {
+            const usersResp = await this.api.getUsers({
+                userGroups: [
+                    {
+                        users: missingUsers,
+                        updatedSince: BigInt(0),
+                    },
+                ],
+            });
+            userStore.addMany(usersResp.users);
+        }
     }
 }

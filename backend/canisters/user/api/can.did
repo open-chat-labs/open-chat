@@ -285,6 +285,18 @@ type SetBioResponse =
         TooLong: FieldTooLongResult;
     };
 
+type WithdrawCryptocurrencyRequest =
+    record {
+        withdrawal: PendingCryptocurrencyWithdrawal;
+    };
+
+type WithdrawCryptocurrencyResponse =
+    variant {
+        Success: CompletedCryptocurrencyWithdrawal;
+        TransactionFailed: FailedCryptocurrencyWithdrawal;
+        CurrencyNotSupported;
+    };
+
 type InitialStateArgs =
     record {
     };
@@ -492,6 +504,7 @@ service: {
     relinquish_group_super_admin: (RelinquishGroupSuperAdminArgs) -> (RelinquishGroupSuperAdminResponse);
     add_recommended_group_exclusions: (AddRecommendedGroupExclusionsArgs) -> (AddRecommendedGroupExclusionsResponse);
     set_bio: (SetBioArgs) -> (SetBioResponse);
+    withdraw_cryptocurrency: (WithdrawCryptocurrencyRequest) -> (WithdrawCryptocurrencyResponse);
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
