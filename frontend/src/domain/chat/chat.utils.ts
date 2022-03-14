@@ -826,7 +826,9 @@ export function replaceAffected(
 
     return events.map((event) => {
         const affectedEvent = affectedEventsLookup[event.index];
-        return affectedEvent !== undefined ? mergeMessageEvents(event, affectedEvent, localReactions) : event;
+        return affectedEvent !== undefined
+            ? mergeMessageEvents(event, affectedEvent, localReactions)
+            : event;
     });
 }
 
