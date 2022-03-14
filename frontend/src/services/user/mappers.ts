@@ -687,7 +687,7 @@ export function completedCryptoWithdrawal(
             feeE8s: candid.ICP.fee.e8s,
             memo: candid.ICP.memo,
             blockIndex: candid.ICP.block_index,
-            transactionHash: candid.ICP.transaction_hash,
+            transactionHash: bytesToHexString(candid.ICP.transaction_hash),
         };
     }
     if ("Cycles" in candid) {
