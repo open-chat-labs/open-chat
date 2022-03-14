@@ -294,6 +294,14 @@
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
+    function eventKey(e: EventWrapper<ChatEventType>): string {
+        if (e.event.kind === "message") {
+            return e.event.messageId.toString();
+        } else {
+            return e.event.toString();
+        }
+    }
+
     function blockUser(ev: CustomEvent<{ userId: string }>) {
         if (!canBlockUser) return;
         controller.blockUser(ev.detail.userId);
@@ -424,7 +432,7 @@
                 {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
             </div>
             {#each dayGroup as userGroup, _ui (controller.userGroupKey(userGroup))}
-                {#each userGroup as evt, i (evt.index)}
+                {#each userGroup as evt, i (eventKey(evt))}
                     <ChatEvent
                         {observer}
                         focused={evt.event.kind === "message" &&
