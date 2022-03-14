@@ -36,7 +36,10 @@
     // make sure that they are not trying to withdraw to the same account - I can see people trying to do that
     $: valid = amountToWithdraw > 0 && targetAccount !== "" && targetAccount !== user.icpAccount;
 
-    $: remainingBalance = Math.max(0, $icpBalanceStore - amountToWithdraw - ICP_TRANSFER_FEE);
+    $: remainingBalance =
+        amountToWithdraw > 0
+            ? Math.max(0, $icpBalanceStore - amountToWithdraw - ICP_TRANSFER_FEE)
+            : $icpBalanceStore;
 
     $: {
         if (amountToWithdraw > $icpBalanceStore - ICP_TRANSFER_FEE) {
@@ -99,7 +102,11 @@
             <div class="main-title">{$_("icpAccount.manageHeader")}</div>
             <div class="balance">
                 <div class="amount">{remainingBalance.toFixed(4)}</div>
-                <div class="label">{$_("icpAccount.shortBalanceLabel")}</div>
+                <div class="label">
+                    {amountToWithdraw > 0
+                        ? $_("icpAccount.shortRemainingBalanceLabel")
+                        : $_("icpAccount.shortBalanceLabel")}
+                </div>
             </div>
             <div class="refresh" class:refreshing class:mobile on:click={reset}>
                 <Refresh size={"1em"} color={"var(--accent)"} />
