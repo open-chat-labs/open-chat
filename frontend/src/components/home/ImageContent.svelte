@@ -53,6 +53,10 @@
         zoomedWidth = imageWidth;
         zoomedHeight = imageHeight;
     }
+
+    function toggleZoom() {
+        zoom = !zoom;
+    }
 </script>
 
 <svelte:window on:resize={recalculateZoomedDimensions} />
@@ -61,6 +65,7 @@
     <div class="img-wrapper">
         <img
             bind:this={imgElement}
+            on:dblclick={toggleZoom}
             on:error={() => (imgElement.src = content.thumbnailData)}
             class:landscape
             class:fill
@@ -73,7 +78,7 @@
             alt={content.caption} />
 
         {#if !draft}
-            <div class="expand" class:rtl={$rtlStore} on:click={() => (zoom = !zoom)}>
+            <div class="expand" class:rtl={$rtlStore} on:click={toggleZoom}>
                 <ArrowExpand size={"1em"} color={"#fff"} />
             </div>
         {/if}
@@ -97,10 +102,11 @@
                     class="zoomed"
                     width={zoomedWidth}
                     height={zoomedHeight}
+                    on:dblclick={toggleZoom}
                     on:error={() => (imgElement.src = content.thumbnailData)}
                     src={content.blobUrl}
                     alt={content.caption} />
-                <div class="expand" class:rtl={$rtlStore} on:click={() => (zoom = !zoom)}>
+                <div class="expand" class:rtl={$rtlStore} on:click={toggleZoom}>
                     <ArrowCollapse size={"1em"} color={"#fff"} />
                 </div>
 
