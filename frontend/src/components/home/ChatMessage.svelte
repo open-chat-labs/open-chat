@@ -346,9 +346,7 @@
                     <MenuIcon>
                         <div class="menu-icon" slot="icon">
                             <HoverIcon compact={true}>
-                                <ChevronDown
-                                    size={$iconSize}
-                                    color={me ? "#fff" : "var(--icon-txt)"} />
+                                <ChevronDown size="1.6em" color={me ? "#fff" : "var(--icon-txt)"} />
                             </HoverIcon>
                         </div>
                         <div slot="menu">
@@ -505,7 +503,7 @@
     .menu {
         $offset: -2px;
         position: absolute;
-        top: $offset;
+        top: -4px;
         right: $offset;
 
         &.rtl {
