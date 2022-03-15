@@ -154,11 +154,16 @@
     }
 
     function shouldLoadPreviousMessages() {
-        return calculateFromTop() < MESSAGE_LOAD_THRESHOLD && controller.morePreviousMessagesAvailable();
+        return (
+            calculateFromTop() < MESSAGE_LOAD_THRESHOLD &&
+            controller.morePreviousMessagesAvailable()
+        );
     }
 
     function shouldLoadNewMessages() {
-        return calculateFromBottom() < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable();
+        return (
+            calculateFromBottom() < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable()
+        );
     }
 
     function onScroll() {
