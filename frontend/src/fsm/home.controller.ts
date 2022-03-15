@@ -603,19 +603,22 @@ export class HomeController {
                 return;
         }
 
-        const selectedChat = get(this.selectedChat);
-        if (selectedChat?.chatId === chatId) {
-            selectedChat.sendMessage(message, sender, true);
-        } else {
-            const chat = this.findChatById(chatId);
-            if (chat !== undefined) {
-                const chatType = chat.kind === "direct_chat" ? "direct" : "group";
-                Promise.all([
-                    this.api.rehydrateMessage(chatType, chatId, message),
-                    this.addMissingUsersFromMessage(message),
-                ]).then(([m, _]) => this.onConfirmedMessage(chatId, m));
-            }
+        const chat = this.findChatById(chatId);
+        if (chat === undefined) {
+            return;
         }
+        const chatType = chat.kind === "direct_chat" ? "direct" : "group";
+        Promise.all([
+            this.api.rehydrateMessage(chatType, chatId, message),
+            this.addMissingUsersFromMessage(message),
+        ]).then(([m, _]) => {
+            const selectedChat = get(this.selectedChat);
+            if (selectedChat?.chatId === chatId) {
+                selectedChat.sendMessage(m, sender, true);
+            } else {
+                this.onConfirmedMessage(chatId, m);
+            }
+        });
     }
 
     private delegateToChatController(
