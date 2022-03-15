@@ -76,6 +76,8 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export type CompletedCryptocurrencyTransfer = { 'ICP' : CompletedICPTransfer } |
+  { 'Cycles' : CompletedCyclesTransfer };
 export type CompletedCryptocurrencyWithdrawal = {
     'ICP' : CompletedICPWithdrawal
   } |
@@ -750,7 +752,17 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'MessageEmpty' : null } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'RecipientBlocked' : null } |
-  { 'InvalidRequest' : string };
+  { 'InvalidRequest' : string } |
+  { 'TransferFailed' : string } |
+  {
+    'TransferSuccess' : {
+      'timestamp' : TimestampMillis,
+      'chat_id' : ChatId,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptocurrencyTransfer,
+      'message_index' : MessageIndex,
+    }
+  };
 export interface SetAvatarArgs { 'avatar' : [] | [Avatar] }
 export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : null };
