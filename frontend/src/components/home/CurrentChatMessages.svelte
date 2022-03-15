@@ -200,7 +200,7 @@
             }
         }
 
-        showGoToFirst = calculateFromBottom() > FROM_BOTTOM_THRESHOLD || unreadMessages > 0;
+        showGoToFirst = shouldShowGoToFirstButton();
     }
 
     function calculateFromTop(): number {
@@ -318,6 +318,7 @@
         if (controller.chatId !== currentChatId) {
             currentChatId = controller.chatId;
             initialised = false;
+            showGoToFirst = shouldShowGoToFirstButton();
 
             controller.subscribe((evt) => {
                 switch (evt.event.kind) {
@@ -360,6 +361,10 @@
                 }
             });
         }
+    }
+
+    function shouldShowGoToFirstButton(): boolean {
+        return calculateFromBottom() > FROM_BOTTOM_THRESHOLD || unreadMessages > 0;
     }
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
