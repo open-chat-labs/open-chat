@@ -17,12 +17,12 @@
             <li><del>Pinned messages</del></li>
             <li><del>Create polls</del></li>
             <li><del>Group permissions including read-only groups</del></li>
-            <li>Message forwarding</li>
+            <li><del>Double-click to show images full-screen</del></li>
             <li>
                 Deposit tokens into your OpenChat wallet, send tokens as messages, withdraw tokens<br />
                 (cycles and ICP first, then Bitcoin and Ether later, plus more)
             </li>
-            <li>Click to show images full-screen</li>
+            <li>Message forwarding</li>
             <li>Improved UI design</li>
             <li>Tag messages (eg star) and search/filter by tag</li>
             <li>Edit sent messages</li>
