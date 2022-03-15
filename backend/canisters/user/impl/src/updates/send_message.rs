@@ -52,7 +52,7 @@ async fn send_message(mut args: Args) -> Response {
                             CryptocurrencyTransfer::Cycles(CyclesTransfer::Completed(completed_transfer.transfer.clone()));
                         transfer = Some(TransferDetails::Cycles(completed_transfer));
                     }
-                    Err(failed_transfer) => return TransactionFailed(failed_transfer.error_message),
+                    Err(failed_transfer) => return TransferFailed(failed_transfer.error_message),
                 };
             }
             CryptocurrencyTransfer::ICP(ICPTransfer::Pending(pending_transfer)) => {
@@ -101,13 +101,22 @@ fn send_message_impl(args: Args, transfer_details: Option<TransferDetails>, runt
     let c2c_args = build_c2c_args(args, message_event.event.message_index);
     ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, cycles_transfer, false));
 
-    Success(SuccessResult {
-        chat_id: recipient.into(),
-        event_index: message_event.index,
-        message_index: message_event.event.message_index,
-        timestamp: now,
-        transfer: transfer_details.map(|t| t.into()),
-    })
+    if let Some(transfer) = transfer_details.map(|t| t.into()) {
+        TransferSuccess(TransferSuccessResult {
+            chat_id: recipient.into(),
+            event_index: message_event.index,
+            message_index: message_event.event.message_index,
+            timestamp: now,
+            transfer,
+        })
+    } else {
+        Success(SuccessResult {
+            chat_id: recipient.into(),
+            event_index: message_event.index,
+            message_index: message_event.event.message_index,
+            timestamp: now,
+        })
+    }
 }
 
 fn is_recipient_blocked(recipient: &UserId, runtime_state: &RuntimeState) -> bool {

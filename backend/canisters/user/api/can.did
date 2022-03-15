@@ -16,13 +16,20 @@ type SendMessageResponse =
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
-            transfer: opt CompletedCryptocurrencyTransfer;
+        };
+        TransferSuccess: record {
+            chat_id: ChatId;
+            event_index: EventIndex;
+            message_index: MessageIndex;
+            timestamp: TimestampMillis;
+            transfer: CompletedCryptocurrencyTransfer;
         };
         MessageEmpty;
         TextTooLong: nat32;
         RecipientBlocked;
         InvalidPoll: InvalidPollReason;
         InvalidRequest: text;
+        TransferFailed: text;
         TransactionFailed: text;
     };
 
