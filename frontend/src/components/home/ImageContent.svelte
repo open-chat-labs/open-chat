@@ -86,7 +86,7 @@
             alt={content.caption} />
 
         {#if !draft}
-            <div class="expand" class:rtl={$rtlStore}>
+            <div class="expand" class:rtl={$rtlStore} class:zoom on:click={toggleZoom}>
                 <ArrowExpand size={"1em"} color={"#fff"} />
             </div>
         {/if}
@@ -116,7 +116,7 @@
                     on:error={() => (imgElement.src = content.thumbnailData)}
                     src={content.blobUrl}
                     alt={content.caption} />
-                <div class="expand" class:rtl={$rtlStore}>
+                <div class="expand" class:rtl={$rtlStore} class:zoom on:click={toggleZoom}>
                     <ArrowCollapse size={"1em"} color={"#fff"} />
                 </div>
                 {#if withCaption}
@@ -150,8 +150,11 @@
     }
 
     .expand {
+        cursor: zoom-in;
+        &.zoom {
+            cursor: zoom-out;
+        }
         position: absolute;
-        pointer-events: none;
         padding: $sp2 $sp4;
         bottom: 0;
         left: 0;
