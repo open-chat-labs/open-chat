@@ -81,7 +81,7 @@
             {/if}
         {/if}
 
-        <ChatMessageContent preview={true} {fill} {me} content={msg.content} />
+        <ChatMessageContent preview={true} pinned={true} {fill} {me} content={msg.content} />
     </div>
 </div>
 

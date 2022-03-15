@@ -92,7 +92,7 @@
             controller.api
                 .sendMessage($chat, controller.user, mentioned, msg)
                 .then((resp) => {
-                    if (resp.kind === "success") {
+                    if (resp.kind === "success" || resp.kind === "transfer_success") {
                         controller.confirmMessage(msg, resp);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                             controller.api.refreshAccountBalance(createdUser.icpAccount);
