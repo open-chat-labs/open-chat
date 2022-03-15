@@ -16,6 +16,7 @@ type SendMessageResponse =
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
+            transfer: opt CompletedCryptocurrencyTransfer;
         };
         MessageEmpty;
         TextTooLong: nat32;

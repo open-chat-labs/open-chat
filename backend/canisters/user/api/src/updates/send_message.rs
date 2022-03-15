@@ -1,7 +1,8 @@
 use candid::CandidType;
 use serde::Deserialize;
 use types::{
-    ChatId, EventIndex, InvalidPollReason, MessageContent, MessageId, MessageIndex, ReplyContext, TimestampMillis, UserId,
+    ChatId, CompletedCryptocurrencyTransfer, EventIndex, InvalidPollReason, MessageContent, MessageId, MessageIndex,
+    ReplyContext, TimestampMillis, UserId,
 };
 
 #[derive(CandidType, Deserialize, Debug)]
@@ -30,4 +31,5 @@ pub struct SuccessResult {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
     pub timestamp: TimestampMillis,
+    pub transfer: Option<CompletedCryptocurrencyTransfer>,
 }

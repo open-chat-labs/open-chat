@@ -10,8 +10,8 @@ use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    CanisterId, ContentValidationError, CryptocurrencyTransfer, CyclesTransfer, FailedCyclesTransfer, ICPTransfer,
-    MessageContent, MessageIndex, UserId,
+    CanisterId, CompletedCryptocurrencyTransfer, CompletedICPTransfer, ContentValidationError, CryptocurrencyTransfer,
+    CyclesTransfer, FailedCyclesTransfer, ICPTransfer, MessageContent, MessageIndex, UserId,
 };
 use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
@@ -37,7 +37,7 @@ async fn send_message(mut args: Args) -> Response {
         return RecipientBlocked;
     }
 
-    let mut cycles_transfer = None;
+    let mut transfer = None;
     // If the message includes a pending cryptocurrency transfer, we process that and then update
     // the message to contain the completed transfer.
     if let MessageContent::Cryptocurrency(c) = &mut args.content {
@@ -50,7 +50,7 @@ async fn send_message(mut args: Args) -> Response {
                     Ok(completed_transfer) => {
                         c.transfer =
                             CryptocurrencyTransfer::Cycles(CyclesTransfer::Completed(completed_transfer.transfer.clone()));
-                        cycles_transfer = Some(completed_transfer);
+                        transfer = Some(TransferDetails::Cycles(completed_transfer));
                     }
                     Err(failed_transfer) => return TransactionFailed(failed_transfer.error_message),
                 };
@@ -61,7 +61,8 @@ async fn send_message(mut args: Args) -> Response {
                 }
                 match send_icp(pending_transfer).await {
                     Ok(completed_transfer) => {
-                        c.transfer = CryptocurrencyTransfer::ICP(ICPTransfer::Completed(completed_transfer))
+                        c.transfer = CryptocurrencyTransfer::ICP(ICPTransfer::Completed(completed_transfer.clone()));
+                        transfer = Some(TransferDetails::ICP(completed_transfer));
                     }
                     Err(failed_transfer) => return TransactionFailed(failed_transfer.error_message),
                 };
@@ -70,10 +71,10 @@ async fn send_message(mut args: Args) -> Response {
         }
     }
 
-    mutate_state(|state| send_message_impl(args, cycles_transfer, state))
+    mutate_state(|state| send_message_impl(args, transfer, state))
 }
 
-fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>, runtime_state: &mut RuntimeState) -> Response {
+fn send_message_impl(args: Args, transfer_details: Option<TransferDetails>, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
     let my_user_id = runtime_state.env.canister_id().into();
     let recipient = args.recipient;
@@ -93,6 +94,10 @@ fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>,
 
     register_callbacks_if_required(recipient, &message_event, runtime_state);
 
+    let cycles_transfer = transfer_details
+        .clone()
+        .and_then(|t| if let TransferDetails::Cycles(c) = t { Some(c) } else { None });
+
     let c2c_args = build_c2c_args(args, message_event.event.message_index);
     ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, cycles_transfer, false));
 
@@ -101,6 +106,7 @@ fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>,
         event_index: message_event.index,
         message_index: message_event.event.message_index,
         timestamp: now,
+        transfer: transfer_details.map(|t| t.into()),
     })
 }
 
@@ -175,4 +181,19 @@ fn queue_failed_message_for_retry(
         .add(recipient, args, cycles_transfer);
 
     runtime_state.data.user_index_canister_id
+}
+
+#[derive(Clone)]
+enum TransferDetails {
+    Cycles(CyclesTransferDetails),
+    ICP(CompletedICPTransfer),
+}
+
+impl From<TransferDetails> for CompletedCryptocurrencyTransfer {
+    fn from(t: TransferDetails) -> Self {
+        match t {
+            TransferDetails::Cycles(c) => CompletedCryptocurrencyTransfer::Cycles(c.transfer),
+            TransferDetails::ICP(i) => CompletedCryptocurrencyTransfer::ICP(i),
+        }
+    }
 }
