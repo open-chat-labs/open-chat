@@ -14,7 +14,7 @@ function boolFromLS(key: string, def: boolean): boolean {
     }
 }
 
-export const enterSend = createLsBoolStore("openchat_entersend", !isTouchDevice());
+export const enterSend = createLsBoolStore("openchat_entersend", !isTouchDevice);
 
 export const appearanceSectionOpen = createLsBoolStore("openchat_appearance_section", false);
 export const chatsSectionOpen = createLsBoolStore("openchat_chats_section", false);

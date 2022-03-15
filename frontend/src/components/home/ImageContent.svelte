@@ -23,18 +23,17 @@
     let landscape = content.height < content.width;
     let zoomedWidth: number;
     let zoomedHeight: number;
-    let isTouch = isTouchDevice();
 
     $: zoomable = !draft && !reply && !pinned;
 
     function onClick() {
-        if (!isTouch) {
+        if (!isTouchDevice) {
             toggleZoom();
         }
     }
 
     function onDoubleClick() {
-        if (isTouch) {
+        if (isTouchDevice) {
             toggleZoom();
         }
     }

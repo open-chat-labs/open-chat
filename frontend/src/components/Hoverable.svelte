@@ -78,7 +78,7 @@
     }
 
     onMount(async () => {
-        if (isTouchDevice()) {
+        if (isTouchDevice) {
             if (enableLongPress) {
                 document.addEventListener("touchstart", handleDocumentTouchStart);
                 containerDiv.addEventListener("touchend", handleTouchEnd);
