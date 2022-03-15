@@ -8,12 +8,13 @@
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { isTouchDevice } from "../../utils/devices";
 
     export let content: ImageContent;
     export let fill: boolean;
     export let draft: boolean = false;
     export let reply: boolean = false;
+    export let pinned: boolean = false;
     export let height: number | undefined = undefined;
 
     let imgElement: HTMLImageElement;
@@ -23,16 +24,16 @@
     let zoomedWidth: number;
     let zoomedHeight: number;
 
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
+    $: zoomable = !draft && !reply && !pinned;
 
     function onClick() {
-        if (!mobile) {
+        if (!isTouchDevice) {
             toggleZoom();
         }
     }
 
     function onDoubleClick() {
-        if (mobile) {
+        if (isTouchDevice) {
             toggleZoom();
         }
     }
@@ -68,6 +69,10 @@
     }
 </script>
 
+<svelte:window
+    on:resize={recalculateZoomedDimensions}
+    on:orientationchange={recalculateZoomedDimensions} />
+
 {#if content.blobUrl !== undefined}
     <div class="img-wrapper">
         <img
@@ -80,13 +85,14 @@
             class:withCaption
             class:draft
             class:reply
+            class:zoomable
             class:rtl={$rtlStore}
             style={height === undefined ? undefined : `height: ${height}px`}
             src={content.blobUrl}
             alt={content.caption} />
 
-        {#if !draft}
-            <div class="expand" class:rtl={$rtlStore} class:zoom on:click={toggleZoom}>
+        {#if zoomable}
+            <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} on:click={toggleZoom}>
                 <ArrowExpand size={"1em"} color={"#fff"} />
             </div>
         {/if}
@@ -97,7 +103,7 @@
     <Markdown text={content.caption} inline={!reply} />
 {/if}
 
-{#if !draft}
+{#if zoomable}
     <Overlay dismissible={true} alignBottomOnMobile={false} bind:active={zoom}>
         <ModalContent
             hideHeader={true}
@@ -116,7 +122,7 @@
                     on:error={() => (imgElement.src = content.thumbnailData)}
                     src={content.blobUrl}
                     alt={content.caption} />
-                <div class="expand" class:rtl={$rtlStore} class:zoom on:click={toggleZoom}>
+                <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} on:click={toggleZoom}>
                     <ArrowCollapse size={"1em"} color={"#fff"} />
                 </div>
                 {#if withCaption}
@@ -150,31 +156,40 @@
     }
 
     .expand {
+        border-radius: 0 $sp4 0 $sp4;
+
         cursor: zoom-in;
-        &.zoom {
+        &.zoomed {
             cursor: zoom-out;
+            border-bottom-left-radius: 0;
         }
+
+        &.rtl {
+            right: 0;
+            left: unset;
+            border-radius: $sp4 0 $sp4 0;
+            &.zoomed {
+                border-bottom-right-radius: 0;
+            }
+        }
+
         position: absolute;
         padding: $sp2 $sp4;
         bottom: 0;
         left: 0;
         background-color: rgba(0, 0, 0, 0.3);
         color: #fff;
-        border-radius: 0 $sp4 0 $sp4;
-
-        &.rtl {
-            right: 0;
-            left: unset;
-            border-radius: $sp4 0 $sp4 0;
-        }
     }
 
-    img.zoomed {
+    img.zoomable.zoomed {
         cursor: zoom-out;
     }
 
-    img:not(.zoomed) {
+    img.zoomable:not(.zoomed) {
         cursor: zoom-in;
+    }
+
+    img:not(.zoomed) {
         width: 100%;
         display: block;
 
