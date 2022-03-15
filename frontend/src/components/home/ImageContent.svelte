@@ -23,12 +23,6 @@
     let zoomedWidth: number;
     let zoomedHeight: number;
 
-    $: {
-        if (zoom) {
-            recalculateZoomedDimensions();
-        }
-    }
-
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 
     function onClick() {
@@ -45,10 +39,12 @@
 
     function toggleZoom() {
         zoom = !zoom;
+        if (zoom) {
+            recalculateZoomedDimensions();
+        }
     }
 
     function recalculateZoomedDimensions() {
-        if (!zoom) return;
         const contentAspectRatio = content.width / content.height;
         let imageWidth = Math.max(400, content.width);
         let imageHeight = Math.max(400, content.height);
@@ -89,7 +85,7 @@
             src={content.blobUrl}
             alt={content.caption} />
 
-        {#if !draft && mobile}
+        {#if !draft}
             <div class="expand" class:rtl={$rtlStore} on:click={toggleZoom}>
                 <ArrowExpand size={"1em"} color={"#fff"} />
             </div>
@@ -120,11 +116,9 @@
                     on:error={() => (imgElement.src = content.thumbnailData)}
                     src={content.blobUrl}
                     alt={content.caption} />
-                {#if mobile}
-                    <div class="expand" class:rtl={$rtlStore} on:click={toggleZoom}>
-                        <ArrowCollapse size={"1em"} color={"#fff"} />
-                    </div>
-                {/if}
+                <div class="expand" class:rtl={$rtlStore} on:click={toggleZoom}>
+                    <ArrowCollapse size={"1em"} color={"#fff"} />
+                </div>
                 {#if withCaption}
                     <div class="caption">
                         {content.caption}
@@ -151,24 +145,24 @@
         color: #fff;
         width: 100%;
         padding: $sp2 $sp4;
-        @include font(light, normal, fs-80);
         top: 0;
         text-align: center;
     }
 
     .expand {
         position: absolute;
+        pointer-events: none;
         padding: $sp2 $sp4;
         bottom: 0;
         left: 0;
         background-color: rgba(0, 0, 0, 0.3);
         color: #fff;
-        border-radius: 0 $sp4 0 0;
+        border-radius: 0 $sp4 0 $sp4;
 
         &.rtl {
             right: 0;
             left: unset;
-            border-radius: $sp4 0 0 0;
+            border-radius: $sp4 0 $sp4 0;
         }
     }
 
