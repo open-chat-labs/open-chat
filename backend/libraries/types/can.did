@@ -696,6 +696,12 @@ type FailedCryptocurrencyWithdrawal =
         Cycles: FailedCyclesWithdrawal;
     };
 
+type CompletedCryptocurrencyTransfer =
+    variant {
+        ICP: CompletedICPTransfer;
+        Cycles: CompletedCyclesTransfer;
+    };
+
 type CyclesDeposit =
     variant {
         Completed: CompletedCyclesDeposit;

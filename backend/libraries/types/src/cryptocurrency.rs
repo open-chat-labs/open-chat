@@ -53,6 +53,12 @@ pub enum FailedCryptocurrencyWithdrawal {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum CompletedCryptocurrencyTransfer {
+    Cycles(CompletedCyclesTransfer),
+    ICP(CompletedICPTransfer),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CyclesDeposit {
     Completed(CompletedCyclesDeposit),
 }

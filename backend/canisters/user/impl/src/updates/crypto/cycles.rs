@@ -2,7 +2,7 @@ use crate::mutate_state;
 use serde::{Deserialize, Serialize};
 use types::{CompletedCyclesTransfer, CryptocurrencyTransfer, CyclesTransfer, FailedCyclesTransfer, PendingCyclesTransfer};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct CyclesTransferDetails {
     pub index: u32,
     pub transfer: CompletedCyclesTransfer,
