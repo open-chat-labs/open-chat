@@ -9,6 +9,7 @@
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { isTouchDevice } from "../../utils/devices";
 
     export let content: ImageContent;
     export let fill: boolean;
@@ -23,18 +24,18 @@
     let landscape = content.height < content.width;
     let zoomedWidth: number;
     let zoomedHeight: number;
+    let isTouch = isTouchDevice();
 
     $: zoomable = !draft && !reply && !pinned;
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 
     function onClick() {
-        if (!mobile) {
+        if (!isTouch) {
             toggleZoom();
         }
     }
 
     function onDoubleClick() {
-        if (mobile) {
+        if (isTouch) {
             toggleZoom();
         }
     }

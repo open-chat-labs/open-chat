@@ -1,5 +1,6 @@
 import type { ScrollStrategy } from "../domain/chat/chat";
 import { writable } from "svelte/store";
+import { isTouchDevice } from "../utils/devices";
 
 function boolFromLS(key: string, def: boolean): boolean {
     const val = localStorage.getItem(key);
@@ -42,9 +43,3 @@ export const scrollStrategy = {
         localStorage.setItem("openchat_scrollstrategy", strategy);
     },
 };
-
-function isTouchDevice() {
-    return (
-        "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0
-    );
-}
