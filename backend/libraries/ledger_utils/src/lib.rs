@@ -31,9 +31,7 @@ pub fn calculate_transaction_hash(sender: UserId, args: &TransferArgs) -> Transa
         created_at_time: args.created_at_time.unwrap(),
     };
 
-    let mut state = Sha256::new();
-    state.update(&serde_cbor::ser::to_vec_packed(&transaction).unwrap());
-    state.finalize().into()
+    transaction.hash()
 }
 
 /// An operation which modifies account balances
@@ -63,4 +61,12 @@ struct Transaction {
 
     /// The time this transaction was created.
     pub created_at_time: Timestamp,
+}
+
+impl Transaction {
+    pub fn hash(&self) -> TransactionHash {
+        let mut hash = Sha256::new();
+        hash.update(&serde_cbor::ser::to_vec_packed(&self).unwrap());
+        hash.finalize().into()
+    }
 }
