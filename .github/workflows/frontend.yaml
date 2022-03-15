@@ -20,6 +20,8 @@ jobs:
         run: npm ci
         env:
           NODE_ENV: ci
+          USERGEEK_APIKEY: ${{ secrets.GH_USERGEEK_APIKEY }}
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.GH_ROLLBAR_ACCESS_TOKEN }}
       - name: building frontend
         run: npm run build
         env:
