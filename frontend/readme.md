@@ -4,8 +4,6 @@ This is the frontend codebase for Open Chat. It is a svelte app written in types
 
 To run locally you will need to do the following:
 
-test
-
 ## Install dependencies
 
 `npm i`
