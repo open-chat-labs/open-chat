@@ -466,7 +466,6 @@ export class UserClient extends CandidService implements IUserClient {
                 ICP: apiPendingICPWithdrawal(domain),
             },
         };
-        console.log("Withdraw:", req);
         return this.handleResponse(
             this.userService.withdraw_cryptocurrency(req),
             withdrawCryptoResponse
