@@ -591,6 +591,10 @@ export const idlFactory = ({ IDL }) => {
     'OptionTooLong' : IDL.Nat32,
     'EndDateInThePast' : IDL.Null,
   });
+  const CompletedCryptocurrencyTransfer = IDL.Variant({
+    'ICP' : CompletedICPTransfer,
+    'Cycles' : CompletedCyclesTransfer,
+  });
   const SendMessageResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
     'TransactionFailed' : IDL.Text,
@@ -604,6 +608,14 @@ export const idlFactory = ({ IDL }) => {
     'InvalidPoll' : InvalidPollReason,
     'RecipientBlocked' : IDL.Null,
     'InvalidRequest' : IDL.Text,
+    'TransferFailed' : IDL.Text,
+    'TransferSuccess' : IDL.Record({
+      'timestamp' : TimestampMillis,
+      'chat_id' : ChatId,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptocurrencyTransfer,
+      'message_index' : MessageIndex,
+    }),
   });
   const SetAvatarArgs = IDL.Record({ 'avatar' : IDL.Opt(Avatar) });
   const SetAvatarResponse = IDL.Variant({
