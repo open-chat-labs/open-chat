@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { createEventDispatcher, onMount, setContext, tick } from "svelte";
+    import { afterUpdate, createEventDispatcher, onMount, setContext, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
@@ -61,7 +61,7 @@
     let currentChatId = "";
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
-    let showGoToFirst: boolean = false;
+    let insideFromBottomThreshold: boolean = false;
 
     onMount(() => {
         const options = {
@@ -99,6 +99,8 @@
             });
         }, options);
     });
+
+    afterUpdate(() => setIfInsideFromBottomThreshold());
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
         messagesDiv?.scrollTo({
@@ -195,7 +197,7 @@
             }
         }
 
-        showGoToFirst = shouldShowGoToFirstButton();
+        setIfInsideFromBottomThreshold();
     }
 
     function calculateFromTop(): number {
@@ -313,7 +315,6 @@
         if (controller.chatId !== currentChatId) {
             currentChatId = controller.chatId;
             initialised = false;
-            showGoToFirst = shouldShowGoToFirstButton();
 
             controller.subscribe((evt) => {
                 switch (evt.event.kind) {
@@ -328,7 +329,7 @@
                     case "loaded_new_messages":
                         // wait until the events are rendered
                         tick().then(() => {
-                            if (calculateFromBottom() < FROM_BOTTOM_THRESHOLD) {
+                            if (insideFromBottomThreshold) {
                                 // only scroll if we are now within threshold from the bottom
                                 scrollBottom("smooth");
                             }
@@ -337,7 +338,7 @@
                     case "sending_message":
                         // if we are within the from bottom threshold *or* if the new message
                         // was sent by us, then scroll to the bottom
-                        if (evt.event.sentByMe || calculateFromBottom() < FROM_BOTTOM_THRESHOLD) {
+                        if (evt.event.sentByMe || insideFromBottomThreshold) {
                             // smooth scroll doesn't work here when we are leaping from the top
                             // which means we are stuck with abrupt scroll which is disappointing
                             const { scroll } = evt.event;
@@ -347,7 +348,7 @@
                     case "chat_updated":
                         if (
                             initialised &&
-                            calculateFromBottom() < FROM_BOTTOM_THRESHOLD &&
+                            insideFromBottomThreshold &&
                             shouldLoadNewMessages()
                         ) {
                             controller.loadNewMessages();
@@ -358,8 +359,8 @@
         }
     }
 
-    function shouldShowGoToFirstButton(): boolean {
-        return calculateFromBottom() > FROM_BOTTOM_THRESHOLD || unreadMessages > 0;
+    function setIfInsideFromBottomThreshold() {
+        insideFromBottomThreshold = calculateFromBottom() < FROM_BOTTOM_THRESHOLD;
     }
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
@@ -492,7 +493,7 @@
 
 <div
     title={$_("goToFirstMessage")}
-    class:show={showGoToFirst}
+    class:show={!insideFromBottomThreshold || unreadMessages > 0}
     class="fab to-bottom"
     class:rtl={$rtlStore}>
     <Fab on:click={() => scrollToNew()}>
