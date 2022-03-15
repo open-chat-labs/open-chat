@@ -69,6 +69,8 @@ export type CheckUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameInvalid' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : null };
+export type CompletedCryptocurrencyTransfer = { 'ICP' : CompletedICPTransfer } |
+  { 'Cycles' : CompletedCyclesTransfer };
 export type CompletedCryptocurrencyWithdrawal = {
     'ICP' : CompletedICPWithdrawal
   } |

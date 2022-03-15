@@ -461,12 +461,14 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
+        const req = {
+            withdrawal: {
+                ICP: apiPendingICPWithdrawal(domain),
+            },
+        };
+        console.log("Withdraw:", req);
         return this.handleResponse(
-            this.userService.withdraw_cryptocurrency({
-                withdrawal: {
-                    ICP: apiPendingICPWithdrawal(domain),
-                },
-            }),
+            this.userService.withdraw_cryptocurrency(req),
             withdrawCryptoResponse
         );
     }
