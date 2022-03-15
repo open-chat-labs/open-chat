@@ -205,7 +205,7 @@ export default [
                             <head>
                                 <meta http-equiv="Content-Security-Policy" content="${csp}" />
                                 <meta charset="utf-8" />
-                                <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+                                <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes" />
                                 <meta name="apple-mobile-web-app-title" content="OpenChat" />
                                 <title>OpenChat</title>
                                 <link rel="manifest" href="/openchat.webmanifest" />
