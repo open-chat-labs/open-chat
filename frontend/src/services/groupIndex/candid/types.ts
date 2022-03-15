@@ -56,6 +56,8 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export type CompletedCryptocurrencyTransfer = { 'ICP' : CompletedICPTransfer } |
+  { 'Cycles' : CompletedCyclesTransfer };
 export type CompletedCryptocurrencyWithdrawal = {
     'ICP' : CompletedICPWithdrawal
   } |

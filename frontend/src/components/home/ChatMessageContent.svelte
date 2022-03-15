@@ -19,6 +19,7 @@
     export let truncate: boolean = false;
     export let fill: boolean;
     export let reply: boolean = false;
+    export let pinned: boolean = false;
     export let height: number | undefined = undefined;
     export let preview: boolean;
 
@@ -36,7 +37,7 @@
 {#if content.kind === "text_content"}
     <Markdown text={truncateText(content.text)} />
 {:else if content.kind === "image_content"}
-    <ImageContent {fill} {content} {reply} {height} />
+    <ImageContent {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "video_content"}
     <VideoContent {fill} {content} {reply} {height} />
 {:else if content.kind === "audio_content"}
