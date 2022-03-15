@@ -88,6 +88,7 @@ pub struct DirectChatSummaryUpdates {
     pub read_by_me: Option<Vec<MessageIndexRange>>,
     pub read_by_them: Option<Vec<MessageIndexRange>>,
     pub notifications_muted: Option<bool>,
+    pub affected_events: Vec<EventIndex>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -108,6 +109,7 @@ pub struct GroupChatSummaryUpdates {
     pub wasm_version: Option<Version>,
     pub owner_id: Option<UserId>,
     pub permissions: Option<GroupPermissions>,
+    pub affected_events: Vec<EventIndex>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
