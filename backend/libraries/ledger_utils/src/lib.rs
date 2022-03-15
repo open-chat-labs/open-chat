@@ -21,8 +21,8 @@ pub fn calculate_transaction_hash(sender: UserId, args: &TransferArgs) -> Transa
 
     let transaction = Transaction {
         operation: Operation::Transfer {
-            from,
-            to: args.to,
+            from: from.to_string(),
+            to: args.to.to_string(),
             amount: args.amount,
             fee: args.fee,
         },
@@ -38,16 +38,16 @@ pub fn calculate_transaction_hash(sender: UserId, args: &TransferArgs) -> Transa
 #[derive(Serialize, Deserialize, CandidType, Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum Operation {
     Burn {
-        from: AccountIdentifier,
+        from: String,
         amount: Tokens,
     },
     Mint {
-        to: AccountIdentifier,
+        to: String,
         amount: Tokens,
     },
     Transfer {
-        from: AccountIdentifier,
-        to: AccountIdentifier,
+        from: String,
+        to: String,
         amount: Tokens,
         fee: Tokens,
     },
