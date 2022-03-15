@@ -15,15 +15,20 @@
     import { IdentityController } from "./fsm/identity.controller";
     import { SessionExpiryError } from "./services/httpError";
     import UpgradeBanner from "./components/UpgradeBanner.svelte";
+    import { mobileOperatingSystem } from "./utils/devices";
 
     import "./theme/themes";
 
+    let viewPortContent = "width=device-width, initial-scale=1";
     let controller: IdentityController = new IdentityController();
     setContext("identityController", controller);
 
     $: identityState = controller.state;
 
     onMount(() => {
+        if (mobileOperatingSystem === "iOS") {
+            viewPortContent += ", maximum-scale=1";
+        }
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
@@ -47,6 +52,10 @@
         }
     }
 </script>
+
+<svelte:head>
+    <meta name="viewport" content={viewPortContent} />
+</svelte:head>
 
 {#if $identityState === "requires_login" || $identityState === "logging_in"}
     <Login loading={$identityState === "logging_in"} on:login={() => controller.login()} />
