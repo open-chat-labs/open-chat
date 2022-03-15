@@ -411,7 +411,6 @@
     "icpTransfer": {
         "title": "ICPを送信する",
         "amount": "金額（icp）*",
-        "balance": "残りのバランス（icp）",
         "send": "送信",
         "message": "メッセージ",
         "messagePlaceholder": "オプションのメッセージを含める",
@@ -423,11 +422,11 @@
         "pendingSent": "{amount}ICPを送信しています",
         "viewTransaction": "[トランザクションを表示]（{url}）",
         "warning": "警告-受信者の身元と動機を確実に信頼するのはあなたの責任です。 OpenChatはICP転送を元に戻すことはできません。",
-        "confirm": "確認"
+        "confirm": "確認",
+        "transfer": "ICP転送"
     },
     "icpAccount": {
         "balanceLabel": "ICPアカウントの残高",
-        "shortBalanceLabel": "保たれているバランス",
         "manage": "管理",
         "manageHeader": "アカウントを管理する",
         "topUp": "補充",
@@ -435,6 +434,8 @@
         "withdraw": "撤退",
         "withdrawTarget": "撤回する住所を入力してください",
         "withdrawalSucceeded": "あなたの撤退は成功しました！",
-        "withdrawalFailed": "引き出しに失敗しました！"
+        "withdrawalFailed": "引き出しに失敗しました！",
+        "shortRemainingBalanceLabel": "保たれているバランス",
+        "shortBalanceLabel": "残高"
     }
 }

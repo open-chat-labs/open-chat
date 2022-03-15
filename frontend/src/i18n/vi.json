@@ -412,7 +412,6 @@
     "icpTransfer": {
         "title": "Gửi ICP",
         "amount": "số tiền (icp) *",
-        "balance": "số dư còn lại (icp)",
         "send": "Gửi",
         "message": "Tin nhắn",
         "messagePlaceholder": "Bao gồm một tin nhắn tùy chọn",
@@ -424,11 +423,11 @@
         "pendingSent": "Bạn đang gửi ICP {amount}",
         "viewTransaction": "[Xem giao dịch] ({url})",
         "warning": "Cảnh báo - bạn có trách nhiệm đảm bảo rằng bạn tin tưởng danh tính và động cơ của người nhận. OpenChat không thể đảo ngược bất kỳ quá trình chuyển ICP nào.",
-        "confirm": "Xác nhận"
+        "confirm": "Xác nhận",
+        "transfer": "Chuyển ICP"
     },
     "icpAccount": {
         "balanceLabel": "Số dư tài khoản ICP",
-        "shortBalanceLabel": "số dư còn lại",
         "manage": "Quản lý",
         "manageHeader": "Quản lý tài khoản",
         "topUp": "Nạp tiền",
@@ -436,6 +435,8 @@
         "withdraw": "Rút",
         "withdrawTarget": "nhập địa chỉ để rút tiền về",
         "withdrawalSucceeded": "Rút tiền của bạn đã thành công!",
-        "withdrawalFailed": "Rút tiền của bạn không thành công!"
+        "withdrawalFailed": "Rút tiền của bạn không thành công!",
+        "shortRemainingBalanceLabel": "số dư còn lại",
+        "shortBalanceLabel": "sự cân bằng"
     }
 }

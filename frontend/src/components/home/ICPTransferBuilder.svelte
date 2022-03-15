@@ -22,7 +22,8 @@
     import { rollbar } from "../../utils/logging";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    import { iconSize } from "stores/iconSize";
+    import { iconSize } from "../../stores/iconSize";
+    import { icpBalanceStore } from "../../stores/balance";
     const dispatch = createEventDispatcher();
 
     export let open: boolean;
@@ -33,20 +34,21 @@
 
     let refreshing = false;
     let error: string | undefined = undefined;
-    let accountBalance: number = 0;
     let draftAmount = 0;
     let message = "";
     let confirming = false;
 
-    $: icpBalance = accountBalance / E8S_PER_ICP; //balance in the user's account expressed as ICP
-    $: remainingBalance = Math.max(0, icpBalance - draftAmount - ICP_TRANSFER_FEE);
+    $: remainingBalance =
+        draftAmount > 0
+            ? Math.max(0, $icpBalanceStore - draftAmount - ICP_TRANSFER_FEE)
+            : $icpBalanceStore;
     $: valid = error === undefined && draftAmount > 0;
     $: receiver = $userStore[receiverId];
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 
     $: {
-        if (draftAmount > icpBalance - ICP_TRANSFER_FEE) {
-            draftAmount = icpBalance - ICP_TRANSFER_FEE;
+        if (draftAmount > $icpBalanceStore - ICP_TRANSFER_FEE) {
+            draftAmount = $icpBalanceStore - ICP_TRANSFER_FEE;
         }
         if (draftAmount < 0) {
             draftAmount = 0;
@@ -60,15 +62,12 @@
         confirming = false;
         message = "";
         api.refreshAccountBalance(user.icpAccount)
-            .then((resp) => {
-                accountBalance = Number(resp.e8s);
+            .then((_) => {
                 draftAmount = amount;
                 error = undefined;
             })
             .catch((err) => {
-                // error = "unableToRefreshAccountBalance";
-                accountBalance = 0;
-                accountBalance = 1234567864;
+                error = "unableToRefreshAccountBalance";
                 rollbar.error("Unable to refresh user's account balance", err);
             })
             .finally(() => (refreshing = false));
@@ -110,7 +109,11 @@
             </div>
             <div class="balance">
                 <div class="amount">{remainingBalance.toFixed(4)}</div>
-                <div class="label">{$_("icpAccount.shortBalanceLabel")}</div>
+                <div class="label">
+                    {draftAmount > 0
+                        ? $_("icpAccount.shortRemainingBalanceLabel")
+                        : $_("icpAccount.shortBalanceLabel")}
+                </div>
             </div>
             <div class="refresh" class:refreshing class:mobile on:click={() => reset(draftAmount)}>
                 <Refresh size={"1em"} color={"var(--accent)"} />
@@ -132,7 +135,7 @@
                             autofocus={true}
                             class="amount-val"
                             min={0}
-                            max={icpBalance}
+                            max={$icpBalanceStore - ICP_TRANSFER_FEE}
                             type="number"
                             bind:value={draftAmount} />
                     </div>

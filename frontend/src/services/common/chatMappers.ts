@@ -620,7 +620,7 @@ export function apiICPWithdrawal(domain: ICPWithdrawal): ApiICPWithdrawal {
                 fee: apiICP(domain.feeE8s),
                 memo: domain.memo,
                 block_index: domain.blockIndex,
-                transaction_hash: domain.transactionHash,
+                transaction_hash: hexStringToBytes(domain.transactionHash),
             },
         };
     }

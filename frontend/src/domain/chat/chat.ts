@@ -128,7 +128,7 @@ export type CompletedICPWithdrawal = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
-    transactionHash: number[];
+    transactionHash: string;
 };
 
 export type FailedICPWithdrawal = {
@@ -147,6 +147,7 @@ export type WithdrawCryptocurrencyResponse =
     | CompletedCryptocurrencyWithdrawal;
 export type FailedCryptocurrencyWithdrawal = FailedICPWithdrawal | FailedCyclesWithdrawal;
 export type CompletedCryptocurrencyWithdrawal = CompletedICPWithdrawal | CompletedCyclesWithdrawal;
+export type CompletedCryptocurrencyTransfer = CompletedCyclesTransfer | CompletedICPTransfer;
 
 export type CyclesTransfer = PendingCyclesTransfer | CompletedCyclesTransfer | FailedCyclesTransfer;
 export type CyclesWithdrawal =
@@ -827,7 +828,8 @@ export type SendMessageResponse =
     | SendMessageEmpty
     | SendMessageBalanceExceeded
     | SendMessageRecipientNotFound
-    | TransationFailed
+    | TransferFailed
+    | TransferSuccess
     | InvalidPoll
     | SendMessageNotInGroup
     | NotAuthorised;
@@ -839,12 +841,20 @@ export type SendMessageSuccess = {
     eventIndex: number;
 };
 
+export type TransferSuccess = {
+    kind: "transfer_success";
+    timestamp: bigint;
+    messageIndex: number;
+    eventIndex: number;
+    transfer: CompletedCryptocurrencyTransfer;
+};
+
 export type InvalidPoll = {
     kind: "invalid_poll";
 };
 
-export type TransationFailed = {
-    kind: "transaction_failed";
+export type TransferFailed = {
+    kind: "transfer_failed";
 };
 
 export type SendMessageRecipientBlocked = {

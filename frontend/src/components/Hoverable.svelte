@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { isTouchDevice } from "../utils/devices";
 
     const HOVER_DELAY = 250;
     const LONGPRESS_DELAY = 500;
@@ -77,9 +78,7 @@
     }
 
     onMount(async () => {
-        let isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-
-        if (isTouch) {
+        if (isTouchDevice) {
             if (enableLongPress) {
                 document.addEventListener("touchstart", handleDocumentTouchStart);
                 containerDiv.addEventListener("touchend", handleTouchEnd);

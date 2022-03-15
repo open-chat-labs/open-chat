@@ -33,9 +33,11 @@ import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
+import { _ } from "svelte-i18n";
 import { unconfirmed } from "../../stores/unconfirmed";
 import type { IMessageReadTracker } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
+import { get } from "svelte/store";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 const EVENT_PAGE_SIZE = 20;
@@ -57,8 +59,7 @@ export function getContentAsText(content: MessageContent): string {
     } else if (content.kind === "file_content") {
         text = captionedContent(content.name, content.caption);
     } else if (content.kind === "crypto_content") {
-        // todo - format crypto
-        text = "crypto_content";
+        text = captionedContent(get(_)("icpTransfer.transfer"), content.caption);
     } else if (content.kind === "deleted_content") {
         text = "deleted message";
     } else if (content.kind === "placeholder_content") {

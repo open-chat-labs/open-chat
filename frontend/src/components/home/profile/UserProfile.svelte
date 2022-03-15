@@ -40,6 +40,7 @@
     import ManageIcpAccount from "./ManageICPAccount.svelte";
     import { currentUserKey } from "../../../fsm/home.controller";
     import ErrorMessage from "../../ErrorMessage.svelte";
+    import { icpBalanceStore } from "../../../stores/balance";
 
     const api: ServiceContainer = getContext(apiKey);
     const createdUser: CreatedUser = getContext(currentUserKey);
@@ -59,7 +60,6 @@
     let validUsername: string | undefined = undefined;
     let usernameInput: UsernameInput;
     let checkingUsername: boolean;
-    let currentIcpBalance = 0;
     let manageIcpAccount: ManageIcpAccount;
     let managingIcpAccount = false;
     let balanceError: string | undefined = undefined;
@@ -80,15 +80,10 @@
     }
 
     onMount(() => {
-        api.refreshAccountBalance(createdUser.icpAccount)
-            .then((resp) => {
-                currentIcpBalance = Number(resp.e8s);
-            })
-            .catch((err) => {
-                balanceError = "unableToRefreshAccountBalance";
-                currentIcpBalance = 0;
-                rollbar.error("Unable to refresh user's account balance", err);
-            });
+        api.refreshAccountBalance(createdUser.icpAccount).catch((err) => {
+            balanceError = "unableToRefreshAccountBalance";
+            rollbar.error("Unable to refresh user's account balance", err);
+        });
     });
 
     function whySms() {
@@ -347,7 +342,7 @@
                 <Legend>{$_("icpAccount.balanceLabel")}</Legend>
                 <div class="icp-balance">
                     <div class="icp-balance-value">
-                        {(currentIcpBalance / E8S_PER_ICP).toFixed(4)}
+                        {$icpBalanceStore.toFixed(4)}
                     </div>
                     <Button on:click={showManageIcp} fill={true} small={true}
                         >{$_("icpAccount.manage")}</Button>
@@ -427,7 +422,7 @@
     }
 
     .para {
-        margin-bottom: $sp3;
+        margin-bottom: $sp4;
         &.last {
             margin-bottom: $sp4;
         }
