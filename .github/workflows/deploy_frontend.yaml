@@ -13,7 +13,7 @@ jobs:
   deploy_frontend:
     runs-on: ubuntu-latest
     env:
-      DFX_VERSION: 0.9.1-beta.0
+      DFX_VERSION: 0.9.2
       USERGEEK_APIKEY: ${{ secrets.GH_USERGEEK_APIKEY }}
       ROLLBAR_ACCESS_TOKEN: ${{ secrets.GH_ROLLBAR_ACCESS_TOKEN }}
       OPENCHAT_WEBSITE_VERSION: $GITHUB_REF_NAME
