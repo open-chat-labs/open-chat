@@ -1,14 +1,19 @@
 name: Deploy frontend
 
+# on:
+#   release:
+#     types: [published]
+
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - "build"
 
 jobs:
   deploy_frontend:
     runs-on: ubuntu-latest
     env:
-      DFX_VERSION: 0.8.4
+      DFX_VERSION: 0.9.1-beta.0
       USERGEEK_APIKEY: ${{ secrets.GH_USERGEEK_APIKEY }}
       ROLLBAR_ACCESS_TOKEN: ${{ secrets.GH_ROLLBAR_ACCESS_TOKEN }}
       OPENCHAT_WEBSITE_VERSION: $GITHUB_REF_NAME
@@ -30,7 +35,7 @@ jobs:
 
       - name: Deploy the frontend to prod test
         id: deploy
-        uses: fleekhq/ic-deploy-action@master
+        uses: open-ic/ic-deploy-action@master
         with:
           identity: ${{ secrets.DFX_IDENTITY }}
           wallets: ${{ secrets.DFX_WALLETS }}
