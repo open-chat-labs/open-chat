@@ -39,4 +39,4 @@ jobs:
         with:
           identity: ${{ secrets.DFX_IDENTITY }}
           wallets: ${{ secrets.DFX_WALLETS }}
-          network: ic_test
+          network: ic

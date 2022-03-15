@@ -24,7 +24,7 @@
     "ic_test": "dhcdh-fqaaa-aaaaf-adnmq-cai"
   },
   "website": {
-    "ic": "6hsbt-vqaaa-aaaaf-aaafq-cai",
-    "ic_test": "pfs7b-iqaaa-aaaaf-abs7q-cai"
+    "ic_live": "6hsbt-vqaaa-aaaaf-aaafq-cai",
+    "ic": "pfs7b-iqaaa-aaaaf-abs7q-cai"
   }
 }
