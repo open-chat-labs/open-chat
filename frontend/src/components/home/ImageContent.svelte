@@ -19,47 +19,11 @@
     let zoom = false;
     let withCaption = content.caption !== undefined && content.caption !== "";
     let landscape = content.height < content.width;
-    let zoomedWidth: number;
-    let zoomedHeight: number;
-
-    $: {
-        if (zoom) {
-            recalculateZoomedDimensions();
-        }
-    }
-
-    function recalculateZoomedDimensions() {
-        if (!zoom) return;
-        const contentAspectRatio = content.width / content.height;
-        let imageWidth = Math.max(400, content.width);
-        let imageHeight = Math.max(400, content.height);
-
-        if (landscape) {
-            imageWidth = Math.min(window.innerWidth, imageWidth);
-            imageHeight = imageWidth / contentAspectRatio;
-            if (imageHeight > window.innerHeight) {
-                imageHeight = window.innerHeight;
-                imageWidth = imageHeight * contentAspectRatio;
-            }
-        } else {
-            imageHeight = Math.min(window.innerHeight, imageHeight);
-            imageWidth = imageHeight * contentAspectRatio;
-            if (imageWidth > window.innerWidth) {
-                imageWidth = window.innerWidth;
-                imageHeight = imageWidth / contentAspectRatio;
-            }
-        }
-
-        zoomedWidth = imageWidth;
-        zoomedHeight = imageHeight;
-    }
 
     function toggleZoom() {
         zoom = !zoom;
     }
 </script>
-
-<svelte:window on:resize={recalculateZoomedDimensions} />
 
 {#if content.blobUrl !== undefined}
     <div class="img-wrapper">
@@ -100,8 +64,7 @@
             <span class="body" slot="body">
                 <img
                     class="zoomed"
-                    width={zoomedWidth}
-                    height={zoomedHeight}
+                    class:landscape
                     on:dblclick={toggleZoom}
                     on:error={() => (imgElement.src = content.thumbnailData)}
                     src={content.blobUrl}
@@ -156,6 +119,20 @@
             left: unset;
             border-radius: $sp4 0 0 0;
         }
+    }
+
+    img.zoomed.landscape {
+        max-width: 100%;
+        min-width: 400px;
+        max-height: none;
+        min-height: auto;
+    }
+
+    img.zoomed:not(.landscape) {
+        max-width: none;
+        min-width: auto;
+        max-height: 100vh;
+        min-height: 400px;
     }
 
     img:not(.zoomed) {
