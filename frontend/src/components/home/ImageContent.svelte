@@ -132,6 +132,7 @@
         max-width: none;
         min-width: auto;
         max-height: 100vh;
+        max-height: calc(var(--vh, 1vh) * 100);
         min-height: 400px;
     }
 
