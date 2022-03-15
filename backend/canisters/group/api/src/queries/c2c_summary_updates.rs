@@ -35,6 +35,7 @@ pub struct SummaryUpdates {
     pub wasm_version: Option<Version>,
     pub owner_id: Option<UserId>,
     pub permissions: Option<GroupPermissions>,
+    pub affected_events: Vec<EventIndex>,
 }
 
 impl From<SummaryUpdates> for GroupChatSummaryUpdates {
@@ -56,6 +57,7 @@ impl From<SummaryUpdates> for GroupChatSummaryUpdates {
             wasm_version: s.wasm_version,
             owner_id: s.owner_id,
             permissions: s.permissions,
+            affected_events: s.affected_events,
         }
     }
 }

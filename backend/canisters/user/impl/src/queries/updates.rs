@@ -315,6 +315,7 @@ fn finalize(
             };
 
             let notifications_muted = direct_chat.notifications_muted.if_set_after(updates_since).copied();
+            let affected_events = direct_chat.events.affected_event_indexes_since(updates_since, 100);
 
             chats_updated.push(ChatSummaryUpdates::Direct(DirectChatSummaryUpdates {
                 chat_id: direct_chat.them.into(),
@@ -323,6 +324,7 @@ fn finalize(
                 read_by_me,
                 read_by_them,
                 notifications_muted,
+                affected_events,
             }));
         }
     }

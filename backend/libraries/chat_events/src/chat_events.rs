@@ -827,6 +827,33 @@ impl ChatEvents {
         None
     }
 
+    pub fn affected_event_indexes_since(&self, since: TimestampMillis, max_results: usize) -> Vec<EventIndex> {
+        let mut affected_events = HashSet::new();
+
+        for EventWrapper { event, .. } in self.events.iter().rev().take_while(|e| e.timestamp > since) {
+            if let Some(index) = self.affected_event_index(event) {
+                if affected_events.insert(index) && affected_events.len() == max_results {
+                    break;
+                }
+            }
+        }
+
+        affected_events.into_iter().collect()
+    }
+
+    pub fn affected_event_index(&self, event: &ChatEventInternal) -> Option<EventIndex> {
+        match event {
+            ChatEventInternal::MessageEdited(m) => self.message_id_map.get(&m.message_id).copied(),
+            ChatEventInternal::MessageDeleted(m) => self.message_id_map.get(&m.message_id).copied(),
+            ChatEventInternal::MessageReactionAdded(r) => self.message_id_map.get(&r.message_id).copied(),
+            ChatEventInternal::MessageReactionRemoved(r) => self.message_id_map.get(&r.message_id).copied(),
+            ChatEventInternal::PollVoteRegistered(v) => self.message_id_map.get(&v.message_id).copied(),
+            ChatEventInternal::PollVoteDeleted(v) => self.message_id_map.get(&v.message_id).copied(),
+            ChatEventInternal::PollEnded(p) => self.message_index_map.get(p).copied(),
+            _ => None,
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         let mut metrics = self.metrics.clone();
         metrics.last_active = self.last().timestamp;
