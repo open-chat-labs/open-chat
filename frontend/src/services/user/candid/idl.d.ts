@@ -86,6 +86,7 @@ import {
     WithdrawCryptocurrencyResponse,
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
+    CompletedCryptocurrencyTransfer,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -174,6 +175,7 @@ export {
     WithdrawCryptocurrencyResponse as ApiWithdrawCryptocurrencyResponse,
     FailedCryptocurrencyWithdrawal as ApiFailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal as ApiCompletedCryptocurrencyWithdrawal,
+    CompletedCryptocurrencyTransfer as ApiCompletedCryptocurrencyTransfer,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

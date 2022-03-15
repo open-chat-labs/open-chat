@@ -29,6 +29,7 @@ import type {
     ApiWithdrawCryptocurrencyResponse,
     ApiFailedCryptocurrencyWithdrawal,
     ApiCompletedCryptocurrencyWithdrawal,
+    ApiCompletedCryptocurrencyTransfer,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -59,6 +60,7 @@ import type {
     WithdrawCryptocurrencyResponse,
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
+    CompletedCryptocurrencyTransfer,
 } from "../../domain/chat/chat";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -262,6 +264,37 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
     throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
 }
 
+export function completedCryptoTransfer(
+    candid: ApiCompletedCryptocurrencyTransfer
+): CompletedCryptocurrencyTransfer {
+    if ("ICP" in candid) {
+        return {
+            transferKind: "icp_transfer",
+            kind: "completed_icp_transfer",
+            recipient: candid.ICP.recipient.toString(),
+            sender: candid.ICP.sender.toString(),
+            amountE8s: candid.ICP.amount.e8s,
+            feeE8s: candid.ICP.fee.e8s,
+            memo: candid.ICP.memo,
+            blockIndex: candid.ICP.block_index,
+            transactionHash: bytesToHexString(candid.ICP.transaction_hash),
+        };
+    }
+    if ("Cycles" in candid) {
+        return {
+            transferKind: "cycles_transfer",
+            kind: "completed_cycles_transfer",
+            recipient: candid.Cycles.recipient.toString(),
+            sender: candid.Cycles.sender.toString(),
+            cycles: candid.Cycles.cycles,
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiCompletedCryptocurrencyTransfer type received",
+        candid
+    );
+}
+
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
     if ("BalanceExceeded" in candid) {
         return { kind: "balance_exceeded" };
@@ -272,6 +305,15 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
+        };
+    }
+    if ("TransferSuccess" in candid) {
+        return {
+            kind: "transfer_success",
+            timestamp: candid.TransferSuccess.timestamp,
+            messageIndex: candid.TransferSuccess.message_index,
+            eventIndex: candid.TransferSuccess.event_index,
+            transfer: completedCryptoTransfer(candid.TransferSuccess.transfer),
         };
     }
     if ("RecipientBlocked" in candid) {
@@ -289,8 +331,12 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("RecipientNotFound" in candid) {
         return { kind: "recipient_not_found" };
     }
+    if ("TransferFailed" in candid) {
+        return { kind: "transfer_failed" };
+    }
+    //todo - remove this later
     if ("TransactionFailed" in candid) {
-        return { kind: "transaction_failed" };
+        return { kind: "transfer_failed" };
     }
     if ("InvalidPoll" in candid) {
         return { kind: "invalid_poll" };

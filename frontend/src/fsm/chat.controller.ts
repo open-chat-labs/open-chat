@@ -18,6 +18,8 @@ import type {
     MemberRole,
     SendMessageSuccess,
     UpdateGroupResponse,
+    TransferSuccess,
+    CryptocurrencyContent,
 } from "../domain/chat/chat";
 import {
     activeUserIdFromEvent,
@@ -781,14 +783,22 @@ export class ChatController {
         );
     }
 
-    confirmMessage(candidate: Message, resp: SendMessageSuccess): void {
+    mergeSendMessageResponse(msg: Message, resp: SendMessageSuccess | TransferSuccess): Message {
+        return {
+            ...msg,
+            messageIndex: resp.messageIndex,
+            content:
+                resp.kind === "transfer_success"
+                    ? ({ ...msg.content, transfer: resp.transfer } as CryptocurrencyContent)
+                    : msg.content,
+        };
+    }
+
+    confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
         if (unconfirmed.delete(this.chatId, candidate.messageId)) {
             this.markRead.confirmMessage(this.chatId, resp.messageIndex, candidate.messageId);
             const confirmed = {
-                event: {
-                    ...candidate,
-                    messageIndex: resp.messageIndex,
-                },
+                event: this.mergeSendMessageResponse(candidate, resp),
                 index: resp.eventIndex,
                 timestamp: resp.timestamp,
             };
