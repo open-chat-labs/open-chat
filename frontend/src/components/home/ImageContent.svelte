@@ -8,7 +8,6 @@
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { isTouchDevice } from "../../utils/devices";
 
     export let content: ImageContent;
@@ -70,6 +69,10 @@
         zoomedHeight = imageHeight;
     }
 </script>
+
+<svelte:window
+    on:resize={recalculateZoomedDimensions}
+    on:orientationchange={recalculateZoomedDimensions} />
 
 {#if content.blobUrl !== undefined}
     <div class="img-wrapper">
