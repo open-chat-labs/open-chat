@@ -8,6 +8,7 @@
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
 
     export let content: ImageContent;
     export let fill: boolean;
@@ -19,9 +20,55 @@
     let zoom = false;
     let withCaption = content.caption !== undefined && content.caption !== "";
     let landscape = content.height < content.width;
+    let zoomedWidth: number;
+    let zoomedHeight: number;
+
+    $: {
+        if (zoom) {
+            recalculateZoomedDimensions();
+        }
+    }
+
+    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
+
+    function onClick() {
+        if (!mobile) {
+            toggleZoom();
+        }
+    }
+
+    function onDoubleClick() {
+        if (mobile) {
+            toggleZoom();
+        }
+    }
 
     function toggleZoom() {
         zoom = !zoom;
+    }
+
+    function recalculateZoomedDimensions() {
+        if (!zoom) return;
+        const contentAspectRatio = content.width / content.height;
+        let imageWidth = Math.max(400, content.width);
+        let imageHeight = Math.max(400, content.height);
+        if (landscape) {
+            imageWidth = Math.min(window.innerWidth, imageWidth);
+            imageHeight = imageWidth / contentAspectRatio;
+            if (imageHeight > window.innerHeight) {
+                imageHeight = window.innerHeight;
+                imageWidth = imageHeight * contentAspectRatio;
+            }
+        } else {
+            imageHeight = Math.min(window.innerHeight, imageHeight);
+            imageWidth = imageHeight * contentAspectRatio;
+            if (imageWidth > window.innerWidth) {
+                imageWidth = window.innerWidth;
+                imageHeight = imageWidth / contentAspectRatio;
+            }
+        }
+        zoomedWidth = imageWidth;
+        zoomedHeight = imageHeight;
     }
 </script>
 
@@ -29,7 +76,8 @@
     <div class="img-wrapper">
         <img
             bind:this={imgElement}
-            on:dblclick={toggleZoom}
+            on:click={onClick}
+            on:dblclick={onDoubleClick}
             on:error={() => (imgElement.src = content.thumbnailData)}
             class:landscape
             class:fill
@@ -41,7 +89,7 @@
             src={content.blobUrl}
             alt={content.caption} />
 
-        {#if !draft}
+        {#if !draft && mobile}
             <div class="expand" class:rtl={$rtlStore} on:click={toggleZoom}>
                 <ArrowExpand size={"1em"} color={"#fff"} />
             </div>
@@ -65,14 +113,18 @@
                 <img
                     class="zoomed"
                     class:landscape
-                    on:dblclick={toggleZoom}
+                    width={zoomedWidth}
+                    height={zoomedHeight}
+                    on:click={onClick}
+                    on:dblclick={onDoubleClick}
                     on:error={() => (imgElement.src = content.thumbnailData)}
                     src={content.blobUrl}
                     alt={content.caption} />
-                <div class="expand" class:rtl={$rtlStore} on:click={toggleZoom}>
-                    <ArrowCollapse size={"1em"} color={"#fff"} />
-                </div>
-
+                {#if mobile}
+                    <div class="expand" class:rtl={$rtlStore} on:click={toggleZoom}>
+                        <ArrowCollapse size={"1em"} color={"#fff"} />
+                    </div>
+                {/if}
                 {#if withCaption}
                     <div class="caption">
                         {content.caption}
@@ -107,7 +159,6 @@
     .expand {
         position: absolute;
         padding: $sp2 $sp4;
-        cursor: pointer;
         bottom: 0;
         left: 0;
         background-color: rgba(0, 0, 0, 0.3);
@@ -121,22 +172,12 @@
         }
     }
 
-    img.zoomed.landscape {
-        max-width: 100%;
-        min-width: 400px;
-        max-height: none;
-        min-height: auto;
-    }
-
-    img.zoomed:not(.landscape) {
-        max-width: none;
-        min-width: auto;
-        max-height: 100vh;
-        max-height: calc(var(--vh, 1vh) * 100);
-        min-height: 400px;
+    img.zoomed {
+        cursor: zoom-out;
     }
 
     img:not(.zoomed) {
+        cursor: zoom-in;
         width: 100%;
         display: block;
 
