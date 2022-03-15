@@ -192,6 +192,7 @@ fn queue_failed_message_for_retry(
     runtime_state.data.user_index_canister_id
 }
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone)]
 enum TransferDetails {
     Cycles(CyclesTransferDetails),
