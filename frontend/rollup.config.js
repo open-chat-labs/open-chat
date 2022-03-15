@@ -56,13 +56,17 @@ if (dfxNetwork) {
     );
 }
 
-// todo - we should add some code here to validate that the env vars we are expecting are actually present
-
 const production = !process.env.ROLLUP_WATCH;
 const env = process.env.NODE_ENV ?? (production ? "production" : "development");
 const version = process.env.OPENCHAT_WEBSITE_VERSION;
 if (production && !version) {
     throw Error("OPENCHAT_WEBSITE_VERSION environment variable not set");
+}
+if (production && !process.env.ROLLBAR_ACCESS_TOKEN) {
+    throw Error("ROLLBAR_ACCESS_TOKEN environment variable not set");
+}
+if (production && !process.env.USERGEEK_APIKEY) {
+    throw Error("USERGEEK_APIKEY environment variable not set");
 }
 const WEBPUSH_SERVICE_WORKER_PATH = "_/raw/sw.js";
 

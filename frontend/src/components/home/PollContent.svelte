@@ -68,7 +68,8 @@
     function percentageOfVote(idx: number) {
         const showPercentage =
             content.ended ||
-            (haveIVoted && (content.config.showVotesBeforeEndDate || content.config.endDate === undefined));
+            (haveIVoted &&
+                (content.config.showVotesBeforeEndDate || content.config.endDate === undefined));
 
         return showPercentage ? (votesForAnswer(idx) / numberOfVotes) * 100 : 0;
     }
@@ -119,7 +120,9 @@
 
 <style type="text/scss">
     .poll {
-      min-width: 300px;
+        @include size-above(xs) {
+            min-width: 300px;
+        }
     }
 
     .question {
