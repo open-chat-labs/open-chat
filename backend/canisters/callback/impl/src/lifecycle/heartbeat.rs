@@ -29,14 +29,7 @@ mod execute_callbacks {
     }
 
     async fn execute_callback(callback: Callback) {
-        match ic_cdk::api::call::call_raw(
-            callback.canister_id,
-            &callback.method_name,
-            callback.payload.clone().into_vec(),
-            0,
-        )
-        .await
-        {
+        match ic_cdk::api::call::call_raw(callback.canister_id, &callback.method_name, callback.payload.as_ref(), 0).await {
             Ok(_) => mutate_state(|state| state.data.callbacks.record_callback_completed()),
             Err((_, error_message)) => {
                 // If it failed due to the target canister being stopped, try again in 1 minute
