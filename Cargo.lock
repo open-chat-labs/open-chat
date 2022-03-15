@@ -1644,9 +1644,6 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "hkdf"
@@ -1882,7 +1879,8 @@ dependencies = [
 [[package]]
 name = "ic-ledger-types"
 version = "0.1.1"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=12cf70ec100788bc8e7487dfa9bb9910bd47540e#12cf70ec100788bc8e7487dfa9bb9910bd47540e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b6ed965b39ea4cf482053bfebc8bbe40329b664e0de64109530d6c33d6c708e"
 dependencies = [
  "candid",
  "crc32fast",
