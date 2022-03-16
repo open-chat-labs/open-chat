@@ -12,6 +12,7 @@
     import { E8S_PER_ICP } from "../../../domain/user/user";
     import { rollbar } from "utils/logging";
     import AccountInfo from "../AccountInfo.svelte";
+    import { ScreenWidth, screenWidth } from "../../../stores/screenDimensions";
 
     const dispatch = createEventDispatcher();
     const icpDecimals = 2;
@@ -32,6 +33,7 @@
     $: newLimit = min;
     $: toPay = (newLimit - min) * icpPrice;
     $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
+    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 
     onMount(refreshBalance);
 
@@ -151,30 +153,29 @@
         {/if}
     {/if}
 </div>
-<Footer>
+<Footer align={mobile ? "center" : "end"}>
     {#if confirmed}
         <Button small={true} on:click={cancel}>{$_("close")}</Button>
     {:else}
-        <a
-            class="how-to"
-            href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
-            target="_blank">
-            {$_("howToBuyICP")}
-        </a>
+        {#if !mobile}
+            <a
+                class="how-to"
+                href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
+                target="_blank">
+                {$_("howToBuyICP")}
+            </a>
+        {/if}
         {#if insufficientFunds}
-            <Button
-                disabled={refreshing}
-                loading={refreshing}
-                on:click={refreshBalance}
-                small={true}>{$_("refresh")}</Button>
+            <Button disabled={refreshing} loading={refreshing} on:click={refreshBalance} tiny={true}
+                >{$_("refresh")}</Button>
         {:else}
             <Button
                 disabled={confirming || toPay === 0}
                 loading={confirming}
                 on:click={confirm}
-                small={true}>{$_("register.confirm")}</Button>
+                tiny={true}>{$_("register.confirm")}</Button>
         {/if}
-        <Button disabled={confirming} small={true} secondary={true} on:click={cancel}
+        <Button disabled={confirming} tiny={true} secondary={true} on:click={cancel}
             >{$_("cancel")}</Button>
     {/if}
 </Footer>

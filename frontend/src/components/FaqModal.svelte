@@ -17,6 +17,7 @@
         "sms_icp",
         "airdrop",
         "security",
+        "icp_account",
         "send_icp",
         "roadmap",
     ];
