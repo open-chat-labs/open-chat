@@ -20,6 +20,7 @@
         canReactToMessages,
         canSendMessages,
     } from "../../domain/chat/chat.utils";
+    import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -34,6 +35,7 @@
     let footer: Footer;
     let pollBuilder: PollBuilder;
     let icpTransferBuilder: ICPTransferBuilder;
+    let showSearchHeader = false;
 
     $: pinned = controller.pinnedMessages;
 
@@ -144,24 +146,32 @@
 {/if}
 
 <div class="wrapper">
-    <CurrentChatHeader
-        on:clearSelection
-        on:blockUser
-        on:unblockUser
-        on:markAllRead={markAllRead}
-        on:toggleMuteNotifications={toggleMuteNotifications}
-        on:addParticipants
-        on:showGroupDetails
-        on:showParticipants
-        on:leaveGroup
-        on:deleteGroup
-        on:showPinned
-        on:createPoll={createPoll}
-        {blocked}
-        {preview}
-        {unreadMessages}
-        selectedChatSummary={chat}
-        hasPinned={$pinned.size > 0} />
+    {#if showSearchHeader}
+        <CurrentChatSearchHeader
+            chat={$chat}
+            on:goToMessageIndex
+            on:close={() => (showSearchHeader = false)} />
+    {:else}
+        <CurrentChatHeader
+            on:clearSelection
+            on:blockUser
+            on:unblockUser
+            on:markAllRead={markAllRead}
+            on:toggleMuteNotifications={toggleMuteNotifications}
+            on:addParticipants
+            on:showGroupDetails
+            on:showParticipants
+            on:leaveGroup
+            on:deleteGroup
+            on:showPinned
+            on:createPoll={createPoll}
+            on:searchChat={() => (showSearchHeader = true)}
+            {blocked}
+            {preview}
+            {unreadMessages}
+            selectedChatSummary={chat}
+            hasPinned={$pinned.size > 0} />
+    {/if}
     <CurrentChatMessages
         on:replyPrivatelyTo
         on:messageRead={messageRead}
@@ -176,17 +186,19 @@
         {firstUnreadMention}
         {firstUnreadMessage}
         {unreadMessages} />
-    <Footer
-        bind:this={footer}
-        {joining}
-        {preview}
-        {blocked}
-        {controller}
-        on:joinGroup
-        on:cancelPreview
-        on:upgrade
-        on:icpTransfer={icpTransfer}
-        on:createPoll={createPoll} />
+    {#if !showSearchHeader}
+        <Footer
+            bind:this={footer}
+            {joining}
+            {preview}
+            {blocked}
+            {controller}
+            on:joinGroup
+            on:cancelPreview
+            on:upgrade
+            on:icpTransfer={icpTransfer}
+            on:createPoll={createPoll} />
+    {/if}
 </div>
 
 <style type="text/scss">

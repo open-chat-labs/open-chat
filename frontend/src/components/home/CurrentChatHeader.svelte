@@ -18,6 +18,7 @@
     import Bell from "svelte-material-icons/Bell.svelte";
     import Poll from "svelte-material-icons/Poll.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
+    import Magnify from "svelte-material-icons/Magnify.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import MenuIcon from "../MenuIcon.svelte";
@@ -65,6 +66,10 @@
 
     function toggleMuteNotifications() {
         dispatch("toggleMuteNotifications");
+    }
+
+    function searchChat() {
+        dispatch("searchChat");
     }
 
     function createPoll() {
@@ -292,6 +297,10 @@
                                 </MenuItem>
                             {/if}
                         {/if}
+                        <MenuItem on:click={searchChat}>
+                            <Magnify size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                            <div slot="text">{$_("searchChat")}</div>
+                        </MenuItem>
                         {#if supportsNotifications}
                             {#if $selectedChatSummary.notificationsMuted === true}
                                 <MenuItem on:click={toggleMuteNotifications}>
@@ -334,9 +343,9 @@
                         {#if canDeleteGroup($selectedChatSummary)}
                             <MenuItem on:click={deleteGroup}>
                                 <DeleteAlertOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-txt)"}
-                                        slot="icon" />
+                                    size={$iconSize}
+                                    color={"var(--icon-txt)"}
+                                    slot="icon" />
                                 <div slot="text">{$_("deleteGroup")}</div>
                             </MenuItem>
                         {/if}

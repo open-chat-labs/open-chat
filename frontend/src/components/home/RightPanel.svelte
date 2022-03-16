@@ -89,7 +89,7 @@
         savingParticipants = false;
     }
 
-    function goToMessageIndex(ev: CustomEvent<number>): void {
+    function goToMessageIndex(ev: CustomEvent<{ index: number; keep: boolean }>): void {
         dispatch("goToMessageIndex", ev.detail);
         pop();
     }
