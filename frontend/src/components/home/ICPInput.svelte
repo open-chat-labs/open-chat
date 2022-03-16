@@ -12,11 +12,12 @@
     onMount(() => inputElement.value = formatICPs(amountE8s, 0));
 
     $: {
-        inputElement?.value = formatICPs(amountE8s, 0);
+        if (inputElement !== undefined) {
+            inputElement.value = formatICPs(amountE8s, 0);
+        }
     }
 
     function onInput(ev: Event) {
-        console.log("Max", maxAmountE8s);
         const inputValue = (ev.target as HTMLInputElement).value;
 
         let { text, e8s } = validateICPInput(inputValue);
