@@ -117,7 +117,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
-    #[serde(default = "callback_canister_id")]
     pub callback_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
     pub user_cycles_balance: UserCyclesBalance,
