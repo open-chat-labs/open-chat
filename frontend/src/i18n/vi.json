@@ -243,7 +243,9 @@
         "roadmap_q": "Bạn có một lộ trình?",
         "roadmap_a": "Có, chúng tôi làm ngay bây giờ! Tìm nó trong menu chính bên cạnh Câu hỏi thường gặp này!",
         "send_icp_q": "Tại sao tôi bị tính phí giao dịch khi gửi ICP?",
-        "send_icp_a": "Khi gửi ICP dưới dạng tin nhắn trò chuyện, quá trình chuyển được thực hiện bởi sổ cái ICP, khoản phí này phải chịu khoản phí bắt buộc là 0,0001 ICP. Phí này được ghi như một phần của giao thức IC và không được nhận bởi bất kỳ bên nào."
+        "send_icp_a": "Khi gửi ICP dưới dạng tin nhắn trò chuyện, quá trình chuyển được thực hiện bởi sổ cái ICP, khoản phí này phải chịu khoản phí bắt buộc là 0,0001 ICP. Phí này được ghi như một phần của giao thức IC và không được nhận bởi bất kỳ bên nào.",
+        "icp_account_q": "Tài khoản ICP của tôi hoạt động như thế nào?",
+        "icp_account_a": "Khi người dùng OpenChat được tạo, chúng tôi sẽ tự động tạo tài khoản ICP. Tài khoản này ban đầu sẽ trống. Bạn có thể nạp tiền vào tài khoản bằng cách chuyển ICP đến địa chỉ của nó. Nếu bạn không biết cách mua ICP, [bài viết này] (https://www.finder.com/uk/how-to-buy-internet-computer) có thể giúp bạn. Khi bạn có một số ICP trong tài khoản OpenChat của mình, bạn sẽ có thể gửi trực tiếp nó đến tài khoản của bất kỳ người dùng OpenChat nào khác thông qua một loại tin nhắn đặc biệt. Bạn cũng có thể sử dụng ICP từ tài khoản OpenChat của mình để nâng cấp tổng dung lượng lên tới 1GB. Nếu bạn muốn rút ICP từ tài khoản OpenChat ICP của mình, bạn có thể thực hiện việc này bằng cách chuyển đến phần Tài khoản trong hồ sơ người dùng của bạn và nhấp vào nút \"Quản lý\". Màn hình này cung cấp cho bạn tùy chọn rút số dư ICP trong OpenChat của bạn đến bất kỳ địa chỉ nào khác mà bạn chọn."
     },
     "roadmap": "Lộ trình",
     "here": "tại đây",

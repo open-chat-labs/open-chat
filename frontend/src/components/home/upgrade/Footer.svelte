@@ -1,9 +1,11 @@
 <script lang="ts">
     import ButtonGroup from "../../ButtonGroup.svelte";
+
+    export let align: "end" | "fill" | "center" = "end";
 </script>
 
 <div class="footer">
-    <ButtonGroup>
+    <ButtonGroup {align}>
         <slot />
     </ButtonGroup>
 </div>
