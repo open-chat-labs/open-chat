@@ -1,9 +1,14 @@
-export function validateICPInput(value: string): [string, bigint] {
-    return validateInput(value, 8);
+export function validateICPInput(value: string): ValidatedICPInput {
+    const [text, e8s] = validateInput(value, 8);
+
+    return {
+        text,
+        e8s
+    };
 }
 
 function validateInput(value: string, powTenPerWhole: number): [string, bigint] {
-    if (value.length > 0) {
+    if (value?.length > 0) {
         const parts = value.split(".");
         if (parts.length === 1) {
             const integralString = parts[0];
@@ -66,3 +71,8 @@ function format(units: bigint, minDecimals: number, powTenPerWhole: number): str
 
     return fractionalString.length > 0 ? integralString + "." + fractionalString : integralString;
 }
+
+export type ValidatedICPInput = {
+    text: string,
+    e8s: bigint
+};

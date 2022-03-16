@@ -3,6 +3,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize, ICP_TRANSFER_FEE, ICP_TRANSFER_FEE_E8S } from "../../domain/user/user";
+    import ICPInput from "./ICPInput.svelte";
     import Input from "../Input.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -22,8 +23,9 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { iconSize } from "../../stores/iconSize";
-    import { icpBalanceE8sStore, icpBalanceStore } from "../../stores/balance";
-    import { formatICPs, validateICPInput } from "../../utils/cryptoFormatter";
+    import { icpBalanceE8sStore } from "../../stores/balance";
+    import { formatICPs } from "../../utils/cryptoFormatter";
+
     const dispatch = createEventDispatcher();
 
     export let open: boolean;
@@ -35,7 +37,6 @@
     let refreshing = false;
     let error: string | undefined = undefined;
     let draftAmountE8s: bigint = BigInt(0);
-    let draftAmountString = "0";
     let message = "";
     let confirming = false;
 
@@ -47,31 +48,15 @@
     $: receiver = $userStore[receiverId];
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 
-    $: {
-        let [validatedString, amountE8s] = validateICPInput(draftAmountString);
-
-        let amountChanged = false;
-        if (amountE8s > $icpBalanceE8sStore.e8s - ICP_TRANSFER_FEE_E8S) {
-            amountE8s = $icpBalanceE8sStore.e8s - ICP_TRANSFER_FEE_E8S;
-            amountChanged = true;
-        }
-        if (amountE8s < BigInt(0)) {
-            amountE8s = BigInt(0);
-            amountChanged = true;
-        }
-        draftAmountString = amountChanged ? formatICPs(amountE8s, 0) : validatedString;
-        draftAmountE8s = amountE8s;
-    }
-
-    export function reset(amountString: string) {
+    export function reset(amountE8s: bigint) {
         refreshing = true;
         error = undefined;
-        draftAmountString = "0";
+        draftAmountE8s = BigInt(0);
         confirming = false;
         message = "";
         api.refreshAccountBalance(user.icpAccount)
-            .then((b) => {
-                draftAmountString = amountString;
+            .then((_) => {
+                draftAmountE8s = amountE8s;
                 error = undefined;
             })
             .catch((err) => {
@@ -79,10 +64,6 @@
                 rollbar.error("Unable to refresh user's account balance", err);
             })
             .finally(() => (refreshing = false));
-    }
-
-    function onInput(ev: Event) {
-        draftAmountString = (ev.target as HTMLInputElement).value;
     }
 
     function send() {
@@ -127,7 +108,7 @@
                         : $_("icpAccount.shortBalanceLabel")}
                 </div>
             </div>
-            <div class="refresh" class:refreshing class:mobile on:click={() => reset(draftAmountString)}>
+            <div class="refresh" class:refreshing class:mobile on:click={() => reset(draftAmountE8s)}>
                 <Refresh size={"1em"} color={"var(--accent)"} />
             </div>
         </span>
@@ -143,14 +124,10 @@
                 {:else}
                     <div class="transfer">
                         <Legend>{$_("icpTransfer.amount")}</Legend>
-                        <input
+                        <ICPInput
                             autofocus={true}
-                            class="amount-val"
-                            min={0}
-                            max={$icpBalanceStore - ICP_TRANSFER_FEE}
-                            type="number"
-                            value={draftAmountString}
-                            on:input={onInput} />
+                            maxAmountE8s={$icpBalanceE8sStore.e8s - ICP_TRANSFER_FEE_E8S}
+                            bind:amountE8s={draftAmountE8s} />
                     </div>
                     <div class="message">
                         <Legend>{$_("icpTransfer.message")}</Legend>
@@ -266,23 +243,6 @@
         text-decoration-color: var(--accent);
         text-underline-offset: $sp1;
         text-decoration-thickness: 2px;
-    }
-
-    .amount-val {
-        height: 40px;
-        @include font(book, normal, fs-140);
-        color: var(--input-txt);
-        background-color: var(--input-bg);
-        border: 1px solid var(--input-bd);
-        line-height: 24px;
-        width: 100%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        border-radius: $sp2;
-        text-align: right;
-        display: block;
-        outline: none;
     }
 
     .footer {
