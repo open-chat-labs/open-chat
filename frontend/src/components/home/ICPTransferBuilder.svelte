@@ -71,7 +71,7 @@
         confirming = false;
         message = "";
         api.refreshAccountBalance(user.icpAccount)
-            .then((b) => {
+            .then((_) => {
                 draftAmountString = previousDraftAmountString;
                 error = undefined;
             })
@@ -80,10 +80,6 @@
                 rollbar.error("Unable to refresh user's account balance", err);
             })
             .finally(() => (refreshing = false));
-    }
-
-    function onInput(ev: InputEvent) {
-        draftAmountString = ev.target.value;
     }
 
     function send() {
@@ -151,7 +147,7 @@
                             max={$icpBalanceStore - ICP_TRANSFER_FEE}
                             type="number"
                             value={draftAmountString}
-                            on:input={onInput} />
+                            on:input={(ev) => draftAmountString = ev.target.value} />
                     </div>
                     <div class="message">
                         <Legend>{$_("icpTransfer.message")}</Legend>

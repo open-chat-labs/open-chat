@@ -6,7 +6,7 @@ export function validateInput(value: string, powTenPerWhole: number): [string, b
             const integral = Number.parseInt(integralString);
 
             if (Number.isSafeInteger(integral)) {
-                return [integralString, BigInt(integral) * BigInt(Math.pow(10, powTenPerWhole))]
+                return [integralString, BigInt(integral) * BigInt(Math.pow(10, powTenPerWhole))];
             }
         }
 
@@ -24,7 +24,8 @@ export function validateInput(value: string, powTenPerWhole: number): [string, b
             if (Number.isSafeInteger(integral) && Number.isSafeInteger(fractional)) {
                 const total =
                     BigInt(integral) * BigInt(Math.pow(10, powTenPerWhole)) +
-                    BigInt(fractional) * BigInt(Math.pow(10, powTenPerWhole - fractionalString.length));
+                    BigInt(fractional) *
+                        BigInt(Math.pow(10, powTenPerWhole - fractionalString.length));
 
                 return [integralString + "." + fractionalString, total];
             }
@@ -61,5 +62,3 @@ function format(units: bigint, minDecimals: number, powTenPerWhole: number): str
 
     return fractionalString.length > 0 ? integralString + "." + fractionalString : integralString;
 }
-
-
