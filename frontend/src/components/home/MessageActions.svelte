@@ -22,8 +22,8 @@
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
 
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall && $chat.kind === "direct_chat";
-    $: showActions = !mobile || (drawOpen && messageAction === undefined);
+    $: useDrawer = $screenWidth === ScreenWidth.ExtraSmall && $chat.kind === "direct_chat";
+    $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
 
     export function close() {
         drawOpen = false;
@@ -62,7 +62,7 @@
     }
 </script>
 
-{#if mobile}
+{#if useDrawer}
     <div class="open-draw" on:click={toggleDraw}>
         {#if drawOpen}
             <HoverIcon>
@@ -76,7 +76,7 @@
     </div>
 {/if}
 
-<div class:visible={showActions} class="message-actions" class:mobile>
+<div class:visible={showActions} class="message-actions" class:useDrawer>
     <div class="emoji" on:click={toggleEmojiPicker}>
         {#if messageAction === "emoji"}
             <HoverIcon>
