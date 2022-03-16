@@ -2,7 +2,7 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize, ICP_TRANSFER_FEE } from "../../domain/user/user";
+    import { AvatarSize, ICP_TRANSFER_FEE, ICP_TRANSFER_FEE_E8S } from "../../domain/user/user";
     import Input from "../Input.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -14,7 +14,6 @@
     import { createEventDispatcher, getContext } from "svelte";
     import { apiKey } from "../../services/serviceContainer";
     import type { ServiceContainer } from "../../services/serviceContainer";
-    import { E8S_PER_ICP } from "../../domain/user/user";
     import type { CreatedUser } from "../../domain/user/user";
     import { now } from "../../stores/time";
     import { userStore } from "../../stores/user";
@@ -23,7 +22,8 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { iconSize } from "../../stores/iconSize";
-    import { icpBalanceStore } from "../../stores/balance";
+    import { icpBalanceE8sStore, icpBalanceStore } from "../../stores/balance";
+    import { format, validateInput } from "../../utils/cryptoFormatter";
     const dispatch = createEventDispatcher();
 
     export let open: boolean;
@@ -34,36 +34,45 @@
 
     let refreshing = false;
     let error: string | undefined = undefined;
-    let draftAmount = 0;
+    let draftAmountE8s: bigint = BigInt(0);
+    let draftAmountString = "0";
     let message = "";
     let confirming = false;
 
-    $: remainingBalance =
-        draftAmount > 0
-            ? Math.max(0, $icpBalanceStore - draftAmount - ICP_TRANSFER_FEE)
-            : $icpBalanceStore;
-    $: valid = error === undefined && draftAmount > 0;
+    $: remainingBalanceE8s =
+        draftAmountE8s > BigInt(0)
+            ? $icpBalanceE8sStore.e8s - draftAmountE8s - ICP_TRANSFER_FEE_E8S
+            : $icpBalanceE8sStore.e8s;
+    $: valid = error === undefined && draftAmountE8s > BigInt(0);
     $: receiver = $userStore[receiverId];
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 
     $: {
-        if (draftAmount > $icpBalanceStore - ICP_TRANSFER_FEE) {
-            draftAmount = $icpBalanceStore - ICP_TRANSFER_FEE;
+        let [validatedString, amountE8s] = validateInput(draftAmountString, 8);
+
+        let amountChanged = false;
+        if (amountE8s > $icpBalanceE8sStore.e8s - ICP_TRANSFER_FEE_E8S) {
+            amountE8s = $icpBalanceE8sStore.e8s - ICP_TRANSFER_FEE_E8S;
+            amountChanged = true;
         }
-        if (draftAmount < 0) {
-            draftAmount = 0;
+        if (amountE8s < BigInt(0)) {
+            amountE8s = BigInt(0);
+            amountChanged = true;
         }
+        draftAmountString = amountChanged ? format(amountE8s, 0, 8) : validatedString;
+        draftAmountE8s = amountE8s;
     }
 
-    export function reset(amount: number) {
+    export function reset() {
         refreshing = true;
         error = undefined;
-        draftAmount = 0;
+        const previousDraftAmountString = draftAmountString;
+        draftAmountString = "0";
         confirming = false;
         message = "";
         api.refreshAccountBalance(user.icpAccount)
-            .then((_) => {
-                draftAmount = amount;
+            .then((b) => {
+                draftAmountString = previousDraftAmountString;
                 error = undefined;
             })
             .catch((err) => {
@@ -71,6 +80,10 @@
                 rollbar.error("Unable to refresh user's account balance", err);
             })
             .finally(() => (refreshing = false));
+    }
+
+    function onInput(ev: InputEvent) {
+        draftAmountString = ev.target.value;
     }
 
     function send() {
@@ -85,7 +98,7 @@
                 transferKind: "icp_transfer",
                 kind: "pending_icp_transfer",
                 recipient: receiverId,
-                amountE8s: BigInt(draftAmount * E8S_PER_ICP),
+                amountE8s: draftAmountE8s,
             },
         };
         dispatch("sendTransfer", content);
@@ -108,14 +121,14 @@
                 </div>
             </div>
             <div class="balance">
-                <div class="amount">{remainingBalance.toFixed(4)}</div>
+                <div class="amount">{format(remainingBalanceE8s, 4, 8)}</div>
                 <div class="label">
-                    {draftAmount > 0
+                    {draftAmountE8s > BigInt(0)
                         ? $_("icpAccount.shortRemainingBalanceLabel")
                         : $_("icpAccount.shortBalanceLabel")}
                 </div>
             </div>
-            <div class="refresh" class:refreshing class:mobile on:click={() => reset(draftAmount)}>
+            <div class="refresh" class:refreshing class:mobile on:click={reset}>
                 <Refresh size={"1em"} color={"var(--accent)"} />
             </div>
         </span>
@@ -137,7 +150,8 @@
                             min={0}
                             max={$icpBalanceStore - ICP_TRANSFER_FEE}
                             type="number"
-                            bind:value={draftAmount} />
+                            value={draftAmountString}
+                            on:input={onInput} />
                     </div>
                     <div class="message">
                         <Legend>{$_("icpTransfer.message")}</Legend>
