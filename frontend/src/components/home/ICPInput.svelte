@@ -13,28 +13,29 @@
 
     $: {
         if (inputElement !== undefined) {
-            inputElement.value = formatICPs(amountE8s, 0);
+            const e8s = validateICPInput(inputElement.value).e8s;
+            if (e8s !== amountE8s) {
+                inputElement.value = formatICPs(amountE8s, 0);
+            }
         }
     }
 
     function onInput(ev: Event) {
         const inputValue = (ev.target as HTMLInputElement).value;
 
-        let { text, e8s } = validateICPInput(inputValue);
+        let { replacementText, e8s } = validateICPInput(inputValue);
 
         if (e8s > maxAmountE8s) {
             e8s = maxAmountE8s;
-            text = formatICPs(amountE8s, 0);
+            inputElement.value = formatICPs(amountE8s, 0);
         } else if (e8s < BigInt(0)) {
             e8s = BigInt(0);
-            text = "0";
-        } else {
-            e8s = e8s;
-            text = text;
+            inputElement.value = "0";
+        } else if (replacementText !== undefined) {
+            inputElement.value = replacementText;
         }
 
         amountE8s = e8s;
-        inputElement.value = text;
     }
 </script>
 

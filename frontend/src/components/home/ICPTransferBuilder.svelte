@@ -19,12 +19,12 @@
     import { now } from "../../stores/time";
     import { userStore } from "../../stores/user";
     import { currentUserKey } from "../../fsm/home.controller";
+    import { formatICPs } from "../../utils/cryptoFormatter";
     import { rollbar } from "../../utils/logging";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { iconSize } from "../../stores/iconSize";
     import { icpBalanceE8sStore } from "../../stores/balance";
-    import { formatICPs } from "../../utils/cryptoFormatter";
 
     const dispatch = createEventDispatcher();
 

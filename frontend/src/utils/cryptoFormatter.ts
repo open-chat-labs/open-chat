@@ -1,13 +1,13 @@
 export function validateICPInput(value: string): ValidatedICPInput {
-    const [text, e8s] = validateInput(value, 8);
+    const [replacementText, e8s] = validateInput(value, 8);
 
     return {
-        text,
+        replacementText,
         e8s,
     };
 }
 
-function validateInput(value: string, powTenPerWhole: number): [string, bigint] {
+function validateInput(value: string, powTenPerWhole: number): [string | undefined, bigint] {
     if (value?.length > 0) {
         const parts = value.split(".");
         if (parts.length === 1) {
@@ -15,7 +15,7 @@ function validateInput(value: string, powTenPerWhole: number): [string, bigint] 
             const integral = Number.parseInt(integralString);
 
             if (Number.isSafeInteger(integral)) {
-                return [integralString, BigInt(integral) * BigInt(Math.pow(10, powTenPerWhole))];
+                return [undefined, BigInt(integral) * BigInt(Math.pow(10, powTenPerWhole))];
             }
         }
 
@@ -24,9 +24,11 @@ function validateInput(value: string, powTenPerWhole: number): [string, bigint] 
             const integral = Number.parseInt(integralString);
 
             let fractionalString = parts[1];
+            let replaceText = false;
             // Trim the string if it exceeds the max number of decimals
             if (fractionalString.length > powTenPerWhole) {
                 fractionalString = fractionalString.substr(0, powTenPerWhole);
+                replaceText = true;
             }
             const fractional = Number.parseInt(fractionalString);
 
@@ -36,7 +38,7 @@ function validateInput(value: string, powTenPerWhole: number): [string, bigint] 
                     BigInt(fractional) *
                         BigInt(Math.pow(10, powTenPerWhole - fractionalString.length));
 
-                return [integralString + "." + fractionalString, total];
+                return [replaceText ? integralString + "." + fractionalString : undefined, total];
             }
         }
     }
@@ -73,6 +75,6 @@ function format(units: bigint, minDecimals: number, powTenPerWhole: number): str
 }
 
 export type ValidatedICPInput = {
-    text: string;
+    replacementText: string | undefined;
     e8s: bigint;
 };
