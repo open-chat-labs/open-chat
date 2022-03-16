@@ -3,7 +3,7 @@ export function validateICPInput(value: string): ValidatedICPInput {
 
     return {
         text,
-        e8s
+        e8s,
     };
 }
 
@@ -73,6 +73,6 @@ function format(units: bigint, minDecimals: number, powTenPerWhole: number): str
 }
 
 export type ValidatedICPInput = {
-    text: string,
-    e8s: bigint
+    text: string;
+    e8s: bigint;
 };
