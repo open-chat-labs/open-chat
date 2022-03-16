@@ -23,7 +23,7 @@
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { iconSize } from "../../stores/iconSize";
     import { icpBalanceE8sStore, icpBalanceStore } from "../../stores/balance";
-    import { format, validateInput } from "../../utils/cryptoFormatter";
+    import { formatICPs, validateInput } from "../../utils/cryptoFormatter";
     const dispatch = createEventDispatcher();
 
     export let open: boolean;
@@ -59,7 +59,7 @@
             amountE8s = BigInt(0);
             amountChanged = true;
         }
-        draftAmountString = amountChanged ? format(amountE8s, 0, 8) : validatedString;
+        draftAmountString = amountChanged ? formatICPs(amountE8s, 0) : validatedString;
         draftAmountE8s = amountE8s;
     }
 
@@ -121,7 +121,7 @@
                 </div>
             </div>
             <div class="balance">
-                <div class="amount">{format(remainingBalanceE8s, 4, 8)}</div>
+                <div class="amount">{formatICPs(remainingBalanceE8s, 4)}</div>
                 <div class="label">
                     {draftAmountE8s > BigInt(0)
                         ? $_("icpAccount.shortRemainingBalanceLabel")

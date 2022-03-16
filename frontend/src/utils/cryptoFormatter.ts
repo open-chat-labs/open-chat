@@ -35,7 +35,11 @@ export function validateInput(value: string, powTenPerWhole: number): [string, b
     return ["0", BigInt(0)];
 }
 
-export function format(units: bigint, minDecimals: number, powTenPerWhole: number): string {
+export function formatICPs(e8s: bigint, minDecimals: number): string {
+    return format(e8s, minDecimals, 8);
+}
+
+function format(units: bigint, minDecimals: number, powTenPerWhole: number): string {
     const unitsPerWhole = BigInt(Math.pow(10, powTenPerWhole));
     const integral = units / unitsPerWhole;
     const integralString = integral.toString();
