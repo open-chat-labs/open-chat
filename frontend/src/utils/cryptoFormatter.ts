@@ -8,7 +8,8 @@ export function validateICPInput(value: string): ValidatedICPInput {
 }
 
 function validateInput(value: string, powTenPerWhole: number): [string | undefined, bigint] {
-    if (value?.length > 0) {
+    value = value.trim();
+    if (value?.length > 0 && value[0] !== "-") {
         const parts = value.split(".");
         if (parts.length === 1) {
             const integralString = parts[0];

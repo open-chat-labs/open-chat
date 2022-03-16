@@ -26,6 +26,11 @@ describe("crypto formatter", () => {
             const validated = validateICPInput("abc");
             expect(validated).toEqual({ replacementText: "", e8s: BigInt(0) });
         });
+
+        test("negative input", () => {
+            const validated = validateICPInput("-123");
+            expect(validated).toEqual({ replacementText: "", e8s: BigInt(0) });
+        });
     });
 
     describe("format", () => {
