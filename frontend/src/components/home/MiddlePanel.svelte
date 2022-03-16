@@ -25,12 +25,11 @@
                 {joining}
                 on:cancelRecommendations
                 on:joinGroup
-                on:recommend
                 on:dismissRecommendation
                 groups={recommendedGroups.data} />
         {:else}
             <div class="no-chat" in:fade>
-                <NoChatSelected on:recommend on:newchat />
+                <NoChatSelected on:newchat />
             </div>
         {/if}
     {:else}

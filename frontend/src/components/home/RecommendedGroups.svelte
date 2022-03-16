@@ -43,7 +43,7 @@
     }
 
     function refresh() {
-        dispatch("recommend");
+        push("/recommended");
     }
 </script>
 

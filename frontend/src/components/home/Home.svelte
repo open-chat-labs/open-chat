@@ -11,7 +11,7 @@
     import { createEventDispatcher, onDestroy, onMount, setContext, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    import { push, replace, querystring } from "svelte-spa-router";
+    import { push, replace, querystring, location, pop } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
     import RemovingGroup from "./RemovingGroup.svelte";
@@ -98,39 +98,50 @@
     });
 
     $: {
-        // wait until we have loaded the chats
         if (controller.initialised) {
-            // if we have a chatid in the params then we need to select that chat
-            if (params.chatId && params.chatId !== $selectedChat?.chatId?.toString()) {
-                // if the chat in the param is not known to us then we need to attempt to load the
-                // chat on the assumption that it is a public group chat that we want to preview
-                // if we have an unknown chat in the param, then redirect to home
-                const chatId = params.chatId;
-                const messageIndex =
-                    params.messageIndex == null ? undefined : Number(params.messageIndex);
+            // wait until we have loaded the chats
+            recommendedGroups = { kind: "idle" };
 
-                if ($chatSummaries[chatId] === undefined) {
-                    if (qs.get("type") === "direct") {
-                        controller.createDirectChat(chatId);
+            if ($location === "/recommended") {
+                console.log("showing recommendations");
+                recommendedGroups = { kind: "loading" };
+
+                api.getRecommendedGroups()
+                    .then((resp) => (recommendedGroups = { kind: "success", data: resp }))
+                    .catch((err) => (recommendedGroups = { kind: "error", error: err.toString() }));
+            } else {
+                // if we have a chatid in the params then we need to select that chat
+                if (params.chatId && params.chatId !== $selectedChat?.chatId?.toString()) {
+                    // if the chat in the param is not known to us then we need to attempt to load the
+                    // chat on the assumption that it is a public group chat that we want to preview
+                    // if we have an unknown chat in the param, then redirect to home
+                    const chatId = params.chatId;
+                    const messageIndex =
+                        params.messageIndex == null ? undefined : Number(params.messageIndex);
+
+                    if ($chatSummaries[chatId] === undefined) {
+                        if (qs.get("type") === "direct") {
+                            controller.createDirectChat(chatId);
+                        } else {
+                            recommendedGroups = { kind: "loading" };
+                            controller.previewChat(chatId).then((canPreview) => {
+                                if (canPreview) {
+                                    controller.selectChat(chatId, messageIndex);
+                                    recommendedGroups = { kind: "idle" };
+                                } else {
+                                    replace("/");
+                                }
+                            });
+                        }
                     } else {
-                        recommendedGroups = { kind: "loading" };
-                        controller.previewChat(chatId).then((canPreview) => {
-                            if (canPreview) {
-                                controller.selectChat(chatId, messageIndex);
-                                recommendedGroups = { kind: "idle" };
-                            } else {
-                                replace("/");
-                            }
-                        });
+                        controller.selectChat(chatId, messageIndex);
                     }
-                } else {
-                    controller.selectChat(chatId, messageIndex);
                 }
-            }
 
-            // if there is no chatId param, tell the machine to clear the selection
-            if (params.chatId === null && $selectedChat !== undefined) {
-                controller.clearSelectedChat();
+                // if there is no chatId param, tell the machine to clear the selection
+                if (params.chatId === null && $selectedChat !== undefined) {
+                    controller.clearSelectedChat();
+                }
             }
         }
     }
@@ -144,7 +155,7 @@
     }
 
     function cancelRecommendations() {
-        recommendedGroups = { kind: "idle" };
+        pop();
     }
 
     function dismissRecommendation(ev: CustomEvent<string>) {
@@ -318,14 +329,6 @@
         });
     }
 
-    function whatsHot() {
-        recommendedGroups = { kind: "loading" };
-        controller.clearSelectedChat();
-        api.getRecommendedGroups()
-            .then((resp) => (recommendedGroups = { kind: "success", data: resp }))
-            .catch((err) => (recommendedGroups = { kind: "error", error: err.toString() }));
-    }
-
     function upgrade(ev: CustomEvent<"explain" | "icp" | "sms">) {
         upgradeStorage = ev.detail;
     }
@@ -371,6 +374,8 @@
         ($screenWidth === ScreenWidth.ExtraSmall &&
             params.chatId == null &&
             recommendedGroups.kind !== "idle");
+
+    $: console.log("ShowLeft: ", showLeft, " ShowMiddle: ", showMiddle);
 </script>
 
 {#if controller.user}
@@ -390,7 +395,6 @@
                 on:showRoadmap={() => (modal = ModalType.Roadmap)}
                 on:searchEntered={performSearch}
                 on:chatWith={chatWith}
-                on:whatsHot={whatsHot}
                 on:logout={logout}
                 on:upgrade={upgrade}
                 on:deleteDirectChat={deleteDirectChat}
@@ -417,7 +421,6 @@
                 on:joinGroup={joinGroup}
                 on:cancelPreview={cancelPreview}
                 on:cancelRecommendations={cancelRecommendations}
-                on:recommend={whatsHot}
                 on:dismissRecommendation={dismissRecommendation}
                 on:upgrade={upgrade}
                 on:showPinned={showPinned} />

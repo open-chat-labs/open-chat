@@ -23,6 +23,7 @@
     import { createEventDispatcher } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
+    import { push } from "svelte-spa-router";
 
     const dispatch = createEventDispatcher();
 
@@ -60,7 +61,7 @@
                             slot="icon" />
                         <span slot="text">{$_("newGroup")}</span>
                     </MenuItem>
-                    <MenuItem on:click={() => dispatch("whatsHot")}>
+                    <MenuItem on:click={() => push("/recommended")}>
                         <span class="flame" slot="icon">🔥</span>
                         <span slot="text">{$_("whatsHot")}</span>
                     </MenuItem>

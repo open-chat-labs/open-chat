@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { pop, push, querystring } from "svelte-spa-router";
     import Panel from "../Panel.svelte";
     import ChatList from "./ChatList.svelte";
     import NewGroup from "./addgroup/AddGroup.controller.svelte";
@@ -13,6 +14,8 @@
     import { nullUser } from "../../domain/user/user.utils";
     import { unsubscribeNotifications } from "../../utils/notifications";
     import type { GroupChatSummary } from "domain/chat/chat";
+    import { addQueryStringParam } from "../../utils/urls";
+    import { tick } from "svelte";
 
     export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -29,11 +32,21 @@
     $: userId = controller.user!.userId;
     $: user = controller.user ? $userStore[controller.user?.userId] : nullUser("unknown");
 
+    $: qs = new URLSearchParams($querystring);
+
+    $: {
+        if (qs.has("profile")) {
+            view = "showing-profile";
+            tick().then(() => profileComponent.reset());
+        } else {
+            view = "showing-chat-list";
+        }
+    }
+
     let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-chat-list";
 
-    export function showProfile() {
-        view = "showing-profile";
-        profileComponent.reset();
+    function showProfile() {
+        push(addQueryStringParam(qs, "profile", "true"));
     }
 
     function groupCreated(ev: CustomEvent<GroupChatSummary>) {
@@ -65,7 +78,6 @@
             on:showAbout
             on:userAvatarSelected={userAvatarSelected}
             on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
-            on:whatsHot
             on:newGroup={() => (view = "adding-group")}
             on:profile={showProfile}
             on:logout
@@ -87,7 +99,7 @@
             on:showFaqQuestion
             {user}
             on:userAvatarSelected={userAvatarSelected}
-            on:closeProfile={() => (view = "showing-chat-list")} />
+            on:closeProfile={pop} />
     </div>
 </Panel>
 

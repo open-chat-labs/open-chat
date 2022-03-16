@@ -121,7 +121,6 @@
     <CurrentUser
         on:userAvatarSelected
         on:logout
-        on:whatsHot
         on:showAbout
         on:showFaq
         on:showRoadmap
