@@ -9,7 +9,11 @@
 
     let inputElement: HTMLInputElement;
 
-    onMount(() => inputElement.value = formatICPs(amountE8s, 0));
+    onMount(() => {
+        if (amountE8s > BigInt(0)) {
+            inputElement.value = formatICPs(amountE8s, 0);
+        }
+    });
 
     $: {
         if (inputElement !== undefined) {
@@ -28,9 +32,6 @@
         if (e8s > maxAmountE8s) {
             e8s = maxAmountE8s;
             inputElement.value = formatICPs(amountE8s, 0);
-        } else if (e8s < BigInt(0)) {
-            e8s = BigInt(0);
-            inputElement.value = "0";
         } else if (replacementText !== undefined) {
             inputElement.value = replacementText;
         }
@@ -46,6 +47,7 @@
     max={Number(maxAmountE8s) / E8S_PER_ICP}
     type="number"
     bind:this={inputElement}
+    placeholder="0"
     on:input={onInput} />
 
 <style type="text/scss">

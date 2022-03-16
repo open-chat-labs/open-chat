@@ -43,8 +43,7 @@ function validateInput(value: string, powTenPerWhole: number): [string | undefin
         }
     }
 
-    // If we reach here then the input is invalid
-    return ["0", BigInt(0)];
+    return ["", BigInt(0)];
 }
 
 export function formatICPs(e8s: bigint, minDecimals: number): string {
