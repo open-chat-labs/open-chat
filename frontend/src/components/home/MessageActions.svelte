@@ -110,7 +110,7 @@
         align-items: center;
         transition: top 200ms ease-in-out;
 
-        &.mobile {
+        &.userDraw {
             position: absolute;
             flex-direction: column;
             top: 0px;
