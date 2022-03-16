@@ -110,7 +110,7 @@
         align-items: center;
         transition: top 200ms ease-in-out;
 
-        &.useDraw {
+        &.useDrawer {
             position: absolute;
             flex-direction: column;
             top: 0px;
