@@ -162,7 +162,7 @@
                 {$_("howToBuyICP")}
             </a>
             <ButtonGroup>
-                <Button small={true} secondary={true} on:click={() => (open = false)}
+                <Button tiny={true} secondary={true} on:click={() => (open = false)}
                     >{$_("close")}</Button>
             </ButtonGroup>
         </span>

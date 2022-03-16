@@ -158,17 +158,19 @@
                 {/if}
             </div>
         </form>
-        <span class="footer" slot="footer">
-            <a
-                class="how-to"
-                href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
-                target="_blank">
-                {$_("howToBuyICP")}
-            </a>
+        <span class="footer" slot="footer" class:mobile>
+            {#if !mobile}
+                <a
+                    class="how-to"
+                    href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
+                    target="_blank">
+                    {$_("howToBuyICP")}
+                </a>
+            {/if}
             <ButtonGroup>
-                <Button disabled={!valid} small={true} on:click={send}
+                <Button disabled={!valid} tiny={true} on:click={send}
                     >{confirming ? $_("icpTransfer.confirm") : $_("icpTransfer.send")}</Button>
-                <Button small={true} secondary={true} on:click={() => (open = false)}
+                <Button tiny={true} secondary={true} on:click={() => (open = false)}
                     >{$_("cancel")}</Button>
             </ButtonGroup>
         </span>
@@ -275,6 +277,10 @@
         display: flex;
         align-items: flex-end;
         justify-content: space-between;
+
+        &.mobile {
+            justify-content: center;
+        }
     }
     .fee {
         @include font(light, normal, fs-60);

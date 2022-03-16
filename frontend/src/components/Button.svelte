@@ -4,6 +4,7 @@
     export let disabled: boolean = false;
     export let secondary: boolean = false;
     export let small: boolean = false;
+    export let tiny: boolean = false;
     export let fill: boolean = false;
 </script>
 
@@ -13,6 +14,7 @@
     class:loading
     class:disabled
     class:small
+    class:tiny
     {disabled}
     class:secondary
     class:fill>
@@ -36,6 +38,12 @@
         &.small {
             padding: $sp2 $sp5;
             height: 25px;
+            min-width: 100px;
+        }
+
+        &.tiny {
+            padding: $sp2 $sp5;
+            min-height: $sp6;
             min-width: 100px;
         }
 
