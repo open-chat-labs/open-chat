@@ -39,7 +39,10 @@ import type { IDBPDatabase } from "idb";
 import { updateArgsFromChats } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
 import type { SetBioResponse, UserSummary } from "../../domain/user/user";
-import type { SearchAllMessagesResponse } from "../../domain/search/search";
+import type {
+    SearchDirectChatResponse,
+    SearchAllMessagesResponse,
+} from "../../domain/search/search";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 
 /**
@@ -196,6 +199,14 @@ export class CachingUserClient implements IUserClient {
 
     searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse> {
         return this.client.searchAllMessages(searchTerm, maxResults);
+    }
+
+    searchDirectChat(
+        userId: string,
+        searchTerm: string,
+        maxResults: number
+    ): Promise<SearchDirectChatResponse> {
+        return this.client.searchDirectChat(userId, searchTerm, maxResults);
     }
 
     toggleMuteNotifications(

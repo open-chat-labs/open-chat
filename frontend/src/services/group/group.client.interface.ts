@@ -25,6 +25,7 @@ import type {
     RegisterPollVoteResponse,
     GroupPermissions,
 } from "../../domain/chat/chat";
+import type { SearchGroupChatResponse } from "../../domain/search/search";
 
 export interface IGroupClient {
     chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>>;
@@ -74,4 +75,5 @@ export interface IGroupClient {
         answerIdx: number,
         voteType: "register" | "delete"
     ): Promise<RegisterPollVoteResponse>;
+    searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse>;
 }

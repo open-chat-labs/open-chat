@@ -40,7 +40,8 @@ import {
     leaveGroupResponse,
     markReadResponse,
     recommendedGroupsResponse,
-    searchAllMessageResponse,
+    searchDirectChatResponse,
+    searchAllMessagesResponse,
     sendMessageResponse,
     setAvatarResponse,
     setBioResponse,
@@ -68,7 +69,10 @@ import {
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
 import type { SetBioResponse, UserSummary } from "../../domain/user/user";
-import type { SearchAllMessagesResponse } from "../../domain/search/search";
+import type {
+    SearchAllMessagesResponse,
+    SearchDirectChatResponse,
+} from "../../domain/search/search";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
@@ -391,7 +395,22 @@ export class UserClient extends CandidService implements IUserClient {
                 search_term: searchTerm,
                 max_results: maxResults,
             }),
-            searchAllMessageResponse
+            searchAllMessagesResponse
+        );
+    }
+
+    searchDirectChat(
+        userId: string,
+        searchTerm: string,
+        maxResults: number
+    ): Promise<SearchDirectChatResponse> {
+        return this.handleResponse(
+            this.userService.search_messages({
+                user_id: Principal.fromText(userId),
+                search_term: searchTerm,
+                max_results: maxResults,
+            }),
+            searchDirectChatResponse
         );
     }
 
