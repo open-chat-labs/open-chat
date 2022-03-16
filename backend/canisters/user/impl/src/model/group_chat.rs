@@ -58,6 +58,7 @@ impl From<&GroupChat> for GroupChatSummaryUpdates {
             wasm_version: None,
             owner_id: None,
             permissions: None,
+            affected_events: Vec::new(),
         }
     }
 }

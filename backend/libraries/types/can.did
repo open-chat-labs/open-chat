@@ -128,6 +128,7 @@ type DirectChatSummaryUpdates =
         read_by_me: opt vec MessageIndexRange;
         read_by_them: opt vec MessageIndexRange;
         notifications_muted: opt bool;
+        affected_events: vec EventIndex;
     };
 
 type DirectMessageNotification =
@@ -238,6 +239,7 @@ type GroupChatSummaryUpdates =
         wasm_version: opt Version;
         owner_id: opt UserId;
         permissions: opt GroupPermissions;
+        affected_events: vec EventIndex;
     };
 
 type GroupDescriptionChanged =
