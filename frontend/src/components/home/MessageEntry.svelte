@@ -9,6 +9,7 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import { iconSize } from "../../stores/iconSize";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { validateICPInput } from "../../utils/cryptoFormatter";
     import { audioRecordingMimeType } from "../../utils/media";
     import MentionPicker from "./MentionPicker.svelte";
     import { userStore } from "stores/user";
@@ -226,7 +227,7 @@
         if ($chat.kind === "direct_chat") {
             const icpMatch = txt.match(/^!icp *(\d*\.?\d*)$/);
             if (icpMatch && icpMatch[1] !== undefined) {
-                dispatch("icpTransfer", Number(icpMatch[1]));
+                dispatch("icpTransfer", validateICPInput(icpMatch[1])[0]);
                 return true;
             }
         }

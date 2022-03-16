@@ -1,4 +1,8 @@
-export function validateInput(value: string, powTenPerWhole: number): [string, bigint] {
+export function validateICPInput(value: string): [string, bigint] {
+    return validateInput(value, 8);
+}
+
+function validateInput(value: string, powTenPerWhole: number): [string, bigint] {
     if (value.length > 0) {
         const parts = value.split(".");
         if (parts.length === 1) {

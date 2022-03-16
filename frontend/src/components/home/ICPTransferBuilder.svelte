@@ -23,7 +23,7 @@
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { iconSize } from "../../stores/iconSize";
     import { icpBalanceE8sStore, icpBalanceStore } from "../../stores/balance";
-    import { formatICPs, validateInput } from "../../utils/cryptoFormatter";
+    import { formatICPs, validateICPInput } from "../../utils/cryptoFormatter";
     const dispatch = createEventDispatcher();
 
     export let open: boolean;
@@ -48,7 +48,7 @@
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 
     $: {
-        let [validatedString, amountE8s] = validateInput(draftAmountString, 8);
+        let [validatedString, amountE8s] = validateICPInput(draftAmountString);
 
         let amountChanged = false;
         if (amountE8s > $icpBalanceE8sStore.e8s - ICP_TRANSFER_FEE_E8S) {
@@ -63,16 +63,15 @@
         draftAmountE8s = amountE8s;
     }
 
-    export function reset() {
+    export function reset(amountString: string) {
         refreshing = true;
         error = undefined;
-        const previousDraftAmountString = draftAmountString;
         draftAmountString = "0";
         confirming = false;
         message = "";
         api.refreshAccountBalance(user.icpAccount)
-            .then((_) => {
-                draftAmountString = previousDraftAmountString;
+            .then((b) => {
+                draftAmountString = amountString;
                 error = undefined;
             })
             .catch((err) => {
@@ -80,6 +79,10 @@
                 rollbar.error("Unable to refresh user's account balance", err);
             })
             .finally(() => (refreshing = false));
+    }
+
+    function onInput(ev: Event) {
+        draftAmountString = (ev.target as HTMLInputElement).value;
     }
 
     function send() {
@@ -124,7 +127,7 @@
                         : $_("icpAccount.shortBalanceLabel")}
                 </div>
             </div>
-            <div class="refresh" class:refreshing class:mobile on:click={reset}>
+            <div class="refresh" class:refreshing class:mobile on:click={() => reset(draftAmountString)}>
                 <Refresh size={"1em"} color={"var(--accent)"} />
             </div>
         </span>
@@ -147,7 +150,7 @@
                             max={$icpBalanceStore - ICP_TRANSFER_FEE}
                             type="number"
                             value={draftAmountString}
-                            on:input={(ev) => draftAmountString = ev.target.value} />
+                            on:input={onInput} />
                     </div>
                     <div class="message">
                         <Legend>{$_("icpTransfer.message")}</Legend>

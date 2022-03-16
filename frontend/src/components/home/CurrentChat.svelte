@@ -119,7 +119,7 @@
         creatingPoll = true;
     }
 
-    function icpTransfer(ev: CustomEvent<number>) {
+    function icpTransfer(ev: CustomEvent<string>) {
         if (icpTransferBuilder !== undefined) {
             icpTransferBuilder.reset(ev.detail);
         }
