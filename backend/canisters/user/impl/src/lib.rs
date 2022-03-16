@@ -130,10 +130,6 @@ struct Data {
     pub bio: String,
 }
 
-fn callback_canister_id() -> CanisterId {
-    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
-}
-
 impl Data {
     pub fn new(
         owner: Principal,

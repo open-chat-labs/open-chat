@@ -137,10 +137,6 @@ struct Data {
     pub challenges: Challenges,
 }
 
-fn callback_canister_id() -> CanisterId {
-    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
-}
-
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
