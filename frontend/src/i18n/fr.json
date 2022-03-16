@@ -247,7 +247,9 @@
         "roadmap_q": "Avez-vous une feuille de route?",
         "roadmap_a": "Oui, nous le faisons maintenant ! Trouvez-le dans le menu principal à côté de cette FAQ !",
         "send_icp_q": "Pourquoi suis-je facturé des frais de transaction lors de l'envoi d'ICP ?",
-        "send_icp_a": "Lors de l'envoi d'ICP sous forme de message de chat, le transfert est effectué par le registre ICP qui entraîne des frais obligatoires de 0,0001 ICP. Ces frais sont brûlés dans le cadre du protocole IC et ne sont perçus par aucune partie."
+        "send_icp_a": "Lors de l'envoi d'ICP sous forme de message de chat, le transfert est effectué par le registre ICP qui entraîne des frais obligatoires de 0,0001 ICP. Ces frais sont brûlés dans le cadre du protocole IC et ne sont perçus par aucune partie.",
+        "icp_account_q": "Comment fonctionne mon compte ICP ?",
+        "icp_account_a": "Lorsqu'un utilisateur OpenChat est créé, nous créons automatiquement un compte ICP. Ce compte sera initialement vide. Vous pouvez recharger le compte en transférant ICP à son adresse. Si vous ne savez pas comment acheter ICP, [cet article](https://www.finder.com/uk/how-to-buy-internet-computer) peut vous aider. Une fois que vous avez un ICP dans votre compte OpenChat, vous pourrez l'envoyer directement au compte de tout autre utilisateur OpenChat via un type de message spécial. Vous pouvez également utiliser l'ICP de votre compte OpenChat pour mettre à niveau votre stockage jusqu'à 1 Go au total. Si vous souhaitez retirer l'ICP de votre compte OpenChat ICP, vous pouvez le faire en vous rendant dans la section Compte de votre profil d'utilisateur et en cliquant sur le bouton \"Gérer\". Cet écran vous donne la possibilité de retirer votre solde OpenChat ICP à toute autre adresse de votre choix."
     },
     "roadmap": "Feuille de route",
     "here": "ici",
