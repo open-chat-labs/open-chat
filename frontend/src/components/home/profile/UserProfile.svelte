@@ -15,7 +15,7 @@
     import TextArea from "../../TextArea.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import { notificationStatus } from "../../../stores/notifications";
-    import { formatICPs } from "../../../utils/cryptoFormatter";
+    import { formatICP } from "../../../utils/cryptoFormatter";
     import { askForNotificationPermission, supported as notificationsSupported } from "../../../utils/notifications";
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
@@ -341,7 +341,7 @@
                 <Legend>{$_("icpAccount.balanceLabel")}</Legend>
                 <div class="icp-balance">
                     <div class="icp-balance-value">
-                        {formatICPs($icpBalanceE8sStore.e8s, 4)}
+                        {formatICP($icpBalanceE8sStore.e8s, 4)}
                     </div>
                     <Button on:click={showManageIcp} fill={true} small={true}
                         >{$_("icpAccount.manage")}</Button>

@@ -19,7 +19,7 @@
     import { now } from "../../stores/time";
     import { userStore } from "../../stores/user";
     import { currentUserKey } from "../../fsm/home.controller";
-    import { formatICPs } from "../../utils/cryptoFormatter";
+    import { formatICP } from "../../utils/cryptoFormatter";
     import { rollbar } from "../../utils/logging";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
@@ -101,7 +101,7 @@
                 </div>
             </div>
             <div class="balance">
-                <div class="amount">{formatICPs(remainingBalanceE8s, 4)}</div>
+                <div class="amount">{formatICP(remainingBalanceE8s, 4)}</div>
                 <div class="label">
                     {draftAmountE8s > BigInt(0)
                         ? $_("icpAccount.shortRemainingBalanceLabel")

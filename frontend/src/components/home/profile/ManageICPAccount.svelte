@@ -15,7 +15,7 @@
     import { ICP_TRANSFER_FEE, ICP_TRANSFER_FEE_E8S } from "../../../domain/user/user";
     import type { CreatedUser } from "../../../domain/user/user";
     import { currentUserKey } from "../../../fsm/home.controller";
-    import { formatICPs } from "../../../utils/cryptoFormatter";
+    import { formatICP } from "../../../utils/cryptoFormatter";
     import { rollbar } from "../../../utils/logging";
     import AccountInfo from "../AccountInfo.svelte";
     import { iconSize } from "../../../stores/iconSize";
@@ -94,7 +94,7 @@
         <span class="header" slot="header">
             <div class="main-title">{$_("icpAccount.manageHeader")}</div>
             <div class="balance">
-                <div class="amount">{formatICPs(remainingBalanceE8s, 2)}</div>
+                <div class="amount">{formatICP(remainingBalanceE8s, 2)}</div>
                 <div class="label">
                     {amountToWithdrawE8s > BigInt(0)
                         ? $_("icpAccount.shortRemainingBalanceLabel")

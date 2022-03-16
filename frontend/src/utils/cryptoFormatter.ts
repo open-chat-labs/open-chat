@@ -46,7 +46,7 @@ function validateInput(value: string, powTenPerWhole: number): [string | undefin
     return ["", BigInt(0)];
 }
 
-export function formatICPs(e8s: bigint, minDecimals: number): string {
+export function formatICP(e8s: bigint, minDecimals: number): string {
     return format(e8s, minDecimals, 8);
 }
 
