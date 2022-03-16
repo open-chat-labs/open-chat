@@ -179,9 +179,7 @@ pub struct Metrics {
     pub video_messages: u64,
     pub audio_messages: u64,
     pub file_messages: u64,
-    #[serde(default)]
     pub polls: u64,
-    #[serde(default)]
     pub poll_votes: u64,
     pub cycles_messages: u64,
     pub icp_messages: u64,
