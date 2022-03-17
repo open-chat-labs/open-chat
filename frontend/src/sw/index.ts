@@ -1,9 +1,9 @@
 import { IDL } from "@dfinity/candid";
 import type { ApiNotification } from "../services/notifications/candid/idl";
 import { Notification as NotificationIdl } from "../services/notifications/candid/notification";
-import type { MessageContent } from "../domain/chat/chat";
+import type { CryptocurrencyContent, MessageContent } from "../domain/chat/chat";
 import type { Notification } from "../domain/notifications";
-import type { User } from "../domain/user/user";
+import { E8S_PER_ICP, User } from "../domain/user/user";
 import { UnsupportedValueError } from "../utils/error";
 import { notification as toNotification } from "../services/notifications/mappers";
 import { getSoftDisabled } from "../utils/caching";
@@ -135,6 +135,31 @@ type ContentExtract = {
     image?: string;
 };
 
+function extractMessageContentFromCryptoContent(content: CryptocurrencyContent): ContentExtract {
+    if (content.transfer.transferKind === "cycles_transfer") {
+        if (
+            content.transfer.kind === "completed_cycles_transfer" ||
+            content.transfer.kind === "pending_cycles_transfer"
+        ) {
+            return {
+                text: `You received ${content.transfer.cycles} cycles`,
+            };
+        }
+    } else if (content.transfer.transferKind === "icp_transfer") {
+        if (
+            content.transfer.kind === "completed_icp_transfer" ||
+            content.transfer.kind === "pending_icp_transfer"
+        ) {
+            return {
+                text: `You received ${Number(content.transfer.amountE8s) / E8S_PER_ICP} ICP`,
+            };
+        }
+    }
+    return {
+        text: `You received a crypto transaction`,
+    };
+}
+
 function extractMessageContent(
     content: MessageContent,
     mentioned: Array<User> = []
@@ -165,9 +190,7 @@ function extractMessageContent(
             image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==",
         };
     } else if (content.kind === "crypto_content") {
-        result = {
-            text: "TODO - crypto content",
-        };
+        result = extractMessageContentFromCryptoContent(content);
     } else if (content.kind === "deleted_content") {
         result = {
             text: "TODO - deleted content",
