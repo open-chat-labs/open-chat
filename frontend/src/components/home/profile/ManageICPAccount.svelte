@@ -12,7 +12,7 @@
     import { getContext } from "svelte";
     import { apiKey } from "../../../services/serviceContainer";
     import type { ServiceContainer } from "../../../services/serviceContainer";
-    import { ICP_TRANSFER_FEE, ICP_TRANSFER_FEE_E8S } from "../../../domain/user/user";
+    import { ICP_TRANSFER_FEE_E8S } from "../../../domain/user/user";
     import type { CreatedUser } from "../../../domain/user/user";
     import { currentUserKey } from "../../../fsm/home.controller";
     import { formatICP } from "../../../utils/cryptoFormatter";
@@ -139,7 +139,7 @@
                 </div>
             </div>
             <div class="fee">
-                {$_("icpTransfer.fee", { values: { fee: ICP_TRANSFER_FEE.toString() } })}
+                {$_("icpTransfer.fee", { values: { fee: formatICP(ICP_TRANSFER_FEE_E8S, 0) } })}
             </div>
             {#if error}
                 <ErrorMessage>{$_(error)}</ErrorMessage>

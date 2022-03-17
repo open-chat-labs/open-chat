@@ -2,7 +2,7 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize, ICP_TRANSFER_FEE, ICP_TRANSFER_FEE_E8S } from "../../domain/user/user";
+    import { AvatarSize, ICP_TRANSFER_FEE_E8S } from "../../domain/user/user";
     import ICPInput from "./ICPInput.svelte";
     import Input from "../Input.svelte";
     import Overlay from "../Overlay.svelte";
@@ -140,7 +140,7 @@
                             bind:value={message} />
                     </div>
                     <div class="fee">
-                        {$_("icpTransfer.fee", { values: { fee: ICP_TRANSFER_FEE.toString() } })}
+                        {$_("icpTransfer.fee", { values: { fee: formatICP(ICP_TRANSFER_FEE_E8S, 0) } })}
                     </div>
                     {#if error}
                         <ErrorMessage>{$_(error)}</ErrorMessage>
