@@ -1,3 +1,6 @@
+import { locale } from "svelte-i18n";
+import { get } from "svelte/store";
+
 export function validateICPInput(value: string): ValidatedICPInput {
     const [replacementText, e8s] = validateInput(value, 8);
 
@@ -77,13 +80,23 @@ function format(units: bigint, minDecimals: number, powTenPerWhole: number): str
         fractionalString = fractionalString.substr(0, fractionalString.length - countToTrim);
     }
 
-    return fractionalString.length > 0 ? integralString + "." + fractionalString : integralString;
+    return fractionalString.length > 0
+        ? integralString + getDecimalSeparator(get(locale)) + fractionalString
+        : integralString;
 }
 
 export type ValidatedICPInput = {
     replacementText: string | undefined;
     e8s: bigint;
 };
+
+function getDecimalSeparator(locale: string) {
+    const numberWithDecimalSeparator = 1.1;
+    return Intl.NumberFormat(locale)
+        .formatToParts(numberWithDecimalSeparator)
+        .find(part => part.type === "decimal")
+        ?.value ?? ".";
+}
 
 const decimalSeparatorsRegex = /[.,]/;
 const integerRegex = /^[0-9]+$/;
