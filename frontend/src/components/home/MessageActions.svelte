@@ -22,10 +22,8 @@
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
 
-    // TODO - temporarilty disable the tray icon
-    // $: mobile = $screenWidth === ScreenWidth.ExtraSmall && $chat.kind === "direct_chat";
-    $: mobile = false;
-    $: showActions = !mobile || (drawOpen && messageAction === undefined);
+    $: useDrawer = $screenWidth === ScreenWidth.ExtraSmall && $chat.kind === "direct_chat";
+    $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
 
     export function close() {
         drawOpen = false;
@@ -47,7 +45,7 @@
     }
 
     function createICPTransfer() {
-        dispatch("icpTransfer", 0);
+        dispatch("icpTransfer", BigInt(0));
         drawOpen = false;
     }
 
@@ -64,7 +62,7 @@
     }
 </script>
 
-{#if mobile}
+{#if useDrawer}
     <div class="open-draw" on:click={toggleDraw}>
         {#if drawOpen}
             <HoverIcon>
@@ -78,7 +76,7 @@
     </div>
 {/if}
 
-<div class:visible={showActions} class="message-actions" class:mobile>
+<div class:visible={showActions} class="message-actions" class:useDrawer>
     <div class="emoji" on:click={toggleEmojiPicker}>
         {#if messageAction === "emoji"}
             <HoverIcon>
@@ -97,13 +95,13 @@
             on:open={() => (messageAction = "file")}
             on:close={close} />
     </div>
-    <!-- {#if $chat.kind === "direct_chat"}
+    {#if $chat.kind === "direct_chat"}
         <div class="send-icp" on:click={createICPTransfer}>
             <HoverIcon title={"Send Crypto"}>
                 <SwapHorizontal size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </div>
-    {/if} -->
+    {/if}
 </div>
 
 <style type="text/scss">
@@ -112,7 +110,7 @@
         align-items: center;
         transition: top 200ms ease-in-out;
 
-        &.mobile {
+        &.useDrawer {
             position: absolute;
             flex-direction: column;
             top: 0px;
