@@ -526,6 +526,15 @@ export class HomeController {
             parsedMsg.messageEvent.event.content = this.hydrateBigIntsInContent(
                 parsedMsg.messageEvent.event.content
             );
+            if (parsedMsg.messageEvent.event.repliesTo?.kind === "rehydrated_reply_context") {
+                parsedMsg.messageEvent.event.repliesTo = {
+                    ...parsedMsg.messageEvent.event.repliesTo,
+                    messageId: BigInt(parsedMsg.messageEvent.event.messageId),
+                    content: this.hydrateBigIntsInContent(
+                        parsedMsg.messageEvent.event.repliesTo.content
+                    ),
+                };
+            }
             this.remoteUserSentMessage({
                 ...parsedMsg,
                 chatId: fromChat.chatId,
