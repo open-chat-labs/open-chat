@@ -225,7 +225,7 @@
         }
 
         if ($chat.kind === "direct_chat") {
-            const icpMatch = txt.match(/^!icp *(\d*\.?\d*)$/);
+            const icpMatch = txt.match(/^!icp *(\d*[.,]?\d*)$/);
             if (icpMatch && icpMatch[1] !== undefined) {
                 dispatch("icpTransfer", validateICPInput(icpMatch[1]).e8s);
                 return true;
