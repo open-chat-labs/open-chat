@@ -224,6 +224,11 @@
             return true;
         }
 
+        if (/^!search$/.test(txt)) {
+            dispatch("searchChat");
+            return true;
+        }
+
         if ($chat.kind === "direct_chat") {
             const icpMatch = txt.match(/^!icp *(\d*[.,]?\d*)$/);
             if (icpMatch && icpMatch[1] !== undefined) {

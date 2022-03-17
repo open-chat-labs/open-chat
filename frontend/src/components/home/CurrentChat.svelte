@@ -206,6 +206,7 @@
             on:cancelPreview
             on:upgrade
             on:icpTransfer={icpTransfer}
+            on:searchChat={() => (showSearchHeader = true)}
             on:createPoll={createPoll} />
     {/if}
 </div>
