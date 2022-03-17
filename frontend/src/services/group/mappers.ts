@@ -19,6 +19,7 @@ import type {
     ApiMessageEventWrapper,
     ApiPinMessageResponse,
     ApiUnpinMessageResponse,
+    ApiSearchGroupChatResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -47,6 +48,8 @@ import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
 import { groupPermissions, message, updatedMessage } from "../common/chatMappers";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
+import { messageMatch } from "../user/mappers";
+import type { SearchGroupChatResponse } from "../../domain/search/search";
 
 function principalToString(p: Principal): string {
     return p.toString();
@@ -480,6 +483,41 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Gro
         return "events_failed";
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
+}
+
+export function searchGroupChatResponse(
+    candid: ApiSearchGroupChatResponse
+): SearchGroupChatResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            matches: candid.Success.matches.map(messageMatch),
+        };
+    }
+    if ("TermTooShort" in candid) {
+        return {
+            kind: "term_too_short",
+        };
+    }
+    if ("TermTooLong" in candid) {
+        return {
+            kind: "term_too_long",
+        };
+    }
+    if ("InvalidTerm" in candid) {
+        return {
+            kind: "term_invalid",
+        };
+    }
+    if ("CallerNotInGroup" in candid) {
+        return {
+            kind: "caller_not_in_group",
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unknown UserIndex.ApiSearchMessagesResponse type received",
+        candid
+    );
 }
 
 function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {

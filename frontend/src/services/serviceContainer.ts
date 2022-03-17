@@ -70,7 +70,12 @@ import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
 import type { BlobReference, DataContent } from "../domain/data/data";
 import { UnsupportedValueError } from "../utils/error";
-import type { GroupSearchResponse, SearchAllMessagesResponse } from "../domain/search/search";
+import type {
+    GroupSearchResponse,
+    SearchAllMessagesResponse,
+    SearchDirectChatResponse,
+    SearchGroupChatResponse,
+} from "../domain/search/search";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import type { IMessageReadTracker, MarkMessagesRead } from "../stores/markRead";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
@@ -467,6 +472,22 @@ export class ServiceContainer implements MarkMessagesRead {
 
     searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
         return this.userClient.searchAllMessages(searchTerm, maxResults);
+    }
+
+    searchGroupChat(
+        chatId: string,
+        searchTerm: string,
+        maxResults = 10
+    ): Promise<SearchGroupChatResponse> {
+        return this.getGroupClient(chatId).searchGroupChat(searchTerm, maxResults);
+    }
+
+    searchDirectChat(
+        userId: string,
+        searchTerm: string,
+        maxResults = 10
+    ): Promise<SearchDirectChatResponse> {
+        return this.userClient.searchDirectChat(userId, searchTerm, maxResults);
     }
 
     async getUser(userId: string): Promise<PartialUserSummary | undefined> {

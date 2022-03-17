@@ -420,25 +420,27 @@ export class ChatController {
             : [];
     }
 
-    private async loadEventWindow(messageIndex: number) {
-        this.loading.set(true);
-        const range = indexRangeForChat(get(this.serverChatSummary));
-        const eventsPromise: Promise<EventsResponse<ChatEvent>> =
-            this.chatVal.kind === "direct_chat"
-                ? this.api.directChatEventsWindow(range, this.chatVal.them, messageIndex)
-                : this.api.groupChatEventsWindow(range, this.chatId, messageIndex);
-        const eventsResponse = await eventsPromise;
+    private async loadEventWindow(messageIndex: number, preserveFocus = false) {
+        if (messageIndex > 0) {
+            this.loading.set(true);
+            const range = indexRangeForChat(get(this.serverChatSummary));
+            const eventsPromise: Promise<EventsResponse<ChatEvent>> =
+                this.chatVal.kind === "direct_chat"
+                    ? this.api.directChatEventsWindow(range, this.chatVal.them, messageIndex)
+                    : this.api.groupChatEventsWindow(range, this.chatId, messageIndex);
+            const eventsResponse = await eventsPromise;
 
-        if (eventsResponse === undefined || eventsResponse === "events_failed") {
-            return undefined;
+            if (eventsResponse === undefined || eventsResponse === "events_failed") {
+                return undefined;
+            }
+
+            await this.handleEventsResponse(eventsResponse);
+            this.loading.set(false);
         }
-
-        await this.handleEventsResponse(eventsResponse);
-        this.loading.set(false);
 
         this.raiseEvent({
             chatId: this.chatId,
-            event: { kind: "loaded_event_window", messageIndex: messageIndex },
+            event: { kind: "loaded_event_window", messageIndex: messageIndex, preserveFocus },
         });
     }
 
@@ -716,8 +718,8 @@ export class ChatController {
         return this.chatVal.kind === "direct_chat" && get(blockedUsers).has(this.chatVal.them);
     }
 
-    async goToMessageIndex(messageIndex: number): Promise<void> {
-        return this.loadEventWindow(messageIndex);
+    async goToMessageIndex(messageIndex: number, preserveFocus: boolean): Promise<void> {
+        return this.loadEventWindow(messageIndex, preserveFocus);
     }
 
     async externalGoToMessage(messageIndex: number): Promise<void> {
@@ -725,7 +727,11 @@ export class ChatController {
         // *only* if it is actually necessary
         this.raiseEvent({
             chatId: this.chatId,
-            event: { kind: "loaded_event_window", messageIndex: messageIndex },
+            event: {
+                kind: "loaded_event_window",
+                messageIndex: messageIndex,
+                preserveFocus: false,
+            },
         });
     }
 

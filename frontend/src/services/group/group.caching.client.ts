@@ -37,6 +37,7 @@ import {
     setCachedGroupDetails,
     setCachedMessage,
 } from "../../utils/caching";
+import type { SearchGroupChatResponse } from "../../domain/search/search";
 
 /**
  * This exists to decorate the group client so that we can provide a write through cache to
@@ -219,5 +220,9 @@ export class CachingGroupClient implements IGroupClient {
         voteType: "register" | "delete"
     ): Promise<RegisterPollVoteResponse> {
         return this.client.registerPollVote(messageIdx, answerIdx, voteType);
+    }
+
+    searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse> {
+        return this.client.searchGroupChat(searchTerm, maxResults);
     }
 }

@@ -3,9 +3,10 @@
 
     export let flush: boolean = false;
     export let shadow: boolean = false;
+    export let entry = false;
 </script>
 
-<div class="section-header" class:flush class:shadow class:rtl={$rtlStore}>
+<div class="section-header" class:flush class:shadow class:entry class:rtl={$rtlStore}>
     <slot />
 </div>
 
@@ -24,6 +25,10 @@
         color: var(--section-txt);
         @include z-index("section-header");
         flex: 0 0 60px;
+
+        &.entry {
+            background-color: var(--entry-bg);
+        }
 
         &.flush {
             margin-bottom: 0;
