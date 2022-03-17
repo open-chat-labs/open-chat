@@ -36,6 +36,8 @@
     let pollBuilder: PollBuilder;
     let icpTransferBuilder: ICPTransferBuilder;
     let showSearchHeader = false;
+    let searchTerm = "";
+    let searchHeader: CurrentChatSearchHeader;
 
     $: pinned = controller.pinnedMessages;
     $: showFooter = !showSearchHeader;
@@ -135,6 +137,14 @@
         controller.replyTo(ev.detail);
     }
 
+    function searchChat(ev: CustomEvent<string>) {
+        showSearchHeader = true;
+        searchTerm = ev.detail;
+        if (searchTerm) {
+            searchHeader?.performSearch();
+        }
+    }
+
     $: chat = controller.chat;
 
     $: preview = isPreviewing($chat);
@@ -156,6 +166,8 @@
     {#if showSearchHeader}
         <CurrentChatSearchHeader
             chat={$chat}
+            bind:this={searchHeader}
+            bind:searchTerm
             on:goToMessageIndex
             on:close={() => (showSearchHeader = false)} />
     {:else}
@@ -172,7 +184,7 @@
             on:deleteGroup
             on:showPinned
             on:createPoll={createPoll}
-            on:searchChat={() => (showSearchHeader = true)}
+            on:searchChat={searchChat}
             {blocked}
             {preview}
             {unreadMessages}
@@ -206,7 +218,7 @@
             on:cancelPreview
             on:upgrade
             on:icpTransfer={icpTransfer}
-            on:searchChat={() => (showSearchHeader = true)}
+            on:searchChat={searchChat}
             on:createPoll={createPoll} />
     {/if}
 </div>

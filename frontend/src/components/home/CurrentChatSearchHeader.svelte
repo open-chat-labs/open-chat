@@ -19,11 +19,11 @@
     const dispatch = createEventDispatcher();
 
     export let chat: ChatSummary;
+    export let searchTerm = "";
 
     const api = getContext<ServiceContainer>(apiKey);
 
     let lastSearchTerm = "";
-    let searchTerm = "";
     let timer: number | undefined;
     let matches: MessageMatch[] = [];
     let currentMatch = 0;
@@ -76,7 +76,7 @@
         });
     }
 
-    async function performSearch() {
+    export async function performSearch() {
         clearMatches();
         if (searchTerm.length > 2) {
             lastSearchTerm = searchTerm;

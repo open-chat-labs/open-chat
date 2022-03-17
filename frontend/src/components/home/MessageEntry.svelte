@@ -215,6 +215,8 @@
     /**
      * Check the message content for special commands
      * * !poll - creates a poll
+     * * !icp [amount]
+     * * !search [term]
      * * !pinned - opens pinned messages (not yet)
      * * !details - opens group details (not yet)
      */
@@ -224,8 +226,9 @@
             return true;
         }
 
-        if (/^!search$/.test(txt)) {
-            dispatch("searchChat");
+        const searchMatch = txt.match(/^!search( *(.*))$/);
+        if (searchMatch && searchMatch[2] !== undefined) {
+            dispatch("searchChat", searchMatch[2]);
             return true;
         }
 
