@@ -9,7 +9,7 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import { onDestroy } from "svelte";
     import { getMinVisibleMessageIndex, isPreviewing } from "../../domain/chat/chat.utils";
-    import type { GroupChatSummary, Mention } from "../../domain/chat/chat";
+    import type { EnhancedReplyContext, GroupChatSummary, Mention } from "../../domain/chat/chat";
     import PollBuilder from "./PollBuilder.svelte";
     import ICPTransferBuilder from "./ICPTransferBuilder.svelte";
     import {
@@ -38,6 +38,7 @@
     let showSearchHeader = false;
 
     $: pinned = controller.pinnedMessages;
+    $: showFooter = !showSearchHeader;
 
     $: {
         if (chatId !== controller.chatId) {
@@ -129,6 +130,11 @@
         creatingICPTransfer = true;
     }
 
+    function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
+        showSearchHeader = false;
+        controller.replyTo(ev.detail);
+    }
+
     $: chat = controller.chat;
 
     $: preview = isPreviewing($chat);
@@ -175,6 +181,7 @@
     {/if}
     <CurrentChatMessages
         on:replyPrivatelyTo
+        on:replyTo={replyTo}
         on:messageRead={messageRead}
         on:chatWith
         {controller}
@@ -186,8 +193,9 @@
         {preview}
         {firstUnreadMention}
         {firstUnreadMessage}
+        footer={showFooter}
         {unreadMessages} />
-    {#if !showSearchHeader}
+    {#if showFooter}
         <Footer
             bind:this={footer}
             {joining}

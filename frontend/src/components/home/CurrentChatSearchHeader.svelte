@@ -2,10 +2,9 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import SectionHeader from "../SectionHeader.svelte";
-    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import type { ChatSummary } from "../../domain/chat/chat";
     import type {
         MessageMatch,
@@ -15,7 +14,6 @@
     import { apiKey } from "../../services/serviceContainer";
     import type { ServiceContainer } from "../../services/serviceContainer";
     import HoverIcon from "../HoverIcon.svelte";
-    import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
 
     const dispatch = createEventDispatcher();
@@ -24,12 +22,15 @@
 
     const api = getContext<ServiceContainer>(apiKey);
 
-    let searching: boolean = false;
+    let lastSearchTerm = "";
     let searchTerm = "";
     let timer: number | undefined;
     let matches: MessageMatch[] = [];
     let currentMatch = 0;
     let inputElement: HTMLInputElement;
+    let searching = false;
+
+    $: count = matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "";
 
     onMount(() => {
         inputElement.focus();
@@ -53,7 +54,13 @@
     function gotoMatch() {
         if (matches.length === 0) return;
 
-        currentMatch = Math.max(0, Math.min(matches.length - 1, currentMatch));
+        if (currentMatch < 0) {
+            currentMatch = matches.length - 1;
+        }
+
+        if (currentMatch >= matches.length) {
+            currentMatch = 0;
+        }
 
         dispatch("goToMessageIndex", {
             index: matches[currentMatch].messageIndex,
@@ -72,6 +79,7 @@
     async function performSearch() {
         clearMatches();
         if (searchTerm.length > 2) {
+            lastSearchTerm = searchTerm;
             searching = true;
             const lowercase = searchTerm.toLowerCase();
             try {
@@ -97,40 +105,54 @@
         }
     }
 
-    function keydown() {
+    function onInputKeyup() {
+        if (lastSearchTerm === searchTerm) {
+            return;
+        }
         if (timer !== undefined) {
             window.clearTimeout(timer);
         }
         timer = window.setTimeout(() => {
-            if (searchTerm.length > 1) {
+            if (searchTerm.length > 2) {
                 performSearch();
-            } else {
-                if (searchTerm.length === 0) {
-                    performSearch();
-                }
             }
         }, 300);
     }
+
+    function onWindowKeyDown(event: KeyboardEvent) {
+        if (event.code === "ArrowDown") {
+            onPrevious();
+        } else if (event.code === "ArrowUp" || event.code === "Enter") {
+            onNext();
+        } else if (event.code === "Escape") {
+            onClose();
+        }
+    }
 </script>
 
-<SectionHeader shadow={true} flush={true}>
+<svelte:window on:keydown={onWindowKeyDown} />
+
+<SectionHeader shadow={true} flush={true} entry={true}>
     <div on:click={onClose}>
         <HoverIcon>
-            {#if $rtlStore}
-                <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
-            {:else}
-                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
-            {/if}
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </div>
-    <input
-        bind:this={inputElement}
-        on:keydown={keydown}
-        spellcheck="false"
-        bind:value={searchTerm}
-        type="text"
-        maxlength="30"
-        placeholder={$_("search")} />
+    <div class="wrapper">
+        <input
+            bind:this={inputElement}
+            on:keyup={onInputKeyup}
+            spellcheck="false"
+            bind:value={searchTerm}
+            type="text"
+            maxlength="30"
+            placeholder={$_("search")} />
+        {#if searching}
+            <div class="searching" />
+        {:else}
+            <div class="count">{count}</div>
+        {/if}
+    </div>
     <div on:click={onNext}>
         <HoverIcon compact={true}>
             <ChevronUp size="1.8em" color={"var(--icon-txt)"} />
@@ -144,20 +166,42 @@
 </SectionHeader>
 
 <style type="text/scss">
-    input {
-        margin: 0 5px;
+    .wrapper {
+        border-radius: 18px;
+        padding: 5px 12px 5px 12px;
         background-color: var(--chatSearch-bg);
-        color: var(--chatSearch-txt);
-        outline: none;
-        flex: 1;
-        padding: $sp1 $sp3;
-        border: none;
-        border-bottom: 1px solid var(--accent);
         width: 100%;
+        margin: 0 5px;
+        flex: 1;
+        display: flex;
+        gap: 4px;
+
+        @include size-below(xs) {
+            border-radius: 16px;
+        }
+    }
+
+    input {
+        flex: 1;
+        width: 100%;
+        outline: none;
+        border: none;
         @include font(book, normal, fs-100);
+        color: var(--chatSearch-txt);
 
         &::placeholder {
             color: var(--placeholder);
         }
+    }
+
+    .searching {
+        @include loading-spinner(1em, 0.5em, false, var(--button-spinner));
+        margin-right: 8px;
+    }
+
+    .count {
+        @include font(light, normal, fs-70);
+        color: var(--chatSearch-txt);
+        align-self: center;
     }
 </style>

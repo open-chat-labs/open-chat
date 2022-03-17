@@ -43,6 +43,7 @@
     export let canDelete: boolean;
     export let canSend: boolean;
     export let canReact: boolean;
+    export let footer: boolean;
 
     $: chat = controller.chat;
     $: loading = controller.loading;
@@ -272,7 +273,7 @@
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         if (!canSend) return;
-        controller.replyTo(ev.detail);
+        dispatch("replyTo", ev.detail);
     }
 
     function editEvent(ev: CustomEvent<EventWrapper<Message>>) {
@@ -504,6 +505,7 @@
     title={$_("goToFirstMessage")}
     class:show={!insideFromBottomThreshold || unreadMessages > 0}
     class="fab to-bottom"
+    class:footer
     class:rtl={$rtlStore}>
     <Fab on:click={() => scrollToNew()}>
         {#if unreadMessages > 0}
@@ -576,7 +578,10 @@
     }
 
     .to-bottom {
-        bottom: 80px;
+        bottom: 24px;
+        &.footer {
+            bottom: 80px;
+        }
     }
 
     .chat-messages {
