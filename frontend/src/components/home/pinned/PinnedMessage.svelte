@@ -47,7 +47,10 @@
     }
 
     function goToMessageIndex() {
-        dispatch("goToMessageIndex", msg.messageIndex);
+        dispatch("goToMessageIndex", {
+            index: msg.messageIndex,
+            preserveFocus: false,
+        });
     }
 </script>
 

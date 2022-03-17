@@ -15,6 +15,7 @@ import type {
     ApiDirectChatEvent,
     ApiDeleteMessageResponse,
     ApiJoinGroupResponse,
+    ApiSearchDirectChatResponse,
     ApiSearchAllMessagesResponse,
     ApiMessageMatch,
     ApiEditMessageResponse,
@@ -72,7 +73,11 @@ import {
     publicGroupSummary,
     updatedMessage,
 } from "../common/chatMappers";
-import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
+import type {
+    MessageMatch,
+    SearchDirectChatResponse,
+    SearchAllMessagesResponse,
+} from "../../domain/search/search";
 import type { SetBioResponse } from "../../domain/user/user";
 import type { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
 
@@ -101,7 +106,7 @@ export function recommendedGroupsResponse(
     );
 }
 
-export function searchAllMessageResponse(
+export function searchAllMessagesResponse(
     candid: ApiSearchAllMessagesResponse
 ): SearchAllMessagesResponse {
     if ("Success" in candid) {
@@ -126,12 +131,47 @@ export function searchAllMessageResponse(
         };
     }
     throw new UnsupportedValueError(
-        "Unknown UserIndex.ApiSearchAllMessagesResponse type received",
+        "Unknown UserIndex.ApiSearchMessagesResponse type received",
         candid
     );
 }
 
-function messageMatch(candid: ApiMessageMatch): MessageMatch {
+export function searchDirectChatResponse(
+    candid: ApiSearchDirectChatResponse
+): SearchDirectChatResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            matches: candid.Success.matches.map(messageMatch),
+        };
+    }
+    if ("TermTooShort" in candid) {
+        return {
+            kind: "term_too_short",
+        };
+    }
+    if ("TermTooLong" in candid) {
+        return {
+            kind: "term_too_long",
+        };
+    }
+    if ("InvalidTerm" in candid) {
+        return {
+            kind: "term_invalid",
+        };
+    }
+    if ("ChatNotFound" in candid) {
+        return {
+            kind: "chat_not_found",
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unknown UserIndex.ApiSearchMessagesResponse type received",
+        candid
+    );
+}
+
+export function messageMatch(candid: ApiMessageMatch): MessageMatch {
     return {
         chatId: candid.chat_id.toString(),
         messageIndex: candid.message_index,

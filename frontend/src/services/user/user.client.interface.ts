@@ -26,7 +26,10 @@ import type {
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
-import type { SearchAllMessagesResponse } from "../../domain/search/search";
+import type {
+    SearchDirectChatResponse,
+    SearchAllMessagesResponse,
+} from "../../domain/search/search";
 import type { SetBioResponse, UserSummary } from "../../domain/user/user";
 
 export interface IUserClient {
@@ -71,6 +74,11 @@ export interface IUserClient {
     ): Promise<ToggleReactionResponse>;
     deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse>;
     searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse>;
+    searchDirectChat(
+        userId: string,
+        searchTerm: string,
+        maxResults: number
+    ): Promise<SearchDirectChatResponse>;
     toggleMuteNotifications(
         chatId: string,
         muted: boolean

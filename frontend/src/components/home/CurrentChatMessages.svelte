@@ -43,6 +43,7 @@
     export let canDelete: boolean;
     export let canSend: boolean;
     export let canReact: boolean;
+    export let footer: boolean;
 
     $: chat = controller.chat;
     $: loading = controller.loading;
@@ -113,7 +114,7 @@
         const idx = firstUnreadMessage ?? $chat.latestMessage?.event.messageIndex;
 
         if (idx !== undefined) {
-            scrollToMessageIndex(idx);
+            scrollToMessageIndex(idx, false);
         }
     }
 
@@ -123,11 +124,16 @@
 
     function scrollToMention(mention: Mention | undefined) {
         if (mention !== undefined) {
-            scrollToMessageIndex(mention.messageIndex);
+            scrollToMessageIndex(mention.messageIndex, false);
         }
     }
 
-    function scrollToMessageIndex(index: number) {
+    function scrollToMessageIndex(index: number, preserveFocus: boolean) {
+        if (index < 0) {
+            controller.clearFocusMessageIndex();
+            return;
+        }
+
         // set a flag so that we can ignore subsequent scroll events temporarily
         scrollingToMessage = true;
         controller.setFocusMessageIndex(index);
@@ -135,20 +141,22 @@
         if (element) {
             // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
-            setTimeout(() => {
-                controller.clearFocusMessageIndex();
-            }, 200);
+            if (!preserveFocus) {
+                setTimeout(() => {
+                    controller.clearFocusMessageIndex();
+                }, 200);
+            }
         } else {
             // todo - this is a bit dangerous as it could cause an infinite recursion
             // if we are looking for a message that simply isn't there.
             // controller.goToMessageIndex(index).then(() => scrollToMessageIndex(index));
-            controller.goToMessageIndex(index);
+            controller.goToMessageIndex(index, preserveFocus);
         }
     }
 
     function resetScroll() {
         if ($focusMessageIndex !== undefined) {
-            scrollToMessageIndex($focusMessageIndex);
+            scrollToMessageIndex($focusMessageIndex, false);
         }
         if (!initialised) {
             initialised = true;
@@ -259,13 +267,13 @@
             });
     }
 
-    function goToMessageIndex(ev: CustomEvent<number>) {
-        scrollToMessageIndex(ev.detail);
+    function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
+        scrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         if (!canSend) return;
-        controller.replyTo(ev.detail);
+        dispatch("replyTo", ev.detail);
     }
 
     function editEvent(ev: CustomEvent<EventWrapper<Message>>) {
@@ -328,7 +336,8 @@
                         break;
                     case "loaded_event_window":
                         const index = evt.event.messageIndex;
-                        tick().then(() => scrollToMessageIndex(index));
+                        const preserveFocus = evt.event.preserveFocus;
+                        tick().then(() => scrollToMessageIndex(index, preserveFocus));
                         initialised = true;
                         break;
                     case "loaded_new_messages":
@@ -351,11 +360,7 @@
                         }
                         break;
                     case "chat_updated":
-                        if (
-                            initialised &&
-                            insideFromBottomThreshold &&
-                            shouldLoadNewMessages()
-                        ) {
+                        if (initialised && insideFromBottomThreshold && shouldLoadNewMessages()) {
                             controller.loadNewMessages();
                         }
                         break;
@@ -500,6 +505,7 @@
     title={$_("goToFirstMessage")}
     class:show={!insideFromBottomThreshold || unreadMessages > 0}
     class="fab to-bottom"
+    class:footer
     class:rtl={$rtlStore}>
     <Fab on:click={() => scrollToNew()}>
         {#if unreadMessages > 0}
@@ -572,7 +578,10 @@
     }
 
     .to-bottom {
-        bottom: 80px;
+        bottom: 24px;
+        &.footer {
+            bottom: 80px;
+        }
     }
 
     .chat-messages {

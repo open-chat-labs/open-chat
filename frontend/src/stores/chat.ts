@@ -21,4 +21,8 @@ type SendingMessage = {
 };
 type ChatUpdated = { kind: "chat_updated" };
 type LoadedPreviousMessages = { kind: "loaded_previous_messages" };
-type LoadedEventWindow = { kind: "loaded_event_window"; messageIndex: number };
+type LoadedEventWindow = {
+    kind: "loaded_event_window";
+    messageIndex: number;
+    preserveFocus: boolean;
+};

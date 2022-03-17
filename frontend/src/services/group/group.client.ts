@@ -47,6 +47,7 @@ import {
     getMessagesByMessageIndexResponse,
     pinMessageResponse,
     unpinMessageResponse,
+    searchGroupChatResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -66,6 +67,7 @@ import {
     mergeGroupChatDetails,
     nextIndex,
 } from "../../domain/chat/chat.utils";
+import type { SearchGroupChatResponse } from "../../domain/search/search";
 
 const MAX_RECURSION = 10;
 
@@ -376,6 +378,16 @@ export class GroupClient extends CandidService implements IGroupClient {
                 message_index: messageIdx,
             }),
             registerPollVoteResponse
+        );
+    }
+
+    searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse> {
+        return this.handleResponse(
+            this.groupService.search_messages({
+                search_term: searchTerm,
+                max_results: maxResults,
+            }),
+            searchGroupChatResponse
         );
     }
 }
