@@ -49,7 +49,7 @@
     function goToMessageIndex() {
         dispatch("goToMessageIndex", {
             index: msg.messageIndex,
-            keep: false,
+            preserveFocus: false,
         });
     }
 </script>

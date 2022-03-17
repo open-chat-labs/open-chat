@@ -27,18 +27,13 @@
     let searching: boolean = false;
     let searchTerm = "";
     let timer: number | undefined;
-    let matches: MessageMatch[];
+    let matches: MessageMatch[] = [];
     let currentMatch = 0;
     let inputElement: HTMLInputElement;
 
     onMount(() => {
         inputElement.focus();
-        return () => {
-            dispatch("goToMessageIndex", {
-                index: -1,
-                keep: false,
-            });
-        };
+        return () => clearMatches();
     });
 
     function onClose() {
@@ -56,15 +51,26 @@
     }
 
     function gotoMatch() {
+        if (matches.length === 0) return;
+
         currentMatch = Math.max(0, Math.min(matches.length - 1, currentMatch));
 
         dispatch("goToMessageIndex", {
             index: matches[currentMatch].messageIndex,
-            keep: true,
+            preserveFocus: true,
+        });
+    }
+
+    function clearMatches() {
+        matches = [];
+        dispatch("goToMessageIndex", {
+            index: -1,
+            preserveFocus: false,
         });
     }
 
     async function performSearch() {
+        clearMatches();
         if (searchTerm.length > 2) {
             searching = true;
             const lowercase = searchTerm.toLowerCase();

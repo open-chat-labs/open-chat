@@ -420,7 +420,7 @@ export class ChatController {
             : [];
     }
 
-    private async loadEventWindow(messageIndex: number, keep = false) {
+    private async loadEventWindow(messageIndex: number, preserveFocus = false) {
         if (messageIndex > 0) {
             this.loading.set(true);
             const range = indexRangeForChat(get(this.serverChatSummary));
@@ -440,7 +440,7 @@ export class ChatController {
 
         this.raiseEvent({
             chatId: this.chatId,
-            event: { kind: "loaded_event_window", messageIndex: messageIndex, keep },
+            event: { kind: "loaded_event_window", messageIndex: messageIndex, preserveFocus },
         });
     }
 
@@ -718,8 +718,8 @@ export class ChatController {
         return this.chatVal.kind === "direct_chat" && get(blockedUsers).has(this.chatVal.them);
     }
 
-    async goToMessageIndex(messageIndex: number, keep: boolean): Promise<void> {
-        return this.loadEventWindow(messageIndex, keep);
+    async goToMessageIndex(messageIndex: number, preserveFocus: boolean): Promise<void> {
+        return this.loadEventWindow(messageIndex, preserveFocus);
     }
 
     async externalGoToMessage(messageIndex: number): Promise<void> {
@@ -727,7 +727,11 @@ export class ChatController {
         // *only* if it is actually necessary
         this.raiseEvent({
             chatId: this.chatId,
-            event: { kind: "loaded_event_window", messageIndex: messageIndex, keep: false },
+            event: {
+                kind: "loaded_event_window",
+                messageIndex: messageIndex,
+                preserveFocus: false,
+            },
         });
     }
 

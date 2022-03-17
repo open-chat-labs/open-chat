@@ -127,7 +127,7 @@
         }
     }
 
-    function scrollToMessageIndex(index: number, keep: boolean) {
+    function scrollToMessageIndex(index: number, preserveFocus: boolean) {
         if (index < 0) {
             controller.clearFocusMessageIndex();
             return;
@@ -140,7 +140,7 @@
         if (element) {
             // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
-            if (!keep) {
+            if (!preserveFocus) {
                 setTimeout(() => {
                     controller.clearFocusMessageIndex();
                 }, 200);
@@ -149,7 +149,7 @@
             // todo - this is a bit dangerous as it could cause an infinite recursion
             // if we are looking for a message that simply isn't there.
             // controller.goToMessageIndex(index).then(() => scrollToMessageIndex(index));
-            controller.goToMessageIndex(index, keep);
+            controller.goToMessageIndex(index, preserveFocus);
         }
     }
 
@@ -266,8 +266,8 @@
             });
     }
 
-    function goToMessageIndex(ev: CustomEvent<{ index: number; keep: boolean }>) {
-        scrollToMessageIndex(ev.detail.index, ev.detail.keep);
+    function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
+        scrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -335,8 +335,8 @@
                         break;
                     case "loaded_event_window":
                         const index = evt.event.messageIndex;
-                        const keep = evt.event.keep;
-                        tick().then(() => scrollToMessageIndex(index, keep));
+                        const preserveFocus = evt.event.preserveFocus;
+                        tick().then(() => scrollToMessageIndex(index, preserveFocus));
                         initialised = true;
                         break;
                     case "loaded_new_messages":

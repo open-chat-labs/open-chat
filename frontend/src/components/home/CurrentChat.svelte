@@ -41,6 +41,7 @@
 
     $: {
         if (chatId !== controller.chatId) {
+            showSearchHeader = false;
             chatId = controller.chatId;
             unreadMessages = controller.unreadMessageCount;
             firstUnreadMention = getFirstUnreadMention();

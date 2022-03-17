@@ -135,8 +135,8 @@
         }
     }
 
-    function goToMessageIndex(ev: CustomEvent<{ index: number; keep: boolean }>) {
-        $selectedChat?.goToMessageIndex(ev.detail.index, ev.detail.keep);
+    function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
+        $selectedChat?.goToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
 
     function closeModal() {
