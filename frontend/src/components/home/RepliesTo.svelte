@@ -44,7 +44,12 @@
             {getUsernameFromReplyContext(repliesTo)}
         </h4>
         {#if repliesTo.content !== undefined}
-            <ChatMessageContent {preview} fill={false} reply={true} content={repliesTo.content} />
+            <ChatMessageContent
+                {me}
+                {preview}
+                fill={false}
+                reply={true}
+                content={repliesTo.content} />
             {#if debug}
                 <pre>EventIdx: {repliesTo.eventIndex}</pre>
                 <pre>MsgId: {repliesTo.messageId}</pre>
