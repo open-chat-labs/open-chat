@@ -1,7 +1,6 @@
 <script lang="ts">
     import { avatarUrl } from "../../../domain/user/user.utils";
     import type { CreatedUser, PartialUserSummary } from "../../../domain/user/user";
-    import { E8S_PER_ICP } from "../../../domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -16,8 +15,8 @@
     import TextArea from "../../TextArea.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import { notificationStatus } from "../../../stores/notifications";
-    import { askForNotificationPermission } from "../../../utils/notifications";
-    import { supported as notificationsSupported } from "../../../utils/notifications";
+    import { formatICP } from "../../../utils/cryptoFormatter";
+    import { askForNotificationPermission, supported as notificationsSupported } from "../../../utils/notifications";
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import {
@@ -40,7 +39,7 @@
     import ManageIcpAccount from "./ManageICPAccount.svelte";
     import { currentUserKey } from "../../../fsm/home.controller";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { icpBalanceStore } from "../../../stores/balance";
+    import { icpBalanceE8sStore } from "../../../stores/balance";
 
     const api: ServiceContainer = getContext(apiKey);
     const createdUser: CreatedUser = getContext(currentUserKey);
@@ -342,7 +341,7 @@
                 <Legend>{$_("icpAccount.balanceLabel")}</Legend>
                 <div class="icp-balance">
                     <div class="icp-balance-value">
-                        {$icpBalanceStore.toFixed(4)}
+                        {formatICP($icpBalanceE8sStore.e8s, 4)}
                     </div>
                     <Button on:click={showManageIcp} fill={true} small={true}
                         >{$_("icpAccount.manage")}</Button>

@@ -3,32 +3,32 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import type { CryptocurrencyContent } from "../../domain/chat/chat";
-    import { E8S_PER_ICP } from "../../domain/user/user";
     import Markdown from "./Markdown.svelte";
     import ChevronDoubleRight from "svelte-material-icons/ChevronDoubleRight.svelte";
     import ChevronDoubleLeft from "svelte-material-icons/ChevronDoubleLeft.svelte";
     import { iconSize } from "stores/iconSize";
+    import { formatICP } from "../../utils/cryptoFormatter";
 
     export let content: CryptocurrencyContent;
     export let me: boolean = false;
     export let reply: boolean = false;
 
-    let amount =
+    let amount: bigint =
         content.transfer.kind === "completed_icp_transfer" ||
         content.transfer.kind === "pending_icp_transfer"
-            ? Number(content.transfer.amountE8s) / E8S_PER_ICP
-            : 0;
+            ? content.transfer.amountE8s
+            : BigInt(0);
 </script>
 
 {#if content.transfer.kind === "completed_icp_transfer"}
     <div class="message">
         {#if me}
             <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
-            {$_("icpTransfer.confirmedSent", { values: { amount: amount.toFixed(4) } })}
+            {$_("icpTransfer.confirmedSent", { values: { amount: formatICP(amount, 0) } })}
             <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
         {:else}
             <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
-            {$_("icpTransfer.confirmedReceived", { values: { amount: amount.toFixed(4) } })}
+            {$_("icpTransfer.confirmedReceived", { values: { amount: formatICP(amount, 0) } })}
             <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
         {/if}
     </div>
@@ -45,11 +45,11 @@
     <div class="message">
         {#if me}
             <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
-            {$_("icpTransfer.pendingSent", { values: { amount: amount.toFixed(4) } })}
+            {$_("icpTransfer.pendingSent", { values: { amount: formatICP(amount, 0) } })}
             <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
         {:else}
             <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
-            {$_("icpTransfer.pendingReceived", { values: { amount: amount.toFixed(4) } })}
+            {$_("icpTransfer.pendingReceived", { values: { amount: formatICP(amount, 0) } })}
             <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
         {/if}
     </div>
