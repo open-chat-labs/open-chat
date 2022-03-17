@@ -29,14 +29,40 @@ export type TermInvalid = {
     kind: "term_invalid";
 };
 
+export type ChatNotFound = {
+    kind: "chat_not_found";
+};
+
+export type CallerNotInGroup = {
+    kind: "caller_not_in_group";
+};
+
 export type GroupSearchSuccess = {
     kind: "success";
     matches: GroupMatch[];
 };
 
-export type SearchAllMessagesResponse = SearchAllSuccess | TermTooShort | TermTooLong | TermInvalid;
+export type SearchAllMessagesResponse =
+    | SearchMessagesSuccess
+    | TermTooShort
+    | TermTooLong
+    | TermInvalid;
 
-export type SearchAllSuccess = {
+export type SearchGroupChatResponse =
+    | SearchMessagesSuccess
+    | TermTooShort
+    | TermTooLong
+    | TermInvalid
+    | CallerNotInGroup;
+
+export type SearchDirectChatResponse =
+    | SearchMessagesSuccess
+    | ChatNotFound
+    | TermTooShort
+    | TermTooLong
+    | TermInvalid;
+
+export type SearchMessagesSuccess = {
     kind: "success";
     matches: MessageMatch[];
 };

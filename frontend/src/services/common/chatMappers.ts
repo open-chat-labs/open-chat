@@ -59,7 +59,6 @@ import type {
     ApiGroupPermissions,
     ApiPermissionRole,
     ApiICPWithdrawal,
-    ApiPendingICPTransfer,
     ApiPendingICPWithdrawal,
 } from "../user/candid/idl";
 import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";

@@ -25,7 +25,10 @@
 
     function zoomToMessage() {
         if (repliesTo.chatId === chatId) {
-            dispatch("goToMessageIndex", repliesTo.messageIndex);
+            dispatch("goToMessageIndex", {
+                index: repliesTo.messageIndex,
+                preserveFocus: false,
+            });
         } else {
             push(`/${repliesTo.chatId}/${repliesTo.messageIndex}`);
         }

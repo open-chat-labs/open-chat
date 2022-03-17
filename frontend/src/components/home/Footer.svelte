@@ -206,6 +206,7 @@
         {joining}
         on:sendMessage={sendMessage}
         on:createPoll
+        on:searchChat
         on:icpTransfer
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}

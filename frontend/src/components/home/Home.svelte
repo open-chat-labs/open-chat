@@ -135,8 +135,8 @@
         }
     }
 
-    function goToMessageIndex(ev: CustomEvent<number>) {
-        $selectedChat?.goToMessageIndex(ev.detail);
+    function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
+        $selectedChat?.goToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
 
     function closeModal() {
@@ -420,7 +420,8 @@
                 on:recommend={whatsHot}
                 on:dismissRecommendation={dismissRecommendation}
                 on:upgrade={upgrade}
-                on:showPinned={showPinned} />
+                on:showPinned={showPinned}
+                on:goToMessageIndex={goToMessageIndex} />
         {/if}
     </main>
 {/if}

@@ -437,5 +437,7 @@
         "withdrawTarget": "enter an address to withdraw to",
         "withdrawalSucceeded": "Your withdrawal succeeded!",
         "withdrawalFailed": "Your withdrawal failed!"
-    }
+    },
+    "searchChat": "Search",
+    "search": "Search..."
 }
