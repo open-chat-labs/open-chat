@@ -9,20 +9,21 @@ export function validateICPInput(value: string): ValidatedICPInput {
 
 function validateInput(value: string, powTenPerWhole: number): [string | undefined, bigint] {
     value = value.trim();
+
     if (value?.length > 0 && value[0] !== "-") {
-        const parts = value.split(".");
+        const parts = value.split(decimalSeparatorsRegex);
         if (parts.length === 1) {
             const integralString = parts[0];
-            const integral = Number.parseInt(integralString);
+            const integral = parseBigInt(integralString);
 
-            if (Number.isSafeInteger(integral)) {
-                return [undefined, BigInt(integral) * BigInt(Math.pow(10, powTenPerWhole))];
+            if (integral !== undefined) {
+                return [undefined, integral * BigInt(Math.pow(10, powTenPerWhole))];
             }
         }
 
         if (parts.length === 2) {
             const integralString = parts[0];
-            const integral = Number.parseInt(integralString);
+            const integral = parseBigInt(integralString);
 
             let fractionalString = parts[1];
             let replaceText = false;
@@ -31,13 +32,12 @@ function validateInput(value: string, powTenPerWhole: number): [string | undefin
                 fractionalString = fractionalString.substr(0, powTenPerWhole);
                 replaceText = true;
             }
-            const fractional = Number.parseInt(fractionalString);
+            const fractional = parseBigInt(fractionalString);
 
-            if (Number.isSafeInteger(integral) && Number.isSafeInteger(fractional)) {
+            if (integral !== undefined && fractional !== undefined) {
                 const total =
-                    BigInt(integral) * BigInt(Math.pow(10, powTenPerWhole)) +
-                    BigInt(fractional) *
-                        BigInt(Math.pow(10, powTenPerWhole - fractionalString.length));
+                    integral * BigInt(Math.pow(10, powTenPerWhole)) +
+                    fractional * BigInt(Math.pow(10, powTenPerWhole - fractionalString.length));
 
                 return [replaceText ? integralString + "." + fractionalString : undefined, total];
             }
@@ -45,6 +45,12 @@ function validateInput(value: string, powTenPerWhole: number): [string | undefin
     }
 
     return ["", BigInt(0)];
+}
+
+function parseBigInt(value: string): bigint | undefined {
+    return integerRegex.test(value)
+        ? BigInt(value)
+        : undefined;
 }
 
 export function formatICP(e8s: bigint, minDecimals: number): string {
@@ -78,3 +84,6 @@ export type ValidatedICPInput = {
     replacementText: string | undefined;
     e8s: bigint;
 };
+
+const decimalSeparatorsRegex = /[.,]/;
+const integerRegex = /^[0-9]+$/;
