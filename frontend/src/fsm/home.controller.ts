@@ -10,6 +10,7 @@ import type {
     Mention,
     Message,
     MemberRole,
+    MessageContent,
 } from "../domain/chat/chat";
 import {
     compareChats,
@@ -522,6 +523,18 @@ export class HomeController {
             this.remoteUserUndeletedMessage(parsedMsg);
         }
         if (parsedMsg.kind === "remote_user_sent_message") {
+            parsedMsg.messageEvent.event.content = this.hydrateBigIntsInContent(
+                parsedMsg.messageEvent.event.content
+            );
+            if (parsedMsg.messageEvent.event.repliesTo?.kind === "rehydrated_reply_context") {
+                parsedMsg.messageEvent.event.repliesTo = {
+                    ...parsedMsg.messageEvent.event.repliesTo,
+                    messageId: BigInt(parsedMsg.messageEvent.event.messageId),
+                    content: this.hydrateBigIntsInContent(
+                        parsedMsg.messageEvent.event.repliesTo.content
+                    ),
+                };
+            }
             this.remoteUserSentMessage({
                 ...parsedMsg,
                 chatId: fromChat.chatId,
@@ -722,5 +735,40 @@ export class HomeController {
             });
             userStore.addMany(usersResp.users);
         }
+    }
+
+    private hydrateBigIntsInContent(content: MessageContent): MessageContent {
+        if (content.kind === "crypto_content") {
+            if (content.transfer.kind === "pending_icp_transfer") {
+                return {
+                    ...content,
+                    transfer: {
+                        ...content.transfer,
+                        amountE8s: BigInt(content.transfer.amountE8s),
+                        feeE8s:
+                            content.transfer.feeE8s !== undefined
+                                ? BigInt(content.transfer.feeE8s)
+                                : undefined,
+                        memo:
+                            content.transfer.memo !== undefined
+                                ? BigInt(content.transfer.memo)
+                                : undefined,
+                    },
+                };
+            }
+            if (content.transfer.kind === "completed_icp_transfer") {
+                return {
+                    ...content,
+                    transfer: {
+                        ...content.transfer,
+                        amountE8s: BigInt(content.transfer.amountE8s),
+                        feeE8s: BigInt(content.transfer.feeE8s),
+                        memo: BigInt(content.transfer.memo),
+                        blockIndex: BigInt(content.transfer.blockIndex),
+                    },
+                };
+            }
+        }
+        return content;
     }
 }
