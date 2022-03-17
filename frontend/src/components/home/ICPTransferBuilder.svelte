@@ -2,7 +2,8 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize, ICP_TRANSFER_FEE } from "../../domain/user/user";
+    import { AvatarSize, ICP_TRANSFER_FEE_E8S } from "../../domain/user/user";
+    import ICPInput from "./ICPInput.svelte";
     import Input from "../Input.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -14,16 +15,17 @@
     import { createEventDispatcher, getContext } from "svelte";
     import { apiKey } from "../../services/serviceContainer";
     import type { ServiceContainer } from "../../services/serviceContainer";
-    import { E8S_PER_ICP } from "../../domain/user/user";
     import type { CreatedUser } from "../../domain/user/user";
     import { now } from "../../stores/time";
     import { userStore } from "../../stores/user";
     import { currentUserKey } from "../../fsm/home.controller";
+    import { formatICP } from "../../utils/cryptoFormatter";
     import { rollbar } from "../../utils/logging";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { iconSize } from "../../stores/iconSize";
-    import { icpBalanceStore } from "../../stores/balance";
+    import { icpBalanceE8sStore } from "../../stores/balance";
+
     const dispatch = createEventDispatcher();
 
     export let open: boolean;
@@ -34,36 +36,27 @@
 
     let refreshing = false;
     let error: string | undefined = undefined;
-    let draftAmount = 0;
+    let draftAmountE8s: bigint = BigInt(0);
     let message = "";
     let confirming = false;
 
-    $: remainingBalance =
-        draftAmount > 0
-            ? Math.max(0, $icpBalanceStore - draftAmount - ICP_TRANSFER_FEE)
-            : $icpBalanceStore;
-    $: valid = error === undefined && draftAmount > 0;
+    $: remainingBalanceE8s =
+        draftAmountE8s > BigInt(0)
+            ? $icpBalanceE8sStore.e8s - draftAmountE8s - ICP_TRANSFER_FEE_E8S
+            : $icpBalanceE8sStore.e8s;
+    $: valid = error === undefined && draftAmountE8s > BigInt(0);
     $: receiver = $userStore[receiverId];
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 
-    $: {
-        if (draftAmount > $icpBalanceStore - ICP_TRANSFER_FEE) {
-            draftAmount = $icpBalanceStore - ICP_TRANSFER_FEE;
-        }
-        if (draftAmount < 0) {
-            draftAmount = 0;
-        }
-    }
-
-    export function reset(amount: number) {
+    export function reset(amountE8s: bigint) {
         refreshing = true;
         error = undefined;
-        draftAmount = 0;
+        draftAmountE8s = BigInt(0);
         confirming = false;
         message = "";
         api.refreshAccountBalance(user.icpAccount)
             .then((_) => {
-                draftAmount = amount;
+                draftAmountE8s = amountE8s;
                 error = undefined;
             })
             .catch((err) => {
@@ -85,7 +78,7 @@
                 transferKind: "icp_transfer",
                 kind: "pending_icp_transfer",
                 recipient: receiverId,
-                amountE8s: BigInt(draftAmount * E8S_PER_ICP),
+                amountE8s: draftAmountE8s,
             },
         };
         dispatch("sendTransfer", content);
@@ -108,14 +101,14 @@
                 </div>
             </div>
             <div class="balance">
-                <div class="amount">{remainingBalance.toFixed(4)}</div>
+                <div class="amount">{formatICP(remainingBalanceE8s, 4)}</div>
                 <div class="label">
-                    {draftAmount > 0
+                    {draftAmountE8s > BigInt(0)
                         ? $_("icpAccount.shortRemainingBalanceLabel")
                         : $_("icpAccount.shortBalanceLabel")}
                 </div>
             </div>
-            <div class="refresh" class:refreshing class:mobile on:click={() => reset(draftAmount)}>
+            <div class="refresh" class:refreshing class:mobile on:click={() => reset(draftAmountE8s)}>
                 <Refresh size={"1em"} color={"var(--accent)"} />
             </div>
         </span>
@@ -131,13 +124,10 @@
                 {:else}
                     <div class="transfer">
                         <Legend>{$_("icpTransfer.amount")}</Legend>
-                        <input
+                        <ICPInput
                             autofocus={true}
-                            class="amount-val"
-                            min={0}
-                            max={$icpBalanceStore - ICP_TRANSFER_FEE}
-                            type="number"
-                            bind:value={draftAmount} />
+                            maxAmountE8s={$icpBalanceE8sStore.e8s - ICP_TRANSFER_FEE_E8S}
+                            bind:amountE8s={draftAmountE8s} />
                     </div>
                     <div class="message">
                         <Legend>{$_("icpTransfer.message")}</Legend>
@@ -150,7 +140,7 @@
                             bind:value={message} />
                     </div>
                     <div class="fee">
-                        {$_("icpTransfer.fee", { values: { fee: ICP_TRANSFER_FEE.toString() } })}
+                        {$_("icpTransfer.fee", { values: { fee: formatICP(ICP_TRANSFER_FEE_E8S, 0) } })}
                     </div>
                     {#if error}
                         <ErrorMessage>{$_(error)}</ErrorMessage>
@@ -253,23 +243,6 @@
         text-decoration-color: var(--accent);
         text-underline-offset: $sp1;
         text-decoration-thickness: 2px;
-    }
-
-    .amount-val {
-        height: 40px;
-        @include font(book, normal, fs-140);
-        color: var(--input-txt);
-        background-color: var(--input-bg);
-        border: 1px solid var(--input-bd);
-        line-height: 24px;
-        width: 100%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        border-radius: $sp2;
-        text-align: right;
-        display: block;
-        outline: none;
     }
 
     .footer {

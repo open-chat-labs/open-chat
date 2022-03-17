@@ -12,15 +12,17 @@
     import { getContext } from "svelte";
     import { apiKey } from "../../../services/serviceContainer";
     import type { ServiceContainer } from "../../../services/serviceContainer";
-    import { E8S_PER_ICP, ICP_TRANSFER_FEE } from "../../../domain/user/user";
+    import { ICP_TRANSFER_FEE_E8S } from "../../../domain/user/user";
     import type { CreatedUser } from "../../../domain/user/user";
     import { currentUserKey } from "../../../fsm/home.controller";
+    import { formatICP } from "../../../utils/cryptoFormatter";
     import { rollbar } from "../../../utils/logging";
     import AccountInfo from "../AccountInfo.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { ScreenWidth, screenWidth } from "../../../stores/screenDimensions";
     import { toastStore } from "../../../stores/toast";
-    import { icpBalanceStore } from "../../../stores/balance";
+    import { icpBalanceE8sStore } from "../../../stores/balance";
+    import ICPInput from "../ICPInput.svelte";
 
     export let open: boolean;
 
@@ -30,25 +32,16 @@
     let refreshing = false;
     let error: string | undefined = undefined;
     let targetAccount: string = "";
-    let amountToWithdraw = 0;
+    let amountToWithdrawE8s = BigInt(0);
     let withdrawing = false;
 
     // make sure that they are not trying to withdraw to the same account - I can see people trying to do that
-    $: valid = amountToWithdraw > 0 && targetAccount !== "" && targetAccount !== user.icpAccount;
+    $: valid = amountToWithdrawE8s > BigInt(0) && targetAccount !== "" && targetAccount !== user.icpAccount;
 
-    $: remainingBalance =
-        amountToWithdraw > 0
-            ? Math.max(0, $icpBalanceStore - amountToWithdraw - ICP_TRANSFER_FEE)
-            : $icpBalanceStore;
-
-    $: {
-        if (amountToWithdraw > $icpBalanceStore - ICP_TRANSFER_FEE) {
-            amountToWithdraw = $icpBalanceStore - ICP_TRANSFER_FEE;
-        }
-        if (amountToWithdraw < 0) {
-            amountToWithdraw = 0;
-        }
-    }
+    $: remainingBalanceE8s =
+        amountToWithdrawE8s > BigInt(0)
+            ? $icpBalanceE8sStore.e8s - amountToWithdrawE8s - ICP_TRANSFER_FEE_E8S
+            : $icpBalanceE8sStore.e8s;
 
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 
@@ -72,12 +65,12 @@
             kind: "pending_icp_withdrawal",
             transferKind: "icp_withdrawal",
             to: targetAccount,
-            amountE8s: BigInt(amountToWithdraw * E8S_PER_ICP),
+            amountE8s: amountToWithdrawE8s,
         })
             .then((resp) => {
                 if (resp.kind === "completed_icp_withdrawal") {
                     console.log(resp);
-                    amountToWithdraw = 0;
+                    amountToWithdrawE8s = BigInt(0);
                     targetAccount = "";
                     reset();
                     toastStore.showSuccessToast("icpAccount.withdrawalSucceeded");
@@ -101,9 +94,9 @@
         <span class="header" slot="header">
             <div class="main-title">{$_("icpAccount.manageHeader")}</div>
             <div class="balance">
-                <div class="amount">{remainingBalance.toFixed(4)}</div>
+                <div class="amount">{formatICP(remainingBalanceE8s, 2)}</div>
                 <div class="label">
-                    {amountToWithdraw > 0
+                    {amountToWithdrawE8s > BigInt(0)
                         ? $_("icpAccount.shortRemainingBalanceLabel")
                         : $_("icpAccount.shortBalanceLabel")}
                 </div>
@@ -125,13 +118,11 @@
             <h4 class="title">{$_("icpAccount.withdraw")}</h4>
 
             <Legend>{$_("icpTransfer.amount")}</Legend>
-            <input
-                class="amount-val"
-                min={0}
-                max={$icpBalanceStore - ICP_TRANSFER_FEE}
-                type="number"
-                bind:value={amountToWithdraw} />
-
+            <div class="icp-input">
+                <ICPInput
+                    maxAmountE8s={$icpBalanceE8sStore.e8s - ICP_TRANSFER_FEE_E8S}
+                    bind:amountE8s={amountToWithdrawE8s} />
+            </div>
             <div class="target">
                 <Input
                     bind:value={targetAccount}
@@ -148,7 +139,7 @@
                 </div>
             </div>
             <div class="fee">
-                {$_("icpTransfer.fee", { values: { fee: ICP_TRANSFER_FEE.toString() } })}
+                {$_("icpTransfer.fee", { values: { fee: formatICP(ICP_TRANSFER_FEE_E8S, 0) } })}
             </div>
             {#if error}
                 <ErrorMessage>{$_(error)}</ErrorMessage>
@@ -245,21 +236,8 @@
         align-items: center;
     }
 
-    .amount-val {
-        height: 40px;
-        @include font(book, normal, fs-140);
-        color: var(--input-txt);
-        background-color: var(--input-bg);
-        border: 1px solid var(--input-bd);
-        line-height: 24px;
+    .icp-input {
         width: 250px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        border-radius: $sp2;
-        text-align: right;
-        display: block;
-        outline: none;
         margin-bottom: $sp3;
     }
 
