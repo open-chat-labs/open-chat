@@ -90,9 +90,7 @@
                     response = await api.searchDirectChat(chat.chatId, lowercase, 50);
                 }
                 if (response.kind === "success") {
-                    matches = response.matches.sort((a, b) => {
-                        return b.messageIndex - a.messageIndex;
-                    });
+                    matches = filterAndSortMatches(response.matches);
                     if (matches.length > 0) {
                         currentMatch = 0;
                         gotoMatch();
@@ -103,6 +101,17 @@
                 searching = false;
             }
         }
+    }
+
+    function filterAndSortMatches(matches: MessageMatch[]): MessageMatch[] {
+        const topScore = matches[0].score;
+        const keepThreshold = topScore * 0.3;
+        matches = matches
+            // Only show matches > than 30% of the top scoring match
+            .filter((m) => m.score >= keepThreshold)
+            // Sort matches in reverse chronological order
+            .sort((m1, m2) => m2.messageIndex - m1.messageIndex);
+        return matches;
     }
 
     function onInputKeyup() {

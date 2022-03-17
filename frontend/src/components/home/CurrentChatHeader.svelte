@@ -297,10 +297,10 @@
                                 </MenuItem>
                             {/if}
                         {/if}
-                        <MenuItem on:click={searchChat}>
+                        <!-- <MenuItem on:click={searchChat}>
                             <Magnify size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                             <div slot="text">{$_("searchChat")}</div>
-                        </MenuItem>
+                        </MenuItem> -->
                         {#if supportsNotifications}
                             {#if $selectedChatSummary.notificationsMuted === true}
                                 <MenuItem on:click={toggleMuteNotifications}>
