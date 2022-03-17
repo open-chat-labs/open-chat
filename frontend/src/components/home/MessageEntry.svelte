@@ -221,19 +221,19 @@
      * * !details - opens group details (not yet)
      */
     function parseCommands(txt: string): boolean {
-        if (/^!poll$/.test(txt)) {
+        if (/^\/poll$/.test(txt)) {
             dispatch("createPoll");
             return true;
         }
 
-        const searchMatch = txt.match(/^!search( *(.*))$/);
+        const searchMatch = txt.match(/^\/search( *(.*))$/);
         if (searchMatch && searchMatch[2] !== undefined) {
             dispatch("searchChat", searchMatch[2]);
             return true;
         }
 
         if ($chat.kind === "direct_chat") {
-            const icpMatch = txt.match(/^!icp *(\d*[.,]?\d*)$/);
+            const icpMatch = txt.match(/^\/icp *(\d*[.,]?\d*)$/);
             if (icpMatch && icpMatch[1] !== undefined) {
                 dispatch("icpTransfer", validateICPInput(icpMatch[1]).e8s);
                 return true;
