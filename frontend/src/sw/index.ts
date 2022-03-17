@@ -151,9 +151,7 @@ function extractMessageContentFromCryptoContent(content: CryptocurrencyContent):
             content.transfer.kind === "pending_icp_transfer"
         ) {
             return {
-                text: `You received ${(Number(content.transfer.amountE8s) / E8S_PER_ICP).toFixed(
-                    4
-                )} ICP`,
+                text: `You received ${Number(content.transfer.amountE8s) / E8S_PER_ICP} ICP`,
             };
         }
     }
