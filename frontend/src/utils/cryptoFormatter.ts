@@ -51,9 +51,7 @@ function validateInput(value: string, powTenPerWhole: number): [string | undefin
 }
 
 function parseBigInt(value: string): bigint | undefined {
-    return integerRegex.test(value)
-        ? BigInt(value)
-        : undefined;
+    return integerRegex.test(value) ? BigInt(value) : undefined;
 }
 
 export function formatICP(e8s: bigint, minDecimals: number): string {
@@ -92,10 +90,11 @@ export type ValidatedICPInput = {
 
 function getDecimalSeparator(locale: string) {
     const numberWithDecimalSeparator = 1.1;
-    return Intl.NumberFormat(locale)
-        .formatToParts(numberWithDecimalSeparator)
-        .find(part => part.type === "decimal")
-        ?.value ?? ".";
+    return (
+        Intl.NumberFormat(locale)
+            .formatToParts(numberWithDecimalSeparator)
+            .find((part) => part.type === "decimal")?.value ?? "."
+    );
 }
 
 const decimalSeparatorsRegex = /[.,]/;
