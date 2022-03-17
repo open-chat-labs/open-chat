@@ -68,5 +68,10 @@ describe("crypto formatter", () => {
             const formatted = formatICP(BigInt(12_345_678_912_345_678), 0);
             expect(formatted).toEqual("123456789.12345678");
         });
+
+        test("123456789.12345678 ICP with comma separator", () => {
+            const formatted = formatICP(BigInt(12_345_678_912_345_678), 0, ",");
+            expect(formatted).toEqual("123456789,12345678");
+        });
     });
 });

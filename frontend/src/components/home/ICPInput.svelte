@@ -11,7 +11,7 @@
 
     onMount(() => {
         if (amountE8s > BigInt(0)) {
-            inputElement.value = formatICP(amountE8s, 0);
+            inputElement.value = formatICP(amountE8s, 0, ".");
         }
     });
 
@@ -19,7 +19,7 @@
         if (inputElement !== undefined) {
             const e8s = validateICPInput(inputElement.value).e8s;
             if (e8s !== amountE8s) {
-                inputElement.value = formatICP(amountE8s, 0);
+                inputElement.value = formatICP(amountE8s, 0, ".");
             }
         }
     }
@@ -31,7 +31,7 @@
 
         if (e8s > maxAmountE8s) {
             e8s = maxAmountE8s;
-            inputElement.value = formatICP(amountE8s, 0);
+            inputElement.value = formatICP(maxAmountE8s, 0, ".");
         } else if (replacementText !== undefined) {
             inputElement.value = replacementText;
         }

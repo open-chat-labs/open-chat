@@ -1,5 +1,6 @@
 import { locale } from "svelte-i18n";
 import { get } from "svelte/store";
+import { getDecimalSeparator } from "./i18n";
 
 export function validateICPInput(value: string): ValidatedICPInput {
     const [replacementText, e8s] = validateInput(value, 8);
@@ -54,12 +55,22 @@ function parseBigInt(value: string): bigint | undefined {
     return integerRegex.test(value) ? BigInt(value) : undefined;
 }
 
-export function formatICP(e8s: bigint, minDecimals: number): string {
-    return format(e8s, minDecimals, 8);
+export function formatICP(
+    e8s: bigint,
+    minDecimals: number,
+    decimalSeparatorOverride?: string
+): string {
+    return format(e8s, minDecimals, 8, decimalSeparatorOverride);
 }
 
-function format(units: bigint, minDecimals: number, powTenPerWhole: number): string {
+function format(
+    units: bigint,
+    minDecimals: number,
+    powTenPerWhole: number,
+    decimalSeparatorOverride?: string
+): string {
     const unitsPerWhole = BigInt(Math.pow(10, powTenPerWhole));
+    const decimalSeparator = decimalSeparatorOverride ?? getDecimalSeparator(get(locale));
     const integral = units / unitsPerWhole;
     const integralString = integral.toString();
 
@@ -79,7 +90,7 @@ function format(units: bigint, minDecimals: number, powTenPerWhole: number): str
     }
 
     return fractionalString.length > 0
-        ? integralString + getDecimalSeparator(get(locale)) + fractionalString
+        ? integralString + decimalSeparator + fractionalString
         : integralString;
 }
 
@@ -87,15 +98,6 @@ export type ValidatedICPInput = {
     replacementText: string | undefined;
     e8s: bigint;
 };
-
-function getDecimalSeparator(locale: string) {
-    const numberWithDecimalSeparator = 1.1;
-    return (
-        Intl.NumberFormat(locale)
-            .formatToParts(numberWithDecimalSeparator)
-            .find((part) => part.type === "decimal")?.value ?? "."
-    );
-}
 
 const decimalSeparatorsRegex = /[.,]/;
 const integerRegex = /^[0-9]+$/;
