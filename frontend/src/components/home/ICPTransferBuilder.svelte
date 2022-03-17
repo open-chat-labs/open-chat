@@ -2,7 +2,7 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize, ICP_TRANSFER_FEE_E8S } from "../../domain/user/user";
+    import { AvatarSize, E8S_PER_ICP, ICP_TRANSFER_FEE_E8S } from "../../domain/user/user";
     import ICPInput from "./ICPInput.svelte";
     import Input from "../Input.svelte";
     import Overlay from "../Overlay.svelte";
@@ -66,6 +66,12 @@
             .finally(() => (refreshing = false));
     }
 
+    function maxAmountE8s(): bigint {
+        const maxAvailable = $icpBalanceE8sStore.e8s - ICP_TRANSFER_FEE_E8S;
+        const maxAllowed = BigInt(10 * E8S_PER_ICP);
+        return maxAvailable > maxAllowed ? maxAllowed : maxAvailable;
+    }
+
     function send() {
         if (!confirming) {
             confirming = true;
@@ -126,7 +132,7 @@
                         <Legend>{$_("icpTransfer.amount")}</Legend>
                         <ICPInput
                             autofocus={true}
-                            maxAmountE8s={$icpBalanceE8sStore.e8s - ICP_TRANSFER_FEE_E8S}
+                            maxAmountE8s={maxAmountE8s()}
                             bind:amountE8s={draftAmountE8s} />
                     </div>
                     <div class="message">
