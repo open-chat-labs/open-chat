@@ -14,8 +14,7 @@
         } else {
             const rect = menu.getBoundingClientRect();
             menuStore.showMenu(contextMenu);
-            await tick();
-            menuStore.position(rect);
+            tick().then(() => menuStore.position(rect));
         }
     }
 
