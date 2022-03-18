@@ -37,7 +37,6 @@
     let icpTransferBuilder: ICPTransferBuilder;
     let showSearchHeader = false;
     let searchTerm = "";
-    let searchHeader: CurrentChatSearchHeader;
 
     $: pinned = controller.pinnedMessages;
     $: showFooter = !showSearchHeader;
@@ -140,9 +139,6 @@
     function searchChat(ev: CustomEvent<string>) {
         showSearchHeader = true;
         searchTerm = ev.detail;
-        if (searchTerm) {
-            searchHeader?.performSearch();
-        }
     }
 
     $: chat = controller.chat;
@@ -166,7 +162,6 @@
     {#if showSearchHeader}
         <CurrentChatSearchHeader
             chat={$chat}
-            bind:this={searchHeader}
             bind:searchTerm
             on:goToMessageIndex
             on:close={() => (showSearchHeader = false)} />
