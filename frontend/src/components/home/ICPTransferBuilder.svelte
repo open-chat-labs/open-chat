@@ -6,6 +6,7 @@
     import ICPInput from "./ICPInput.svelte";
     import Input from "../Input.svelte";
     import Overlay from "../Overlay.svelte";
+    import AccountInfo from "./AccountInfo.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import Refresh from "svelte-material-icons/Refresh.svelte";
@@ -47,6 +48,7 @@
     $: valid = error === undefined && draftAmountE8s > BigInt(0);
     $: receiver = $userStore[receiverId];
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
+    $: zero = $icpBalanceE8sStore.e8s <= ICP_TRANSFER_FEE_E8S;
 
     export function reset(amountE8s: bigint) {
         refreshing = true;
@@ -114,13 +116,21 @@
                         : $_("icpAccount.shortBalanceLabel")}
                 </div>
             </div>
-            <div class="refresh" class:refreshing class:mobile on:click={() => reset(draftAmountE8s)}>
+            <div
+                class="refresh"
+                class:refreshing
+                class:mobile
+                on:click={() => reset(draftAmountE8s)}>
                 <Refresh size={"1em"} color={"var(--accent)"} />
             </div>
         </span>
         <form slot="body">
-            <div class="body" class:confirming>
-                {#if confirming}
+            <div class="body" class:confirming class:zero>
+                {#if zero}
+                    <AccountInfo qrSize={"smaller"} {user} />
+                    <p>{$_("icpTransfer.zeroBalance")}</p>
+                    <p>{$_("icpTransfer.makeDeposit")}</p>
+                {:else if confirming}
                     <div class="alert">
                         <AlertOutline size={$iconSize} color={"var(--toast-failure-txt"} />
                     </div>
@@ -146,7 +156,9 @@
                             bind:value={message} />
                     </div>
                     <div class="fee">
-                        {$_("icpTransfer.fee", { values: { fee: formatICP(ICP_TRANSFER_FEE_E8S, 0) } })}
+                        {$_("icpTransfer.fee", {
+                            values: { fee: formatICP(ICP_TRANSFER_FEE_E8S, 0) },
+                        })}
                     </div>
                     {#if error}
                         <ErrorMessage>{$_(error)}</ErrorMessage>
@@ -164,8 +176,16 @@
                 </a>
             {/if}
             <ButtonGroup>
-                <Button disabled={!valid} tiny={true} on:click={send}
-                    >{confirming ? $_("icpTransfer.confirm") : $_("icpTransfer.send")}</Button>
+                {#if zero}
+                    <Button
+                        disabled={refreshing}
+                        loading={refreshing}
+                        tiny={true}
+                        on:click={() => reset(draftAmountE8s)}>{$_("refresh")}</Button>
+                {:else}
+                    <Button disabled={!valid} tiny={true} on:click={send}
+                        >{confirming ? $_("icpTransfer.confirm") : $_("icpTransfer.send")}</Button>
+                {/if}
                 <Button tiny={true} secondary={true} on:click={() => (open = false)}
                     >{$_("cancel")}</Button>
             </ButtonGroup>
@@ -222,6 +242,13 @@
     .body {
         padding: 0 $sp3;
         transition: background-color 100ms ease-in-out;
+
+        &.zero {
+            text-align: center;
+            p {
+                margin-bottom: $sp4;
+            }
+        }
 
         &.confirming {
             display: flex;

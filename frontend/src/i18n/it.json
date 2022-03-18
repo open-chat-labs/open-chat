@@ -425,7 +425,9 @@
         "viewTransaction": "[Visualizza transazione]({url})",
         "warning": "Avvertenza: è tua responsabilità assicurarti di fidarti dell'identità e delle motivazioni del destinatario. OpenChat non può annullare alcun trasferimento ICP.",
         "confirm": "Confermare",
-        "transfer": "Trasferimento ICP"
+        "transfer": "Trasferimento ICP",
+        "makeDeposit": "Si prega di effettuare un deposito sul conto sopra e aggiornare il saldo.",
+        "zeroBalance": "Non hai alcun ICP 😭."
     },
     "icpAccount": {
         "balanceLabel": "Saldo del conto ICP",
@@ -439,5 +441,7 @@
         "withdrawalFailed": "Il tuo prelievo è fallito!",
         "shortRemainingBalanceLabel": "equilibrio restante",
         "shortBalanceLabel": "equilibrio"
-    }
+    },
+    "searchChat": "Ricerca",
+    "search": "Ricerca..."
 }

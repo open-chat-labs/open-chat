@@ -426,7 +426,9 @@
         "viewTransaction": "[Ver transacción]({url})",
         "warning": "Advertencia: es su responsabilidad asegurarse de que confía en la identidad y los motivos del destinatario. OpenChat no puede revertir ninguna transferencia de ICP.",
         "confirm": "Confirmar",
-        "transfer": "transferencia de PIC"
+        "transfer": "transferencia de PIC",
+        "makeDeposit": "Realice un depósito en la cuenta anterior y actualice su saldo.",
+        "zeroBalance": "No tienes PIC 😭."
     },
     "icpAccount": {
         "balanceLabel": "Saldo de la cuenta del PCI",
@@ -440,5 +442,7 @@
         "withdrawalFailed": "¡Su retiro falló!",
         "shortRemainingBalanceLabel": "balance restante",
         "shortBalanceLabel": "equilibrio"
-    }
+    },
+    "searchChat": "Búsqueda",
+    "search": "Búsqueda..."
 }
