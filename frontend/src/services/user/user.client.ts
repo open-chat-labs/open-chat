@@ -212,6 +212,7 @@ export class UserClient extends CandidService implements IUserClient {
             timestamp: resp.timestamp,
             blockedUsers: resp.blockedUsers,
             avatarIdUpdate: undefined,
+            affectedEvents: {},
         };
     }
 
@@ -251,6 +252,12 @@ export class UserClient extends CandidService implements IUserClient {
             timestamp: updatesResponse.timestamp,
             blockedUsers: updatesResponse.blockedUsers,
             avatarIdUpdate: updatesResponse.avatarIdUpdate,
+            affectedEvents: updatesResponse.chatsUpdated.reduce((result, chatSummary) => {
+                if (chatSummary.affectedEvents.length > 0) {
+                    result[chatSummary.chatId] = chatSummary.affectedEvents;
+                }
+                return result;
+            }, {} as Record<string, number[]>),
         };
     }
 

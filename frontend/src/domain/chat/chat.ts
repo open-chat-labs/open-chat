@@ -535,6 +535,7 @@ export type MergedUpdatesResponse = {
     chatSummaries: ChatSummary[];
     blockedUsers: Set<string>;
     avatarIdUpdate: OptionUpdate<bigint>;
+    affectedEvents: Record<string, number[]>;
     timestamp: bigint;
 };
 
@@ -597,6 +598,7 @@ type ChatSummaryUpdatesCommon = {
     latestEventIndex?: number;
     latestMessage?: EventWrapper<Message>;
     notificationsMuted?: boolean;
+    affectedEvents: number[];
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
