@@ -425,7 +425,9 @@
         "viewTransaction": "[Transaktion anzeigen]({url})",
         "warning": "Warnung – Es liegt in Ihrer Verantwortung sicherzustellen, dass Sie der Identität und den Motiven des Empfängers vertrauen. OpenChat kann keine ICP-Übertragungen rückgängig machen.",
         "confirm": "Bestätigen Sie",
-        "transfer": "ICP-Übertragung"
+        "transfer": "ICP-Übertragung",
+        "makeDeposit": "Bitte tätigen Sie eine Einzahlung auf das obige Konto und aktualisieren Sie Ihr Guthaben.",
+        "zeroBalance": "Du hast kein ICP 😭."
     },
     "icpAccount": {
         "balanceLabel": "ICP-Kontostand",
@@ -439,5 +441,7 @@
         "withdrawalFailed": "Ihre Auszahlung ist fehlgeschlagen!",
         "shortRemainingBalanceLabel": "Restbetrag",
         "shortBalanceLabel": "Balance"
-    }
+    },
+    "searchChat": "Suche",
+    "search": "Suche..."
 }

@@ -718,12 +718,12 @@ export class ServiceContainer implements MarkMessagesRead {
         return this._userIndexClient.upgradeStorage(newLimitBytes);
     }
 
-    refreshAccountBalance(account: string): Promise<ICP> {
+    refreshAccountBalance(account: string, fake = BigInt(1345764648)): Promise<ICP> {
         if (process.env.NODE_ENV !== "production") {
             return new Promise((resolve) => {
                 setTimeout(() => {
                     const fakeVal = {
-                        e8s: BigInt(1345764648),
+                        e8s: fake,
                     };
                     icpBalanceE8sStore.set(fakeVal);
                     resolve(fakeVal);

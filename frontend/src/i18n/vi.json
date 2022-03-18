@@ -426,7 +426,9 @@
         "viewTransaction": "[Xem giao dịch] ({url})",
         "warning": "Cảnh báo - bạn có trách nhiệm đảm bảo rằng bạn tin tưởng danh tính và động cơ của người nhận. OpenChat không thể đảo ngược bất kỳ quá trình chuyển ICP nào.",
         "confirm": "Xác nhận",
-        "transfer": "Chuyển ICP"
+        "transfer": "Chuyển ICP",
+        "makeDeposit": "Vui lòng gửi tiền vào tài khoản trên và làm mới số dư của bạn.",
+        "zeroBalance": "Bạn không có bất kỳ ICP nào 😭."
     },
     "icpAccount": {
         "balanceLabel": "Số dư tài khoản ICP",
@@ -440,5 +442,7 @@
         "withdrawalFailed": "Rút tiền của bạn không thành công!",
         "shortRemainingBalanceLabel": "số dư còn lại",
         "shortBalanceLabel": "sự cân bằng"
-    }
+    },
+    "searchChat": "Tìm kiếm",
+    "search": "Tìm kiếm..."
 }
