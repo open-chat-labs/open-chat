@@ -34,6 +34,9 @@
 
     onMount(() => {
         inputElement.focus();
+        if (searchTerm.length > 0) {
+            performSearch();
+        }
         return () => clearMatches();
     });
 
@@ -76,7 +79,7 @@
         });
     }
 
-    export async function performSearch() {
+    async function performSearch() {
         clearMatches();
         if (searchTerm.length > 2) {
             lastSearchTerm = searchTerm;
@@ -105,9 +108,14 @@
 
     function filterAndSortMatches(matches: MessageMatch[]): MessageMatch[] {
         const topScore = matches[0].score;
-        const keepThreshold = topScore * 0.3;
+        const keepThreshold = topScore * 0.2;
+        console.log(
+            `all matches: ${matches.length}, topScore: ${topScore}, bottomScore: ${
+                matches[matches.length - 1].score
+            }`
+        );
         matches = matches
-            // Only show matches > than 30% of the top scoring match
+            // Only show matches > than 20% of the top scoring match
             .filter((m) => m.score >= keepThreshold)
             // Sort matches in reverse chronological order
             .sort((m1, m2) => m2.messageIndex - m1.messageIndex);
