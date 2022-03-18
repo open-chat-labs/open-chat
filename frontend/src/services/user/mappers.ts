@@ -626,6 +626,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             permissions: optional(candid.Group.permissions, (permissions) =>
                 groupPermissions(permissions)
             ),
+            affectedEvents: candid.Group.affected_events,
         };
     }
     if ("Direct" in candid) {
@@ -642,6 +643,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             })),
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
             notificationsMuted: optional(candid.Direct.notifications_muted, identity),
+            affectedEvents: candid.Direct.affected_events,
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);

@@ -728,6 +728,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
     'wasm_version' : IDL.Opt(Version),
+    'affected_events' : IDL.Vec(EventIndex),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
@@ -742,6 +743,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const DirectChatSummaryUpdates = IDL.Record({
+    'affected_events' : IDL.Vec(EventIndex),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'latest_event_index' : IDL.Opt(EventIndex),

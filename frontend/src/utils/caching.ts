@@ -183,7 +183,10 @@ export function setCachedChats(
                 }
                 return c;
             });
-        (await db).put(
+
+        const resolvedDb = await db;
+
+        resolvedDb.put(
             "chats",
             {
                 wasUpdated: true,
@@ -191,9 +194,15 @@ export function setCachedChats(
                 timestamp: data.timestamp,
                 blockedUsers: data.blockedUsers,
                 avatarIdUpdate: undefined,
+                affectedEvents: {},
             },
             userId
         );
+
+        Object.entries(data.affectedEvents)
+            .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
+            .forEach((key) => resolvedDb.delete("chat_events", key));
+
         return data;
     };
 }
@@ -223,7 +232,7 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
     return complete ? { events, affectedEvents: [] } : undefined;
 }
 
-async function loadEventByIndex<T extends ChatEvent>(
+function loadEventByIndex<T extends ChatEvent>(
     db: IDBPDatabase<ChatSchema>,
     chatId: string,
     idx: number
