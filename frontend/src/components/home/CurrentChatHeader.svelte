@@ -69,7 +69,7 @@
     }
 
     function searchChat() {
-        dispatch("searchChat");
+        dispatch("searchChat", "");
     }
 
     function createPoll() {
