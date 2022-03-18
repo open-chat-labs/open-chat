@@ -1,7 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
-use crate::ContentValidationError::InvalidPoll;
+use crate::ContentValidationError::{InvalidPoll, TransferLimitExceeded};
 use crate::RegisterVoteResult::SuccessNoChange;
-use crate::{CanisterId, CryptocurrencyTransfer, TimestampMillis, TotalVotes, UserId, VoteOperation};
+use crate::{CanisterId, CryptocurrencyTransfer, ICPTransfer, TimestampMillis, TotalVotes, UserId, VoteOperation};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -9,6 +9,8 @@ use std::fmt::{Debug, Formatter};
 
 const MAX_TEXT_LENGTH: u32 = 5_000;
 const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
+const E8S_PER_ICP: u64 = 100_000_000;
+const ICP_TRANSFER_LIMIT_E8S: u64 = 10 * E8S_PER_ICP;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContent {
@@ -38,17 +40,28 @@ pub enum ContentValidationError {
     Empty,
     TextTooLong(u32),
     InvalidPoll(InvalidPollReason),
+    TransferLimitExceeded(u64),
 }
 
 impl MessageContent {
     // Determines if the content is valid for a new message, this should not be called on existing
     // messages
     pub fn validate_for_new_message(&self, now: TimestampMillis) -> Result<(), ContentValidationError> {
-        if let MessageContent::Poll(p) = self {
-            if let Err(reason) = p.config.validate(now) {
-                return Err(InvalidPoll(reason));
+        match self {
+            MessageContent::Poll(p) => {
+                if let Err(reason) = p.config.validate(now) {
+                    return Err(InvalidPoll(reason));
+                }
             }
-        }
+            MessageContent::Cryptocurrency(c) => {
+                if let CryptocurrencyTransfer::ICP(ICPTransfer::Pending(icp)) = &c.transfer {
+                    if icp.amount.e8s() > ICP_TRANSFER_LIMIT_E8S {
+                        return Err(TransferLimitExceeded(ICP_TRANSFER_LIMIT_E8S));
+                    }
+                }
+            }
+            _ => {}
+        };
 
         let is_empty = match self {
             MessageContent::Text(t) => t.text.is_empty(),
