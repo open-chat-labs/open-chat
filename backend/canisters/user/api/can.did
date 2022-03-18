@@ -30,7 +30,7 @@ type SendMessageResponse =
         InvalidPoll: InvalidPollReason;
         InvalidRequest: text;
         TransferFailed: text;
-        TransactionFailed: text;
+        TransferLimitExceeded: nat64;
     };
 
 type EditMessageArgs =

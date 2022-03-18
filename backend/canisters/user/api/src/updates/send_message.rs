@@ -24,7 +24,7 @@ pub enum Response {
     InvalidPoll(InvalidPollReason),
     InvalidRequest(String),
     TransferFailed(String),
-    TransactionFailed(String),
+    TransferLimitExceeded(u64),
 }
 
 #[derive(CandidType, Deserialize, Debug)]

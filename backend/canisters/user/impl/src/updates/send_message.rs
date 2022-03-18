@@ -30,6 +30,7 @@ async fn send_message(mut args: Args) -> Response {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
             ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
+            ContentValidationError::TransferLimitExceeded(limit) => TransferLimitExceeded(limit),
         };
     }
 
@@ -64,7 +65,7 @@ async fn send_message(mut args: Args) -> Response {
                         c.transfer = CryptocurrencyTransfer::ICP(ICPTransfer::Completed(completed_transfer.clone()));
                         transfer = Some(TransferDetails::ICP(completed_transfer));
                     }
-                    Err(failed_transfer) => return TransactionFailed(failed_transfer.error_message),
+                    Err(failed_transfer) => return TransferFailed(failed_transfer.error_message),
                 };
             }
             _ => return InvalidRequest("Can only send pending transfers".to_owned()),
