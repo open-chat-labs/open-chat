@@ -482,9 +482,9 @@
         transition: margin ease-in-out 300ms;
         position: relative;
         width: 100%;
-        max-width: 1200px;
         display: flex;
         margin: var(--mg);
+        max-width: 1600px;
         @include size-below(lg) {
             margin: 0 auto;
         }

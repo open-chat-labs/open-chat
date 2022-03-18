@@ -10,7 +10,7 @@
 
 <style type="text/scss">
     $left-width: 40%;
-    $right-width: 400px;
+    $right-width: 500px;
     $trans: ease-in-out 200ms;
 
     section {
@@ -38,7 +38,7 @@
             display: flex;
             flex-direction: column;
             min-width: 236px;
-            max-width: 450px;
+            max-width: 550px;
             position: relative;
             @include size-below(xs) {
                 background: var(--panel-left-xs);

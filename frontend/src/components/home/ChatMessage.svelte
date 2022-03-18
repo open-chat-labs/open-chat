@@ -3,6 +3,8 @@
 <script lang="ts">
     import Link from "../Link.svelte";
     import type { UserSummary, UserLookup } from "../../domain/user/user";
+    import Avatar from "../Avatar.svelte";
+    import { AvatarSize } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -36,6 +38,7 @@
     import MessageReaction from "./MessageReaction.svelte";
     import Reload from "../Reload.svelte";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
+    import { avatarUrl } from "../../domain/user/user.utils";
 
     const dispatch = createEventDispatcher();
 
@@ -71,8 +74,7 @@
     let showEmojiPicker = false;
     let debug = false;
     let viewProfile = false;
-    let usernameLink: Link;
-    let usernameLinkBoundingRect: DOMRect | undefined = undefined;
+    let alignProfileTo: DOMRect | undefined = undefined;
 
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
@@ -80,6 +82,7 @@
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
+    $: showAvatar = !me && !deleted && !mobile && groupChat;
 
     afterUpdate(() => {
         console.log("updating ChatMessage component");
@@ -202,8 +205,10 @@
         dispatch("blockUser", { userId: senderId });
     }
 
-    function openUserProfile() {
-        usernameLinkBoundingRect = usernameLink.getBoundingRect();
+    function openUserProfile(ev: Event) {
+        if (ev.target) {
+            alignProfileTo = (ev.target as HTMLElement).getBoundingClientRect();
+        }
         viewProfile = true;
     }
 
@@ -254,7 +259,7 @@
 
 {#if viewProfile}
     <ViewUserProfile
-        alignTo={usernameLinkBoundingRect}
+        alignTo={alignProfileTo}
         userId={sender.userId}
         on:openDirectChat={chatWithUser}
         on:close={closeUserProfile} />
@@ -278,6 +283,14 @@
             </div>
         {/if}
 
+        {#if showAvatar}
+            <div class="avatar" class:mobile on:click={openUserProfile}>
+                {#if first}
+                    <Avatar url={avatarUrl(sender)} size={AvatarSize.Small} />
+                {/if}
+            </div>
+        {/if}
+
         <div
             bind:this={msgBubbleElement}
             style={msgBubbleCalculatedWidth !== undefined
@@ -294,7 +307,7 @@
             class:rtl={$rtlStore}>
             {#if first && !me && groupChat && !deleted}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
-                    <Link bind:this={usernameLink} underline={"hover"} on:click={openUserProfile}>
+                    <Link underline={"hover"} on:click={openUserProfile}>
                         <h4 class="username" class:fill>{username}</h4>
                     </Link>
                 </div>
@@ -428,7 +441,7 @@
     </div>
 
     {#if msg.reactions.length > 0 && !deleted}
-        <div class="message-reactions" class:me>
+        <div class="message-reactions" class:me class:indent={showAvatar}>
             {#each msg.reactions as { reaction, userIds } (reaction)}
                 <MessageReaction
                     on:click={() => toggleReaction(reaction)}
@@ -443,10 +456,15 @@
 
 <style type="text/scss">
     $size: 10px;
+    $avatar-width: 53px;
 
     :global(.message .loading) {
         min-height: 100px;
         min-width: 250px;
+    }
+
+    :global(.message .avatar .avatar) {
+        margin: 0;
     }
 
     :global(.message-bubble .content a) {
@@ -525,6 +543,10 @@
         &.me {
             justify-content: flex-end;
         }
+
+        &.indent {
+            margin-left: $avatar-width;
+        }
     }
 
     .message {
@@ -534,6 +556,11 @@
 
         &.me {
             justify-content: flex-end;
+        }
+
+        .avatar {
+            flex: 0 0 $avatar-width;
+            cursor: pointer;
         }
 
         .actions {
