@@ -425,7 +425,9 @@
         "viewTransaction": "[トランザクションを表示]（{url}）",
         "warning": "警告-受信者の身元と動機を確実に信頼するのはあなたの責任です。 OpenChatはICP転送を元に戻すことはできません。",
         "confirm": "確認",
-        "transfer": "ICP転送"
+        "transfer": "ICP転送",
+        "makeDeposit": "上記の口座に入金し、残高を更新してください。",
+        "zeroBalance": "ICPはありません😭。"
     },
     "icpAccount": {
         "balanceLabel": "ICPアカウントの残高",
@@ -439,5 +441,7 @@
         "withdrawalFailed": "引き出しに失敗しました！",
         "shortRemainingBalanceLabel": "保たれているバランス",
         "shortBalanceLabel": "残高"
-    }
+    },
+    "searchChat": "検索",
+    "search": "検索..."
 }

@@ -423,7 +423,9 @@
         "viewTransaction": "[View transaction]({url})",
         "warning": "Warning - it is your responsibility to be sure that you trust the identity and motives of the recipient. OpenChat cannot reverse any ICP transfers.",
         "confirm": "Confirm",
-        "transfer": "ICP transfer"
+        "transfer": "ICP transfer",
+        "makeDeposit": "Please make a deposit into the account above and refresh your balance.",
+        "zeroBalance": "You don't have any ICP 😭."
     },
     "icpAccount": {
         "balanceLabel": "ICP account balance",

@@ -5,7 +5,6 @@
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
     import type { CreatedUser } from "../../domain/user/user";
-    import type { ServiceContainer } from "../../services/serviceContainer";
 
     export let user: CreatedUser;
     export let qrSize: "default" | "smaller" = "default";

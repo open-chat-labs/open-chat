@@ -205,6 +205,7 @@
         border: none;
         @include font(book, normal, fs-100);
         color: var(--chatSearch-txt);
+        background-color: inherit;
 
         &::placeholder {
             color: var(--placeholder);
