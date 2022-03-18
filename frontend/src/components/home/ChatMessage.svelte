@@ -82,7 +82,7 @@
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
     $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
-    $: showAvatar = !me && !deleted && !mobile && groupChat;
+    $: showAvatar = !me && !mobile && groupChat;
 
     afterUpdate(() => {
         console.log("updating ChatMessage component");
@@ -284,9 +284,11 @@
         {/if}
 
         {#if showAvatar}
-            <div class="avatar" class:mobile on:click={openUserProfile}>
+            <div class="avatar-col">
                 {#if first}
-                    <Avatar url={avatarUrl(sender)} size={AvatarSize.Small} />
+                    <div class="avatar" on:click={openUserProfile}>
+                        <Avatar url={avatarUrl(sender)} size={AvatarSize.Small} />
+                    </div>
                 {/if}
             </div>
         {/if}
@@ -305,7 +307,7 @@
             class:last
             class:readByMe
             class:rtl={$rtlStore}>
-            {#if first && !me && groupChat && !deleted}
+            {#if first && !me && groupChat}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"hover"} on:click={openUserProfile}>
                         <h4 class="username" class:fill>{username}</h4>
@@ -558,9 +560,12 @@
             justify-content: flex-end;
         }
 
-        .avatar {
+        .avatar-col {
             flex: 0 0 $avatar-width;
-            cursor: pointer;
+
+            .avatar {
+                cursor: pointer;
+            }
         }
 
         .actions {
