@@ -52,6 +52,7 @@ function validateInput(value: string, powTenPerWhole: number): [string | undefin
 }
 
 function parseBigInt(value: string): bigint | undefined {
+    if (value.length === 0) return BigInt(0);
     return integerRegex.test(value) ? BigInt(value) : undefined;
 }
 
