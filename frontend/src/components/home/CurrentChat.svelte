@@ -140,9 +140,6 @@
     function searchChat(ev: CustomEvent<string>) {
         showSearchHeader = true;
         searchTerm = ev.detail;
-        if (searchTerm) {
-            searchHeader?.performSearch();
-        }
     }
 
     $: chat = controller.chat;
