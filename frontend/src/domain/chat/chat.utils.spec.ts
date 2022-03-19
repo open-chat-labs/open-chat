@@ -358,7 +358,7 @@ describe("merging updates", () => {
                 index: 300,
                 timestamp: BigInt(400),
             },
-            affectedEvents: []
+            affectedEvents: [],
         };
 
         const updatedGroup: GroupChatSummaryUpdates = {
@@ -387,7 +387,7 @@ describe("merging updates", () => {
             name: "stuff",
             description: "stuff",
             mentions: [],
-            affectedEvents: []
+            affectedEvents: [],
         };
 
         test("attempting to update with a mismatched kind throws error", () => {
