@@ -602,6 +602,10 @@
         min-width: 90px;
         overflow: hidden;
 
+        @include size-above(xl) {
+            max-width: 70%;
+        }
+
         .username {
             color: inherit;
             color: var(--accent);
