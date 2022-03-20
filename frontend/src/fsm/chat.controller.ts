@@ -421,22 +421,20 @@ export class ChatController {
     }
 
     private async loadEventWindow(messageIndex: number, preserveFocus = false) {
-        if (messageIndex > 0) {
-            this.loading.set(true);
-            const range = indexRangeForChat(get(this.serverChatSummary));
-            const eventsPromise: Promise<EventsResponse<ChatEvent>> =
-                this.chatVal.kind === "direct_chat"
-                    ? this.api.directChatEventsWindow(range, this.chatVal.them, messageIndex)
-                    : this.api.groupChatEventsWindow(range, this.chatId, messageIndex);
-            const eventsResponse = await eventsPromise;
+        this.loading.set(true);
+        const range = indexRangeForChat(get(this.serverChatSummary));
+        const eventsPromise: Promise<EventsResponse<ChatEvent>> =
+            this.chatVal.kind === "direct_chat"
+                ? this.api.directChatEventsWindow(range, this.chatVal.them, messageIndex)
+                : this.api.groupChatEventsWindow(range, this.chatId, messageIndex);
+        const eventsResponse = await eventsPromise;
 
-            if (eventsResponse === undefined || eventsResponse === "events_failed") {
-                return undefined;
-            }
-
-            await this.handleEventsResponse(eventsResponse);
-            this.loading.set(false);
+        if (eventsResponse === undefined || eventsResponse === "events_failed") {
+            return undefined;
         }
+
+        await this.handleEventsResponse(eventsResponse);
+        this.loading.set(false);
 
         this.raiseEvent({
             chatId: this.chatId,
