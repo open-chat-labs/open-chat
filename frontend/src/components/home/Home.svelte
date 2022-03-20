@@ -488,6 +488,9 @@
         @include size-below(lg) {
             margin: 0 auto;
         }
+        @include size-below(xl) {
+            max-width: 1400px;
+        }
     }
     :global(body) {
         transition: color ease-in-out 300ms;
