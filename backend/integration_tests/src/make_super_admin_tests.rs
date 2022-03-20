@@ -2,7 +2,6 @@ use crate::block_on;
 use canister_client::operations::*;
 use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::{TestIdentity, USER2_DEFAULT_NAME};
-use ic_agent::AgentError::HttpError;
 use ic_fondue::ic_manager::IcHandle;
 use std::{panic, thread, time};
 use types::{ChatSummary, GroupChatEvent, Role};
@@ -45,6 +44,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
         description: description.clone(),
         avatar: None,
         history_visible_to_new_joiners: false,
+        permissions: None,
     };
 
     // User1 is owner and user2 is a participant
@@ -78,32 +78,32 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
 
     {
         print!("3. User3 try to join the private group... ");
-        let args = user_canister::join_group::Args {
+        let args = user_canister::join_group_v2::Args {
             chat_id,
             as_super_admin: false,
         };
-        match user_canister_client::join_group(&user3_agent, &user3_id.into(), &args)
+        match user_canister_client::join_group_v2(&user3_agent, &user3_id.into(), &args)
             .await
             .unwrap()
         {
-            user_canister::join_group::Response::GroupNotPublic => {}
-            response => panic!("user::join_group did not return GroupNotPublic: {response:?}"),
+            user_canister::join_group_v2::Response::GroupNotPublic => {}
+            response => panic!("user::join_group_v2 did not return GroupNotPublic: {response:?}"),
         };
         println!("Failed as expected");
     }
 
     {
         print!("4. User3 join the private group as a SuperAdmin... ");
-        let args = user_canister::join_group::Args {
+        let args = user_canister::join_group_v2::Args {
             chat_id,
             as_super_admin: true,
         };
-        match user_canister_client::join_group(&user3_agent, &user3_id.into(), &args)
+        match user_canister_client::join_group_v2(&user3_agent, &user3_id.into(), &args)
             .await
             .unwrap()
         {
-            user_canister::join_group::Response::Success => {}
-            response => panic!("user::join_group did not return Success: {response:?}"),
+            user_canister::join_group_v2::Response::Success(_) => {}
+            response => panic!("user::join_group_v2 did not return Success: {response:?}"),
         };
         println!("Ok");
     }
@@ -217,11 +217,7 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
         print!("12. User3 try to remove user2... ");
         let args = group_canister::remove_participant::Args { user_id: user2_id };
         match group_canister_client::remove_participant(&user3_agent, &chat_id.into(), &args).await {
-            Err(HttpError(error)) => {
-                if error.status != 403 {
-                    panic!("group::remove_participant did not return 403 as expected: {error:?}");
-                }
-            }
+            Err(error) if format!("{error:?}").contains("403") => {}
             response => panic!("group::remove_participant did not return 403 as expected: {response:?}"),
         };
         println!("Failed as expected");
