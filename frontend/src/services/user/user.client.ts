@@ -16,7 +16,6 @@ import type {
     LeaveGroupResponse,
     MarkReadResponse,
     IndexRange,
-    EventWrapper,
     ToggleReactionResponse,
     DeleteMessageResponse,
     JoinGroupResponse,
@@ -50,12 +49,7 @@ import {
     withdrawCryptoResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import {
-    compareChats,
-    enoughVisibleMessages,
-    mergeChatUpdates,
-    nextIndex,
-} from "../../domain/chat/chat.utils";
+import { compareChats, mergeChatUpdates } from "../../domain/chat/chat.utils";
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
@@ -76,8 +70,7 @@ import type {
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
-
-const MAX_RECURSION = 10;
+import { getChatEventsInLoop } from "../common/chatEvents";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -144,60 +137,30 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    async chatEvents(
+    chatEvents(
         eventIndexRange: IndexRange,
         userId: string,
         startIndex: number,
-        ascending: boolean,
-        previouslyLoadedEvents: EventWrapper<DirectChatEvent>[] = [],
-        iterations = 0
+        ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const resp = await this.handleResponse(
-            this.userService.events({
-                user_id: Principal.fromText(userId),
-                max_messages: 30,
-                max_events: 50,
-                start_index: startIndex,
-                ascending,
-            }),
-            getEventsResponse
-        );
-        if (resp === "events_failed") {
-            return resp;
-        }
-
-        // merge the retrieved events with the events accumulated from the previous iteration(s)
-        // todo - we also need to merge affected events
-        const merged = ascending
-            ? [...previouslyLoadedEvents, ...resp.events]
-            : [...resp.events, ...previouslyLoadedEvents];
-
-        // check whether we have accumulated enough messages to display
-        if (enoughVisibleMessages(ascending, eventIndexRange, merged)) {
-            console.log("we got enough visible messages to display now");
-            return { ...resp, events: merged };
-        } else if (iterations < MAX_RECURSION) {
-            const idx = nextIndex(ascending, merged);
-            if (idx === undefined) {
-                // this will happen if we didn't get any events.
-                return { ...resp, events: merged };
-            } else {
-                // recurse and get the next chunk since we don't yet have enough events
-                console.log("we don't have enough message, recursing", resp.events);
-                return this.chatEvents(
-                    eventIndexRange,
-                    userId,
-                    idx,
-                    ascending,
-                    merged,
-                    iterations + 1
-                );
-            }
-        } else {
-            throw new Error(
-                `Reached the maximum number of iterations of ${MAX_RECURSION} when trying to load events: ascending (${ascending}), range (${eventIndexRange}), so far (${previouslyLoadedEvents.length})`
+        const getChatEventsFunc = (index: number, asc: boolean) =>
+            this.handleResponse(
+                this.userService.events({
+                    user_id: Principal.fromText(userId),
+                    max_messages: 30,
+                    max_events: 50,
+                    start_index: index,
+                    ascending: asc,
+                }),
+                getEventsResponse
             );
-        }
+
+        return getChatEventsInLoop(
+            getChatEventsFunc,
+            eventIndexRange,
+            startIndex,
+            ascending
+        );
     }
 
     async getInitialState(): Promise<MergedUpdatesResponse> {
