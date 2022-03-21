@@ -4,7 +4,6 @@ use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::TestIdentity;
 use ic_fondue::ic_manager::IcHandle;
 use std::panic;
-use ic_agent::AgentError::HttpError;
 use types::{EventIndex, GroupChatEvent, MessageContent, Role, TextContent};
 
 pub fn pinned_messages_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
@@ -38,6 +37,7 @@ async fn pinned_messages_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context
         description: description.clone(),
         avatar: None,
         history_visible_to_new_joiners: false,
+        permissions: None,
     };
 
     let chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id]).await;
@@ -61,9 +61,7 @@ async fn pinned_messages_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context
     let _ = send_group_message(&user1_agent, chat_id, &send_message_args2).await;
 
     print!("1. Check that the Owner can pin a message... ");
-    let pin_message_args1 = group_canister::pin_message::Args {
-        message_index: 0.into(),
-    };
+    let pin_message_args1 = group_canister::pin_message::Args { message_index: 0.into() };
     match group_canister_client::pin_message(&user1_agent, &chat_id.into(), &pin_message_args1)
         .await
         .unwrap()
@@ -74,20 +72,22 @@ async fn pinned_messages_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context
     println!("Ok");
 
     print!("2. Check that a participant can't pin a message... ");
-    let pin_message_args2 = group_canister::pin_message::Args {
-        message_index: 1.into(),
-    };
-    match group_canister_client::pin_message(&user2_agent, &chat_id.into(), &pin_message_args2)
-        .await
-    {
-        Err(HttpError(error)) if error.status == 403 => {},
+    let pin_message_args2 = group_canister::pin_message::Args { message_index: 1.into() };
+    match group_canister_client::pin_message(&user2_agent, &chat_id.into(), &pin_message_args2).await {
+        Err(error) if format!("{error:?}").contains("403") => {}
         response => panic!("pin_message did not return 403 as expected: {response:?}"),
     };
     println!("Ok");
 
     print!("3. Making user2 an admin... ");
-    let change_role_args = group_canister::change_role::Args { user_id: user2_id, new_role: Role::Admin };
-    match group_canister_client::change_role(&user1_agent, &chat_id.into(), &change_role_args).await.unwrap() {
+    let change_role_args = group_canister::change_role::Args {
+        user_id: user2_id,
+        new_role: Role::Admin,
+    };
+    match group_canister_client::change_role(&user1_agent, &chat_id.into(), &change_role_args)
+        .await
+        .unwrap()
+    {
         group_canister::change_role::Response::Success => {}
         response => panic!("change_role returned an error: {response:?}"),
     };
@@ -117,9 +117,7 @@ async fn pinned_messages_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context
     println!("Ok");
 
     print!("6. Check the MessageIndexOutOfRange case... ");
-    let pin_message_args3 = group_canister::pin_message::Args {
-        message_index: 2.into(),
-    };
+    let pin_message_args3 = group_canister::pin_message::Args { message_index: 2.into() };
     match group_canister_client::pin_message(&user2_agent, &chat_id.into(), &pin_message_args3)
         .await
         .unwrap()
@@ -133,34 +131,34 @@ async fn pinned_messages_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context
     let selected_initial_args = group_canister::selected_initial::Args {};
     match group_canister_client::selected_initial(&user1_agent, &chat_id.into(), &selected_initial_args)
         .await
-        .unwrap() {
+        .unwrap()
+    {
         group_canister::selected_initial::Response::Success(r) => {
             assert_eq!(r.pinned_messages, vec![0.into(), 1.into()]);
         }
-        response => panic!("selected_initial returned an error: {response:?}")
+        response => panic!("selected_initial returned an error: {response:?}"),
     }
     println!("Ok");
 
     print!("8. Check that messages can be unpinned... ");
-    let unpin_message_args = group_canister::unpin_message::Args {
-        message_index: 0.into(),
-    };
+    let unpin_message_args = group_canister::unpin_message::Args { message_index: 0.into() };
     match group_canister_client::unpin_message(&user1_agent, &chat_id.into(), &unpin_message_args)
         .await
         .unwrap()
     {
-        group_canister::unpin_message::Response::Success(_) => {},
+        group_canister::unpin_message::Response::Success(_) => {}
         response => panic!("unpin_message returned an error: {response:?}"),
     };
     println!("Ok");
 
     print!("9. Check that the chat updates show the unpinned message... ");
     let selected_updates_args = group_canister::selected_updates::Args {
-        updates_since: pin_message_event_index
+        updates_since: pin_message_event_index,
     };
     match group_canister_client::selected_updates(&user1_agent, &chat_id.into(), &selected_updates_args)
         .await
-        .unwrap() {
+        .unwrap()
+    {
         group_canister::selected_updates::Response::Success(r) => {
             assert_eq!(r.pinned_messages_removed, vec![0.into()]);
         }

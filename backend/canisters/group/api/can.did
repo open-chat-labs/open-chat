@@ -9,11 +9,6 @@ type SendMessageArgs =
         mentioned: vec User;
     };
 
-type GroupReplyContext =
-    record {
-        event_index: EventIndex;
-    };
-
 type SendMessageResponse =
     variant {
         Success: record {

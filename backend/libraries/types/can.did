@@ -315,6 +315,11 @@ type GroupNameChanged =
         changed_by: UserId;
     };
 
+type GroupReplyContext =
+    record {
+        event_index: EventIndex;
+    };
+
 type MessagePinned =
     record {
         message_index: MessageIndex;

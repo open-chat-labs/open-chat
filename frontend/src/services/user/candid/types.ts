@@ -742,7 +742,7 @@ export interface SendMessageArgs {
   'replies_to' : [] | [ReplyContext],
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
-  { 'TransactionFailed' : string } |
+  { 'TransferLimitExceeded' : bigint } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,

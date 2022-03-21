@@ -1,5 +1,5 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
-use crate::ContentValidationError::{InvalidPoll, TransferLimitExceeded};
+use crate::ContentValidationError::{InvalidPoll, TransferCannotBeZero, TransferLimitExceeded};
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{CanisterId, CryptocurrencyTransfer, ICPTransfer, TimestampMillis, TotalVotes, UserId, VoteOperation};
 use candid::CandidType;
@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
-const MAX_TEXT_LENGTH: u32 = 5_000;
-const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
+pub const MAX_TEXT_LENGTH: u32 = 5_000;
+pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
 const E8S_PER_ICP: u64 = 100_000_000;
 const ICP_TRANSFER_LIMIT_E8S: u64 = 10 * E8S_PER_ICP;
 
@@ -40,6 +40,7 @@ pub enum ContentValidationError {
     Empty,
     TextTooLong(u32),
     InvalidPoll(InvalidPollReason),
+    TransferCannotBeZero,
     TransferLimitExceeded(u64),
 }
 
@@ -54,10 +55,11 @@ impl MessageContent {
                 }
             }
             MessageContent::Cryptocurrency(c) => {
-                if let CryptocurrencyTransfer::ICP(ICPTransfer::Pending(icp)) = &c.transfer {
-                    if icp.amount.e8s() > ICP_TRANSFER_LIMIT_E8S {
-                        return Err(TransferLimitExceeded(ICP_TRANSFER_LIMIT_E8S));
-                    }
+                if c.transfer.is_zero() {
+                    return Err(TransferCannotBeZero);
+                }
+                if let Err(limit) = c.within_limit() {
+                    return Err(TransferLimitExceeded(limit));
                 }
             }
             _ => {}
@@ -322,6 +324,17 @@ pub enum RegisterVoteResult {
 pub struct CryptocurrencyContent {
     pub transfer: CryptocurrencyTransfer,
     pub caption: Option<String>,
+}
+
+impl CryptocurrencyContent {
+    pub fn within_limit(&self) -> Result<(), u64> {
+        if let CryptocurrencyTransfer::ICP(ICPTransfer::Pending(icp)) = &self.transfer {
+            if icp.amount.e8s() > ICP_TRANSFER_LIMIT_E8S {
+                return Err(ICP_TRANSFER_LIMIT_E8S);
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
