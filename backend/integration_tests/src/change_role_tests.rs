@@ -40,6 +40,7 @@ async fn change_role_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         description: description.clone(),
         avatar: None,
         history_visible_to_new_joiners: false,
+        permissions: None,
     };
 
     // User1 is owner and user2 and user3 are participants
@@ -114,9 +115,12 @@ async fn change_role_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     }
     {
         print!("9. Confirm that a non-admin is not able to make another user an admin... ");
-        let args = group_canister::change_role::Args { user_id: user3_id, new_role: Role::Admin };
+        let args = group_canister::change_role::Args {
+            user_id: user3_id,
+            new_role: Role::Admin,
+        };
         match group_canister_client::change_role(&user2_agent, &chat_id.into(), &args).await {
-            Err(error) if { format!("{error:?}").contains("403") } => {}
+            Err(error) if format!("{error:?}").contains("403") => {}
             response => panic!("MakeAdmin should have returned 403 but did not: {response:?}"),
         };
         println!("Ok");
@@ -172,7 +176,14 @@ async fn user_role(user_id: UserId, agent: &Agent) -> Option<Role> {
     }
 }
 
-async fn change_role(group_id: ChatId, user_id: UserId, new_role: Role, agent: &Agent) -> group_canister::change_role::Response {
+async fn change_role(
+    group_id: ChatId,
+    user_id: UserId,
+    new_role: Role,
+    agent: &Agent,
+) -> group_canister::change_role::Response {
     let args = group_canister::change_role::Args { user_id, new_role };
-    group_canister_client::change_role(agent, &group_id.into(), &args).await.unwrap()
+    group_canister_client::change_role(agent, &group_id.into(), &args)
+        .await
+        .unwrap()
 }
