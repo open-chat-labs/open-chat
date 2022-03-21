@@ -27,7 +27,7 @@
     import { iconSize } from "../../stores/iconSize";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
-    const MESSAGE_LOAD_THRESHOLD = 300;
+    const MESSAGE_LOAD_THRESHOLD = 400;
     const FROM_BOTTOM_THRESHOLD = 600;
     const MESSAGE_READ_THRESHOLD = 500;
 

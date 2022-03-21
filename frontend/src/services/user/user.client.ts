@@ -49,7 +49,12 @@ import {
     withdrawCryptoResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import { compareChats, mergeChatUpdates } from "../../domain/chat/chat.utils";
+import {
+    compareChats,
+    MAX_EVENTS,
+    MAX_MESSAGES,
+    mergeChatUpdates,
+} from "../../domain/chat/chat.utils";
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
@@ -129,8 +134,8 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.events_window({
                 user_id: Principal.fromText(userId),
-                max_messages: 30,
-                max_events: 200,
+                max_messages: MAX_MESSAGES,
+                max_events: MAX_EVENTS,
                 mid_point: messageIndex,
             }),
             getEventsResponse
@@ -147,20 +152,15 @@ export class UserClient extends CandidService implements IUserClient {
             this.handleResponse(
                 this.userService.events({
                     user_id: Principal.fromText(userId),
-                    max_messages: 30,
-                    max_events: 50,
+                    max_messages: MAX_MESSAGES,
+                    max_events: MAX_EVENTS,
                     start_index: index,
                     ascending: asc,
                 }),
                 getEventsResponse
             );
 
-        return getChatEventsInLoop(
-            getChatEventsFunc,
-            eventIndexRange,
-            startIndex,
-            ascending
-        );
+        return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending);
     }
 
     async getInitialState(): Promise<MergedUpdatesResponse> {

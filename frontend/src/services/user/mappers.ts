@@ -374,9 +374,8 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("TransferFailed" in candid) {
         return { kind: "transfer_failed" };
     }
-    //todo - remove this later
-    if ("TransactionFailed" in candid) {
-        return { kind: "transfer_failed" };
+    if ("TransferLimitExceeded" in candid) {
+        return { kind: "transfer_limit_exceeded" };
     }
     if ("InvalidPoll" in candid) {
         return { kind: "invalid_poll" };
