@@ -279,7 +279,7 @@
         align-items: flex-end;
         justify-content: space-between;
 
-        &.mobile {
+        @include mobile() {
             justify-content: center;
         }
     }

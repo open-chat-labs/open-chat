@@ -27,7 +27,7 @@
 
     export function close() {
         drawOpen = false;
-        if (messageAction === "file") {
+        if (fileToAttach !== undefined) {
             controller.clearAttachment();
         }
         messageAction = undefined;
@@ -54,7 +54,7 @@
     }
 
     function toggleDraw() {
-        if (drawOpen) {
+        if (drawOpen || $fileToAttach !== undefined) {
             close();
         } else {
             drawOpen = true;
@@ -64,7 +64,7 @@
 
 {#if useDrawer}
     <div class="open-draw" on:click={toggleDraw}>
-        {#if drawOpen}
+        {#if drawOpen || $fileToAttach !== undefined}
             <HoverIcon>
                 <TrayRemove size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
@@ -90,7 +90,7 @@
     </div>
     <div class="attach">
         <FileAttacher
-            open={$fileToAttach !== undefined && messageAction === "file"}
+            open={$fileToAttach !== undefined}
             on:fileSelected
             on:open={() => (messageAction = "file")}
             on:close={close} />
