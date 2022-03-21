@@ -72,7 +72,7 @@
     }
     .chars-wrapper {
         width: 80%;
-        @include size-below(xs) {
+        @include mobile() {
             width: 100%;
         }
     }

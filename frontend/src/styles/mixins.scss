@@ -133,6 +133,12 @@ $sp11: 192px;
     }
 }
 
+@mixin mobile() {
+    @include size-below(sm) {
+        @content;
+    }
+}
+
 @mixin size-below($breakpoint) {
     @if map-has-key($breakpoints, $breakpoint) {
         $breakpoint-value: map-get($breakpoints, $breakpoint);
@@ -296,7 +302,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     // LINE-HEIGHTS
     @if map-has-key($type, line-height) {
         line-height: map-get($type, line-height);
-        @include size-below(sm) {
+        @include mobile() {
             line-height: calc(#{map-get($type, line-height)} * 0.95);
         }
         @include size-below(xs) {
@@ -307,7 +313,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     // FONT-SIZES
     @if map-has-key($type, font-size) {
         font-size: map-get($type, font-size);
-        @include size-below(sm) {
+        @include mobile() {
             font-size: calc(#{map-get($type, font-size)} * 0.95);
         }
         @include size-below(xs) {

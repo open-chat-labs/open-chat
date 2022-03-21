@@ -302,7 +302,7 @@
     .form-fields {
         padding: var(--groupForm-edit-pd);
         padding-bottom: 0;
-        @include size-below(xs) {
+        @include mobile() {
             padding: 0 $sp3;
         }
     }

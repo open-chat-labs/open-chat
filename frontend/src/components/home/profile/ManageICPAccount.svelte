@@ -19,7 +19,6 @@
     import { rollbar } from "../../../utils/logging";
     import AccountInfo from "../AccountInfo.svelte";
     import { iconSize } from "../../../stores/iconSize";
-    import { ScreenWidth, screenWidth } from "../../../stores/screenDimensions";
     import { toastStore } from "../../../stores/toast";
     import { icpBalanceE8sStore } from "../../../stores/balance";
     import ICPInput from "../ICPInput.svelte";
@@ -36,14 +35,15 @@
     let withdrawing = false;
 
     // make sure that they are not trying to withdraw to the same account - I can see people trying to do that
-    $: valid = amountToWithdrawE8s > BigInt(0) && targetAccount !== "" && targetAccount !== user.icpAccount;
+    $: valid =
+        amountToWithdrawE8s > BigInt(0) &&
+        targetAccount !== "" &&
+        targetAccount !== user.icpAccount;
 
     $: remainingBalanceE8s =
         amountToWithdrawE8s > BigInt(0)
             ? $icpBalanceE8sStore.e8s - amountToWithdrawE8s - ICP_TRANSFER_FEE_E8S
             : $icpBalanceE8sStore.e8s;
-
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 
     export function reset() {
         refreshing = true;
@@ -101,7 +101,7 @@
                         : $_("icpAccount.shortBalanceLabel")}
                 </div>
             </div>
-            <div class="refresh" class:refreshing class:mobile on:click={reset}>
+            <div class="refresh" class:refreshing on:click={reset}>
                 <Refresh size={"1em"} color={"var(--accent)"} />
             </div>
         </span>
@@ -210,7 +210,7 @@
                 @include spin();
             }
 
-            &.mobile {
+            @include mobile() {
                 height: 21.59px;
                 width: 21.59px;
             }

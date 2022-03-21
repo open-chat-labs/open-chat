@@ -39,6 +39,10 @@ export const screenWidth = derived(dimensions, ($dimensions) => {
     }
 });
 
+export const mobileWidth = derived(dimensions, ($dimensions) => {
+    return $dimensions.width < 768;
+});
+
 export const screenHeight = derived(dimensions, ($dimensions) => {
     if ($dimensions.height < 768) {
         return ScreenHeight.Small;

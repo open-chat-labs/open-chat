@@ -4,7 +4,7 @@
     import Link from "./Link.svelte";
     import { rtlStore } from "../stores/rtl";
     import { rollbar } from "../utils/logging";
-    import { ScreenWidth, screenWidth } from "../stores/screenDimensions";
+    import { mobileWidth } from "../stores/screenDimensions";
 
     const dispatch = createEventDispatcher();
 
@@ -21,8 +21,7 @@
 
     let divElement: HTMLElement;
 
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
-    $: useAlignTo = alignTo !== undefined && !mobile;
+    $: useAlignTo = alignTo !== undefined && !$mobileWidth;
     $: style = useAlignTo ? "visibility: hidden;" : "visibility: visible;";
 
     onMount(async () => {
@@ -95,14 +94,14 @@
         background-color: var(--modal-bg);
         color: var(--modal-txt);
         box-shadow: var(--modal-sh);
-        @include size-below(xs) {
+        @include mobile() {
             &:not(.fit_to_content) {
                 width: 100%;
                 max-height: calc(100% - 20px);
                 border-radius: $sp4 $sp4 0 0;
             }
         }
-        @include size-above(xs) {
+        @include size-above(sm) {
             &.fixed-width {
                 width: 60%;
             }
@@ -124,7 +123,7 @@
         background-color: var(--modal-header-bg);
         color: var(--modal-header-txt);
         border-bottom: 1px solid var(--modal-header-bd);
-        @include size-below(xs) {
+        @include mobile() {
             border-radius: $sp4 $sp4 0 0;
         }
     }
@@ -139,7 +138,7 @@
             padding: 0;
         }
 
-        @include size-below(xs) {
+        @include mobile() {
             padding: $sp3;
         }
     }
@@ -152,7 +151,7 @@
         color: var(--modal-footer-txt);
         border-top: 1px solid var(--modal-footer-bd);
         text-align: right;
-        @include size-below(xs) {
+        @include mobile() {
             border-radius: 0;
         }
         &.rtl {

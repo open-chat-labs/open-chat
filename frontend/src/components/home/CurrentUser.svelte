@@ -13,12 +13,7 @@
     import MenuItem from "../MenuItem.svelte";
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../domain/user/user.utils";
-    import {
-        ScreenHeight,
-        screenHeight,
-        ScreenWidth,
-        screenWidth,
-    } from "../../stores/screenDimensions";
+    import { mobileWidth, ScreenHeight, screenHeight } from "../../stores/screenDimensions";
     import type { PartialUserSummary } from "../../domain/user/user";
     import { createEventDispatcher } from "svelte";
     import { rtlStore } from "../../stores/rtl";
@@ -36,7 +31,7 @@
         dispatch("userAvatarSelected", ev.detail);
     }
 
-    $: small = $screenWidth === ScreenWidth.ExtraSmall || $screenHeight === ScreenHeight.Small;
+    $: small = $mobileWidth || $screenHeight === ScreenHeight.Small;
 </script>
 
 <div class="current-user-box" class:small class:rtl={$rtlStore}>

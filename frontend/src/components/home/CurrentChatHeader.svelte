@@ -1,7 +1,7 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
@@ -166,7 +166,7 @@
 </script>
 
 <SectionHeader shadow={true} flush={true}>
-    {#if $screenWidth === ScreenWidth.ExtraSmall}
+    {#if $mobileWidth}
         <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
             <HoverIcon>
                 {#if $rtlStore}

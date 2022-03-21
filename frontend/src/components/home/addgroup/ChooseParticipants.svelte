@@ -83,7 +83,7 @@
         flex-direction: column;
         justify-content: space-around;
         overflow: auto;
-        @include size-below(xs) {
+        @include mobile() {
             background-color: transparent;
         }
     }
@@ -92,7 +92,7 @@
         padding: var(--findUser-add-pd);
         flex: auto;
         overflow: auto;
-        @include size-below(xs) {
+        @include mobile() {
             padding: var(--findUser-add-pdxs);
         }
     }
