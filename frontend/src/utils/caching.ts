@@ -19,7 +19,7 @@ import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 
 export const MAX_MSGS = 30;
-const CACHE_VERSION = 21;
+const CACHE_VERSION = 22;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
