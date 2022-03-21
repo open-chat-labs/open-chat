@@ -72,7 +72,7 @@
         };
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
-            const messagesDivHeight = messagesDiv.getClientRects()[0].height;
+            const messagesDivHeight = messagesDiv?.getClientRects()[0].height ?? 0;
 
             entries.forEach((entry) => {
                 const idxAttr = entry.target.attributes.getNamedItem("data-index");
@@ -80,7 +80,7 @@
                 const idx = idxAttr ? parseInt(idxAttr.value, 10) : undefined;
                 const id = idAttr ? BigInt(idAttr.value) : undefined;
                 if (idx !== undefined && id !== undefined) {
-                    const intersectionRatioRequired = messagesDivHeight < entry.boundingClientRect.height
+                    const intersectionRatioRequired = 0 < messagesDivHeight && messagesDivHeight < entry.boundingClientRect.height
                         ? messagesDivHeight * 0.5 / entry.boundingClientRect.height
                         : 0.5;
 
