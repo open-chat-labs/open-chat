@@ -41,7 +41,7 @@
 <style type="text/scss">
     .outer-wrapper {
         margin-bottom: $sp3;
-        @include size-below(xs) {
+        @include mobile() {
             margin-bottom: $sp3;
         }
     }

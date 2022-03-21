@@ -477,7 +477,7 @@
     .preview {
         justify-content: flex-end;
         gap: $sp3;
-        @include size-below(xs) {
+        @include mobile() {
             justify-content: center;
         }
     }

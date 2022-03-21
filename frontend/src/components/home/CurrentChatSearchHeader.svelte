@@ -193,8 +193,8 @@
         display: flex;
         gap: 4px;
 
-        @include size-below(xs) {
-            border-radius: 16px;
+        @include mobile() {
+            border-radius: $sp4;
         }
     }
 

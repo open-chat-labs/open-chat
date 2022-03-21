@@ -596,7 +596,7 @@
 
         @include nice-scrollbar();
 
-        @include size-below(xs) {
+        @include mobile() {
             padding: 10px;
             -webkit-overflow-scrolling: touch;
         }

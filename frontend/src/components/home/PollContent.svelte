@@ -120,7 +120,7 @@
 
 <style type="text/scss">
     .poll {
-        @include size-above(xs) {
+        @include size-above(sm) {
             min-width: 300px;
         }
     }
