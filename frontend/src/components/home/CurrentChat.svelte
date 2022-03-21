@@ -15,7 +15,7 @@
     import {
         canBlockUsers,
         canCreatePolls,
-        canDeleteMessages,
+        canDeleteOtherUsersMessages,
         canPinMessages,
         canReactToMessages,
         canSendMessages,
@@ -194,7 +194,7 @@
         {controller}
         canPin={canPinMessages($chat)}
         canBlockUser={canBlockUsers($chat)}
-        canDelete={canDeleteMessages($chat)}
+        canDelete={canDeleteOtherUsersMessages($chat)}
         canSend={canSendMessages($chat)}
         canReact={canReactToMessages($chat)}
         {preview}
