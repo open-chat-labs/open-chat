@@ -9,7 +9,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher } from "svelte";
     import type { ChatController } from "../../fsm/chat.controller";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import type { MessageAction } from "../../domain/chat/chat";
 
     const dispatch = createEventDispatcher();
@@ -22,7 +22,7 @@
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
 
-    $: useDrawer = $screenWidth === ScreenWidth.ExtraSmall && $chat.kind === "direct_chat";
+    $: useDrawer = $mobileWidth && $chat.kind === "direct_chat";
     $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
 
     export function close() {

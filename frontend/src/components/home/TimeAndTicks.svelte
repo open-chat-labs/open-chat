@@ -6,7 +6,6 @@
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
 
     export let timestamp: bigint;
     export let confirmed: boolean;
@@ -22,11 +21,9 @@
         : fill
         ? "#fff"
         : "var(--currentChat-msg-txt)";
-
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 </script>
 
-<div class="time-and-ticks" class:fill class:rtl={$rtlStore} class:mobile>
+<div class="time-and-ticks" class:fill class:rtl={$rtlStore}>
     <span class="time">
         {toShortTimeString(new Date(Number(timestamp)))}
     </span>
@@ -61,7 +58,7 @@
         float: right;
         margin-top: 7px;
 
-        &.mobile {
+        @include mobile() {
             margin-top: 4px;
         }
 

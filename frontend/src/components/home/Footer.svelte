@@ -244,7 +244,7 @@
         @include size-below(md) {
             --num-columns: 11 !important;
         }
-        @include size-below(sm) {
+        @include mobile() {
             --num-columns: 9 !important;
         }
         @include size-below(xxs) {

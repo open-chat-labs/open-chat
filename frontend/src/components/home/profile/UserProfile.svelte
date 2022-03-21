@@ -16,7 +16,10 @@
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import { notificationStatus } from "../../../stores/notifications";
     import { formatICP } from "../../../utils/cryptoFormatter";
-    import { askForNotificationPermission, supported as notificationsSupported } from "../../../utils/notifications";
+    import {
+        askForNotificationPermission,
+        supported as notificationsSupported,
+    } from "../../../utils/notifications";
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import {
@@ -414,7 +417,7 @@
         border-bottom: var(--profile-section-bd);
         color: var(--section-txt);
 
-        @include size-below(xs) {
+        @include mobile() {
             margin-bottom: var(--profile-section-xs-mg);
             border-bottom: var(--profile-section-xs-bd);
         }

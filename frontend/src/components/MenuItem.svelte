@@ -30,7 +30,7 @@
         line-height: 145%;
         padding: 10px;
 
-        @include size-below(xs) {
+        @include mobile() {
             font-size: 14px;
             line-height: 140%;
             padding: 9px;

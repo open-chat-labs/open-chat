@@ -21,10 +21,18 @@
         portal.className = "portal";
         document.body.appendChild(portal);
         portal.appendChild(ref);
+
+        window.addEventListener("popstate", popState);
         return () => {
+            window.removeEventListener("popstate", popState);
             document.body.removeChild(portal);
         };
     });
+
+    // make sure that the modal is closed if there is a routing event
+    function popState() {
+        onClose();
+    }
 
     function onClick() {
         if (dismissible) {
@@ -77,7 +85,7 @@
         width: 100%;
         pointer-events: none;
 
-        @include size-below(xs) {
+        @include mobile() {
             &.align-bottom {
                 align-items: flex-end;
             }

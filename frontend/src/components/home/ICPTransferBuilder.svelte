@@ -23,7 +23,7 @@
     import { formatICP } from "../../utils/cryptoFormatter";
     import { rollbar } from "../../utils/logging";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { iconSize } from "../../stores/iconSize";
     import { icpBalanceE8sStore } from "../../stores/balance";
 
@@ -47,7 +47,6 @@
             : $icpBalanceE8sStore.e8s;
     $: valid = error === undefined && draftAmountE8s > BigInt(0);
     $: receiver = $userStore[receiverId];
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
     $: zero = $icpBalanceE8sStore.e8s <= ICP_TRANSFER_FEE_E8S;
 
     export function reset(amountE8s: bigint) {
@@ -116,11 +115,7 @@
                         : $_("icpAccount.shortBalanceLabel")}
                 </div>
             </div>
-            <div
-                class="refresh"
-                class:refreshing
-                class:mobile
-                on:click={() => reset(draftAmountE8s)}>
+            <div class="refresh" class:refreshing on:click={() => reset(draftAmountE8s)}>
                 <Refresh size={"1em"} color={"var(--accent)"} />
             </div>
         </span>
@@ -166,8 +161,8 @@
                 {/if}
             </div>
         </form>
-        <span class="footer" slot="footer" class:mobile>
-            {#if !mobile}
+        <span class="footer" slot="footer">
+            {#if !$mobileWidth}
                 <a
                     class="how-to"
                     href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
@@ -232,7 +227,7 @@
                 @include spin();
             }
 
-            &.mobile {
+            @include mobile() {
                 height: 21.59px;
                 width: 21.59px;
             }
