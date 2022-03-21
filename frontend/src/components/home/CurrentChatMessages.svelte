@@ -128,7 +128,11 @@
         }
     }
 
-    function scrollToMessageIndex(index: number, preserveFocus: boolean) {
+    function scrollToMessageIndex(
+        index: number,
+        preserveFocus: boolean,
+        loadWindowIfMissing: boolean = true
+    ) {
         if (index < 0) {
             controller.clearFocusMessageIndex();
             return;
@@ -146,10 +150,7 @@
                     controller.clearFocusMessageIndex();
                 }, 200);
             }
-        } else {
-            // todo - this is a bit dangerous as it could cause an infinite recursion
-            // if we are looking for a message that simply isn't there.
-            // controller.goToMessageIndex(index).then(() => scrollToMessageIndex(index));
+        } else if (loadWindowIfMissing) {
             controller.goToMessageIndex(index, preserveFocus);
         }
     }
@@ -337,7 +338,7 @@
                     case "loaded_event_window":
                         const index = evt.event.messageIndex;
                         const preserveFocus = evt.event.preserveFocus;
-                        tick().then(() => scrollToMessageIndex(index, preserveFocus));
+                        tick().then(() => scrollToMessageIndex(index, preserveFocus, false));
                         initialised = true;
                         break;
                     case "loaded_new_messages":
