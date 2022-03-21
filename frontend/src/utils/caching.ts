@@ -1,4 +1,4 @@
-import { isPreviewing } from "../domain/chat/chat.utils";
+import { isPreviewing, MAX_MESSAGES } from "../domain/chat/chat.utils";
 import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
@@ -18,7 +18,6 @@ import type {
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 
-export const MAX_MSGS = 30;
 const CACHE_VERSION = 22;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -264,7 +263,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     let descIdx = eventIndex;
     let ascIdx = eventIndex + 1;
 
-    while (numMessages < MAX_MSGS) {
+    while (numMessages < MAX_MESSAGES) {
         // if we have exceeded the range of this chat then we have succeeded
         if (ascIdx > max && descIdx < min) {
             return [true, events];
@@ -310,7 +309,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
 
     // todo - events are going to come out in a weird order here but I don't think it matter
     // because I think we sort them later
-    return [numMessages >= MAX_MSGS, events];
+    return [numMessages >= MAX_MESSAGES, events];
 }
 
 async function aggregateEvents<T extends ChatEvent>(
@@ -325,7 +324,7 @@ async function aggregateEvents<T extends ChatEvent>(
     const events: EventWrapper<T>[] = [];
     const resolvedDb = await db;
 
-    while (numMessages < MAX_MSGS) {
+    while (numMessages < MAX_MESSAGES) {
         // if we have exceeded the range of this chat then we have succeeded
         if ((currentIndex > max && ascending) || (currentIndex < min && !ascending)) {
             return [true, events];
@@ -351,7 +350,7 @@ async function aggregateEvents<T extends ChatEvent>(
         }
     }
 
-    return [numMessages >= MAX_MSGS, ascending ? events : events.reverse()];
+    return [numMessages >= MAX_MESSAGES, ascending ? events : events.reverse()];
 }
 
 export async function getCachedMessageByIndex<T extends ChatEvent>(
@@ -401,7 +400,10 @@ export async function getCachedEvents<T extends ChatEvent>(
 }
 
 // we need to strip out the blobData promise from any media content because that cannot be serialised
-function makeSerialisable<T extends ChatEvent>(ev: EventWrapper<T>, chatId: string): EventWrapper<T> {
+function makeSerialisable<T extends ChatEvent>(
+    ev: EventWrapper<T>,
+    chatId: string
+): EventWrapper<T> {
     if (ev.event.kind !== "message") return ev;
 
     return {
@@ -409,8 +411,8 @@ function makeSerialisable<T extends ChatEvent>(ev: EventWrapper<T>, chatId: stri
         event: {
             ...ev.event,
             content: removeBlobData(ev.event.content),
-            repliesTo: removeReplyContent(ev.event.repliesTo, chatId)
-        }
+            repliesTo: removeReplyContent(ev.event.repliesTo, chatId),
+        },
     };
 }
 
@@ -418,18 +420,21 @@ function removeBlobData(content: MessageContent): MessageContent {
     if ("blobData" in content) {
         return {
             ...content,
-            blobData: undefined
+            blobData: undefined,
         };
     }
     return content;
 }
 
-function removeReplyContent(repliesTo: ReplyContext | undefined, chatId: string): ReplyContext | undefined {
+function removeReplyContent(
+    repliesTo: ReplyContext | undefined,
+    chatId: string
+): ReplyContext | undefined {
     if (repliesTo?.kind === "rehydrated_reply_context") {
         return {
             kind: "raw_reply_context",
             chatIdIfOther: repliesTo.chatId === chatId ? undefined : repliesTo.chatId,
-            eventIndex: repliesTo.eventIndex
+            eventIndex: repliesTo.eventIndex,
         };
     }
     return repliesTo;

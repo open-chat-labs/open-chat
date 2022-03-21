@@ -831,6 +831,7 @@ export type SendMessageResponse =
     | SendMessageBalanceExceeded
     | SendMessageRecipientNotFound
     | TransferFailed
+    | TransferLimitExceeded
     | TransferSuccess
     | InvalidPoll
     | SendMessageNotInGroup
@@ -857,6 +858,10 @@ export type InvalidPoll = {
 
 export type TransferFailed = {
     kind: "transfer_failed";
+};
+
+export type TransferLimitExceeded = {
+    kind: "transfer_limit_exceeded";
 };
 
 export type SendMessageRecipientBlocked = {
