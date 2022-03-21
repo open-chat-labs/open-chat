@@ -56,6 +56,7 @@
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
+    let messagesDivHeight: number;
     let initialised = false;
     let scrollingToMessage = false;
     let scrollTimer: number | undefined;
@@ -72,8 +73,6 @@
         };
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
-            const messagesDivHeight = messagesDiv?.getClientRects()[0].height ?? 0;
-
             entries.forEach((entry) => {
                 const idxAttr = entry.target.attributes.getNamedItem("data-index");
                 const idAttr = entry.target.attributes.getNamedItem("data-id");
@@ -449,7 +448,7 @@
     }
 </script>
 
-<div bind:this={messagesDiv} class="chat-messages" on:scroll|passive={onScroll} id="chat-messages">
+<div bind:this={messagesDiv} bind:clientHeight={messagesDivHeight} class="chat-messages" on:scroll|passive={onScroll} id="chat-messages">
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
