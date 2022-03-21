@@ -597,7 +597,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SendMessageResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
-    'TransactionFailed' : IDL.Text,
+    'TransferLimitExceeded' : IDL.Nat64,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,

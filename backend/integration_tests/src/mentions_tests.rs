@@ -49,6 +49,7 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         description: description.clone(),
         avatar: None,
         history_visible_to_new_joiners: false,
+        permissions: None,
     };
 
     let chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id, user3_id]).await;
