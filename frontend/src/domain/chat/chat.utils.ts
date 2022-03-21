@@ -40,7 +40,9 @@ import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
-const EVENT_PAGE_SIZE = 20;
+export const EVENT_PAGE_SIZE = 50;
+export const MAX_MESSAGES = 60;
+export const MAX_EVENTS = 200;
 
 export function newMessageId(): bigint {
     return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
@@ -833,16 +835,19 @@ export function replaceAffected(
         } else if (event.event.kind === "message" && event.event.repliesTo !== undefined) {
             const repliesTo = event.event.repliesTo.eventIndex;
             const affectedReplyContent = affectedEventsLookup[repliesTo];
-            if (affectedReplyContent !== undefined && affectedReplyContent.event.kind === "message") {
+            if (
+                affectedReplyContent !== undefined &&
+                affectedReplyContent.event.kind === "message"
+            ) {
                 return {
                     ...event,
                     event: {
                         ...event.event,
                         repliesTo: {
                             ...event.event.repliesTo,
-                            content: affectedReplyContent.event.content
-                        }
-                    }
+                            content: affectedReplyContent.event.content,
+                        },
+                    },
                 };
             }
         }
