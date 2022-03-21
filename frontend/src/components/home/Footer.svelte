@@ -238,17 +238,4 @@
         max-width: 80%;
         padding-bottom: 8px;
     }
-
-    :global(.footer-overlay emoji-picker) {
-        --num-columns: 15 !important;
-        @include size-below(md) {
-            --num-columns: 11 !important;
-        }
-        @include mobile() {
-            --num-columns: 9 !important;
-        }
-        @include size-below(xxs) {
-            --num-columns: 7 !important;
-        }
-    }
 </style>

@@ -81,7 +81,7 @@
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
-    $: showAvatar = !me && !$mobileWidth && groupChat;
+    $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraSmall && groupChat;
 
     afterUpdate(() => {
         console.log("updating ChatMessage component");
@@ -286,7 +286,9 @@
             <div class="avatar-col">
                 {#if first}
                     <div class="avatar" on:click={openUserProfile}>
-                        <Avatar url={avatarUrl(sender)} size={AvatarSize.Small} />
+                        <Avatar
+                            url={avatarUrl(sender)}
+                            size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
                     </div>
                 {/if}
             </div>
@@ -457,7 +459,9 @@
 
 <style type="text/scss">
     $size: 10px;
+
     $avatar-width: 53px;
+    $avatar-width-mob: 43px;
 
     :global(.message .loading) {
         min-height: 100px;
@@ -547,6 +551,9 @@
 
         &.indent {
             margin-left: $avatar-width;
+            @include mobile() {
+                margin-left: $avatar-width-mob;
+            }
         }
     }
 
@@ -561,6 +568,10 @@
 
         .avatar-col {
             flex: 0 0 $avatar-width;
+
+            @include mobile() {
+                flex: 0 0 $avatar-width-mob;
+            }
 
             .avatar {
                 cursor: pointer;

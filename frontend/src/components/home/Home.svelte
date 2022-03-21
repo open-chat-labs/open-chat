@@ -475,7 +475,7 @@
 
 <style type="text/scss">
     main {
-        transition: margin ease-in-out 300ms;
+        transition: margin ease-in-out 300ms, max-width ease-in-out 300ms;
         position: relative;
         width: 100%;
         display: flex;
