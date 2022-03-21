@@ -68,17 +68,24 @@
         const options = {
             root: messagesDiv,
             rootMargin: "0px",
-            threshold: 0.5,
+            threshold: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
         };
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
+            const messagesDivHeight = messagesDiv.getClientRects()[0].height;
+
             entries.forEach((entry) => {
                 const idxAttr = entry.target.attributes.getNamedItem("data-index");
                 const idAttr = entry.target.attributes.getNamedItem("data-id");
                 const idx = idxAttr ? parseInt(idxAttr.value, 10) : undefined;
                 const id = idAttr ? BigInt(idAttr.value) : undefined;
                 if (idx !== undefined && id !== undefined) {
-                    if (entry.isIntersecting && messageReadTimers[idx] === undefined) {
+                    const intersectionRatioRequired = messagesDivHeight < entry.boundingClientRect.height
+                        ? messagesDivHeight * 0.5 / entry.boundingClientRect.height
+                        : 0.5;
+
+                    const isIntersecting = entry.intersectionRatio >= intersectionRatioRequired;
+                    if (isIntersecting && messageReadTimers[idx] === undefined) {
                         const chatId = controller.chatId;
                         const timer = setTimeout(() => {
                             if (chatId === controller.chatId) {
@@ -92,7 +99,7 @@
                         }, MESSAGE_READ_THRESHOLD);
                         messageReadTimers[idx] = timer;
                     }
-                    if (!entry.isIntersecting && messageReadTimers[idx] !== undefined) {
+                    if (!isIntersecting && messageReadTimers[idx] !== undefined) {
                         clearTimeout(messageReadTimers[idx]);
                         delete messageReadTimers[idx];
                     }
