@@ -10,7 +10,7 @@
     import Overlay from "../Overlay.svelte";
     import { createEventDispatcher, onDestroy, onMount, setContext, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { push, replace, querystring } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
@@ -344,7 +344,7 @@
     $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
 
     /** SHOW LEFT
-     * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
+     * MobileScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
      * ==========================================================
      * F             |  -            |  -            |  T
      * T             |  T            |  -            |  F
@@ -352,10 +352,8 @@
      * T             |  F            |  F            |  T
      */
     $: showLeft =
-        $screenWidth !== ScreenWidth.ExtraSmall ||
-        ($screenWidth === ScreenWidth.ExtraSmall &&
-            params.chatId == null &&
-            recommendedGroups.kind === "idle");
+        !$mobileWidth ||
+        ($mobileWidth && params.chatId == null && recommendedGroups.kind === "idle");
 
     /** SHOW MIDDLE
      * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
@@ -366,11 +364,9 @@
      * T             |  F            |  F            |  F
      */
     $: showMiddle =
-        $screenWidth !== ScreenWidth.ExtraSmall ||
-        ($screenWidth === ScreenWidth.ExtraSmall && params.chatId != null) ||
-        ($screenWidth === ScreenWidth.ExtraSmall &&
-            params.chatId == null &&
-            recommendedGroups.kind !== "idle");
+        !$mobileWidth ||
+        ($mobileWidth && params.chatId != null) ||
+        ($mobileWidth && params.chatId == null && recommendedGroups.kind !== "idle");
 </script>
 
 {#if controller.user}
@@ -479,7 +475,7 @@
 
 <style type="text/scss">
     main {
-        transition: margin ease-in-out 300ms;
+        transition: margin ease-in-out 300ms, max-width ease-in-out 300ms;
         position: relative;
         width: 100%;
         display: flex;
@@ -511,7 +507,7 @@
         }
         @include z-index("right-panel");
         @include box-shadow(3);
-        @include size-below(xs) {
+        @include mobile() {
             width: 100%;
         }
     }

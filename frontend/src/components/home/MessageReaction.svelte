@@ -6,7 +6,7 @@
     import { getContext, onMount } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
     import { rtlStore } from "../../stores/rtl";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import Hoverable from "../Hoverable.svelte";
 
     export let reaction: string;
@@ -21,10 +21,9 @@
     let hovering: boolean;
     let longPressed: boolean;
 
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
     $: selected = myUserId !== undefined ? userIds.has(myUserId) : false;
     $: usernames = buildReactionUsernames(userIds);
-    $: maxWidth = calculateMaxWidth(usernames.length, reactionCode.length, mobile);
+    $: maxWidth = calculateMaxWidth(usernames.length, reactionCode.length, $mobileWidth);
 
     onMount(async () => {
         reactionCode = (await buildReactionCode(reaction)) ?? "unknown";

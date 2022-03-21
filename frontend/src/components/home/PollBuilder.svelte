@@ -332,7 +332,7 @@
             padding: 0 $sp3;
             width: 40%;
 
-            @include size-below(xs) {
+            @include mobile() {
                 width: 30%;
             }
         }

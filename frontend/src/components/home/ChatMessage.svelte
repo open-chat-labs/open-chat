@@ -29,7 +29,7 @@
     import PinOff from "svelte-material-icons/PinOff.svelte";
     import { fillMessage } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import TimeAndTicks from "./TimeAndTicks.svelte";
     import { iconSize } from "../../stores/iconSize";
     import type { Dimensions } from "../../utils/media";
@@ -81,8 +81,7 @@
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
-    $: showAvatar = !me && !mobile && groupChat;
+    $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraSmall && groupChat;
 
     afterUpdate(() => {
         console.log("updating ChatMessage component");
@@ -274,7 +273,7 @@
         data-id={msg.messageId}
         id={`event-${eventIndex}`}>
         {#if me && !deleted && canReact}
-            <div class="actions" class:mobile>
+            <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
                         <EmoticonLolOutline size={$iconSize} color={"#fff"} />
@@ -287,7 +286,9 @@
             <div class="avatar-col">
                 {#if first}
                     <div class="avatar" on:click={openUserProfile}>
-                        <Avatar url={avatarUrl(sender)} size={AvatarSize.Small} />
+                        <Avatar
+                            url={avatarUrl(sender)}
+                            size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
                     </div>
                 {/if}
             </div>
@@ -432,7 +433,7 @@
             {/if}
         </div>
         {#if !me && !deleted && canReact}
-            <div class="actions" class:mobile>
+            <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
                         <EmoticonLolOutline size={$iconSize} color={"#fff"} />
@@ -458,7 +459,9 @@
 
 <style type="text/scss">
     $size: 10px;
+
     $avatar-width: 53px;
+    $avatar-width-mob: 43px;
 
     :global(.message .loading) {
         min-height: 100px;
@@ -548,6 +551,9 @@
 
         &.indent {
             margin-left: $avatar-width;
+            @include mobile() {
+                margin-left: $avatar-width-mob;
+            }
         }
     }
 
@@ -563,6 +569,10 @@
         .avatar-col {
             flex: 0 0 $avatar-width;
 
+            @include mobile() {
+                flex: 0 0 $avatar-width-mob;
+            }
+
             .avatar {
                 cursor: pointer;
             }
@@ -576,7 +586,7 @@
             justify-content: center;
             align-items: center;
 
-            &.mobile {
+            @include mobile() {
                 opacity: 0.3;
             }
         }

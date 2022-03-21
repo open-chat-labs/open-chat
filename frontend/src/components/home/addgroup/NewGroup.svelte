@@ -194,7 +194,7 @@
 
     .form-fields {
         padding: var(--groupForm-add-pd);
-        @include size-below(xs) {
+        @include mobile() {
             padding: $sp3;
             padding-top: $sp2;
         }

@@ -229,7 +229,7 @@
     .body {
         overflow: auto;
         @include nice-scrollbar();
-        @include size-below(xs) {
+        @include mobile() {
             padding: var(--chatSearch-xs-pd);
         }
     }

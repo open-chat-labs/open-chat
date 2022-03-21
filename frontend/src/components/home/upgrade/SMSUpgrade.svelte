@@ -214,12 +214,12 @@
             flex: 4;
             margin-bottom: $sp5;
 
-            @include size-below(xs) {
+            @include mobile() {
                 margin-bottom: $sp4;
             }
         }
 
-        @include size-below(xs) {
+        @include mobile() {
             flex-wrap: wrap;
             .number {
                 flex-basis: 100%;
