@@ -55,6 +55,7 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Res
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
             ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
+            ContentValidationError::TransferCannotBeZero => TransferCannotBeZero,
             ContentValidationError::TransferLimitExceeded(limit) => TransferLimitExceeded(limit),
         })
     } else {

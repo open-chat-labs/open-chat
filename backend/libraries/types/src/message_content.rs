@@ -1,5 +1,5 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
-use crate::ContentValidationError::{InvalidPoll, TransferLimitExceeded};
+use crate::ContentValidationError::{InvalidPoll, TransferCannotBeZero, TransferLimitExceeded};
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{CanisterId, CryptocurrencyTransfer, ICPTransfer, TimestampMillis, TotalVotes, UserId, VoteOperation};
 use candid::CandidType;
@@ -40,6 +40,7 @@ pub enum ContentValidationError {
     Empty,
     TextTooLong(u32),
     InvalidPoll(InvalidPollReason),
+    TransferCannotBeZero,
     TransferLimitExceeded(u64),
 }
 
@@ -54,6 +55,9 @@ impl MessageContent {
                 }
             }
             MessageContent::Cryptocurrency(c) => {
+                if c.transfer.is_zero() {
+                    return Err(TransferCannotBeZero);
+                }
                 if let Err(limit) = c.within_limit() {
                     return Err(TransferLimitExceeded(limit));
                 }

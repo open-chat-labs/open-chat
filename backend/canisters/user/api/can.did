@@ -30,6 +30,7 @@ type SendMessageResponse =
         InvalidPoll: InvalidPollReason;
         InvalidRequest: text;
         TransferFailed: text;
+        TransferCannotBeZero;
         TransferLimitExceeded: nat64;
     };
 

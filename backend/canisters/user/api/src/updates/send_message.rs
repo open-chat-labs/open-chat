@@ -24,6 +24,7 @@ pub enum Response {
     InvalidPoll(InvalidPollReason),
     InvalidRequest(String),
     TransferFailed(String),
+    TransferCannotBeZero,
     TransferLimitExceeded(u64),
 }
 
