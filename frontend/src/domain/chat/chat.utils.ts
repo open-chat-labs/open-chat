@@ -828,9 +828,25 @@ export function replaceAffected(
 
     return events.map((event) => {
         const affectedEvent = affectedEventsLookup[event.index];
-        return affectedEvent !== undefined
-            ? mergeMessageEvents(event, affectedEvent, localReactions)
-            : event;
+        if (affectedEvent !== undefined) {
+            return mergeMessageEvents(event, affectedEvent, localReactions);
+        } else if (event.event.kind === "message" && event.event.repliesTo !== undefined) {
+            const repliesTo = event.event.repliesTo.eventIndex;
+            const affectedReplyContent = affectedEventsLookup[repliesTo];
+            if (affectedReplyContent !== undefined && affectedReplyContent.event.kind === "message") {
+                return {
+                    ...event,
+                    event: {
+                        ...event.event,
+                        repliesTo: {
+                            ...event.event.repliesTo,
+                            content: affectedReplyContent.event.content
+                        }
+                    }
+                };
+            }
+        }
+        return event;
     });
 }
 
