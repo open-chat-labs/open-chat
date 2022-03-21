@@ -9,6 +9,8 @@ import type {
     IndexRange,
     MergedUpdatesResponse,
     Message,
+    MessageContent,
+    ReplyContext,
     SendMessageResponse,
     SendMessageSuccess,
     SerializableMergedUpdatesResponse,
@@ -17,11 +19,9 @@ import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 
 export const MAX_MSGS = 30;
-const CACHE_VERSION = 21;
+const CACHE_VERSION = 22;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
-
-const blobbyContentTypes = ["file_content", "image_content", "video_content", "audio_content"];
 
 export interface ChatSchema extends DBSchema {
     chats: {
@@ -168,7 +168,7 @@ export function setCachedChats(
                         readByMe: drangeToIndexRanges(c.readByMe),
                         readByThem: drangeToIndexRanges(c.readByThem),
                         latestMessage: c.latestMessage
-                            ? makeSerialisable(c.latestMessage)
+                            ? makeSerialisable(c.latestMessage, c.chatId)
                             : undefined,
                     };
                 }
@@ -177,7 +177,7 @@ export function setCachedChats(
                         ...c,
                         readByMe: drangeToIndexRanges(c.readByMe),
                         latestMessage: c.latestMessage
-                            ? makeSerialisable(c.latestMessage)
+                            ? makeSerialisable(c.latestMessage, c.chatId)
                             : undefined,
                     };
                 }
@@ -401,22 +401,38 @@ export async function getCachedEvents<T extends ChatEvent>(
 }
 
 // we need to strip out the blobData promise from any media content because that cannot be serialised
-function makeSerialisable<T extends ChatEvent>(ev: EventWrapper<T>): EventWrapper<T> {
+function makeSerialisable<T extends ChatEvent>(ev: EventWrapper<T>, chatId: string): EventWrapper<T> {
     if (ev.event.kind !== "message") return ev;
 
-    if (blobbyContentTypes.includes(ev.event.content.kind)) {
+    return {
+        ...ev,
+        event: {
+            ...ev.event,
+            content: removeBlobData(ev.event.content),
+            repliesTo: removeReplyContent(ev.event.repliesTo, chatId)
+        }
+    };
+}
+
+function removeBlobData(content: MessageContent): MessageContent {
+    if ("blobData" in content) {
         return {
-            ...ev,
-            event: {
-                ...ev.event,
-                content: {
-                    ...ev.event.content,
-                    blobData: undefined,
-                },
-            },
+            ...content,
+            blobData: undefined
         };
     }
-    return ev;
+    return content;
+}
+
+function removeReplyContent(repliesTo: ReplyContext | undefined, chatId: string): ReplyContext | undefined {
+    if (repliesTo?.kind === "rehydrated_reply_context") {
+        return {
+            kind: "raw_reply_context",
+            chatIdIfOther: repliesTo.chatId === chatId ? undefined : repliesTo.chatId,
+            eventIndex: repliesTo.eventIndex
+        };
+    }
+    return repliesTo;
 }
 
 function drangeToIndexRanges(drange: DRange): IndexRange[] {
@@ -444,7 +460,7 @@ export function setCachedEvents<T extends ChatEvent>(
         await Promise.all(
             resp.events.concat(resp.affectedEvents).map(async (event) => {
                 await eventStore.put(
-                    makeSerialisable<T>(event),
+                    makeSerialisable<T>(event, chatId),
                     createCacheKey(chatId, event.index)
                 );
                 if (event.event.kind === "message") {
@@ -475,7 +491,7 @@ export function setCachedMessage(
         const eventStore = tx.objectStore("chat_events");
         const mapStore = tx.objectStore("message_index_event_index");
         await Promise.all([
-            eventStore.put(makeSerialisable(event), createCacheKey(chatId, event.index)),
+            eventStore.put(makeSerialisable(event, chatId), createCacheKey(chatId, event.index)),
             mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`),
         ]);
         await tx.done;
@@ -508,7 +524,7 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
     const store = tx.objectStore("chat_events");
     await Promise.all(
         events.map((event) =>
-            store.put(makeSerialisable<T>(event), createCacheKey(chatId, event.index))
+            store.put(makeSerialisable<T>(event, chatId), createCacheKey(chatId, event.index))
         )
     );
     await tx.done;
