@@ -39,7 +39,7 @@
         @include size-below(md) {
             --num-columns: 12 !important;
         }
-        @include mobile() {
+        @include size-below(sm) {
             --num-columns: 11 !important;
         }
         @include size-below(xs) {
@@ -52,7 +52,7 @@
         &.reaction {
             --num-columns: 12 !important;
 
-            @include mobile() {
+            @include size-below(sm) {
                 --num-columns: 11 !important;
             }
             @include size-below(xs) {
