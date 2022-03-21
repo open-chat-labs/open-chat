@@ -1072,11 +1072,11 @@ export function canUnblockUsers(chat: ChatSummary): boolean {
     }
 }
 
-export function canDeleteMessages(chat: ChatSummary): boolean {
+export function canDeleteOtherUsersMessages(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
         return isPermitted(chat.myRole, chat.permissions.deleteMessages);
     } else {
-        return true;
+        return false;
     }
 }
 
