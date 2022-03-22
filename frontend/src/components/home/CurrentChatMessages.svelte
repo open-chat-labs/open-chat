@@ -56,6 +56,7 @@
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
+    let messagesDivHeight: number;
     let initialised = false;
     let scrollingToMessage = false;
     let scrollTimer: number | undefined;
@@ -68,7 +69,7 @@
         const options = {
             root: messagesDiv,
             rootMargin: "0px",
-            threshold: 0.5,
+            threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
         };
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
@@ -78,7 +79,12 @@
                 const idx = idxAttr ? parseInt(idxAttr.value, 10) : undefined;
                 const id = idAttr ? BigInt(idAttr.value) : undefined;
                 if (idx !== undefined && id !== undefined) {
-                    if (entry.isIntersecting && messageReadTimers[idx] === undefined) {
+                    const intersectionRatioRequired = 0 < messagesDivHeight && messagesDivHeight < entry.boundingClientRect.height
+                        ? messagesDivHeight * 0.5 / entry.boundingClientRect.height
+                        : 0.5;
+
+                    const isIntersecting = entry.intersectionRatio >= intersectionRatioRequired;
+                    if (isIntersecting && messageReadTimers[idx] === undefined) {
                         const chatId = controller.chatId;
                         const timer = setTimeout(() => {
                             if (chatId === controller.chatId) {
@@ -92,7 +98,7 @@
                         }, MESSAGE_READ_THRESHOLD);
                         messageReadTimers[idx] = timer;
                     }
-                    if (!entry.isIntersecting && messageReadTimers[idx] !== undefined) {
+                    if (!isIntersecting && messageReadTimers[idx] !== undefined) {
                         clearTimeout(messageReadTimers[idx]);
                         delete messageReadTimers[idx];
                     }
@@ -445,7 +451,7 @@
     }
 </script>
 
-<div bind:this={messagesDiv} class="chat-messages" on:scroll|passive={onScroll} id="chat-messages">
+<div bind:this={messagesDiv} bind:clientHeight={messagesDivHeight} class="chat-messages" on:scroll|passive={onScroll} id="chat-messages">
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
