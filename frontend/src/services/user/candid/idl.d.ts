@@ -88,6 +88,8 @@ import {
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyTransfer,
+    TransferCryptocurrencyWithinGroupResponse,
+    TransferCryptocurrencyWithinGroupArgs,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -178,6 +180,8 @@ export {
     FailedCryptocurrencyWithdrawal as ApiFailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal as ApiCompletedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyTransfer as ApiCompletedCryptocurrencyTransfer,
+    TransferCryptocurrencyWithinGroupResponse as ApiTransferCryptocurrencyWithinGroupResponse,
+    TransferCryptocurrencyWithinGroupArgs as ApiTransferCryptocurrencyWithinGroupArgs,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -1,6 +1,11 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { ApiSendMessageArgs, idlFactory, UserService } from "./candid/idl";
+import {
+    ApiSendMessageArgs,
+    ApiTransferCryptocurrencyWithinGroupArgs,
+    idlFactory,
+    UserService,
+} from "./candid/idl";
 import type {
     EventsResponse,
     UpdateArgs,
@@ -25,6 +30,7 @@ import type {
     RegisterPollVoteResponse,
     PendingICPWithdrawal,
     WithdrawCryptocurrencyResponse,
+    CryptocurrencyContent,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -47,6 +53,7 @@ import {
     toggleReactionResponse,
     unblockResponse,
     withdrawCryptoResponse,
+    transferWithinGroupResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -58,6 +65,7 @@ import {
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
+    apiCryptoContent,
     apiGroupPermissions,
     apiMessageContent,
     apiOptional,
@@ -279,6 +287,31 @@ export class UserClient extends CandidService implements IUserClient {
                     ),
                 };
                 return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
+            });
+    }
+
+    sendGroupICPTransfer(
+        groupId: string,
+        recipientId: string,
+        sender: UserSummary,
+        message: Message
+    ): Promise<SendMessageResponse> {
+        return DataClient.create(this.identity)
+            .uploadData(message.content, [this.userId, recipientId])
+            .then(() => {
+                const req: ApiTransferCryptocurrencyWithinGroupArgs = {
+                    content: apiCryptoContent(message.content as CryptocurrencyContent),
+                    recipient: Principal.fromText(recipientId),
+                    sender_name: sender.username,
+                    mentioned: [],
+                    message_id: message.messageId,
+                    group_id: Principal.fromText(groupId),
+                    replies_to: [],
+                };
+                return this.handleResponse(
+                    this.userService.transfer_cryptocurrency_within_group(req),
+                    transferWithinGroupResponse
+                );
             });
     }
 

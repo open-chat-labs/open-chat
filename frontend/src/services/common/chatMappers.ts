@@ -544,7 +544,7 @@ function apiDeletedContent(domain: DeletedContent): ApiDeletedContent {
     };
 }
 
-function apiCryptoContent(domain: CryptocurrencyContent): ApiCryptocurrencyContent {
+export function apiCryptoContent(domain: CryptocurrencyContent): ApiCryptocurrencyContent {
     return {
         caption: apiOptional(identity, domain.caption),
         transfer: apiCryptoTransfer(domain.transfer),

@@ -203,6 +203,10 @@
             if (userId !== undefined) {
                 mentionedMap.set(userId, p1);
                 return `@UserId(${userId})`;
+            } else {
+                console.log(
+                    `Could not find the userId for user: ${p1}, this should not really happen`
+                );
             }
             return match;
         });
