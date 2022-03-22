@@ -13,9 +13,6 @@ use types::{
     TimestampMillis, UserId, Version,
 };
 
-pub const MAX_GROUP_NAME_LENGTH: u32 = 25;
-pub const MAX_GROUP_DESCRIPTION_LENGTH: u32 = 1024;
-
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct Summary {
     pub chat_id: ChatId,

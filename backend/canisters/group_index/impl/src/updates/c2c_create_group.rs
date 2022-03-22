@@ -1,4 +1,5 @@
 use crate::model::public_groups::GroupCreatedArgs;
+use crate::updates::{validate_group, GroupValidationError};
 use crate::{mutate_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE};
 use canister_api_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
@@ -10,9 +11,12 @@ use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 #[update]
 #[trace]
-async fn c2c_create_group(args: Args) -> Response {
-    let name = args.name.to_owned();
-    let description = args.description.to_owned();
+async fn c2c_create_group(mut args: Args) -> Response {
+    args.name = args.name.trim().to_string();
+    args.description = args.description.trim().to_string();
+
+    let name = args.name.clone();
+    let description = args.description.clone();
     let is_public = args.is_public;
     let avatar_id = Avatar::id(&args.avatar);
 
@@ -70,6 +74,14 @@ struct CreateCanisterArgs {
 }
 
 fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCanisterArgs, Response> {
+    if let Err(error) = validate_group(&args.name, &args.description) {
+        return match error {
+            GroupValidationError::NameTooShort(f) => Err(NameTooShort(f)),
+            GroupValidationError::NameTooLong(f) => Err(NameTooLong(f)),
+            GroupValidationError::DescriptionTooLong(f) => Err(DescriptionTooLong(f)),
+        };
+    }
+
     let cycles_to_use = if runtime_state.data.canister_pool.is_empty() {
         let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
         if !utils::cycles::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
