@@ -25,4 +25,5 @@ type LoadedEventWindow = {
     kind: "loaded_event_window";
     messageIndex: number;
     preserveFocus: boolean;
+    allowRecursion: boolean;
 };

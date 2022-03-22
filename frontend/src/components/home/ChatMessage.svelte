@@ -81,7 +81,7 @@
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
-    $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraSmall && groupChat;
+    $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
 
     afterUpdate(() => {
         console.log("updating ChatMessage component");

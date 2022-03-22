@@ -338,7 +338,10 @@
                     case "loaded_event_window":
                         const index = evt.event.messageIndex;
                         const preserveFocus = evt.event.preserveFocus;
-                        tick().then(() => scrollToMessageIndex(index, preserveFocus, false));
+                        const allowRecursion = evt.event.allowRecursion;
+                        tick().then(() =>
+                            scrollToMessageIndex(index, preserveFocus, allowRecursion)
+                        );
                         initialised = true;
                         break;
                     case "loaded_new_messages":
