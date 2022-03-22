@@ -325,6 +325,7 @@ export interface GroupPermissions {
   'pin_messages' : PermissionRole,
   'react_to_messages' : PermissionRole,
 }
+export interface GroupReplyContext { 'event_index' : EventIndex }
 export interface ICP { 'e8s' : bigint }
 export type ICPDeposit = { 'Completed' : CompletedICPDeposit };
 export interface ICPRegistrationFee {

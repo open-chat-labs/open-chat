@@ -414,6 +414,7 @@ export interface GroupPermissions {
   'pin_messages' : PermissionRole,
   'react_to_messages' : PermissionRole,
 }
+export interface GroupReplyContext { 'event_index' : EventIndex }
 export interface ICP { 'e8s' : bigint }
 export type ICPDeposit = { 'Completed' : CompletedICPDeposit };
 export interface ICPRegistrationFee {
@@ -743,6 +744,7 @@ export interface SendMessageArgs {
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'TransferLimitExceeded' : bigint } |
+  { 'TransferCannotBeZero' : null } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,
@@ -818,6 +820,34 @@ export interface TransactionsSuccessResult {
   'latest_transaction_index' : [] | [number],
   'transactions' : Array<TransactionWrapper>,
 }
+export interface TransferCryptocurrencyWithinGroupArgs {
+  'content' : CryptocurrencyContent,
+  'recipient' : UserId,
+  'mentioned' : Array<User>,
+  'group_id' : ChatId,
+  'sender_name' : string,
+  'message_id' : MessageId,
+  'replies_to' : [] | [GroupReplyContext],
+}
+export type TransferCryptocurrencyWithinGroupResponse = {
+    'TextTooLong' : number
+  } |
+  { 'TransferLimitExceeded' : bigint } |
+  { 'CallerNotInGroup' : [] | [CompletedCryptocurrencyTransfer] } |
+  { 'TransferCannotBeZero' : null } |
+  {
+    'Success' : {
+      'timestamp' : TimestampMillis,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptocurrencyTransfer,
+      'message_index' : MessageIndex,
+    }
+  } |
+  { 'RecipientBlocked' : null } |
+  { 'InvalidRequest' : string } |
+  { 'TransferFailed' : string } |
+  { 'InternalError' : [string, CompletedCryptocurrencyTransfer] } |
+  { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
 export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
@@ -943,6 +973,9 @@ export interface _SERVICE {
       ToggleReactionResponse
     >,
   'transactions' : (arg_0: TransactionsArgs) => Promise<TransactionsResponse>,
+  'transfer_cryptocurrency_within_group' : (
+      arg_0: TransferCryptocurrencyWithinGroupArgs,
+    ) => Promise<TransferCryptocurrencyWithinGroupResponse>,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
   'unmute_notifications' : (arg_0: UnmuteNotificationsArgs) => Promise<
       UnmuteNotificationsResponse

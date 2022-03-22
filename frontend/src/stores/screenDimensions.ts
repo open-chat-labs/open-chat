@@ -16,6 +16,7 @@ const dimensions = readable(
 );
 
 export const enum ScreenWidth {
+    ExtraExtraSmall = "ExtraExtraSmall",
     ExtraSmall = "ExtraSmall",
     Small = "Small",
     Medium = "Medium",
@@ -28,7 +29,9 @@ export const enum ScreenHeight {
 }
 
 export const screenWidth = derived(dimensions, ($dimensions) => {
-    if ($dimensions.width < 576) {
+    if ($dimensions.width < 354) {
+        return ScreenWidth.ExtraExtraSmall;
+    } else if ($dimensions.width < 576) {
         return ScreenWidth.ExtraSmall;
     } else if ($dimensions.width < 768) {
         return ScreenWidth.Small;

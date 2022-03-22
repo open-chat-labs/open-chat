@@ -598,6 +598,7 @@ export const idlFactory = ({ IDL }) => {
   const SendMessageResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
     'TransferLimitExceeded' : IDL.Nat64,
+    'TransferCannotBeZero' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
@@ -677,6 +678,35 @@ export const idlFactory = ({ IDL }) => {
   });
   const TransactionsResponse = IDL.Variant({
     'Success' : TransactionsSuccessResult,
+  });
+  const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
+  const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
+  const TransferCryptocurrencyWithinGroupArgs = IDL.Record({
+    'content' : CryptocurrencyContent,
+    'recipient' : UserId,
+    'mentioned' : IDL.Vec(User),
+    'group_id' : ChatId,
+    'sender_name' : IDL.Text,
+    'message_id' : MessageId,
+    'replies_to' : IDL.Opt(GroupReplyContext),
+  });
+  const Cryptocurrency = IDL.Variant({ 'ICP' : IDL.Null, 'Cycles' : IDL.Null });
+  const TransferCryptocurrencyWithinGroupResponse = IDL.Variant({
+    'TextTooLong' : IDL.Nat32,
+    'TransferLimitExceeded' : IDL.Nat64,
+    'CallerNotInGroup' : IDL.Opt(CompletedCryptocurrencyTransfer),
+    'TransferCannotBeZero' : IDL.Null,
+    'Success' : IDL.Record({
+      'timestamp' : TimestampMillis,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptocurrencyTransfer,
+      'message_index' : MessageIndex,
+    }),
+    'RecipientBlocked' : IDL.Null,
+    'InvalidRequest' : IDL.Text,
+    'TransferFailed' : IDL.Text,
+    'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptocurrencyTransfer),
+    'CryptocurrencyNotSupported' : Cryptocurrency,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
@@ -884,6 +914,11 @@ export const idlFactory = ({ IDL }) => {
         [TransactionsArgs],
         [TransactionsResponse],
         ['query'],
+      ),
+    'transfer_cryptocurrency_within_group' : IDL.Func(
+        [TransferCryptocurrencyWithinGroupArgs],
+        [TransferCryptocurrencyWithinGroupResponse],
+        [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'unmute_notifications' : IDL.Func(

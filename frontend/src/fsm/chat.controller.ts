@@ -354,13 +354,15 @@ export class ChatController {
         );
     }
 
-    private async handleEventsResponse(resp: EventsResponse<ChatEvent>): Promise<void> {
+    private async handleEventsResponse(
+        resp: EventsResponse<ChatEvent>,
+        keepCurrentEvents = true
+    ): Promise<void> {
         if (resp === "events_failed") return;
 
         this.initialised = true;
         const events = get(this.events);
         const chat = get(this.chat);
-        const keepCurrentEvents = get(this.focusMessageIndex) === undefined;
         if (!keepCurrentEvents) {
             this.confirmedEventIndexesLoaded = new DRange();
             this.userGroupKeys.clear();
@@ -434,13 +436,18 @@ export class ChatController {
                 return undefined;
             }
 
-            await this.handleEventsResponse(eventsResponse);
+            await this.handleEventsResponse(eventsResponse, false);
             this.loading.set(false);
         }
 
         this.raiseEvent({
             chatId: this.chatId,
-            event: { kind: "loaded_event_window", messageIndex: messageIndex, preserveFocus },
+            event: {
+                kind: "loaded_event_window",
+                messageIndex: messageIndex,
+                preserveFocus,
+                allowRecursion: false,
+            },
         });
     }
 
@@ -731,6 +738,7 @@ export class ChatController {
                 kind: "loaded_event_window",
                 messageIndex: messageIndex,
                 preserveFocus: false,
+                allowRecursion: true,
             },
         });
     }
