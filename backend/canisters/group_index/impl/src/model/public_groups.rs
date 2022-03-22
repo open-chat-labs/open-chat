@@ -6,7 +6,6 @@ use rand::{RngCore, SeedableRng};
 use search::*;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
     ChatId, Cycles, CyclesTopUp, GroupMatch, Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis, Version,
@@ -25,7 +24,7 @@ pub struct PublicGroups {
     groups_pending: CaseInsensitiveHashMap<TimestampMillis>,
 }
 
-fn deserialize_groups_pending<'de, D>(deserializer: D) -> Result<T, D::Error>
+fn deserialize_groups_pending<'de, D>(deserializer: D) -> Result<CaseInsensitiveHashMap<TimestampMillis>, D::Error>
 where
     D: Deserializer<'de>,
 {
