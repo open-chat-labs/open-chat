@@ -96,13 +96,13 @@ export class ChatController {
             mergeUnconfirmedIntoSummary(user.userId, summary, unconfirmed[summary.chatId]?.messages)
         );
 
-        this.events = writable([]);
+        const { chatId, kind } = get(this.chat);
+        this.events = writable(unconfirmed.getMessages(chatId));
         this.loading = writable(false);
         this.focusMessageIndex = writable(_focusMessageIndex);
         this.participants = writable([]);
         this.blockedUsers = writable(new Set<string>());
         this.pinnedMessages = writable(new Set<number>());
-        const { chatId, kind } = get(this.chat);
         this.chatId = chatId;
         // If this is a group chat, chatUserIds will be populated when processing the chat events
         this.chatUserIds = new Set<string>(kind === "direct_chat" ? [chatId] : []);
