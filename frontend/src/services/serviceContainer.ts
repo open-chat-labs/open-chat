@@ -156,6 +156,14 @@ export class ServiceContainer implements MarkMessagesRead {
         msg: Message
     ): Promise<SendMessageResponse> {
         if (chat.kind === "group_chat") {
+            if (msg.content.kind === "crypto_content") {
+                return this.userClient.sendGroupICPTransfer(
+                    chat.chatId,
+                    msg.content.transfer.recipient,
+                    user,
+                    msg
+                );
+            }
             return this.sendGroupMessage(chat.chatId, user.username, mentioned, msg);
         }
         if (chat.kind === "direct_chat") {

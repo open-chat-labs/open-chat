@@ -149,6 +149,17 @@ export class CachingUserClient implements IUserClient {
         return this.client.editMessage(recipientId, message);
     }
 
+    sendGroupICPTransfer(
+        groupId: string,
+        recipientId: string,
+        sender: UserSummary,
+        message: Message
+    ): Promise<SendMessageResponse> {
+        return this.client
+            .sendGroupICPTransfer(groupId, recipientId, sender, message)
+            .then(setCachedMessage(this.db, groupId, message));
+    }
+
     sendMessage(
         recipientId: string,
         sender: UserSummary,

@@ -61,6 +61,12 @@ export interface IUserClient {
         message: Message,
         replyingToChatId?: string
     ): Promise<SendMessageResponse>;
+    sendGroupICPTransfer(
+        groupId: string,
+        recipientId: string,
+        sender: UserSummary,
+        message: Message
+    ): Promise<SendMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
