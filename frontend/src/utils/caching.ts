@@ -18,7 +18,7 @@ import type {
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 
-const CACHE_VERSION = 22;
+const CACHE_VERSION = 23;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
