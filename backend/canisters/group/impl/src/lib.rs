@@ -24,8 +24,6 @@ mod queries;
 mod regular_jobs;
 mod updates;
 
-const STATE_VERSION: StateVersion = StateVersion::V1;
-
 #[derive(CandidType, Serialize, Deserialize)]
 enum StateVersion {
     V1,

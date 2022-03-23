@@ -13,8 +13,6 @@ mod model;
 mod queries;
 mod updates;
 
-const STATE_VERSION: StateVersion = StateVersion::V1;
-
 #[derive(CandidType, Serialize, Deserialize)]
 enum StateVersion {
     V1,
