@@ -1,17 +1,19 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
-use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
-use group_index_canister::c2c_create_group;
+use group_index_canister::{c2c_create_group, MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH, MIN_GROUP_NAME_LENGTH};
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{CanisterId, ChatId, FieldTooLongResult, MAX_AVATAR_SIZE};
+use types::{CanisterId, ChatId, FieldTooLongResult, FieldTooShortResult, MAX_AVATAR_SIZE};
 use user_canister::create_group::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
-async fn create_group(args: Args) -> Response {
+async fn create_group(mut args: Args) -> Response {
     run_regular_jobs();
+
+    args.name = args.name.trim().to_string();
+    args.description = args.description.trim().to_string();
 
     let prepare_result = match read_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
@@ -55,6 +57,11 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
         Err(MaxGroupsCreated(max))
     } else if is_throttled() {
         Err(Throttled)
+    } else if args.name.len() < MIN_GROUP_NAME_LENGTH as usize {
+        Err(NameTooShort(FieldTooShortResult {
+            length_provided: args.name.len() as u32,
+            min_length: MIN_GROUP_NAME_LENGTH,
+        }))
     } else if args.name.len() > MAX_GROUP_NAME_LENGTH as usize {
         Err(NameTooLong(FieldTooLongResult {
             length_provided: args.name.len() as u32,

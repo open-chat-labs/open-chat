@@ -148,6 +148,7 @@ type CreateGroupSuccessResult =
 type CreateGroupResponse =
     variant {
         Success: CreateGroupSuccessResult;
+        NameTooShort: FieldTooShortResult;
         NameTooLong: FieldTooLongResult;
         DescriptionTooLong: FieldTooLongResult;
         AvatarTooBig: FieldTooLongResult;

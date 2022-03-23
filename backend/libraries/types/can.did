@@ -138,6 +138,12 @@ type DirectMessageNotification =
         message: MessageEventWrapper;
     };
 
+type FieldTooShortResult =
+    record {
+        length_provided: nat32;
+        min_length: nat32;
+    };
+
 type FieldTooLongResult =
     record {
         length_provided: nat32;
