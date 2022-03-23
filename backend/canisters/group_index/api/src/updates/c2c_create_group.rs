@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::Deserialize;
-use types::{Avatar, ChatId, FieldTooLongResult, FieldTooShortResult, GroupPermissions};
+use types::{Avatar, ChatId, GroupPermissions};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -17,9 +17,6 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     NameTaken,
-    NameTooShort(FieldTooShortResult),
-    NameTooLong(FieldTooLongResult),
-    DescriptionTooLong(FieldTooLongResult),
     CyclesBalanceTooLow,
     InternalError,
 }

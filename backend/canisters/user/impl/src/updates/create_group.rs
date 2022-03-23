@@ -32,9 +32,6 @@ async fn create_group(mut args: Args) -> Response {
                 Success(SuccessResult { chat_id: r.chat_id })
             }
             c2c_create_group::Response::NameTaken => NameTaken,
-            c2c_create_group::Response::NameTooShort(f) => NameTooShort(f),
-            c2c_create_group::Response::NameTooLong(f) => NameTooLong(f),
-            c2c_create_group::Response::DescriptionTooLong(f) => DescriptionTooLong(f),
             c2c_create_group::Response::CyclesBalanceTooLow => InternalError,
             c2c_create_group::Response::InternalError => InternalError,
         },

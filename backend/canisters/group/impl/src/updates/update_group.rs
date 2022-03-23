@@ -42,9 +42,6 @@ async fn update_group(mut args: Args) -> Response {
                     error!(chat_id = %prepare_result.chat_id, "Group not found in index");
                     return InternalError;
                 }
-                c2c_update_group::Response::NameTooShort(f) => return NameTooShort(f),
-                c2c_update_group::Response::NameTooLong(f) => return NameTooLong(f),
-                c2c_update_group::Response::DescriptionTooLong(f) => return DescriptionTooLong(f),
             },
             Err(_) => return InternalError,
         };
