@@ -2,7 +2,13 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize, E8S_PER_ICP, ICP_TRANSFER_FEE_E8S } from "../../domain/user/user";
+    import {
+        AvatarSize,
+        E8S_PER_ICP,
+        ICP_TRANSFER_FEE_E8S,
+        UserStatus,
+    } from "../../domain/user/user";
+    import type { PartialUserSummary } from "../../domain/user/user";
     import ICPInput from "./ICPInput.svelte";
     import Input from "../Input.svelte";
     import Overlay from "../Overlay.svelte";
@@ -23,14 +29,16 @@
     import { formatICP } from "../../utils/cryptoFormatter";
     import { rollbar } from "../../utils/logging";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import { mobileWidth, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import { iconSize } from "../../stores/iconSize";
     import { icpBalanceE8sStore } from "../../stores/balance";
+    import type { ChatController } from "../../fsm/chat.controller";
+    import SingleUserSelector from "./SingleUserSelector.svelte";
 
     const dispatch = createEventDispatcher();
 
+    export let controller: ChatController;
     export let open: boolean;
-    export let receiverId: string;
 
     const api = getContext<ServiceContainer>(apiKey);
     const user = getContext<CreatedUser>(currentUserKey);
@@ -40,13 +48,17 @@
     let draftAmountE8s: bigint = BigInt(0);
     let message = "";
     let confirming = false;
+    let receiver: PartialUserSummary | undefined = undefined;
 
+    $: chat = controller.chat;
+    $: group = $chat.kind === "group_chat";
+    $: blockedUsers = controller.blockedUsers;
+    $: participants = controller.participants;
     $: remainingBalanceE8s =
         draftAmountE8s > BigInt(0)
             ? $icpBalanceE8sStore.e8s - draftAmountE8s - ICP_TRANSFER_FEE_E8S
             : $icpBalanceE8sStore.e8s;
-    $: valid = error === undefined && draftAmountE8s > BigInt(0);
-    $: receiver = $userStore[receiverId];
+    $: valid = error === undefined && draftAmountE8s > BigInt(0) && receiver !== undefined;
     $: zero = $icpBalanceE8sStore.e8s <= ICP_TRANSFER_FEE_E8S;
 
     export function reset(amountE8s: bigint) {
@@ -55,6 +67,11 @@
         draftAmountE8s = BigInt(0);
         confirming = false;
         message = "";
+
+        receiver =
+            controller.chatVal.kind === "direct_chat"
+                ? $userStore[controller.chatVal.them]
+                : undefined;
         api.refreshAccountBalance(user.icpAccount)
             .then((_) => {
                 draftAmountE8s = amountE8s;
@@ -78,13 +95,16 @@
             confirming = true;
             return;
         }
+
+        if (receiver === undefined) return;
+
         const content = {
             kind: "crypto_content",
             caption: message === "" ? undefined : message,
             transfer: {
                 transferKind: "icp_transfer",
                 kind: "pending_icp_transfer",
-                recipient: receiverId,
+                recipient: receiver.userId,
                 amountE8s: draftAmountE8s,
             },
         };
@@ -100,7 +120,9 @@
                 <span class="avatar">
                     <Avatar
                         url={avatarUrl(receiver)}
-                        status={getUserStatus($now, $userStore, receiverId)}
+                        status={receiver
+                            ? getUserStatus($now, $userStore, receiver.userId)
+                            : UserStatus.None}
                         size={AvatarSize.Small} />
                 </span>
                 <div class="main-title">
@@ -133,10 +155,20 @@
                         {$_("icpTransfer.warning")}
                     </div>
                 {:else}
+                    {#if group}
+                        <div class="receiver">
+                            <Legend>{$_("icpTransfer.receiver")}</Legend>
+                            <SingleUserSelector
+                                bind:selectedReceiver={receiver}
+                                participants={$participants}
+                                blockedUsers={$blockedUsers}
+                                autofocus={group} />
+                        </div>
+                    {/if}
                     <div class="transfer">
                         <Legend>{$_("icpTransfer.amount")}</Legend>
                         <ICPInput
-                            autofocus={true}
+                            autofocus={!group}
                             maxAmountE8s={maxAmountE8s()}
                             bind:amountE8s={draftAmountE8s} />
                     </div>

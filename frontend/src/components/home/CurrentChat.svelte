@@ -150,13 +150,11 @@
 
 <PollBuilder bind:this={pollBuilder} on:sendPoll={footer.sendPoll} bind:open={creatingPoll} />
 
-{#if $chat.kind === "direct_chat"}
-    <ICPTransferBuilder
-        receiverId={$chat.them}
-        bind:this={icpTransferBuilder}
-        on:sendTransfer={footer.sendICPTransfer}
-        bind:open={creatingICPTransfer} />
-{/if}
+<ICPTransferBuilder
+    bind:this={icpTransferBuilder}
+    on:sendTransfer={footer.sendICPTransfer}
+    {controller}
+    bind:open={creatingICPTransfer} />
 
 <div class="wrapper">
     {#if showSearchHeader}
