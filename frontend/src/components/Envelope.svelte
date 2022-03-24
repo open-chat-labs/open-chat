@@ -19,6 +19,7 @@
     $back: darken($color, 20%);
     $width: 80px;
     $height: calc(#{$width} * 0.8);
+    $delay: 0.15s;
 
     .envelope {
         position: relative;
@@ -39,8 +40,9 @@
         height: calc(#{$height} * 0.85);
         top: 8px;
         left: calc(#{$width} * 0.04);
-        transition: 0.2s;
+        transition: 0.3s;
         color: #191919;
+        z-index: 0;
     }
 
     .text {
@@ -95,14 +97,17 @@
         top: 0;
         transform-origin: top;
         transition: 0.4s;
+        transition-delay: $delay;
     }
 
     .envelope:hover .top {
         transform: rotateX(160deg);
+        transition-delay: 0ms;
     }
 
     .envelope:hover .letter {
         transform: translateY(calc(#{$height} * 0.5 * -1));
+        transition-delay: $delay;
         z-index: 2;
     }
 </style>
