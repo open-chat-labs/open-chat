@@ -15,6 +15,7 @@
     export let replyingTo: EnhancedReplyContext;
     export let user: UserSummary;
     export let preview: boolean;
+    export let groupChat: boolean;
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
@@ -40,6 +41,7 @@
     </h4>
     <ChatMessageContent
         {preview}
+        {groupChat}
         fill={false}
         first={true}
         {me}

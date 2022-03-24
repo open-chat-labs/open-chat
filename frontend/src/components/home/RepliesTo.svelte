@@ -17,6 +17,7 @@
     export let user: UserSummary;
     export let repliesTo: RehydratedReplyContext;
     export let preview: boolean;
+    export let groupChat: boolean;
 
     let debug = false;
 
@@ -54,6 +55,7 @@
             <ChatMessageContent
                 {me}
                 {preview}
+                {groupChat}
                 first={true}
                 senderId={repliesTo.senderId}
                 fill={false}

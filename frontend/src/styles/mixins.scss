@@ -225,25 +225,24 @@ $sp11: 192px;
     background: linear-gradient(
         to bottom,
         #cfc09f 22%,
-        #cfc09f 26%,
-        #cfc09f 27%,
-        #ffecb3 40%,
+        #ffecb3 30%,
+        #cfc09f 40%,
+        #cfc09f 50%,
         #634f2c 78%
     );
-    animation: shimmer 10s ease-in-out infinite;
-    animation-delay: 500ms;
+    animation: shimmer 15s ease-in-out infinite;
     background-size: 120% 120%;
 }
 
 @keyframes shimmer {
     0% {
-        background-position: 10% 0%;
+        background-position: 0 0%;
     }
     50% {
-        background-position: 91% 100%;
+        background-position: 0 75%;
     }
     100% {
-        background-position: 10% 0%;
+        background-position: 0 0%;
     }
 }
 

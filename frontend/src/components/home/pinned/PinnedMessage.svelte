@@ -80,7 +80,12 @@
         {/if}
         {#if msg.repliesTo !== undefined && !deleted}
             {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                <RepliesTo preview={true} {chatId} {user} repliesTo={msg.repliesTo} />
+                <RepliesTo
+                    preview={true}
+                    {chatId}
+                    {user}
+                    groupChat={true}
+                    repliesTo={msg.repliesTo} />
             {:else}
                 <UnresolvedReply repliesTo={msg.repliesTo} />
             {/if}
@@ -92,6 +97,7 @@
             {senderId}
             {fill}
             first={true}
+            groupChat={true}
             {me}
             content={msg.content} />
     </div>

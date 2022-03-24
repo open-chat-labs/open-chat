@@ -16,6 +16,7 @@
     export let first: boolean;
     export let reply: boolean = false;
     export let senderId: string;
+    export let groupChat: boolean;
 
     const user = getContext<CreatedUser>(currentUserKey);
 
@@ -30,13 +31,13 @@
     function username(userId: string): string {
         return userId === user.userId
             ? $_("you")
-            : `@${$userStore[userId]?.username ?? $_("unknown")}`;
+            : `${$userStore[userId]?.username ?? $_("unknown")}`;
     }
 </script>
 
 {#if content.transfer.kind === "completed_icp_transfer"}
     <div class="message">
-        <div class="env" class:me class:first>
+        <div class="env" class:me class:first class:groupChat>
             <Envelope />
         </div>
         <div class="txt">
@@ -62,7 +63,7 @@
     </div>
 {:else if content.transfer.kind === "pending_icp_transfer"}
     <div class="message">
-        <div class="env" class:me class:first>
+        <div class="env" class:me class:first class:groupChat>
             <Envelope />
         </div>
         <div class="txt">
@@ -104,6 +105,7 @@
     .link {
         text-align: center;
         margin-bottom: $sp3;
+        @include font-size(fs-90);
     }
 
     .message {
@@ -115,10 +117,9 @@
         padding: 0 $sp3;
 
         .env {
-            margin-top: 10px;
-            &.me,
-            &:not(.first) {
-                margin-top: 30px;
+            margin-top: 30px;
+            &.first:not(.me).groupChat {
+                margin-top: 10px;
             }
         }
 
@@ -128,7 +129,9 @@
     }
 
     .transfer-txt {
+        @include font-size(fs-120);
         text-align: center;
+        text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.5);
     }
 
     .txt {

@@ -323,6 +323,7 @@
                         {preview}
                         {chatId}
                         {user}
+                        {groupChat}
                         on:goToMessageIndex
                         repliesTo={msg.repliesTo} />
                 {:else}
@@ -335,6 +336,7 @@
                 {fill}
                 {me}
                 {first}
+                {groupChat}
                 {senderId}
                 content={msg.content}
                 height={mediaCalculatedHeight}

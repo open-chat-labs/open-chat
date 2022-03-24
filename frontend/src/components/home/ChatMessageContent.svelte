@@ -23,6 +23,7 @@
     export let pinned: boolean = false;
     export let height: number | undefined = undefined;
     export let preview: boolean;
+    export let groupChat: boolean;
     export let senderId: string;
 
     function truncateText(text: string): string {
@@ -49,7 +50,7 @@
 {:else if content.kind === "deleted_content"}
     <DeletedContent {content} />
 {:else if content.kind === "crypto_content"}
-    <CryptoContent {senderId} {content} {me} {first} />
+    <CryptoContent {senderId} {content} {me} {first} {groupChat} />
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "poll_content"}
