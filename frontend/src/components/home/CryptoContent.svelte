@@ -4,33 +4,63 @@
     import { _ } from "svelte-i18n";
     import type { CryptocurrencyContent } from "../../domain/chat/chat";
     import Markdown from "./Markdown.svelte";
+    import Envelope from "../Envelope.svelte";
     import ChevronDoubleRight from "svelte-material-icons/ChevronDoubleRight.svelte";
     import ChevronDoubleLeft from "svelte-material-icons/ChevronDoubleLeft.svelte";
     import { iconSize } from "stores/iconSize";
     import { formatICP } from "../../utils/cryptoFormatter";
+    import { userStore } from "../../stores/user";
+    import { getContext } from "svelte";
+    import type { CreatedUser } from "../../domain/user/user";
+    import { currentUserKey } from "../../fsm/home.controller";
 
     export let content: CryptocurrencyContent;
     export let me: boolean = false;
     export let reply: boolean = false;
+
+    const user = getContext<CreatedUser>(currentUserKey);
 
     let amount: bigint =
         content.transfer.kind === "completed_icp_transfer" ||
         content.transfer.kind === "pending_icp_transfer"
             ? content.transfer.amountE8s
             : BigInt(0);
+
+    function username(userId: string): string {
+        return $userStore[userId]?.username ?? $_("unknown");
+    }
 </script>
 
 {#if content.transfer.kind === "completed_icp_transfer"}
     <div class="message">
-        {#if me}
-            <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
-            {$_("icpTransfer.confirmedSent", { values: { amount: formatICP(amount, 0) } })}
-            <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
-        {:else}
-            <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
-            {$_("icpTransfer.confirmedReceived", { values: { amount: formatICP(amount, 0) } })}
-            <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
-        {/if}
+        <div class="env">
+            <Envelope />
+        </div>
+        <div class="txt">
+            {#if me}
+                <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
+                {$_("icpTransfer.confirmedSent", {
+                    values: {
+                        amount: formatICP(amount, 0),
+                        receiver: username(content.transfer.recipient),
+                    },
+                })}
+                <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
+            {:else if content.transfer.recipient === user.userId}
+                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+                {$_("icpTransfer.confirmedReceived", { values: { amount: formatICP(amount, 0) } })}
+                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+            {:else}
+                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+                {$_("icpTransfer.someoneConfirmedReceived", {
+                    values: {
+                        amount: formatICP(amount, 0),
+                        receiver: username(content.transfer.recipient),
+                    },
+                })}
+                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+            {/if}
+        </div>
     </div>
     <div class="link">
         <Markdown
@@ -43,15 +73,34 @@
     </div>
 {:else if content.transfer.kind === "pending_icp_transfer"}
     <div class="message">
-        {#if me}
-            <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
-            {$_("icpTransfer.pendingSent", { values: { amount: formatICP(amount, 0) } })}
-            <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
-        {:else}
-            <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
-            {$_("icpTransfer.pendingReceived", { values: { amount: formatICP(amount, 0) } })}
-            <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
-        {/if}
+        <div class="env">
+            <Envelope />
+        </div>
+        <div class="txt">
+            {#if me}
+                <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
+                {$_("icpTransfer.pendingSent", {
+                    values: {
+                        amount: formatICP(amount, 0),
+                        receiver: username(content.transfer.recipient),
+                    },
+                })}
+                <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
+            {:else if content.transfer.recipient === user.userId}
+                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+                {$_("icpTransfer.pendingReceived", { values: { amount: formatICP(amount, 0) } })}
+                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+            {:else}
+                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+                {$_("icpTransfer.someonePendingReceived", {
+                    values: {
+                        amount: formatICP(amount, 0),
+                        receiver: username(content.transfer.recipient),
+                    },
+                })}
+                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+            {/if}
+        </div>
     </div>
 {:else}
     <div class="unexpected">{$_("icpTransfer.unexpected")}</div>
@@ -71,7 +120,21 @@
     }
 
     .message {
-        margin-bottom: $sp3;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        gap: 12px;
+
+        .env {
+            margin-top: 30px;
+        }
+
+        .txt {
+            flex: auto;
+        }
+    }
+
+    .txt {
         display: flex;
         align-items: center;
     }

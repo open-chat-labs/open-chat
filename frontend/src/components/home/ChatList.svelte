@@ -130,6 +130,7 @@
         on:profile
         on:newGroup />
     <Search {searching} {searchTerm} on:searchEntered />
+
     <div class="body">
         {#if $chatsLoading}
             <Loading />

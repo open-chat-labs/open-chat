@@ -98,13 +98,13 @@
                             controller.api.refreshAccountBalance(createdUser.icpAccount);
                         }
                     } else {
-                        controller.removeMessage(msg.messageId, controller.user.userId);
+                        // controller.removeMessage(msg.messageId, controller.user.userId);
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
                     }
                 })
                 .catch((err) => {
-                    controller.removeMessage(msg.messageId, controller.user.userId);
+                    // controller.removeMessage(msg.messageId, controller.user.userId);
                     console.log(err);
                     toastStore.showFailureToast("errorSendingMessage");
                     rollbar.error("Exception sending message", err);
