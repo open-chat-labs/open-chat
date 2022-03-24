@@ -75,6 +75,7 @@
     let debug = false;
     let viewProfile = false;
     let alignProfileTo: DOMRect | undefined = undefined;
+    let crypto = msg.content.kind === "crypto_content";
 
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
@@ -307,12 +308,12 @@
             class:first
             class:last
             class:readByMe
-            class:crypto={msg.content.kind === "crypto_content"}
+            class:crypto
             class:rtl={$rtlStore}>
             {#if first && !me && groupChat}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"hover"} on:click={openUserProfile}>
-                        <h4 class="username" class:fill>{username}</h4>
+                        <h4 class="username" class:fill class:crypto>{username}</h4>
                     </Link>
                 </div>
             {/if}
@@ -347,6 +348,7 @@
                     {me}
                     {confirmed}
                     {readByThem}
+                    {crypto}
                     {chatType} />
             {/if}
 
@@ -628,7 +630,8 @@
             color: var(--accent);
             display: inline;
 
-            &.fill {
+            &.fill,
+            &.crypto {
                 color: #fff;
             }
         }

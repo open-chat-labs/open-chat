@@ -14,9 +14,12 @@
     export let me: boolean;
     export let fill: boolean;
     export let pinned: boolean;
+    export let crypto: boolean;
 
     let iconColor = fill ? "#fff" : "var(--currentChat-msg-me-txt)";
-    let pinnedColor = me
+    let pinnedColor = crypto
+        ? "#fff"
+        : me
         ? "var(--currentChat-msg-me-txt)"
         : fill
         ? "#fff"
