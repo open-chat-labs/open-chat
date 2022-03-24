@@ -18,10 +18,12 @@
     export let me: boolean = false;
     export let truncate: boolean = false;
     export let fill: boolean;
+    export let first: boolean;
     export let reply: boolean = false;
     export let pinned: boolean = false;
     export let height: number | undefined = undefined;
     export let preview: boolean;
+    export let senderId: string;
 
     function truncateText(text: string): string {
         // todo - we might be able to do something nicer than this with pure css, but we just need to do
@@ -47,7 +49,7 @@
 {:else if content.kind === "deleted_content"}
     <DeletedContent {content} />
 {:else if content.kind === "crypto_content"}
-    <CryptoContent {content} {me} />
+    <CryptoContent {senderId} {content} {me} {first} />
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "poll_content"}

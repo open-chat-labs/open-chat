@@ -42,7 +42,11 @@
 </script>
 
 <Link on:click={zoomToMessage}>
-    <div class="reply-wrapper" class:me class:rtl={$rtlStore}>
+    <div
+        class="reply-wrapper"
+        class:me
+        class:rtl={$rtlStore}
+        class:crypto={repliesTo.content.kind === "crypto_content"}>
         <h4 class="username" class:text-content={isTextContent}>
             {getUsernameFromReplyContext(repliesTo)}
         </h4>
@@ -50,6 +54,8 @@
             <ChatMessageContent
                 {me}
                 {preview}
+                first={true}
+                senderId={repliesTo.senderId}
                 fill={false}
                 reply={true}
                 content={repliesTo.content} />
@@ -86,6 +92,10 @@
         &.me {
             background-color: var(--currentChat-msg-me-hv);
             color: var(--currentChat-msg-me-txt);
+        }
+
+        &.crypto {
+            @include gold();
         }
 
         &:after {

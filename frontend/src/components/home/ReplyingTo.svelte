@@ -25,7 +25,11 @@
     }
 </script>
 
-<div class="replying" class:me class:rtl={$rtlStore}>
+<div
+    class="replying"
+    class:me
+    class:rtl={$rtlStore}
+    class:crypto={replyingTo.content.kind === "crypto_content"}>
     <div class="close-icon" on:click={cancelReply}>
         <HoverIcon compact={true}>
             <Close size={$iconSize} color={me ? "#fff" : "#aaa"} />
@@ -37,7 +41,9 @@
     <ChatMessageContent
         {preview}
         fill={false}
+        first={true}
         {me}
+        senderId={replyingTo.senderId}
         truncate={true}
         content={replyingTo.content}
         reply={true} />
@@ -77,6 +83,10 @@
         &.me {
             background-color: var(--currentChat-msg-me-hv);
             color: var(--currentChat-msg-me-txt);
+        }
+
+        &.crypto {
+            @include gold();
         }
 
         &:after {

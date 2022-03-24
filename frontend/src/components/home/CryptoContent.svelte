@@ -5,9 +5,6 @@
     import type { CryptocurrencyContent } from "../../domain/chat/chat";
     import Markdown from "./Markdown.svelte";
     import Envelope from "../Envelope.svelte";
-    import ChevronDoubleRight from "svelte-material-icons/ChevronDoubleRight.svelte";
-    import ChevronDoubleLeft from "svelte-material-icons/ChevronDoubleLeft.svelte";
-    import { iconSize } from "stores/iconSize";
     import { formatICP } from "../../utils/cryptoFormatter";
     import { userStore } from "../../stores/user";
     import { getContext } from "svelte";
@@ -16,9 +13,13 @@
 
     export let content: CryptocurrencyContent;
     export let me: boolean = false;
+    export let first: boolean;
     export let reply: boolean = false;
+    export let senderId: string;
 
     const user = getContext<CreatedUser>(currentUserKey);
+
+    let senderName = username(senderId);
 
     let amount: bigint =
         content.transfer.kind === "completed_icp_transfer" ||
@@ -27,47 +28,27 @@
             : BigInt(0);
 
     function username(userId: string): string {
-        return $userStore[userId]?.username ?? $_("unknown");
+        return userId === user.userId
+            ? $_("you")
+            : `@${$userStore[userId]?.username ?? $_("unknown")}`;
     }
 </script>
 
 {#if content.transfer.kind === "completed_icp_transfer"}
     <div class="message">
-        <div class="env">
+        <div class="env" class:me class:first>
             <Envelope />
         </div>
         <div class="txt">
-            {#if me}
-                <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
-                <span class="transfer-txt">
-                    {$_("icpTransfer.confirmedSent", {
-                        values: {
-                            amount: formatICP(amount, 0),
-                            receiver: username(content.transfer.recipient),
-                        },
-                    })}
-                </span>
-                <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
-            {:else if content.transfer.recipient === user.userId}
-                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
-                <span class="transfer-txt">
-                    {$_("icpTransfer.confirmedReceived", {
-                        values: { amount: formatICP(amount, 0) },
-                    })}
-                </span>
-                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
-            {:else}
-                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
-                <span class="transfer-txt">
-                    {$_("icpTransfer.someoneConfirmedReceived", {
-                        values: {
-                            amount: formatICP(amount, 0),
-                            receiver: username(content.transfer.recipient),
-                        },
-                    })}
-                </span>
-                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
-            {/if}
+            <span class="transfer-txt">
+                {$_("icpTransfer.confirmedSent", {
+                    values: {
+                        amount: formatICP(amount, 0),
+                        receiver: username(content.transfer.recipient),
+                        sender: senderName,
+                    },
+                })}
+            </span>
         </div>
     </div>
     <div class="link">
@@ -81,40 +62,29 @@
     </div>
 {:else if content.transfer.kind === "pending_icp_transfer"}
     <div class="message">
-        <div class="env">
+        <div class="env" class:me class:first>
             <Envelope />
         </div>
         <div class="txt">
             {#if me}
-                <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
+                <span class="transfer-txt">
+                    {$_("icpTransfer.pendingSentByYou", {
+                        values: {
+                            amount: formatICP(amount, 0),
+                            receiver: username(content.transfer.recipient),
+                        },
+                    })}
+                </span>
+            {:else}
                 <span class="transfer-txt">
                     {$_("icpTransfer.pendingSent", {
                         values: {
                             amount: formatICP(amount, 0),
                             receiver: username(content.transfer.recipient),
+                            sender: senderName,
                         },
                     })}
                 </span>
-                <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
-            {:else if content.transfer.recipient === user.userId}
-                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
-                <span class="transfer-txt">
-                    {$_("icpTransfer.pendingReceived", {
-                        values: { amount: formatICP(amount, 0) },
-                    })}
-                </span>
-                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
-            {:else}
-                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
-                <span class="transfer-txt">
-                    {$_("icpTransfer.someonePendingReceived", {
-                        values: {
-                            amount: formatICP(amount, 0),
-                            receiver: username(content.transfer.recipient),
-                        },
-                    })}
-                </span>
-                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
             {/if}
         </div>
     </div>
@@ -142,9 +112,14 @@
         flex-direction: column;
         gap: 12px;
         margin-bottom: $sp3;
+        padding: 0 $sp3;
 
         .env {
-            margin-top: 30px;
+            margin-top: 10px;
+            &.me,
+            &:not(.first) {
+                margin-top: 30px;
+            }
         }
 
         .txt {

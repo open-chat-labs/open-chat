@@ -333,6 +333,8 @@
                 {preview}
                 {fill}
                 {me}
+                {first}
+                {senderId}
                 content={msg.content}
                 height={mediaCalculatedHeight}
                 on:registerVote={registerVote} />

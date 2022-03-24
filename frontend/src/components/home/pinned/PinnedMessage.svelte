@@ -68,6 +68,7 @@
         class:fill={fill && !deleted}
         class:me
         class:deleted
+        class:crypto={msg.content.kind === "crypto_content"}
         class:rtl={$rtlStore}>
         {#if !me && !deleted}
             <div class="sender" class:fill class:rtl={$rtlStore}>
@@ -84,7 +85,14 @@
             {/if}
         {/if}
 
-        <ChatMessageContent preview={true} pinned={true} {fill} {me} content={msg.content} />
+        <ChatMessageContent
+            preview={true}
+            pinned={true}
+            {senderId}
+            {fill}
+            first={true}
+            {me}
+            content={msg.content} />
     </div>
 </div>
 
@@ -153,6 +161,10 @@
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
             border-color: var(--currentChat-msg-me-bd);
+        }
+
+        &.crypto {
+            @include gold();
         }
 
         &.fill {
