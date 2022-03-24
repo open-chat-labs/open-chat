@@ -27,7 +27,6 @@ const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 500_000_000_000; // 0.5T cy
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE: u64 = (1024 * 1024 * 1024) / 10; // 0.1 GB
 const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 10 * 60 * 1000; // 10 minutes
-const STATE_VERSION: StateVersion = StateVersion::V1;
 
 #[derive(CandidType, Serialize, Deserialize)]
 enum StateVersion {
