@@ -24,8 +24,6 @@
     export let direction: "up" | "down" = "up";
     export let border = false;
 
-    $: console.log("Offset: ", offset);
-
     let index = 0;
     $: itemHeight = $mobileWidth ? 53 : 55;
     $: borderWidth = direction === "up" ? 2 : 3;
@@ -36,7 +34,6 @@
         (p) => !blockedUsers.has(p.userId) && p.userId !== user.userId
     );
 
-    // TODO - mildly worried about the performance of this
     $: reverseLookup = unblocked.reduce((lookup, u) => {
         const user = $userStore[u.userId];
         if (user !== undefined && user.username !== undefined) {

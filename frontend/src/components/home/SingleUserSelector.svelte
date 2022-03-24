@@ -40,7 +40,7 @@
         if (selectedReceiver === undefined) {
             selectedReceiver = mentionPicker?.userFromUsername(textValue);
         }
-        // showMentionPicker = false;
+        showMentionPicker = false;
     }
 </script>
 
