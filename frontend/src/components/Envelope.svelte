@@ -35,7 +35,7 @@
 
     .letter {
         position: absolute;
-        background-color: #efefef;
+        background-color: #fff;
         width: calc(#{$width} * 0.92);
         height: calc(#{$height} * 0.85);
         top: 8px;
