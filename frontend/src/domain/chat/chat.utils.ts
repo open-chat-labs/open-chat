@@ -613,7 +613,7 @@ export function updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummar
         updatesSince: {
             timestamp,
             groupChats: chatSummaries
-                .filter((c) => c.kind === "group_chat")
+                .filter((c) => c.kind === "group_chat" && c.myRole !== "previewer")
                 .map((g) => ({
                     chatId: g.chatId,
                     lastUpdated: (g as GroupChatSummary).lastUpdated,

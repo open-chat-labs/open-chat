@@ -4,7 +4,7 @@ use candid::CandidType;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use search::*;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use types::{
@@ -19,24 +19,7 @@ pub struct PublicGroups {
     groups: HashMap<ChatId, PublicGroupInfo>,
     #[serde(skip)]
     name_to_id_map: CaseInsensitiveHashMap<ChatId>,
-    // This attribute will be removed after the upgrade
-    #[serde(deserialize_with = "deserialize_groups_pending")]
     groups_pending: CaseInsensitiveHashMap<TimestampMillis>,
-}
-
-fn deserialize_groups_pending<'de, D>(deserializer: D) -> Result<CaseInsensitiveHashMap<TimestampMillis>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let groups: HashMap<String, TimestampMillis> = HashMap::deserialize(deserializer)?;
-
-    let mut case_insensitive = CaseInsensitiveHashMap::default();
-
-    for (name, chat_id) in groups {
-        case_insensitive.insert(&name, chat_id);
-    }
-
-    Ok(case_insensitive)
 }
 
 impl PublicGroups {
