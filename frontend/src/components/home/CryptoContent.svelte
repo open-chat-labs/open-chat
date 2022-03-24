@@ -49,15 +49,15 @@
                 </span>
                 <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
             {:else if content.transfer.recipient === user.userId}
-                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
                 <span class="transfer-txt">
                     {$_("icpTransfer.confirmedReceived", {
                         values: { amount: formatICP(amount, 0) },
                     })}
                 </span>
-                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
             {:else}
-                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
                 <span class="transfer-txt">
                     {$_("icpTransfer.someoneConfirmedReceived", {
                         values: {
@@ -66,7 +66,7 @@
                         },
                     })}
                 </span>
-                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
             {/if}
         </div>
     </div>
@@ -97,15 +97,15 @@
                 </span>
                 <ChevronDoubleLeft size={$iconSize} color={"#fff"} />
             {:else if content.transfer.recipient === user.userId}
-                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
                 <span class="transfer-txt">
                     {$_("icpTransfer.pendingReceived", {
                         values: { amount: formatICP(amount, 0) },
                     })}
                 </span>
-                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
             {:else}
-                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
                 <span class="transfer-txt">
                     {$_("icpTransfer.someonePendingReceived", {
                         values: {
@@ -114,7 +114,7 @@
                         },
                     })}
                 </span>
-                <ChevronDoubleRight size={$iconSize} color={"var(--icon-txt)"} />
+                <ChevronDoubleRight size={$iconSize} color={"#fff"} />
             {/if}
         </div>
     </div>
@@ -132,6 +132,7 @@
     }
 
     .link {
+        text-align: center;
         margin-bottom: $sp3;
     }
 

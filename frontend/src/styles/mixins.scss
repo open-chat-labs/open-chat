@@ -220,6 +220,7 @@ $sp11: 192px;
 }
 
 @mixin gold() {
+    color: #ffffff;
     border: none;
     background: linear-gradient(
         to bottom,
