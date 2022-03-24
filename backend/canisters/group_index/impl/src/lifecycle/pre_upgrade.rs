@@ -1,4 +1,4 @@
-use crate::{take_state, LOG_MESSAGES, STATE_VERSION};
+use crate::{take_state, LOG_MESSAGES};
 use canister_api_macros::trace;
 use ic_cdk_macros::pre_upgrade;
 use tracing::info;
@@ -17,5 +17,5 @@ fn pre_upgrade() {
     let stable_state = (state.data, log_messages, trace_messages);
     let bytes = serializer::serialize(&stable_state).unwrap();
 
-    ic_cdk::storage::stable_save((STATE_VERSION, &bytes)).unwrap();
+    ic_cdk::api::stable::stable64_write(0, &bytes);
 }

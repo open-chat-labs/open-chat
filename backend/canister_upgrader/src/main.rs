@@ -17,7 +17,7 @@ async fn main() {
         CanisterName::Notifications => {
             upgrade_notifications_canister(identity, opts.url, opts.notifications, opts.version).await
         }
-        CanisterName::Root => unimplemented!(),
+        CanisterName::Root => upgrade_root_canister(identity, opts.url, opts.notifications, opts.version).await,
         CanisterName::OnlineUsersAggregator => {
             upgrade_online_users_aggregator_canister(identity, opts.url, opts.online_users_aggregator, opts.version).await
         }
