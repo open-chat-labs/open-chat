@@ -11,8 +11,8 @@
 </div>
 
 <style type="text/scss">
-    $color: slateblue;
-    // $color: crimson;
+    // $color: slateblue;
+    $color: crimson;
     $front: darken($color, 5%);
     $top: lighten($color, 5%);
     $sides: $color;
@@ -34,7 +34,7 @@
 
     .letter {
         position: absolute;
-        background-color: #fff;
+        background-color: #efefef;
         width: calc(#{$width} * 0.92);
         height: calc(#{$height} * 0.85);
         top: 8px;

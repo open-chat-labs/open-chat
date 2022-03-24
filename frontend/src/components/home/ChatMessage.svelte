@@ -307,6 +307,7 @@
             class:first
             class:last
             class:readByMe
+            class:crypto={msg.content.kind === "crypto_content"}
             class:rtl={$rtlStore}>
             {#if first && !me && groupChat}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
@@ -488,6 +489,10 @@
         background-color: var(--icon-inverted-hv);
     }
 
+    :global(.message-bubble.crypto:hover .menu-icon .wrapper) {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+
     :global(.me .menu-icon:hover .wrapper) {
         background-color: var(--icon-inverted-hv);
     }
@@ -660,6 +665,10 @@
             &:not(.first):not(.last) {
                 border-radius: $radius $inner-radius $inner-radius $radius;
             }
+        }
+
+        &.crypto {
+            @include gold();
         }
 
         &.rtl {
