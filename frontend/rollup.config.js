@@ -163,19 +163,6 @@ export default [
                 process: "process/browser",
             }),
             json(),
-            
-            // Copy sourcemaps to '_/raw' and update the js files to point to the new sourcemap locations
-            copy({
-                targets: [{
-                    src: "build/*.map",
-                    dest: "build/_/raw"
-                },{
-                    src: "build/*.js",
-                    dest: "build",
-                    transform: (contents, filename) => contents.toString().replace("//# sourceMappingURL=", "//# sourceMappingURL=_/raw/")
-                }],
-                hook: "writeBundle",
-            }),
 
             replace({
                 preventAssignment: true,
@@ -256,6 +243,21 @@ export default [
             production && analyze({ summaryOnly: true }),
 
             production && filesize(),
+
+            // If we're building for production, copy sourcemaps to '_/raw'
+            // and update the js files to point to the new sourcemap locations
+            production && copy({
+                targets: [{
+                    src: "build/*.map",
+                    dest: "build/_/raw"
+                },{
+                    src: "build/*.js",
+                    dest: "build",
+                    transform: (contents, filename) => contents.toString().replace("//# sourceMappingURL=", "//# sourceMappingURL=_/raw/")
+                }],
+                hook: "writeBundle",
+            }),
+
         ],
         watch: {
             clearScreen: false,
