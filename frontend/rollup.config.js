@@ -4,6 +4,7 @@ import sveltePreprocess from "svelte-preprocess";
 import commonjs from "@rollup/plugin-commonjs";
 import html from "@rollup/plugin-html";
 import resolve from "@rollup/plugin-node-resolve";
+import copy from "rollup-plugin-copy";
 import livereload from "rollup-plugin-livereload";
 import { terser } from "rollup-plugin-terser";
 import typescript from "@rollup/plugin-typescript";
@@ -242,6 +243,21 @@ export default [
             production && analyze({ summaryOnly: true }),
 
             production && filesize(),
+
+            // If we're building for production, copy sourcemaps to '_/raw'
+            // and update the js files to point to the new sourcemap locations
+            production && copy({
+                targets: [{
+                    src: "build/*.map",
+                    dest: "build/_/raw"
+                },{
+                    src: "build/*.js",
+                    dest: "build",
+                    transform: (contents, filename) => contents.toString().replace("//# sourceMappingURL=", "//# sourceMappingURL=_/raw/")
+                }],
+                hook: "writeBundle",
+            }),
+
         ],
         watch: {
             clearScreen: false,
