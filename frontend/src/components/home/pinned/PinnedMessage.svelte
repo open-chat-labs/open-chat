@@ -27,6 +27,7 @@
     let viewProfile = false;
     let usernameLink: Link;
     let usernameLinkBoundingRect: DOMRect | undefined = undefined;
+    let crypto = msg.content.kind === "crypto_content";
 
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
@@ -68,12 +69,12 @@
         class:fill={fill && !deleted}
         class:me
         class:deleted
-        class:crypto={msg.content.kind === "crypto_content"}
+        class:crypto
         class:rtl={$rtlStore}>
         {#if !me && !deleted}
             <div class="sender" class:fill class:rtl={$rtlStore}>
                 <Link bind:this={usernameLink} underline={"hover"} on:click={openUserProfile}>
-                    <h4 class="username" class:fill>{username}</h4>
+                    <h4 class="username" class:fill class:crypto>{username}</h4>
                 </Link>
             </div>
         {/if}
@@ -152,7 +153,8 @@
             color: var(--accent);
             display: inline;
 
-            &.fill {
+            &.fill,
+            &.crypto {
                 color: #fff;
             }
         }
