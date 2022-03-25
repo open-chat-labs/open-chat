@@ -445,5 +445,7 @@
         "shortBalanceLabel": "sự cân bằng"
     },
     "searchChat": "Tìm kiếm",
-    "search": "Tìm kiếm..."
+    "search": "Tìm kiếm...",
+    "offline": "Offine",
+    "sendTo": "Gửi đến..."
 }

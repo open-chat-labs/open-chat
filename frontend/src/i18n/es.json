@@ -445,5 +445,7 @@
         "shortBalanceLabel": "equilibrio"
     },
     "searchChat": "Búsqueda",
-    "search": "Búsqueda..."
+    "search": "Búsqueda...",
+    "offline": "Desconectado",
+    "sendTo": "Enviar a..."
 }
