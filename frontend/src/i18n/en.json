@@ -443,5 +443,6 @@
     },
     "searchChat": "Search",
     "search": "Search...",
-    "offline": "Offine"
+    "offline": "Offine",
+    "sendTo": "Send to..."
 }
