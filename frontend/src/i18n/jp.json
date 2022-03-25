@@ -418,16 +418,17 @@
         "messagePlaceholder": "オプションのメッセージを含める",
         "fee": "*{fee}ICPの料金が追加されます",
         "unexpected": "予期しない暗号転送タイプを受信しました",
-        "confirmedReceived": "{amount}ICPを受け取りました",
-        "confirmedSent": "{amount}ICPを送信しました",
-        "pendingReceived": "{金額}ICPがあなたに向かっています",
-        "pendingSent": "{amount}ICPを送信しています",
         "viewTransaction": "[トランザクションを表示]（{url}）",
         "warning": "警告-受信者の身元と動機を確実に信頼するのはあなたの責任です。 OpenChatはICP転送を元に戻すことはできません。",
         "confirm": "確認",
         "transfer": "ICP転送",
         "makeDeposit": "上記の口座に入金し、残高を更新してください。",
-        "zeroBalance": "ICPはありません😭。"
+        "zeroBalance": "ICPはありません😭。",
+        "confirmedSent": "{sender}は{amount}ICPを{receiver}に送信しました",
+        "pendingSent": "{sender}は{amount}ICPを{receiver}に送信しています",
+        "pendingSentByYou": "{amount}ICPを{receiver}に送信しています",
+        "receiver": "レシーバー",
+        "chooseReceiver": "受信者のユーザー名を入力します"
     },
     "icpAccount": {
         "balanceLabel": "ICPアカウントの残高",

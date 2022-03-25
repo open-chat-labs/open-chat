@@ -173,6 +173,7 @@
             <div class="draft-container">
                 {#if $replyingTo}
                     <ReplyingTo
+                        groupChat={$chat.kind === "group_chat"}
                         preview={true}
                         on:cancelReply={cancelReply}
                         user={controller.user}

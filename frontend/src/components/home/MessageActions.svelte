@@ -22,7 +22,7 @@
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
 
-    $: useDrawer = $mobileWidth && $chat.kind === "direct_chat";
+    $: useDrawer = $mobileWidth;
     $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
 
     export function close() {
@@ -95,13 +95,11 @@
             on:open={() => (messageAction = "file")}
             on:close={close} />
     </div>
-    {#if $chat.kind === "direct_chat"}
-        <div class="send-icp" on:click={createICPTransfer}>
-            <HoverIcon title={"Send Crypto"}>
-                <SwapHorizontal size={$iconSize} color={"var(--icon-txt)"} />
-            </HoverIcon>
-        </div>
-    {/if}
+    <div class="send-icp" on:click={createICPTransfer}>
+        <HoverIcon title={"Send Crypto"}>
+            <SwapHorizontal size={$iconSize} color={"var(--icon-txt)"} />
+        </HoverIcon>
+    </div>
 </div>
 
 <style type="text/scss">

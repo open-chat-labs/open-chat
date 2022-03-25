@@ -58,6 +58,7 @@
     let mentionPrefix: string | undefined;
     let emojiQuery: string | undefined;
     let messageEntry: HTMLDivElement;
+    let messageEntryHeight: number;
     let messageActions: MessageActions;
 
     $: messageIsEmpty = true;
@@ -203,6 +204,10 @@
             if (userId !== undefined) {
                 mentionedMap.set(userId, p1);
                 return `@UserId(${userId})`;
+            } else {
+                console.log(
+                    `Could not find the userId for user: ${p1}, this should not really happen`
+                );
             }
             return match;
         });
@@ -328,7 +333,7 @@
 {#if showMentionPicker}
     <MentionPicker
         blockedUsers={$blockedUsers}
-        offset={messageEntry.clientHeight}
+        offset={messageEntryHeight}
         on:close={cancelMention}
         on:mention={mention}
         prefix={mentionPrefix}
@@ -337,13 +342,13 @@
 
 {#if showEmojiSearch}
     <EmojiAutocompleter
-        offset={messageEntry.clientHeight}
+        offset={messageEntryHeight}
         on:close={() => (showEmojiSearch = false)}
         on:select={completeEmoji}
         query={emojiQuery} />
 {/if}
 
-<div class="message-entry" bind:this={messageEntry}>
+<div class="message-entry" bind:this={messageEntry} bind:clientHeight={messageEntryHeight}>
     {#if blocked}
         <div class="blocked">
             {$_("userIsBlocked")}

@@ -418,16 +418,17 @@
         "messagePlaceholder": "Fügen Sie eine optionale Nachricht hinzu",
         "fee": "* Eine Gebühr von {fee} ICP wird hinzugefügt",
         "unexpected": "Ein unerwarteter Kryptoübertragungstyp wurde empfangen",
-        "confirmedReceived": "Sie haben {amount} ICP erhalten",
-        "confirmedSent": "Sie haben {amount} ICP gesendet",
-        "pendingReceived": "{amount} ICP ist auf dem Weg zu Ihnen",
-        "pendingSent": "Sie senden {amount} ICP",
         "viewTransaction": "[Transaktion anzeigen]({url})",
         "warning": "Warnung – Es liegt in Ihrer Verantwortung sicherzustellen, dass Sie der Identität und den Motiven des Empfängers vertrauen. OpenChat kann keine ICP-Übertragungen rückgängig machen.",
         "confirm": "Bestätigen Sie",
         "transfer": "ICP-Übertragung",
         "makeDeposit": "Bitte tätigen Sie eine Einzahlung auf das obige Konto und aktualisieren Sie Ihr Guthaben.",
-        "zeroBalance": "Du hast kein ICP 😭."
+        "zeroBalance": "Du hast kein ICP 😭.",
+        "confirmedSent": "{sender} hat {amount} ICP an {receiver} gesendet",
+        "pendingSent": "{sender} sendet {amount} ICP an {receiver}",
+        "pendingSentByYou": "Sie senden {amount} ICP an {receiver}",
+        "receiver": "Empfänger",
+        "chooseReceiver": "Geben Sie den Benutzernamen des Empfängers ein"
     },
     "icpAccount": {
         "balanceLabel": "ICP-Kontostand",
