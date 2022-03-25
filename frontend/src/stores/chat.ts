@@ -15,8 +15,6 @@ type Nothing = { kind: "nothing" };
 type LoadedNewMessages = { kind: "loaded_new_messages" };
 type SendingMessage = {
     kind: "sending_message";
-    messageIndex: number;
-    sentByMe: boolean;
     scroll: ScrollBehavior;
 };
 type ChatUpdated = { kind: "chat_updated" };

@@ -360,14 +360,10 @@
                         });
                         break;
                     case "sending_message":
-                        // if we are within the from bottom threshold *or* if the new message
-                        // was sent by us, then scroll to the bottom
-                        if (evt.event.sentByMe || insideFromBottomThreshold) {
-                            // smooth scroll doesn't work here when we are leaping from the top
-                            // which means we are stuck with abrupt scroll which is disappointing
-                            const { scroll } = evt.event;
-                            tick().then(() => scrollBottom(scroll));
-                        }
+                        // smooth scroll doesn't work here when we are leaping from the top
+                        // which means we are stuck with abrupt scroll which is disappointing
+                        const { scroll } = evt.event;
+                        tick().then(() => scrollBottom(scroll));
                         break;
                     case "chat_updated":
                         if (initialised && insideFromBottomThreshold && shouldLoadNewMessages()) {

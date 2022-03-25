@@ -39,6 +39,7 @@ import {
     serialiseMessageForRtc,
     toggleReaction,
     userIdsFromEvents,
+    indexIsInRanges,
 } from "../domain/chat/chat.utils";
 import type { UserSummary } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -539,32 +540,16 @@ export class ChatController {
         return get(this.events);
     }
 
-    // This is called in 3 scenarios:
-    // 1 - we are sending a message
-    // 2 - we receive an unconfirmed message via WebRTC
-    // 3 - we receive a confirmed message via a notification
-    async sendMessage(
-        messageEvent: EventWrapper<Message>,
-        userId: string,
-        confirmed = false
-    ): Promise<void> {
-        const sentByMe = userId === this.user.userId;
-        let upToDate = this.upToDate();
-
+    async sendMessage(messageEvent: EventWrapper<Message>): Promise<void> {
         let jumping = false;
-        if (sentByMe && !upToDate) {
+        if (!this.upToDate()) {
             jumping = true;
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
-            upToDate = true;
         }
 
-        if (sentByMe) {
-            draftMessages.delete(this.chatId);
-        } else {
-            await this.updateUserStore(userIdsFromEvents([messageEvent]));
-        }
+        draftMessages.delete(this.chatId);
 
-        if (sentByMe && get(this.editingEvent)) {
+        if (get(this.editingEvent)) {
             this.events.update((events) => {
                 return events.map((e) => {
                     if (
@@ -577,48 +562,77 @@ export class ChatController {
                 });
             });
         } else {
-            if (!confirmed) {
-                unconfirmed.add(this.chatId, messageEvent);
-            }
-            if (sentByMe) {
-                rtcConnectionsManager.sendMessage([...this.chatUserIds], {
-                    kind: "remote_user_sent_message",
-                    chatType: this.chatVal.kind,
-                    chatId: this.chatId,
-                    messageEvent: serialiseMessageForRtc(messageEvent),
-                    userId: userId,
-                });
-                // mark our own messages as read manually since we will not be observing them
-                this.markRead.markMessageRead(
-                    this.chatId,
-                    messageEvent.event.messageIndex,
-                    messageEvent.event.messageId
-                );
-            }
-            if (upToDate) {
-                this.events.update((events) => {
-                    const existing = events.find(
-                        (ev) =>
-                            ev.event.kind === "message" &&
-                            ev.event.messageId === messageEvent.event.messageId
-                    );
-                    if (existing !== undefined) {
-                        return [...events];
-                    } else {
-                        return [...events, messageEvent];
-                    }
-                });
-            }
+            unconfirmed.add(this.chatId, messageEvent);
+            rtcConnectionsManager.sendMessage([...this.chatUserIds], {
+                kind: "remote_user_sent_message",
+                chatType: this.chatVal.kind,
+                chatId: this.chatId,
+                messageEvent: serialiseMessageForRtc(messageEvent),
+                userId: this.user.userId,
+            });
+            // mark our own messages as read manually since we will not be observing them
+            this.markRead.markMessageRead(
+                this.chatId,
+                messageEvent.event.messageIndex,
+                messageEvent.event.messageId
+            );
+            this.appendMessage(messageEvent);
             this.raiseEvent({
                 chatId: this.chatId,
                 event: {
                     kind: "sending_message",
-                    messageIndex: messageEvent.event.messageIndex,
-                    sentByMe,
                     scroll: jumping ? "auto" : "smooth",
                 },
             });
         }
+    }
+
+    // This could be a message received in an `updates` response, from a notification, or via WebRTC.
+    handleMessageSentByOther(messageEvent: EventWrapper<Message>, confirmed: boolean) {
+        if (indexIsInRanges(messageEvent.index, this.confirmedEventIndexesLoaded)) {
+            // We already have this confirmed message
+            return;
+        }
+
+        if (confirmed) {
+            const isAdjacentToAlreadyLoadedEvents =
+                indexIsInRanges(messageEvent.index - 1, this.confirmedEventIndexesLoaded) ||
+                indexIsInRanges(messageEvent.index + 1, this.confirmedEventIndexesLoaded);
+
+            if (!isAdjacentToAlreadyLoadedEvents) {
+                return;
+            }
+
+            this.handleEventsResponse({
+                events: [messageEvent],
+                affectedEvents: [],
+            });
+        } else {
+            if (!this.upToDate()) {
+                return;
+            }
+
+            // If it is unconfirmed then we simply append it
+            this.appendMessage(messageEvent);
+        }
+
+        this.raiseEvent({
+            chatId: this.chatId,
+            event: {
+                kind: "loaded_new_messages",
+            },
+        });
+    }
+
+    appendMessage(message: EventWrapper<Message>): boolean {
+        const existing = get(this.events).find(
+            (ev) => ev.event.kind === "message" && ev.event.messageId === message.event.messageId
+        );
+
+        if (existing !== undefined) return false;
+
+        this.events.update((events) => [...events, message]);
+        return true;
     }
 
     undeleteMessage(message: Message, userId: string): void {
@@ -744,6 +758,12 @@ export class ChatController {
     }
 
     async chatUpdated(): Promise<void> {
+        // The chat summary has been updated which means the latest message may be new
+        const latestMessage = this.chatVal.latestMessage;
+        if (latestMessage !== undefined && latestMessage.event.sender !== this.user.userId) {
+            this.handleMessageSentByOther(latestMessage, true);
+        }
+
         this.updateDetails();
 
         this.raiseEvent({
