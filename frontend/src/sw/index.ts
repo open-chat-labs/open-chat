@@ -97,7 +97,10 @@ async function showNotification(notification: Notification): Promise<void> {
     let body: string;
     let path: string;
     if (notification.kind === "direct_notification") {
-        const content = extractMessageContent(notification.message.event.content);
+        const content = extractMessageContent(
+            notification.message.event.content,
+            notification.senderName
+        );
         title += notification.senderName;
         body = content.text;
         icon = content.image ?? icon;
@@ -105,6 +108,7 @@ async function showNotification(notification: Notification): Promise<void> {
     } else if (notification.kind === "group_notification") {
         const content = extractMessageContent(
             notification.message.event.content,
+            notification.senderName,
             notification.mentioned
         );
         title += notification.groupName;
@@ -135,14 +139,17 @@ type ContentExtract = {
     image?: string;
 };
 
-function extractMessageContentFromCryptoContent(content: CryptocurrencyContent): ContentExtract {
+function extractMessageContentFromCryptoContent(
+    content: CryptocurrencyContent,
+    senderName: string
+): ContentExtract {
     if (content.transfer.transferKind === "cycles_transfer") {
         if (
             content.transfer.kind === "completed_cycles_transfer" ||
             content.transfer.kind === "pending_cycles_transfer"
         ) {
             return {
-                text: `You received ${content.transfer.cycles} cycles`,
+                text: `${senderName} sent ${content.transfer.cycles} cycles`,
             };
         }
     } else if (content.transfer.transferKind === "icp_transfer") {
@@ -151,17 +158,18 @@ function extractMessageContentFromCryptoContent(content: CryptocurrencyContent):
             content.transfer.kind === "pending_icp_transfer"
         ) {
             return {
-                text: `You received ${Number(content.transfer.amountE8s) / E8S_PER_ICP} ICP`,
+                text: `${senderName} sent ${Number(content.transfer.amountE8s) / E8S_PER_ICP} ICP`,
             };
         }
     }
     return {
-        text: `You received a crypto transaction`,
+        text: `${senderName} sent a crypto transfer`,
     };
 }
 
 function extractMessageContent(
     content: MessageContent,
+    senderName: string,
     mentioned: Array<User> = []
 ): ContentExtract {
     let result: ContentExtract;
@@ -190,7 +198,7 @@ function extractMessageContent(
             image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==",
         };
     } else if (content.kind === "crypto_content") {
-        result = extractMessageContentFromCryptoContent(content);
+        result = extractMessageContentFromCryptoContent(content, senderName);
     } else if (content.kind === "deleted_content") {
         result = {
             text: "TODO - deleted content",

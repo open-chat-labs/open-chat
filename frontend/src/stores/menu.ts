@@ -15,7 +15,9 @@ function close(menu: HTMLElement | undefined): HTMLElement | undefined {
             // debug logging - will remove later
             rollbar.error("trying to remove menu when menu anchor is null");
         } else {
-            menuAnchor.removeChild(menu);
+            if (menuAnchor.contains(menu)) {
+                menuAnchor.removeChild(menu);
+            }
         }
     }
     return undefined;
