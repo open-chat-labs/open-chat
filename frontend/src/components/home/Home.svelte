@@ -499,24 +499,24 @@
         on:cancel={() => (upgradeStorage = undefined)} />
 {/if}
 
-{#if modal !== ModalType.None && modal !== ModalType.Share}
-    <Overlay dismissible={true} active on:close={closeModal}>
+{#if modal !== ModalType.None}
+    <Overlay
+        dismissible={modal !== ModalType.Share}
+        alignLeft={modal === ModalType.Share}
+        active
+        on:close={closeModal}>
         {#if modal === ModalType.Faq}
             <FaqModal bind:question={faqQuestion} on:close={closeModal} />
         {:else if modal === ModalType.Roadmap}
             <RoadmapModal on:close={closeModal} />
         {:else if modal === ModalType.About}
             <AboutModal canister={{ id: userId, wasmVersion }} on:close={closeModal} />
+        {:else if modal === ModalType.Share}
+            <SelectChatModal
+                chatsSummaries={$chatSummariesList}
+                on:close={closeModal}
+                on:select={onChatSelectedForShare} />
         {/if}
-    </Overlay>
-{/if}
-
-{#if modal === ModalType.Share}
-    <Overlay active alignLeft={true} on:close={closeModal}>
-        <SelectChatModal
-            chatsSummaries={$chatSummariesList}
-            on:close={closeModal}
-            on:select={onChatSelectedForShare} />
     </Overlay>
 {/if}
 
