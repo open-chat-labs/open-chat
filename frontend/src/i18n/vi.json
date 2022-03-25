@@ -419,16 +419,17 @@
         "messagePlaceholder": "Bao gồm một tin nhắn tùy chọn",
         "fee": "* phí ICP sẽ được thêm vào",
         "unexpected": "Đã nhận được một loại chuyển tiền điện tử không mong muốn",
-        "confirmedReceived": "Bạn đã nhận được ICP {amount}",
-        "confirmedSent": "Bạn đã gửi ICP {amount}",
-        "pendingReceived": "{amount} ICP đang đến với bạn",
-        "pendingSent": "Bạn đang gửi ICP {amount}",
         "viewTransaction": "[Xem giao dịch] ({url})",
         "warning": "Cảnh báo - bạn có trách nhiệm đảm bảo rằng bạn tin tưởng danh tính và động cơ của người nhận. OpenChat không thể đảo ngược bất kỳ quá trình chuyển ICP nào.",
         "confirm": "Xác nhận",
         "transfer": "Chuyển ICP",
         "makeDeposit": "Vui lòng gửi tiền vào tài khoản trên và làm mới số dư của bạn.",
-        "zeroBalance": "Bạn không có bất kỳ ICP nào 😭."
+        "zeroBalance": "Bạn không có bất kỳ ICP nào 😭.",
+        "confirmedSent": "{sender} đã gửi ICP {amount} đến {receiver}",
+        "pendingSent": "{sender} đang gửi ICP {amount} đến {receiver}",
+        "pendingSentByYou": "bạn đang gửi ICP {amount} đến {receiver}",
+        "receiver": "Người nhận",
+        "chooseReceiver": "nhập tên người dùng của người nhận"
     },
     "icpAccount": {
         "balanceLabel": "Số dư tài khoản ICP",
