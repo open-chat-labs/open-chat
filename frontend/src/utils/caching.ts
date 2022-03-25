@@ -158,49 +158,74 @@ export function setCachedChats(
 ): (data: MergedUpdatesResponse) => Promise<MergedUpdatesResponse> {
     return async (data: MergedUpdatesResponse) => {
         // irritating hoop jumping to keep typescript happy here
+        const latestMessages: Record<string, EventWrapper<Message>> = {};
         const serialisable = data.chatSummaries
             .filter((c) => !isPreviewing(c))
             .map((c) => {
                 if (c.kind === "direct_chat") {
+                    const latestMessage = c.latestMessage
+                        ? makeSerialisable(c.latestMessage, c.chatId)
+                        : undefined;
+
+                    if (latestMessage) {
+                        latestMessages[c.chatId] = latestMessage;
+                    }
+
                     return {
                         ...c,
                         readByMe: drangeToIndexRanges(c.readByMe),
                         readByThem: drangeToIndexRanges(c.readByThem),
-                        latestMessage: c.latestMessage
-                            ? makeSerialisable(c.latestMessage, c.chatId)
-                            : undefined,
+                        latestMessage,
                     };
                 }
                 if (c.kind === "group_chat") {
+                    const latestMessage = c.latestMessage
+                        ? makeSerialisable(c.latestMessage, c.chatId)
+                        : undefined;
+
+                    if (latestMessage) {
+                        latestMessages[c.chatId] = latestMessage;
+                    }
+
                     return {
                         ...c,
                         readByMe: drangeToIndexRanges(c.readByMe),
-                        latestMessage: c.latestMessage
-                            ? makeSerialisable(c.latestMessage, c.chatId)
-                            : undefined,
+                        latestMessage,
                     };
                 }
                 return c;
             });
 
-        const resolvedDb = await db;
+        const tx = (await db).transaction(
+            ["chats", "chat_events", "message_index_event_index"],
+            "readwrite"
+        );
+        const chatsStore = tx.objectStore("chats");
+        const eventStore = tx.objectStore("chat_events");
+        const mapStore = tx.objectStore("message_index_event_index");
 
-        resolvedDb.put(
-            "chats",
-            {
+        const promises: Promise<string | void>[] = [
+            chatsStore.put({
                 wasUpdated: true,
                 chatSummaries: serialisable,
                 timestamp: data.timestamp,
                 blockedUsers: data.blockedUsers,
                 avatarIdUpdate: undefined,
                 affectedEvents: {},
-            },
-            userId
-        );
+            }, userId)
+        ];
+
+        Object.entries(latestMessages).forEach(([chatId, message]) => {
+            promises.push(eventStore.put(message, createCacheKey(chatId, message.index)));
+            promises.push(mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`));
+        });
 
         Object.entries(data.affectedEvents)
             .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
-            .forEach((key) => resolvedDb.delete("chat_events", key));
+            .forEach((key) => promises.push(eventStore.delete(key)));
+
+        await Promise.all(promises);
+        await tx.done;
 
         return data;
     };
