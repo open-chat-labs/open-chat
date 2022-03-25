@@ -157,8 +157,8 @@ export function setCachedChats(
     userId: string
 ): (data: MergedUpdatesResponse) => Promise<MergedUpdatesResponse> {
     return async (data: MergedUpdatesResponse) => {
-        // irritating hoop jumping to keep typescript happy here
         const latestMessages: Record<string, EventWrapper<Message>> = {};
+        // irritating hoop jumping to keep typescript happy here
         const serialisable = data.chatSummaries
             .filter((c) => !isPreviewing(c))
             .map((c) => {
