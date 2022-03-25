@@ -69,7 +69,7 @@ if (production && !process.env.ROLLBAR_ACCESS_TOKEN) {
 if (production && !process.env.USERGEEK_APIKEY) {
     throw Error("USERGEEK_APIKEY environment variable not set");
 }
-const WEBPUSH_SERVICE_WORKER_PATH = "_/raw/sw.js";
+const WEBPUSH_SERVICE_WORKER_PATH = env === "development" ? "sw.js" : "_/raw/sw.js";
 
 console.log("PROD", production);
 console.log("ENV", env);
@@ -246,18 +246,27 @@ export default [
 
             // If we're building for production, copy sourcemaps to '_/raw'
             // and update the js files to point to the new sourcemap locations
-            production && copy({
-                targets: [{
-                    src: "build/*.map",
-                    dest: "build/_/raw"
-                },{
-                    src: "build/*.js",
-                    dest: "build",
-                    transform: (contents, filename) => contents.toString().replace("//# sourceMappingURL=", "//# sourceMappingURL=_/raw/")
-                }],
-                hook: "writeBundle",
-            }),
-
+            production &&
+                copy({
+                    targets: [
+                        {
+                            src: "build/*.map",
+                            dest: "build/_/raw",
+                        },
+                        {
+                            src: "build/*.js",
+                            dest: "build",
+                            transform: (contents, filename) =>
+                                contents
+                                    .toString()
+                                    .replace(
+                                        "//# sourceMappingURL=",
+                                        "//# sourceMappingURL=_/raw/"
+                                    ),
+                        },
+                    ],
+                    hook: "writeBundle",
+                }),
         ],
         watch: {
             clearScreen: false,

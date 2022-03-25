@@ -52,7 +52,6 @@
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
     let audioSupported: boolean = "mediaDevices" in navigator;
-    let inputIsEmpty = true;
     let showMentionPicker = false;
     let showEmojiSearch = false;
     let mentionPrefix: string | undefined;
@@ -61,7 +60,7 @@
     let messageEntryHeight: number;
     let messageActions: MessageActions;
 
-    $: messageIsEmpty = true;
+    $: messageIsEmpty = ($textContent?.trim() ?? "").length === 0 && $fileToAttach === undefined;
 
     $: {
         if ($editingEvent && !initialisedEdit) {
@@ -77,6 +76,7 @@
             // the start of the textbox on some devices.
             if (inp.textContent !== text) {
                 inp.textContent = text;
+                setCaretToEnd();
             }
         }
         if ($editingEvent === undefined) {
@@ -97,15 +97,10 @@
     }
 
     $: {
-        messageIsEmpty = inputIsEmpty && $fileToAttach === undefined;
-    }
-
-    $: {
         if ($emojiStore !== undefined) {
             if (inp) {
                 restoreSelection();
                 document.execCommand("insertText", false, $emojiStore);
-                inputIsEmpty = false;
                 saveSelection();
                 emojiStore.set(undefined);
             }
@@ -126,17 +121,14 @@
             range.deleteContents();
             range.insertNode(document.createTextNode(text));
             range.collapse(false);
-            inputIsEmpty = false;
         }
     }
 
     function onInput() {
-        const content = inp.textContent;
-        const trimmedContent = content?.trim();
-        inputIsEmpty = (trimmedContent?.length ?? 0) === 0;
-        controller.setTextContent(inputIsEmpty ? undefined : content!);
-        triggerMentionLookup(content);
-        triggerEmojiLookup(content);
+        const inputContent = inp.textContent ?? "";
+        controller.setTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
+        triggerMentionLookup(inputContent);
+        triggerEmojiLookup(inputContent);
         triggerTypingTimer();
     }
 
@@ -256,8 +248,6 @@
         inp.textContent = "";
         controller.setTextContent(undefined);
         inp.focus();
-        inputIsEmpty = true;
-        messageIsEmpty = true;
         messageActions.close();
     }
 
