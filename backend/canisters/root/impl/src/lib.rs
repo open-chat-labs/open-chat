@@ -13,11 +13,6 @@ mod lifecycle;
 mod queries;
 mod updates;
 
-#[derive(CandidType, Serialize, Deserialize)]
-enum StateVersion {
-    V1,
-}
-
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();

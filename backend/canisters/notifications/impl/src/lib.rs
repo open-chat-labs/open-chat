@@ -19,11 +19,6 @@ mod updates;
 
 const MAX_SUBSCRIPTION_AGE: Duration = Duration::from_secs(365 * 24 * 60 * 60); // 365 days
 
-#[derive(CandidType, Serialize, Deserialize)]
-enum StateVersion {
-    V1,
-}
-
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
