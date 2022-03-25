@@ -4,9 +4,10 @@
     export let flush: boolean = false;
     export let shadow: boolean = false;
     export let entry = false;
+    export let gap = false;
 </script>
 
-<div class="section-header" class:flush class:shadow class:entry class:rtl={$rtlStore}>
+<div class="section-header" class:flush class:shadow class:entry class:gap class:rtl={$rtlStore}>
     <slot />
 </div>
 
@@ -42,6 +43,10 @@
 
         &.shadow {
             box-shadow: 0 5px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        &.gap {
+            gap: $sp4;
         }
     }
 </style>

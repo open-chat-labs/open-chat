@@ -8,6 +8,7 @@
     export let fade: boolean = true;
     export let alignBottomOnMobile: boolean = true;
     export let dismissible: boolean = false;
+    export let alignLeft = false;
 
     let ref: HTMLElement;
 
@@ -61,6 +62,7 @@
         class:active
         class:faded={fade}
         class:align-bottom={alignBottomOnMobile}
+        class:align-left={alignLeft}
         on:click={onClick}>
         {#if active}
             <slot />
@@ -89,6 +91,10 @@
             &.align-bottom {
                 align-items: flex-end;
             }
+        }
+
+        &.align-left {
+            justify-content: left;
         }
 
         &.active {

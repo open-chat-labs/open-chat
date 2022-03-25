@@ -220,7 +220,6 @@
         margin-bottom: var(--chatSummary-mb);
         cursor: pointer;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
-        position: relative;
         border-bottom: var(--chatSummary-bd);
 
         &.selected::before {

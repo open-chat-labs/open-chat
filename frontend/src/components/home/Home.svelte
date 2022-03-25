@@ -4,13 +4,14 @@
     import AboutModal from "../AboutModal.svelte";
     import FaqModal from "../FaqModal.svelte";
     import RoadmapModal from "../RoadmapModal.svelte";
+    import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
     import { fly } from "svelte/transition";
     import Overlay from "../Overlay.svelte";
     import { createEventDispatcher, onDestroy, onMount, setContext, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { mobileWidth, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import { push, replace, querystring } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
@@ -34,12 +35,13 @@
     } from "../../domain/chat/chat";
     import type { Writable } from "svelte/store";
     import { currentUserKey, HomeController } from "../../fsm/home.controller";
-    import { _ } from "svelte-i18n";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
     import Upgrade from "./upgrade/Upgrade.svelte";
     import type { Questions } from "../../domain/faq";
     import { apiKey } from "../../services/serviceContainer";
+    import type { Share } from "../../domain/share";
+    import { draftMessages } from "../../stores/draftMessages";
 
     const dispatch = createEventDispatcher();
 
@@ -54,6 +56,7 @@
         About,
         Faq,
         Roadmap,
+        Share,
     }
     let faqQuestion: Questions | undefined = undefined;
     let modal = ModalType.None;
@@ -71,6 +74,7 @@
     let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
+    let share: Share = { title: "", text: "", url: "" };
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -100,6 +104,21 @@
     $: {
         // wait until we have loaded the chats
         if (controller.initialised) {
+            if (params.chatId === "share") {
+                const local_qs = new URLSearchParams(window.location.search);
+                const title = local_qs.get("title") ?? "";
+                const text = local_qs.get("text") ?? "";
+                const url = local_qs.get("url") ?? "";
+                share = {
+                    title,
+                    text,
+                    url,
+                };
+                params.chatId = null;
+                history.replaceState(null, "", "/#/");
+                modal = ModalType.Share;
+            }
+
             // if we have a chatid in the params then we need to select that chat
             if (params.chatId && params.chatId !== $selectedChat?.chatId?.toString()) {
                 // if the chat in the param is not known to us then we need to attempt to load the
@@ -330,6 +349,23 @@
         upgradeStorage = ev.detail;
     }
 
+    function onChatSelectedForShare(ev: CustomEvent<string>) {
+        closeModal();
+        const chatId = ev.detail;
+        push(`/${chatId}`);
+
+        let text = share.text.length > 0 ? share.text : share.title;
+
+        if (share.url.length > 0) {
+            if (text.length > 0) {
+                text += "\n";
+            }
+            text += share.url;
+        }
+
+        draftMessages.setTextContent(chatId, text);
+    }
+
     $: chat = $selectedChat?.chat;
 
     $: groupChat =
@@ -463,15 +499,26 @@
         on:cancel={() => (upgradeStorage = undefined)} />
 {/if}
 
-<Overlay dismissible={true} active={modal !== ModalType.None} on:close={closeModal}>
-    {#if modal === ModalType.Faq}
-        <FaqModal bind:question={faqQuestion} on:close={closeModal} />
-    {:else if modal === ModalType.Roadmap}
-        <RoadmapModal on:close={closeModal} />
-    {:else if modal === ModalType.About}
-        <AboutModal canister={{ id: userId, wasmVersion }} on:close={closeModal} />
-    {/if}
-</Overlay>
+{#if modal !== ModalType.None}
+    <Overlay
+        dismissible={modal !== ModalType.Share}
+        alignLeft={modal === ModalType.Share}
+        active
+        on:close={closeModal}>
+        {#if modal === ModalType.Faq}
+            <FaqModal bind:question={faqQuestion} on:close={closeModal} />
+        {:else if modal === ModalType.Roadmap}
+            <RoadmapModal on:close={closeModal} />
+        {:else if modal === ModalType.About}
+            <AboutModal canister={{ id: userId, wasmVersion }} on:close={closeModal} />
+        {:else if modal === ModalType.Share}
+            <SelectChatModal
+                chatsSummaries={$chatSummariesList}
+                on:close={closeModal}
+                on:select={onChatSelectedForShare} />
+        {/if}
+    </Overlay>
+{/if}
 
 <style type="text/scss">
     main {

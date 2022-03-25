@@ -442,5 +442,7 @@
         "withdrawalFailed": "Your withdrawal failed!"
     },
     "searchChat": "Search",
-    "search": "Search..."
+    "search": "Search...",
+    "offline": "Offine",
+    "sendTo": "Send to..."
 }
