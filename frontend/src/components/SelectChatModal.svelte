@@ -65,7 +65,7 @@
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
-        <h4>Send to...</h4>
+        <h4>{$_("sendTo")}</h4>
         <span title={$_("close")} class="close" on:click={() => dispatch("close")}>
             <HoverIcon>
                 <Close size={$iconSize} color={"var(--icon-txt)"} />
