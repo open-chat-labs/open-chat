@@ -444,5 +444,7 @@
         "shortBalanceLabel": "平衡"
     },
     "searchChat": "搜索",
-    "search": "搜索..."
+    "search": "搜索...",
+    "offline": "离线",
+    "sendTo": "发给..."
 }

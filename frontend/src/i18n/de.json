@@ -444,5 +444,7 @@
         "shortBalanceLabel": "Balance"
     },
     "searchChat": "Suche",
-    "search": "Suche..."
+    "search": "Suche...",
+    "offline": "Offline",
+    "sendTo": "Senden an..."
 }

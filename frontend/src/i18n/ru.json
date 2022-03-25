@@ -444,5 +444,7 @@
         "shortBalanceLabel": "остаток средств"
     },
     "searchChat": "Поиск",
-    "search": "Поиск..."
+    "search": "Поиск...",
+    "offline": "Не в сети",
+    "sendTo": "Отправить..."
 }

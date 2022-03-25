@@ -444,5 +444,7 @@
         "shortBalanceLabel": "残高"
     },
     "searchChat": "検索",
-    "search": "検索..."
+    "search": "検索...",
+    "offline": "オフライン",
+    "sendTo": "に送る..."
 }
