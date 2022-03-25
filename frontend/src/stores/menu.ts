@@ -15,11 +15,8 @@ function close(menu: HTMLElement | undefined): HTMLElement | undefined {
             // debug logging - will remove later
             rollbar.error("trying to remove menu when menu anchor is null");
         } else {
-            try {
+            if (menuAnchor.contains(menu)) {
                 menuAnchor.removeChild(menu);
-                // eslint-disable-next-line no-empty
-            } catch (_) {
-                // this will throw sometimes
             }
         }
     }
