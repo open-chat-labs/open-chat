@@ -162,15 +162,15 @@ export function setCachedChats(
         const serialisable = data.chatSummaries
             .filter((c) => !isPreviewing(c))
             .map((c) => {
+                const latestMessage = c.latestMessage
+                    ? makeSerialisable(c.latestMessage, c.chatId)
+                    : undefined;
+
+                if (latestMessage) {
+                    latestMessages[c.chatId] = latestMessage;
+                }
+
                 if (c.kind === "direct_chat") {
-                    const latestMessage = c.latestMessage
-                        ? makeSerialisable(c.latestMessage, c.chatId)
-                        : undefined;
-
-                    if (latestMessage) {
-                        latestMessages[c.chatId] = latestMessage;
-                    }
-
                     return {
                         ...c,
                         readByMe: drangeToIndexRanges(c.readByMe),
@@ -179,14 +179,6 @@ export function setCachedChats(
                     };
                 }
                 if (c.kind === "group_chat") {
-                    const latestMessage = c.latestMessage
-                        ? makeSerialisable(c.latestMessage, c.chatId)
-                        : undefined;
-
-                    if (latestMessage) {
-                        latestMessages[c.chatId] = latestMessage;
-                    }
-
                     return {
                         ...c,
                         readByMe: drangeToIndexRanges(c.readByMe),
@@ -212,17 +204,15 @@ export function setCachedChats(
                 blockedUsers: data.blockedUsers,
                 avatarIdUpdate: undefined,
                 affectedEvents: {},
-            }, userId)
+            }, userId),
+            ...Object.entries(latestMessages).flatMap(([chatId, message]) => [
+                eventStore.put(message, createCacheKey(chatId, message.index)),
+                mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`)
+            ]),
+            ...Object.entries(data.affectedEvents)
+                .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
+                .map((key) => eventStore.delete(key))
         ];
-
-        Object.entries(latestMessages).forEach(([chatId, message]) => {
-            promises.push(eventStore.put(message, createCacheKey(chatId, message.index)));
-            promises.push(mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`));
-        });
-
-        Object.entries(data.affectedEvents)
-            .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
-            .forEach((key) => promises.push(eventStore.delete(key)));
 
         await Promise.all(promises);
         await tx.done;
