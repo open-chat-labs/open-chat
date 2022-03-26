@@ -117,18 +117,21 @@ export class CachingUserClient implements IUserClient {
         const cachedChats = await getCachedChats(this.db, this.userId);
         // if we have cached chats we will rebuild the UpdateArgs from that cached data
         if (cachedChats) {
+            const updateArgs = updateArgsFromChats(
+                cachedChats.timestamp,
+                cachedChats.chatSummaries
+            );
             return this.client
-                .getUpdates(
-                    cachedChats.chatSummaries,
-                    updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries)
-                )
+                .getUpdates(cachedChats.chatSummaries, updateArgs)
                 .then((resp) => {
                     resp.wasUpdated = true;
                     return resp;
                 })
-                .then(setCachedChats(this.db, this.userId));
+                .then(setCachedChats(updateArgs, this.db, this.userId));
         } else {
-            return this.client.getInitialState().then(setCachedChats(this.db, this.userId));
+            return this.client
+                .getInitialState()
+                .then(setCachedChats(undefined, this.db, this.userId));
         }
     }
 
@@ -138,7 +141,7 @@ export class CachingUserClient implements IUserClient {
     ): Promise<MergedUpdatesResponse> {
         return this.client
             .getUpdates(chatSummaries, args)
-            .then(setCachedChats(this.db, this.userId));
+            .then(setCachedChats(args, this.db, this.userId));
     }
 
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {

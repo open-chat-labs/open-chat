@@ -14,6 +14,7 @@ import type {
     SendMessageResponse,
     SendMessageSuccess,
     SerializableMergedUpdatesResponse,
+    UpdateArgs,
 } from "../domain/chat/chat";
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
@@ -153,6 +154,7 @@ export async function getCachedChats(
 }
 
 export function setCachedChats(
+    args: UpdateArgs | undefined,
     db: Database,
     userId: string
 ): (data: MergedUpdatesResponse) => Promise<MergedUpdatesResponse> {
@@ -161,7 +163,14 @@ export function setCachedChats(
             return data;
         }
 
-        const latestMessages: Record<string, EventWrapper<Message>> = {};
+        // We determine which 'latestMessage' values are new and store those in the cache
+        const newLatestMessages: Record<string, EventWrapper<Message>> = {};
+        const groupUpdatesSince: Record<string, bigint> =
+            args?.updatesSince.groupChats.reduce((result, next) => {
+                result[next.chatId] = next.lastUpdated;
+                return result;
+            }, {} as Record<string, bigint>) ?? {};
+
         // irritating hoop jumping to keep typescript happy here
         const serialisable = data.chatSummaries
             .filter((c) => !isPreviewing(c))
@@ -170,11 +179,14 @@ export function setCachedChats(
                     ? makeSerialisable(c.latestMessage, c.chatId)
                     : undefined;
 
-                if (latestMessage) {
-                    latestMessages[c.chatId] = latestMessage;
-                }
-
                 if (c.kind === "direct_chat") {
+                    if (
+                        latestMessage &&
+                        latestMessage.timestamp > (args?.updatesSince.timestamp ?? BigInt(0))
+                    ) {
+                        newLatestMessages[c.chatId] = latestMessage;
+                    }
+
                     return {
                         ...c,
                         readByMe: drangeToIndexRanges(c.readByMe),
@@ -183,6 +195,13 @@ export function setCachedChats(
                     };
                 }
                 if (c.kind === "group_chat") {
+                    if (
+                        latestMessage &&
+                        latestMessage.timestamp > (groupUpdatesSince[c.chatId] ?? BigInt(0))
+                    ) {
+                        newLatestMessages[c.chatId] = latestMessage;
+                    }
+
                     return {
                         ...c,
                         readByMe: drangeToIndexRanges(c.readByMe),
@@ -201,21 +220,24 @@ export function setCachedChats(
         const mapStore = tx.objectStore("message_index_event_index");
 
         const promises: Promise<string | void>[] = [
-            chatsStore.put({
-                wasUpdated: true,
-                chatSummaries: serialisable,
-                timestamp: data.timestamp,
-                blockedUsers: data.blockedUsers,
-                avatarIdUpdate: undefined,
-                affectedEvents: {},
-            }, userId),
-            ...Object.entries(latestMessages).flatMap(([chatId, message]) => [
+            chatsStore.put(
+                {
+                    wasUpdated: true,
+                    chatSummaries: serialisable,
+                    timestamp: data.timestamp,
+                    blockedUsers: data.blockedUsers,
+                    avatarIdUpdate: undefined,
+                    affectedEvents: {},
+                },
+                userId
+            ),
+            ...Object.entries(newLatestMessages).flatMap(([chatId, message]) => [
                 eventStore.put(message, createCacheKey(chatId, message.index)),
-                mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`)
+                mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`),
             ]),
             ...Object.entries(data.affectedEvents)
                 .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
-                .map((key) => eventStore.delete(key))
+                .map((key) => eventStore.delete(key)),
         ];
 
         await Promise.all(promises);
