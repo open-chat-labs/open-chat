@@ -3,6 +3,7 @@ import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
+    ChatSummary,
     EventsResponse,
     EventWrapper,
     GroupChatDetails,
@@ -18,6 +19,7 @@ import type {
 } from "../domain/chat/chat";
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
+import { UnsupportedValueError } from "./error";
 
 const CACHE_VERSION = 23;
 
@@ -121,7 +123,7 @@ export async function removeCachedChat(
     const fromCache = await getCachedChats(db, userId);
     if (fromCache !== undefined) {
         fromCache.chatSummaries = fromCache.chatSummaries.filter((c) => c.chatId !== chatId);
-        await setCachedChats(undefined, db, userId)(fromCache);
+        await setCachedChats("remove_chat", db, userId)(fromCache);
     }
 }
 
@@ -154,7 +156,7 @@ export async function getCachedChats(
 }
 
 export function setCachedChats(
-    args: UpdateArgs | undefined,
+    context: UpdateArgs | "initial_state" | "remove_chat",
     db: Database,
     userId: string
 ): (data: MergedUpdatesResponse) => Promise<MergedUpdatesResponse> {
@@ -165,11 +167,24 @@ export function setCachedChats(
 
         // We determine which 'latestMessage' values are new and store those in the cache
         const newLatestMessages: Record<string, EventWrapper<Message>> = {};
-        const groupUpdatesSince: Record<string, bigint> =
-            args?.updatesSince.groupChats.reduce((result, next) => {
-                result[next.chatId] = next.lastUpdated;
-                return result;
-            }, {} as Record<string, bigint>) ?? {};
+
+        let isNewLatestMessage: (chat: ChatSummary, message: EventWrapper<Message>) => boolean;
+        if (context === "initial_state") {
+            isNewLatestMessage = (_, __) => true;
+        } else if (context === "remove_chat") {
+            isNewLatestMessage = (_, __) => false;
+        } else {
+            const groupUpdatesSince: Record<string, bigint> =
+                context.updatesSince.groupChats.reduce((result, next) => {
+                    result[next.chatId] = next.lastUpdated;
+                    return result;
+                }, {} as Record<string, bigint>);
+
+            isNewLatestMessage = (chat, message) =>
+                chat.kind === "direct_chat"
+                    ? message.timestamp > context.updatesSince.timestamp
+                    : message.timestamp > (groupUpdatesSince[chat.chatId] ?? BigInt(0));
+        }
 
         // irritating hoop jumping to keep typescript happy here
         const serialisable = data.chatSummaries
@@ -179,14 +194,11 @@ export function setCachedChats(
                     ? makeSerialisable(c.latestMessage, c.chatId)
                     : undefined;
 
-                if (c.kind === "direct_chat") {
-                    if (
-                        latestMessage &&
-                        latestMessage.timestamp > (args?.updatesSince.timestamp ?? BigInt(0))
-                    ) {
-                        newLatestMessages[c.chatId] = latestMessage;
-                    }
+                if (latestMessage && isNewLatestMessage(c, latestMessage)) {
+                    newLatestMessages[c.chatId] = latestMessage;
+                }
 
+                if (c.kind === "direct_chat") {
                     return {
                         ...c,
                         readByMe: drangeToIndexRanges(c.readByMe),
@@ -194,21 +206,16 @@ export function setCachedChats(
                         latestMessage,
                     };
                 }
-                if (c.kind === "group_chat") {
-                    if (
-                        latestMessage &&
-                        latestMessage.timestamp > (groupUpdatesSince[c.chatId] ?? BigInt(0))
-                    ) {
-                        newLatestMessages[c.chatId] = latestMessage;
-                    }
 
+                if (c.kind === "group_chat") {
                     return {
                         ...c,
                         readByMe: drangeToIndexRanges(c.readByMe),
                         latestMessage,
                     };
                 }
-                return c;
+
+                throw new UnsupportedValueError("Unrecognised chat type", c);
             });
 
         const tx = (await db).transaction(

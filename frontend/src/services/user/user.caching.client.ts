@@ -131,7 +131,7 @@ export class CachingUserClient implements IUserClient {
         } else {
             return this.client
                 .getInitialState()
-                .then(setCachedChats(undefined, this.db, this.userId));
+                .then(setCachedChats("initial_state", this.db, this.userId));
         }
     }
 
