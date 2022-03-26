@@ -161,7 +161,7 @@ export function setCachedChats(
     userId: string
 ): (data: MergedUpdatesResponse) => Promise<MergedUpdatesResponse> {
     return async (data: MergedUpdatesResponse) => {
-        if (!data.wasUpdated) {
+        if (!data.wasUpdated && context !== "remove_chat") {
             return data;
         }
 
