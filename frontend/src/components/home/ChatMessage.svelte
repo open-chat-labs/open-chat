@@ -195,7 +195,8 @@
             mediaDimensions,
             parentWidth,
             msgBubblePaddingWidth,
-            window.innerHeight
+            window.innerHeight,
+            $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8
         );
         mediaCalculatedHeight = targetMediaDimensions.height;
         msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
