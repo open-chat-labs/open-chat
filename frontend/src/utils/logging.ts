@@ -13,9 +13,7 @@ export const rollbar = Rollbar.init({
         client: {
             javascript: {
                 source_map_enabled: true,
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                //@ts-ignore
-                code_version: window.OPENCHAT_WEBSITE_VERSION,
+                code_version: process.env.OPENCHAT_WEBSITE_VERSION,
                 guess_uncaught_frames: true,
             },
         },
