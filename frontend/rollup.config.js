@@ -119,6 +119,7 @@ export default [
             replace({
                 preventAssignment: true,
                 "process.env.NODE_ENV": JSON.stringify(env),
+                "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
             }),
 
             production && terser(),
@@ -171,6 +172,7 @@ export default [
                 ),
                 "process.env.DFX_NETWORK": JSON.stringify(dfxNetwork),
                 "process.env.NODE_ENV": JSON.stringify(env),
+                "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
                 "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
                 "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
                 "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
