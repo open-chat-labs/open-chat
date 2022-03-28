@@ -913,9 +913,11 @@ function getLatestMessage(
     chat: ChatSummary,
     updatedChat: ChatSummaryUpdates
 ): EventWrapper<Message> | undefined {
-    return (updatedChat.latestMessage?.index ?? -1) > (chat.latestMessage?.index ?? -1)
-        ? updatedChat.latestMessage
-        : chat.latestMessage;
+    if (chat.latestMessage === undefined) return updatedChat.latestMessage;
+    if (updatedChat.latestMessage === undefined) return chat.latestMessage;
+
+    const isLocalLatestUnconfirmed = unconfirmed.contains(chat.chatId, chat.latestMessage.event.messageId);
+    return isLocalLatestUnconfirmed ? chat.latestMessage : updatedChat.latestMessage;
 }
 
 export function isPreviewing(chat: ChatSummary): boolean {
