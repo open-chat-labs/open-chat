@@ -429,7 +429,8 @@
         "pendingSent": "{sender} está enviando {amount} ICP a {receiver}",
         "pendingSentByYou": "está enviando {amount} ICP a {receiver}",
         "receiver": "Receptor",
-        "chooseReceiver": "ingrese el nombre de usuario del receptor"
+        "chooseReceiver": "ingrese el nombre de usuario del receptor",
+        "done": "actualizar y continuar"
     },
     "icpAccount": {
         "balanceLabel": "Saldo de la cuenta del PCI",

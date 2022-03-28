@@ -40,7 +40,7 @@
 
     const reverseUserLookup: Record<string, string> = {};
     const mentionRegex = /@([\d\w_]*)$/;
-    const emojiRegex = /:([\w_]*):?$/;
+    const emojiRegex = /:([\w_]+):?$/;
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
     let audioMimeType = audioRecordingMimeType();
@@ -56,7 +56,6 @@
     let showEmojiSearch = false;
     let mentionPrefix: string | undefined;
     let emojiQuery: string | undefined;
-    let messageEntry: HTMLDivElement;
     let messageEntryHeight: number;
     let messageActions: MessageActions;
 
@@ -121,6 +120,8 @@
             range.deleteContents();
             range.insertNode(document.createTextNode(text));
             range.collapse(false);
+            const inputContent = inp.textContent ?? "";
+            controller.setTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         }
     }
 
@@ -338,7 +339,7 @@
         query={emojiQuery} />
 {/if}
 
-<div class="message-entry" bind:this={messageEntry} bind:clientHeight={messageEntryHeight}>
+<div class="message-entry" bind:clientHeight={messageEntryHeight}>
     {#if blocked}
         <div class="blocked">
             {$_("userIsBlocked")}

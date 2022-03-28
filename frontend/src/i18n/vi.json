@@ -429,7 +429,8 @@
         "pendingSent": "{sender} đang gửi ICP {amount} đến {receiver}",
         "pendingSentByYou": "bạn đang gửi ICP {amount} đến {receiver}",
         "receiver": "Người nhận",
-        "chooseReceiver": "nhập tên người dùng của người nhận"
+        "chooseReceiver": "nhập tên người dùng của người nhận",
+        "done": "làm mới và tiếp tục"
     },
     "icpAccount": {
         "balanceLabel": "Số dư tài khoản ICP",

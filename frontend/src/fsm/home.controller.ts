@@ -48,6 +48,7 @@ import { closeNotificationsForChat } from "../utils/notifications";
 import { ChatController } from "./chat.controller";
 import { Poller } from "./poller";
 import { scrollStrategy } from "stores/settings";
+import { setCachedMessageFromNotification } from "../utils/caching";
 
 const ONE_MINUTE = 60 * 1000;
 const ONE_HOUR = 60 * ONE_MINUTE;
@@ -585,7 +586,7 @@ export class HomeController {
         console.log("remote user sent message");
         if (
             !this.delegateToChatController(message, (chat) =>
-                chat.sendMessage(message.messageEvent, message.userId)
+                chat.handleMessageSentByOther(message.messageEvent, false)
             )
         ) {
             unconfirmed.add(message.chatId, message.messageEvent);
@@ -624,12 +625,13 @@ export class HomeController {
         Promise.all([
             this.api.rehydrateMessage(chatType, chatId, message),
             this.addMissingUsersFromMessage(message),
-        ]).then(([m, _]) => {
+            setCachedMessageFromNotification(notification),
+        ]).then(([m, _, __]) => {
+            this.onConfirmedMessage(chatId, m);
+
             const selectedChat = get(this.selectedChat);
             if (selectedChat?.chatId === chatId) {
-                selectedChat.sendMessage(m, sender, true);
-            } else {
-                this.onConfirmedMessage(chatId, m);
+                selectedChat.handleMessageSentByOther(m, true);
             }
         });
     }
