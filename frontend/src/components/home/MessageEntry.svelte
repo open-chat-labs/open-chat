@@ -40,7 +40,7 @@
 
     const reverseUserLookup: Record<string, string> = {};
     const mentionRegex = /@([\d\w_]*)$/;
-    const emojiRegex = /:([\w_]*):?$/;
+    const emojiRegex = /:([\w_]+):?$/;
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
     let audioMimeType = audioRecordingMimeType();
