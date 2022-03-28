@@ -300,7 +300,6 @@
         transition: background-color 100ms ease-in-out;
 
         &.zero {
-            position: relative;
             text-align: center;
             p {
                 margin-bottom: $sp4;
@@ -355,7 +354,5 @@
         @include font(light, normal, fs-60);
         margin-bottom: $sp3;
         text-transform: lowercase;
-        display: flex;
-        justify-content: space-between;
     }
 </style>
