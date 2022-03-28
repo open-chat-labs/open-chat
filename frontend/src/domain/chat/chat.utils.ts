@@ -903,17 +903,26 @@ export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): Eve
 }
 
 function getLatestEventIndex(chat: ChatSummary, updatedChat: ChatSummaryUpdates): number {
-    return updatedChat.latestEventIndex !== undefined &&
-        updatedChat.latestEventIndex > chat.latestEventIndex
-        ? updatedChat.latestEventIndex
-        : chat.latestEventIndex;
+    return Math.max(updatedChat.latestEventIndex ?? 0, chat.latestEventIndex);
 }
 
 function getLatestMessage(
     chat: ChatSummary,
     updatedChat: ChatSummaryUpdates
 ): EventWrapper<Message> | undefined {
-    return (updatedChat.latestMessage?.index ?? -1) > (chat.latestMessage?.index ?? -1)
+    if (chat.latestMessage === undefined) return updatedChat.latestMessage;
+    if (updatedChat.latestMessage === undefined) return chat.latestMessage;
+
+    // If the local message is unconfirmed, treat that as the latest
+    const isLocalLatestUnconfirmed = unconfirmed.contains(
+        chat.chatId,
+        chat.latestMessage.event.messageId
+    );
+    if (isLocalLatestUnconfirmed) return chat.latestMessage;
+
+    // Otherwise take the one with the highest event index, if they match, take the server version since it may have had
+    // subsequent updates (eg. deleted)
+    return updatedChat.latestMessage.index >= chat.latestMessage.index
         ? updatedChat.latestMessage
         : chat.latestMessage;
 }
