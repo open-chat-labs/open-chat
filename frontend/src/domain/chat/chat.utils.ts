@@ -667,7 +667,7 @@ export function enoughVisibleMessages(
         return true;
     } else if (ascending) {
         // if there are no more events then we have enough by definition
-        return events[events.length - 1]?.index === maxIndex;
+        return events[events.length - 1]?.index >= maxIndex;
     } else {
         // if there are no previous events then we have enough by definition
         return events[0].index <= minIndex;
