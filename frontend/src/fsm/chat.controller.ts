@@ -588,7 +588,7 @@ export class ChatController {
     }
 
     // This could be a message received in an `updates` response, from a notification, or via WebRTC.
-    handleMessageSentByOther(messageEvent: EventWrapper<Message>, confirmed: boolean) {
+    handleMessageSentByOther(messageEvent: EventWrapper<Message>, confirmed: boolean): void {
         if (indexIsInRanges(messageEvent.index, this.confirmedEventIndexesLoaded)) {
             // We already have this confirmed message
             return;
