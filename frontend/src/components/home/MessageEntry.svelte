@@ -56,7 +56,6 @@
     let showEmojiSearch = false;
     let mentionPrefix: string | undefined;
     let emojiQuery: string | undefined;
-    let messageEntry: HTMLDivElement;
     let messageEntryHeight: number;
     let messageActions: MessageActions;
 
@@ -340,7 +339,7 @@
         query={emojiQuery} />
 {/if}
 
-<div class="message-entry" bind:this={messageEntry} bind:clientHeight={messageEntryHeight}>
+<div class="message-entry" bind:clientHeight={messageEntryHeight}>
     {#if blocked}
         <div class="blocked">
             {$_("userIsBlocked")}
