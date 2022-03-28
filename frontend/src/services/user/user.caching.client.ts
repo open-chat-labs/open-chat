@@ -117,21 +117,18 @@ export class CachingUserClient implements IUserClient {
         const cachedChats = await getCachedChats(this.db, this.userId);
         // if we have cached chats we will rebuild the UpdateArgs from that cached data
         if (cachedChats) {
-            const updateArgs = updateArgsFromChats(
-                cachedChats.timestamp,
-                cachedChats.chatSummaries
-            );
             return this.client
-                .getUpdates(cachedChats.chatSummaries, updateArgs)
+                .getUpdates(
+                    cachedChats.chatSummaries,
+                    updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries)
+                )
                 .then((resp) => {
                     resp.wasUpdated = true;
                     return resp;
                 })
                 .then(setCachedChats(this.db, this.userId));
         } else {
-            return this.client
-                .getInitialState()
-                .then(setCachedChats(this.db, this.userId));
+            return this.client.getInitialState().then(setCachedChats(this.db, this.userId));
         }
     }
 
