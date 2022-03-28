@@ -70,7 +70,7 @@
                 });
 
             const event = { ...editingEvent, event: msg! };
-            controller.sendMessage(event, controller.user.userId);
+            controller.sendMessage(event);
         }
     }
 
@@ -111,7 +111,7 @@
                 });
 
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
-            controller.sendMessage(event, controller.user.userId);
+            controller.sendMessage(event);
         }
     }
 
