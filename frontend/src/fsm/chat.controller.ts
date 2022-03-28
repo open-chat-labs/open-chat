@@ -765,32 +765,33 @@ export class ChatController {
             this.handleMessageSentByOther(latestMessage, true);
         }
 
-        const affectedEventsToRefresh = affectedEvents.filter((e) =>
-            indexIsInRanges(e, this.confirmedEventIndexesLoaded)
-        );
-        if (affectedEventsToRefresh.length > 0) {
-            this.loading.set(true);
-            const events =
-                chat.kind === "direct_chat"
-                    ? await this.api.directChatEventsByEventIndex(
-                          chat.them,
-                          affectedEventsToRefresh
-                      )
-                    : await this.api.groupChatEventsByEventIndex(
-                          chat.chatId,
-                          affectedEventsToRefresh
-                      );
-
-            await this.handleEventsResponse(events);
-            this.loading.set(false);
-        }
-
+        this.refreshAffectedEvents(affectedEvents);
         this.updateDetails();
 
         this.raiseEvent({
             chatId: this.chatId,
             event: { kind: "chat_updated" },
         });
+    }
+
+    private refreshAffectedEvents(affectedEventIndexes: number[]): Promise<void> {
+        const filtered = affectedEventIndexes.filter((e) =>
+            indexIsInRanges(e, this.confirmedEventIndexesLoaded)
+        );
+        if (filtered.length === 0) {
+            return Promise.resolve();
+        }
+
+        const chat = this.chatVal;
+        this.loading.set(true);
+        const eventsPromise =
+            chat.kind === "direct_chat"
+                ? this.api.directChatEventsByEventIndex(chat.them, filtered)
+                : this.api.groupChatEventsByEventIndex(chat.chatId, filtered);
+
+        return eventsPromise
+            .then((resp) => this.handleEventsResponse(resp))
+            .finally(() => this.loading.set(false));
     }
 
     markAllRead(): void {
