@@ -15,6 +15,7 @@
     import AccountInfo from "./AccountInfo.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import Legend from "../Legend.svelte";
@@ -34,6 +35,7 @@
     import { icpBalanceE8sStore } from "../../stores/balance";
     import type { ChatController } from "../../fsm/chat.controller";
     import SingleUserSelector from "./SingleUserSelector.svelte";
+    import Link from "../Link.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -49,6 +51,7 @@
     let message = "";
     let confirming = false;
     let receiver: PartialUserSummary | undefined = undefined;
+    let toppingUp = false;
 
     $: chat = controller.chat;
     $: group = $chat.kind === "group_chat";
@@ -72,7 +75,8 @@
             controller.chatVal.kind === "direct_chat"
                 ? $userStore[controller.chatVal.them]
                 : undefined;
-        api.refreshAccountBalance(user.icpAccount)
+        return api
+            .refreshAccountBalance(user.icpAccount)
             .then((_) => {
                 draftAmountE8s = amountE8s;
                 error = undefined;
@@ -82,6 +86,10 @@
                 rollbar.error("Unable to refresh user's account balance", err);
             })
             .finally(() => (refreshing = false));
+    }
+
+    function refreshAndContinue() {
+        reset(draftAmountE8s).then(() => (toppingUp = false));
     }
 
     function maxAmountE8s(): bigint {
@@ -142,11 +150,19 @@
             </div>
         </span>
         <form slot="body">
-            <div class="body" class:confirming class:zero>
-                {#if zero}
+            <div class="body" class:confirming class:zero={zero || toppingUp}>
+                {#if zero || toppingUp}
                     <AccountInfo qrSize={"smaller"} {user} />
-                    <p>{$_("icpTransfer.zeroBalance")}</p>
+                    {#if zero}
+                        <p>{$_("icpTransfer.zeroBalance")}</p>
+                    {/if}
                     <p>{$_("icpTransfer.makeDeposit")}</p>
+                    <p class="back">
+                        <ArrowLeft size={"0.8em"} color={"var(--txt)"} />
+                        <Link underline="always" on:click={refreshAndContinue}>
+                            {$_("icpTransfer.done")}
+                        </Link>
+                    </p>
                 {:else if confirming}
                     <div class="alert">
                         <AlertOutline size={$iconSize} color={"var(--toast-failure-txt"} />
@@ -183,9 +199,11 @@
                             bind:value={message} />
                     </div>
                     <div class="fee">
-                        {$_("icpTransfer.fee", {
-                            values: { fee: formatICP(ICP_TRANSFER_FEE_E8S, 0) },
-                        })}
+                        <span>
+                            {$_("icpTransfer.fee", {
+                                values: { fee: formatICP(ICP_TRANSFER_FEE_E8S, 0) },
+                            })}
+                        </span>
                     </div>
                     {#if error}
                         <ErrorMessage>{$_(error)}</ErrorMessage>
@@ -193,8 +211,14 @@
                 {/if}
             </div>
         </form>
-        <span class="footer" slot="footer">
-            {#if !$mobileWidth}
+        <span class="footer" class:zero={zero || toppingUp} slot="footer">
+            {#if !zero && !toppingUp}
+                <span class="topup">
+                    <Link underline={"always"} on:click={() => (toppingUp = true)}>
+                        {$_("icpAccount.topUp")}
+                    </Link>
+                </span>
+            {:else if !$mobileWidth}
                 <a
                     class="how-to"
                     href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
@@ -266,11 +290,17 @@
         }
     }
 
+    .topup {
+        @include font(book, normal, fs-90);
+        text-transform: lowercase;
+    }
+
     .body {
         padding: 0 $sp3;
         transition: background-color 100ms ease-in-out;
 
         &.zero {
+            position: relative;
             text-align: center;
             p {
                 margin-bottom: $sp4;
@@ -294,6 +324,10 @@
         }
     }
 
+    .back {
+        @include font(light, normal, fs-90);
+    }
+
     .transfer {
         margin-bottom: $sp4;
     }
@@ -312,12 +346,16 @@
         justify-content: space-between;
 
         @include mobile() {
-            justify-content: center;
+            &.zero {
+                justify-content: center;
+            }
         }
     }
     .fee {
         @include font(light, normal, fs-60);
         margin-bottom: $sp3;
         text-transform: lowercase;
+        display: flex;
+        justify-content: space-between;
     }
 </style>

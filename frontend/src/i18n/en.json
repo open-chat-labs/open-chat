@@ -426,7 +426,8 @@
         "makeDeposit": "Please make a deposit into the account above and refresh your balance.",
         "zeroBalance": "You don't have any ICP 😭.",
         "receiver": "Receiver",
-        "chooseReceiver": "enter the receiver's user name"
+        "chooseReceiver": "enter the receiver's user name",
+        "done": "refresh and continue"
     },
     "icpAccount": {
         "balanceLabel": "ICP account balance",

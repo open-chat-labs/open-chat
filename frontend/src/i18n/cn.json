@@ -428,7 +428,8 @@
         "pendingSent": "{sender} 正在向 {receiver} 发送 {amount} ICP",
         "pendingSentByYou": "您正在向 {receiver} 发送 {amount} ICP",
         "receiver": "接收者",
-        "chooseReceiver": "输入接收者的用户名"
+        "chooseReceiver": "输入接收者的用户名",
+        "done": "刷新并继续"
     },
     "icpAccount": {
         "balanceLabel": "ICP账户余额",
