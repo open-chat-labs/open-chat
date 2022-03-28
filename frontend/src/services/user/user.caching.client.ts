@@ -127,11 +127,11 @@ export class CachingUserClient implements IUserClient {
                     resp.wasUpdated = true;
                     return resp;
                 })
-                .then(setCachedChats(updateArgs, this.db, this.userId));
+                .then(setCachedChats(this.db, this.userId));
         } else {
             return this.client
                 .getInitialState()
-                .then(setCachedChats("initial_state", this.db, this.userId));
+                .then(setCachedChats(this.db, this.userId));
         }
     }
 
@@ -141,7 +141,7 @@ export class CachingUserClient implements IUserClient {
     ): Promise<MergedUpdatesResponse> {
         return this.client
             .getUpdates(chatSummaries, args)
-            .then(setCachedChats(args, this.db, this.userId));
+            .then(setCachedChats(this.db, this.userId));
     }
 
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {

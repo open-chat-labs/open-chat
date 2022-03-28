@@ -124,7 +124,7 @@ export async function removeCachedChat(
     const fromCache = await getCachedChats(db, userId);
     if (fromCache !== undefined) {
         fromCache.chatSummaries = fromCache.chatSummaries.filter((c) => c.chatId !== chatId);
-        await setCachedChats("remove_chat", db, userId)(fromCache);
+        await setCachedChats(db, userId)(fromCache);
     }
 }
 
@@ -157,35 +157,15 @@ export async function getCachedChats(
 }
 
 export function setCachedChats(
-    context: UpdateArgs | "initial_state" | "remove_chat",
     db: Database,
     userId: string
 ): (data: MergedUpdatesResponse) => Promise<MergedUpdatesResponse> {
     return async (data: MergedUpdatesResponse) => {
-        if (!data.wasUpdated && context !== "remove_chat") {
+        if (!data.wasUpdated) {
             return data;
         }
 
-        // We determine which 'latestMessage' values are new and store those in the cache
-        const newLatestMessages: Record<string, EventWrapper<Message>> = {};
-
-        let isNewLatestMessage: (chat: ChatSummary, message: EventWrapper<Message>) => boolean;
-        if (context === "initial_state") {
-            isNewLatestMessage = (_, __) => true;
-        } else if (context === "remove_chat") {
-            isNewLatestMessage = (_, __) => false;
-        } else {
-            const groupUpdatesSince: Record<string, bigint> =
-                context.updatesSince.groupChats.reduce((result, next) => {
-                    result[next.chatId] = next.lastUpdated;
-                    return result;
-                }, {} as Record<string, bigint>);
-
-            isNewLatestMessage = (chat, message) =>
-                chat.kind === "direct_chat"
-                    ? message.timestamp > context.updatesSince.timestamp
-                    : message.timestamp > (groupUpdatesSince[chat.chatId] ?? BigInt(0));
-        }
+        const latestMessages: Record<string, EventWrapper<Message>> = {};
 
         // irritating hoop jumping to keep typescript happy here
         const serialisable = data.chatSummaries
@@ -195,8 +175,8 @@ export function setCachedChats(
                     ? makeSerialisable(c.latestMessage, c.chatId)
                     : undefined;
 
-                if (latestMessage && isNewLatestMessage(c, latestMessage)) {
-                    newLatestMessages[c.chatId] = latestMessage;
+                if (latestMessage) {
+                    latestMessages[c.chatId] = latestMessage;
                 }
 
                 if (c.kind === "direct_chat") {
@@ -239,7 +219,7 @@ export function setCachedChats(
                 },
                 userId
             ),
-            ...Object.entries(newLatestMessages).flatMap(([chatId, message]) => [
+            ...Object.entries(latestMessages).flatMap(([chatId, message]) => [
                 eventStore.put(message, createCacheKey(chatId, message.index)),
                 mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`),
             ]),
