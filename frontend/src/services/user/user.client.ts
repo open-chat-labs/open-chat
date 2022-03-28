@@ -306,7 +306,10 @@ export class UserClient extends CandidService implements IUserClient {
                     mentioned: [],
                     message_id: message.messageId,
                     group_id: Principal.fromText(groupId),
-                    replies_to: [],
+                    replies_to: apiOptional(
+                        (replyContext) => apiReplyContextArgs(replyContext),
+                        message.repliesTo
+                    ),
                 };
                 return this.handleResponse(
                     this.userService.transfer_cryptocurrency_within_group(req),
