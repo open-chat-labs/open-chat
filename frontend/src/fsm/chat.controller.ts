@@ -759,8 +759,7 @@ export class ChatController {
 
     async chatUpdated(affectedEvents: number[]): Promise<void> {
         // The chat summary has been updated which means the latest message may be new
-        const chat = this.chatVal;
-        const latestMessage = chat.latestMessage;
+        const latestMessage = this.chatVal.latestMessage;
         if (latestMessage !== undefined && latestMessage.event.sender !== this.user.userId) {
             this.handleMessageSentByOther(latestMessage, true);
         }
