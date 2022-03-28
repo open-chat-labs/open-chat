@@ -35,7 +35,7 @@ import {
     loadMessagesByMessageIndex,
     setCachedEvents,
     setCachedGroupDetails,
-    setCachedMessage,
+    setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 
@@ -115,7 +115,7 @@ export class CachingGroupClient implements IGroupClient {
     ): Promise<SendMessageResponse> {
         return this.client
             .sendMessage(senderName, mentioned, message)
-            .then(setCachedMessage(this.db, this.chatId, message));
+            .then(setCachedMessageFromSendResponse(this.db, this.chatId, message));
     }
 
     editMessage(message: Message): Promise<EditMessageResponse> {
