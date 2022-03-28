@@ -33,7 +33,7 @@ import {
     removeCachedChat,
     setCachedChats,
     setCachedEvents,
-    setCachedMessage,
+    setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
 import { updateArgsFromChats } from "../../domain/chat/chat.utils";
@@ -157,7 +157,7 @@ export class CachingUserClient implements IUserClient {
     ): Promise<SendMessageResponse> {
         return this.client
             .sendGroupICPTransfer(groupId, recipientId, sender, message)
-            .then(setCachedMessage(this.db, groupId, message));
+            .then(setCachedMessageFromSendResponse(this.db, groupId, message));
     }
 
     sendMessage(
@@ -168,7 +168,7 @@ export class CachingUserClient implements IUserClient {
     ): Promise<SendMessageResponse> {
         return this.client
             .sendMessage(recipientId, sender, message, replyingToChatId)
-            .then(setCachedMessage(this.db, this.userId, message));
+            .then(setCachedMessageFromSendResponse(this.db, this.userId, message));
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {
