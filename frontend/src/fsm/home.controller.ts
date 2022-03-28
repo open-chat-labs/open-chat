@@ -586,7 +586,7 @@ export class HomeController {
         console.log("remote user sent message");
         if (
             !this.delegateToChatController(message, (chat) =>
-                chat.sendMessage(message.messageEvent, message.userId)
+                chat.handleMessageSentByOther(message.messageEvent, false)
             )
         ) {
             unconfirmed.add(message.chatId, message.messageEvent);
@@ -627,11 +627,11 @@ export class HomeController {
             this.addMissingUsersFromMessage(message),
             setCachedMessageFromNotification(notification),
         ]).then(([m, _, __]) => {
+            this.onConfirmedMessage(chatId, m);
+
             const selectedChat = get(this.selectedChat);
             if (selectedChat?.chatId === chatId) {
-                selectedChat.sendMessage(m, sender, true);
-            } else {
-                this.onConfirmedMessage(chatId, m);
+                selectedChat.handleMessageSentByOther(m, true);
             }
         });
     }
