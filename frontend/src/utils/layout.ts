@@ -9,7 +9,7 @@ export function calculateMediaDimensions(
 ): Dimensions {
     const ratio = content.height / content.width;
     const availWidth = parentWidth * maxWidthFraction - containerPaddingWidth;
-    const availHeight = (2 * windowHeight) / 3;
+    const availHeight = Math.min((2 * windowHeight) / 3, 400);
 
     let width = Math.min(availWidth, Math.max(200, content.width));
     let height = width * ratio;
