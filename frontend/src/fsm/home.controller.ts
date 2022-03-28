@@ -196,7 +196,9 @@ export class HomeController {
                 if (selectedChatInvalid) {
                     this.clearSelectedChat();
                 } else if (selectedChat !== undefined) {
-                    selectedChat.chatUpdated();
+                    selectedChat.chatUpdated(
+                        chatsResponse.affectedEvents[selectedChat.chatId] ?? []
+                    );
                 }
 
                 if (chatsResponse.avatarIdUpdate !== undefined) {

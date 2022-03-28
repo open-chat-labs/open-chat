@@ -757,11 +757,32 @@ export class ChatController {
         });
     }
 
-    async chatUpdated(): Promise<void> {
+    async chatUpdated(affectedEvents: number[]): Promise<void> {
         // The chat summary has been updated which means the latest message may be new
-        const latestMessage = this.chatVal.latestMessage;
+        const chat = this.chatVal;
+        const latestMessage = chat.latestMessage;
         if (latestMessage !== undefined && latestMessage.event.sender !== this.user.userId) {
             this.handleMessageSentByOther(latestMessage, true);
+        }
+
+        const affectedEventsToRefresh = affectedEvents.filter((e) =>
+            indexIsInRanges(e, this.confirmedEventIndexesLoaded)
+        );
+        if (affectedEventsToRefresh.length > 0) {
+            this.loading.set(true);
+            const events =
+                chat.kind === "direct_chat"
+                    ? await this.api.directChatEventsByEventIndex(
+                          chat.them,
+                          affectedEventsToRefresh
+                      )
+                    : await this.api.groupChatEventsByEventIndex(
+                          chat.chatId,
+                          affectedEventsToRefresh
+                      );
+
+            await this.handleEventsResponse(events);
+            this.loading.set(false);
         }
 
         this.updateDetails();
