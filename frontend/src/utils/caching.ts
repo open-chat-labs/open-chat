@@ -3,7 +3,6 @@ import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
-    ChatSummary,
     EventsResponse,
     EventWrapper,
     GroupChatDetails,
@@ -15,11 +14,9 @@ import type {
     SendMessageResponse,
     SendMessageSuccess,
     SerializableMergedUpdatesResponse,
-    UpdateArgs,
 } from "../domain/chat/chat";
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
-import { DirectNotification, GroupNotification } from "../domain/notifications";
 import { UnsupportedValueError } from "./error";
 
 const CACHE_VERSION = 23;
