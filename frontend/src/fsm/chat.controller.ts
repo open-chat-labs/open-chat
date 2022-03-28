@@ -782,8 +782,8 @@ export class ChatController {
             return Promise.resolve();
         }
 
-        const chat = this.chatVal;
         this.loading.set(true);
+        const chat = this.chatVal;
         const eventsPromise =
             chat.kind === "direct_chat"
                 ? this.api.directChatEventsByEventIndex(chat.them, filtered)
