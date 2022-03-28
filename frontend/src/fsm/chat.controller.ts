@@ -773,6 +773,7 @@ export class ChatController {
         });
     }
 
+    // This will refresh any affected events which are currently loaded
     private refreshAffectedEvents(affectedEventIndexes: number[]): Promise<void> {
         const filtered = affectedEventIndexes.filter((e) =>
             indexIsInRanges(e, this.confirmedEventIndexesLoaded)
