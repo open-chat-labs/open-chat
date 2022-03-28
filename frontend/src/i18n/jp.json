@@ -428,7 +428,8 @@
         "pendingSent": "{sender}は{amount}ICPを{receiver}に送信しています",
         "pendingSentByYou": "{amount}ICPを{receiver}に送信しています",
         "receiver": "レシーバー",
-        "chooseReceiver": "受信者のユーザー名を入力します"
+        "chooseReceiver": "受信者のユーザー名を入力します",
+        "done": "更新して続行"
     },
     "icpAccount": {
         "balanceLabel": "ICPアカウントの残高",

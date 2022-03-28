@@ -428,7 +428,8 @@
         "pendingSent": "{sender} envoie {amount} ICP à {receiver}",
         "pendingSentByYou": "vous envoyez {amount} ICP à {receiver}",
         "receiver": "Receveur",
-        "chooseReceiver": "entrez le nom d'utilisateur du destinataire"
+        "chooseReceiver": "entrez le nom d'utilisateur du destinataire",
+        "done": "actualiser et continuer"
     },
     "icpAccount": {
         "balanceLabel": "Solde du compte ICP",
