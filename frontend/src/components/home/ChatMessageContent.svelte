@@ -38,7 +38,7 @@
 </script>
 
 {#if content.kind === "text_content"}
-    <Markdown text={truncateText(content.text)} />
+    <Markdown suppressLinks={pinned} text={truncateText(content.text)} />
 {:else if content.kind === "image_content"}
     <ImageContent {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "video_content"}
