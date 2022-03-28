@@ -115,6 +115,8 @@ pub struct MessageInternal {
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
     pub last_updated: Option<TimestampMillis>,
+    #[serde(default)]
+    pub last_edited: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -274,6 +276,7 @@ impl ChatEvents {
             replies_to: args.replies_to,
             reactions: Vec::new(),
             last_updated: None,
+            last_edited: None,
         };
         let message = self.hydrate_message(&message_internal, Some(message_internal.sender));
         let event_index = self.push_event(ChatEventInternal::Message(Box::new(message_internal)), args.now);
@@ -342,6 +345,7 @@ impl ChatEvents {
                 } else {
                     message.content = args.content.new_content_into_internal();
                     message.last_updated = Some(args.now);
+                    message.last_edited = Some(args.now);
                     self.metrics.total_edits += 1;
                     self.push_event(
                         ChatEventInternal::MessageEdited(Box::new(UpdatedMessageInternal {
@@ -412,6 +416,7 @@ impl ChatEvents {
             if let MessageContentInternal::Poll(p) = &mut message.content {
                 return match p.register_vote(user_id, option_index, operation) {
                     types::RegisterVoteResult::Success => {
+                        message.last_updated = Some(now);
                         let updated_message = Box::new(UpdatedMessageInternal {
                             updated_by: user_id,
                             message_id: message.message_id,
@@ -441,6 +446,7 @@ impl ChatEvents {
                 return if p.ended || p.config.end_date.is_none() {
                     EndPollResult::UnableToEndPoll
                 } else {
+                    message.last_updated = Some(now);
                     p.ended = true;
                     let event = ChatEventInternal::PollEnded(Box::new(message_index));
                     self.push_event(event, now);
@@ -465,6 +471,8 @@ impl ChatEvents {
 
         if let Some(&event_index) = self.message_id_map.get(&message_id) {
             if let Some(ChatEventInternal::Message(message)) = self.get_mut(event_index).map(|e| &mut e.event) {
+                message.last_updated = Some(now);
+
                 let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
                     if users.insert(user_id) {
                         true

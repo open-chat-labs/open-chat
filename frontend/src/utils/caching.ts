@@ -17,6 +17,7 @@ import type {
 } from "../domain/chat/chat";
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
+import { DirectNotification, GroupNotification } from "../domain/notifications";
 
 const CACHE_VERSION = 23;
 
@@ -479,7 +480,7 @@ export function setCachedEvents<T extends ChatEvent>(
     };
 }
 
-export function setCachedMessage(
+export function setCachedMessageFromSendResponse(
     db: Database,
     chatId: string,
     message: Message
@@ -489,20 +490,43 @@ export function setCachedMessage(
 
         const event = messageToEvent(message, resp);
 
-        const tx = (await db).transaction(
-            ["chat_events", "message_index_event_index"],
-            "readwrite"
-        );
-        const eventStore = tx.objectStore("chat_events");
-        const mapStore = tx.objectStore("message_index_event_index");
-        await Promise.all([
-            eventStore.put(makeSerialisable(event, chatId), createCacheKey(chatId, event.index)),
-            mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`),
-        ]);
-        await tx.done;
+        await setCachedMessage(db, chatId, event);
 
         return resp;
     };
+}
+
+export async function setCachedMessageFromNotification(
+    notification: DirectNotification | GroupNotification
+): Promise<void> {
+    if (!process.env.CLIENT_CACHING) return;
+
+    if (db === undefined) {
+        throw new Error("Unable to open indexDB, cannot set message from notification");
+    }
+
+    const chatId =
+        notification.kind === "group_notification" ? notification.chatId : notification.sender;
+
+    await setCachedMessage(db, chatId, notification.message);
+}
+
+async function setCachedMessage(
+    db: Database,
+    chatId: string,
+    messageEvent: EventWrapper<Message>
+): Promise<void> {
+    const tx = (await db).transaction(["chat_events", "message_index_event_index"], "readwrite");
+    const eventStore = tx.objectStore("chat_events");
+    const mapStore = tx.objectStore("message_index_event_index");
+    await Promise.all([
+        eventStore.put(
+            makeSerialisable(messageEvent, chatId),
+            createCacheKey(chatId, messageEvent.index)
+        ),
+        mapStore.put(messageEvent.index, `${chatId}_${messageEvent.event.messageIndex}`),
+    ]);
+    await tx.done;
 }
 
 function messageToEvent(message: Message, resp: SendMessageSuccess): EventWrapper<Message> {

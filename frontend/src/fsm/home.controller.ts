@@ -48,6 +48,7 @@ import { closeNotificationsForChat } from "../utils/notifications";
 import { ChatController } from "./chat.controller";
 import { Poller } from "./poller";
 import { scrollStrategy } from "stores/settings";
+import { setCachedMessageFromNotification } from "../utils/caching";
 
 const ONE_MINUTE = 60 * 1000;
 const ONE_HOUR = 60 * ONE_MINUTE;
@@ -624,7 +625,8 @@ export class HomeController {
         Promise.all([
             this.api.rehydrateMessage(chatType, chatId, message),
             this.addMissingUsersFromMessage(message),
-        ]).then(([m, _]) => {
+            setCachedMessageFromNotification(notification),
+        ]).then(([m, _, __]) => {
             const selectedChat = get(this.selectedChat);
             if (selectedChat?.chatId === chatId) {
                 selectedChat.sendMessage(m, sender, true);
