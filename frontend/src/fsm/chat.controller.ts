@@ -53,6 +53,7 @@ import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { overwriteCachedEvents } from "../utils/caching";
 import { writable } from "svelte/store";
+import { findLast } from "../utils/list";
 import { rollbar } from "../utils/logging";
 import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
@@ -507,6 +508,13 @@ export class ChatController {
         }
 
         await this.handleEventsResponse(eventsResponse);
+
+        // We may have loaded messages which are more recent than what the chat summary thinks is the latest message,
+        // if so, we update the chat summary to show the correct latest message.
+        const latestMessage = findLast(eventsResponse.events, (e) => e.event.kind === "message");
+        if (latestMessage !== undefined && latestMessage.index > this.latestServerEventIndex()) {
+            this._onConfirmedMessage(latestMessage as EventWrapper<Message>);
+        }
 
         this.raiseEvent({
             chatId: this.chatId,
