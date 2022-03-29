@@ -339,7 +339,7 @@ export class HomeController {
                     readableChatSummary,
                     this.messagesRead,
                     messageIndex,
-                    (message) => this.onConfirmedMessage(chatId, message)
+                    (message) => this.updateSummaryWithConfirmedMessage(chatId, message)
                 );
             });
         } else {
@@ -629,7 +629,7 @@ export class HomeController {
             this.addMissingUsersFromMessage(message),
             setCachedMessageFromNotification(notification),
         ]).then(([m, _, __]) => {
-            this.onConfirmedMessage(chatId, m);
+            this.updateSummaryWithConfirmedMessage(chatId, m);
 
             const selectedChat = get(this.selectedChat);
             if (selectedChat?.chatId === chatId) {
@@ -651,7 +651,10 @@ export class HomeController {
         return true;
     }
 
-    private onConfirmedMessage(chatId: string, message: EventWrapper<Message>): void {
+    private updateSummaryWithConfirmedMessage(
+        chatId: string,
+        message: EventWrapper<Message>
+    ): void {
         this.serverChatSummaries.update((summaries) => {
             const summary = summaries[chatId];
             if (summary === undefined) return summaries;
