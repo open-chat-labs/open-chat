@@ -35,6 +35,7 @@
     export let canDelete: boolean;
     export let canSend: boolean;
     export let canReact: boolean;
+    export let publicGroup: boolean;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -66,6 +67,7 @@
         {canDelete}
         {canSend}
         {canReact}
+        {publicGroup}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo

@@ -79,9 +79,10 @@
                 const idx = idxAttr ? parseInt(idxAttr.value, 10) : undefined;
                 const id = idAttr ? BigInt(idAttr.value) : undefined;
                 if (idx !== undefined && id !== undefined) {
-                    const intersectionRatioRequired = 0 < messagesDivHeight && messagesDivHeight < entry.boundingClientRect.height
-                        ? messagesDivHeight * 0.5 / entry.boundingClientRect.height
-                        : 0.5;
+                    const intersectionRatioRequired =
+                        0 < messagesDivHeight && messagesDivHeight < entry.boundingClientRect.height
+                            ? (messagesDivHeight * 0.5) / entry.boundingClientRect.height
+                            : 0.5;
 
                     const isIntersecting = entry.intersectionRatio >= intersectionRatioRequired;
                     if (isIntersecting && messageReadTimers[idx] === undefined) {
@@ -447,7 +448,12 @@
     }
 </script>
 
-<div bind:this={messagesDiv} bind:clientHeight={messagesDivHeight} class="chat-messages" on:scroll|passive={onScroll} id="chat-messages">
+<div
+    bind:this={messagesDiv}
+    bind:clientHeight={messagesDivHeight}
+    class="chat-messages"
+    on:scroll|passive={onScroll}
+    id="chat-messages">
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
@@ -474,6 +480,8 @@
                         {canDelete}
                         {canSend}
                         {canReact}
+                        publicGroup={controller.chatVal.kind === "group_chat" &&
+                            controller.chatVal.public}
                         pinned={isPinned($pinned, evt)}
                         on:chatWith
                         on:replyTo={replyTo}

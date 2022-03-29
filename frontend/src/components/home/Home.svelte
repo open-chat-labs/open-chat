@@ -74,7 +74,7 @@
     let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
-    let share: Share = { title: "", text: "", url: "" };
+    let share: Share = { title: "", text: "", url: "", files: [] };
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -113,6 +113,7 @@
                     title,
                     text,
                     url,
+                    files: [],
                 };
                 params.chatId = null;
                 history.replaceState(null, "", "/#/");
