@@ -588,7 +588,7 @@ export class ChatController {
     }
 
     // This could be a message received in an `updates` response, from a notification, or via WebRTC.
-    handleMessageSentByOther(messageEvent: EventWrapper<Message>, confirmed: boolean) {
+    handleMessageSentByOther(messageEvent: EventWrapper<Message>, confirmed: boolean): void {
         if (indexIsInRanges(messageEvent.index, this.confirmedEventIndexesLoaded)) {
             // We already have this confirmed message
             return;
@@ -757,19 +757,41 @@ export class ChatController {
         });
     }
 
-    async chatUpdated(): Promise<void> {
+    async chatUpdated(affectedEvents: number[]): Promise<void> {
         // The chat summary has been updated which means the latest message may be new
         const latestMessage = this.chatVal.latestMessage;
         if (latestMessage !== undefined && latestMessage.event.sender !== this.user.userId) {
             this.handleMessageSentByOther(latestMessage, true);
         }
 
+        this.refreshAffectedEvents(affectedEvents);
         this.updateDetails();
 
         this.raiseEvent({
             chatId: this.chatId,
             event: { kind: "chat_updated" },
         });
+    }
+
+    // This will refresh any affected events which are currently loaded
+    private refreshAffectedEvents(affectedEventIndexes: number[]): Promise<void> {
+        const filtered = affectedEventIndexes.filter((e) =>
+            indexIsInRanges(e, this.confirmedEventIndexesLoaded)
+        );
+        if (filtered.length === 0) {
+            return Promise.resolve();
+        }
+
+        this.loading.set(true);
+        const chat = this.chatVal;
+        const eventsPromise =
+            chat.kind === "direct_chat"
+                ? this.api.directChatEventsByEventIndex(chat.them, filtered)
+                : this.api.groupChatEventsByEventIndex(chat.chatId, filtered);
+
+        return eventsPromise
+            .then((resp) => this.handleEventsResponse(resp))
+            .finally(() => this.loading.set(false));
     }
 
     markAllRead(): void {
