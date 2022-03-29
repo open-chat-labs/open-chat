@@ -1234,13 +1234,16 @@ export function buildCryptoTransferText(
 }
 
 export function buildTransactionLink(content: CryptocurrencyContent): string | undefined {
+    const url = buildTransactionUrl(content);
+    return url !== undefined
+        ? get(_)("icpTransfer.viewTransaction", { values: { url } })
+        : undefined;
+}
+
+export function buildTransactionUrl(content: CryptocurrencyContent): string | undefined {
     if (content.transfer.kind !== "completed_icp_transfer") {
         return undefined;
     }
 
-    return get(_)("icpTransfer.viewTransaction", {
-        values: {
-            url: `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`,
-        },
-    });
+    return `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`;
 }
