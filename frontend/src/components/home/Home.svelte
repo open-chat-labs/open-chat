@@ -113,6 +113,7 @@
                     title,
                     text,
                     url,
+                    files: [],
                 };
                 params.chatId = null;
                 history.replaceState(null, "", "/#/");
