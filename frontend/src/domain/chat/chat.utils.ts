@@ -28,6 +28,7 @@ import type {
     PollContent,
     MemberRole,
     PermissionRole,
+    CryptocurrencyContent,
 } from "./chat";
 import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -38,6 +39,8 @@ import { unconfirmed } from "../../stores/unconfirmed";
 import type { IMessageReadTracker } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
+import { formatICP } from "../../utils/cryptoFormatter";
+import { userStore } from "../../stores/user";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
@@ -1191,4 +1194,53 @@ function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean 
         case "members":
             return true;
     }
+}
+
+export function buildCryptoTransferText(
+    myUserId: string,
+    senderId: string,
+    content: CryptocurrencyContent,
+    me: boolean
+): string | undefined {
+    if (
+        content.transfer.kind !== "completed_icp_transfer" &&
+        content.transfer.kind !== "pending_icp_transfer"
+    ) {
+        return undefined;
+    }
+
+    function username(userId: string): string {
+        const lookup = get(userStore);
+
+        return userId === myUserId
+            ? get(_)("you")
+            : `${lookup[userId]?.username ?? get(_)("unknown")}`;
+    }
+
+    const values = {
+        amount: formatICP(content.transfer.amountE8s, 0),
+        receiver: username(content.transfer.recipient),
+        sender: username(senderId),
+    };
+
+    const key =
+        content.transfer.kind !== "completed_icp_transfer"
+            ? "confirmedSent"
+            : me
+            ? "pendingSentByYou"
+            : "pendingSent";
+
+    return get(_)(`icpTransfer.${key}`, { values });
+}
+
+export function buildTransactionLink(content: CryptocurrencyContent): string | undefined {
+    if (content.transfer.kind !== "completed_icp_transfer") {
+        return undefined;
+    }
+
+    return get(_)("icpTransfer.viewTransaction", {
+        values: {
+            url: `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`,
+        },
+    });
 }
