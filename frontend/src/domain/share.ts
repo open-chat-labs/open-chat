@@ -3,7 +3,7 @@ import { toastStore } from "../stores/toast";
 import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
 import { buildCryptoTransferText, buildTransactionLink } from "./chat/chat.utils";
-import type { DataContent } from "./data/data";
+import { rollbar } from "../utils/logging";
 
 export type Share = {
     title: string;
@@ -93,13 +93,18 @@ export async function shareMessage(
     me: boolean,
     msg: Message
 ): Promise<void> {
-    const share = await buildShareFromMessage(chatId, userId, me, msg);
-
-    navigator.share(share).catch((e: DOMException) => {
-        if (e.name !== "AbortError") {
-            toastStore.showFailureToast("failedToShareMessage");
-        }
-    });
+    buildShareFromMessage(chatId, userId, me, msg).then(
+        (share) =>
+            navigator.share(share).catch((e: DOMException) => {
+                if (e.name !== "AbortError") {
+                    const errorMessage = "Failed to share message";
+                    console.log(`${errorMessage}: ${e}`);
+                    rollbar.error(errorMessage, e);
+                    toastStore.showFailureToast("failedToShareMessage");
+                }
+            }),
+        () => toastStore.showFailureToast("failedToShareMessage")
+    );
 }
 
 async function buildShareFromMessage(
@@ -128,10 +133,28 @@ async function buildShareFromMessage(
     ) {
         share.text = msg.content.caption ?? "";
 
+        const blobUrl = extractBlobUrl(msg.content);
+        if (blobUrl === undefined) {
+            const error = "No blob url found";
+            console.log(error);
+            rollbar.error(error);
+            return Promise.reject();
+        }
+
+        // We need to give the file a valid filename (incl extension) otherwise the call to navigator.share
+        // will fail with "DOMException permission denied"
+        const filename =
+            msg.content.kind === "file_content"
+                ? msg.content.name
+                : buildDummyFilename(msg.content.mimeType);
+
         let file: File;
         try {
-            file = await fetchBlob(msg.content);
-        } catch {
+            file = await fetchBlob(blobUrl, msg.content.mimeType, filename);
+        } catch (e) {
+            const errorMessage = "Failed to fetch blob";
+            console.log(`${errorMessage}: ${e}`);
+            rollbar.error(errorMessage, e as Error);
             return Promise.reject();
         }
 
@@ -167,34 +190,29 @@ async function buildShareFromMessage(
     return share;
 }
 
-async function fetchBlob(content: MessageContent): Promise<File> {
-    let dataContent: DataContent;
+function extractBlobUrl(content: MessageContent): string | undefined {
+    let blobUrl: string | undefined;
 
     switch (content.kind) {
         case "video_content":
-            dataContent = content.videoData;
+            blobUrl = content.videoData.blobUrl;
             break;
         case "file_content":
         case "image_content":
         case "audio_content":
-            dataContent = content;
+            blobUrl = content.blobUrl;
             break;
         default:
-            return Promise.reject();
+            return;
     }
 
-    if (dataContent.blobUrl === undefined) {
-        return Promise.reject();
-    }
+    return blobUrl;
+}
 
-    // We need to give the file a valid filename (and extension) otherwise the call to navigator.share
-    // will fail with "DOMException permission denied"
-    const filename =
-        content.kind === "file_content" ? content.name : buildDummyFilename(content.mimeType);
-
-    const r = await fetch(dataContent.blobUrl);
-    const blobFile = await r.blob();
-    return new File([blobFile], filename, { type: content.mimeType });
+function fetchBlob(blobUrl: string, mimeType: string, filename: string): Promise<File> {
+    return fetch(blobUrl)
+        .then((response) => response.blob())
+        .then((data) => new File([data], filename, { type: mimeType }));
 }
 
 function buildDummyFilename(mimeType: string): string {
