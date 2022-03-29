@@ -92,7 +92,7 @@ export class ChatController {
         private serverChatSummary: Readable<ChatSummary>,
         public markRead: IMessageReadTracker,
         private _focusMessageIndex: number | undefined,
-        private _onConfirmedMessage: (message: EventWrapper<Message>) => void
+        private _updateSummaryWithConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
         this.chat = derived([serverChatSummary, unconfirmed], ([summary, unconfirmed]) =>
             mergeUnconfirmedIntoSummary(user.userId, summary, unconfirmed[summary.chatId]?.messages)
@@ -513,7 +513,7 @@ export class ChatController {
         // if so, we update the chat summary to show the correct latest message.
         const latestMessage = findLast(eventsResponse.events, (e) => e.event.kind === "message");
         if (latestMessage !== undefined && latestMessage.index > this.latestServerEventIndex()) {
-            this._onConfirmedMessage(latestMessage as EventWrapper<Message>);
+            this._updateSummaryWithConfirmedMessage(latestMessage as EventWrapper<Message>);
         }
 
         this.raiseEvent({
@@ -875,7 +875,7 @@ export class ChatController {
                 })
             );
             this.confirmedEventIndexesLoaded.add(resp.eventIndex);
-            this._onConfirmedMessage(confirmed);
+            this._updateSummaryWithConfirmedMessage(confirmed);
         }
     }
 
