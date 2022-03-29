@@ -17,7 +17,7 @@ import type {
 } from "../domain/chat/chat";
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
-import { DirectNotification, GroupNotification } from "../domain/notifications";
+import type { DirectNotification, GroupNotification } from "../domain/notifications";
 
 const CACHE_VERSION = 23;
 
