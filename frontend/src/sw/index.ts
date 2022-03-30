@@ -92,7 +92,7 @@ async function isClientFocused(): Promise<boolean> {
 }
 
 async function showNotification(notification: Notification): Promise<void> {
-    let icon = "/_/raw/icon.png";
+    let icon = "/_/raw/apple-touch-icon.png";
     let title = "OpenChat - ";
     let body: string;
     let path: string;
@@ -209,7 +209,7 @@ function extractMessageContent(
         };
     } else if (content.kind === "poll_content") {
         result = {
-            text: "TODO - poll content",
+            text: content.config.text ?? "New poll",
         };
     } else {
         throw new UnsupportedValueError(
