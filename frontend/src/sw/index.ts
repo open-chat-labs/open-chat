@@ -92,7 +92,7 @@ async function isClientFocused(): Promise<boolean> {
 }
 
 async function showNotification(notification: Notification): Promise<void> {
-    let icon = "/_/raw/apple-touch-icon.png";
+    let icon = "/_/raw/icon.png";
     let title = "OpenChat - ";
     let body: string;
     let path: string;
