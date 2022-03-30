@@ -446,5 +446,8 @@
     "search": "Search...",
     "offline": "Offine",
     "sendTo": "Send to...",
-    "sendGif": "Send gif"
+    "sendGif": "Send gif",
+    "copyMessageUrl": "Copy message url",
+    "messageUrlCopiedToClipboard": "Message url copied to clipboard!",
+    "failedToShareMessage": "Unable to share this message"
 }

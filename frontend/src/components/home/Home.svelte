@@ -74,7 +74,7 @@
     let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
-    let share: Share = { title: "", text: "", url: "" };
+    let share: Share = { title: "", text: "", url: "", files: [] };
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -113,6 +113,7 @@
                     title,
                     text,
                     url,
+                    files: [],
                 };
                 params.chatId = null;
                 history.replaceState(null, "", "/#/");
@@ -354,13 +355,17 @@
         const chatId = ev.detail;
         push(`/${chatId}`);
 
-        let text = share.text.length > 0 ? share.text : share.title;
+        const shareText = share.text ?? "";
+        const shareTitle = share.title ?? "";
+        const shareUrl = share.url ?? "";
 
-        if (share.url.length > 0) {
+        let text = shareText.length > 0 ? shareText : shareTitle;
+
+        if (shareUrl.length > 0) {
             if (text.length > 0) {
                 text += "\n";
             }
-            text += share.url;
+            text += shareUrl;
         }
 
         draftMessages.setTextContent(chatId, text);
