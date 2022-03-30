@@ -233,7 +233,7 @@
     }
 
     function shareMessage() {
-        shareFunctions.shareMessage(chatId, user.userId, me, msg);
+        shareFunctions.shareMessage(user.userId, me, msg);
     }
 
     function copyMessageUrl() {
@@ -391,6 +391,24 @@
                         </div>
                         <div slot="menu">
                             <Menu>
+                                {#if publicGroup && confirmed}
+                                    {#if canShare()}
+                                        <MenuItem on:click={shareMessage}>
+                                            <ShareIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("share")}</div>
+                                        </MenuItem>
+                                    {/if}
+                                    <MenuItem on:click={copyMessageUrl}>
+                                        <ContentCopy
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("copyMessageUrl")}</div>
+                                    </MenuItem>
+                                {/if}
                                 {#if confirmed && canPin}
                                     {#if pinned}
                                         <MenuItem on:click={unpinMessage}>
@@ -434,25 +452,6 @@
                                                 color={"var(--icon-txt)"}
                                                 slot="icon" />
                                             <div slot="text">{$_("blockUser")}</div>
-                                        </MenuItem>
-                                    {/if}
-                                {/if}
-                                {#if publicGroup && confirmed}
-                                    {#if canShare()}
-                                        <MenuItem on:click={shareMessage}>
-                                            <ShareIcon
-                                                size={$iconSize}
-                                                color={"var(--icon-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">{$_("share")}</div>
-                                        </MenuItem>
-                                    {:else}
-                                        <MenuItem on:click={copyMessageUrl}>
-                                            <ContentCopy
-                                                size={$iconSize}
-                                                color={"var(--icon-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">{$_("copyMessageUrl")}</div>
                                         </MenuItem>
                                     {/if}
                                 {/if}

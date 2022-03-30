@@ -2,13 +2,13 @@ import type { Message, MessageContent } from "./chat/chat";
 import { toastStore } from "../stores/toast";
 import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
-import { buildCryptoTransferText, buildTransactionLink } from "./chat/chat.utils";
+import { buildCryptoTransferText, buildTransactionUrl } from "./chat/chat.utils";
 import { rollbar } from "../utils/logging";
 
 export type Share = {
-    title: string;
-    text: string;
-    url: string;
+    title: string | undefined;
+    text: string | undefined;
+    url: string | undefined;
     files: File[];
 };
 
@@ -91,8 +91,8 @@ export function canShare(content: MessageContent): boolean {
     // return true;
 }
 
-export function shareMessage(chatId: string, userId: string, me: boolean, msg: Message): void {
-    buildShareFromMessage(chatId, userId, me, msg).then(
+export function shareMessage(userId: string, me: boolean, msg: Message): void {
+    buildShareFromMessage(userId, me, msg).then(
         (share) =>
             navigator.share(share).catch((e: DOMException) => {
                 if (e.name !== "AbortError") {
@@ -106,21 +106,16 @@ export function shareMessage(chatId: string, userId: string, me: boolean, msg: M
     );
 }
 
-async function buildShareFromMessage(
-    chatId: string,
-    userId: string,
-    me: boolean,
-    msg: Message
-): Promise<Share> {
+async function buildShareFromMessage(userId: string, me: boolean, msg: Message): Promise<Share> {
     const kind = msg.content.kind;
     if (kind === "deleted_content" || kind === "placeholder_content") {
         return Promise.reject();
     }
 
     const share: Share = {
-        title: "",
+        title: undefined,
         text: "",
-        url: buildMessageUrl(chatId, msg.messageIndex),
+        url: undefined,
         files: [],
     };
 
@@ -176,12 +171,12 @@ async function buildShareFromMessage(
             text += msg.content.caption;
         }
 
-        const transactionLink = buildTransactionLink(msg.content);
-        if (transactionLink !== undefined) {
+        const transactionUrl = buildTransactionUrl(msg.content);
+        if (transactionUrl !== undefined) {
             if (text !== undefined) {
                 text += "\n\n";
             }
-            text += transactionLink;
+            text += transactionUrl;
         }
         share.text = text ?? get(_)("icpTransfer.unexpected");
     }
