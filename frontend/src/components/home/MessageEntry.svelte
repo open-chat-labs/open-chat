@@ -230,6 +230,12 @@
             return true;
         }
 
+        const gifMatch = txt.match(/^\/gif( *(.*))$/);
+        if (gifMatch && gifMatch[2] !== undefined) {
+            dispatch("attachGif", gifMatch[2]);
+            return true;
+        }
+
         if ($chat.kind === "direct_chat") {
             const icpMatch = txt.match(/^\/icp *(\d*[.,]?\d*)$/);
             if (icpMatch && icpMatch[1] !== undefined) {
@@ -367,6 +373,7 @@
             bind:messageAction
             {controller}
             on:icpTransfer
+            on:attachGif
             on:fileSelected />
 
         {#if recording}

@@ -209,6 +209,7 @@
         on:createPoll
         on:searchChat
         on:icpTransfer
+        on:attachGif
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         on:joinGroup

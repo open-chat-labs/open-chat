@@ -4,6 +4,7 @@
     import Smiley from "./Smiley.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import SwapHorizontal from "svelte-material-icons/SwapHorizontal.svelte";
+    import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
     import TrayPlus from "svelte-material-icons/TrayPlus.svelte";
     import TrayRemove from "svelte-material-icons/TrayRemove.svelte";
     import { iconSize } from "../../stores/iconSize";
@@ -60,6 +61,11 @@
             drawOpen = true;
         }
     }
+
+    function sendGif() {
+        dispatch("attachGif", "");
+        drawOpen = false;
+    }
 </script>
 
 {#if useDrawer}
@@ -100,6 +106,11 @@
             <SwapHorizontal size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </div>
+    <div class="gif" on:click={sendGif}>
+        <HoverIcon title={"Attach gif"}>
+            <StickerEmoji size={$iconSize} color={"var(--icon-txt)"} />
+        </HoverIcon>
+    </div>
 </div>
 
 <style type="text/scss">
@@ -115,7 +126,7 @@
             background-color: var(--entry-bg);
 
             &.visible {
-                top: -110px;
+                top: -149px;
             }
         }
 
@@ -126,6 +137,7 @@
     .emoji,
     .attach,
     .open-draw,
+    .gif,
     .send-icp {
         flex: 0 0 15px;
     }

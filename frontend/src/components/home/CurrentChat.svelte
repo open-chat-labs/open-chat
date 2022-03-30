@@ -21,6 +21,7 @@
         canSendMessages,
     } from "../../domain/chat/chat.utils";
     import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
+    import GiphySelector from "./GiphySelector.svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -32,9 +33,11 @@
     let firstUnreadMention: Mention | undefined;
     let creatingPoll = false;
     let creatingICPTransfer = false;
+    let selectingGif = false;
     let footer: Footer;
     let pollBuilder: PollBuilder;
     let icpTransferBuilder: ICPTransferBuilder;
+    let giphySelector: GiphySelector;
     let showSearchHeader = false;
     let searchTerm = "";
 
@@ -131,6 +134,13 @@
         creatingICPTransfer = true;
     }
 
+    function attachGif(ev: CustomEvent<string>) {
+        selectingGif = true;
+        if (giphySelector !== undefined) {
+            giphySelector.reset(ev.detail);
+        }
+    }
+
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         showSearchHeader = false;
         controller.replyTo(ev.detail);
@@ -155,6 +165,8 @@
     on:sendTransfer={footer.sendICPTransfer}
     {controller}
     bind:open={creatingICPTransfer} />
+
+<GiphySelector bind:this={giphySelector} bind:open={selectingGif} />
 
 <div class="wrapper">
     {#if showSearchHeader}
@@ -210,6 +222,7 @@
             on:joinGroup
             on:cancelPreview
             on:upgrade
+            on:attachGif={attachGif}
             on:icpTransfer={icpTransfer}
             on:searchChat={searchChat}
             on:createPoll={createPoll} />

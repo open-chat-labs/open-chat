@@ -184,6 +184,12 @@ export default [
                 "process.env.BLOB_URL_PATTERN": process.env.BLOB_URL_PATTERN,
                 "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
                 "process.env.USERGEEK_APIKEY": process.env.USERGEEK_APIKEY,
+                "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
+            }),
+
+            replace({
+                'Object.defineProperty(exports, "__esModule", { value: true });': "",
+                delimiters: ["\n", "\n"],
             }),
 
             html({

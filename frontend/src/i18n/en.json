@@ -445,5 +445,6 @@
     "searchChat": "Search",
     "search": "Search...",
     "offline": "Offine",
-    "sendTo": "Send to..."
+    "sendTo": "Send to...",
+    "sendGif": "Send gif"
 }
