@@ -28,7 +28,7 @@
             class:rtl={$rtlStore}
             style={height === undefined ? undefined : `height: ${height}px`}
             src={content.mobile.url}
-            alt={content.caption} />
+            alt={content.caption ?? content.title} />
     {:else}
         <video
             autoplay={true}
@@ -40,8 +40,8 @@
             class:draft
             class:reply
             class:rtl={$rtlStore}
+            title={content.caption ?? content.title}
             style={height === undefined ? undefined : `height: ${height}px`}>
-            <title>{content.caption}</title>
             <track kind="captions" />
             <source src={content.desktop.url} type="video/mp4" />
         </video>

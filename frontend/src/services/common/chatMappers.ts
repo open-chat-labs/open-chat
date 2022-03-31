@@ -66,7 +66,6 @@ import type {
     ApiGiphyImageVariant,
 } from "../user/candid/idl";
 import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
-import { debug } from "../../utils/logging";
 
 export function message(candid: ApiMessage): Message {
     return {
@@ -121,7 +120,7 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
         return pollContent(candid.Poll);
     }
     if ("Giphy" in candid) {
-        return debug(giphyContent(candid.Giphy));
+        return giphyContent(candid.Giphy);
     }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }

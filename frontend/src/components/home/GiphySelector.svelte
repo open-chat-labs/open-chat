@@ -165,12 +165,12 @@
                             alt={selectedGif?.title} />
                     {:else if selectedImage.type === "mp4"}
                         <video
+                            title={selectedGif?.title}
                             class:landscape={selectedImage.width > selectedImage.height}
                             autoplay={true}
                             muted={true}
                             loop={true}
                             class="thumb">
-                            <title>{selectedGif?.title}</title>
                             <track kind="captions" />
                             <source src={selectedImage.url} type="video/mp4" />
                         </video>
@@ -191,13 +191,13 @@
                     let:visibleItems>
                     {#each visibleItems as item (getItemKey(item))}
                         <video
+                            title={getItemData(item).title}
                             autoplay={true}
                             muted={true}
                             loop={true}
                             style={`width: ${imgWidth}px`}
                             on:click={() => selectGif(getItemData(item))}
                             class="thumb">
-                            <title>{getItemData(item).title}</title>
                             <track kind="captions" />
                             <source
                                 src={getItemData(item).images.fixed_width.mp4}
@@ -208,6 +208,12 @@
                         </video>
                     {/each}
                 </MasonryInfiniteGrid>
+            {/if}
+
+            {#if selectedGif === undefined}
+                <div class="powered-by">
+                    <img src="../assets/giphy_small.gif" alt="Powered by Giphy" />
+                </div>
             {/if}
 
             <div class="message">
@@ -250,6 +256,11 @@
 
     :global(.gif-search .input-wrapper) {
         margin-bottom: 0;
+    }
+
+    .powered-by {
+        text-align: center;
+        background-color: black;
     }
 
     .header {
