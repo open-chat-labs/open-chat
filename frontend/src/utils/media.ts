@@ -112,7 +112,11 @@ type MediaExtract = {
 };
 
 export function fillMessage(msg: Message): boolean {
-    if (msg.content.kind === "image_content" || msg.content.kind === "video_content") {
+    if (
+        msg.content.kind === "image_content" ||
+        msg.content.kind === "video_content" ||
+        msg.content.kind === "giphy_content"
+    ) {
         return (
             (msg.content.caption === undefined || msg.content.caption === "") &&
             msg.repliesTo === undefined

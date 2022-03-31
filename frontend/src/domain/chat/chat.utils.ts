@@ -71,6 +71,8 @@ export function getContentAsText(content: MessageContent): string {
         text = "placeholder content";
     } else if (content.kind === "poll_content") {
         text = "poll";
+    } else if (content.kind === "giphy_content") {
+        text = captionedContent(get(_)("giphyMessage"), content.caption);
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
@@ -260,7 +262,8 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "deleted_content" &&
         content.kind !== "placeholder_content" &&
         content.kind !== "poll_content" &&
-        content.kind !== "crypto_content"
+        content.kind !== "crypto_content" &&
+        content.kind !== "giphy_content"
         ? { ...content, caption }
         : content;
 }

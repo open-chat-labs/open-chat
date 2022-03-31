@@ -4,6 +4,11 @@ export type SearchResponse = {
     meta: MetaObject;
 };
 
+export type PagedGIFObject = GIFObject & {
+    groupKey: number;
+    key: number;
+};
+
 export type GIFObject = {
     type: string;
     id: string;
@@ -15,12 +20,23 @@ export type GIFObject = {
 };
 
 export type ImagesObject = {
-    fixed_height: ImageVariant;
-    fixed_width: ImageVariant;
+    fixed_height: MultiformatImage;
+    fixed_width: MultiformatImage;
+    downsized_large: ImageVariant;
+    original: MultiformatImage;
 };
+
+export type NormalisedImage = ImageVariant & { type: "gif" | "mp4" };
 
 export type ImageVariant = {
     url: string;
+    height: number;
+    width: number;
+};
+
+export type MultiformatImage = ImageVariant & {
+    mp4: string;
+    webp: string;
 };
 
 export type PaginationObject = {

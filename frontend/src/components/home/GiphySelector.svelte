@@ -2,33 +2,49 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Input from "../Input.svelte";
+    import Link from "../Link.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, onMount, tick } from "svelte";
+    import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { GIFObject, PaginationObject, SearchResponse } from "../../domain/giphy";
+    import type { GIFObject, PagedGIFObject, SearchResponse } from "../../domain/giphy";
+    import { MasonryInfiniteGrid } from "@egjs/svelte-infinitegrid";
     import { debug } from "../../utils/logging";
+    import type { GiphyContent } from "domain/chat/chat";
 
     const dispatch = createEventDispatcher();
 
-    const TRENDING_API_URL = `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_APIKEY}&limit=50`;
-    const SEARCH_API_URL = `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_APIKEY}&limit=50&q=`;
-    const THRESHOLD = 1000;
-
     export let open: boolean;
-
-    let giphyGridEl: HTMLElement;
 
     let refreshing = false;
     let error: string | undefined = undefined;
     let message = "";
     let searchTerm = "";
-    let gifs: GIFObject[] = [];
+    let gifs: PagedGIFObject[] = [];
     let timer: number | undefined;
-    let pagination: PaginationObject | undefined = undefined;
-    let gridElement: HTMLDivElement;
-    let masonrySupported = false;
+    let modalWidth = 0;
+    let pageSize = 25;
+    let pageNum = -1;
+    let selectedGif: PagedGIFObject | undefined;
+
+    $: selectedImage =
+        selectedGif === undefined
+            ? undefined
+            : $mobileWidth
+            ? { ...selectedGif.images.downsized_large, type: "gif" }
+            : {
+                  ...selectedGif.images.original,
+                  url: selectedGif.images.original.mp4,
+                  type: "mp4",
+              };
+
+    const TRENDING_API_URL = `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_APIKEY}&limit=${pageSize}`;
+    const SEARCH_API_URL = `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_APIKEY}&limit=${pageSize}&q=`;
+
+    $: availWidth = modalWidth - 32; // 32 is the padding
+    $: numCols = $mobileWidth ? 2 : 4;
+    $: imgWidth = availWidth / numCols - 5; // 5 is the col gap
 
     function onChange(ev: CustomEvent<string>) {
         if (ev.detail === searchTerm) {
@@ -41,98 +57,85 @@
         }
         timer = window.setTimeout(() => {
             if (searchTerm.length > 2) {
-                pagination = undefined;
+                pageNum = -1;
                 reset(searchTerm);
             }
         }, 500);
     }
 
-    function onScroll() {
-        if (!refreshing && giphyGridEl.scrollHeight - giphyGridEl.scrollTop < THRESHOLD) {
-            if (pagination !== undefined && pagination.offset < pagination.total_count) {
-                reset(searchTerm);
-            }
-        }
+    function addPagingInfo(index: number, pageNum: number, gif: GIFObject): PagedGIFObject {
+        return {
+            groupKey: pageNum,
+            key: index + pageNum * pageSize,
+            ...gif,
+        };
     }
 
-    function renderGrid(recursing = false) {
-        if (masonrySupported) return;
-
-        const style = getComputedStyle(gridElement);
-        const gap = parseFloat(style.gridRowGap);
-        const items = [...gridElement.childNodes].filter(
-            (c) => c.nodeType === 1
-        ) as HTMLImageElement[];
-        const ncol = style.gridTemplateColumns.split(" ").length;
-
-        items.forEach((item) => {
-            item.style.removeProperty("margin-top");
-        });
-
-        if (ncol > 1) {
-            items.slice(ncol).forEach((c, i) => {
-                let prev_fin =
-                        items[i].getBoundingClientRect().bottom /* bottom edge of item above */,
-                    curr_ini = c.getBoundingClientRect().top; /* top edge of current item */
-
-                c.style.marginTop = `${prev_fin + gap - curr_ini}px`;
-            });
-        }
-
-        if (!recursing) {
-            renderGrid(true);
-        }
+    function getMoreGifs() {
+        refreshing = true;
+        const offset = pageSize * pageNum;
+        const url =
+            searchTerm === ""
+                ? `${TRENDING_API_URL}&offset=${offset}`
+                : `${SEARCH_API_URL}${searchTerm}&offset=${offset}`;
+        return fetch(url)
+            .then((res) => res.json())
+            .then((res: SearchResponse) => {
+                return res.data;
+            })
+            .then((res) => res.map((gif, i) => addPagingInfo(i, pageNum, gif)))
+            .then(debug)
+            .finally(() => (refreshing = false));
     }
 
     export function reset(search: string) {
-        tick().then(() => {
-            const style = getComputedStyle(gridElement);
-            masonrySupported = style.gridTemplateRows === "masonry";
-            refreshing = true;
-            error = undefined;
-            message = "";
-            searchTerm = search;
-            gifs = pagination === undefined ? [] : gifs;
-            const url =
-                searchTerm === ""
-                    ? `${TRENDING_API_URL}&offset=${pagination?.offset ?? 0}`
-                    : `${SEARCH_API_URL}${searchTerm}&offset=${pagination?.offset ?? 0}`;
-            fetch(url)
-                .then((res) => res.json())
-                .then(debug)
-                .then((res: SearchResponse) => {
-                    pagination = {
-                        offset: res.pagination.count + (pagination?.count ?? 0),
-                        total_count: res.pagination.total_count,
-                        count: res.pagination.count,
-                    };
-                    return res.data;
-                })
-                .then((res) => (gifs = [...gifs, ...res]))
-                .then(() => window.setTimeout(renderGrid, 1000))
-                .finally(() => (refreshing = false));
-        });
+        error = undefined;
+        message = "";
+        searchTerm = search;
+        selectedGif = undefined;
+        gifs = [];
     }
 
     function send() {
-        // create a new type of message content maybe to contain the giphy url, let's wait and see how that pans out
-        const content = {
-            kind: "giphy_content",
-            caption: message === "" ? undefined : message,
-        };
-        dispatch("sendGiphy", content);
-        open = false;
+        if (selectedGif !== undefined) {
+            const content: GiphyContent = {
+                kind: "giphy_content",
+                caption: message === "" ? undefined : message,
+                title: selectedGif.title,
+                desktop: {
+                    height: Number(selectedGif.images.original.height),
+                    width: Number(selectedGif.images.original.width),
+                    url: selectedGif.images.original.mp4,
+                },
+                mobile: {
+                    height: Number(selectedGif.images.downsized_large.height),
+                    width: Number(selectedGif.images.downsized_large.width),
+                    url: selectedGif.images.downsized_large.url,
+                },
+            };
+            dispatch("sendGiphy", debug(content));
+            open = false;
+        }
     }
 
-    function selectGif(gif: GIFObject) {
-        console.log("selected: ", gif);
+    function selectGif(gif: PagedGIFObject) {
+        selectedGif = gif;
+    }
+
+    function clearSelectedGif() {
+        selectedGif = undefined;
+    }
+
+    async function nextPage() {
+        if (refreshing) return;
+        pageNum = pageNum + 1;
+        const nextPage = await getMoreGifs();
+        gifs = [...gifs, ...nextPage];
     }
 </script>
 
-<svelte:window on:resize={() => renderGrid(true)} />
-
 <Overlay dismissible={true} bind:active={open}>
-    <ModalContent>
+    <ModalContent large={true} bind:actualWidth={modalWidth}>
         <div class="header" slot="header">
             <div class="title">
                 {$_("sendGif")}
@@ -149,17 +152,55 @@
             </div>
         </div>
         <form slot="body" class="gif-body" on:submit={send}>
-            <div on:scroll={onScroll} bind:this={giphyGridEl} class="result-wrapper">
-                <div bind:this={gridElement} class="grid--masonry">
-                    {#each gifs as gif}
+            {#if selectedImage !== undefined}
+                <div class="selected">
+                    {#if selectedImage.type === "gif"}
                         <img
-                            on:click={() => selectGif(gif)}
-                            class="thumb"
-                            src={gif.images.fixed_height.url}
-                            alt={gif.title} />
-                    {/each}
+                            class:landscape={selectedImage.width > selectedImage.height}
+                            src={selectedImage.url}
+                            alt={selectedGif?.title} />
+                    {:else if selectedImage.type === "mp4"}
+                        <video
+                            class:landscape={selectedImage.width > selectedImage.height}
+                            autoplay={true}
+                            muted={true}
+                            loop={true}
+                            class="thumb">
+                            <title>{selectedGif?.title}</title>
+                            <track kind="captions" />
+                            <source src={selectedImage.url} type="video/mp4" />
+                        </video>
+                    {/if}
                 </div>
-            </div>
+            {:else}
+                <MasonryInfiniteGrid
+                    threshold={500}
+                    isConstantSize={true}
+                    container={true}
+                    class="giphy-container"
+                    gap={5}
+                    on:requestAppend={({ detail: e }) => {
+                        e.wait();
+                        nextPage().then(() => e.ready());
+                    }}
+                    items={gifs}
+                    let:visibleItems>
+                    {#each visibleItems as item (item.key)}
+                        <video
+                            autoplay={true}
+                            muted={true}
+                            loop={true}
+                            style={`width: ${imgWidth}px`}
+                            on:click={() => selectGif(item.data)}
+                            class="thumb">
+                            <title>{item.data.title}</title>
+                            <track kind="captions" />
+                            <source src={item.data.images.fixed_width.mp4} type="video/mp4" />
+                            <source src={item.data.images.fixed_width.webp} type="video/webp" />
+                        </video>
+                    {/each}
+                </MasonryInfiniteGrid>
+            {/if}
 
             <div class="message">
                 <Input
@@ -171,9 +212,17 @@
                     bind:value={message} />
             </div>
         </form>
-        <span class="footer" slot="footer">
+        <span class="footer" slot="footer" class:selected={selectedGif !== undefined}>
+            {#if selectedGif !== undefined}
+                <span class="close">
+                    <Link underline={"always"} on:click={clearSelectedGif}>
+                        {$_("backToResults")}
+                    </Link>
+                </span>
+            {/if}
             <ButtonGroup align={$mobileWidth ? "center" : "end"}>
-                <Button tiny={true} on:click={send}>{$_("send")}</Button>
+                <Button tiny={true} disabled={selectedGif === undefined} on:click={send}
+                    >{$_("send")}</Button>
                 <Button tiny={true} secondary={true} on:click={() => (open = false)}
                     >{$_("cancel")}</Button>
             </ButtonGroup>
@@ -186,12 +235,14 @@
         margin-bottom: 0;
     }
 
+    :global(.giphy-container) {
+        overflow: auto;
+        height: calc(var(--vh, 1vh) * 60);
+    }
+
     :global(.gif-search .input-wrapper) {
         margin-bottom: 0;
     }
-
-    $col-width: Min(10em, 100%);
-    $gap: $sp3;
 
     .header {
         display: flex;
@@ -203,40 +254,60 @@
         }
     }
 
+    .selected {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        img {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            max-height: calc(var(--vh, 1vh) * 50);
+
+            &:not(.landscape) {
+                width: auto;
+            }
+        }
+    }
+
     .gif-body {
         position: relative;
 
-        .result-wrapper {
-            overflow: auto;
-            height: calc(var(--vh, 1vh) * 50);
-        }
-
-        .grid--masonry {
-            justify-content: center;
-            grid-gap: $gap;
-            padding: $gap;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, $col-width);
-
-            // todo - this is only supported on firefox so far
-            // for other browsers, we need a js fallback
-            grid-template-rows: masonry;
-
-            > * {
-                width: $col-width;
-            }
-        }
         .thumb {
             cursor: pointer;
             display: block;
-            // width: 100%;
         }
+
+        .container {
+            height: 300px;
+        }
+
         .message {
             padding-top: $sp3;
             background-color: #fff;
         }
+
+        .fake {
+            background: #ccc;
+            height: 200px;
+            padding: 10px;
+        }
     }
 
     .footer {
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-end;
+
+        &.selected {
+            justify-content: space-between;
+        }
+
+        @include mobile() {
+            justify-content: center;
+        }
     }
 </style>

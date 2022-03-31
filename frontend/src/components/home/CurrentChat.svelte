@@ -158,15 +158,21 @@
 
 <svelte:window on:focus={onWindowFocus} />
 
-<PollBuilder bind:this={pollBuilder} on:sendPoll={footer.sendPoll} bind:open={creatingPoll} />
+<PollBuilder
+    bind:this={pollBuilder}
+    on:sendPoll={footer.sendMessageWithContent}
+    bind:open={creatingPoll} />
 
 <ICPTransferBuilder
     bind:this={icpTransferBuilder}
-    on:sendTransfer={footer.sendICPTransfer}
+    on:sendTransfer={footer.sendMessageWithContent}
     {controller}
     bind:open={creatingICPTransfer} />
 
-<GiphySelector bind:this={giphySelector} bind:open={selectingGif} />
+<GiphySelector
+    bind:this={giphySelector}
+    bind:open={selectingGif}
+    on:sendGiphy={footer.sendMessageWithContent} />
 
 <div class="wrapper">
     {#if showSearchHeader}

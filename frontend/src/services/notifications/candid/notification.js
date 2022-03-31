@@ -7,6 +7,20 @@ export const Notification = IDL.Variant({
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
+          'Giphy' : IDL.Record({
+            'title' : IDL.Text,
+            'desktop' : IDL.Record({
+              'url' : IDL.Text,
+              'height' : IDL.Nat32,
+              'width' : IDL.Nat32,
+            }),
+            'caption' : IDL.Opt(IDL.Text),
+            'mobile' : IDL.Record({
+              'url' : IDL.Text,
+              'height' : IDL.Nat32,
+              'width' : IDL.Nat32,
+            }),
+          }),
           'File' : IDL.Record({
             'name' : IDL.Text,
             'mime_type' : IDL.Text,
@@ -145,6 +159,20 @@ export const Notification = IDL.Variant({
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
+          'Giphy' : IDL.Record({
+            'title' : IDL.Text,
+            'desktop' : IDL.Record({
+              'url' : IDL.Text,
+              'height' : IDL.Nat32,
+              'width' : IDL.Nat32,
+            }),
+            'caption' : IDL.Opt(IDL.Text),
+            'mobile' : IDL.Record({
+              'url' : IDL.Text,
+              'height' : IDL.Nat32,
+              'width' : IDL.Nat32,
+            }),
+          }),
           'File' : IDL.Record({
             'name' : IDL.Text,
             'mime_type' : IDL.Text,
