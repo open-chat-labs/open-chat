@@ -213,7 +213,7 @@ function extractMessageContent(
         };
     } else if (content.kind === "poll_content") {
         result = {
-            text: "TODO - poll content",
+            text: content.config.text ?? "New poll",
         };
     } else {
         throw new UnsupportedValueError(

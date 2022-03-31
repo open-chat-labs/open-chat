@@ -447,5 +447,8 @@
     "searchChat": "検索",
     "search": "検索...",
     "offline": "オフライン",
-    "sendTo": "に送る..."
+    "sendTo": "に送る...",
+    "copyMessageUrl": "メッセージのURLをコピーする",
+    "messageUrlCopiedToClipboard": "メッセージのURLがクリップボードにコピーされました！",
+    "failedToShareMessage": "このメッセージを共有できません"
 }
