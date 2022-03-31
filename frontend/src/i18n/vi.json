@@ -451,5 +451,8 @@
     "sendTo": "Gửi đến...",
     "copyMessageUrl": "Sao chép url tin nhắn",
     "messageUrlCopiedToClipboard": "Đã sao chép url tin nhắn vào khay nhớ tạm!",
-    "failedToShareMessage": "Không thể chia sẻ tin nhắn này"
+    "failedToShareMessage": "Không thể chia sẻ tin nhắn này",
+    "sendGif": "Gửi gif",
+    "backToResults": "trở lại",
+    "giphyMessage": "Tin nhắn Giphy"
 }

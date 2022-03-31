@@ -450,5 +450,8 @@
     "sendTo": "Отправить...",
     "copyMessageUrl": "Скопировать адрес сообщения",
     "messageUrlCopiedToClipboard": "Адрес сообщения скопирован в буфер обмена!",
-    "failedToShareMessage": "Не удалось поделиться этим сообщением"
+    "failedToShareMessage": "Не удалось поделиться этим сообщением",
+    "sendGif": "Отправить гифку",
+    "backToResults": "назад",
+    "giphyMessage": "сообщение"
 }
