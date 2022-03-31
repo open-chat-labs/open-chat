@@ -151,7 +151,7 @@
                     value={searchTerm} />
             </div>
         </div>
-        <form slot="body" class="gif-body" on:submit={send}>
+        <form slot="body" class="gif-body" on:submit|preventDefault={send}>
             {#if selectedImage !== undefined}
                 <div class="selected">
                     {#if selectedImage.type === "gif"}

@@ -114,32 +114,69 @@
 </div>
 
 <style type="text/scss">
-    .message-actions {
-        display: none;
-        align-items: center;
-        transition: top 200ms ease-in-out;
-
-        &.useDrawer {
-            position: absolute;
-            flex-direction: column;
-            top: 0px;
-            background-color: var(--entry-bg);
-
-            &.visible {
-                top: -149px;
-            }
-        }
-
-        &.visible {
-            display: flex;
-        }
+    :global(.message-actions.useDrawer.visible .wrapper) {
+        background-color: var(--entry-bg);
+        @include box-shadow(1);
     }
+
     .emoji,
     .attach,
     .open-draw,
     .gif,
     .send-icp {
         flex: 0 0 15px;
+    }
+
+    .message-actions {
+        position: relative;
+        display: flex;
+        opacity: 0;
+        align-items: center;
+
+        &.visible {
+            opacity: 1;
+        }
+
+        &.useDrawer {
+            pointer-events: none;
+
+            .emoji,
+            .attach,
+            .open-draw,
+            .gif,
+            .send-icp {
+                top: -18px;
+                left: -38px;
+                opacity: 0;
+                position: absolute;
+                transition: top 200ms ease-in, opacity 200ms ease-in;
+            }
+
+            &.visible {
+                display: block;
+                pointer-events: all;
+
+                .emoji {
+                    opacity: 1;
+                    top: -75px;
+                    transition-delay: 150ms;
+                }
+                .attach {
+                    opacity: 1;
+                    top: -120px;
+                    transition-delay: 100ms;
+                }
+                .send-icp {
+                    opacity: 1;
+                    top: -165px;
+                    transition-delay: 50ms;
+                }
+                .gif {
+                    opacity: 1;
+                    top: -210px;
+                }
+            }
+        }
     }
 
     .open-draw {
