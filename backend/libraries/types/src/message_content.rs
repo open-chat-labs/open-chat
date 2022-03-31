@@ -22,7 +22,7 @@ pub enum MessageContent {
     Poll(PollContent),
     Cryptocurrency(CryptocurrencyContent),
     Deleted(DeletedContent),
-    Giphy(GiphyContent)
+    Giphy(GiphyContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -35,7 +35,7 @@ pub enum MessageContentInternal {
     Poll(PollContentInternal),
     Cryptocurrency(CryptocurrencyContent),
     Deleted(DeletedContent),
-    Giphy(GiphyContent)
+    Giphy(GiphyContent),
 }
 
 pub enum ContentValidationError {
