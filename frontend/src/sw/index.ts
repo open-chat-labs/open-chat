@@ -183,6 +183,10 @@ function extractMessageContent(
             text: content.caption ?? extractMediaType(content.mimeType),
             image: content.thumbnailData,
         };
+    } else if (content.kind === "giphy_content") {
+        result = {
+            text: content.caption ?? "Gif message",
+        };
     } else if (content.kind === "video_content") {
         result = {
             text: content.caption ?? extractMediaType(content.mimeType),
