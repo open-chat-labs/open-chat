@@ -187,11 +187,6 @@ export default [
                 "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
             }),
 
-            replace({
-                'Object.defineProperty(exports, "__esModule", { value: true });': "",
-                delimiters: ["\n", "\n"],
-            }),
-
             html({
                 template: (_) => {
                     function generateCspHashValue(text) {
