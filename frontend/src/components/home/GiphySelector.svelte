@@ -128,6 +128,14 @@
         const nextPage = await getMoreGifs();
         gifs = [...gifs, ...nextPage];
     }
+
+    function getItemData(item: any): PagedGIFObject {
+        return item.data;
+    }
+
+    function getItemKey(item: any): number {
+        return item.key;
+    }
 </script>
 
 <Overlay dismissible={true} bind:active={open}>
@@ -181,18 +189,22 @@
                     }}
                     items={gifs}
                     let:visibleItems>
-                    {#each visibleItems as item (item.key)}
+                    {#each visibleItems as item (getItemKey(item))}
                         <video
                             autoplay={true}
                             muted={true}
                             loop={true}
                             style={`width: ${imgWidth}px`}
-                            on:click={() => selectGif(item.data)}
+                            on:click={() => selectGif(getItemData(item))}
                             class="thumb">
-                            <title>{item.data.title}</title>
+                            <title>{getItemData(item).title}</title>
                             <track kind="captions" />
-                            <source src={item.data.images.fixed_width.mp4} type="video/mp4" />
-                            <source src={item.data.images.fixed_width.webp} type="video/webp" />
+                            <source
+                                src={getItemData(item).images.fixed_width.mp4}
+                                type="video/mp4" />
+                            <source
+                                src={getItemData(item).images.fixed_width.webp}
+                                type="video/webp" />
                         </video>
                     {/each}
                 </MasonryInfiniteGrid>

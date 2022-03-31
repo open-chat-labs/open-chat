@@ -57,5 +57,5 @@
 {:else if content.kind === "poll_content"}
     <PollContent {preview} {me} {content} on:registerVote />
 {:else if content.kind === "giphy_content"}
-    <GiphyContent {fill} {content} {reply} {pinned} {height} />
+    <GiphyContent {fill} {content} {reply} {height} />
 {/if}

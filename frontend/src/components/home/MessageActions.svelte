@@ -20,9 +20,7 @@
 
     let drawOpen = false;
 
-    $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
-
     $: useDrawer = $mobileWidth;
     $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
 

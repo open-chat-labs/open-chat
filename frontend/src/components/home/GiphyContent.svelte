@@ -10,7 +10,6 @@
     export let fill: boolean;
     export let draft: boolean = false;
     export let reply: boolean = false;
-    export let pinned: boolean = false;
     export let height: number | undefined = undefined;
 
     let withCaption = content.caption !== undefined && content.caption !== "";
