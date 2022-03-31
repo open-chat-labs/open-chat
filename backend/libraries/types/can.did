@@ -367,6 +367,21 @@ type ReplyContext =
         event_index: EventIndex;
     };
 
+type GiphyImageVariant = 
+    record {
+        width: nat32;
+        height: nat32;
+        url: text;
+    };
+
+type GiphyContent =
+    record {
+        caption: opt text;
+        title: text;
+        desktop: GiphyImageVariant;
+        mobile: GiphyImageVariant;
+    };
+
 type ImageContent =
     record {
         width: nat32;
@@ -402,6 +417,7 @@ type MessageContent =
         Poll: PollContent;
         Cryptocurrency: CryptocurrencyContent;
         Deleted: DeletedContent;
+        Giphy: GiphyContent;
     };
 
 type MessageIndexRange =

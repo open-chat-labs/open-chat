@@ -186,6 +186,7 @@ pub struct Metrics {
     pub cycles_messages: u64,
     pub icp_messages: u64,
     pub deleted_messages: u64,
+    pub giphy_messages: u64,
     pub replies: u64,
     pub total_edits: u64,
     pub total_reactions: u64,
@@ -323,6 +324,7 @@ impl ChatEvents {
                     CryptocurrencyTransfer::ICP(_) => self.metrics.icp_messages += 1,
                 },
                 MessageContentInternal::Deleted(_) => self.metrics.deleted_messages += 1,
+                MessageContentInternal::Giphy(_) => self.metrics.giphy_messages += 1,
             }
 
             if m.replies_to.is_some() {

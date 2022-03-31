@@ -208,12 +208,27 @@ export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
 }
+export interface FieldTooShortResult {
+  'length_provided' : number,
+  'min_length' : number,
+}
 export interface FileContent {
   'name' : string,
   'mime_type' : string,
   'file_size' : number,
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
+}
+export interface GiphyContent {
+  'title' : string,
+  'desktop' : GiphyImageVariant,
+  'caption' : [] | [string],
+  'mobile' : GiphyImageVariant,
+}
+export interface GiphyImageVariant {
+  'url' : string,
+  'height' : number,
+  'width' : number,
 }
 export interface GroupChatCreated {
   'name' : string,
@@ -379,7 +394,8 @@ export interface Message {
   'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
 }
-export type MessageContent = { 'File' : FileContent } |
+export type MessageContent = { 'Giphy' : GiphyContent } |
+  { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |

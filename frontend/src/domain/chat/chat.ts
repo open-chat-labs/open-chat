@@ -16,7 +16,8 @@ export type MessageContent =
     | DeletedContent
     | PlaceholderContent
     | PollContent
-    | CryptocurrencyContent;
+    | CryptocurrencyContent
+    | GiphyContent;
 
 export type IndexRange = [number, number];
 
@@ -179,6 +180,20 @@ export interface CryptocurrencyContent {
     kind: "crypto_content";
     caption?: string;
     transfer: CryptocurrencyTransfer;
+}
+
+export type GiphyImage = {
+    height: number;
+    width: number;
+    url: string;
+};
+
+export interface GiphyContent {
+    kind: "giphy_content";
+    caption?: string;
+    title: string;
+    desktop: GiphyImage; //will be "original" from the giphy api
+    mobile: GiphyImage; //will be "downsized_large" from the giphy api
 }
 
 export interface ImageContent extends DataContent {

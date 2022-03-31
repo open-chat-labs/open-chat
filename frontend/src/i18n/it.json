@@ -450,5 +450,8 @@
     "sendTo": "Inviare a...",
     "copyMessageUrl": "Copia l'URL del messaggio",
     "messageUrlCopiedToClipboard": "URL del messaggio copiato negli appunti!",
-    "failedToShareMessage": "Impossibile condividere questo messaggio"
+    "failedToShareMessage": "Impossibile condividere questo messaggio",
+    "sendGif": "Invia gif",
+    "backToResults": "Indietro",
+    "giphyMessage": "messaggio Giphy"
 }

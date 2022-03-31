@@ -27,6 +27,8 @@ import type {
     PermissionRole,
     ICPWithdrawal,
     PendingICPWithdrawal,
+    GiphyContent,
+    GiphyImage,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { User } from "../../domain/user/user";
@@ -60,6 +62,8 @@ import type {
     ApiPermissionRole,
     ApiICPWithdrawal,
     ApiPendingICPWithdrawal,
+    ApiGiphyContent,
+    ApiGiphyImageVariant,
 } from "../user/candid/idl";
 import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
 
@@ -115,6 +119,9 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
     if ("Poll" in candid) {
         return pollContent(candid.Poll);
     }
+    if ("Giphy" in candid) {
+        return giphyContent(candid.Giphy);
+    }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
@@ -122,6 +129,24 @@ export function apiUser(domain: User): ApiUser {
     return {
         user_id: Principal.fromText(domain.userId),
         username: domain.username,
+    };
+}
+
+function giphyContent(candid: ApiGiphyContent): GiphyContent {
+    return {
+        kind: "giphy_content",
+        title: candid.title,
+        caption: optional(candid.caption, identity),
+        desktop: giphyImageVariant(candid.desktop),
+        mobile: giphyImageVariant(candid.mobile),
+    };
+}
+
+function giphyImageVariant(candid: ApiGiphyImageVariant): GiphyImage {
+    return {
+        width: candid.width,
+        height: candid.height,
+        url: candid.url,
     };
 }
 
@@ -437,9 +462,29 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
         case "poll_content":
             return { Poll: apiPollContent(domain) };
 
+        case "giphy_content":
+            return { Giphy: apiGiphyContent(domain) };
+
         case "placeholder_content":
             throw new Error("Incorrectly attempting to send placeholder content to the server");
     }
+}
+
+function apiGiphyContent(domain: GiphyContent): ApiGiphyContent {
+    return {
+        title: domain.title,
+        caption: apiOptional(identity, domain.caption),
+        desktop: apiGiphyImageVariant(domain.desktop),
+        mobile: apiGiphyImageVariant(domain.mobile),
+    };
+}
+
+function apiGiphyImageVariant(domain: GiphyImage): ApiGiphyImageVariant {
+    return {
+        height: domain.height,
+        width: domain.width,
+        url: domain.url,
+    };
 }
 
 function apiPollContent(domain: PollContent): ApiPollContent {

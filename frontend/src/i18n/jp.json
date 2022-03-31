@@ -450,5 +450,8 @@
     "sendTo": "に送る...",
     "copyMessageUrl": "メッセージのURLをコピーする",
     "messageUrlCopiedToClipboard": "メッセージのURLがクリップボードにコピーされました！",
-    "failedToShareMessage": "このメッセージを共有できません"
+    "failedToShareMessage": "このメッセージを共有できません",
+    "sendGif": "gifを送信",
+    "backToResults": "戻る",
+    "giphyMessage": "Giphyメッセージ"
 }

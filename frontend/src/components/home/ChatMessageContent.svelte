@@ -4,6 +4,7 @@
     import Markdown from "./Markdown.svelte";
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";
+    import GiphyContent from "./GiphyContent.svelte";
     import AudioContent from "./AudioContent.svelte";
     import PollContent from "./PollContent.svelte";
     import FileContent from "./FileContent.svelte";
@@ -55,4 +56,6 @@
     <PlaceholderContent />
 {:else if content.kind === "poll_content"}
     <PollContent {preview} {me} {content} on:registerVote />
+{:else if content.kind === "giphy_content"}
+    <GiphyContent {fill} {content} {reply} {height} />
 {/if}

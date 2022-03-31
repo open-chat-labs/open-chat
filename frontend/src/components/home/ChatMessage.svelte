@@ -174,6 +174,10 @@
                 width: content.width,
                 height: content.height,
             };
+        } else if (content.kind === "giphy_content") {
+            return $mobileWidth
+                ? { width: content.mobile.width, height: content.mobile.height }
+                : { width: content.desktop.width, height: content.desktop.height };
         }
 
         return undefined;
