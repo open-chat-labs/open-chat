@@ -10,7 +10,6 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import type { GIFObject, PagedGIFObject, SearchResponse } from "../../domain/giphy";
     import { MasonryInfiniteGrid } from "@egjs/svelte-infinitegrid";
-    import { debug } from "../../utils/logging";
     import type { GiphyContent } from "domain/chat/chat";
 
     const dispatch = createEventDispatcher();
@@ -18,7 +17,6 @@
     export let open: boolean;
 
     let refreshing = false;
-    let error: string | undefined = undefined;
     let message = "";
     let searchTerm = "";
     let gifs: PagedGIFObject[] = [];
@@ -84,12 +82,10 @@
                 return res.data;
             })
             .then((res) => res.map((gif, i) => addPagingInfo(i, pageNum, gif)))
-            .then(debug)
             .finally(() => (refreshing = false));
     }
 
     export function reset(search: string) {
-        error = undefined;
         message = "";
         searchTerm = search;
         selectedGif = undefined;
@@ -113,7 +109,7 @@
                     url: selectedGif.images.downsized_large.url,
                 },
             };
-            dispatch("sendGiphy", debug(content));
+            dispatch("sendGiphy", content);
             open = false;
         }
     }
@@ -280,19 +276,9 @@
             display: block;
         }
 
-        .container {
-            height: 300px;
-        }
-
         .message {
             padding-top: $sp3;
             background-color: #fff;
-        }
-
-        .fake {
-            background: #ccc;
-            height: 200px;
-            padding: 10px;
         }
     }
 
