@@ -64,8 +64,6 @@
         dispatch("attachGif", "");
         drawOpen = false;
     }
-
-    $: console.log("ShowActions: ", showActions);
 </script>
 
 <svelte:body
