@@ -4,7 +4,7 @@ use group_canister::c2c_summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use std::collections::HashSet;
 use types::{
-    EventIndex, EventWrapper, GroupPermissions, Mention, Message, MessageIndex, OptionUpdate, TimestampMillis, UserId,
+    EventIndex, EventWrapper, GroupChatSummaryUpdatesInternal, GroupPermissions, Mention, Message, MessageIndex, OptionUpdate, TimestampMillis, UserId,
     MAX_RETURNED_MENTIONS,
 };
 
@@ -22,7 +22,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
     let updates_from_events = process_events(args.updates_since, participant, runtime_state);
 
     if let Some(last_updated) = updates_from_events.latest_update {
-        let updates = SummaryUpdates {
+        let updates = GroupChatSummaryUpdatesInternal {
             chat_id: runtime_state.env.canister_id().into(),
             last_updated,
             name: updates_from_events.name,

@@ -4,14 +4,10 @@ use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use chat_events::GroupChatEvents;
-use group_canister::Summary;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{
-    Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupPermissions, MessageIndex, Milliseconds, Notification,
-    TimestampMillis, Timestamped, UserId, Version,
-};
+use types::{Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupPermissions, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version, GroupChatSummaryInternal};
 use utils::env::Environment;
 use utils::memory;
 use utils::rand::get_random_item;
@@ -70,12 +66,12 @@ impl RuntimeState {
         }
     }
 
-    pub fn summary(&self, participant: &ParticipantInternal) -> Summary {
+    pub fn summary(&self, participant: &ParticipantInternal) -> GroupChatSummaryInternal {
         let data = &self.data;
         let latest_event = data.events.last();
         let min_visible_message_index = participant.min_visible_message_index();
 
-        Summary {
+        GroupChatSummaryInternal {
             chat_id: self.env.canister_id().into(),
             last_updated: latest_event.timestamp,
             name: data.name.clone(),
