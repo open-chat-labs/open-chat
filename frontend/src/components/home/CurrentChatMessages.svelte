@@ -184,6 +184,18 @@
         );
     }
 
+    function getScrollTopResetFn(previousHeight: number) {
+        return (newHeight: number, scrollTop: number) => {
+            if (messagesDiv === undefined) return;
+            const additionalHeight = newHeight - previousHeight;
+            messagesDiv.scrollTop = scrollTop - additionalHeight;
+            setIfInsideFromBottomThreshold();
+            scrollTopResetFn = undefined;
+        };
+    }
+
+    let scrollTopResetFn: ((newHeight: number, scrollTop: number) => void) | undefined = undefined;
+
     function onScroll() {
         if (!initialised) return;
 
@@ -214,6 +226,7 @@
                 // Note - this fires even when we have entered our own message. This *seems* wrong but
                 // it is actually correct because we do want to load our own messages from the server
                 // so that any incorrect indexes are corrected and only the right thing goes in the cache
+                scrollTopResetFn = getScrollTopResetFn(messagesDiv?.scrollHeight ?? 0);
                 controller.loadNewMessages();
             }
         }
@@ -354,6 +367,11 @@
                     case "loaded_new_messages":
                         // wait until the events are rendered
                         tick().then(() => {
+                            scrollTopResetFn &&
+                                scrollTopResetFn(
+                                    messagesDiv?.scrollHeight ?? 0,
+                                    messagesDiv?.scrollTop ?? 0
+                                );
                             if (insideFromBottomThreshold) {
                                 // only scroll if we are now within threshold from the bottom
                                 scrollBottom("smooth");
