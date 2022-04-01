@@ -7,7 +7,10 @@ use chat_events::GroupChatEvents;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupPermissions, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version, GroupChatSummaryInternal};
+use types::{
+    Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, MessageIndex, Milliseconds,
+    Notification, TimestampMillis, Timestamped, UserId, Version,
+};
 use utils::env::Environment;
 use utils::memory;
 use utils::rand::get_random_item;

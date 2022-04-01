@@ -4,7 +4,11 @@ use group_index_canister::c2c_filter_groups;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::query;
 use std::collections::{HashMap, HashSet};
-use types::{Alert, AlertDetails, AlertId, CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary, DirectChatSummaryUpdates, GroupChatSummary, GroupChatSummaryInternal, GroupChatSummaryUpdates, GroupChatSummaryUpdatesInternal, GroupDeleted, Milliseconds, OptionUpdate, TimestampMillis};
+use types::{
+    Alert, AlertDetails, AlertId, CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary,
+    DirectChatSummaryUpdates, GroupChatSummary, GroupChatSummaryInternal, GroupChatSummaryUpdates,
+    GroupChatSummaryUpdatesInternal, GroupDeleted, Milliseconds, OptionUpdate, TimestampMillis,
+};
 use user_canister::{initial_state, updates, updates::UpdatesSince};
 use utils::range_set::convert_to_message_index_ranges;
 
