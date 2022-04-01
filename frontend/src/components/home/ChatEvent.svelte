@@ -8,6 +8,7 @@
     import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
+    import AggregateParticipantsJoinedOrLeftEvent from "./AggregateParticipantsJoinedOrLeftEvent.svelte";
     import type { UserSummary } from "../../domain/user/user";
     import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
@@ -112,6 +113,11 @@
         label={"userJoined"}
         subjectId={event.event.userId}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "aggregate_participants_joined_left"}
+    <AggregateParticipantsJoinedOrLeftEvent
+        {user}
+        joined={event.event.users_joined}
+        left={event.event.users_left} />
 {:else if event.event.kind === "role_changed"}
     <RoleChangedEvent {user} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "users_blocked"}
