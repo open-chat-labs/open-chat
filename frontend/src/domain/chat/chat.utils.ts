@@ -581,8 +581,6 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
                 memo.pop();
             }
 
-            // console.log(`${e.event.kind}: ${e.event.userId}`);
-
             if (e.event.kind === "participant_joined") {
                 if (agg.users_left.has(e.event.userId)) {
                     agg.users_left.delete(e.event.userId);
