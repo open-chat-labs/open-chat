@@ -65,6 +65,4 @@ opt-level = "z"
 codegen-units = 1
 
 [patch.crates-io]
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "12cf70ec100788bc8e7487dfa9bb9910bd47540e" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "12cf70ec100788bc8e7487dfa9bb9910bd47540e" }
 web-push = { git = "https://github.com/hpeebles/rust-web-push", rev = "c0424e229fab6094754338e6efb97efb9fcf56e5" }
