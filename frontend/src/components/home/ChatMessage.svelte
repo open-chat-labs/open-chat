@@ -92,7 +92,7 @@
         console.log("updating ChatMessage component");
 
         if (readByMe) {
-            observer.unobserve(msgElement);
+            observer?.unobserve(msgElement);
         }
     });
 
@@ -198,7 +198,8 @@
                 parseFloat(msgBubbleStyle.borderLeftWidth);
         }
 
-        const parentWidth = document.getElementById("chat-messages")?.offsetWidth ?? 0;
+        const parentWidth = msgBubbleElement.parentElement?.offsetWidth ?? 0;
+
         let targetMediaDimensions = calculateMediaDimensions(
             mediaDimensions,
             parentWidth,
