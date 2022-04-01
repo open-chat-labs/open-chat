@@ -66,8 +66,15 @@
     }
 </script>
 
+<svelte:body
+    on:click={() => {
+        if (drawOpen && messageAction === undefined) {
+            drawOpen = false;
+        }
+    }} />
+
 {#if useDrawer}
-    <div class="open-draw" on:click={toggleDraw}>
+    <div class="open-draw" on:click|stopPropagation={toggleDraw}>
         {#if drawOpen || $fileToAttach !== undefined}
             <HoverIcon>
                 <TrayRemove size={$iconSize} color={"var(--icon-txt)"} />
@@ -81,7 +88,7 @@
 {/if}
 
 <div class:visible={showActions} class="message-actions" class:useDrawer>
-    <div class="emoji" on:click={toggleEmojiPicker}>
+    <div class="emoji" on:click|stopPropagation={toggleEmojiPicker}>
         {#if messageAction === "emoji"}
             <HoverIcon>
                 <Close size={$iconSize} color={"var(--icon-txt)"} />
@@ -99,12 +106,12 @@
             on:open={() => (messageAction = "file")}
             on:close={close} />
     </div>
-    <div class="send-icp" on:click={createICPTransfer}>
+    <div class="send-icp" on:click|stopPropagation={createICPTransfer}>
         <HoverIcon title={"Send Crypto"}>
             <SwapHorizontal size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </div>
-    <div class="gif" on:click={sendGif}>
+    <div class="gif" on:click|stopPropagation={sendGif}>
         <HoverIcon title={"Attach gif"}>
             <StickerEmoji size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
@@ -130,9 +137,12 @@
         display: flex;
         opacity: 0;
         align-items: center;
+        transition: opacity 0s ease-in-out;
+        transition-delay: 300s;
 
         &.visible {
             opacity: 1;
+            transition-delay: 0s;
         }
 
         &.useDrawer {
