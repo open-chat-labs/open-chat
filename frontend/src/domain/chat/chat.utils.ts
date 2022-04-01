@@ -29,6 +29,7 @@ import type {
     MemberRole,
     PermissionRole,
     CryptocurrencyContent,
+    AggregateParticipantsJoinedOrLeft,
 } from "./chat";
 import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -551,7 +552,62 @@ function groupBySender(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEven
 }
 
 export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][][] {
-    return groupWhile(sameDate, events.filter(eventIsVisible)).map(groupBySender);
+    return groupWhile(sameDate, events.filter(eventIsVisible))
+        .map(reduceJoinedOrLeft)
+        .map(groupBySender);
+}
+
+function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[] {
+    function getLatestAggregateEventIfExists(
+        events: EventWrapper<ChatEvent>[]
+    ): AggregateParticipantsJoinedOrLeft | undefined {
+        if (events.length === 0) return undefined;
+        const latest = events[events.length - 1];
+        return latest.event.kind === "aggregate_participants_joined_left"
+            ? latest.event
+            : undefined;
+    }
+
+    return events.reduce((memo: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
+        if (e.event.kind === "participant_joined" || e.event.kind === "participant_left") {
+            let agg = getLatestAggregateEventIfExists(memo);
+            if (agg === undefined) {
+                agg = {
+                    kind: "aggregate_participants_joined_left",
+                    users_joined: new Set(),
+                    users_left: new Set(),
+                };
+            } else {
+                memo.pop();
+            }
+
+            // console.log(`${e.event.kind}: ${e.event.userId}`);
+
+            if (e.event.kind === "participant_joined") {
+                if (agg.users_left.has(e.event.userId)) {
+                    agg.users_left.delete(e.event.userId);
+                } else {
+                    agg.users_joined.add(e.event.userId);
+                }
+            } else {
+                if (agg.users_joined.has(e.event.userId)) {
+                    agg.users_joined.delete(e.event.userId);
+                } else {
+                    agg.users_left.add(e.event.userId);
+                }
+            }
+
+            memo.push({
+                event: agg,
+                timestamp: e.timestamp,
+                index: e.index,
+            });
+        } else {
+            memo.push(e);
+        }
+
+        return memo;
+    }, []);
 }
 
 export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapper<Message>[][] {

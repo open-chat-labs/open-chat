@@ -343,6 +343,7 @@ export type GroupChatEvent =
     | GroupChatCreated
     | ParticipantsAdded
     | ParticipantJoined
+    | AggregateParticipantsJoinedOrLeft
     | ParticipantsRemoved
     | ParticipantLeft
     | GroupNameChanged
@@ -376,6 +377,12 @@ export type ParticipantsAdded = {
     kind: "participants_added";
     userIds: string[];
     addedBy: string;
+};
+
+export type AggregateParticipantsJoinedOrLeft = {
+    kind: "aggregate_participants_joined_left";
+    users_joined: Set<string>;
+    users_left: Set<string>;
 };
 
 export type ParticipantJoined = {
