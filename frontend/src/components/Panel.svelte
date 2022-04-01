@@ -36,15 +36,15 @@
             flex: 0 0 $left-width;
             background: var(--panel-left-bg);
             display: flex;
-            flex-direction: column;
+            // flex-direction: column;
             min-width: 236px;
             max-width: 550px;
             position: relative;
+            padding: 0;
             @include mobile() {
                 background: var(--panel-left-xs);
                 width: 100%;
                 max-width: none;
-                padding: 0;
                 flex: auto;
             }
         }
