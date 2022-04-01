@@ -92,7 +92,7 @@
         console.log("updating ChatMessage component");
 
         if (readByMe) {
-            observer.unobserve(msgElement);
+            observer?.unobserve(msgElement);
         }
     });
 
