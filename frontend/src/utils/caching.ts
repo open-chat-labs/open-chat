@@ -18,6 +18,7 @@ import type {
 import type { DirectNotification, GroupNotification } from "../domain/notifications";
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
+import { UnsupportedValueError } from "./error";
 
 const CACHE_VERSION = 23;
 
@@ -158,50 +159,75 @@ export function setCachedChats(
     userId: string
 ): (data: MergedUpdatesResponse) => Promise<MergedUpdatesResponse> {
     return async (data: MergedUpdatesResponse) => {
+        if (!data.wasUpdated) {
+            return data;
+        }
+
+        const latestMessages: Record<string, EventWrapper<Message>> = {};
+
         // irritating hoop jumping to keep typescript happy here
         const serialisable = data.chatSummaries
             .filter((c) => !isPreviewing(c))
             .map((c) => {
+                const latestMessage = c.latestMessage
+                    ? makeSerialisable(c.latestMessage, c.chatId)
+                    : undefined;
+
+                if (latestMessage) {
+                    latestMessages[c.chatId] = latestMessage;
+                }
+
                 if (c.kind === "direct_chat") {
                     return {
                         ...c,
                         readByMe: drangeToIndexRanges(c.readByMe),
                         readByThem: drangeToIndexRanges(c.readByThem),
-                        latestMessage: c.latestMessage
-                            ? makeSerialisable(c.latestMessage, c.chatId)
-                            : undefined,
+                        latestMessage,
                     };
                 }
+
                 if (c.kind === "group_chat") {
                     return {
                         ...c,
                         readByMe: drangeToIndexRanges(c.readByMe),
-                        latestMessage: c.latestMessage
-                            ? makeSerialisable(c.latestMessage, c.chatId)
-                            : undefined,
+                        latestMessage,
                     };
                 }
-                return c;
+
+                throw new UnsupportedValueError("Unrecognised chat type", c);
             });
 
-        const resolvedDb = await db;
-
-        resolvedDb.put(
-            "chats",
-            {
-                wasUpdated: true,
-                chatSummaries: serialisable,
-                timestamp: data.timestamp,
-                blockedUsers: data.blockedUsers,
-                avatarIdUpdate: undefined,
-                affectedEvents: {},
-            },
-            userId
+        const tx = (await db).transaction(
+            ["chats", "chat_events", "message_index_event_index"],
+            "readwrite"
         );
+        const chatsStore = tx.objectStore("chats");
+        const eventStore = tx.objectStore("chat_events");
+        const mapStore = tx.objectStore("message_index_event_index");
 
-        Object.entries(data.affectedEvents)
-            .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
-            .forEach((key) => resolvedDb.delete("chat_events", key));
+        const promises: Promise<string | void>[] = [
+            chatsStore.put(
+                {
+                    wasUpdated: true,
+                    chatSummaries: serialisable,
+                    timestamp: data.timestamp,
+                    blockedUsers: data.blockedUsers,
+                    avatarIdUpdate: undefined,
+                    affectedEvents: {},
+                },
+                userId
+            ),
+            ...Object.entries(latestMessages).flatMap(([chatId, message]) => [
+                eventStore.put(message, createCacheKey(chatId, message.index)),
+                mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`),
+            ]),
+            ...Object.entries(data.affectedEvents)
+                .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
+                .map((key) => eventStore.delete(key)),
+        ];
+
+        await Promise.all(promises);
+        await tx.done;
 
         return data;
     };
