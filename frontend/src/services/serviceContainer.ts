@@ -255,6 +255,17 @@ export class ServiceContainer implements MarkMessagesRead {
         );
     }
 
+    directChatEventsByEventIndex(
+        theirUserId: string,
+        eventIndexes: number[]
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        return this.rehydrateEventResponse(
+            "direct",
+            theirUserId,
+            this.userClient.chatEventsByIndex(eventIndexes, theirUserId)
+        );
+    }
+
     groupChatEventsWindow(
         eventIndexRange: IndexRange,
         chatId: string,
@@ -277,6 +288,17 @@ export class ServiceContainer implements MarkMessagesRead {
             "group",
             chatId,
             this.getGroupClient(chatId).chatEvents(eventIndexRange, startIndex, ascending)
+        );
+    }
+
+    groupChatEventsByEventIndex(
+        chatId: string,
+        eventIndexes: number[]
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        return this.rehydrateEventResponse(
+            "group",
+            chatId,
+            this.getGroupClient(chatId).chatEventsByIndex(eventIndexes)
         );
     }
 

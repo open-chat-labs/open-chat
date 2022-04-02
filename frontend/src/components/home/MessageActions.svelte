@@ -4,6 +4,7 @@
     import Smiley from "./Smiley.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import SwapHorizontal from "svelte-material-icons/SwapHorizontal.svelte";
+    import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
     import TrayPlus from "svelte-material-icons/TrayPlus.svelte";
     import TrayRemove from "svelte-material-icons/TrayRemove.svelte";
     import { iconSize } from "../../stores/iconSize";
@@ -19,9 +20,7 @@
 
     let drawOpen = false;
 
-    $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
-
     $: useDrawer = $mobileWidth;
     $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
 
@@ -60,10 +59,22 @@
             drawOpen = true;
         }
     }
+
+    function sendGif() {
+        dispatch("attachGif", "");
+        drawOpen = false;
+    }
 </script>
 
+<svelte:body
+    on:click={() => {
+        if (drawOpen && messageAction === undefined) {
+            drawOpen = false;
+        }
+    }} />
+
 {#if useDrawer}
-    <div class="open-draw" on:click={toggleDraw}>
+    <div class="open-draw" on:click|stopPropagation={toggleDraw}>
         {#if drawOpen || $fileToAttach !== undefined}
             <HoverIcon>
                 <TrayRemove size={$iconSize} color={"var(--icon-txt)"} />
@@ -77,7 +88,7 @@
 {/if}
 
 <div class:visible={showActions} class="message-actions" class:useDrawer>
-    <div class="emoji" on:click={toggleEmojiPicker}>
+    <div class="emoji" on:click|stopPropagation={toggleEmojiPicker}>
         {#if messageAction === "emoji"}
             <HoverIcon>
                 <Close size={$iconSize} color={"var(--icon-txt)"} />
@@ -95,39 +106,85 @@
             on:open={() => (messageAction = "file")}
             on:close={close} />
     </div>
-    <div class="send-icp" on:click={createICPTransfer}>
+    <div class="send-icp" on:click|stopPropagation={createICPTransfer}>
         <HoverIcon title={"Send Crypto"}>
             <SwapHorizontal size={$iconSize} color={"var(--icon-txt)"} />
+        </HoverIcon>
+    </div>
+    <div class="gif" on:click|stopPropagation={sendGif}>
+        <HoverIcon title={"Attach gif"}>
+            <StickerEmoji size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </div>
 </div>
 
 <style type="text/scss">
-    .message-actions {
-        display: none;
-        align-items: center;
-        transition: top 200ms ease-in-out;
-
-        &.useDrawer {
-            position: absolute;
-            flex-direction: column;
-            top: 0px;
-            background-color: var(--entry-bg);
-
-            &.visible {
-                top: -110px;
-            }
-        }
-
-        &.visible {
-            display: flex;
-        }
+    :global(.message-actions.useDrawer.visible .wrapper) {
+        background-color: var(--entry-bg);
+        @include box-shadow(1);
     }
+
     .emoji,
     .attach,
     .open-draw,
+    .gif,
     .send-icp {
         flex: 0 0 15px;
+    }
+
+    .message-actions {
+        position: relative;
+        display: flex;
+        opacity: 0;
+        align-items: center;
+        transition: opacity 0s ease-in-out;
+        transition-delay: 300s;
+
+        &.visible {
+            opacity: 1;
+            transition-delay: 0s;
+        }
+
+        &.useDrawer {
+            pointer-events: none;
+
+            .emoji,
+            .attach,
+            .open-draw,
+            .gif,
+            .send-icp {
+                top: -18px;
+                left: -38px;
+                opacity: 0;
+                position: absolute;
+                transition: top 200ms ease-in, opacity 200ms ease-in;
+            }
+
+            &.visible {
+                display: block;
+                pointer-events: all;
+
+                .emoji {
+                    opacity: 1;
+                    top: -75px;
+                    transition-delay: 150ms;
+                }
+                .attach {
+                    opacity: 1;
+                    top: -120px;
+                    transition-delay: 100ms;
+                }
+                .send-icp {
+                    opacity: 1;
+                    top: -165px;
+                    transition-delay: 50ms;
+                }
+                .gif {
+                    opacity: 1;
+                    top: -210px;
+                }
+            }
+        }
     }
 
     .open-draw {

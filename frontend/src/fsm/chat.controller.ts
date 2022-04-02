@@ -53,6 +53,7 @@ import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { overwriteCachedEvents } from "../utils/caching";
 import { writable } from "svelte/store";
+import { findLast } from "../utils/list";
 import { rollbar } from "../utils/logging";
 import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
@@ -91,7 +92,7 @@ export class ChatController {
         private serverChatSummary: Readable<ChatSummary>,
         public markRead: IMessageReadTracker,
         private _focusMessageIndex: number | undefined,
-        private _onConfirmedMessage: (message: EventWrapper<Message>) => void
+        private _updateSummaryWithConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
         this.chat = derived([serverChatSummary, unconfirmed], ([summary, unconfirmed]) =>
             mergeUnconfirmedIntoSummary(user.userId, summary, unconfirmed[summary.chatId]?.messages)
@@ -508,6 +509,13 @@ export class ChatController {
 
         await this.handleEventsResponse(eventsResponse);
 
+        // We may have loaded messages which are more recent than what the chat summary thinks is the latest message,
+        // if so, we update the chat summary to show the correct latest message.
+        const latestMessage = findLast(eventsResponse.events, (e) => e.event.kind === "message");
+        if (latestMessage !== undefined && latestMessage.index > this.latestServerEventIndex()) {
+            this._updateSummaryWithConfirmedMessage(latestMessage as EventWrapper<Message>);
+        }
+
         this.raiseEvent({
             chatId: this.chatId,
             event: { kind: "loaded_new_messages" },
@@ -588,7 +596,7 @@ export class ChatController {
     }
 
     // This could be a message received in an `updates` response, from a notification, or via WebRTC.
-    handleMessageSentByOther(messageEvent: EventWrapper<Message>, confirmed: boolean) {
+    handleMessageSentByOther(messageEvent: EventWrapper<Message>, confirmed: boolean): void {
         if (indexIsInRanges(messageEvent.index, this.confirmedEventIndexesLoaded)) {
             // We already have this confirmed message
             return;
@@ -757,19 +765,41 @@ export class ChatController {
         });
     }
 
-    async chatUpdated(): Promise<void> {
+    async chatUpdated(affectedEvents: number[]): Promise<void> {
         // The chat summary has been updated which means the latest message may be new
         const latestMessage = this.chatVal.latestMessage;
         if (latestMessage !== undefined && latestMessage.event.sender !== this.user.userId) {
             this.handleMessageSentByOther(latestMessage, true);
         }
 
+        this.refreshAffectedEvents(affectedEvents);
         this.updateDetails();
 
         this.raiseEvent({
             chatId: this.chatId,
             event: { kind: "chat_updated" },
         });
+    }
+
+    // This will refresh any affected events which are currently loaded
+    private refreshAffectedEvents(affectedEventIndexes: number[]): Promise<void> {
+        const filtered = affectedEventIndexes.filter((e) =>
+            indexIsInRanges(e, this.confirmedEventIndexesLoaded)
+        );
+        if (filtered.length === 0) {
+            return Promise.resolve();
+        }
+
+        this.loading.set(true);
+        const chat = this.chatVal;
+        const eventsPromise =
+            chat.kind === "direct_chat"
+                ? this.api.directChatEventsByEventIndex(chat.them, filtered)
+                : this.api.groupChatEventsByEventIndex(chat.chatId, filtered);
+
+        return eventsPromise
+            .then((resp) => this.handleEventsResponse(resp))
+            .finally(() => this.loading.set(false));
     }
 
     markAllRead(): void {
@@ -845,7 +875,7 @@ export class ChatController {
                 })
             );
             this.confirmedEventIndexesLoaded.add(resp.eventIndex);
-            this._onConfirmedMessage(confirmed);
+            this._updateSummaryWithConfirmedMessage(confirmed);
         }
     }
 

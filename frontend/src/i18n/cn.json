@@ -447,5 +447,11 @@
     "searchChat": "搜索",
     "search": "搜索...",
     "offline": "离线",
-    "sendTo": "发给..."
+    "sendTo": "发给...",
+    "copyMessageUrl": "复制消息地址",
+    "messageUrlCopiedToClipboard": "消息网址已复制到剪贴板！",
+    "failedToShareMessage": "无法分享此消息",
+    "sendGif": "发送 gif",
+    "backToResults": "背部",
+    "giphyMessage": "Giphy 消息"
 }

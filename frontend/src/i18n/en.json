@@ -445,5 +445,11 @@
     "searchChat": "Search",
     "search": "Search...",
     "offline": "Offine",
-    "sendTo": "Send to..."
+    "sendTo": "Send to...",
+    "sendGif": "Send gif",
+    "copyMessageUrl": "Copy message url",
+    "messageUrlCopiedToClipboard": "Message url copied to clipboard!",
+    "failedToShareMessage": "Unable to share this message",
+    "backToResults": "back",
+    "giphyMessage": "Giphy message"
 }

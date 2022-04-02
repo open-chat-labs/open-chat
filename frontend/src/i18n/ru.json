@@ -447,5 +447,11 @@
     "searchChat": "Поиск",
     "search": "Поиск...",
     "offline": "Не в сети",
-    "sendTo": "Отправить..."
+    "sendTo": "Отправить...",
+    "copyMessageUrl": "Скопировать адрес сообщения",
+    "messageUrlCopiedToClipboard": "Адрес сообщения скопирован в буфер обмена!",
+    "failedToShareMessage": "Не удалось поделиться этим сообщением",
+    "sendGif": "Отправить гифку",
+    "backToResults": "назад",
+    "giphyMessage": "сообщение"
 }

@@ -18,6 +18,7 @@
     export let fixedWidth: boolean = true;
     export let fitToContent: boolean = false;
     export let alignTo: DOMRect | undefined = undefined;
+    export let actualWidth: number = 0;
 
     let divElement: HTMLElement;
 
@@ -58,6 +59,7 @@
 
 <div
     bind:this={divElement}
+    bind:clientWidth={actualWidth}
     {style}
     class="modal-content"
     class:large

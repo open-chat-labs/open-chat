@@ -2,7 +2,6 @@
     import MentionPicker from "./MentionPicker.svelte";
     import { _ } from "svelte-i18n";
     import { userStore } from "../../stores/user";
-    import { iconSize } from "../../stores/iconSize";
     import type { Participant } from "../../domain/chat/chat";
     import Close from "svelte-material-icons/Close.svelte";
     import type { PartialUserSummary } from "../../domain/user/user";

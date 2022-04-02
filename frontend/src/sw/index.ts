@@ -183,6 +183,10 @@ function extractMessageContent(
             text: content.caption ?? extractMediaType(content.mimeType),
             image: content.thumbnailData,
         };
+    } else if (content.kind === "giphy_content") {
+        result = {
+            text: content.caption ?? "Gif message",
+        };
     } else if (content.kind === "video_content") {
         result = {
             text: content.caption ?? extractMediaType(content.mimeType),
@@ -209,7 +213,7 @@ function extractMessageContent(
         };
     } else if (content.kind === "poll_content") {
         result = {
-            text: "TODO - poll content",
+            text: content.config.text ?? "New poll",
         };
     } else {
         throw new UnsupportedValueError(

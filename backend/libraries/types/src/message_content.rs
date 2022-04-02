@@ -22,6 +22,7 @@ pub enum MessageContent {
     Poll(PollContent),
     Cryptocurrency(CryptocurrencyContent),
     Deleted(DeletedContent),
+    Giphy(GiphyContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -34,6 +35,7 @@ pub enum MessageContentInternal {
     Poll(PollContentInternal),
     Cryptocurrency(CryptocurrencyContent),
     Deleted(DeletedContent),
+    Giphy(GiphyContent),
 }
 
 pub enum ContentValidationError {
@@ -74,6 +76,7 @@ impl MessageContent {
             MessageContent::Poll(p) => p.config.options.is_empty(),
             MessageContent::Cryptocurrency(c) => c.transfer.is_zero(),
             MessageContent::Deleted(_) => true,
+            MessageContent::Giphy(_) => false,
         };
 
         if is_empty {
@@ -101,6 +104,7 @@ impl MessageContent {
             }),
             MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
+            MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
         }
     }
 
@@ -134,7 +138,8 @@ impl MessageContent {
             MessageContent::Text(_)
             | MessageContent::Poll(_)
             | MessageContent::Cryptocurrency(_)
-            | MessageContent::Deleted(_) => {}
+            | MessageContent::Deleted(_)
+            | MessageContent::Giphy(_) => {}
         }
 
         references
@@ -150,6 +155,7 @@ impl MessageContent {
             MessageContent::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
             MessageContent::Cryptocurrency(c) => c.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Deleted(_) => 0,
+            MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
         }
     }
 }
@@ -165,6 +171,7 @@ impl MessageContentInternal {
             MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
             MessageContentInternal::Cryptocurrency(c) => MessageContent::Cryptocurrency(c.clone()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
+            MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
         }
     }
 }
@@ -182,6 +189,21 @@ pub struct ImageContent {
     pub caption: Option<String>,
     pub mime_type: String,
     pub blob_reference: Option<BlobReference>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GiphyImageVariant {
+    pub width: u32,
+    pub height: u32,
+    pub url: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GiphyContent {
+    pub caption: Option<String>,
+    pub title: String,
+    pub desktop: GiphyImageVariant,
+    pub mobile: GiphyImageVariant,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

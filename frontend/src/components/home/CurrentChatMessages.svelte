@@ -79,9 +79,10 @@
                 const idx = idxAttr ? parseInt(idxAttr.value, 10) : undefined;
                 const id = idAttr ? BigInt(idAttr.value) : undefined;
                 if (idx !== undefined && id !== undefined) {
-                    const intersectionRatioRequired = 0 < messagesDivHeight && messagesDivHeight < entry.boundingClientRect.height
-                        ? messagesDivHeight * 0.5 / entry.boundingClientRect.height
-                        : 0.5;
+                    const intersectionRatioRequired =
+                        0 < messagesDivHeight && messagesDivHeight < entry.boundingClientRect.height
+                            ? (messagesDivHeight * 0.5) / entry.boundingClientRect.height
+                            : 0.5;
 
                     const isIntersecting = entry.intersectionRatio >= intersectionRatioRequired;
                     if (isIntersecting && messageReadTimers[idx] === undefined) {
@@ -183,6 +184,18 @@
         );
     }
 
+    function getScrollTopResetFn(previousHeight: number) {
+        return (newHeight: number, scrollTop: number) => {
+            if (messagesDiv === undefined) return;
+            const additionalHeight = newHeight - previousHeight;
+            messagesDiv.scrollTop = scrollTop - additionalHeight;
+            setIfInsideFromBottomThreshold();
+            scrollTopResetFn = undefined;
+        };
+    }
+
+    let scrollTopResetFn: ((newHeight: number, scrollTop: number) => void) | undefined = undefined;
+
     function onScroll() {
         if (!initialised) return;
 
@@ -213,6 +226,7 @@
                 // Note - this fires even when we have entered our own message. This *seems* wrong but
                 // it is actually correct because we do want to load our own messages from the server
                 // so that any incorrect indexes are corrected and only the right thing goes in the cache
+                scrollTopResetFn = getScrollTopResetFn(messagesDiv?.scrollHeight ?? 0);
                 controller.loadNewMessages();
             }
         }
@@ -353,6 +367,11 @@
                     case "loaded_new_messages":
                         // wait until the events are rendered
                         tick().then(() => {
+                            scrollTopResetFn &&
+                                scrollTopResetFn(
+                                    messagesDiv?.scrollHeight ?? 0,
+                                    messagesDiv?.scrollTop ?? 0
+                                );
                             if (insideFromBottomThreshold) {
                                 // only scroll if we are now within threshold from the bottom
                                 scrollBottom("smooth");
@@ -447,7 +466,12 @@
     }
 </script>
 
-<div bind:this={messagesDiv} bind:clientHeight={messagesDivHeight} class="chat-messages" on:scroll|passive={onScroll} id="chat-messages">
+<div
+    bind:this={messagesDiv}
+    bind:clientHeight={messagesDivHeight}
+    class="chat-messages"
+    on:scroll|passive={onScroll}
+    id="chat-messages">
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
@@ -474,6 +498,8 @@
                         {canDelete}
                         {canSend}
                         {canReact}
+                        publicGroup={controller.chatVal.kind === "group_chat" &&
+                            controller.chatVal.public}
                         pinned={isPinned($pinned, evt)}
                         on:chatWith
                         on:replyTo={replyTo}

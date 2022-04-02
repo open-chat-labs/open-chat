@@ -447,5 +447,11 @@
     "searchChat": "Rechercher",
     "search": "Rechercher...",
     "offline": "Hors ligne",
-    "sendTo": "Envoyer à..."
+    "sendTo": "Envoyer à...",
+    "copyMessageUrl": "Copier l'URL du message",
+    "messageUrlCopiedToClipboard": "URL du message copiée dans le presse-papier !",
+    "failedToShareMessage": "Impossible de partager ce message",
+    "sendGif": "Envoyer un GIF",
+    "backToResults": "arrière",
+    "giphyMessage": "Message graphique"
 }

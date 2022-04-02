@@ -5,13 +5,11 @@
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
     import type {
-        CryptocurrencyContent,
         EventWrapper,
         GroupChatSummary,
         Message,
         MessageAction,
         MessageContent,
-        PollContent,
     } from "../../domain/chat/chat";
     import { canSendMessages } from "../../domain/chat/chat.utils";
     import { getMessageContent, getStorageRequiredForMessage } from "../../domain/chat/chat.utils";
@@ -125,11 +123,7 @@
         }
     }
 
-    export function sendPoll(ev: CustomEvent<PollContent>) {
-        sendMessageWithAttachment(undefined, [], ev.detail);
-    }
-
-    export function sendICPTransfer(ev: CustomEvent<CryptocurrencyContent>) {
+    export function sendMessageWithContent(ev: CustomEvent<MessageContent>) {
         sendMessageWithAttachment(undefined, [], ev.detail);
     }
 
@@ -209,6 +203,7 @@
         on:createPoll
         on:searchChat
         on:icpTransfer
+        on:attachGif
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         on:joinGroup

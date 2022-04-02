@@ -5,11 +5,10 @@
     import type { CryptocurrencyContent } from "../../domain/chat/chat";
     import Markdown from "./Markdown.svelte";
     import Envelope from "../Envelope.svelte";
-    import { formatICP } from "../../utils/cryptoFormatter";
-    import { userStore } from "../../stores/user";
     import { getContext } from "svelte";
     import type { CreatedUser } from "../../domain/user/user";
     import { currentUserKey } from "../../fsm/home.controller";
+    import { buildCryptoTransferText, buildTransactionLink } from "../../domain/chat/chat.utils";
 
     export let content: CryptocurrencyContent;
     export let me: boolean = false;
@@ -19,76 +18,24 @@
     export let groupChat: boolean;
 
     const user = getContext<CreatedUser>(currentUserKey);
-
-    let senderName = username(senderId);
-
-    let amount: bigint =
-        content.transfer.kind === "completed_icp_transfer" ||
-        content.transfer.kind === "pending_icp_transfer"
-            ? content.transfer.amountE8s
-            : BigInt(0);
-
-    function username(userId: string): string {
-        return userId === user.userId
-            ? $_("you")
-            : `${$userStore[userId]?.username ?? $_("unknown")}`;
-    }
+    let transferText = buildCryptoTransferText(user.userId, senderId, content, me);
+    let transactionLinkText = buildTransactionLink(content);
 </script>
 
-{#if content.transfer.kind === "completed_icp_transfer"}
+{#if transferText !== undefined}
     <div class="message">
         <div class="env" class:me class:first class:groupChat>
             <Envelope />
         </div>
         <div class="txt">
-            <span class="transfer-txt">
-                {$_("icpTransfer.confirmedSent", {
-                    values: {
-                        amount: formatICP(amount, 0),
-                        receiver: username(content.transfer.recipient),
-                        sender: senderName,
-                    },
-                })}
-            </span>
+            <span class="transfer-txt">{transferText}</span>
         </div>
     </div>
-    <div class="link">
-        <Markdown
-            text={$_("icpTransfer.viewTransaction", {
-                values: {
-                    url: `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`,
-                },
-            })}
-            inline={!reply} />
-    </div>
-{:else if content.transfer.kind === "pending_icp_transfer"}
-    <div class="message">
-        <div class="env" class:me class:first class:groupChat>
-            <Envelope />
+    {#if transactionLinkText !== undefined}
+        <div class="link">
+            <Markdown text={transactionLinkText} inline={!reply} />
         </div>
-        <div class="txt">
-            {#if me}
-                <span class="transfer-txt">
-                    {$_("icpTransfer.pendingSentByYou", {
-                        values: {
-                            amount: formatICP(amount, 0),
-                            receiver: username(content.transfer.recipient),
-                        },
-                    })}
-                </span>
-            {:else}
-                <span class="transfer-txt">
-                    {$_("icpTransfer.pendingSent", {
-                        values: {
-                            amount: formatICP(amount, 0),
-                            receiver: username(content.transfer.recipient),
-                            sender: senderName,
-                        },
-                    })}
-                </span>
-            {/if}
-        </div>
-    </div>
+    {/if}
 {:else}
     <div class="unexpected">{$_("icpTransfer.unexpected")}</div>
 {/if}

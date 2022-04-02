@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 canister_client_macros = { path = "../../../libraries/canister_client_macros" }
-ic-cdk = "0.4.0"
+ic-cdk = "0.5.0"
 tracing = "0.1.29"
 types = { path = "../../../libraries/types" }
 user_index_canister = { path = "../api" }

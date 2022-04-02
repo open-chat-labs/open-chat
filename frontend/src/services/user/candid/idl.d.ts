@@ -24,6 +24,8 @@ import {
     ImageContent,
     VideoContent,
     AudioContent,
+    GiphyContent,
+    GiphyImageVariant,
     PollContent,
     PollVotes,
     PollConfig,
@@ -182,6 +184,8 @@ export {
     CompletedCryptocurrencyTransfer as ApiCompletedCryptocurrencyTransfer,
     TransferCryptocurrencyWithinGroupResponse as ApiTransferCryptocurrencyWithinGroupResponse,
     TransferCryptocurrencyWithinGroupArgs as ApiTransferCryptocurrencyWithinGroupArgs,
+    GiphyContent as ApiGiphyContent,
+    GiphyImageVariant as ApiGiphyImageVariant,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

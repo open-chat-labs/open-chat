@@ -8,6 +8,7 @@
     import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
+    import AggregateParticipantsJoinedOrLeftEvent from "./AggregateParticipantsJoinedOrLeftEvent.svelte";
     import type { UserSummary } from "../../domain/user/user";
     import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
@@ -35,6 +36,7 @@
     export let canDelete: boolean;
     export let canSend: boolean;
     export let canReact: boolean;
+    export let publicGroup: boolean;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -66,6 +68,7 @@
         {canDelete}
         {canSend}
         {canReact}
+        {publicGroup}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo
@@ -110,6 +113,11 @@
         label={"userJoined"}
         subjectId={event.event.userId}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "aggregate_participants_joined_left"}
+    <AggregateParticipantsJoinedOrLeftEvent
+        {user}
+        joined={event.event.users_joined}
+        left={event.event.users_left} />
 {:else if event.event.kind === "role_changed"}
     <RoleChangedEvent {user} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "users_blocked"}

@@ -22,11 +22,13 @@
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import Close from "svelte-material-icons/Close.svelte";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import PinOff from "svelte-material-icons/PinOff.svelte";
+    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import { fillMessage } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
     import { mobileWidth, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
@@ -39,6 +41,7 @@
     import Reload from "../Reload.svelte";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { avatarUrl } from "../../domain/user/user.utils";
+    import * as shareFunctions from "../../domain/share";
 
     const dispatch = createEventDispatcher();
 
@@ -64,6 +67,7 @@
     export let canDelete: boolean;
     export let canSend: boolean;
     export let canReact: boolean;
+    export let publicGroup: boolean;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
@@ -88,7 +92,7 @@
         console.log("updating ChatMessage component");
 
         if (readByMe) {
-            observer.unobserve(msgElement);
+            observer?.unobserve(msgElement);
         }
     });
 
@@ -170,6 +174,10 @@
                 width: content.width,
                 height: content.height,
             };
+        } else if (content.kind === "giphy_content") {
+            return $mobileWidth
+                ? { width: content.mobile.width, height: content.mobile.height }
+                : { width: content.desktop.width, height: content.desktop.height };
         }
 
         return undefined;
@@ -190,7 +198,8 @@
                 parseFloat(msgBubbleStyle.borderLeftWidth);
         }
 
-        const parentWidth = document.getElementById("chat-messages")?.offsetWidth ?? 0;
+        const parentWidth = msgBubbleElement.parentElement?.offsetWidth ?? 0;
+
         let targetMediaDimensions = calculateMediaDimensions(
             mediaDimensions,
             parentWidth,
@@ -222,6 +231,18 @@
             ...ev.detail,
             messageIndex: msg.messageIndex,
         });
+    }
+
+    function canShare(): boolean {
+        return shareFunctions.canShare(msg.content);
+    }
+
+    function shareMessage() {
+        shareFunctions.shareMessage(user.userId, me, msg);
+    }
+
+    function copyMessageUrl() {
+        shareFunctions.copyMessageUrl(chatId, msg.messageIndex);
     }
 </script>
 
@@ -375,6 +396,24 @@
                         </div>
                         <div slot="menu">
                             <Menu>
+                                {#if publicGroup && confirmed}
+                                    {#if canShare()}
+                                        <MenuItem on:click={shareMessage}>
+                                            <ShareIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("share")}</div>
+                                        </MenuItem>
+                                    {/if}
+                                    <MenuItem on:click={copyMessageUrl}>
+                                        <ContentCopy
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("copyMessageUrl")}</div>
+                                    </MenuItem>
+                                {/if}
                                 {#if confirmed && canPin}
                                     {#if pinned}
                                         <MenuItem on:click={unpinMessage}>
@@ -425,7 +464,7 @@
                                     <PencilOutline size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                                     <div slot="text">{$_("editMessage")}</div>
                                 </MenuItem> -->
-                                {#if (canDelete || me) && msg.content.kind !== "crypto_content"}
+                                {#if (canDelete || me) && !crypto}
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline
                                             size={$iconSize}

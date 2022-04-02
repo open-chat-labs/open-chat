@@ -16,7 +16,8 @@ export type MessageContent =
     | DeletedContent
     | PlaceholderContent
     | PollContent
-    | CryptocurrencyContent;
+    | CryptocurrencyContent
+    | GiphyContent;
 
 export type IndexRange = [number, number];
 
@@ -181,6 +182,20 @@ export interface CryptocurrencyContent {
     transfer: CryptocurrencyTransfer;
 }
 
+export type GiphyImage = {
+    height: number;
+    width: number;
+    url: string;
+};
+
+export interface GiphyContent {
+    kind: "giphy_content";
+    caption?: string;
+    title: string;
+    desktop: GiphyImage; //will be "original" from the giphy api
+    mobile: GiphyImage; //will be "downsized_large" from the giphy api
+}
+
 export interface ImageContent extends DataContent {
     kind: "image_content";
     height: number;
@@ -328,6 +343,7 @@ export type GroupChatEvent =
     | GroupChatCreated
     | ParticipantsAdded
     | ParticipantJoined
+    | AggregateParticipantsJoinedOrLeft
     | ParticipantsRemoved
     | ParticipantLeft
     | GroupNameChanged
@@ -361,6 +377,12 @@ export type ParticipantsAdded = {
     kind: "participants_added";
     userIds: string[];
     addedBy: string;
+};
+
+export type AggregateParticipantsJoinedOrLeft = {
+    kind: "aggregate_participants_joined_left";
+    users_joined: Set<string>;
+    users_left: Set<string>;
 };
 
 export type ParticipantJoined = {
