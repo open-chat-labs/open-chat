@@ -18,8 +18,8 @@
     export let groupChat: boolean;
 
     const user = getContext<CreatedUser>(currentUserKey);
-    let transferText = buildCryptoTransferText(user.userId, senderId, content, me);
-    let transactionLinkText = buildTransactionLink(content);
+    $: transferText = buildCryptoTransferText(user.userId, senderId, content, me);
+    $: transactionLinkText = buildTransactionLink(content);
 </script>
 
 {#if transferText !== undefined}
