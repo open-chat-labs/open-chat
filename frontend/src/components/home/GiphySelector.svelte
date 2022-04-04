@@ -185,7 +185,7 @@
                     containerElement.scrollHeight -
                         containerElement.clientHeight -
                         containerElement.scrollTop
-                ) < 100
+                ) < 200
             ) {
                 nextPage();
             }
