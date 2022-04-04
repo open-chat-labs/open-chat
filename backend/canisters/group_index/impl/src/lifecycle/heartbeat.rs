@@ -6,7 +6,7 @@ use utils::canister::{self, FailedUpgrade};
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, CYCLES_REQUIRED_FOR_UPGRADE};
 use utils::cycles::can_spend_cycles;
 
-const MAX_CONCURRENT_CANISTER_UPGRADES: u32 = 5;
+const MAX_CONCURRENT_CANISTER_UPGRADES: u32 = 1;
 
 #[heartbeat]
 fn heartbeat() {

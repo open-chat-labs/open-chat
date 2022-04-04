@@ -56,39 +56,35 @@ export function copyMessageUrl(chatId: string, messageIndex: number): void {
 }
 
 export function canShare(content: MessageContent): boolean {
-    // Disable message share until OpenStorage buckets are upgraded to
-    // return HTTP response header Access-Control-Allow-Origin: *
-    return false;
+    if (navigator.share === undefined) {
+        return false;
+    }
 
-    // if (navigator.share === undefined) {
-    //     return false;
-    // }
+    if (content.kind === "placeholder_content" || content.kind === "deleted_content") {
+        return false;
+    }
 
-    // if (content.kind === "placeholder_content" || content.kind === "deleted_content") {
-    //     return false;
-    // }
+    if (content.kind === "crypto_content" && content.transfer.kind === "failed_icp_transfer") {
+        return false;
+    }
 
-    // if (content.kind === "crypto_content" && content.transfer.kind === "failed_icp_transfer") {
-    //     return false;
-    // }
+    // This is tempoaray until we implement a text only version of a poll message
+    if (content.kind === "poll_content") {
+        return false;
+    }
 
-    // // This is tempoaray until we implement a text only version of a poll message
-    // if (content.kind === "poll_content") {
-    //     return false;
-    // }
+    if (
+        content.kind === "file_content" ||
+        content.kind === "image_content" ||
+        content.kind === "video_content" ||
+        content.kind === "audio_content"
+    ) {
+        return (
+            navigator.canShare !== undefined && permittedMimeTypes[content.mimeType] !== undefined
+        );
+    }
 
-    // if (
-    //     content.kind === "file_content" ||
-    //     content.kind === "image_content" ||
-    //     content.kind === "video_content" ||
-    //     content.kind === "audio_content"
-    // ) {
-    //     return (
-    //         navigator.canShare !== undefined && permittedMimeTypes[content.mimeType] !== undefined
-    //     );
-    // }
-
-    // return true;
+    return true;
 }
 
 export function shareMessage(userId: string, me: boolean, msg: Message): void {
