@@ -3,6 +3,7 @@
     import ChatList from "./ChatList.svelte";
     import NewGroup from "./addgroup/AddGroup.controller.svelte";
     import UserProfile from "./profile/UserProfile.svelte";
+    import PlusCircleOutline from "svelte-material-icons/PlusCircleOutline.svelte";
     import type {
         GroupSearchResponse,
         SearchAllMessagesResponse,
@@ -30,6 +31,7 @@
     $: user = controller.user ? $userStore[controller.user?.userId] : nullUser("unknown");
 
     let communities = [1, 2, 3, 4, 5, 6];
+    let selectedCommunity = 1;
 
     let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-chat-list";
 
@@ -54,8 +56,14 @@
 <Panel left>
     <div class="communities">
         {#each communities as community}
-            <div class="community" />
+            <div
+                on:click={() => (selectedCommunity = community)}
+                class="community"
+                class:selected={community === selectedCommunity} />
         {/each}
+        <div class="community new">
+            <PlusCircleOutline size={"2.5em"} color={"rgba(255,255,255,0.5)"} />
+        </div>
     </div>
     <div class="chats">
         <div class="new-group" class:adding-group={view === "adding-group"}>
@@ -124,9 +132,17 @@
             width: 75px;
             height: 75px;
 
-            &:first-child {
+            &.selected {
                 background-color: rgba(255, 255, 255, 1);
                 border: 2px solid var(--accent);
+            }
+
+            &.new {
+                background-color: transparent;
+                border: 2px solid rgba(255, 255, 255, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
 
             @include mobile() {
