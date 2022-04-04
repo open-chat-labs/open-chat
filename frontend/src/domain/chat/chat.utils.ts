@@ -1283,7 +1283,7 @@ export function buildCryptoTransferText(
     };
 
     const key =
-        content.transfer.kind !== "completed_icp_transfer"
+        content.transfer.kind === "completed_icp_transfer"
             ? "confirmedSent"
             : me
             ? "pendingSentByYou"
