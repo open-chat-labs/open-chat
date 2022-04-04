@@ -211,11 +211,8 @@ async function fetchBlob(blobUrl: string, mimeType: string, filename: string): P
     return new File([data], filename, { type: mimeType });
 }
 
-function buildDummyFilename(mimeType: string, name?: string): string {
-    name = name !== undefined ? name.replace(/\s/g, "_") : "";
-    if (name.length === 0) {
-        name = mimeType.split("/")[0];
-    }
+function buildDummyFilename(mimeType: string, title?: string): string {
+    const name = title !== undefined ? title.replace(/\s+/g, "_") : mimeType.split("/")[0];
 
     const ext = permittedMimeTypes[mimeType];
     const filename = `${name}.${ext}`;
