@@ -195,6 +195,7 @@
                             autoplay={true}
                             muted={true}
                             loop={true}
+                            playsinline={true}
                             style={`width: ${imgWidth}px`}
                             on:click={() => selectGif(getItemData(item))}
                             class="thumb">
