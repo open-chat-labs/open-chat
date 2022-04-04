@@ -6,7 +6,7 @@ pub fn write_to_stable_memory(offset: u64, bytes: &[u8]) {
     }
 
     let bytes_required = offset + bytes.len() as u64;
-    let pages_required = ((bytes_required - 1) / WASM_PAGE_SIZE_BYTES) + 1;
+    let pages_required = (bytes_required + WASM_PAGE_SIZE_BYTES - 1) / WASM_PAGE_SIZE_BYTES;
     let current_stable_memory_pages = ic_cdk::api::stable::stable64_size();
     let additional_pages_required = pages_required.saturating_sub(current_stable_memory_pages);
 
