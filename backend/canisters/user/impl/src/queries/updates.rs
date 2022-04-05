@@ -1,15 +1,13 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState, WASM_VERSION};
-use group_canister::c2c_summary_updates::SummaryUpdates;
-use group_canister::Summary;
 use group_index_canister::c2c_filter_groups;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::query;
 use std::collections::{HashMap, HashSet};
 use types::{
     Alert, AlertDetails, AlertId, CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary,
-    DirectChatSummaryUpdates, GroupChatSummary, GroupChatSummaryUpdates, GroupDeleted, Milliseconds, OptionUpdate,
-    TimestampMillis,
+    DirectChatSummaryUpdates, GroupChatSummary, GroupChatSummaryInternal, GroupChatSummaryUpdates,
+    GroupChatSummaryUpdatesInternal, GroupDeleted, Milliseconds, OptionUpdate, TimestampMillis,
 };
 use user_canister::{initial_state, updates, updates::UpdatesSince};
 use utils::range_set::convert_to_message_index_ranges;
@@ -167,7 +165,7 @@ fn prepare(updates_since_option: Option<&UpdatesSince>, runtime_state: &RuntimeS
     }
 }
 
-async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> Vec<Summary> {
+async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> Vec<GroupChatSummaryInternal> {
     if chat_ids.is_empty() {
         return Vec::new();
     }
@@ -190,7 +188,7 @@ async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> Vec<Summary> {
     summaries
 }
 
-async fn get_group_chat_summary_updates(group_chats: Vec<(ChatId, TimestampMillis)>) -> Vec<SummaryUpdates> {
+async fn get_group_chat_summary_updates(group_chats: Vec<(ChatId, TimestampMillis)>) -> Vec<GroupChatSummaryUpdatesInternal> {
     if group_chats.is_empty() {
         return Vec::new();
     }
@@ -224,8 +222,8 @@ async fn get_group_chat_summary_updates(group_chats: Vec<(ChatId, TimestampMilli
 
 fn finalize(
     updates_since_option: Option<&UpdatesSince>,
-    group_chats_added: Vec<Summary>,
-    group_chats_updated: Vec<SummaryUpdates>,
+    group_chats_added: Vec<GroupChatSummaryInternal>,
+    group_chats_updated: Vec<GroupChatSummaryUpdatesInternal>,
     groups_deleted: Vec<DeletedGroupInfo>,
     upgrades_in_progress: Vec<ChatId>,
     runtime_state: &RuntimeState,

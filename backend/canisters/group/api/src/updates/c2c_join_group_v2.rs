@@ -1,6 +1,6 @@
-use crate::Summary;
 use candid::{CandidType, Principal};
 use serde::Deserialize;
+use types::GroupChatSummaryInternal;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -11,7 +11,7 @@ pub struct Args {
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
-    Success(Summary),
+    Success(GroupChatSummaryInternal),
     AlreadyInGroup,
     GroupNotPublic,
     Blocked,

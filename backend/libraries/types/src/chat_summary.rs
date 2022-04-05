@@ -126,3 +126,96 @@ pub struct PublicGroupSummary {
     pub wasm_version: Version,
     pub owner_id: UserId,
 }
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct GroupChatSummaryInternal {
+    pub chat_id: ChatId,
+    pub last_updated: TimestampMillis,
+    pub name: String,
+    pub description: String,
+    pub avatar_id: Option<u128>,
+    pub is_public: bool,
+    pub min_visible_event_index: EventIndex,
+    pub min_visible_message_index: MessageIndex,
+    pub latest_message: Option<EventWrapper<Message>>,
+    pub latest_event_index: EventIndex,
+    pub joined: TimestampMillis,
+    pub participant_count: u32,
+    pub role: Role,
+    pub mentions: Vec<Mention>,
+    pub pinned_message: Option<MessageIndex>,
+    pub wasm_version: Version,
+    pub owner_id: UserId,
+    pub permissions: GroupPermissions,
+    pub notifications_muted: bool,
+}
+
+impl From<GroupChatSummaryInternal> for GroupChatSummary {
+    fn from(s: GroupChatSummaryInternal) -> Self {
+        GroupChatSummary {
+            chat_id: s.chat_id,
+            last_updated: s.last_updated,
+            name: s.name,
+            description: s.description,
+            avatar_id: s.avatar_id,
+            is_public: s.is_public,
+            min_visible_event_index: s.min_visible_event_index,
+            min_visible_message_index: s.min_visible_message_index,
+            latest_message: s.latest_message,
+            latest_event_index: s.latest_event_index,
+            joined: s.joined,
+            read_by_me: vec![],
+            notifications_muted: s.notifications_muted,
+            participant_count: s.participant_count,
+            role: s.role,
+            mentions: s.mentions,
+            pinned_message: s.pinned_message,
+            wasm_version: s.wasm_version,
+            owner_id: s.owner_id,
+            permissions: s.permissions,
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct GroupChatSummaryUpdatesInternal {
+    pub chat_id: ChatId,
+    pub last_updated: TimestampMillis,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub avatar_id: OptionUpdate<u128>,
+    pub latest_message: Option<EventWrapper<Message>>,
+    pub latest_event_index: Option<EventIndex>,
+    pub participant_count: Option<u32>,
+    pub role: Option<Role>,
+    pub mentions: Vec<Mention>,
+    pub pinned_message: OptionUpdate<MessageIndex>,
+    pub wasm_version: Option<Version>,
+    pub owner_id: Option<UserId>,
+    pub permissions: Option<GroupPermissions>,
+    pub affected_events: Vec<EventIndex>,
+}
+
+impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
+    fn from(s: GroupChatSummaryUpdatesInternal) -> Self {
+        GroupChatSummaryUpdates {
+            chat_id: s.chat_id,
+            last_updated: s.last_updated,
+            name: s.name,
+            description: s.description,
+            avatar_id: s.avatar_id,
+            latest_message: s.latest_message,
+            latest_event_index: s.latest_event_index,
+            participant_count: s.participant_count,
+            role: s.role,
+            read_by_me: None,
+            notifications_muted: None,
+            mentions: s.mentions,
+            pinned_message: s.pinned_message,
+            wasm_version: s.wasm_version,
+            owner_id: s.owner_id,
+            permissions: s.permissions,
+            affected_events: s.affected_events,
+        }
+    }
+}
