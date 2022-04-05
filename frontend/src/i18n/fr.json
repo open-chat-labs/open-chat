@@ -453,5 +453,6 @@
     "failedToShareMessage": "Impossible de partager ce message",
     "sendGif": "Envoyer un GIF",
     "backToResults": "arrière",
-    "giphyMessage": "Message graphique"
+    "giphyMessage": "Message graphique",
+    "share": "Partager"
 }
