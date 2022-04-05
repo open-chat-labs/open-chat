@@ -453,5 +453,6 @@
     "failedToShareMessage": "このメッセージを共有できません",
     "sendGif": "gifを送信",
     "backToResults": "戻る",
-    "giphyMessage": "Giphyメッセージ"
+    "giphyMessage": "Giphyメッセージ",
+    "share": "共有"
 }

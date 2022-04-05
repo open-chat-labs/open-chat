@@ -453,5 +453,6 @@
     "failedToShareMessage": "Diese Nachricht kann nicht geteilt werden",
     "sendGif": "GIFs senden",
     "backToResults": "zurück",
-    "giphyMessage": "Giphy-Nachricht"
+    "giphyMessage": "Giphy-Nachricht",
+    "share": "Teilen"
 }

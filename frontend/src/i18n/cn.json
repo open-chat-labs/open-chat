@@ -453,5 +453,6 @@
     "failedToShareMessage": "无法分享此消息",
     "sendGif": "发送 gif",
     "backToResults": "背部",
-    "giphyMessage": "Giphy 消息"
+    "giphyMessage": "Giphy 消息",
+    "share": "分享"
 }
