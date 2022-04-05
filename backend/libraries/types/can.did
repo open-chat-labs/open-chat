@@ -372,6 +372,7 @@ type GiphyImageVariant =
         width: nat32;
         height: nat32;
         url: text;
+        mime_type: text;
     };
 
 type GiphyContent =

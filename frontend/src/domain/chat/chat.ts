@@ -186,6 +186,7 @@ export type GiphyImage = {
     height: number;
     width: number;
     url: string;
+    mimeType: string;
 };
 
 export interface GiphyContent {
