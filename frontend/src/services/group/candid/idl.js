@@ -72,6 +72,7 @@ export const idlFactory = ({ IDL }) => {
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
     'height' : IDL.Nat32,
+    'mime_type' : IDL.Text,
     'width' : IDL.Nat32,
   });
   const GiphyContent = IDL.Record({

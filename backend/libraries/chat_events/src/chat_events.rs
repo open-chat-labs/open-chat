@@ -186,6 +186,7 @@ pub struct Metrics {
     pub cycles_messages: u64,
     pub icp_messages: u64,
     pub deleted_messages: u64,
+    #[serde(default)]
     pub giphy_messages: u64,
     pub replies: u64,
     pub total_edits: u64,

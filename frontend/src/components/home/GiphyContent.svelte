@@ -34,6 +34,7 @@
             autoplay={true}
             muted={true}
             loop={true}
+            playsinline={true}
             class:landscape
             class:fill
             class:withCaption

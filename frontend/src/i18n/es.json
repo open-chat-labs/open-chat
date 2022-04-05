@@ -454,5 +454,6 @@
     "failedToShareMessage": "No se puede compartir este mensaje",
     "sendGif": "Enviar gif",
     "backToResults": "espalda",
-    "giphyMessage": "mensaje giphy"
+    "giphyMessage": "mensaje giphy",
+    "share": "Cuota"
 }

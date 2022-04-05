@@ -196,6 +196,7 @@ pub struct GiphyImageVariant {
     pub width: u32,
     pub height: u32,
     pub url: String,
+    pub mime_type: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

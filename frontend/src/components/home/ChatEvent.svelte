@@ -7,7 +7,6 @@
     import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
     import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
-    import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
     import AggregateParticipantsJoinedOrLeftEvent from "./AggregateParticipantsJoinedOrLeftEvent.svelte";
     import type { UserSummary } from "../../domain/user/user";
     import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
@@ -101,18 +100,6 @@
         changedBy={event.event.removedBy}
         resourceKey={"removedBy"}
         timestamp={event.timestamp} />
-{:else if event.event.kind === "participant_left"}
-    <ParticipantLeftEvent
-        {user}
-        label={"userLeft"}
-        subjectId={event.event.userId}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "participant_joined"}
-    <ParticipantLeftEvent
-        {user}
-        label={"userJoined"}
-        subjectId={event.event.userId}
-        timestamp={event.timestamp} />
 {:else if event.event.kind === "aggregate_participants_joined_left"}
     <AggregateParticipantsJoinedOrLeftEvent
         {user}
@@ -161,6 +148,6 @@
         timestamp={event.timestamp} />
 {:else if event.event.kind === "permissions_changed"}
     <PermissionsChangedEvent {user} event={event.event} timestamp={event.timestamp} />
-{:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "poll_ended"}
+{:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "poll_ended" && event.event.kind !== "participant_joined" && event.event.kind !== "participant_left"}
     <div>Unexpected event type</div>
 {/if}

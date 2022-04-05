@@ -228,6 +228,7 @@ export interface GiphyContent {
 export interface GiphyImageVariant {
   'url' : string,
   'height' : number,
+  'mime_type' : string,
   'width' : number,
 }
 export interface GroupChatCreated {

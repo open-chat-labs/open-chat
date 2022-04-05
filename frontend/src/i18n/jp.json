@@ -12,7 +12,7 @@
     "usernameRules": "英数字とアンダースコアのみ",
     "enterBio": "あなた自身について教えてください",
     "username": "ユーザー名",
-    "bio": "ユーザー経歴",
+    "bio": "自己紹介",
     "unableToRefreshAccountBalance": "申し訳ありませんが、アカウントの残高を更新できませんでした",
     "congratulations": "おめでとうございます!",
     "enjoyYourStorage": "写真や動画の投稿を思う存分楽しんでください",
@@ -69,7 +69,7 @@
     "publicGroups": "公開グループ",
     "yourChats": "あなたのチャット",
     "users": "ユーザー",
-    "lastOnline": "最終オンライン{期間}前",
+    "lastOnline": "最終オンライン{duration}前",
     "unresolvedReply": "メッセージの内容が利用できません",
     "placeholderContent": "メッセージがまもなく読み込まれますので、お待ちください",
     "durationMins": "{duration} 分",
@@ -453,5 +453,6 @@
     "failedToShareMessage": "このメッセージを共有できません",
     "sendGif": "gifを送信",
     "backToResults": "戻る",
-    "giphyMessage": "Giphyメッセージ"
+    "giphyMessage": "Giphyメッセージ",
+    "share": "共有"
 }

@@ -570,9 +570,9 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
             : undefined;
     }
 
-    return events.reduce((memo: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
+    return events.reduce((previous: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
         if (e.event.kind === "participant_joined" || e.event.kind === "participant_left") {
-            let agg = getLatestAggregateEventIfExists(memo);
+            let agg = getLatestAggregateEventIfExists(previous);
             if (agg === undefined) {
                 agg = {
                     kind: "aggregate_participants_joined_left",
@@ -580,7 +580,7 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
                     users_left: new Set(),
                 };
             } else {
-                memo.pop();
+                previous.pop();
             }
 
             if (e.event.kind === "participant_joined") {
@@ -597,16 +597,16 @@ function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
                 }
             }
 
-            memo.push({
+            previous.push({
                 event: agg,
                 timestamp: e.timestamp,
                 index: e.index,
             });
         } else {
-            memo.push(e);
+            previous.push(e);
         }
 
-        return memo;
+        return previous;
     }, []);
 }
 

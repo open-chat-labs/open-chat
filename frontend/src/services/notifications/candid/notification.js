@@ -12,12 +12,14 @@ export const Notification = IDL.Variant({
             'desktop' : IDL.Record({
               'url' : IDL.Text,
               'height' : IDL.Nat32,
+              'mime_type' : IDL.Text,
               'width' : IDL.Nat32,
             }),
             'caption' : IDL.Opt(IDL.Text),
             'mobile' : IDL.Record({
               'url' : IDL.Text,
               'height' : IDL.Nat32,
+              'mime_type' : IDL.Text,
               'width' : IDL.Nat32,
             }),
           }),
@@ -164,12 +166,14 @@ export const Notification = IDL.Variant({
             'desktop' : IDL.Record({
               'url' : IDL.Text,
               'height' : IDL.Nat32,
+              'mime_type' : IDL.Text,
               'width' : IDL.Nat32,
             }),
             'caption' : IDL.Opt(IDL.Text),
             'mobile' : IDL.Record({
               'url' : IDL.Text,
               'height' : IDL.Nat32,
+              'mime_type' : IDL.Text,
               'width' : IDL.Nat32,
             }),
           }),

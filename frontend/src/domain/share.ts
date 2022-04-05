@@ -56,39 +56,35 @@ export function copyMessageUrl(chatId: string, messageIndex: number): void {
 }
 
 export function canShare(content: MessageContent): boolean {
-    // Disable message share until OpenStorage buckets are upgraded to
-    // return HTTP response header Access-Control-Allow-Origin: *
-    return false;
+    if (navigator.share === undefined) {
+        return false;
+    }
 
-    // if (navigator.share === undefined) {
-    //     return false;
-    // }
+    if (content.kind === "placeholder_content" || content.kind === "deleted_content") {
+        return false;
+    }
 
-    // if (content.kind === "placeholder_content" || content.kind === "deleted_content") {
-    //     return false;
-    // }
+    if (content.kind === "crypto_content" && content.transfer.kind === "failed_icp_transfer") {
+        return false;
+    }
 
-    // if (content.kind === "crypto_content" && content.transfer.kind === "failed_icp_transfer") {
-    //     return false;
-    // }
+    // This is tempoaray until we implement a text only version of a poll message
+    if (content.kind === "poll_content") {
+        return false;
+    }
 
-    // // This is tempoaray until we implement a text only version of a poll message
-    // if (content.kind === "poll_content") {
-    //     return false;
-    // }
+    if (
+        content.kind === "file_content" ||
+        content.kind === "image_content" ||
+        content.kind === "video_content" ||
+        content.kind === "audio_content"
+    ) {
+        return (
+            navigator.canShare !== undefined && permittedMimeTypes[content.mimeType] !== undefined
+        );
+    }
 
-    // if (
-    //     content.kind === "file_content" ||
-    //     content.kind === "image_content" ||
-    //     content.kind === "video_content" ||
-    //     content.kind === "audio_content"
-    // ) {
-    //     return (
-    //         navigator.canShare !== undefined && permittedMimeTypes[content.mimeType] !== undefined
-    //     );
-    // }
-
-    // return true;
+    return true;
 }
 
 export function shareMessage(userId: string, me: boolean, msg: Message): void {
@@ -123,7 +119,8 @@ async function buildShareFromMessage(userId: string, me: boolean, msg: Message):
         kind === "file_content" ||
         kind === "image_content" ||
         kind === "video_content" ||
-        kind === "audio_content"
+        kind === "audio_content" ||
+        kind === "giphy_content"
     ) {
         share.text = msg.content.caption ?? "";
 
@@ -135,16 +132,24 @@ async function buildShareFromMessage(userId: string, me: boolean, msg: Message):
             return Promise.reject();
         }
 
+        const mimeType =
+            msg.content.kind === "giphy_content"
+                ? msg.content.desktop.mimeType
+                : msg.content.mimeType;
+
         // We need to give the file a valid filename (incl extension) otherwise the call to navigator.share
         // will fail with "DOMException permission denied"
         const filename =
             msg.content.kind === "file_content"
                 ? msg.content.name
-                : buildDummyFilename(msg.content.mimeType);
+                : buildDummyFilename(
+                      mimeType,
+                      msg.content.kind === "giphy_content" ? msg.content.title : undefined
+                  );
 
         let file: File;
         try {
-            file = await fetchBlob(blobUrl, msg.content.mimeType, filename);
+            file = await fetchBlob(blobUrl, mimeType, filename);
         } catch (e) {
             const errorMessage = "Failed to fetch blob";
             console.log(`${errorMessage}: ${e}`);
@@ -185,32 +190,33 @@ async function buildShareFromMessage(userId: string, me: boolean, msg: Message):
 }
 
 function extractBlobUrl(content: MessageContent): string | undefined {
-    let blobUrl: string | undefined;
-
     switch (content.kind) {
         case "video_content":
-            blobUrl = content.videoData.blobUrl;
-            break;
+            return content.videoData.blobUrl;
         case "file_content":
         case "image_content":
         case "audio_content":
-            blobUrl = content.blobUrl;
-            break;
+            return content.blobUrl;
+        case "giphy_content":
+            return content.desktop.url;
         default:
             return;
     }
-
-    return blobUrl;
 }
 
-function fetchBlob(blobUrl: string, mimeType: string, filename: string): Promise<File> {
-    return fetch(blobUrl)
-        .then((response) => response.blob())
-        .then((data) => new File([data], filename, { type: mimeType }));
+async function fetchBlob(blobUrl: string, mimeType: string, filename: string): Promise<File> {
+    const response = await fetch(blobUrl, {
+        headers: {
+            Accept: mimeType,
+        },
+    });
+    const data = await response.blob();
+    return new File([data], filename, { type: mimeType });
 }
 
-function buildDummyFilename(mimeType: string): string {
-    const name = mimeType.split("/")[0];
+function buildDummyFilename(mimeType: string, title?: string): string {
+    const name = title !== undefined ? title.replace(/\s+/g, "_") : mimeType.split("/")[0];
+
     const ext = permittedMimeTypes[mimeType];
     const filename = `${name}.${ext}`;
     return filename;

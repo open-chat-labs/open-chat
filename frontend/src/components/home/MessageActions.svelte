@@ -111,11 +111,11 @@
             <SwapHorizontal size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </div>
-    <div class="gif" on:click|stopPropagation={sendGif}>
+    <!-- <div class="gif" on:click|stopPropagation={sendGif}>
         <HoverIcon title={"Attach gif"}>
             <StickerEmoji size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
-    </div>
+    </div> -->
 </div>
 
 <style type="text/scss">
@@ -150,7 +150,6 @@
 
             .emoji,
             .attach,
-            .open-draw,
             .gif,
             .send-icp {
                 top: -18px;
