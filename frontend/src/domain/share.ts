@@ -132,7 +132,10 @@ async function buildShareFromMessage(userId: string, me: boolean, msg: Message):
             return Promise.reject();
         }
 
-        const mimeType = msg.content.kind === "giphy_content" ? "image/gif" : msg.content.mimeType;
+        const mimeType =
+            msg.content.kind === "giphy_content"
+                ? msg.content.desktop.mimeType
+                : msg.content.mimeType;
 
         // We need to give the file a valid filename (incl extension) otherwise the call to navigator.share
         // will fail with "DOMException permission denied"
@@ -195,7 +198,7 @@ function extractBlobUrl(content: MessageContent): string | undefined {
         case "audio_content":
             return content.blobUrl;
         case "giphy_content":
-            return content.mobile.url;
+            return content.desktop.url;
         default:
             return;
     }
