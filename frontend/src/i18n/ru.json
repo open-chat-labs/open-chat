@@ -453,5 +453,6 @@
     "failedToShareMessage": "Не удалось поделиться этим сообщением",
     "sendGif": "Отправить гифку",
     "backToResults": "назад",
-    "giphyMessage": "сообщение"
+    "giphyMessage": "сообщение",
+    "share": "Делиться"
 }

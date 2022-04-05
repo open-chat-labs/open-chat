@@ -454,5 +454,6 @@
     "failedToShareMessage": "Không thể chia sẻ tin nhắn này",
     "sendGif": "Gửi gif",
     "backToResults": "trở lại",
-    "giphyMessage": "Tin nhắn Giphy"
+    "giphyMessage": "Tin nhắn Giphy",
+    "share": "Đăng lại"
 }
