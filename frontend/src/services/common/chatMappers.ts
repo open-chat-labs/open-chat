@@ -147,6 +147,7 @@ function giphyImageVariant(candid: ApiGiphyImageVariant): GiphyImage {
         width: candid.width,
         height: candid.height,
         url: candid.url,
+        mimeType: candid.mime_type,
     };
 }
 
@@ -484,6 +485,7 @@ function apiGiphyImageVariant(domain: GiphyImage): ApiGiphyImageVariant {
         height: domain.height,
         width: domain.width,
         url: domain.url,
+        mime_type: domain.mimeType,
     };
 }
 

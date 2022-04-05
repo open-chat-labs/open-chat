@@ -30,7 +30,7 @@
     let selectedGif: PagedGIFObject | undefined;
     let containerWidth: number = 0;
     let containerElement: HTMLDivElement;
-    let gutter = 5;
+    const gutter = 5;
     let imgWidth = 0;
 
     $: selectedImage =
@@ -151,11 +151,13 @@
                     height: Number(selectedGif.images.original.height),
                     width: Number(selectedGif.images.original.width),
                     url: selectedGif.images.original.mp4,
+                    mimeType: "video/mp4",
                 },
                 mobile: {
                     height: Number(selectedGif.images.downsized_large.height),
                     width: Number(selectedGif.images.downsized_large.width),
                     url: selectedGif.images.downsized_large.url,
+                    mimeType: "image/gif",
                 },
             };
             dispatch("sendGiphy", content);
