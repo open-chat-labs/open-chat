@@ -9,7 +9,6 @@
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import type { GIFObject, PagedGIFObject, SearchResponse } from "../../domain/giphy";
-    import { MasonryInfiniteGrid } from "@egjs/svelte-infinitegrid";
     import type { GiphyContent } from "domain/chat/chat";
 
     const dispatch = createEventDispatcher();
@@ -20,29 +19,78 @@
     let message = "";
     let searchTerm = "";
     let gifs: PagedGIFObject[] = [];
+    let gifCache: Record<
+        string,
+        PagedGIFObject & { top: number; left: number; calculatedHeight: number }
+    > = {};
     let timer: number | undefined;
     let modalWidth = 0;
     let pageSize = 25;
     let pageNum = -1;
     let selectedGif: PagedGIFObject | undefined;
+    let containerWidth: number = 0;
+    let containerElement: HTMLDivElement;
+    let gutter = 5;
+    let imgWidth = 0;
 
     $: selectedImage =
         selectedGif === undefined
             ? undefined
             : $mobileWidth
-            ? { ...selectedGif.images.downsized_large, type: "gif" }
-            : {
-                  ...selectedGif.images.original,
-                  url: selectedGif.images.original.mp4,
-                  type: "mp4",
-              };
+            ? { ...selectedGif.images.downsized_large }
+            : { ...selectedGif.images.original };
 
     const TRENDING_API_URL = `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_APIKEY}&limit=${pageSize}`;
     const SEARCH_API_URL = `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_APIKEY}&limit=${pageSize}&q=`;
 
-    $: availWidth = modalWidth - 32; // 32 is the padding
-    $: numCols = $mobileWidth ? 2 : 4;
-    $: imgWidth = availWidth / numCols - 5; // 5 is the col gap
+    $: {
+        let numCols = $mobileWidth ? 2 : 4;
+        let availWidth = containerWidth - (numCols - 1) * gutter;
+        imgWidth = availWidth / numCols;
+        gifCache = gifs.reduce((cache, gif, i) => reduceGifs(numCols, cache, gif, i), {});
+    }
+
+    function sumOfHeightsForColumn(
+        cache: Record<
+            string,
+            PagedGIFObject & { top: number; left: number; calculatedHeight: number }
+        >,
+        row: number,
+        col: number
+    ): number {
+        let height = 0;
+        for (let i = 0; i < row; i++) {
+            const gif = cache[`${i}_${col}`];
+            if (gif !== undefined) {
+                height += gif.calculatedHeight;
+            }
+        }
+        return height;
+    }
+
+    function reduceGifs(
+        numCols: number,
+        cache: Record<
+            string,
+            PagedGIFObject & { top: number; left: number; calculatedHeight: number }
+        >,
+        gif: PagedGIFObject,
+        i: number
+    ): Record<string, PagedGIFObject & { top: number; left: number; calculatedHeight: number }> {
+        const col = i % numCols;
+        const row = Math.floor(i / numCols);
+        const scale = gif.images.fixed_width.width / imgWidth;
+        const calcHeight = gif.images.fixed_width.height / scale;
+        const key = `${row}_${col}`;
+
+        cache[key] = {
+            ...gif,
+            top: sumOfHeightsForColumn(cache, row, col) + row * gutter,
+            left: col * imgWidth + col * gutter,
+            calculatedHeight: calcHeight,
+        };
+        return cache;
+    }
 
     function onChange(ev: CustomEvent<string>) {
         if (ev.detail === searchTerm) {
@@ -90,6 +138,7 @@
         searchTerm = search;
         selectedGif = undefined;
         gifs = [];
+        nextPage();
     }
 
     function send() {
@@ -129,12 +178,18 @@
         gifs = [...gifs, ...nextPage];
     }
 
-    function getItemData(item: any): PagedGIFObject {
-        return item.data;
-    }
-
-    function getItemKey(item: any): number {
-        return item.key;
+    function onScroll() {
+        if (containerElement) {
+            if (
+                Math.abs(
+                    containerElement.scrollHeight -
+                        containerElement.clientHeight -
+                        containerElement.scrollTop
+                ) < 200
+            ) {
+                nextPage();
+            }
+        }
     }
 </script>
 
@@ -158,57 +213,26 @@
         <form slot="body" class="gif-body" on:submit|preventDefault={send}>
             {#if selectedImage !== undefined}
                 <div class="selected">
-                    {#if selectedImage.type === "gif"}
-                        <img
-                            class:landscape={selectedImage.width > selectedImage.height}
-                            src={selectedImage.url}
-                            alt={selectedGif?.title} />
-                    {:else if selectedImage.type === "mp4"}
-                        <video
-                            title={selectedGif?.title}
-                            class:landscape={selectedImage.width > selectedImage.height}
-                            autoplay={true}
-                            muted={true}
-                            loop={true}
-                            class="thumb">
-                            <track kind="captions" />
-                            <source src={selectedImage.url} type="video/mp4" />
-                        </video>
-                    {/if}
+                    <img
+                        class:landscape={selectedImage.width > selectedImage.height}
+                        src={selectedImage.url}
+                        alt={selectedGif?.title} />
                 </div>
             {:else}
-                <MasonryInfiniteGrid
-                    threshold={500}
-                    isConstantSize={true}
-                    container={true}
+                <div
                     class="giphy-container"
-                    gap={5}
-                    on:requestAppend={({ detail: e }) => {
-                        e.wait();
-                        nextPage().then(() => e.ready());
-                    }}
-                    items={gifs}
-                    let:visibleItems>
-                    {#each visibleItems as item (getItemKey(item))}
-                        <video
-                            title={getItemData(item).title}
-                            autoplay={true}
-                            muted={true}
-                            loop={true}
-                            playsinline={true}
-                            style={`width: ${imgWidth}px`}
-                            on:click={() => selectGif(getItemData(item))}
-                            class="thumb">
-                            <track kind="captions" />
-                            <source
-                                src={getItemData(item).images.fixed_width.mp4}
-                                type="video/mp4" />
-                            <source
-                                src={getItemData(item).images.fixed_width.webp}
-                                type="video/webp" />
-                        </video>
+                    bind:clientWidth={containerWidth}
+                    on:scroll={onScroll}
+                    bind:this={containerElement}>
+                    {#each Object.values(gifCache) as item (item.key)}
+                        <img
+                            class="thumb"
+                            on:click={() => selectGif(item)}
+                            src={item.images.fixed_width.url}
+                            style={`width: ${imgWidth}px; top: ${item.top}px; left: ${item.left}px`}
+                            alt={item.title} />
                     {/each}
-                </MasonryInfiniteGrid>
+                </div>
             {/if}
 
             {#if selectedGif === undefined}
@@ -250,9 +274,14 @@
         margin-bottom: 0;
     }
 
-    :global(.giphy-container) {
+    .giphy-container {
         overflow: auto;
+        position: relative;
         height: calc(var(--vh, 1vh) * 60);
+
+        @include mobile() {
+            height: calc(var(--vh, 1vh) * 50);
+        }
     }
 
     :global(.gif-search .input-wrapper) {
@@ -296,6 +325,7 @@
         position: relative;
 
         .thumb {
+            position: absolute;
             cursor: pointer;
             display: block;
         }
