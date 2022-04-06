@@ -128,6 +128,7 @@ type DirectChatSummaryUpdates =
         read_by_me: opt vec MessageIndexRange;
         read_by_them: opt vec MessageIndexRange;
         notifications_muted: opt bool;
+        affected_events: vec EventIndex;
     };
 
 type DirectMessageNotification =
@@ -135,6 +136,12 @@ type DirectMessageNotification =
         sender: UserId;
         sender_name: text;
         message: MessageEventWrapper;
+    };
+
+type FieldTooShortResult =
+    record {
+        length_provided: nat32;
+        min_length: nat32;
     };
 
 type FieldTooLongResult =
@@ -238,6 +245,7 @@ type GroupChatSummaryUpdates =
         wasm_version: opt Version;
         owner_id: opt UserId;
         permissions: opt GroupPermissions;
+        affected_events: vec EventIndex;
     };
 
 type GroupDescriptionChanged =
@@ -313,6 +321,11 @@ type GroupNameChanged =
         changed_by: UserId;
     };
 
+type GroupReplyContext =
+    record {
+        event_index: EventIndex;
+    };
+
 type MessagePinned =
     record {
         message_index: MessageIndex;
@@ -354,6 +367,22 @@ type ReplyContext =
         event_index: EventIndex;
     };
 
+type GiphyImageVariant = 
+    record {
+        width: nat32;
+        height: nat32;
+        url: text;
+        mime_type: text;
+    };
+
+type GiphyContent =
+    record {
+        caption: opt text;
+        title: text;
+        desktop: GiphyImageVariant;
+        mobile: GiphyImageVariant;
+    };
+
 type ImageContent =
     record {
         width: nat32;
@@ -389,6 +418,7 @@ type MessageContent =
         Poll: PollContent;
         Cryptocurrency: CryptocurrencyContent;
         Deleted: DeletedContent;
+        Giphy: GiphyContent;
     };
 
 type MessageIndexRange =
@@ -694,6 +724,12 @@ type FailedCryptocurrencyWithdrawal =
     variant {
         ICP: FailedICPWithdrawal;
         Cycles: FailedCyclesWithdrawal;
+    };
+
+type CompletedCryptocurrencyTransfer =
+    variant {
+        ICP: CompletedICPTransfer;
+        Cycles: CompletedCyclesTransfer;
     };
 
 type CyclesDeposit =

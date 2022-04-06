@@ -59,6 +59,8 @@ import type {
     UnpinMessageResponse,
     RegisterPollVoteResponse,
     GroupPermissions,
+    PendingICPWithdrawal,
+    WithdrawCryptocurrencyResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
@@ -68,7 +70,12 @@ import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
 import type { BlobReference, DataContent } from "../domain/data/data";
 import { UnsupportedValueError } from "../utils/error";
-import type { GroupSearchResponse, SearchAllMessagesResponse } from "../domain/search/search";
+import type {
+    GroupSearchResponse,
+    SearchAllMessagesResponse,
+    SearchDirectChatResponse,
+    SearchGroupChatResponse,
+} from "../domain/search/search";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import type { IMessageReadTracker, MarkMessagesRead } from "../stores/markRead";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
@@ -81,6 +88,7 @@ import { storageStore } from "../stores/storage";
 import type { ILedgerClient } from "./ledger/ledger.client.interface";
 import { LedgerClient } from "./ledger/ledger.client";
 import type { ICP } from "../domain/crypto/crypto";
+import { icpBalanceE8sStore } from "../stores/balance";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -148,6 +156,14 @@ export class ServiceContainer implements MarkMessagesRead {
         msg: Message
     ): Promise<SendMessageResponse> {
         if (chat.kind === "group_chat") {
+            if (msg.content.kind === "crypto_content") {
+                return this.userClient.sendGroupICPTransfer(
+                    chat.chatId,
+                    msg.content.transfer.recipient,
+                    user,
+                    msg
+                );
+            }
             return this.sendGroupMessage(chat.chatId, user.username, mentioned, msg);
         }
         if (chat.kind === "direct_chat") {
@@ -239,6 +255,17 @@ export class ServiceContainer implements MarkMessagesRead {
         );
     }
 
+    directChatEventsByEventIndex(
+        theirUserId: string,
+        eventIndexes: number[]
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        return this.rehydrateEventResponse(
+            "direct",
+            theirUserId,
+            this.userClient.chatEventsByIndex(eventIndexes, theirUserId)
+        );
+    }
+
     groupChatEventsWindow(
         eventIndexRange: IndexRange,
         chatId: string,
@@ -261,6 +288,17 @@ export class ServiceContainer implements MarkMessagesRead {
             "group",
             chatId,
             this.getGroupClient(chatId).chatEvents(eventIndexRange, startIndex, ascending)
+        );
+    }
+
+    groupChatEventsByEventIndex(
+        chatId: string,
+        eventIndexes: number[]
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        return this.rehydrateEventResponse(
+            "group",
+            chatId,
+            this.getGroupClient(chatId).chatEventsByIndex(eventIndexes)
         );
     }
 
@@ -433,6 +471,17 @@ export class ServiceContainer implements MarkMessagesRead {
         return dataContent;
     }
 
+    async rehydrateMessage(
+        chatType: "direct" | "group",
+        currentChatId: string,
+        message: EventWrapper<Message>
+    ): Promise<EventWrapper<Message>> {
+        const missing = await this.resolveMissingIndexes(chatType, currentChatId, [message]);
+        [message] = this.rehydrateMissingReplies(currentChatId, [message], missing);
+        [message] = this.reydrateEventList([message]);
+        return message;
+    }
+
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
         return this._userIndexClient
             .searchUsers(searchTerm, maxResults)
@@ -453,6 +502,22 @@ export class ServiceContainer implements MarkMessagesRead {
 
     searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
         return this.userClient.searchAllMessages(searchTerm, maxResults);
+    }
+
+    searchGroupChat(
+        chatId: string,
+        searchTerm: string,
+        maxResults = 10
+    ): Promise<SearchGroupChatResponse> {
+        return this.getGroupClient(chatId).searchGroupChat(searchTerm, maxResults);
+    }
+
+    searchDirectChat(
+        userId: string,
+        searchTerm: string,
+        maxResults = 10
+    ): Promise<SearchDirectChatResponse> {
+        return this.userClient.searchDirectChat(userId, searchTerm, maxResults);
     }
 
     async getUser(userId: string): Promise<PartialUserSummary | undefined> {
@@ -683,8 +748,28 @@ export class ServiceContainer implements MarkMessagesRead {
         return this._userIndexClient.upgradeStorage(newLimitBytes);
     }
 
-    refreshAccountBalance(account: string): Promise<ICP> {
-        return this._ledgerClient.accountBalance(account);
+    refreshAccountBalance(account: string, fake = BigInt(1345764648)): Promise<ICP> {
+        if (process.env.NODE_ENV !== "production") {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    const fakeVal = {
+                        e8s: fake,
+                    };
+                    icpBalanceE8sStore.set(fakeVal);
+                    resolve(fakeVal);
+                }, 1000);
+            });
+        }
+        return this._ledgerClient
+            .accountBalance(account)
+            .then((val) => {
+                icpBalanceE8sStore.set(val);
+                return val;
+            })
+            .catch((err) => {
+                icpBalanceE8sStore.set({ e8s: BigInt(0) });
+                throw err;
+            });
     }
 
     getGroupMessagesByMessageIndex(
@@ -722,5 +807,9 @@ export class ServiceContainer implements MarkMessagesRead {
         voteType: "register" | "delete"
     ): Promise<RegisterPollVoteResponse> {
         return this.userClient.registerPollVote(otherUser, messageIdx, answerIdx, voteType);
+    }
+
+    withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
+        return this.userClient.withdrawICP(domain);
     }
 }

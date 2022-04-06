@@ -4,9 +4,11 @@
     import Markdown from "./Markdown.svelte";
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";
+    import GiphyContent from "./GiphyContent.svelte";
     import AudioContent from "./AudioContent.svelte";
     import PollContent from "./PollContent.svelte";
     import FileContent from "./FileContent.svelte";
+    import CryptoContent from "./CryptoContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
     import type { MessageContent } from "../../domain/chat/chat";
@@ -17,9 +19,13 @@
     export let me: boolean = false;
     export let truncate: boolean = false;
     export let fill: boolean;
+    export let first: boolean;
     export let reply: boolean = false;
+    export let pinned: boolean = false;
     export let height: number | undefined = undefined;
     export let preview: boolean;
+    export let groupChat: boolean;
+    export let senderId: string;
 
     function truncateText(text: string): string {
         // todo - we might be able to do something nicer than this with pure css, but we just need to do
@@ -33,9 +39,9 @@
 </script>
 
 {#if content.kind === "text_content"}
-    <Markdown text={truncateText(content.text)} />
+    <Markdown suppressLinks={pinned} text={truncateText(content.text)} />
 {:else if content.kind === "image_content"}
-    <ImageContent {fill} {content} {reply} {height} />
+    <ImageContent {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "video_content"}
     <VideoContent {fill} {content} {reply} {height} />
 {:else if content.kind === "audio_content"}
@@ -45,9 +51,11 @@
 {:else if content.kind === "deleted_content"}
     <DeletedContent {content} />
 {:else if content.kind === "crypto_content"}
-    <div>Crypto content</div>
+    <CryptoContent {senderId} {content} {me} {first} {groupChat} />
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "poll_content"}
     <PollContent {preview} {me} {content} on:registerVote />
+{:else if content.kind === "giphy_content"}
+    <GiphyContent {fill} {content} {reply} {height} />
 {/if}

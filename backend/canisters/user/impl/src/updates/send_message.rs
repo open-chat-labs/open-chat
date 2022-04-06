@@ -1,18 +1,13 @@
-use super::crypto::cycles::{
-    handle_failed_cycles_transfer, handle_successful_cycles_transfer, start_cycles_transfer, CyclesTransferDetails,
-};
-use super::crypto::icp::send_icp;
+use super::crypto::cycles::{handle_failed_cycles_transfer, handle_successful_cycles_transfer, CyclesTransferDetails};
 use crate::guards::caller_is_owner;
+use crate::updates::crypto::{process_transfer, CompletedTransferDetails, TransferError};
 use crate::updates::send_message_common::register_callbacks_if_required;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{
-    CanisterId, ContentValidationError, CryptocurrencyTransfer, CyclesTransfer, FailedCyclesTransfer, ICPTransfer,
-    MessageContent, MessageIndex, UserId,
-};
+use types::{CanisterId, ContentValidationError, FailedCyclesTransfer, MessageContent, MessageIndex, UserId};
 use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
 
@@ -23,57 +18,56 @@ use user_canister::send_message::{Response::*, *};
 async fn send_message(mut args: Args) -> Response {
     run_regular_jobs();
 
-    let now = read_state(|state| state.env.now());
-
-    if let Err(error) = args.content.validate_for_new_message(now) {
-        return match error {
-            ContentValidationError::Empty => MessageEmpty,
-            ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
-            ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
-        };
+    if let Err(response) = read_state(|state| validate_request(&args, state)) {
+        return response;
     }
 
-    if read_state(|state| is_recipient_blocked(&args.recipient, state)) {
-        return RecipientBlocked;
-    }
-
-    let mut cycles_transfer = None;
+    let mut transfer_details = None;
     // If the message includes a pending cryptocurrency transfer, we process that and then update
     // the message to contain the completed transfer.
     if let MessageContent::Cryptocurrency(c) = &mut args.content {
-        match c.transfer.clone() {
-            CryptocurrencyTransfer::Cycles(CyclesTransfer::Pending(pending_transfer)) => {
-                if pending_transfer.recipient != args.recipient {
-                    return InvalidRequest("Transfer recipient does not match message recipient".to_owned());
-                }
-                match start_cycles_transfer(pending_transfer) {
-                    Ok(completed_transfer) => {
-                        c.transfer =
-                            CryptocurrencyTransfer::Cycles(CyclesTransfer::Completed(completed_transfer.transfer.clone()));
-                        cycles_transfer = Some(completed_transfer);
-                    }
-                    Err(failed_transfer) => return TransactionFailed(failed_transfer.error_message),
-                };
+        transfer_details = match process_transfer(c.transfer.clone(), args.recipient).await {
+            Ok(transfer) => {
+                c.transfer = transfer.clone().into();
+                Some(transfer)
             }
-            CryptocurrencyTransfer::ICP(ICPTransfer::Pending(pending_transfer)) => {
-                if pending_transfer.recipient != args.recipient {
-                    return InvalidRequest("Transfer recipient does not match message recipient".to_owned());
+            Err(error) => {
+                return match error {
+                    TransferError::InvalidRequest(reason) => InvalidRequest(reason),
+                    TransferError::TransferFailed(reason) => TransferFailed(reason),
                 }
-                match send_icp(pending_transfer).await {
-                    Ok(completed_transfer) => {
-                        c.transfer = CryptocurrencyTransfer::ICP(ICPTransfer::Completed(completed_transfer))
-                    }
-                    Err(failed_transfer) => return TransactionFailed(failed_transfer.error_message),
-                };
             }
-            _ => return InvalidRequest("Can only send pending transfers".to_owned()),
-        }
+        };
     }
 
-    mutate_state(|state| send_message_impl(args, cycles_transfer, state))
+    mutate_state(|state| send_message_impl(args, transfer_details, state))
 }
 
-fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>, runtime_state: &mut RuntimeState) -> Response {
+fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Response> {
+    if runtime_state.data.blocked_users.contains(&args.recipient) {
+        return Err(RecipientBlocked);
+    }
+
+    let now = runtime_state.env.now();
+
+    if let Err(error) = args.content.validate_for_new_message(now) {
+        Err(match error {
+            ContentValidationError::Empty => MessageEmpty,
+            ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
+            ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
+            ContentValidationError::TransferCannotBeZero => TransferCannotBeZero,
+            ContentValidationError::TransferLimitExceeded(limit) => TransferLimitExceeded(limit),
+        })
+    } else {
+        Ok(())
+    }
+}
+
+fn send_message_impl(
+    args: Args,
+    transfer_details: Option<CompletedTransferDetails>,
+    runtime_state: &mut RuntimeState,
+) -> Response {
     let now = runtime_state.env.now();
     let my_user_id = runtime_state.env.canister_id().into();
     let recipient = args.recipient;
@@ -93,19 +87,30 @@ fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>,
 
     register_callbacks_if_required(recipient, &message_event, runtime_state);
 
+    let cycles_transfer =
+        transfer_details
+            .clone()
+            .and_then(|t| if let CompletedTransferDetails::Cycles(c) = t { Some(c) } else { None });
+
     let c2c_args = build_c2c_args(args, message_event.event.message_index);
     ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, cycles_transfer, false));
 
-    Success(SuccessResult {
-        chat_id: recipient.into(),
-        event_index: message_event.index,
-        message_index: message_event.event.message_index,
-        timestamp: now,
-    })
-}
-
-fn is_recipient_blocked(recipient: &UserId, runtime_state: &RuntimeState) -> bool {
-    runtime_state.data.blocked_users.contains(recipient)
+    if let Some(transfer) = transfer_details.map(|t| t.into()) {
+        TransferSuccess(TransferSuccessResult {
+            chat_id: recipient.into(),
+            event_index: message_event.index,
+            message_index: message_event.event.message_index,
+            timestamp: now,
+            transfer,
+        })
+    } else {
+        Success(SuccessResult {
+            chat_id: recipient.into(),
+            event_index: message_event.index,
+            message_index: message_event.event.message_index,
+            timestamp: now,
+        })
+    }
 }
 
 fn build_c2c_args(args: Args, message_index: MessageIndex) -> c2c_send_message::Args {

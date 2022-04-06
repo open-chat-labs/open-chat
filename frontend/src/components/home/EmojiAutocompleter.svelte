@@ -6,7 +6,7 @@
     import { _ } from "svelte-i18n";
     import { emojiDatabase } from "../../utils/emojis";
     import type { NativeEmoji } from "emoji-picker-element/shared";
-    import { ScreenWidth, screenWidth } from "stores/screenDimensions";
+    import { mobileWidth } from "stores/screenDimensions";
 
     type EmojiSummary = {
         unicode: string;
@@ -20,7 +20,7 @@
     let matches: EmojiSummary[] = [];
 
     // this is definitely a bit horrible. It seems to be necessary when we use the virtual list.
-    $: ITEM_HEIGHT = $screenWidth === ScreenWidth.ExtraSmall ? 43.2 : 49.59;
+    $: ITEM_HEIGHT = $mobileWidth ? 43.2 : 49.59;
     $: {
         if (query !== undefined) {
             emojiDatabase.getPreferredSkinTone().then((tone) => {

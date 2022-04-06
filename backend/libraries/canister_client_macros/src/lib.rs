@@ -5,18 +5,20 @@ macro_rules! generate_update_call {
             agent: &ic_agent::Agent,
             canister_id: &candid::Principal,
             args: &$method_name::Args,
-        ) -> Result<$method_name::Response, ic_agent::AgentError> {
+        ) -> Result<$method_name::Response, Box<dyn std::error::Error + Sync + std::marker::Send>> {
             use candid::{Decode, Encode};
+
+            let candid_args = Encode!(args)?;
 
             let method_name = stringify!($method_name);
             let response = agent
                 .update(canister_id, method_name)
-                .with_arg(Encode!(args).expect(&format!("Failed to serialize '{method_name}' args")))
+                .with_arg(candid_args)
                 .call_and_wait(delay())
                 .await?;
 
-            Ok(Decode!(response.as_slice(), $method_name::Response)
-                .expect(&format!("Failed to deserialize '{method_name}' response")))
+            let result = Decode!(response.as_slice(), $method_name::Response)?;
+            Ok(result)
         }
     };
 }
@@ -28,18 +30,19 @@ macro_rules! generate_query_call {
             agent: &ic_agent::Agent,
             canister_id: &candid::Principal,
             args: &$method_name::Args,
-        ) -> Result<$method_name::Response, ic_agent::AgentError> {
+        ) -> Result<$method_name::Response, Box<dyn std::error::Error + std::marker::Send + std::marker::Sync>> {
             use candid::{Decode, Encode};
+
+            let candid_args = Encode!(args)?;
 
             let method_name = stringify!($method_name);
             let response = agent
                 .query(canister_id, method_name)
-                .with_arg(Encode!(args).expect(&format!("Failed to serialize '{method_name}' args")))
+                .with_arg(candid_args)
                 .call()
                 .await?;
 
-            Ok(Decode!(response.as_slice(), $method_name::Response)
-                .expect(&format!("Failed to deserialize '{method_name}' response")))
+            Ok(Decode!(response.as_slice(), $method_name::Response)?)
         }
     };
 }

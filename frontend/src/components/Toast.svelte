@@ -46,7 +46,7 @@
         justify-content: center;
         align-items: center;
         color: var(--button-txt);
-        @include size-below(xs) {
+        @include mobile() {
             width: 100%;
         }
 

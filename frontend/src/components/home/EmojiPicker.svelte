@@ -29,17 +29,38 @@
 <style type="text/scss">
     emoji-picker {
         width: 100%;
-        --num-columns: 13;
+        --num-columns: 17;
         --emoji-padding: 0.3rem;
         --emoji-size: 1.8rem;
+
+        @include size-below(xl) {
+            --num-columns: 15 !important;
+        }
         @include size-below(md) {
-            --num-columns: 11 !important;
+            --num-columns: 12 !important;
         }
         @include size-below(sm) {
-            --num-columns: 8 !important;
+            --num-columns: 11 !important;
+        }
+        @include size-below(xs) {
+            --num-columns: 9 !important;
         }
         @include size-below(xxs) {
             --num-columns: 7 !important;
+        }
+
+        &.reaction {
+            --num-columns: 12 !important;
+
+            @include size-below(sm) {
+                --num-columns: 11 !important;
+            }
+            @include size-below(xs) {
+                --num-columns: 9 !important;
+            }
+            @include size-below(xxs) {
+                --num-columns: 7 !important;
+            }
         }
     }
 </style>

@@ -7,6 +7,22 @@ export const Notification = IDL.Variant({
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
+          'Giphy' : IDL.Record({
+            'title' : IDL.Text,
+            'desktop' : IDL.Record({
+              'url' : IDL.Text,
+              'height' : IDL.Nat32,
+              'mime_type' : IDL.Text,
+              'width' : IDL.Nat32,
+            }),
+            'caption' : IDL.Opt(IDL.Text),
+            'mobile' : IDL.Record({
+              'url' : IDL.Text,
+              'height' : IDL.Nat32,
+              'mime_type' : IDL.Text,
+              'width' : IDL.Nat32,
+            }),
+          }),
           'File' : IDL.Record({
             'name' : IDL.Text,
             'mime_type' : IDL.Text,
@@ -61,6 +77,7 @@ export const Notification = IDL.Variant({
                 }),
                 'Completed' : IDL.Record({
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                  'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'block_index' : IDL.Nat64,
                   'memo' : IDL.Nat64,
                   'recipient' : IDL.Principal,
@@ -144,6 +161,22 @@ export const Notification = IDL.Variant({
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
+          'Giphy' : IDL.Record({
+            'title' : IDL.Text,
+            'desktop' : IDL.Record({
+              'url' : IDL.Text,
+              'height' : IDL.Nat32,
+              'mime_type' : IDL.Text,
+              'width' : IDL.Nat32,
+            }),
+            'caption' : IDL.Opt(IDL.Text),
+            'mobile' : IDL.Record({
+              'url' : IDL.Text,
+              'height' : IDL.Nat32,
+              'mime_type' : IDL.Text,
+              'width' : IDL.Nat32,
+            }),
+          }),
           'File' : IDL.Record({
             'name' : IDL.Text,
             'mime_type' : IDL.Text,
@@ -198,6 +231,7 @@ export const Notification = IDL.Variant({
                 }),
                 'Completed' : IDL.Record({
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                  'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'block_index' : IDL.Nat64,
                   'memo' : IDL.Nat64,
                   'recipient' : IDL.Principal,

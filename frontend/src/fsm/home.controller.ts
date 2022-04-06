@@ -10,6 +10,7 @@ import type {
     Mention,
     Message,
     MemberRole,
+    MessageContent,
 } from "../domain/chat/chat";
 import {
     compareChats,
@@ -17,6 +18,7 @@ import {
     getMinVisibleMessageIndex,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
+    userIdsFromEvents,
 } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
 import type { Notification } from "../domain/notifications";
@@ -46,6 +48,7 @@ import { closeNotificationsForChat } from "../utils/notifications";
 import { ChatController } from "./chat.controller";
 import { Poller } from "./poller";
 import { scrollStrategy } from "stores/settings";
+import { setCachedMessageFromNotification } from "../utils/caching";
 
 const ONE_MINUTE = 60 * 1000;
 const ONE_HOUR = 60 * ONE_MINUTE;
@@ -53,6 +56,8 @@ const USER_UPDATE_INTERVAL = ONE_MINUTE;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 1000;
+
+export const currentUserKey = Symbol();
 
 export class HomeController {
     public messagesRead: IMessageReadTracker;
@@ -183,11 +188,18 @@ export class HomeController {
                         rec[chat.chatId] = chat;
                         if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
                             selectedChatInvalid = false;
-                            selectedChat.chatUpdated();
                         }
                         return rec;
                     }, {})
                 );
+
+                if (selectedChatInvalid) {
+                    this.clearSelectedChat();
+                } else if (selectedChat !== undefined) {
+                    selectedChat.chatUpdated(
+                        chatsResponse.affectedEvents[selectedChat.chatId] ?? []
+                    );
+                }
 
                 if (chatsResponse.avatarIdUpdate !== undefined) {
                     const blobReference =
@@ -209,10 +221,6 @@ export class HomeController {
                     userStore.add(this.api.rehydrateDataContent(user, "avatar"));
                 }
 
-                if (selectedChatInvalid) {
-                    this.clearSelectedChat();
-                }
-
                 this.initialised = true;
             }
         } catch (err) {
@@ -230,9 +238,9 @@ export class HomeController {
                 userIds.add(chat.them);
             } else if (chat.latestMessage !== undefined) {
                 userIds.add(chat.latestMessage.event.sender);
-                extractUserIdsFromMentions(getContentAsText(chat.latestMessage.event.content)).forEach((id) =>
-                    userIds.add(id)
-                );
+                extractUserIdsFromMentions(
+                    getContentAsText(chat.latestMessage.event.content)
+                ).forEach((id) => userIds.add(id));
             }
         });
         return userIds;
@@ -331,7 +339,7 @@ export class HomeController {
                     readableChatSummary,
                     this.messagesRead,
                     messageIndex,
-                    (message) => this.onConfirmedMessage(chatId, message)
+                    (message) => this.updateSummaryWithConfirmedMessage(chatId, message)
                 );
             });
         } else {
@@ -518,6 +526,18 @@ export class HomeController {
             this.remoteUserUndeletedMessage(parsedMsg);
         }
         if (parsedMsg.kind === "remote_user_sent_message") {
+            parsedMsg.messageEvent.event.content = this.hydrateBigIntsInContent(
+                parsedMsg.messageEvent.event.content
+            );
+            if (parsedMsg.messageEvent.event.repliesTo?.kind === "rehydrated_reply_context") {
+                parsedMsg.messageEvent.event.repliesTo = {
+                    ...parsedMsg.messageEvent.event.repliesTo,
+                    messageId: BigInt(parsedMsg.messageEvent.event.messageId),
+                    content: this.hydrateBigIntsInContent(
+                        parsedMsg.messageEvent.event.repliesTo.content
+                    ),
+                };
+            }
             this.remoteUserSentMessage({
                 ...parsedMsg,
                 chatId: fromChat.chatId,
@@ -568,7 +588,7 @@ export class HomeController {
         console.log("remote user sent message");
         if (
             !this.delegateToChatController(message, (chat) =>
-                chat.sendMessage(message.messageEvent, message.userId)
+                chat.handleMessageSentByOther(message.messageEvent, false)
             )
         ) {
             unconfirmed.add(message.chatId, message.messageEvent);
@@ -599,11 +619,23 @@ export class HomeController {
                 return;
         }
 
-        const selectedChat = get(this.selectedChat);
-        if (selectedChat?.chatId === chatId) {
-            selectedChat.sendMessage(message, sender, true);
+        const chat = this.findChatById(chatId);
+        if (chat === undefined) {
+            return;
         }
-        this.onConfirmedMessage(chatId, message);
+        const chatType = chat.kind === "direct_chat" ? "direct" : "group";
+        Promise.all([
+            this.api.rehydrateMessage(chatType, chatId, message),
+            this.addMissingUsersFromMessage(message),
+            setCachedMessageFromNotification(notification),
+        ]).then(([m, _, __]) => {
+            this.updateSummaryWithConfirmedMessage(chatId, m);
+
+            const selectedChat = get(this.selectedChat);
+            if (selectedChat?.chatId === chatId) {
+                selectedChat.handleMessageSentByOther(m, true);
+            }
+        });
     }
 
     private delegateToChatController(
@@ -619,7 +651,10 @@ export class HomeController {
         return true;
     }
 
-    private onConfirmedMessage(chatId: string, message: EventWrapper<Message>): void {
+    private updateSummaryWithConfirmedMessage(
+        chatId: string,
+        message: EventWrapper<Message>
+    ): void {
         this.serverChatSummaries.update((summaries) => {
             const summary = summaries[chatId];
             if (summary === undefined) return summaries;
@@ -691,5 +726,56 @@ export class HomeController {
                 toastStore.showFailureToast("joinGroupFailed");
                 return false;
             });
+    }
+
+    private async addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
+        const users = userIdsFromEvents([message]);
+        const missingUsers = missingUserIds(get(userStore), users);
+        if (missingUsers.length > 0) {
+            const usersResp = await this.api.getUsers({
+                userGroups: [
+                    {
+                        users: missingUsers,
+                        updatedSince: BigInt(0),
+                    },
+                ],
+            });
+            userStore.addMany(usersResp.users);
+        }
+    }
+
+    private hydrateBigIntsInContent(content: MessageContent): MessageContent {
+        if (content.kind === "crypto_content") {
+            if (content.transfer.kind === "pending_icp_transfer") {
+                return {
+                    ...content,
+                    transfer: {
+                        ...content.transfer,
+                        amountE8s: BigInt(content.transfer.amountE8s),
+                        feeE8s:
+                            content.transfer.feeE8s !== undefined
+                                ? BigInt(content.transfer.feeE8s)
+                                : undefined,
+                        memo:
+                            content.transfer.memo !== undefined
+                                ? BigInt(content.transfer.memo)
+                                : undefined,
+                    },
+                };
+            }
+            if (content.transfer.kind === "completed_icp_transfer") {
+                return {
+                    ...content,
+                    transfer: {
+                        ...content.transfer,
+                        amountE8s: BigInt(content.transfer.amountE8s),
+                        feeE8s: BigInt(content.transfer.feeE8s),
+                        memo: BigInt(content.transfer.memo),
+                        blockIndex: BigInt(content.transfer.blockIndex),
+                    },
+                };
+            }
+        }
+        return content;
     }
 }

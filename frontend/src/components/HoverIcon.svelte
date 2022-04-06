@@ -1,8 +1,9 @@
 <script lang="ts">
     export let compact: boolean = false;
+    export let title: string | undefined = undefined;
 </script>
 
-<div class="wrapper" class:compact role="button">
+<div class="wrapper" class:compact role="button" {title}>
     <slot />
 </div>
 

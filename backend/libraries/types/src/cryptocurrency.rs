@@ -53,6 +53,12 @@ pub enum FailedCryptocurrencyWithdrawal {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum CompletedCryptocurrencyTransfer {
+    Cycles(CompletedCyclesTransfer),
+    ICP(CompletedICPTransfer),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CyclesDeposit {
     Completed(CompletedCyclesDeposit),
 }
@@ -173,6 +179,20 @@ pub enum CryptocurrencyTransfer {
 }
 
 impl CryptocurrencyTransfer {
+    pub fn cryptocurrency(&self) -> Cryptocurrency {
+        match self {
+            CryptocurrencyTransfer::Cycles(_) => Cryptocurrency::Cycles,
+            CryptocurrencyTransfer::ICP(_) => Cryptocurrency::ICP,
+        }
+    }
+
+    pub fn recipient(&self) -> UserId {
+        match self {
+            CryptocurrencyTransfer::Cycles(c) => c.recipient(),
+            CryptocurrencyTransfer::ICP(icp) => icp.recipient(),
+        }
+    }
+
     pub fn is_zero(&self) -> bool {
         match self {
             CryptocurrencyTransfer::Cycles(c) => c.cycles() == 0,
@@ -189,6 +209,14 @@ pub enum CyclesTransfer {
 }
 
 impl CyclesTransfer {
+    pub fn recipient(&self) -> UserId {
+        match self {
+            Self::Pending(t) => t.recipient,
+            Self::Completed(t) => t.recipient,
+            Self::Failed(t) => t.recipient,
+        }
+    }
+
     pub fn cycles(&self) -> Cycles {
         match self {
             Self::Pending(t) => t.cycles,
@@ -244,6 +272,14 @@ pub enum ICPTransfer {
 }
 
 impl ICPTransfer {
+    pub fn recipient(&self) -> UserId {
+        match self {
+            Self::Pending(t) => t.recipient,
+            Self::Completed(t) => t.recipient,
+            Self::Failed(t) => t.recipient,
+        }
+    }
+
     pub fn amount(&self) -> ICP {
         match self {
             Self::Pending(t) => t.amount,

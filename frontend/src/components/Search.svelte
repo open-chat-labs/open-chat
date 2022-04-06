@@ -64,7 +64,7 @@
         padding: var(--chatSearch-pd);
         border-radius: $sp5;
 
-        @include size-below(xs) {
+        @include mobile() {
             margin: var(--chatSearch-xs-mg);
             margin-bottom: $sp3;
         }

@@ -76,6 +76,12 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export type CompletedCryptocurrencyTransfer = { 'ICP' : CompletedICPTransfer } |
+  { 'Cycles' : CompletedCyclesTransfer };
+export type CompletedCryptocurrencyWithdrawal = {
+    'ICP' : CompletedICPWithdrawal
+  } |
+  { 'Cycles' : CompletedCyclesWithdrawal };
 export interface CompletedCyclesDeposit {
   'from' : CanisterId,
   'cycles' : Cycles,
@@ -98,6 +104,7 @@ export interface CompletedICPDeposit {
 }
 export interface CompletedICPTransfer {
   'fee' : ICP,
+  'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'memo' : Memo,
   'recipient' : UserId,
@@ -107,6 +114,7 @@ export interface CompletedICPTransfer {
 export interface CompletedICPWithdrawal {
   'to' : AccountIdentifier,
   'fee' : ICP,
+  'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'memo' : Memo,
   'amount' : ICP,
@@ -126,6 +134,7 @@ export interface CreateGroupArgs {
 export type CreateGroupResponse = {
     'DescriptionTooLong' : FieldTooLongResult
   } |
+  { 'NameTooShort' : FieldTooShortResult } |
   { 'Throttled' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : CreateGroupSuccessResult } |
@@ -199,6 +208,7 @@ export interface DirectChatSummary {
   'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
+  'affected_events' : Array<EventIndex>,
   'notifications_muted' : [] | [boolean],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
@@ -252,6 +262,8 @@ export interface EventsWindowArgs {
   'max_messages' : number,
   'max_events' : number,
 }
+export type FailedCryptocurrencyWithdrawal = { 'ICP' : FailedICPWithdrawal } |
+  { 'Cycles' : FailedCyclesWithdrawal };
 export interface FailedCyclesTransfer {
   'error_message' : string,
   'recipient' : UserId,
@@ -282,12 +294,28 @@ export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
 }
+export interface FieldTooShortResult {
+  'length_provided' : number,
+  'min_length' : number,
+}
 export interface FileContent {
   'name' : string,
   'mime_type' : string,
   'file_size' : number,
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
+}
+export interface GiphyContent {
+  'title' : string,
+  'desktop' : GiphyImageVariant,
+  'caption' : [] | [string],
+  'mobile' : GiphyImageVariant,
+}
+export interface GiphyImageVariant {
+  'url' : string,
+  'height' : number,
+  'mime_type' : string,
+  'width' : number,
 }
 export interface GroupChatCreated {
   'name' : string,
@@ -352,6 +380,7 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
+  'affected_events' : Array<EventIndex>,
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -402,6 +431,7 @@ export interface GroupPermissions {
   'pin_messages' : PermissionRole,
   'react_to_messages' : PermissionRole,
 }
+export interface GroupReplyContext { 'event_index' : EventIndex }
 export interface ICP { 'e8s' : bigint }
 export type ICPDeposit = { 'Completed' : CompletedICPDeposit };
 export interface ICPRegistrationFee {
@@ -483,7 +513,8 @@ export interface Message {
   'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
 }
-export type MessageContent = { 'File' : FileContent } |
+export type MessageContent = { 'Giphy' : GiphyContent } |
+  { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
@@ -595,6 +626,8 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
+export type PendingCryptocurrencyWithdrawal = { 'ICP' : PendingICPWithdrawal } |
+  { 'Cycles' : PendingCyclesWithdrawal };
 export interface PendingCyclesTransfer {
   'recipient' : UserId,
   'cycles' : Cycles,
@@ -728,7 +761,8 @@ export interface SendMessageArgs {
   'replies_to' : [] | [ReplyContext],
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
-  { 'TransactionFailed' : string } |
+  { 'TransferLimitExceeded' : bigint } |
+  { 'TransferCannotBeZero' : null } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,
@@ -740,7 +774,17 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'MessageEmpty' : null } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'RecipientBlocked' : null } |
-  { 'InvalidRequest' : string };
+  { 'InvalidRequest' : string } |
+  { 'TransferFailed' : string } |
+  {
+    'TransferSuccess' : {
+      'timestamp' : TimestampMillis,
+      'chat_id' : ChatId,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptocurrencyTransfer,
+      'message_index' : MessageIndex,
+    }
+  };
 export interface SetAvatarArgs { 'avatar' : [] | [Avatar] }
 export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : null };
@@ -775,6 +819,7 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
+export type TransactionHash = Array<number>;
 export type TransactionStatus = { 'Failed' : string } |
   { 'Complete' : null } |
   { 'Pending' : null };
@@ -793,6 +838,34 @@ export interface TransactionsSuccessResult {
   'latest_transaction_index' : [] | [number],
   'transactions' : Array<TransactionWrapper>,
 }
+export interface TransferCryptocurrencyWithinGroupArgs {
+  'content' : CryptocurrencyContent,
+  'recipient' : UserId,
+  'mentioned' : Array<User>,
+  'group_id' : ChatId,
+  'sender_name' : string,
+  'message_id' : MessageId,
+  'replies_to' : [] | [GroupReplyContext],
+}
+export type TransferCryptocurrencyWithinGroupResponse = {
+    'TextTooLong' : number
+  } |
+  { 'TransferLimitExceeded' : bigint } |
+  { 'CallerNotInGroup' : [] | [CompletedCryptocurrencyTransfer] } |
+  { 'TransferCannotBeZero' : null } |
+  {
+    'Success' : {
+      'timestamp' : TimestampMillis,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptocurrencyTransfer,
+      'message_index' : MessageIndex,
+    }
+  } |
+  { 'RecipientBlocked' : null } |
+  { 'InvalidRequest' : string } |
+  { 'TransferFailed' : string } |
+  { 'InternalError' : [string, CompletedCryptocurrencyTransfer] } |
+  { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
 export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
@@ -856,6 +929,12 @@ export interface VideoContent {
 }
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
+export interface WithdrawCryptocurrencyRequest {
+  'withdrawal' : PendingCryptocurrencyWithdrawal,
+}
+export type WithdrawCryptocurrencyResponse = { 'CurrencyNotSupported' : null } |
+  { 'TransactionFailed' : FailedCryptocurrencyWithdrawal } |
+  { 'Success' : CompletedCryptocurrencyWithdrawal };
 export interface _SERVICE {
   'add_recommended_group_exclusions' : (
       arg_0: AddRecommendedGroupExclusionsArgs,
@@ -912,9 +991,15 @@ export interface _SERVICE {
       ToggleReactionResponse
     >,
   'transactions' : (arg_0: TransactionsArgs) => Promise<TransactionsResponse>,
+  'transfer_cryptocurrency_within_group' : (
+      arg_0: TransferCryptocurrencyWithinGroupArgs,
+    ) => Promise<TransferCryptocurrencyWithinGroupResponse>,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
   'unmute_notifications' : (arg_0: UnmuteNotificationsArgs) => Promise<
       UnmuteNotificationsResponse
     >,
   'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
+  'withdraw_cryptocurrency' : (arg_0: WithdrawCryptocurrencyRequest) => Promise<
+      WithdrawCryptocurrencyResponse
+    >,
 }

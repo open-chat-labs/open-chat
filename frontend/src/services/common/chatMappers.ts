@@ -25,11 +25,15 @@ import type {
     RegisterPollVoteResponse,
     GroupPermissions,
     PermissionRole,
+    ICPWithdrawal,
+    PendingICPWithdrawal,
+    GiphyContent,
+    GiphyImage,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { User } from "../../domain/user/user";
 import { UnsupportedValueError } from "../../utils/error";
-import { identity, optional } from "../../utils/mapping";
+import { bytesToHexString, hexStringToBytes, identity, optional } from "../../utils/mapping";
 import type {
     ApiBlobReference,
     ApiFileContent,
@@ -56,6 +60,10 @@ import type {
     ApiRegisterPollVoteResponse as ApiRegisterUserPollVoteResponse,
     ApiGroupPermissions,
     ApiPermissionRole,
+    ApiICPWithdrawal,
+    ApiPendingICPWithdrawal,
+    ApiGiphyContent,
+    ApiGiphyImageVariant,
 } from "../user/candid/idl";
 import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
 
@@ -111,6 +119,9 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
     if ("Poll" in candid) {
         return pollContent(candid.Poll);
     }
+    if ("Giphy" in candid) {
+        return giphyContent(candid.Giphy);
+    }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
@@ -118,6 +129,25 @@ export function apiUser(domain: User): ApiUser {
     return {
         user_id: Principal.fromText(domain.userId),
         username: domain.username,
+    };
+}
+
+function giphyContent(candid: ApiGiphyContent): GiphyContent {
+    return {
+        kind: "giphy_content",
+        title: candid.title,
+        caption: optional(candid.caption, identity),
+        desktop: giphyImageVariant(candid.desktop),
+        mobile: giphyImageVariant(candid.mobile),
+    };
+}
+
+function giphyImageVariant(candid: ApiGiphyImageVariant): GiphyImage {
+    return {
+        width: candid.width,
+        height: candid.height,
+        url: candid.url,
+        mimeType: candid.mime_type,
     };
 }
 
@@ -253,6 +283,7 @@ function icpTransfer(candid: ApiICPTransfer): ICPTransfer {
             feeE8s: candid.Completed.fee.e8s,
             memo: candid.Completed.memo,
             blockIndex: candid.Completed.block_index,
+            transactionHash: bytesToHexString(candid.Completed.transaction_hash),
         };
     }
     if ("Failed" in candid) {
@@ -432,9 +463,30 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
         case "poll_content":
             return { Poll: apiPollContent(domain) };
 
+        case "giphy_content":
+            return { Giphy: apiGiphyContent(domain) };
+
         case "placeholder_content":
             throw new Error("Incorrectly attempting to send placeholder content to the server");
     }
+}
+
+function apiGiphyContent(domain: GiphyContent): ApiGiphyContent {
+    return {
+        title: domain.title,
+        caption: apiOptional(identity, domain.caption),
+        desktop: apiGiphyImageVariant(domain.desktop),
+        mobile: apiGiphyImageVariant(domain.mobile),
+    };
+}
+
+function apiGiphyImageVariant(domain: GiphyImage): ApiGiphyImageVariant {
+    return {
+        height: domain.height,
+        width: domain.width,
+        url: domain.url,
+        mime_type: domain.mimeType,
+    };
 }
 
 function apiPollContent(domain: PollContent): ApiPollContent {
@@ -539,7 +591,7 @@ function apiDeletedContent(domain: DeletedContent): ApiDeletedContent {
     };
 }
 
-function apiCryptoContent(domain: CryptocurrencyContent): ApiCryptocurrencyContent {
+export function apiCryptoContent(domain: CryptocurrencyContent): ApiCryptocurrencyContent {
     return {
         caption: apiOptional(identity, domain.caption),
         transfer: apiCryptoTransfer(domain.transfer),
@@ -590,6 +642,48 @@ function apiCyclesTransfer(domain: CyclesTransfer): ApiCyclesTransfer {
     throw new UnsupportedValueError("Unexpected cycles transfer kind", domain);
 }
 
+export function apiPendingICPWithdrawal(domain: PendingICPWithdrawal): ApiPendingICPWithdrawal {
+    return {
+        to: hexStringToBytes(domain.to),
+        amount: apiICP(domain.amountE8s),
+        fee: apiOptional(apiICP, domain.feeE8s),
+        memo: apiOptional(identity, domain.memo),
+    };
+}
+
+export function apiICPWithdrawal(domain: ICPWithdrawal): ApiICPWithdrawal {
+    if (domain.kind === "pending_icp_withdrawal") {
+        return {
+            Pending: apiPendingICPWithdrawal(domain),
+        };
+    }
+
+    if (domain.kind === "completed_icp_withdrawal") {
+        return {
+            Completed: {
+                to: hexStringToBytes(domain.to),
+                amount: apiICP(domain.amountE8s),
+                fee: apiICP(domain.feeE8s),
+                memo: domain.memo,
+                block_index: domain.blockIndex,
+                transaction_hash: hexStringToBytes(domain.transactionHash),
+            },
+        };
+    }
+    if (domain.kind === "failed_icp_withdrawal") {
+        return {
+            Failed: {
+                to: hexStringToBytes(domain.to),
+                amount: apiICP(domain.amountE8s),
+                fee: apiICP(domain.feeE8s),
+                memo: domain.memo,
+                error_message: domain.errorMessage,
+            },
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ICPWithdrawal kind", domain);
+}
+
 function apiICPTransfer(domain: ICPTransfer): ApiICPTransfer {
     if (domain.kind === "pending_icp_transfer") {
         return {
@@ -610,6 +704,7 @@ function apiICPTransfer(domain: ICPTransfer): ApiICPTransfer {
                 fee: apiICP(domain.feeE8s),
                 memo: domain.memo,
                 block_index: domain.blockIndex,
+                transaction_hash: hexStringToBytes(domain.transactionHash),
             },
         };
     }

@@ -679,6 +679,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "callback_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "serde_bytes",
+ "types",
+]
+
+[[package]]
 name = "candid"
 version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -750,6 +761,7 @@ dependencies = [
 name = "canister_client"
 version = "0.1.0"
 dependencies = [
+ "callback_canister",
  "candid",
  "canister_client_macros",
  "dirs",

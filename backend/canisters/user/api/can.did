@@ -17,12 +17,21 @@ type SendMessageResponse =
             message_index: MessageIndex;
             timestamp: TimestampMillis;
         };
+        TransferSuccess: record {
+            chat_id: ChatId;
+            event_index: EventIndex;
+            message_index: MessageIndex;
+            timestamp: TimestampMillis;
+            transfer: CompletedCryptocurrencyTransfer;
+        };
         MessageEmpty;
         TextTooLong: nat32;
         RecipientBlocked;
         InvalidPoll: InvalidPollReason;
         InvalidRequest: text;
-        TransactionFailed: text;
+        TransferFailed: text;
+        TransferCannotBeZero;
+        TransferLimitExceeded: nat64;
     };
 
 type EditMessageArgs =
@@ -139,6 +148,7 @@ type CreateGroupSuccessResult =
 type CreateGroupResponse =
     variant {
         Success: CreateGroupSuccessResult;
+        NameTooShort: FieldTooShortResult;
         NameTooLong: FieldTooLongResult;
         DescriptionTooLong: FieldTooLongResult;
         AvatarTooBig: FieldTooLongResult;
@@ -283,6 +293,36 @@ type SetBioResponse =
     variant {
         Success;
         TooLong: FieldTooLongResult;
+    };
+
+type TransferCryptocurrencyWithinGroupArgs =
+    record {
+        message_id: MessageId;
+        group_id: ChatId;
+        recipient: UserId;
+        content: CryptocurrencyContent;
+        sender_name: text;
+        replies_to: opt GroupReplyContext;
+        mentioned: vec User;
+    };
+
+type TransferCryptocurrencyWithinGroupResponse =
+    variant {
+        Success: record {
+            event_index: EventIndex;
+            message_index: MessageIndex;
+            timestamp: TimestampMillis;
+            transfer: CompletedCryptocurrencyTransfer;
+        };
+        TextTooLong: nat32;
+        RecipientBlocked;
+        CallerNotInGroup: opt CompletedCryptocurrencyTransfer;
+        CryptocurrencyNotSupported: Cryptocurrency;
+        InvalidRequest: text;
+        TransferFailed: text;
+        TransferCannotBeZero;
+        TransferLimitExceeded: nat64;
+        InternalError: record { text; CompletedCryptocurrencyTransfer; };
     };
 
 type WithdrawCryptocurrencyRequest =
@@ -504,6 +544,7 @@ service: {
     relinquish_group_super_admin: (RelinquishGroupSuperAdminArgs) -> (RelinquishGroupSuperAdminResponse);
     add_recommended_group_exclusions: (AddRecommendedGroupExclusionsArgs) -> (AddRecommendedGroupExclusionsResponse);
     set_bio: (SetBioArgs) -> (SetBioResponse);
+    transfer_cryptocurrency_within_group: (TransferCryptocurrencyWithinGroupArgs) -> (TransferCryptocurrencyWithinGroupResponse);
     withdraw_cryptocurrency: (WithdrawCryptocurrencyRequest) -> (WithdrawCryptocurrencyResponse);
 
     events: (EventsArgs) -> (EventsResponse) query;

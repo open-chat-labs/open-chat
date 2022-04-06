@@ -80,7 +80,7 @@ async fn send_cycles_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         }),
         replies_to: None,
     };
-    send_direct_message(&user1_agent, user1_id, &send_message_args).await;
+    send_direct_message_with_cryptocurrency_transfer(&user1_agent, user1_id, &send_message_args).await;
     println!("Ok");
 
     print!("Checking user1's cycles balance + transfer is in list of transactions... ");

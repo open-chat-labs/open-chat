@@ -9,11 +9,6 @@ type SendMessageArgs =
         mentioned: vec User;
     };
 
-type GroupReplyContext =
-    record {
-        event_index: EventIndex;
-    };
-
 type SendMessageResponse =
     variant {
         Success: record {
@@ -194,6 +189,7 @@ type UpdateGroupResponse =
         Success;
         NotAuthorized;
         CallerNotInGroup;
+        NameTooShort: FieldTooShortResult;
         NameTooLong: FieldTooLongResult;
         DescriptionTooLong: FieldTooLongResult;
         AvatarTooBig: FieldTooLongResult;
@@ -276,7 +272,7 @@ type SelectedUpdatesSuccess =
 type SelectedUpdatesResponse =
     variant {
         Success: SelectedUpdatesSuccess;
-        SuccessNoUpdates;
+        SuccessNoUpdates: EventIndex;
         CallerNotInGroup;
     };
 

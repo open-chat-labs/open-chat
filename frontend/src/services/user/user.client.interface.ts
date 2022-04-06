@@ -21,10 +21,15 @@ import type {
     MarkReadRequest,
     GroupChatSummary,
     RegisterPollVoteResponse,
+    PendingICPWithdrawal,
+    WithdrawCryptocurrencyResponse,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
-import type { SearchAllMessagesResponse } from "../../domain/search/search";
+import type {
+    SearchDirectChatResponse,
+    SearchAllMessagesResponse,
+} from "../../domain/search/search";
 import type { SetBioResponse, UserSummary } from "../../domain/user/user";
 
 export interface IUserClient {
@@ -56,6 +61,12 @@ export interface IUserClient {
         message: Message,
         replyingToChatId?: string
     ): Promise<SendMessageResponse>;
+    sendGroupICPTransfer(
+        groupId: string,
+        recipientId: string,
+        sender: UserSummary,
+        message: Message
+    ): Promise<SendMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
@@ -69,6 +80,11 @@ export interface IUserClient {
     ): Promise<ToggleReactionResponse>;
     deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse>;
     searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse>;
+    searchDirectChat(
+        userId: string,
+        searchTerm: string,
+        maxResults: number
+    ): Promise<SearchDirectChatResponse>;
     toggleMuteNotifications(
         chatId: string,
         muted: boolean
@@ -83,4 +99,5 @@ export interface IUserClient {
         answerIdx: number,
         voteType: "register" | "delete"
     ): Promise<RegisterPollVoteResponse>;
+    withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse>;
 }

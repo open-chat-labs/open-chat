@@ -9,7 +9,6 @@ import type {
     RemoveParticipantResponse,
     UpdateGroupResponse,
     ToggleReactionResponse,
-    EventWrapper,
     IndexRange,
     DeleteMessageResponse,
     EditMessageResponse,
@@ -47,6 +46,7 @@ import {
     getMessagesByMessageIndexResponse,
     pinMessageResponse,
     unpinMessageResponse,
+    searchGroupChatResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -61,13 +61,9 @@ import {
     registerPollVoteResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
-import {
-    enoughVisibleMessages,
-    mergeGroupChatDetails,
-    nextIndex,
-} from "../../domain/chat/chat.utils";
-
-const MAX_RECURSION = 10;
+import { MAX_EVENTS, MAX_MESSAGES, mergeGroupChatDetails } from "../../domain/chat/chat.utils";
+import type { SearchGroupChatResponse } from "../../domain/search/search";
+import { getChatEventsInLoop } from "../common/chatEvents";
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
@@ -98,59 +94,31 @@ export class GroupClient extends CandidService implements IGroupClient {
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.handleResponse(
             this.groupService.events_window({
-                max_messages: 30,
-                max_events: 200,
+                max_messages: MAX_MESSAGES,
+                max_events: MAX_EVENTS,
                 mid_point: messageIndex,
             }),
             getEventsResponse
         );
     }
 
-    async chatEvents(
+    chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,
-        ascending: boolean,
-        previouslyLoadedEvents: EventWrapper<GroupChatEvent>[] = [],
-        iterations = 0
+        ascending: boolean
     ): Promise<EventsResponse<GroupChatEvent>> {
-        const resp = await this.handleResponse(
-            this.groupService.events({
-                max_messages: 30,
-                max_events: 50,
-                ascending: ascending,
-                start_index: startIndex,
-            }),
-            getEventsResponse
-        );
-        if (resp === "events_failed") {
-            return resp;
-        }
-
-        // merge the retrieved events with the events accumulated from the previous iteration(s)
-        // todo - we also need to merge affected events
-        const merged = ascending
-            ? [...previouslyLoadedEvents, ...resp.events]
-            : [...resp.events, ...previouslyLoadedEvents];
-
-        // check whether we have accumulated enough messages to display
-        if (enoughVisibleMessages(ascending, eventIndexRange, merged)) {
-            console.log("we got enough visible messages to display now");
-            return { ...resp, events: merged };
-        } else if (iterations < MAX_RECURSION) {
-            const idx = nextIndex(ascending, merged);
-            if (idx === undefined) {
-                // this will happen if we didn't get any events.
-                return { ...resp, events: merged };
-            } else {
-                // recurse and get the next chunk since we don't yet have enough events
-                console.log("we don't have enough message, recursing", resp.events);
-                return this.chatEvents(eventIndexRange, idx, ascending, merged, iterations + 1);
-            }
-        } else {
-            throw new Error(
-                `Reached the maximum number of iterations of ${MAX_RECURSION} when trying to load events: ascending (${ascending}), range (${eventIndexRange}), so far (${previouslyLoadedEvents.length})`
+        const getChatEventsFunc = (index: number, asc: boolean) =>
+            this.handleResponse(
+                this.groupService.events({
+                    max_messages: MAX_MESSAGES,
+                    max_events: MAX_EVENTS,
+                    ascending: asc,
+                    start_index: index,
+                }),
+                getEventsResponse
             );
-        }
+
+        return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending);
     }
 
     addParticipants(
@@ -309,8 +277,15 @@ export class GroupClient extends CandidService implements IGroupClient {
             groupDetailsUpdatesResponse
         );
 
-        if (updatesResponse === "caller_not_in_group" || updatesResponse === "success_no_updates") {
+        if (updatesResponse === "caller_not_in_group") {
             return previous;
+        }
+
+        if (updatesResponse.kind === "success_no_updates") {
+            return {
+                ...previous,
+                latestEventIndex: updatesResponse.latestEventIndex,
+            };
         }
 
         return mergeGroupChatDetails(previous, updatesResponse);
@@ -369,6 +344,16 @@ export class GroupClient extends CandidService implements IGroupClient {
                 message_index: messageIdx,
             }),
             registerPollVoteResponse
+        );
+    }
+
+    searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse> {
+        return this.handleResponse(
+            this.groupService.search_messages({
+                search_term: searchTerm,
+                max_results: maxResults,
+            }),
+            searchGroupChatResponse
         );
     }
 }

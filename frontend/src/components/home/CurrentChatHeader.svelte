@@ -1,7 +1,7 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
@@ -18,6 +18,7 @@
     import Bell from "svelte-material-icons/Bell.svelte";
     import Poll from "svelte-material-icons/Poll.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
+    import Magnify from "svelte-material-icons/Magnify.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import MenuIcon from "../MenuIcon.svelte";
@@ -65,6 +66,10 @@
 
     function toggleMuteNotifications() {
         dispatch("toggleMuteNotifications");
+    }
+
+    function searchChat() {
+        dispatch("searchChat", "");
     }
 
     function createPoll() {
@@ -161,7 +166,7 @@
 </script>
 
 <SectionHeader shadow={true} flush={true}>
-    {#if $screenWidth === ScreenWidth.ExtraSmall}
+    {#if $mobileWidth}
         <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
             <HoverIcon>
                 {#if $rtlStore}
@@ -250,15 +255,6 @@
                                 </MenuItem>
                             {/if}
                         {:else if $selectedChatSummary.kind === "group_chat"}
-                            {#if canDeleteGroup($selectedChatSummary)}
-                                <MenuItem on:click={deleteGroup}>
-                                    <DeleteAlertOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("deleteGroup")}</div>
-                                </MenuItem>
-                            {/if}
                             <MenuItem on:click={showGroupDetails}>
                                 <AccountMultiplePlus
                                     size={$iconSize}
@@ -301,6 +297,10 @@
                                 </MenuItem>
                             {/if}
                         {/if}
+                        <MenuItem on:click={searchChat}>
+                            <Magnify size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                            <div slot="text">{$_("searchChat")}</div>
+                        </MenuItem>
                         {#if supportsNotifications}
                             {#if $selectedChatSummary.notificationsMuted === true}
                                 <MenuItem on:click={toggleMuteNotifications}>
@@ -338,6 +338,15 @@
                                     color={"var(--icon-txt)"}
                                     slot="icon" />
                                 <div slot="text">{$_("markAllRead")}</div>
+                            </MenuItem>
+                        {/if}
+                        {#if canDeleteGroup($selectedChatSummary)}
+                            <MenuItem on:click={deleteGroup}>
+                                <DeleteAlertOutline
+                                    size={$iconSize}
+                                    color={"var(--icon-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("deleteGroup")}</div>
                             </MenuItem>
                         {/if}
                     </Menu>

@@ -3,6 +3,10 @@ import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 
+export type InternalError = { kind: "internal_error" };
+
+export type CallerNotInGroup = { kind: "caller_not_in_group" };
+
 export type MessageContent =
     | FileContent
     | TextContent
@@ -12,7 +16,8 @@ export type MessageContent =
     | DeletedContent
     | PlaceholderContent
     | PollContent
-    | CryptocurrencyContent;
+    | CryptocurrencyContent
+    | GiphyContent;
 
 export type IndexRange = [number, number];
 
@@ -89,6 +94,7 @@ export type CompletedICPTransfer = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
+    transactionHash: string;
 };
 
 export type CompletedICPDeposit = {
@@ -127,6 +133,7 @@ export type CompletedICPWithdrawal = {
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
+    transactionHash: string;
 };
 
 export type FailedICPWithdrawal = {
@@ -138,6 +145,14 @@ export type FailedICPWithdrawal = {
     memo: bigint;
     errorMessage: string;
 };
+
+export type WithdrawCryptocurrencyResponse =
+    | { kind: "currency_not_supported" }
+    | FailedCryptocurrencyWithdrawal
+    | CompletedCryptocurrencyWithdrawal;
+export type FailedCryptocurrencyWithdrawal = FailedICPWithdrawal | FailedCyclesWithdrawal;
+export type CompletedCryptocurrencyWithdrawal = CompletedICPWithdrawal | CompletedCyclesWithdrawal;
+export type CompletedCryptocurrencyTransfer = CompletedCyclesTransfer | CompletedICPTransfer;
 
 export type CyclesTransfer = PendingCyclesTransfer | CompletedCyclesTransfer | FailedCyclesTransfer;
 export type CyclesWithdrawal =
@@ -165,6 +180,21 @@ export interface CryptocurrencyContent {
     kind: "crypto_content";
     caption?: string;
     transfer: CryptocurrencyTransfer;
+}
+
+export type GiphyImage = {
+    height: number;
+    width: number;
+    url: string;
+    mimeType: string;
+};
+
+export interface GiphyContent {
+    kind: "giphy_content";
+    caption?: string;
+    title: string;
+    desktop: GiphyImage; //will be "original" from the giphy api
+    mobile: GiphyImage; //will be "downsized_large" from the giphy api
 }
 
 export interface ImageContent extends DataContent {
@@ -314,6 +344,7 @@ export type GroupChatEvent =
     | GroupChatCreated
     | ParticipantsAdded
     | ParticipantJoined
+    | AggregateParticipantsJoinedOrLeft
     | ParticipantsRemoved
     | ParticipantLeft
     | GroupNameChanged
@@ -347,6 +378,12 @@ export type ParticipantsAdded = {
     kind: "participants_added";
     userIds: string[];
     addedBy: string;
+};
+
+export type AggregateParticipantsJoinedOrLeft = {
+    kind: "aggregate_participants_joined_left";
+    users_joined: Set<string>;
+    users_left: Set<string>;
 };
 
 export type ParticipantJoined = {
@@ -525,6 +562,7 @@ export type MergedUpdatesResponse = {
     chatSummaries: ChatSummary[];
     blockedUsers: Set<string>;
     avatarIdUpdate: OptionUpdate<bigint>;
+    affectedEvents: Record<string, number[]>;
     timestamp: bigint;
 };
 
@@ -587,6 +625,7 @@ type ChatSummaryUpdatesCommon = {
     latestEventIndex?: number;
     latestMessage?: EventWrapper<Message>;
     notificationsMuted?: boolean;
+    affectedEvents: number[];
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
@@ -636,9 +675,9 @@ export type GroupPermissions = {
 export type GroupChatDetailsResponse = "caller_not_in_group" | GroupChatDetails;
 
 export type GroupChatDetailsUpdatesResponse =
-    | "success_no_updates"
-    | "caller_not_in_group"
-    | GroupChatDetailsUpdates;
+    | ({ kind: "success" } & GroupChatDetailsUpdates)
+    | { kind: "success_no_updates"; latestEventIndex: number }
+    | "caller_not_in_group";
 
 export type GroupChatDetails = {
     participants: Participant[];
@@ -730,9 +769,7 @@ export type CreateGroupSuccess = {
     canisterId: string;
 };
 
-export type CreateGroupInternalError = {
-    kind: "internal_error";
-};
+export type CreateGroupInternalError = InternalError;
 
 export type CreateGroupInvalidName = {
     kind: "invalid_name";
@@ -816,11 +853,16 @@ export type SendMessageResponse =
     | SendMessageInvalidRequest
     | SendMessageTooLong
     | SendMessageEmpty
-    | SendMessageBalanceExceeded
+    | TransferCannotBeZero
     | SendMessageRecipientNotFound
-    | TransationFailed
+    | TransferFailed
+    | TransferLimitExceeded
+    | TransferSuccess
     | InvalidPoll
     | SendMessageNotInGroup
+    | CallerNotInGroup
+    | InternalError
+    | CryptoCurrencyNotSupported
     | NotAuthorised;
 
 export type SendMessageSuccess = {
@@ -830,12 +872,32 @@ export type SendMessageSuccess = {
     eventIndex: number;
 };
 
+export type TransferSuccess = {
+    kind: "transfer_success";
+    timestamp: bigint;
+    messageIndex: number;
+    eventIndex: number;
+    transfer: CompletedCryptocurrencyTransfer;
+};
+
 export type InvalidPoll = {
     kind: "invalid_poll";
 };
 
-export type TransationFailed = {
-    kind: "transaction_failed";
+export type CryptoCurrencyNotSupported = {
+    kind: "cryptocurrency_not_supported";
+};
+
+export type TransferFailed = {
+    kind: "transfer_failed";
+};
+
+export type TransferLimitExceeded = {
+    kind: "transfer_limit_exceeded";
+};
+
+export type TransferCannotBeZero = {
+    kind: "transfer_cannot_be_zero";
 };
 
 export type SendMessageRecipientBlocked = {
@@ -856,10 +918,6 @@ export type SendMessageEmpty = {
 
 export type SendMessageRecipientNotFound = {
     kind: "recipient_not_found";
-};
-
-export type SendMessageBalanceExceeded = {
-    kind: "balance_exceeded";
 };
 
 export type SendMessageNotInGroup = {
@@ -923,7 +981,7 @@ export type JoinGroupResponse =
     | { kind: "already_in_group" }
     | { kind: "not_super_admin" }
     | { kind: "participant_limit_reached" }
-    | { kind: "internal_error" };
+    | InternalError;
 
 export type MarkReadRequest = {
     ranges: DRange;
@@ -988,3 +1046,5 @@ export type RegisterPollVoteResponse =
     | "out_of_range"
     | "poll_not_found"
     | "chat_not_found";
+
+export type MessageAction = "emoji" | "file" | undefined;

@@ -2,9 +2,10 @@ use crate::{read_state, ParticipantInternal, RuntimeState, WASM_VERSION};
 use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
+use std::collections::HashSet;
 use types::{
-    EventIndex, EventWrapper, GroupPermissions, Mention, Message, MessageIndex, OptionUpdate, TimestampMillis, UserId,
-    MAX_RETURNED_MENTIONS,
+    EventIndex, EventWrapper, GroupChatSummaryUpdatesInternal, GroupPermissions, Mention, Message, MessageIndex, OptionUpdate,
+    TimestampMillis, UserId, MAX_RETURNED_MENTIONS,
 };
 
 #[query]
@@ -21,7 +22,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
     let updates_from_events = process_events(args.updates_since, participant, runtime_state);
 
     if let Some(last_updated) = updates_from_events.latest_update {
-        let updates = SummaryUpdates {
+        let updates = GroupChatSummaryUpdatesInternal {
             chat_id: runtime_state.env.canister_id().into(),
             last_updated,
             name: updates_from_events.name,
@@ -40,6 +41,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(args.updates_since).copied()),
             owner_id: updates_from_events.owner_id,
             permissions: updates_from_events.permissions,
+            affected_events: updates_from_events.affected_events.into_iter().collect(),
         };
         Success(Box::new(SuccessResult { updates }))
     } else {
@@ -60,6 +62,7 @@ struct UpdatesFromEvents {
     mentions: Vec<Mention>,
     owner_id: Option<UserId>,
     permissions: Option<GroupPermissions>,
+    affected_events: HashSet<EventIndex>,
 }
 
 fn process_events(
@@ -67,23 +70,28 @@ fn process_events(
     participant: &ParticipantInternal,
     runtime_state: &RuntimeState,
 ) -> UpdatesFromEvents {
+    let chat_events = &runtime_state.data.events;
+
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
         // during the iteration below.
-        latest_message: runtime_state
-            .data
-            .events
-            .latest_message_if_updated(since, Some(participant.user_id)),
+        latest_message: chat_events.latest_message_if_updated(since, Some(participant.user_id)),
         ..Default::default()
     };
 
     // Iterate through events starting from most recent
     let mut lowest_message_index: MessageIndex = u32::MIN.into();
-    for event_wrapper in runtime_state.data.events.iter().rev().take_while(|e| e.timestamp > since) {
+    for event_wrapper in chat_events.iter().rev().take_while(|e| e.timestamp > since) {
         if updates.latest_event_index.is_none() {
             updates.latest_update = Some(event_wrapper.timestamp);
             updates.latest_event_index = Some(event_wrapper.index);
+        }
+
+        if let Some(index) = chat_events.affected_event_index(&event_wrapper.event) {
+            if updates.affected_events.len() < 100 {
+                updates.affected_events.insert(index);
+            }
         }
 
         match &event_wrapper.event {

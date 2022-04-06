@@ -10,7 +10,7 @@
 
 <style type="text/scss">
     $left-width: 40%;
-    $right-width: 400px;
+    $right-width: 500px;
     $trans: ease-in-out 200ms;
 
     section {
@@ -27,7 +27,7 @@
             width: 100%;
             padding-left: 0;
             padding-right: 0;
-            @include size-below(xs) {
+            @include mobile() {
                 padding: 0;
             }
         }
@@ -38,9 +38,9 @@
             display: flex;
             flex-direction: column;
             min-width: 236px;
-            max-width: 450px;
+            max-width: 550px;
             position: relative;
-            @include size-below(xs) {
+            @include mobile() {
                 background: var(--panel-left-xs);
                 width: 100%;
                 max-width: none;
@@ -56,7 +56,7 @@
             display: flex;
             flex-direction: column;
             @include fullHeight();
-            @include size-below(xs) {
+            @include mobile() {
                 width: 100%;
             }
         }

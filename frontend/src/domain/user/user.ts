@@ -2,6 +2,7 @@ import type { Version } from "../../domain/version";
 import type { DataContent } from "../data/data";
 
 export const E8S_PER_ICP = 100_000_000;
+export const ICP_TRANSFER_FEE_E8S = BigInt(10_000);
 
 export type UserLastOnline = {
     userId: string;

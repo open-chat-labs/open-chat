@@ -4,7 +4,7 @@
     import Link from "./Link.svelte";
     import { rtlStore } from "../stores/rtl";
     import { rollbar } from "../utils/logging";
-    import { ScreenWidth, screenWidth } from "../stores/screenDimensions";
+    import { mobileWidth } from "../stores/screenDimensions";
 
     const dispatch = createEventDispatcher();
 
@@ -16,12 +16,13 @@
     export let fadeDuration = 100;
     export let fadeDelay = 200;
     export let fixedWidth: boolean = true;
+    export let fitToContent: boolean = false;
     export let alignTo: DOMRect | undefined = undefined;
+    export let actualWidth: number = 0;
 
     let divElement: HTMLElement;
 
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
-    $: useAlignTo = alignTo !== undefined && !mobile;
+    $: useAlignTo = alignTo !== undefined && !$mobileWidth;
     $: style = useAlignTo ? "visibility: hidden;" : "visibility: visible;";
 
     onMount(async () => {
@@ -58,12 +59,14 @@
 
 <div
     bind:this={divElement}
+    bind:clientWidth={actualWidth}
     {style}
     class="modal-content"
     class:large
     in:fade={{ duration: fadeDuration, delay: fadeDelay }}
     out:fade={{ duration: fadeDuration }}
     class:fixed-width={fixedWidth}
+    class:fit_to_content={fitToContent}
     on:click|stopPropagation>
     {#if !hideHeader}
         <div class="header">
@@ -93,16 +96,20 @@
         background-color: var(--modal-bg);
         color: var(--modal-txt);
         box-shadow: var(--modal-sh);
-        @include size-below(xs) {
-            width: 100%;
-            max-height: calc(100% - 20px);
-            border-radius: $sp4 $sp4 0 0;
+        @include mobile() {
+            &:not(.fit_to_content) {
+                width: 100%;
+                max-height: calc(100% - 20px);
+                border-radius: $sp4 $sp4 0 0;
+            }
         }
-        @include size-above(xs) {
+        @include size-above(sm) {
             &.fixed-width {
                 width: 60%;
             }
-            max-width: 576px;
+            &:not(.fit_to_content) {
+                max-width: 576px;
+            }
             &.large {
                 &.fixed-width {
                     width: 90%;
@@ -118,7 +125,7 @@
         background-color: var(--modal-header-bg);
         color: var(--modal-header-txt);
         border-bottom: 1px solid var(--modal-header-bd);
-        @include size-below(xs) {
+        @include mobile() {
             border-radius: $sp4 $sp4 0 0;
         }
     }
@@ -133,7 +140,7 @@
             padding: 0;
         }
 
-        @include size-below(xs) {
+        @include mobile() {
             padding: $sp3;
         }
     }
@@ -146,7 +153,7 @@
         color: var(--modal-footer-txt);
         border-top: 1px solid var(--modal-footer-bd);
         text-align: right;
-        @include size-below(xs) {
+        @include mobile() {
             border-radius: 0;
         }
         &.rtl {

@@ -4,12 +4,15 @@ use notification_pusher_core::actions::{prune_notifications, push_notifications}
 use notification_pusher_core::ic_agent::IcAgentConfig;
 use notification_pusher_core::runner;
 use std::str::FromStr;
+use tracing::info;
 use types::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     dotenv::dotenv()?;
     tracing_subscriber::fmt::init();
+
+    info!("Initializing notification pusher");
 
     let args: Vec<String> = std::env::args().collect();
     let command: &str = &args[1];
@@ -27,6 +30,8 @@ async fn main() -> Result<(), Error> {
         fetch_root_key: !is_production,
         canister_id,
     };
+
+    info!("Initialization complete");
 
     match command {
         "push" => push_notifications::run(&ic_agent_config, &index_store, &vapid_private_pem).await,

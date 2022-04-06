@@ -26,7 +26,7 @@
     import { toTitleCase } from "../../utils/string";
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
-    import { ScreenWidth, screenWidth } from "stores/screenDimensions";
+    import { mobileWidth } from "stores/screenDimensions";
 
     export let index: number;
     export let chatSummary: ChatSummary;
@@ -177,7 +177,7 @@
             </div>
         {/if}
     {/if}
-    {#if canDelete && hovering && $screenWidth !== ScreenWidth.ExtraSmall}
+    {#if canDelete && hovering && !$mobileWidth}
         <div
             title={$_("removeChat")}
             on:click|stopPropagation|preventDefault={deleteDirectChat}
@@ -220,7 +220,6 @@
         margin-bottom: var(--chatSummary-mb);
         cursor: pointer;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
-        position: relative;
         border-bottom: var(--chatSummary-bd);
 
         &.selected::before {

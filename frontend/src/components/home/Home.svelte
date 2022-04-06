@@ -4,13 +4,14 @@
     import AboutModal from "../AboutModal.svelte";
     import FaqModal from "../FaqModal.svelte";
     import RoadmapModal from "../RoadmapModal.svelte";
+    import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
     import { fly } from "svelte/transition";
     import Overlay from "../Overlay.svelte";
     import { createEventDispatcher, onDestroy, onMount, setContext, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import { push, replace, querystring } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
@@ -33,13 +34,14 @@
         GroupChatSummary,
     } from "../../domain/chat/chat";
     import type { Writable } from "svelte/store";
-    import type { HomeController } from "../../fsm/home.controller";
-    import { _ } from "svelte-i18n";
+    import { currentUserKey, HomeController } from "../../fsm/home.controller";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
     import Upgrade from "./upgrade/Upgrade.svelte";
     import type { Questions } from "../../domain/faq";
     import { apiKey } from "../../services/serviceContainer";
+    import type { Share } from "../../domain/share";
+    import { draftMessages } from "../../stores/draftMessages";
 
     const dispatch = createEventDispatcher();
 
@@ -54,10 +56,12 @@
         About,
         Faq,
         Roadmap,
+        Share,
     }
     let faqQuestion: Questions | undefined = undefined;
     let modal = ModalType.None;
     setContext(apiKey, controller.api);
+    setContext(currentUserKey, controller.user);
 
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -70,6 +74,7 @@
     let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
+    let share: Share = { title: "", text: "", url: "", files: [] };
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -99,6 +104,22 @@
     $: {
         // wait until we have loaded the chats
         if (controller.initialised) {
+            if (params.chatId === "share") {
+                const local_qs = new URLSearchParams(window.location.search);
+                const title = local_qs.get("title") ?? "";
+                const text = local_qs.get("text") ?? "";
+                const url = local_qs.get("url") ?? "";
+                share = {
+                    title,
+                    text,
+                    url,
+                    files: [],
+                };
+                params.chatId = null;
+                history.replaceState(null, "", "/#/");
+                modal = ModalType.Share;
+            }
+
             // if we have a chatid in the params then we need to select that chat
             if (params.chatId && params.chatId !== $selectedChat?.chatId?.toString()) {
                 // if the chat in the param is not known to us then we need to attempt to load the
@@ -134,8 +155,8 @@
         }
     }
 
-    function goToMessageIndex(ev: CustomEvent<number>) {
-        $selectedChat?.goToMessageIndex(ev.detail);
+    function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
+        $selectedChat?.goToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
 
     function closeModal() {
@@ -329,6 +350,27 @@
         upgradeStorage = ev.detail;
     }
 
+    function onChatSelectedForShare(ev: CustomEvent<string>) {
+        closeModal();
+        const chatId = ev.detail;
+        push(`/${chatId}`);
+
+        const shareText = share.text ?? "";
+        const shareTitle = share.title ?? "";
+        const shareUrl = share.url ?? "";
+
+        let text = shareText.length > 0 ? shareText : shareTitle;
+
+        if (shareUrl.length > 0) {
+            if (text.length > 0) {
+                text += "\n";
+            }
+            text += shareUrl;
+        }
+
+        draftMessages.setTextContent(chatId, text);
+    }
+
     $: chat = $selectedChat?.chat;
 
     $: groupChat =
@@ -343,7 +385,7 @@
     $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
 
     /** SHOW LEFT
-     * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
+     * MobileScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
      * ==========================================================
      * F             |  -            |  -            |  T
      * T             |  T            |  -            |  F
@@ -351,10 +393,8 @@
      * T             |  F            |  F            |  T
      */
     $: showLeft =
-        $screenWidth !== ScreenWidth.ExtraSmall ||
-        ($screenWidth === ScreenWidth.ExtraSmall &&
-            params.chatId == null &&
-            recommendedGroups.kind === "idle");
+        !$mobileWidth ||
+        ($mobileWidth && params.chatId == null && recommendedGroups.kind === "idle");
 
     /** SHOW MIDDLE
      * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
@@ -365,11 +405,9 @@
      * T             |  F            |  F            |  F
      */
     $: showMiddle =
-        $screenWidth !== ScreenWidth.ExtraSmall ||
-        ($screenWidth === ScreenWidth.ExtraSmall && params.chatId != null) ||
-        ($screenWidth === ScreenWidth.ExtraSmall &&
-            params.chatId == null &&
-            recommendedGroups.kind !== "idle");
+        !$mobileWidth ||
+        ($mobileWidth && params.chatId != null) ||
+        ($mobileWidth && params.chatId == null && recommendedGroups.kind !== "idle");
 </script>
 
 {#if controller.user}
@@ -419,7 +457,8 @@
                 on:recommend={whatsHot}
                 on:dismissRecommendation={dismissRecommendation}
                 on:upgrade={upgrade}
-                on:showPinned={showPinned} />
+                on:showPinned={showPinned}
+                on:goToMessageIndex={goToMessageIndex} />
         {/if}
     </main>
 {/if}
@@ -465,26 +504,40 @@
         on:cancel={() => (upgradeStorage = undefined)} />
 {/if}
 
-<Overlay dismissible={true} active={modal !== ModalType.None} on:close={closeModal}>
-    {#if modal === ModalType.Faq}
-        <FaqModal bind:question={faqQuestion} on:close={closeModal} />
-    {:else if modal === ModalType.Roadmap}
-        <RoadmapModal on:close={closeModal} />
-    {:else if modal === ModalType.About}
-        <AboutModal canister={{ id: userId, wasmVersion }} on:close={closeModal} />
-    {/if}
-</Overlay>
+{#if modal !== ModalType.None}
+    <Overlay
+        dismissible={modal !== ModalType.Share}
+        alignLeft={modal === ModalType.Share}
+        active
+        on:close={closeModal}>
+        {#if modal === ModalType.Faq}
+            <FaqModal bind:question={faqQuestion} on:close={closeModal} />
+        {:else if modal === ModalType.Roadmap}
+            <RoadmapModal on:close={closeModal} />
+        {:else if modal === ModalType.About}
+            <AboutModal canister={{ id: userId, wasmVersion }} on:close={closeModal} />
+        {:else if modal === ModalType.Share}
+            <SelectChatModal
+                chatsSummaries={$chatSummariesList}
+                on:close={closeModal}
+                on:select={onChatSelectedForShare} />
+        {/if}
+    </Overlay>
+{/if}
 
 <style type="text/scss">
     main {
-        transition: margin ease-in-out 300ms;
+        transition: margin ease-in-out 300ms, max-width ease-in-out 300ms;
         position: relative;
         width: 100%;
-        max-width: 1200px;
         display: flex;
         margin: var(--mg);
+        max-width: 1600px;
         @include size-below(lg) {
             margin: 0 auto;
+        }
+        @include size-below(xl) {
+            max-width: 1400px;
         }
     }
     :global(body) {
@@ -506,7 +559,7 @@
         }
         @include z-index("right-panel");
         @include box-shadow(3);
-        @include size-below(xs) {
+        @include mobile() {
             width: 100%;
         }
     }

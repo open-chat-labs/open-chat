@@ -27,8 +27,8 @@ pub fn calculate_transaction_hash(sender: UserId, args: &TransferArgs) -> Transa
 
     let transaction = Transaction {
         operation: Operation::Transfer {
-            from,
-            to: args.to,
+            from: from.to_string(),
+            to: args.to.to_string(),
             amount: args.amount,
             fee: args.fee,
         },
@@ -37,9 +37,7 @@ pub fn calculate_transaction_hash(sender: UserId, args: &TransferArgs) -> Transa
         created_at_time: args.created_at_time.unwrap(),
     };
 
-    let mut state = Sha256::new();
-    state.update(&serde_cbor::ser::to_vec_packed(&transaction).unwrap());
-    state.finalize().into()
+    transaction.hash()
 }
 
 pub async fn latest_block_index(ledger_canister_id: CanisterId) -> CallResult<BlockIndex> {
@@ -92,16 +90,16 @@ pub async fn query_blocks(ledger_canister_id: CanisterId, args: GetBlocksArgs) -
 #[derive(Serialize, Deserialize, CandidType, Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum Operation {
     Burn {
-        from: AccountIdentifier,
+        from: String,
         amount: Tokens,
     },
     Mint {
-        to: AccountIdentifier,
+        to: String,
         amount: Tokens,
     },
     Transfer {
-        from: AccountIdentifier,
-        to: AccountIdentifier,
+        from: String,
+        to: String,
         amount: Tokens,
         fee: Tokens,
     },
@@ -115,4 +113,12 @@ struct Transaction {
 
     /// The time this transaction was created.
     pub created_at_time: Timestamp,
+}
+
+impl Transaction {
+    pub fn hash(&self) -> TransactionHash {
+        let mut hash = Sha256::new();
+        hash.update(&serde_cbor::ser::to_vec_packed(&self).unwrap());
+        hash.finalize().into()
+    }
 }

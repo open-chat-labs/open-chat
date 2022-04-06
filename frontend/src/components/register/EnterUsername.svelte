@@ -1,7 +1,7 @@
 <script lang="ts">
     import Button from "../Button.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
     import UsernameInput from "../UsernameInput.svelte";
-    import { fade } from "svelte/transition";
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import type { ServiceContainer } from "../../services/serviceContainer";
@@ -25,40 +25,35 @@
 <p class="enter-username">{$_("register.usernameRules")}</p>
 
 <form class="username-wrapper" on:submit|preventDefault={submitUsername}>
-    <UsernameInput 
+    <UsernameInput
         {api}
         {originalUsername}
-        bind:validUsername={validUsername}
+        bind:validUsername
         bind:checking={checkingUsername}
-        bind:error={error} />
+        bind:error />
 </form>
 
 {#if error}
-    <h4 in:fade class="error">{$_(error)}</h4>
+    <ErrorMessage>{$_(error)}</ErrorMessage>
 {/if}
 
 <div class="actions">
-    <Button 
+    <Button
         loading={checkingUsername}
-        disabled={validUsername === undefined} 
+        disabled={validUsername === undefined}
         on:click={submitUsername}>
         {$_("register.createUser")}
     </Button>
 </div>
 
 <style type="text/scss">
-    .error {
-        @include font(bold, normal, fs-100);
-        color: var(--error);
-    }
-
     .enter-username {
         @include font(light, normal, fs-100);
         margin-bottom: $sp4;
     }
     .username-wrapper {
         width: 80%;
-        @include size-below(xs) {
+        @include mobile() {
             width: 100%;
         }
     }

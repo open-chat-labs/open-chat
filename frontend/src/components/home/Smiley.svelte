@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    $: size = $screenWidth === ScreenWidth.ExtraSmall ? 20 : 24;
+    import { mobileWidth } from "../../stores/screenDimensions";
+    $: size = $mobileWidth ? 20 : 24;
 </script>
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size}

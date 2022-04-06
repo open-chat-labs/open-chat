@@ -42,7 +42,9 @@
                 } else {
                     messages = {
                         kind: "success",
-                        data: groupMessagesByDate(resp.events.sort((a, b) => a.index - b.index)),
+                        data: groupMessagesByDate(
+                            resp.events.sort((a, b) => a.index - b.index)
+                        ).reverse(),
                     };
                 }
             })
@@ -112,7 +114,7 @@
 
         @include nice-scrollbar();
 
-        @include size-below(xs) {
+        @include mobile() {
             padding: 10px;
             -webkit-overflow-scrolling: touch;
         }

@@ -9,16 +9,19 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import { onDestroy } from "svelte";
     import { getMinVisibleMessageIndex, isPreviewing } from "../../domain/chat/chat.utils";
-    import type { GroupChatSummary, Mention } from "../../domain/chat/chat";
+    import type { EnhancedReplyContext, GroupChatSummary, Mention } from "../../domain/chat/chat";
     import PollBuilder from "./PollBuilder.svelte";
+    import ICPTransferBuilder from "./ICPTransferBuilder.svelte";
     import {
         canBlockUsers,
         canCreatePolls,
-        canDeleteMessages,
+        canDeleteOtherUsersMessages,
         canPinMessages,
         canReactToMessages,
         canSendMessages,
     } from "../../domain/chat/chat.utils";
+    import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
+    import GiphySelector from "./GiphySelector.svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -29,13 +32,21 @@
     let firstUnreadMessage: number | undefined;
     let firstUnreadMention: Mention | undefined;
     let creatingPoll = false;
+    let creatingICPTransfer = false;
+    let selectingGif = false;
     let footer: Footer;
     let pollBuilder: PollBuilder;
+    let icpTransferBuilder: ICPTransferBuilder;
+    let giphySelector: GiphySelector;
+    let showSearchHeader = false;
+    let searchTerm = "";
 
     $: pinned = controller.pinnedMessages;
+    $: showFooter = !showSearchHeader;
 
     $: {
         if (chatId !== controller.chatId) {
+            showSearchHeader = false;
             chatId = controller.chatId;
             unreadMessages = controller.unreadMessageCount;
             firstUnreadMention = getFirstUnreadMention();
@@ -116,6 +127,30 @@
         creatingPoll = true;
     }
 
+    function icpTransfer(ev: CustomEvent<bigint>) {
+        if (icpTransferBuilder !== undefined) {
+            icpTransferBuilder.reset(ev.detail);
+        }
+        creatingICPTransfer = true;
+    }
+
+    function attachGif(ev: CustomEvent<string>) {
+        selectingGif = true;
+        if (giphySelector !== undefined) {
+            giphySelector.reset(ev.detail);
+        }
+    }
+
+    function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
+        showSearchHeader = false;
+        controller.replyTo(ev.detail);
+    }
+
+    function searchChat(ev: CustomEvent<string>) {
+        showSearchHeader = true;
+        searchTerm = ev.detail;
+    }
+
     $: chat = controller.chat;
 
     $: preview = isPreviewing($chat);
@@ -123,51 +158,81 @@
 
 <svelte:window on:focus={onWindowFocus} />
 
-<PollBuilder bind:this={pollBuilder} on:sendPoll={footer.sendPoll} bind:open={creatingPoll} />
+<PollBuilder
+    bind:this={pollBuilder}
+    on:sendPoll={footer.sendMessageWithContent}
+    bind:open={creatingPoll} />
+
+<ICPTransferBuilder
+    bind:this={icpTransferBuilder}
+    on:sendTransfer={footer.sendMessageWithContent}
+    {controller}
+    bind:open={creatingICPTransfer} />
+
+<GiphySelector
+    bind:this={giphySelector}
+    bind:open={selectingGif}
+    on:sendGiphy={footer.sendMessageWithContent} />
 
 <div class="wrapper">
-    <CurrentChatHeader
-        on:clearSelection
-        on:blockUser
-        on:unblockUser
-        on:markAllRead={markAllRead}
-        on:toggleMuteNotifications={toggleMuteNotifications}
-        on:addParticipants
-        on:showGroupDetails
-        on:showParticipants
-        on:leaveGroup
-        on:deleteGroup
-        on:showPinned
-        on:createPoll={createPoll}
-        {blocked}
-        {preview}
-        {unreadMessages}
-        selectedChatSummary={chat}
-        hasPinned={$pinned.size > 0} />
+    {#if showSearchHeader}
+        <CurrentChatSearchHeader
+            chat={$chat}
+            bind:searchTerm
+            on:goToMessageIndex
+            on:close={() => (showSearchHeader = false)} />
+    {:else}
+        <CurrentChatHeader
+            on:clearSelection
+            on:blockUser
+            on:unblockUser
+            on:markAllRead={markAllRead}
+            on:toggleMuteNotifications={toggleMuteNotifications}
+            on:addParticipants
+            on:showGroupDetails
+            on:showParticipants
+            on:leaveGroup
+            on:deleteGroup
+            on:showPinned
+            on:createPoll={createPoll}
+            on:searchChat={searchChat}
+            {blocked}
+            {preview}
+            {unreadMessages}
+            selectedChatSummary={chat}
+            hasPinned={$pinned.size > 0} />
+    {/if}
     <CurrentChatMessages
         on:replyPrivatelyTo
+        on:replyTo={replyTo}
         on:messageRead={messageRead}
         on:chatWith
         {controller}
         canPin={canPinMessages($chat)}
         canBlockUser={canBlockUsers($chat)}
-        canDelete={canDeleteMessages($chat)}
+        canDelete={canDeleteOtherUsersMessages($chat)}
         canSend={canSendMessages($chat)}
         canReact={canReactToMessages($chat)}
         {preview}
         {firstUnreadMention}
         {firstUnreadMessage}
+        footer={showFooter}
         {unreadMessages} />
-    <Footer
-        bind:this={footer}
-        {joining}
-        {preview}
-        {blocked}
-        {controller}
-        on:joinGroup
-        on:cancelPreview
-        on:upgrade
-        on:createPoll={createPoll} />
+    {#if showFooter}
+        <Footer
+            bind:this={footer}
+            {joining}
+            {preview}
+            {blocked}
+            {controller}
+            on:joinGroup
+            on:cancelPreview
+            on:upgrade
+            on:attachGif={attachGif}
+            on:icpTransfer={icpTransfer}
+            on:searchChat={searchChat}
+            on:createPoll={createPoll} />
+    {/if}
 </div>
 
 <style type="text/scss">

@@ -1,5 +1,5 @@
 use crate::lifecycle::{init_logger, init_state};
-use crate::{Data, StateVersion, LOG_MESSAGES};
+use crate::{Data, LOG_MESSAGES};
 use canister_api_macros::trace;
 use canister_logger::{set_panic_hook, LogMessage, LogMessagesWrapper};
 use group_index_canister::post_upgrade::Args;
@@ -12,22 +12,20 @@ use utils::env::canister::CanisterEnv;
 fn post_upgrade(args: Args) {
     set_panic_hook();
 
-    let (version, bytes): (StateVersion, Vec<u8>) = ic_cdk::storage::stable_restore().unwrap();
     let env = Box::new(CanisterEnv::new());
+    let bytes = ic_cdk::api::stable::stable_bytes();
 
-    match version {
-        StateVersion::V1 => {
-            let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
-                serializer::deserialize(&bytes).unwrap();
+    let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
+        serializer::deserialize(&bytes).unwrap();
 
-            init_logger(data.test_mode);
-            init_state(env, data, args.wasm_version);
+    data.public_groups.hydrate();
 
-            if !log_messages.is_empty() || !trace_messages.is_empty() {
-                LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
-            }
-        }
-    };
+    init_logger(data.test_mode);
+    init_state(env, data, args.wasm_version);
+
+    if !log_messages.is_empty() || !trace_messages.is_empty() {
+        LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
+    }
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }

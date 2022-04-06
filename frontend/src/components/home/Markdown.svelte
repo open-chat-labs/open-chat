@@ -7,6 +7,7 @@
     import { rollbar } from "../../utils/logging";
     import { userStore } from "../../stores/user";
     import { _ } from "svelte-i18n";
+    import { isAbsoluteUrl, synonymousUrlRegex } from "../../utils/urls";
 
     export let text: string;
     export let inline: boolean = true;
@@ -52,10 +53,21 @@
 
     const renderer = {
         link(href: string | null, title: string | null, text: string) {
-            if (suppressLinks) {
+            if (suppressLinks || href === null) {
                 return `<span class="fake-link" ${title && `title=${title}`}>${text}</span>`;
             } else {
-                return `<a href=${href} ${title && `title=${title}`} target="_blank">${text}</a>`;
+                let target = "";
+                // Check if the link is to a synonymous url (eg. https://oc.app), if so, convert it to a relative link
+                if (synonymousUrlRegex.test(href)) {
+                    href = href.replace(synonymousUrlRegex, "");
+                    if (href === "" || href === "/") {
+                        href = "/#";
+                    }
+                } else if (isAbsoluteUrl(href)) {
+                    target = 'target="_blank"';
+                }
+
+                return `<a href=${href} ${title && `title=${title}`} ${target}>${text}</a>`;
             }
         },
     };
@@ -87,7 +99,6 @@
 <style type="text/scss">
     :global(.markdown-wrapper a) {
         text-decoration: underline;
-        word-break: break-all;
     }
 
     :global(.markdown-wrapper .fake-link) {

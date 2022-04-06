@@ -34,7 +34,7 @@
         left: 0;
         right: 0;
 
-        @include size-below(xs) {
+        @include mobile() {
             margin-bottom: 0;
         }
     }

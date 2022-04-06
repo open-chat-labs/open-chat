@@ -4,13 +4,12 @@ use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use chat_events::GroupChatEvents;
-use group_canister::Summary;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupPermissions, MessageIndex, Milliseconds, Notification,
-    TimestampMillis, Timestamped, UserId, Version,
+    Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, MessageIndex, Milliseconds,
+    Notification, TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::env::Environment;
 use utils::memory;
@@ -23,13 +22,6 @@ mod model;
 mod queries;
 mod regular_jobs;
 mod updates;
-
-const STATE_VERSION: StateVersion = StateVersion::V1;
-
-#[derive(CandidType, Serialize, Deserialize)]
-enum StateVersion {
-    V1,
-}
 
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
@@ -77,12 +69,12 @@ impl RuntimeState {
         }
     }
 
-    pub fn summary(&self, participant: &ParticipantInternal) -> Summary {
+    pub fn summary(&self, participant: &ParticipantInternal) -> GroupChatSummaryInternal {
         let data = &self.data;
         let latest_event = data.events.last();
         let min_visible_message_index = participant.min_visible_message_index();
 
-        Summary {
+        GroupChatSummaryInternal {
             chat_id: self.env.canister_id().into(),
             last_updated: latest_event.timestamp,
             name: data.name.clone(),
@@ -104,6 +96,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             owner_id: data.owner_id,
             permissions: data.permissions.clone(),
+            notifications_muted: participant.notifications_muted,
         }
     }
 
@@ -147,18 +140,12 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
-    #[serde(default = "callback_canister_id")]
     pub callback_canister_id: CanisterId,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
     pub test_mode: bool,
     pub owner_id: UserId,
-    #[serde(default)]
     pub permissions: GroupPermissions,
-}
-
-fn callback_canister_id() -> CanisterId {
-    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
 
 #[allow(clippy::too_many_arguments)]

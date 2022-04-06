@@ -18,7 +18,7 @@
     <div slot="body" class:rtl={$rtlStore}>
         <p>
             We are pleased to open up OpenChat for beta testing! The number of users has been
-            limited to <strong>10,000</strong> for now but this will soon increase.
+            limited to <strong>20,000</strong> for now but this will soon increase.
         </p>
         <p>
             We have rebuilt OpenChat from the ground up over the last 6+ months giving us a solid

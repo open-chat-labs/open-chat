@@ -6,7 +6,10 @@
 
     export let active: boolean;
     export let fade: boolean = true;
+    export let alignBottomOnMobile: boolean = true;
     export let dismissible: boolean = false;
+    export let alignLeft = false;
+
     let ref: HTMLElement;
 
     /**
@@ -19,10 +22,18 @@
         portal.className = "portal";
         document.body.appendChild(portal);
         portal.appendChild(ref);
+
+        window.addEventListener("popstate", popState);
         return () => {
+            window.removeEventListener("popstate", popState);
             document.body.removeChild(portal);
         };
     });
+
+    // make sure that the modal is closed if there is a routing event
+    function popState() {
+        onClose();
+    }
 
     function onClick() {
         if (dismissible) {
@@ -45,7 +56,14 @@
 <svelte:window on:keydown={onKeyDown} />
 
 <div class="blueprint">
-    <div bind:this={ref} class="overlay" class:active class:faded={fade} on:click={onClick}>
+    <div
+        bind:this={ref}
+        class="overlay"
+        class:active
+        class:faded={fade}
+        class:align-bottom={alignBottomOnMobile}
+        class:align-left={alignLeft}
+        on:click={onClick}>
         {#if active}
             <slot />
         {/if}
@@ -69,8 +87,14 @@
         width: 100%;
         pointer-events: none;
 
-        @include size-below(xs) {
-            align-items: flex-end;
+        @include mobile() {
+            &.align-bottom {
+                align-items: flex-end;
+            }
+        }
+
+        &.align-left {
+            justify-content: left;
         }
 
         &.active {

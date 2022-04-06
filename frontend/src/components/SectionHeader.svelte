@@ -3,9 +3,11 @@
 
     export let flush: boolean = false;
     export let shadow: boolean = false;
+    export let entry = false;
+    export let gap = false;
 </script>
 
-<div class="section-header" class:flush class:shadow class:rtl={$rtlStore}>
+<div class="section-header" class:flush class:shadow class:entry class:gap class:rtl={$rtlStore}>
     <slot />
 </div>
 
@@ -25,6 +27,10 @@
         @include z-index("section-header");
         flex: 0 0 60px;
 
+        &.entry {
+            background-color: var(--entry-bg);
+        }
+
         &.flush {
             margin-bottom: 0;
             border-left: 1px solid var(--section-bd-start);
@@ -37,6 +43,10 @@
 
         &.shadow {
             box-shadow: 0 5px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        &.gap {
+            gap: $sp4;
         }
     }
 </style>

@@ -1,13 +1,13 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import Button from "../../Button.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
     import Link from "../../Link.svelte";
     import Input from "../../Input.svelte";
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
     import Footer from "./Footer.svelte";
     import { createEventDispatcher, onDestroy, onMount } from "svelte";
-    import { fade } from "svelte/transition";
     import "intl-tel-input/build/css/intlTelInput.css";
     import "intl-tel-input/build/js/utils";
     import intlTelInput, { Plugin } from "intl-tel-input";
@@ -159,7 +159,7 @@
         </form>
 
         {#if error}
-            <h4 in:fade class="error">{$_(error)}</h4>
+            <ErrorMessage>{$_(error)}</ErrorMessage>
         {/if}
     {:else}
         <h3 class="title">
@@ -177,7 +177,7 @@
             </div>
         </form>
         {#if error}
-            <h4 in:fade class="error">{$_(error)}</h4>
+            <ErrorMessage>{$_(error)}</ErrorMessage>
         {/if}
     {/if}
 </div>
@@ -207,11 +207,6 @@
         justify-content: center;
         text-align: center;
     }
-    .error {
-        @include font(bold, normal, fs-100);
-        color: var(--error);
-        margin-bottom: $sp4;
-    }
 
     .phone-number {
         display: flex;
@@ -219,12 +214,12 @@
             flex: 4;
             margin-bottom: $sp5;
 
-            @include size-below(xs) {
+            @include mobile() {
                 margin-bottom: $sp4;
             }
         }
 
-        @include size-below(xs) {
+        @include mobile() {
             flex-wrap: wrap;
             .number {
                 flex-basis: 100%;

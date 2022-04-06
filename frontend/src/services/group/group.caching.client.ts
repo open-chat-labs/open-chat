@@ -35,11 +35,12 @@ import {
     loadMessagesByMessageIndex,
     setCachedEvents,
     setCachedGroupDetails,
-    setCachedMessage,
+    setCachedMessageFromSendResponse,
 } from "../../utils/caching";
+import type { SearchGroupChatResponse } from "../../domain/search/search";
 
 /**
- * This exists to decorate the user client so that we can provide a write through cache to
+ * This exists to decorate the group client so that we can provide a write through cache to
  * indexDB for holding chat events
  */
 export class CachingGroupClient implements IGroupClient {
@@ -114,7 +115,7 @@ export class CachingGroupClient implements IGroupClient {
     ): Promise<SendMessageResponse> {
         return this.client
             .sendMessage(senderName, mentioned, message)
-            .then(setCachedMessage(this.db, this.chatId, message));
+            .then(setCachedMessageFromSendResponse(this.db, this.chatId, message));
     }
 
     editMessage(message: Message): Promise<EditMessageResponse> {
@@ -219,5 +220,9 @@ export class CachingGroupClient implements IGroupClient {
         voteType: "register" | "delete"
     ): Promise<RegisterPollVoteResponse> {
         return this.client.registerPollVote(messageIdx, answerIdx, voteType);
+    }
+
+    searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse> {
+        return this.client.searchGroupChat(searchTerm, maxResults);
     }
 }

@@ -115,6 +115,8 @@ pub struct MessageInternal {
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
     pub last_updated: Option<TimestampMillis>,
+    #[serde(default)]
+    pub last_edited: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -147,6 +149,7 @@ pub enum EditMessageResult {
 pub enum DeleteMessageResult {
     Success(MessageContent),
     AlreadyDeleted,
+    MessageTypeCannotBeDeleted,
     NotAuthorized,
     NotFound,
 }
@@ -178,13 +181,13 @@ pub struct Metrics {
     pub video_messages: u64,
     pub audio_messages: u64,
     pub file_messages: u64,
-    #[serde(default)]
     pub polls: u64,
-    #[serde(default)]
     pub poll_votes: u64,
     pub cycles_messages: u64,
     pub icp_messages: u64,
     pub deleted_messages: u64,
+    #[serde(default)]
+    pub giphy_messages: u64,
     pub replies: u64,
     pub total_edits: u64,
     pub total_reactions: u64,
@@ -275,6 +278,7 @@ impl ChatEvents {
             replies_to: args.replies_to,
             reactions: Vec::new(),
             last_updated: None,
+            last_edited: None,
         };
         let message = self.hydrate_message(&message_internal, Some(message_internal.sender));
         let event_index = self.push_event(ChatEventInternal::Message(Box::new(message_internal)), args.now);
@@ -321,6 +325,7 @@ impl ChatEvents {
                     CryptocurrencyTransfer::ICP(_) => self.metrics.icp_messages += 1,
                 },
                 MessageContentInternal::Deleted(_) => self.metrics.deleted_messages += 1,
+                MessageContentInternal::Giphy(_) => self.metrics.giphy_messages += 1,
             }
 
             if m.replies_to.is_some() {
@@ -343,6 +348,7 @@ impl ChatEvents {
                 } else {
                     message.content = args.content.new_content_into_internal();
                     message.last_updated = Some(args.now);
+                    message.last_edited = Some(args.now);
                     self.metrics.total_edits += 1;
                     self.push_event(
                         ChatEventInternal::MessageEdited(Box::new(UpdatedMessageInternal {
@@ -370,26 +376,28 @@ impl ChatEvents {
     ) -> DeleteMessageResult {
         if let Some(message) = self.get_message_by_id_internal_mut(message_id) {
             if message.sender == caller || is_admin {
-                if matches!(message.content, MessageContentInternal::Deleted(_)) {
-                    DeleteMessageResult::AlreadyDeleted
-                } else {
-                    let previous_content = replace(
-                        &mut message.content,
-                        MessageContentInternal::Deleted(DeletedContent {
-                            deleted_by: caller,
-                            timestamp: now,
-                        }),
-                    );
-                    message.last_updated = Some(now);
-                    self.metrics.deleted_messages += 1;
-                    self.push_event(
-                        ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
-                            updated_by: caller,
-                            message_id,
-                        })),
-                        now,
-                    );
-                    DeleteMessageResult::Success(previous_content.hydrate(Some(caller)))
+                match message.content {
+                    MessageContentInternal::Deleted(_) => DeleteMessageResult::AlreadyDeleted,
+                    MessageContentInternal::Cryptocurrency(_) => DeleteMessageResult::MessageTypeCannotBeDeleted,
+                    _ => {
+                        let previous_content = replace(
+                            &mut message.content,
+                            MessageContentInternal::Deleted(DeletedContent {
+                                deleted_by: caller,
+                                timestamp: now,
+                            }),
+                        );
+                        message.last_updated = Some(now);
+                        self.metrics.deleted_messages += 1;
+                        self.push_event(
+                            ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
+                                updated_by: caller,
+                                message_id,
+                            })),
+                            now,
+                        );
+                        DeleteMessageResult::Success(previous_content.hydrate(Some(caller)))
+                    }
                 }
             } else {
                 DeleteMessageResult::NotAuthorized
@@ -411,6 +419,7 @@ impl ChatEvents {
             if let MessageContentInternal::Poll(p) = &mut message.content {
                 return match p.register_vote(user_id, option_index, operation) {
                     types::RegisterVoteResult::Success => {
+                        message.last_updated = Some(now);
                         let updated_message = Box::new(UpdatedMessageInternal {
                             updated_by: user_id,
                             message_id: message.message_id,
@@ -440,6 +449,7 @@ impl ChatEvents {
                 return if p.ended || p.config.end_date.is_none() {
                     EndPollResult::UnableToEndPoll
                 } else {
+                    message.last_updated = Some(now);
                     p.ended = true;
                     let event = ChatEventInternal::PollEnded(Box::new(message_index));
                     self.push_event(event, now);
@@ -464,6 +474,8 @@ impl ChatEvents {
 
         if let Some(&event_index) = self.message_id_map.get(&message_id) {
             if let Some(ChatEventInternal::Message(message)) = self.get_mut(event_index).map(|e| &mut e.event) {
+                message.last_updated = Some(now);
+
                 let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
                     if users.insert(user_id) {
                         true
@@ -822,6 +834,33 @@ impl ChatEvents {
         }
 
         None
+    }
+
+    pub fn affected_event_indexes_since(&self, since: TimestampMillis, max_results: usize) -> Vec<EventIndex> {
+        let mut affected_events = HashSet::new();
+
+        for EventWrapper { event, .. } in self.events.iter().rev().take_while(|e| e.timestamp > since) {
+            if let Some(index) = self.affected_event_index(event) {
+                if affected_events.insert(index) && affected_events.len() == max_results {
+                    break;
+                }
+            }
+        }
+
+        affected_events.into_iter().collect()
+    }
+
+    pub fn affected_event_index(&self, event: &ChatEventInternal) -> Option<EventIndex> {
+        match event {
+            ChatEventInternal::MessageEdited(m) => self.message_id_map.get(&m.message_id).copied(),
+            ChatEventInternal::MessageDeleted(m) => self.message_id_map.get(&m.message_id).copied(),
+            ChatEventInternal::MessageReactionAdded(r) => self.message_id_map.get(&r.message_id).copied(),
+            ChatEventInternal::MessageReactionRemoved(r) => self.message_id_map.get(&r.message_id).copied(),
+            ChatEventInternal::PollVoteRegistered(v) => self.message_id_map.get(&v.message_id).copied(),
+            ChatEventInternal::PollVoteDeleted(v) => self.message_id_map.get(&v.message_id).copied(),
+            ChatEventInternal::PollEnded(p) => self.message_index_map.get(p).copied(),
+            _ => None,
+        }
     }
 
     pub fn metrics(&self) -> Metrics {

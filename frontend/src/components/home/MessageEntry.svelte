@@ -1,8 +1,6 @@
 <script lang="ts">
-    import Close from "svelte-material-icons/Close.svelte";
     import Send from "svelte-material-icons/Send.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import FileAttacher from "./FileAttacher.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import { emojiStore } from "../../stores/emoji";
     import { createEventDispatcher } from "svelte";
@@ -11,21 +9,22 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import { iconSize } from "../../stores/iconSize";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    import Smiley from "./Smiley.svelte";
+    import { validateICPInput } from "../../utils/cryptoFormatter";
     import { audioRecordingMimeType } from "../../utils/media";
     import MentionPicker from "./MentionPicker.svelte";
     import { userStore } from "stores/user";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import type { User } from "../../domain/user/user";
     import Button from "../Button.svelte";
-    import type { GroupChatSummary } from "../../domain/chat/chat";
+    import type { GroupChatSummary, MessageAction } from "../../domain/chat/chat";
     import { enterSend } from "../../stores/settings";
+    import MessageActions from "./MessageActions.svelte";
 
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
     export let canSend: boolean;
-    export let showEmojiPicker = false;
+    export let messageAction: MessageAction = undefined;
     export let joining: GroupChatSummary | undefined;
 
     $: textContent = controller.textContent;
@@ -34,13 +33,14 @@
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
     $: replyingTo = controller.replyingTo;
+    $: chat = controller.chat;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
     const reverseUserLookup: Record<string, string> = {};
     const mentionRegex = /@([\d\w_]*)$/;
-    const emojiRegex = /:([\w_]*):?$/;
+    const emojiRegex = /:([\w_]+):?$/;
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
     let audioMimeType = audioRecordingMimeType();
@@ -52,14 +52,14 @@
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
     let audioSupported: boolean = "mediaDevices" in navigator;
-    let inputIsEmpty = true;
     let showMentionPicker = false;
     let showEmojiSearch = false;
     let mentionPrefix: string | undefined;
     let emojiQuery: string | undefined;
-    let messageEntry: HTMLDivElement;
+    let messageEntryHeight: number;
+    let messageActions: MessageActions;
 
-    $: messageIsEmpty = true;
+    $: messageIsEmpty = ($textContent?.trim() ?? "").length === 0 && $fileToAttach === undefined;
 
     $: {
         if ($editingEvent && !initialisedEdit) {
@@ -75,6 +75,7 @@
             // the start of the textbox on some devices.
             if (inp.textContent !== text) {
                 inp.textContent = text;
+                setCaretToEnd();
             }
         }
         if ($editingEvent === undefined) {
@@ -95,15 +96,10 @@
     }
 
     $: {
-        messageIsEmpty = inputIsEmpty && $fileToAttach === undefined;
-    }
-
-    $: {
         if ($emojiStore !== undefined) {
             if (inp) {
                 restoreSelection();
                 document.execCommand("insertText", false, $emojiStore);
-                inputIsEmpty = false;
                 saveSelection();
                 emojiStore.set(undefined);
             }
@@ -124,17 +120,16 @@
             range.deleteContents();
             range.insertNode(document.createTextNode(text));
             range.collapse(false);
-            inputIsEmpty = false;
+            const inputContent = inp.textContent ?? "";
+            controller.setTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         }
     }
 
     function onInput() {
-        const content = inp.textContent;
-        const trimmedContent = content?.trim();
-        inputIsEmpty = (trimmedContent?.length ?? 0) === 0;
-        controller.setTextContent(inputIsEmpty ? undefined : content!);
-        triggerMentionLookup(content);
-        triggerEmojiLookup(content);
+        const inputContent = inp.textContent ?? "";
+        controller.setTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
+        triggerMentionLookup(inputContent);
+        triggerEmojiLookup(inputContent);
         triggerTypingTimer();
     }
 
@@ -202,6 +197,10 @@
             if (userId !== undefined) {
                 mentionedMap.set(userId, p1);
                 return `@UserId(${userId})`;
+            } else {
+                console.log(
+                    `Could not find the userId for user: ${p1}, this should not really happen`
+                );
             }
             return match;
         });
@@ -214,13 +213,35 @@
     /**
      * Check the message content for special commands
      * * !poll - creates a poll
+     * * !icp [amount]
+     * * !search [term]
      * * !pinned - opens pinned messages (not yet)
      * * !details - opens group details (not yet)
      */
     function parseCommands(txt: string): boolean {
-        if (/^!poll$/.test(txt)) {
+        if (/^\/poll$/.test(txt)) {
             dispatch("createPoll");
             return true;
+        }
+
+        const searchMatch = txt.match(/^\/search( *(.*))$/);
+        if (searchMatch && searchMatch[2] !== undefined) {
+            dispatch("searchChat", searchMatch[2]);
+            return true;
+        }
+
+        const gifMatch = txt.match(/^\/gif( *(.*))$/);
+        if (gifMatch && gifMatch[2] !== undefined) {
+            dispatch("attachGif", gifMatch[2]);
+            return true;
+        }
+
+        if ($chat.kind === "direct_chat") {
+            const icpMatch = txt.match(/^\/icp *(\d*[.,]?\d*)$/);
+            if (icpMatch && icpMatch[1] !== undefined) {
+                dispatch("icpTransfer", validateICPInput(icpMatch[1]).e8s);
+                return true;
+            }
         }
         return false;
     }
@@ -234,13 +255,7 @@
         inp.textContent = "";
         controller.setTextContent(undefined);
         inp.focus();
-        inputIsEmpty = true;
-        messageIsEmpty = true;
-        showEmojiPicker = false;
-    }
-
-    function toggleEmojiPicker() {
-        showEmojiPicker = !showEmojiPicker;
+        messageActions.close();
     }
 
     function saveSelection() {
@@ -276,10 +291,6 @@
     function onDrop(e: DragEvent) {
         dragging = false;
         dispatch("drop", e);
-    }
-
-    function clearAttachment() {
-        controller.clearAttachment();
     }
 
     function mention(ev: CustomEvent<string>): void {
@@ -319,7 +330,7 @@
 {#if showMentionPicker}
     <MentionPicker
         blockedUsers={$blockedUsers}
-        offset={messageEntry.clientHeight}
+        offset={messageEntryHeight}
         on:close={cancelMention}
         on:mention={mention}
         prefix={mentionPrefix}
@@ -328,13 +339,13 @@
 
 {#if showEmojiSearch}
     <EmojiAutocompleter
-        offset={messageEntry.clientHeight}
+        offset={messageEntryHeight}
         on:close={() => (showEmojiSearch = false)}
         on:select={completeEmoji}
         query={emojiQuery} />
 {/if}
 
-<div class="message-entry" bind:this={messageEntry}>
+<div class="message-entry" bind:clientHeight={messageEntryHeight}>
     {#if blocked}
         <div class="blocked">
             {$_("userIsBlocked")}
@@ -357,23 +368,13 @@
             {$_("readOnlyGroup")}
         </div>
     {:else}
-        <div class="emoji" on:click={toggleEmojiPicker}>
-            {#if showEmojiPicker}
-                <HoverIcon>
-                    <Close size={$iconSize} color={"var(--icon-txt)"} />
-                </HoverIcon>
-            {:else}
-                <HoverIcon>
-                    <Smiley />
-                </HoverIcon>
-            {/if}
-        </div>
-        <div class="attach">
-            <FileAttacher
-                open={$fileToAttach !== undefined}
-                on:fileSelected
-                on:close={clearAttachment} />
-        </div>
+        <MessageActions
+            bind:this={messageActions}
+            bind:messageAction
+            {controller}
+            on:icpTransfer
+            on:attachGif
+            on:fileSelected />
 
         {#if recording}
             <div class="recording">
@@ -426,8 +427,6 @@
         background-color: var(--entry-bg);
         padding: $sp3;
     }
-    .emoji,
-    .attach,
     .send {
         flex: 0 0 15px;
     }
@@ -481,7 +480,7 @@
     .preview {
         justify-content: flex-end;
         gap: $sp3;
-        @include size-below(xs) {
+        @include mobile() {
             justify-content: center;
         }
     }

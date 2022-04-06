@@ -33,6 +33,7 @@ async fn get_updates_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         description: "TEST_DESCRIPTION1".to_string(),
         avatar: None,
         history_visible_to_new_joiners: false,
+        permissions: None,
     };
     let chat_id1 = create_group(&user1_agent, user1_id, &create_group_args1, vec![user2_id, user3_id]).await;
 
@@ -42,6 +43,7 @@ async fn get_updates_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         description: "TEST_DESCRIPTION2".to_string(),
         avatar: None,
         history_visible_to_new_joiners: false,
+        permissions: None,
     };
     let chat_id2 = create_group(&user1_agent, user1_id, &create_group_args2, vec![user2_id, user3_id]).await;
 

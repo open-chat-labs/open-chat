@@ -8,7 +8,7 @@ use utils::canister::{self, FailedUpgrade};
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, CYCLES_REQUIRED_FOR_UPGRADE};
 use utils::cycles::can_spend_cycles;
 
-const MAX_CONCURRENT_CANISTER_UPGRADES: u32 = 5;
+const MAX_CONCURRENT_CANISTER_UPGRADES: u32 = 2;
 const MAX_MESSAGES_TO_RETRY_PER_HEARTBEAT: u32 = 5;
 
 #[heartbeat]
@@ -37,10 +37,7 @@ mod upgrade_canisters {
     fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
         let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
         (0..(MAX_CONCURRENT_CANISTER_UPGRADES - count_in_progress))
-            // TODO replace this with 'map_while' once we have upgraded to Rust 1.57
-            .map(|_| try_get_next(runtime_state))
-            .take_while(|c| c.is_some())
-            .map(|c| c.unwrap())
+            .map_while(|_| try_get_next(runtime_state))
             .collect()
     }
 

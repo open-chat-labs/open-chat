@@ -4,19 +4,21 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::update_group::*;
-use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
-use group_index_canister::c2c_update_group;
+use group_index_canister::{c2c_update_group, MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH, MIN_GROUP_NAME_LENGTH};
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged,
-    PermissionsChanged, UserId, MAX_AVATAR_SIZE,
+    Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
+    GroupNameChanged, PermissionsChanged, UserId, MAX_AVATAR_SIZE,
 };
 
 #[update]
 #[trace]
-async fn update_group(args: Args) -> Response {
+async fn update_group(mut args: Args) -> Response {
     run_regular_jobs();
+
+    args.name = args.name.trim().to_string();
+    args.description = args.description.trim().to_string();
 
     let prepare_result = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
@@ -34,12 +36,12 @@ async fn update_group(args: Args) -> Response {
 
         match group_index_canister_c2c_client::c2c_update_group(group_index_canister_id, &c2c_update_group_args).await {
             Ok(response) => match response {
+                c2c_update_group::Response::Success => {}
                 c2c_update_group::Response::NameTaken => return NameTaken,
                 c2c_update_group::Response::ChatNotFound => {
                     error!(chat_id = %prepare_result.chat_id, "Group not found in index");
                     return InternalError;
                 }
-                c2c_update_group::Response::Success => (),
             },
             Err(_) => return InternalError,
         };
@@ -62,7 +64,12 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     let avatar_update = args.avatar.as_ref().expand();
     let avatar_update_size = avatar_update.flatten().map_or(0, |a| a.data.len() as u32);
 
-    if args.name.len() > MAX_GROUP_NAME_LENGTH as usize {
+    if args.name.len() < MIN_GROUP_NAME_LENGTH as usize {
+        Err(NameTooShort(FieldTooShortResult {
+            length_provided: args.name.len() as u32,
+            min_length: MIN_GROUP_NAME_LENGTH,
+        }))
+    } else if args.name.len() > MAX_GROUP_NAME_LENGTH as usize {
         Err(NameTooLong(FieldTooLongResult {
             length_provided: args.name.len() as u32,
             max_length: MAX_GROUP_NAME_LENGTH,

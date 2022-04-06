@@ -7,7 +7,7 @@
     import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
     import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
-    import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
+    import AggregateParticipantsJoinedOrLeftEvent from "./AggregateParticipantsJoinedOrLeftEvent.svelte";
     import type { UserSummary } from "../../domain/user/user";
     import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
@@ -35,6 +35,7 @@
     export let canDelete: boolean;
     export let canSend: boolean;
     export let canReact: boolean;
+    export let publicGroup: boolean;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -66,6 +67,7 @@
         {canDelete}
         {canSend}
         {canReact}
+        {publicGroup}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo
@@ -98,18 +100,11 @@
         changedBy={event.event.removedBy}
         resourceKey={"removedBy"}
         timestamp={event.timestamp} />
-{:else if event.event.kind === "participant_left"}
-    <ParticipantLeftEvent
+{:else if event.event.kind === "aggregate_participants_joined_left"}
+    <AggregateParticipantsJoinedOrLeftEvent
         {user}
-        label={"userLeft"}
-        subjectId={event.event.userId}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "participant_joined"}
-    <ParticipantLeftEvent
-        {user}
-        label={"userJoined"}
-        subjectId={event.event.userId}
-        timestamp={event.timestamp} />
+        joined={event.event.users_joined}
+        left={event.event.users_left} />
 {:else if event.event.kind === "role_changed"}
     <RoleChangedEvent {user} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "users_blocked"}
@@ -153,6 +148,6 @@
         timestamp={event.timestamp} />
 {:else if event.event.kind === "permissions_changed"}
     <PermissionsChangedEvent {user} event={event.event} timestamp={event.timestamp} />
-{:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "poll_ended"}
+{:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "poll_ended" && event.event.kind !== "participant_joined" && event.event.kind !== "participant_left"}
     <div>Unexpected event type</div>
 {/if}

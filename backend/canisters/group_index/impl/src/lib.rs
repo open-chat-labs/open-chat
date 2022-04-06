@@ -23,14 +23,8 @@ const MIN_CYCLES_BALANCE: Cycles = 5_000_000_000_000; // 5T
 const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 500_000_000_000; // 0.5T cycles
 const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
-const STATE_VERSION: StateVersion = StateVersion::V1;
 const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
 const CACHED_HOT_GROUPS_COUNT: usize = 40;
-
-#[derive(CandidType, Serialize, Deserialize)]
-enum StateVersion {
-    V1,
-}
 
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
@@ -87,7 +81,6 @@ struct Data {
     pub group_canister_wasm: CanisterWasm,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub user_index_canister_id: CanisterId,
-    #[serde(default = "callback_canister_id")]
     pub callback_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
@@ -95,10 +88,6 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
-}
-
-fn callback_canister_id() -> CanisterId {
-    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
 
 impl Data {

@@ -150,7 +150,6 @@ pub struct MessagePinned {
 pub struct MessageUnpinned {
     pub message_index: MessageIndex,
     pub unpinned_by: UserId,
-    #[serde(default)]
     pub due_to_message_deleted: bool,
 }
 

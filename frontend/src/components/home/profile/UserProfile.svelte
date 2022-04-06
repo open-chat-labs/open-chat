@@ -1,6 +1,6 @@
 <script lang="ts">
     import { avatarUrl } from "../../../domain/user/user.utils";
-    import type { PartialUserSummary } from "../../../domain/user/user";
+    import type { CreatedUser, PartialUserSummary } from "../../../domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -15,8 +15,11 @@
     import TextArea from "../../TextArea.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import { notificationStatus } from "../../../stores/notifications";
-    import { askForNotificationPermission } from "../../../utils/notifications";
-    import { supported as notificationsSupported } from "../../../utils/notifications";
+    import { formatICP } from "../../../utils/cryptoFormatter";
+    import {
+        askForNotificationPermission,
+        supported as notificationsSupported,
+    } from "../../../utils/notifications";
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import {
@@ -26,7 +29,7 @@
         enterSend,
         scrollStrategy,
     } from "../../../stores/settings";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "./Toggle.svelte";
     import { setLocale, supportedLanguages } from "i18n/i18n";
@@ -36,8 +39,13 @@
     import { userStore } from "../../../stores/user";
     import { ONE_GB, storageStore } from "../../../stores/storage";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
+    import ManageIcpAccount from "./ManageICPAccount.svelte";
+    import { currentUserKey } from "../../../fsm/home.controller";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import { icpBalanceE8sStore } from "../../../stores/balance";
 
     const api: ServiceContainer = getContext(apiKey);
+    const createdUser: CreatedUser = getContext(currentUserKey);
 
     const dispatch = createEventDispatcher();
     const MAX_BIO_LENGTH = 2000;
@@ -54,6 +62,9 @@
     let validUsername: string | undefined = undefined;
     let usernameInput: UsernameInput;
     let checkingUsername: boolean;
+    let manageIcpAccount: ManageIcpAccount;
+    let managingIcpAccount = false;
+    let balanceError: string | undefined = undefined;
 
     $: {
         setLocale(selectedLocale);
@@ -69,6 +80,13 @@
             originalBio = userbio = bio;
         });
     }
+
+    onMount(() => {
+        api.refreshAccountBalance(createdUser.icpAccount).catch((err) => {
+            balanceError = "unableToRefreshAccountBalance";
+            rollbar.error("Unable to refresh user's account balance", err);
+        });
+    });
 
     function whySms() {
         dispatch("showFaqQuestion", "sms_icp");
@@ -157,7 +175,14 @@
     function closeProfile() {
         dispatch("closeProfile");
     }
+
+    function showManageIcp() {
+        manageIcpAccount.reset();
+        managingIcpAccount = true;
+    }
 </script>
+
+<ManageIcpAccount bind:this={manageIcpAccount} bind:open={managingIcpAccount} />
 
 <form class="user-form" on:submit|preventDefault={saveUser}>
     <div class="user">
@@ -182,7 +207,7 @@
             bind:checking={checkingUsername}
             bind:error={usernameError}>
             {#if usernameError !== undefined}
-                <div class="error">{$_(usernameError)}</div>
+                <ErrorMessage>{$_(usernameError)}</ErrorMessage>
             {/if}
         </UsernameInput>
 
@@ -194,7 +219,7 @@
             maxlength={MAX_BIO_LENGTH}
             placeholder={$_("enterBio")}>
             {#if bioError !== undefined}
-                <div class="error">{bioError}</div>
+                <ErrorMessage>{bioError}</ErrorMessage>
             {/if}
         </TextArea>
         <div class="full-width-btn">
@@ -282,34 +307,52 @@
             on:toggle={accountSectionOpen.toggle}
             open={$accountSectionOpen}
             headerText={$_("account")}>
-            <Legend>{$_("storage")}</Legend>
-            {#if $storageStore.byteLimit === 0}
-                <p class="para">
-                    {$_("noStorageAdvice")}
-                </p>
-                <p class="para last">
-                    {$_("chooseUpgrade")}
+            <div class="storage">
+                <Legend>{$_("storage")}</Legend>
+                {#if $storageStore.byteLimit === 0}
+                    <p class="para">
+                        {$_("noStorageAdvice")}
+                    </p>
+                    <p class="para last">
+                        {$_("chooseUpgrade")}
 
-                    <Link underline={"always"} on:click={whySms}>
-                        {$_("tellMeMore")}
-                    </Link>
-                </p>
-                <ButtonGroup align={"fill"}>
-                    <Button on:click={() => dispatch("upgrade", "sms")} small={true}
-                        >{$_("upgradeBySMS")}</Button>
-                    <Button on:click={() => dispatch("upgrade", "icp")} small={true}
-                        >{$_("upgradeByTransfer")}</Button>
-                </ButtonGroup>
-            {:else}
-                <StorageUsage />
-                {#if $storageStore.byteLimit < ONE_GB}
-                    <p class="para">{$_("chooseTransfer")}</p>
-                    <div class="full-width-btn">
-                        <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small={true}
-                            >{$_("upgradeStorage")}</Button>
-                    </div>
+                        <Link underline={"always"} on:click={whySms}>
+                            {$_("tellMeMore")}
+                        </Link>
+                    </p>
+                    <ButtonGroup align={"fill"}>
+                        <Button on:click={() => dispatch("upgrade", "sms")} small={true}
+                            >{$_("upgradeBySMS")}</Button>
+                        <Button on:click={() => dispatch("upgrade", "icp")} small={true}
+                            >{$_("upgradeByTransfer")}</Button>
+                    </ButtonGroup>
+                {:else}
+                    <StorageUsage />
+                    {#if $storageStore.byteLimit < ONE_GB}
+                        <p class="para">{$_("chooseTransfer")}</p>
+                        <div class="full-width-btn">
+                            <Button
+                                on:click={() => dispatch("upgrade", "icp")}
+                                fill={true}
+                                small={true}>{$_("upgradeStorage")}</Button>
+                        </div>
+                    {/if}
                 {/if}
-            {/if}
+            </div>
+
+            <div class="icp">
+                <Legend>{$_("icpAccount.balanceLabel")}</Legend>
+                <div class="icp-balance">
+                    <div class="icp-balance-value">
+                        {formatICP($icpBalanceE8sStore.e8s, 4)}
+                    </div>
+                    <Button on:click={showManageIcp} fill={true} small={true}
+                        >{$_("icpAccount.manage")}</Button>
+                </div>
+                {#if balanceError !== undefined}
+                    <ErrorMessage>{$_(balanceError)}</ErrorMessage>
+                {/if}
+            </div>
         </CollapsibleCard>
     </div>
 </form>
@@ -321,13 +364,6 @@
         display: flex;
         justify-content: center;
         margin-top: $sp4;
-    }
-
-    .error {
-        @include font(bold, normal, fs-100);
-        text-transform: lowercase;
-        color: var(--error);
-        margin-bottom: $sp4;
     }
 
     .theme-selection {
@@ -381,14 +417,14 @@
         border-bottom: var(--profile-section-bd);
         color: var(--section-txt);
 
-        @include size-below(xs) {
+        @include mobile() {
             margin-bottom: var(--profile-section-xs-mg);
             border-bottom: var(--profile-section-xs-bd);
         }
     }
 
     .para {
-        margin-bottom: $sp3;
+        margin-bottom: $sp4;
         &.last {
             margin-bottom: $sp4;
         }
@@ -408,5 +444,27 @@
         position: absolute;
         top: $sp3;
         right: $sp3;
+    }
+
+    .storage {
+        margin-bottom: $sp5;
+    }
+
+    .icp-balance {
+        display: flex;
+        gap: $sp3;
+        justify-content: space-between;
+    }
+
+    .icp-balance-value {
+        @include font(book, normal, fs-140);
+        color: var(--input-txt);
+        height: 45px;
+        padding: $sp3;
+        width: 100%;
+        background-color: var(--input-bg);
+        border: 1px solid var(--input-bd);
+        border-radius: $sp2;
+        text-align: right;
     }
 </style>

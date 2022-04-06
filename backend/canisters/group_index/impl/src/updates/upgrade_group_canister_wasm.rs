@@ -20,7 +20,7 @@ fn upgrade_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState
 
     let version = args.group_canister_wasm.version;
 
-    if version <= runtime_state.data.group_canister_wasm.version {
+    if !runtime_state.data.test_mode && version <= runtime_state.data.group_canister_wasm.version {
         VersionNotHigher
     } else {
         runtime_state.data.canisters_requiring_upgrade.clear();

@@ -51,7 +51,8 @@
             on:joinGroup
             on:upgrade
             on:cancelPreview
-            on:showPinned />
+            on:showPinned
+            on:goToMessageIndex />
     {/if}
 </Panel>
 

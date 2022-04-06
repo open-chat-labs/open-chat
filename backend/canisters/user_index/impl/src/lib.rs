@@ -21,19 +21,13 @@ mod model;
 mod queries;
 mod updates;
 
-pub const USER_LIMIT: usize = 10_000;
+pub const USER_LIMIT: usize = 20_000;
 
 const MIN_CYCLES_BALANCE: Cycles = 5_000_000_000_000; // 5T
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 500_000_000_000; // 0.5T cycles
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE: u64 = (1024 * 1024 * 1024) / 10; // 0.1 GB
 const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 10 * 60 * 1000; // 10 minutes
-const STATE_VERSION: StateVersion = StateVersion::V1;
-
-#[derive(CandidType, Serialize, Deserialize)]
-enum StateVersion {
-    V1,
-}
 
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();

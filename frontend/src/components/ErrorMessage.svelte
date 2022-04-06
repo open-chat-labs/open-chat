@@ -1,19 +1,16 @@
-<div class="error">
-    <h5>
-        <slot />
-    </h5>
-</div>
+<script lang="ts">
+    import { fade } from "svelte/transition";
+</script>
+
+<h4 in:fade class="error">
+    <slot />
+</h4>
 
 <style type="text/scss">
     .error {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        padding: $sp3;
-    }
-    h5 {
-        flex: 1;
-        @include font(bold, normal, fs-120);
+        @include font(bold, normal, fs-100);
+        text-transform: lowercase;
+        color: var(--error);
+        margin-bottom: $sp3;
     }
 </style>

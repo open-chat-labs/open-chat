@@ -3,6 +3,8 @@
 <script lang="ts">
     import Link from "../Link.svelte";
     import type { UserSummary, UserLookup } from "../../domain/user/user";
+    import Avatar from "../Avatar.svelte";
+    import { AvatarSize } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -20,14 +22,16 @@
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import Close from "svelte-material-icons/Close.svelte";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import PinOff from "svelte-material-icons/PinOff.svelte";
+    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import { fillMessage } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import TimeAndTicks from "./TimeAndTicks.svelte";
     import { iconSize } from "../../stores/iconSize";
     import type { Dimensions } from "../../utils/media";
@@ -36,6 +40,8 @@
     import MessageReaction from "./MessageReaction.svelte";
     import Reload from "../Reload.svelte";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
+    import { avatarUrl } from "../../domain/user/user.utils";
+    import * as shareFunctions from "../../domain/share";
 
     const dispatch = createEventDispatcher();
 
@@ -61,6 +67,7 @@
     export let canDelete: boolean;
     export let canSend: boolean;
     export let canReact: boolean;
+    export let publicGroup: boolean;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
@@ -71,21 +78,21 @@
     let showEmojiPicker = false;
     let debug = false;
     let viewProfile = false;
-    let usernameLink: Link;
-    let usernameLinkBoundingRect: DOMRect | undefined = undefined;
+    let alignProfileTo: DOMRect | undefined = undefined;
+    let crypto = msg.content.kind === "crypto_content";
 
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
+    $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
 
     afterUpdate(() => {
         console.log("updating ChatMessage component");
 
         if (readByMe) {
-            observer.unobserve(msgElement);
+            observer?.unobserve(msgElement);
         }
     });
 
@@ -167,6 +174,10 @@
                 width: content.width,
                 height: content.height,
             };
+        } else if (content.kind === "giphy_content") {
+            return $mobileWidth
+                ? { width: content.mobile.width, height: content.mobile.height }
+                : { width: content.desktop.width, height: content.desktop.height };
         }
 
         return undefined;
@@ -187,12 +198,14 @@
                 parseFloat(msgBubbleStyle.borderLeftWidth);
         }
 
-        const parentWidth = document.getElementById("chat-messages")?.offsetWidth ?? 0;
+        const parentWidth = msgBubbleElement.parentElement?.offsetWidth ?? 0;
+
         let targetMediaDimensions = calculateMediaDimensions(
             mediaDimensions,
             parentWidth,
             msgBubblePaddingWidth,
-            window.innerHeight
+            window.innerHeight,
+            $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8
         );
         mediaCalculatedHeight = targetMediaDimensions.height;
         msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
@@ -202,8 +215,10 @@
         dispatch("blockUser", { userId: senderId });
     }
 
-    function openUserProfile() {
-        usernameLinkBoundingRect = usernameLink.getBoundingRect();
+    function openUserProfile(ev: Event) {
+        if (ev.target) {
+            alignProfileTo = (ev.target as HTMLElement).getBoundingClientRect();
+        }
         viewProfile = true;
     }
 
@@ -216,6 +231,18 @@
             ...ev.detail,
             messageIndex: msg.messageIndex,
         });
+    }
+
+    function canShare(): boolean {
+        return shareFunctions.canShare(msg.content);
+    }
+
+    function shareMessage() {
+        shareFunctions.shareMessage(user.userId, me, msg);
+    }
+
+    function copyMessageUrl() {
+        shareFunctions.copyMessageUrl(chatId, msg.messageIndex);
     }
 </script>
 
@@ -254,7 +281,7 @@
 
 {#if viewProfile}
     <ViewUserProfile
-        alignTo={usernameLinkBoundingRect}
+        alignTo={alignProfileTo}
         userId={sender.userId}
         on:openDirectChat={chatWithUser}
         on:close={closeUserProfile} />
@@ -269,12 +296,24 @@
         data-id={msg.messageId}
         id={`event-${eventIndex}`}>
         {#if me && !deleted && canReact}
-            <div class="actions" class:mobile>
+            <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
                         <EmoticonLolOutline size={$iconSize} color={"#fff"} />
                     </HoverIcon>
                 </div>
+            </div>
+        {/if}
+
+        {#if showAvatar}
+            <div class="avatar-col">
+                {#if first}
+                    <div class="avatar" on:click={openUserProfile}>
+                        <Avatar
+                            url={avatarUrl(sender)}
+                            size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
+                    </div>
+                {/if}
             </div>
         {/if}
 
@@ -291,11 +330,12 @@
             class:first
             class:last
             class:readByMe
+            class:crypto
             class:rtl={$rtlStore}>
-            {#if first && !me && groupChat && !deleted}
+            {#if first && !me && groupChat}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
-                    <Link bind:this={usernameLink} underline={"hover"} on:click={openUserProfile}>
-                        <h4 class="username" class:fill>{username}</h4>
+                    <Link underline={"hover"} on:click={openUserProfile}>
+                        <h4 class="username" class:fill class:crypto>{username}</h4>
                     </Link>
                 </div>
             {/if}
@@ -305,6 +345,7 @@
                         {preview}
                         {chatId}
                         {user}
+                        {groupChat}
                         on:goToMessageIndex
                         repliesTo={msg.repliesTo} />
                 {:else}
@@ -316,6 +357,9 @@
                 {preview}
                 {fill}
                 {me}
+                {first}
+                {groupChat}
+                {senderId}
                 content={msg.content}
                 height={mediaCalculatedHeight}
                 on:registerVote={registerVote} />
@@ -328,6 +372,7 @@
                     {me}
                     {confirmed}
                     {readByThem}
+                    {crypto}
                     {chatType} />
             {/if}
 
@@ -346,13 +391,29 @@
                     <MenuIcon>
                         <div class="menu-icon" slot="icon">
                             <HoverIcon compact={true}>
-                                <ChevronDown
-                                    size={$iconSize}
-                                    color={me ? "#fff" : "var(--icon-txt)"} />
+                                <ChevronDown size="1.6em" color={me ? "#fff" : "var(--icon-txt)"} />
                             </HoverIcon>
                         </div>
                         <div slot="menu">
                             <Menu>
+                                {#if publicGroup && confirmed}
+                                    {#if canShare()}
+                                        <MenuItem on:click={shareMessage}>
+                                            <ShareIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("share")}</div>
+                                        </MenuItem>
+                                    {/if}
+                                    <MenuItem on:click={copyMessageUrl}>
+                                        <ContentCopy
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("copyMessageUrl")}</div>
+                                    </MenuItem>
+                                {/if}
                                 {#if confirmed && canPin}
                                     {#if pinned}
                                         <MenuItem on:click={unpinMessage}>
@@ -403,7 +464,7 @@
                                     <PencilOutline size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
                                     <div slot="text">{$_("editMessage")}</div>
                                 </MenuItem> -->
-                                {#if canDelete || me}
+                                {#if (canDelete || me) && !crypto}
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline
                                             size={$iconSize}
@@ -419,7 +480,7 @@
             {/if}
         </div>
         {#if !me && !deleted && canReact}
-            <div class="actions" class:mobile>
+            <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
                         <EmoticonLolOutline size={$iconSize} color={"#fff"} />
@@ -430,7 +491,7 @@
     </div>
 
     {#if msg.reactions.length > 0 && !deleted}
-        <div class="message-reactions" class:me>
+        <div class="message-reactions" class:me class:indent={showAvatar}>
             {#each msg.reactions as { reaction, userIds } (reaction)}
                 <MessageReaction
                     on:click={() => toggleReaction(reaction)}
@@ -446,9 +507,16 @@
 <style type="text/scss">
     $size: 10px;
 
+    $avatar-width: 53px;
+    $avatar-width-mob: 43px;
+
     :global(.message .loading) {
         min-height: 100px;
         min-width: 250px;
+    }
+
+    :global(.message .avatar .avatar) {
+        margin: 0;
     }
 
     :global(.message-bubble .content a) {
@@ -465,6 +533,10 @@
 
     :global(.message-bubble.me:hover .menu-icon .wrapper) {
         background-color: var(--icon-inverted-hv);
+    }
+
+    :global(.message-bubble.crypto:hover .menu-icon .wrapper) {
+        background-color: rgba(255, 255, 255, 0.3);
     }
 
     :global(.me .menu-icon:hover .wrapper) {
@@ -505,7 +577,7 @@
     .menu {
         $offset: -2px;
         position: absolute;
-        top: $offset;
+        top: -4px;
         right: $offset;
 
         &.rtl {
@@ -527,6 +599,13 @@
         &.me {
             justify-content: flex-end;
         }
+
+        &.indent {
+            margin-left: $avatar-width;
+            @include mobile() {
+                margin-left: $avatar-width-mob;
+            }
+        }
     }
 
     .message {
@@ -538,6 +617,18 @@
             justify-content: flex-end;
         }
 
+        .avatar-col {
+            flex: 0 0 $avatar-width;
+
+            @include mobile() {
+                flex: 0 0 $avatar-width-mob;
+            }
+
+            .avatar {
+                cursor: pointer;
+            }
+        }
+
         .actions {
             transition: opacity 200ms ease-in-out;
             display: flex;
@@ -546,7 +637,7 @@
             justify-content: center;
             align-items: center;
 
-            &.mobile {
+            @include mobile() {
                 opacity: 0.3;
             }
         }
@@ -572,12 +663,17 @@
         min-width: 90px;
         overflow: hidden;
 
+        @include size-above(xl) {
+            max-width: 70%;
+        }
+
         .username {
             color: inherit;
             color: var(--accent);
             display: inline;
 
-            &.fill {
+            &.fill,
+            &.crypto {
                 color: #fff;
             }
         }
@@ -616,6 +712,10 @@
             &:not(.first):not(.last) {
                 border-radius: $radius $inner-radius $inner-radius $radius;
             }
+        }
+
+        &.crypto {
+            @include gold();
         }
 
         &.rtl {

@@ -27,6 +27,7 @@
     let viewProfile = false;
     let usernameLink: Link;
     let usernameLinkBoundingRect: DOMRect | undefined = undefined;
+    let crypto = msg.content.kind === "crypto_content";
 
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
@@ -47,7 +48,10 @@
     }
 
     function goToMessageIndex() {
-        dispatch("goToMessageIndex", msg.messageIndex);
+        dispatch("goToMessageIndex", {
+            index: msg.messageIndex,
+            preserveFocus: false,
+        });
     }
 </script>
 
@@ -65,23 +69,37 @@
         class:fill={fill && !deleted}
         class:me
         class:deleted
+        class:crypto
         class:rtl={$rtlStore}>
         {#if !me && !deleted}
             <div class="sender" class:fill class:rtl={$rtlStore}>
                 <Link bind:this={usernameLink} underline={"hover"} on:click={openUserProfile}>
-                    <h4 class="username" class:fill>{username}</h4>
+                    <h4 class="username" class:fill class:crypto>{username}</h4>
                 </Link>
             </div>
         {/if}
         {#if msg.repliesTo !== undefined && !deleted}
             {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                <RepliesTo preview={true} {chatId} {user} repliesTo={msg.repliesTo} />
+                <RepliesTo
+                    preview={true}
+                    {chatId}
+                    {user}
+                    groupChat={true}
+                    repliesTo={msg.repliesTo} />
             {:else}
                 <UnresolvedReply repliesTo={msg.repliesTo} />
             {/if}
         {/if}
 
-        <ChatMessageContent preview={true} {fill} {me} content={msg.content} />
+        <ChatMessageContent
+            preview={true}
+            pinned={true}
+            {senderId}
+            {fill}
+            first={true}
+            groupChat={true}
+            {me}
+            content={msg.content} />
     </div>
 </div>
 
@@ -141,7 +159,8 @@
             color: var(--accent);
             display: inline;
 
-            &.fill {
+            &.fill,
+            &.crypto {
                 color: #fff;
             }
         }
@@ -150,6 +169,10 @@
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
             border-color: var(--currentChat-msg-me-bd);
+        }
+
+        &.crypto {
+            @include gold();
         }
 
         &.fill {

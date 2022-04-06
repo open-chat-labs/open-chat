@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { createEventDispatcher, onMount, setContext, tick } from "svelte";
+    import { afterUpdate, createEventDispatcher, onMount, setContext, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
@@ -27,7 +27,7 @@
     import { iconSize } from "../../stores/iconSize";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
-    const MESSAGE_LOAD_THRESHOLD = 300;
+    const MESSAGE_LOAD_THRESHOLD = 400;
     const FROM_BOTTOM_THRESHOLD = 600;
     const MESSAGE_READ_THRESHOLD = 500;
 
@@ -43,6 +43,7 @@
     export let canDelete: boolean;
     export let canSend: boolean;
     export let canReact: boolean;
+    export let footer: boolean;
 
     $: chat = controller.chat;
     $: loading = controller.loading;
@@ -55,20 +56,20 @@
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
+    let messagesDivHeight: number;
     let initialised = false;
     let scrollingToMessage = false;
     let scrollTimer: number | undefined;
     let currentChatId = "";
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
-    let fromBottom: number = 0;
-    let fromTop: number = 0;
+    let insideFromBottomThreshold: boolean = false;
 
     onMount(() => {
         const options = {
             root: messagesDiv,
             rootMargin: "0px",
-            threshold: 0.5,
+            threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
         };
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
@@ -78,7 +79,13 @@
                 const idx = idxAttr ? parseInt(idxAttr.value, 10) : undefined;
                 const id = idAttr ? BigInt(idAttr.value) : undefined;
                 if (idx !== undefined && id !== undefined) {
-                    if (entry.isIntersecting && messageReadTimers[idx] === undefined) {
+                    const intersectionRatioRequired =
+                        0 < messagesDivHeight && messagesDivHeight < entry.boundingClientRect.height
+                            ? (messagesDivHeight * 0.5) / entry.boundingClientRect.height
+                            : 0.5;
+
+                    const isIntersecting = entry.intersectionRatio >= intersectionRatioRequired;
+                    if (isIntersecting && messageReadTimers[idx] === undefined) {
                         const chatId = controller.chatId;
                         const timer = setTimeout(() => {
                             if (chatId === controller.chatId) {
@@ -92,7 +99,7 @@
                         }, MESSAGE_READ_THRESHOLD);
                         messageReadTimers[idx] = timer;
                     }
-                    if (!entry.isIntersecting && messageReadTimers[idx] !== undefined) {
+                    if (!isIntersecting && messageReadTimers[idx] !== undefined) {
                         clearTimeout(messageReadTimers[idx]);
                         delete messageReadTimers[idx];
                     }
@@ -100,6 +107,8 @@
             });
         }, options);
     });
+
+    afterUpdate(() => setIfInsideFromBottomThreshold());
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
         messagesDiv?.scrollTo({
@@ -112,7 +121,7 @@
         const idx = firstUnreadMessage ?? $chat.latestMessage?.event.messageIndex;
 
         if (idx !== undefined) {
-            scrollToMessageIndex(idx);
+            scrollToMessageIndex(idx, false);
         }
     }
 
@@ -122,11 +131,20 @@
 
     function scrollToMention(mention: Mention | undefined) {
         if (mention !== undefined) {
-            scrollToMessageIndex(mention.messageIndex);
+            scrollToMessageIndex(mention.messageIndex, false);
         }
     }
 
-    function scrollToMessageIndex(index: number) {
+    function scrollToMessageIndex(
+        index: number,
+        preserveFocus: boolean,
+        loadWindowIfMissing: boolean = true
+    ) {
+        if (index < 0) {
+            controller.clearFocusMessageIndex();
+            return;
+        }
+
         // set a flag so that we can ignore subsequent scroll events temporarily
         scrollingToMessage = true;
         controller.setFocusMessageIndex(index);
@@ -134,20 +152,19 @@
         if (element) {
             // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
-            setTimeout(() => {
-                controller.clearFocusMessageIndex();
-            }, 200);
-        } else {
-            // todo - this is a bit dangerous as it could cause an infinite recursion
-            // if we are looking for a message that simply isn't there.
-            // controller.goToMessageIndex(index).then(() => scrollToMessageIndex(index));
-            controller.goToMessageIndex(index);
+            if (!preserveFocus) {
+                setTimeout(() => {
+                    controller.clearFocusMessageIndex();
+                }, 200);
+            }
+        } else if (loadWindowIfMissing) {
+            controller.goToMessageIndex(index, preserveFocus);
         }
     }
 
     function resetScroll() {
         if ($focusMessageIndex !== undefined) {
-            scrollToMessageIndex($focusMessageIndex);
+            scrollToMessageIndex($focusMessageIndex, false);
         }
         if (!initialised) {
             initialised = true;
@@ -155,12 +172,29 @@
     }
 
     function shouldLoadPreviousMessages() {
-        return fromTop < MESSAGE_LOAD_THRESHOLD && controller.morePreviousMessagesAvailable();
+        return (
+            calculateFromTop() < MESSAGE_LOAD_THRESHOLD &&
+            controller.morePreviousMessagesAvailable()
+        );
     }
 
     function shouldLoadNewMessages() {
-        return fromBottom < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable();
+        return (
+            calculateFromBottom() < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable()
+        );
     }
+
+    function getScrollTopResetFn(previousHeight: number) {
+        return (newHeight: number, scrollTop: number) => {
+            if (messagesDiv === undefined) return;
+            const additionalHeight = newHeight - previousHeight;
+            messagesDiv.scrollTop = scrollTop - additionalHeight;
+            setIfInsideFromBottomThreshold();
+            scrollTopResetFn = undefined;
+        };
+    }
+
+    let scrollTopResetFn: ((newHeight: number, scrollTop: number) => void) | undefined = undefined;
 
     function onScroll() {
         if (!initialised) return;
@@ -183,9 +217,6 @@
             return;
         }
 
-        fromBottom = -(messagesDiv?.scrollTop ?? 0);
-        fromTop = calculateFromTop();
-
         if (!$loading) {
             if (shouldLoadPreviousMessages()) {
                 controller.loadPreviousMessages();
@@ -195,15 +226,22 @@
                 // Note - this fires even when we have entered our own message. This *seems* wrong but
                 // it is actually correct because we do want to load our own messages from the server
                 // so that any incorrect indexes are corrected and only the right thing goes in the cache
+                scrollTopResetFn = getScrollTopResetFn(messagesDiv?.scrollHeight ?? 0);
                 controller.loadNewMessages();
             }
         }
+
+        setIfInsideFromBottomThreshold();
     }
 
     function calculateFromTop(): number {
         return messagesDiv
             ? messagesDiv.scrollHeight - messagesDiv.clientHeight + messagesDiv.scrollTop
             : 0;
+    }
+
+    function calculateFromBottom(): number {
+        return -(messagesDiv?.scrollTop ?? 0);
     }
 
     function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
@@ -250,13 +288,13 @@
             });
     }
 
-    function goToMessageIndex(ev: CustomEvent<number>) {
-        scrollToMessageIndex(ev.detail);
+    function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
+        scrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         if (!canSend) return;
-        controller.replyTo(ev.detail);
+        dispatch("replyTo", ev.detail);
     }
 
     function editEvent(ev: CustomEvent<EventWrapper<Message>>) {
@@ -292,26 +330,12 @@
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
-    function eventKey(e: EventWrapper<ChatEventType>): string | ChatEventType {
+    function eventKey(e: EventWrapper<ChatEventType>): string {
         if (e.event.kind === "message") {
             return e.event.messageId.toString();
         } else {
-            return e.event;
+            return e.index.toString();
         }
-    }
-
-    function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
-        const first = group[0]!;
-        if (first.event.kind === "message") {
-            return `${first.event.sender}_${first.event.messageId}`;
-        }
-        if (first.event.kind === "direct_chat_created") {
-            return `${first.event.kind}_${first.index}`;
-        }
-        if (first.event.kind === "group_chat_created") {
-            return `${first.event.created_by}_${first.index}`;
-        }
-        return `${first.timestamp}_${first.index}`;
     }
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
@@ -325,7 +349,6 @@
         if (controller.chatId !== currentChatId) {
             currentChatId = controller.chatId;
             initialised = false;
-            fromBottom = 0;
 
             controller.subscribe((evt) => {
                 switch (evt.event.kind) {
@@ -334,42 +357,45 @@
                         break;
                     case "loaded_event_window":
                         const index = evt.event.messageIndex;
-                        tick().then(() => scrollToMessageIndex(index));
+                        const preserveFocus = evt.event.preserveFocus;
+                        const allowRecursion = evt.event.allowRecursion;
+                        tick().then(() =>
+                            scrollToMessageIndex(index, preserveFocus, allowRecursion)
+                        );
                         initialised = true;
                         break;
                     case "loaded_new_messages":
                         // wait until the events are rendered
                         tick().then(() => {
-                            // recalculate fromBottom
-                            fromBottom = -(messagesDiv?.scrollTop ?? 0);
-                            if (fromBottom < FROM_BOTTOM_THRESHOLD) {
+                            scrollTopResetFn &&
+                                scrollTopResetFn(
+                                    messagesDiv?.scrollHeight ?? 0,
+                                    messagesDiv?.scrollTop ?? 0
+                                );
+                            if (insideFromBottomThreshold) {
                                 // only scroll if we are now within threshold from the bottom
                                 scrollBottom("smooth");
                             }
                         });
                         break;
                     case "sending_message":
-                        // if we are within the from bottom threshold *or* if the new message
-                        // was sent by us, then scroll to the bottom
-                        if (evt.event.sentByMe || fromBottom < FROM_BOTTOM_THRESHOLD) {
-                            // smooth scroll doesn't work here when we are leaping from the top
-                            // which means we are stuck with abrupt scroll which is disappointing
-                            const { scroll } = evt.event;
-                            tick().then(() => scrollBottom(scroll));
-                        }
+                        // smooth scroll doesn't work here when we are leaping from the top
+                        // which means we are stuck with abrupt scroll which is disappointing
+                        const { scroll } = evt.event;
+                        tick().then(() => scrollBottom(scroll));
                         break;
                     case "chat_updated":
-                        if (
-                            initialised &&
-                            fromBottom < FROM_BOTTOM_THRESHOLD &&
-                            shouldLoadNewMessages()
-                        ) {
+                        if (initialised && insideFromBottomThreshold && shouldLoadNewMessages()) {
                             controller.loadNewMessages();
                         }
                         break;
                 }
             });
         }
+    }
+
+    function setIfInsideFromBottomThreshold() {
+        insideFromBottomThreshold = calculateFromBottom() < FROM_BOTTOM_THRESHOLD;
     }
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
@@ -440,13 +466,18 @@
     }
 </script>
 
-<div bind:this={messagesDiv} class="chat-messages" on:scroll|passive={onScroll} id="chat-messages">
+<div
+    bind:this={messagesDiv}
+    bind:clientHeight={messagesDivHeight}
+    class="chat-messages"
+    on:scroll|passive={onScroll}
+    id="chat-messages">
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
                 {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
             </div>
-            {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
+            {#each dayGroup as userGroup, _ui (controller.userGroupKey(userGroup))}
                 {#each userGroup as evt, i (eventKey(evt))}
                     <ChatEvent
                         {observer}
@@ -467,6 +498,8 @@
                         {canDelete}
                         {canSend}
                         {canReact}
+                        publicGroup={controller.chatVal.kind === "group_chat" &&
+                            controller.chatVal.public}
                         pinned={isPinned($pinned, evt)}
                         on:chatWith
                         on:replyTo={replyTo}
@@ -502,8 +535,9 @@
 
 <div
     title={$_("goToFirstMessage")}
-    class:show={fromBottom > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
+    class:show={!insideFromBottomThreshold || unreadMessages > 0}
     class="fab to-bottom"
+    class:footer
     class:rtl={$rtlStore}>
     <Fab on:click={() => scrollToNew()}>
         {#if unreadMessages > 0}
@@ -576,7 +610,10 @@
     }
 
     .to-bottom {
-        bottom: 80px;
+        bottom: 24px;
+        &.footer {
+            bottom: 80px;
+        }
     }
 
     .chat-messages {
@@ -591,7 +628,7 @@
 
         @include nice-scrollbar();
 
-        @include size-below(xs) {
+        @include mobile() {
             padding: 10px;
             -webkit-overflow-scrolling: touch;
         }

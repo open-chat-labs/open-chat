@@ -69,6 +69,18 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
   });
+  const GiphyImageVariant = IDL.Record({
+    'url' : IDL.Text,
+    'height' : IDL.Nat32,
+    'mime_type' : IDL.Text,
+    'width' : IDL.Nat32,
+  });
+  const GiphyContent = IDL.Record({
+    'title' : IDL.Text,
+    'desktop' : GiphyImageVariant,
+    'caption' : IDL.Opt(IDL.Text),
+    'mobile' : GiphyImageVariant,
+  });
   const BlobReference = IDL.Record({
     'blob_id' : IDL.Nat,
     'canister_id' : CanisterId,
@@ -121,9 +133,11 @@ export const idlFactory = ({ IDL }) => {
     'recipient' : UserId,
     'amount' : ICP,
   });
+  const TransactionHash = IDL.Vec(IDL.Nat8);
   const BlockIndex = IDL.Nat64;
   const CompletedICPTransfer = IDL.Record({
     'fee' : ICP,
+    'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
     'memo' : Memo,
     'recipient' : UserId,
@@ -188,6 +202,7 @@ export const idlFactory = ({ IDL }) => {
     'deleted_by' : UserId,
   });
   const MessageContent = IDL.Variant({
+    'Giphy' : GiphyContent,
     'File' : FileContent,
     'Poll' : PollContent,
     'Text' : TextContent,
@@ -499,7 +514,7 @@ export const idlFactory = ({ IDL }) => {
   const SelectedUpdatesResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
     'Success' : SelectedUpdatesSuccess,
-    'SuccessNoUpdates' : IDL.Null,
+    'SuccessNoUpdates' : EventIndex,
   });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
@@ -576,8 +591,13 @@ export const idlFactory = ({ IDL }) => {
     'length_provided' : IDL.Nat32,
     'max_length' : IDL.Nat32,
   });
+  const FieldTooShortResult = IDL.Record({
+    'length_provided' : IDL.Nat32,
+    'min_length' : IDL.Nat32,
+  });
   const UpdateGroupResponse = IDL.Variant({
     'DescriptionTooLong' : FieldTooLongResult,
+    'NameTooShort' : FieldTooShortResult,
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'AvatarTooBig' : FieldTooLongResult,

@@ -115,8 +115,8 @@ mod tests {
         let groups_raw = vec![
             (1, "Sausages", "Sausages, chips, and beans"),
             (2, "Fry-up", "Sausages, chips, and beans"),
-            (3, "sAusAges", "sausages, chips, and beans"),
-            (4, "sausages", "sausages, chips, beans, eggs, bacon, hash browns, black-pudding, haggis, mushrooms, buttered toast, fried tomatoes"),
+            (3, "sAusAges?", "sausages, chips, and beans"),
+            (4, "sausages!!", "sausages, chips, beans, eggs, bacon, hash browns, black-pudding, haggis, mushrooms, buttered toast, fried tomatoes"),
             (5, "Small fry", "Chips, sausages, and beans"),
             (6, "Buffet", "Croissant, yoghurt, cheese slices, baguette"),
             (7, "Small sausages", "Weeners"),

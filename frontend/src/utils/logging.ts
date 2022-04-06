@@ -8,6 +8,16 @@ export const rollbar = Rollbar.init({
     environment: process.env.NODE_ENV,
     enabled: process.env.NODE_ENV === "production",
     captureUnhandledRejections: true,
+    payload: {
+        environment: process.env.NODE_ENV,
+        client: {
+            javascript: {
+                source_map_enabled: true,
+                code_version: process.env.OPENCHAT_WEBSITE_VERSION,
+                guess_uncaught_frames: true,
+            },
+        },
+    },
 });
 
 export function debug<T>(data: T, msg?: string): T {

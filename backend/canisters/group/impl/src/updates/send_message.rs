@@ -7,8 +7,8 @@ use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
 use serde_bytes::ByteBuf;
 use types::{
-    CanisterId, ContentValidationError, EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex,
-    Notification, TimestampMillis, UserId,
+    CanisterId, ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, Message, MessageContent,
+    MessageIndex, Notification, TimestampMillis, UserId,
 };
 
 #[update]
@@ -21,7 +21,7 @@ fn send_message(args: Args) -> Response {
 
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(&caller) {
+    if let Some(participant) = runtime_state.data.participants.get(caller) {
         let now = runtime_state.env.now();
 
         if let Err(error) = args.content.validate_for_new_message(now) {
@@ -29,6 +29,9 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
                 ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
+                ContentValidationError::TransferCannotBeZero | ContentValidationError::TransferLimitExceeded(_) => {
+                    unreachable!()
+                }
             };
         }
 

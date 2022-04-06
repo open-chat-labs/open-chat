@@ -4,6 +4,7 @@ $breakpoints: (
     sm: 768px,
     md: 992px,
     lg: 1200px,
+    xl: 2000px,
 );
 
 $font-weights: (
@@ -132,6 +133,12 @@ $sp11: 192px;
     }
 }
 
+@mixin mobile() {
+    @include size-below(sm) {
+        @content;
+    }
+}
+
 @mixin size-below($breakpoint) {
     @if map-has-key($breakpoints, $breakpoint) {
         $breakpoint-value: map-get($breakpoints, $breakpoint);
@@ -209,6 +216,33 @@ $sp11: 192px;
     }
     100% {
         transform: scale(1);
+    }
+}
+
+@mixin gold() {
+    color: #ffffff;
+    border: none;
+    background: linear-gradient(
+        to bottom,
+        #cfc09f 22%,
+        #ffecb3 30%,
+        #cfc09f 40%,
+        #cfc09f 50%,
+        #634f2c 78%
+    );
+    animation: shimmer 15s ease-in-out infinite;
+    background-size: 120% 120%;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 0 0%;
+    }
+    50% {
+        background-position: 0 75%;
+    }
+    100% {
+        background-position: 0 0%;
     }
 }
 
@@ -295,7 +329,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     // LINE-HEIGHTS
     @if map-has-key($type, line-height) {
         line-height: map-get($type, line-height);
-        @include size-below(sm) {
+        @include mobile() {
             line-height: calc(#{map-get($type, line-height)} * 0.95);
         }
         @include size-below(xs) {
@@ -306,7 +340,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     // FONT-SIZES
     @if map-has-key($type, font-size) {
         font-size: map-get($type, font-size);
-        @include size-below(sm) {
+        @include mobile() {
             font-size: calc(#{map-get($type, font-size)} * 0.95);
         }
         @include size-below(xs) {

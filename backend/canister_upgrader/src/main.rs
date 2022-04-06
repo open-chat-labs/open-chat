@@ -21,7 +21,7 @@ async fn main() {
         CanisterName::OnlineUsersAggregator => {
             upgrade_online_users_aggregator_canister(identity, opts.url, opts.online_users_aggregator, opts.version).await
         }
-        CanisterName::Root => unimplemented!(),
+        CanisterName::Root => upgrade_root_canister(identity, opts.url, opts.root, opts.version).await,
         CanisterName::User => upgrade_user_canister(identity, opts.url, opts.user_index, opts.version).await,
         CanisterName::UserIndex => upgrade_user_index_canister(identity, opts.url, opts.root, opts.version).await,
     };

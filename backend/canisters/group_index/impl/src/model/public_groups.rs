@@ -6,22 +6,29 @@ use rand::{RngCore, SeedableRng};
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
     ChatId, Cycles, CyclesTopUp, GroupMatch, Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis, Version,
 };
+use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::iterator_extensions::IteratorExtensions;
 use utils::time::DAY_IN_MS;
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct PublicGroups {
     groups: HashMap<ChatId, PublicGroupInfo>,
-    name_to_id_map: HashMap<String, ChatId>,
-    groups_pending: HashMap<String, TimestampMillis>,
+    #[serde(skip)]
+    name_to_id_map: CaseInsensitiveHashMap<ChatId>,
+    groups_pending: CaseInsensitiveHashMap<TimestampMillis>,
 }
 
 impl PublicGroups {
+    pub fn hydrate(&mut self) {
+        for (chat_id, group) in self.groups.iter() {
+            self.name_to_id_map.insert(&group.name, *chat_id);
+        }
+    }
+
     pub fn len(&self) -> usize {
         self.groups.len()
     }
@@ -38,13 +45,8 @@ impl PublicGroups {
         if self.name_to_id_map.contains_key(name) || self.groups_pending.contains_key(name) {
             false
         } else {
-            match self.groups_pending.entry(name.to_owned()) {
-                Occupied(_) => false,
-                Vacant(e) => {
-                    e.insert(now);
-                    true
-                }
-            }
+            self.groups_pending.insert(name, now);
+            true
         }
     }
 
@@ -61,9 +63,8 @@ impl PublicGroups {
         }: GroupCreatedArgs,
     ) -> bool {
         if self.groups_pending.remove(&name).is_some() {
-            let group_info = PublicGroupInfo::new(chat_id, name.clone(), description, avatar_id, now, wasm_version, cycles);
-
-            self.name_to_id_map.insert(name, chat_id);
+            self.name_to_id_map.insert(&name, chat_id);
+            let group_info = PublicGroupInfo::new(chat_id, name, description, avatar_id, now, wasm_version, cycles);
             self.groups.insert(chat_id, group_info);
             true
         } else {
@@ -117,15 +118,18 @@ impl PublicGroups {
         match self.groups.get_mut(chat_id) {
             None => UpdateGroupResult::ChatNotFound,
             Some(mut group) => {
-                if group.name != name && (self.name_to_id_map.contains_key(&name) || self.groups_pending.contains_key(&name)) {
-                    UpdateGroupResult::NameTaken
-                } else {
+                if group.name != name {
+                    if self.name_to_id_map.contains_key(&name) || self.groups_pending.contains_key(&name) {
+                        return UpdateGroupResult::NameTaken;
+                    }
                     self.name_to_id_map.remove(&group.name);
-                    group.name = name;
-                    group.description = description;
-                    group.avatar_id = avatar_id;
-                    UpdateGroupResult::Success
+                    self.name_to_id_map.insert(&name, *chat_id);
                 }
+
+                group.name = name;
+                group.description = description;
+                group.avatar_id = avatar_id;
+                UpdateGroupResult::Success
             }
         }
     }

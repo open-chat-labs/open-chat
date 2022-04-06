@@ -19,3 +19,17 @@ pub struct ReplyContext {
     pub chat_id_if_other: Option<ChatId>,
     pub event_index: EventIndex,
 }
+
+#[derive(CandidType, Deserialize, Debug)]
+pub struct GroupReplyContext {
+    pub event_index: EventIndex,
+}
+
+impl From<GroupReplyContext> for ReplyContext {
+    fn from(r: GroupReplyContext) -> Self {
+        ReplyContext {
+            chat_id_if_other: None,
+            event_index: r.event_index,
+        }
+    }
+}

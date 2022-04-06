@@ -9,7 +9,7 @@
     import { avatarUrl, formatLastOnlineDate } from "../../../domain/user/user.utils";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import { ScreenWidth, screenWidth } from "../../../stores/screenDimensions";
+    import { mobileWidth } from "../../../stores/screenDimensions";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import { rollbar } from "../../../utils/logging";
 
@@ -24,8 +24,7 @@
     let user: PartialUserSummary | undefined;
     let loaded = false;
 
-    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
-    $: modal = alignTo === undefined || mobile;
+    $: modal = alignTo === undefined || $mobileWidth;
     $: status = formatLastOnlineDate(Date.now(), user);
 
     onMount(async () => {

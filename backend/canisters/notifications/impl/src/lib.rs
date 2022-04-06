@@ -18,12 +18,6 @@ mod queries;
 mod updates;
 
 const MAX_SUBSCRIPTION_AGE: Duration = Duration::from_secs(365 * 24 * 60 * 60); // 365 days
-const STATE_VERSION: StateVersion = StateVersion::V1;
-
-#[derive(CandidType, Serialize, Deserialize)]
-enum StateVersion {
-    V1,
-}
 
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();

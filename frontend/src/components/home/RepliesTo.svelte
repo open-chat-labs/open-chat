@@ -17,6 +17,7 @@
     export let user: UserSummary;
     export let repliesTo: RehydratedReplyContext;
     export let preview: boolean;
+    export let groupChat: boolean;
 
     let debug = false;
 
@@ -25,7 +26,10 @@
 
     function zoomToMessage() {
         if (repliesTo.chatId === chatId) {
-            dispatch("goToMessageIndex", repliesTo.messageIndex);
+            dispatch("goToMessageIndex", {
+                index: repliesTo.messageIndex,
+                preserveFocus: false,
+            });
         } else {
             push(`/${repliesTo.chatId}/${repliesTo.messageIndex}`);
         }
@@ -39,12 +43,24 @@
 </script>
 
 <Link on:click={zoomToMessage}>
-    <div class="reply-wrapper" class:me class:rtl={$rtlStore}>
+    <div
+        class="reply-wrapper"
+        class:me
+        class:rtl={$rtlStore}
+        class:crypto={repliesTo.content.kind === "crypto_content"}>
         <h4 class="username" class:text-content={isTextContent}>
             {getUsernameFromReplyContext(repliesTo)}
         </h4>
         {#if repliesTo.content !== undefined}
-            <ChatMessageContent {preview} fill={false} reply={true} content={repliesTo.content} />
+            <ChatMessageContent
+                {me}
+                {preview}
+                {groupChat}
+                first={true}
+                senderId={repliesTo.senderId}
+                fill={false}
+                reply={true}
+                content={repliesTo.content} />
             {#if debug}
                 <pre>EventIdx: {repliesTo.eventIndex}</pre>
                 <pre>MsgId: {repliesTo.messageId}</pre>
@@ -78,6 +94,10 @@
         &.me {
             background-color: var(--currentChat-msg-me-hv);
             color: var(--currentChat-msg-me-txt);
+        }
+
+        &.crypto {
+            @include gold();
         }
 
         &:after {

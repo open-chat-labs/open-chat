@@ -1,9 +1,12 @@
 <script lang="ts">
+    import { onDestroy } from "svelte";
     import { menuStore } from "../stores/menu";
     import { tick } from "svelte";
 
     let menu: HTMLElement;
     let contextMenu: HTMLElement;
+
+    onDestroy(closeMenu);
 
     async function showMenu(_e: MouseEvent): Promise<void> {
         if ($menuStore === contextMenu) {

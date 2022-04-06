@@ -2,7 +2,7 @@
     import { fade } from "svelte/transition";
 </script>
 
-<div transition:fade={{ duration: 100 }} class="menu">
+<div transition:fade|local={{ duration: 100 }} class="menu">
     <slot />
 </div>
 

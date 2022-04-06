@@ -15,6 +15,7 @@ import type {
     ApiDirectChatEvent,
     ApiDeleteMessageResponse,
     ApiJoinGroupResponse,
+    ApiSearchDirectChatResponse,
     ApiSearchAllMessagesResponse,
     ApiMessageMatch,
     ApiEditMessageResponse,
@@ -26,6 +27,11 @@ import type {
     ApiMention,
     ApiRecommendedGroupsResponse,
     ApiSetBioResponse,
+    ApiWithdrawCryptocurrencyResponse,
+    ApiFailedCryptocurrencyWithdrawal,
+    ApiCompletedCryptocurrencyWithdrawal,
+    ApiCompletedCryptocurrencyTransfer,
+    ApiTransferCryptocurrencyWithinGroupResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -53,8 +59,12 @@ import type {
     Mention,
     GroupChatSummary,
     DirectChatSummary,
+    WithdrawCryptocurrencyResponse,
+    FailedCryptocurrencyWithdrawal,
+    CompletedCryptocurrencyWithdrawal,
+    CompletedCryptocurrencyTransfer,
 } from "../../domain/chat/chat";
-import { identity, optional, optionUpdate } from "../../utils/mapping";
+import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
 import {
     apiMessageIndexRanges,
@@ -64,7 +74,11 @@ import {
     publicGroupSummary,
     updatedMessage,
 } from "../common/chatMappers";
-import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
+import type {
+    MessageMatch,
+    SearchDirectChatResponse,
+    SearchAllMessagesResponse,
+} from "../../domain/search/search";
 import type { SetBioResponse } from "../../domain/user/user";
 import type { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
 
@@ -93,7 +107,7 @@ export function recommendedGroupsResponse(
     );
 }
 
-export function searchAllMessageResponse(
+export function searchAllMessagesResponse(
     candid: ApiSearchAllMessagesResponse
 ): SearchAllMessagesResponse {
     if ("Success" in candid) {
@@ -118,12 +132,47 @@ export function searchAllMessageResponse(
         };
     }
     throw new UnsupportedValueError(
-        "Unknown UserIndex.ApiSearchAllMessagesResponse type received",
+        "Unknown UserIndex.ApiSearchMessagesResponse type received",
         candid
     );
 }
 
-function messageMatch(candid: ApiMessageMatch): MessageMatch {
+export function searchDirectChatResponse(
+    candid: ApiSearchDirectChatResponse
+): SearchDirectChatResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            matches: candid.Success.matches.map(messageMatch),
+        };
+    }
+    if ("TermTooShort" in candid) {
+        return {
+            kind: "term_too_short",
+        };
+    }
+    if ("TermTooLong" in candid) {
+        return {
+            kind: "term_too_long",
+        };
+    }
+    if ("InvalidTerm" in candid) {
+        return {
+            kind: "term_invalid",
+        };
+    }
+    if ("ChatNotFound" in candid) {
+        return {
+            kind: "chat_not_found",
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unknown UserIndex.ApiSearchMessagesResponse type received",
+        candid
+    );
+}
+
+export function messageMatch(candid: ApiMessageMatch): MessageMatch {
     return {
         chatId: candid.chat_id.toString(),
         messageIndex: candid.message_index,
@@ -256,17 +305,51 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
     throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
 }
 
-export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
-    if ("BalanceExceeded" in candid) {
-        return { kind: "balance_exceeded" };
+export function completedCryptoTransfer(
+    candid: ApiCompletedCryptocurrencyTransfer
+): CompletedCryptocurrencyTransfer {
+    if ("ICP" in candid) {
+        return {
+            transferKind: "icp_transfer",
+            kind: "completed_icp_transfer",
+            recipient: candid.ICP.recipient.toString(),
+            sender: candid.ICP.sender.toString(),
+            amountE8s: candid.ICP.amount.e8s,
+            feeE8s: candid.ICP.fee.e8s,
+            memo: candid.ICP.memo,
+            blockIndex: candid.ICP.block_index,
+            transactionHash: bytesToHexString(candid.ICP.transaction_hash),
+        };
     }
+    if ("Cycles" in candid) {
+        return {
+            transferKind: "cycles_transfer",
+            kind: "completed_cycles_transfer",
+            recipient: candid.Cycles.recipient.toString(),
+            sender: candid.Cycles.sender.toString(),
+            cycles: candid.Cycles.cycles,
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiCompletedCryptocurrencyTransfer type received",
+        candid
+    );
+}
+
+export function transferWithinGroupResponse(
+    candid: ApiTransferCryptocurrencyWithinGroupResponse
+): SendMessageResponse {
     if ("Success" in candid) {
         return {
-            kind: "success",
+            kind: "transfer_success",
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
+            transfer: completedCryptoTransfer(candid.Success.transfer),
         };
+    }
+    if ("TransferCannotBeZero" in candid) {
+        return { kind: "transfer_cannot_be_zero" };
     }
     if ("RecipientBlocked" in candid) {
         return { kind: "recipient_blocked" };
@@ -283,8 +366,68 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("RecipientNotFound" in candid) {
         return { kind: "recipient_not_found" };
     }
-    if ("TransactionFailed" in candid) {
-        return { kind: "transaction_failed" };
+    if ("TransferFailed" in candid) {
+        return { kind: "transfer_failed" };
+    }
+    if ("CallerNotInGroup" in candid) {
+        return { kind: "caller_not_in_group" };
+    }
+    if ("CryptocurrencyNotSupported" in candid) {
+        return { kind: "cryptocurrency_not_supported" };
+    }
+    if ("InternalError" in candid) {
+        return { kind: "internal_error" };
+    }
+    if ("TransferLimitExceeded" in candid) {
+        return { kind: "transfer_limit_exceeded" };
+    }
+    if ("InvalidPoll" in candid) {
+        return { kind: "invalid_poll" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
+}
+
+export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            timestamp: candid.Success.timestamp,
+            messageIndex: candid.Success.message_index,
+            eventIndex: candid.Success.event_index,
+        };
+    }
+    if ("TransferSuccess" in candid) {
+        return {
+            kind: "transfer_success",
+            timestamp: candid.TransferSuccess.timestamp,
+            messageIndex: candid.TransferSuccess.message_index,
+            eventIndex: candid.TransferSuccess.event_index,
+            transfer: completedCryptoTransfer(candid.TransferSuccess.transfer),
+        };
+    }
+    if ("TransferCannotBeZero" in candid) {
+        return { kind: "transfer_cannot_be_zero" };
+    }
+    if ("RecipientBlocked" in candid) {
+        return { kind: "recipient_blocked" };
+    }
+    if ("InvalidRequest" in candid) {
+        return { kind: "invalid_request" };
+    }
+    if ("TextTooLong" in candid) {
+        return { kind: "text_too_long" };
+    }
+    if ("MessageEmpty" in candid) {
+        return { kind: "message_empty" };
+    }
+    if ("RecipientNotFound" in candid) {
+        return { kind: "recipient_not_found" };
+    }
+    if ("TransferFailed" in candid) {
+        return { kind: "transfer_failed" };
+    }
+    if ("TransferLimitExceeded" in candid) {
+        return { kind: "transfer_limit_exceeded" };
     }
     if ("InvalidPoll" in candid) {
         return { kind: "invalid_poll" };
@@ -534,6 +677,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             permissions: optional(candid.Group.permissions, (permissions) =>
                 groupPermissions(permissions)
             ),
+            affectedEvents: candid.Group.affected_events,
         };
     }
     if ("Direct" in candid) {
@@ -550,6 +694,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             })),
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
             notificationsMuted: optional(candid.Direct.notifications_muted, identity),
+            affectedEvents: candid.Direct.affected_events,
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
@@ -639,4 +784,79 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
         dateCreated: candid.date_created,
         notificationsMuted: candid.notifications_muted,
     };
+}
+
+export function failedCryptoWithdrawal(
+    candid: ApiFailedCryptocurrencyWithdrawal
+): FailedCryptocurrencyWithdrawal {
+    if ("ICP" in candid) {
+        return {
+            transferKind: "icp_withdrawal",
+            kind: "failed_icp_withdrawal",
+            to: bytesToHexString(candid.ICP.to),
+            amountE8s: candid.ICP.amount.e8s,
+            feeE8s: candid.ICP.fee.e8s,
+            memo: candid.ICP.memo,
+            errorMessage: candid.ICP.error_message,
+        };
+    }
+    if ("Cycles" in candid) {
+        return {
+            transferKind: "cycles_withdrawal",
+            kind: "failed_cycles_withdrawal",
+            cycles: candid.Cycles.cycles,
+            errorMessage: candid.Cycles.error_message,
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiFailedCryptocurrencyWithdrawal type received",
+        candid
+    );
+}
+
+export function completedCryptoWithdrawal(
+    candid: ApiCompletedCryptocurrencyWithdrawal
+): CompletedCryptocurrencyWithdrawal {
+    if ("ICP" in candid) {
+        return {
+            transferKind: "icp_withdrawal",
+            kind: "completed_icp_withdrawal",
+            to: bytesToHexString(candid.ICP.to),
+            amountE8s: candid.ICP.amount.e8s,
+            feeE8s: candid.ICP.fee.e8s,
+            memo: candid.ICP.memo,
+            blockIndex: candid.ICP.block_index,
+            transactionHash: bytesToHexString(candid.ICP.transaction_hash),
+        };
+    }
+    if ("Cycles" in candid) {
+        return {
+            transferKind: "cycles_withdrawal",
+            kind: "completed_cycles_withdrawal",
+            to: candid.Cycles.to.toString(),
+            cycles: candid.Cycles.cycles,
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiCompletedCryptocurrencyWithdrawal type received",
+        candid
+    );
+}
+
+export function withdrawCryptoResponse(
+    candid: ApiWithdrawCryptocurrencyResponse
+): WithdrawCryptocurrencyResponse {
+    if ("CurrencyNotSupported" in candid) {
+        return { kind: "currency_not_supported" };
+    }
+    if ("TransactionFailed" in candid) {
+        return failedCryptoWithdrawal(candid.TransactionFailed);
+    }
+    if ("Success" in candid) {
+        return completedCryptoWithdrawal(candid.Success);
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiWithdrawCryptocurrencyResponse type received",
+        candid
+    );
 }

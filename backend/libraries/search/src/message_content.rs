@@ -39,6 +39,7 @@ impl From<&MessageContentInternal> for Document {
             MessageContentInternal::Video(c) => try_add_caption_and_mime_type(&mut document, c.caption.as_ref(), &c.mime_type),
             MessageContentInternal::Audio(c) => try_add_caption_and_mime_type(&mut document, c.caption.as_ref(), &c.mime_type),
             MessageContentInternal::File(c) => try_add_caption_and_mime_type(&mut document, c.caption.as_ref(), &c.mime_type),
+            MessageContentInternal::Giphy(c) => try_add_caption(&mut document, c.caption.as_ref()),
             MessageContentInternal::Poll(p) => {
                 document.add_field("poll".to_string(), 1.0);
                 if let Some(text) = p.config.text.clone() {

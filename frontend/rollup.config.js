@@ -4,6 +4,7 @@ import sveltePreprocess from "svelte-preprocess";
 import commonjs from "@rollup/plugin-commonjs";
 import html from "@rollup/plugin-html";
 import resolve from "@rollup/plugin-node-resolve";
+import copy from "rollup-plugin-copy";
 import livereload from "rollup-plugin-livereload";
 import { terser } from "rollup-plugin-terser";
 import typescript from "@rollup/plugin-typescript";
@@ -56,15 +57,19 @@ if (dfxNetwork) {
     );
 }
 
-// todo - we should add some code here to validate that the env vars we are expecting are actually present
-
 const production = !process.env.ROLLUP_WATCH;
 const env = process.env.NODE_ENV ?? (production ? "production" : "development");
 const version = process.env.OPENCHAT_WEBSITE_VERSION;
 if (production && !version) {
     throw Error("OPENCHAT_WEBSITE_VERSION environment variable not set");
 }
-const WEBPUSH_SERVICE_WORKER_PATH = "_/raw/sw.js";
+if (production && !process.env.ROLLBAR_ACCESS_TOKEN) {
+    throw Error("ROLLBAR_ACCESS_TOKEN environment variable not set");
+}
+if (production && !process.env.USERGEEK_APIKEY) {
+    throw Error("USERGEEK_APIKEY environment variable not set");
+}
+const WEBPUSH_SERVICE_WORKER_PATH = env === "development" ? "sw.js" : "_/raw/sw.js";
 
 console.log("PROD", production);
 console.log("ENV", env);
@@ -114,6 +119,7 @@ export default [
             replace({
                 preventAssignment: true,
                 "process.env.NODE_ENV": JSON.stringify(env),
+                "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
             }),
 
             production && terser(),
@@ -164,7 +170,9 @@ export default [
                 "process.env.INTERNET_IDENTITY_URL": JSON.stringify(
                     process.env.INTERNET_IDENTITY_URL
                 ),
+                "process.env.DFX_NETWORK": JSON.stringify(dfxNetwork),
                 "process.env.NODE_ENV": JSON.stringify(env),
+                "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
                 "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
                 "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
                 "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
@@ -176,6 +184,7 @@ export default [
                 "process.env.BLOB_URL_PATTERN": process.env.BLOB_URL_PATTERN,
                 "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
                 "process.env.USERGEEK_APIKEY": process.env.USERGEEK_APIKEY,
+                "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
             }),
 
             html({
@@ -204,7 +213,7 @@ export default [
                             <head>
                                 <meta http-equiv="Content-Security-Policy" content="${csp}" />
                                 <meta charset="utf-8" />
-                                <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+                                <meta name="viewport" content="width=device-width, initial-scale=1">
                                 <meta name="apple-mobile-web-app-title" content="OpenChat" />
                                 <title>OpenChat</title>
                                 <link rel="manifest" href="/openchat.webmanifest" />
@@ -237,6 +246,30 @@ export default [
             production && analyze({ summaryOnly: true }),
 
             production && filesize(),
+
+            // If we're building for production, copy sourcemaps to '_/raw'
+            // and update the js files to point to the new sourcemap locations
+            production &&
+                copy({
+                    targets: [
+                        {
+                            src: "build/*.map",
+                            dest: "build/_/raw",
+                        },
+                        {
+                            src: "build/*.js",
+                            dest: "build",
+                            transform: (contents, filename) =>
+                                contents
+                                    .toString()
+                                    .replace(
+                                        "//# sourceMappingURL=",
+                                        "//# sourceMappingURL=_/raw/"
+                                    ),
+                        },
+                    ],
+                    hook: "writeBundle",
+                }),
         ],
         watch: {
             clearScreen: false,

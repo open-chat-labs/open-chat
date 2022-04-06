@@ -15,10 +15,13 @@ type Nothing = { kind: "nothing" };
 type LoadedNewMessages = { kind: "loaded_new_messages" };
 type SendingMessage = {
     kind: "sending_message";
-    messageIndex: number;
-    sentByMe: boolean;
     scroll: ScrollBehavior;
 };
 type ChatUpdated = { kind: "chat_updated" };
 type LoadedPreviousMessages = { kind: "loaded_previous_messages" };
-type LoadedEventWindow = { kind: "loaded_event_window"; messageIndex: number };
+type LoadedEventWindow = {
+    kind: "loaded_event_window";
+    messageIndex: number;
+    preserveFocus: boolean;
+    allowRecursion: boolean;
+};

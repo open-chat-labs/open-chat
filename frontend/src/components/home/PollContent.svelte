@@ -66,15 +66,12 @@
     }
 
     function percentageOfVote(idx: number) {
-        if (!haveIVoted) {
-            return 0;
-        }
+        const showPercentage =
+            content.ended ||
+            (haveIVoted &&
+                (content.config.showVotesBeforeEndDate || content.config.endDate === undefined));
 
-        if (!content.ended && !content.config.showVotesBeforeEndDate) {
-            return 0;
-        }
-
-        return (votesForAnswer(idx) / numberOfVotes) * 100;
+        return showPercentage ? (votesForAnswer(idx) / numberOfVotes) * 100 : 0;
     }
 </script>
 
@@ -122,6 +119,12 @@
 </div>
 
 <style type="text/scss">
+    .poll {
+        @include size-above(sm) {
+            min-width: 300px;
+        }
+    }
+
     .question {
         display: flex;
         align-items: flex-start;

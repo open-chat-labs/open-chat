@@ -28,18 +28,25 @@ import type {
     PollContent,
     MemberRole,
     PermissionRole,
+    CryptocurrencyContent,
+    AggregateParticipantsJoinedOrLeft,
 } from "./chat";
 import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
-import { overwriteCachedEvents } from "../../utils/caching";
+import { _ } from "svelte-i18n";
 import { unconfirmed } from "../../stores/unconfirmed";
 import type { IMessageReadTracker } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
+import { get } from "svelte/store";
+import { formatICP } from "../../utils/cryptoFormatter";
+import { userStore } from "../../stores/user";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
-const EVENT_PAGE_SIZE = 20;
+export const EVENT_PAGE_SIZE = 50;
+export const MAX_MESSAGES = 60;
+export const MAX_EVENTS = 200;
 
 export function newMessageId(): bigint {
     return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
@@ -58,14 +65,15 @@ export function getContentAsText(content: MessageContent): string {
     } else if (content.kind === "file_content") {
         text = captionedContent(content.name, content.caption);
     } else if (content.kind === "crypto_content") {
-        // todo - format crypto
-        text = "crypto_content";
+        text = captionedContent(get(_)("icpTransfer.transfer"), content.caption);
     } else if (content.kind === "deleted_content") {
         text = "deleted message";
     } else if (content.kind === "placeholder_content") {
         text = "placeholder content";
     } else if (content.kind === "poll_content") {
         text = "poll";
+    } else if (content.kind === "giphy_content") {
+        text = captionedContent(get(_)("giphyMessage"), content.caption);
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
@@ -149,6 +157,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 break;
             case "direct_chat_created":
             case "poll_ended":
+            case "aggregate_participants_joined_left":
                 break;
             default:
                 throw new UnsupportedValueError("Unexpected ChatEvent type received", e.event);
@@ -196,6 +205,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "poll_vote_deleted":
             return event.message.updatedBy;
         case "direct_chat_created":
+        case "aggregate_participants_joined_left":
         case "poll_ended":
         case "participant_dismissed_as_super_admin":
         case "participant_left": // We exclude participant_left events since the user is no longer in the group
@@ -254,7 +264,9 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
     return content.kind !== "text_content" &&
         content.kind !== "deleted_content" &&
         content.kind !== "placeholder_content" &&
-        content.kind !== "poll_content"
+        content.kind !== "poll_content" &&
+        content.kind !== "crypto_content" &&
+        content.kind !== "giphy_content"
         ? { ...content, caption }
         : content;
 }
@@ -542,7 +554,60 @@ function groupBySender(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEven
 }
 
 export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][][] {
-    return groupWhile(sameDate, events.filter(eventIsVisible)).map(groupBySender);
+    return groupWhile(sameDate, events.filter(eventIsVisible))
+        .map(reduceJoinedOrLeft)
+        .map(groupBySender);
+}
+
+function reduceJoinedOrLeft(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[] {
+    function getLatestAggregateEventIfExists(
+        events: EventWrapper<ChatEvent>[]
+    ): AggregateParticipantsJoinedOrLeft | undefined {
+        if (events.length === 0) return undefined;
+        const latest = events[events.length - 1];
+        return latest.event.kind === "aggregate_participants_joined_left"
+            ? latest.event
+            : undefined;
+    }
+
+    return events.reduce((previous: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
+        if (e.event.kind === "participant_joined" || e.event.kind === "participant_left") {
+            let agg = getLatestAggregateEventIfExists(previous);
+            if (agg === undefined) {
+                agg = {
+                    kind: "aggregate_participants_joined_left",
+                    users_joined: new Set(),
+                    users_left: new Set(),
+                };
+            } else {
+                previous.pop();
+            }
+
+            if (e.event.kind === "participant_joined") {
+                if (agg.users_left.has(e.event.userId)) {
+                    agg.users_left.delete(e.event.userId);
+                } else {
+                    agg.users_joined.add(e.event.userId);
+                }
+            } else {
+                if (agg.users_joined.has(e.event.userId)) {
+                    agg.users_joined.delete(e.event.userId);
+                } else {
+                    agg.users_left.add(e.event.userId);
+                }
+            }
+
+            previous.push({
+                event: agg,
+                timestamp: e.timestamp,
+                index: e.index,
+            });
+        } else {
+            previous.push(e);
+        }
+
+        return previous;
+    }, []);
 }
 
 export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapper<Message>[][] {
@@ -610,7 +675,7 @@ export function updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummar
         updatesSince: {
             timestamp,
             groupChats: chatSummaries
-                .filter((c) => c.kind === "group_chat")
+                .filter((c) => c.kind === "group_chat" && c.myRole !== "previewer")
                 .map((g) => ({
                     chatId: g.chatId,
                     lastUpdated: (g as GroupChatSummary).lastUpdated,
@@ -664,7 +729,7 @@ export function enoughVisibleMessages(
         return true;
     } else if (ascending) {
         // if there are no more events then we have enough by definition
-        return events[events.length - 1]?.index === maxIndex;
+        return events[events.length - 1]?.index >= maxIndex;
     } else {
         // if there are no previous events then we have enough by definition
         return events[0].index <= minIndex;
@@ -811,31 +876,45 @@ function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
     }
 }
 
-// todo - this is not very efficient at the moment
 export function replaceAffected(
     chatId: string,
     events: EventWrapper<ChatEvent>[],
     affectedEvents: EventWrapper<ChatEvent>[],
     localReactions: Record<string, LocalReaction[]>
 ): EventWrapper<ChatEvent>[] {
-    const toCacheBust: EventWrapper<ChatEvent>[] = [];
-    const updated = events.map((ev) => {
-        const aff = affectedEvents.find((a) => a.index === ev.index);
-        if (aff !== undefined) {
-            const merged = mergeMessageEvents(ev, aff, localReactions);
-            toCacheBust.push(merged);
-            return merged;
-        }
-        return ev;
-    });
-    if (toCacheBust.length > 0) {
-        // Note - this is fire and forget which is a tiny bit dodgy
-        console.log("Busting: ", toCacheBust);
-        overwriteCachedEvents(chatId, toCacheBust).catch((err) => {
-            console.log("failed to update cache: ", err, toCacheBust);
-        });
+    if (affectedEvents.length === 0) {
+        return events;
     }
-    return updated;
+    const affectedEventsLookup = affectedEvents.reduce((lookup, event) => {
+        lookup[event.index] = event;
+        return lookup;
+    }, {} as Record<number, EventWrapper<ChatEvent>>);
+
+    return events.map((event) => {
+        const affectedEvent = affectedEventsLookup[event.index];
+        if (affectedEvent !== undefined) {
+            return mergeMessageEvents(event, affectedEvent, localReactions);
+        } else if (event.event.kind === "message" && event.event.repliesTo !== undefined) {
+            const repliesTo = event.event.repliesTo.eventIndex;
+            const affectedReplyContent = affectedEventsLookup[repliesTo];
+            if (
+                affectedReplyContent !== undefined &&
+                affectedReplyContent.event.kind === "message"
+            ) {
+                return {
+                    ...event,
+                    event: {
+                        ...event.event,
+                        repliesTo: {
+                            ...event.event.repliesTo,
+                            content: affectedReplyContent.event.content,
+                        },
+                    },
+                };
+            }
+        }
+        return event;
+    });
 }
 
 export function pruneLocalReactions(
@@ -886,17 +965,26 @@ export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): Eve
 }
 
 function getLatestEventIndex(chat: ChatSummary, updatedChat: ChatSummaryUpdates): number {
-    return updatedChat.latestEventIndex !== undefined &&
-        updatedChat.latestEventIndex > chat.latestEventIndex
-        ? updatedChat.latestEventIndex
-        : chat.latestEventIndex;
+    return Math.max(updatedChat.latestEventIndex ?? 0, chat.latestEventIndex);
 }
 
 function getLatestMessage(
     chat: ChatSummary,
     updatedChat: ChatSummaryUpdates
 ): EventWrapper<Message> | undefined {
-    return (updatedChat.latestMessage?.index ?? -1) > (chat.latestMessage?.index ?? -1)
+    if (chat.latestMessage === undefined) return updatedChat.latestMessage;
+    if (updatedChat.latestMessage === undefined) return chat.latestMessage;
+
+    // If the local message is unconfirmed, treat that as the latest
+    const isLocalLatestUnconfirmed = unconfirmed.contains(
+        chat.chatId,
+        chat.latestMessage.event.messageId
+    );
+    if (isLocalLatestUnconfirmed) return chat.latestMessage;
+
+    // Otherwise take the one with the highest event index, if they match, take the server version since it may have had
+    // subsequent updates (eg. deleted)
+    return updatedChat.latestMessage.index >= chat.latestMessage.index
         ? updatedChat.latestMessage
         : chat.latestMessage;
 }
@@ -1076,11 +1164,11 @@ export function canUnblockUsers(chat: ChatSummary): boolean {
     }
 }
 
-export function canDeleteMessages(chat: ChatSummary): boolean {
+export function canDeleteOtherUsersMessages(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
         return isPermitted(chat.myRole, chat.permissions.deleteMessages);
     } else {
-        return true;
+        return false;
     }
 }
 
@@ -1165,4 +1253,56 @@ function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean 
         case "members":
             return true;
     }
+}
+
+export function buildCryptoTransferText(
+    myUserId: string,
+    senderId: string,
+    content: CryptocurrencyContent,
+    me: boolean
+): string | undefined {
+    if (
+        content.transfer.kind !== "completed_icp_transfer" &&
+        content.transfer.kind !== "pending_icp_transfer"
+    ) {
+        return undefined;
+    }
+
+    function username(userId: string): string {
+        const lookup = get(userStore);
+
+        return userId === myUserId
+            ? get(_)("you")
+            : `${lookup[userId]?.username ?? get(_)("unknown")}`;
+    }
+
+    const values = {
+        amount: formatICP(content.transfer.amountE8s, 0),
+        receiver: username(content.transfer.recipient),
+        sender: username(senderId),
+    };
+
+    const key =
+        content.transfer.kind === "completed_icp_transfer"
+            ? "confirmedSent"
+            : me
+            ? "pendingSentByYou"
+            : "pendingSent";
+
+    return get(_)(`icpTransfer.${key}`, { values });
+}
+
+export function buildTransactionLink(content: CryptocurrencyContent): string | undefined {
+    const url = buildTransactionUrl(content);
+    return url !== undefined
+        ? get(_)("icpTransfer.viewTransaction", { values: { url } })
+        : undefined;
+}
+
+export function buildTransactionUrl(content: CryptocurrencyContent): string | undefined {
+    if (content.transfer.kind !== "completed_icp_transfer") {
+        return undefined;
+    }
+
+    return `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`;
 }

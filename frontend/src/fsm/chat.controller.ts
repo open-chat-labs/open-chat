@@ -18,6 +18,8 @@ import type {
     MemberRole,
     SendMessageSuccess,
     UpdateGroupResponse,
+    TransferSuccess,
+    CryptocurrencyContent,
 } from "../domain/chat/chat";
 import {
     activeUserIdFromEvent,
@@ -37,6 +39,7 @@ import {
     serialiseMessageForRtc,
     toggleReaction,
     userIdsFromEvents,
+    indexIsInRanges,
 } from "../domain/chat/chat.utils";
 import type { UserSummary } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -50,6 +53,7 @@ import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { overwriteCachedEvents } from "../utils/caching";
 import { writable } from "svelte/store";
+import { findLast } from "../utils/list";
 import { rollbar } from "../utils/logging";
 import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
@@ -79,25 +83,28 @@ export class ChatController {
     private onEvent?: (evt: ChatState) => void;
     private confirmedEventIndexesLoaded = new DRange();
 
+    // This set will contain 1 key for each rendered user event group which is used as that group's key
+    private userGroupKeys = new Set<string>();
+
     constructor(
         public api: ServiceContainer,
         public user: UserSummary,
         private serverChatSummary: Readable<ChatSummary>,
         public markRead: IMessageReadTracker,
         private _focusMessageIndex: number | undefined,
-        private _onConfirmedMessage: (message: EventWrapper<Message>) => void
+        private _updateSummaryWithConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {
         this.chat = derived([serverChatSummary, unconfirmed], ([summary, unconfirmed]) =>
             mergeUnconfirmedIntoSummary(user.userId, summary, unconfirmed[summary.chatId]?.messages)
         );
 
-        this.events = writable([]);
+        const { chatId, kind } = get(this.chat);
+        this.events = writable(unconfirmed.getMessages(chatId));
         this.loading = writable(false);
         this.focusMessageIndex = writable(_focusMessageIndex);
         this.participants = writable([]);
         this.blockedUsers = writable(new Set<string>());
         this.pinnedMessages = writable(new Set<number>());
-        const { chatId, kind } = get(this.chat);
         this.chatId = chatId;
         // If this is a group chat, chatUserIds will be populated when processing the chat events
         this.chatUserIds = new Set<string>(kind === "direct_chat" ? [chatId] : []);
@@ -191,12 +198,12 @@ export class ChatController {
                 this.participants.set(this.groupDetails.participants);
                 this.blockedUsers.set(this.groupDetails.blockedUsers);
                 this.pinnedMessages.set(this.groupDetails.pinnedMessages);
+                await this.updateUserStore(userIdsFromEvents(get(this.events)));
                 console.log(
                     "loading chat details updated to: ",
                     this.groupDetails.latestEventIndex
                 );
             }
-            await this.updateUserStore(userIdsFromEvents(get(this.events)));
         }
     }
 
@@ -349,15 +356,18 @@ export class ChatController {
         );
     }
 
-    private async handleEventsResponse(resp: EventsResponse<ChatEvent>): Promise<void> {
+    private async handleEventsResponse(
+        resp: EventsResponse<ChatEvent>,
+        keepCurrentEvents = true
+    ): Promise<void> {
         if (resp === "events_failed") return;
 
         this.initialised = true;
         const events = get(this.events);
         const chat = get(this.chat);
-        const keepCurrentEvents = get(this.focusMessageIndex) === undefined;
         if (!keepCurrentEvents) {
             this.confirmedEventIndexesLoaded = new DRange();
+            this.userGroupKeys.clear();
         }
 
         const updated = replaceAffected(
@@ -414,25 +424,32 @@ export class ChatController {
             : [];
     }
 
-    private async loadEventWindow(messageIndex: number) {
-        this.loading.set(true);
-        const range = indexRangeForChat(get(this.serverChatSummary));
-        const eventsPromise: Promise<EventsResponse<ChatEvent>> =
-            this.chatVal.kind === "direct_chat"
-                ? this.api.directChatEventsWindow(range, this.chatVal.them, messageIndex)
-                : this.api.groupChatEventsWindow(range, this.chatId, messageIndex);
-        const eventsResponse = await eventsPromise;
+    private async loadEventWindow(messageIndex: number, preserveFocus = false) {
+        if (messageIndex >= 0) {
+            this.loading.set(true);
+            const range = indexRangeForChat(get(this.serverChatSummary));
+            const eventsPromise: Promise<EventsResponse<ChatEvent>> =
+                this.chatVal.kind === "direct_chat"
+                    ? this.api.directChatEventsWindow(range, this.chatVal.them, messageIndex)
+                    : this.api.groupChatEventsWindow(range, this.chatId, messageIndex);
+            const eventsResponse = await eventsPromise;
 
-        if (eventsResponse === undefined || eventsResponse === "events_failed") {
-            return undefined;
+            if (eventsResponse === undefined || eventsResponse === "events_failed") {
+                return undefined;
+            }
+
+            await this.handleEventsResponse(eventsResponse, false);
+            this.loading.set(false);
         }
-
-        await this.handleEventsResponse(eventsResponse);
-        this.loading.set(false);
 
         this.raiseEvent({
             chatId: this.chatId,
-            event: { kind: "loaded_event_window", messageIndex: messageIndex },
+            event: {
+                kind: "loaded_event_window",
+                messageIndex: messageIndex,
+                preserveFocus,
+                allowRecursion: false,
+            },
         });
     }
 
@@ -492,6 +509,13 @@ export class ChatController {
 
         await this.handleEventsResponse(eventsResponse);
 
+        // We may have loaded messages which are more recent than what the chat summary thinks is the latest message,
+        // if so, we update the chat summary to show the correct latest message.
+        const latestMessage = findLast(eventsResponse.events, (e) => e.event.kind === "message");
+        if (latestMessage !== undefined && latestMessage.index > this.latestServerEventIndex()) {
+            this._updateSummaryWithConfirmedMessage(latestMessage as EventWrapper<Message>);
+        }
+
         this.raiseEvent({
             chatId: this.chatId,
             event: { kind: "loaded_new_messages" },
@@ -524,32 +548,16 @@ export class ChatController {
         return get(this.events);
     }
 
-    // This is called in 3 scenarios:
-    // 1 - we are sending a message
-    // 2 - we receive an unconfirmed message via WebRTC
-    // 3 - we receive a confirmed message via a notification
-    async sendMessage(
-        messageEvent: EventWrapper<Message>,
-        userId: string,
-        confirmed = false
-    ): Promise<void> {
-        const sentByMe = userId === this.user.userId;
-        let upToDate = this.upToDate();
-
+    async sendMessage(messageEvent: EventWrapper<Message>): Promise<void> {
         let jumping = false;
-        if (sentByMe && !upToDate) {
+        if (!this.upToDate()) {
             jumping = true;
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
-            upToDate = true;
         }
 
-        if (sentByMe) {
-            draftMessages.delete(this.chatId);
-        } else {
-            await this.updateUserStore(userIdsFromEvents([messageEvent]));
-        }
+        draftMessages.delete(this.chatId);
 
-        if (sentByMe && get(this.editingEvent)) {
+        if (get(this.editingEvent)) {
             this.events.update((events) => {
                 return events.map((e) => {
                     if (
@@ -562,48 +570,77 @@ export class ChatController {
                 });
             });
         } else {
-            if (!confirmed) {
-                unconfirmed.add(this.chatId, messageEvent);
-            }
-            if (sentByMe) {
-                rtcConnectionsManager.sendMessage([...this.chatUserIds], {
-                    kind: "remote_user_sent_message",
-                    chatType: this.chatVal.kind,
-                    chatId: this.chatId,
-                    messageEvent: serialiseMessageForRtc(messageEvent),
-                    userId: userId,
-                });
-                // mark our own messages as read manually since we will not be observing them
-                this.markRead.markMessageRead(
-                    this.chatId,
-                    messageEvent.event.messageIndex,
-                    messageEvent.event.messageId
-                );
-            }
-            if (upToDate) {
-                this.events.update((events) => {
-                    const existing = events.find(
-                        (ev) =>
-                            ev.event.kind === "message" &&
-                            ev.event.messageId === messageEvent.event.messageId
-                    );
-                    if (existing !== undefined) {
-                        return [...events];
-                    } else {
-                        return [...events, messageEvent];
-                    }
-                });
-            }
+            unconfirmed.add(this.chatId, messageEvent);
+            rtcConnectionsManager.sendMessage([...this.chatUserIds], {
+                kind: "remote_user_sent_message",
+                chatType: this.chatVal.kind,
+                chatId: this.chatId,
+                messageEvent: serialiseMessageForRtc(messageEvent),
+                userId: this.user.userId,
+            });
+            // mark our own messages as read manually since we will not be observing them
+            this.markRead.markMessageRead(
+                this.chatId,
+                messageEvent.event.messageIndex,
+                messageEvent.event.messageId
+            );
+            this.appendMessage(messageEvent);
             this.raiseEvent({
                 chatId: this.chatId,
                 event: {
                     kind: "sending_message",
-                    messageIndex: messageEvent.event.messageIndex,
-                    sentByMe,
                     scroll: jumping ? "auto" : "smooth",
                 },
             });
         }
+    }
+
+    // This could be a message received in an `updates` response, from a notification, or via WebRTC.
+    handleMessageSentByOther(messageEvent: EventWrapper<Message>, confirmed: boolean): void {
+        if (indexIsInRanges(messageEvent.index, this.confirmedEventIndexesLoaded)) {
+            // We already have this confirmed message
+            return;
+        }
+
+        if (confirmed) {
+            const isAdjacentToAlreadyLoadedEvents =
+                indexIsInRanges(messageEvent.index - 1, this.confirmedEventIndexesLoaded) ||
+                indexIsInRanges(messageEvent.index + 1, this.confirmedEventIndexesLoaded);
+
+            if (!isAdjacentToAlreadyLoadedEvents) {
+                return;
+            }
+
+            this.handleEventsResponse({
+                events: [messageEvent],
+                affectedEvents: [],
+            });
+        } else {
+            if (!this.upToDate()) {
+                return;
+            }
+
+            // If it is unconfirmed then we simply append it
+            this.appendMessage(messageEvent);
+        }
+
+        this.raiseEvent({
+            chatId: this.chatId,
+            event: {
+                kind: "loaded_new_messages",
+            },
+        });
+    }
+
+    appendMessage(message: EventWrapper<Message>): boolean {
+        const existing = get(this.events).find(
+            (ev) => ev.event.kind === "message" && ev.event.messageId === message.event.messageId
+        );
+
+        if (existing !== undefined) return false;
+
+        this.events.update((events) => [...events, message]);
+        return true;
     }
 
     undeleteMessage(message: Message, userId: string): void {
@@ -710,8 +747,8 @@ export class ChatController {
         return this.chatVal.kind === "direct_chat" && get(blockedUsers).has(this.chatVal.them);
     }
 
-    async goToMessageIndex(messageIndex: number): Promise<void> {
-        return this.loadEventWindow(messageIndex);
+    async goToMessageIndex(messageIndex: number, preserveFocus: boolean): Promise<void> {
+        return this.loadEventWindow(messageIndex, preserveFocus);
     }
 
     async externalGoToMessage(messageIndex: number): Promise<void> {
@@ -719,17 +756,50 @@ export class ChatController {
         // *only* if it is actually necessary
         this.raiseEvent({
             chatId: this.chatId,
-            event: { kind: "loaded_event_window", messageIndex: messageIndex },
+            event: {
+                kind: "loaded_event_window",
+                messageIndex: messageIndex,
+                preserveFocus: false,
+                allowRecursion: true,
+            },
         });
     }
 
-    async chatUpdated(): Promise<void> {
+    async chatUpdated(affectedEvents: number[]): Promise<void> {
+        // The chat summary has been updated which means the latest message may be new
+        const latestMessage = this.chatVal.latestMessage;
+        if (latestMessage !== undefined && latestMessage.event.sender !== this.user.userId) {
+            this.handleMessageSentByOther(latestMessage, true);
+        }
+
+        this.refreshAffectedEvents(affectedEvents);
         this.updateDetails();
 
         this.raiseEvent({
             chatId: this.chatId,
             event: { kind: "chat_updated" },
         });
+    }
+
+    // This will refresh any affected events which are currently loaded
+    private refreshAffectedEvents(affectedEventIndexes: number[]): Promise<void> {
+        const filtered = affectedEventIndexes.filter((e) =>
+            indexIsInRanges(e, this.confirmedEventIndexesLoaded)
+        );
+        if (filtered.length === 0) {
+            return Promise.resolve();
+        }
+
+        this.loading.set(true);
+        const chat = this.chatVal;
+        const eventsPromise =
+            chat.kind === "direct_chat"
+                ? this.api.directChatEventsByEventIndex(chat.them, filtered)
+                : this.api.groupChatEventsByEventIndex(chat.chatId, filtered);
+
+        return eventsPromise
+            .then((resp) => this.handleEventsResponse(resp))
+            .finally(() => this.loading.set(false));
     }
 
     markAllRead(): void {
@@ -777,14 +847,22 @@ export class ChatController {
         );
     }
 
-    confirmMessage(candidate: Message, resp: SendMessageSuccess): void {
+    mergeSendMessageResponse(msg: Message, resp: SendMessageSuccess | TransferSuccess): Message {
+        return {
+            ...msg,
+            messageIndex: resp.messageIndex,
+            content:
+                resp.kind === "transfer_success"
+                    ? ({ ...msg.content, transfer: resp.transfer } as CryptocurrencyContent)
+                    : msg.content,
+        };
+    }
+
+    confirmMessage(candidate: Message, resp: SendMessageSuccess | TransferSuccess): void {
         if (unconfirmed.delete(this.chatId, candidate.messageId)) {
             this.markRead.confirmMessage(this.chatId, resp.messageIndex, candidate.messageId);
             const confirmed = {
-                event: {
-                    ...candidate,
-                    messageIndex: resp.messageIndex,
-                },
+                event: this.mergeSendMessageResponse(candidate, resp),
                 index: resp.eventIndex,
                 timestamp: resp.timestamp,
             };
@@ -797,7 +875,7 @@ export class ChatController {
                 })
             );
             this.confirmedEventIndexesLoaded.add(resp.eventIndex);
-            this._onConfirmedMessage(confirmed);
+            this._updateSummaryWithConfirmedMessage(confirmed);
         }
     }
 
@@ -1174,6 +1252,26 @@ export class ChatController {
         };
 
         rtcConnectionsManager.sendMessage([...this.chatUserIds], rtc);
+    }
+
+    // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the
+    // new version with the old version, if not, a new key will be created for the group.
+    userGroupKey(group: EventWrapper<ChatEvent>[]): string {
+        const first = group[0];
+        let prefix = "";
+        if (first.event.kind === "message") {
+            const sender = first.event.sender;
+            prefix = sender + "_";
+        }
+        for (const { index } of group) {
+            const key = prefix + index;
+            if (this.userGroupKeys.has(key)) {
+                return key;
+            }
+        }
+        const firstKey = prefix + first.index;
+        this.userGroupKeys.add(firstKey);
+        return firstKey;
     }
 
     // Returns the most recently active users, only considering users who have been active within the last 10 minutes

@@ -1,5 +1,6 @@
 import type { ScrollStrategy } from "../domain/chat/chat";
 import { writable } from "svelte/store";
+import { isTouchDevice } from "../utils/devices";
 
 function boolFromLS(key: string, def: boolean): boolean {
     const val = localStorage.getItem(key);
@@ -13,7 +14,7 @@ function boolFromLS(key: string, def: boolean): boolean {
     }
 }
 
-export const enterSend = createLsBoolStore("openchat_entersend", true);
+export const enterSend = createLsBoolStore("openchat_entersend", !isTouchDevice);
 
 export const appearanceSectionOpen = createLsBoolStore("openchat_appearance_section", false);
 export const chatsSectionOpen = createLsBoolStore("openchat_chats_section", false);

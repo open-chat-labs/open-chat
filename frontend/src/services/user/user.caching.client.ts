@@ -20,6 +20,8 @@ import type {
     MarkReadRequest,
     GroupChatSummary,
     RegisterPollVoteResponse,
+    PendingICPWithdrawal,
+    WithdrawCryptocurrencyResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -31,13 +33,16 @@ import {
     removeCachedChat,
     setCachedChats,
     setCachedEvents,
-    setCachedMessage,
+    setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
 import { updateArgsFromChats } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
 import type { SetBioResponse, UserSummary } from "../../domain/user/user";
-import type { SearchAllMessagesResponse } from "../../domain/search/search";
+import type {
+    SearchDirectChatResponse,
+    SearchAllMessagesResponse,
+} from "../../domain/search/search";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 
 /**
@@ -144,6 +149,17 @@ export class CachingUserClient implements IUserClient {
         return this.client.editMessage(recipientId, message);
     }
 
+    sendGroupICPTransfer(
+        groupId: string,
+        recipientId: string,
+        sender: UserSummary,
+        message: Message
+    ): Promise<SendMessageResponse> {
+        return this.client
+            .sendGroupICPTransfer(groupId, recipientId, sender, message)
+            .then(setCachedMessageFromSendResponse(this.db, groupId, message));
+    }
+
     sendMessage(
         recipientId: string,
         sender: UserSummary,
@@ -152,7 +168,7 @@ export class CachingUserClient implements IUserClient {
     ): Promise<SendMessageResponse> {
         return this.client
             .sendMessage(recipientId, sender, message, replyingToChatId)
-            .then(setCachedMessage(this.db, this.userId, message));
+            .then(setCachedMessageFromSendResponse(this.db, this.userId, message));
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {
@@ -196,6 +212,14 @@ export class CachingUserClient implements IUserClient {
         return this.client.searchAllMessages(searchTerm, maxResults);
     }
 
+    searchDirectChat(
+        userId: string,
+        searchTerm: string,
+        maxResults: number
+    ): Promise<SearchDirectChatResponse> {
+        return this.client.searchDirectChat(userId, searchTerm, maxResults);
+    }
+
     toggleMuteNotifications(
         chatId: string,
         muted: boolean
@@ -226,5 +250,9 @@ export class CachingUserClient implements IUserClient {
         voteType: "register" | "delete"
     ): Promise<RegisterPollVoteResponse> {
         return this.client.registerPollVote(otherUser, messageIdx, answerIdx, voteType);
+    }
+
+    withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
+        return this.client.withdrawICP(domain);
     }
 }

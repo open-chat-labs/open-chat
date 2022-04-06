@@ -13,7 +13,13 @@ pub struct GroupChat {
 }
 
 impl GroupChat {
-    pub fn new(chat_id: ChatId, is_super_admin: bool, read_up_to: Option<MessageIndex>, now: TimestampMillis) -> GroupChat {
+    pub fn new(
+        chat_id: ChatId,
+        is_super_admin: bool,
+        notifications_muted: bool,
+        read_up_to: Option<MessageIndex>,
+        now: TimestampMillis,
+    ) -> GroupChat {
         let mut read_by_me = RangeSet::new();
         if let Some(index) = read_up_to {
             read_by_me.insert_range(0..=index.into());
@@ -23,7 +29,7 @@ impl GroupChat {
             chat_id,
             date_joined: now,
             read_by_me: Timestamped::new(read_by_me, now),
-            notifications_muted: Timestamped::new(false, now),
+            notifications_muted: Timestamped::new(notifications_muted, now),
             is_super_admin,
         }
     }
@@ -52,6 +58,7 @@ impl From<&GroupChat> for GroupChatSummaryUpdates {
             wasm_version: None,
             owner_id: None,
             permissions: None,
+            affected_events: Vec::new(),
         }
     }
 }

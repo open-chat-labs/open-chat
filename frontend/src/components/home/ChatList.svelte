@@ -130,6 +130,7 @@
         on:profile
         on:newGroup />
     <Search {searching} {searchTerm} on:searchEntered />
+
     <div class="body">
         {#if $chatsLoading}
             <Loading />
@@ -229,7 +230,7 @@
     .body {
         overflow: auto;
         @include nice-scrollbar();
-        @include size-below(xs) {
+        @include mobile() {
             padding: var(--chatSearch-xs-pd);
         }
     }

@@ -15,7 +15,7 @@
     import { push } from "svelte-spa-router";
     import { rtlStore } from "../../stores/rtl";
     import HoverIcon from "../HoverIcon.svelte";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../stores/iconSize";
     import Markdown from "./Markdown.svelte";
@@ -49,7 +49,7 @@
 
 <div class="wrapper" class:no-groups={groups.length === 0}>
     {#if groups.length > 0}
-        {#if $screenWidth === ScreenWidth.ExtraSmall}
+        {#if $mobileWidth}
             <SectionHeader>
                 <div class="back" class:rtl={$rtlStore} on:click={cancelRecommendations}>
                     <HoverIcon>
@@ -77,7 +77,7 @@
                 class="group-card"
                 class:selected={selected === i}
                 on:mouseenter={() => (selected = i)}>
-                {#if $screenWidth !== ScreenWidth.ExtraSmall}
+                {#if !$mobileWidth}
                     <div class="avatar">
                         <Avatar
                             url={getAvatarUrl(group, "../assets/group.svg")}
@@ -87,7 +87,7 @@
                 {/if}
                 <div class="body">
                     <div class="group-title-line">
-                        {#if $screenWidth === ScreenWidth.ExtraSmall}
+                        {#if $mobileWidth}
                             <div class="avatar">
                                 <Avatar
                                     url={getAvatarUrl(group, "../assets/group.svg")}
@@ -147,7 +147,7 @@
 
     .subtitle {
         margin-bottom: $sp6;
-        @include size-below(xs) {
+        @include mobile() {
             margin-bottom: 0;
             @include font(book, normal, fs-80);
             @include ellipsis();
@@ -158,7 +158,7 @@
         @include font(bold, normal, fs-180);
         margin-bottom: $sp3;
 
-        @include size-below(xs) {
+        @include mobile() {
             margin-bottom: 0;
             @include font(book, normal, fs-120);
             @include ellipsis();
@@ -179,7 +179,7 @@
         overflow-x: hidden;
 
         @include nice-scrollbar();
-        @include size-below(xs) {
+        @include mobile() {
             padding-top: 0;
             background-color: inherit;
         }
@@ -190,14 +190,14 @@
             background-color: var(--currentChat-header-bg);
 
             .title {
-                @include size-below(xs) {
+                @include mobile() {
                     @include font(book, normal, fs-160);
                     @include ellipsis();
                 }
             }
 
             .subtitle {
-                @include size-below(xs) {
+                @include mobile() {
                     margin-bottom: $sp6;
                 }
             }
@@ -228,7 +228,7 @@
         background-color: var(--recommended-bg);
         margin-bottom: $sp5;
 
-        @include size-below(xs) {
+        @include mobile() {
             width: calc(100% - #{$sp4});
             margin: 0 $sp3 $sp4 $sp3;
             padding: $sp3;
@@ -246,7 +246,7 @@
             flex: 0 0 20px;
         }
 
-        @include size-above(xs) {
+        @include size-above(sm) {
             &.selected {
                 @include box-shadow(3);
                 border-left: 7px solid var(--accent);
@@ -262,7 +262,7 @@
 
         .avatar {
             flex: 0 0 60px;
-            @include size-below(xs) {
+            @include mobile() {
                 flex: 0 0 45px;
             }
         }
@@ -274,7 +274,7 @@
         .group-name {
             @include font(bold, normal, fs-160);
             margin-bottom: $sp3;
-            @include size-below(xs) {
+            @include mobile() {
                 @include font-size(fs-120);
                 @include ellipsis();
                 margin-bottom: 0;

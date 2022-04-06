@@ -6,4 +6,6 @@ export type Questions =
     | "sms_icp"
     | "airdrop"
     | "security"
+    | "send_icp"
+    | "icp_account"
     | "roadmap";

@@ -84,15 +84,24 @@ async fn create_and_validate_group(name: String, is_public: bool, users: &Users)
         description: description.clone(),
         avatar: None,
         history_visible_to_new_joiners: !is_public,
+        permissions: None,
     };
 
-    let chat_id = create_group(
-        &users.user1_agent,
-        users.user1_id,
-        &args,
-        vec![users.user2_id, users.user3_id],
-    )
-    .await;
+    let members = if is_public { Vec::new() } else { vec![users.user2_id, users.user3_id] };
+
+    let chat_id = create_group(&users.user1_agent, users.user1_id, &args, members).await;
+
+    if is_public {
+        let join_group_args = user_canister::join_group_v2::Args {
+            chat_id,
+            as_super_admin: false,
+        };
+        futures::future::join(
+            join_group(&users.user2_agent, users.user2_id, &join_group_args),
+            join_group(&users.user3_agent, users.user3_id, &join_group_args),
+        )
+        .await;
+    }
 
     let args = user_canister::initial_state::Args {};
     match user_canister_client::initial_state(&users.user1_agent, &users.user1_id.into(), &args)

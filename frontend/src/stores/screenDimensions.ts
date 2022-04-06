@@ -16,10 +16,12 @@ const dimensions = readable(
 );
 
 export const enum ScreenWidth {
+    ExtraExtraSmall = "ExtraExtraSmall",
     ExtraSmall = "ExtraSmall",
     Small = "Small",
     Medium = "Medium",
     Large = "Large",
+    ExtraLarge = "ExtraLarge",
 }
 
 export const enum ScreenHeight {
@@ -28,15 +30,23 @@ export const enum ScreenHeight {
 }
 
 export const screenWidth = derived(dimensions, ($dimensions) => {
-    if ($dimensions.width < 576) {
+    if ($dimensions.width < 354) {
+        return ScreenWidth.ExtraExtraSmall;
+    } else if ($dimensions.width < 576) {
         return ScreenWidth.ExtraSmall;
     } else if ($dimensions.width < 768) {
         return ScreenWidth.Small;
     } else if ($dimensions.width < 992) {
         return ScreenWidth.Medium;
-    } else {
+    } else if ($dimensions.width < 1200) {
         return ScreenWidth.Large;
+    } else {
+        return ScreenWidth.ExtraLarge;
     }
+});
+
+export const mobileWidth = derived(dimensions, ($dimensions) => {
+    return $dimensions.width < 768;
 });
 
 export const screenHeight = derived(dimensions, ($dimensions) => {

@@ -1,7 +1,7 @@
 import { get, writable } from "svelte/store";
 import { rollbar } from "utils/logging";
 import { rtlStore } from "./rtl";
-import { ScreenWidth, screenWidth } from "./screenDimensions";
+import { mobileWidth } from "./screenDimensions";
 
 const { subscribe, update } = writable<HTMLElement | undefined>(undefined);
 
@@ -15,7 +15,9 @@ function close(menu: HTMLElement | undefined): HTMLElement | undefined {
             // debug logging - will remove later
             rollbar.error("trying to remove menu when menu anchor is null");
         } else {
-            menuAnchor.removeChild(menu);
+            if (menuAnchor.contains(menu)) {
+                menuAnchor.removeChild(menu);
+            }
         }
     }
     return undefined;
@@ -28,7 +30,7 @@ export const menuStore = {
             if (menu === undefined) return menu;
             const xoffset = get(rtlStore) ? 180 : -180;
             const items = menu.querySelectorAll(".menu-item").length;
-            const itemHeight = get(screenWidth) === ScreenWidth.ExtraSmall ? 39 : 44;
+            const itemHeight = get(mobileWidth) ? 39 : 44;
             const height = itemHeight * items;
             const left = Math.max(10, pos.x + xoffset);
             const top = pos.y > window.innerHeight / 2 ? pos.y - height : pos.y + pos.height;

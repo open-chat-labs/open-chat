@@ -1,14 +1,16 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
-use crate::ContentValidationError::InvalidPoll;
+use crate::ContentValidationError::{InvalidPoll, TransferCannotBeZero, TransferLimitExceeded};
 use crate::RegisterVoteResult::SuccessNoChange;
-use crate::{CanisterId, CryptocurrencyTransfer, TimestampMillis, TotalVotes, UserId, VoteOperation};
+use crate::{CanisterId, CryptocurrencyTransfer, ICPTransfer, TimestampMillis, TotalVotes, UserId, VoteOperation};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
-const MAX_TEXT_LENGTH: u32 = 5_000;
-const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
+pub const MAX_TEXT_LENGTH: u32 = 5_000;
+pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
+const E8S_PER_ICP: u64 = 100_000_000;
+const ICP_TRANSFER_LIMIT_E8S: u64 = 10 * E8S_PER_ICP;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContent {
@@ -20,6 +22,7 @@ pub enum MessageContent {
     Poll(PollContent),
     Cryptocurrency(CryptocurrencyContent),
     Deleted(DeletedContent),
+    Giphy(GiphyContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -32,23 +35,37 @@ pub enum MessageContentInternal {
     Poll(PollContentInternal),
     Cryptocurrency(CryptocurrencyContent),
     Deleted(DeletedContent),
+    Giphy(GiphyContent),
 }
 
 pub enum ContentValidationError {
     Empty,
     TextTooLong(u32),
     InvalidPoll(InvalidPollReason),
+    TransferCannotBeZero,
+    TransferLimitExceeded(u64),
 }
 
 impl MessageContent {
     // Determines if the content is valid for a new message, this should not be called on existing
     // messages
     pub fn validate_for_new_message(&self, now: TimestampMillis) -> Result<(), ContentValidationError> {
-        if let MessageContent::Poll(p) = self {
-            if let Err(reason) = p.config.validate(now) {
-                return Err(InvalidPoll(reason));
+        match self {
+            MessageContent::Poll(p) => {
+                if let Err(reason) = p.config.validate(now) {
+                    return Err(InvalidPoll(reason));
+                }
             }
-        }
+            MessageContent::Cryptocurrency(c) => {
+                if c.transfer.is_zero() {
+                    return Err(TransferCannotBeZero);
+                }
+                if let Err(limit) = c.within_limit() {
+                    return Err(TransferLimitExceeded(limit));
+                }
+            }
+            _ => {}
+        };
 
         let is_empty = match self {
             MessageContent::Text(t) => t.text.is_empty(),
@@ -59,6 +76,7 @@ impl MessageContent {
             MessageContent::Poll(p) => p.config.options.is_empty(),
             MessageContent::Cryptocurrency(c) => c.transfer.is_zero(),
             MessageContent::Deleted(_) => true,
+            MessageContent::Giphy(_) => false,
         };
 
         if is_empty {
@@ -86,6 +104,7 @@ impl MessageContent {
             }),
             MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
+            MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
         }
     }
 
@@ -119,7 +138,8 @@ impl MessageContent {
             MessageContent::Text(_)
             | MessageContent::Poll(_)
             | MessageContent::Cryptocurrency(_)
-            | MessageContent::Deleted(_) => {}
+            | MessageContent::Deleted(_)
+            | MessageContent::Giphy(_) => {}
         }
 
         references
@@ -135,6 +155,7 @@ impl MessageContent {
             MessageContent::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
             MessageContent::Cryptocurrency(c) => c.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Deleted(_) => 0,
+            MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
         }
     }
 }
@@ -150,6 +171,7 @@ impl MessageContentInternal {
             MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
             MessageContentInternal::Cryptocurrency(c) => MessageContent::Cryptocurrency(c.clone()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
+            MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
         }
     }
 }
@@ -167,6 +189,22 @@ pub struct ImageContent {
     pub caption: Option<String>,
     pub mime_type: String,
     pub blob_reference: Option<BlobReference>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GiphyImageVariant {
+    pub width: u32,
+    pub height: u32,
+    pub url: String,
+    pub mime_type: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GiphyContent {
+    pub caption: Option<String>,
+    pub title: String,
+    pub desktop: GiphyImageVariant,
+    pub mobile: GiphyImageVariant,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -309,6 +347,17 @@ pub enum RegisterVoteResult {
 pub struct CryptocurrencyContent {
     pub transfer: CryptocurrencyTransfer,
     pub caption: Option<String>,
+}
+
+impl CryptocurrencyContent {
+    pub fn within_limit(&self) -> Result<(), u64> {
+        if let CryptocurrencyTransfer::ICP(ICPTransfer::Pending(icp)) = &self.transfer {
+            if icp.amount.e8s() > ICP_TRANSFER_LIMIT_E8S {
+                return Err(ICP_TRANSFER_LIMIT_E8S);
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

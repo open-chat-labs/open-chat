@@ -1,9 +1,9 @@
 import { IDL } from "@dfinity/candid";
 import type { ApiNotification } from "../services/notifications/candid/idl";
 import { Notification as NotificationIdl } from "../services/notifications/candid/notification";
-import type { MessageContent } from "../domain/chat/chat";
+import type { CryptocurrencyContent, MessageContent } from "../domain/chat/chat";
 import type { Notification } from "../domain/notifications";
-import type { User } from "../domain/user/user";
+import { E8S_PER_ICP, User } from "../domain/user/user";
 import { UnsupportedValueError } from "../utils/error";
 import { notification as toNotification } from "../services/notifications/mappers";
 import { getSoftDisabled } from "../utils/caching";
@@ -97,7 +97,10 @@ async function showNotification(notification: Notification): Promise<void> {
     let body: string;
     let path: string;
     if (notification.kind === "direct_notification") {
-        const content = extractMessageContent(notification.message.event.content);
+        const content = extractMessageContent(
+            notification.message.event.content,
+            notification.senderName
+        );
         title += notification.senderName;
         body = content.text;
         icon = content.image ?? icon;
@@ -105,6 +108,7 @@ async function showNotification(notification: Notification): Promise<void> {
     } else if (notification.kind === "group_notification") {
         const content = extractMessageContent(
             notification.message.event.content,
+            notification.senderName,
             notification.mentioned
         );
         title += notification.groupName;
@@ -135,8 +139,37 @@ type ContentExtract = {
     image?: string;
 };
 
+function extractMessageContentFromCryptoContent(
+    content: CryptocurrencyContent,
+    senderName: string
+): ContentExtract {
+    if (content.transfer.transferKind === "cycles_transfer") {
+        if (
+            content.transfer.kind === "completed_cycles_transfer" ||
+            content.transfer.kind === "pending_cycles_transfer"
+        ) {
+            return {
+                text: `${senderName} sent ${content.transfer.cycles} cycles`,
+            };
+        }
+    } else if (content.transfer.transferKind === "icp_transfer") {
+        if (
+            content.transfer.kind === "completed_icp_transfer" ||
+            content.transfer.kind === "pending_icp_transfer"
+        ) {
+            return {
+                text: `${senderName} sent ${Number(content.transfer.amountE8s) / E8S_PER_ICP} ICP`,
+            };
+        }
+    }
+    return {
+        text: `${senderName} sent a crypto transfer`,
+    };
+}
+
 function extractMessageContent(
     content: MessageContent,
+    senderName: string,
     mentioned: Array<User> = []
 ): ContentExtract {
     let result: ContentExtract;
@@ -149,6 +182,10 @@ function extractMessageContent(
         result = {
             text: content.caption ?? extractMediaType(content.mimeType),
             image: content.thumbnailData,
+        };
+    } else if (content.kind === "giphy_content") {
+        result = {
+            text: content.caption ?? "Gif message",
         };
     } else if (content.kind === "video_content") {
         result = {
@@ -165,9 +202,7 @@ function extractMessageContent(
             image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==",
         };
     } else if (content.kind === "crypto_content") {
-        result = {
-            text: "TODO - crypto content",
-        };
+        result = extractMessageContentFromCryptoContent(content, senderName);
     } else if (content.kind === "deleted_content") {
         result = {
             text: "TODO - deleted content",
@@ -178,7 +213,7 @@ function extractMessageContent(
         };
     } else if (content.kind === "poll_content") {
         result = {
-            text: "TODO - poll content",
+            text: content.config.text ?? "New poll",
         };
     } else {
         throw new UnsupportedValueError(

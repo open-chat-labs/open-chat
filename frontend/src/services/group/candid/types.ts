@@ -98,6 +98,12 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export type CompletedCryptocurrencyTransfer = { 'ICP' : CompletedICPTransfer } |
+  { 'Cycles' : CompletedCyclesTransfer };
+export type CompletedCryptocurrencyWithdrawal = {
+    'ICP' : CompletedICPWithdrawal
+  } |
+  { 'Cycles' : CompletedCyclesWithdrawal };
 export interface CompletedCyclesDeposit {
   'from' : CanisterId,
   'cycles' : Cycles,
@@ -120,6 +126,7 @@ export interface CompletedICPDeposit {
 }
 export interface CompletedICPTransfer {
   'fee' : ICP,
+  'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'memo' : Memo,
   'recipient' : UserId,
@@ -129,6 +136,7 @@ export interface CompletedICPTransfer {
 export interface CompletedICPWithdrawal {
   'to' : AccountIdentifier,
   'fee' : ICP,
+  'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
   'memo' : Memo,
   'amount' : ICP,
@@ -203,6 +211,7 @@ export interface DirectChatSummary {
   'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
+  'affected_events' : Array<EventIndex>,
   'notifications_muted' : [] | [boolean],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
@@ -246,6 +255,8 @@ export interface EventsWindowArgs {
   'max_messages' : number,
   'max_events' : number,
 }
+export type FailedCryptocurrencyWithdrawal = { 'ICP' : FailedICPWithdrawal } |
+  { 'Cycles' : FailedCyclesWithdrawal };
 export interface FailedCyclesTransfer {
   'error_message' : string,
   'recipient' : UserId,
@@ -276,12 +287,28 @@ export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
 }
+export interface FieldTooShortResult {
+  'length_provided' : number,
+  'min_length' : number,
+}
 export interface FileContent {
   'name' : string,
   'mime_type' : string,
   'file_size' : number,
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
+}
+export interface GiphyContent {
+  'title' : string,
+  'desktop' : GiphyImageVariant,
+  'caption' : [] | [string],
+  'mobile' : GiphyImageVariant,
+}
+export interface GiphyImageVariant {
+  'url' : string,
+  'height' : number,
+  'mime_type' : string,
+  'width' : number,
 }
 export interface GroupChatCreated {
   'name' : string,
@@ -346,6 +373,7 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
+  'affected_events' : Array<EventIndex>,
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -440,7 +468,8 @@ export interface Message {
   'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
 }
-export type MessageContent = { 'File' : FileContent } |
+export type MessageContent = { 'Giphy' : GiphyContent } |
+  { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
@@ -546,6 +575,8 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
+export type PendingCryptocurrencyWithdrawal = { 'ICP' : PendingICPWithdrawal } |
+  { 'Cycles' : PendingCyclesWithdrawal };
 export interface PendingCyclesTransfer {
   'recipient' : UserId,
   'cycles' : Cycles,
@@ -677,7 +708,7 @@ export interface SelectedInitialSuccess {
 export interface SelectedUpdatesArgs { 'updates_since' : EventIndex }
 export type SelectedUpdatesResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : SelectedUpdatesSuccess } |
-  { 'SuccessNoUpdates' : null };
+  { 'SuccessNoUpdates' : EventIndex };
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'participants_added_or_updated' : Array<Participant>,
@@ -732,6 +763,7 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
+export type TransactionHash = Array<number>;
 export type TransactionStatus = { 'Failed' : string } |
   { 'Complete' : null } |
   { 'Pending' : null };
@@ -760,6 +792,7 @@ export interface UpdateGroupArgs {
 export type UpdateGroupResponse = {
     'DescriptionTooLong' : FieldTooLongResult
   } |
+  { 'NameTooShort' : FieldTooShortResult } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |

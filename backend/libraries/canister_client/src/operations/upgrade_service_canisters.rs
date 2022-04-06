@@ -8,13 +8,26 @@ use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
 use types::{CanisterId, CanisterWasm, Version};
 
+pub async fn upgrade_root_canister(identity: BasicIdentity, url: String, root_canister_id: CanisterId, version: Version) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        root_canister_id,
+        version,
+        root_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::Root,
+    )
+    .await;
+    println!("Root canister upgraded");
+}
+
 pub async fn upgrade_group_index_canister(
     identity: BasicIdentity,
     url: String,
     group_index_canister_id: CanisterId,
     version: Version,
 ) {
-    upgrade_root_canister(
+    upgrade_top_level_canister(
         identity,
         url,
         group_index_canister_id,
@@ -44,7 +57,7 @@ pub async fn upgrade_notifications_canister(
     notifications_canister_id: CanisterId,
     version: Version,
 ) {
-    upgrade_root_canister(
+    upgrade_top_level_canister(
         identity,
         url,
         notifications_canister_id,
@@ -62,7 +75,7 @@ pub async fn upgrade_online_users_aggregator_canister(
     online_users_aggregator_canister_id: CanisterId,
     version: Version,
 ) {
-    upgrade_root_canister(
+    upgrade_top_level_canister(
         identity,
         url,
         online_users_aggregator_canister_id,
@@ -81,7 +94,7 @@ pub async fn upgrade_callback_canister(
     callback_canister_id: CanisterId,
     version: Version,
 ) {
-    upgrade_root_canister(
+    upgrade_top_level_canister(
         identity,
         url,
         callback_canister_id,
@@ -160,7 +173,7 @@ pub async fn upgrade_user_canister(identity: BasicIdentity, url: String, user_in
     println!("User canister wasm upgraded to version {version}");
 }
 
-async fn upgrade_root_canister<A: CandidType + Send + Sync>(
+async fn upgrade_top_level_canister<A: CandidType + Send + Sync>(
     identity: BasicIdentity,
     url: String,
     canister_id: CanisterId,

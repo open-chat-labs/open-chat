@@ -4,11 +4,12 @@ export function calculateMediaDimensions(
     content: Dimensions,
     parentWidth: number,
     containerPaddingWidth: number,
-    windowHeight: number
+    windowHeight: number,
+    maxWidthFraction = 0.8
 ): Dimensions {
     const ratio = content.height / content.width;
-    const availWidth = parentWidth * 0.8 - containerPaddingWidth;
-    const availHeight = (2 * windowHeight) / 3;
+    const availWidth = parentWidth * maxWidthFraction - containerPaddingWidth;
+    const availHeight = Math.min((2 * windowHeight) / 3, 400);
 
     let width = Math.min(availWidth, Math.max(200, content.width));
     let height = width * ratio;

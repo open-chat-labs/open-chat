@@ -21,13 +21,14 @@ futures = "0.3.16"
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = "0.4.0"
-ic-cdk-macros = "0.4.0"
+ic-cdk = "0.5.0"
+ic-cdk-macros = "0.5.0"
 ic-ledger-types = "0.1.1"
 itertools = "0.10.1"
 ledger_sync_canister = { path = "../../ledger_sync/api" }
 ledger_sync_canister_c2c_client = { path = "../../ledger_sync/c2c_client" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
+lodepng = "3.6.1"
 open_storage_index_canister = { path = "../../open_storage_index/api" }
 open_storage_index_canister_c2c_client = { path = "../../open_storage_index/c2c_client" }
 rand = "0.7.3"
