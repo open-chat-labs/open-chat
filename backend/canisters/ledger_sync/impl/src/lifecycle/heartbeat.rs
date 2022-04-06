@@ -16,12 +16,11 @@ mod sync_ledger_transactions {
     use super::*;
 
     pub fn run() {
-        match mutate_state(|state| {
+        if let Some(block_index_synced_up_to) = mutate_state(|state| {
             let now = state.env.now();
             state.data.ledger_sync_state.try_start(now)
         }) {
-            Some(block_index_synced_up_to) => ic_cdk::spawn(sync_transactions(block_index_synced_up_to + 1)),
-            None => {}
+            ic_cdk::spawn(sync_transactions(block_index_synced_up_to + 1));
         }
     }
 
