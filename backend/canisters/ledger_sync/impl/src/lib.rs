@@ -5,6 +5,7 @@ use crate::model::transaction_metrics::TransactionMetrics;
 use candid::CandidType;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
+use ic_ledger_types::BlockIndex;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{CanisterId, Cycles, TimestampMillis, Timestamped, Version};
@@ -61,6 +62,8 @@ impl RuntimeState {
             total_transferred_e8s,
             withdrawals,
             total_withdrawn_e8s,
+            block_index_synced_up_to: self.data.ledger_sync_state.synced_up_to(),
+            last_sync_started_at: self.data.ledger_sync_state.last_sync_started_at(),
         }
     }
 }
@@ -102,4 +105,6 @@ pub struct Metrics {
     pub total_transferred_e8s: u128,
     pub withdrawals: u64,
     pub total_withdrawn_e8s: u128,
+    pub block_index_synced_up_to: BlockIndex,
+    pub last_sync_started_at: TimestampMillis,
 }

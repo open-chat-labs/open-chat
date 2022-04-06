@@ -1,8 +1,8 @@
 use crate::model::notifications_queue::DepositNotification;
 use crate::{mutate_state, read_state, RuntimeState};
 use ic_cdk_macros::heartbeat;
-use ic_ledger_types::BlockIndex;
-use ledger_utils::{blocks_since, latest_block_index, CandidBlock, CandidOperation};
+use ic_ledger_types::{Block, BlockIndex, Operation};
+use ledger_utils::blocks_since;
 use tracing::error;
 use types::{CanisterId, CompletedICPDeposit, CryptocurrencyDeposit, ICPDeposit};
 
@@ -16,22 +16,13 @@ mod sync_ledger_transactions {
     use super::*;
 
     pub fn run() {
-        match mutate_state(|state| state.data.ledger_sync_state.try_start()) {
-            Some(0) => ic_cdk::spawn(init_block_index()),
+        match mutate_state(|state| {
+            let now = state.env.now();
+            state.data.ledger_sync_state.try_start(now)
+        }) {
             Some(block_index_synced_up_to) => ic_cdk::spawn(sync_transactions(block_index_synced_up_to + 1)),
             None => {}
         }
-    }
-
-    async fn init_block_index() {
-        let ledger_canister_id = read_state(|state| state.data.ledger_canister_id);
-
-        let block_index = latest_block_index(ledger_canister_id).await.unwrap_or_else(|error| {
-            error!(?error, "Failed to get latest block index from ledger");
-            0
-        });
-
-        mutate_state(|state| state.data.ledger_sync_state.mark_complete(block_index));
     }
 
     async fn sync_transactions(from_block_index: BlockIndex) {
@@ -41,15 +32,23 @@ mod sync_ledger_transactions {
             Ok(blocks) => mutate_state(|state| process_blocks(blocks, from_block_index, state)),
             Err(error) => error!(?error, "Failed to get blocks from ledger"),
         }
+
+        mutate_state(|state| state.data.ledger_sync_state.mark_sync_complete());
     }
 
-    fn process_blocks(blocks: Vec<CandidBlock>, from_block_index: BlockIndex, runtime_state: &mut RuntimeState) {
+    fn process_blocks(blocks: Vec<Block>, from_block_index: BlockIndex, runtime_state: &mut RuntimeState) {
+        if blocks.is_empty() {
+            return;
+        }
+
+        let last_block_index = from_block_index + blocks.len() as u64;
+
         for (block_index, block) in blocks
             .into_iter()
             .enumerate()
             .map(|(index, block)| ((index as u64) + from_block_index, block))
         {
-            if let CandidOperation::Transfer { from, to, amount, fee } = block.transaction.operation {
+            if let Operation::Transfer { from, to, amount, fee } = block.transaction.operation {
                 if let Some(canister_id) = runtime_state.data.accounts.canister_id(&to) {
                     if runtime_state.data.accounts.canister_id(&from).is_some() {
                         runtime_state.data.transaction_metrics.mark_transfer(amount);
@@ -71,6 +70,8 @@ mod sync_ledger_transactions {
                 }
             }
         }
+
+        runtime_state.data.ledger_sync_state.set_synced_up_to(last_block_index);
     }
 }
 

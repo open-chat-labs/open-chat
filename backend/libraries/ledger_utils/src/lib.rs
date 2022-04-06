@@ -1,14 +1,12 @@
-mod ledger_types;
-
-pub use ledger_types::*;
-
-use candid::{CandidType, Principal};
+use candid::Principal;
 use ic_cdk::api::call::CallResult;
-use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
+use ic_ledger_types::{
+    AccountIdentifier, ArchivedBlocksRange, Block, BlockIndex, GetBlocksArgs, GetBlocksResult, Subaccount, DEFAULT_SUBACCOUNT,
+};
 use itertools::Itertools;
-use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
-use types::{CanisterId, TransactionHash, UserId};
+use types::CanisterId;
+
+pub use transaction_hash::calculate_transaction_hash;
 
 pub fn default_ledger_account(principal: Principal) -> AccountIdentifier {
     AccountIdentifier::new(&principal, &DEFAULT_SUBACCOUNT)
@@ -22,37 +20,13 @@ pub fn convert_to_subaccount(principal: &Principal) -> Subaccount {
     Subaccount(subaccount)
 }
 
-pub fn calculate_transaction_hash(sender: UserId, args: &TransferArgs) -> TransactionHash {
-    let from = default_ledger_account(sender.into());
-
-    let transaction = Transaction {
-        operation: Operation::Transfer {
-            from: from.to_string(),
-            to: args.to.to_string(),
-            amount: args.amount,
-            fee: args.fee,
-        },
-        memo: args.memo,
-        // 'args.created_at_time' must be set otherwise the hash won't match
-        created_at_time: args.created_at_time.unwrap(),
-    };
-
-    transaction.hash()
-}
-
-pub async fn latest_block_index(ledger_canister_id: CanisterId) -> CallResult<BlockIndex> {
-    let response = query_blocks(ledger_canister_id, GetBlocksArgs { start: 0, length: 0 }).await?;
-
-    Ok(response.chain_length)
-}
-
-pub async fn blocks_since(ledger_canister_id: CanisterId, start: BlockIndex, length: usize) -> CallResult<Vec<CandidBlock>> {
-    let response = query_blocks(ledger_canister_id, GetBlocksArgs { start, length }).await?;
+pub async fn blocks_since(ledger_canister_id: CanisterId, start: BlockIndex, length: usize) -> CallResult<Vec<Block>> {
+    let response = ic_ledger_types::query_blocks(ledger_canister_id, GetBlocksArgs { start, length }).await?;
 
     if response.archived_blocks.is_empty() {
         Ok(response.blocks)
     } else {
-        async fn get_blocks(range: ArchivedBlocksRange) -> CallResult<GetBlocksResult> {
+        async fn get_blocks_from_archive(range: ArchivedBlocksRange) -> CallResult<GetBlocksResult> {
             let args = GetBlocksArgs {
                 start: range.start,
                 length: range.length as usize,
@@ -66,7 +40,7 @@ pub async fn blocks_since(ledger_canister_id: CanisterId, start: BlockIndex, len
             .archived_blocks
             .into_iter()
             .sorted_by_key(|a| a.start)
-            .map(get_blocks)
+            .map(get_blocks_from_archive)
             .collect();
 
         let archive_responses = futures::future::join_all(futures).await;
@@ -81,44 +55,53 @@ pub async fn blocks_since(ledger_canister_id: CanisterId, start: BlockIndex, len
     }
 }
 
-pub async fn query_blocks(ledger_canister_id: CanisterId, args: GetBlocksArgs) -> CallResult<QueryBlocksResponse> {
-    let (result,) = ic_cdk::call(ledger_canister_id, "query_blocks", (args,)).await?;
-    Ok(result)
-}
+mod transaction_hash {
+    use crate::default_ledger_account;
+    use ic_ledger_types::{Memo, Timestamp, Tokens, TransferArgs};
+    use serde::Serialize;
+    use sha2::{Digest, Sha256};
+    use types::{TransactionHash, UserId};
 
-/// An operation which modifies account balances
-#[derive(Serialize, Deserialize, CandidType, Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum Operation {
-    Burn {
-        from: String,
-        amount: Tokens,
-    },
-    Mint {
-        to: String,
-        amount: Tokens,
-    },
-    Transfer {
-        from: String,
-        to: String,
-        amount: Tokens,
-        fee: Tokens,
-    },
-}
+    pub fn calculate_transaction_hash(sender: UserId, args: &TransferArgs) -> TransactionHash {
+        let from = default_ledger_account(sender.into());
 
-/// An operation with the metadata the client generated attached to it
-#[derive(Serialize, Deserialize, CandidType, Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct Transaction {
-    pub operation: Operation,
-    pub memo: Memo,
+        let transaction = Transaction {
+            operation: Operation::Transfer {
+                from: from.to_string(),
+                to: args.to.to_string(),
+                amount: args.amount,
+                fee: args.fee,
+            },
+            memo: args.memo,
+            // 'args.created_at_time' must be set otherwise the hash won't match
+            created_at_time: args.created_at_time.unwrap(),
+        };
 
-    /// The time this transaction was created.
-    pub created_at_time: Timestamp,
-}
+        transaction.hash()
+    }
 
-impl Transaction {
-    pub fn hash(&self) -> TransactionHash {
-        let mut hash = Sha256::new();
-        hash.update(&serde_cbor::ser::to_vec_packed(&self).unwrap());
-        hash.finalize().into()
+    #[derive(Serialize)]
+    struct Transaction {
+        operation: Operation,
+        memo: Memo,
+        created_at_time: Timestamp,
+    }
+
+    impl Transaction {
+        pub fn hash(&self) -> TransactionHash {
+            let mut hash = Sha256::new();
+            hash.update(&serde_cbor::ser::to_vec_packed(&self).unwrap());
+            hash.finalize().into()
+        }
+    }
+
+    #[derive(Serialize)]
+    enum Operation {
+        Transfer {
+            from: String,
+            to: String,
+            amount: Tokens,
+            fee: Tokens,
+        },
     }
 }

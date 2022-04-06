@@ -14,7 +14,6 @@ members = [
     "backend/canisters/group_index/client",
     "backend/canisters/group_index/impl",
     "backend/canisters/ledger_sync/api",
-    "backend/canisters/ledger_sync/c2c_client",
     "backend/canisters/ledger_sync/impl",
     "backend/canisters/notifications/api",
     "backend/canisters/notifications/c2c_client",
@@ -68,4 +67,7 @@ opt-level = "z"
 codegen-units = 1
 
 [patch.crates-io]
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "2eeb4264bc6b91d8651f85bbddf7fbe71679313f" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "2eeb4264bc6b91d8651f85bbddf7fbe71679313f" }
+ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "2eeb4264bc6b91d8651f85bbddf7fbe71679313f" }
 web-push = { git = "https://github.com/hpeebles/rust-web-push", rev = "c0424e229fab6094754338e6efb97efb9fcf56e5" }

@@ -113,7 +113,7 @@ pub async fn upgrade_ledger_sync_canister(
     ledger_sync_canister_id: CanisterId,
     version: Version,
 ) {
-    upgrade_root_canister(
+    upgrade_top_level_canister(
         identity,
         url,
         ledger_sync_canister_id,
