@@ -80,11 +80,13 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>> {
-        return this.handleResponse(
-            this.groupService.events_by_index({
-                events: eventIndexes,
-            }),
-            getEventsResponse
+        const args = {
+            events: eventIndexes,
+        };
+        return this.handleQueryResponse(
+            () => this.groupService.events_by_index(args),
+            getEventsResponse,
+            args
         );
     }
 
@@ -92,13 +94,15 @@ export class GroupClient extends CandidService implements IGroupClient {
         _eventIndexRange: IndexRange,
         messageIndex: number
     ): Promise<EventsResponse<GroupChatEvent>> {
-        return this.handleResponse(
-            this.groupService.events_window({
-                max_messages: MAX_MESSAGES,
-                max_events: MAX_EVENTS,
-                mid_point: messageIndex,
-            }),
-            getEventsResponse
+        const args = {
+            max_messages: MAX_MESSAGES,
+            max_events: MAX_EVENTS,
+            mid_point: messageIndex,
+        };
+        return this.handleQueryResponse(
+            () => this.groupService.events_window(args),
+            getEventsResponse,
+            args
         );
     }
 
@@ -107,16 +111,15 @@ export class GroupClient extends CandidService implements IGroupClient {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<GroupChatEvent>> {
-        const getChatEventsFunc = (index: number, asc: boolean) =>
-            this.handleResponse(
-                this.groupService.events({
-                    max_messages: MAX_MESSAGES,
-                    max_events: MAX_EVENTS,
-                    ascending: asc,
-                    start_index: index,
-                }),
-                getEventsResponse
-            );
+        const getChatEventsFunc = (index: number, asc: boolean) => {
+            const args = {
+                max_messages: MAX_MESSAGES,
+                max_events: MAX_EVENTS,
+                ascending: asc,
+                start_index: index,
+            };
+            return this.handleResponse(this.groupService.events(args), getEventsResponse, args);
+        };
 
         return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending);
     }
@@ -266,15 +269,20 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     getGroupDetails(): Promise<GroupChatDetailsResponse> {
-        return this.handleResponse(this.groupService.selected_initial({}), groupDetailsResponse);
+        return this.handleQueryResponse(
+            () => this.groupService.selected_initial({}),
+            groupDetailsResponse
+        );
     }
 
     async getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
-        const updatesResponse = await this.handleResponse(
-            this.groupService.selected_updates({
-                updates_since: previous.latestEventIndex,
-            }),
-            groupDetailsUpdatesResponse
+        const args = {
+            updates_since: previous.latestEventIndex,
+        };
+        const updatesResponse = await this.handleQueryResponse(
+            () => this.groupService.selected_updates(args),
+            groupDetailsUpdatesResponse,
+            args
         );
 
         if (updatesResponse === "caller_not_in_group") {
@@ -296,8 +304,8 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     getPublicSummary(): Promise<GroupChatSummary | undefined> {
-        return this.handleResponse(
-            this.groupService.public_summary({}),
+        return this.handleQueryResponse(
+            () => this.groupService.public_summary({}),
             publicSummaryResponse
         ).catch((_err) => {
             // whatever error we get, just assume that we cannot get hold of the group
@@ -306,11 +314,13 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>> {
-        return this.handleResponse(
-            this.groupService.messages_by_message_index({
-                messages: [...messageIndexes],
-            }),
-            getMessagesByMessageIndexResponse
+        const args = {
+            messages: [...messageIndexes],
+        };
+        return this.handleQueryResponse(
+            () => this.groupService.messages_by_message_index(args),
+            getMessagesByMessageIndexResponse,
+            args
         );
     }
 
@@ -348,12 +358,14 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse> {
-        return this.handleResponse(
-            this.groupService.search_messages({
-                search_term: searchTerm,
-                max_results: maxResults,
-            }),
-            searchGroupChatResponse
+        const args = {
+            search_term: searchTerm,
+            max_results: maxResults,
+        };
+        return this.handleQueryResponse(
+            () => this.groupService.search_messages(args),
+            searchGroupChatResponse,
+            args
         );
     }
 }

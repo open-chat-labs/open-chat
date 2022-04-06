@@ -23,12 +23,14 @@ export class GroupIndexClient extends CandidService implements IGroupIndexClient
     }
 
     search(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
-        return this.handleResponse(
-            this.groupIndexService.search({
-                search_term: searchTerm,
-                max_results: maxResults,
-            }),
-            groupSearchResponse
+        const args = {
+            search_term: searchTerm,
+            max_results: maxResults,
+        };
+        return this.handleQueryResponse(
+            () => this.groupIndexService.search(args),
+            groupSearchResponse,
+            args
         );
     }
 }

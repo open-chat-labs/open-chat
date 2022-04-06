@@ -55,11 +55,17 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this.handleResponse(this.userService.current_user({}), currentUserResponse);
+        return this.handleQueryResponse(
+            () => this.userService.current_user({}),
+            currentUserResponse
+        );
     }
 
     createChallenge(): Promise<CreateChallengeResponse> {
-        return this.handleResponse(this.userService.create_challenge({}), createChallengeResponse);
+        return this.handleQueryResponse(
+            () => this.userService.create_challenge({}),
+            createChallengeResponse
+        );
     }
 
     registerUser(
@@ -76,12 +82,14 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
-        return this.handleResponse(
-            this.userService.search({
-                search_term: searchTerm,
-                max_results: maxResults,
-            }),
-            userSearchResponse
+        const args = {
+            search_term: searchTerm,
+            max_results: maxResults,
+        };
+        return this.handleQueryResponse(
+            () => this.userService.search(args),
+            userSearchResponse,
+            args
         );
     }
 
@@ -94,15 +102,13 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
                 users: [],
             });
         }
-        return this.handleResponse(
-            this.userService.users({
-                user_groups: userGroups.map(({ users, updatedSince }) => ({
-                    users: users.map((u) => Principal.fromText(u)),
-                    updated_since: updatedSince,
-                })),
-            }),
-            usersResponse
-        );
+        const args = {
+            user_groups: userGroups.map(({ users, updatedSince }) => ({
+                users: users.map((u) => Principal.fromText(u)),
+                updated_since: updatedSince,
+            })),
+        };
+        return this.handleQueryResponse(() => this.userService.users(args), usersResponse, args);
     }
 
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
@@ -119,11 +125,13 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     checkUsername(username: string): Promise<CheckUsernameResponse> {
-        return this.handleResponse(
-            this.userService.check_username({
-                username: username,
-            }),
-            checkUsernameResponse
+        const args = {
+            username: username,
+        };
+        return this.handleQueryResponse(
+            () => this.userService.check_username(args),
+            checkUsernameResponse,
+            args
         );
     }
 

@@ -125,12 +125,14 @@ export class UserClient extends CandidService implements IUserClient {
         eventIndexes: number[],
         userId: string
     ): Promise<EventsResponse<DirectChatEvent>> {
-        return this.handleResponse(
-            this.userService.events_by_index({
-                user_id: Principal.fromText(userId),
-                events: eventIndexes,
-            }),
-            getEventsResponse
+        const args = {
+            user_id: Principal.fromText(userId),
+            events: eventIndexes,
+        };
+        return this.handleQueryResponse(
+            () => this.userService.events_by_index(args),
+            getEventsResponse,
+            args
         );
     }
 
@@ -139,15 +141,13 @@ export class UserClient extends CandidService implements IUserClient {
         userId: string,
         messageIndex: number
     ): Promise<EventsResponse<DirectChatEvent>> {
-        return this.handleResponse(
-            this.userService.events_window({
-                user_id: Principal.fromText(userId),
-                max_messages: MAX_MESSAGES,
-                max_events: MAX_EVENTS,
-                mid_point: messageIndex,
-            }),
-            getEventsResponse
-        );
+        const args = {
+            user_id: Principal.fromText(userId),
+            max_messages: MAX_MESSAGES,
+            max_events: MAX_EVENTS,
+            mid_point: messageIndex,
+        };
+        return this.handleResponse(this.userService.events_window(args), getEventsResponse, args);
     }
 
     chatEvents(
@@ -156,24 +156,28 @@ export class UserClient extends CandidService implements IUserClient {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const getChatEventsFunc = (index: number, asc: boolean) =>
-            this.handleResponse(
-                this.userService.events({
-                    user_id: Principal.fromText(userId),
-                    max_messages: MAX_MESSAGES,
-                    max_events: MAX_EVENTS,
-                    start_index: index,
-                    ascending: asc,
-                }),
-                getEventsResponse
+        const getChatEventsFunc = (index: number, asc: boolean) => {
+            const args = {
+                user_id: Principal.fromText(userId),
+                max_messages: MAX_MESSAGES,
+                max_events: MAX_EVENTS,
+                start_index: index,
+                ascending: asc,
+            };
+
+            return this.handleQueryResponse(
+                () => this.userService.events(args),
+                getEventsResponse,
+                args
             );
+        };
 
         return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending);
     }
 
     async getInitialState(): Promise<MergedUpdatesResponse> {
-        const resp = await this.handleResponse(
-            this.userService.initial_state({}),
+        const resp = await this.handleQueryResponse(
+            () => this.userService.initial_state({}),
             initialStateResponse
         );
 
@@ -191,17 +195,18 @@ export class UserClient extends CandidService implements IUserClient {
         chatSummaries: ChatSummary[],
         args: UpdateArgs
     ): Promise<MergedUpdatesResponse> {
-        const updatesResponse = await this.handleResponse(
-            this.userService.updates({
-                updates_since: {
-                    timestamp: args.updatesSince.timestamp,
-                    group_chats: args.updatesSince.groupChats.map((g) => ({
-                        chat_id: Principal.fromText(g.chatId),
-                        updates_since: g.lastUpdated,
-                    })),
-                },
-            }),
-            (resp) => getUpdatesResponse(resp),
+        const updatesResponse = await this.handleQueryResponse(
+            () =>
+                this.userService.updates({
+                    updates_since: {
+                        timestamp: args.updatesSince.timestamp,
+                        group_chats: args.updatesSince.groupChats.map((g) => ({
+                            chat_id: Principal.fromText(g.chatId),
+                            updates_since: g.lastUpdated,
+                        })),
+                    },
+                }),
+            getUpdatesResponse,
             args
         );
 
@@ -396,12 +401,14 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
-        return this.handleResponse(
-            this.userService.search_all_messages({
-                search_term: searchTerm,
-                max_results: maxResults,
-            }),
-            searchAllMessagesResponse
+        const args = {
+            search_term: searchTerm,
+            max_results: maxResults,
+        };
+        return this.handleQueryResponse(
+            () => this.userService.search_all_messages(args),
+            searchAllMessagesResponse,
+            args
         );
     }
 
@@ -410,13 +417,15 @@ export class UserClient extends CandidService implements IUserClient {
         searchTerm: string,
         maxResults: number
     ): Promise<SearchDirectChatResponse> {
-        return this.handleResponse(
-            this.userService.search_messages({
-                user_id: Principal.fromText(userId),
-                search_term: searchTerm,
-                max_results: maxResults,
-            }),
-            searchDirectChatResponse
+        const args = {
+            user_id: Principal.fromText(userId),
+            search_term: searchTerm,
+            max_results: maxResults,
+        };
+        return this.handleQueryResponse(
+            () => this.userService.search_messages(args),
+            searchDirectChatResponse,
+            args
         );
     }
 
@@ -442,11 +451,13 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
-        return this.handleResponse(
-            this.userService.recommended_groups({
-                count: 20,
-            }),
-            recommendedGroupsResponse
+        const args = {
+            count: 20,
+        };
+        return this.handleQueryResponse(
+            () => this.userService.recommended_groups(args),
+            recommendedGroupsResponse,
+            args
         );
     }
 
@@ -461,7 +472,10 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     getBio(): Promise<string> {
-        return this.handleResponse(this.userService.bio({}), (candid) => candid.Success);
+        return this.handleQueryResponse(
+            () => this.userService.bio({}),
+            (candid) => candid.Success
+        );
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
