@@ -31,7 +31,8 @@
             Array.from(userIds),
             $_("unknownUser"),
             $_("you"),
-            user ? compareIsNotYouThenUsername(user.userId) : compareUsername
+            user ? compareIsNotYouThenUsername(user.userId) : compareUsername,
+            false
         );
     }
 </script>

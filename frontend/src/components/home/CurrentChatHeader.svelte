@@ -391,6 +391,7 @@
     .chat-details {
         flex: 1;
         overflow: auto;
+        padding: 0 $sp2;
     }
 
     .menu {

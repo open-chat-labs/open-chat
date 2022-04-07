@@ -124,11 +124,11 @@ export function darkTheme(defaultTheme: Theme): Theme {
         chatSummary: {
             ...defaultTheme.chatSummary,
             bg: dark20,
-            hv: dark15,
+            "bg-selected": dark15,
+            hv: "#3d3d3d",
             txt1: dark60,
             txt2: "#888888",
-            bd: dark10,
-            "bd-selected": "#085d8c",
+            bd: "1px solid #3d3d3d",
             del: "#085d8c",
         },
 

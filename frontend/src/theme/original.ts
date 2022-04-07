@@ -46,9 +46,6 @@ export function originalTheme(defaultTheme: Theme): Theme {
         chatSummary: {
             ...defaultTheme.chatSummary,
             txt2: "rgba(0, 0, 0, 0.6)",
-            mb: "0",
-            bd: "1px solid #ddd",
-            "bd-selected": "transparent",
             del: accent,
         },
 

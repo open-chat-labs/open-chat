@@ -527,6 +527,10 @@
         margin: 0 $sp4;
     }
 
+    :global(.message-bubble.me a) {
+        color: inherit;
+    }
+
     :global(.message-bubble:hover .menu-icon .wrapper) {
         background-color: var(--icon-msg-hv);
     }

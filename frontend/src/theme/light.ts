@@ -135,12 +135,12 @@ export function lightTheme(): Theme {
 
         chatSummary: {
             bg: "white",
-            hv: "#ececec",
+            "bg-selected": "#e7e7e7",
+            hv: "#eeeeee",
             txt1: "#191919",
             txt2: "rgba(0, 0, 0, 0.6)",
-            bd: "transparent",
-            "bd-selected": pinkAccent,
-            mb: sp3,
+            bd: "1px solid #ddd",
+            mb: "0",
             del: pinkAccent,
         },
 

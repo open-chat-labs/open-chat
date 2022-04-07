@@ -143,11 +143,11 @@ export interface Theme {
 
     chatSummary: {
         bg: string;
+        "bg-selected": string;
         hv: string;
         txt1: string;
         txt2: string;
         bd: string;
-        "bd-selected": string;
         mb: string;
         del: string;
     };
