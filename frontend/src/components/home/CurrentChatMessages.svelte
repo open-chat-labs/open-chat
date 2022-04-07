@@ -542,8 +542,7 @@
     <Fab on:click={() => scrollToNew()}>
         {#if unreadMessages > 0}
             <div in:pop={{ duration: 1500 }} class="unread">
-                <div class="unread-count">{unreadMessages > 99 ? "99+" : unreadMessages}</div>
-                <div class="unread-label">{$_("new")}</div>
+                <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>
             </div>
         {:else}
             <ArrowDown size={$iconSize} color={"#fff"} />
@@ -556,13 +555,14 @@
         position: relative;
 
         .date-label {
-            padding: $sp2;
+            padding: $sp2 10px;
             background-color: var(--currentChat-date-bg);
             position: sticky;
             top: 0;
-            width: 200px;
+            width: fit-content;
+            min-width: 100px;
             margin: auto;
-            border-radius: $sp4;
+            border-radius: 12px;
             @include z-index("date-label");
             @include font(book, normal, fs-70);
             text-align: center;

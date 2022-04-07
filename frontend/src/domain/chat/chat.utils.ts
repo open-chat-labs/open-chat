@@ -244,9 +244,10 @@ export function getParticipantsString(
     participantIds: string[],
     unknownUser: string,
     you: string,
-    compareUsersFn?: (u1: PartialUserSummary, u2: PartialUserSummary) => number
+    compareUsersFn?: (u1: PartialUserSummary, u2: PartialUserSummary) => number,
+    truncate = true
 ): string {
-    if (participantIds.length > 5) {
+    if (truncate && participantIds.length > 5) {
         return `${participantIds.length} members`;
     }
     const sorted = participantIds

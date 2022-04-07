@@ -18,7 +18,11 @@
             <li><del>Create polls</del></li>
             <li><del>Group permissions including read-only groups</del></li>
             <li><del>Double-click to show images full-screen</del></li>
-            <li><del>Deposit ICP into your OpenChat account, send ICP as messages, withdraw ICP</del></li>
+            <li>
+                <del
+                    >Deposit ICP into your OpenChat account, send ICP as messages, withdraw ICP</del>
+            </li>
+            <li><del>Share messages and receive shares from other apps</del></li>
             <li>Send additional tokens as messages, such as BTC, ETH, Cycles, etc</li>
             <li>Message forwarding</li>
             <li>Improved UI design</li>

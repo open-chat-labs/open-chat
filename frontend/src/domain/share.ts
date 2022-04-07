@@ -79,9 +79,7 @@ export function canShare(content: MessageContent): boolean {
         content.kind === "video_content" ||
         content.kind === "audio_content"
     ) {
-        return (
-            navigator.canShare !== undefined && permittedMimeTypes[content.mimeType] !== undefined
-        );
+        return permittedMimeTypes[content.mimeType] !== undefined;
     }
 
     return true;
@@ -103,8 +101,8 @@ export function shareMessage(userId: string, me: boolean, msg: Message): void {
 }
 
 async function buildShareFromMessage(userId: string, me: boolean, msg: Message): Promise<Share> {
-    const kind = msg.content.kind;
-    if (kind === "deleted_content" || kind === "placeholder_content") {
+    const content = msg.content;
+    if (content.kind === "deleted_content" || content.kind === "placeholder_content") {
         return Promise.reject();
     }
 
@@ -115,14 +113,16 @@ async function buildShareFromMessage(userId: string, me: boolean, msg: Message):
         files: [],
     };
 
-    if (
-        kind === "file_content" ||
-        kind === "image_content" ||
-        kind === "video_content" ||
-        kind === "audio_content" ||
-        kind === "giphy_content"
+    if (content.kind === "text_content") {
+        share.text = content.text;
+    } else if (
+        content.kind === "file_content" ||
+        content.kind === "image_content" ||
+        content.kind === "video_content" ||
+        content.kind === "audio_content" ||
+        content.kind === "giphy_content"
     ) {
-        share.text = msg.content.caption ?? "";
+        share.text = content.caption ?? "";
 
         const blobUrl = extractBlobUrl(msg.content);
         if (blobUrl === undefined) {
@@ -133,18 +133,16 @@ async function buildShareFromMessage(userId: string, me: boolean, msg: Message):
         }
 
         const mimeType =
-            msg.content.kind === "giphy_content"
-                ? msg.content.desktop.mimeType
-                : msg.content.mimeType;
+            content.kind === "giphy_content" ? content.desktop.mimeType : content.mimeType;
 
         // We need to give the file a valid filename (incl extension) otherwise the call to navigator.share
         // will fail with "DOMException permission denied"
         const filename =
-            msg.content.kind === "file_content"
-                ? msg.content.name
+            content.kind === "file_content"
+                ? content.name
                 : buildDummyFilename(
                       mimeType,
-                      msg.content.kind === "giphy_content" ? msg.content.title : undefined
+                      content.kind === "giphy_content" ? content.title : undefined
                   );
 
         let file: File;
@@ -157,26 +155,24 @@ async function buildShareFromMessage(userId: string, me: boolean, msg: Message):
             return Promise.reject();
         }
 
-        if (kind === "file_content") {
+        if (content.kind === "file_content") {
             share.title = file.name;
         }
 
         share.files = [file];
-    } else if (kind === "text_content") {
-        share.text = msg.content.text;
-    } else if (kind === "poll_content") {
+    } else if (content.kind === "poll_content") {
         // TODO:
         share.text = "TODO: Poll content";
-    } else if (kind === "crypto_content") {
-        let text = buildCryptoTransferText(userId, msg.sender, msg.content, me);
-        if (msg.content.caption !== undefined) {
+    } else if (content.kind === "crypto_content") {
+        let text = buildCryptoTransferText(userId, msg.sender, content, me);
+        if (content.caption !== undefined) {
             if (text !== undefined) {
                 text += "\n\n";
             }
-            text += msg.content.caption;
+            text += content.caption;
         }
 
-        const transactionUrl = buildTransactionUrl(msg.content);
+        const transactionUrl = buildTransactionUrl(content);
         if (transactionUrl !== undefined) {
             if (text !== undefined) {
                 text += "\n\n";

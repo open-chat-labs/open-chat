@@ -173,7 +173,7 @@
                 title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
                 class:rtl={$rtlStore}
                 class="notification">
-                {unreadMessages > 99 ? "99+" : unreadMessages}
+                {unreadMessages > 999 ? "999+" : unreadMessages}
             </div>
         {/if}
     {/if}
@@ -222,25 +222,13 @@
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         border-bottom: var(--chatSummary-bd);
 
-        &.selected::before {
-            content: "";
-            position: absolute;
-            height: 100%;
-            width: $sp2;
-            background-color: var(--chatSummary-bd-selected);
-            left: 0;
-            &.rtl {
-                right: 0;
-            }
-        }
 
-        &.selected.rtl::before {
-            right: 0;
-        }
-
-        &:hover,
-        &.selected {
+        &:hover {
             background-color: var(--chatSummary-hv);
+        }
+
+        &.selected {
+            background-color: var(--chatSummary-bg-selected);
         }
     }
     .avatar {
@@ -297,10 +285,11 @@
         align-items: center;
         background-color: var(--accent);
         text-shadow: 1px 1px 1px var(--accentDarker);
-        border-radius: 50%;
+        border-radius: 12px;
         @include font(bold, normal, fs-50);
         color: #ffffff;
-        width: $sp5;
+        min-width: $sp5;
+        padding: 0 $sp2;
         height: $sp5;
         margin-top: 18px;
         margin-left: 2px;

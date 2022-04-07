@@ -62,7 +62,6 @@
         align-items: center;
         position: relative;
         padding: var(--chatSearch-pd);
-        border-radius: $sp5;
 
         @include mobile() {
             margin: var(--chatSearch-xs-mg);

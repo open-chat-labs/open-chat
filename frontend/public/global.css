@@ -34,6 +34,10 @@ textarea {
         Cantarell, "Helvetica Neue", sans-serif;
 }
 
+a {
+    color: #22a7f2;
+}
+
 .iti__flag {
     background-image: url("assets/flags.png") !important;
 }
