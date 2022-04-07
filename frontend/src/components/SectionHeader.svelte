@@ -26,7 +26,6 @@
         color: var(--section-txt);
         @include z-index("section-header");
         flex: 0 0 60px;
-        gap: $sp2;
 
         &.entry {
             background-color: var(--entry-bg);
