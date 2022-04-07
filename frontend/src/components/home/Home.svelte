@@ -531,7 +531,8 @@
         position: relative;
         width: 100%;
         display: flex;
-        margin: var(--mg);
+        gap: $sp3;
+        margin: 0 auto;
         max-width: 1600px;
         @include size-below(lg) {
             margin: 0 auto;
@@ -541,11 +542,15 @@
         }
     }
     :global(body) {
-        transition: color ease-in-out 300ms;
-        padding: 0;
+        transition: color ease-in-out 300ms, padding ease-in-out 300ms;
+        padding: $sp3;
         --background-color: var(--theme-background);
         --text-color: var(--theme-text);
         color: var(--theme-text);
+
+        @include mobile() {
+            padding: 0;
+        }
     }
 
     .right-wrapper {

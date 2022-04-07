@@ -18,7 +18,6 @@ export interface Theme {
     name: string;
     label: string;
 
-    mg: string;
     bg: string;
     txt: string;
 
@@ -97,7 +96,6 @@ export interface Theme {
     };
 
     panel: {
-        pd: string;
         bg: string;
         left: {
             bg: string;

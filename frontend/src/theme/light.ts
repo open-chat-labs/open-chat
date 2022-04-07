@@ -11,7 +11,7 @@ export function lightTheme(): Theme {
         name: "light",
         label: "Light",
 
-        mg: "0 auto",
+        mg: "8px auto",
         bg: "linear-gradient(#22A7F2, #5f2583)",
         txt: "#191919",
         error: "#CF6679",
@@ -89,7 +89,6 @@ export function lightTheme(): Theme {
         },
 
         panel: {
-            pd: sp3,
             bg: "linear-gradient(#22A7F2, #5f2583)",
             left: {
                 bg: "linear-gradient(transparent, rgba(255,255,255,0.15))",

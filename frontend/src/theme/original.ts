@@ -9,7 +9,6 @@ export function originalTheme(defaultTheme: Theme): Theme {
         name: "original",
         label: "Original",
         bg: "#41398b",
-        mg: "20px auto",
 
         accent: accent,
         accentDarker: accentDarker,
@@ -21,7 +20,6 @@ export function originalTheme(defaultTheme: Theme): Theme {
 
         panel: {
             ...defaultTheme.panel,
-            pd: "0",
             bg: "#3ec4ee",
             // bg: "linear-gradient(#22A7F2, #5f2583)",
             left: {

@@ -17,7 +17,6 @@
         transition: background $trans, width $trans, right $trans, padding $trans, left $trans,
             padding-left $trans;
         background: var(--panel-bg);
-        padding: var(--panel-pd);
         padding-bottom: 0;
         overflow: auto;
         overflow-x: hidden;
@@ -39,11 +38,13 @@
             min-width: 236px;
             max-width: 550px;
             position: relative;
+            background: var(--panel-left-bg);
             @include mobile() {
                 width: 100%;
                 max-width: none;
                 padding: 0;
                 flex: auto;
+                background: var(--panel-left-xs);
             }
         }
 

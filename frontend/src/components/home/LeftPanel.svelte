@@ -50,46 +50,44 @@
 </script>
 
 <Panel left>
-    <div class="inner-wrapper">
-        <div class="new-group" class:adding-group={view === "adding-group"}>
-            <NewGroup
-                {currentUser}
-                on:cancelNewGroup={() => (view = "showing-chat-list")}
-                on:groupCreated={groupCreated} />
-        </div>
-        <div class="chat-list" class:showing-chat-list={view === "showing-chat-list"}>
-            <ChatList
-                on:loadMessage
-                on:chatWith
-                on:showRoadmap
-                on:showFaq
-                on:showAbout
-                on:userAvatarSelected={userAvatarSelected}
-                on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
-                on:whatsHot
-                on:newGroup={() => (view = "adding-group")}
-                on:profile={showProfile}
-                on:logout
-                on:searchEntered
-                on:deleteDirectChat
-                {searchResultsAvailable}
-                {searchTerm}
-                {searching}
-                {groupSearchResults}
-                {userSearchResults}
-                {messageSearchResults}
-                {controller} />
-        </div>
-        <div class="profile" class:showing-profile={view === "showing-profile"}>
-            <UserProfile
-                bind:this={profileComponent}
-                on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
-                on:upgrade
-                on:showFaqQuestion
-                {user}
-                on:userAvatarSelected={userAvatarSelected}
-                on:closeProfile={() => (view = "showing-chat-list")} />
-        </div>
+    <div class="new-group" class:adding-group={view === "adding-group"}>
+        <NewGroup
+            {currentUser}
+            on:cancelNewGroup={() => (view = "showing-chat-list")}
+            on:groupCreated={groupCreated} />
+    </div>
+    <div class="chat-list" class:showing-chat-list={view === "showing-chat-list"}>
+        <ChatList
+            on:loadMessage
+            on:chatWith
+            on:showRoadmap
+            on:showFaq
+            on:showAbout
+            on:userAvatarSelected={userAvatarSelected}
+            on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
+            on:whatsHot
+            on:newGroup={() => (view = "adding-group")}
+            on:profile={showProfile}
+            on:logout
+            on:searchEntered
+            on:deleteDirectChat
+            {searchResultsAvailable}
+            {searchTerm}
+            {searching}
+            {groupSearchResults}
+            {userSearchResults}
+            {messageSearchResults}
+            {controller} />
+    </div>
+    <div class="profile" class:showing-profile={view === "showing-profile"}>
+        <UserProfile
+            bind:this={profileComponent}
+            on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
+            on:upgrade
+            on:showFaqQuestion
+            {user}
+            on:userAvatarSelected={userAvatarSelected}
+            on:closeProfile={() => (view = "showing-chat-list")} />
     </div>
 </Panel>
 
@@ -114,13 +112,6 @@
     .profile {
         &.showing-profile {
             display: flex;
-        }
-    }
-    .inner-wrapper {
-        @include fullHeight();
-        background: var(--panel-left-bg);
-        @include mobile() {
-            background: var(--panel-left-xs);
         }
     }
 </style>
