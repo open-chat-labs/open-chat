@@ -92,6 +92,11 @@
 </Panel>
 
 <style type="text/scss">
+    .left-wrapper {
+        height: 100%;
+        padding-left: $sp3;
+    }
+
     .new-group,
     .profile,
     .chat-list {

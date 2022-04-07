@@ -206,7 +206,7 @@
         background-color: var(--participants-bg);
         color: var(--participants-txt);
         padding: $sp3;
-        margin: var(--participants-mg);
+        margin: 0 $sp3 $sp3 $sp3;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
 
         &:not(.me) {

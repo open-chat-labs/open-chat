@@ -543,10 +543,14 @@
     }
     :global(body) {
         transition: color ease-in-out 300ms, padding ease-in-out 300ms;
-        padding: $sp3;
+        padding: $sp4;
         --background-color: var(--theme-background);
         --text-color: var(--theme-text);
         color: var(--theme-text);
+
+        @include size-below(lg) {
+            padding: $sp3;
+        }
 
         @include mobile() {
             padding: 0;

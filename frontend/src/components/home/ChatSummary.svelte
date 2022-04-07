@@ -217,11 +217,10 @@
         background-color: var(--chatSummary-bg);
         color: var(--chatSummary-txt1);
         padding: $sp3;
-        margin-bottom: var(--chatSummary-mb);
+        margin-bottom: 0;
         cursor: pointer;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         border-bottom: var(--chatSummary-bd);
-
 
         &:hover {
             background-color: var(--chatSummary-hv);

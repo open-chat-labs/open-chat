@@ -117,15 +117,14 @@
         align-items: center;
         position: relative;
         padding: $sp2 $sp4;
-        border-radius: $sp5;
         border: 1px solid var(--chatSearch-bd);
 
         &.add {
-            margin: var(--findUser-add-search-mg);
+            margin: 0 0 $sp3 0;
         }
 
         &.edit {
-            margin: var(--findUser-edit-search-mg);
+            margin: 0 0 $sp3 0;
         }
     }
     .icon {
@@ -159,7 +158,7 @@
         background-color: var(--participants-bg);
         color: var(--participants-txt);
         padding: $sp3;
-        margin: var(--findUser-mg);
+        margin: 0 0 $sp3 0;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         cursor: pointer;
 

@@ -89,11 +89,8 @@
     }
 
     .form-fields {
-        padding: var(--findUser-add-pd);
+        padding: 0;
         flex: auto;
         overflow: auto;
-        @include mobile() {
-            padding: var(--findUser-add-pdxs);
-        }
     }
 </style>

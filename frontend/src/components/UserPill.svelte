@@ -43,6 +43,7 @@
 
         .username {
             @include ellipsis();
+            text-align: center;
         }
 
         .delete {

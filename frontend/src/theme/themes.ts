@@ -1,4 +1,3 @@
-import { originalTheme } from "./original";
 import { darkTheme } from "./dark";
 import { lightTheme } from "./light";
 import { derived, readable, writable } from "svelte/store";
@@ -77,10 +76,6 @@ export interface Theme {
         hv: string;
         bd: string;
         bdb: string;
-        mg: string;
-        search: {
-            pd: string;
-        };
         panel: {
             bg: string;
         };
@@ -123,19 +118,9 @@ export interface Theme {
         bg: string;
         txt: string;
         bd: string;
-        mg: string;
-        pd: string;
 
         section: {
             txt: string;
-            title: {
-                ml: string;
-            };
-        };
-
-        xs: {
-            pd: string;
-            mg: string;
         };
     };
 
@@ -146,7 +131,6 @@ export interface Theme {
         txt1: string;
         txt2: string;
         bd: string;
-        mb: string;
         del: string;
     };
 
@@ -248,37 +232,13 @@ export interface Theme {
         bg: string;
     };
 
-    groupForm: {
-        add: {
-            pd: string;
-        };
-        edit: {
-            pd: string;
-        };
-    };
-
     findUser: {
-        mg: string;
         edit: {
-            wrapper: {
-                mg: string;
-            };
-            search: {
-                mg: string;
-            };
-            selected: {
-                mg: string;
-            };
             pill: {
                 txt: string;
             };
         };
         add: {
-            pd: string;
-            pdxs: string;
-            search: {
-                mg: string;
-            };
             pill: {
                 txt: string;
             };
@@ -291,12 +251,10 @@ export interface Theme {
 
     profile: {
         section: {
-            mg: string;
             bd: string;
             bg: string;
 
             xs: {
-                mg: string;
                 bd: string;
             };
         };
@@ -318,14 +276,12 @@ export interface Theme {
 export type Themes = {
     light: Theme;
     dark: Theme;
-    original: Theme;
 };
 
 const defaultTheme = lightTheme();
 
 export const themes: Themes = {
     light: defaultTheme,
-    original: originalTheme(defaultTheme),
     dark: darkTheme(defaultTheme),
 };
 

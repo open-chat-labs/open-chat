@@ -251,12 +251,11 @@
                 checked={$themeNameStore === "system"} />
             {#if $themeNameStore !== "system"}
                 <div class="theme-selection">
-                    {#each ["light", "original", "dark"] as t}
+                    {#each ["light", "dark"] as t}
                         <div
                             class="theme"
                             class:dark={t === "dark"}
                             class:light={t === "light"}
-                            class:original={t === "original"}
                             class:selected={$themeNameStore === t}
                             on:click={() => selectTheme(t)}>
                             <span class="theme-txt">
@@ -391,14 +390,6 @@
                 background-color: #191919;
             }
 
-            &.original {
-                // background-color: #59df59;
-                background-color: #3ec4ee;
-                .theme-txt {
-                    border-bottom-color: #59df59;
-                }
-            }
-
             &.light {
                 background: linear-gradient(#22a7f2, #5f2583);
             }
@@ -413,12 +404,12 @@
     .chats,
     .account,
     .appearance {
-        margin-bottom: var(--profile-section-mg);
+        margin-bottom: $sp3;
         border-bottom: var(--profile-section-bd);
         color: var(--section-txt);
 
         @include mobile() {
-            margin-bottom: var(--profile-section-xs-mg);
+            margin-bottom: 0;
             border-bottom: var(--profile-section-xs-bd);
         }
     }

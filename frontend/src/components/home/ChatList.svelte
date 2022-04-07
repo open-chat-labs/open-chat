@@ -231,7 +231,7 @@
         overflow: auto;
         @include nice-scrollbar();
         @include mobile() {
-            padding: var(--chatSearch-xs-pd);
+            padding: 0 $sp3;
         }
     }
     .chat-summaries {
@@ -240,7 +240,7 @@
 
     .search-subtitle {
         margin-bottom: $sp3;
-        margin-left: var(--chatSearch-section-title-ml);
+        margin-left: 0;
         color: var(--chatSearch-section-txt);
     }
 

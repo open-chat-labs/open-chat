@@ -193,10 +193,10 @@
     }
 
     .form-fields {
-        padding: var(--groupForm-add-pd);
+        padding: 0;
         @include mobile() {
             padding: $sp3;
-            padding-top: $sp2;
+            padding-top: 0;
         }
     }
 
