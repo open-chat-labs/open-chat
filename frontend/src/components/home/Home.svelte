@@ -557,6 +557,11 @@
         }
     }
 
+    :global(body.fill) {
+        transition: none;
+        padding: 0;
+    }
+
     .right-wrapper {
         position: absolute;
         top: 0;

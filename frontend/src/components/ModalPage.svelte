@@ -2,6 +2,7 @@
     import Select from "./Select.svelte";
     import { setLocale, supportedLanguages } from "../i18n/i18n";
     import { locale } from "svelte-i18n";
+    import { onMount } from "svelte";
     export let minHeight: string | undefined = undefined;
     export let bgClass:
         | "none"
@@ -12,6 +13,13 @@
         | "expired"
         | "upgrade"
         | "empty" = "underwater";
+
+    onMount(() => {
+        document.body.classList.add("fill");
+        return () => {
+            document.body.classList.remove("fill");
+        };
+    });
 
     let selectedLocale = ($locale as string).substring(0, 2);
     $: {
