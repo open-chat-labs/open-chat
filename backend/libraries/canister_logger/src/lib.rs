@@ -1,7 +1,3 @@
-mod panic_hook;
-
-pub use panic_hook::set_panic_hook;
-
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
