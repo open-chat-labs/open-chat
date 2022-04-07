@@ -29,12 +29,6 @@ body {
     height: calc(var(--vh, 1vh) * 100);
 }
 
-@media (max-width: 1199px) {
-    body {
-        padding: 0 8px;
-    }
-}
-
 textarea {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
         Cantarell, "Helvetica Neue", sans-serif;
