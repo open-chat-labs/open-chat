@@ -534,9 +534,6 @@
         gap: $sp3;
         margin: 0 auto;
         max-width: 1600px;
-        @include size-below(lg) {
-            margin: 0 auto;
-        }
         @include size-below(xl) {
             max-width: 1400px;
         }
