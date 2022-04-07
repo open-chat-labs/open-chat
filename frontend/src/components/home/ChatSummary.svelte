@@ -222,9 +222,13 @@
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         border-bottom: var(--chatSummary-bd);
 
-        &:hover,
-        &.selected {
+
+        &:hover {
             background-color: var(--chatSummary-hv);
+        }
+
+        &.selected {
+            background-color: var(--chatSummary-bg-selected);
         }
     }
     .avatar {
