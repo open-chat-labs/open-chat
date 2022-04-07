@@ -55,16 +55,15 @@
 
 <style type="text/scss">
     .wrapper {
-        margin: var(--chatSearch-mg);
         margin-bottom: $sp3;
         background-color: var(--chatSearch-bg);
         display: flex;
         align-items: center;
         position: relative;
-        padding: var(--chatSearch-pd);
+        padding: $sp2 $sp4;
 
         @include mobile() {
-            margin: var(--chatSearch-xs-mg);
+            margin: 0 $sp3;
             margin-bottom: $sp3;
         }
     }

@@ -78,10 +78,14 @@
         flex: 0 0 30px;
     }
     .find-user {
-        margin: var(--findUser-edit-wrapper-mg);
         flex: 1;
         display: flex;
         flex-direction: column;
+        padding: 0 $sp3;
+
+        @include mobile() {
+            padding: 0;
+        }
     }
     .cta {
         height: 57px;

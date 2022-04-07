@@ -84,7 +84,10 @@
         .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId)
         .sort(compareParticipants);
 
-    function compareParticipants(a: FullParticipant | BlockedParticipant, b: FullParticipant | BlockedParticipant): number {
+    function compareParticipants(
+        a: FullParticipant | BlockedParticipant,
+        b: FullParticipant | BlockedParticipant
+    ): number {
         if (a.kind !== b.kind) {
             return a.kind === "full_participant" ? -1 : 1;
         }
@@ -137,6 +140,10 @@
 
 <style type="text/scss">
     .search {
-        padding: var(--participants-search-pd);
+        padding: 0 $sp3;
+
+        @include mobile() {
+            padding: 0;
+        }
     }
 </style>

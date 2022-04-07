@@ -228,7 +228,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
             ...defaultTheme.findUser,
             add: {
                 ...defaultTheme.findUser.add,
-                pd: "8px",
                 pill: {
                     txt: "#fff",
                 },
@@ -247,7 +246,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 bg: dark25,
                 xs: {
                     ...defaultTheme.profile.section.xs,
-                    mg: "0",
                     bd: `1px solid ${dark15}`,
                 },
             },

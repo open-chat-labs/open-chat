@@ -115,7 +115,7 @@
         color: var(--chatSummary-txt1);
         background-color: var(--chatSummary-bg);
         border-bottom: var(--chatSummary-bd);
-        margin-bottom: var(--chatSummary-mb);
+        margin-bottom: 0;
         cursor: pointer;
 
         &:hover {

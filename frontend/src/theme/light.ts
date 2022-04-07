@@ -11,7 +11,6 @@ export function lightTheme(): Theme {
         name: "light",
         label: "Light",
 
-        mg: "0 auto",
         bg: "linear-gradient(#22A7F2, #5f2583)",
         txt: "#191919",
         error: "#CF6679",
@@ -69,10 +68,6 @@ export function lightTheme(): Theme {
             hv: "#e2e2e2",
             bd: "transparent",
             bdb: "transparent",
-            mg: "0 8px 8px 8px",
-            search: {
-                pd: "0 8px",
-            },
             panel: {
                 // bg: "#fff",
                 bg: "transparent",
@@ -89,7 +84,6 @@ export function lightTheme(): Theme {
         },
 
         panel: {
-            pd: sp3,
             bg: "linear-gradient(#22A7F2, #5f2583)",
             left: {
                 bg: "linear-gradient(transparent, rgba(255,255,255,0.15))",
@@ -116,20 +110,10 @@ export function lightTheme(): Theme {
         chatSearch: {
             bg: "#ffffff",
             txt: "#555555",
-            mg: "0",
-            pd: "4px 16px",
             bd: "transparent",
 
             section: {
                 txt: "#ffffff",
-                title: {
-                    ml: "0",
-                },
-            },
-
-            xs: {
-                pd: "0 8px",
-                mg: "0 8px",
             },
         },
 
@@ -140,7 +124,6 @@ export function lightTheme(): Theme {
             txt1: "#191919",
             txt2: "rgba(0, 0, 0, 0.6)",
             bd: "1px solid #ddd",
-            mb: "0",
             del: pinkAccent,
         },
 
@@ -252,39 +235,15 @@ export function lightTheme(): Theme {
             bg: "rgba(34, 167, 242, 0.4)",
         },
 
-        groupForm: {
-            add: {
-                pd: "0",
-            },
-            edit: {
-                pd: "8px",
-            },
-        },
-
         findUser: {
-            mg: "0 0 8px 0",
             edit: {
-                wrapper: {
-                    mg: "0 8px",
-                },
-                search: {
-                    mg: "0 0 8px 0",
-                },
-                selected: {
-                    mg: "0",
-                },
                 pill: {
                     txt: "#fff",
                 },
             },
             add: {
-                pd: "0",
-                pdxs: "8px",
-                search: {
-                    mg: "0 0 8px 0",
-                },
                 pill: {
-                    txt: "#191919",
+                    txt: "#fff",
                 },
             },
         },
@@ -295,11 +254,9 @@ export function lightTheme(): Theme {
 
         profile: {
             section: {
-                mg: "8px",
                 bd: "none",
                 bg: "#fff",
                 xs: {
-                    mg: "0",
                     bd: "1px solid #eaeaea",
                 },
             },

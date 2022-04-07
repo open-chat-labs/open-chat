@@ -334,7 +334,6 @@
 
         .message {
             padding-top: $sp3;
-            background-color: #fff;
         }
     }
 

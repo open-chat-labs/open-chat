@@ -36,7 +36,11 @@
     .pill {
         display: inline-block;
     }
-    .selected {
-        margin: var(--findUser-edit-selected-mg);
+
+    @include mobile() {
+        .find-user,
+        .selected {
+            padding: 0 $sp3;
+        }
     }
 </style>

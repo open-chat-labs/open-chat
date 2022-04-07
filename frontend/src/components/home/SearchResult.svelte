@@ -29,7 +29,7 @@
         background-color: var(--chatSummary-bg);
         color: var(--chatSummary-txt1);
         padding: $sp3;
-        margin-bottom: var(--chatSummary-mb);
+        margin-bottom: 0;
         transition: background-color ease-in-out 100ms;
         cursor: pointer;
         border-bottom: var(--chatSummary-bd);
