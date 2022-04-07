@@ -16,7 +16,7 @@
     section {
         transition: background $trans, width $trans, right $trans, padding $trans, left $trans,
             padding-left $trans;
-        background: var(--panel-bg);
+        // background: var(--panel-bg);
         padding-bottom: 0;
         overflow: auto;
         overflow-x: hidden;

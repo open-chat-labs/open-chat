@@ -42,6 +42,7 @@
     import { apiKey } from "../../services/serviceContainer";
     import type { Share } from "../../domain/share";
     import { draftMessages } from "../../stores/draftMessages";
+    import Hex from "../Hex.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -524,6 +525,8 @@
         {/if}
     </Overlay>
 {/if}
+
+<Hex />
 
 <style type="text/scss">
     main {
