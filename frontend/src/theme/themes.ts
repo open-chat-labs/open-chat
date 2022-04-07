@@ -147,7 +147,6 @@ export interface Theme {
         txt1: string;
         txt2: string;
         bd: string;
-        "bd-selected": string;
         mb: string;
         del: string;
     };
