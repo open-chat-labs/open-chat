@@ -1,7 +1,6 @@
 use crate::lifecycle::{init_logger, init_state};
 use crate::Data;
 use canister_api_macros::trace;
-use canister_logger::set_panic_hook;
 use group_canister::init::Args;
 use ic_cdk_macros::init;
 use tracing::info;
@@ -11,7 +10,7 @@ use utils::env::Environment;
 #[init]
 #[trace]
 fn init(args: Args) {
-    set_panic_hook();
+    ic_cdk::setup();
     init_logger(args.test_mode);
 
     let env = Box::new(CanisterEnv::new());
