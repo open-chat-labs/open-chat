@@ -13,7 +13,7 @@ fn transactions_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         runtime_state
             .data
             .transactions
-            .from_index(args.start_index as usize, args.ascending, args.max_transactions);
+            .starting_from_index(args.start_index as usize, args.ascending, args.max_transactions);
 
     let latest_transaction_index = runtime_state.data.transactions.latest_index();
 

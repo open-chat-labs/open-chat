@@ -60,7 +60,7 @@ impl Transactions {
         }
     }
 
-    pub fn from_index(&self, start: usize, ascending: bool, max_transactions: u8) -> Vec<TransactionWrapper> {
+    pub fn starting_from_index(&self, start: usize, ascending: bool, max_transactions: u8) -> Vec<TransactionWrapper> {
         let iter: Box<dyn Iterator<Item = &TransactionWrapperInternal>> = if ascending {
             let range = &self.transactions[start..];
             Box::new(range.iter())
