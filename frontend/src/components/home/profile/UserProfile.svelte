@@ -14,6 +14,7 @@
     import Select from "../../Select.svelte";
     import TextArea from "../../TextArea.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import FontSize from "./FontSize.svelte";
     import { notificationStatus } from "../../../stores/notifications";
     import { formatICP } from "../../../utils/cryptoFormatter";
     import {
@@ -243,28 +244,35 @@
                 {/each}
             </Select>
 
-            <Legend>{$_("theme")}</Legend>
-            <Toggle
-                id={"inherit-system"}
-                on:change={toggleSystemTheme}
-                label={$_("inheritSystem")}
-                checked={$themeNameStore === "system"} />
-            {#if $themeNameStore !== "system"}
-                <div class="theme-selection">
-                    {#each ["light", "dark"] as t}
-                        <div
-                            class="theme"
-                            class:dark={t === "dark"}
-                            class:light={t === "light"}
-                            class:selected={$themeNameStore === t}
-                            on:click={() => selectTheme(t)}>
-                            <span class="theme-txt">
-                                {$_(t)}
-                            </span>
-                        </div>
-                    {/each}
-                </div>
-            {/if}
+            <div class="para">
+                <Legend>{$_("theme")}</Legend>
+                <Toggle
+                    id={"inherit-system"}
+                    on:change={toggleSystemTheme}
+                    label={$_("inheritSystem")}
+                    checked={$themeNameStore === "system"} />
+                {#if $themeNameStore !== "system"}
+                    <div class="theme-selection">
+                        {#each ["light", "dark"] as t}
+                            <div
+                                class="theme"
+                                class:dark={t === "dark"}
+                                class:light={t === "light"}
+                                class:selected={$themeNameStore === t}
+                                on:click={() => selectTheme(t)}>
+                                <span class="theme-txt">
+                                    {$_(t)}
+                                </span>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+            </div>
+
+            <div class="para">
+                <Legend>{$_("fontSize")}</Legend>
+                <FontSize />
+            </div>
         </CollapsibleCard>
     </div>
 

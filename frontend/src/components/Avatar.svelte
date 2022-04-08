@@ -52,28 +52,28 @@
         margin: 0 auto;
 
         &.tiny {
-            width: 35px;
-            height: 35px;
+            width: 2.1875rem;
+            height: 2.1875rem;
         }
 
         &.small {
-            width: 45px;
-            height: 45px;
+            width: 2.8125rem;
+            height: 2.8125rem;
         }
 
         &.medium {
-            width: 70px;
-            height: 70px;
+            width: 4.375rem;
+            height: 4.375rem;
         }
 
         &.large {
-            width: 100px;
-            height: 100px;
+            width: 6.25rem;
+            height: 6.25rem;
         }
 
         &.extra-large {
-            width: 150px;
-            height: 150px;
+            width: 9.375rem;
+            height: 9.375rem;
         }
 
         &.blocked::after {

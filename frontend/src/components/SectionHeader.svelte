@@ -19,13 +19,13 @@
         align-items: center;
         width: 100%;
         padding: $sp3;
-        height: 60px;
+        height: 3.75rem;
         margin-bottom: $sp3;
         background-color: var(--section-bg);
         border: 1px solid var(--section-bd);
         color: var(--section-txt);
         @include z-index("section-header");
-        flex: 0 0 60px;
+        flex: 0 0 3.75rem;
 
         &.entry {
             background-color: var(--entry-bg);
