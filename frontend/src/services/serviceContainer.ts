@@ -548,25 +548,28 @@ export class ServiceContainer implements MarkMessagesRead {
         messagesRead: IMessageReadTracker,
         resp: MergedUpdatesResponse
     ): Promise<MergedUpdatesResponse> {
-        const promises = resp.chatSummaries
-            .filter((c) => c.latestMessage !== undefined)
-            .map((c) => {
-                const chatType = c.kind === "direct_chat" ? "direct" : "group";
-                return this
-                    .rehydrateMessage(chatType, c.chatId, c.latestMessage!)
-                    .then((m) => c.latestMessage = m)
-            });
-
-        await Promise.all(promises);
-
-        return {
-            ...resp,
-            chatSummaries: resp.chatSummaries.map((chat) => {
+        const chatSummaries = await Promise.all(
+            resp.chatSummaries.map(async (chat) => {
                 messagesRead.syncWithServer(chat.chatId, chat.readByMe);
+
+                if (chat.latestMessage !== undefined) {
+                    const chatType = chat.kind === "direct_chat" ? "direct" : "group";
+                    chat.latestMessage = await this.rehydrateMessage(
+                        chatType,
+                        chat.chatId,
+                        chat.latestMessage
+                    );
+                }
+
                 return chat.kind === "direct_chat"
                     ? chat
                     : this.rehydrateDataContent(chat, "avatar");
-            }),
+            })
+        );
+
+        return {
+            ...resp,
+            chatSummaries,
         };
     }
 
