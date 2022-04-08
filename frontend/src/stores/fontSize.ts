@@ -14,7 +14,7 @@ function translateScale(scale: FontScale): string {
 }
 
 export function getCurrentFontSize(): FontScale {
-    const size = Number(localStorage.getItem("openchat_font_size") ?? "1") as FontScale;
+    const size = Number(localStorage.getItem("openchat_font_size") ?? "2") as FontScale;
     document.documentElement.style.setProperty("--font-size", translateScale(size));
     return size;
 }
