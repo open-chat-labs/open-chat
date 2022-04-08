@@ -5,7 +5,7 @@ use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use types::{
     CanisterId, CompletedCyclesTransfer, CryptocurrencyTransfer, Cycles, CyclesTransfer, DirectMessageNotification,
-    MessageContent, Notification, TimestampMillis, UserId,
+    MessageContent, Notification, ReplyContext, TimestampMillis, UserId,
 };
 use user_canister::c2c_send_message::{Response::*, *};
 
@@ -68,11 +68,13 @@ fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut Runtime
         runtime_state.data.transactions.add(c.transfer.clone(), now);
     }
 
+    let replies_to = convert_reply_context(args.replies_to_v2, sender, runtime_state).or(args.replies_to);
+
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
         sender,
         content: args.content.new_content_into_internal(),
-        replies_to: args.replies_to,
+        replies_to,
         now,
     };
 
@@ -99,6 +101,31 @@ fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut Runtime
     }
 
     Success
+}
+
+fn convert_reply_context(
+    replies_to: Option<C2CReplyContext>,
+    sender: UserId,
+    runtime_state: &RuntimeState,
+) -> Option<ReplyContext> {
+    match replies_to? {
+        C2CReplyContext::ThisChat(message_id) => {
+            let chat_id = sender.into();
+            runtime_state
+                .data
+                .direct_chats
+                .get(&chat_id)
+                .and_then(|chat| chat.events.get_event_index_by_message_id(message_id))
+                .map(|event_index| ReplyContext {
+                    chat_id_if_other: None,
+                    event_index,
+                })
+        }
+        C2CReplyContext::OtherChat(chat_id, event_index) => Some(ReplyContext {
+            chat_id_if_other: Some(chat_id),
+            event_index,
+        }),
+    }
 }
 
 fn accept_cycles(transfer: &CompletedCyclesTransfer, now: TimestampMillis, data: &mut Data) {
