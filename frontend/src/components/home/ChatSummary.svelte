@@ -238,7 +238,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        height: 3rem;
+        height: toRem(48);
         overflow: hidden;
 
         &:not(.rtl) {

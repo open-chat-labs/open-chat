@@ -386,3 +386,8 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     scrollbar-color: var(--scrollbar-bg) transparent;
     scrollbar-width: thin;
 }
+
+@function toRem($value) {
+    $remValue: math.div($value, 16) + rem;
+    @return $remValue;
+}

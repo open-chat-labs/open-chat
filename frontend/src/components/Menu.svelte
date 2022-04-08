@@ -8,7 +8,7 @@
 
 <style type="text/scss">
     .menu {
-        width: 200px;
+        width: toRem(200);
         position: absolute;
         background-color: var(--menu-bg);
         @include z-index("popup-menu");

@@ -456,7 +456,7 @@
     }
 
     .icp-balance-value {
-        @include font(book, normal, fs-140);
+        @include font(book, normal, fs-120);
         color: var(--input-txt);
         height: 45px;
         padding: $sp3;

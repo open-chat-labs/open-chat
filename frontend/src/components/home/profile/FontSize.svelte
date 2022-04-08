@@ -10,7 +10,13 @@
     <div class="letter three" on:click={() => setFontSize(3)}>A</div>
     <div class="letter four" on:click={() => setFontSize(4)}>A</div>
     <div class="slider">
-        <input class="range-input" type="range" min={0} max={4} bind:value={$fontSizeScale} />
+        <input
+            class="range-input"
+            type="range"
+            min={0}
+            max={4}
+            bind:value={$fontSizeScale}
+            on:change={() => setFontSize($fontSizeScale)} />
     </div>
 </div>
 

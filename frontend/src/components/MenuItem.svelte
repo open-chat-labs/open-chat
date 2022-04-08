@@ -45,7 +45,7 @@
 
         .icon {
             display: flex;
-            flex: 0 0 2.125rem;
+            flex: 0 0 toRem(34);
         }
 
         &.disabled {

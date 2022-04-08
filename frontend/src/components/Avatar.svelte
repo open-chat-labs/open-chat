@@ -52,28 +52,28 @@
         margin: 0 auto;
 
         &.tiny {
-            width: 2.1875rem;
-            height: 2.1875rem;
+            width: toRem(35);
+            height: toRem(35);
         }
 
         &.small {
-            width: 2.8125rem;
-            height: 2.8125rem;
+            width: toRem(45);
+            height: toRem(45);
         }
 
         &.medium {
-            width: 4.375rem;
-            height: 4.375rem;
+            width: toRem(70);
+            height: toRem(70);
         }
 
         &.large {
-            width: 6.25rem;
-            height: 6.25rem;
+            width: toRem(100);
+            height: toRem(100);
         }
 
         &.extra-large {
-            width: 9.375rem;
-            height: 9.375rem;
+            width: toRem(150);
+            height: toRem(150);
         }
 
         &.blocked::after {
