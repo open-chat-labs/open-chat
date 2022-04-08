@@ -153,7 +153,7 @@
                 controller.clearSelectedChat();
             }
 
-            if (params.chatId === null) {
+            if (params.chatId === null && !$mobileWidth) {
                 whatsHot();
             }
         }

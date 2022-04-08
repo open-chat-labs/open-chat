@@ -19,7 +19,6 @@
     import { iconSize } from "../../stores/iconSize";
     import Markdown from "./Markdown.svelte";
     import Footer from "./upgrade/Footer.svelte";
-    import Link from "../Link.svelte";
 
     export let groups: GroupChatSummary[];
     export let joining: GroupChatSummary | undefined;
@@ -112,13 +111,13 @@
                         </p>
                     </div>
                 </div>
-                <Footer align={$mobileWidth ? "center" : "end"}>
+                <Footer align="end">
                     <a
                         on:click|preventDefault|stopPropagation={() => dismiss(group)}
                         role="button"
                         href="/#"
                         class="not-interested">
-                        not interested
+                        {$_("notInterested")}
                     </a>
                     <Button
                         disabled={joining === group}
@@ -320,6 +319,7 @@
                 text-decoration-color: var(--accent);
                 text-underline-offset: $sp1;
                 text-decoration-thickness: 2px;
+                text-transform: lowercase;
                 position: absolute;
                 left: $sp4;
                 bottom: $sp4;
