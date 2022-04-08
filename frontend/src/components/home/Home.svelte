@@ -152,6 +152,10 @@
             if (params.chatId === null && $selectedChat !== undefined) {
                 controller.clearSelectedChat();
             }
+
+            if (params.chatId === null) {
+                whatsHot();
+            }
         }
     }
 
@@ -317,14 +321,14 @@
         }
     }
 
-    function joinGroup(ev: CustomEvent<GroupChatSummary>) {
-        joining = ev.detail;
+    function joinGroup(ev: CustomEvent<{ group: GroupChatSummary; select: boolean }>) {
+        joining = ev.detail.group;
         controller
-            .joinGroup(ev.detail)
+            .joinGroup(joining)
             .then((success) => {
-                if (success) {
+                if (success && ev.detail.select) {
                     recommendedGroups = { kind: "idle" };
-                    push(`/${ev.detail.chatId}`);
+                    push(`/${ev.detail.group.chatId}`);
                 }
             })
             .finally(() => (joining = undefined));
@@ -334,7 +338,6 @@
         controller.clearSelectedChat();
         tick().then(() => {
             controller.removeChat(ev.detail);
-            dismissRecommendation(ev);
         });
     }
 

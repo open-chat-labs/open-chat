@@ -39,7 +39,10 @@
     }
 
     function joinGroup(group: GroupChatSummary) {
-        dispatch("joinGroup", group);
+        dispatch("joinGroup", {
+            group,
+            select: false,
+        });
     }
 
     function refresh() {
