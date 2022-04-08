@@ -9,7 +9,6 @@
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import { avatarUrl as getAvatarUrl } from "../../domain/user/user.utils";
     import { AvatarSize, UserStatus } from "domain/user/user";
-    import Close from "svelte-material-icons/Close.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import { push } from "svelte-spa-router";
@@ -19,6 +18,7 @@
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../stores/iconSize";
     import Markdown from "./Markdown.svelte";
+    import Footer from "./upgrade/Footer.svelte";
 
     export let groups: GroupChatSummary[];
     export let joining: GroupChatSummary | undefined;
@@ -39,7 +39,10 @@
     }
 
     function joinGroup(group: GroupChatSummary) {
-        dispatch("joinGroup", group);
+        dispatch("joinGroup", {
+            group,
+            select: false,
+        });
     }
 
     function refresh() {
@@ -77,57 +80,56 @@
                 class="group-card"
                 class:selected={selected === i}
                 on:mouseenter={() => (selected = i)}>
-                {#if !$mobileWidth}
-                    <div class="avatar">
-                        <Avatar
-                            url={getAvatarUrl(group, "../assets/group.svg")}
-                            status={UserStatus.None}
-                            size={AvatarSize.Small} />
-                    </div>
-                {/if}
-                <div class="body">
-                    <div class="group-title-line">
-                        {#if $mobileWidth}
-                            <div class="avatar">
-                                <Avatar
-                                    url={getAvatarUrl(group, "../assets/group.svg")}
-                                    status={UserStatus.None}
-                                    size={AvatarSize.Tiny} />
-                            </div>
-                        {/if}
-                        <h3 class="group-name">
-                            {group.name}
-                        </h3>
-                        <span
-                            title={$_("notInterested")}
-                            class="close"
-                            on:click={() => dismiss(group)}>
-                            <HoverIcon>
-                                <Close size={"1.2em"} color={"var(--icon-txt)"} />
-                            </HoverIcon>
-                        </span>
-                    </div>
-                    <p class="group-desc">
-                        <Markdown text={group.description} />
-                    </p>
-                    <div class="footer">
+                <div class="main">
+                    {#if !$mobileWidth}
+                        <div class="avatar">
+                            <Avatar
+                                url={getAvatarUrl(group, "../assets/group.svg")}
+                                status={UserStatus.None}
+                                size={AvatarSize.Small} />
+                        </div>
+                    {/if}
+                    <div class="body">
+                        <div class="group-title-line">
+                            {#if $mobileWidth}
+                                <div class="avatar">
+                                    <Avatar
+                                        url={getAvatarUrl(group, "../assets/group.svg")}
+                                        status={UserStatus.None}
+                                        size={AvatarSize.Tiny} />
+                                </div>
+                            {/if}
+                            <h3 class="group-name">
+                                {group.name}
+                            </h3>
+                        </div>
+                        <p class="group-desc">
+                            <Markdown text={group.description} />
+                        </p>
                         <p class="user-count">
                             {$_("groupWithN", { values: { number: group.participantCount } })}
                         </p>
-                        <ButtonGroup align={"fill"}>
-                            <Button
-                                disabled={joining === group}
-                                small={true}
-                                on:click={() => previewGroup(group)}>{$_("preview")}</Button>
-                            <Button
-                                disabled={joining === group}
-                                loading={joining === group}
-                                small={true}
-                                on:click={() => joinGroup(group)}
-                                secondary={true}>{$_("join")}</Button>
-                        </ButtonGroup>
                     </div>
                 </div>
+                <Footer align="end">
+                    <a
+                        on:click|preventDefault|stopPropagation={() => dismiss(group)}
+                        role="button"
+                        href="/#"
+                        class="not-interested">
+                        {$_("notInterested")}
+                    </a>
+                    <Button
+                        disabled={joining === group}
+                        tiny={true}
+                        on:click={() => previewGroup(group)}>{$_("preview")}</Button>
+                    <Button
+                        disabled={joining === group}
+                        loading={joining === group}
+                        tiny={true}
+                        on:click={() => joinGroup(group)}
+                        secondary={true}>{$_("join")}</Button>
+                </Footer>
             </div>
         {/each}
     {:else}
@@ -217,13 +219,12 @@
     .group-card {
         position: relative;
         display: flex;
-        align-items: flex-start;
+        flex-direction: column;
         transition: transform 200ms ease-in-out, box-shadow 200ms ease-in-out,
             opacity 200ms ease-in-out, border-left 200ms ease-in-out;
         @include box-shadow(2);
         width: 80%;
         border-radius: $sp2;
-        padding: $sp4;
         opacity: 0.95;
         background-color: var(--recommended-bg);
         margin-bottom: $sp5;
@@ -231,7 +232,6 @@
         @include mobile() {
             width: calc(100% - #{$sp4});
             margin: 0 $sp3 $sp4 $sp3;
-            padding: $sp3;
             opacity: 1;
         }
 
@@ -240,10 +240,6 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: $sp3;
-        }
-
-        .close {
-            flex: 0 0 20px;
         }
 
         @include size-above(sm) {
@@ -257,6 +253,16 @@
                     border-left: none;
                     border-right: 7px solid var(--accent);
                 }
+            }
+        }
+
+        .main {
+            display: flex;
+            align-items: flex-start;
+            padding: $sp4;
+
+            @include mobile() {
+                padding: $sp3;
             }
         }
 
@@ -305,6 +311,18 @@
             @include size-below(md) {
                 flex-direction: column;
                 align-items: flex-start;
+            }
+
+            .not-interested {
+                @include font(light, normal, fs-90);
+                text-decoration: underline;
+                text-decoration-color: var(--accent);
+                text-underline-offset: $sp1;
+                text-decoration-thickness: 2px;
+                text-transform: lowercase;
+                position: absolute;
+                left: $sp4;
+                bottom: $sp4;
             }
         }
     }

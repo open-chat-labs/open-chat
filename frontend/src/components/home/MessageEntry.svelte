@@ -319,7 +319,10 @@
     }
 
     function joinGroup() {
-        dispatch("joinGroup", controller.chatVal);
+        dispatch("joinGroup", {
+            group: controller.chatVal,
+            select: true,
+        });
     }
 
     function cancelPreview() {
