@@ -108,7 +108,7 @@ fn send_message_impl(
                     .direct_chats
                     .get(&args.recipient.into())
                     .and_then(|chat| chat.events.get_message_id_by_event_index(r.event_index))
-                    .map(|message_id| C2CReplyContext::ThisChat(message_id))
+                    .map(C2CReplyContext::ThisChat)
             }
         }),
     };
