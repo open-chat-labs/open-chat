@@ -24,63 +24,63 @@ $font-weights: (
 // The key-numbers are not related in any other way to the font-size or line-height.
 $font-sizes: (
     fs-50: (
-        font-size: 0.6875rem,
+        font-size: toRem(11),
         line-height: 130%,
     ),
     fs-60: (
-        font-size: 0.75rem,
+        font-size: toRem(12),
         line-height: 135%,
     ),
     fs-70: (
-        font-size: 0.8125rem,
+        font-size: toRem(13),
         line-height: 140%,
     ),
     fs-80: (
-        font-size: 0.875rem,
+        font-size: toRem(14),
         line-height: 140%,
     ),
     fs-90: (
-        font-size: 0.9375rem,
+        font-size: toRem(15),
         line-height: 145%,
     ),
     fs-100: (
-        font-size: 1rem,
+        font-size: toRem(16),
         line-height: 150%,
     ),
     fs-110: (
-        font-size: 1.125rem,
+        font-size: toRem(18),
         line-height: 130%,
     ),
     fs-120: (
-        font-size: 1.25rem,
+        font-size: toRem(20),
         line-height: 120%,
     ),
     fs-140: (
-        font-size: 1.5rem,
+        font-size: toRem(24),
         line-height: 120%,
     ),
     fs-160: (
-        font-size: 1.75rem,
+        font-size: toRem(28),
         line-height: 120%,
     ),
     fs-180: (
-        font-size: 2rem,
+        font-size: toRem(32),
         line-height: 120%,
     ),
     fs-220: (
-        font-size: 2.5rem,
+        font-size: toRem(40),
         line-height: 120%,
     ),
     fs-230: (
-        font-size: 3rem,
+        font-size: toRem(48),
         line-height: 120%,
     ),
     fs-240: (
-        font-size: 3.75rem,
+        font-size: toRem(60),
         line-height: 120%,
     ),
     fs-260: (
-        font-size: 5rem,
+        font-size: toRem(80),
         line-height: 120%,
     ),
 );
