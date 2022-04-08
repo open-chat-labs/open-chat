@@ -544,10 +544,21 @@ export class ServiceContainer implements MarkMessagesRead {
         }));
     }
 
-    private handleMergedUpdatesResponse(
+    private async handleMergedUpdatesResponse(
         messagesRead: IMessageReadTracker,
         resp: MergedUpdatesResponse
-    ): MergedUpdatesResponse {
+    ): Promise<MergedUpdatesResponse> {
+        const promises = resp.chatSummaries
+            .filter((c) => c.latestMessage !== undefined)
+            .map((c) => {
+                const chatType = c.kind === "direct_chat" ? "direct" : "group";
+                return this
+                    .rehydrateMessage(chatType, c.chatId, c.latestMessage!)
+                    .then((m) => c.latestMessage = m)
+            });
+
+        await Promise.all(promises);
+
         return {
             ...resp,
             chatSummaries: resp.chatSummaries.map((chat) => {

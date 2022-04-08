@@ -7,8 +7,9 @@ use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{CanisterId, ContentValidationError, FailedCyclesTransfer, MessageContent, MessageIndex, UserId};
+use types::{CanisterId, ContentValidationError, FailedCyclesTransfer, MessageContent, UserId};
 use user_canister::c2c_send_message;
+use user_canister::c2c_send_message::C2CReplyContext;
 use user_canister::send_message::{Response::*, *};
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
@@ -92,7 +93,25 @@ fn send_message_impl(
             .clone()
             .and_then(|t| if let CompletedTransferDetails::Cycles(c) = t { Some(c) } else { None });
 
-    let c2c_args = build_c2c_args(args, message_event.event.message_index);
+    let c2c_args = c2c_send_message::Args {
+        message_id: args.message_id,
+        sender_name: args.sender_name,
+        sender_message_index: message_event.event.message_index,
+        content: args.content,
+        replies_to: args.replies_to.clone(),
+        replies_to_v2: args.replies_to.and_then(|r| {
+            if let Some(chat_id) = r.chat_id_if_other {
+                Some(C2CReplyContext::OtherChat(chat_id, r.event_index))
+            } else {
+                runtime_state
+                    .data
+                    .direct_chats
+                    .get(&args.recipient.into())
+                    .and_then(|chat| chat.events.get_message_id_by_event_index(r.event_index))
+                    .map(|message_id| C2CReplyContext::ThisChat(message_id))
+            }
+        }),
+    };
     ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, cycles_transfer, false));
 
     if let Some(transfer) = transfer_details.map(|t| t.into()) {
@@ -110,16 +129,6 @@ fn send_message_impl(
             message_index: message_event.event.message_index,
             timestamp: now,
         })
-    }
-}
-
-fn build_c2c_args(args: Args, message_index: MessageIndex) -> c2c_send_message::Args {
-    c2c_send_message::Args {
-        message_id: args.message_id,
-        sender_name: args.sender_name,
-        sender_message_index: message_index,
-        content: args.content,
-        replies_to: args.replies_to,
     }
 }
 

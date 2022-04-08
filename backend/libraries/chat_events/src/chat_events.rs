@@ -808,6 +808,14 @@ impl ChatEvents {
         Vec::new()
     }
 
+    pub fn get_event_index_by_message_id(&self, message_id: MessageId) -> Option<EventIndex> {
+        self.message_id_map.get(&message_id).copied()
+    }
+
+    pub fn get_message_id_by_event_index(&self, event_index: EventIndex) -> Option<MessageId> {
+        self.get_message_internal(event_index).map(|m| m.message_id)
+    }
+
     pub fn get_message_index(&self, message_id: MessageId) -> Option<MessageIndex> {
         if let Some(&event_index) = self.message_id_map.get(&message_id) {
             if let Some(event) = self.get(event_index) {
@@ -886,6 +894,15 @@ impl ChatEvents {
     fn get_message_by_id_internal_mut(&mut self, message_id: MessageId) -> Option<&mut MessageInternal> {
         let event_index = *self.message_id_map.get(&message_id)?;
         self.get_message_internal_mut(event_index)
+    }
+
+    fn get_message_internal(&self, event_index: EventIndex) -> Option<&MessageInternal> {
+        let event = self.get(event_index)?;
+        if let ChatEventInternal::Message(message) = &event.event {
+            Some(message)
+        } else {
+            None
+        }
     }
 
     fn get_message_internal_mut(&mut self, event_index: EventIndex) -> Option<&mut MessageInternal> {
