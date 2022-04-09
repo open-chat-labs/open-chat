@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
 
     import { iconSize } from "../../stores/iconSize";
+    import { mobileWidth } from "../../stores/screenDimensions";
 
     let open = true;
 
@@ -30,6 +31,7 @@
     }
 
     onMount(() => {
+        if ($mobileWidth) return;
         const t = startBlinking();
         return () => window.clearInterval(t);
     });
