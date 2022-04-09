@@ -17,7 +17,7 @@
 <style type="text/scss">
     .msg {
         font-weight: bold;
-        font-size: 100px;
+        font-size: toRem(100);
         text-shadow: 3px 3px #000;
         color: #ffffff;
     }

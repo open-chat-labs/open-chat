@@ -423,7 +423,7 @@
 <style type="text/scss">
     .message-entry {
         position: relative;
-        flex: 0 0 40px;
+        flex: 0 0 toRem(40);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -443,7 +443,7 @@
         outline: none;
         border: 0;
         max-height: 100px;
-        min-height: 30px;
+        min-height: toRem(30);
         overflow-x: hidden;
         overflow-y: auto;
         user-select: text;

@@ -26,13 +26,11 @@
         border-bottom: 1px solid var(--menu-bd);
         color: var(--menu-txt);
         align-items: center;
-        font-size: 15px;
-        line-height: 145%;
+        @include font-size(fs-90);
         padding: 10px;
 
         @include mobile() {
-            font-size: 14px;
-            line-height: 140%;
+            @include font-size(fs-80);
             padding: 9px;
         }
 
@@ -47,7 +45,7 @@
 
         .icon {
             display: flex;
-            flex: 0 0 34px;
+            flex: 0 0 toRem(34);
         }
 
         &.disabled {

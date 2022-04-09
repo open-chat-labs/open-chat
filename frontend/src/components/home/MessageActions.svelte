@@ -153,7 +153,7 @@
             .gif,
             .send-icp {
                 top: -18px;
-                left: -38px;
+                left: toRem(-38);
                 opacity: 0;
                 position: absolute;
                 transition: top 200ms ease-in, opacity 200ms ease-in;

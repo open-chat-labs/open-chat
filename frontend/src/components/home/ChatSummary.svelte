@@ -26,7 +26,7 @@
     import { toTitleCase } from "../../utils/string";
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
-    import { mobileWidth } from "stores/screenDimensions";
+    import { mobileWidth } from "../../stores/screenDimensions";
 
     export let index: number;
     export let chatSummary: ChatSummary;
@@ -238,7 +238,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        height: $sp7;
+        height: toRem(48);
         overflow: hidden;
 
         &:not(.rtl) {

@@ -1,3 +1,8 @@
+@function toRem($value) {
+    $remValue: math.div($value, 16) + rem;
+    @return $remValue;
+}
+
 $breakpoints: (
     xxs: 354px,
     xs: 576px,
@@ -24,63 +29,63 @@ $font-weights: (
 // The key-numbers are not related in any other way to the font-size or line-height.
 $font-sizes: (
     fs-50: (
-        font-size: 11px,
+        font-size: toRem(11),
         line-height: 130%,
     ),
     fs-60: (
-        font-size: 12px,
+        font-size: toRem(12),
         line-height: 135%,
     ),
     fs-70: (
-        font-size: 13px,
+        font-size: toRem(13),
         line-height: 140%,
     ),
     fs-80: (
-        font-size: 14px,
+        font-size: toRem(14),
         line-height: 140%,
     ),
     fs-90: (
-        font-size: 15px,
+        font-size: toRem(15),
         line-height: 145%,
     ),
     fs-100: (
-        font-size: 16px,
+        font-size: toRem(16),
         line-height: 150%,
     ),
     fs-110: (
-        font-size: 18px,
+        font-size: toRem(18),
         line-height: 130%,
     ),
     fs-120: (
-        font-size: 20px,
+        font-size: toRem(20),
         line-height: 120%,
     ),
     fs-140: (
-        font-size: 24px,
+        font-size: toRem(24),
         line-height: 120%,
     ),
     fs-160: (
-        font-size: 28px,
+        font-size: toRem(28),
         line-height: 120%,
     ),
     fs-180: (
-        font-size: 32px,
+        font-size: toRem(32),
         line-height: 120%,
     ),
     fs-220: (
-        font-size: 40px,
+        font-size: toRem(40),
         line-height: 120%,
     ),
     fs-230: (
-        font-size: 48px,
-        line-height: 105%,
+        font-size: toRem(48),
+        line-height: 120%,
     ),
     fs-240: (
-        font-size: 60px,
+        font-size: toRem(60),
         line-height: 120%,
     ),
     fs-260: (
-        font-size: 80px,
+        font-size: toRem(80),
         line-height: 120%,
     ),
 );

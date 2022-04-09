@@ -18,6 +18,7 @@
     import { mobileOperatingSystem } from "./utils/devices";
 
     import "./theme/themes";
+    import "./stores/fontSize";
 
     let viewPortContent = "width=device-width, initial-scale=1";
     let controller: IdentityController = new IdentityController();

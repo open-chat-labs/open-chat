@@ -657,7 +657,7 @@
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
             border ease-in-out 300ms, transform ease-in-out 200ms;
         position: relative;
-        padding: 6px $sp3 6px $sp3;
+        padding: toRem(6) toRem(8) toRem(6) toRem(8);
         border: 1px solid var(--currentChat-msg-bd);
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);

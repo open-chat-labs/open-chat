@@ -1,5 +1,6 @@
 import { get, writable } from "svelte/store";
 import { rollbar } from "utils/logging";
+import { fontSizeScale, FontScale } from "./fontSize";
 import { rtlStore } from "./rtl";
 import { mobileWidth } from "./screenDimensions";
 
@@ -23,14 +24,23 @@ function close(menu: HTMLElement | undefined): HTMLElement | undefined {
     return undefined;
 }
 
+const offsetStep = 25;
+const desktopHeightStep = 3;
+const mobileHeightStep = 2.8;
+
 export const menuStore = {
     subscribe,
     position: (pos: DOMRect): void =>
         update((menu) => {
             if (menu === undefined) return menu;
-            const xoffset = get(rtlStore) ? 180 : -180;
+
+            const scale = get(fontSizeScale) - 2;
+            const baseOffset = 180 + scale * offsetStep;
+            const xoffset = get(rtlStore) ? baseOffset : -baseOffset;
             const items = menu.querySelectorAll(".menu-item").length;
-            const itemHeight = get(mobileWidth) ? 39 : 44;
+            const itemHeight = get(mobileWidth)
+                ? 41.4 + scale * mobileHeightStep
+                : 45 + scale * desktopHeightStep;
             const height = itemHeight * items;
             const left = Math.max(10, pos.x + xoffset);
             const top = pos.y > window.innerHeight / 2 ? pos.y - height : pos.y + pos.height;
