@@ -454,5 +454,6 @@
     "sendGif": "Envoyer un GIF",
     "backToResults": "arrière",
     "giphyMessage": "Message graphique",
-    "share": "Partager"
+    "share": "Partager",
+    "fontSize": "Taille de police"
 }

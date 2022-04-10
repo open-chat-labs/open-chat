@@ -454,5 +454,6 @@
     "sendGif": "GIFs senden",
     "backToResults": "zurück",
     "giphyMessage": "Giphy-Nachricht",
-    "share": "Teilen"
+    "share": "Teilen",
+    "fontSize": "Schriftgröße"
 }

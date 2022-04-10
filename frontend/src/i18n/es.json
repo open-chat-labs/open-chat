@@ -455,5 +455,6 @@
     "sendGif": "Enviar gif",
     "backToResults": "espalda",
     "giphyMessage": "mensaje giphy",
-    "share": "Cuota"
+    "share": "Cuota",
+    "fontSize": "Tamaño de fuente"
 }
