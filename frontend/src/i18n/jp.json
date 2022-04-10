@@ -454,5 +454,6 @@
     "sendGif": "gifを送信",
     "backToResults": "戻る",
     "giphyMessage": "Giphyメッセージ",
-    "share": "共有"
+    "share": "共有",
+    "fontSize": "フォントサイズ"
 }

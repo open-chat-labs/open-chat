@@ -454,5 +454,6 @@
     "sendGif": "Отправить гифку",
     "backToResults": "назад",
     "giphyMessage": "сообщение",
-    "share": "Делиться"
+    "share": "Делиться",
+    "fontSize": "Размер шрифта"
 }
