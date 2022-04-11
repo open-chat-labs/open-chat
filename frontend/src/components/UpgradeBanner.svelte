@@ -86,5 +86,6 @@
         text-decoration: underline;
         text-underline-offset: $sp1;
         cursor: pointer;
+        color: inherit;
     }
 </style>

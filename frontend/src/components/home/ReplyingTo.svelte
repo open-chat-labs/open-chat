@@ -52,6 +52,10 @@
 </div>
 
 <style type="text/scss">
+    :global(.replying.me a) {
+        color: inherit;
+    }
+
     .replying {
         @include font(book, normal, fs-100);
         margin-top: $sp4;

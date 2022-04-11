@@ -73,6 +73,10 @@
 </Link>
 
 <style type="text/scss">
+    :global(.reply-wrapper.me a) {
+        color: inherit;
+    }
+
     .reply-wrapper {
         border-radius: $sp4;
         padding: $sp3;
