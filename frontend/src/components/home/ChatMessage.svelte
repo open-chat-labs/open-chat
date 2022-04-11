@@ -531,6 +531,10 @@
         color: inherit;
     }
 
+    :global(.message-bubble.crypto a) {
+        color: inherit;
+    }
+
     :global(.message-bubble:hover .menu-icon .wrapper) {
         background-color: var(--icon-msg-hv);
     }
