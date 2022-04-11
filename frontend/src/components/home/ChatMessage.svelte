@@ -106,7 +106,7 @@
         recalculateMediaDimensions();
     });
 
-    onDestroy(() => observer.unobserve(msgElement));
+    onDestroy(() => observer?.unobserve(msgElement));
 
     function chatWithUser() {
         dispatch("chatWith", senderId);
