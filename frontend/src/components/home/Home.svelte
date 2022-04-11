@@ -153,7 +153,7 @@
                 controller.clearSelectedChat();
             }
 
-            if (params.chatId === null && !$mobileWidth) {
+            if (params.chatId === null && !$mobileWidth && recommendedGroups.kind === "idle") {
                 whatsHot();
             }
         }
