@@ -236,6 +236,7 @@
     }
     .chat-summaries {
         overflow: auto;
+        overflow-x: hidden;
     }
 
     .search-subtitle {
