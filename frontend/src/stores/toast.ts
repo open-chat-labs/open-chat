@@ -10,10 +10,6 @@ type InterpolationValues =
     | undefined;
 
 type MessageObject = {
-    id: string;
-    locale?: string;
-    format?: string;
-    default?: string;
     values?: InterpolationValues;
 };
 
