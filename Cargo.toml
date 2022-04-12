@@ -40,7 +40,6 @@ members = [
     "backend/libraries/canister_client",
     "backend/libraries/canister_client_macros",
     "backend/libraries/canister_logger",
-    "backend/libraries/canister_state_macros",
     "backend/libraries/chat_events",
     "backend/libraries/dynamodb_index_store",
     "backend/libraries/http_request",
