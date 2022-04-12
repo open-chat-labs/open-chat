@@ -2574,8 +2574,7 @@
             "dependencies": {
                 "ansi-regex": {
                     "version": "4.1.0",
-                    "resolved": "https://registry.npmjs.org/ansi-regex/-/ansi-regex-4.1.0.tgz",
-                    "integrity": "sha512-1apePfXM1UOSqw0o9IiFAovVz9M5S1Dg+4TrDwfMewQ6p/rmMueb7tWZjQ1rx4Loy1ArBggoqGpfqqdI4rondg==",
+                    "resolved": "",
                     "dev": true
                 },
                 "emoji-regex": {
@@ -6764,9 +6763,9 @@
             "dev": true
         },
         "json-schema": {
-            "version": "0.2.3",
-            "resolved": "https://registry.npmjs.org/json-schema/-/json-schema-0.2.3.tgz",
-            "integrity": "sha1-tIDIkuWaLwWVTOcnvT8qTogvnhM=",
+            "version": "0.4.0",
+            "resolved": "https://registry.npmjs.org/json-schema/-/json-schema-0.4.0.tgz",
+            "integrity": "sha512-es94M3nTIfsEPisRafak+HDLfHXnKBhV3vU5eqPcS3flIWqcxJWgXHXiey3YrpaNsanY5ei1VoYEbOzijuq9BA==",
             "dev": true
         },
         "json-schema-traverse": {
@@ -6818,14 +6817,14 @@
             "dev": true
         },
         "jsprim": {
-            "version": "1.4.1",
-            "resolved": "https://registry.npmjs.org/jsprim/-/jsprim-1.4.1.tgz",
-            "integrity": "sha1-MT5mvB5cwG5Di8G3SZwuXFastqI=",
+            "version": "1.4.2",
+            "resolved": "https://registry.npmjs.org/jsprim/-/jsprim-1.4.2.tgz",
+            "integrity": "sha512-P2bSOMAc/ciLz6DzgjVlGJP9+BrJWu5UDGK70C2iweC5QBIeFf0ZXRvGjEj2uYgrY2MkAAhsSWHDWlFtEroZWw==",
             "dev": true,
             "requires": {
                 "assert-plus": "1.0.0",
                 "extsprintf": "1.3.0",
-                "json-schema": "0.2.3",
+                "json-schema": "0.4.0",
                 "verror": "1.10.0"
             }
         },
@@ -7092,9 +7091,9 @@
             }
         },
         "minimist": {
-            "version": "1.2.5",
-            "resolved": "https://registry.npmjs.org/minimist/-/minimist-1.2.5.tgz",
-            "integrity": "sha512-FM9nNUYrRBAELZQT3xeZQ7fmMOBg6nWNmJKTcgsJeaLstP/UODVpGsr5OhXhhXg6f+qtJ8uiZ+PUxkDWcgIXLw=="
+            "version": "1.2.6",
+            "resolved": "https://registry.npmjs.org/minimist/-/minimist-1.2.6.tgz",
+            "integrity": "sha512-Jsjnk4bw3YJqYzbdyBiNsPWHPfO++UGG749Cxs6peCu5Xg4nrena6OVxOYxrQTqww0Jmwt+Ref8rggumkTLz9Q=="
         },
         "minipass": {
             "version": "3.1.3",
@@ -9724,45 +9723,12 @@
             }
         },
         "wide-align": {
-            "version": "1.1.3",
-            "resolved": "https://registry.npmjs.org/wide-align/-/wide-align-1.1.3.tgz",
-            "integrity": "sha512-QGkOQc8XL6Bt5PwnsExKBPuMKBxnGxWWW3fU55Xt4feHozMUhdUMaBCk290qpm/wG5u/RSKzwdAC4i51YigihA==",
+            "version": "1.1.5",
+            "resolved": "https://registry.npmjs.org/wide-align/-/wide-align-1.1.5.tgz",
+            "integrity": "sha512-eDMORYaPNZ4sQIuuYPDHdQvf4gyCF9rEEV/yPxGfwPkRodwEgiMUUXTx/dex+Me0wxx53S+NgUHaP7y3MGlDmg==",
             "dev": true,
             "requires": {
-                "string-width": "^1.0.2 || 2"
-            },
-            "dependencies": {
-                "ansi-regex": {
-                    "version": "3.0.0",
-                    "resolved": "https://registry.npmjs.org/ansi-regex/-/ansi-regex-3.0.0.tgz",
-                    "integrity": "sha1-7QMXwyIGT3lGbAKWa922Bas32Zg=",
-                    "dev": true
-                },
-                "is-fullwidth-code-point": {
-                    "version": "2.0.0",
-                    "resolved": "https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-2.0.0.tgz",
-                    "integrity": "sha1-o7MKXE8ZkYMWeqq5O+764937ZU8=",
-                    "dev": true
-                },
-                "string-width": {
-                    "version": "2.1.1",
-                    "resolved": "https://registry.npmjs.org/string-width/-/string-width-2.1.1.tgz",
-                    "integrity": "sha512-nOqH59deCq9SRHlxq1Aw85Jnt4w6KvLKqWVik6oA9ZklXLNIOlqg4F2yrT1MVaTjAqvVwdfeZ7w7aCvJD7ugkw==",
-                    "dev": true,
-                    "requires": {
-                        "is-fullwidth-code-point": "^2.0.0",
-                        "strip-ansi": "^4.0.0"
-                    }
-                },
-                "strip-ansi": {
-                    "version": "4.0.0",
-                    "resolved": "https://registry.npmjs.org/strip-ansi/-/strip-ansi-4.0.0.tgz",
-                    "integrity": "sha1-qEeQIusaw2iocTibY1JixQXuNo8=",
-                    "dev": true,
-                    "requires": {
-                        "ansi-regex": "^3.0.0"
-                    }
-                }
+                "string-width": "^1.0.2 || 2 || 3 || 4"
             }
         },
         "widest-line": {
