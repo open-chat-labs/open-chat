@@ -590,7 +590,7 @@ dependencies = [
  "ic-cdk-macros",
  "serde",
  "serde_bytes",
- "serializer",
+ "stable_memory",
  "tracing",
  "types",
  "utils",
@@ -712,7 +712,7 @@ dependencies = [
 [[package]]
 name = "canister_state_macros"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=b06d3b984e39fa3a23828521934ef0370b720b18#b06d3b984e39fa3a23828521934ef0370b720b18"
+source = "git+https://github.com/open-ic/ic-utils?rev=c7aa6b402a41b2cf5e67903055f2b809b68469c6#c7aa6b402a41b2cf5e67903055f2b809b68469c6"
 
 [[package]]
 name = "canister_upgrader"
@@ -1580,7 +1580,7 @@ dependencies = [
  "search",
  "serde",
  "serde_bytes",
- "serializer",
+ "stable_memory",
  "tracing",
  "types",
  "user_canister",
@@ -1640,7 +1640,7 @@ dependencies = [
  "rand 0.7.3",
  "search",
  "serde",
- "serializer",
+ "stable_memory",
  "tracing",
  "types",
  "utils",
@@ -1931,8 +1931,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bf92c1ce281995ec4cecca2a0da8f3420af546ed807dceb46441197642f3c1f"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=a49e2eb44ebf977d545d0e120197fe572692a27f#a49e2eb44ebf977d545d0e120197fe572692a27f"
 dependencies = [
  "candid",
  "cfg-if",
@@ -1942,8 +1941,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk-macros"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d2d6181f0a29fefb75493822339591b6244098c5ab9eb67790cc6b805d3a42b"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=a49e2eb44ebf977d545d0e120197fe572692a27f#a49e2eb44ebf977d545d0e120197fe572692a27f"
 dependencies = [
  "candid",
  "ic-cdk 0.5.0",
@@ -2541,7 +2539,7 @@ dependencies = [
  "ic-cdk-macros",
  "notifications_canister",
  "serde",
- "serializer",
+ "stable_memory",
  "tracing",
  "types",
  "user_index_canister",
@@ -2709,7 +2707,7 @@ dependencies = [
  "ic-cdk-macros",
  "online_users_aggregator_canister",
  "serde",
- "serializer",
+ "stable_memory",
  "tracing",
  "types",
  "user_index_canister",
@@ -3408,7 +3406,7 @@ dependencies = [
  "ic-cdk-macros",
  "root_canister",
  "serde",
- "serializer",
+ "stable_memory",
  "tracing",
  "types",
  "user_index_canister",
@@ -3699,14 +3697,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serializer"
-version = "0.1.0"
-dependencies = [
- "rmp-serde",
- "serde",
-]
-
-[[package]]
 name = "sha2"
 version = "0.9.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3898,6 +3888,16 @@ checksum = "44d01ac02a6ccf3e07db148d2be087da624fea0221a16152ed01f0496a6b0a27"
 dependencies = [
  "base64ct",
  "der 0.5.1",
+]
+
+[[package]]
+name = "stable_memory"
+version = "0.1.0"
+source = "git+https://github.com/open-ic/ic-utils?rev=c7aa6b402a41b2cf5e67903055f2b809b68469c6#c7aa6b402a41b2cf5e67903055f2b809b68469c6"
+dependencies = [
+ "ic-cdk 0.5.0",
+ "rmp-serde",
+ "serde",
 ]
 
 [[package]]
@@ -4469,7 +4469,7 @@ dependencies = [
  "search",
  "serde",
  "serde_bytes",
- "serializer",
+ "stable_memory",
  "tracing",
  "types",
  "user_canister",
@@ -4538,7 +4538,7 @@ dependencies = [
  "rand_chacha 0.2.2",
  "rand_core 0.5.1",
  "serde",
- "serializer",
+ "stable_memory",
  "tracing",
  "types",
  "user_canister",

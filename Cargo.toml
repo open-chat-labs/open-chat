@@ -47,7 +47,6 @@ members = [
     "backend/libraries/ledger_utils",
     "backend/libraries/open_storage_bucket_client",
     "backend/libraries/search",
-    "backend/libraries/serializer",
     "backend/libraries/types",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
@@ -64,4 +63,6 @@ opt-level = "z"
 codegen-units = 1
 
 [patch.crates-io]
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "a49e2eb44ebf977d545d0e120197fe572692a27f" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "a49e2eb44ebf977d545d0e120197fe572692a27f" }
 web-push = { git = "https://github.com/hpeebles/rust-web-push", rev = "c0424e229fab6094754338e6efb97efb9fcf56e5" }
