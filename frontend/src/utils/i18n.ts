@@ -1,4 +1,4 @@
-export function getDecimalSeparator(locale: string | null) {
+export function getDecimalSeparator(locale: string | null | undefined): string {
     if (!locale) {
         return defaultDecimalSeparator;
     }

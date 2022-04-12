@@ -83,11 +83,6 @@
             background-color: var(--accent);
         }
 
-        input:disabled + label {
-            // todo - need to make it more obvious what a disabled toggle looks like
-            // background-color: blue;
-        }
-
         input:checked + label:after {
             left: calc(100% - 2px);
             transform: translateX(-100%);

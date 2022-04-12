@@ -243,6 +243,9 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
     if ("NameTooLong" in candid) {
         return "name_too_long";
     }
+    if ("NameTooShort" in candid) {
+        return "name_too_long";
+    }
     if ("Unchanged" in candid) {
         return "unchanged";
     }

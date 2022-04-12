@@ -758,6 +758,7 @@ export type CreateGroupResponse =
     | CreateGroupInternalError
     | CreateGroupInvalidName
     | CreateGroupNameTooLong
+    | CreateGroupNameTooShort
     | CreateGroupDescriptionTooLong
     | GroupNameTaken
     | AvatarTooBig
@@ -777,6 +778,10 @@ export type CreateGroupInvalidName = {
 
 export type CreateGroupNameTooLong = {
     kind: "name_too_long";
+};
+
+export type CreateGroupNameTooShort = {
+    kind: "name_too_short";
 };
 
 export type CreateGroupDescriptionTooLong = {
@@ -994,6 +999,7 @@ export type UpdateGroupResponse =
     | "success"
     | "not_authorised"
     | "name_too_long"
+    | "name_too_short"
     | "desc_too_long"
     | "unchanged"
     | "name_taken"

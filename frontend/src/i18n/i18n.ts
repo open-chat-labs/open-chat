@@ -68,7 +68,7 @@ init({
 });
 
 export function getStoredLocale(): string {
-    return localStorage.getItem("openchat_locale") ?? getLocaleFromNavigator();
+    return localStorage.getItem("openchat_locale") ?? (getLocaleFromNavigator() || "en");
 }
 
 export function setLocale(code: string): void {

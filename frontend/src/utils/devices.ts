@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 export const isTouchDevice: boolean =
+    //@ts-ignore
     "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
 
 export const mobileOperatingSystem = getMobileOperatingSystem();
@@ -10,6 +12,7 @@ export const mobileOperatingSystem = getMobileOperatingSystem();
  * @returns {String}
  */
 function getMobileOperatingSystem(): string {
+    //@ts-ignore
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
     // Windows Phone must come first because its UA also contains "Android"
@@ -22,6 +25,7 @@ function getMobileOperatingSystem(): string {
     }
 
     // iOS detection from: http://stackoverflow.com/a/9039885/177710
+    //@ts-ignore
     if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
         return "iOS";
     }

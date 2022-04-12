@@ -1,10 +1,17 @@
-import type { MessageObject } from "svelte-i18n/types/runtime/types";
 import { writable } from "svelte/store";
 
 export enum ToastType {
     Success,
     Failure,
 }
+
+type InterpolationValues =
+    | Record<string, string | number | boolean | Date | null | undefined>
+    | undefined;
+
+type MessageObject = {
+    values?: InterpolationValues;
+};
 
 export type Toast = {
     text: string;
