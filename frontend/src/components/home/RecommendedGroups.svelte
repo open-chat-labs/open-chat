@@ -301,5 +301,29 @@
                 margin-bottom: $sp4;
             }
         }
+
+        .footer {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+
+            @include size-below(md) {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .not-interested {
+                @include font(light, normal, fs-90);
+                text-decoration: underline;
+                text-decoration-color: var(--accent);
+                text-underline-offset: $sp1;
+                text-decoration-thickness: 2px;
+                text-transform: lowercase;
+                position: absolute;
+                left: $sp4;
+                bottom: $sp4;
+            }
+        }
     }
 </style>
