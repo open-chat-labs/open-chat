@@ -60,7 +60,7 @@ pub fn build_management_canister(agent: &Agent) -> Canister<ManagementCanister> 
         .unwrap()
 }
 
-const TEN_TRILLION: u64 = 10_000_000_000_000;
+const TEN_TRILLION: u128 = 10_000_000_000_000;
 pub async fn create_empty_canister(management_canister: &Canister<'_, ManagementCanister>) -> CanisterId {
     let (canister_id,) = management_canister
         .create_canister()

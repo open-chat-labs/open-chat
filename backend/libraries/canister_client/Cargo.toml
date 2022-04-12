@@ -8,21 +8,21 @@ edition = "2021"
 
 [dependencies]
 callback_canister = { path = "../../canisters/callback/api" }
-candid = "0.7.10"
+candid = "0.7.14"
 canister_client_macros = { path = "../canister_client_macros", features = ["ingress"] }
 dirs = "3.0.2"
-futures = "0.3.16"
+futures = "0.3.21"
 garcon = "0.2.3"
 group_canister = { path = "../../canisters/group/api" }
 group_canister_client = { path = "../../canisters/group/client" }
 group_index_canister = { path = "../../canisters/group_index/api" }
 group_index_canister_client = { path = "../../canisters/group_index/client" }
-ic-agent = "0.12.1"
-ic-utils = "0.12.1"
+ic-agent = "0.15.0"
+ic-utils = "0.15.0"
 notifications_canister = { path = "../../canisters/notifications/api" }
 root_canister = { path = "../../canisters/root/api" }
 root_canister_client = { path = "../../canisters/root/client" }
-serde = "1.0.126"
+serde = "1.0.136"
 types = { path = "../types", default-features = false }
 user_canister = { path = "../../canisters/user/api" }
 user_canister_client = { path = "../../canisters/user/client" }

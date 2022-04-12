@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_dynamodb::Client;
-use aws_types::config::Config;
+use aws_types::sdk_config::SdkConfig;
 use index_store::IndexStore;
 use std::str::FromStr;
 use types::{CanisterId, Error};
@@ -13,7 +13,7 @@ pub struct DynamoDbIndexStore {
 }
 
 impl DynamoDbIndexStore {
-    pub fn build(config: &Config, table_name: String, canister_id: CanisterId) -> DynamoDbIndexStore {
+    pub fn build(config: &SdkConfig, table_name: String, canister_id: CanisterId) -> DynamoDbIndexStore {
         let client = Client::new(config);
 
         DynamoDbIndexStore {

@@ -9,28 +9,28 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.7.10"
+candid = "0.7.14"
 canister_client = { path = "../libraries/canister_client" }
 fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
-futures = "0.3.16"
+futures = "0.3.21"
 garcon = "0.2.3"
 group_canister = { path = "../canisters/group/api" }
 group_canister_client = { path = "../canisters/group/client" }
 group_index_canister = { path = "../canisters/group_index/api" }
 group_index_canister_client = { path = "../canisters/group_index/client" }
-ic-agent = "0.12.1"
+ic-agent = "0.15.0"
 ic-fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 ic-registry-subnet-type = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 ic-replica = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 ic-rosetta-api = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
-ic-utils = "0.12.1"
+ic-utils = "0.15.0"
 itertools = "0.10.3"
 nodemanager = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 notifications_canister = { path = "../canisters/notifications/api" }
 notifications_canister_client = { path = "../canisters/notifications/client" }
 online_users_aggregator_canister = { path = "../canisters/online_users_aggregator/api" }
 online_users_aggregator_canister_client = { path = "../canisters/online_users_aggregator/client" }
-serde = "1.0.126"
+serde = "1.0.136"
 serde_bytes = "0.11.5"
 tokio = { version = "1.10.0", features = ["full"] }
 types = { path = "../../backend/libraries/types", default-features = false }

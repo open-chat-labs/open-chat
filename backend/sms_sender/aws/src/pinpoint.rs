@@ -3,7 +3,7 @@ use aws_sdk_pinpoint::model::{
     AddressConfiguration, ChannelType, DirectMessageConfiguration, MessageRequest, SmsMessage, Template, TemplateConfiguration,
 };
 use aws_sdk_pinpoint::Client;
-use aws_types::config::Config;
+use aws_types::sdk_config::SdkConfig;
 use sms_sender_core::SmsSender;
 use types::Error;
 
@@ -15,7 +15,7 @@ pub struct PinpointClient {
 }
 
 impl PinpointClient {
-    pub fn build(config: &Config, application_id: String) -> PinpointClient {
+    pub fn build(config: &SdkConfig, application_id: String) -> PinpointClient {
         let client = Client::new(config);
         let address_configuration = AddressConfiguration::builder().channel_type(ChannelType::Sms).build();
         let template_configuration = TemplateConfiguration::builder()

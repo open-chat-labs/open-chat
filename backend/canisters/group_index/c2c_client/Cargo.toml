@@ -10,5 +10,5 @@ edition = "2021"
 canister_client_macros = { path = "../../../libraries/canister_client_macros" }
 group_index_canister = { path = "../api" }
 ic-cdk = "0.5.0"
-tracing = "0.1.29"
+tracing = "0.1.33"
 types = { path = "../../../libraries/types" }
