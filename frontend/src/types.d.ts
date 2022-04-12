@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 declare module "remount/es5";
 
 declare module "uuid" {
@@ -24,3 +26,11 @@ declare module "svelte-easy-crop" {
 declare module "intl-tel-input/build/js/utils";
 
 declare module "svelte-qr";
+
+declare namespace svelte.JSX {
+    interface HTMLAttributes<T> {
+        onleftswipe?: any;
+        onrightswipe?: any;
+        onswiping?: any;
+    }
+}
