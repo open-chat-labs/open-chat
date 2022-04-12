@@ -684,6 +684,7 @@ dependencies = [
 [[package]]
 name = "canister_state_macros"
 version = "0.1.0"
+source = "git+https://github.com/open-ic/ic-utils?rev=b06d3b984e39fa3a23828521934ef0370b720b18#b06d3b984e39fa3a23828521934ef0370b720b18"
 
 [[package]]
 name = "canister_upgrader"
