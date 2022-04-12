@@ -7,14 +7,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.7.10"
+candid = "0.7.14"
 canister_client_macros = { path = "../canister_client_macros" }
 getrandom = { version = "0.2.3", features = ["js"] }
 ic-cdk = "0.5.0"
 rand = "0.7.3"
 range-set = { git = "https://github.com/hpeebles/range-set", rev = "d64d0b95c5a397273b490bd37d81ddbff9c3e4a3", features = ["serde"], optional = true }
-serde = "1.0.126"
+serde = "1.0.136"
 serde_bytes = "0.11.5"
-smallvec = { version = "0.6.*", features = ["serde"] }
-tracing = "0.1.29"
+smallvec = { version = "1.8.0", features = ["serde"] }
+tracing = "0.1.33"
 types = { path = "../types" }

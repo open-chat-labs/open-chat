@@ -5,18 +5,18 @@ authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gm
 edition = "2021"
 
 [dependencies]
-async-trait = "0.1.51"
+async-trait = "0.1.53"
 base64 = "0.13.0"
-candid = "0.7.10"
-futures = "0.3.16"
+candid = "0.7.14"
+futures = "0.3.21"
 garcon = "0.2.3"
-ic-agent = "0.12.1"
+ic-agent = "0.15.0"
 index_store = { path = "../../libraries/index_store" }
 notifications_canister = { path = "../../canisters/notifications/api" }
 notifications_canister_client = { path = "../../canisters/notifications/client" }
 openssl = { version = "0.10.35", features = ["vendored"] }
-serde = "1.0.126"
+serde = "1.0.136"
 tokio = { version = "1.10.0", features = ["macros", "time"] }
-tracing = "0.1.29"
+tracing = "0.1.33"
 types = { path = "../../libraries/types" }
 web-push = "0.9.1"

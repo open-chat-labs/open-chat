@@ -12,7 +12,7 @@ name = "notification_candid_gen"
 path = "src/notification_candid_gen.rs"
 
 [dependencies]
-candid = "0.7.10"
+candid = "0.7.14"
 candid_gen = { path = "../../../libraries/candid_gen" }
-serde = "1.0.126"
+serde = "1.0.136"
 types = { path = "../../../libraries/types" }
