@@ -1,9 +1,10 @@
-use crate::lifecycle::{init_logger, init_state};
+use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
 use crate::{Data, LOG_MESSAGES};
 use canister_api_macros::trace;
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use ic_cdk_macros::post_upgrade;
 use notifications_canister::post_upgrade::Args;
+use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
 use utils::env::canister::CanisterEnv;
 
@@ -13,10 +14,9 @@ fn post_upgrade(args: Args) {
     ic_cdk::setup();
 
     let env = Box::new(CanisterEnv::new());
-    let bytes = ic_cdk::api::stable::stable_bytes();
 
     let (data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
-        serializer::deserialize(&bytes).unwrap();
+        deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);
