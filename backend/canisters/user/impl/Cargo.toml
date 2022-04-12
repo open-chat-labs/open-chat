@@ -13,12 +13,12 @@ crate-type = ["cdylib"]
 [dependencies]
 callback_canister = { path = "../../callback/api" }
 callback_canister_c2c_client = { path = "../../callback/c2c_client" }
-candid = "0.7.10"
+candid = "0.7.14"
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "b06d3b984e39fa3a23828521934ef0370b720b18" }
 chat_events = { path = "../../../libraries/chat_events" }
-futures = "0.3.16"
+futures = "0.3.21"
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 group_index_canister = { path = "../../group_index/api" }
@@ -27,16 +27,16 @@ http_request = { path = "../../../libraries/http_request" }
 ic-cdk = "0.5.0"
 ic-cdk-macros = "0.5.0"
 ic-ledger-types = "0.1.1"
-itertools = "0.10.1"
+itertools = "0.10.3"
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 open_storage_bucket_client = { path = "../../../libraries/open_storage_bucket_client" }
 search = { path = "../../../libraries/search" }
-serde = "1.0.126"
+serde = "1.0.136"
 serde_bytes = "0.11.5"
 serializer = { path = "../../../libraries/serializer" }
-tracing = "0.1.29"
+tracing = "0.1.33"
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils", features = ["range-set"] }
 user_canister = { path = "../api" }

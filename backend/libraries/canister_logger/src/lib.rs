@@ -1,12 +1,11 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use std::fmt::Write;
 use std::iter::FromIterator;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 use tracing::Level;
-use tracing_subscriber::fmt::format::FmtSpan;
+use tracing_subscriber::fmt::format::{FmtSpan, Writer};
 use tracing_subscriber::fmt::time::FormatTime;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 use tracing_subscriber::fmt::Layer;
@@ -161,7 +160,7 @@ struct Timer {
 }
 
 impl FormatTime for Timer {
-    fn format_time(&self, w: &mut dyn Write) -> std::fmt::Result {
+    fn format_time(&self, w: &mut Writer) -> std::fmt::Result {
         let now = (self.time_fn)();
 
         w.write_str(&format!("{now}"))
