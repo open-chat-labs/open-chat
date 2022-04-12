@@ -1,20 +1,24 @@
 import type { Action, ActionReturn } from "svelte/action";
 
+export function clamp(min: number, max: number, val: number): number {
+    return Math.min(max, Math.max(min, val));
+}
+
 export const swipe: Action<HTMLElement, { threshold: number }> = (
     node,
     param = { threshold: 20 }
 ): ActionReturn => {
-    let touchstartX = 0;
-    let touchendX = 0;
+    let start = 0;
+    let end = 0;
     let swiping = false;
     let diffx = 0;
 
     function handleGesture() {
-        if (touchendX < touchstartX && touchstartX - touchendX > param.threshold) {
+        if (end < start && start - end > param.threshold) {
             node.dispatchEvent(new CustomEvent("leftswipe"));
         }
 
-        if (touchendX > touchstartX && touchendX - touchstartX > param.threshold) {
+        if (end > start && end - start > param.threshold) {
             node.dispatchEvent(new CustomEvent("rightswipe"));
         }
     }
@@ -22,7 +26,7 @@ export const swipe: Action<HTMLElement, { threshold: number }> = (
     function touchMove(e: TouchEvent) {
         if (!swiping) return;
 
-        diffx = touchstartX - e.changedTouches[0].screenX;
+        diffx = start - e.changedTouches[0].screenX;
         node.dispatchEvent(
             new CustomEvent<{ diffx: number }>("swiping", {
                 bubbles: true,
@@ -33,12 +37,12 @@ export const swipe: Action<HTMLElement, { threshold: number }> = (
     }
 
     function touchStart(e: TouchEvent) {
-        touchstartX = e.changedTouches[0].screenX;
+        start = e.changedTouches[0].screenX;
         swiping = true;
     }
 
     function touchEnd(e: TouchEvent) {
-        touchendX = e.changedTouches[0].screenX;
+        end = e.changedTouches[0].screenX;
         swiping = false;
         handleGesture();
     }

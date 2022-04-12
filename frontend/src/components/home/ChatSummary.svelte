@@ -5,7 +5,7 @@
     import Delete from "svelte-material-icons/Delete.svelte";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
-    import { swipe } from "..//swipeAction";
+    import { clamp, swipe } from "../chatSwipe";
     import { formatMessageDate } from "../../utils/date";
     import { _ } from "svelte-i18n";
     import {
@@ -113,24 +113,25 @@
 
     onDestroy(unsub);
 
-    let delOffset = -50;
+    let maxDelOffset = -50;
+    let delOffset = maxDelOffset;
     let swiped = false;
 
     function leftSwipe() {
         if (swiped) return;
-        if (delOffset > -25) {
+        if (delOffset > maxDelOffset / 2) {
             delOffset = 0;
             swiped = true;
         } else {
-            delOffset = -50;
+            delOffset = maxDelOffset;
             swiped = false;
         }
     }
 
     function rightSwipe() {
         if (!swiped) return;
-        if (delOffset < -25) {
-            delOffset = -50;
+        if (delOffset < maxDelOffset / 2) {
+            delOffset = maxDelOffset;
             swiped = false;
         } else {
             delOffset = 0;
@@ -138,19 +139,13 @@
         }
     }
 
-    function clamp(min: number, max: number, val: number) {
-        return Math.min(max, Math.max(min, val));
-    }
-
     function swiping({ detail: { diffx } }: CustomEvent<{ diffx: number }>) {
         if (diffx > 0 && !swiped) {
-            // swiping left (start -50 end 0)
-            delOffset = clamp(-50, 0, -50 + diffx);
+            delOffset = clamp(maxDelOffset, 0, maxDelOffset + diffx);
         }
 
         if (diffx < 0 && swiped) {
-            // swiping right (start 0 end -50)
-            delOffset = clamp(-50, 0, 0 + diffx);
+            delOffset = clamp(maxDelOffset, 0, 0 + diffx);
         }
     }
 
