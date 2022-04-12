@@ -1,11 +1,11 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserLookup } from "../../domain/user/user";
-    import { fly } from "svelte/transition";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import Delete from "svelte-material-icons/Delete.svelte";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
+    import { clamp, swipe } from "../chatSwipe";
     import { formatMessageDate } from "../../utils/date";
     import { _ } from "svelte-i18n";
     import {
@@ -98,6 +98,7 @@
 
     function deleteDirectChat() {
         dispatch("deleteDirectChat", chatSummary.chatId);
+        delOffset = -50;
     }
 
     $: chat = normaliseChatSummary($now, chatSummary);
@@ -111,6 +112,42 @@
     const unsub = messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
 
     onDestroy(unsub);
+
+    let maxDelOffset = -50;
+    let delOffset = maxDelOffset;
+    let swiped = false;
+
+    function leftSwipe() {
+        if (swiped) return;
+        if (delOffset > maxDelOffset / 2) {
+            delOffset = 0;
+            swiped = true;
+        } else {
+            delOffset = maxDelOffset;
+            swiped = false;
+        }
+    }
+
+    function rightSwipe() {
+        if (!swiped) return;
+        if (delOffset < maxDelOffset / 2) {
+            delOffset = maxDelOffset;
+            swiped = false;
+        } else {
+            delOffset = 0;
+            swiped = true;
+        }
+    }
+
+    function swiping({ detail: { diffx } }: CustomEvent<{ diffx: number }>) {
+        if (diffx > 0 && !swiped) {
+            delOffset = clamp(maxDelOffset, 0, maxDelOffset + diffx);
+        }
+
+        if (diffx < 0 && swiped) {
+            delOffset = clamp(maxDelOffset, 0, 0 + diffx);
+        }
+    }
 
     $: displayDate = getDisplayDate(chatSummary);
     $: isTyping =
@@ -127,6 +164,10 @@
     class="chat-summary"
     class:first={index === 0}
     class:selected
+    use:swipe
+    on:swiping={swiping}
+    on:leftswipe={leftSwipe}
+    on:rightswipe={rightSwipe}
     class:empty={canDelete}
     class:rtl={$rtlStore}
     on:mouseenter={() => (hovering = true)}
@@ -177,12 +218,15 @@
             </div>
         {/if}
     {/if}
-    {#if canDelete && hovering && !$mobileWidth}
+    {#if canDelete}
         <div
             title={$_("removeChat")}
+            style={$mobileWidth
+                ? $rtlStore
+                    ? `left: ${delOffset}px`
+                    : `right: ${delOffset}px`
+                : ""}
             on:click|stopPropagation|preventDefault={deleteDirectChat}
-            in:fly={{ x: $rtlStore ? -100 : 100, duration: 200, delay: 200 }}
-            out:fly={{ x: $rtlStore ? -100 : 100, duration: 1000 }}
             class:rtl={$rtlStore}
             class="delete-chat">
             <Delete size={$iconSize} color={"#fff"} slot="icon" />
@@ -195,7 +239,7 @@
         background-color: var(--chatSummary-del);
         padding: $sp3;
         position: absolute;
-        right: 0;
+        right: -50px;
         height: 100%;
         display: flex;
         justify-content: center;
@@ -203,9 +247,14 @@
         width: 50px;
         cursor: pointer;
 
+        @include size-above(sm) {
+            transition: right 200ms ease-in-out;
+            transition-delay: 200ms;
+        }
+
         &.rtl {
             right: unset;
-            left: 0;
+            left: -50px;
         }
     }
 
@@ -224,6 +273,16 @@
 
         &:hover {
             background-color: var(--chatSummary-hv);
+
+            @include size-above(sm) {
+                .delete-chat {
+                    right: 0px;
+                    &.rtl {
+                        right: unset;
+                        left: 0px;
+                    }
+                }
+            }
         }
 
         &.selected {
