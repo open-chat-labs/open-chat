@@ -3808,6 +3808,9 @@ name = "smallvec"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2dd574626839106c320a323308629dcb1acfc96e32a8cba364ddc61ac23ee83"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "sms_sender_aws"
@@ -4562,7 +4565,7 @@ dependencies = [
  "range-set",
  "serde",
  "serde_bytes",
- "smallvec 0.6.14",
+ "smallvec 1.8.0",
  "tracing",
  "types",
 ]
