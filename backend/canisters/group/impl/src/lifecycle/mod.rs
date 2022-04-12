@@ -7,6 +7,8 @@ mod inspect_message;
 mod post_upgrade;
 mod pre_upgrade;
 
+const UPGRADE_BUFFER_SIZE: usize = 1024 * 1024; // 1MB
+
 fn init_logger(enable_trace: bool) {
     let log_messages = canister_logger::init_logger(enable_trace, None, ic_cdk::api::time);
 
