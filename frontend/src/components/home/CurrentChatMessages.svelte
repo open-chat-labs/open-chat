@@ -470,7 +470,7 @@
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
     class="chat-messages"
-    on:scroll|passive={onScroll}
+    on:scroll={onScroll}
     id="chat-messages">
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
@@ -577,9 +577,6 @@
 
         .unread-count {
             line-height: 80%;
-        }
-        .unread-label {
-            @include font(book, normal, fs-70);
         }
     }
 
