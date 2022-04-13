@@ -17,6 +17,7 @@
     import FontSize from "./FontSize.svelte";
     import { notificationStatus } from "../../../stores/notifications";
     import { formatICP } from "../../../utils/cryptoFormatter";
+    import Stats from "../Stats.svelte";
     import {
         askForNotificationPermission,
         supported as notificationsSupported,
@@ -29,6 +30,7 @@
         chatsSectionOpen,
         enterSend,
         scrollStrategy,
+        statsSectionOpen,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
@@ -362,6 +364,15 @@
             </div>
         </CollapsibleCard>
     </div>
+
+    <div class="stats">
+        <CollapsibleCard
+            on:toggle={statsSectionOpen.toggle}
+            open={$statsSectionOpen}
+            headerText={$_("stats.userStats")}>
+            <Stats />
+        </CollapsibleCard>
+    </div>
 </form>
 
 <style type="text/scss">
@@ -411,6 +422,7 @@
     .user,
     .chats,
     .account,
+    .stats,
     .appearance {
         margin-bottom: $sp3;
         border-bottom: var(--profile-section-bd);

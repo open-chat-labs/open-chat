@@ -163,3 +163,21 @@ export type UpgradeStorageResponse =
     | { kind: "internal_error" }
     | { kind: "storage_limit_exceeded" }
     | { kind: "user_not_found" };
+
+export type UserStats = {
+    text_messages: number;
+    image_messages: number;
+    video_messages: number;
+    audio_messages: number;
+    file_messages: number;
+    polls: number;
+    icp_messages: number;
+    giphy_messages: number;
+
+    poll_votes: number;
+    deleted_messages: number;
+    replies: number;
+    edits: number;
+    reactions: number;
+    last_active: number;
+};

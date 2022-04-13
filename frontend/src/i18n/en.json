@@ -453,5 +453,21 @@
     "failedToShareMessage": "Unable to share this message",
     "backToResults": "back",
     "giphyMessage": "Giphy message",
-    "share": "Share"
+    "share": "Share",
+    "stats": {
+        "userStats": "User stats",
+        "groupStats": "Group stats",
+        "textMessages": "text messages",
+        "imageMessages": "image messages",
+        "videoMessages": "video messages",
+        "audioMessages": "audio messages",
+        "fileMessages": "file messages",
+        "pollMessages": "poll messages",
+        "icpTransfers": "IPC transfers",
+        "giphyMessages": "giphy messages",
+        "pollVotes": "poll votes",
+        "replies": "replies",
+        "reactions": "reactions",
+        "deletedMessages": "deleted messages"
+    }
 }
