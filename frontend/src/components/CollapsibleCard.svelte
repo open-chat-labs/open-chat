@@ -21,7 +21,7 @@
     <div class="header" class:open on:click={toggle}>
         <h4>{headerText}</h4>
         <div class="arrow" class:rtl={$rtlStore} class:open>
-            <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
+            <ChevronDown viewBox="0 -3 24 24" size={$iconSize} color={"var(--icon-txt)"} />
         </div>
     </div>
     {#if open}

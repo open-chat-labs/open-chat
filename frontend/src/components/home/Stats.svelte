@@ -36,7 +36,7 @@
                     reactions: 567,
                     last_active: Date.now(),
                 });
-            }, 500);
+            }, 200);
         });
     }
 
@@ -245,7 +245,7 @@
         flex-wrap: wrap;
         justify-content: center;
 
-        @include font(book, normal, fs-140);
+        @include font(book, normal, fs-120);
 
         @include mobile() {
             @include font-size(fs-110);
