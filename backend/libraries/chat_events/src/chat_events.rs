@@ -1,3 +1,4 @@
+use crate::types::{ChatEventInternal, MessageInternal, UpdatedMessageInternal};
 use candid::CandidType;
 use search::*;
 use serde::{Deserialize, Serialize};
@@ -17,112 +18,15 @@ pub struct ChatEvents {
     message_index_map: HashMap<MessageIndex, EventIndex>,
     latest_message_event_index: Option<EventIndex>,
     latest_message_index: Option<MessageIndex>,
-    metrics: Metrics,
+    metrics: ChatMetrics,
+    #[serde(default)]
+    per_user_metrics: HashMap<UserId, ChatMetrics>,
 }
 
 #[derive(CandidType, Serialize, Deserialize)]
 enum ChatType {
     Direct,
     Group,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum ChatEventInternal {
-    Message(Box<MessageInternal>),
-    MessageEdited(Box<UpdatedMessageInternal>),
-    MessageDeleted(Box<UpdatedMessageInternal>),
-    MessageReactionAdded(Box<UpdatedMessageInternal>),
-    MessageReactionRemoved(Box<UpdatedMessageInternal>),
-    DirectChatCreated(DirectChatCreated),
-    GroupChatCreated(Box<GroupChatCreated>),
-    GroupNameChanged(Box<GroupNameChanged>),
-    GroupDescriptionChanged(Box<GroupDescriptionChanged>),
-    AvatarChanged(Box<AvatarChanged>),
-    OwnershipTransferred(Box<OwnershipTransferred>),
-    ParticipantsAdded(Box<ParticipantsAdded>),
-    ParticipantsRemoved(Box<ParticipantsRemoved>),
-    ParticipantJoined(Box<ParticipantJoined>),
-    ParticipantLeft(Box<ParticipantLeft>),
-    ParticipantAssumesSuperAdmin(Box<ParticipantAssumesSuperAdmin>),
-    ParticipantDismissedAsSuperAdmin(Box<ParticipantDismissedAsSuperAdmin>),
-    ParticipantRelinquishesSuperAdmin(Box<ParticipantRelinquishesSuperAdmin>),
-    RoleChanged(Box<RoleChanged>),
-    UsersBlocked(Box<UsersBlocked>),
-    UsersUnblocked(Box<UsersUnblocked>),
-    MessagePinned(Box<MessagePinned>),
-    MessageUnpinned(Box<MessageUnpinned>),
-    PollVoteRegistered(Box<UpdatedMessageInternal>),
-    PollVoteDeleted(Box<UpdatedMessageInternal>),
-    PollEnded(Box<MessageIndex>),
-    PermissionsChanged(Box<PermissionsChanged>),
-}
-
-impl ChatEventInternal {
-    fn is_valid_for_direct_chat(&self) -> bool {
-        matches!(
-            self,
-            ChatEventInternal::Message(_)
-                | ChatEventInternal::MessageEdited(_)
-                | ChatEventInternal::MessageDeleted(_)
-                | ChatEventInternal::MessageReactionAdded(_)
-                | ChatEventInternal::MessageReactionRemoved(_)
-                | ChatEventInternal::DirectChatCreated(_)
-                | ChatEventInternal::PollVoteRegistered(_)
-                | ChatEventInternal::PollVoteDeleted(_)
-                | ChatEventInternal::PollEnded(_)
-        )
-    }
-
-    fn is_valid_for_group_chat(&self) -> bool {
-        matches!(
-            self,
-            ChatEventInternal::Message(_)
-                | ChatEventInternal::MessageEdited(_)
-                | ChatEventInternal::MessageDeleted(_)
-                | ChatEventInternal::MessageReactionAdded(_)
-                | ChatEventInternal::MessageReactionRemoved(_)
-                | ChatEventInternal::GroupChatCreated(_)
-                | ChatEventInternal::GroupNameChanged(_)
-                | ChatEventInternal::GroupDescriptionChanged(_)
-                | ChatEventInternal::AvatarChanged(_)
-                | ChatEventInternal::OwnershipTransferred(_)
-                | ChatEventInternal::ParticipantsAdded(_)
-                | ChatEventInternal::ParticipantsRemoved(_)
-                | ChatEventInternal::ParticipantJoined(_)
-                | ChatEventInternal::ParticipantLeft(_)
-                | ChatEventInternal::ParticipantAssumesSuperAdmin(_)
-                | ChatEventInternal::ParticipantDismissedAsSuperAdmin(_)
-                | ChatEventInternal::ParticipantRelinquishesSuperAdmin(_)
-                | ChatEventInternal::RoleChanged(_)
-                | ChatEventInternal::UsersBlocked(_)
-                | ChatEventInternal::UsersUnblocked(_)
-                | ChatEventInternal::MessagePinned(_)
-                | ChatEventInternal::MessageUnpinned(_)
-                | ChatEventInternal::PollVoteRegistered(_)
-                | ChatEventInternal::PollVoteDeleted(_)
-                | ChatEventInternal::PollEnded(_)
-                | ChatEventInternal::PermissionsChanged(_)
-        )
-    }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct MessageInternal {
-    pub message_index: MessageIndex,
-    pub message_id: MessageId,
-    pub sender: UserId,
-    pub content: MessageContentInternal,
-    pub replies_to: Option<ReplyContext>,
-    pub reactions: Vec<(Reaction, HashSet<UserId>)>,
-    pub last_updated: Option<TimestampMillis>,
-    #[serde(default)]
-    pub last_edited: Option<TimestampMillis>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct UpdatedMessageInternal {
-    pub updated_by: UserId,
-    pub message_id: MessageId,
 }
 
 pub struct PushMessageArgs {
@@ -174,27 +78,6 @@ pub enum ToggleReactionResult {
     MessageNotFound,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone)]
-pub struct Metrics {
-    pub text_messages: u64,
-    pub image_messages: u64,
-    pub video_messages: u64,
-    pub audio_messages: u64,
-    pub file_messages: u64,
-    pub polls: u64,
-    pub poll_votes: u64,
-    pub cycles_messages: u64,
-    pub icp_messages: u64,
-    pub deleted_messages: u64,
-    #[serde(default)]
-    pub giphy_messages: u64,
-    pub replies: u64,
-    pub total_edits: u64,
-    pub total_reactions: u64,
-    pub total_events: u64,
-    pub last_active: TimestampMillis,
-}
-
 impl ChatEvents {
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
@@ -205,7 +88,8 @@ impl ChatEvents {
             message_index_map: HashMap::new(),
             latest_message_event_index: None,
             latest_message_index: None,
-            metrics: Metrics::default(),
+            metrics: ChatMetrics::default(),
+            per_user_metrics: HashMap::new(),
         };
 
         events.push_event(ChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
@@ -228,7 +112,8 @@ impl ChatEvents {
             message_index_map: HashMap::new(),
             latest_message_event_index: None,
             latest_message_index: None,
-            metrics: Metrics::default(),
+            metrics: ChatMetrics::default(),
+            per_user_metrics: HashMap::new(),
         };
 
         events.push_event(
@@ -309,34 +194,20 @@ impl ChatEvents {
             self.message_index_map.insert(m.message_index, event_index);
             self.latest_message_index = Some(m.message_index);
             self.latest_message_event_index = Some(event_index);
-
-            match &m.content {
-                MessageContentInternal::Text(_) => self.metrics.text_messages += 1,
-                MessageContentInternal::Image(_) => self.metrics.image_messages += 1,
-                MessageContentInternal::Video(_) => self.metrics.video_messages += 1,
-                MessageContentInternal::Audio(_) => self.metrics.audio_messages += 1,
-                MessageContentInternal::File(_) => self.metrics.file_messages += 1,
-                MessageContentInternal::Poll(p) => {
-                    self.metrics.polls += 1;
-                    self.metrics.poll_votes += p.votes.values().map(|v| v.len() as u64).sum::<u64>();
-                }
-                MessageContentInternal::Cryptocurrency(c) => match c.transfer {
-                    CryptocurrencyTransfer::Cycles(_) => self.metrics.cycles_messages += 1,
-                    CryptocurrencyTransfer::ICP(_) => self.metrics.icp_messages += 1,
-                },
-                MessageContentInternal::Deleted(_) => self.metrics.deleted_messages += 1,
-                MessageContentInternal::Giphy(_) => self.metrics.giphy_messages += 1,
-            }
-
-            if m.replies_to.is_some() {
-                self.metrics.replies += 1;
-            }
         }
+
+        event.add_to_metrics(&mut self.metrics, now);
+
+        if let Some(user_id) = event.triggered_by() {
+            event.add_to_metrics(self.per_user_metrics.entry(user_id).or_default(), now);
+        }
+
         self.events.push(EventWrapper {
             index: event_index,
             timestamp: now,
             event,
         });
+
         event_index
     }
 
@@ -349,7 +220,6 @@ impl ChatEvents {
                     message.content = args.content.new_content_into_internal();
                     message.last_updated = Some(args.now);
                     message.last_edited = Some(args.now);
-                    self.metrics.total_edits += 1;
                     self.push_event(
                         ChatEventInternal::MessageEdited(Box::new(UpdatedMessageInternal {
                             updated_by: args.sender,
@@ -388,7 +258,6 @@ impl ChatEvents {
                             }),
                         );
                         message.last_updated = Some(now);
-                        self.metrics.deleted_messages += 1;
                         self.push_event(
                             ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
                                 updated_by: caller,
@@ -492,7 +361,6 @@ impl ChatEvents {
                 };
 
                 return if added {
-                    self.metrics.total_reactions += 1;
                     let new_event_index = self.push_event(
                         ChatEventInternal::MessageReactionAdded(Box::new(UpdatedMessageInternal {
                             updated_by: user_id,
@@ -502,7 +370,6 @@ impl ChatEvents {
                     );
                     ToggleReactionResult::Added(new_event_index)
                 } else {
-                    self.metrics.total_reactions -= 1;
                     let new_event_index = self.push_event(
                         ChatEventInternal::MessageReactionRemoved(Box::new(UpdatedMessageInternal {
                             updated_by: user_id,
@@ -871,11 +738,14 @@ impl ChatEvents {
         }
     }
 
-    pub fn metrics(&self) -> Metrics {
-        let mut metrics = self.metrics.clone();
-        metrics.last_active = self.last().timestamp;
-        metrics.total_events = self.events.len() as u64;
-        metrics
+    pub fn metrics(&self) -> &ChatMetrics {
+        &self.metrics
+    }
+
+    pub fn user_metrics(&self, user_id: &UserId, if_updated_since: Option<TimestampMillis>) -> Option<&ChatMetrics> {
+        self.per_user_metrics
+            .get(user_id)
+            .filter(|m| if let Some(since) = if_updated_since { m.last_active > since } else { true })
     }
 
     pub fn len(&self) -> usize {

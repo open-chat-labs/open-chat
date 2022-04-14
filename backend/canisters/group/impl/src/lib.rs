@@ -97,6 +97,12 @@ impl RuntimeState {
             owner_id: data.owner_id,
             permissions: data.permissions.clone(),
             notifications_muted: participant.notifications_muted,
+            metrics: data.events.metrics().clone(),
+            my_metrics: data
+                .events
+                .user_metrics(&participant.user_id, None)
+                .cloned()
+                .unwrap_or_default(),
         }
     }
 
@@ -115,12 +121,16 @@ impl RuntimeState {
             video_messages: chat_metrics.video_messages,
             audio_messages: chat_metrics.audio_messages,
             file_messages: chat_metrics.file_messages,
+            polls: chat_metrics.polls,
+            poll_votes: chat_metrics.poll_votes,
             cycles_messages: chat_metrics.cycles_messages,
+            icp_messages: chat_metrics.icp_messages,
             deleted_messages: chat_metrics.deleted_messages,
-            total_edits: chat_metrics.total_edits,
+            giphy_messages: chat_metrics.giphy_messages,
             replies: chat_metrics.replies,
-            total_reactions: chat_metrics.total_reactions,
-            pinned_messages: self.data.pinned_messages.len() as u32,
+            edits: chat_metrics.edits,
+            reactions: chat_metrics.reactions,
+            total_events: chat_metrics.total_events,
             last_active: chat_metrics.last_active,
         }
     }
@@ -218,12 +228,16 @@ pub struct Metrics {
     pub video_messages: u64,
     pub audio_messages: u64,
     pub file_messages: u64,
+    pub polls: u64,
+    pub poll_votes: u64,
     pub cycles_messages: u64,
+    pub icp_messages: u64,
     pub deleted_messages: u64,
-    pub total_edits: u64,
+    pub giphy_messages: u64,
     pub replies: u64,
-    pub total_reactions: u64,
-    pub pinned_messages: u32,
+    pub edits: u64,
+    pub reactions: u64,
+    pub total_events: u64,
     pub last_active: TimestampMillis,
 }
 

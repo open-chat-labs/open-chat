@@ -4,6 +4,7 @@ use crate::{
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::cmp::max;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatSummary {
@@ -36,6 +37,10 @@ pub struct DirectChatSummary {
     pub read_by_me: Vec<MessageIndexRange>,
     pub read_by_them: Vec<MessageIndexRange>,
     pub notifications_muted: bool,
+    #[serde(default)]
+    pub metrics: ChatMetrics,
+    #[serde(default)]
+    pub my_metrics: ChatMetrics,
 }
 
 impl DirectChatSummary {
@@ -66,6 +71,10 @@ pub struct GroupChatSummary {
     pub wasm_version: Version,
     pub owner_id: UserId,
     pub permissions: GroupPermissions,
+    #[serde(default)]
+    pub metrics: ChatMetrics,
+    #[serde(default)]
+    pub my_metrics: ChatMetrics,
 }
 
 impl GroupChatSummary {
@@ -89,6 +98,10 @@ pub struct DirectChatSummaryUpdates {
     pub read_by_them: Option<Vec<MessageIndexRange>>,
     pub notifications_muted: Option<bool>,
     pub affected_events: Vec<EventIndex>,
+    #[serde(default)]
+    pub metrics: ChatMetrics,
+    #[serde(default)]
+    pub my_metrics: Option<ChatMetrics>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -110,6 +123,10 @@ pub struct GroupChatSummaryUpdates {
     pub owner_id: Option<UserId>,
     pub permissions: Option<GroupPermissions>,
     pub affected_events: Vec<EventIndex>,
+    #[serde(default)]
+    pub metrics: ChatMetrics,
+    #[serde(default)]
+    pub my_metrics: Option<ChatMetrics>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -148,6 +165,10 @@ pub struct GroupChatSummaryInternal {
     pub owner_id: UserId,
     pub permissions: GroupPermissions,
     pub notifications_muted: bool,
+    #[serde(default)]
+    pub metrics: ChatMetrics,
+    #[serde(default)]
+    pub my_metrics: ChatMetrics,
 }
 
 impl From<GroupChatSummaryInternal> for GroupChatSummary {
@@ -173,6 +194,8 @@ impl From<GroupChatSummaryInternal> for GroupChatSummary {
             wasm_version: s.wasm_version,
             owner_id: s.owner_id,
             permissions: s.permissions,
+            metrics: s.metrics,
+            my_metrics: s.my_metrics,
         }
     }
 }
@@ -194,6 +217,10 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub owner_id: Option<UserId>,
     pub permissions: Option<GroupPermissions>,
     pub affected_events: Vec<EventIndex>,
+    #[serde(default)]
+    pub metrics: ChatMetrics,
+    #[serde(default)]
+    pub my_metrics: Option<ChatMetrics>,
 }
 
 impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
@@ -216,6 +243,51 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             owner_id: s.owner_id,
             permissions: s.permissions,
             affected_events: s.affected_events,
+            metrics: s.metrics,
+            my_metrics: s.my_metrics,
         }
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone)]
+pub struct ChatMetrics {
+    pub text_messages: u64,
+    pub image_messages: u64,
+    pub video_messages: u64,
+    pub audio_messages: u64,
+    pub file_messages: u64,
+    pub polls: u64,
+    pub poll_votes: u64,
+    pub cycles_messages: u64,
+    pub icp_messages: u64,
+    pub deleted_messages: u64,
+    pub giphy_messages: u64,
+    pub replies: u64,
+    #[serde(default)]
+    pub edits: u64,
+    #[serde(default)]
+    pub reactions: u64,
+    pub total_events: u64,
+    pub last_active: TimestampMillis,
+}
+
+impl ChatMetrics {
+    pub fn merge(&mut self, other: &ChatMetrics) {
+        self.text_messages += other.text_messages;
+        self.image_messages += other.image_messages;
+        self.video_messages += other.video_messages;
+        self.audio_messages += other.audio_messages;
+        self.file_messages += other.file_messages;
+        self.polls += other.polls;
+        self.poll_votes += other.poll_votes;
+        self.cycles_messages += other.cycles_messages;
+        self.icp_messages += other.icp_messages;
+        self.deleted_messages += other.deleted_messages;
+        self.giphy_messages += other.giphy_messages;
+        self.replies += other.replies;
+        self.edits += other.edits;
+        self.reactions += other.reactions;
+        self.total_events += other.total_events;
+        self.last_active = max(self.last_active, other.last_active);
     }
 }
