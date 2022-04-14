@@ -55,6 +55,26 @@ type CanisterWasm =
         compressed: bool;
     };
 
+type ChatMetrics =
+    record {
+        text_messages: nat64;
+        image_messages: nat64;
+        video_messages: nat64;
+        audio_messages: nat64;
+        file_messages: nat64;
+        polls: nat64;
+        poll_votes: nat64;
+        cycles_messages: nat64;
+        icp_messages: nat64;
+        deleted_messages: nat64;
+        giphy_messages: nat64;
+        replies: nat64;
+        edits: nat64;
+        reactions: nat64;
+        total_events: nat64;
+        last_active: TimestampMillis;
+    };
+
 type ChatSummary =
     variant {
         Direct: DirectChatSummary;
@@ -118,6 +138,8 @@ type DirectChatSummary =
         read_by_me: vec MessageIndexRange;
         read_by_them: vec MessageIndexRange;
         notifications_muted: bool;
+        metrics: ChatMetrics;
+        my_metrics: ChatMetrics;
     };
 
 type DirectChatSummaryUpdates =
@@ -129,6 +151,8 @@ type DirectChatSummaryUpdates =
         read_by_them: opt vec MessageIndexRange;
         notifications_muted: opt bool;
         affected_events: vec EventIndex;
+        metrics: ChatMetrics;
+        my_metrics: opt ChatMetrics;
     };
 
 type DirectMessageNotification =
@@ -225,6 +249,8 @@ type GroupChatSummary =
         wasm_version: Version;
         owner_id: UserId;
         permissions: GroupPermissions;
+        metrics: ChatMetrics;
+        my_metrics: ChatMetrics;
     };
 
 type GroupChatSummaryUpdates =
@@ -246,6 +272,8 @@ type GroupChatSummaryUpdates =
         owner_id: opt UserId;
         permissions: opt GroupPermissions;
         affected_events: vec EventIndex;
+        metrics: ChatMetrics;
+        my_metrics: opt ChatMetrics;
     };
 
 type GroupDescriptionChanged =
