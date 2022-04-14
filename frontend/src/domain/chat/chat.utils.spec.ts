@@ -12,6 +12,7 @@ import type {
 } from "./chat";
 import {
     addVoteToPoll,
+    emptyChatMetrics,
     enoughVisibleMessages,
     getParticipantsString,
     indexIsInRanges,
@@ -45,6 +46,8 @@ const defaultDirectChat: DirectChatSummary = {
     latestEventIndex: 0,
     dateCreated: BigInt(0),
     notificationsMuted: false,
+    metrics: emptyChatMetrics(),
+    myMetrics: emptyChatMetrics(),
 };
 
 const defaultGroupChat: GroupChatSummary = {
@@ -78,6 +81,8 @@ const defaultGroupChat: GroupChatSummary = {
         sendMessages: "members",
         reactToMessages: "members",
     },
+    metrics: emptyChatMetrics(),
+    myMetrics: emptyChatMetrics(),
 };
 
 function directChatId(id: number): DirectChatSummary {
@@ -359,6 +364,8 @@ describe("merging updates", () => {
                 timestamp: BigInt(400),
             },
             affectedEvents: [],
+            metrics: emptyChatMetrics(),
+            myMetrics: emptyChatMetrics(),
         };
 
         const updatedGroup: GroupChatSummaryUpdates = {
@@ -388,6 +395,8 @@ describe("merging updates", () => {
             description: "stuff",
             mentions: [],
             affectedEvents: [],
+            metrics: emptyChatMetrics(),
+            myMetrics: emptyChatMetrics(),
         };
 
         test("attempting to update with a mismatched kind throws error", () => {

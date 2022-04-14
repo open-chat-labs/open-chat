@@ -626,6 +626,8 @@ type ChatSummaryUpdatesCommon = {
     latestMessage?: EventWrapper<Message>;
     notificationsMuted?: boolean;
     affectedEvents: number[];
+    metrics: ChatMetrics;
+    myMetrics?: ChatMetrics;
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
@@ -704,6 +706,8 @@ type ChatSummaryCommon = {
     latestEventIndex: number;
     latestMessage?: EventWrapper<Message>;
     notificationsMuted: boolean;
+    metrics: ChatMetrics;
+    myMetrics: ChatMetrics;
 };
 
 export type DirectChatSummary = ChatSummaryCommon & {
@@ -1054,3 +1058,22 @@ export type RegisterPollVoteResponse =
     | "chat_not_found";
 
 export type MessageAction = "emoji" | "file" | undefined;
+
+export type ChatMetrics = {
+    audioMessages: number;
+    cyclesMessages: number;
+    edits: number;
+    icpMessages: number;
+    lastActive: number;
+    giphyMessages: number;
+    deletedMessages: number;
+    fileMessages: number;
+    pollVotes: number;
+    textMessages: number;
+    imageMessages: number;
+    replies: number;
+    videoMessages: number;
+    polls: number;
+    totalEvents: number;
+    reactions: number;
+};

@@ -32,6 +32,7 @@ import type {
     ApiCompletedCryptocurrencyWithdrawal,
     ApiCompletedCryptocurrencyTransfer,
     ApiTransferCryptocurrencyWithinGroupResponse,
+    ApiChatMetrics,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -63,6 +64,7 @@ import type {
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyTransfer,
+    ChatMetrics,
 } from "../../domain/chat/chat";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -682,6 +684,8 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
                 groupPermissions(permissions)
             ),
             affectedEvents: candid.Group.affected_events,
+            metrics: chatMetrics(candid.Group.metrics),
+            myMetrics: optional(candid.Group.my_metrics, chatMetrics),
         };
     }
     if ("Direct" in candid) {
@@ -699,6 +703,8 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
             notificationsMuted: optional(candid.Direct.notifications_muted, identity),
             affectedEvents: candid.Direct.affected_events,
+            metrics: chatMetrics(candid.Direct.metrics),
+            myMetrics: optional(candid.Direct.my_metrics, chatMetrics),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
@@ -739,6 +745,27 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
     throw new UnsupportedValueError("Unexpected ApiChatSummary type received", candid);
 }
 
+function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
+    return {
+        audioMessages: Number(candid.audio_messages),
+        cyclesMessages: Number(candid.cycles_messages),
+        edits: Number(candid.edits),
+        icpMessages: Number(candid.icp_messages),
+        lastActive: Number(candid.last_active),
+        giphyMessages: Number(candid.giphy_messages),
+        deletedMessages: Number(candid.deleted_messages),
+        fileMessages: Number(candid.file_messages),
+        pollVotes: Number(candid.poll_votes),
+        textMessages: Number(candid.text_messages),
+        imageMessages: Number(candid.image_messages),
+        replies: Number(candid.replies),
+        videoMessages: Number(candid.video_messages),
+        polls: Number(candid.polls),
+        totalEvents: Number(candid.total_events),
+        reactions: Number(candid.reactions),
+    };
+}
+
 function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
     return {
         kind: "group_chat",
@@ -769,6 +796,8 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         mentions: candid.mentions.map(mention),
         ownerId: candid.owner_id.toString(),
         permissions: groupPermissions(candid.permissions),
+        metrics: chatMetrics(candid.metrics),
+        myMetrics: chatMetrics(candid.my_metrics),
     };
 }
 
@@ -787,6 +816,8 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
         readByThem: apiMessageIndexRanges(candid.read_by_them),
         dateCreated: candid.date_created,
         notificationsMuted: candid.notifications_muted,
+        metrics: chatMetrics(candid.metrics),
+        myMetrics: chatMetrics(candid.my_metrics),
     };
 }
 

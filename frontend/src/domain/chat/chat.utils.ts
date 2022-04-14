@@ -30,6 +30,7 @@ import type {
     PermissionRole,
     CryptocurrencyContent,
     AggregateParticipantsJoinedOrLeft,
+    ChatMetrics,
 } from "./chat";
 import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -322,7 +323,8 @@ function mergeUpdatedDirectChat(
     chat.latestEventIndex = getLatestEventIndex(chat, updatedChat);
     chat.latestMessage = getLatestMessage(chat, updatedChat);
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
-
+    chat.metrics = updatedChat.metrics;
+    chat.myMetrics = updatedChat.myMetrics ?? chat.myMetrics;
     return chat;
 }
 
@@ -434,6 +436,8 @@ function mergeUpdatedGroupChat(
     chat.mentions = mergeMentions(chat.mentions, updatedChat.mentions);
     chat.ownerId = updatedChat.ownerId ?? chat.ownerId;
     chat.permissions = updatedChat.permissions ?? chat.permissions;
+    chat.metrics = updatedChat.metrics;
+    chat.myMetrics = updatedChat.myMetrics ?? chat.myMetrics;
     return chat;
 }
 
@@ -1019,6 +1023,8 @@ export function groupChatFromCandidate(
         ...candidate.avatar,
         ownerId: userId,
         permissions: candidate.permissions,
+        metrics: emptyChatMetrics(),
+        myMetrics: emptyChatMetrics(),
     };
 }
 
@@ -1306,4 +1312,46 @@ export function buildTransactionUrl(content: CryptocurrencyContent): string | un
     }
 
     return `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`;
+}
+
+export function emptyChatMetrics(): ChatMetrics {
+    return {
+        audioMessages: 0,
+        cyclesMessages: 0,
+        edits: 0,
+        icpMessages: 0,
+        lastActive: 0,
+        giphyMessages: 0,
+        deletedMessages: 0,
+        fileMessages: 0,
+        pollVotes: 0,
+        textMessages: 0,
+        imageMessages: 0,
+        replies: 0,
+        videoMessages: 0,
+        polls: 0,
+        totalEvents: 0,
+        reactions: 0,
+    };
+}
+
+export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {
+    return {
+        audioMessages: a.audioMessages + b.audioMessages,
+        cyclesMessages: a.cyclesMessages + b.cyclesMessages,
+        edits: a.edits + b.edits,
+        icpMessages: a.icpMessages + b.icpMessages,
+        lastActive: Math.max(a.lastActive, b.lastActive),
+        giphyMessages: a.giphyMessages + b.giphyMessages,
+        deletedMessages: a.deletedMessages + b.deletedMessages,
+        fileMessages: a.fileMessages + b.fileMessages,
+        pollVotes: a.pollVotes + b.pollVotes,
+        textMessages: a.textMessages + b.textMessages,
+        imageMessages: a.imageMessages + b.imageMessages,
+        replies: a.replies + b.replies,
+        videoMessages: a.videoMessages + b.videoMessages,
+        polls: a.polls + b.polls,
+        totalEvents: a.totalEvents + b.totalEvents,
+        reactions: a.reactions + b.reactions,
+    };
 }
