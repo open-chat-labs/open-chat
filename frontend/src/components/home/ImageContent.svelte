@@ -16,6 +16,7 @@
     export let reply: boolean = false;
     export let pinned: boolean = false;
     export let height: number | undefined = undefined;
+    export let intersecting: boolean = true;
 
     let imgElement: HTMLImageElement;
     let zoom = false;
@@ -88,7 +89,7 @@
             class:zoomable
             class:rtl={$rtlStore}
             style={height === undefined ? undefined : `height: ${height}px`}
-            src={content.blobUrl}
+            src={intersecting ? content.blobUrl : content.thumbnailData}
             alt={content.caption} />
 
         {#if zoomable}
