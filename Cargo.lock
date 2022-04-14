@@ -1931,7 +1931,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk"
 version = "0.5.0"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=a49e2eb44ebf977d545d0e120197fe572692a27f#a49e2eb44ebf977d545d0e120197fe572692a27f"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=92e71c53735016544e1d5fc650f5f9088cf80baa#92e71c53735016544e1d5fc650f5f9088cf80baa"
 dependencies = [
  "candid",
  "cfg-if",
@@ -1941,7 +1941,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk-macros"
 version = "0.5.0"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=a49e2eb44ebf977d545d0e120197fe572692a27f#a49e2eb44ebf977d545d0e120197fe572692a27f"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=92e71c53735016544e1d5fc650f5f9088cf80baa#92e71c53735016544e1d5fc650f5f9088cf80baa"
 dependencies = [
  "candid",
  "ic-cdk 0.5.0",
