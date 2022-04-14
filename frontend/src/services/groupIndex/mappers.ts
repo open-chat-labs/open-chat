@@ -1,7 +1,5 @@
-import type { GroupMatch, GroupSearchResponse } from "../../../domain/search/search";
-import { optional } from "../../../utils/mapping";
-import type { ApiGroupMatch, ApiSearchResponse } from "./candid/idl";
-
+import type { GroupMatch, GroupSearchResponse } from "../../domain/search/searchort { optional } from "../../../utils/mappingort type { ApiGroupMatch, ApiSearchResponse } from "./candid/idl";
+../../utils/mapping
 export function groupSearchResponse(candid: ApiSearchResponse): GroupSearchResponse {
     if ("Success" in candid) {
         return {

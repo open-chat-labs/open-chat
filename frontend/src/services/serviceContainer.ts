@@ -64,7 +64,6 @@ import type {
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
-import type { IGroupIndexClient } from "./group/groupIndex/groupIndex.client.interface";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
@@ -76,7 +75,6 @@ import type {
     SearchDirectChatResponse,
     SearchGroupChatResponse,
 } from "../domain/search/search";
-import { GroupIndexClient } from "./group/groupIndex/groupIndex.client";
 import type { IMessageReadTracker, MarkMessagesRead } from "../stores/markRead";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
@@ -89,6 +87,8 @@ import type { ILedgerClient } from "./ledger/ledger.client.interface";
 import { LedgerClient } from "./ledger/ledger.client";
 import type { ICP } from "../domain/crypto/crypto";
 import { icpBalanceE8sStore } from "../stores/balance";
+import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
+import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {

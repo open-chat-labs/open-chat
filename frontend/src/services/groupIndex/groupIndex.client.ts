@@ -1,8 +1,8 @@
 import type { Identity } from "@dfinity/agent";
+import type { GroupSearchResponse } from "../../domain/search/search";
+import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
-import { CandidService } from "../../candidService";
 import type { IGroupIndexClient } from "./groupIndex.client.interface";
-import type { GroupSearchResponse } from "../../../domain/search/search";
 import { groupSearchResponse } from "./mappers";
 
 export class GroupIndexClient extends CandidService implements IGroupIndexClient {
