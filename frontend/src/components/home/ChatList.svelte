@@ -12,7 +12,7 @@
         SearchAllMessagesResponse,
     } from "../../domain/search/search";
     import type { UserSummary } from "../../domain/user/user";
-    import { createEventDispatcher, onDestroy, onMount, tick } from "svelte";
+    import { createEventDispatcher, onMount, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import { push } from "svelte-spa-router";
     import { avatarUrl } from "../../domain/user/user.utils";
@@ -76,8 +76,6 @@
             : 0;
     });
 
-    onDestroy(unsub);
-
     $: {
         document.title = chatsWithUnreadMsgs > 0 ? `OpenChat (${chatsWithUnreadMsgs})` : "OpenChat";
     }
@@ -118,14 +116,20 @@
     }
 
     let chatListElement: HTMLElement;
+    let chatScrollTop = 0;
 
-    onMount(() =>
+    onMount(() => {
         tick().then(() => {
             if (chatListElement) {
                 chatListElement.scrollTop = $chatListScroll;
             }
-        })
-    );
+        });
+
+        return () => {
+            unsub();
+            chatListScroll.set(chatScrollTop);
+        };
+    });
 </script>
 
 {#if user}
@@ -145,7 +149,7 @@
     <div
         bind:this={chatListElement}
         class="body"
-        on:scroll={(e) => ($chatListScroll = e.currentTarget.scrollTop)}>
+        on:scroll={(e) => (chatScrollTop = e.currentTarget.scrollTop)}>
         {#if $chatsLoading}
             <Loading />
         {:else}
