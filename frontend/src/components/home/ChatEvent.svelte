@@ -41,9 +41,9 @@
         dispatch("editEvent", event as EventWrapper<Message>);
     }
 
-    afterUpdate(() => {
-        console.log("updating ChatEvent component");
-    });
+    // afterUpdate(() => {
+    //     console.log("updating ChatEvent component");
+    // });
 </script>
 
 {#if event.event.kind === "message"}

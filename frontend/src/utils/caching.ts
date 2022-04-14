@@ -66,6 +66,10 @@ function padMessageIndex(i: number): string {
     return i.toString().padStart(10, "0");
 }
 
+export function cachingLocallyDisabled(): boolean {
+    return !!localStorage.getItem("openchat_nocache");
+}
+
 export function createCacheKey(chatId: string, index: number): string {
     return `${chatId}_${padMessageIndex(index)}`;
 }

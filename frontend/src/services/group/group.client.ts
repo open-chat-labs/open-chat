@@ -50,7 +50,7 @@ import {
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
-import type { Database } from "../../utils/caching";
+import { cachingLocallyDisabled, Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
 import {
     apiGroupPermissions,
@@ -64,6 +64,7 @@ import { DataClient } from "../data/data.client";
 import { MAX_EVENTS, MAX_MESSAGES, mergeGroupChatDetails } from "../../domain/chat/chat.utils";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { getChatEventsInLoop } from "../common/chatEvents";
+import { profile } from "../common/profiling";
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
@@ -74,11 +75,12 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     static create(chatId: string, identity: Identity, db?: Database): IGroupClient {
-        return db !== undefined && process.env.CLIENT_CACHING
+        return db !== undefined && process.env.CLIENT_CACHING && !cachingLocallyDisabled()
             ? new CachingGroupClient(db, chatId, new GroupClient(identity, chatId))
             : new GroupClient(identity, chatId);
     }
 
+    @profile("groupClient")
     chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             events: eventIndexes,
@@ -90,6 +92,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     async chatEventsWindow(
         _eventIndexRange: IndexRange,
         messageIndex: number
@@ -106,6 +109,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,
@@ -124,6 +128,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending);
     }
 
+    @profile("groupClient")
     addParticipants(
         userIds: string[],
         myUsername: string,
@@ -139,6 +144,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
         const new_role = apiRole(newRole);
         if (new_role === undefined) {
@@ -153,6 +159,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     removeParticipant(userId: string): Promise<RemoveParticipantResponse> {
         return this.handleResponse(
             this.groupService.remove_participant({
@@ -162,6 +169,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     editMessage(message: Message): Promise<EditMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.chatId])
@@ -176,6 +184,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             });
     }
 
+    @profile("groupClient")
     sendMessage(
         senderName: string,
         mentioned: User[],
@@ -202,6 +211,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             });
     }
 
+    @profile("groupClient")
     updateGroup(
         name: string,
         desc: string,
@@ -231,6 +241,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse> {
         return this.handleResponse(
             this.groupService.toggle_reaction({
@@ -241,6 +252,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     deleteMessage(messageId: bigint): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.groupService.delete_messages({
@@ -250,6 +262,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     blockUser(userId: string): Promise<BlockUserResponse> {
         return this.handleResponse(
             this.groupService.block_user({
@@ -259,6 +272,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     unblockUser(userId: string): Promise<UnblockUserResponse> {
         return this.handleResponse(
             this.groupService.unblock_user({
@@ -268,6 +282,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     getGroupDetails(): Promise<GroupChatDetailsResponse> {
         return this.handleQueryResponse(
             () => this.groupService.selected_initial({}),
@@ -275,6 +290,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     async getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
         const args = {
             updates_since: previous.latestEventIndex,
@@ -299,10 +315,12 @@ export class GroupClient extends CandidService implements IGroupClient {
         return mergeGroupChatDetails(previous, updatesResponse);
     }
 
+    @profile("groupClient")
     deleteGroup(): Promise<DeleteGroupResponse> {
         return this.handleResponse(this.groupService.delete_group({}), deleteGroupResponse);
     }
 
+    @profile("groupClient")
     getPublicSummary(): Promise<GroupChatSummary | undefined> {
         return this.handleQueryResponse(
             () => this.groupService.public_summary({}),
@@ -313,6 +331,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         });
     }
 
+    @profile("groupClient")
     getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>> {
         const args = {
             messages: [...messageIndexes],
@@ -324,6 +343,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     pinMessage(messageIndex: number): Promise<PinMessageResponse> {
         return this.handleResponse(
             this.groupService.pin_message({
@@ -333,6 +353,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     unpinMessage(messageIndex: number): Promise<UnpinMessageResponse> {
         return this.handleResponse(
             this.groupService.unpin_message({
@@ -342,6 +363,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     registerPollVote(
         messageIdx: number,
         answerIdx: number,
@@ -357,6 +379,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    @profile("groupClient")
     searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse> {
         const args = {
             search_term: searchTerm,

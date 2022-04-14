@@ -38,6 +38,7 @@ import {
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
+import { profile } from "../common/profiling";
 
 /**
  * This exists to decorate the group client so that we can provide a write through cache to
@@ -50,6 +51,7 @@ export class CachingGroupClient implements IGroupClient {
         private client: IGroupClient
     ) {}
 
+    @profile("groupCachingClient")
     async chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>> {
         const cachedEvents = await getCachedEventsByIndex<GroupChatEvent>(
             this.db,
@@ -62,6 +64,7 @@ export class CachingGroupClient implements IGroupClient {
         );
     }
 
+    @profile("groupCachingClient")
     async chatEventsWindow(
         eventIndexRange: IndexRange,
         messageIndex: number
@@ -80,6 +83,7 @@ export class CachingGroupClient implements IGroupClient {
         );
     }
 
+    @profile("groupCachingClient")
     async chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,
@@ -155,6 +159,7 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.unblockUser(userId);
     }
 
+    @profile("groupCachingClient")
     async getGroupDetails(): Promise<GroupChatDetailsResponse> {
         const fromCache = await getCachedGroupDetails(this.db, this.chatId);
         if (fromCache !== undefined) {
@@ -168,6 +173,7 @@ export class CachingGroupClient implements IGroupClient {
         return response;
     }
 
+    @profile("groupCachingClient")
     async getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
         const response = await this.client.getGroupDetailsUpdates(previous);
         if (response.latestEventIndex > previous.latestEventIndex) {
@@ -184,6 +190,7 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.getPublicSummary();
     }
 
+    @profile("groupCachingClient")
     async getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>> {
         const fromCache = await loadMessagesByMessageIndex(this.db, this.chatId, messageIndexes);
         if (fromCache.missing.size > 0) {
