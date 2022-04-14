@@ -9646,8 +9646,8 @@
             }
         },
         "usergeek-ic-js": {
-            "version": "github:usergeek/usergeek-ic-js#44df4ba2b05b18a01429f92482110ed6c5d4dfda",
-            "from": "github:usergeek/usergeek-ic-js",
+            "version": "github:julianjelfs/usergeek-ic-js#bcf4dffb3c1b884f06d34e353c693bae7552ad3d",
+            "from": "github:julianjelfs/usergeek-ic-js",
             "dev": true
         },
         "util": {

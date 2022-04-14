@@ -69,7 +69,7 @@
         "svelte-preprocess": "^4.10.5",
         "tslib": "^2.3.1",
         "typescript": "^4.6.3",
-        "usergeek-ic-js": "github:usergeek/usergeek-ic-js",
+        "usergeek-ic-js": "github:julianjelfs/usergeek-ic-js",
         "util": "0.12.3"
     },
     "dependencies": {
