@@ -1,9 +1,11 @@
 <script lang="ts">
-    import type { UserStats } from "../../domain/user/user";
     import { onMount } from "svelte";
     import { cubicOut } from "svelte/easing";
     import { tweened } from "svelte/motion";
     import { _ } from "svelte-i18n";
+    import type { ChatMetrics } from "../../domain/chat/chat";
+
+    export let stats: ChatMetrics;
 
     let hoveredIndex: number | undefined;
     let rendered = false;
@@ -15,58 +17,28 @@
     let pollPerc = slice();
     let icpPerc = slice();
     let giphyPerc = slice();
-    let userStats: UserStats | undefined;
-
-    function dummyStats(): Promise<UserStats> {
-        return new Promise((resolve) => {
-            window.setTimeout(() => {
-                resolve({
-                    text_messages: 654,
-                    image_messages: 256,
-                    video_messages: 100,
-                    audio_messages: 50,
-                    file_messages: 75,
-                    polls: 22,
-                    icp_messages: 5,
-                    giphy_messages: 180,
-                    poll_votes: 50,
-                    deleted_messages: 60,
-                    replies: 90,
-                    edits: 0,
-                    reactions: 567,
-                    last_active: Date.now(),
-                });
-            }, 200);
-        });
-    }
 
     onMount(() => {
-        dummyStats().then((stats) => {
-            userStats = stats;
-            const totalMessages =
-                stats.text_messages +
-                stats.image_messages +
-                stats.video_messages +
-                stats.audio_messages +
-                stats.file_messages +
-                stats.polls +
-                stats.icp_messages +
-                stats.giphy_messages;
-            textPerc.set((stats.text_messages / totalMessages) * 100);
-            imagePerc.set((stats.image_messages / totalMessages) * 100);
-            videoPerc.set((stats.video_messages / totalMessages) * 100);
-            audioPerc.set((stats.audio_messages / totalMessages) * 100);
-            filePerc.set((stats.file_messages / totalMessages) * 100);
-            pollPerc.set((stats.polls / totalMessages) * 100);
-            icpPerc.set((stats.icp_messages / totalMessages) * 100);
-            giphyPerc.set((stats.giphy_messages / totalMessages) * 100);
-            window.setTimeout(() => (rendered = true), 600);
-        });
-        // fetch("https://2yfsq-kaaaa-aaaaf-aaa4q-cai.raw.ic0.app/metrics")
-        //     .then((res) => res.json())
-        //     .then((res) => {
-        //         const stats = res;
-        //     });
+        const totalMessages =
+            stats.textMessages +
+            stats.imageMessages +
+            stats.videoMessages +
+            stats.audioMessages +
+            stats.fileMessages +
+            stats.polls +
+            stats.icpMessages +
+            stats.giphyMessages;
+
+        console.log("total messages: ", totalMessages);
+        textPerc.set((stats.textMessages / totalMessages) * 100);
+        imagePerc.set((stats.imageMessages / totalMessages) * 100);
+        videoPerc.set((stats.videoMessages / totalMessages) * 100);
+        audioPerc.set((stats.audioMessages / totalMessages) * 100);
+        filePerc.set((stats.fileMessages / totalMessages) * 100);
+        pollPerc.set((stats.polls / totalMessages) * 100);
+        icpPerc.set((stats.icpMessages / totalMessages) * 100);
+        giphyPerc.set((stats.giphyMessages / totalMessages) * 100);
+        window.setTimeout(() => (rendered = true), 600);
     });
 
     function percToDegree(perc: number): number {
@@ -165,35 +137,35 @@
     </svg>
     <div class="numbers">
         <div class="text legend">
-            <span class="stat">{userStats?.text_messages ?? ""}</span>
+            <span class="stat">{stats.textMessages}</span>
             {$_("stats.textMessages")}
         </div>
         <div class="image legend">
-            <span class="stat">{userStats?.image_messages ?? ""}</span>
+            <span class="stat">{stats.imageMessages}</span>
             {$_("stats.imageMessages")}
         </div>
         <div class="video legend">
-            <span class="stat">{userStats?.video_messages ?? ""}</span>
+            <span class="stat">{stats.videoMessages}</span>
             {$_("stats.videoMessages")}
         </div>
         <div class="audio legend">
-            <span class="stat">{userStats?.audio_messages ?? ""}</span>
+            <span class="stat">{stats.audioMessages}</span>
             {$_("stats.audioMessages")}
         </div>
         <div class="file legend">
-            <span class="stat">{userStats?.file_messages ?? ""}</span>
+            <span class="stat">{stats.fileMessages}</span>
             {$_("stats.fileMessages")}
         </div>
         <div class="poll legend">
-            <span class="stat">{userStats?.polls ?? ""}</span>
+            <span class="stat">{stats.polls}</span>
             {$_("stats.pollMessages")}
         </div>
         <div class="icp legend">
-            <span class="stat">{userStats?.icp_messages ?? ""}</span>
+            <span class="stat">{stats.icpMessages}</span>
             {$_("stats.icpTransfers")}
         </div>
         <div class="giphy legend">
-            <span class="stat">{userStats?.giphy_messages ?? ""}</span>
+            <span class="stat">{stats.giphyMessages}</span>
             {$_("stats.giphyMessages")}
         </div>
     </div>
@@ -201,19 +173,19 @@
 
 <div class="other-stats">
     <div class="poll-votes">
-        <span class="stat">📊 {userStats?.poll_votes ?? ""}</span>
+        <span class="stat">📊 {stats.pollVotes}</span>
         {$_("stats.pollVotes")}
     </div>
     <div class="replies">
-        <span class="stat">↩️ {userStats?.replies ?? ""}</span>
+        <span class="stat">↩️ {stats.replies}</span>
         {$_("stats.replies")}
     </div>
     <div class="reactions">
-        <span class="stat">🍿 {userStats?.reactions ?? ""}</span>
+        <span class="stat">🍿 {stats.reactions}</span>
         {$_("stats.reactions")}
     </div>
     <div class="deleted-messages">
-        <span class="stat">🗑️ {userStats?.deleted_messages ?? ""}</span>
+        <span class="stat">🗑️ {stats.deletedMessages}</span>
         {$_("stats.deletedMessages")}
     </div>
 </div>

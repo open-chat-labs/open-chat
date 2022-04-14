@@ -245,7 +245,7 @@
             on:toggle={groupStatsOpen.toggle}
             open={$groupStatsOpen}
             headerText={$_("stats.groupStats")}>
-            <Stats />
+            <Stats stats={originalGroup.metrics} />
         </CollapsibleCard>
     </div>
 </form>
