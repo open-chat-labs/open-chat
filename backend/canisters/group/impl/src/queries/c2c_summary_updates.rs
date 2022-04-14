@@ -42,6 +42,12 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
             owner_id: updates_from_events.owner_id,
             permissions: updates_from_events.permissions,
             affected_events: updates_from_events.affected_events.into_iter().collect(),
+            metrics: runtime_state.data.events.metrics().clone(),
+            my_metrics: runtime_state
+                .data
+                .events
+                .user_metrics(&participant.user_id, Some(args.updates_since))
+                .cloned(),
         };
         Success(Box::new(SuccessResult { updates }))
     } else {

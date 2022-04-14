@@ -1,4 +1,5 @@
-use crate::chat_events::{ChatEventInternal, ChatEvents};
+use crate::chat_events::ChatEvents;
+use crate::types::ChatEventInternal;
 use candid::CandidType;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};

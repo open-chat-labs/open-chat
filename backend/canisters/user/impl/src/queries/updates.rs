@@ -285,6 +285,8 @@ fn finalize(
     let my_user_id = runtime_state.env.canister_id().into();
 
     for direct_chat in runtime_state.data.direct_chats.get_all(Some(updates_since)) {
+        let metrics = direct_chat.events.metrics().clone();
+
         if direct_chat.date_created > updates_since {
             chats_added.push(ChatSummary::Direct(DirectChatSummary {
                 them: direct_chat.them,
@@ -294,6 +296,12 @@ fn finalize(
                 read_by_me: convert_to_message_index_ranges(direct_chat.read_by_me.value.clone()),
                 read_by_them: convert_to_message_index_ranges(direct_chat.read_by_them.value.clone()),
                 notifications_muted: direct_chat.notifications_muted.value,
+                metrics,
+                my_metrics: direct_chat
+                    .events
+                    .user_metrics(&my_user_id, None)
+                    .cloned()
+                    .unwrap_or_default(),
             }));
         } else {
             let latest_message = direct_chat.events.latest_message_if_updated(updates_since, Some(my_user_id));
@@ -323,6 +331,8 @@ fn finalize(
                 read_by_them,
                 notifications_muted,
                 affected_events,
+                metrics,
+                my_metrics: direct_chat.events.user_metrics(&my_user_id, Some(updates_since)).cloned(),
             }));
         }
     }

@@ -1,14 +1,14 @@
 use crate::model::direct_chat::DirectChat;
-use chat_events::{Metrics, PushMessageArgs};
+use chat_events::PushMessageArgs;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, EventWrapper, Message, MessageIndex, TimestampMillis, UserId};
+use types::{ChatId, ChatMetrics, EventWrapper, Message, MessageIndex, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
-    metrics: Metrics,
+    metrics: ChatMetrics,
 }
 
 impl DirectChats {
@@ -69,28 +69,16 @@ impl DirectChats {
     }
 
     pub fn aggregate_metrics(&mut self) {
-        let mut metrics = Metrics::default();
+        let mut metrics = ChatMetrics::default();
 
         for chat in self.direct_chats.values() {
-            let chat_metrics = chat.events.metrics();
-            metrics.text_messages += chat_metrics.text_messages;
-            metrics.image_messages += chat_metrics.image_messages;
-            metrics.video_messages += chat_metrics.video_messages;
-            metrics.audio_messages += chat_metrics.audio_messages;
-            metrics.file_messages += chat_metrics.file_messages;
-            metrics.cycles_messages += chat_metrics.cycles_messages;
-            metrics.deleted_messages += chat_metrics.deleted_messages;
-            metrics.total_edits += chat_metrics.total_edits;
-            metrics.replies += chat_metrics.replies;
-            metrics.total_reactions += chat_metrics.total_reactions;
-            metrics.total_events += chat_metrics.total_events;
-            metrics.last_active = std::cmp::max(metrics.last_active, chat_metrics.last_active);
+            metrics.merge(chat.events.metrics());
         }
 
         self.metrics = metrics;
     }
 
-    pub fn metrics(&self) -> Metrics {
-        self.metrics.clone()
+    pub fn metrics(&self) -> &ChatMetrics {
+        &self.metrics
     }
 }
