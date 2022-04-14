@@ -126,6 +126,14 @@
             }
         })
     );
+
+    let scrollTimer: number | undefined = undefined;
+    function onScroll() {
+        window.clearTimeout(scrollTimer);
+        scrollTimer = window.setTimeout(() => {
+            chatListScroll.set(chatListElement.scrollTop);
+        }, 300);
+    }
 </script>
 
 {#if user}
@@ -142,10 +150,7 @@
         on:newGroup />
     <Search {searching} {searchTerm} on:searchEntered />
 
-    <div
-        bind:this={chatListElement}
-        class="body"
-        on:scroll={(e) => ($chatListScroll = e.currentTarget.scrollTop)}>
+    <div bind:this={chatListElement} class="body" on:scroll={onScroll}>
         {#if $chatsLoading}
             <Loading />
         {:else}

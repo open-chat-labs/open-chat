@@ -95,11 +95,14 @@
         }
     }
 
+    $: console.log("empty: ", messageIsEmpty);
+
     $: {
         if ($emojiStore !== undefined) {
             if (inp) {
                 restoreSelection();
                 document.execCommand("insertText", false, $emojiStore);
+                messageIsEmpty = false;
                 saveSelection();
                 emojiStore.set(undefined);
             }
