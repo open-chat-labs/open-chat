@@ -1,5 +1,5 @@
-import type { GroupMatch, GroupSearchResponse } from "../../domain/search/search";
 import { optional } from "../../utils/mapping";
+import type { GroupMatch, GroupSearchResponse } from "../../domain/search/search";
 import type { ApiGroupMatch, ApiSearchResponse } from "./candid/idl";
 
 export function groupSearchResponse(candid: ApiSearchResponse): GroupSearchResponse {
