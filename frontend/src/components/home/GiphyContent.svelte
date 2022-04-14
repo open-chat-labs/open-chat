@@ -11,6 +11,7 @@
     export let draft: boolean = false;
     export let reply: boolean = false;
     export let height: number | undefined = undefined;
+    export let intersecting: boolean = true;
 
     let withCaption = content.caption !== undefined && content.caption !== "";
     let image = $mobileWidth ? content.mobile : content.desktop;
@@ -18,7 +19,18 @@
 </script>
 
 <div class="img-wrapper">
-    {#if $mobileWidth}
+    {#if !intersecting}
+        <div
+            class="placeholder"
+            class:landscape
+            class:fill
+            class:withCaption
+            style={height === undefined ? undefined : `height: ${height}px`}
+            class:draft
+            title={content.caption ?? content.title}
+            class:reply
+            class:rtl={$rtlStore} />
+    {:else if $mobileWidth}
         <img
             class:landscape
             class:fill
@@ -58,6 +70,7 @@
         position: relative;
     }
 
+    .placeholder,
     img,
     video {
         width: 100%;

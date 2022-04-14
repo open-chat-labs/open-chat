@@ -11,6 +11,7 @@
     import CryptoContent from "./CryptoContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
+    import ImageObserver from "./ImageObserver.svelte";
     import type { MessageContent } from "../../domain/chat/chat";
     import { _ } from "svelte-i18n";
 
@@ -41,7 +42,9 @@
 {#if content.kind === "text_content"}
     <Markdown suppressLinks={pinned} text={truncateText(content.text)} />
 {:else if content.kind === "image_content"}
-    <ImageContent {fill} {content} {reply} {pinned} {height} />
+    <ImageObserver let:intersecting>
+        <ImageContent {intersecting} {fill} {content} {reply} {pinned} {height} />
+    </ImageObserver>
 {:else if content.kind === "video_content"}
     <VideoContent {fill} {content} {reply} {height} />
 {:else if content.kind === "audio_content"}
@@ -57,5 +60,7 @@
 {:else if content.kind === "poll_content"}
     <PollContent {preview} {me} {content} on:registerVote />
 {:else if content.kind === "giphy_content"}
-    <GiphyContent {fill} {content} {reply} {height} />
+    <ImageObserver let:intersecting>
+        <GiphyContent {intersecting} {fill} {content} {reply} {height} />
+    </ImageObserver>
 {/if}
