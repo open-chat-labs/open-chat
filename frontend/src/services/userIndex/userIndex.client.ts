@@ -33,7 +33,8 @@ import {
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
-import type { Database } from "../../utils/caching";
+import { cachingLocallyDisabled, Database } from "../../utils/caching";
+import { profile } from "../common/profiling";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userService: UserIndexService;
@@ -49,11 +50,12 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     static create(identity: Identity, db?: Database): IUserIndexClient {
-        return db && process.env.CLIENT_CACHING
+        return db && process.env.CLIENT_CACHING && !cachingLocallyDisabled()
             ? new CachingUserIndexClient(db, new UserIndexClient(identity))
             : new UserIndexClient(identity);
     }
 
+    @profile("userIndexClient")
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this.handleQueryResponse(
             () => this.userService.current_user({}),
@@ -61,6 +63,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
+    @profile("userIndexClient")
     createChallenge(): Promise<CreateChallengeResponse> {
         return this.handleQueryResponse(
             () => this.userService.create_challenge({}),
@@ -68,6 +71,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
+    @profile("userIndexClient")
     registerUser(
         username: string,
         challengeAttempt: ChallengeAttempt
@@ -81,6 +85,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
+    @profile("userIndexClient")
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
         const args = {
             search_term: searchTerm,
@@ -93,6 +98,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
+    @profile("userIndexClient")
     getUsers(users: UsersArgs): Promise<UsersResponse> {
         const userGroups = users.userGroups.filter((g) => g.users.length > 0);
 
@@ -111,6 +117,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         return this.handleQueryResponse(() => this.userService.users(args), usersResponse, args);
     }
 
+    @profile("userIndexClient")
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
         return this.handleResponse(
             this.userService.upgrade_storage({
@@ -120,10 +127,12 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
+    @profile("userIndexClient")
     resendRegistrationCode(): Promise<ResendCodeResponse> {
         return this.handleResponse(this.userService.resend_code({}), resendCodeResponse);
     }
 
+    @profile("userIndexClient")
     checkUsername(username: string): Promise<CheckUsernameResponse> {
         const args = {
             username: username,
@@ -135,6 +144,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
+    @profile("userIndexClient")
     setUsername(username: string): Promise<SetUsernameResponse> {
         return this.handleResponse(
             this.userService.set_username({
@@ -144,6 +154,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
+    @profile("userIndexClient")
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
         return this.handleResponse(
             this.userService.submit_phone_number({
@@ -156,6 +167,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
+    @profile("userIndexClient")
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
         return this.handleResponse(
             this.userService.confirm_phone_number({

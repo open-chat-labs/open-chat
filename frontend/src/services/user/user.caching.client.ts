@@ -44,6 +44,7 @@ import type {
     SearchAllMessagesResponse,
 } from "../../domain/search/search";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
+import { profile } from "../common/profiling";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -56,6 +57,7 @@ export class CachingUserClient implements IUserClient {
 
     constructor(private db: Promise<IDBPDatabase<ChatSchema>>, private client: IUserClient) {}
 
+    @profile("userCachingClient")
     async chatEventsByIndex(
         eventIndexes: number[],
         userId: string
@@ -73,6 +75,7 @@ export class CachingUserClient implements IUserClient {
         );
     }
 
+    @profile("userCachingClient")
     async chatEventsWindow(
         eventIndexRange: IndexRange,
         userId: string,
@@ -92,6 +95,7 @@ export class CachingUserClient implements IUserClient {
         );
     }
 
+    @profile("userCachingClient")
     async chatEvents(
         eventIndexRange: IndexRange,
         userId: string,
@@ -113,6 +117,7 @@ export class CachingUserClient implements IUserClient {
         );
     }
 
+    @profile("userCachingClient")
     async getInitialState(): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         // if we have cached chats we will rebuild the UpdateArgs from that cached data
@@ -132,6 +137,7 @@ export class CachingUserClient implements IUserClient {
         }
     }
 
+    @profile("userCachingClient")
     async getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs
@@ -149,6 +155,7 @@ export class CachingUserClient implements IUserClient {
         return this.client.editMessage(recipientId, message);
     }
 
+    @profile("userCachingClient")
     sendGroupICPTransfer(
         groupId: string,
         recipientId: string,
@@ -160,6 +167,7 @@ export class CachingUserClient implements IUserClient {
             .then(setCachedMessageFromSendResponse(this.db, groupId, message));
     }
 
+    @profile("userCachingClient")
     sendMessage(
         recipientId: string,
         sender: UserSummary,

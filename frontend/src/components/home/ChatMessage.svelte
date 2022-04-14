@@ -89,7 +89,7 @@
     $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
 
     afterUpdate(() => {
-        console.log("updating ChatMessage component");
+        // console.log("updating ChatMessage component");
 
         if (readByMe) {
             observer?.unobserve(msgElement);

@@ -62,7 +62,7 @@ import {
     MAX_MESSAGES,
     mergeChatUpdates,
 } from "../../domain/chat/chat.utils";
-import type { Database } from "../../utils/caching";
+import { cachingLocallyDisabled, Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
     apiCryptoContent,
@@ -84,6 +84,7 @@ import type { ToggleMuteNotificationResponse } from "../../domain/notifications"
 import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
 import { getChatEventsInLoop } from "../common/chatEvents";
+import { profile } from "../common/profiling";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -96,11 +97,12 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     static create(userId: string, identity: Identity, db?: Database): IUserClient {
-        return db && process.env.CLIENT_CACHING
+        return db && process.env.CLIENT_CACHING && !cachingLocallyDisabled()
             ? new CachingUserClient(db, new UserClient(identity, userId))
             : new UserClient(identity, userId);
     }
 
+    @profile("userClient")
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.handleResponse(
             this.userService.create_group({
@@ -121,6 +123,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     chatEventsByIndex(
         eventIndexes: number[],
         userId: string
@@ -136,6 +139,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     async chatEventsWindow(
         _eventIndexRange: IndexRange,
         userId: string,
@@ -150,6 +154,7 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(this.userService.events_window(args), getEventsResponse, args);
     }
 
+    @profile("userClient")
     chatEvents(
         eventIndexRange: IndexRange,
         userId: string,
@@ -175,6 +180,7 @@ export class UserClient extends CandidService implements IUserClient {
         return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending);
     }
 
+    @profile("userClient")
     async getInitialState(): Promise<MergedUpdatesResponse> {
         const resp = await this.handleQueryResponse(
             () => this.userService.initial_state({}),
@@ -191,6 +197,7 @@ export class UserClient extends CandidService implements IUserClient {
         };
     }
 
+    @profile("userClient")
     async getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs
@@ -237,6 +244,7 @@ export class UserClient extends CandidService implements IUserClient {
         };
     }
 
+    @profile("userClient")
     setAvatar(bytes: Uint8Array): Promise<BlobReference> {
         const blobId = DataClient.newBlobId();
         return this.handleResponse(
@@ -259,6 +267,7 @@ export class UserClient extends CandidService implements IUserClient {
         });
     }
 
+    @profile("userClient")
     editMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.userId, recipientId])
@@ -272,6 +281,7 @@ export class UserClient extends CandidService implements IUserClient {
             });
     }
 
+    @profile("userClient")
     sendMessage(
         recipientId: string,
         sender: UserSummary,
@@ -295,6 +305,7 @@ export class UserClient extends CandidService implements IUserClient {
             });
     }
 
+    @profile("userClient")
     sendGroupICPTransfer(
         groupId: string,
         recipientId: string,
@@ -323,6 +334,7 @@ export class UserClient extends CandidService implements IUserClient {
             });
     }
 
+    @profile("userClient")
     blockUser(userId: string): Promise<BlockUserResponse> {
         return this.handleResponse(
             this.userService.block_user({
@@ -332,6 +344,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     unblockUser(userId: string): Promise<UnblockUserResponse> {
         return this.handleResponse(
             this.userService.unblock_user({
@@ -341,6 +354,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
         return this.handleResponse(
             this.userService.leave_group({
@@ -350,6 +364,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     joinGroup(chatId: string): Promise<JoinGroupResponse> {
         return this.handleResponse(
             this.userService.join_group_v2({
@@ -360,6 +375,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
         return this.handleResponse(
             this.userService.mark_read({
@@ -375,6 +391,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     toggleReaction(
         otherUserId: string,
         messageId: bigint,
@@ -390,6 +407,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.userService.delete_messages({
@@ -400,6 +418,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
         const args = {
             search_term: searchTerm,
@@ -412,6 +431,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     searchDirectChat(
         userId: string,
         searchTerm: string,
@@ -429,6 +449,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     toggleMuteNotifications(
         chatId: string,
         muted: boolean
@@ -450,6 +471,7 @@ export class UserClient extends CandidService implements IUserClient {
         }
     }
 
+    @profile("userClient")
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
         const args = {
             count: 20,
@@ -461,6 +483,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     dismissRecommendation(chatId: string): Promise<void> {
         return this.handleResponse(
             this.userService.add_recommended_group_exclusions({
@@ -471,6 +494,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     getBio(): Promise<string> {
         return this.handleQueryResponse(
             () => this.userService.bio({}),
@@ -478,10 +502,12 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     setBio(bio: string): Promise<SetBioResponse> {
         return this.handleResponse(this.userService.set_bio({ text: bio }), setBioResponse);
     }
 
+    @profile("userClient")
     registerPollVote(
         otherUser: string,
         messageIdx: number,
@@ -499,6 +525,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
+    @profile("userClient")
     withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
         const req = {
             withdrawal: {

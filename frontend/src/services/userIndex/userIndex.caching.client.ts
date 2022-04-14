@@ -20,6 +20,7 @@ import type {
 } from "../../domain/user/user";
 import { groupBy } from "../../utils/list";
 import { isUserSummary } from "../../utils/user";
+import { profile } from "../common/profiling";
 
 /**
  * This exists to decorate the user index client so that we can provide a write through cache to
@@ -28,6 +29,7 @@ import { isUserSummary } from "../../utils/user";
 export class CachingUserIndexClient implements IUserIndexClient {
     constructor(private db: Promise<IDBPDatabase<ChatSchema>>, private client: IUserIndexClient) {}
 
+    @profile("userIndexCachingClient")
     async getUsers(users: UsersArgs): Promise<UsersResponse> {
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
