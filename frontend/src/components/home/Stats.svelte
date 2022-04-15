@@ -1,56 +1,48 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import { cubicOut } from "svelte/easing";
     import { tweened } from "svelte/motion";
     import { _ } from "svelte-i18n";
     import type { ChatMetrics } from "../../domain/chat/chat";
+    import { onMount } from "svelte";
 
     export let stats: ChatMetrics;
 
     let hoveredIndex: number | undefined;
     let rendered = false;
-    let textPerc = slice();
-    let imagePerc = slice();
-    let videoPerc = slice();
-    let audioPerc = slice();
-    let filePerc = slice();
-    let pollPerc = slice();
-    let icpPerc = slice();
-    let giphyPerc = slice();
 
-    onMount(() => {
-        const totalMessages =
-            stats.textMessages +
-            stats.imageMessages +
-            stats.videoMessages +
-            stats.audioMessages +
-            stats.fileMessages +
-            stats.polls +
-            stats.icpMessages +
-            stats.giphyMessages;
-
-        console.log("total messages: ", totalMessages);
-        textPerc.set((stats.textMessages / totalMessages) * 100);
-        imagePerc.set((stats.imageMessages / totalMessages) * 100);
-        videoPerc.set((stats.videoMessages / totalMessages) * 100);
-        audioPerc.set((stats.audioMessages / totalMessages) * 100);
-        filePerc.set((stats.fileMessages / totalMessages) * 100);
-        pollPerc.set((stats.polls / totalMessages) * 100);
-        icpPerc.set((stats.icpMessages / totalMessages) * 100);
-        giphyPerc.set((stats.giphyMessages / totalMessages) * 100);
-        window.setTimeout(() => (rendered = true), 600);
-    });
+    $: totalMessages =
+        stats.textMessages +
+        stats.imageMessages +
+        stats.videoMessages +
+        stats.audioMessages +
+        stats.fileMessages +
+        stats.polls +
+        stats.icpMessages +
+        stats.giphyMessages;
+    $: textPerc = slice(stats.textMessages);
+    $: imagePerc = slice(stats.imageMessages);
+    $: videoPerc = slice(stats.videoMessages);
+    $: audioPerc = slice(stats.audioMessages);
+    $: filePerc = slice(stats.fileMessages);
+    $: pollPerc = slice(stats.polls);
+    $: icpPerc = slice(stats.icpMessages);
+    $: giphyPerc = slice(stats.giphyMessages);
 
     function percToDegree(perc: number): number {
         return (perc / 100) * 360;
     }
 
-    function slice() {
+    onMount(() => {
+        setTimeout(() => (rendered = true), 600);
+    });
+
+    function slice(val: number) {
+        const perc = totalMessages > 0 ? (val / totalMessages) * 100 : 12.5;
         const tween = tweened(0, {
             duration: 600,
             easing: cubicOut,
         });
-        tween.set(12.5);
+        tween.set(perc);
         return tween;
     }
 
