@@ -1,6 +1,8 @@
 <script lang="ts">
     import { rtlStore } from "../stores/rtl";
     import { iconSize } from "../stores/iconSize";
+    import { slide } from "svelte/transition";
+    import { expoInOut } from "svelte/easing";
 
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { createEventDispatcher } from "svelte";
@@ -25,7 +27,7 @@
         </div>
     </div>
     {#if open}
-        <div class="body" class:open>
+        <div transition:slide|local={{ duration: 300, easing: expoInOut }} class="body" class:open>
             <slot />
         </div>
     {/if}

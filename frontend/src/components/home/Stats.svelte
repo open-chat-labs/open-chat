@@ -196,9 +196,9 @@
     $giphy-colour: hsl(calc(360 / 8 * 8), $saturation, $lightness);
 
     .stat {
-        @include font(book, italic, fs-110);
+        @include font(book, italic, fs-100);
         @include mobile() {
-            @include font-size(fs-100);
+            @include font-size(fs-90);
         }
     }
 
@@ -209,14 +209,14 @@
         flex-wrap: wrap;
         justify-content: center;
 
-        @include font(book, normal, fs-120);
+        @include font(book, normal, fs-110);
 
         @include mobile() {
-            @include font-size(fs-110);
+            @include font-size(fs-100);
         }
 
         .stat {
-            @include font-size(fs-140);
+            @include font-size(fs-120);
         }
     }
 
@@ -255,12 +255,12 @@
 
     .legend {
         padding: 0 $sp3;
-        margin-bottom: $sp3;
+        margin-bottom: $sp2;
         border-left-width: 6px;
         border-left-style: solid;
+        @include font-size(fs-80);
 
         @include mobile() {
-            @include font-size(fs-80);
             margin-bottom: $sp2;
         }
     }
