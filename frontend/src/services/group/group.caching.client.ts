@@ -89,19 +89,48 @@ export class CachingGroupClient implements IGroupClient {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<GroupChatEvent>> {
-        const cachedEvents = await getCachedEvents<GroupChatEvent>(
+        const [cachedEvents, missing] = await getCachedEvents<GroupChatEvent>(
             this.db,
             eventIndexRange,
             this.chatId,
             startIndex,
             ascending
         );
-        return (
-            cachedEvents ??
-            this.client
+
+        // we may or may not have all of the requested events
+        if (cachedEvents.events.length <= missing.length) {
+            // if we got back fewer events than we were missing then just defer to the api
+            console.log("We didn't get enough back from the cache, going to the api");
+            return this.client
                 .chatEvents(eventIndexRange, startIndex, ascending)
-                .then(setCachedEvents(this.db, this.chatId))
-        );
+                .then(setCachedEvents(this.db, this.chatId));
+        } else {
+            if (missing.length > 0) {
+                // if we got *some* back from the cache, let's just load the missing events by index
+                console.log(
+                    `We got ${cachedEvents.events.length} events from the cache, but we have ${missing.length} events to look up`
+                );
+                return this.client
+                    .chatEventsByIndex(missing)
+                    .then(setCachedEvents(this.db, this.chatId))
+                    .then((resp) => {
+                        // merge the missing events in with the ones we already got from the cache
+                        if (resp !== "events_failed") {
+                            return {
+                                events: [...cachedEvents.events, ...resp.events],
+                                affectedEvents: [
+                                    ...cachedEvents.affectedEvents,
+                                    ...resp.affectedEvents,
+                                ],
+                            };
+                        }
+                        return resp;
+                    });
+            } else {
+                // in this case we got everything from the cache and we are all good
+                return cachedEvents;
+            }
+        }
     }
 
     addParticipants(

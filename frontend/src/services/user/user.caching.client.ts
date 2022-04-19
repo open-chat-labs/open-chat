@@ -102,7 +102,7 @@ export class CachingUserClient implements IUserClient {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const cachedEvents = await getCachedEvents<DirectChatEvent>(
+        const [cachedEvents, _missing] = await getCachedEvents<DirectChatEvent>(
             this.db,
             eventIndexRange,
             userId,

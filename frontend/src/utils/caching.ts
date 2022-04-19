@@ -4,6 +4,7 @@ import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
     EventsResponse,
+    EventsSuccessResult,
     EventWrapper,
     GroupChatDetails,
     IndexRange,
@@ -19,6 +20,7 @@ import type { DirectNotification, GroupNotification } from "../domain/notificati
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
+import { missingUserIds } from "domain/user/user.utils";
 
 const CACHE_VERSION = 24;
 
@@ -349,16 +351,19 @@ async function aggregateEvents<T extends ChatEvent>(
     chatId: string,
     startIndex: number,
     ascending: boolean
-): Promise<[boolean, EventWrapper<T>[]]> {
+): Promise<[EventWrapper<T>[], number[]]> {
     let numMessages = 0;
     let currentIndex = startIndex;
     const events: EventWrapper<T>[] = [];
     const resolvedDb = await db;
+    const missing: number[] = [];
 
-    while (numMessages < MAX_MESSAGES) {
+    // keep iterating until we get "enough" messages or we go beyond the range of the chat or we get a full page of missing messages
+    // return all the events that we found and the indexes of any that we did not find
+    while (numMessages < MAX_MESSAGES && missing.length < MAX_MESSAGES) {
         // if we have exceeded the range of this chat then we have succeeded
         if ((currentIndex > max && ascending) || (currentIndex < min && !ascending)) {
-            return [true, events];
+            return [events, missing];
         }
 
         const key = createCacheKey(chatId, currentIndex);
@@ -371,7 +376,9 @@ async function aggregateEvents<T extends ChatEvent>(
         } else {
             console.log("Couldn't find key: ", key);
             // as soon as we draw a blank, bale out
-            break;
+            // break;
+            // let's continue aggregating events and just track the indexes that we couldn't find
+            missing.push(currentIndex);
         }
 
         if (ascending) {
@@ -381,7 +388,7 @@ async function aggregateEvents<T extends ChatEvent>(
         }
     }
 
-    return [numMessages >= MAX_MESSAGES, ascending ? events : events.reverse()];
+    return [ascending ? events : events.reverse(), missing];
 }
 
 export async function getCachedMessageByIndex<T extends ChatEvent>(
@@ -411,10 +418,10 @@ export async function getCachedEvents<T extends ChatEvent>(
     chatId: string,
     startIndex: number,
     ascending: boolean
-): Promise<EventsResponse<T> | undefined> {
+): Promise<[EventsSuccessResult<T>, number[]]> {
     console.log("cache: ", eventIndexRange, startIndex, ascending);
     const start = Date.now();
-    const [complete, events] = await aggregateEvents<T>(
+    const [events, missing] = await aggregateEvents<T>(
         db,
         eventIndexRange,
         chatId,
@@ -422,12 +429,16 @@ export async function getCachedEvents<T extends ChatEvent>(
         ascending
     );
 
-    if (complete) {
+    if (missing.length === 0) {
         console.log("cache hit: ", events.length, Date.now() - start);
+    } else {
+        console.log("cache miss: ", missing);
     }
 
+    return [{ events, affectedEvents: [] }, missing];
+
     // if we are retrieving completely from the cache, affectedEvents is always empty
-    return complete ? { events, affectedEvents: [] } : undefined;
+    // return missing.length === 0 ? { events, affectedEvents: [] } : undefined;
 }
 
 // we need to strip out the blobData promise from any media content because that cannot be serialised
