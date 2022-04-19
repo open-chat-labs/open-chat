@@ -7,6 +7,7 @@ use chat_events::GroupChatEvents;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::ops::Deref;
 use types::{
     Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, MessageIndex, Milliseconds,
     Notification, TimestampMillis, Timestamped, UserId, Version,
@@ -242,8 +243,5 @@ pub struct Metrics {
 }
 
 fn run_regular_jobs() {
-    mutate_state(|state| {
-        let now = state.env.now();
-        state.regular_jobs.run(now, &mut state.data)
-    });
+    mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
 }
