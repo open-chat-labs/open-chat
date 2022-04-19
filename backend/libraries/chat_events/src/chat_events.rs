@@ -128,6 +128,15 @@ impl ChatEvents {
         events
     }
 
+    pub fn recalculate_metrics(&mut self) {
+        self.metrics = ChatMetrics::default();
+        self.per_user_metrics = HashMap::default();
+
+        for EventWrapper { event, timestamp, .. } in self.events.iter() {
+            event.add_to_metrics(&mut self.metrics, *timestamp);
+        }
+    }
+
     pub fn get(&self, event_index: EventIndex) -> Option<&EventWrapper<ChatEventInternal>> {
         let index = self.get_index(event_index)?;
         self.events.get(index)
@@ -196,11 +205,7 @@ impl ChatEvents {
             self.latest_message_event_index = Some(event_index);
         }
 
-        event.add_to_metrics(&mut self.metrics, now);
-
-        if let Some(user_id) = event.triggered_by() {
-            event.add_to_metrics(self.per_user_metrics.entry(user_id).or_default(), now);
-        }
+        self.add_to_metrics(&event, now);
 
         self.events.push(EventWrapper {
             index: event_index,
@@ -795,6 +800,14 @@ impl ChatEvents {
         }
 
         None
+    }
+
+    fn add_to_metrics(&mut self, event: &ChatEventInternal, timestamp: TimestampMillis) {
+        event.add_to_metrics(&mut self.metrics, timestamp);
+
+        if let Some(user_id) = event.triggered_by() {
+            event.add_to_metrics(self.per_user_metrics.entry(user_id).or_default(), timestamp);
+        }
     }
 }
 
