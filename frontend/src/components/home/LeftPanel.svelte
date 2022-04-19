@@ -36,8 +36,6 @@
         .map((c) => c.myMetrics)
         .reduce(mergeChatMetrics, emptyChatMetrics());
 
-    $: console.log("Combined metrics: ", combinedMetrics);
-
     let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-chat-list";
 
     export function showProfile() {

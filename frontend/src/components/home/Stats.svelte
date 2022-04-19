@@ -33,7 +33,7 @@
     }
 
     onMount(() => {
-        setTimeout(() => (rendered = true), 600);
+        window.setTimeout(() => (rendered = true), 600);
     });
 
     function slice(val: number) {
