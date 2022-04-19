@@ -27,7 +27,7 @@
         </div>
     </div>
     {#if open}
-        <div transition:slide|local={{ duration: 300, easing: expoInOut }} class="body" class:open>
+        <div transition:slide|local={{ duration: 200, easing: expoInOut }} class="body" class:open>
             <slot />
         </div>
     {/if}
