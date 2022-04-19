@@ -134,6 +134,10 @@ impl ChatEvents {
 
         for EventWrapper { event, timestamp, .. } in self.events.iter() {
             event.add_to_metrics(&mut self.metrics, *timestamp);
+
+            if let Some(user_id) = event.triggered_by() {
+                event.add_to_metrics(self.per_user_metrics.entry(user_id).or_default(), *timestamp);
+            }
         }
     }
 
