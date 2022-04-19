@@ -44,8 +44,8 @@ fn update_cached_group_summaries(env: &dyn Environment, data: &mut Data) {
 }
 
 async fn update_cached_group_summaries_impl(args: UpdatesArgs) {
-    match crate::group_summaries::updates(args).await {
-        Ok(group_chat_details) if group_chat_details.upgrades_in_progress.is_empty() => {
+    if let Ok(group_chat_details) = crate::group_summaries::updates(args).await {
+        if !group_chat_details.added.is_empty() && group_chat_details.upgrades_in_progress.is_empty() {
             mutate_state(|state| {
                 let now = state.env.now();
                 state.data.cached_group_summaries = Some(CachedGroupSummaries {
@@ -54,6 +54,5 @@ async fn update_cached_group_summaries_impl(args: UpdatesArgs) {
                 });
             });
         }
-        _ => {}
     }
 }
