@@ -1,7 +1,8 @@
-use crate::Data;
+use crate::group_summaries::{build_args_using_cache, UpdatesArgs};
+use crate::{mutate_state, CachedGroupSummaries, Data};
 use utils::env::Environment;
 use utils::regular_jobs::{RegularJob, RegularJobs};
-use utils::time::MINUTE_IN_MS;
+use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
 pub(crate) fn build() -> RegularJobs<Data> {
     let check_cycles_balance = RegularJob::new("Check cycles balance", check_cycles_balance, MINUTE_IN_MS);
@@ -11,11 +12,14 @@ pub(crate) fn build() -> RegularJobs<Data> {
         5 * MINUTE_IN_MS,
     );
     let retry_deleting_files = RegularJob::new("Retry deleting files", retry_deleting_files, MINUTE_IN_MS);
+    let update_cached_group_summaries =
+        RegularJob::new("Update cached group summaries", update_cached_group_summaries, DAY_IN_MS);
 
     RegularJobs::new(vec![
         check_cycles_balance,
         aggregate_direct_chat_metrics,
         retry_deleting_files,
+        update_cached_group_summaries,
     ])
 }
 
@@ -31,4 +35,25 @@ fn aggregate_direct_chat_metrics(_: &dyn Environment, data: &mut Data) {
 
 fn retry_deleting_files(_: &dyn Environment, _: &mut Data) {
     open_storage_bucket_client::retry_failed();
+}
+
+fn update_cached_group_summaries(env: &dyn Environment, data: &mut Data) {
+    let updates_args = build_args_using_cache(env.now(), data);
+
+    ic_cdk::spawn(update_cached_group_summaries_impl(updates_args));
+}
+
+async fn update_cached_group_summaries_impl(args: UpdatesArgs) {
+    match crate::group_summaries::updates(args).await {
+        Ok(group_chat_details) if group_chat_details.upgrades_in_progress.is_empty() => {
+            mutate_state(|state| {
+                let now = state.env.now();
+                state.data.cached_group_summaries = Some(CachedGroupSummaries {
+                    groups: group_chat_details.added,
+                    timestamp: now,
+                });
+            });
+        }
+        _ => {}
+    }
 }

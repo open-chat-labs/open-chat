@@ -1,4 +1,5 @@
 use crate::model::alerts::Alerts;
+use crate::model::cached_group_summaries::CachedGroupSummaries;
 use crate::model::direct_chats::DirectChats;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::group_chats::GroupChats;
@@ -22,6 +23,7 @@ use utils::memory;
 use utils::rand::get_random_item;
 use utils::regular_jobs::RegularJobs;
 
+mod group_summaries;
 mod guards;
 mod lifecycle;
 mod model;
@@ -127,6 +129,7 @@ struct Data {
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
     pub bio: String,
+    pub cached_group_summaries: Option<CachedGroupSummaries>,
 }
 
 impl Data {
@@ -158,6 +161,7 @@ impl Data {
             is_super_admin: false,
             recommended_group_exclusions: RecommendedGroupExclusions::default(),
             bio: "".to_string(),
+            cached_group_summaries: None,
         }
     }
 

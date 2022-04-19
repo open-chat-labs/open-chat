@@ -1,6 +1,6 @@
 use crate::{
     ChatId, EventIndex, EventWrapper, GroupPermissions, Mention, Message, MessageIndex, MessageIndexRange, OptionUpdate, Role,
-    TimestampMillis, UserId, Version,
+    TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -144,7 +144,7 @@ pub struct PublicGroupSummary {
     pub owner_id: UserId,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummaryInternal {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
@@ -169,6 +169,52 @@ pub struct GroupChatSummaryInternal {
     pub metrics: ChatMetrics,
     #[serde(default)]
     pub my_metrics: ChatMetrics,
+}
+
+impl GroupChatSummaryInternal {
+    pub fn merge_updates(&mut self, updates: GroupChatSummaryUpdatesInternal) {
+        if self.chat_id != updates.chat_id {
+            panic!(
+                "Updates are not from the same chat. Original: {}. Updates: {}",
+                self.chat_id, updates.chat_id
+            );
+        }
+
+        self.last_updated = updates.last_updated;
+        Self::update_if_some(&mut self.name, updates.name);
+        Self::update_if_some(&mut self.description, updates.description);
+        Self::update_option_if_some(&mut self.latest_message, updates.latest_message);
+        Self::update_if_some(&mut self.latest_event_index, updates.latest_event_index);
+        Self::update_if_some(&mut self.participant_count, updates.participant_count);
+        Self::update_if_some(&mut self.role, updates.role);
+        Self::update_if_some(&mut self.wasm_version, updates.wasm_version);
+        Self::update_if_some(&mut self.owner_id, updates.owner_id);
+        Self::update_if_some(&mut self.permissions, updates.permissions);
+
+        match updates.avatar_id {
+            OptionUpdate::SetToSome(avatar_id) => self.avatar_id = Some(avatar_id),
+            OptionUpdate::SetToNone => self.avatar_id = None,
+            OptionUpdate::NoChange => {}
+        };
+
+        self.mentions.extend(updates.mentions);
+        let mentions_to_remove = self.mentions.len().saturating_sub(MAX_RETURNED_MENTIONS);
+        if mentions_to_remove > 0 {
+            self.mentions.drain(..mentions_to_remove);
+        }
+    }
+
+    fn update_if_some<T>(current: &mut T, update: Option<T>) {
+        if let Some(updated) = update {
+            *current = updated;
+        }
+    }
+
+    fn update_option_if_some<T>(current: &mut Option<T>, update: Option<T>) {
+        if let Some(updated) = update {
+            *current = Some(updated);
+        }
+    }
 }
 
 impl From<GroupChatSummaryInternal> for GroupChatSummary {
@@ -200,7 +246,7 @@ impl From<GroupChatSummaryInternal> for GroupChatSummary {
     }
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummaryUpdatesInternal {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
