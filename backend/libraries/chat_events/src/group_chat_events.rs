@@ -65,7 +65,7 @@ impl GroupChatEvents {
             ChatEventInternal::PermissionsChanged(p) => GroupChatEvent::PermissionsChanged(*p.clone()),
             ChatEventInternal::MessageUnpinned(u) => GroupChatEvent::MessageUnpinned(*u.clone()),
             ChatEventInternal::PollVoteRegistered(v) => {
-                GroupChatEvent::PollVoteRegistered(self.inner.hydrate_updated_message(v))
+                GroupChatEvent::PollVoteRegistered(self.inner.hydrate_poll_vote_registered(v))
             }
             ChatEventInternal::PollVoteDeleted(v) => GroupChatEvent::PollVoteDeleted(self.inner.hydrate_updated_message(v)),
             ChatEventInternal::PollEnded(m) => GroupChatEvent::PollEnded(self.inner.hydrate_poll_ended(**m)),

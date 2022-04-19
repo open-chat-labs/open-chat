@@ -292,15 +292,20 @@ impl ChatEvents {
         if let Some(message) = self.get_message_by_message_index_internal_mut(message_index) {
             if let MessageContentInternal::Poll(p) = &mut message.content {
                 return match p.register_vote(user_id, option_index, operation) {
-                    types::RegisterVoteResult::Success => {
+                    types::RegisterVoteResult::Success(existing_vote_removed) => {
                         message.last_updated = Some(now);
-                        let updated_message = Box::new(UpdatedMessageInternal {
-                            updated_by: user_id,
-                            message_id: message.message_id,
-                        });
                         let event = match operation {
-                            VoteOperation::RegisterVote => ChatEventInternal::PollVoteRegistered(updated_message),
-                            VoteOperation::DeleteVote => ChatEventInternal::PollVoteDeleted(updated_message),
+                            VoteOperation::RegisterVote => {
+                                ChatEventInternal::PollVoteRegistered(Box::new(PollVoteRegistered {
+                                    user_id,
+                                    message_id: message.message_id,
+                                    existing_vote_removed,
+                                }))
+                            }
+                            VoteOperation::DeleteVote => ChatEventInternal::PollVoteDeleted(Box::new(UpdatedMessageInternal {
+                                updated_by: user_id,
+                                message_id: message.message_id,
+                            })),
                         };
                         let votes = p.hydrate(Some(user_id)).votes;
                         self.push_event(event, now);
@@ -469,11 +474,18 @@ impl ChatEvents {
     pub fn hydrate_updated_message(&self, message: &UpdatedMessageInternal) -> UpdatedMessage {
         UpdatedMessage {
             updated_by: message.updated_by,
-            event_index: self
-                .message_id_map
-                .get(&message.message_id)
-                .map_or(EventIndex::default(), |e| *e),
+            event_index: self.get_event_index_by_message_id(message.message_id).unwrap_or_default(),
             message_id: message.message_id,
+        }
+    }
+
+    pub fn hydrate_poll_vote_registered(&self, poll_vote_registered: &PollVoteRegistered) -> UpdatedMessage {
+        UpdatedMessage {
+            updated_by: poll_vote_registered.user_id,
+            event_index: self
+                .get_event_index_by_message_id(poll_vote_registered.message_id)
+                .unwrap_or_default(),
+            message_id: poll_vote_registered.message_id,
         }
     }
 
