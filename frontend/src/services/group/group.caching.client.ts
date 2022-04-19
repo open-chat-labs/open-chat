@@ -160,13 +160,17 @@ export class CachingGroupClient implements IGroupClient {
     }
 
     @profile("groupCachingClient")
-    async getGroupDetails(): Promise<GroupChatDetailsResponse> {
+    async getGroupDetails(latestEventIndex: number): Promise<GroupChatDetailsResponse> {
         const fromCache = await getCachedGroupDetails(this.db, this.chatId);
         if (fromCache !== undefined) {
-            return this.getGroupDetailsUpdates(fromCache);
+            if (fromCache.latestEventIndex >= latestEventIndex) {
+                return fromCache;
+            } else {
+                return this.getGroupDetailsUpdates(fromCache);
+            }
         }
 
-        const response = await this.client.getGroupDetails();
+        const response = await this.client.getGroupDetails(latestEventIndex);
         if (response !== "caller_not_in_group") {
             await setCachedGroupDetails(this.db, this.chatId, response);
         }

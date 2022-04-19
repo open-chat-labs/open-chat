@@ -15,6 +15,7 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::ops::Deref;
 use types::{Avatar, CanisterId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
@@ -195,8 +196,5 @@ pub struct Metrics {
 }
 
 fn run_regular_jobs() {
-    mutate_state(|state| {
-        let now = state.env.now();
-        state.regular_jobs.run(now, &mut state.data);
-    });
+    mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
 }

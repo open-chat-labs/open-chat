@@ -68,6 +68,12 @@ impl DirectChats {
         message_event
     }
 
+    pub fn recalculate_metrics(&mut self) {
+        for chat in self.direct_chats.values_mut() {
+            chat.events.recalculate_metrics();
+        }
+    }
+
     pub fn aggregate_metrics(&mut self) {
         let mut metrics = ChatMetrics::default();
 

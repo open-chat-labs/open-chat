@@ -708,8 +708,8 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.userClient.toggleMuteNotifications(chatId, muted);
     }
 
-    getGroupDetails(chatId: string): Promise<GroupChatDetailsResponse> {
-        return this.getGroupClient(chatId).getGroupDetails();
+    getGroupDetails(chatId: string, latestEventIndex: number): Promise<GroupChatDetailsResponse> {
+        return this.getGroupClient(chatId).getGroupDetails(latestEventIndex);
     }
 
     async getGroupDetailsUpdates(

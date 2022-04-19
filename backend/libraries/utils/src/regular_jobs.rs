@@ -1,3 +1,5 @@
+use crate::env::Environment;
+use tracing::info;
 use types::{Milliseconds, TimestampMillis};
 
 #[derive(Default)]
@@ -10,11 +12,12 @@ impl<Data> RegularJobs<Data> {
         RegularJobs { jobs }
     }
 
-    pub fn run(&mut self, now: TimestampMillis, data: &mut Data) -> Vec<String> {
+    pub fn run(&mut self, env: &dyn Environment, data: &mut Data) -> Vec<&'static str> {
         let mut jobs_run = Vec::new();
         for job in self.jobs.iter_mut() {
-            if job.try_run(now, data) {
-                jobs_run.push(job.name.clone());
+            if job.try_run(env, data) {
+                info!(job.name, "Regular job executed");
+                jobs_run.push(job.name);
             }
         }
         jobs_run
@@ -22,14 +25,14 @@ impl<Data> RegularJobs<Data> {
 }
 
 pub struct RegularJob<Data> {
-    name: String,
-    action: fn(&mut Data),
+    name: &'static str,
+    action: fn(&dyn Environment, &mut Data),
     min_interval: Milliseconds,
     last_run: TimestampMillis,
 }
 
 impl<Data> RegularJob<Data> {
-    pub fn new(name: String, action: fn(&mut Data), min_interval: Milliseconds) -> RegularJob<Data> {
+    pub fn new(name: &'static str, action: fn(&dyn Environment, &mut Data), min_interval: Milliseconds) -> RegularJob<Data> {
         RegularJob {
             name,
             action,
@@ -38,10 +41,11 @@ impl<Data> RegularJob<Data> {
         }
     }
 
-    pub fn try_run(&mut self, now: TimestampMillis, data: &mut Data) -> bool {
+    pub fn try_run(&mut self, env: &dyn Environment, data: &mut Data) -> bool {
+        let now = env.now();
         if now > self.next_due() {
             self.last_run = now;
-            (self.action)(data);
+            (self.action)(env, data);
             true
         } else {
             false
