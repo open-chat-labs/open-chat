@@ -455,5 +455,21 @@
     "backToResults": "zurück",
     "giphyMessage": "Giphy-Nachricht",
     "share": "Teilen",
-    "fontSize": "Schriftgröße"
+    "fontSize": "Schriftgröße",
+    "stats": {
+        "userStats": "Benutzerstatistiken",
+        "groupStats": "Gruppenstatistik",
+        "textMessages": "Textnachrichten",
+        "imageMessages": "Bildbotschaften",
+        "videoMessages": "Videobotschaften",
+        "audioMessages": "Audio-Nachrichten",
+        "fileMessages": "Datei Nachrichten",
+        "pollMessages": "Nachrichten abfragen",
+        "icpTransfers": "IPC-Übertragungen",
+        "giphyMessages": "giphy-Nachrichten",
+        "pollVotes": "Umfrage Stimmen",
+        "replies": "antwortet",
+        "reactions": "Reaktionen",
+        "deletedMessages": "gelöschte Nachrichten"
+    }
 }

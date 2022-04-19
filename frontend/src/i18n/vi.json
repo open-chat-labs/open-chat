@@ -456,5 +456,21 @@
     "backToResults": "trở lại",
     "giphyMessage": "Tin nhắn Giphy",
     "share": "Đăng lại",
-    "fontSize": "Cỡ chữ"
+    "fontSize": "Cỡ chữ",
+    "stats": {
+        "userStats": "Số liệu thống kê về người dùng",
+        "groupStats": "Thống kê nhóm",
+        "textMessages": "tin nhắn",
+        "imageMessages": "tin nhắn hình ảnh",
+        "videoMessages": "tin nhắn video",
+        "audioMessages": "tin nhắn âm thanh",
+        "fileMessages": "gửi tin nhắn",
+        "pollMessages": "thông báo thăm dò ý kiến",
+        "icpTransfers": "Chuyển IPC",
+        "giphyMessages": "tin nhắn giphy",
+        "pollVotes": "phiếu thăm dò ý kiến",
+        "replies": "trả lời",
+        "reactions": "phản ứng",
+        "deletedMessages": "tin nhắn đã xóa"
+    }
 }
