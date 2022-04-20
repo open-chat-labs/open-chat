@@ -66,6 +66,7 @@ import type {
     ApiGiphyImageVariant,
 } from "../user/candid/idl";
 import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
+import { emptyChatMetrics } from "../../domain/chat/chat.utils";
 
 export function message(candid: ApiMessage): Message {
     return {
@@ -784,6 +785,8 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
             sendMessages: "owner",
             reactToMessages: "owner",
         },
+        metrics: emptyChatMetrics(),
+        myMetrics: emptyChatMetrics(),
     };
 }
 

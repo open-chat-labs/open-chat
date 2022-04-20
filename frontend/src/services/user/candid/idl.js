@@ -320,6 +320,24 @@ export const idlFactory = ({ IDL }) => {
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
   });
+  const ChatMetrics = IDL.Record({
+    'audio_messages' : IDL.Nat64,
+    'cycles_messages' : IDL.Nat64,
+    'edits' : IDL.Nat64,
+    'icp_messages' : IDL.Nat64,
+    'last_active' : TimestampMillis,
+    'giphy_messages' : IDL.Nat64,
+    'deleted_messages' : IDL.Nat64,
+    'file_messages' : IDL.Nat64,
+    'poll_votes' : IDL.Nat64,
+    'text_messages' : IDL.Nat64,
+    'image_messages' : IDL.Nat64,
+    'replies' : IDL.Nat64,
+    'video_messages' : IDL.Nat64,
+    'polls' : IDL.Nat64,
+    'total_events' : IDL.Nat64,
+    'reactions' : IDL.Nat64,
+  });
   const FallbackRole = IDL.Variant({
     'Participant' : IDL.Null,
     'Admin' : IDL.Null,
@@ -348,6 +366,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : GroupPermissions,
+    'metrics' : ChatMetrics,
     'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
     'role' : Role,
@@ -365,15 +384,18 @@ export const idlFactory = ({ IDL }) => {
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
     'participant_count' : IDL.Nat32,
+    'my_metrics' : ChatMetrics,
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const DirectChatSummary = IDL.Record({
     'date_created' : TimestampMillis,
+    'metrics' : ChatMetrics,
     'them' : UserId,
     'notifications_muted' : IDL.Bool,
     'read_by_me' : IDL.Vec(MessageIndexRange),
     'latest_event_index' : EventIndex,
     'read_by_them' : IDL.Vec(MessageIndexRange),
+    'my_metrics' : ChatMetrics,
     'latest_message' : MessageEventWrapper,
   });
   const ChatSummary = IDL.Variant({
@@ -773,6 +795,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupChatSummaryUpdates = IDL.Record({
     'permissions' : IDL.Opt(GroupPermissions),
+    'metrics' : IDL.Opt(ChatMetrics),
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
     'wasm_version' : IDL.Opt(Version),
@@ -788,15 +811,18 @@ export const idlFactory = ({ IDL }) => {
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
     'participant_count' : IDL.Opt(IDL.Nat32),
+    'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const DirectChatSummaryUpdates = IDL.Record({
+    'metrics' : IDL.Opt(ChatMetrics),
     'affected_events' : IDL.Vec(EventIndex),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
     'read_by_them' : IDL.Opt(IDL.Vec(MessageIndexRange)),
+    'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const ChatSummaryUpdates = IDL.Variant({

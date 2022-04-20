@@ -456,5 +456,21 @@
     "backToResults": "espalda",
     "giphyMessage": "mensaje giphy",
     "share": "Cuota",
-    "fontSize": "Tamaño de fuente"
+    "fontSize": "Tamaño de fuente",
+    "stats": {
+        "userStats": "Estadísticas de usuario",
+        "groupStats": "Estadísticas del grupo",
+        "textMessages": "mensajes de texto",
+        "imageMessages": "mensajes de imagen",
+        "videoMessages": "mensajes de video",
+        "audioMessages": "mensajes de audio",
+        "fileMessages": "mensajes de archivo",
+        "pollMessages": "mensajes de encuesta",
+        "icpTransfers": "Transferencias de CIP",
+        "giphyMessages": "mensajes giphy",
+        "pollVotes": "Votos electorales",
+        "replies": "respuestas",
+        "reactions": "reacciones",
+        "deletedMessages": "Mensajes eliminados"
+    }
 }

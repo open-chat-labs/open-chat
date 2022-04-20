@@ -4,6 +4,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import Avatar from "../../Avatar.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
+    import Stats from "../Stats.svelte";
     import { AvatarSize } from "../../../domain/user/user";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -23,6 +24,12 @@
     import Legend from "../../Legend.svelte";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
     import Markdown from "../Markdown.svelte";
+    import {
+        groupInfoOpen,
+        groupPermissionsOpen,
+        groupStatsOpen,
+        groupVisibilityOpen,
+    } from "stores/settings";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -38,9 +45,6 @@
     let showConfirmation = false;
     let confirmed = false;
     let saving = false;
-    let groupInfoOpen = true;
-    let visibilityOpen = true;
-    let permissionsOpen = false;
     let viewProfile = false;
     let myGroup = controller.user.userId === originalGroup.ownerId;
 
@@ -148,7 +152,10 @@
 
 <form class="group-form" on:submit|preventDefault={updateGroup}>
     <div class="form-fields">
-        <CollapsibleCard open={groupInfoOpen} headerText={$_("group.groupInfo")}>
+        <CollapsibleCard
+            on:toggle={groupInfoOpen.toggle}
+            open={$groupInfoOpen}
+            headerText={$_("group.groupInfo")}>
             <div class="sub-section photo">
                 {#if canEdit}
                     <EditableAvatar
@@ -201,7 +208,10 @@
                 </fieldset>
             {/if}
         </CollapsibleCard>
-        <CollapsibleCard open={visibilityOpen} headerText={$_("group.visibility")}>
+        <CollapsibleCard
+            on:toggle={groupVisibilityOpen.toggle}
+            open={$groupVisibilityOpen}
+            headerText={$_("group.visibility")}>
             {#if originalGroup.public}
                 <h4>{$_("group.publicGroup")}</h4>
             {:else}
@@ -217,7 +227,10 @@
                 {/if}
             </div>
         </CollapsibleCard>
-        <CollapsibleCard open={permissionsOpen} headerText={$_("group.permissions.permissions")}>
+        <CollapsibleCard
+            on:toggle={groupPermissionsOpen.toggle}
+            open={$groupPermissionsOpen}
+            headerText={$_("group.permissions.permissions")}>
             {#if canEditPermissions}
                 <GroupPermissionsEditor
                     bind:permissions={updatedGroup.permissions}
@@ -227,6 +240,12 @@
                     bind:permissions={updatedGroup.permissions}
                     isPublic={originalGroup.public} />
             {/if}
+        </CollapsibleCard>
+        <CollapsibleCard
+            on:toggle={groupStatsOpen.toggle}
+            open={$groupStatsOpen}
+            headerText={$_("stats.groupStats")}>
+            <Stats stats={originalGroup.metrics} />
         </CollapsibleCard>
     </div>
 </form>

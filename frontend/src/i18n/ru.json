@@ -455,5 +455,21 @@
     "backToResults": "назад",
     "giphyMessage": "сообщение",
     "share": "Делиться",
-    "fontSize": "Размер шрифта"
+    "fontSize": "Размер шрифта",
+    "stats": {
+        "userStats": "Статистика пользователя",
+        "groupStats": "Статистика группы",
+        "textMessages": "текстовые сообщения",
+        "imageMessages": "графические сообщения",
+        "videoMessages": "видео сообщения",
+        "audioMessages": "звуковые сообщения",
+        "fileMessages": "файловые сообщения",
+        "pollMessages": "сообщения опроса",
+        "icpTransfers": "IPC переводы",
+        "giphyMessages": "сообщения",
+        "pollVotes": "голосование",
+        "replies": "ответы",
+        "reactions": "реакции",
+        "deletedMessages": "удаленные сообщения"
+    }
 }

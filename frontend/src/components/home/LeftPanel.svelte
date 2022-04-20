@@ -12,7 +12,8 @@
     import { userStore } from "../../stores/user";
     import { nullUser } from "../../domain/user/user.utils";
     import { unsubscribeNotifications } from "../../utils/notifications";
-    import type { GroupChatSummary } from "domain/chat/chat";
+    import type { GroupChatSummary } from "../../domain/chat/chat";
+    import { emptyChatMetrics, mergeChatMetrics } from "../../domain/chat/chat.utils";
 
     export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -28,6 +29,12 @@
     $: currentUser = controller.user;
     $: userId = controller.user!.userId;
     $: user = controller.user ? $userStore[controller.user?.userId] : nullUser("unknown");
+
+    $: chats = controller.chatSummariesList;
+
+    $: combinedMetrics = $chats
+        .map((c) => c.myMetrics)
+        .reduce(mergeChatMetrics, emptyChatMetrics());
 
     let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-chat-list";
 
@@ -86,6 +93,7 @@
             on:upgrade
             on:showFaqQuestion
             {user}
+            metrics={combinedMetrics}
             on:userAvatarSelected={userAvatarSelected}
             on:closeProfile={() => (view = "showing-chat-list")} />
     </div>

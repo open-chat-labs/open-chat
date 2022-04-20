@@ -455,5 +455,21 @@
     "backToResults": "背部",
     "giphyMessage": "Giphy 消息",
     "share": "分享",
-    "fontSize": "字体大小"
+    "fontSize": "字体大小",
+    "stats": {
+        "userStats": "用户统计",
+        "groupStats": "组统计",
+        "textMessages": "短信",
+        "imageMessages": "图像信息",
+        "videoMessages": "视频信息",
+        "audioMessages": "语音信息",
+        "fileMessages": "文件消息",
+        "pollMessages": "投票消息",
+        "icpTransfers": "IPC 传输",
+        "giphyMessages": "giphy消息",
+        "pollVotes": "投票",
+        "replies": "回复",
+        "reactions": "反应",
+        "deletedMessages": "已删除的消息"
+    }
 }

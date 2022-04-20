@@ -17,6 +17,7 @@
     import FontSize from "./FontSize.svelte";
     import { notificationStatus } from "../../../stores/notifications";
     import { formatICP } from "../../../utils/cryptoFormatter";
+    import Stats from "../Stats.svelte";
     import {
         askForNotificationPermission,
         supported as notificationsSupported,
@@ -29,12 +30,13 @@
         chatsSectionOpen,
         enterSend,
         scrollStrategy,
+        statsSectionOpen,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "./Toggle.svelte";
     import { setLocale, supportedLanguages } from "i18n/i18n";
-    import type { ScrollStrategy } from "../../../domain/chat/chat";
+    import type { ChatMetrics, ScrollStrategy } from "../../../domain/chat/chat";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
     import { userStore } from "../../../stores/user";
@@ -52,6 +54,7 @@
     const MAX_BIO_LENGTH = 2000;
 
     export let user: PartialUserSummary;
+    export let metrics: ChatMetrics;
 
     let originalBio = "";
     let userbio = "";
@@ -362,6 +365,15 @@
             </div>
         </CollapsibleCard>
     </div>
+
+    <div class="stats">
+        <CollapsibleCard
+            on:toggle={statsSectionOpen.toggle}
+            open={$statsSectionOpen}
+            headerText={$_("stats.userStats")}>
+            <Stats stats={metrics} />
+        </CollapsibleCard>
+    </div>
 </form>
 
 <style type="text/scss">
@@ -411,6 +423,7 @@
     .user,
     .chats,
     .account,
+    .stats,
     .appearance {
         margin-bottom: $sp3;
         border-bottom: var(--profile-section-bd);

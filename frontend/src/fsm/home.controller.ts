@@ -14,6 +14,7 @@ import type {
 } from "../domain/chat/chat";
 import {
     compareChats,
+    emptyChatMetrics,
     getContentAsText,
     getMinVisibleMessageIndex,
     mergeUnconfirmedIntoSummary,
@@ -437,6 +438,8 @@ export class HomeController {
                 latestEventIndex: 0,
                 dateCreated: BigInt(Date.now()),
                 notificationsMuted: false,
+                metrics: emptyChatMetrics(),
+                myMetrics: emptyChatMetrics(),
             };
             return chatSummaries;
         });

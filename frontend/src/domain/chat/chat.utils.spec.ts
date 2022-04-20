@@ -12,13 +12,21 @@ import type {
 } from "./chat";
 import {
     addVoteToPoll,
+    emptyChatMetrics,
     enoughVisibleMessages,
     getParticipantsString,
     indexIsInRanges,
+    mergeChatMetrics,
     mergeChatUpdates,
     newMessageId,
     rangesAreEqual,
 } from "./chat.utils";
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
+BigInt.prototype.toJSON = function () {
+    return this.toString();
+};
 
 const defaultDirectChat: DirectChatSummary = {
     kind: "direct_chat",
@@ -45,6 +53,8 @@ const defaultDirectChat: DirectChatSummary = {
     latestEventIndex: 0,
     dateCreated: BigInt(0),
     notificationsMuted: false,
+    metrics: emptyChatMetrics(),
+    myMetrics: emptyChatMetrics(),
 };
 
 const defaultGroupChat: GroupChatSummary = {
@@ -78,6 +88,8 @@ const defaultGroupChat: GroupChatSummary = {
         sendMessages: "members",
         reactToMessages: "members",
     },
+    metrics: emptyChatMetrics(),
+    myMetrics: emptyChatMetrics(),
 };
 
 function directChatId(id: number): DirectChatSummary {
@@ -103,6 +115,34 @@ function createUser(userId: string, username: string, seconds: number): PartialU
         updated: BigInt(0),
     };
 }
+
+describe("merging metrics", () => {
+    test("merging with empty leaves unchanged", () => {
+        const metrics = {
+            ...emptyChatMetrics(),
+            audioMessages: 10,
+            cyclesMessages: 20,
+            edits: 30,
+            icpMessages: 40,
+        };
+        expect(mergeChatMetrics(metrics, emptyChatMetrics())).toMatchObject(metrics);
+    });
+    test("merging non-empty adds values", () => {
+        const metrics = {
+            ...emptyChatMetrics(),
+            audioMessages: 10,
+            cyclesMessages: 20,
+            edits: 30,
+            icpMessages: 40,
+        };
+        expect(mergeChatMetrics(metrics, metrics)).toMatchObject({
+            audioMessages: 20,
+            cyclesMessages: 40,
+            edits: 60,
+            icpMessages: 80,
+        });
+    });
+});
 
 describe("updating poll votes", () => {
     const config: PollConfig = {
@@ -151,54 +191,82 @@ describe("updating poll votes", () => {
 
     const poll: PollContent = { kind: "poll_content", votes: anonVotes, config, ended: false };
 
+    function clonePoll(poll: PollContent): PollContent {
+        return JSON.parse(JSON.stringify(poll));
+    }
+
     describe("adding a vote", () => {
         describe("when multiple votes are allowed", () => {
             test("when I have already voted", () => {
-                const updated = addVoteToPoll("abcdef", 0, poll);
+                const updated = addVoteToPoll("abcdef", 0, clonePoll(poll));
                 expect(updated).toEqual(anonVotes);
             });
             test("when votes are anonymous", () => {
-                const updated = addVoteToPoll("abcdef", 1, poll);
+                const updated = addVoteToPoll("abcdef", 1, clonePoll(poll));
                 expect(updated.user).toEqual([0, 1]);
                 expect(updated.total.votes).toEqual({ 0: 1, 1: 1, 2: 10 });
             });
             test("when votes are hidden", () => {
-                const updated = addVoteToPoll("abcdef", 1, { ...poll, votes: hiddenVotes });
+                const updated = addVoteToPoll(
+                    "abcdef",
+                    1,
+                    clonePoll({ ...poll, votes: hiddenVotes })
+                );
                 expect(updated.user).toEqual([0, 1]);
                 expect(updated.total.votes).toEqual(4);
             });
             test("when votes are visible", () => {
-                const updated = addVoteToPoll("abcdef", 1, { ...poll, votes: visibleVotes });
+                const updated = addVoteToPoll(
+                    "abcdef",
+                    1,
+                    clonePoll({ ...poll, votes: visibleVotes })
+                );
                 expect(updated.user).toEqual([0, 1]);
                 expect(updated.total.votes).toEqual({ 0: ["abcdef"], 1: ["abcdef"] });
             });
         });
         describe("when only one vote is allowed", () => {
-            describe.only("when user has previously voted", () => {
+            describe("when user has previously voted", () => {
                 test("when I have already voted", () => {
-                    const updated = addVoteToPoll("abcdef", 0, { ...poll, config: singleVote });
+                    const updated = addVoteToPoll(
+                        "abcdef",
+                        0,
+                        clonePoll({ ...poll, config: singleVote })
+                    );
                     expect(updated).toEqual(anonVotes);
                 });
                 test("when votes are anonymous", () => {
-                    const updated = addVoteToPoll("abcdef", 1, { ...poll, config: singleVote });
+                    const updated = addVoteToPoll(
+                        "abcdef",
+                        1,
+                        clonePoll({ ...poll, config: singleVote })
+                    );
                     expect(updated.user).toEqual([1]);
                     expect(updated.total.votes).toEqual({ 0: 0, 1: 1, 2: 10 });
                 });
                 test("when votes are hidden", () => {
-                    const updated = addVoteToPoll("abcdef", 1, {
-                        ...poll,
-                        config: singleVote,
-                        votes: hiddenVotes,
-                    });
+                    const updated = addVoteToPoll(
+                        "abcdef",
+                        1,
+                        clonePoll({
+                            ...poll,
+                            config: singleVote,
+                            votes: hiddenVotes,
+                        })
+                    );
                     expect(updated.user).toEqual([1]);
                     expect(updated.total.votes).toEqual(3);
                 });
                 test("when votes are visible", () => {
-                    const updated = addVoteToPoll("abcdef", 1, {
-                        ...poll,
-                        config: singleVote,
-                        votes: visibleVotes,
-                    });
+                    const updated = addVoteToPoll(
+                        "abcdef",
+                        1,
+                        clonePoll({
+                            ...poll,
+                            config: singleVote,
+                            votes: visibleVotes,
+                        })
+                    );
                     expect(updated.user).toEqual([1]);
                     expect(updated.total.votes).toEqual({ 0: [], 1: ["abcdef"] });
                 });
@@ -206,29 +274,41 @@ describe("updating poll votes", () => {
 
             describe("when user has not previously voted", () => {
                 test("when votes are anonymous", () => {
-                    const updated = addVoteToPoll("abcdef", 1, {
-                        ...poll,
-                        votes: anonVotesNoPrev,
-                        config: singleVote,
-                    });
+                    const updated = addVoteToPoll(
+                        "abcdef",
+                        1,
+                        clonePoll({
+                            ...poll,
+                            votes: anonVotesNoPrev,
+                            config: singleVote,
+                        })
+                    );
                     expect(updated.user).toEqual([1]);
                     expect(updated.total.votes).toEqual({ 0: 1, 1: 1, 2: 10 });
                 });
                 test("when votes are hidden", () => {
-                    const updated = addVoteToPoll("abcdef", 1, {
-                        ...poll,
-                        config: singleVote,
-                        votes: hiddenVotesNoPrev,
-                    });
+                    const updated = addVoteToPoll(
+                        "abcdef",
+                        1,
+                        clonePoll({
+                            ...poll,
+                            config: singleVote,
+                            votes: hiddenVotesNoPrev,
+                        })
+                    );
                     expect(updated.user).toEqual([1]);
                     expect(updated.total.votes).toEqual(4);
                 });
                 test("when votes are visible", () => {
-                    const updated = addVoteToPoll("abcdef", 1, {
-                        ...poll,
-                        config: singleVote,
-                        votes: visibleVotesNoPrev,
-                    });
+                    const updated = addVoteToPoll(
+                        "abcdef",
+                        1,
+                        clonePoll({
+                            ...poll,
+                            config: singleVote,
+                            votes: visibleVotesNoPrev,
+                        })
+                    );
                     expect(updated.user).toEqual([1]);
                     expect(updated.total.votes).toEqual({ 0: ["123456"], 1: ["abcdef"] });
                 });
@@ -359,6 +439,8 @@ describe("merging updates", () => {
                 timestamp: BigInt(400),
             },
             affectedEvents: [],
+            metrics: emptyChatMetrics(),
+            myMetrics: emptyChatMetrics(),
         };
 
         const updatedGroup: GroupChatSummaryUpdates = {
@@ -388,6 +470,8 @@ describe("merging updates", () => {
             description: "stuff",
             mentions: [],
             affectedEvents: [],
+            metrics: emptyChatMetrics(),
+            myMetrics: emptyChatMetrics(),
         };
 
         test("attempting to update with a mismatched kind throws error", () => {

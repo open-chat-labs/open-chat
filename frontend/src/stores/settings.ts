@@ -19,6 +19,12 @@ export const enterSend = createLsBoolStore("openchat_entersend", !isTouchDevice)
 export const appearanceSectionOpen = createLsBoolStore("openchat_appearance_section", false);
 export const chatsSectionOpen = createLsBoolStore("openchat_chats_section", false);
 export const accountSectionOpen = createLsBoolStore("openchat_account_section", false);
+export const statsSectionOpen = createLsBoolStore("openchat_user_stats_section", false);
+
+export const groupInfoOpen = createLsBoolStore("openchat_group_info_section", true);
+export const groupVisibilityOpen = createLsBoolStore("openchat_group_visibility_section", true);
+export const groupPermissionsOpen = createLsBoolStore("openchat_group_permission_section", false);
+export const groupStatsOpen = createLsBoolStore("openchat_group_stats_section", false);
 
 function createLsBoolStore(key: string, def: boolean) {
     const store = writable<boolean>(boolFromLS(key, def));

@@ -1,6 +1,8 @@
 <script lang="ts">
     import { rtlStore } from "../stores/rtl";
     import { iconSize } from "../stores/iconSize";
+    import { slide } from "svelte/transition";
+    import { expoInOut } from "svelte/easing";
 
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { createEventDispatcher } from "svelte";
@@ -21,11 +23,11 @@
     <div class="header" class:open on:click={toggle}>
         <h4>{headerText}</h4>
         <div class="arrow" class:rtl={$rtlStore} class:open>
-            <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
+            <ChevronDown viewBox="0 -3 24 24" size={$iconSize} color={"var(--icon-txt)"} />
         </div>
     </div>
     {#if open}
-        <div class="body" class:open>
+        <div transition:slide|local={{ duration: 200, easing: expoInOut }} class="body" class:open>
             <slot />
         </div>
     {/if}

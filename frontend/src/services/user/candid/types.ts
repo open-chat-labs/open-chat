@@ -72,6 +72,24 @@ export interface ChatMessagesRead {
   'message_ranges' : Array<MessageIndexRange>,
   'chat_id' : ChatId,
 }
+export interface ChatMetrics {
+  'audio_messages' : bigint,
+  'cycles_messages' : bigint,
+  'edits' : bigint,
+  'icp_messages' : bigint,
+  'last_active' : TimestampMillis,
+  'giphy_messages' : bigint,
+  'deleted_messages' : bigint,
+  'file_messages' : bigint,
+  'poll_votes' : bigint,
+  'text_messages' : bigint,
+  'image_messages' : bigint,
+  'replies' : bigint,
+  'video_messages' : bigint,
+  'polls' : bigint,
+  'total_events' : bigint,
+  'reactions' : bigint,
+}
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
@@ -200,20 +218,24 @@ export interface DirectChatEventWrapper {
 }
 export interface DirectChatSummary {
   'date_created' : TimestampMillis,
+  'metrics' : ChatMetrics,
   'them' : UserId,
   'notifications_muted' : boolean,
   'read_by_me' : Array<MessageIndexRange>,
   'latest_event_index' : EventIndex,
   'read_by_them' : Array<MessageIndexRange>,
+  'my_metrics' : ChatMetrics,
   'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
+  'metrics' : [] | [ChatMetrics],
   'affected_events' : Array<EventIndex>,
   'notifications_muted' : [] | [boolean],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
   'read_by_them' : [] | [Array<MessageIndexRange>],
+  'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface DirectMessageNotification {
@@ -356,6 +378,7 @@ export interface GroupChatEventWrapper {
 export interface GroupChatSummary {
   'is_public' : boolean,
   'permissions' : GroupPermissions,
+  'metrics' : ChatMetrics,
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
@@ -373,10 +396,12 @@ export interface GroupChatSummary {
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'participant_count' : number,
+  'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
   'permissions' : [] | [GroupPermissions],
+  'metrics' : [] | [ChatMetrics],
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -392,6 +417,7 @@ export interface GroupChatSummaryUpdates {
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'participant_count' : [] | [number],
+  'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatUpdatesSince {

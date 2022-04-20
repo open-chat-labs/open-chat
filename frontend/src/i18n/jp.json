@@ -455,5 +455,21 @@
     "backToResults": "戻る",
     "giphyMessage": "Giphyメッセージ",
     "share": "共有",
-    "fontSize": "フォントサイズ"
+    "fontSize": "フォントサイズ",
+    "stats": {
+        "userStats": "ユーザー統計",
+        "groupStats": "グループ統計",
+        "textMessages": "テキストメッセージ",
+        "imageMessages": "画像メッセージ",
+        "videoMessages": "ビデオメッセージ",
+        "audioMessages": "音声メッセージ",
+        "fileMessages": "ファイルメッセージ",
+        "pollMessages": "ポーリングメッセージ",
+        "icpTransfers": "IPC転送",
+        "giphyMessages": "GIPHYメッセージ",
+        "pollVotes": "得票",
+        "replies": "返信",
+        "reactions": "反応",
+        "deletedMessages": "削除されたメッセージ"
+    }
 }
