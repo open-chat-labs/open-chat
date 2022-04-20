@@ -36,9 +36,7 @@ export interface IGroupClient {
     chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,
-        ascending: boolean,
-        previouslyLoadedEvents?: EventWrapper<GroupChatEvent>[],
-        iterations?: number
+        ascending: boolean
     ): Promise<EventsResponse<GroupChatEvent>>;
     addParticipants(
         userIds: string[],
