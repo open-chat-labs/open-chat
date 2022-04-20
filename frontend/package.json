@@ -48,6 +48,7 @@
         "eslint-plugin-prettier": "^3.4.1",
         "events": "3.3.0",
         "js-sha256": "^0.9.0",
+        "postcss": "^8.4.12",
         "prettier": "^2.6.2",
         "process": "^0.11.10",
         "rollup": "^2.70.1",
