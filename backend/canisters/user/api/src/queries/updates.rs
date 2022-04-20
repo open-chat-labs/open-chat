@@ -9,7 +9,7 @@ pub struct Args {
     pub updates_since: UpdatesSince,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Deserialize, Debug, Default)]
 pub struct UpdatesSince {
     pub timestamp: TimestampMillis,
     pub group_chats: Vec<GroupChatUpdatesSince>,

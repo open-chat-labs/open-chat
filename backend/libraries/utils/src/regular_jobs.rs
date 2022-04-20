@@ -1,5 +1,5 @@
 use crate::env::Environment;
-use tracing::info;
+use tracing::trace;
 use types::{Milliseconds, TimestampMillis};
 
 #[derive(Default)]
@@ -16,7 +16,7 @@ impl<Data> RegularJobs<Data> {
         let mut jobs_run = Vec::new();
         for job in self.jobs.iter_mut() {
             if job.try_run(env, data) {
-                info!(job.name, "Regular job executed");
+                trace!(job.name, "Regular job executed");
                 jobs_run.push(job.name);
             }
         }
