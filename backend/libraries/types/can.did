@@ -151,7 +151,7 @@ type DirectChatSummaryUpdates =
         read_by_them: opt vec MessageIndexRange;
         notifications_muted: opt bool;
         affected_events: vec EventIndex;
-        metrics: ChatMetrics;
+        metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
     };
 
@@ -272,7 +272,7 @@ type GroupChatSummaryUpdates =
         owner_id: opt UserId;
         permissions: opt GroupPermissions;
         affected_events: vec EventIndex;
-        metrics: ChatMetrics;
+        metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
     };
 
