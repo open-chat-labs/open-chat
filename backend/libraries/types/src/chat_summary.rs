@@ -181,6 +181,7 @@ impl GroupChatSummaryInternal {
         }
 
         self.last_updated = updates.last_updated;
+        self.metrics = updates.metrics;
         Self::update_if_some(&mut self.name, updates.name);
         Self::update_if_some(&mut self.description, updates.description);
         Self::update_option_if_some(&mut self.latest_message, updates.latest_message);
@@ -190,6 +191,7 @@ impl GroupChatSummaryInternal {
         Self::update_if_some(&mut self.wasm_version, updates.wasm_version);
         Self::update_if_some(&mut self.owner_id, updates.owner_id);
         Self::update_if_some(&mut self.permissions, updates.permissions);
+        Self::update_if_some(&mut self.my_metrics, updates.my_metrics);
 
         match updates.avatar_id {
             OptionUpdate::SetToSome(avatar_id) => self.avatar_id = Some(avatar_id),
