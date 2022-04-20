@@ -22,6 +22,8 @@ import type {
     UnpinMessageResponse,
     RegisterPollVoteResponse,
     GroupPermissions,
+    EventsSuccessResult,
+    ChatEvent,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -33,12 +35,14 @@ import {
     getCachedEventsWindow,
     getCachedGroupDetails,
     loadMessagesByMessageIndex,
+    mergeSuccessResponses,
     setCachedEvents,
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { profile } from "../common/profiling";
+import { MAX_MISSING } from "domain/chat/chat.utils";
 
 /**
  * This exists to decorate the group client so that we can provide a write through cache to
@@ -51,16 +55,29 @@ export class CachingGroupClient implements IGroupClient {
         private client: IGroupClient
     ) {}
 
+    private handleMissingEvents([cachedEvents, missing]: [
+        EventsSuccessResult<GroupChatEvent>,
+        Set<number>
+    ]): Promise<EventsResponse<GroupChatEvent>> {
+        if (missing.size === 0) {
+            return Promise.resolve(cachedEvents);
+        } else {
+            return this.client
+                .chatEventsByIndex([...missing])
+                .then(setCachedEvents(this.db, this.chatId))
+                .then((resp) => {
+                    if (resp !== "events_failed") {
+                        return mergeSuccessResponses(cachedEvents, resp);
+                    }
+                    return resp;
+                });
+        }
+    }
+
     @profile("groupCachingClient")
-    async chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>> {
-        const cachedEvents = await getCachedEventsByIndex<GroupChatEvent>(
-            this.db,
-            eventIndexes,
-            this.chatId
-        );
-        return (
-            cachedEvents ??
-            this.client.chatEventsByIndex(eventIndexes).then(setCachedEvents(this.db, this.chatId))
+    chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>> {
+        return getCachedEventsByIndex<GroupChatEvent>(this.db, eventIndexes, this.chatId).then(
+            (res) => this.handleMissingEvents(res)
         );
     }
 
@@ -69,18 +86,21 @@ export class CachingGroupClient implements IGroupClient {
         eventIndexRange: IndexRange,
         messageIndex: number
     ): Promise<EventsResponse<GroupChatEvent>> {
-        const cachedEvents = await getCachedEventsWindow<GroupChatEvent>(
+        const [cachedEvents, missing] = await getCachedEventsWindow<GroupChatEvent>(
             this.db,
             eventIndexRange,
             this.chatId,
             messageIndex
         );
-        return (
-            cachedEvents ??
-            this.client
+        if (missing.size >= MAX_MISSING) {
+            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
+            console.log("We didn't get enough back from the cache, going to the api");
+            return this.client
                 .chatEventsWindow(eventIndexRange, messageIndex)
-                .then(setCachedEvents(this.db, this.chatId))
-        );
+                .then(setCachedEvents(this.db, this.chatId));
+        } else {
+            return this.handleMissingEvents([cachedEvents, missing]);
+        }
     }
 
     @profile("groupCachingClient")
@@ -89,19 +109,24 @@ export class CachingGroupClient implements IGroupClient {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<GroupChatEvent>> {
-        const cachedEvents = await getCachedEvents<GroupChatEvent>(
+        const [cachedEvents, missing] = await getCachedEvents<GroupChatEvent>(
             this.db,
             eventIndexRange,
             this.chatId,
             startIndex,
             ascending
         );
-        return (
-            cachedEvents ??
-            this.client
+
+        // we may or may not have all of the requested events
+        if (missing.size >= MAX_MISSING) {
+            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
+            console.log("We didn't get enough back from the cache, going to the api");
+            return this.client
                 .chatEvents(eventIndexRange, startIndex, ascending)
-                .then(setCachedEvents(this.db, this.chatId))
-        );
+                .then(setCachedEvents(this.db, this.chatId));
+        } else {
+            return this.handleMissingEvents([cachedEvents, missing]);
+        }
     }
 
     addParticipants(
@@ -160,13 +185,17 @@ export class CachingGroupClient implements IGroupClient {
     }
 
     @profile("groupCachingClient")
-    async getGroupDetails(): Promise<GroupChatDetailsResponse> {
+    async getGroupDetails(latestEventIndex: number): Promise<GroupChatDetailsResponse> {
         const fromCache = await getCachedGroupDetails(this.db, this.chatId);
         if (fromCache !== undefined) {
-            return this.getGroupDetailsUpdates(fromCache);
+            if (fromCache.latestEventIndex >= latestEventIndex) {
+                return fromCache;
+            } else {
+                return this.getGroupDetailsUpdates(fromCache);
+            }
         }
 
-        const response = await this.client.getGroupDetails();
+        const response = await this.client.getGroupDetails(latestEventIndex);
         if (response !== "caller_not_in_group") {
             await setCachedGroupDetails(this.db, this.chatId, response);
         }

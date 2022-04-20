@@ -22,6 +22,7 @@ import type {
     RegisterPollVoteResponse,
     PendingICPWithdrawal,
     WithdrawCryptocurrencyResponse,
+    EventsSuccessResult,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -30,13 +31,14 @@ import {
     getCachedEvents,
     getCachedEventsByIndex,
     getCachedEventsWindow,
+    mergeSuccessResponses,
     removeCachedChat,
     setCachedChats,
     setCachedEvents,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
-import { updateArgsFromChats } from "../../domain/chat/chat.utils";
+import { MAX_MISSING, updateArgsFromChats } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
 import type { SetBioResponse, UserSummary } from "../../domain/user/user";
 import type {
@@ -57,21 +59,32 @@ export class CachingUserClient implements IUserClient {
 
     constructor(private db: Promise<IDBPDatabase<ChatSchema>>, private client: IUserClient) {}
 
+    private handleMissingEvents(
+        userId: string,
+        [cachedEvents, missing]: [EventsSuccessResult<DirectChatEvent>, Set<number>]
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        if (missing.size === 0) {
+            return Promise.resolve(cachedEvents);
+        } else {
+            return this.client
+                .chatEventsByIndex([...missing], userId)
+                .then(setCachedEvents(this.db, userId))
+                .then((resp) => {
+                    if (resp !== "events_failed") {
+                        return mergeSuccessResponses(cachedEvents, resp);
+                    }
+                    return resp;
+                });
+        }
+    }
+
     @profile("userCachingClient")
     async chatEventsByIndex(
         eventIndexes: number[],
         userId: string
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const cachedEvents = await getCachedEventsByIndex<DirectChatEvent>(
-            this.db,
-            eventIndexes,
-            userId
-        );
-        return (
-            cachedEvents ??
-            this.client
-                .chatEventsByIndex(eventIndexes, userId)
-                .then(setCachedEvents(this.db, userId))
+        return getCachedEventsByIndex<DirectChatEvent>(this.db, eventIndexes, userId).then((res) =>
+            this.handleMissingEvents(userId, res)
         );
     }
 
@@ -81,18 +94,21 @@ export class CachingUserClient implements IUserClient {
         userId: string,
         messageIndex: number
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const cachedEvents = await getCachedEventsWindow<DirectChatEvent>(
+        const [cachedEvents, missing] = await getCachedEventsWindow<DirectChatEvent>(
             this.db,
             eventIndexRange,
             userId,
             messageIndex
         );
-        return (
-            cachedEvents ??
-            this.client
+        if (missing.size >= MAX_MISSING) {
+            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
+            console.log("We didn't get enough back from the cache, going to the api");
+            return this.client
                 .chatEventsWindow(eventIndexRange, userId, messageIndex)
-                .then(setCachedEvents(this.db, userId))
-        );
+                .then(setCachedEvents(this.db, userId));
+        } else {
+            return this.handleMissingEvents(userId, [cachedEvents, missing]);
+        }
     }
 
     @profile("userCachingClient")
@@ -102,19 +118,24 @@ export class CachingUserClient implements IUserClient {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const cachedEvents = await getCachedEvents<DirectChatEvent>(
+        const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
             this.db,
             eventIndexRange,
             userId,
             startIndex,
             ascending
         );
-        return (
-            cachedEvents ??
-            this.client
+
+        // we may or may not have all of the requested events
+        if (missing.size >= MAX_MISSING) {
+            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
+            console.log("We didn't get enough back from the cache, going to the api");
+            return this.client
                 .chatEvents(eventIndexRange, userId, startIndex, ascending)
-                .then(setCachedEvents(this.db, userId))
-        );
+                .then(setCachedEvents(this.db, userId));
+        } else {
+            return this.handleMissingEvents(userId, [cachedEvents, missing]);
+        }
     }
 
     @profile("userCachingClient")

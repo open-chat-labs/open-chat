@@ -1,9 +1,10 @@
-import { isPreviewing, MAX_MESSAGES } from "../domain/chat/chat.utils";
+import { isPreviewing, MAX_MESSAGES, MAX_MISSING } from "../domain/chat/chat.utils";
 import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
     EventsResponse,
+    EventsSuccessResult,
     EventWrapper,
     GroupChatDetails,
     IndexRange,
@@ -242,24 +243,23 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
     eventIndexRange: IndexRange,
     chatId: string,
     messageIndex: number
-): Promise<EventsResponse<T> | undefined> {
+): Promise<[EventsSuccessResult<T>, Set<number>]> {
     console.log("cache: window: ", eventIndexRange, messageIndex);
     const start = Date.now();
-    const [complete, events] = await aggregateEventsWindow<T>(
+    const [events, missing] = await aggregateEventsWindow<T>(
         db,
         eventIndexRange,
         chatId,
         messageIndex
     );
 
-    if (complete) {
+    if (missing.size === 0) {
         console.log("cache hit: ", events, Date.now() - start);
     }
 
     events.sort((a, b) => a.index - b.index);
 
-    // if we are retrieving completely from the cache, affectedEvents is always empty
-    return complete ? { events, affectedEvents: [] } : undefined;
+    return [{ events, affectedEvents: [] }, missing];
 }
 
 function loadEventByIndex<T extends ChatEvent>(
@@ -276,10 +276,11 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     [min, max]: IndexRange,
     chatId: string,
     middleMessageIndex: number
-): Promise<[boolean, EventWrapper<T>[]]> {
+): Promise<[EventWrapper<T>[], Set<number>]> {
     let numMessages = 0;
     const events: EventWrapper<T>[] = [];
     const resolvedDb = await db;
+    const missing = new Set<number>();
 
     const eventIndex = await resolvedDb.get(
         "message_index_event_index",
@@ -288,16 +289,16 @@ async function aggregateEventsWindow<T extends ChatEvent>(
 
     if (eventIndex === undefined) {
         console.log("cache miss: could not find the starting event index for the message window");
-        return [false, []];
+        return [[], missing];
     }
 
     let descIdx = eventIndex;
     let ascIdx = eventIndex + 1;
 
-    while (numMessages < MAX_MESSAGES) {
+    while (numMessages < MAX_MESSAGES && missing.size < MAX_MISSING) {
         // if we have exceeded the range of this chat then we have succeeded
         if (ascIdx > max && descIdx < min) {
-            return [true, events];
+            return [events, missing];
         }
 
         if (ascIdx <= max) {
@@ -313,7 +314,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
                 }
             } else {
                 console.log("Couldn't find index: ", ascIdx);
-                break;
+                missing.add(ascIdx);
             }
             ascIdx += 1;
         }
@@ -332,15 +333,13 @@ async function aggregateEventsWindow<T extends ChatEvent>(
                 }
             } else {
                 console.log("Couldn't find index: ", descIdx);
-                break;
+                missing.add(descIdx);
             }
             descIdx -= 1;
         }
     }
 
-    // todo - events are going to come out in a weird order here but I don't think it matter
-    // because I think we sort them later
-    return [numMessages >= MAX_MESSAGES, events];
+    return [events, missing];
 }
 
 async function aggregateEvents<T extends ChatEvent>(
@@ -349,16 +348,19 @@ async function aggregateEvents<T extends ChatEvent>(
     chatId: string,
     startIndex: number,
     ascending: boolean
-): Promise<[boolean, EventWrapper<T>[]]> {
+): Promise<[EventWrapper<T>[], Set<number>]> {
     let numMessages = 0;
     let currentIndex = startIndex;
     const events: EventWrapper<T>[] = [];
     const resolvedDb = await db;
+    const missing = new Set<number>();
 
-    while (numMessages < MAX_MESSAGES) {
+    // keep iterating until we get "enough" messages or we go beyond the range of the chat or we get a full page of missing messages
+    // return all the events that we found and the indexes of any that we did not find
+    while (numMessages < MAX_MESSAGES && missing.size < MAX_MISSING) {
         // if we have exceeded the range of this chat then we have succeeded
         if ((currentIndex > max && ascending) || (currentIndex < min && !ascending)) {
-            return [true, events];
+            return [events, missing];
         }
 
         const key = createCacheKey(chatId, currentIndex);
@@ -370,8 +372,8 @@ async function aggregateEvents<T extends ChatEvent>(
             events.push(evt as EventWrapper<T>);
         } else {
             console.log("Couldn't find key: ", key);
-            // as soon as we draw a blank, bale out
-            break;
+            // let's continue aggregating events and just track the indexes that we couldn't find
+            missing.add(currentIndex);
         }
 
         if (ascending) {
@@ -381,7 +383,7 @@ async function aggregateEvents<T extends ChatEvent>(
         }
     }
 
-    return [numMessages >= MAX_MESSAGES, ascending ? events : events.reverse()];
+    return [ascending ? events : events.reverse(), missing];
 }
 
 export async function getCachedMessageByIndex<T extends ChatEvent>(
@@ -397,12 +399,20 @@ export async function getCachedEventsByIndex<T extends ChatEvent>(
     db: Database,
     eventIndexes: number[],
     chatId: string
-): Promise<EventsResponse<T> | undefined> {
+): Promise<[EventsSuccessResult<T>, Set<number>]> {
+    const missing = new Set<number>();
     const returnedEvents = await Promise.all(
-        eventIndexes.map(async (idx) => getCachedMessageByIndex(db, idx, chatId))
+        eventIndexes.map((idx) =>
+            getCachedMessageByIndex(db, idx, chatId).then((evt) => {
+                if (evt === undefined) {
+                    missing.add(idx);
+                }
+                return evt;
+            })
+        )
     );
     const events = returnedEvents.filter((evt) => evt !== undefined) as EventWrapper<T>[];
-    return events.length === eventIndexes.length ? { events, affectedEvents: [] } : undefined;
+    return [{ events, affectedEvents: [] }, missing];
 }
 
 export async function getCachedEvents<T extends ChatEvent>(
@@ -411,10 +421,10 @@ export async function getCachedEvents<T extends ChatEvent>(
     chatId: string,
     startIndex: number,
     ascending: boolean
-): Promise<EventsResponse<T> | undefined> {
+): Promise<[EventsSuccessResult<T>, Set<number>]> {
     console.log("cache: ", eventIndexRange, startIndex, ascending);
     const start = Date.now();
-    const [complete, events] = await aggregateEvents<T>(
+    const [events, missing] = await aggregateEvents<T>(
         db,
         eventIndexRange,
         chatId,
@@ -422,12 +432,23 @@ export async function getCachedEvents<T extends ChatEvent>(
         ascending
     );
 
-    if (complete) {
+    if (missing.size === 0) {
         console.log("cache hit: ", events.length, Date.now() - start);
+    } else {
+        console.log("cache miss: ", missing);
     }
 
-    // if we are retrieving completely from the cache, affectedEvents is always empty
-    return complete ? { events, affectedEvents: [] } : undefined;
+    return [{ events, affectedEvents: [] }, missing];
+}
+
+export function mergeSuccessResponses<T extends ChatEvent>(
+    a: EventsSuccessResult<T>,
+    b: EventsSuccessResult<T>
+): EventsSuccessResult<T> {
+    return {
+        events: [...a.events, ...b.events].sort((a, b) => a.index - b.index),
+        affectedEvents: [...a.affectedEvents, ...b.affectedEvents],
+    };
 }
 
 // we need to strip out the blobData promise from any media content because that cannot be serialised

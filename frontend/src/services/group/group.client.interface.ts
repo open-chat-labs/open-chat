@@ -36,9 +36,7 @@ export interface IGroupClient {
     chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,
-        ascending: boolean,
-        previouslyLoadedEvents?: EventWrapper<GroupChatEvent>[],
-        iterations?: number
+        ascending: boolean
     ): Promise<EventsResponse<GroupChatEvent>>;
     addParticipants(
         userIds: string[],
@@ -63,7 +61,7 @@ export interface IGroupClient {
     deleteMessage(messageId: bigint): Promise<DeleteMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
-    getGroupDetails(): Promise<GroupChatDetailsResponse>;
+    getGroupDetails(latestEventIndex: number): Promise<GroupChatDetailsResponse>;
     getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails>;
     deleteGroup(): Promise<DeleteGroupResponse>;
     getPublicSummary(): Promise<GroupChatSummary | undefined>;

@@ -171,7 +171,10 @@ export class ChatController {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (this.chatVal.kind === "group_chat") {
             if (this.groupDetails === undefined) {
-                const resp = await this.api.getGroupDetails(this.chatId);
+                const resp = await this.api.getGroupDetails(
+                    this.chatId,
+                    this.chatVal.latestEventIndex
+                );
                 if (resp !== "caller_not_in_group") {
                     this.groupDetails = resp;
                     this.participants.set(resp.participants);

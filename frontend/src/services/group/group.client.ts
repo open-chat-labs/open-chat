@@ -283,7 +283,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    getGroupDetails(): Promise<GroupChatDetailsResponse> {
+    getGroupDetails(_latestEventIndex: number): Promise<GroupChatDetailsResponse> {
         return this.handleQueryResponse(
             () => this.groupService.selected_initial({}),
             groupDetailsResponse
