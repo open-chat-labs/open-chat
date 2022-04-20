@@ -6,7 +6,7 @@ use std::cmp::{max, min};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::FromIterator;
-use std::mem::replace;
+use std::ops::{Deref, DerefMut};
 use types::*;
 
 #[derive(CandidType, Serialize, Deserialize)]
@@ -141,13 +141,25 @@ impl ChatEvents {
         }
     }
 
+    pub fn populate_deleted_messages(&mut self) {
+        for message in
+            self.events
+                .iter_mut()
+                .filter_map(|e| if let ChatEventInternal::Message(m) = &mut e.event { Some(m) } else { None })
+        {
+            if let MessageContentInternal::Deleted(c) = &message.content {
+                message.deleted = Some(c.clone());
+            }
+        }
+    }
+
     pub fn get(&self, event_index: EventIndex) -> Option<&EventWrapper<ChatEventInternal>> {
-        let index = self.get_index(event_index)?;
+        let index = Self::get_index(&self.events, event_index)?;
         self.events.get(index)
     }
 
     pub fn get_mut(&mut self, event_index: EventIndex) -> Option<&mut EventWrapper<ChatEventInternal>> {
-        let index = self.get_index(event_index)?;
+        let index = Self::get_index(&self.events, event_index)?;
         self.events.get_mut(index)
     }
 
@@ -177,6 +189,7 @@ impl ChatEvents {
             reactions: Vec::new(),
             last_updated: None,
             last_edited: None,
+            deleted: None,
         };
         let message = self.hydrate_message(&message_internal, Some(message_internal.sender));
         let event_index = self.push_event(ChatEventInternal::Message(Box::new(message_internal)), args.now);
@@ -221,7 +234,10 @@ impl ChatEvents {
     }
 
     pub fn edit_message(&mut self, args: EditMessageArgs) -> EditMessageResult {
-        if let Some(message) = self.get_message_by_id_internal_mut(args.message_id) {
+        if let Some(message) = self
+            .get_event_index_by_message_id(args.message_id)
+            .and_then(|e| Self::get_message_internal_mut(&mut self.events, e))
+        {
             if message.sender == args.sender {
                 if matches!(message.content, MessageContentInternal::Deleted(_)) {
                     EditMessageResult::NotFound
@@ -253,20 +269,32 @@ impl ChatEvents {
         message_id: MessageId,
         now: TimestampMillis,
     ) -> DeleteMessageResult {
-        if let Some(message) = self.get_message_by_id_internal_mut(message_id) {
+        if let Some(message) = self
+            .get_event_index_by_message_id(message_id)
+            .and_then(|e| Self::get_message_internal_mut(&mut self.events, e))
+        {
             if message.sender == caller || is_admin {
+                if message.deleted.is_some() {
+                    return DeleteMessageResult::AlreadyDeleted;
+                }
                 match message.content {
                     MessageContentInternal::Deleted(_) => DeleteMessageResult::AlreadyDeleted,
                     MessageContentInternal::Cryptocurrency(_) => DeleteMessageResult::MessageTypeCannotBeDeleted,
                     _ => {
-                        let previous_content = replace(
-                            &mut message.content,
-                            MessageContentInternal::Deleted(DeletedContent {
-                                deleted_by: caller,
-                                timestamp: now,
-                            }),
-                        );
                         message.last_updated = Some(now);
+                        message.deleted = Some(DeletedContent {
+                            deleted_by: caller,
+                            timestamp: now,
+                        });
+
+                        let message_content = message.content.hydrate(Some(caller));
+
+                        // Remove the delete message from the metrics
+                        message.remove_from_metrics(&mut self.metrics);
+                        if let Some(user_metrics) = self.per_user_metrics.get_mut(&caller) {
+                            message.remove_from_metrics(user_metrics);
+                        }
+
                         self.push_event(
                             ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
                                 updated_by: caller,
@@ -274,7 +302,7 @@ impl ChatEvents {
                             })),
                             now,
                         );
-                        DeleteMessageResult::Success(previous_content.hydrate(Some(caller)))
+                        DeleteMessageResult::Success(message_content)
                     }
                 }
             } else {
@@ -293,7 +321,10 @@ impl ChatEvents {
         operation: VoteOperation,
         now: TimestampMillis,
     ) -> RegisterVoteResult {
-        if let Some(message) = self.get_message_by_message_index_internal_mut(message_index) {
+        if let Some(message) = self
+            .get_event_index_by_message_index(message_index)
+            .and_then(|e| Self::get_message_internal_mut(&mut self.events, e))
+        {
             if let MessageContentInternal::Poll(p) = &mut message.content {
                 return match p.register_vote(user_id, option_index, operation) {
                     types::RegisterVoteResult::Success(existing_vote_removed) => {
@@ -327,7 +358,10 @@ impl ChatEvents {
     }
 
     pub fn end_poll(&mut self, message_index: MessageIndex, now: TimestampMillis) -> EndPollResult {
-        if let Some(message) = self.get_message_by_message_index_internal_mut(message_index) {
+        if let Some(message) = self
+            .get_event_index_by_message_index(message_index)
+            .and_then(|e| Self::get_message_internal_mut(&mut self.events, e))
+        {
             if let MessageContentInternal::Poll(p) = &mut message.content {
                 return if p.ended || p.config.end_date.is_none() {
                     EndPollResult::UnableToEndPoll
@@ -451,7 +485,7 @@ impl ChatEvents {
     }
 
     pub fn since(&self, index: EventIndex) -> &[EventWrapper<ChatEventInternal>] {
-        if let Some(from) = self.get_index(index.incr()) {
+        if let Some(from) = Self::get_index(&self.events, index.incr()) {
             &self.events[from..]
         } else {
             &[]
@@ -463,7 +497,11 @@ impl ChatEvents {
             message_index: message.message_index,
             message_id: message.message_id,
             sender: message.sender,
-            content: message.content.hydrate(my_user_id),
+            content: if let Some(deleted) = message.deleted.clone() {
+                MessageContent::Deleted(deleted)
+            } else {
+                message.content.hydrate(my_user_id)
+            },
             replies_to: message.replies_to.clone(),
             reactions: message
                 .reactions
@@ -599,7 +637,7 @@ impl ChatEvents {
         max_events: usize,
         min_visible_event_index: EventIndex,
     ) -> Vec<&EventWrapper<ChatEventInternal>> {
-        if let Some(index) = self.get_index(start) {
+        if let Some(index) = Self::get_index(&self.events, start) {
             let iter: Box<dyn Iterator<Item = &EventWrapper<ChatEventInternal>>> = if ascending {
                 let range = &self.events[index..];
                 Box::new(range.iter())
@@ -638,13 +676,14 @@ impl ChatEvents {
         max_events: usize,
         min_visible_event_index: EventIndex,
     ) -> Vec<&EventWrapper<ChatEventInternal>> {
-        if let Some(&mid_point) = self.message_index_map.get(&mid_point) {
-            if let Some(min_visible_event_index) = self.get_index(min_visible_event_index) {
-                let mid_point: u32 = mid_point.into();
-                let mid_point = mid_point as usize;
-                if mid_point >= min_visible_event_index {
-                    let mut forwards_iter = self.events[mid_point..].iter();
-                    let mut backwards_iter = self.events[min_visible_event_index..mid_point].iter().rev();
+        if let Some(mid_point_index) = self
+            .get_event_index_by_message_index(mid_point)
+            .and_then(|e| Self::get_index(&self.events, e))
+        {
+            if let Some(min_visible_index) = Self::get_index(&self.events, min_visible_event_index) {
+                if mid_point_index >= min_visible_index {
+                    let mut forwards_iter = self.events[mid_point_index..].iter();
+                    let mut backwards_iter = self.events[min_visible_index..mid_point_index].iter().rev();
 
                     let mut events = VecDeque::new();
                     let mut message_count = 0;
@@ -696,12 +735,16 @@ impl ChatEvents {
         Vec::new()
     }
 
+    pub fn get_event_index_by_message_index(&self, message_index: MessageIndex) -> Option<EventIndex> {
+        self.message_index_map.get(&message_index).copied()
+    }
+
     pub fn get_event_index_by_message_id(&self, message_id: MessageId) -> Option<EventIndex> {
         self.message_id_map.get(&message_id).copied()
     }
 
     pub fn get_message_id_by_event_index(&self, event_index: EventIndex) -> Option<MessageId> {
-        self.get_message_internal(event_index).map(|m| m.message_id)
+        Self::get_message_internal(&self.events, event_index).map(|m| m.message_id)
     }
 
     pub fn get_message_index(&self, message_id: MessageId) -> Option<MessageIndex> {
@@ -777,40 +820,36 @@ impl ChatEvents {
         self.events.is_empty()
     }
 
-    fn get_message_by_message_index_internal_mut(&mut self, message_index: MessageIndex) -> Option<&mut MessageInternal> {
-        let event_index = *self.message_index_map.get(&message_index)?;
-        self.get_message_internal_mut(event_index)
-    }
-
-    fn get_message_by_id_internal_mut(&mut self, message_id: MessageId) -> Option<&mut MessageInternal> {
-        let event_index = *self.message_id_map.get(&message_id)?;
-        self.get_message_internal_mut(event_index)
-    }
-
-    fn get_message_internal(&self, event_index: EventIndex) -> Option<&MessageInternal> {
-        let event = self.get(event_index)?;
+    fn get_message_internal(
+        events: &Vec<EventWrapper<ChatEventInternal>>,
+        event_index: EventIndex,
+    ) -> Option<&MessageInternal> {
+        let event = Self::get_index(events, event_index).and_then(|i| events.get(i))?;
         if let ChatEventInternal::Message(message) = &event.event {
-            Some(message)
+            Some(message.deref())
         } else {
             None
         }
     }
 
-    fn get_message_internal_mut(&mut self, event_index: EventIndex) -> Option<&mut MessageInternal> {
-        let event = self.get_mut(event_index)?;
+    fn get_message_internal_mut(
+        events: &mut Vec<EventWrapper<ChatEventInternal>>,
+        event_index: EventIndex,
+    ) -> Option<&mut MessageInternal> {
+        let event = Self::get_index(events, event_index).and_then(|i| events.get_mut(i))?;
         if let ChatEventInternal::Message(message) = &mut event.event {
-            Some(message)
+            Some(message.deref_mut())
         } else {
             None
         }
     }
 
-    fn get_index(&self, event_index: EventIndex) -> Option<usize> {
-        if let Some(first_event) = self.events.first() {
+    fn get_index(events: &Vec<EventWrapper<ChatEventInternal>>, event_index: EventIndex) -> Option<usize> {
+        if let Some(first_event) = events.first() {
             let earliest_event_index: u32 = first_event.index.into();
             let as_u32: u32 = event_index.into();
             let index = (as_u32 - earliest_event_index) as usize;
-            if index < self.events.len() {
+            if index < events.len() {
                 return Some(index);
             }
         }

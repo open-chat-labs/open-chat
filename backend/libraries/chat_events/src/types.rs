@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::HashSet;
 use types::{
-    AvatarChanged, ChatMetrics, Cryptocurrency, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged, GroupNameChanged,
-    MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred,
+    AvatarChanged, ChatMetrics, Cryptocurrency, DeletedContent, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged,
+    GroupNameChanged, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred,
     ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft,
     ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved, PermissionsChanged, PollVoteRegistered,
     Reaction, ReplyContext, RoleChanged, TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
@@ -91,32 +91,13 @@ impl ChatEventInternal {
 
     pub fn add_to_metrics(&self, metrics: &mut ChatMetrics, timestamp: TimestampMillis) {
         match &self {
-            ChatEventInternal::Message(m) => {
-                match &m.content {
-                    MessageContentInternal::Text(_) => metrics.text_messages += 1,
-                    MessageContentInternal::Image(_) => metrics.image_messages += 1,
-                    MessageContentInternal::Video(_) => metrics.video_messages += 1,
-                    MessageContentInternal::Audio(_) => metrics.audio_messages += 1,
-                    MessageContentInternal::File(_) => metrics.file_messages += 1,
-                    MessageContentInternal::Poll(_) => metrics.polls += 1,
-                    MessageContentInternal::Cryptocurrency(c) => match c.transfer.cryptocurrency() {
-                        Cryptocurrency::ICP => metrics.icp_messages += 1,
-                        Cryptocurrency::Cycles => metrics.cycles_messages += 1,
-                    },
-                    MessageContentInternal::Deleted(_) => {} // This is accounted for by the MessageDeleted events
-                    MessageContentInternal::Giphy(_) => metrics.giphy_messages += 1,
-                }
-
-                if m.replies_to.is_some() {
-                    metrics.replies += 1;
-                }
-            }
-            ChatEventInternal::MessageEdited(_) => metrics.edits += 1,
-            ChatEventInternal::MessageDeleted(_) => metrics.deleted_messages += 1,
-            ChatEventInternal::MessageReactionAdded(_) => metrics.reactions += 1,
-            ChatEventInternal::MessageReactionRemoved(_) => metrics.reactions = metrics.reactions.saturating_sub(1),
-            ChatEventInternal::PollVoteRegistered(v) if !v.existing_vote_removed => metrics.poll_votes += 1,
-            ChatEventInternal::PollVoteDeleted(_) => metrics.poll_votes = metrics.poll_votes.saturating_sub(1),
+            ChatEventInternal::Message(m) => m.add_to_metrics(metrics),
+            ChatEventInternal::MessageEdited(_) => incr(&mut metrics.edits),
+            ChatEventInternal::MessageDeleted(_) => incr(&mut metrics.deleted_messages),
+            ChatEventInternal::MessageReactionAdded(_) => incr(&mut metrics.reactions),
+            ChatEventInternal::MessageReactionRemoved(_) => decr(&mut metrics.reactions),
+            ChatEventInternal::PollVoteRegistered(v) if !v.existing_vote_removed => incr(&mut metrics.poll_votes),
+            ChatEventInternal::PollVoteDeleted(_) => decr(&mut metrics.poll_votes),
             _ => {}
         }
 
@@ -166,10 +147,47 @@ pub struct MessageInternal {
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
     pub last_updated: Option<TimestampMillis>,
     pub last_edited: Option<TimestampMillis>,
+    #[serde(default)]
+    pub deleted: Option<DeletedContent>,
+}
+
+impl MessageInternal {
+    pub fn add_to_metrics(&self, metrics: &mut ChatMetrics) {
+        self.adjust_metrics(metrics, incr);
+    }
+
+    pub fn remove_from_metrics(&self, metrics: &mut ChatMetrics) {
+        self.adjust_metrics(metrics, decr);
+    }
+
+    fn adjust_metrics(&self, metrics: &mut ChatMetrics, adjust: fn(&mut u64)) {
+        match &self.content {
+            MessageContentInternal::Text(_) => adjust(&mut metrics.text_messages),
+            MessageContentInternal::Image(_) => adjust(&mut metrics.image_messages),
+            MessageContentInternal::Video(_) => adjust(&mut metrics.video_messages),
+            MessageContentInternal::Audio(_) => adjust(&mut metrics.audio_messages),
+            MessageContentInternal::File(_) => adjust(&mut metrics.file_messages),
+            MessageContentInternal::Poll(_) => adjust(&mut metrics.polls),
+            MessageContentInternal::Cryptocurrency(c) => match c.transfer.cryptocurrency() {
+                Cryptocurrency::ICP => adjust(&mut metrics.icp_messages),
+                Cryptocurrency::Cycles => adjust(&mut metrics.cycles_messages),
+            },
+            MessageContentInternal::Deleted(_) => {} // This is accounted for by the MessageDeleted events
+            MessageContentInternal::Giphy(_) => adjust(&mut metrics.giphy_messages),
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpdatedMessageInternal {
     pub updated_by: UserId,
     pub message_id: MessageId,
+}
+
+fn incr(counter: &mut u64) {
+    *counter += 1;
+}
+
+fn decr(counter: &mut u64) {
+    *counter = counter.saturating_sub(1);
 }
