@@ -99,7 +99,7 @@ pub struct DirectChatSummaryUpdates {
     pub notifications_muted: Option<bool>,
     pub affected_events: Vec<EventIndex>,
     #[serde(default)]
-    pub metrics: ChatMetrics,
+    pub metrics: Option<ChatMetrics>,
     #[serde(default)]
     pub my_metrics: Option<ChatMetrics>,
 }
@@ -124,7 +124,7 @@ pub struct GroupChatSummaryUpdates {
     pub permissions: Option<GroupPermissions>,
     pub affected_events: Vec<EventIndex>,
     #[serde(default)]
-    pub metrics: ChatMetrics,
+    pub metrics: Option<ChatMetrics>,
     #[serde(default)]
     pub my_metrics: Option<ChatMetrics>,
 }
@@ -181,7 +181,6 @@ impl GroupChatSummaryInternal {
         }
 
         self.last_updated = updates.last_updated;
-        self.metrics = updates.metrics;
         Self::update_if_some(&mut self.name, updates.name);
         Self::update_if_some(&mut self.description, updates.description);
         Self::update_option_if_some(&mut self.latest_message, updates.latest_message);
@@ -191,6 +190,7 @@ impl GroupChatSummaryInternal {
         Self::update_if_some(&mut self.wasm_version, updates.wasm_version);
         Self::update_if_some(&mut self.owner_id, updates.owner_id);
         Self::update_if_some(&mut self.permissions, updates.permissions);
+        Self::update_if_some(&mut self.metrics, updates.metrics);
         Self::update_if_some(&mut self.my_metrics, updates.my_metrics);
 
         match updates.avatar_id {
@@ -266,7 +266,7 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub permissions: Option<GroupPermissions>,
     pub affected_events: Vec<EventIndex>,
     #[serde(default)]
-    pub metrics: ChatMetrics,
+    pub metrics: Option<ChatMetrics>,
     #[serde(default)]
     pub my_metrics: Option<ChatMetrics>,
 }
