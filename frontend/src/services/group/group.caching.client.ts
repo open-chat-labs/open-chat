@@ -35,6 +35,7 @@ import {
     getCachedEventsWindow,
     getCachedGroupDetails,
     loadMessagesByMessageIndex,
+    mergeSuccessResponses,
     setCachedEvents,
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
@@ -42,16 +43,6 @@ import {
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { profile } from "../common/profiling";
 import { MAX_MISSING } from "domain/chat/chat.utils";
-
-function mergeSuccessResponses<T extends ChatEvent>(
-    a: EventsSuccessResult<T>,
-    b: EventsSuccessResult<T>
-): EventsSuccessResult<T> {
-    return {
-        events: [...a.events, ...b.events],
-        affectedEvents: [...a.affectedEvents, ...b.affectedEvents],
-    };
-}
 
 /**
  * This exists to decorate the group client so that we can provide a write through cache to

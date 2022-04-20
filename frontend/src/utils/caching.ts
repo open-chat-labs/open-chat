@@ -444,6 +444,16 @@ export async function getCachedEvents<T extends ChatEvent>(
     return [{ events, affectedEvents: [] }, missing];
 }
 
+export function mergeSuccessResponses<T extends ChatEvent>(
+    a: EventsSuccessResult<T>,
+    b: EventsSuccessResult<T>
+): EventsSuccessResult<T> {
+    return {
+        events: [...a.events, ...b.events].sort((a, b) => a.index - b.index),
+        affectedEvents: [...a.affectedEvents, ...b.affectedEvents],
+    };
+}
+
 // we need to strip out the blobData promise from any media content because that cannot be serialised
 function makeSerialisable<T extends ChatEvent>(
     ev: EventWrapper<T>,
