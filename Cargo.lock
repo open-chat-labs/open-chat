@@ -2338,12 +2338,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
-name = "maybe-uninit"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
-
-[[package]]
 name = "memchr"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2581,7 +2575,7 @@ dependencies = [
  "num-iter",
  "num-traits",
  "rand 0.8.5",
- "smallvec 1.8.0",
+ "smallvec",
  "zeroize",
 ]
 
@@ -2863,7 +2857,7 @@ dependencies = [
  "cfg-if",
  "libc",
  "redox_syscall",
- "smallvec 1.8.0",
+ "smallvec",
  "windows-sys",
 ]
 
@@ -3196,12 +3190,13 @@ dependencies = [
 
 [[package]]
 name = "range-set"
-version = "0.0.7"
-source = "git+https://github.com/hpeebles/range-set?rev=d64d0b95c5a397273b490bd37d81ddbff9c3e4a3#d64d0b95c5a397273b490bd37d81ddbff9c3e4a3"
+version = "0.0.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6558ccfefeefa880f80c0e957c3748cbcf75c937900eb0604d0f2acc6a84f8dc"
 dependencies = [
  "num-traits",
  "serde",
- "smallvec 0.6.14",
+ "smallvec",
 ]
 
 [[package]]
@@ -3785,16 +3780,6 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "0.6.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b97fcaeba89edba30f044a10c6a3cc39df9c3f17d7cd829dd1446cab35f890e0"
-dependencies = [
- "maybe-uninit",
- "serde",
-]
-
-[[package]]
-name = "smallvec"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2dd574626839106c320a323308629dcb1acfc96e32a8cba364ddc61ac23ee83"
@@ -4314,7 +4299,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sharded-slab",
- "smallvec 1.8.0",
+ "smallvec",
  "thread_local",
  "tracing-core",
  "tracing-log",
@@ -4565,7 +4550,6 @@ dependencies = [
  "range-set",
  "serde",
  "serde_bytes",
- "smallvec 1.8.0",
  "tracing",
  "types",
 ]
