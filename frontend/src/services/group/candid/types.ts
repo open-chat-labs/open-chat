@@ -231,7 +231,7 @@ export interface DirectChatSummary {
   'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
-  'metrics' : ChatMetrics,
+  'metrics' : [] | [ChatMetrics],
   'affected_events' : Array<EventIndex>,
   'notifications_muted' : [] | [boolean],
   'read_by_me' : [] | [Array<MessageIndexRange>],
@@ -394,7 +394,7 @@ export interface GroupChatSummary {
 }
 export interface GroupChatSummaryUpdates {
   'permissions' : [] | [GroupPermissions],
-  'metrics' : ChatMetrics,
+  'metrics' : [] | [ChatMetrics],
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],

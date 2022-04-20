@@ -324,7 +324,7 @@ function mergeUpdatedDirectChat(
     chat.latestEventIndex = getLatestEventIndex(chat, updatedChat);
     chat.latestMessage = getLatestMessage(chat, updatedChat);
     chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
-    chat.metrics = updatedChat.metrics;
+    chat.metrics = updatedChat.metrics ?? chat.metrics;
     chat.myMetrics = updatedChat.myMetrics ?? chat.myMetrics;
     return chat;
 }
@@ -437,7 +437,7 @@ function mergeUpdatedGroupChat(
     chat.mentions = mergeMentions(chat.mentions, updatedChat.mentions);
     chat.ownerId = updatedChat.ownerId ?? chat.ownerId;
     chat.permissions = updatedChat.permissions ?? chat.permissions;
-    chat.metrics = updatedChat.metrics;
+    chat.metrics = updatedChat.metrics ?? chat.metrics;
     chat.myMetrics = updatedChat.myMetrics ?? chat.myMetrics;
     return chat;
 }

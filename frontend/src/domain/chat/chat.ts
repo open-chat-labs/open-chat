@@ -626,7 +626,7 @@ type ChatSummaryUpdatesCommon = {
     latestMessage?: EventWrapper<Message>;
     notificationsMuted?: boolean;
     affectedEvents: number[];
-    metrics: ChatMetrics;
+    metrics?: ChatMetrics;
     myMetrics?: ChatMetrics;
 };
 

@@ -795,7 +795,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupChatSummaryUpdates = IDL.Record({
     'permissions' : IDL.Opt(GroupPermissions),
-    'metrics' : ChatMetrics,
+    'metrics' : IDL.Opt(ChatMetrics),
     'name' : IDL.Opt(IDL.Text),
     'role' : IDL.Opt(Role),
     'wasm_version' : IDL.Opt(Version),
@@ -815,7 +815,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const DirectChatSummaryUpdates = IDL.Record({
-    'metrics' : ChatMetrics,
+    'metrics' : IDL.Opt(ChatMetrics),
     'affected_events' : IDL.Vec(EventIndex),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
