@@ -6,8 +6,8 @@ use types::{
     AvatarChanged, ChatMetrics, Cryptocurrency, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged, GroupNameChanged,
     MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred,
     ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft,
-    ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved, PermissionsChanged, Reaction, ReplyContext,
-    RoleChanged, TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
+    ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved, PermissionsChanged, PollVoteRegistered,
+    Reaction, ReplyContext, RoleChanged, TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -35,7 +35,7 @@ pub enum ChatEventInternal {
     UsersUnblocked(Box<UsersUnblocked>),
     MessagePinned(Box<MessagePinned>),
     MessageUnpinned(Box<MessageUnpinned>),
-    PollVoteRegistered(Box<UpdatedMessageInternal>),
+    PollVoteRegistered(Box<PollVoteRegistered>),
     PollVoteDeleted(Box<UpdatedMessageInternal>),
     PollEnded(Box<MessageIndex>),
     PermissionsChanged(Box<PermissionsChanged>),
@@ -114,7 +114,8 @@ impl ChatEventInternal {
             ChatEventInternal::MessageEdited(_) => metrics.edits += 1,
             ChatEventInternal::MessageReactionAdded(_) => metrics.reactions += 1,
             ChatEventInternal::MessageReactionRemoved(_) => metrics.reactions = metrics.reactions.saturating_sub(1),
-            ChatEventInternal::PollVoteRegistered(_) => metrics.poll_votes += 1,
+            ChatEventInternal::PollVoteRegistered(v) if !v.existing_vote_removed => metrics.poll_votes += 1,
+            ChatEventInternal::PollVoteDeleted(_) => metrics.poll_votes = metrics.poll_votes.saturating_sub(1),
             _ => {}
         }
 
@@ -142,12 +143,12 @@ impl ChatEventInternal {
             ChatEventInternal::UsersUnblocked(u) => Some(u.unblocked_by),
             ChatEventInternal::MessagePinned(m) => Some(m.pinned_by),
             ChatEventInternal::MessageUnpinned(m) => Some(m.unpinned_by),
+            ChatEventInternal::PollVoteRegistered(v) => Some(v.user_id),
             ChatEventInternal::PermissionsChanged(p) => Some(p.changed_by),
             ChatEventInternal::MessageEdited(e)
             | ChatEventInternal::MessageDeleted(e)
             | ChatEventInternal::MessageReactionAdded(e)
             | ChatEventInternal::MessageReactionRemoved(e)
-            | ChatEventInternal::PollVoteRegistered(e)
             | ChatEventInternal::PollVoteDeleted(e) => Some(e.updated_by),
             ChatEventInternal::PollEnded(_) | ChatEventInternal::DirectChatCreated(_) => None,
         }
