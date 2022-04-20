@@ -38,7 +38,7 @@ impl DirectChatEvents {
             }
             ChatEventInternal::DirectChatCreated(d) => DirectChatEvent::DirectChatCreated(*d),
             ChatEventInternal::PollVoteRegistered(v) => {
-                DirectChatEvent::PollVoteRegistered(self.inner.hydrate_updated_message(v))
+                DirectChatEvent::PollVoteRegistered(self.inner.hydrate_poll_vote_registered(v))
             }
             ChatEventInternal::PollVoteDeleted(v) => DirectChatEvent::PollVoteDeleted(self.inner.hydrate_updated_message(v)),
             ChatEventInternal::PollEnded(m) => DirectChatEvent::PollEnded(self.inner.hydrate_poll_ended(**m)),
