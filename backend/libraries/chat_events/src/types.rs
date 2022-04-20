@@ -103,7 +103,7 @@ impl ChatEventInternal {
                         Cryptocurrency::ICP => metrics.icp_messages += 1,
                         Cryptocurrency::Cycles => metrics.cycles_messages += 1,
                     },
-                    MessageContentInternal::Deleted(_) => metrics.deleted_messages += 1,
+                    MessageContentInternal::Deleted(_) => {} // This is accounted for by the MessageDeleted events
                     MessageContentInternal::Giphy(_) => metrics.giphy_messages += 1,
                 }
 
@@ -112,6 +112,7 @@ impl ChatEventInternal {
                 }
             }
             ChatEventInternal::MessageEdited(_) => metrics.edits += 1,
+            ChatEventInternal::MessageDeleted(_) => metrics.deleted_messages += 1,
             ChatEventInternal::MessageReactionAdded(_) => metrics.reactions += 1,
             ChatEventInternal::MessageReactionRemoved(_) => metrics.reactions = metrics.reactions.saturating_sub(1),
             ChatEventInternal::PollVoteRegistered(v) if !v.existing_vote_removed => metrics.poll_votes += 1,
