@@ -62,17 +62,16 @@ export class CachingUserClient implements IUserClient {
         eventIndexes: number[],
         userId: string
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const cachedEvents = await getCachedEventsByIndex<DirectChatEvent>(
+        const [cachedEvents, missing] = await getCachedEventsByIndex<DirectChatEvent>(
             this.db,
             eventIndexes,
             userId
         );
-        return (
-            cachedEvents ??
-            this.client
-                .chatEventsByIndex(eventIndexes, userId)
-                .then(setCachedEvents(this.db, userId))
-        );
+        return missing.size === 0
+            ? cachedEvents
+            : this.client
+                  .chatEventsByIndex(eventIndexes, userId)
+                  .then(setCachedEvents(this.db, userId));
     }
 
     @profile("userCachingClient")
@@ -81,18 +80,17 @@ export class CachingUserClient implements IUserClient {
         userId: string,
         messageIndex: number
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const cachedEvents = await getCachedEventsWindow<DirectChatEvent>(
+        const [cachedEvents, missing] = await getCachedEventsWindow<DirectChatEvent>(
             this.db,
             eventIndexRange,
             userId,
             messageIndex
         );
-        return (
-            cachedEvents ??
-            this.client
-                .chatEventsWindow(eventIndexRange, userId, messageIndex)
-                .then(setCachedEvents(this.db, userId))
-        );
+        return missing.size === 0
+            ? cachedEvents
+            : this.client
+                  .chatEventsWindow(eventIndexRange, userId, messageIndex)
+                  .then(setCachedEvents(this.db, userId));
     }
 
     @profile("userCachingClient")
@@ -102,19 +100,18 @@ export class CachingUserClient implements IUserClient {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const [cachedEvents, _missing] = await getCachedEvents<DirectChatEvent>(
+        const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
             this.db,
             eventIndexRange,
             userId,
             startIndex,
             ascending
         );
-        return (
-            cachedEvents ??
-            this.client
-                .chatEvents(eventIndexRange, userId, startIndex, ascending)
-                .then(setCachedEvents(this.db, userId))
-        );
+        return missing.size === 0
+            ? cachedEvents
+            : this.client
+                  .chatEvents(eventIndexRange, userId, startIndex, ascending)
+                  .then(setCachedEvents(this.db, userId));
     }
 
     @profile("userCachingClient")
