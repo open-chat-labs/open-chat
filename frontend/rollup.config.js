@@ -8,13 +8,13 @@ import copy from "rollup-plugin-copy";
 import livereload from "rollup-plugin-livereload";
 import { terser } from "rollup-plugin-terser";
 import typescript from "@rollup/plugin-typescript";
-import css from "rollup-plugin-css-only";
 import dfxJson from "../dfx.json";
 import inject from "rollup-plugin-inject";
 import dev from "rollup-plugin-dev";
 import json from "@rollup/plugin-json";
 import analyze from "rollup-plugin-analyzer";
 import filesize from "rollup-plugin-filesize";
+import postcss from "rollup-plugin-postcss";
 import { sha256 } from "js-sha256";
 import dotenv from "dotenv";
 import replace from "@rollup/plugin-replace";
@@ -132,6 +132,7 @@ export default [
             format: "es",
             name: "app",
             dir: "build",
+            entryFileNames: "[name]-[hash].js",
         },
         plugins: [
             svelte({
@@ -147,7 +148,7 @@ export default [
                 },
             }),
 
-            css({ output: "main.css" }),
+            postcss({ extract: true }),
 
             resolve({
                 preferBuiltins: false,
@@ -188,7 +189,10 @@ export default [
             }),
 
             html({
-                template: (_) => {
+                template: ({ files }) => {
+                    const jsEntryFile = files.js.find(f => f.isEntry).fileName;
+                    const cssFile = files.css[0].fileName;
+
                     function generateCspHashValue(text) {
                         const hash = sha256.update(text).arrayBuffer();
                         const base64 = Buffer.from(hash).toString("base64");
@@ -221,8 +225,8 @@ export default [
                                 <link rel="apple-touch-icon" href="/_/raw/apple-touch-icon.png" />
                                 <link rel="icon" type="image/png" href="/icon.png" />
                                 <link rel="stylesheet" href="/global.css" />
-                                <link rel="stylesheet" href="/main.css" />
-                                <script type="module" defer src="/main.js"></script>
+                                <link rel="stylesheet" href="/${cssFile}" />
+                                <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
                             <body></body>

@@ -161,6 +161,31 @@ pub struct UpdatedMessage {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "UpdatedMessageInternalTemp")]
+pub struct PollVoteRegistered {
+    pub user_id: UserId,
+    pub message_id: MessageId,
+    pub existing_vote_removed: bool,
+}
+
+// Only needed for the one time upgrade
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+struct UpdatedMessageInternalTemp {
+    updated_by: UserId,
+    message_id: MessageId,
+}
+
+impl From<UpdatedMessageInternalTemp> for PollVoteRegistered {
+    fn from(m: UpdatedMessageInternalTemp) -> Self {
+        PollVoteRegistered {
+            user_id: m.updated_by,
+            message_id: m.message_id,
+            existing_vote_removed: false,
+        }
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PollEnded {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
