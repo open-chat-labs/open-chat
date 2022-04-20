@@ -5,11 +5,22 @@ use std::collections::{HashMap, HashSet};
 use types::{CanisterId, ChatId, DeletedGroupInfo, GroupChatSummaryInternal, GroupChatSummaryUpdatesInternal, TimestampMillis};
 use user_canister::updates::UpdatesSince;
 
+pub(crate) struct SummariesArgs {
+    group_index_canister_id: CanisterId,
+    group_chat_ids: Vec<ChatId>,
+    cached_group_summaries: Option<CachedGroupSummaries>,
+    now: TimestampMillis,
+}
+
+pub(crate) struct Summaries {
+    pub groups: Vec<GroupChatSummaryInternal>,
+    pub upgrades_in_progress: Vec<ChatId>,
+}
+
 pub(crate) struct UpdatesArgs {
     group_index_canister_id: CanisterId,
     updates_since: UpdatesSince,
     group_chat_ids: Vec<ChatId>,
-    cached_group_summaries: Option<CachedGroupSummaries>,
     now: TimestampMillis,
 }
 
@@ -20,32 +31,49 @@ pub(crate) struct Updates {
     pub upgrades_in_progress: Vec<ChatId>,
 }
 
-pub(crate) fn build_args_using_cache(now: TimestampMillis, data: &Data) -> UpdatesArgs {
-    let cached_group_summaries = data.cached_group_summaries.clone();
-    let updates_since = cached_group_summaries
-        .as_ref()
-        .map_or(UpdatesSince::default(), |c| c.updates_args());
-
-    build_args_internal(updates_since, cached_group_summaries, now, data)
+pub(crate) fn build_summaries_args(now: TimestampMillis, data: &Data) -> SummariesArgs {
+    SummariesArgs {
+        group_index_canister_id: data.group_index_canister_id,
+        group_chat_ids: data.group_chats.iter().map(|g| g.chat_id).collect(),
+        cached_group_summaries: data.cached_group_summaries.clone(),
+        now,
+    }
 }
 
-pub(crate) fn build_args(updates_since: UpdatesSince, now: TimestampMillis, data: &Data) -> UpdatesArgs {
-    build_args_internal(updates_since, None, now, data)
-}
-
-fn build_args_internal(
-    updates_since: UpdatesSince,
-    cached_group_summaries: Option<CachedGroupSummaries>,
-    now: TimestampMillis,
-    data: &Data,
-) -> UpdatesArgs {
+pub(crate) fn build_updates_args(updates_since: UpdatesSince, now: TimestampMillis, data: &Data) -> UpdatesArgs {
     UpdatesArgs {
         group_index_canister_id: data.group_index_canister_id,
         updates_since,
         group_chat_ids: data.group_chats.iter().map(|g| g.chat_id).collect(),
-        cached_group_summaries,
         now,
     }
+}
+
+pub(crate) async fn summaries(args: SummariesArgs) -> Result<Summaries, String> {
+    let updates_args = UpdatesArgs {
+        group_index_canister_id: args.group_index_canister_id,
+        updates_since: args
+            .cached_group_summaries
+            .as_ref()
+            .map_or(UpdatesSince::default(), |c| c.updates_args()),
+        group_chat_ids: args.group_chat_ids,
+        now: args.now,
+    };
+
+    let updates = updates(updates_args).await?;
+
+    let groups = if let Some(cached) = args.cached_group_summaries {
+        let mut merged = merge_updates(cached.groups, updates.updated);
+        merged.extend(updates.added);
+        merged
+    } else {
+        updates.added
+    };
+
+    Ok(Summaries {
+        groups,
+        upgrades_in_progress: updates.upgrades_in_progress,
+    })
 }
 
 pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
@@ -99,17 +127,12 @@ pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
         group_chats_added.retain(|id| !has_group_been_deleted(&deleted, id) && !upgrades_in_progress.contains(id));
         group_chats_to_check_for_updates.retain(|(id, _)| active_groups.contains(id) && !upgrades_in_progress.contains(id));
 
-        let summaries_future = summaries(group_chats_added);
-        let summary_updates_future = summary_updates(group_chats_to_check_for_updates);
+        let summaries_future = c2c::summaries(group_chats_added);
+        let summary_updates_future = c2c::summary_updates(group_chats_to_check_for_updates);
 
         let (s, su) = futures::future::join(summaries_future, summary_updates_future).await;
         added = s;
         updated = su;
-    }
-
-    if let Some(cached) = args.cached_group_summaries {
-        let merged = merge_updates(cached.groups, std::mem::take(&mut updated));
-        added.extend(merged);
     }
 
     Ok(Updates {
@@ -118,61 +141,6 @@ pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
         deleted,
         upgrades_in_progress,
     })
-}
-
-async fn summaries(chat_ids: Vec<ChatId>) -> Vec<GroupChatSummaryInternal> {
-    if chat_ids.is_empty() {
-        return Vec::new();
-    }
-
-    let args = group_canister::c2c_summary::Args {};
-    let futures: Vec<_> = chat_ids
-        .into_iter()
-        .map(|chat_id| group_canister_c2c_client::c2c_summary(chat_id.into(), &args))
-        .collect();
-
-    let responses = futures::future::join_all(futures).await;
-
-    let mut summaries = Vec::new();
-    for response in responses.into_iter().flatten() {
-        if let group_canister::c2c_summary::Response::Success(result) = response {
-            summaries.push(result.summary);
-        }
-    }
-
-    summaries
-}
-
-async fn summary_updates(group_chats: Vec<(ChatId, TimestampMillis)>) -> Vec<GroupChatSummaryUpdatesInternal> {
-    if group_chats.is_empty() {
-        return Vec::new();
-    }
-
-    async fn get_summary_updates(
-        canister_id: CanisterId,
-        args: group_canister::c2c_summary_updates::Args,
-    ) -> CallResult<group_canister::c2c_summary_updates::Response> {
-        group_canister_c2c_client::c2c_summary_updates(canister_id, &args).await
-    }
-
-    let futures: Vec<_> = group_chats
-        .into_iter()
-        .map(|(g, t)| {
-            let args = group_canister::c2c_summary_updates::Args { updates_since: t };
-            get_summary_updates(g.into(), args)
-        })
-        .collect();
-
-    let responses = futures::future::join_all(futures).await;
-
-    let mut summary_updates = Vec::new();
-    for response in responses.into_iter().flatten() {
-        if let group_canister::c2c_summary_updates::Response::Success(result) = response {
-            summary_updates.push(result.updates);
-        }
-    }
-
-    summary_updates
 }
 
 fn merge_updates(
@@ -193,4 +161,63 @@ fn merge_updates(
 
 fn has_group_been_deleted(groups: &[DeletedGroupInfo], group_id: &ChatId) -> bool {
     groups.iter().any(|g| g.id == *group_id)
+}
+
+mod c2c {
+    use super::*;
+
+    pub async fn summaries(chat_ids: Vec<ChatId>) -> Vec<GroupChatSummaryInternal> {
+        if chat_ids.is_empty() {
+            return Vec::new();
+        }
+
+        let args = group_canister::c2c_summary::Args {};
+        let futures: Vec<_> = chat_ids
+            .into_iter()
+            .map(|chat_id| group_canister_c2c_client::c2c_summary(chat_id.into(), &args))
+            .collect();
+
+        let responses = futures::future::join_all(futures).await;
+
+        let mut summaries = Vec::new();
+        for response in responses.into_iter().flatten() {
+            if let group_canister::c2c_summary::Response::Success(result) = response {
+                summaries.push(result.summary);
+            }
+        }
+
+        summaries
+    }
+
+    pub async fn summary_updates(group_chats: Vec<(ChatId, TimestampMillis)>) -> Vec<GroupChatSummaryUpdatesInternal> {
+        if group_chats.is_empty() {
+            return Vec::new();
+        }
+
+        async fn get_summary_updates(
+            canister_id: CanisterId,
+            args: group_canister::c2c_summary_updates::Args,
+        ) -> CallResult<group_canister::c2c_summary_updates::Response> {
+            group_canister_c2c_client::c2c_summary_updates(canister_id, &args).await
+        }
+
+        let futures: Vec<_> = group_chats
+            .into_iter()
+            .map(|(g, t)| {
+                let args = group_canister::c2c_summary_updates::Args { updates_since: t };
+                get_summary_updates(g.into(), args)
+            })
+            .collect();
+
+        let responses = futures::future::join_all(futures).await;
+
+        let mut summary_updates = Vec::new();
+        for response in responses.into_iter().flatten() {
+            if let group_canister::c2c_summary_updates::Response::Success(result) = response {
+                summary_updates.push(result.updates);
+            }
+        }
+
+        summary_updates
+    }
 }

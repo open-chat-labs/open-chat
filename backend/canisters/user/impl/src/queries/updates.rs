@@ -1,22 +1,32 @@
-use crate::group_summaries::{build_args, build_args_using_cache, Updates};
+use crate::group_summaries::{build_summaries_args, build_updates_args};
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState, WASM_VERSION};
 use ic_cdk_macros::query;
 use std::collections::{HashMap, HashSet};
 use types::{
     Alert, AlertDetails, AlertId, ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary,
-    DirectChatSummaryUpdates, GroupChatSummary, GroupChatSummaryUpdates, GroupDeleted, OptionUpdate, TimestampMillis,
+    DirectChatSummaryUpdates, GroupChatSummary, GroupChatSummaryInternal, GroupChatSummaryUpdates,
+    GroupChatSummaryUpdatesInternal, GroupDeleted, OptionUpdate, TimestampMillis,
 };
 use user_canister::{initial_state, updates};
 use utils::range_set::convert_to_message_index_ranges;
 
 #[query(guard = "caller_is_owner")]
 async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
-    let updates_args = read_state(|state| build_args_using_cache(state.env.now(), &state.data));
+    let group_summaries_args = read_state(|state| build_summaries_args(state.env.now(), &state.data));
 
-    match crate::group_summaries::updates(updates_args).await {
-        Ok(updates) => {
-            let result = read_state(|state| finalize(0, updates, state));
+    match crate::group_summaries::summaries(group_summaries_args).await {
+        Ok(group_summaries) => {
+            let result = read_state(|state| {
+                finalize(
+                    0,
+                    group_summaries.groups,
+                    Vec::new(),
+                    Vec::new(),
+                    group_summaries.upgrades_in_progress,
+                    state,
+                )
+            });
 
             initial_state::Response::Success(initial_state::SuccessResult {
                 timestamp: result.timestamp,
@@ -35,11 +45,20 @@ async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
 #[query(guard = "caller_is_owner")]
 async fn updates(args: updates::Args) -> updates::Response {
     let updates_since_timestamp = args.updates_since.timestamp;
-    let updates_args = read_state(|state| build_args(args.updates_since, state.env.now(), &state.data));
+    let group_updates_args = read_state(|state| build_updates_args(args.updates_since, state.env.now(), &state.data));
 
-    match crate::group_summaries::updates(updates_args).await {
-        Ok(group_chat_details) => {
-            let result = read_state(|state| finalize(updates_since_timestamp, group_chat_details, state));
+    match crate::group_summaries::updates(group_updates_args).await {
+        Ok(group_updates) => {
+            let result = read_state(|state| {
+                finalize(
+                    updates_since_timestamp,
+                    group_updates.added,
+                    group_updates.updated,
+                    group_updates.deleted,
+                    group_updates.upgrades_in_progress,
+                    state,
+                )
+            });
             updates::Response::Success(result)
         }
         Err(error) => updates::Response::InternalError(error),
@@ -48,7 +67,10 @@ async fn updates(args: updates::Args) -> updates::Response {
 
 fn finalize(
     updates_since: TimestampMillis,
-    group_chat_details: Updates,
+    group_chats_added: Vec<GroupChatSummaryInternal>,
+    group_chats_updated: Vec<GroupChatSummaryUpdatesInternal>,
+    group_chats_deleted: Vec<DeletedGroupInfo>,
+    group_chat_upgrades_in_progress: Vec<ChatId>,
     runtime_state: &RuntimeState,
 ) -> updates::SuccessResult {
     let now = runtime_state.env.now();
@@ -56,27 +78,24 @@ fn finalize(
     // The list of chats_removed currently consists of deleted groups and groups the user
     // has been removed from since the given timestamp
     let chats_removed: Vec<ChatId> = if updates_since > 0 {
-        let mut chats_removed: HashSet<ChatId> = group_chat_details.deleted.iter().map(|gd| gd.id).collect();
+        let mut chats_removed: HashSet<ChatId> = group_chats_deleted.iter().map(|gd| gd.id).collect();
         let groups_removed = runtime_state.data.group_chats.removed_since(updates_since);
         if !groups_removed.is_empty() {
             chats_removed.extend(groups_removed.iter());
         }
         chats_removed.into_iter().collect()
     } else {
-        group_chat_details.deleted.iter().map(|gd| gd.id).collect()
+        group_chats_deleted.iter().map(|gd| gd.id).collect()
     };
 
     let mut group_chats_added: HashMap<ChatId, GroupChatSummary> =
-        group_chat_details.added.into_iter().map(|s| (s.chat_id, s.into())).collect();
+        group_chats_added.into_iter().map(|s| (s.chat_id, s.into())).collect();
 
-    let mut group_chats_updated: HashMap<ChatId, GroupChatSummaryUpdates> = group_chat_details
-        .updated
-        .into_iter()
-        .map(|s| (s.chat_id, s.into()))
-        .collect();
+    let mut group_chats_updated: HashMap<ChatId, GroupChatSummaryUpdates> =
+        group_chats_updated.into_iter().map(|s| (s.chat_id, s.into())).collect();
 
     for group_chat in runtime_state.data.group_chats.get_all(Some(updates_since)) {
-        if has_group_been_deleted(&group_chat_details.deleted, &group_chat.chat_id) {
+        if has_group_been_deleted(&group_chats_deleted, &group_chat.chat_id) {
             continue;
         }
 
@@ -179,7 +198,7 @@ fn finalize(
     // Combine the internal alerts with alerts based on deleted groups
     // and sort so the most recent alerts are at the top
     let mut alerts = runtime_state.data.alerts.get_all(Some(updates_since), now);
-    for group_deleted in group_chat_details.deleted {
+    for group_deleted in group_chats_deleted {
         let alert = Alert {
             id: AlertId::GroupDeleted(group_deleted.id).to_string(),
             elapsed: now - group_deleted.timestamp,
@@ -202,7 +221,7 @@ fn finalize(
         cycles_balance,
         avatar_id,
         alerts,
-        upgrades_in_progress: group_chat_details.upgrades_in_progress,
+        upgrades_in_progress: group_chat_upgrades_in_progress,
         user_canister_wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(updates_since).copied()),
     }
 }

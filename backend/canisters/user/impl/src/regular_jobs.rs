@@ -1,4 +1,4 @@
-use crate::group_summaries::{build_args_using_cache, UpdatesArgs};
+use crate::group_summaries::{build_summaries_args, SummariesArgs};
 use crate::{mutate_state, CachedGroupSummaries, Data};
 use utils::env::Environment;
 use utils::regular_jobs::{RegularJob, RegularJobs};
@@ -38,18 +38,18 @@ fn retry_deleting_files(_: &dyn Environment, _: &mut Data) {
 }
 
 fn update_cached_group_summaries(env: &dyn Environment, data: &mut Data) {
-    let updates_args = build_args_using_cache(env.now(), data);
+    let summaries_args = build_summaries_args(env.now(), data);
 
-    ic_cdk::spawn(update_cached_group_summaries_impl(updates_args));
+    ic_cdk::spawn(update_cached_group_summaries_impl(summaries_args));
 }
 
-async fn update_cached_group_summaries_impl(args: UpdatesArgs) {
-    if let Ok(group_chat_details) = crate::group_summaries::updates(args).await {
-        if !group_chat_details.added.is_empty() && group_chat_details.upgrades_in_progress.is_empty() {
+async fn update_cached_group_summaries_impl(args: SummariesArgs) {
+    if let Ok(summaries) = crate::group_summaries::summaries(args).await {
+        if !summaries.groups.is_empty() && summaries.upgrades_in_progress.is_empty() {
             mutate_state(|state| {
                 let now = state.env.now();
                 state.data.cached_group_summaries = Some(CachedGroupSummaries {
-                    groups: group_chat_details.added,
+                    groups: summaries.groups,
                     timestamp: now,
                 });
             });
