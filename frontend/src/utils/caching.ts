@@ -20,7 +20,6 @@ import type { DirectNotification, GroupNotification } from "../domain/notificati
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
-import { missingUserIds } from "domain/user/user.utils";
 
 const CACHE_VERSION = 24;
 
@@ -373,8 +372,6 @@ async function aggregateEvents<T extends ChatEvent>(
             events.push(evt as EventWrapper<T>);
         } else {
             console.log("Couldn't find key: ", key);
-            // as soon as we draw a blank, bale out
-            // break;
             // let's continue aggregating events and just track the indexes that we couldn't find
             missing.add(currentIndex);
         }
