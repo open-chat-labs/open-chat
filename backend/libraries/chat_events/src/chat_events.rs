@@ -818,10 +818,7 @@ impl ChatEvents {
         self.events.is_empty()
     }
 
-    fn get_message_internal(
-        events: &Vec<EventWrapper<ChatEventInternal>>,
-        event_index: EventIndex,
-    ) -> Option<&MessageInternal> {
+    fn get_message_internal(events: &[EventWrapper<ChatEventInternal>], event_index: EventIndex) -> Option<&MessageInternal> {
         let event = Self::get_index(events, event_index).and_then(|i| events.get(i))?;
         if let ChatEventInternal::Message(message) = &event.event {
             Some(message.deref())
