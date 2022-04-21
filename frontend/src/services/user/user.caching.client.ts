@@ -50,6 +50,8 @@ import { profile } from "../common/profiling";
 import { toRecord } from "../../utils/list";
 import { GroupClient } from "services/group/group.client";
 import type { Identity } from "@dfinity/agent";
+import { scrollStrategy } from "stores/settings";
+import { get } from "svelte/store";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -158,6 +160,8 @@ export class CachingUserClient implements IUserClient {
                 ? {}
                 : toRecord(cachedResponse.chatSummaries, (c) => c.chatId);
         const nextChats = nextResponse.chatSummaries;
+        const currentScrollStrategy = get(scrollStrategy);
+
         nextChats.forEach((chat) => {
             // there is no need to do anything for the selected chat
             if (chat.chatId !== selectedChatId) {
@@ -166,26 +170,35 @@ export class CachingUserClient implements IUserClient {
                     cachedChat === undefined ||
                     chat.latestEventIndex > cachedChat.latestEventIndex
                 ) {
-                    console.log(`Chat ${chat.chatId} is not up to date`);
-                    // if the difference is < a page then this is easy
-                    // if the difference is > a page then what we do depends on the user's preferences
+                    let targetMessageIndex: number | undefined = undefined;
+
+                    if (currentScrollStrategy === "firstMention") {
+                        targetMessageIndex =
+                            this.getFirstUnreadMention(chat)?.messageIndex ??
+                            this.getFirstUnreadMessageIndex(chat);
+                    }
+                    if (currentScrollStrategy === "firstMessage") {
+                        targetMessageIndex = this.getFirstUnreadMessageIndex(chat);
+                    }
+
+                    const range = indexRangeForChat(chat);
 
                     // fire and forget an events request that will prime the cache
                     if (chat.kind === "group_chat") {
                         // this is a bit gross, but I don't want this to leak outside of the caching layer
                         const groupClient = GroupClient.create(chat.chatId, this.identity, this.db);
-                        groupClient.chatEvents(
-                            indexRangeForChat(chat),
-                            chat.latestEventIndex,
-                            false
-                        );
+
+                        if (targetMessageIndex !== undefined) {
+                            groupClient.chatEventsWindow(range, targetMessageIndex);
+                        } else {
+                            groupClient.chatEvents(range, chat.latestEventIndex, false);
+                        }
                     } else {
-                        this.chatEvents(
-                            indexRangeForChat(chat),
-                            this.userId,
-                            chat.latestEventIndex,
-                            false
-                        );
+                        if (targetMessageIndex !== undefined) {
+                            this.chatEventsWindow(range, this.userId, targetMessageIndex);
+                        } else {
+                            this.chatEvents(range, this.userId, chat.latestEventIndex, false);
+                        }
                     }
                 }
             }
