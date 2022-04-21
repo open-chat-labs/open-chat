@@ -40,6 +40,7 @@ import {
 } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
 import {
+    compareChats,
     getFirstUnreadMention,
     getFirstUnreadMessageIndex,
     indexRangeForChat,
@@ -163,14 +164,21 @@ export class CachingUserClient implements IUserClient {
         cachedResponse: MergedUpdatesResponse | undefined,
         nextResponse: MergedUpdatesResponse,
         messagesRead: IMessageReadTracker,
+        limit: boolean,
         selectedChatId?: string
     ): MergedUpdatesResponse {
         const cachedChats =
             cachedResponse === undefined
                 ? {}
                 : toRecord(cachedResponse.chatSummaries, (c) => c.chatId);
-        const nextChats = nextResponse.chatSummaries;
+
+        const limitTo = Number(localStorage.getItem("openchat_prime_cache_limit") || "5");
+        const nextChats = limit
+            ? nextResponse.chatSummaries.sort(compareChats).slice(0, limitTo)
+            : nextResponse.chatSummaries;
         const currentScrollStrategy = get(scrollStrategy);
+
+        console.log("limiting chats: ", limit, limitTo);
 
         nextChats.forEach((chat) => {
             // there is no need to do anything for the selected chat
@@ -245,12 +253,16 @@ export class CachingUserClient implements IUserClient {
                     resp.wasUpdated = true;
                     return resp;
                 })
-                .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
+                .then((resp) =>
+                    this.primeCaches(cachedChats, resp, messagesRead, false, selectedChatId)
+                )
                 .then(setCachedChats(this.db, this.userId));
         } else {
             return this.client
                 .getInitialState(messagesRead)
-                .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
+                .then((resp) =>
+                    this.primeCaches(cachedChats, resp, messagesRead, true, selectedChatId)
+                )
                 .then(setCachedChats(this.db, this.userId));
         }
     }
@@ -265,7 +277,9 @@ export class CachingUserClient implements IUserClient {
         const cachedChats = await getCachedChats(this.db, this.userId);
         return this.client
             .getUpdates(chatSummaries, args, messagesRead)
-            .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
+            .then((resp) =>
+                this.primeCaches(cachedChats, resp, messagesRead, false, selectedChatId)
+            )
             .then(setCachedChats(this.db, this.userId));
     }
 
