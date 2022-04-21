@@ -577,7 +577,7 @@ export class ServiceContainer implements MarkMessagesRead {
         messagesRead: IMessageReadTracker,
         selectedChatId?: string
     ): Promise<MergedUpdatesResponse> {
-        return this.userClient.getInitialState(selectedChatId).then((resp) => {
+        return this.userClient.getInitialState(messagesRead, selectedChatId).then((resp) => {
             return this.handleMergedUpdatesResponse(messagesRead, resp);
         });
     }
@@ -588,9 +588,11 @@ export class ServiceContainer implements MarkMessagesRead {
         messagesRead: IMessageReadTracker,
         selectedChatId?: string
     ): Promise<MergedUpdatesResponse> {
-        return this.userClient.getUpdates(chatSummaries, args, selectedChatId).then((resp) => {
-            return this.handleMergedUpdatesResponse(messagesRead, resp);
-        });
+        return this.userClient
+            .getUpdates(chatSummaries, args, messagesRead, selectedChatId)
+            .then((resp) => {
+                return this.handleMergedUpdatesResponse(messagesRead, resp);
+            });
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {

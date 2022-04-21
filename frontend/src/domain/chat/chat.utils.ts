@@ -1354,3 +1354,26 @@ export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {
         reactions: a.reactions + b.reactions,
     };
 }
+
+export function getFirstUnreadMention(
+    messagesRead: IMessageReadTracker,
+    chat: ChatSummary
+): Mention | undefined {
+    if (chat.kind === "direct_chat") return undefined;
+    return chat.mentions.find(
+        (m) => !messagesRead.isRead(chat.chatId, m.messageIndex, m.messageId)
+    );
+}
+
+export function getFirstUnreadMessageIndex(
+    messagesRead: IMessageReadTracker,
+    chat: ChatSummary
+): number | undefined {
+    if (chat.kind === "group_chat" && chat.myRole === "previewer") return undefined;
+
+    return messagesRead.getFirstUnreadMessageIndex(
+        chat.chatId,
+        getMinVisibleMessageIndex(chat),
+        chat.latestMessage?.event.messageIndex
+    );
+}

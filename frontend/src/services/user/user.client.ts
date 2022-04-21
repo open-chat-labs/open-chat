@@ -85,6 +85,7 @@ import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
+import type { IMessageReadTracker } from "../../stores/markRead";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -181,7 +182,10 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    async getInitialState(_selectedChatId?: string): Promise<MergedUpdatesResponse> {
+    async getInitialState(
+        _: IMessageReadTracker,
+        _selectedChatId?: string
+    ): Promise<MergedUpdatesResponse> {
         const resp = await this.handleQueryResponse(
             () => this.userService.initial_state({}),
             initialStateResponse
@@ -201,6 +205,7 @@ export class UserClient extends CandidService implements IUserClient {
     async getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
+        _: IMessageReadTracker,
         _selectedChatId?: string
     ): Promise<MergedUpdatesResponse> {
         const updatesResponse = await this.handleQueryResponse(

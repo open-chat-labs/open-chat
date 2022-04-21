@@ -23,6 +23,7 @@ import type {
     PendingICPWithdrawal,
     WithdrawCryptocurrencyResponse,
     EventsSuccessResult,
+    Mention,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -38,7 +39,13 @@ import {
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
-import { indexRangeForChat, MAX_MISSING, updateArgsFromChats } from "../../domain/chat/chat.utils";
+import {
+    getFirstUnreadMention,
+    getFirstUnreadMessageIndex,
+    indexRangeForChat,
+    MAX_MISSING,
+    updateArgsFromChats,
+} from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
 import type { SetBioResponse, UserSummary } from "../../domain/user/user";
 import type {
@@ -50,8 +57,9 @@ import { profile } from "../common/profiling";
 import { toRecord } from "../../utils/list";
 import { GroupClient } from "services/group/group.client";
 import type { Identity } from "@dfinity/agent";
-import { scrollStrategy } from "stores/settings";
+import { scrollStrategy } from "../../stores/settings";
 import { get } from "svelte/store";
+import type { IMessageReadTracker } from "../../stores/markRead";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -150,11 +158,9 @@ export class CachingUserClient implements IUserClient {
     private primeCaches(
         cachedResponse: MergedUpdatesResponse | undefined,
         nextResponse: MergedUpdatesResponse,
+        messagesRead: IMessageReadTracker,
         selectedChatId?: string
     ): MergedUpdatesResponse {
-        // TODO - we need to make sure that we don't do anything special for _the selected_ chat,
-        // otherwise we will end up in a race
-
         const cachedChats =
             cachedResponse === undefined
                 ? {}
@@ -174,11 +180,11 @@ export class CachingUserClient implements IUserClient {
 
                     if (currentScrollStrategy === "firstMention") {
                         targetMessageIndex =
-                            this.getFirstUnreadMention(chat)?.messageIndex ??
-                            this.getFirstUnreadMessageIndex(chat);
+                            getFirstUnreadMention(messagesRead, chat)?.messageIndex ??
+                            getFirstUnreadMessageIndex(messagesRead, chat);
                     }
                     if (currentScrollStrategy === "firstMessage") {
-                        targetMessageIndex = this.getFirstUnreadMessageIndex(chat);
+                        targetMessageIndex = getFirstUnreadMessageIndex(messagesRead, chat);
                     }
 
                     const range = indexRangeForChat(chat);
@@ -207,25 +213,29 @@ export class CachingUserClient implements IUserClient {
     }
 
     @profile("userCachingClient")
-    async getInitialState(selectedChatId?: string): Promise<MergedUpdatesResponse> {
+    async getInitialState(
+        messagesRead: IMessageReadTracker,
+        selectedChatId?: string
+    ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         // if we have cached chats we will rebuild the UpdateArgs from that cached data
         if (cachedChats) {
             return this.client
                 .getUpdates(
                     cachedChats.chatSummaries,
-                    updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries)
+                    updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries),
+                    messagesRead
                 )
                 .then((resp) => {
                     resp.wasUpdated = true;
                     return resp;
                 })
-                .then((resp) => this.primeCaches(cachedChats, resp, selectedChatId))
+                .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
                 .then(setCachedChats(this.db, this.userId));
         } else {
             return this.client
-                .getInitialState()
-                .then((resp) => this.primeCaches(cachedChats, resp, selectedChatId))
+                .getInitialState(messagesRead)
+                .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
                 .then(setCachedChats(this.db, this.userId));
         }
     }
@@ -234,12 +244,13 @@ export class CachingUserClient implements IUserClient {
     async getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
+        messagesRead: IMessageReadTracker,
         selectedChatId?: string
     ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         return this.client
-            .getUpdates(chatSummaries, args)
-            .then((resp) => this.primeCaches(cachedChats, resp, selectedChatId))
+            .getUpdates(chatSummaries, args, messagesRead)
+            .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
             .then(setCachedChats(this.db, this.userId));
     }
 
