@@ -1,13 +1,20 @@
 import type { UserLookup } from "./user";
+import { init, register } from "svelte-i18n";
 import {
+    buildUsernameList,
     compareUsername,
     extractUserIdsFromMentions,
     missingUserIds,
     userIsOnline,
 } from "./user.utils";
 
+register("en", () => import("../../i18n/en.json"));
+
 const now = Date.now();
 jest.setSystemTime(now);
+init({
+    fallbackLocale: "en",
+});
 
 const lookup: UserLookup = {
     a: {
@@ -25,6 +32,12 @@ const lookup: UserLookup = {
     xyz: {
         userId: "xyz",
         username: "julian_jelfs",
+        lastOnline: 0,
+        updated: BigInt(0),
+    },
+    alpha: {
+        userId: "alpha",
+        username: "alpha",
         lastOnline: 0,
         updated: BigInt(0),
     },
@@ -89,5 +102,41 @@ describe("compare username", () => {
             undefined,
             undefined,
         ]);
+    });
+});
+
+describe("build username list", () => {
+    test("and you and more", () => {
+        const userIds = Object.entries(lookup).map(([k, _]) => k);
+        userIds.push("beta");
+
+        const result = buildUsernameList(new Set(userIds), "alpha", lookup, 2);
+
+        expect(result).toEqual("a, b, and you, and 2 more");
+    });
+
+    test("show all", () => {
+        const userIds = Object.entries(lookup).map(([k, _]) => k);
+
+        const result = buildUsernameList(new Set(userIds), undefined, lookup);
+
+        expect(result).toEqual("a, b, julian_jelfs, alpha");
+    });
+
+    test("don't show 1 more", () => {
+        const userIds = Object.entries(lookup).map(([k, _]) => k);
+
+        const result = buildUsernameList(new Set(userIds), undefined, lookup, 3);
+
+        expect(result).toEqual("a, b, julian_jelfs, alpha");
+    });
+
+    test("do show 1 more if missing", () => {
+        const userIds = Object.entries(lookup).map(([k, _]) => k);
+        userIds.push("beta");
+
+        const result = buildUsernameList(new Set(userIds), undefined, lookup);
+
+        expect(result).toEqual("a, b, julian_jelfs, alpha, and 1 more");
     });
 });

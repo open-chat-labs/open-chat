@@ -1,18 +1,18 @@
 <!-- <svelte:options immutable={true} /> -->
 <script lang="ts">
     import Poll from "svelte-material-icons/Poll.svelte";
-    import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
-    import Progress from "../Progress.svelte";
     import { _ } from "svelte-i18n";
     import type { PollContent } from "../../domain/chat/chat";
     import { iconSize } from "../../stores/iconSize";
     import { toLongDateString, toShortTimeString } from "../../utils/date";
     import { createEventDispatcher } from "svelte";
+    import PollAnswer from "./PollAnswer.svelte";
 
     const dispatch = createEventDispatcher();
 
     export let content: PollContent;
     export let me: boolean;
+    export let myUserId: string | undefined;
     export let preview: boolean;
 
     $: txtColor = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
@@ -22,6 +22,11 @@
     $: haveIVoted = content.votes.user.length > 0;
 
     $: numberOfVotes = totalVotes(content);
+
+    $: showVotes =
+        content.ended ||
+        (haveIVoted &&
+            (content.config.showVotesBeforeEndDate || content.config.endDate === undefined));
 
     function vote(idx: number) {
         if (content.ended || preview) return;
@@ -34,6 +39,26 @@
 
     function votedFor(idx: number): boolean {
         return content.votes.user.includes(idx);
+    }
+
+    function voteCount(idx: number): number {
+        let total = content.votes.total;
+        switch (total.kind) {
+            case "anonymous_poll_votes":
+                return total.votes[idx] ?? 0;
+            case "hidden_poll_votes":
+                return total.votes;
+            case "visible_poll_votes":
+                return total.votes[idx]?.length ?? 0;
+        }
+    }
+
+    function voters(idx: number): string[] | undefined {
+        if (content.votes.total.kind !== "visible_poll_votes") {
+            return undefined;
+        }
+
+        return content.votes.total.votes[idx];
     }
 
     function totalVotes(content: PollContent): number {
@@ -66,12 +91,7 @@
     }
 
     function percentageOfVote(idx: number) {
-        const showPercentage =
-            content.ended ||
-            (haveIVoted &&
-                (content.config.showVotesBeforeEndDate || content.config.endDate === undefined));
-
-        return showPercentage ? (votesForAnswer(idx) / numberOfVotes) * 100 : 0;
+        return showVotes ? (votesForAnswer(idx) / numberOfVotes) * 100 : 0;
     }
 </script>
 
@@ -86,24 +106,30 @@
     {/if}
     <div class="answers">
         {#each [...content.config.options] as answer, i (answer)}
-            <div
-                class:preview
-                class="answer-text"
-                class:finished={content.ended}
-                on:click={() => vote(i)}>
-                <Progress bg={"button"} percent={percentageOfVote(i)}>
-                    <div class="label">
-                        <span>{answer}</span>
-                        {#if votedFor(i)}
-                            <CheckCircleOutline size={"1em"} color={txtColor} />
-                        {/if}
-                    </div>
-                </Progress>
-            </div>
+            <PollAnswer
+                on:click={() => vote(i)}
+                finished={content.ended}
+                {preview}
+                percent={percentageOfVote(i)}
+                {answer}
+                voted={votedFor(i)}
+                {txtColor}
+                {myUserId}
+                voters={voters(i)}
+                numVotes={voteCount(i)}
+                {showVotes}
+                {me} />
         {/each}
     </div>
     <p class="total-votes">
         {$_("poll.totalVotes", { values: { total: numberOfVotes.toString() } })}
+    </p>
+    <p class="timestamp">
+        {#if content.config.anonymous}
+            {$_("poll.votersPrivate")}
+        {:else}
+            {$_("poll.votersPublic")}
+        {/if}
     </p>
     {#if date !== undefined}
         <p class="timestamp">
@@ -136,27 +162,11 @@
         }
     }
 
-    .label {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-    }
-
     .answers {
-        margin-bottom: $sp3;
-    }
-
-    .answer-text {
-        padding: $sp3 0;
-        cursor: pointer;
-
-        &.finished {
-            cursor: default;
-        }
-
-        &.preview {
-            cursor: default;
-        }
+        margin: $sp3 0 $sp4 0;
+        display: flex;
+        flex-direction: column;
+        gap: $sp4;
     }
 
     .total-votes {

@@ -27,6 +27,7 @@
     export let preview: boolean;
     export let groupChat: boolean;
     export let senderId: string;
+    export let myUserId: string | undefined;
 
     function truncateText(text: string): string {
         // todo - we might be able to do something nicer than this with pure css, but we just need to do
@@ -58,7 +59,7 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "poll_content"}
-    <PollContent {preview} {me} {content} on:registerVote />
+    <PollContent {preview} {me} {content} {myUserId} on:registerVote />
 {:else if content.kind === "giphy_content"}
     <ImageObserver let:intersecting>
         <GiphyContent {intersecting} {fill} {content} {reply} {height} />
