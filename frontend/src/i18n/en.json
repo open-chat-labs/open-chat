@@ -463,7 +463,7 @@
         "audioMessages": "audio messages",
         "fileMessages": "file messages",
         "pollMessages": "poll messages",
-        "icpTransfers": "IPC transfers",
+        "icpTransfers": "ICP transfers",
         "giphyMessages": "giphy messages",
         "pollVotes": "poll votes",
         "replies": "replies",
