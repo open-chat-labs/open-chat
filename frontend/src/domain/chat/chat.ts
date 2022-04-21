@@ -1064,7 +1064,6 @@ export type ChatMetrics = {
     cyclesMessages: number;
     edits: number;
     icpMessages: number;
-    lastActive: number;
     giphyMessages: number;
     deletedMessages: number;
     fileMessages: number;
