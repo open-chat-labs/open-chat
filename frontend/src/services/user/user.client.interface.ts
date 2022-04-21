@@ -34,8 +34,12 @@ import type { SetBioResponse, UserSummary } from "../../domain/user/user";
 
 export interface IUserClient {
     userId: string;
-    getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse>;
-    getInitialState(): Promise<MergedUpdatesResponse>;
+    getUpdates(
+        chatSummaries: ChatSummary[],
+        args: UpdateArgs,
+        selectedChatId?: string
+    ): Promise<MergedUpdatesResponse>;
+    getInitialState(selectedChatId?: string): Promise<MergedUpdatesResponse>;
     chatEventsWindow(
         eventIndexRange: IndexRange,
         userId: string,

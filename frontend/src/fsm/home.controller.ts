@@ -154,6 +154,7 @@ export class HomeController {
         try {
             this.loading.set(!this.initialised);
             const chats = Object.values(get(this.serverChatSummaries));
+            const selectedChat = get(this.selectedChat);
             const chatsResponse =
                 this.chatUpdatesSince === undefined
                     ? await this.api.getInitialState(this.messagesRead)
@@ -179,8 +180,6 @@ export class HomeController {
 
                 userStore.addMany(usersResponse.users);
                 blockedUsers.set(chatsResponse.blockedUsers);
-
-                const selectedChat = get(this.selectedChat);
 
                 let selectedChatInvalid = true;
 
