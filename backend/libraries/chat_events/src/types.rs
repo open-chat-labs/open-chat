@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use types::{
-    AvatarChanged, ChatMetrics, Cryptocurrency, DeletedContent, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged,
+    AvatarChanged, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged,
     GroupNameChanged, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred,
     ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft,
     ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved, PermissionsChanged, PollVoteRegistered,
@@ -175,7 +175,7 @@ pub struct MessageInternal {
     pub last_updated: Option<TimestampMillis>,
     pub last_edited: Option<TimestampMillis>,
     #[serde(default)]
-    pub deleted: Option<DeletedContent>,
+    pub deleted_by: Option<DeletedBy>,
 }
 
 impl MessageInternal {
@@ -195,10 +195,15 @@ impl MessageInternal {
     ) {
         let sender_metrics = per_user_metrics.entry(self.sender).or_default();
 
-        if self.deleted.is_some() {
+        if self.deleted_by.is_some() {
             adjust(&mut metrics.deleted_messages);
             adjust(&mut sender_metrics.deleted_messages);
         } else {
+            if self.replies_to.is_some() {
+                adjust(&mut metrics.replies);
+                adjust(&mut sender_metrics.replies);
+            }
+
             match &self.content {
                 MessageContentInternal::Text(_) => {
                     adjust(&mut metrics.text_messages);
@@ -245,13 +250,6 @@ impl MessageInternal {
                 MessageContentInternal::Giphy(_) => {
                     adjust(&mut metrics.giphy_messages);
                     adjust(&mut sender_metrics.giphy_messages);
-                }
-            }
-
-            if self.replies_to.is_some() {
-                adjust(&mut metrics.replies);
-                if let Some(user_metrics) = per_user_metrics.get_mut(user_id) {
-                    adjust(&mut user_metrics.replies);
                 }
             }
 

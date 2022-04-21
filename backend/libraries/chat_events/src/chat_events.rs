@@ -150,7 +150,7 @@ impl ChatEvents {
                 .filter_map(|e| if let ChatEventInternal::Message(m) = &mut e.event { Some(m) } else { None })
         {
             if let MessageContentInternal::Deleted(c) = &message.content {
-                message.deleted = Some(c.clone());
+                message.deleted_by = Some(c.clone());
             }
         }
     }
@@ -191,7 +191,7 @@ impl ChatEvents {
             reactions: Vec::new(),
             last_updated: None,
             last_edited: None,
-            deleted: None,
+            deleted_by: None,
         };
         let message = self.hydrate_message(&message_internal, Some(message_internal.sender));
         let event_index = self.push_event(ChatEventInternal::Message(Box::new(message_internal)), args.now);
@@ -276,7 +276,7 @@ impl ChatEvents {
             .and_then(|e| Self::get_message_internal_mut(&mut self.events, e))
         {
             if message.sender == caller || is_admin {
-                if message.deleted.is_some() {
+                if message.deleted_by.is_some() {
                     return DeleteMessageResult::AlreadyDeleted;
                 }
                 match message.content {
@@ -286,7 +286,7 @@ impl ChatEvents {
                         message.remove_from_metrics(&mut self.metrics, &mut self.per_user_metrics);
 
                         message.last_updated = Some(now);
-                        message.deleted = Some(DeletedContent {
+                        message.deleted_by = Some(DeletedBy {
                             deleted_by: caller,
                             timestamp: now,
                         });
@@ -495,8 +495,8 @@ impl ChatEvents {
             message_index: message.message_index,
             message_id: message.message_id,
             sender: message.sender,
-            content: if let Some(deleted) = message.deleted.clone() {
-                MessageContent::Deleted(deleted)
+            content: if let Some(deleted_by) = message.deleted_by.clone() {
+                MessageContent::Deleted(deleted_by)
             } else {
                 message.content.hydrate(my_user_id)
             },
