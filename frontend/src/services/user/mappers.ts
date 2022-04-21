@@ -761,7 +761,6 @@ function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
         replies: Number(candid.replies),
         videoMessages: Number(candid.video_messages),
         polls: Number(candid.polls),
-        totalEvents: Number(candid.total_events),
         reactions: Number(candid.reactions),
     };
 }

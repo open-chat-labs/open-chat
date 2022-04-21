@@ -1074,6 +1074,5 @@ export type ChatMetrics = {
     replies: number;
     videoMessages: number;
     polls: number;
-    totalEvents: number;
     reactions: number;
 };
