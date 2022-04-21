@@ -68,13 +68,6 @@ impl DirectChats {
         message_event
     }
 
-    pub fn hydrate_chat_events(&mut self) {
-        for chat in self.direct_chats.values_mut() {
-            chat.events.populate_deleted_messages();
-            chat.events.recalculate_metrics();
-        }
-    }
-
     pub fn aggregate_metrics(&mut self) {
         let mut metrics = ChatMetrics::default();
 
