@@ -111,15 +111,19 @@ export class CachingUserClient implements IUserClient {
         userId: string,
         messageIndex: number
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const [cachedEvents, missing] = await getCachedEventsWindow<DirectChatEvent>(
+        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<DirectChatEvent>(
             this.db,
             eventIndexRange,
             userId,
             messageIndex
         );
-        if (missing.size >= MAX_MISSING) {
+        if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.log("We didn't get enough back from the cache, going to the api");
+            console.log(
+                "We didn't get enough back from the cache, going to the api",
+                missing.size,
+                totalMiss
+            );
             return this.client
                 .chatEventsWindow(eventIndexRange, userId, messageIndex)
                 .then(setCachedEvents(this.db, userId));
@@ -178,6 +182,11 @@ export class CachingUserClient implements IUserClient {
                 ) {
                     let targetMessageIndex: number | undefined = undefined;
 
+                    if (currentScrollStrategy !== "latestMessage") {
+                        // horrible having to do this but if we don't the message read tracker will not be in the right state
+                        messagesRead.syncWithServer(chat.chatId, chat.readByMe);
+                    }
+
                     if (currentScrollStrategy === "firstMention") {
                         targetMessageIndex =
                             getFirstUnreadMention(messagesRead, chat)?.messageIndex ??
@@ -195,6 +204,12 @@ export class CachingUserClient implements IUserClient {
                         const groupClient = GroupClient.create(chat.chatId, this.identity, this.db);
 
                         if (targetMessageIndex !== undefined) {
+                            console.log(
+                                "loading event window for chat ",
+                                chat.chatId,
+                                " starting at index: ",
+                                targetMessageIndex
+                            );
                             groupClient.chatEventsWindow(range, targetMessageIndex);
                         } else {
                             groupClient.chatEvents(range, chat.latestEventIndex, false);

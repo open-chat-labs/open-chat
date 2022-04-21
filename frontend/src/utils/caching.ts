@@ -243,23 +243,23 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
     eventIndexRange: IndexRange,
     chatId: string,
     messageIndex: number
-): Promise<[EventsSuccessResult<T>, Set<number>]> {
+): Promise<[EventsSuccessResult<T>, Set<number>, boolean]> {
     console.log("cache: window: ", eventIndexRange, messageIndex);
     const start = Date.now();
-    const [events, missing] = await aggregateEventsWindow<T>(
+    const [events, missing, totalMiss] = await aggregateEventsWindow<T>(
         db,
         eventIndexRange,
         chatId,
         messageIndex
     );
 
-    if (missing.size === 0) {
+    if (!totalMiss && missing.size === 0) {
         console.log("cache hit: ", events, Date.now() - start);
     }
 
     events.sort((a, b) => a.index - b.index);
 
-    return [{ events, affectedEvents: [] }, missing];
+    return [{ events, affectedEvents: [] }, missing, totalMiss];
 }
 
 function loadEventByIndex<T extends ChatEvent>(
@@ -276,7 +276,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     [min, max]: IndexRange,
     chatId: string,
     middleMessageIndex: number
-): Promise<[EventWrapper<T>[], Set<number>]> {
+): Promise<[EventWrapper<T>[], Set<number>, boolean]> {
     let numMessages = 0;
     const events: EventWrapper<T>[] = [];
     const resolvedDb = await db;
@@ -288,8 +288,10 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     );
 
     if (eventIndex === undefined) {
-        console.log("cache miss: could not find the starting event index for the message window");
-        return [[], missing];
+        console.log(
+            "cache total miss: could not even find the starting event index for the message window"
+        );
+        return [[], missing, true];
     }
 
     let descIdx = eventIndex;
@@ -298,7 +300,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     while (numMessages < MAX_MESSAGES && missing.size < MAX_MISSING) {
         // if we have exceeded the range of this chat then we have succeeded
         if (ascIdx > max && descIdx < min) {
-            return [events, missing];
+            return [events, missing, false];
         }
 
         if (ascIdx <= max) {
@@ -313,7 +315,6 @@ async function aggregateEventsWindow<T extends ChatEvent>(
                     numMessages += 1;
                 }
             } else {
-                console.log("Couldn't find index: ", ascIdx);
                 missing.add(ascIdx);
             }
             ascIdx += 1;
@@ -332,14 +333,13 @@ async function aggregateEventsWindow<T extends ChatEvent>(
                     numMessages += 1;
                 }
             } else {
-                console.log("Couldn't find index: ", descIdx);
                 missing.add(descIdx);
             }
             descIdx -= 1;
         }
     }
 
-    return [events, missing];
+    return [events, missing, false];
 }
 
 async function aggregateEvents<T extends ChatEvent>(
