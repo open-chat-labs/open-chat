@@ -465,7 +465,7 @@
         "audioMessages": "语音信息",
         "fileMessages": "文件消息",
         "pollMessages": "投票消息",
-        "icpTransfers": "IPC 传输",
+        "icpTransfers": "ICP 传输",
         "giphyMessages": "giphy消息",
         "pollVotes": "投票",
         "replies": "回复",

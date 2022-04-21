@@ -751,7 +751,6 @@ function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
         cyclesMessages: Number(candid.cycles_messages),
         edits: Number(candid.edits),
         icpMessages: Number(candid.icp_messages),
-        lastActive: Number(candid.last_active),
         giphyMessages: Number(candid.giphy_messages),
         deletedMessages: Number(candid.deleted_messages),
         fileMessages: Number(candid.file_messages),
