@@ -25,7 +25,6 @@
 
     $: {
         if (previousStats === undefined || !metricsEqual(stats, previousStats)) {
-            console.log("stats have actually changed");
             totalMessages =
                 stats.textMessages +
                 stats.imageMessages +
