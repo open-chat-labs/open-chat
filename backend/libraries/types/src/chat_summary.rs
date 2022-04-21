@@ -315,7 +315,6 @@ pub struct ChatMetrics {
     pub edits: u64,
     #[serde(default)]
     pub reactions: u64,
-    pub total_events: u64,
     pub last_active: TimestampMillis,
 }
 
@@ -335,7 +334,6 @@ impl ChatMetrics {
         self.replies += other.replies;
         self.edits += other.edits;
         self.reactions += other.reactions;
-        self.total_events += other.total_events;
         self.last_active = max(self.last_active, other.last_active);
     }
 }

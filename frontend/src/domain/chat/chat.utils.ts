@@ -1331,7 +1331,6 @@ export function emptyChatMetrics(): ChatMetrics {
         replies: 0,
         videoMessages: 0,
         polls: 0,
-        totalEvents: 0,
         reactions: 0,
     };
 }
@@ -1352,7 +1351,6 @@ export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {
         replies: a.replies + b.replies,
         videoMessages: a.videoMessages + b.videoMessages,
         polls: a.polls + b.polls,
-        totalEvents: a.totalEvents + b.totalEvents,
         reactions: a.reactions + b.reactions,
     };
 }

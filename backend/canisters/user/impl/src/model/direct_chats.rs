@@ -68,8 +68,9 @@ impl DirectChats {
         message_event
     }
 
-    pub fn recalculate_metrics(&mut self) {
+    pub fn hydrate_chat_events(&mut self) {
         for chat in self.direct_chats.values_mut() {
+            chat.events.populate_deleted_messages();
             chat.events.recalculate_metrics();
         }
     }

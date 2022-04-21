@@ -335,7 +335,6 @@ export const idlFactory = ({ IDL }) => {
     'replies' : IDL.Nat64,
     'video_messages' : IDL.Nat64,
     'polls' : IDL.Nat64,
-    'total_events' : IDL.Nat64,
     'reactions' : IDL.Nat64,
   });
   const FallbackRole = IDL.Variant({
