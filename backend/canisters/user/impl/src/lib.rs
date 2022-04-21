@@ -88,7 +88,6 @@ impl RuntimeState {
             group_chats: self.data.group_chats.len() as u32,
             groups_created: self.data.group_chats.groups_created(),
             blocked_users: self.data.blocked_users.len() as u32,
-            events: chat_metrics.total_events,
             text_messages: chat_metrics.text_messages,
             image_messages: chat_metrics.image_messages,
             video_messages: chat_metrics.video_messages,
@@ -103,7 +102,6 @@ impl RuntimeState {
             replies: chat_metrics.replies,
             edits: chat_metrics.edits,
             reactions: chat_metrics.reactions,
-            total_events: chat_metrics.total_events,
             last_active: chat_metrics.last_active,
         }
     }
@@ -180,7 +178,6 @@ pub struct Metrics {
     pub group_chats: u32,
     pub groups_created: u32,
     pub blocked_users: u32,
-    pub events: u64,
     pub text_messages: u64,
     pub image_messages: u64,
     pub video_messages: u64,
@@ -195,7 +192,6 @@ pub struct Metrics {
     pub replies: u64,
     pub edits: u64,
     pub reactions: u64,
-    pub total_events: u64,
     pub last_active: TimestampMillis,
 }
 

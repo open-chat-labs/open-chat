@@ -21,7 +21,7 @@ pub enum MessageContent {
     File(FileContent),
     Poll(PollContent),
     Cryptocurrency(CryptocurrencyContent),
-    Deleted(DeletedContent),
+    Deleted(DeletedBy),
     Giphy(GiphyContent),
 }
 
@@ -34,7 +34,7 @@ pub enum MessageContentInternal {
     File(FileContent),
     Poll(PollContentInternal),
     Cryptocurrency(CryptocurrencyContent),
-    Deleted(DeletedContent),
+    Deleted(DeletedBy),
     Giphy(GiphyContent),
 }
 
@@ -363,7 +363,7 @@ impl CryptocurrencyContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct DeletedContent {
+pub struct DeletedBy {
     pub deleted_by: UserId,
     pub timestamp: TimestampMillis,
 }
