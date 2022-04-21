@@ -1,19 +1,13 @@
 #!/bin/sh
 
+# Pass in the dfx identity name
+# eg './upgrade-canister-prod.sh openchat user_index 1.0.0'
+
 IDENTITY=$1
 CANISTER_TO_UPGRADE=$2
 VERSION=$3
 
-# Pass in the dfx identity name
-# eg './upgrade-canister-prod.sh openchat user_index 1.0.0'
-./generate-wasm.sh callback_canister_impl
-./generate-wasm.sh group_canister_impl
-./generate-wasm.sh group_index_canister_impl
-./generate-wasm.sh notifications_canister_impl
-./generate-wasm.sh online_users_aggregator_canister_impl
-./generate-wasm.sh root_canister_impl
-./generate-wasm.sh user_canister_impl
-./generate-wasm.sh user_index_canister_impl
+./generate-wasm.sh ${CANISTER_TO_UPGRADE}_canister_impl
 
 ./compress-wasm.sh group_canister_impl
 ./compress-wasm.sh user_canister_impl
