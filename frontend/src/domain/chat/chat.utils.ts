@@ -1353,7 +1353,7 @@ export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {
     };
 }
 
-export function statsEqual(a: ChatMetrics, b: ChatMetrics): boolean {
+export function metricsEqual(a: ChatMetrics, b: ChatMetrics): boolean {
     return Object.keys(a).reduce<boolean>(
         (same, k) => same && a[k as keyof ChatMetrics] === b[k as keyof ChatMetrics],
         true

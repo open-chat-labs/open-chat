@@ -4,7 +4,7 @@
     import { _ } from "svelte-i18n";
     import type { ChatMetrics } from "../../domain/chat/chat";
     import { onMount } from "svelte";
-    import { statsEqual } from "../../domain/chat/chat.utils";
+    import { metricsEqual } from "../../domain/chat/chat.utils";
     import { writable } from "svelte/store";
 
     export let stats: ChatMetrics;
@@ -24,7 +24,7 @@
     let giphyPerc = writable(12.5);
 
     $: {
-        if (previousStats === undefined || !statsEqual(stats, previousStats)) {
+        if (previousStats === undefined || !metricsEqual(stats, previousStats)) {
             console.log("stats have actually changed");
             totalMessages =
                 stats.textMessages +
