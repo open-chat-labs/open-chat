@@ -37,9 +37,7 @@ pub struct DirectChatSummary {
     pub read_by_me: Vec<MessageIndexRange>,
     pub read_by_them: Vec<MessageIndexRange>,
     pub notifications_muted: bool,
-    #[serde(default)]
     pub metrics: ChatMetrics,
-    #[serde(default)]
     pub my_metrics: ChatMetrics,
 }
 
@@ -71,9 +69,7 @@ pub struct GroupChatSummary {
     pub wasm_version: Version,
     pub owner_id: UserId,
     pub permissions: GroupPermissions,
-    #[serde(default)]
     pub metrics: ChatMetrics,
-    #[serde(default)]
     pub my_metrics: ChatMetrics,
 }
 
@@ -98,9 +94,7 @@ pub struct DirectChatSummaryUpdates {
     pub read_by_them: Option<Vec<MessageIndexRange>>,
     pub notifications_muted: Option<bool>,
     pub affected_events: Vec<EventIndex>,
-    #[serde(default)]
     pub metrics: Option<ChatMetrics>,
-    #[serde(default)]
     pub my_metrics: Option<ChatMetrics>,
 }
 
@@ -123,9 +117,7 @@ pub struct GroupChatSummaryUpdates {
     pub owner_id: Option<UserId>,
     pub permissions: Option<GroupPermissions>,
     pub affected_events: Vec<EventIndex>,
-    #[serde(default)]
     pub metrics: Option<ChatMetrics>,
-    #[serde(default)]
     pub my_metrics: Option<ChatMetrics>,
 }
 
@@ -165,9 +157,7 @@ pub struct GroupChatSummaryInternal {
     pub owner_id: UserId,
     pub permissions: GroupPermissions,
     pub notifications_muted: bool,
-    #[serde(default)]
     pub metrics: ChatMetrics,
-    #[serde(default)]
     pub my_metrics: ChatMetrics,
 }
 
@@ -265,9 +255,7 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub owner_id: Option<UserId>,
     pub permissions: Option<GroupPermissions>,
     pub affected_events: Vec<EventIndex>,
-    #[serde(default)]
     pub metrics: Option<ChatMetrics>,
-    #[serde(default)]
     pub my_metrics: Option<ChatMetrics>,
 }
 
@@ -311,9 +299,7 @@ pub struct ChatMetrics {
     pub deleted_messages: u64,
     pub giphy_messages: u64,
     pub replies: u64,
-    #[serde(default)]
     pub edits: u64,
-    #[serde(default)]
     pub reactions: u64,
     pub last_active: TimestampMillis,
 }

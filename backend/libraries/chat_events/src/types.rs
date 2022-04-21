@@ -174,7 +174,6 @@ pub struct MessageInternal {
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
     pub last_updated: Option<TimestampMillis>,
     pub last_edited: Option<TimestampMillis>,
-    #[serde(default)]
     pub deleted_by: Option<DeletedBy>,
 }
 
