@@ -121,7 +121,9 @@ pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
             };
 
         let active_groups: HashSet<_> = filter_groups_result.active_groups.into_iter().collect();
-        group_chats_added.retain(|id| !has_group_been_deleted(&filter_groups_result.deleted_groups, id) && !upgrades_in_progress.contains(id));
+        group_chats_added.retain(|id| {
+            !has_group_been_deleted(&filter_groups_result.deleted_groups, id) && !upgrades_in_progress.contains(id)
+        });
         group_chats_to_check_for_updates.retain(|(id, _)| active_groups.contains(id) && !upgrades_in_progress.contains(id));
 
         let summaries_future = c2c::summaries(group_chats_added);
@@ -131,7 +133,11 @@ pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
 
         added = s;
         updated = su;
-        deleted = filter_groups_result.deleted_groups.into_iter().filter(|g| g.timestamp > args.updates_since.timestamp).collect();
+        deleted = filter_groups_result
+            .deleted_groups
+            .into_iter()
+            .filter(|g| g.timestamp > args.updates_since.timestamp)
+            .collect();
         upgrades_in_progress = filter_groups_result.upgrades_in_progress;
     }
 
