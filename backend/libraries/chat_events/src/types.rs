@@ -248,6 +248,13 @@ impl MessageInternal {
                 }
             }
 
+            if self.replies_to.is_some() {
+                adjust(&mut metrics.replies);
+                if let Some(user_metrics) = per_user_metrics.get_mut(user_id) {
+                    adjust(&mut user_metrics.replies);
+                }
+            }
+
             for user_id in self.reactions.iter().flat_map(|(_, u)| u.iter()) {
                 adjust(&mut metrics.reactions);
                 if let Some(user_metrics) = per_user_metrics.get_mut(user_id) {
