@@ -18,8 +18,8 @@ fn post_upgrade(args: Args) {
     let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
-    data.events.recalculate_metrics();
     data.events.populate_deleted_messages();
+    data.events.recalculate_metrics();
 
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);
