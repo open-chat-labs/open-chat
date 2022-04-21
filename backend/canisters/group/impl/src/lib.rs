@@ -116,7 +116,6 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             participants: self.data.participants.len() as u32,
             admins: self.data.participants.admin_count(),
-            events: chat_metrics.total_events,
             text_messages: chat_metrics.text_messages,
             image_messages: chat_metrics.image_messages,
             video_messages: chat_metrics.video_messages,
@@ -131,7 +130,6 @@ impl RuntimeState {
             replies: chat_metrics.replies,
             edits: chat_metrics.edits,
             reactions: chat_metrics.reactions,
-            total_events: chat_metrics.total_events,
             last_active: chat_metrics.last_active,
         }
     }
@@ -223,7 +221,6 @@ pub struct Metrics {
     pub wasm_version: Version,
     pub participants: u32,
     pub admins: u32,
-    pub events: u64,
     pub text_messages: u64,
     pub image_messages: u64,
     pub video_messages: u64,
@@ -238,7 +235,6 @@ pub struct Metrics {
     pub replies: u64,
     pub edits: u64,
     pub reactions: u64,
-    pub total_events: u64,
     pub last_active: TimestampMillis,
 }
 

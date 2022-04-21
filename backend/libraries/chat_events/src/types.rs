@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use types::{
     AvatarChanged, ChatMetrics, Cryptocurrency, DeletedContent, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged,
     GroupNameChanged, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred,
@@ -89,23 +89,50 @@ impl ChatEventInternal {
         )
     }
 
-    pub fn add_to_metrics(&self, metrics: &mut ChatMetrics, timestamp: TimestampMillis) {
+    pub fn add_to_metrics(
+        &self,
+        metrics: &mut ChatMetrics,
+        per_user_metrics: &mut HashMap<UserId, ChatMetrics>,
+        timestamp: TimestampMillis,
+    ) {
         match &self {
-            ChatEventInternal::Message(m) => m.add_to_metrics(metrics),
-            ChatEventInternal::MessageEdited(_) => incr(&mut metrics.edits),
-            ChatEventInternal::MessageDeleted(_) => incr(&mut metrics.deleted_messages),
-            ChatEventInternal::MessageReactionAdded(_) => incr(&mut metrics.reactions),
-            ChatEventInternal::MessageReactionRemoved(_) => decr(&mut metrics.reactions),
-            ChatEventInternal::PollVoteRegistered(v) if !v.existing_vote_removed => incr(&mut metrics.poll_votes),
-            ChatEventInternal::PollVoteDeleted(_) => decr(&mut metrics.poll_votes),
+            ChatEventInternal::Message(m) => m.add_to_metrics(metrics, per_user_metrics),
+            ChatEventInternal::MessageEdited(m) => {
+                incr(&mut metrics.edits);
+                incr(&mut per_user_metrics.entry(m.updated_by).or_default().edits);
+            }
+            ChatEventInternal::MessageDeleted(m) => {
+                incr(&mut metrics.deleted_messages);
+                incr(&mut per_user_metrics.entry(m.updated_by).or_default().deleted_messages);
+            }
+            ChatEventInternal::MessageReactionAdded(m) => {
+                incr(&mut metrics.reactions);
+                incr(&mut per_user_metrics.entry(m.updated_by).or_default().reactions);
+            }
+            ChatEventInternal::MessageReactionRemoved(m) => {
+                decr(&mut metrics.reactions);
+                decr(&mut per_user_metrics.entry(m.updated_by).or_default().reactions);
+            }
+            ChatEventInternal::PollVoteRegistered(v) if !v.existing_vote_removed => {
+                incr(&mut metrics.poll_votes);
+                incr(&mut per_user_metrics.entry(v.user_id).or_default().poll_votes);
+            }
+            ChatEventInternal::PollVoteDeleted(v) => {
+                decr(&mut metrics.poll_votes);
+                decr(&mut per_user_metrics.entry(v.updated_by).or_default().poll_votes);
+            }
             _ => {}
         }
 
-        metrics.total_events += 1;
         metrics.last_active = max(metrics.last_active, timestamp);
+
+        if let Some(user_id) = self.triggered_by() {
+            let user_metrics = per_user_metrics.entry(user_id).or_default();
+            user_metrics.last_active = max(user_metrics.last_active, timestamp);
+        }
     }
 
-    pub fn triggered_by(&self) -> Option<UserId> {
+    fn triggered_by(&self) -> Option<UserId> {
         match self {
             ChatEventInternal::Message(m) => Some(m.sender),
             ChatEventInternal::GroupChatCreated(g) => Some(g.created_by),
@@ -152,28 +179,81 @@ pub struct MessageInternal {
 }
 
 impl MessageInternal {
-    pub fn add_to_metrics(&self, metrics: &mut ChatMetrics) {
-        self.adjust_metrics(metrics, incr);
+    pub fn add_to_metrics(&self, metrics: &mut ChatMetrics, per_user_metrics: &mut HashMap<UserId, ChatMetrics>) {
+        self.adjust_metrics(metrics, per_user_metrics, incr);
     }
 
-    pub fn remove_from_metrics(&self, metrics: &mut ChatMetrics) {
-        self.adjust_metrics(metrics, decr);
+    pub fn remove_from_metrics(&self, metrics: &mut ChatMetrics, per_user_metrics: &mut HashMap<UserId, ChatMetrics>) {
+        self.adjust_metrics(metrics, per_user_metrics, decr);
     }
 
-    fn adjust_metrics(&self, metrics: &mut ChatMetrics, adjust: fn(&mut u64)) {
-        match &self.content {
-            MessageContentInternal::Text(_) => adjust(&mut metrics.text_messages),
-            MessageContentInternal::Image(_) => adjust(&mut metrics.image_messages),
-            MessageContentInternal::Video(_) => adjust(&mut metrics.video_messages),
-            MessageContentInternal::Audio(_) => adjust(&mut metrics.audio_messages),
-            MessageContentInternal::File(_) => adjust(&mut metrics.file_messages),
-            MessageContentInternal::Poll(_) => adjust(&mut metrics.polls),
-            MessageContentInternal::Cryptocurrency(c) => match c.transfer.cryptocurrency() {
-                Cryptocurrency::ICP => adjust(&mut metrics.icp_messages),
-                Cryptocurrency::Cycles => adjust(&mut metrics.cycles_messages),
-            },
-            MessageContentInternal::Deleted(_) => {} // This is accounted for by the MessageDeleted events
-            MessageContentInternal::Giphy(_) => adjust(&mut metrics.giphy_messages),
+    fn adjust_metrics(
+        &self,
+        metrics: &mut ChatMetrics,
+        per_user_metrics: &mut HashMap<UserId, ChatMetrics>,
+        adjust: fn(&mut u64),
+    ) {
+        let sender_metrics = per_user_metrics.entry(self.sender).or_default();
+
+        if self.deleted.is_some() {
+            adjust(&mut metrics.deleted_messages);
+            adjust(&mut sender_metrics.deleted_messages);
+        } else {
+            match &self.content {
+                MessageContentInternal::Text(_) => {
+                    adjust(&mut metrics.text_messages);
+                    adjust(&mut sender_metrics.text_messages);
+                }
+                MessageContentInternal::Image(_) => {
+                    adjust(&mut metrics.image_messages);
+                    adjust(&mut sender_metrics.image_messages);
+                }
+                MessageContentInternal::Video(_) => {
+                    adjust(&mut metrics.video_messages);
+                    adjust(&mut sender_metrics.video_messages);
+                }
+                MessageContentInternal::Audio(_) => {
+                    adjust(&mut metrics.audio_messages);
+                    adjust(&mut sender_metrics.audio_messages);
+                }
+                MessageContentInternal::File(_) => {
+                    adjust(&mut metrics.file_messages);
+                    adjust(&mut sender_metrics.file_messages);
+                }
+                MessageContentInternal::Poll(p) => {
+                    adjust(&mut metrics.polls);
+                    adjust(&mut sender_metrics.polls);
+
+                    for user_id in p.votes.iter().flat_map(|(_, u)| u.iter()) {
+                        adjust(&mut metrics.poll_votes);
+                        if let Some(user_metrics) = per_user_metrics.get_mut(user_id) {
+                            adjust(&mut user_metrics.poll_votes);
+                        }
+                    }
+                }
+                MessageContentInternal::Cryptocurrency(c) => match c.transfer.cryptocurrency() {
+                    Cryptocurrency::ICP => {
+                        adjust(&mut metrics.icp_messages);
+                        adjust(&mut sender_metrics.icp_messages);
+                    }
+                    Cryptocurrency::Cycles => {
+                        adjust(&mut metrics.cycles_messages);
+                        adjust(&mut sender_metrics.cycles_messages);
+                    }
+                },
+                MessageContentInternal::Deleted(_) => {}
+                MessageContentInternal::Giphy(_) => {
+                    adjust(&mut metrics.giphy_messages);
+                    adjust(&mut sender_metrics.giphy_messages);
+                }
+            }
+
+            for user_id in self.reactions.iter().flat_map(|(_, u)| u.iter()) {
+                adjust(&mut metrics.reactions);
+                if let Some(user_metrics) = per_user_metrics.get_mut(user_id) {
+                    adjust(&mut user_metrics.reactions);
+                }
+            }
         }
     }
 }

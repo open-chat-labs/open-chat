@@ -132,12 +132,14 @@ impl ChatEvents {
         self.metrics = ChatMetrics::default();
         self.per_user_metrics = HashMap::default();
 
-        for EventWrapper { event, timestamp, .. } in self.events.iter() {
-            event.add_to_metrics(&mut self.metrics, *timestamp);
-
-            if let Some(user_id) = event.triggered_by() {
-                event.add_to_metrics(self.per_user_metrics.entry(user_id).or_default(), *timestamp);
-            }
+        for EventWrapper { event, timestamp, .. } in self
+            .events
+            .iter()
+            .filter(|e| matches!(e.event, ChatEventInternal::Message(_)))
+        {
+            // When recalculating, we only care about messages, since they already include the
+            // details needed to work out the reaction, poll vote and deleted message counts.
+            event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, *timestamp);
         }
     }
 
@@ -222,7 +224,7 @@ impl ChatEvents {
             self.latest_message_event_index = Some(event_index);
         }
 
-        self.add_to_metrics(&event, now);
+        event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, now);
 
         self.events.push(EventWrapper {
             index: event_index,
@@ -289,11 +291,7 @@ impl ChatEvents {
 
                         let message_content = message.content.hydrate(Some(caller));
 
-                        // Remove the delete message from the metrics
-                        message.remove_from_metrics(&mut self.metrics);
-                        if let Some(user_metrics) = self.per_user_metrics.get_mut(&caller) {
-                            message.remove_from_metrics(user_metrics);
-                        }
+                        message.remove_from_metrics(&mut self.metrics, &mut self.per_user_metrics);
 
                         self.push_event(
                             ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
@@ -833,7 +831,7 @@ impl ChatEvents {
     }
 
     fn get_message_internal_mut(
-        events: &mut Vec<EventWrapper<ChatEventInternal>>,
+        events: &mut [EventWrapper<ChatEventInternal>],
         event_index: EventIndex,
     ) -> Option<&mut MessageInternal> {
         let event = Self::get_index(events, event_index).and_then(|i| events.get_mut(i))?;
@@ -844,7 +842,7 @@ impl ChatEvents {
         }
     }
 
-    fn get_index(events: &Vec<EventWrapper<ChatEventInternal>>, event_index: EventIndex) -> Option<usize> {
+    fn get_index(events: &[EventWrapper<ChatEventInternal>], event_index: EventIndex) -> Option<usize> {
         if let Some(first_event) = events.first() {
             let earliest_event_index: u32 = first_event.index.into();
             let as_u32: u32 = event_index.into();
@@ -855,14 +853,6 @@ impl ChatEvents {
         }
 
         None
-    }
-
-    fn add_to_metrics(&mut self, event: &ChatEventInternal, timestamp: TimestampMillis) {
-        event.add_to_metrics(&mut self.metrics, timestamp);
-
-        if let Some(user_id) = event.triggered_by() {
-            event.add_to_metrics(self.per_user_metrics.entry(user_id).or_default(), timestamp);
-        }
     }
 }
 
