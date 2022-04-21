@@ -1321,7 +1321,6 @@ export function emptyChatMetrics(): ChatMetrics {
         cyclesMessages: 0,
         edits: 0,
         icpMessages: 0,
-        lastActive: 0,
         giphyMessages: 0,
         deletedMessages: 0,
         fileMessages: 0,
@@ -1341,7 +1340,6 @@ export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {
         cyclesMessages: a.cyclesMessages + b.cyclesMessages,
         edits: a.edits + b.edits,
         icpMessages: a.icpMessages + b.icpMessages,
-        lastActive: Math.max(a.lastActive, b.lastActive),
         giphyMessages: a.giphyMessages + b.giphyMessages,
         deletedMessages: a.deletedMessages + b.deletedMessages,
         fileMessages: a.fileMessages + b.fileMessages,
@@ -1353,6 +1351,13 @@ export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {
         polls: a.polls + b.polls,
         reactions: a.reactions + b.reactions,
     };
+}
+
+export function metricsEqual(a: ChatMetrics, b: ChatMetrics): boolean {
+    return Object.keys(a).reduce<boolean>(
+        (same, k) => same && a[k as keyof ChatMetrics] === b[k as keyof ChatMetrics],
+        true
+    );
 }
 
 export function getFirstUnreadMention(

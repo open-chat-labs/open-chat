@@ -4,29 +4,48 @@
     import { _ } from "svelte-i18n";
     import type { ChatMetrics } from "../../domain/chat/chat";
     import { onMount } from "svelte";
+    import { metricsEqual } from "../../domain/chat/chat.utils";
+    import { writable } from "svelte/store";
 
     export let stats: ChatMetrics;
 
     let hoveredIndex: number | undefined;
     let rendered = false;
 
-    $: totalMessages =
-        stats.textMessages +
-        stats.imageMessages +
-        stats.videoMessages +
-        stats.audioMessages +
-        stats.fileMessages +
-        stats.polls +
-        stats.icpMessages +
-        stats.giphyMessages;
-    $: textPerc = slice(stats.textMessages);
-    $: imagePerc = slice(stats.imageMessages);
-    $: videoPerc = slice(stats.videoMessages);
-    $: audioPerc = slice(stats.audioMessages);
-    $: filePerc = slice(stats.fileMessages);
-    $: pollPerc = slice(stats.polls);
-    $: icpPerc = slice(stats.icpMessages);
-    $: giphyPerc = slice(stats.giphyMessages);
+    let previousStats: ChatMetrics | undefined = undefined;
+    let totalMessages = 0;
+    let textPerc = writable(12.5);
+    let imagePerc = writable(12.5);
+    let videoPerc = writable(12.5);
+    let audioPerc = writable(12.5);
+    let filePerc = writable(12.5);
+    let pollPerc = writable(12.5);
+    let icpPerc = writable(12.5);
+    let giphyPerc = writable(12.5);
+
+    $: {
+        if (previousStats === undefined || !metricsEqual(stats, previousStats)) {
+            totalMessages =
+                stats.textMessages +
+                stats.imageMessages +
+                stats.videoMessages +
+                stats.audioMessages +
+                stats.fileMessages +
+                stats.polls +
+                stats.icpMessages +
+                stats.giphyMessages;
+
+            textPerc = slice(stats.textMessages);
+            imagePerc = slice(stats.imageMessages);
+            videoPerc = slice(stats.videoMessages);
+            audioPerc = slice(stats.audioMessages);
+            filePerc = slice(stats.fileMessages);
+            pollPerc = slice(stats.polls);
+            icpPerc = slice(stats.icpMessages);
+            giphyPerc = slice(stats.giphyMessages);
+            previousStats = stats;
+        }
+    }
 
     function percToDegree(perc: number): number {
         return (perc / 100) * 360;

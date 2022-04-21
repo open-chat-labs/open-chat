@@ -120,19 +120,25 @@ pub(crate) async fn updates(args: UpdatesArgs) -> Result<Updates, String> {
                 Err(error) => return Err(format!("Failed to call 'c2c_filter_groups': {error:?}")),
             };
 
-        deleted = filter_groups_result.deleted_groups;
-        upgrades_in_progress = filter_groups_result.upgrades_in_progress;
         let active_groups: HashSet<_> = filter_groups_result.active_groups.into_iter().collect();
-
-        group_chats_added.retain(|id| !has_group_been_deleted(&deleted, id) && !upgrades_in_progress.contains(id));
+        group_chats_added.retain(|id| {
+            !has_group_been_deleted(&filter_groups_result.deleted_groups, id) && !upgrades_in_progress.contains(id)
+        });
         group_chats_to_check_for_updates.retain(|(id, _)| active_groups.contains(id) && !upgrades_in_progress.contains(id));
 
         let summaries_future = c2c::summaries(group_chats_added);
         let summary_updates_future = c2c::summary_updates(group_chats_to_check_for_updates);
 
         let (s, su) = futures::future::join(summaries_future, summary_updates_future).await;
+
         added = s;
         updated = su;
+        deleted = filter_groups_result
+            .deleted_groups
+            .into_iter()
+            .filter(|g| g.timestamp > args.updates_since.timestamp)
+            .collect();
+        upgrades_in_progress = filter_groups_result.upgrades_in_progress;
     }
 
     Ok(Updates {

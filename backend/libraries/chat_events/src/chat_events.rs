@@ -19,7 +19,6 @@ pub struct ChatEvents {
     latest_message_event_index: Option<EventIndex>,
     latest_message_index: Option<MessageIndex>,
     metrics: ChatMetrics,
-    #[serde(default)]
     per_user_metrics: HashMap<UserId, ChatMetrics>,
 }
 
@@ -126,33 +125,6 @@ impl ChatEvents {
         );
 
         events
-    }
-
-    pub fn recalculate_metrics(&mut self) {
-        self.metrics = ChatMetrics::default();
-        self.per_user_metrics = HashMap::default();
-
-        for EventWrapper { event, timestamp, .. } in self
-            .events
-            .iter()
-            .filter(|e| matches!(e.event, ChatEventInternal::Message(_)))
-        {
-            // When recalculating, we only care about messages, since they already include the
-            // details needed to work out the reaction, poll vote and deleted message counts.
-            event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, *timestamp);
-        }
-    }
-
-    pub fn populate_deleted_messages(&mut self) {
-        for message in
-            self.events
-                .iter_mut()
-                .filter_map(|e| if let ChatEventInternal::Message(m) = &mut e.event { Some(m) } else { None })
-        {
-            if let MessageContentInternal::Deleted(c) = &message.content {
-                message.deleted_by = Some(c.clone());
-            }
-        }
     }
 
     pub fn get(&self, event_index: EventIndex) -> Option<&EventWrapper<ChatEventInternal>> {
