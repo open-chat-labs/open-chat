@@ -283,6 +283,8 @@ impl ChatEvents {
                     MessageContentInternal::Deleted(_) => DeleteMessageResult::AlreadyDeleted,
                     MessageContentInternal::Cryptocurrency(_) => DeleteMessageResult::MessageTypeCannotBeDeleted,
                     _ => {
+                        message.remove_from_metrics(&mut self.metrics, &mut self.per_user_metrics);
+
                         message.last_updated = Some(now);
                         message.deleted = Some(DeletedContent {
                             deleted_by: caller,
@@ -290,8 +292,6 @@ impl ChatEvents {
                         });
 
                         let message_content = message.content.hydrate(Some(caller));
-
-                        message.remove_from_metrics(&mut self.metrics, &mut self.per_user_metrics);
 
                         self.push_event(
                             ChatEventInternal::MessageDeleted(Box::new(UpdatedMessageInternal {
