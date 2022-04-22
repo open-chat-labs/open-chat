@@ -1,4 +1,4 @@
-import { isPreviewing, MAX_MESSAGES, MAX_MISSING } from "../domain/chat/chat.utils";
+import { isPreviewing, MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../domain/chat/chat.utils";
 import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
@@ -297,7 +297,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     let descIdx = eventIndex;
     let ascIdx = eventIndex + 1;
 
-    while (numMessages < MAX_MESSAGES && missing.size < MAX_MISSING) {
+    while (numMessages < MAX_MESSAGES && events.length < MAX_EVENTS && missing.size < MAX_MISSING) {
         // if we have exceeded the range of this chat then we have succeeded
         if (ascIdx > max && descIdx < min) {
             return [events, missing, false];
@@ -355,9 +355,10 @@ async function aggregateEvents<T extends ChatEvent>(
     const resolvedDb = await db;
     const missing = new Set<number>();
 
-    // keep iterating until we get "enough" messages or we go beyond the range of the chat or we get a full page of missing messages
-    // return all the events that we found and the indexes of any that we did not find
-    while (numMessages < MAX_MESSAGES && missing.size < MAX_MISSING) {
+    // keep iterating until we get "enough" messages, we get MAX_EVENTS events, we go beyond the range of the chat, or
+    // we get a full page of missing messages, return all the events that we found and the indexes of any that we did
+    // not find
+    while (numMessages < MAX_MESSAGES && events.length < MAX_EVENTS && missing.size < MAX_MISSING) {
         // if we have exceeded the range of this chat then we have succeeded
         if ((currentIndex > max && ascending) || (currentIndex < min && !ascending)) {
             return [events, missing];
