@@ -12,9 +12,9 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
         with:
-          ref: $
+          ref: ${{ github.head_ref }}
       - uses: actions/setup-node@v1
         with:
           node-version: "16.x"
@@ -22,17 +22,6 @@ jobs:
         run: npm ci
         env:
           NODE_ENV: ci
-      - name: Generate translations
-        run: npm run sync_lang
-        env:
-          TRANSLATE_API_KEY: ${{ secrets.GH_TRANSLATE_API_KEY }}
-      - name: Commit and push changes
-        run: |
-          git config --global user.name "openchat"
-          git config --global user.email "openchat@openchat.com"
-          git add -A
-          git commit -m "synchronised language changes"
-          git push
       - name: building frontend
         run: npm run build
         env:
@@ -45,3 +34,10 @@ jobs:
           npm run lint
           npm run validate
           npm test
+      - name: Generate translations
+        run: npm run sync_lang
+        env:
+          TRANSLATE_API_KEY: ${{ secrets.GH_TRANSLATE_API_KEY }}
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Synchronise language changes
