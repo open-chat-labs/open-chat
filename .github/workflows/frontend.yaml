@@ -26,6 +26,8 @@ jobs:
           TRANSLATE_API_KEY: ${{ secrets.GH_TRANSLATE_API_KEY }}
       - name: Commit and push changes
         run: |
+          git config --global user.name "openchat"
+          git config --global user.email "openchat@openchat.com"
           git add -A
           git commit -m "synchronised language changes"
           git push
