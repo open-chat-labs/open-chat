@@ -14,6 +14,8 @@ async function generateLanguage(lang, code) {
     const target = lang;
     const targetLang = code;
 
+    const tokensByKey = {};
+
     console.log("Translating: ", lang, code);
 
     const enData = JSON.parse(fs.readFileSync("./src/i18n/en.json"));
@@ -28,7 +30,15 @@ async function generateLanguage(lang, code) {
         const missing = [];
         enEntries.forEach(([k, v]) => {
             if (targetEntries.find(([tk]) => tk === k) === undefined) {
-                missing.push([k, v]);
+                const cleaned = v.replace(/{[^}.]*}/g, (match) => {
+                    if (tokensByKey[k] === undefined) {
+                        tokensByKey[k] = [];
+                    }
+                    tokensByKey[k].push(match);
+                    return "{_}";
+                });
+
+                missing.push([k, cleaned]);
             }
         });
         return missing;
@@ -46,6 +56,11 @@ async function generateLanguage(lang, code) {
                     return [chunk[i][0], val];
                 });
                 return translatedArr.reduce((agg, [k, v]) => {
+                    if (tokensByKey[k] !== undefined) {
+                        tokensByKey[k].forEach((t) => {
+                            v = v.replace("{_}", t);
+                        });
+                    }
                     agg[k] = v;
                     return agg;
                 }, {});
