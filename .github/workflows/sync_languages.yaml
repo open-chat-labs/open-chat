@@ -1,0 +1,27 @@
+on:
+  pull_request:
+    branches:
+      - master
+
+name: Keep language files in sync
+
+jobs:
+  install-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "16.x"
+      - name: Generate translations
+        run: npm run sync_lang
+        env:
+          ROLLBAR_ACCESS_TOKEN: ${{ secrets.GH_TRANSLATE_API_KEY }}
+      - name: Commit and push changes
+        run: |
+          git add -A
+          git commit -m "synchronised language changes"
+          git push
