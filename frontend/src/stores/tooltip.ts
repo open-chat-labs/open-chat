@@ -31,7 +31,7 @@ export const tooltipStore = {
             const targetCentre = targetRect.left + targetRect.width / 2;
 
             const left = centreChevron
-                ? targetRect.left - chevronOffset
+                ? targetCentre - chevronOffset
                 : Math.max(targetRect.left, targetCentre - tooltipWidth / 2);
 
             const right = centreChevron
