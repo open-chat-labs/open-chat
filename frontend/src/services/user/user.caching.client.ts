@@ -23,7 +23,6 @@ import type {
     PendingICPWithdrawal,
     WithdrawCryptocurrencyResponse,
     EventsSuccessResult,
-    Mention,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -164,7 +163,6 @@ export class CachingUserClient implements IUserClient {
         cachedResponse: MergedUpdatesResponse | undefined,
         nextResponse: MergedUpdatesResponse,
         messagesRead: IMessageReadTracker,
-        limit: boolean,
         selectedChatId?: string
     ): MergedUpdatesResponse {
         const cachedChats =
@@ -173,65 +171,60 @@ export class CachingUserClient implements IUserClient {
                 : toRecord(cachedResponse.chatSummaries, (c) => c.chatId);
 
         const limitTo = Number(localStorage.getItem("openchat_prime_cache_limit") || "5");
-        const nextChats = limit
-            ? nextResponse.chatSummaries.sort(compareChats).slice(0, limitTo)
-            : nextResponse.chatSummaries;
         const currentScrollStrategy = get(scrollStrategy);
 
-        console.log("limiting chats: ", limit, limitTo);
+        nextResponse.chatSummaries
+            .filter(
+                ({ chatId, latestEventIndex }) =>
+                    chatId !== selectedChatId &&
+                    (cachedChats[chatId] === undefined ||
+                        latestEventIndex > cachedChats[chatId].latestEventIndex)
+            )
+            .sort(compareChats)
+            .slice(0, limitTo)
+            .forEach((chat) => {
+                let targetMessageIndex: number | undefined = undefined;
 
-        nextChats.forEach((chat) => {
-            // there is no need to do anything for the selected chat
-            if (chat.chatId !== selectedChatId) {
-                const cachedChat = cachedChats[chat.chatId];
-                if (
-                    cachedChat === undefined ||
-                    chat.latestEventIndex > cachedChat.latestEventIndex
-                ) {
-                    let targetMessageIndex: number | undefined = undefined;
+                if (currentScrollStrategy !== "latestMessage") {
+                    // horrible having to do this but if we don't the message read tracker will not be in the right state
+                    messagesRead.syncWithServer(chat.chatId, chat.readByMe);
+                }
 
-                    if (currentScrollStrategy !== "latestMessage") {
-                        // horrible having to do this but if we don't the message read tracker will not be in the right state
-                        messagesRead.syncWithServer(chat.chatId, chat.readByMe);
-                    }
+                if (currentScrollStrategy === "firstMention") {
+                    targetMessageIndex =
+                        getFirstUnreadMention(messagesRead, chat)?.messageIndex ??
+                        getFirstUnreadMessageIndex(messagesRead, chat);
+                }
+                if (currentScrollStrategy === "firstMessage") {
+                    targetMessageIndex = getFirstUnreadMessageIndex(messagesRead, chat);
+                }
 
-                    if (currentScrollStrategy === "firstMention") {
-                        targetMessageIndex =
-                            getFirstUnreadMention(messagesRead, chat)?.messageIndex ??
-                            getFirstUnreadMessageIndex(messagesRead, chat);
-                    }
-                    if (currentScrollStrategy === "firstMessage") {
-                        targetMessageIndex = getFirstUnreadMessageIndex(messagesRead, chat);
-                    }
+                const range = indexRangeForChat(chat);
 
-                    const range = indexRangeForChat(chat);
+                // fire and forget an events request that will prime the cache
+                if (chat.kind === "group_chat") {
+                    // this is a bit gross, but I don't want this to leak outside of the caching layer
+                    const groupClient = GroupClient.create(chat.chatId, this.identity, this.db);
 
-                    // fire and forget an events request that will prime the cache
-                    if (chat.kind === "group_chat") {
-                        // this is a bit gross, but I don't want this to leak outside of the caching layer
-                        const groupClient = GroupClient.create(chat.chatId, this.identity, this.db);
-
-                        if (targetMessageIndex !== undefined) {
-                            console.log(
-                                "loading event window for chat ",
-                                chat.chatId,
-                                " starting at index: ",
-                                targetMessageIndex
-                            );
-                            groupClient.chatEventsWindow(range, targetMessageIndex);
-                        } else {
-                            groupClient.chatEvents(range, chat.latestEventIndex, false);
-                        }
+                    if (targetMessageIndex !== undefined) {
+                        console.log(
+                            "loading event window for chat ",
+                            chat.chatId,
+                            " starting at index: ",
+                            targetMessageIndex
+                        );
+                        groupClient.chatEventsWindow(range, targetMessageIndex);
                     } else {
-                        if (targetMessageIndex !== undefined) {
-                            this.chatEventsWindow(range, this.userId, targetMessageIndex);
-                        } else {
-                            this.chatEvents(range, this.userId, chat.latestEventIndex, false);
-                        }
+                        groupClient.chatEvents(range, chat.latestEventIndex, false);
+                    }
+                } else {
+                    if (targetMessageIndex !== undefined) {
+                        this.chatEventsWindow(range, this.userId, targetMessageIndex);
+                    } else {
+                        this.chatEvents(range, this.userId, chat.latestEventIndex, false);
                     }
                 }
-            }
-        });
+            });
         return nextResponse;
     }
 
@@ -253,16 +246,12 @@ export class CachingUserClient implements IUserClient {
                     resp.wasUpdated = true;
                     return resp;
                 })
-                .then((resp) =>
-                    this.primeCaches(cachedChats, resp, messagesRead, false, selectedChatId)
-                )
+                .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
                 .then(setCachedChats(this.db, this.userId));
         } else {
             return this.client
                 .getInitialState(messagesRead)
-                .then((resp) =>
-                    this.primeCaches(cachedChats, resp, messagesRead, true, selectedChatId)
-                )
+                .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
                 .then(setCachedChats(this.db, this.userId));
         }
     }
@@ -277,9 +266,7 @@ export class CachingUserClient implements IUserClient {
         const cachedChats = await getCachedChats(this.db, this.userId);
         return this.client
             .getUpdates(chatSummaries, args, messagesRead)
-            .then((resp) =>
-                this.primeCaches(cachedChats, resp, messagesRead, false, selectedChatId)
-            )
+            .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
             .then(setCachedChats(this.db, this.userId));
     }
 
