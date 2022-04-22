@@ -16,6 +16,10 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: "16.x"
+      - name: Installing NPM dependencies
+        run: npm ci
+        env:
+          NODE_ENV: ci
       - name: Generate translations
         run: npm run sync_lang
         env:
