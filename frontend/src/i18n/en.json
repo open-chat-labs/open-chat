@@ -369,7 +369,14 @@
         "pollEnds": "Poll ends {end}",
         "voteFailed": "Poll vote failed",
         "totalVotes": "Total votes: {total}",
-        "finished": "Poll has finished"
+        "finished": "Poll has finished",
+        "votersPublic": "Voters will be public",
+        "votersPrivate": "Voters will be anonymous",
+        "numVotes": "{votes} votes",
+        "numVotesBy": "{votes} votes by",
+        "oneVote": "1 vote",
+        "oneVoteBy": "1 vote by",
+        "numVotesIncludingYours": "{votes} votes including yours"
     },
     "group": {
         "addGroupPhoto": "Add group photo",
@@ -469,5 +476,6 @@
         "replies": "replies",
         "reactions": "reactions",
         "deletedMessages": "deleted messages"
-    }
+    },
+    "andNMore": ", and {n} more"
 }

@@ -17,7 +17,7 @@
     import type { PollContent, TotalPollVotes } from "domain/chat/chat";
     const dispatch = createEventDispatcher();
 
-    const MAX_QUESTION_LENGTH = 100;
+    const MAX_QUESTION_LENGTH = 250;
     const MAX_ANSWER_LENGTH = 50;
     const MAX_ANSWERS = 10;
     const durations: Duration[] = ["oneHour", "oneDay", "oneWeek"];
@@ -40,7 +40,7 @@
     let answerError: string | undefined = "";
     let selectedDuration: Duration = "oneDay";
 
-    $: valid = poll.pollAnswers.size >= 2;
+    $: valid = poll.pollAnswers.size >= 2 && nextAnswer.length === 0;
 
     export function resetPoll() {
         selectedDuration = "oneDay";
@@ -207,19 +207,18 @@
                     <Tab id={1} {isTitle} {isContent}>
                         <span slot="title">{$_("poll.settings")}</span>
                         <table>
-                            <!-- <tr>
-                            <td class="label">
-                                {$_("poll.anonymous")}
-                            </td>
-                            <td>
-                                <Toggle
-                                    small={true}
-                                    id={"anonymous"}
-                                    on:change={() => (poll.anonymous = !poll.anonymous)}
-                                    checked={poll.anonymous} />
-                            </td>
-                        </tr> -->
-
+                            <tr>
+                                <td class="label">
+                                    {$_("poll.anonymous")}
+                                </td>
+                                <td>
+                                    <Toggle
+                                        small={true}
+                                        id={"anonymous"}
+                                        on:change={() => (poll.anonymous = !poll.anonymous)}
+                                        checked={poll.anonymous} />
+                                </td>
+                            </tr>
                             <tr>
                                 <td class="label">
                                     {$_("poll.allowMultipleVotes")}

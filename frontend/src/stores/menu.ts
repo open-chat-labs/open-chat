@@ -1,6 +1,6 @@
 import { get, writable } from "svelte/store";
 import { rollbar } from "utils/logging";
-import { fontSizeScale, FontScale } from "./fontSize";
+import { fontSizeScale } from "./fontSize";
 import { rtlStore } from "./rtl";
 import { mobileWidth } from "./screenDimensions";
 

@@ -60,6 +60,7 @@
                 senderId={repliesTo.senderId}
                 fill={false}
                 reply={true}
+                myUserId={user.userId}
                 content={repliesTo.content} />
             {#if debug}
                 <pre>EventIdx: {repliesTo.eventIndex}</pre>

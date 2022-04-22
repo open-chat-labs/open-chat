@@ -24,6 +24,7 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import type { MessageReadState } from "../../stores/markRead";
     import { menuStore } from "../../stores/menu";
+    import { tooltipStore } from "../../stores/tooltip";
     import { iconSize } from "../../stores/iconSize";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
@@ -200,6 +201,7 @@
         if (!initialised) return;
 
         menuStore.hideMenu();
+        tooltipStore.hide();
 
         if (scrollingToMessage) {
             // if we are in the middle of scrolling to a message we have to wait for the scroll to settle

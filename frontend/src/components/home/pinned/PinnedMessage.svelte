@@ -99,6 +99,7 @@
             first={true}
             groupChat={true}
             {me}
+            myUserId={user.userId}
             content={msg.content} />
     </div>
 </div>
