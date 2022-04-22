@@ -20,6 +20,15 @@ jobs:
         run: npm ci
         env:
           NODE_ENV: ci
+      - name: Generate translations
+        run: npm run sync_lang
+        env:
+          TRANSLATE_API_KEY: ${{ secrets.GH_TRANSLATE_API_KEY }}
+      - name: Commit and push changes
+        run: |
+          git add -A
+          git commit -m "synchronised language changes"
+          git push
       - name: building frontend
         run: npm run build
         env:
