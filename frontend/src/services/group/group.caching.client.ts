@@ -86,15 +86,19 @@ export class CachingGroupClient implements IGroupClient {
         eventIndexRange: IndexRange,
         messageIndex: number
     ): Promise<EventsResponse<GroupChatEvent>> {
-        const [cachedEvents, missing] = await getCachedEventsWindow<GroupChatEvent>(
+        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<GroupChatEvent>(
             this.db,
             eventIndexRange,
             this.chatId,
             messageIndex
         );
-        if (missing.size >= MAX_MISSING) {
+        if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.log("We didn't get enough back from the cache, going to the api");
+            console.log(
+                "We didn't get enough back from the cache, going to the api",
+                missing.size,
+                totalMiss
+            );
             return this.client
                 .chatEventsWindow(eventIndexRange, messageIndex)
                 .then(setCachedEvents(this.db, this.chatId));

@@ -38,7 +38,14 @@ import {
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
-import { MAX_MISSING, updateArgsFromChats } from "../../domain/chat/chat.utils";
+import {
+    compareChats,
+    getFirstUnreadMention,
+    getFirstUnreadMessageIndex,
+    indexRangeForChat,
+    MAX_MISSING,
+    updateArgsFromChats,
+} from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
 import type { SetBioResponse, UserSummary } from "../../domain/user/user";
 import type {
@@ -47,6 +54,12 @@ import type {
 } from "../../domain/search/search";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { profile } from "../common/profiling";
+import { toRecord } from "../../utils/list";
+import { GroupClient } from "services/group/group.client";
+import type { Identity } from "@dfinity/agent";
+import { scrollStrategy } from "../../stores/settings";
+import { get } from "svelte/store";
+import type { IMessageReadTracker } from "../../stores/markRead";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -57,7 +70,11 @@ export class CachingUserClient implements IUserClient {
         return this.client.userId;
     }
 
-    constructor(private db: Promise<IDBPDatabase<ChatSchema>>, private client: IUserClient) {}
+    constructor(
+        private db: Promise<IDBPDatabase<ChatSchema>>,
+        private identity: Identity,
+        private client: IUserClient
+    ) {}
 
     private handleMissingEvents(
         userId: string,
@@ -94,15 +111,19 @@ export class CachingUserClient implements IUserClient {
         userId: string,
         messageIndex: number
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const [cachedEvents, missing] = await getCachedEventsWindow<DirectChatEvent>(
+        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<DirectChatEvent>(
             this.db,
             eventIndexRange,
             userId,
             messageIndex
         );
-        if (missing.size >= MAX_MISSING) {
+        if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.log("We didn't get enough back from the cache, going to the api");
+            console.log(
+                "We didn't get enough back from the cache, going to the api",
+                missing.size,
+                totalMiss
+            );
             return this.client
                 .chatEventsWindow(eventIndexRange, userId, messageIndex)
                 .then(setCachedEvents(this.db, userId));
@@ -138,33 +159,114 @@ export class CachingUserClient implements IUserClient {
         }
     }
 
+    private primeCaches(
+        cachedResponse: MergedUpdatesResponse | undefined,
+        nextResponse: MergedUpdatesResponse,
+        messagesRead: IMessageReadTracker,
+        selectedChatId?: string
+    ): MergedUpdatesResponse {
+        const cachedChats =
+            cachedResponse === undefined
+                ? {}
+                : toRecord(cachedResponse.chatSummaries, (c) => c.chatId);
+
+        const limitTo = Number(localStorage.getItem("openchat_prime_cache_limit") || "5");
+        const currentScrollStrategy = get(scrollStrategy);
+
+        nextResponse.chatSummaries
+            .filter(
+                ({ chatId, latestEventIndex }) =>
+                    chatId !== selectedChatId &&
+                    (cachedChats[chatId] === undefined ||
+                        latestEventIndex > cachedChats[chatId].latestEventIndex)
+            )
+            .sort(compareChats)
+            .slice(0, limitTo)
+            .forEach((chat) => {
+                let targetMessageIndex: number | undefined = undefined;
+
+                if (currentScrollStrategy !== "latestMessage") {
+                    // horrible having to do this but if we don't the message read tracker will not be in the right state
+                    messagesRead.syncWithServer(chat.chatId, chat.readByMe);
+                }
+
+                if (currentScrollStrategy === "firstMention") {
+                    targetMessageIndex =
+                        getFirstUnreadMention(messagesRead, chat)?.messageIndex ??
+                        getFirstUnreadMessageIndex(messagesRead, chat);
+                }
+                if (currentScrollStrategy === "firstMessage") {
+                    targetMessageIndex = getFirstUnreadMessageIndex(messagesRead, chat);
+                }
+
+                const range = indexRangeForChat(chat);
+
+                // fire and forget an events request that will prime the cache
+                if (chat.kind === "group_chat") {
+                    // this is a bit gross, but I don't want this to leak outside of the caching layer
+                    const groupClient = GroupClient.create(chat.chatId, this.identity, this.db);
+
+                    if (targetMessageIndex !== undefined) {
+                        console.log(
+                            "loading event window for chat ",
+                            chat.chatId,
+                            " starting at index: ",
+                            targetMessageIndex
+                        );
+                        groupClient.chatEventsWindow(range, targetMessageIndex);
+                    } else {
+                        groupClient.chatEvents(range, chat.latestEventIndex, false);
+                    }
+                } else {
+                    if (targetMessageIndex !== undefined) {
+                        this.chatEventsWindow(range, this.userId, targetMessageIndex);
+                    } else {
+                        this.chatEvents(range, this.userId, chat.latestEventIndex, false);
+                    }
+                }
+            });
+        return nextResponse;
+    }
+
     @profile("userCachingClient")
-    async getInitialState(): Promise<MergedUpdatesResponse> {
+    async getInitialState(
+        messagesRead: IMessageReadTracker,
+        selectedChatId?: string
+    ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         // if we have cached chats we will rebuild the UpdateArgs from that cached data
         if (cachedChats) {
             return this.client
                 .getUpdates(
                     cachedChats.chatSummaries,
-                    updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries)
+                    updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries),
+                    messagesRead
                 )
                 .then((resp) => {
                     resp.wasUpdated = true;
                     return resp;
                 })
+                .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
                 .then(setCachedChats(this.db, this.userId));
         } else {
-            return this.client.getInitialState().then(setCachedChats(this.db, this.userId));
+            return this.client
+                .getInitialState(messagesRead)
+                .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
+                .then(setCachedChats(this.db, this.userId));
         }
     }
 
     @profile("userCachingClient")
     async getUpdates(
         chatSummaries: ChatSummary[],
-        args: UpdateArgs
+        args: UpdateArgs,
+        messagesRead: IMessageReadTracker,
+        selectedChatId?: string
     ): Promise<MergedUpdatesResponse> {
+        const cachedChats = await getCachedChats(this.db, this.userId);
         return this.client
-            .getUpdates(chatSummaries, args)
+            .getUpdates(chatSummaries, args, messagesRead)
+            .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
             .then(setCachedChats(this.db, this.userId));
     }
 

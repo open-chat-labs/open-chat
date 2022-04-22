@@ -7,7 +7,6 @@ import type {
     EnhancedReplyContext,
     EventWrapper,
     GroupChatSummary,
-    Mention,
     Message,
     MemberRole,
     MessageContent,
@@ -16,7 +15,8 @@ import {
     compareChats,
     emptyChatMetrics,
     getContentAsText,
-    getMinVisibleMessageIndex,
+    getFirstUnreadMention,
+    getFirstUnreadMessageIndex,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
     userIdsFromEvents,
@@ -154,6 +154,7 @@ export class HomeController {
         try {
             this.loading.set(!this.initialised);
             const chats = Object.values(get(this.serverChatSummaries));
+            const selectedChat = get(this.selectedChat);
             const chatsResponse =
                 this.chatUpdatesSince === undefined
                     ? await this.api.getInitialState(this.messagesRead)
@@ -179,8 +180,6 @@ export class HomeController {
 
                 userStore.addMany(usersResponse.users);
                 blockedUsers.set(chatsResponse.blockedUsers);
-
-                const selectedChat = get(this.selectedChat);
 
                 let selectedChatInvalid = true;
 
@@ -318,11 +317,11 @@ export class HomeController {
                 if (messageIndex === undefined) {
                     if (currentScrollStrategy === "firstMention") {
                         messageIndex =
-                            this.getFirstUnreadMention(chat)?.messageIndex ??
-                            this.getFirstUnreadMessageIndex(chat);
+                            getFirstUnreadMention(this.messagesRead, chat)?.messageIndex ??
+                            getFirstUnreadMessageIndex(this.messagesRead, chat);
                     }
                     if (currentScrollStrategy === "firstMessage") {
-                        messageIndex = this.getFirstUnreadMessageIndex(chat);
+                        messageIndex = getFirstUnreadMessageIndex(this.messagesRead, chat);
                     }
                 }
 
@@ -346,23 +345,6 @@ export class HomeController {
         } else {
             this.clearSelectedChat();
         }
-    }
-
-    getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
-        if (chat.kind === "direct_chat") return undefined;
-        return chat.mentions.find(
-            (m) => !this.messagesRead.isRead(chat.chatId, m.messageIndex, m.messageId)
-        );
-    }
-
-    getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {
-        if (chat.kind === "group_chat" && chat.myRole === "previewer") return undefined;
-
-        return this.messagesRead.getFirstUnreadMessageIndex(
-            chat.chatId,
-            getMinVisibleMessageIndex(chat),
-            chat.latestMessage?.event.messageIndex
-        );
     }
 
     clearSelectedChat(): void {

@@ -84,3 +84,13 @@ export function findLast<T>(array: T[], predicate: (item: T) => boolean): T | un
     }
     return undefined;
 }
+
+export function toRecord<T, K extends string | number | symbol>(
+    xs: T[],
+    keyFn: (x: T) => K
+): Record<K, T> {
+    return xs.reduce((rec, x) => {
+        rec[keyFn(x)] = x;
+        return rec;
+    }, {} as Record<K, T>);
+}

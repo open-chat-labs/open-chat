@@ -85,6 +85,7 @@ import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
+import type { IMessageReadTracker } from "../../stores/markRead";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -98,7 +99,7 @@ export class UserClient extends CandidService implements IUserClient {
 
     static create(userId: string, identity: Identity, db?: Database): IUserClient {
         return db && process.env.CLIENT_CACHING && !cachingLocallyDisabled()
-            ? new CachingUserClient(db, new UserClient(identity, userId))
+            ? new CachingUserClient(db, identity, new UserClient(identity, userId))
             : new UserClient(identity, userId);
     }
 
@@ -181,7 +182,10 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    async getInitialState(): Promise<MergedUpdatesResponse> {
+    async getInitialState(
+        _: IMessageReadTracker,
+        _selectedChatId?: string
+    ): Promise<MergedUpdatesResponse> {
         const resp = await this.handleQueryResponse(
             () => this.userService.initial_state({}),
             initialStateResponse
@@ -200,7 +204,9 @@ export class UserClient extends CandidService implements IUserClient {
     @profile("userClient")
     async getUpdates(
         chatSummaries: ChatSummary[],
-        args: UpdateArgs
+        args: UpdateArgs,
+        _: IMessageReadTracker,
+        _selectedChatId?: string
     ): Promise<MergedUpdatesResponse> {
         const updatesResponse = await this.handleQueryResponse(
             () =>

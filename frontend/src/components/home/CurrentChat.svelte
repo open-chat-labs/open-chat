@@ -8,7 +8,12 @@
     import { _ } from "svelte-i18n";
     import type { ChatController } from "../../fsm/chat.controller";
     import { onDestroy } from "svelte";
-    import { getMinVisibleMessageIndex, isPreviewing } from "../../domain/chat/chat.utils";
+    import {
+        getFirstUnreadMention,
+        getFirstUnreadMessageIndex,
+        getMinVisibleMessageIndex,
+        isPreviewing,
+    } from "../../domain/chat/chat.utils";
     import type { EnhancedReplyContext, GroupChatSummary, Mention } from "../../domain/chat/chat";
     import PollBuilder from "./PollBuilder.svelte";
     import ICPTransferBuilder from "./ICPTransferBuilder.svelte";
@@ -49,35 +54,19 @@
             showSearchHeader = false;
             chatId = controller.chatId;
             unreadMessages = controller.unreadMessageCount;
-            firstUnreadMention = getFirstUnreadMention();
-            firstUnreadMessage = getFirstUnreadMessageIndex();
+            firstUnreadMention = getFirstUnreadMention(controller.markRead, controller.chatVal);
+            firstUnreadMessage = getFirstUnreadMessageIndex(
+                controller.markRead,
+                controller.chatVal
+            );
         }
     }
 
     let unsub = controller.markRead.subscribe(() => {
         unreadMessages = controller.unreadMessageCount;
-        firstUnreadMention = getFirstUnreadMention();
-        firstUnreadMessage = getFirstUnreadMessageIndex();
+        firstUnreadMention = getFirstUnreadMention(controller.markRead, controller.chatVal);
+        firstUnreadMessage = getFirstUnreadMessageIndex(controller.markRead, controller.chatVal);
     });
-
-    function getFirstUnreadMention(): Mention | undefined {
-        const chat = controller.chatVal;
-        if (chat.kind === "direct_chat") return undefined;
-        return chat.mentions.find(
-            (m) => !controller.markRead.isRead(chat.chatId, m.messageIndex, m.messageId)
-        );
-    }
-
-    function getFirstUnreadMessageIndex(): number | undefined {
-        const chat = controller.chatVal;
-        if (preview) return undefined;
-
-        return controller.markRead.getFirstUnreadMessageIndex(
-            chat.chatId,
-            getMinVisibleMessageIndex(chat),
-            chat.latestMessage?.event.messageIndex
-        );
-    }
 
     function onWindowFocus() {
         closeNotificationsForChat(chatId);
