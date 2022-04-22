@@ -8,7 +8,6 @@ import type {
     UpdateGroupResponse,
     ToggleReactionResponse,
     IndexRange,
-    EventWrapper,
     Message,
     DeleteMessageResponse,
     EditMessageResponse,

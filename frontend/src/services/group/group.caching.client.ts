@@ -23,7 +23,6 @@ import type {
     RegisterPollVoteResponse,
     GroupPermissions,
     EventsSuccessResult,
-    ChatEvent,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
