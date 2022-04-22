@@ -105,7 +105,12 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
             error_message = msg.as_str(),
             "Error calling 'start_canister'"
         );
-        Err(error.unwrap_or(canister::Error { code, msg }))
+        error = error.or(Some(canister::Error { code, msg }));
+    }
+
+    if let Some(error) = error {
+        error!(canister_id = canister_id_string.as_str(), "Canister upgrade failed");
+        Err(error)
     } else {
         trace!(canister_id = canister_id_string.as_str(), "Canister upgrade completed");
         Ok(cycles_used)
