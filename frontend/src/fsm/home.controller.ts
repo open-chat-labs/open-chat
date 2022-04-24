@@ -142,7 +142,9 @@ export class HomeController {
                     })),
                 });
                 userStore.addMany(usersResp.users);
-                userStore.setUpdated(batch, usersResp.timestamp);
+                if (usersResp.serverTimestamp !== undefined) {
+                    userStore.setUpdated(batch.filter((u) => !usersResp.fromCache.has(u)), usersResp.serverTimestamp);
+                }
             }
             console.log("users updated");
         } catch (err) {
@@ -175,7 +177,7 @@ export class HomeController {
                             updatedSince: BigInt(0),
                         },
                     ],
-                });
+                }, true);
 
                 userStore.addMany(usersResponse.users);
                 blockedUsers.set(chatsResponse.blockedUsers);
@@ -724,7 +726,7 @@ export class HomeController {
                         updatedSince: BigInt(0),
                     },
                 ],
-            });
+            }, true);
             userStore.addMany(usersResp.users);
         }
     }

@@ -220,30 +220,31 @@ export class CachingUserClient implements IUserClient {
                 }
             });
 
-        Promise.all(eventsPromises).then((responses) => {
-            const userIds = responses.reduce((result, next) => {
-                if (next !== "events_failed") {
-                    for (const userId of userIdsFromEvents(next.events)) {
-                        result.add(userId);
+        if (eventsPromises.length > 0) {
+            Promise.all(eventsPromises).then((responses) => {
+                const userIds = responses.reduce((result, next) => {
+                    if (next !== "events_failed") {
+                        for (const userId of userIdsFromEvents(next.events)) {
+                            result.add(userId);
+                        }
                     }
-                }
-                return result;
-            }, new Set<string>());
+                    return result;
+                }, new Set<string>());
 
-            const missing = missingUserIds(get(userStore), userIds);
-            if (missing.length > 0) {
-                UserIndexClient.create(this.identity, this.db)
-                    .getUsers({
-                        userGroups: [
-                            {
-                                users: missing,
-                                updatedSince: BigInt(0),
-                            },
-                        ],
-                    })
-                    .then((res) => userStore.addMany(res.users));
-            }
-        });
+                const missing = missingUserIds(get(userStore), userIds);
+                if (missing.length > 0) {
+                    UserIndexClient.create(this.identity, this.db)
+                        .getUsers({
+                            userGroups: [
+                                {
+                                    users: missing,
+                                    updatedSince: BigInt(0),
+                                },
+                            ],
+                        }, true);
+                }
+            });
+        }
 
         return nextResponse;
     }

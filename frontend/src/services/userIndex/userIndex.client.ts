@@ -99,13 +99,14 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     @profile("userIndexClient")
-    getUsers(users: UsersArgs): Promise<UsersResponse> {
+    getUsers(users: UsersArgs, _allowStale: boolean): Promise<UsersResponse> {
         const userGroups = users.userGroups.filter((g) => g.users.length > 0);
 
         if (userGroups.length === 0) {
             return Promise.resolve({
-                timestamp: BigInt(Date.now()),
+                serverTimestamp: undefined,
                 users: [],
+                fromCache: new Set<string>()
             });
         }
         const args = {
