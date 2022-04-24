@@ -218,8 +218,8 @@ export class CachingUserClient implements IUserClient {
                         : groupClient.chatEvents(range, chat.latestEventIndex, false);
                 } else {
                     return targetMessageIndex !== undefined
-                        ? this.chatEventsWindow(range, this.userId, targetMessageIndex)
-                        : this.chatEvents(range, this.userId, chat.latestEventIndex, false);
+                        ? this.chatEventsWindow(range, chat.chatId, targetMessageIndex)
+                        : this.chatEvents(range, chat.chatId, chat.latestEventIndex, false);
                 }
             });
 
