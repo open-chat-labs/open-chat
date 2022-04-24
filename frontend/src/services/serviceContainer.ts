@@ -520,7 +520,7 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.userClient.searchDirectChat(userId, searchTerm, maxResults);
     }
 
-    async getUser(userId: string): Promise<PartialUserSummary | undefined> {
+    async getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
         const response = await this.getUsers({
             userGroups: [
                 {
@@ -528,7 +528,7 @@ export class ServiceContainer implements MarkMessagesRead {
                     updatedSince: BigInt(0),
                 },
             ],
-        });
+        }, allowStale);
 
         if (response.users.length == 0) {
             return undefined;
@@ -537,9 +537,9 @@ export class ServiceContainer implements MarkMessagesRead {
         return response.users[0];
     }
 
-    getUsers(users: UsersArgs): Promise<UsersResponse> {
-        return this._userIndexClient.getUsers(users).then((resp) => ({
-            timestamp: resp.timestamp,
+    getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
+        return this._userIndexClient.getUsers(users, allowStale).then((resp) => ({
+            ...resp,
             users: resp.users.map((u) => this.rehydrateDataContent(u, "avatar", u.userId)),
         }));
     }

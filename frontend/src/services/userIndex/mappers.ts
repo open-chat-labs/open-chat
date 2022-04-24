@@ -47,8 +47,9 @@ export function usersResponse(candid: ApiUsersResponse): UsersResponse {
     if ("Success" in candid) {
         const timestamp = candid.Success.timestamp;
         return {
-            timestamp,
+            serverTimestamp: timestamp,
             users: candid.Success.users.map((u) => partialUserSummary(u, timestamp)),
+            fromCache: new Set<string>(),
         };
     }
     throw new Error(`Unknown UserIndex.UsersResponse of ${candid}`);

@@ -30,19 +30,19 @@ export class CachingUserIndexClient implements IUserIndexClient {
     constructor(private db: Promise<IDBPDatabase<ChatSchema>>, private client: IUserIndexClient) {}
 
     @profile("userIndexCachingClient")
-    async getUsers(users: UsersArgs): Promise<UsersResponse> {
+    async getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse> {
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
         const fromCache = await getCachedUsers(this.db, allUsers);
 
         // We throw away all of the updatedSince values passed in and instead use the values from the cache, this
         // ensures the cache is always correct and doesn't miss any updates
-        const args = this.buildGetUsersArgs(allUsers, fromCache);
+        const args = this.buildGetUsersArgs(allUsers, fromCache, allowStale);
 
-        const response = await this.client.getUsers(args);
+        const response = await this.client.getUsers(args, allowStale);
 
         // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
-        const mergedResponse = this.mergeGetUsersResponse(args, response, fromCache);
+        const mergedResponse = this.mergeGetUsersResponse(allUsers, response, fromCache);
 
         await setCachedUsers(this.db, mergedResponse.users.filter(isUserSummary));
 
@@ -88,7 +88,7 @@ export class CachingUserIndexClient implements IUserIndexClient {
         return this.client.submitPhoneNumber(phoneNumber);
     }
 
-    private buildGetUsersArgs(users: string[], fromCache: UserSummary[]): UsersArgs {
+    private buildGetUsersArgs(users: string[], fromCache: UserSummary[], allowStale: boolean): UsersArgs {
         const fromCacheGrouped = groupBy(fromCache, (u) => u.updated);
         const fromCacheSet = new Set<string>(fromCache.map((u) => u.userId));
 
@@ -105,12 +105,14 @@ export class CachingUserIndexClient implements IUserIndexClient {
             });
         }
 
-        // Add the users found in the cache but only ask for updates since the date they were last updated in the cache
-        for (const [updatedSince, users] of fromCacheGrouped) {
-            args.userGroups.push({
-                users: users.map((u) => u.userId),
-                updatedSince,
-            });
+        if (!allowStale) {
+            // Add the users found in the cache but only ask for updates since the date they were last updated in the cache
+            for (const [updatedSince, users] of fromCacheGrouped) {
+                args.userGroups.push({
+                    users: users.map((u) => u.userId),
+                    updatedSince,
+                });
+            }
         }
 
         return args;
@@ -118,7 +120,7 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     // Merges the cached values into the response
     private mergeGetUsersResponse(
-        args: UsersArgs,
+        allUsers: string[],
         response: UsersResponse,
         fromCache: UserSummary[]
     ): UsersResponse {
@@ -130,32 +132,30 @@ export class CachingUserIndexClient implements IUserIndexClient {
         const responseMap = new Map<string, PartialUserSummary>(
             response.users.map((u) => [u.userId, u])
         );
+        const fromCacheSet = new Set<string>();
 
         const users: PartialUserSummary[] = [];
 
-        for (const group of args.userGroups) {
-            for (const userId of group.users) {
-                const cached = fromCacheMap.get(userId);
-                const userResponse = responseMap.get(userId);
+        for (const userId of allUsers) {
+            const cached = fromCacheMap.get(userId);
+            const userResponse = responseMap.get(userId);
 
-                if (userResponse !== undefined) {
-                    users.push({
-                        ...userResponse,
-                        username: userResponse.username ?? cached?.username,
-                        blobReference: userResponse.blobReference ?? cached?.blobReference,
-                    });
-                } else if (cached !== undefined) {
-                    users.push({
-                        ...cached,
-                        updated: response.timestamp,
-                    });
-                }
+            if (userResponse !== undefined) {
+                users.push({
+                    ...userResponse,
+                    username: userResponse.username ?? cached?.username,
+                    blobReference: userResponse.blobReference ?? cached?.blobReference,
+                });
+            } else if (cached !== undefined) {
+                users.push(cached);
+                fromCacheSet.add(userId);
             }
         }
 
         return {
+            serverTimestamp: response.serverTimestamp,
             users,
-            timestamp: response.timestamp,
+            fromCache: fromCacheSet
         };
     }
 

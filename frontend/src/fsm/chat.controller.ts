@@ -346,7 +346,7 @@ export class ChatController {
                     updatedSince: BigInt(0),
                 },
             ],
-        });
+        }, true);
 
         userStore.addMany(resp.users);
     }

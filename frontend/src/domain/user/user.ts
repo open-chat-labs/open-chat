@@ -36,8 +36,9 @@ export type UsersArgs = {
 };
 
 export type UsersResponse = {
-    timestamp: bigint;
+    serverTimestamp?: bigint;
     users: PartialUserSummary[];
+    fromCache: Set<string>,
 };
 
 export enum UserStatus {
