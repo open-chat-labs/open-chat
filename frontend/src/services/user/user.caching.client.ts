@@ -55,7 +55,7 @@ import type {
 } from "../../domain/search/search";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { profile } from "../common/profiling";
-import { toRecord } from "../../utils/list";
+import { chunk, toRecord } from "../../utils/list";
 import { GroupClient } from "services/group/group.client";
 import type { Identity } from "@dfinity/agent";
 import { scrollStrategy } from "../../stores/settings";
@@ -163,21 +163,22 @@ export class CachingUserClient implements IUserClient {
         }
     }
 
-    private primeCaches(
+    private async primeCaches(
         cachedResponse: MergedUpdatesResponse | undefined,
         nextResponse: MergedUpdatesResponse,
         messagesRead: IMessageReadTracker,
         selectedChatId?: string
-    ): MergedUpdatesResponse {
+    ): Promise<void> {
         const cachedChats =
             cachedResponse === undefined
                 ? {}
                 : toRecord(cachedResponse.chatSummaries, (c) => c.chatId);
 
-        const limitTo = Number(localStorage.getItem("openchat_prime_cache_limit") || "5");
+        const limitTo = Number(localStorage.getItem("openchat_prime_cache_limit") || "50");
+        const batchSize = Number(localStorage.getItem("openchat_prime_cache_batch_size") || "5");
         const currentScrollStrategy = get(scrollStrategy);
 
-        const eventsPromises = nextResponse.chatSummaries
+        const orderedChats = nextResponse.chatSummaries
             .filter(
                 ({ chatId, latestEventIndex }) =>
                     chatId !== selectedChatId &&
@@ -185,8 +186,10 @@ export class CachingUserClient implements IUserClient {
                         latestEventIndex > cachedChats[chatId].latestEventIndex)
             )
             .sort(compareChats)
-            .slice(0, limitTo)
-            .map((chat) => {
+            .slice(0, limitTo);
+
+        for (const batch of chunk(orderedChats, batchSize)) {
+            const eventsPromises = batch.map((chat) => {
                 let targetMessageIndex: number | undefined = undefined;
 
                 if (currentScrollStrategy !== "latestMessage") {
@@ -220,33 +223,32 @@ export class CachingUserClient implements IUserClient {
                 }
             });
 
-        if (eventsPromises.length > 0) {
-            Promise.all(eventsPromises).then((responses) => {
-                const userIds = responses.reduce((result, next) => {
-                    if (next !== "events_failed") {
-                        for (const userId of userIdsFromEvents(next.events)) {
-                            result.add(userId);
+            if (eventsPromises.length > 0) {
+                await Promise.all(eventsPromises).then((responses) => {
+                    const userIds = responses.reduce((result, next) => {
+                        if (next !== "events_failed") {
+                            for (const userId of userIdsFromEvents(next.events)) {
+                                result.add(userId);
+                            }
                         }
+                        return result;
+                    }, new Set<string>());
+
+                    const missing = missingUserIds(get(userStore), userIds);
+                    if (missing.length > 0) {
+                        return UserIndexClient.create(this.identity, this.db)
+                            .getUsers({
+                                userGroups: [
+                                    {
+                                        users: missing,
+                                        updatedSince: BigInt(0),
+                                    },
+                                ],
+                            }, true)
                     }
-                    return result;
-                }, new Set<string>());
-
-                const missing = missingUserIds(get(userStore), userIds);
-                if (missing.length > 0) {
-                    UserIndexClient.create(this.identity, this.db)
-                        .getUsers({
-                            userGroups: [
-                                {
-                                    users: missing,
-                                    updatedSince: BigInt(0),
-                                },
-                            ],
-                        }, true);
-                }
-            });
+                });
+            }
         }
-
-        return nextResponse;
     }
 
     @profile("userCachingClient")
@@ -265,14 +267,17 @@ export class CachingUserClient implements IUserClient {
                 )
                 .then((resp) => {
                     resp.wasUpdated = true;
+                    this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
                     return resp;
                 })
-                .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
                 .then(setCachedChats(this.db, this.userId));
         } else {
             return this.client
                 .getInitialState(messagesRead)
-                .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
+                .then((resp) => {
+                    this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
+                    return resp;
+                })
                 .then(setCachedChats(this.db, this.userId));
         }
     }
@@ -287,7 +292,10 @@ export class CachingUserClient implements IUserClient {
         const cachedChats = await getCachedChats(this.db, this.userId);
         return this.client
             .getUpdates(chatSummaries, args, messagesRead)
-            .then((resp) => this.primeCaches(cachedChats, resp, messagesRead, selectedChatId))
+            .then((resp) => {
+                this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
+                return resp;
+            })
             .then(setCachedChats(this.db, this.userId));
     }
 
