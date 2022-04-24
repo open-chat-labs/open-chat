@@ -45,6 +45,7 @@ import {
     indexRangeForChat,
     MAX_MISSING,
     updateArgsFromChats,
+    userIdsFromEvents,
 } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
 import type { SetBioResponse, UserSummary } from "../../domain/user/user";
@@ -60,6 +61,9 @@ import type { Identity } from "@dfinity/agent";
 import { scrollStrategy } from "../../stores/settings";
 import { get } from "svelte/store";
 import type { IMessageReadTracker } from "../../stores/markRead";
+import { missingUserIds } from "domain/user/user.utils";
+import { userStore } from "stores/user";
+import { UserIndexClient } from "services/userIndex/userIndex.client";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -173,7 +177,7 @@ export class CachingUserClient implements IUserClient {
         const limitTo = Number(localStorage.getItem("openchat_prime_cache_limit") || "5");
         const currentScrollStrategy = get(scrollStrategy);
 
-        nextResponse.chatSummaries
+        const eventsPromises = nextResponse.chatSummaries
             .filter(
                 ({ chatId, latestEventIndex }) =>
                     chatId !== selectedChatId &&
@@ -182,7 +186,7 @@ export class CachingUserClient implements IUserClient {
             )
             .sort(compareChats)
             .slice(0, limitTo)
-            .forEach((chat) => {
+            .map((chat) => {
                 let targetMessageIndex: number | undefined = undefined;
 
                 if (currentScrollStrategy !== "latestMessage") {
@@ -206,25 +210,41 @@ export class CachingUserClient implements IUserClient {
                     // this is a bit gross, but I don't want this to leak outside of the caching layer
                     const groupClient = GroupClient.create(chat.chatId, this.identity, this.db);
 
-                    if (targetMessageIndex !== undefined) {
-                        console.log(
-                            "loading event window for chat ",
-                            chat.chatId,
-                            " starting at index: ",
-                            targetMessageIndex
-                        );
-                        groupClient.chatEventsWindow(range, targetMessageIndex);
-                    } else {
-                        groupClient.chatEvents(range, chat.latestEventIndex, false);
-                    }
+                    return targetMessageIndex !== undefined
+                        ? groupClient.chatEventsWindow(range, targetMessageIndex)
+                        : groupClient.chatEvents(range, chat.latestEventIndex, false);
                 } else {
-                    if (targetMessageIndex !== undefined) {
-                        this.chatEventsWindow(range, this.userId, targetMessageIndex);
-                    } else {
-                        this.chatEvents(range, this.userId, chat.latestEventIndex, false);
-                    }
+                    return targetMessageIndex !== undefined
+                        ? this.chatEventsWindow(range, this.userId, targetMessageIndex)
+                        : this.chatEvents(range, this.userId, chat.latestEventIndex, false);
                 }
             });
+
+        Promise.all(eventsPromises).then((responses) => {
+            const userIds = responses.reduce((result, next) => {
+                if (next !== "events_failed") {
+                    for (const userId of userIdsFromEvents(next.events)) {
+                        result.add(userId);
+                    }
+                }
+                return result;
+            }, new Set<string>());
+
+            const missing = missingUserIds(get(userStore), userIds);
+            if (missing.length > 0) {
+                UserIndexClient.create(this.identity, this.db)
+                    .getUsers({
+                        userGroups: [
+                            {
+                                users: missing,
+                                updatedSince: BigInt(0),
+                            },
+                        ],
+                    })
+                    .then((res) => userStore.addMany(res.users));
+            }
+        });
+
         return nextResponse;
     }
 
