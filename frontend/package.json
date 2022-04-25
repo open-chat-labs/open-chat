@@ -14,11 +14,13 @@
         "lint": "eslint ./src --fix",
         "format": "prettier --config .prettierrc './src/**/*.ts' --write",
         "codegen": "sh ./codegen.sh",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "sync_lang": "node ./generate.js"
     },
     "devDependencies": {
         "@babel/core": "^7.17.9",
         "@babel/preset-env": "^7.16.11",
+        "@google-cloud/translate": "^6.3.1",
         "@rollup/plugin-alias": "^3.1.9",
         "@rollup/plugin-commonjs": "^17.0.0",
         "@rollup/plugin-html": "^0.2.4",
@@ -48,6 +50,8 @@
         "eslint-plugin-prettier": "^3.4.1",
         "events": "3.3.0",
         "js-sha256": "^0.9.0",
+        "lodash": "^4.17.21",
+        "node-fetch": "^3.2.3",
         "postcss": "^8.4.12",
         "prettier": "^2.6.2",
         "process": "^0.11.10",
