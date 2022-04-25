@@ -359,7 +359,14 @@
         "pollEnds": "Cuộc thăm dò ý kiến kết thúc vào {end}",
         "voteFailed": "Cuộc bỏ phiếu thăm dò không thành công",
         "totalVotes": "Tổng số phiếu bầu: {total}",
-        "finished": "Cuộc thăm dò đã kết thúc"
+        "finished": "Cuộc thăm dò đã kết thúc",
+        "votersPublic": "Người bỏ phiếu sẽ được công khai",
+        "votersPrivate": "Người bỏ phiếu sẽ được ẩn danh",
+        "numVotes": "{votes} phiếu bầu",
+        "numVotesBy": "{votes} phiếu bầu của",
+        "oneVote": "1 phiếu bầu",
+        "oneVoteBy": "1 phiếu bầu của",
+        "numVotesIncludingYours": "{votes} phiếu bầu bao gồm cả của bạn"
     },
     "group": {
         "addGroupPhoto": "Thêm ảnh nhóm",
@@ -472,5 +479,6 @@
         "replies": "trả lời",
         "reactions": "phản ứng",
         "deletedMessages": "tin nhắn đã xóa"
-    }
+    },
+    "andNMore": ", và hơn thế nữa"
 }

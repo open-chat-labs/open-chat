@@ -358,7 +358,14 @@
         "pollEnds": "投票が終了します{end}",
         "voteFailed": "投票に失敗しました",
         "totalVotes": "総投票数：{total}",
-        "finished": "投票が終了しました"
+        "finished": "投票が終了しました",
+        "votersPublic": "有権者は公開されます",
+        "votersPrivate": "投票者は匿名になります",
+        "numVotes": "{votes}投票",
+        "numVotesBy": "{votes}による投票",
+        "oneVote": "1票",
+        "oneVoteBy": "1票",
+        "numVotesIncludingYours": "{votes}あなたを含む投票"
     },
     "group": {
         "addGroupPhoto": "グループ写真を追加",
@@ -471,5 +478,6 @@
         "replies": "返信",
         "reactions": "反応",
         "deletedMessages": "削除されたメッセージ"
-    }
+    },
+    "andNMore": "、 もっと"
 }

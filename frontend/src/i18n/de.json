@@ -358,7 +358,14 @@
         "pollEnds": "Umfrage endet {end}",
         "voteFailed": "Abstimmung fehlgeschlagen",
         "totalVotes": "Stimmen insgesamt: {total}",
-        "finished": "Umfrage ist beendet"
+        "finished": "Umfrage ist beendet",
+        "votersPublic": "Die Wähler werden öffentlich sein",
+        "votersPrivate": "Die Wähler bleiben anonym",
+        "numVotes": "{votes} Stimmen",
+        "numVotesBy": "{votes} Stimmen ab",
+        "oneVote": "1 Stimme",
+        "oneVoteBy": "1 Stimme von",
+        "numVotesIncludingYours": "{votes} Stimmen einschließlich deiner"
     },
     "group": {
         "addGroupPhoto": "Gruppenfoto hinzufügen",
@@ -471,5 +478,6 @@
         "replies": "antwortet",
         "reactions": "Reaktionen",
         "deletedMessages": "gelöschte Nachrichten"
-    }
+    },
+    "andNMore": ", und mehr"
 }
