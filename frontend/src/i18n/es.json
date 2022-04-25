@@ -359,7 +359,14 @@
         "pollEnds": "La encuesta termina {end}",
         "voteFailed": "Voto de encuesta fallido",
         "totalVotes": "Votos totales: {total}",
-        "finished": "La encuesta ha terminado"
+        "finished": "La encuesta ha terminado",
+        "votersPublic": "Los votantes serán públicos",
+        "votersPrivate": "Los votantes serán anónimos",
+        "numVotes": "{votes} votos",
+        "numVotesBy": "{votes} votos por",
+        "oneVote": "1 voto",
+        "oneVoteBy": "1 voto por",
+        "numVotesIncludingYours": "{votes} votos incluido el tuyo"
     },
     "group": {
         "addGroupPhoto": "Añadir foto de grupo",
@@ -472,5 +479,6 @@
         "replies": "respuestas",
         "reactions": "reacciones",
         "deletedMessages": "Mensajes eliminados"
-    }
+    },
+    "andNMore": ", y más"
 }

@@ -358,7 +358,14 @@
         "pollEnds": "Опрос заканчивается {end}",
         "voteFailed": "Голосование в опросе не удалось",
         "totalVotes": "Всего голосов: {total}",
-        "finished": "Голосование завершено"
+        "finished": "Голосование завершено",
+        "votersPublic": "Избиратели будут публичными",
+        "votersPrivate": "Голосующие будут анонимными",
+        "numVotes": "{votes} голосов",
+        "numVotesBy": "{votes} голосов от",
+        "oneVote": "1 голос",
+        "oneVoteBy": "1 голос от",
+        "numVotesIncludingYours": "{votes} голосов, включая ваш"
     },
     "group": {
         "addGroupPhoto": "Добавить фото группы",
@@ -471,5 +478,6 @@
         "replies": "ответы",
         "reactions": "реакции",
         "deletedMessages": "удаленные сообщения"
-    }
+    },
+    "andNMore": ", и более"
 }

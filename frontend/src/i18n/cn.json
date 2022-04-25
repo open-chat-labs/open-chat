@@ -358,7 +358,14 @@
         "pollEnds": "投票结束 {end}",
         "voteFailed": "投票表决失败",
         "totalVotes": "总票数：{total}",
-        "finished": "投票已结束"
+        "finished": "投票已结束",
+        "votersPublic": "选民将公开",
+        "votersPrivate": "选民将是匿名的",
+        "numVotes": "{votes} 票",
+        "numVotesBy": "{votes} 票",
+        "oneVote": "1 票",
+        "oneVoteBy": "1 票",
+        "numVotesIncludingYours": "{votes} 票，包括你的票"
     },
     "group": {
         "addGroupPhoto": "添加群聊图片",
@@ -471,5 +478,6 @@
         "replies": "回复",
         "reactions": "反应",
         "deletedMessages": "已删除的消息"
-    }
+    },
+    "andNMore": "， 和更多"
 }
