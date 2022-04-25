@@ -48,6 +48,7 @@
         senderId={replyingTo.senderId}
         truncate={true}
         content={replyingTo.content}
+        myUserId={user.userId}
         reply={true} />
 </div>
 

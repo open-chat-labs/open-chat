@@ -142,7 +142,9 @@ export class HomeController {
                     })),
                 });
                 userStore.addMany(usersResp.users);
-                userStore.setUpdated(batch, usersResp.timestamp);
+                if (usersResp.serverTimestamp !== undefined) {
+                    userStore.setUpdated(batch.filter((u) => !usersResp.fromCache.has(u)), usersResp.serverTimestamp);
+                }
             }
             console.log("users updated");
         } catch (err) {
@@ -154,7 +156,6 @@ export class HomeController {
         try {
             this.loading.set(!this.initialised);
             const chats = Object.values(get(this.serverChatSummaries));
-            const selectedChat = get(this.selectedChat);
             const chatsResponse =
                 this.chatUpdatesSince === undefined
                     ? await this.api.getInitialState(this.messagesRead)
@@ -176,11 +177,12 @@ export class HomeController {
                             updatedSince: BigInt(0),
                         },
                     ],
-                });
+                }, true);
 
                 userStore.addMany(usersResponse.users);
                 blockedUsers.set(chatsResponse.blockedUsers);
 
+                const selectedChat = get(this.selectedChat);
                 let selectedChatInvalid = true;
 
                 this.serverChatSummaries.set(
@@ -724,7 +726,7 @@ export class HomeController {
                         updatedSince: BigInt(0),
                     },
                 ],
-            });
+            }, true);
             userStore.addMany(usersResp.users);
         }
     }

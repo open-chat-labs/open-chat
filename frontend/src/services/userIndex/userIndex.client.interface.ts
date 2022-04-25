@@ -27,7 +27,7 @@ export interface IUserIndexClient {
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse>;
     resendRegistrationCode(): Promise<ResendCodeResponse>;
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse>;
-    getUsers(users: UsersArgs): Promise<UsersResponse>;
+    getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse>;
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]>;
     upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse>;
 }

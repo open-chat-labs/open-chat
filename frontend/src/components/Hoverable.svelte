@@ -8,9 +8,10 @@
     const maxDiffX = 10; // max number of X pixels the mouse can move during long press before it is canceled
     const maxDiffY = 10; // max number of Y pixels the mouse can move during long press before it is canceled
 
-    export let hovering: boolean;
+    export let hovering: boolean = false;
     export let longPressed: boolean = false;
     export let enableLongPress: boolean = false;
+    export let coords: { x: number; y: number } = { x: 0, y: 0 };
 
     let containerDiv: HTMLDivElement;
     let hoverTimer: number | undefined;
@@ -20,7 +21,9 @@
     let startX = 0; // mouse x position when timer started
     let startY = 0; // mouse y position when timer started
 
-    function startHover() {
+    function startHover(e: MouseEvent) {
+        coords.x = e.clientX;
+        coords.y = e.clientY;
         hoverTimer = window.setTimeout(() => (hovering = true), HOVER_DELAY);
     }
 
@@ -37,8 +40,8 @@
 
     function handleTouchStart(e: TouchEvent) {
         let t = e.changedTouches[0];
-        startX = t.clientX;
-        startY = t.clientY;
+        startX = coords.x = t.clientX;
+        startY = coords.x = t.clientY;
 
         cancelLongPress();
 
@@ -93,7 +96,7 @@
             containerDiv.addEventListener("mouseleave", endHover);
             containerDiv.addEventListener("contextmenu", (e: MouseEvent) => {
                 e.preventDefault();
-                startHover();
+                startHover(e);
             });
         }
     });

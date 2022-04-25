@@ -122,3 +122,42 @@ export function formatLastOnlineDate(now: number, user: PartialUserSummary | und
     }
     return get(_)("lastOnline", { values: { duration: durationText } });
 }
+
+export function buildUsernameList(
+    userIds: Set<string>,
+    myUserId: string | undefined,
+    users: UserLookup,
+    maxUsernames = 99
+): string {
+    const includesMe = myUserId !== undefined ? userIds.has(myUserId) : false;
+
+    let usernamesArray = Array.from(userIds)
+        .slice(0, maxUsernames * 1.5)
+        .map((uid) => [uid, users[uid]?.username])
+        .filter(([uid, username]) => username !== undefined && uid !== myUserId)
+        .map(([_, username]) => username);
+
+    const missing = userIds.size - (usernamesArray.length + (includesMe ? 1 : 0));
+
+    // If there are no usernames missing and we would otherwise say "and 1 more"
+    // then just show that last username
+    if (missing === 0 && usernamesArray.length === maxUsernames + 1) {
+        maxUsernames++;
+    }
+
+    usernamesArray = usernamesArray.slice(0, maxUsernames);
+
+    let usernames = usernamesArray.join(", ");
+
+    if (includesMe) {
+        usernames += usernames.length === 0 ? get(_)("you") : get(_)("reactions.andYou");
+    }
+
+    const n = userIds.size - (usernamesArray.length + (includesMe ? 1 : 0));
+
+    if (n > 0) {
+        usernames += get(_)("andNMore", { values: { n } });
+    }
+
+    return usernames;
+}

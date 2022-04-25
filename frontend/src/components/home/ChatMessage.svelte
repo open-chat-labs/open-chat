@@ -360,6 +360,7 @@
                 {first}
                 {groupChat}
                 {senderId}
+                myUserId={user.userId}
                 content={msg.content}
                 height={mediaCalculatedHeight}
                 on:registerVote={registerVote} />
