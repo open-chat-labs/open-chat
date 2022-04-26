@@ -274,6 +274,7 @@ type GroupChatSummaryUpdates =
         affected_events: vec EventIndex;
         metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
+        is_public: opt bool;
     };
 
 type GroupDescriptionChanged =
