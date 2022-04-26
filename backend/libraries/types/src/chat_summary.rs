@@ -119,6 +119,7 @@ pub struct GroupChatSummaryUpdates {
     pub affected_events: Vec<EventIndex>,
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
+    pub is_public: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -257,6 +258,7 @@ pub struct GroupChatSummaryUpdatesInternal {
     pub affected_events: Vec<EventIndex>,
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
+    pub is_public: Option<bool>,
 }
 
 impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
@@ -281,6 +283,7 @@ impl From<GroupChatSummaryUpdatesInternal> for GroupChatSummaryUpdates {
             affected_events: s.affected_events,
             metrics: s.metrics,
             my_metrics: s.my_metrics,
+            is_public: s.is_public,
         }
     }
 }
