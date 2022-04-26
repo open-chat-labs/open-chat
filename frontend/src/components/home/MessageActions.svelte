@@ -166,17 +166,16 @@
                 .emoji {
                     opacity: 1;
                     top: -75px;
-                    transition-delay: 150ms;
+                    transition-delay: 100ms;
                 }
                 .attach {
                     opacity: 1;
                     top: -120px;
-                    transition-delay: 100ms;
+                    transition-delay: 50ms;
                 }
                 .gif {
                     opacity: 1;
                     top: -165px;
-                    transition-delay: 50ms;
                 }
             }
         }
