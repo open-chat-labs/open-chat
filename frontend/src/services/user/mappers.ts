@@ -28,9 +28,10 @@ import type {
     ApiRecommendedGroupsResponse,
     ApiSetBioResponse,
     ApiWithdrawCryptocurrencyResponse,
-    ApiFailedCryptocurrencyWithdrawal,
-    ApiCompletedCryptocurrencyWithdrawal,
+    ApiFailedCryptocurrencyWithdrawalV2,
+    ApiCompletedCryptocurrencyWithdrawalV2,
     ApiCompletedCryptocurrencyTransfer,
+    ApiCompletedCryptocurrencyTransferV2,
     ApiTransferCryptocurrencyWithinGroupResponse,
     ApiChatMetrics,
 } from "./candid/idl";
@@ -338,6 +339,28 @@ export function completedCryptoTransfer(
     );
 }
 
+export function completedCryptoTransferV2(
+    candid: ApiCompletedCryptocurrencyTransferV2
+): CompletedCryptocurrencyTransfer {
+    if ("InternetComputer" in candid.token) {
+        return {
+            transferKind: "icp_transfer",
+            kind: "completed_icp_transfer",
+            recipient: candid.recipient.toString(),
+            sender: candid.sender.toString(),
+            amountE8s: candid.amount.e8s,
+            feeE8s: candid.fee.e8s,
+            memo: candid.memo,
+            blockIndex: candid.block_index,
+            transactionHash: bytesToHexString(candid.transaction_hash),
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiCompletedCryptocurrencyTransfer type received",
+        candid
+    );
+}
+
 export function transferWithinGroupResponse(
     candid: ApiTransferCryptocurrencyWithinGroupResponse
 ): SendMessageResponse {
@@ -347,7 +370,7 @@ export function transferWithinGroupResponse(
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(candid.Success.transfer),
+            transfer: completedCryptoTransferV2(candid.Success.transfer),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -405,6 +428,15 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             messageIndex: candid.TransferSuccess.message_index,
             eventIndex: candid.TransferSuccess.event_index,
             transfer: completedCryptoTransfer(candid.TransferSuccess.transfer),
+        };
+    }
+    if ("TransferSuccessV2" in candid) {
+        return {
+            kind: "transfer_success",
+            timestamp: candid.TransferSuccessV2.timestamp,
+            messageIndex: candid.TransferSuccessV2.message_index,
+            eventIndex: candid.TransferSuccessV2.event_index,
+            transfer: completedCryptoTransferV2(candid.TransferSuccessV2.transfer),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -820,58 +852,42 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
 }
 
 export function failedCryptoWithdrawal(
-    candid: ApiFailedCryptocurrencyWithdrawal
+    candid: ApiFailedCryptocurrencyWithdrawalV2
 ): FailedCryptocurrencyWithdrawal {
-    if ("ICP" in candid) {
+    if ("InternetComputer" in candid.token) {
         return {
             transferKind: "icp_withdrawal",
             kind: "failed_icp_withdrawal",
-            to: bytesToHexString(candid.ICP.to),
-            amountE8s: candid.ICP.amount.e8s,
-            feeE8s: candid.ICP.fee.e8s,
-            memo: candid.ICP.memo,
-            errorMessage: candid.ICP.error_message,
-        };
-    }
-    if ("Cycles" in candid) {
-        return {
-            transferKind: "cycles_withdrawal",
-            kind: "failed_cycles_withdrawal",
-            cycles: candid.Cycles.cycles,
-            errorMessage: candid.Cycles.error_message,
+            to: bytesToHexString(candid.to),
+            amountE8s: candid.amount.e8s,
+            feeE8s: candid.fee.e8s,
+            memo: candid.memo,
+            errorMessage: candid.error_message,
         };
     }
     throw new UnsupportedValueError(
-        "Unexpected ApiFailedCryptocurrencyWithdrawal type received",
+        "Unexpected ApiFailedCryptocurrencyWithdrawalV2 type received",
         candid
     );
 }
 
 export function completedCryptoWithdrawal(
-    candid: ApiCompletedCryptocurrencyWithdrawal
+    candid: ApiCompletedCryptocurrencyWithdrawalV2
 ): CompletedCryptocurrencyWithdrawal {
-    if ("ICP" in candid) {
+    if ("InternetComputer" in candid.token) {
         return {
             transferKind: "icp_withdrawal",
             kind: "completed_icp_withdrawal",
-            to: bytesToHexString(candid.ICP.to),
-            amountE8s: candid.ICP.amount.e8s,
-            feeE8s: candid.ICP.fee.e8s,
-            memo: candid.ICP.memo,
-            blockIndex: candid.ICP.block_index,
-            transactionHash: bytesToHexString(candid.ICP.transaction_hash),
-        };
-    }
-    if ("Cycles" in candid) {
-        return {
-            transferKind: "cycles_withdrawal",
-            kind: "completed_cycles_withdrawal",
-            to: candid.Cycles.to.toString(),
-            cycles: candid.Cycles.cycles,
+            to: bytesToHexString(candid.to),
+            amountE8s: candid.amount.e8s,
+            feeE8s: candid.fee.e8s,
+            memo: candid.memo,
+            blockIndex: candid.block_index,
+            transactionHash: bytesToHexString(candid.transaction_hash),
         };
     }
     throw new UnsupportedValueError(
-        "Unexpected ApiCompletedCryptocurrencyWithdrawal type received",
+        "Unexpected ApiCompletedCryptocurrencyWithdrawalV2 type received",
         candid
     );
 }

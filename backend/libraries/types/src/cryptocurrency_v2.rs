@@ -17,7 +17,6 @@ impl Cryptocurrency {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "crate::CryptocurrencyTransaction")]
 pub enum CryptocurrencyTransaction {
     Deposit(CryptocurrencyDeposit),
     Withdrawal(CryptocurrencyWithdrawal),

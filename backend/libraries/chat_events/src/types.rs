@@ -238,14 +238,10 @@ impl MessageInternal {
                         }
                     }
                 }
-                MessageContentInternal::Cryptocurrency(c) => match c.transfer.cryptocurrency() {
-                    Cryptocurrency::ICP => {
+                MessageContentInternal::Cryptocurrency(c) => match c.transfer.token() {
+                    types::cryptocurrency_v2::Cryptocurrency::InternetComputer => {
                         adjust(&mut metrics.icp_messages);
                         adjust(&mut sender_metrics.icp_messages);
-                    }
-                    Cryptocurrency::Cycles => {
-                        adjust(&mut metrics.cycles_messages);
-                        adjust(&mut sender_metrics.cycles_messages);
                     }
                 },
                 MessageContentInternal::Deleted(_) => {}

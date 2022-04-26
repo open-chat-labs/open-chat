@@ -64,6 +64,36 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
           }),
+          'CryptocurrencyV2' : IDL.Record({
+            'caption' : IDL.Opt(IDL.Text),
+            'transfer' : IDL.Variant({
+              'Failed' : IDL.Record({
+                'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                'memo' : IDL.Nat64,
+                'error_message' : IDL.Text,
+                'recipient' : IDL.Principal,
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+              'Completed' : IDL.Record({
+                'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                'transaction_hash' : IDL.Vec(IDL.Nat8),
+                'block_index' : IDL.Nat64,
+                'memo' : IDL.Nat64,
+                'recipient' : IDL.Principal,
+                'sender' : IDL.Principal,
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+              'Pending' : IDL.Record({
+                'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
+                'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                'memo' : IDL.Opt(IDL.Nat64),
+                'recipient' : IDL.Principal,
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+            }),
+          }),
           'Cryptocurrency' : IDL.Record({
             'caption' : IDL.Opt(IDL.Text),
             'transfer' : IDL.Variant({
@@ -217,6 +247,36 @@ export const Notification = IDL.Variant({
             'thumbnail_data' : IDL.Text,
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
+          }),
+          'CryptocurrencyV2' : IDL.Record({
+            'caption' : IDL.Opt(IDL.Text),
+            'transfer' : IDL.Variant({
+              'Failed' : IDL.Record({
+                'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                'memo' : IDL.Nat64,
+                'error_message' : IDL.Text,
+                'recipient' : IDL.Principal,
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+              'Completed' : IDL.Record({
+                'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                'transaction_hash' : IDL.Vec(IDL.Nat8),
+                'block_index' : IDL.Nat64,
+                'memo' : IDL.Nat64,
+                'recipient' : IDL.Principal,
+                'sender' : IDL.Principal,
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+              'Pending' : IDL.Record({
+                'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
+                'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                'memo' : IDL.Opt(IDL.Nat64),
+                'recipient' : IDL.Principal,
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+            }),
           }),
           'Cryptocurrency' : IDL.Record({
             'caption' : IDL.Opt(IDL.Text),

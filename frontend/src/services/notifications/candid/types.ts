@@ -73,12 +73,39 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export interface CompletedCryptocurrencyDepositV2 {
+  'fee' : Tokens,
+  'token' : CryptocurrencyV2,
+  'block_index' : BlockIndex,
+  'memo' : Memo,
+  'from_address' : AccountIdentifier,
+  'amount' : Tokens,
+}
 export type CompletedCryptocurrencyTransfer = { 'ICP' : CompletedICPTransfer } |
   { 'Cycles' : CompletedCyclesTransfer };
+export interface CompletedCryptocurrencyTransferV2 {
+  'fee' : Tokens,
+  'token' : CryptocurrencyV2,
+  'transaction_hash' : TransactionHash,
+  'block_index' : BlockIndex,
+  'memo' : Memo,
+  'recipient' : UserId,
+  'sender' : UserId,
+  'amount' : Tokens,
+}
 export type CompletedCryptocurrencyWithdrawal = {
     'ICP' : CompletedICPWithdrawal
   } |
   { 'Cycles' : CompletedCyclesWithdrawal };
+export interface CompletedCryptocurrencyWithdrawalV2 {
+  'to' : AccountIdentifier,
+  'fee' : Tokens,
+  'token' : CryptocurrencyV2,
+  'transaction_hash' : TransactionHash,
+  'block_index' : BlockIndex,
+  'memo' : Memo,
+  'amount' : Tokens,
+}
 export interface CompletedCyclesDeposit {
   'from' : CanisterId,
   'cycles' : Cycles,
@@ -128,15 +155,35 @@ export interface CryptocurrencyContent {
   'caption' : [] | [string],
   'transfer' : CryptocurrencyTransfer,
 }
+export interface CryptocurrencyContentV2 {
+  'caption' : [] | [string],
+  'transfer' : CryptocurrencyTransferV2,
+}
 export type CryptocurrencyDeposit = { 'ICP' : ICPDeposit } |
   { 'Cycles' : CyclesDeposit };
-export type CryptocurrencyTransaction = { 'Deposit' : CryptocurrencyDeposit } |
-  { 'Withdrawal' : CryptocurrencyWithdrawal } |
-  { 'Transfer' : CryptocurrencyTransfer };
+export type CryptocurrencyDepositV2 = {
+    'Completed' : CompletedCryptocurrencyDepositV2
+  };
+export type CryptocurrencyTransaction = {
+    'Deposit' : CryptocurrencyDepositV2
+  } |
+  { 'Withdrawal' : CryptocurrencyWithdrawalV2 } |
+  { 'Transfer' : CryptocurrencyTransferV2 };
 export type CryptocurrencyTransfer = { 'ICP' : ICPTransfer } |
   { 'Cycles' : CyclesTransfer };
+export type CryptocurrencyTransferV2 = {
+    'Failed' : FailedCryptocurrencyTransferV2
+  } |
+  { 'Completed' : CompletedCryptocurrencyTransferV2 } |
+  { 'Pending' : PendingCryptocurrencyTransferV2 };
+export type CryptocurrencyV2 = { 'InternetComputer' : null };
 export type CryptocurrencyWithdrawal = { 'ICP' : ICPWithdrawal } |
   { 'Cycles' : CyclesWithdrawal };
+export type CryptocurrencyWithdrawalV2 = {
+    'Failed' : FailedCryptocurrencyWithdrawalV2
+  } |
+  { 'Completed' : CompletedCryptocurrencyWithdrawalV2 } |
+  { 'Pending' : PendingCryptocurrencyWithdrawalV2 };
 export type Cycles = bigint;
 export type CyclesDeposit = { 'Completed' : CompletedCyclesDeposit };
 export interface CyclesRegistrationFee {
@@ -197,8 +244,24 @@ export interface DirectMessageNotification {
   'sender_name' : string,
 }
 export type EventIndex = number;
+export interface FailedCryptocurrencyTransferV2 {
+  'fee' : Tokens,
+  'token' : CryptocurrencyV2,
+  'memo' : Memo,
+  'error_message' : string,
+  'recipient' : UserId,
+  'amount' : Tokens,
+}
 export type FailedCryptocurrencyWithdrawal = { 'ICP' : FailedICPWithdrawal } |
   { 'Cycles' : FailedCyclesWithdrawal };
+export interface FailedCryptocurrencyWithdrawalV2 {
+  'to' : AccountIdentifier,
+  'fee' : Tokens,
+  'token' : CryptocurrencyV2,
+  'memo' : Memo,
+  'error_message' : string,
+  'amount' : Tokens,
+}
 export interface FailedCyclesTransfer {
   'error_message' : string,
   'recipient' : UserId,
@@ -367,7 +430,7 @@ export interface GroupPermissions {
   'react_to_messages' : PermissionRole,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
-export interface ICP { 'e8s' : bigint }
+export type ICP = Tokens;
 export type ICPDeposit = { 'Completed' : CompletedICPDeposit };
 export interface ICPRegistrationFee {
   'recipient' : AccountIdentifier,
@@ -419,6 +482,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
+  { 'CryptocurrencyV2' : CryptocurrencyContentV2 } |
   { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
@@ -513,8 +577,22 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
+export interface PendingCryptocurrencyTransferV2 {
+  'fee' : [] | [Tokens],
+  'token' : CryptocurrencyV2,
+  'memo' : [] | [Memo],
+  'recipient' : UserId,
+  'amount' : Tokens,
+}
 export type PendingCryptocurrencyWithdrawal = { 'ICP' : PendingICPWithdrawal } |
   { 'Cycles' : PendingCyclesWithdrawal };
+export interface PendingCryptocurrencyWithdrawalV2 {
+  'to' : AccountIdentifier,
+  'fee' : [] | [Tokens],
+  'token' : CryptocurrencyV2,
+  'memo' : [] | [Memo],
+  'amount' : Tokens,
+}
 export interface PendingCyclesTransfer {
   'recipient' : UserId,
   'cycles' : Cycles,
@@ -619,6 +697,7 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
+export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
