@@ -27,6 +27,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
                 role.can_change_roles(args.new_role, permissions)
             }
             "delete_group" => role.can_delete_group(),
+            "make_private" => role.can_make_group_private(),
             "pin_message" => role.can_pin_messages(permissions),
             "remove_participant" => role.can_remove_members(permissions),
             "unblock_user" => role.can_block_users(permissions),

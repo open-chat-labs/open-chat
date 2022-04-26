@@ -51,7 +51,7 @@ fn prepare(runtime_state: &mut RuntimeState) -> PrepareResult {
 
 fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.data.is_public || args.as_super_admin {
-        if let Some(limit) = runtime_state.data.participants.user_limit_reached(true) {
+        if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
             return ParticipantLimitReached(limit);
         }
 

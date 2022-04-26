@@ -133,6 +133,10 @@ impl Role {
         self.has_owner_rights()
     }
 
+    pub fn can_make_group_private(&self) -> bool {
+        self.has_owner_rights()
+    }
+
     pub fn can_view_full_message_history(&self) -> bool {
         self.has_owner_rights()
     }

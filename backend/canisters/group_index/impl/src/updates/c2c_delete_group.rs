@@ -19,7 +19,7 @@ fn c2c_delete_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
     let mut deleted = runtime_state.data.private_groups.delete(&chat_id);
 
     if !deleted {
-        deleted = runtime_state.data.public_groups.delete(&chat_id);
+        deleted = runtime_state.data.public_groups.delete(&chat_id).is_some();
     }
 
     ic_cdk::spawn(delete_canister(caller));
