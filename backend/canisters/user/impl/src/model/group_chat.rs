@@ -61,6 +61,7 @@ impl From<&GroupChat> for GroupChatSummaryUpdates {
             affected_events: Vec::new(),
             metrics: None,
             my_metrics: None,
+            is_public: None,
         }
     }
 }
