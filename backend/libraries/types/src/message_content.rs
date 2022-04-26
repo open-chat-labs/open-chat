@@ -113,7 +113,7 @@ impl MessageContent {
                 votes: HashMap::new(),
                 ended: false,
             }),
-            MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c.into()),
+            MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c),
             MessageContent::CryptocurrencyV2(_) => unreachable!(),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
             MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
