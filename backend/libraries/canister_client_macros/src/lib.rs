@@ -63,25 +63,6 @@ macro_rules! generate_c2c_call {
     };
 }
 
-#[macro_export]
-macro_rules! generate_c2c_call_with_cycles {
-    ($method_name:ident) => {
-        pub async fn $method_name(canister_id: types::CanisterId, args: &$method_name::Args, cycles: types::Cycles) -> ic_cdk::api::call::CallResult<$method_name::Response> {
-            use std::convert::TryInto;
-
-            let method_name = stringify!($method_name);
-            let result: ic_cdk::api::call::CallResult<($method_name::Response,)> =
-                ic_cdk::api::call::call_with_payment(canister_id, method_name, (args,), cycles.try_into().unwrap()).await;
-
-            if let Err(error) = &result {
-                tracing::error!(method_name, error_code = ?error.0, error_message = error.1.as_str(), "Error calling c2c");
-            }
-
-            result.map(|r| r.0)
-        }
-    };
-}
-
 #[cfg(feature = "garcon")]
 // How `Agent` is instructed to wait for update calls.
 pub fn delay() -> garcon::Delay {

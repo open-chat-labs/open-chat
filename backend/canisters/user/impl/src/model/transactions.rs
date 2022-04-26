@@ -38,6 +38,7 @@ impl Transactions {
         self.transactions[index as usize].transaction = transaction.into();
     }
 
+    #[allow(dead_code)]
     pub fn most_recent(&self, since: TimestampMillis, max_results: u8) -> Vec<TransactionWrapper> {
         if self.transactions.last().map_or(0, |t| t.timestamp) < since {
             Vec::new()

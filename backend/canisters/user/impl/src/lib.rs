@@ -5,7 +5,6 @@ use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::group_chats::GroupChats;
 use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
 use crate::model::transactions::Transactions;
-use crate::model::user_cycles_balance::UserCyclesBalance;
 use crate::model::user_preferences::UserPreferences;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
@@ -23,6 +22,7 @@ use utils::memory;
 use utils::rand::get_random_item;
 use utils::regular_jobs::RegularJobs;
 
+mod crypto;
 mod group_summaries;
 mod guards;
 mod lifecycle;
@@ -118,7 +118,6 @@ struct Data {
     pub notifications_canister_ids: Vec<CanisterId>,
     pub callback_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
-    pub user_cycles_balance: UserCyclesBalance,
     pub transactions: Transactions,
     pub test_mode: bool,
     pub user_preferences: UserPreferences,
@@ -137,7 +136,6 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         callback_canister_id: CanisterId,
-        now: TimestampMillis,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -150,7 +148,6 @@ impl Data {
             notifications_canister_ids,
             callback_canister_id,
             avatar: Timestamped::default(),
-            user_cycles_balance: UserCyclesBalance::new(now),
             transactions: Transactions::default(),
             test_mode,
             user_preferences: UserPreferences::default(),

@@ -8,18 +8,17 @@ const FREEZE_THRESHOLD_SECONDS: u32 = 30 * 24 * 60 * 60; // 30 days
 const MIN_CYCLES_BALANCE: Cycles = 450_000_000_000; // 0.45T (upgrades require the canister to have at least 0.4T)
 const GB_STORAGE_PER_SECOND_FEE: Cycles = 127_000;
 
-pub fn check_cycles_balance(user_cycles_balance: Cycles, top_up_canister_id: CanisterId) {
-    if should_notify(user_cycles_balance) {
+pub fn check_cycles_balance(top_up_canister_id: CanisterId) {
+    if should_notify() {
         ic_cdk::spawn(send_notification(top_up_canister_id));
     }
 }
 
-fn should_notify(user_cycles_balance: Cycles) -> bool {
-    let total_cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
-    let canister_cycles_balance = total_cycles_balance.saturating_sub(user_cycles_balance);
+fn should_notify() -> bool {
+    let cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
     let freeze_threshold = get_approx_freeze_threshold_cycles();
 
-    canister_cycles_balance < max(2 * freeze_threshold, MIN_CYCLES_BALANCE)
+    cycles_balance < max(2 * freeze_threshold, MIN_CYCLES_BALANCE)
 }
 
 fn get_approx_freeze_threshold_cycles() -> Cycles {

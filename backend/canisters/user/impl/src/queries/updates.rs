@@ -31,9 +31,9 @@ async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
             initial_state::Response::Success(initial_state::SuccessResult {
                 timestamp: result.timestamp,
                 chats: result.chats_added,
-                transactions: result.transactions,
+                // transactions: result.transactions,
                 blocked_users: result.blocked_users,
-                cycles_balance: result.cycles_balance.unwrap_or(0),
+                cycles_balance: 0,
                 upgrades_in_progress: result.upgrades_in_progress,
                 user_canister_wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             })
@@ -179,13 +179,8 @@ fn finalize(
         }
     }
 
-    let transactions = runtime_state.data.transactions.most_recent(updates_since, 20);
+    // let transactions = runtime_state.data.transactions.most_recent(updates_since, 20);
     let blocked_users = runtime_state.data.blocked_users.iter().copied().collect();
-    let cycles_balance = if runtime_state.data.user_cycles_balance.last_updated() > updates_since {
-        Some(runtime_state.data.user_cycles_balance.value())
-    } else {
-        None
-    };
 
     let avatar_id = runtime_state
         .data
@@ -216,9 +211,9 @@ fn finalize(
         chats_added,
         chats_updated,
         chats_removed,
-        transactions,
+        // transactions,
         blocked_users,
-        cycles_balance,
+        cycles_balance: None,
         avatar_id,
         alerts,
         upgrades_in_progress: group_chat_upgrades_in_progress,
