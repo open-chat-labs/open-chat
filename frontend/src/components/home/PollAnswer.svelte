@@ -5,9 +5,8 @@
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import Progress from "../Progress.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
-    import type { UserLookup } from "../../domain/user/user";
+    import { userStore } from "../../stores/user";
     import { buildUsernameList } from "../../domain/user/user.utils";
-    import { getContext } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import TooltipWrapper from "../TooltipWrapper.svelte";
 
@@ -23,8 +22,6 @@
     export let showVotes: boolean;
     export let me: boolean;
 
-    let userLookup = getContext<UserLookup>("userLookup");
-
     $: usernames = buildPollUsernames(voters, myUserId);
     $: alignRight = me != $rtlStore;
 
@@ -32,8 +29,8 @@
         voters: string[] | undefined,
         myUserId: string | undefined
     ): string | undefined {
-        if (voters === undefined || voters.length === 0) return undefined;
-        return buildUsernameList(new Set(voters), myUserId, userLookup);
+        if (voters === undefined || voters.length === 0 || !showVotes) return undefined;
+        return buildUsernameList(new Set(voters), myUserId, $userStore);
     }
 
     function buildTooltipText(): string {
