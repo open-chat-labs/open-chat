@@ -92,11 +92,7 @@ struct PrepareResult {
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = runtime_state.env.caller();
-    if let Some(limit) = runtime_state
-        .data
-        .participants
-        .user_limit_reached(runtime_state.data.is_public)
-    {
+    if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
         Err(ParticipantLimitReached(limit))
     } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         let permissions = &runtime_state.data.permissions;

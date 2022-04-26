@@ -14,6 +14,8 @@ use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::iterator_extensions::IteratorExtensions;
 use utils::time::DAY_IN_MS;
 
+use super::private_groups::PrivateGroupInfo;
+
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct PublicGroups {
     groups: HashMap<ChatId, PublicGroupInfo>,
@@ -134,12 +136,12 @@ impl PublicGroups {
         }
     }
 
-    pub fn delete(&mut self, chat_id: &ChatId) -> bool {
+    pub fn delete(&mut self, chat_id: &ChatId) -> Option<PublicGroupInfo> {
         if let Some(group) = self.groups.remove(chat_id) {
             self.name_to_id_map.remove(&group.name);
-            true
+            Some(group)
         } else {
-            false
+            None
         }
     }
 
@@ -290,6 +292,19 @@ impl From<&PublicGroupInfo> for Document {
             .add_field(group.name.to_owned(), 5.0)
             .add_field(group.description.to_owned(), 1.0);
         document
+    }
+}
+
+impl From<PublicGroupInfo> for PrivateGroupInfo {
+    fn from(public_group_info: PublicGroupInfo) -> Self {
+        PrivateGroupInfo::from(
+            public_group_info.id,
+            public_group_info.created,
+            public_group_info.marked_active_until,
+            public_group_info.wasm_version,
+            public_group_info.cycle_top_ups,
+            public_group_info.upgrade_in_progress,
+        )
     }
 }
 

@@ -235,6 +235,18 @@ type DeleteGroupResponse =
         InternalError;
     };
 
+type MakePrivateArgs =
+    record {
+    };
+
+type MakePrivateResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        AlreadyPrivate;
+        InternalError;
+    };
+
 type SelectedInitialArgs =
     record {
     };
@@ -365,6 +377,7 @@ type PublicSummarySuccess =
 service: {
     // Owner only
     delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);
+    make_private: (MakePrivateArgs) -> (MakePrivateResponse);
 
     // Admin only
     block_user: (BlockUserArgs) -> (BlockUserResponse); // public only
