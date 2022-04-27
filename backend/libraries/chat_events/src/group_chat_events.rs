@@ -69,7 +69,7 @@ impl GroupChatEvents {
             }
             ChatEventInternal::PollVoteDeleted(v) => GroupChatEvent::PollVoteDeleted(self.inner.hydrate_updated_message(v)),
             ChatEventInternal::PollEnded(m) => GroupChatEvent::PollEnded(self.inner.hydrate_poll_ended(**m)),
-            ChatEventInternal::GroupMadePrivate(g) => GroupChatEvent::GroupMadePrivate(*g.clone()),
+            ChatEventInternal::GroupVisibilityChanged(g) => GroupChatEvent::GroupVisibilityChanged(*g.clone()),
             _ => panic!("Unrecognised event type"),
         };
 

@@ -30,7 +30,7 @@ pub enum GroupChatEvent {
     PollVoteDeleted(UpdatedMessage),
     PollEnded(PollEnded),
     PermissionsChanged(PermissionsChanged),
-    GroupMadePrivate(GroupMadePrivate),
+    GroupVisibilityChanged(GroupVisibilityChanged),
 }
 
 impl GroupChatEvent {
@@ -182,7 +182,8 @@ pub struct PermissionsChanged {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupMadePrivate {
+pub struct GroupVisibilityChanged {
+    pub now_public: bool,
     pub changed_by: UserId,
 }
 
