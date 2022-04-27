@@ -1,7 +1,5 @@
 use crate::document::Document;
-use types::{CryptocurrencyTransfer, MessageContentInternal};
-
-const TRILLION: u128 = 1_000_000_000_000;
+use types::MessageContentInternal;
 
 impl From<&MessageContentInternal> for Document {
     fn from(message_content: &MessageContentInternal) -> Self {
@@ -23,16 +21,8 @@ impl From<&MessageContentInternal> for Document {
                 document.add_field(c.text.clone(), 1.0);
             }
             MessageContentInternal::Cryptocurrency(c) => {
-                match &c.transfer {
-                    CryptocurrencyTransfer::Cycles(c) => {
-                        document.add_field("cycles".to_owned(), 1.0);
-                        document.add_field(format_as_whole_units(c.cycles() as f64, TRILLION as f64), 1.0);
-                    }
-                    CryptocurrencyTransfer::ICP(icp) => {
-                        document.add_field("icp".to_owned(), 1.0);
-                        document.add_field(format!("{}", icp.amount()), 1.0);
-                    }
-                }
+                document.add_field(c.transfer.token().ticker(), 1.0);
+                document.add_field(format!("{}", c.transfer.amount()), 1.0);
                 try_add_caption(&mut document, c.caption.as_ref())
             }
             MessageContentInternal::Image(c) => try_add_caption_and_mime_type(&mut document, c.caption.as_ref(), &c.mime_type),
@@ -51,8 +41,4 @@ impl From<&MessageContentInternal> for Document {
 
         document
     }
-}
-
-fn format_as_whole_units(units: f64, units_per_whole: f64) -> String {
-    (units / units_per_whole).to_string()
 }

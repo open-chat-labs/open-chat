@@ -47,7 +47,9 @@ import type {
     ApiUpdatedMessage,
     ApiDeletedContent,
     ApiCryptocurrencyContent,
+    ApiCryptocurrencyContentV2,
     ApiCryptocurrencyTransfer,
+    ApiCryptocurrencyTransferV2,
     ApiICPTransfer,
     ApiCyclesTransfer,
     ApiMessageIndexRange,
@@ -61,7 +63,7 @@ import type {
     ApiGroupPermissions,
     ApiPermissionRole,
     ApiICPWithdrawal,
-    ApiPendingICPWithdrawal,
+    ApiPendingCryptocurrencyWithdrawalV2,
     ApiGiphyContent,
     ApiGiphyImageVariant,
 } from "../user/candid/idl";
@@ -116,6 +118,9 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
     }
     if ("Cryptocurrency" in candid) {
         return cryptoContent(candid.Cryptocurrency);
+    }
+    if ("CryptocurrencyV2" in candid) {
+        return cryptoContentV2(candid.CryptocurrencyV2);
     }
     if ("Poll" in candid) {
         return pollContent(candid.Poll);
@@ -223,6 +228,14 @@ function cryptoContent(candid: ApiCryptocurrencyContent): CryptocurrencyContent 
     };
 }
 
+function cryptoContentV2(candid: ApiCryptocurrencyContentV2): CryptocurrencyContent {
+    return {
+        kind: "crypto_content",
+        caption: optional(candid.caption, identity),
+        transfer: cryptoTransferV2(candid.transfer),
+    };
+}
+
 function cryptoTransfer(candid: ApiCryptocurrencyTransfer): CryptocurrencyTransfer {
     if ("ICP" in candid) {
         return icpTransfer(candid.ICP);
@@ -231,6 +244,44 @@ function cryptoTransfer(candid: ApiCryptocurrencyTransfer): CryptocurrencyTransf
         return cyclesTransfer(candid.Cycles);
     }
     throw new UnsupportedValueError("Unexpected ApiCryptocurrencyTransfer type received", candid);
+}
+
+function cryptoTransferV2(candid: ApiCryptocurrencyTransferV2): CryptocurrencyTransfer {
+    if ("Pending" in candid) {
+        return {
+            transferKind: "icp_transfer",
+            kind: "pending_icp_transfer",
+            recipient: candid.Pending.recipient.toString(),
+            amountE8s: candid.Pending.amount.e8s,
+            feeE8s: optional(candid.Pending.fee, (f) => f.e8s),
+            memo: optional(candid.Pending.memo, identity),
+        };
+    }
+    if ("Completed" in candid) {
+        return {
+            transferKind: "icp_transfer",
+            kind: "completed_icp_transfer",
+            recipient: candid.Completed.recipient.toString(),
+            sender: candid.Completed.sender.toString(),
+            amountE8s: candid.Completed.amount.e8s,
+            feeE8s: candid.Completed.fee.e8s,
+            memo: candid.Completed.memo,
+            blockIndex: candid.Completed.block_index,
+            transactionHash: bytesToHexString(candid.Completed.transaction_hash),
+        };
+    }
+    if ("Failed" in candid) {
+        return {
+            transferKind: "icp_transfer",
+            kind: "failed_icp_transfer",
+            recipient: candid.Failed.recipient.toString(),
+            amountE8s: candid.Failed.amount.e8s,
+            feeE8s: candid.Failed.fee.e8s,
+            memo: candid.Failed.memo,
+            errorMessage: candid.Failed.error_message,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiCryptocurrencyTransferV2 type received", candid);
 }
 
 function cyclesTransfer(candid: ApiCyclesTransfer): CyclesTransfer {
@@ -456,7 +507,7 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
             return { File: apiFileContent(domain) };
 
         case "crypto_content":
-            return { Cryptocurrency: apiCryptoContent(domain) };
+            return { CryptocurrencyV2: apiCryptoContent(domain) };
 
         case "deleted_content":
             return { Deleted: apiDeletedContent(domain) };
@@ -592,59 +643,26 @@ function apiDeletedContent(domain: DeletedContent): ApiDeletedContent {
     };
 }
 
-export function apiCryptoContent(domain: CryptocurrencyContent): ApiCryptocurrencyContent {
+export function apiCryptoContent(domain: CryptocurrencyContent): ApiCryptocurrencyContentV2 {
     return {
         caption: apiOptional(identity, domain.caption),
         transfer: apiCryptoTransfer(domain.transfer),
     };
 }
 
-function apiCryptoTransfer(domain: CryptocurrencyTransfer): ApiCryptocurrencyTransfer {
+function apiCryptoTransfer(domain: CryptocurrencyTransfer): ApiCryptocurrencyTransferV2 {
     if (domain.transferKind === "cycles_transfer") {
-        return {
-            Cycles: apiCyclesTransfer(domain),
-        };
+        throw new Error("Sending cycles is not supported");
     }
     if (domain.transferKind === "icp_transfer") {
-        return {
-            ICP: apiICPTransfer(domain),
-        };
+        return apiICPTransfer(domain);
     }
     throw new UnsupportedValueError("Unexpected transfer kind", domain);
 }
 
-function apiCyclesTransfer(domain: CyclesTransfer): ApiCyclesTransfer {
-    if (domain.kind === "pending_cycles_transfer") {
-        return {
-            Pending: {
-                recipient: Principal.fromText(domain.recipient),
-                cycles: domain.cycles,
-            },
-        };
-    }
-    if (domain.kind === "completed_cycles_transfer") {
-        return {
-            Completed: {
-                recipient: Principal.fromText(domain.recipient),
-                sender: Principal.fromText(domain.sender),
-                cycles: domain.cycles,
-            },
-        };
-    }
-    if (domain.kind === "failed_cycles_transfer") {
-        return {
-            Failed: {
-                recipient: Principal.fromText(domain.recipient),
-                cycles: domain.cycles,
-                error_message: domain.errorMessage,
-            },
-        };
-    }
-    throw new UnsupportedValueError("Unexpected cycles transfer kind", domain);
-}
-
-export function apiPendingICPWithdrawal(domain: PendingICPWithdrawal): ApiPendingICPWithdrawal {
+export function apiPendingICPWithdrawal(domain: PendingICPWithdrawal): ApiPendingCryptocurrencyWithdrawalV2 {
     return {
+        token: { InternetComputer: null },
         to: hexStringToBytes(domain.to),
         amount: apiICP(domain.amountE8s),
         fee: apiOptional(apiICP, domain.feeE8s),
@@ -652,43 +670,11 @@ export function apiPendingICPWithdrawal(domain: PendingICPWithdrawal): ApiPendin
     };
 }
 
-export function apiICPWithdrawal(domain: ICPWithdrawal): ApiICPWithdrawal {
-    if (domain.kind === "pending_icp_withdrawal") {
-        return {
-            Pending: apiPendingICPWithdrawal(domain),
-        };
-    }
-
-    if (domain.kind === "completed_icp_withdrawal") {
-        return {
-            Completed: {
-                to: hexStringToBytes(domain.to),
-                amount: apiICP(domain.amountE8s),
-                fee: apiICP(domain.feeE8s),
-                memo: domain.memo,
-                block_index: domain.blockIndex,
-                transaction_hash: hexStringToBytes(domain.transactionHash),
-            },
-        };
-    }
-    if (domain.kind === "failed_icp_withdrawal") {
-        return {
-            Failed: {
-                to: hexStringToBytes(domain.to),
-                amount: apiICP(domain.amountE8s),
-                fee: apiICP(domain.feeE8s),
-                memo: domain.memo,
-                error_message: domain.errorMessage,
-            },
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ICPWithdrawal kind", domain);
-}
-
-function apiICPTransfer(domain: ICPTransfer): ApiICPTransfer {
+function apiICPTransfer(domain: ICPTransfer): ApiCryptocurrencyTransferV2 {
     if (domain.kind === "pending_icp_transfer") {
         return {
             Pending: {
+                token: { InternetComputer: null },
                 recipient: Principal.fromText(domain.recipient),
                 amount: apiICP(domain.amountE8s),
                 fee: apiOptional(apiICP, domain.feeE8s),
@@ -699,6 +685,7 @@ function apiICPTransfer(domain: ICPTransfer): ApiICPTransfer {
     if (domain.kind === "completed_icp_transfer") {
         return {
             Completed: {
+                token: { InternetComputer: null },
                 recipient: Principal.fromText(domain.recipient),
                 sender: Principal.fromText(domain.sender),
                 amount: apiICP(domain.amountE8s),
@@ -712,6 +699,7 @@ function apiICPTransfer(domain: ICPTransfer): ApiICPTransfer {
     if (domain.kind === "failed_icp_transfer") {
         return {
             Failed: {
+                token: { InternetComputer: null },
                 recipient: Principal.fromText(domain.recipient),
                 amount: apiICP(domain.amountE8s),
                 fee: apiICP(domain.feeE8s),

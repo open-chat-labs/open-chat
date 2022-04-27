@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use types::{
-    AvatarChanged, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged,
-    GroupNameChanged, GroupVisibilityChanged, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
+    AvatarChanged, ChatMetrics, DeletedBy, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged, GroupNameChanged,
+    GroupVisibilityChanged, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
     OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft,
     ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved, PermissionsChanged, PollVoteRegistered,
     Reaction, ReplyContext, RoleChanged, TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
@@ -238,14 +238,10 @@ impl MessageInternal {
                         }
                     }
                 }
-                MessageContentInternal::Cryptocurrency(c) => match c.transfer.cryptocurrency() {
-                    Cryptocurrency::ICP => {
+                MessageContentInternal::Cryptocurrency(c) => match c.transfer.token() {
+                    types::cryptocurrency_v2::Cryptocurrency::InternetComputer => {
                         adjust(&mut metrics.icp_messages);
                         adjust(&mut sender_metrics.icp_messages);
-                    }
-                    Cryptocurrency::Cycles => {
-                        adjust(&mut metrics.cycles_messages);
-                        adjust(&mut sender_metrics.cycles_messages);
                     }
                 },
                 MessageContentInternal::Deleted(_) => {}

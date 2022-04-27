@@ -35,7 +35,7 @@ pub enum MessageContentInternal {
     Audio(AudioContent),
     File(FileContent),
     Poll(PollContentInternal),
-    Cryptocurrency(CryptocurrencyContent),
+    Cryptocurrency(CryptocurrencyContentV2Temp),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
 }
@@ -113,8 +113,8 @@ impl MessageContent {
                 votes: HashMap::new(),
                 ended: false,
             }),
-            MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c),
-            MessageContent::CryptocurrencyV2(_) => unreachable!(),
+            MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c.into()),
+            MessageContent::CryptocurrencyV2(c) => MessageContentInternal::Cryptocurrency(c.into()),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
             MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
         }
@@ -183,7 +183,7 @@ impl MessageContentInternal {
             MessageContentInternal::Audio(a) => MessageContent::Audio(a.clone()),
             MessageContentInternal::File(f) => MessageContent::File(f.clone()),
             MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
-            MessageContentInternal::Cryptocurrency(c) => MessageContent::Cryptocurrency(c.clone()),
+            MessageContentInternal::Cryptocurrency(c) => MessageContent::CryptocurrencyV2(c.clone().into()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
         }

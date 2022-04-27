@@ -124,8 +124,46 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
-  const ICP = IDL.Record({ 'e8s' : IDL.Nat64 });
+  const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
+  const CryptocurrencyV2 = IDL.Variant({ 'InternetComputer' : IDL.Null });
   const Memo = IDL.Nat64;
+  const FailedCryptocurrencyTransferV2 = IDL.Record({
+    'fee' : Tokens,
+    'token' : CryptocurrencyV2,
+    'memo' : Memo,
+    'error_message' : IDL.Text,
+    'recipient' : UserId,
+    'amount' : Tokens,
+  });
+  const TransactionHash = IDL.Vec(IDL.Nat8);
+  const BlockIndex = IDL.Nat64;
+  const CompletedCryptocurrencyTransferV2 = IDL.Record({
+    'fee' : Tokens,
+    'token' : CryptocurrencyV2,
+    'transaction_hash' : TransactionHash,
+    'block_index' : BlockIndex,
+    'memo' : Memo,
+    'recipient' : UserId,
+    'sender' : UserId,
+    'amount' : Tokens,
+  });
+  const PendingCryptocurrencyTransferV2 = IDL.Record({
+    'fee' : IDL.Opt(Tokens),
+    'token' : CryptocurrencyV2,
+    'memo' : IDL.Opt(Memo),
+    'recipient' : UserId,
+    'amount' : Tokens,
+  });
+  const CryptocurrencyTransferV2 = IDL.Variant({
+    'Failed' : FailedCryptocurrencyTransferV2,
+    'Completed' : CompletedCryptocurrencyTransferV2,
+    'Pending' : PendingCryptocurrencyTransferV2,
+  });
+  const CryptocurrencyContentV2 = IDL.Record({
+    'caption' : IDL.Opt(IDL.Text),
+    'transfer' : CryptocurrencyTransferV2,
+  });
+  const ICP = Tokens;
   const FailedICPTransfer = IDL.Record({
     'fee' : ICP,
     'memo' : Memo,
@@ -133,8 +171,6 @@ export const idlFactory = ({ IDL }) => {
     'recipient' : UserId,
     'amount' : ICP,
   });
-  const TransactionHash = IDL.Vec(IDL.Nat8);
-  const BlockIndex = IDL.Nat64;
   const CompletedICPTransfer = IDL.Record({
     'fee' : ICP,
     'transaction_hash' : TransactionHash,
@@ -207,6 +243,7 @@ export const idlFactory = ({ IDL }) => {
     'Poll' : PollContent,
     'Text' : TextContent,
     'Image' : ImageContent,
+    'CryptocurrencyV2' : CryptocurrencyContentV2,
     'Cryptocurrency' : CryptocurrencyContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,

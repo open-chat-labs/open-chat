@@ -145,7 +145,8 @@ export const idlFactory = ({ IDL }) => {
   const UpgradeStorageArgs = IDL.Record({
     'new_storage_limit_bytes' : IDL.Nat64,
   });
-  const ICP = IDL.Record({ 'e8s' : IDL.Nat64 });
+  const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
+  const ICP = Tokens;
   const UpgradeStorageResponse = IDL.Variant({
     'SuccessNoChange' : IDL.Null,
     'Success' : IDL.Null,
