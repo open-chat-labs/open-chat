@@ -274,18 +274,8 @@
         }
     }
 
-    function confirmLeaveGroup(ev: CustomEvent<string>) {
-        confirmAction = "leave";
-        confirmActionChatId = ev.detail;
-    }
-
-    function confirmDeleteGroup(ev: CustomEvent<string>) {
-        confirmAction = "delete";
-        confirmActionChatId = ev.detail;
-    }
-
-    function confirmMakeGroupPrivate(ev: CustomEvent<string>) {
-        confirmAction = "makePrivate";
+    function triggerConfirm(action: ConfirmAction, ev: CustomEvent<string>) {
+        confirmAction = action;
         confirmActionChatId = ev.detail;
     }
 
@@ -496,7 +486,7 @@
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}
                 on:unblockUser={unblockUser}
-                on:leaveGroup={confirmLeaveGroup}
+                on:leaveGroup={(ev) => triggerConfirm("leave", ev)}
                 on:chatWith={chatWith}
                 on:replyPrivatelyTo={replyPrivatelyTo}
                 on:addParticipants={addParticipants}
@@ -531,8 +521,8 @@
                     on:showParticipants={showParticipants}
                     on:chatWith={chatWith}
                     on:blockUser={blockUser}
-                    on:deleteGroup={confirmDeleteGroup}
-                    on:makeGroupPrivate={confirmMakeGroupPrivate}
+                    on:deleteGroup={(ev) => triggerConfirm("delete", ev)}
+                    on:makeGroupPrivate={(ev) => triggerConfirm("makePrivate", ev)}
                     on:updateChat={updateChat} />
             </div>
         {/if}
