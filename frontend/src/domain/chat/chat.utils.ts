@@ -715,8 +715,7 @@ export function toggleReaction(
     reactions.forEach((r) => {
         if (r.reaction === reaction) {
             const userIds = new Set(r.userIds);
-            if (userIds.has(userId)) {
-                userIds.delete(userId);
+            if (userIds.delete(userId)) {
                 if (userIds.size > 0) {
                     result.push({
                         ...r,
