@@ -41,8 +41,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
         const response = await this.client.getUsers(args, allowStale);
 
-        console.log("Server users: ", response, args);
-
         // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
         const mergedResponse = this.mergeGetUsersResponse(allUsers, response, fromCache);
 
