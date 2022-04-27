@@ -4,7 +4,8 @@ type CanisterId = principal;
 type ChatId = CanisterId;
 type Cycles = nat;
 type EventIndex = nat32;
-type ICP = record { e8s: nat64; };
+type Tokens = record { e8s: nat64; };
+type ICP = Tokens;
 type Memo = nat64;
 type MessageId = nat;
 type MessageIndex = nat32;
@@ -95,6 +96,12 @@ type ConfirmationCodeSms =
 type CryptocurrencyContent =
     record {
         transfer: CryptocurrencyTransfer;
+        caption: opt text;
+    };
+
+type CryptocurrencyContentV2 =
+    record {
+        transfer: CryptocurrencyTransferV2;
         caption: opt text;
     };
 
@@ -446,6 +453,7 @@ type MessageContent =
         File: FileContent;
         Poll: PollContent;
         Cryptocurrency: CryptocurrencyContent;
+        CryptocurrencyV2: CryptocurrencyContentV2;
         Deleted: DeletedContent;
         Giphy: GiphyContent;
     };
@@ -718,6 +726,11 @@ type Cryptocurrency =
         Cycles;
     };
 
+type CryptocurrencyV2 =
+    variant {
+        InternetComputer;
+    };
+
 type CryptocurrencyAccount =
     variant {
         ICP: AccountIdentifier;
@@ -726,9 +739,9 @@ type CryptocurrencyAccount =
 
 type CryptocurrencyTransaction =
     variant {
-        Deposit: CryptocurrencyDeposit;
-        Withdrawal: CryptocurrencyWithdrawal;
-        Transfer: CryptocurrencyTransfer;
+        Deposit: CryptocurrencyDepositV2;
+        Withdrawal: CryptocurrencyWithdrawalV2;
+        Transfer: CryptocurrencyTransferV2;
     };
 
 type CryptocurrencyDeposit =
@@ -856,6 +869,96 @@ type CryptocurrencyTransfer =
     variant {
         Cycles: CyclesTransfer;
         ICP: ICPTransfer;
+    };
+
+type CryptocurrencyDepositV2 =
+    variant {
+        Completed: CompletedCryptocurrencyDepositV2;
+    };
+
+type CompletedCryptocurrencyDepositV2 =
+    record {
+        token: CryptocurrencyV2;
+        from_address: AccountIdentifier;
+        amount: Tokens;
+        fee: Tokens;
+        memo: Memo;
+        block_index: BlockIndex;
+    };
+
+type CryptocurrencyWithdrawalV2 =
+    variant {
+        Pending: PendingCryptocurrencyWithdrawalV2;
+        Completed: CompletedCryptocurrencyWithdrawalV2;
+        Failed: FailedCryptocurrencyWithdrawalV2;
+    };
+
+type PendingCryptocurrencyWithdrawalV2 =
+    record {
+        token: CryptocurrencyV2;
+        to: AccountIdentifier;
+        amount: Tokens;
+        fee: opt Tokens;
+        memo: opt Memo;
+    };
+
+type CompletedCryptocurrencyWithdrawalV2 =
+    record {
+        token: CryptocurrencyV2;
+        to: AccountIdentifier;
+        amount: Tokens;
+        fee: Tokens;
+        memo: Memo;
+        block_index: BlockIndex;
+        transaction_hash: TransactionHash;
+    };
+
+type FailedCryptocurrencyWithdrawalV2 =
+    record {
+        token: CryptocurrencyV2;
+        to: AccountIdentifier;
+        amount: Tokens;
+        fee: Tokens;
+        memo: Memo;
+        error_message: text;
+    };
+
+type CryptocurrencyTransferV2 =
+    variant {
+        Pending: PendingCryptocurrencyTransferV2;
+        Completed:CompletedCryptocurrencyTransferV2;
+        Failed: FailedCryptocurrencyTransferV2;
+    };
+
+type PendingCryptocurrencyTransferV2 =
+    record {
+        token: CryptocurrencyV2;
+        recipient: UserId;
+        amount: Tokens;
+        fee: opt Tokens;
+        memo: opt Memo;
+    };
+
+type CompletedCryptocurrencyTransferV2 =
+    record {
+        token: CryptocurrencyV2;
+        sender: UserId;
+        recipient: UserId;
+        amount: Tokens;
+        fee: Tokens;
+        memo: Memo;
+        block_index: BlockIndex;
+        transaction_hash: TransactionHash;
+    };
+
+type FailedCryptocurrencyTransferV2 =
+    record {
+        token: CryptocurrencyV2;
+        recipient: UserId;
+        amount: Tokens;
+        fee: Tokens;
+        memo: Memo;
+        error_message: text;
     };
 
 type CyclesTransfer =

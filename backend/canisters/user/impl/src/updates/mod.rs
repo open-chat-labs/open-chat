@@ -19,7 +19,6 @@ pub mod c2c_send_message;
 pub mod c2c_toggle_reaction;
 pub mod c2c_try_add_to_group;
 pub mod create_group;
-pub mod crypto;
 pub mod delete_messages;
 pub mod dismiss_alerts;
 pub mod edit_message;

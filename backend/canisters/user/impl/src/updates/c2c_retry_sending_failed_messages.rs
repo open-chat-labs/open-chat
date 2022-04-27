@@ -1,4 +1,3 @@
-use super::crypto::cycles::CyclesTransferDetails;
 use super::send_message::send_to_recipients_canister;
 use crate::guards::caller_is_user_index;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
@@ -23,13 +22,10 @@ fn c2c_retry_sending_failed_messages_impl(args: Args, runtime_state: &mut Runtim
     Success
 }
 
-async fn retry_sending_messages(
-    recipient: UserId,
-    messages_to_retry: Vec<(user_canister::c2c_send_message::Args, Option<CyclesTransferDetails>)>,
-) {
+async fn retry_sending_messages(recipient: UserId, messages_to_retry: Vec<user_canister::c2c_send_message::Args>) {
     let futures: Vec<_> = messages_to_retry
         .into_iter()
-        .map(|(args, cycles_transfer)| send_to_recipients_canister(recipient, args, cycles_transfer, true))
+        .map(|args| send_to_recipients_canister(recipient, args, true))
         .collect();
 
     futures::future::join_all(futures).await;

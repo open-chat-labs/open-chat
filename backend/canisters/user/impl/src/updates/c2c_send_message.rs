@@ -1,12 +1,9 @@
 use crate::updates::send_message_common::register_callbacks_if_required;
-use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
-use types::{
-    CanisterId, CompletedCyclesTransfer, CryptocurrencyTransfer, Cycles, CyclesTransfer, DirectMessageNotification,
-    MessageContent, Notification, ReplyContext, TimestampMillis, UserId,
-};
+use types::{CanisterId, DirectMessageNotification, MessageContent, Notification, ReplyContext, UserId};
 use user_canister::c2c_send_message::{Response::*, *};
 
 #[update]
@@ -61,10 +58,7 @@ async fn verify_user(user_index_canister_id: CanisterId, user_id: UserId) -> boo
 fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
-    if let MessageContent::Cryptocurrency(c) = &args.content {
-        if let CryptocurrencyTransfer::Cycles(CyclesTransfer::Completed(cycles_transfer)) = &c.transfer {
-            accept_cycles(cycles_transfer, now, &mut runtime_state.data);
-        }
+    if let MessageContent::CryptocurrencyV2(c) = &args.content {
         runtime_state.data.transactions.add(c.transfer.clone(), now);
     }
 
@@ -126,19 +120,4 @@ fn convert_reply_context(
             event_index,
         }),
     }
-}
-
-fn accept_cycles(transfer: &CompletedCyclesTransfer, now: TimestampMillis, data: &mut Data) {
-    let cycles_available: Cycles = ic_cdk::api::call::msg_cycles_available().into();
-    if cycles_available < transfer.cycles {
-        // This should never happen...
-        panic!("Message does not contain the stated number of cycles");
-    }
-    let cycles_accepted: Cycles = ic_cdk::api::call::msg_cycles_accept(transfer.cycles as u64).into();
-    if cycles_accepted != transfer.cycles {
-        // This can only happen if accepting the cycles results in the canister exceeding the
-        // max cycles limit which in reality should never happen.
-        panic!("Unable to accept cycles")
-    }
-    data.user_cycles_balance.add(cycles_accepted, now);
 }

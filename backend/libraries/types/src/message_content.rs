@@ -3,6 +3,7 @@ use crate::ContentValidationError::{InvalidPoll, TransferCannotBeZero, TransferL
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{CanisterId, CryptocurrencyTransfer, ICPTransfer, TimestampMillis, TotalVotes, UserId, VoteOperation};
 use candid::CandidType;
+use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
@@ -21,6 +22,7 @@ pub enum MessageContent {
     File(FileContent),
     Poll(PollContent),
     Cryptocurrency(CryptocurrencyContent),
+    CryptocurrencyV2(CryptocurrencyContentV2),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
 }
@@ -64,6 +66,14 @@ impl MessageContent {
                     return Err(TransferLimitExceeded(limit));
                 }
             }
+            MessageContent::CryptocurrencyV2(c) => {
+                if c.transfer.amount() == Tokens::ZERO {
+                    return Err(TransferCannotBeZero);
+                }
+                if let Err(limit) = c.within_limit() {
+                    return Err(TransferLimitExceeded(limit));
+                }
+            }
             _ => {}
         };
 
@@ -75,6 +85,7 @@ impl MessageContent {
             MessageContent::File(f) => f.blob_reference.is_none(),
             MessageContent::Poll(p) => p.config.options.is_empty(),
             MessageContent::Cryptocurrency(c) => c.transfer.is_zero(),
+            MessageContent::CryptocurrencyV2(c) => c.transfer.amount() == Tokens::ZERO,
             MessageContent::Deleted(_) => true,
             MessageContent::Giphy(_) => false,
         };
@@ -103,6 +114,7 @@ impl MessageContent {
                 ended: false,
             }),
             MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c),
+            MessageContent::CryptocurrencyV2(_) => unreachable!(),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
             MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
         }
@@ -138,6 +150,7 @@ impl MessageContent {
             MessageContent::Text(_)
             | MessageContent::Poll(_)
             | MessageContent::Cryptocurrency(_)
+            | MessageContent::CryptocurrencyV2(_)
             | MessageContent::Deleted(_)
             | MessageContent::Giphy(_) => {}
         }
@@ -154,6 +167,7 @@ impl MessageContent {
             MessageContent::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
             MessageContent::Cryptocurrency(c) => c.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::CryptocurrencyV2(c) => c.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Deleted(_) => 0,
             MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
         }
@@ -359,6 +373,60 @@ impl CryptocurrencyContent {
             }
         }
         Ok(())
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CryptocurrencyContentV2 {
+    pub transfer: crate::cryptocurrency_v2::CryptocurrencyTransfer,
+    pub caption: Option<String>,
+}
+
+// This is just needed for the one time upgrade since we need to redefine the type but with
+// different deserialization behaviour.
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "CryptocurrencyContent")]
+pub struct CryptocurrencyContentV2Temp {
+    pub transfer: crate::cryptocurrency_v2::CryptocurrencyTransfer,
+    pub caption: Option<String>,
+}
+
+impl From<CryptocurrencyContentV2Temp> for CryptocurrencyContentV2 {
+    fn from(c: CryptocurrencyContentV2Temp) -> Self {
+        CryptocurrencyContentV2 {
+            transfer: c.transfer,
+            caption: c.caption,
+        }
+    }
+}
+
+impl From<CryptocurrencyContentV2> for CryptocurrencyContentV2Temp {
+    fn from(c: CryptocurrencyContentV2) -> Self {
+        CryptocurrencyContentV2Temp {
+            transfer: c.transfer,
+            caption: c.caption,
+        }
+    }
+}
+
+impl CryptocurrencyContentV2 {
+    pub fn within_limit(&self) -> Result<(), u64> {
+        if let crate::cryptocurrency_v2::CryptocurrencyTransfer::Pending(t) = &self.transfer {
+            if t.token == crate::cryptocurrency_v2::Cryptocurrency::InternetComputer && t.amount.e8s() > ICP_TRANSFER_LIMIT_E8S
+            {
+                return Err(ICP_TRANSFER_LIMIT_E8S);
+            }
+        }
+        Ok(())
+    }
+}
+
+impl From<CryptocurrencyContent> for CryptocurrencyContentV2Temp {
+    fn from(c: CryptocurrencyContent) -> Self {
+        CryptocurrencyContentV2Temp {
+            transfer: c.transfer.into(),
+            caption: c.caption,
+        }
     }
 }
 
