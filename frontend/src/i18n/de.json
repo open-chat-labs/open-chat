@@ -479,5 +479,5 @@
         "reactions": "Reaktionen",
         "deletedMessages": "gelöschte Nachrichten"
     },
-    "andNMore": ", und mehr"
+    "andNMore": ", und {n} mehr"
 }

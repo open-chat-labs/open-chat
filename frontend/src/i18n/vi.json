@@ -480,5 +480,5 @@
         "reactions": "phản ứng",
         "deletedMessages": "tin nhắn đã xóa"
     },
-    "andNMore": ", và hơn thế nữa"
+    "andNMore": "và {n} khác"
 }

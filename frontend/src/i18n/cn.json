@@ -479,5 +479,5 @@
         "reactions": "反应",
         "deletedMessages": "已删除的消息"
     },
-    "andNMore": "， 和更多"
+    "andNMore": ", 和 {n} 更多"
 }

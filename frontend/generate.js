@@ -35,7 +35,7 @@ async function generateLanguage(lang, code) {
                         tokensByKey[k] = [];
                     }
                     tokensByKey[k].push(match);
-                    return "{_}";
+                    return "{xyz}";
                 });
 
                 missing.push([k, cleaned]);
@@ -58,7 +58,7 @@ async function generateLanguage(lang, code) {
                 return translatedArr.reduce((agg, [k, v]) => {
                     if (tokensByKey[k] !== undefined) {
                         tokensByKey[k].forEach((t) => {
-                            v = v.replace("{_}", t);
+                            v = v.replace("{xyz}", t);
                         });
                     }
                     agg[k] = v;

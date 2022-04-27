@@ -479,5 +479,5 @@
         "reactions": "反応",
         "deletedMessages": "削除されたメッセージ"
     },
-    "andNMore": "、 もっと"
+    "andNMore": "、および{n} more"
 }
