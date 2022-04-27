@@ -12,7 +12,7 @@ pub(crate) fn build() -> RegularJobs<Data> {
 
 fn check_cycles_balance(_: &dyn Environment, data: &mut Data) {
     let group_index_canister_id = data.group_index_canister_id;
-    utils::cycles::check_cycles_balance(0, group_index_canister_id);
+    utils::cycles::check_cycles_balance(group_index_canister_id);
 }
 
 fn retry_deleting_files(_: &dyn Environment, _: &mut Data) {

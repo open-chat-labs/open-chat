@@ -1,18 +1,46 @@
-use crate::mutate_state;
-use ic_ledger_types::{
-    AccountIdentifier, Memo, Timestamp, TransferArgs, DEFAULT_FEE, DEFAULT_SUBACCOUNT, MAINNET_LEDGER_CANISTER_ID,
+use crate::{mutate_state, read_state};
+use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE, MAINNET_LEDGER_CANISTER_ID};
+use ledger_utils::{calculate_transaction_hash, default_ledger_account};
+use types::cryptocurrency_v2::{
+    CompletedCryptocurrencyTransfer, CompletedCryptocurrencyWithdrawal, CryptocurrencyTransfer, CryptocurrencyWithdrawal,
+    FailedCryptocurrencyTransfer, FailedCryptocurrencyWithdrawal, PendingCryptocurrencyTransfer,
+    PendingCryptocurrencyWithdrawal,
 };
-use ledger_utils::calculate_transaction_hash;
-use types::{
-    CompletedICPTransfer, CompletedICPWithdrawal, CryptocurrencyTransfer, CryptocurrencyWithdrawal, FailedICPTransfer,
-    FailedICPWithdrawal, ICPTransfer, ICPWithdrawal, PendingICPTransfer, PendingICPWithdrawal,
-};
+use types::UserId;
 
-pub async fn send_icp(pending_transfer: PendingICPTransfer) -> Result<CompletedICPTransfer, FailedICPTransfer> {
+pub enum TransferError {
+    InvalidRequest(String),
+    TransferFailed(FailedCryptocurrencyTransfer),
+}
+
+pub async fn process_transfer(
+    transfer: CryptocurrencyTransfer,
+    recipient: UserId,
+) -> Result<CompletedCryptocurrencyTransfer, TransferError> {
+    read_state(|state| {
+        if !state.is_caller_owner() {
+            panic!("Only the owner can transfer cryptocurrency");
+        }
+    });
+
+    if transfer.recipient() != recipient {
+        Err(TransferError::InvalidRequest(
+            "Transfer recipient does not match message recipient".to_string(),
+        ))
+    } else if let CryptocurrencyTransfer::Pending(t) = transfer {
+        send_to_ledger(t).await.map_err(TransferError::TransferFailed)
+    } else {
+        Err(TransferError::InvalidRequest("Can only send pending transfers".to_string()))
+    }
+}
+
+async fn send_to_ledger(
+    pending_transfer: PendingCryptocurrencyTransfer,
+) -> Result<CompletedCryptocurrencyTransfer, FailedCryptocurrencyTransfer> {
     let (my_user_id, transaction_index, now) = mutate_state(|state| {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
-        let crypto_transfer = CryptocurrencyTransfer::ICP(ICPTransfer::Pending(pending_transfer.clone()));
+        let crypto_transfer = CryptocurrencyTransfer::Pending(pending_transfer.clone());
         let transaction_index = state.data.transactions.add(crypto_transfer, now);
 
         (my_user_id, transaction_index, now)
@@ -26,7 +54,7 @@ pub async fn send_icp(pending_transfer: PendingICPTransfer) -> Result<CompletedI
         amount: pending_transfer.amount,
         fee,
         from_subaccount: None,
-        to: AccountIdentifier::new(&pending_transfer.recipient.into(), &DEFAULT_SUBACCOUNT),
+        to: default_ledger_account(pending_transfer.recipient.into()),
         created_at_time: Some(Timestamp {
             timestamp_nanos: now * 1000 * 1000,
         }),
@@ -52,23 +80,25 @@ pub async fn send_icp(pending_transfer: PendingICPTransfer) -> Result<CompletedI
     };
 
     mutate_state(|state| {
-        let crypto_transfer = CryptocurrencyTransfer::ICP(match transfer_result.clone() {
-            Ok(completed) => ICPTransfer::Completed(completed),
-            Err(failed) => ICPTransfer::Failed(failed),
-        });
+        let crypto_transfer = match transfer_result.clone() {
+            Ok(completed) => CryptocurrencyTransfer::Completed(completed),
+            Err(failed) => CryptocurrencyTransfer::Failed(failed),
+        };
         state.data.transactions.update(transaction_index, crypto_transfer);
     });
 
     transfer_result
 }
 
-pub async fn withdraw_icp(pending_withdrawal: PendingICPWithdrawal) -> Result<CompletedICPWithdrawal, FailedICPWithdrawal> {
+pub async fn withdraw(
+    pending_withdrawal: PendingCryptocurrencyWithdrawal,
+) -> Result<CompletedCryptocurrencyWithdrawal, FailedCryptocurrencyWithdrawal> {
     let memo = pending_withdrawal.memo.unwrap_or(Memo(0));
     let fee = pending_withdrawal.fee.unwrap_or(DEFAULT_FEE);
     let (my_user_id, transaction_index, now) = mutate_state(|state| {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
-        let crypto_transfer = CryptocurrencyWithdrawal::ICP(ICPWithdrawal::Pending(pending_withdrawal.clone()));
+        let crypto_transfer = CryptocurrencyWithdrawal::Pending(pending_withdrawal.clone());
         let transaction_index = state.data.transactions.add(crypto_transfer, now);
 
         (my_user_id, transaction_index, now)
@@ -105,10 +135,10 @@ pub async fn withdraw_icp(pending_withdrawal: PendingICPWithdrawal) -> Result<Co
     };
 
     mutate_state(|state| {
-        let crypto_withdrawal = CryptocurrencyWithdrawal::ICP(match withdrawal_result.clone() {
-            Ok(completed) => ICPWithdrawal::Completed(completed),
-            Err(failed) => ICPWithdrawal::Failed(failed),
-        });
+        let crypto_withdrawal = match withdrawal_result.clone() {
+            Ok(completed) => CryptocurrencyWithdrawal::Completed(completed),
+            Err(failed) => CryptocurrencyWithdrawal::Failed(failed),
+        };
         state.data.transactions.update(transaction_index, crypto_withdrawal);
     });
 

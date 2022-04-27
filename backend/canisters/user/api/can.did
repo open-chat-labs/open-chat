@@ -24,6 +24,13 @@ type SendMessageResponse =
             timestamp: TimestampMillis;
             transfer: CompletedCryptocurrencyTransfer;
         };
+        TransferSuccessV2: record {
+            chat_id: ChatId;
+            event_index: EventIndex;
+            message_index: MessageIndex;
+            timestamp: TimestampMillis;
+            transfer: CompletedCryptocurrencyTransferV2;
+        };
         MessageEmpty;
         TextTooLong: nat32;
         RecipientBlocked;
@@ -300,7 +307,7 @@ type TransferCryptocurrencyWithinGroupArgs =
         message_id: MessageId;
         group_id: ChatId;
         recipient: UserId;
-        content: CryptocurrencyContent;
+        content: CryptocurrencyContentV2;
         sender_name: text;
         replies_to: opt GroupReplyContext;
         mentioned: vec User;
@@ -312,28 +319,28 @@ type TransferCryptocurrencyWithinGroupResponse =
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
-            transfer: CompletedCryptocurrencyTransfer;
+            transfer: CompletedCryptocurrencyTransferV2;
         };
         TextTooLong: nat32;
         RecipientBlocked;
-        CallerNotInGroup: opt CompletedCryptocurrencyTransfer;
+        CallerNotInGroup: opt CompletedCryptocurrencyTransferV2;
         CryptocurrencyNotSupported: Cryptocurrency;
         InvalidRequest: text;
         TransferFailed: text;
         TransferCannotBeZero;
         TransferLimitExceeded: nat64;
-        InternalError: record { text; CompletedCryptocurrencyTransfer; };
+        InternalError: record { text; CompletedCryptocurrencyTransferV2; };
     };
 
 type WithdrawCryptocurrencyRequest =
     record {
-        withdrawal: PendingCryptocurrencyWithdrawal;
+        withdrawal: PendingCryptocurrencyWithdrawalV2;
     };
 
 type WithdrawCryptocurrencyResponse =
     variant {
-        Success: CompletedCryptocurrencyWithdrawal;
-        TransactionFailed: FailedCryptocurrencyWithdrawal;
+        Success: CompletedCryptocurrencyWithdrawalV2;
+        TransactionFailed: FailedCryptocurrencyWithdrawalV2;
         CurrencyNotSupported;
     };
 
@@ -346,7 +353,6 @@ type InitialStateResponse =
         Success: record {
             timestamp: TimestampMillis;
             chats: vec ChatSummary;
-            transactions: vec TransactionWrapper;
             blocked_users: vec UserId;
             cycles_balance: Cycles;
             upgrades_in_progress: vec ChatId;
@@ -379,7 +385,6 @@ type UpdatesResponse =
             chats_added: vec ChatSummary;
             chats_updated: vec ChatSummaryUpdates;
             chats_removed: vec ChatId;
-            transactions: vec TransactionWrapper;
             blocked_users: vec UserId;
             cycles_balance: opt Cycles;
             avatar_id: AvatarIdUpdate;

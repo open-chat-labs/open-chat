@@ -48,6 +48,7 @@ fn c2c_summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Respons
                 .events
                 .user_metrics(&participant.user_id, Some(args.updates_since))
                 .cloned(),
+            is_public: updates_from_events.is_public,
         };
         Success(Box::new(SuccessResult { updates }))
     } else {
@@ -69,6 +70,7 @@ struct UpdatesFromEvents {
     owner_id: Option<UserId>,
     permissions: Option<GroupPermissions>,
     affected_events: HashSet<EventIndex>,
+    is_public: Option<bool>,
 }
 
 fn process_events(
@@ -160,6 +162,9 @@ fn process_events(
                 if updates.permissions.is_none() {
                     updates.permissions = Some(p.new_permissions.clone());
                 }
+            }
+            ChatEventInternal::GroupVisibilityChanged(v) => {
+                updates.is_public = Some(v.now_public);
             }
             _ => {}
         }

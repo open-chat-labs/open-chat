@@ -8,8 +8,7 @@ use types::{
     MAX_RETURNED_MENTIONS,
 };
 
-const MAX_PARTICIPANTS_PER_PUBLIC_GROUP: u32 = 100_000;
-const MAX_PARTICIPANTS_PER_PRIVATE_GROUP: u32 = 200;
+const MAX_PARTICIPANTS_PER_GROUP: u32 = 100_000;
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct Participants {
@@ -148,11 +147,9 @@ impl Participants {
             .collect()
     }
 
-    pub fn user_limit_reached(&self, is_public: bool) -> Option<u32> {
-        let user_limit = if is_public { MAX_PARTICIPANTS_PER_PUBLIC_GROUP } else { MAX_PARTICIPANTS_PER_PRIVATE_GROUP };
-
-        if self.by_principal.len() >= user_limit as usize {
-            Some(user_limit)
+    pub fn user_limit_reached(&self) -> Option<u32> {
+        if self.by_principal.len() >= MAX_PARTICIPANTS_PER_GROUP as usize {
+            Some(MAX_PARTICIPANTS_PER_GROUP)
         } else {
             None
         }

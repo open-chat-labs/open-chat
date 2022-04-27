@@ -40,6 +40,16 @@ impl PrivateGroups {
         }
     }
 
+    pub fn add_existing(&mut self, private_group_info: PrivateGroupInfo) -> bool {
+        match self.groups.entry(private_group_info.id()) {
+            Occupied(_) => false,
+            Vacant(e) => {
+                e.insert(private_group_info);
+                true
+            }
+        }
+    }
+
     pub fn delete(&mut self, chat_id: &ChatId) -> bool {
         self.groups.remove(chat_id).is_some()
     }
@@ -71,6 +81,24 @@ impl PrivateGroupInfo {
                 amount: cycles,
             }],
             upgrade_in_progress: false,
+        }
+    }
+
+    pub fn from(
+        id: ChatId,
+        created: TimestampMillis,
+        marked_active_until: TimestampMillis,
+        wasm_version: Version,
+        cycle_top_ups: Vec<CyclesTopUp>,
+        upgrade_in_progress: bool,
+    ) -> PrivateGroupInfo {
+        PrivateGroupInfo {
+            id,
+            created,
+            marked_active_until,
+            wasm_version,
+            cycle_top_ups,
+            upgrade_in_progress,
         }
     }
 

@@ -44,6 +44,10 @@ impl CachedHotGroups {
 
         trace!(?chat_ids, "Cached hot groups updated");
     }
+
+    pub fn remove(&mut self, chat_id: ChatId) {
+        self.groups.retain(|g| g.chat_id != chat_id);
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

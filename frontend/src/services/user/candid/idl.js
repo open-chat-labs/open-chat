@@ -488,7 +488,6 @@ export const idlFactory = ({ IDL }) => {
       'chats' : IDL.Vec(ChatSummary),
       'blocked_users' : IDL.Vec(UserId),
       'timestamp' : TimestampMillis,
-      'transactions' : IDL.Vec(TransactionWrapper),
     }),
     'InternalError' : IDL.Text,
   });
@@ -840,7 +839,6 @@ export const idlFactory = ({ IDL }) => {
       'avatar_id' : AvatarIdUpdate,
       'chats_removed' : IDL.Vec(ChatId),
       'timestamp' : TimestampMillis,
-      'transactions' : IDL.Vec(TransactionWrapper),
     }),
     'InternalError' : IDL.Text,
   });

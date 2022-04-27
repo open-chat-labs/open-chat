@@ -12,6 +12,7 @@ pub mod change_role;
 pub mod delete_group;
 pub mod delete_messages;
 pub mod edit_message;
+pub mod make_private;
 pub mod pin_message;
 pub mod register_poll_vote;
 pub mod remove_participant;

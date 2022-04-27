@@ -10,6 +10,7 @@ mod chat_id;
 mod chat_summary;
 mod confirmation_code_sms;
 mod cryptocurrency;
+pub mod cryptocurrency_v2;
 mod cycles;
 mod deleted_group_info;
 mod error;

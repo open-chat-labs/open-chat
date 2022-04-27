@@ -1,12 +1,10 @@
+use crate::crypto::{process_transfer, TransferError};
 use crate::guards::caller_is_owner;
-use crate::updates::crypto::{process_transfer, TransferError};
 use crate::{read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
-use types::{
-    CompletedCryptocurrencyTransfer, Cryptocurrency, CryptocurrencyContent, MessageContent, MAX_TEXT_LENGTH,
-    MAX_TEXT_LENGTH_USIZE,
-};
+use ic_ledger_types::Tokens;
+use types::{CryptocurrencyContentV2, MessageContent, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE};
 use user_canister::transfer_cryptocurrency_within_group::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
@@ -18,28 +16,26 @@ async fn transfer_cryptocurrency_within_group(args: Args) -> Response {
         return response;
     }
 
-    let transfer_details = match process_transfer(args.content.transfer, args.recipient).await {
+    let completed_transfer = match process_transfer(args.content.transfer, args.recipient).await {
         Ok(transfer) => transfer,
         Err(error) => {
             return match error {
                 TransferError::InvalidRequest(reason) => InvalidRequest(reason),
-                TransferError::TransferFailed(reason) => TransferFailed(reason),
+                TransferError::TransferFailed(failed_transfer) => TransferFailed(failed_transfer.error_message),
             }
         }
     };
 
     let c2c_args = group_canister::send_message::Args {
         message_id: args.message_id,
-        content: MessageContent::Cryptocurrency(CryptocurrencyContent {
-            transfer: transfer_details.clone().into(),
+        content: MessageContent::CryptocurrencyV2(CryptocurrencyContentV2 {
+            transfer: types::cryptocurrency_v2::CryptocurrencyTransfer::Completed(completed_transfer.clone()),
             caption: args.content.caption,
         }),
         sender_name: args.sender_name,
         replies_to: args.replies_to,
         mentioned: args.mentioned,
     };
-
-    let completed_transfer: CompletedCryptocurrencyTransfer = transfer_details.into();
 
     match group_canister_c2c_client::send_message(args.group_id.into(), &c2c_args).await {
         Ok(response) => match response {
@@ -64,9 +60,7 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Res
         Err(RecipientBlocked)
     } else if runtime_state.data.group_chats.get(&args.group_id).is_none() {
         Err(CallerNotInGroup(None))
-    } else if matches!(args.content.transfer.cryptocurrency(), Cryptocurrency::Cycles) {
-        Err(CryptocurrencyNotSupported(Cryptocurrency::Cycles))
-    } else if args.content.transfer.is_zero() {
+    } else if args.content.transfer.amount() == Tokens::ZERO {
         Err(TransferCannotBeZero)
     } else if let Err(limit) = args.content.within_limit() {
         Err(TransferLimitExceeded(limit))
