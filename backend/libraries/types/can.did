@@ -224,7 +224,7 @@ type GroupChatEvent =
         PollVoteDeleted: UpdatedMessage;
         PollEnded: PollEnded;
         PermissionsChanged: PermissionsChanged;
-        GroupMadePrivate: GroupMadePrivate;
+        GroupVisibilityChanged: GroupVisibilityChanged;
     };
 
 type GroupChatEventWrapper =
@@ -548,8 +548,9 @@ type PermissionsChanged =
         changed_by: UserId;
     };
 
-type GroupMadePrivate =
+type GroupVisibilityChanged =
     record {
+        now_public: bool;
         changed_by: UserId;
     };
 

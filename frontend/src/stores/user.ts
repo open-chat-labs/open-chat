@@ -1,15 +1,16 @@
-import { writable } from "svelte/store";
 import type { PartialUserSummary, UserLookup } from "../domain/user/user";
+import { immutableStore } from "./immutable";
 
-const { subscribe, update } = writable<UserLookup>({});
+const { subscribe, update } = immutableStore<UserLookup>({});
 
 export function overwriteUser(lookup: UserLookup, user: PartialUserSummary): UserLookup {
-    lookup[user.userId] = {
-        ...lookup[user.userId],
-        ...user,
-        username: user.username ?? lookup[user.userId]?.username,
+    return {
+        ...lookup,
+        [user.userId]: {
+            ...user,
+            username: user.username ?? lookup[user.userId]?.username,
+        },
     };
-    return lookup;
 }
 
 export const userStore = {

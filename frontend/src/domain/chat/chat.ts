@@ -272,6 +272,8 @@ export interface TextContent {
     text: string;
 }
 
+export type StoredMediaContent = FileContent | VideoContent | AudioContent | ImageContent;
+
 export interface FileContent extends DataContent {
     kind: "file_content";
     name: string;

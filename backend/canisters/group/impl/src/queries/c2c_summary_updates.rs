@@ -163,8 +163,8 @@ fn process_events(
                     updates.permissions = Some(p.new_permissions.clone());
                 }
             }
-            ChatEventInternal::GroupMadePrivate(_) => {
-                updates.is_public = Some(false);
+            ChatEventInternal::GroupVisibilityChanged(v) => {
+                updates.is_public = Some(v.now_public);
             }
             _ => {}
         }

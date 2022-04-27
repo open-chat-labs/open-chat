@@ -18,6 +18,7 @@
     import { userStore } from "../../../stores/user";
     import { createEventDispatcher } from "svelte";
     import type { Readable, Writable } from "svelte/store";
+    import type { UserLookup } from "../../../domain/user/user";
 
     export let chat: Readable<GroupChatSummary>;
     export let participants: Writable<ParticipantType[]>;
@@ -47,12 +48,13 @@
     }
 
     function getKnownUsers(
+        userStore: UserLookup,
         participants: ParticipantType[],
         blockedUsers: Set<string>
     ): (FullParticipant | BlockedParticipant)[] {
         const users: (FullParticipant | BlockedParticipant)[] = [];
         participants.forEach((p) => {
-            const user = $userStore[p.userId];
+            const user = userStore[p.userId];
             if (user) {
                 users.push({
                     kind: "full_participant",
@@ -63,7 +65,7 @@
         });
         if ($chat.myRole === "admin" || $chat.myRole === "owner") {
             blockedUsers.forEach((userId) => {
-                const user = $userStore[userId];
+                const user = userStore[userId];
                 if (user) {
                     users.push({
                         kind: "blocked_participant",
@@ -76,7 +78,7 @@
         return users;
     }
 
-    $: knownUsers = getKnownUsers($participants, $blockedUsers);
+    $: knownUsers = getKnownUsers($userStore, $participants, $blockedUsers);
 
     $: me = knownUsers.find((u) => u.userId === userId);
 

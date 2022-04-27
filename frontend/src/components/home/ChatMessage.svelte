@@ -17,7 +17,7 @@
     import RepliesTo from "./RepliesTo.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
+    import { afterUpdate, createEventDispatcher, onDestroy, onMount } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
@@ -42,6 +42,7 @@
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { avatarUrl } from "../../domain/user/user.utils";
     import * as shareFunctions from "../../domain/share";
+    import { userStore } from "../../stores/user";
 
     const dispatch = createEventDispatcher();
 
@@ -71,16 +72,15 @@
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
-    let userLookup = getContext<UserLookup>("userLookup");
-    let sender = userLookup[senderId];
     let groupChat = chatType === "group_chat";
-    let username = sender?.username;
     let showEmojiPicker = false;
     let debug = false;
     let viewProfile = false;
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
 
+    $: sender = $userStore[senderId];
+    $: username = sender?.username;
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
