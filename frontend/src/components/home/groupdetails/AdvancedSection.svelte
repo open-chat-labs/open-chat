@@ -2,6 +2,7 @@
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
 
     export let canMakeGroupPrivate: boolean;
     export let chatId: string;
@@ -17,16 +18,9 @@
     }
 </script>
 
-<div class="wrapper">
+<ButtonGroup align="left">
     <Button on:click={deleteGroup}>{$_("deleteGroup")}</Button>
     {#if canMakeGroupPrivate}
         <Button on:click={makeGroupPrivate}>{$_("makeGroupPrivate")}</Button>
     {/if}
-</div>
-
-<style type="text/scss">
-    .wrapper {
-        display: flex;
-        gap: $sp4;
-    }
-</style>
+</ButtonGroup>
