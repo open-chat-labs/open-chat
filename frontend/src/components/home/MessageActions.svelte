@@ -106,11 +106,11 @@
             on:open={() => (messageAction = "file")}
             on:close={close} />
     </div>
-<!--    <div class="send-icp" on:click|stopPropagation={createICPTransfer}>-->
-<!--        <HoverIcon title={"Send Crypto"}>-->
-<!--            <SwapHorizontal size={$iconSize} color={"var(&#45;&#45;icon-txt)"} />-->
-<!--        </HoverIcon>-->
-<!--    </div>-->
+    <div class="send-icp" on:click|stopPropagation={createICPTransfer}>
+        <HoverIcon title={"Send Crypto"}>
+            <SwapHorizontal size={$iconSize} color={"var(--icon-txt)"} />
+        </HoverIcon>
+    </div>
     <div class="gif" on:click|stopPropagation={sendGif}>
         <HoverIcon title={"Attach gif"}>
             <StickerEmoji size={$iconSize} color={"var(--icon-txt)"} />
@@ -166,16 +166,21 @@
                 .emoji {
                     opacity: 1;
                     top: -75px;
-                    transition-delay: 100ms;
+                    transition-delay: 150ms;
                 }
                 .attach {
                     opacity: 1;
                     top: -120px;
+                    transition-delay: 100ms;
+                }
+                .send-icp {
+                    opacity: 1;
+                    top: -165px;
                     transition-delay: 50ms;
                 }
                 .gif {
                     opacity: 1;
-                    top: -165px;
+                    top: -210px;
                 }
             }
         }
