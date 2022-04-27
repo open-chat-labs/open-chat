@@ -274,10 +274,10 @@
         }
     }
 
-    function triggerConfirm(action: ConfirmAction, ev: CustomEvent<string>) {
+    const triggerConfirm = (action: ConfirmAction) => (ev: CustomEvent<string>) => {
         confirmAction = action;
         confirmActionChatId = ev.detail;
-    }
+    };
 
     function onConfirmAction(yes: boolean): Promise<void> {
         const result = yes
@@ -486,7 +486,7 @@
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}
                 on:unblockUser={unblockUser}
-                on:leaveGroup={(ev) => triggerConfirm("leave", ev)}
+                on:leaveGroup={triggerConfirm("leave")}
                 on:chatWith={chatWith}
                 on:replyPrivatelyTo={replyPrivatelyTo}
                 on:addParticipants={addParticipants}
@@ -521,8 +521,8 @@
                     on:showParticipants={showParticipants}
                     on:chatWith={chatWith}
                     on:blockUser={blockUser}
-                    on:deleteGroup={(ev) => triggerConfirm("delete", ev)}
-                    on:makeGroupPrivate={(ev) => triggerConfirm("makePrivate", ev)}
+                    on:deleteGroup={triggerConfirm("delete")}
+                    on:makeGroupPrivate={triggerConfirm("makePrivate")}
                     on:updateChat={updateChat} />
             </div>
         {/if}
