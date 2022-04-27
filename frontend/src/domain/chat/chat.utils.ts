@@ -123,6 +123,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "avatar_changed":
             case "role_changed":
             case "permissions_changed":
+            case "group_visibility_changed":
                 userIds.add(e.event.changedBy);
                 break;
             case "group_chat_created":
@@ -182,6 +183,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "avatar_changed":
         case "role_changed":
         case "permissions_changed":
+        case "group_visibility_changed":
             return event.changedBy;
         case "group_chat_created":
             return event.created_by;
@@ -453,6 +455,7 @@ function mergeUpdatedGroupChat(
         permissions: updatedChat.permissions ?? chat.permissions,
         metrics: updatedChat.metrics ?? chat.metrics,
         myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
+        public: updatedChat.public ?? chat.public,
     };
 }
 
@@ -1272,6 +1275,14 @@ export function canLeaveGroup(chat: ChatSummary): boolean {
 export function canDeleteGroup(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
         return hasOwnerRights(chat.myRole);
+    } else {
+        return false;
+    }
+}
+
+export function canMakeGroupPrivate(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return chat.public && hasOwnerRights(chat.myRole);
     } else {
         return false;
     }

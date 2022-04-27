@@ -410,6 +410,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
+  { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
   { 'PollEnded' : PollEnded } |
@@ -455,6 +456,7 @@ export interface GroupChatSummary {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
+  'is_public' : [] | [boolean],
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
   'name' : [] | [string],
@@ -509,6 +511,10 @@ export interface GroupPermissions {
   'react_to_messages' : PermissionRole,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
+export interface GroupVisibilityChanged {
+  'changed_by' : UserId,
+  'now_public' : boolean,
+}
 export type ICP = Tokens;
 export type ICPDeposit = { 'Completed' : CompletedICPDeposit };
 export interface ICPRegistrationFee {
@@ -539,6 +545,11 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'TooManyOptions' : number } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null };
+export type MakePrivateArgs = {};
+export type MakePrivateResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'AlreadyPrivate' : null } |
+  { 'InternalError' : null };
 export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,
@@ -956,6 +967,7 @@ export interface _SERVICE {
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
   'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
   'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
+  'make_private' : (arg_0: MakePrivateArgs) => Promise<MakePrivateResponse>,
   'messages_by_message_index' : (arg_0: MessagesByMessageIndexArgs) => Promise<
       MessagesByMessageIndexResponse
     >,

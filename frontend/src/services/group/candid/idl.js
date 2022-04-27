@@ -304,6 +304,10 @@ export const idlFactory = ({ IDL }) => {
     'removed_by' : UserId,
   });
   const ParticipantRelinquishesSuperAdmin = IDL.Record({ 'user_id' : UserId });
+  const GroupVisibilityChanged = IDL.Record({
+    'changed_by' : UserId,
+    'now_public' : IDL.Bool,
+  });
   const ChatId = CanisterId;
   const ReplyContext = IDL.Record({
     'chat_id_if_other' : IDL.Opt(ChatId),
@@ -389,6 +393,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageReactionAdded' : UpdatedMessage,
     'ParticipantsRemoved' : ParticipantsRemoved,
     'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin,
+    'GroupVisibilityChanged' : GroupVisibilityChanged,
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
     'PollEnded' : PollEnded,
@@ -428,6 +433,13 @@ export const idlFactory = ({ IDL }) => {
     'mid_point' : MessageIndex,
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
+  });
+  const MakePrivateArgs = IDL.Record({});
+  const MakePrivateResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'AlreadyPrivate' : IDL.Null,
+    'InternalError' : IDL.Null,
   });
   const MessagesByMessageIndexArgs = IDL.Record({
     'messages' : IDL.Vec(MessageIndex),
@@ -666,6 +678,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
+    'make_private' : IDL.Func([MakePrivateArgs], [MakePrivateResponse], []),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],
         [MessagesByMessageIndexResponse],

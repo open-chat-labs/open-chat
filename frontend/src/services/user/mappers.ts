@@ -718,6 +718,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             affectedEvents: candid.Group.affected_events,
             metrics: optional(candid.Group.metrics, chatMetrics),
             myMetrics: optional(candid.Group.my_metrics, chatMetrics),
+            public: optional(candid.Group.is_public, identity),
         };
     }
     if ("Direct" in candid) {

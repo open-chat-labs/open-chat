@@ -368,7 +368,7 @@ export class HomeController {
         });
     }
 
-    deleteGroup(chatId: string): Promise<boolean> {
+    deleteGroup(chatId: string): Promise<void> {
         this.clearSelectedChat();
         return this.api
             .deleteGroup(chatId)
@@ -381,13 +381,40 @@ export class HomeController {
                     toastStore.showFailureToast("deleteGroupFailure");
                     push(`/${chatId}`);
                 }
-                return true;
             })
             .catch((err) => {
                 toastStore.showFailureToast("deleteGroupFailure");
                 rollbar.error("Unable to delete group", err);
                 push(`/${chatId}`);
-                return false;
+            });
+    }
+
+    makeGroupPrivate(chatId: string): Promise<void> {
+        return this.api
+            .makeGroupPrivate(chatId)
+            .then((resp) => {
+                if (resp === "success") {
+                    this.serverChatSummaries.update((summaries) => {
+                        const summary = summaries[chatId];
+                        if (summary === undefined || summary.kind !== "group_chat") {
+                            return summaries;
+                        }
+
+                        return {
+                            ...summaries,
+                            [chatId]: {
+                                ...summary,
+                                public: false,
+                            },
+                        };
+                    });
+                } else {
+                    toastStore.showFailureToast("makeGroupPrivateFailed");
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("makeGroupPrivateFailed");
+                rollbar.error("Error making group private", err);
             });
     }
 
@@ -599,17 +626,15 @@ export class HomeController {
 
     notificationReceived(notification: Notification): void {
         let chatId: string;
-        let sender: string;
         let message: EventWrapper<Message>;
         switch (notification.kind) {
             case "direct_notification": {
-                chatId = sender = notification.sender;
+                chatId = notification.sender;
                 message = notification.message;
                 break;
             }
             case "group_notification": {
                 chatId = notification.chatId;
-                sender = notification.sender;
                 message = notification.message;
                 break;
             }

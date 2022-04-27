@@ -20,6 +20,7 @@ import type {
     ApiPinMessageResponse,
     ApiUnpinMessageResponse,
     ApiSearchGroupChatResponse,
+    ApiMakePrivateResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -43,6 +44,7 @@ import type {
     Message,
     PinMessageResponse,
     UnpinMessageResponse,
+    MakeGroupPrivateResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -149,6 +151,22 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
         return "not_authorised";
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteGroupResponse type received", candid);
+}
+
+export function makeGroupPrivateResponse(candid: ApiMakePrivateResponse): MakeGroupPrivateResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("AlreadyPrivate" in candid) {
+        return "already_private";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    throw new UnsupportedValueError("Unexpected ApiMakePrivateResponse type received", candid);
 }
 
 export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUserResponse {
@@ -710,6 +728,14 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             oldPermissions: groupPermissions(candid.PermissionsChanged.old_permissions),
             newPermissions: groupPermissions(candid.PermissionsChanged.new_permissions),
             changedBy: candid.PermissionsChanged.changed_by.toString(),
+        };
+    }
+
+    if ("GroupVisibilityChanged" in candid) {
+        return {
+            kind: "group_visibility_changed",
+            nowPublic: candid.GroupVisibilityChanged.now_public,
+            changedBy: candid.GroupVisibilityChanged.changed_by.toString(),
         };
     }
 

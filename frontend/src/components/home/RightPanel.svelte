@@ -102,6 +102,8 @@
             {originalGroup}
             {updatedGroup}
             on:close={pop}
+            on:deleteGroup
+            on:makeGroupPrivate
             on:chatWith
             on:showParticipants
             on:updateChat />

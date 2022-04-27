@@ -828,6 +828,7 @@ export const idlFactory = ({ IDL }) => {
     'SetToSome' : IDL.Nat,
   });
   const GroupChatSummaryUpdates = IDL.Record({
+    'is_public' : IDL.Opt(IDL.Bool),
     'permissions' : IDL.Opt(GroupPermissions),
     'metrics' : IDL.Opt(ChatMetrics),
     'name' : IDL.Opt(IDL.Text),

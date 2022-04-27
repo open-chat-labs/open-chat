@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import LeftPanel from "./LeftPanel.svelte";
     import Toast from "../Toast.svelte";
     import AboutModal from "../AboutModal.svelte";
@@ -15,7 +16,6 @@
     import { push, replace, querystring } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
-    import RemovingGroup from "./RemovingGroup.svelte";
     import type {
         GroupSearchResponse,
         MessageMatch,
@@ -42,6 +42,7 @@
     import { apiKey } from "../../services/serviceContainer";
     import type { Share } from "../../domain/share";
     import { draftMessages } from "../../stores/draftMessages";
+    import AreYouSure from "../AreYouSure.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -50,6 +51,8 @@
         chatId: null,
         messageIndex: undefined,
     };
+
+    type ConfirmAction = "leave" | "delete" | "makePrivate" | undefined;
 
     enum ModalType {
         None,
@@ -69,8 +72,8 @@
     let searchTerm: string = "";
     let searching: boolean = false;
     let searchResultsAvailable: boolean = false;
-    let removingOperation: "leave" | "delete" = "delete";
-    let removingChatId: string | undefined;
+    let confirmActionChatId: string | undefined;
+    let confirmAction: ConfirmAction = undefined;
     let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
@@ -84,6 +87,7 @@
     $: selectedChat = controller.selectedChat;
     $: wasmVersion = controller.user.wasmVersion;
     $: qs = new URLSearchParams($querystring);
+    $: confirmMessage = getConfirmMessage(confirmAction);
 
     function logout() {
         dispatch("logout");
@@ -257,14 +261,60 @@
             });
     }
 
-    function leaveGroup(ev: CustomEvent<string>) {
-        removingOperation = "leave";
-        removingChatId = ev.detail;
+    function getConfirmMessage(confirmAction: ConfirmAction): string {
+        switch (confirmAction) {
+            case "leave":
+                return $_("confirmLeaveGroup");
+            case "delete":
+                return $_("irreversible");
+            case "makePrivate":
+                return $_("confirmMakeGroupPrivate");
+            default:
+                return "";
+        }
     }
 
-    function deleteGroup(ev: CustomEvent<string>) {
-        removingOperation = "delete";
-        removingChatId = ev.detail;
+    function confirmLeaveGroup(ev: CustomEvent<string>) {
+        confirmAction = "leave";
+        confirmActionChatId = ev.detail;
+    }
+
+    function confirmDeleteGroup(ev: CustomEvent<string>) {
+        confirmAction = "delete";
+        confirmActionChatId = ev.detail;
+    }
+
+    function confirmMakeGroupPrivate(ev: CustomEvent<string>) {
+        confirmAction = "makePrivate";
+        confirmActionChatId = ev.detail;
+    }
+
+    function onConfirmAction(yes: boolean): Promise<void> {
+        const result = yes
+            ? doConfirmAction(confirmAction, confirmActionChatId!)
+            : Promise.resolve();
+
+        return result.finally(() => {
+            confirmAction = undefined;
+            confirmActionChatId = undefined;
+        });
+    }
+
+    function doConfirmAction(confirmAction: ConfirmAction, chatId: string): Promise<void> {
+        switch (confirmAction) {
+            case "leave":
+                return controller.leaveGroup(chatId);
+            case "delete":
+                return controller.deleteGroup(chatId).then((_) => {
+                    rightPanelHistory = [];
+                });
+            case "makePrivate":
+                return controller.makeGroupPrivate(chatId).then((_) => {
+                    rightPanelHistory = [];
+                });
+            default:
+                return Promise.reject();
+        }
     }
 
     function deleteDirectChat(ev: CustomEvent<string>) {
@@ -446,8 +496,7 @@
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}
                 on:unblockUser={unblockUser}
-                on:leaveGroup={leaveGroup}
-                on:deleteGroup={deleteGroup}
+                on:leaveGroup={confirmLeaveGroup}
                 on:chatWith={chatWith}
                 on:replyPrivatelyTo={replyPrivatelyTo}
                 on:addParticipants={addParticipants}
@@ -482,18 +531,16 @@
                     on:showParticipants={showParticipants}
                     on:chatWith={chatWith}
                     on:blockUser={blockUser}
+                    on:deleteGroup={confirmDeleteGroup}
+                    on:makeGroupPrivate={confirmMakeGroupPrivate}
                     on:updateChat={updateChat} />
             </div>
         {/if}
     </Overlay>
 {/if}
 
-{#if removingChatId !== undefined}
-    <RemovingGroup
-        operation={removingOperation}
-        {controller}
-        on:removed={() => (removingChatId = undefined)}
-        bind:chatId={removingChatId} />
+{#if confirmAction !== undefined}
+    <AreYouSure message={confirmMessage} action={onConfirmAction} />
 {/if}
 
 <Toast />

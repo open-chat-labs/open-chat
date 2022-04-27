@@ -61,6 +61,7 @@ import type {
     GroupPermissions,
     PendingICPWithdrawal,
     WithdrawCryptocurrencyResponse,
+    MakeGroupPrivateResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
@@ -648,6 +649,10 @@ export class ServiceContainer implements MarkMessagesRead {
 
     deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
         return this.getGroupClient(chatId).deleteGroup();
+    }
+
+    makeGroupPrivate(chatId: string): Promise<MakeGroupPrivateResponse> {
+        return this.getGroupClient(chatId).makeGroupPrivate();
     }
 
     removeParticipant(chatId: string, userId: string): Promise<RemoveParticipantResponse> {
