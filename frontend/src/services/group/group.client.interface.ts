@@ -23,6 +23,7 @@ import type {
     UnpinMessageResponse,
     RegisterPollVoteResponse,
     GroupPermissions,
+    MakeGroupPrivateResponse,
 } from "../../domain/chat/chat";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 
@@ -63,6 +64,7 @@ export interface IGroupClient {
     getGroupDetails(latestEventIndex: number): Promise<GroupChatDetailsResponse>;
     getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails>;
     deleteGroup(): Promise<DeleteGroupResponse>;
+    makeGroupPrivate(): Promise<MakeGroupPrivateResponse>;
     getPublicSummary(): Promise<GroupChatSummary | undefined>;
     getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>>;
     pinMessage(messageIndex: number): Promise<PinMessageResponse>;

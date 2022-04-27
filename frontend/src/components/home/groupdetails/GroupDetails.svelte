@@ -14,7 +14,12 @@
     import { avatarUrl } from "../../../domain/user/user.utils";
     import type { UpdatedGroup } from "../../../fsm/rightPanel";
     import type { GroupChatSummary, GroupPermissions } from "../../../domain/chat/chat";
-    import { canChangePermissions, canEditGroupDetails } from "../../../domain/chat/chat.utils";
+    import {
+        canChangePermissions,
+        canEditGroupDetails,
+        canDeleteGroup,
+        canMakeGroupPrivate,
+    } from "../../../domain/chat/chat.utils";
     import { createEventDispatcher } from "svelte";
     import type { ChatController } from "../../../fsm/chat.controller";
     import { userStore } from "../../../stores/user";
@@ -25,11 +30,13 @@
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
     import Markdown from "../Markdown.svelte";
     import {
+        groupAdvancedOpen,
         groupInfoOpen,
         groupPermissionsOpen,
         groupStatsOpen,
         groupVisibilityOpen,
     } from "stores/settings";
+    import AdvancedSection from "./AdvancedSection.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -150,8 +157,8 @@
 
 <GroupDetailsHeader {saving} on:showParticipants={showParticipants} on:close={close} />
 
-<form class="group-form" on:submit|preventDefault={updateGroup}>
-    <div class="form-fields">
+<div class="group-details">
+    <div class="inner">
         <CollapsibleCard
             on:toggle={groupInfoOpen.toggle}
             open={$groupInfoOpen}
@@ -247,8 +254,20 @@
             headerText={$_("stats.groupStats")}>
             <Stats stats={originalGroup.metrics} />
         </CollapsibleCard>
+        {#if canDeleteGroup(originalGroup)}
+            <CollapsibleCard
+                on:toggle={groupAdvancedOpen.toggle}
+                open={$groupAdvancedOpen}
+                headerText={$_("group.advanced")}>
+                <AdvancedSection
+                    on:deleteGroup
+                    on:makeGroupPrivate
+                    chatId={originalGroup.chatId}
+                    canMakeGroupPrivate={canMakeGroupPrivate(originalGroup)} />
+            </CollapsibleCard>
+        {/if}
     </div>
-</form>
+</div>
 
 {#if canEdit || canEditPermissions}
     <div class="cta">
@@ -309,7 +328,7 @@
         @include font(light, normal, fs-100);
     }
 
-    .group-form {
+    .group-details {
         flex: 1;
         color: var(--section-txt);
         overflow: auto;
@@ -318,7 +337,10 @@
         background-color: transparent;
     }
 
-    .form-fields {
+    .inner {
+        display: flex;
+        flex-direction: column;
+        gap: $sp3;
         padding: $sp3;
         padding-bottom: 0;
         @include mobile() {

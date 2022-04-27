@@ -304,6 +304,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
+  { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
   { 'PollEnded' : PollEnded } |
@@ -349,6 +350,7 @@ export interface GroupChatSummary {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
+  'is_public' : [] | [boolean],
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
   'name' : [] | [string],
@@ -403,6 +405,10 @@ export interface GroupPermissions {
   'react_to_messages' : PermissionRole,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
+export interface GroupVisibilityChanged {
+  'changed_by' : UserId,
+  'now_public' : boolean,
+}
 export interface ICP { 'e8s' : bigint }
 export type ICPDeposit = { 'Completed' : CompletedICPDeposit };
 export interface ICPRegistrationFee {

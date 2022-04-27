@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import LeftPanel from "./LeftPanel.svelte";
     import Toast from "../Toast.svelte";
     import AboutModal from "../AboutModal.svelte";
@@ -42,6 +43,7 @@
     import { apiKey } from "../../services/serviceContainer";
     import type { Share } from "../../domain/share";
     import { draftMessages } from "../../stores/draftMessages";
+    import AreYouSure from "./AreYouSure.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -71,6 +73,7 @@
     let searchResultsAvailable: boolean = false;
     let removingOperation: "leave" | "delete" = "delete";
     let removingChatId: string | undefined;
+    let makePrivateChatId: string | undefined;
     let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
@@ -267,6 +270,22 @@
         removingChatId = ev.detail;
     }
 
+    function confirmMakeGroupPrivate(ev: CustomEvent<string>) {
+        makePrivateChatId = ev.detail;
+    }
+
+    function makeGroupPrivate(yes: boolean): Promise<void> {
+        if (!yes || makePrivateChatId == undefined) {
+            makePrivateChatId = undefined;
+            return Promise.resolve();
+        }
+
+        return controller.makeGroupPrivate(makePrivateChatId).finally(() => {
+            rightPanelHistory = [];
+            makePrivateChatId = undefined;
+        });
+    }
+
     function deleteDirectChat(ev: CustomEvent<string>) {
         if (ev.detail === params.chatId) {
             controller.clearSelectedChat();
@@ -447,7 +466,6 @@
                 on:blockUser={blockUser}
                 on:unblockUser={unblockUser}
                 on:leaveGroup={leaveGroup}
-                on:deleteGroup={deleteGroup}
                 on:chatWith={chatWith}
                 on:replyPrivatelyTo={replyPrivatelyTo}
                 on:addParticipants={addParticipants}
@@ -482,6 +500,8 @@
                     on:showParticipants={showParticipants}
                     on:chatWith={chatWith}
                     on:blockUser={blockUser}
+                    on:deleteGroup={deleteGroup}
+                    on:makeGroupPrivate={confirmMakeGroupPrivate}
                     on:updateChat={updateChat} />
             </div>
         {/if}
@@ -494,6 +514,10 @@
         {controller}
         on:removed={() => (removingChatId = undefined)}
         bind:chatId={removingChatId} />
+{/if}
+
+{#if makePrivateChatId !== undefined}
+    <AreYouSure message={$_("confirmMakeGroupPrivate")} action={makeGroupPrivate} />
 {/if}
 
 <Toast />

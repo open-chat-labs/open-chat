@@ -409,7 +409,8 @@
             "createPolls": "create polls",
             "sendMessages": "send messages",
             "reactToMessages": "react to messages"
-        }
+        },
+        "advanced": "Advanced"
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",
@@ -477,5 +478,10 @@
         "reactions": "reactions",
         "deletedMessages": "deleted messages"
     },
-    "andNMore": ", and {n} more"
+    "andNMore": ", and {n} more",
+    "confirmMakeGroupPrivate": "Do you definitely want to make this group private? You cannot subsequently make the group public again!",
+    "makeGroupPrivate": "Make group private",
+    "makeGroupPrivateSucceeded": "This group has been made private",
+    "makeGroupPrivateFailed": "Failed to make group private",
+    "groupVisibilityChangedBy": "{changedBy} made the group {visibility}"
 }

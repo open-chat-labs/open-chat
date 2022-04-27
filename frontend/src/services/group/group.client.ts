@@ -24,6 +24,7 @@ import type {
     UnpinMessageResponse,
     RegisterPollVoteResponse,
     GroupPermissions,
+    MakeGroupPrivateResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import { CandidService } from "../candidService";
@@ -47,6 +48,7 @@ import {
     pinMessageResponse,
     unpinMessageResponse,
     searchGroupChatResponse,
+    makeGroupPrivateResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -318,6 +320,11 @@ export class GroupClient extends CandidService implements IGroupClient {
     @profile("groupClient")
     deleteGroup(): Promise<DeleteGroupResponse> {
         return this.handleResponse(this.groupService.delete_group({}), deleteGroupResponse);
+    }
+
+    @profile("groupClient")
+    makeGroupPrivate(): Promise<MakeGroupPrivateResponse> {
+        return this.handleResponse(this.groupService.make_private({}), makeGroupPrivateResponse);
     }
 
     @profile("groupClient")

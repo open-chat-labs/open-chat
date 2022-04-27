@@ -488,6 +488,7 @@ export const idlFactory = ({ IDL }) => {
       'chats' : IDL.Vec(ChatSummary),
       'blocked_users' : IDL.Vec(UserId),
       'timestamp' : TimestampMillis,
+      'transactions' : IDL.Vec(TransactionWrapper),
     }),
     'InternalError' : IDL.Text,
   });
@@ -792,6 +793,7 @@ export const idlFactory = ({ IDL }) => {
     'SetToSome' : IDL.Nat,
   });
   const GroupChatSummaryUpdates = IDL.Record({
+    'is_public' : IDL.Opt(IDL.Bool),
     'permissions' : IDL.Opt(GroupPermissions),
     'metrics' : IDL.Opt(ChatMetrics),
     'name' : IDL.Opt(IDL.Text),
@@ -839,6 +841,7 @@ export const idlFactory = ({ IDL }) => {
       'avatar_id' : AvatarIdUpdate,
       'chats_removed' : IDL.Vec(ChatId),
       'timestamp' : TimestampMillis,
+      'transactions' : IDL.Vec(TransactionWrapper),
     }),
     'InternalError' : IDL.Text,
   });

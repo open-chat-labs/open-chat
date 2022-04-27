@@ -181,7 +181,6 @@
             on:showGroupDetails
             on:showParticipants
             on:leaveGroup
-            on:deleteGroup
             on:showPinned
             on:createPoll={createPoll}
             on:searchChat={searchChat}

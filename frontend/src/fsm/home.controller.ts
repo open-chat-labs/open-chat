@@ -143,7 +143,10 @@ export class HomeController {
                 });
                 userStore.addMany(usersResp.users);
                 if (usersResp.serverTimestamp !== undefined) {
-                    userStore.setUpdated(batch.filter((u) => !usersResp.fromCache.has(u)), usersResp.serverTimestamp);
+                    userStore.setUpdated(
+                        batch.filter((u) => !usersResp.fromCache.has(u)),
+                        usersResp.serverTimestamp
+                    );
                 }
             }
             console.log("users updated");
@@ -156,13 +159,15 @@ export class HomeController {
         try {
             this.loading.set(!this.initialised);
             const chats = Object.values(get(this.serverChatSummaries));
+            const selectedChat = get(this.selectedChat);
             const chatsResponse =
                 this.chatUpdatesSince === undefined
-                    ? await this.api.getInitialState(this.messagesRead)
+                    ? await this.api.getInitialState(this.messagesRead, selectedChat?.chatId)
                     : await this.api.getUpdates(
                           chats,
                           updateArgsFromChats(this.chatUpdatesSince, chats),
-                          this.messagesRead
+                          this.messagesRead,
+                          selectedChat?.chatId
                       );
 
             this.chatUpdatesSince = chatsResponse.timestamp;
@@ -170,14 +175,17 @@ export class HomeController {
             if (chatsResponse.wasUpdated) {
                 const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
                 userIds.add(this.user.userId);
-                const usersResponse = await this.api.getUsers({
-                    userGroups: [
-                        {
-                            users: missingUserIds(get(userStore), userIds),
-                            updatedSince: BigInt(0),
-                        },
-                    ],
-                }, true);
+                const usersResponse = await this.api.getUsers(
+                    {
+                        userGroups: [
+                            {
+                                users: missingUserIds(get(userStore), userIds),
+                                updatedSince: BigInt(0),
+                            },
+                        ],
+                    },
+                    true
+                );
 
                 userStore.addMany(usersResponse.users);
                 blockedUsers.set(chatsResponse.blockedUsers);
@@ -379,6 +387,26 @@ export class HomeController {
                 rollbar.error("Unable to delete group", err);
                 push(`/${chatId}`);
                 return false;
+            });
+    }
+
+    makeGroupPrivate(chatId: string): Promise<void> {
+        return this.api
+            .makeGroupPrivate(chatId)
+            .then((resp) => {
+                if (resp === "success") {
+                    const chat = get(this.serverChatSummaries)[chatId];
+                    if (chat !== undefined && chat.kind === "group_chat") {
+                        chat.public = false;
+                    }
+                    toastStore.showSuccessToast("makeGroupPrivateSucceeded");
+                } else {
+                    toastStore.showFailureToast("makeGroupPrivateFailed");
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("makeGroupPrivateFailed");
+                rollbar.error("Error making group private", err);
             });
     }
 
@@ -719,14 +747,17 @@ export class HomeController {
         const users = userIdsFromEvents([message]);
         const missingUsers = missingUserIds(get(userStore), users);
         if (missingUsers.length > 0) {
-            const usersResp = await this.api.getUsers({
-                userGroups: [
-                    {
-                        users: missingUsers,
-                        updatedSince: BigInt(0),
-                    },
-                ],
-            }, true);
+            const usersResp = await this.api.getUsers(
+                {
+                    userGroups: [
+                        {
+                            users: missingUsers,
+                            updatedSince: BigInt(0),
+                        },
+                    ],
+                },
+                true
+            );
             userStore.addMany(usersResp.users);
         }
     }

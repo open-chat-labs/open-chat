@@ -9,7 +9,6 @@
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
-    import DeleteAlertOutline from "svelte-material-icons/DeleteAlertOutline.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -28,12 +27,7 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import type { ChatSummary } from "../../domain/chat/chat";
-    import {
-        canAddMembers,
-        canCreatePolls,
-        canDeleteGroup,
-        canLeaveGroup,
-    } from "../../domain/chat/chat.utils";
+    import { canAddMembers, canCreatePolls, canLeaveGroup } from "../../domain/chat/chat.utils";
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
@@ -78,10 +72,6 @@
 
     function markAllRead() {
         dispatch("markAllRead");
-    }
-
-    function deleteGroup() {
-        dispatch("deleteGroup", $selectedChatSummary.chatId);
     }
 
     function blockUser() {
@@ -338,15 +328,6 @@
                                     color={"var(--icon-txt)"}
                                     slot="icon" />
                                 <div slot="text">{$_("markAllRead")}</div>
-                            </MenuItem>
-                        {/if}
-                        {#if canDeleteGroup($selectedChatSummary)}
-                            <MenuItem on:click={deleteGroup}>
-                                <DeleteAlertOutline
-                                    size={$iconSize}
-                                    color={"var(--icon-txt)"}
-                                    slot="icon" />
-                                <div slot="text">{$_("deleteGroup")}</div>
                             </MenuItem>
                         {/if}
                     </Menu>
