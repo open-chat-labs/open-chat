@@ -9,7 +9,7 @@ pub enum Cryptocurrency {
 }
 
 impl Cryptocurrency {
-    pub fn ticker(&self) -> String {
+    pub fn token_symbol(&self) -> String {
         match self {
             Cryptocurrency::InternetComputer => "ICP".to_string(),
         }

@@ -21,7 +21,7 @@ impl From<&MessageContentInternal> for Document {
                 document.add_field(c.text.clone(), 1.0);
             }
             MessageContentInternal::Cryptocurrency(c) => {
-                document.add_field(c.transfer.token().ticker(), 1.0);
+                document.add_field(c.transfer.token().token_symbol(), 1.0);
                 document.add_field(format!("{}", c.transfer.amount()), 1.0);
                 try_add_caption(&mut document, c.caption.as_ref())
             }
