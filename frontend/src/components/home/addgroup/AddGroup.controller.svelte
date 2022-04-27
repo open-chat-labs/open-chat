@@ -49,7 +49,7 @@
                 createPolls: "members",
                 sendMessages: "members",
                 reactToMessages: "members",
-            }
+            },
         };
     }
 

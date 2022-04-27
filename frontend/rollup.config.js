@@ -190,7 +190,7 @@ export default [
 
             html({
                 template: ({ files }) => {
-                    const jsEntryFile = files.js.find(f => f.isEntry).fileName;
+                    const jsEntryFile = files.js.find((f) => f.isEntry).fileName;
                     const cssFile = files.css[0].fileName;
 
                     function generateCspHashValue(text) {

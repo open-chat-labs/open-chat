@@ -14,6 +14,7 @@
         ChatEvent as ChatEventType,
         Message,
         Mention,
+        ChatSummary,
     } from "../../domain/chat/chat";
     import { groupEvents, messageIsReadByThem } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
@@ -52,8 +53,6 @@
     $: focusMessageIndex = controller.focusMessageIndex;
     $: markRead = controller.markRead;
     $: pinned = controller.pinnedMessages;
-
-    setContext<UserLookup>("userLookup", $userStore);
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
@@ -417,9 +416,13 @@
         return true;
     }
 
-    function isReadByThem(readByThem: Set<bigint>, evt: EventWrapper<ChatEventType>): boolean {
+    function isReadByThem(
+        chat: ChatSummary,
+        readByThem: Set<bigint>,
+        evt: EventWrapper<ChatEventType>
+    ): boolean {
         if (evt.event.kind === "message") {
-            const confirmedRead = messageIsReadByThem($chat, evt.event);
+            const confirmedRead = messageIsReadByThem(chat, evt.event);
             if (confirmedRead && readByThem.has(evt.event.messageId)) {
                 unconfirmedReadByThem.delete(evt.event.messageId);
             }
@@ -486,7 +489,7 @@
                         focused={evt.event.kind === "message" &&
                             evt.event.messageIndex === $focusMessageIndex}
                         confirmed={isConfirmed(evt)}
-                        readByThem={isReadByThem($unconfirmedReadByThem, evt)}
+                        readByThem={isReadByThem($chat, $unconfirmedReadByThem, evt)}
                         readByMe={isReadByMe($markRead, evt)}
                         chatId={controller.chatId}
                         chatType={controller.kind}

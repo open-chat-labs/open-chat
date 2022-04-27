@@ -315,18 +315,31 @@ export function getDisplayDate(chat: ChatSummary): bigint {
         : started;
 }
 
+function mergeRange(a: DRange, b: DRange) {
+    const merged = new DRange();
+    merged.add(a);
+    merged.add(b);
+    return merged;
+}
+
 function mergeUpdatedDirectChat(
     chat: DirectChatSummary,
     updatedChat: DirectChatSummaryUpdates
 ): DirectChatSummary {
-    if (updatedChat.readByMe) chat.readByMe.add(updatedChat.readByMe);
-    if (updatedChat.readByThem) chat.readByThem.add(updatedChat.readByThem);
-    chat.latestEventIndex = getLatestEventIndex(chat, updatedChat);
-    chat.latestMessage = getLatestMessage(chat, updatedChat);
-    chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
-    chat.metrics = updatedChat.metrics ?? chat.metrics;
-    chat.myMetrics = updatedChat.myMetrics ?? chat.myMetrics;
-    return chat;
+    return {
+        ...chat,
+        readByMe: updatedChat.readByMe
+            ? mergeRange(chat.readByMe, updatedChat.readByMe)
+            : chat.readByMe,
+        readByThem: updatedChat.readByThem
+            ? mergeRange(chat.readByThem, updatedChat.readByThem)
+            : chat.readByThem,
+        latestEventIndex: getLatestEventIndex(chat, updatedChat),
+        latestMessage: getLatestMessage(chat, updatedChat),
+        notificationsMuted: updatedChat.notificationsMuted ?? chat.notificationsMuted,
+        metrics: updatedChat.metrics ?? chat.metrics,
+        myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
+    };
 }
 
 export function mergeUpdates(
@@ -421,25 +434,26 @@ function mergeUpdatedGroupChat(
     chat: GroupChatSummary,
     updatedChat: GroupChatSummaryUpdates
 ): GroupChatSummary {
-    chat.name = updatedChat.name ?? chat.name;
-    chat.description = updatedChat.description ?? chat.description;
-    if (updatedChat.readByMe) chat.readByMe.add(updatedChat.readByMe);
-    chat.lastUpdated = updatedChat.lastUpdated;
-    chat.latestEventIndex = getLatestEventIndex(chat, updatedChat);
-    chat.latestMessage = getLatestMessage(chat, updatedChat);
-    chat.blobReference = applyOptionUpdate(
-        chat.blobReference,
-        updatedChat.avatarBlobReferenceUpdate
-    );
-    chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
-    chat.participantCount = updatedChat.participantCount ?? chat.participantCount;
-    chat.myRole = updatedChat.myRole ?? (chat.myRole === "previewer" ? "participant" : chat.myRole);
-    chat.mentions = mergeMentions(chat.mentions, updatedChat.mentions);
-    chat.ownerId = updatedChat.ownerId ?? chat.ownerId;
-    chat.permissions = updatedChat.permissions ?? chat.permissions;
-    chat.metrics = updatedChat.metrics ?? chat.metrics;
-    chat.myMetrics = updatedChat.myMetrics ?? chat.myMetrics;
-    return chat;
+    return {
+        ...chat,
+        name: updatedChat.name ?? chat.name,
+        description: updatedChat.description ?? chat.description,
+        readByMe: updatedChat.readByMe
+            ? mergeRange(chat.readByMe, updatedChat.readByMe)
+            : chat.readByMe,
+        lastUpdated: updatedChat.lastUpdated,
+        latestEventIndex: getLatestEventIndex(chat, updatedChat),
+        latestMessage: getLatestMessage(chat, updatedChat),
+        blobReference: applyOptionUpdate(chat.blobReference, updatedChat.avatarBlobReferenceUpdate),
+        notificationsMuted: updatedChat.notificationsMuted ?? chat.notificationsMuted,
+        participantCount: updatedChat.participantCount ?? chat.participantCount,
+        myRole: updatedChat.myRole ?? (chat.myRole === "previewer" ? "participant" : chat.myRole),
+        mentions: mergeMentions(chat.mentions, updatedChat.mentions),
+        ownerId: updatedChat.ownerId ?? chat.ownerId,
+        permissions: updatedChat.permissions ?? chat.permissions,
+        metrics: updatedChat.metrics ?? chat.metrics,
+        myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
+    };
 }
 
 function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {
@@ -695,20 +709,37 @@ export function toggleReaction(
     reactions: Reaction[],
     reaction: string
 ): Reaction[] {
-    const r = reactions.find((r) => r.reaction === reaction);
-    if (r === undefined) {
-        reactions.push({ reaction, userIds: new Set([userId]) });
-    } else {
-        if (r.userIds.has(userId)) {
-            r.userIds.delete(userId);
-            if (r.userIds.size === 0) {
-                return reactions.filter((r) => r.reaction !== reaction);
+    const result: Reaction[] = [];
+    let found = false;
+
+    reactions.forEach((r) => {
+        if (r.reaction === reaction) {
+            const userIds = new Set(r.userIds);
+            if (userIds.delete(userId)) {
+                if (userIds.size > 0) {
+                    result.push({
+                        ...r,
+                        userIds,
+                    });
+                }
+            } else {
+                userIds.add(userId);
+                result.push({
+                    ...r,
+                    userIds,
+                });
             }
+            found = true;
         } else {
-            r.userIds.add(userId);
+            result.push(r);
         }
+    });
+
+    if (!found) {
+        result.push({ reaction, userIds: new Set([userId]) });
     }
-    return reactions;
+
+    return result;
 }
 
 export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
@@ -1069,37 +1100,39 @@ export function addVoteToPoll(
         return votes;
     }
 
+    let updatedVotes = JSON.parse(JSON.stringify(votes));
+
     // update the total votes
-    if (votes.total.kind === "anonymous_poll_votes") {
-        if (votes.total.votes[answerIdx] === undefined) {
-            votes.total.votes[answerIdx] = 0;
+    if (updatedVotes.total.kind === "anonymous_poll_votes") {
+        if (updatedVotes.total.votes[answerIdx] === undefined) {
+            updatedVotes.total.votes[answerIdx] = 0;
         }
-        votes.total.votes[answerIdx] = votes.total.votes[answerIdx] + 1;
+        updatedVotes.total.votes[answerIdx] = updatedVotes.total.votes[answerIdx] + 1;
     }
 
-    if (votes.total.kind === "hidden_poll_votes") {
-        votes.total.votes = votes.total.votes + 1;
+    if (updatedVotes.total.kind === "hidden_poll_votes") {
+        updatedVotes.total.votes = updatedVotes.total.votes + 1;
     }
 
-    if (votes.total.kind === "visible_poll_votes") {
-        if (votes.total.votes[answerIdx] === undefined) {
-            votes.total.votes[answerIdx] = [];
+    if (updatedVotes.total.kind === "visible_poll_votes") {
+        if (updatedVotes.total.votes[answerIdx] === undefined) {
+            updatedVotes.total.votes[answerIdx] = [];
         }
-        votes.total.votes[answerIdx].push(userId);
+        updatedVotes.total.votes[answerIdx].push(userId);
     }
 
     if (!config.allowMultipleVotesPerUser) {
         // if we are only allowed a single vote then we also need
         // to remove anything we may previously have voted for
-        const previousVote = votes.user[0];
+        const previousVote = updatedVotes.user[0];
         if (previousVote !== undefined) {
-            votes = removeVoteFromPoll(userId, previousVote, votes);
+            updatedVotes = removeVoteFromPoll(userId, previousVote, updatedVotes);
         }
     }
 
-    votes.user.push(answerIdx);
+    updatedVotes.user.push(answerIdx);
 
-    return votes;
+    return updatedVotes;
 }
 
 export function removeVoteFromPoll(userId: string, answerIdx: number, votes: PollVotes): PollVotes {

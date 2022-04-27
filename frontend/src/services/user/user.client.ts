@@ -277,9 +277,9 @@ export class UserClient extends CandidService implements IUserClient {
     editMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.userId, recipientId])
-            .then(() => {
+            .then(({ content }) => {
                 const req = {
-                    content: apiMessageContent(message.content),
+                    content: apiMessageContent(content ?? message.content),
                     user_id: Principal.fromText(recipientId),
                     message_id: message.messageId,
                 };
@@ -296,9 +296,9 @@ export class UserClient extends CandidService implements IUserClient {
     ): Promise<SendMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.userId, recipientId])
-            .then(() => {
+            .then(({ content }) => {
                 const req: ApiSendMessageArgs = {
-                    content: apiMessageContent(message.content),
+                    content: apiMessageContent(content ?? message.content),
                     recipient: Principal.fromText(recipientId),
                     sender_name: sender.username,
                     message_id: message.messageId,
@@ -318,26 +318,22 @@ export class UserClient extends CandidService implements IUserClient {
         sender: UserSummary,
         message: Message
     ): Promise<SendMessageResponse> {
-        return DataClient.create(this.identity)
-            .uploadData(message.content, [this.userId, recipientId])
-            .then(() => {
-                const req: ApiTransferCryptocurrencyWithinGroupArgs = {
-                    content: apiCryptoContent(message.content as CryptocurrencyContent),
-                    recipient: Principal.fromText(recipientId),
-                    sender_name: sender.username,
-                    mentioned: [],
-                    message_id: message.messageId,
-                    group_id: Principal.fromText(groupId),
-                    replies_to: apiOptional(
-                        (replyContext) => apiReplyContextArgs(replyContext),
-                        message.repliesTo
-                    ),
-                };
-                return this.handleResponse(
-                    this.userService.transfer_cryptocurrency_within_group(req),
-                    transferWithinGroupResponse
-                );
-            });
+        const req: ApiTransferCryptocurrencyWithinGroupArgs = {
+            content: apiCryptoContent(message.content as CryptocurrencyContent),
+            recipient: Principal.fromText(recipientId),
+            sender_name: sender.username,
+            mentioned: [],
+            message_id: message.messageId,
+            group_id: Principal.fromText(groupId),
+            replies_to: apiOptional(
+                (replyContext) => apiReplyContextArgs(replyContext),
+                message.repliesTo
+            ),
+        };
+        return this.handleResponse(
+            this.userService.transfer_cryptocurrency_within_group(req),
+            transferWithinGroupResponse
+        );
     }
 
     @profile("userClient")

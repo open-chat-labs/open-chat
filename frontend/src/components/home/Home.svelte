@@ -33,7 +33,7 @@
         EnhancedReplyContext,
         GroupChatSummary,
     } from "../../domain/chat/chat";
-    import type { Writable } from "svelte/store";
+    import type { Readable } from "svelte/store";
     import { currentUserKey, HomeController } from "../../fsm/home.controller";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
@@ -378,7 +378,7 @@
 
     $: groupChat =
         chat && $chat && $chat.kind === "group_chat"
-            ? (chat as Writable<GroupChatSummary>)
+            ? (chat as Readable<GroupChatSummary>)
             : undefined;
 
     $: x = $rtlStore ? -300 : 300;

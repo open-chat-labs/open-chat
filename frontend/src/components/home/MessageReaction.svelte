@@ -3,34 +3,38 @@
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import type { UserLookup } from "../../domain/user/user";
     import { buildUsernameList } from "../../domain/user/user.utils";
-    import { getContext, onMount } from "svelte";
+    import { onMount } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
     import { rtlStore } from "../../stores/rtl";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
+    import { userStore } from "../../stores/user";
 
     export let reaction: string;
     export let userIds: Set<string>;
     export let me: boolean;
     export let myUserId: string | undefined;
 
-    let userLookup = getContext<UserLookup>("userLookup");
     let reactionCode = "unknown";
 
     $: alignRight = me != $rtlStore;
     $: selected = myUserId !== undefined ? userIds.has(myUserId) : false;
-    $: usernames = buildReactionUsernames(userIds, myUserId);
+    $: usernames = buildReactionUsernames($userStore, userIds, myUserId);
 
     onMount(async () => {
         reactionCode = (await buildReactionCode(reaction)) ?? "unknown";
     });
 
-    function buildReactionUsernames(userIds: Set<string>, myUserId: string | undefined): string {
+    function buildReactionUsernames(
+        userStore: UserLookup,
+        userIds: Set<string>,
+        myUserId: string | undefined
+    ): string {
         if (userIds.size === 1 && myUserId !== undefined && userIds.has(myUserId)) {
             return $_("reactions.youClickToRemove");
         }
 
-        return buildUsernameList(userIds, myUserId, userLookup);
+        return buildUsernameList(userIds, myUserId, userStore);
     }
 
     async function buildReactionCode(reaction: string): Promise<string | undefined> {

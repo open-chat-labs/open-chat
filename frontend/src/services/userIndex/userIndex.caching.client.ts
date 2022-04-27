@@ -88,7 +88,11 @@ export class CachingUserIndexClient implements IUserIndexClient {
         return this.client.submitPhoneNumber(phoneNumber);
     }
 
-    private buildGetUsersArgs(users: string[], fromCache: UserSummary[], allowStale: boolean): UsersArgs {
+    private buildGetUsersArgs(
+        users: string[],
+        fromCache: UserSummary[],
+        allowStale: boolean
+    ): UsersArgs {
         const fromCacheGrouped = groupBy(fromCache, (u) => u.updated);
         const fromCacheSet = new Set<string>(fromCache.map((u) => u.userId));
 
@@ -155,7 +159,7 @@ export class CachingUserIndexClient implements IUserIndexClient {
         return {
             serverTimestamp: response.serverTimestamp,
             users,
-            fromCache: fromCacheSet
+            fromCache: fromCacheSet,
         };
     }
 

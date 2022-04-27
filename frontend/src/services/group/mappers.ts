@@ -448,7 +448,7 @@ export function getMessagesByMessageIndexResponse(
     candid: ApiMessagesByMessageIndexResponse
 ): EventsResponse<Message> {
     if ("Success" in candid) {
-        console.log("event response: ", candid);
+        console.log("event by index response: ", candid);
         return {
             events: candid.Success.messages.map(messageWrapper),
             affectedEvents: [],

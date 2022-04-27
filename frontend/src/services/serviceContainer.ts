@@ -321,7 +321,13 @@ export class ServiceContainer implements MarkMessagesRead {
     private reydrateEventList<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[] {
         return events.map((e) => {
             if (e.event.kind === "message") {
-                e.event.content = this.rehydrateMessageContent(e.event.content);
+                return {
+                    ...e,
+                    event: {
+                        ...e.event,
+                        content: this.rehydrateMessageContent(e.event.content),
+                    },
+                };
             }
             return e;
         });
@@ -459,13 +465,19 @@ export class ServiceContainer implements MarkMessagesRead {
         key?: string
     ): T {
         if (dataContent.blobReference !== undefined) {
-            dataContent.blobData = undefined;
-            dataContent.blobUrl = `${"process.env.BLOB_URL_PATTERN"
-                .replace("{canisterId}", dataContent.blobReference.canisterId)
-                .replace("{blobType}", blobType)}${dataContent.blobReference.blobId}`;
+            return {
+                ...dataContent,
+                blobData: undefined,
+                blobUrl: `${"process.env.BLOB_URL_PATTERN"
+                    .replace("{canisterId}", dataContent.blobReference.canisterId)
+                    .replace("{blobType}", blobType)}${dataContent.blobReference.blobId}`,
+            };
         } else {
             if (blobType === "avatar" && key) {
-                dataContent.blobUrl = buildIdenticonUrl(key);
+                return {
+                    ...dataContent,
+                    blobUrl: buildIdenticonUrl(key),
+                };
             }
         }
         return dataContent;
@@ -521,14 +533,17 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     async getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
-        const response = await this.getUsers({
-            userGroups: [
-                {
-                    users: [userId],
-                    updatedSince: BigInt(0),
-                },
-            ],
-        }, allowStale);
+        const response = await this.getUsers(
+            {
+                userGroups: [
+                    {
+                        users: [userId],
+                        updatedSince: BigInt(0),
+                    },
+                ],
+            },
+            allowStale
+        );
 
         if (response.users.length == 0) {
             return undefined;
@@ -554,11 +569,15 @@ export class ServiceContainer implements MarkMessagesRead {
 
                 if (chat.latestMessage !== undefined) {
                     const chatType = chat.kind === "direct_chat" ? "direct" : "group";
-                    chat.latestMessage = await this.rehydrateMessage(
+                    const latestMessage = await this.rehydrateMessage(
                         chatType,
                         chat.chatId,
                         chat.latestMessage
                     );
+                    chat = {
+                        ...chat,
+                        latestMessage,
+                    };
                 }
 
                 return chat.kind === "direct_chat"

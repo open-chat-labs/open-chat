@@ -12,7 +12,7 @@
     import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import { _ } from "svelte-i18n";
-    import { afterUpdate, createEventDispatcher } from "svelte";
+    import { createEventDispatcher } from "svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -40,10 +40,6 @@
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
     }
-
-    // afterUpdate(() => {
-    //     console.log("updating ChatEvent component");
-    // });
 </script>
 
 {#if event.event.kind === "message"}
