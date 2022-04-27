@@ -398,7 +398,8 @@
             "createPolls": "创建民意调查",
             "sendMessages": "发送信息",
             "reactToMessages": "对消息做出反应"
-        }
+        },
+        "advanced": "先进的"
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",
@@ -479,5 +480,9 @@
         "reactions": "反应",
         "deletedMessages": "已删除的消息"
     },
-    "andNMore": ", 和 {n} 更多"
+    "andNMore": ", 和 {n} 更多",
+    "confirmMakeGroupPrivate": "您确定要将此组设为私有吗？目前此操作无法撤消！",
+    "makeGroupPrivate": "将群组设为私有",
+    "makeGroupPrivateFailed": "无法将群组设为私有",
+    "groupVisibilityChangedBy": "{changedBy} 组 {visibility}"
 }
