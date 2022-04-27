@@ -4,7 +4,7 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use types::{
     AvatarChanged, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged,
-    GroupMadePrivate, GroupNameChanged, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
+    GroupNameChanged, GroupVisibilityChanged, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
     OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft,
     ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved, PermissionsChanged, PollVoteRegistered,
     Reaction, ReplyContext, RoleChanged, TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
@@ -39,7 +39,7 @@ pub enum ChatEventInternal {
     PollVoteDeleted(Box<UpdatedMessageInternal>),
     PollEnded(Box<MessageIndex>),
     PermissionsChanged(Box<PermissionsChanged>),
-    GroupMadePrivate(Box<GroupMadePrivate>),
+    GroupVisibilityChanged(Box<GroupVisibilityChanged>),
 }
 
 impl ChatEventInternal {
@@ -87,7 +87,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::PollVoteDeleted(_)
                 | ChatEventInternal::PollEnded(_)
                 | ChatEventInternal::PermissionsChanged(_)
-                | ChatEventInternal::GroupMadePrivate(_)
+                | ChatEventInternal::GroupVisibilityChanged(_)
         )
     }
 
@@ -156,7 +156,7 @@ impl ChatEventInternal {
             ChatEventInternal::MessageUnpinned(m) => Some(m.unpinned_by),
             ChatEventInternal::PollVoteRegistered(v) => Some(v.user_id),
             ChatEventInternal::PermissionsChanged(p) => Some(p.changed_by),
-            ChatEventInternal::GroupMadePrivate(p) => Some(p.changed_by),
+            ChatEventInternal::GroupVisibilityChanged(p) => Some(p.changed_by),
             ChatEventInternal::MessageEdited(e)
             | ChatEventInternal::MessageDeleted(e)
             | ChatEventInternal::MessageReactionAdded(e)
