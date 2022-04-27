@@ -7,9 +7,9 @@
     import TooltipPopup from "../TooltipPopup.svelte";
     import type { UserLookup } from "../../domain/user/user";
     import { buildUsernameList } from "../../domain/user/user.utils";
-    import { getContext } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import TooltipWrapper from "../TooltipWrapper.svelte";
+    import { userStore } from "../../stores/user";
 
     export let finished: boolean;
     export let preview: boolean;
@@ -23,17 +23,16 @@
     export let showVotes: boolean;
     export let me: boolean;
 
-    let userLookup = getContext<UserLookup>("userLookup");
-
-    $: usernames = buildPollUsernames(voters, myUserId);
+    $: usernames = buildPollUsernames($userStore, voters, myUserId);
     $: alignRight = me != $rtlStore;
 
     function buildPollUsernames(
+        userStore: UserLookup,
         voters: string[] | undefined,
         myUserId: string | undefined
     ): string | undefined {
         if (voters === undefined || voters.length === 0) return undefined;
-        return buildUsernameList(new Set(voters), myUserId, userLookup);
+        return buildUsernameList(new Set(voters), myUserId, userStore);
     }
 
     function buildTooltipText(): string {

@@ -57,6 +57,7 @@ import { findLast } from "../utils/list";
 import { rollbar } from "../utils/logging";
 import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
+import { immutableStore } from "../stores/immutable";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
@@ -99,12 +100,12 @@ export class ChatController {
         );
 
         const { chatId, kind } = get(this.chat);
-        this.events = writable(unconfirmed.getMessages(chatId));
+        this.events = immutableStore(unconfirmed.getMessages(chatId));
         this.loading = writable(false);
-        this.focusMessageIndex = writable(_focusMessageIndex);
-        this.participants = writable([]);
-        this.blockedUsers = writable(new Set<string>());
-        this.pinnedMessages = writable(new Set<number>());
+        this.focusMessageIndex = immutableStore(_focusMessageIndex);
+        this.participants = immutableStore([]);
+        this.blockedUsers = immutableStore(new Set<string>());
+        this.pinnedMessages = immutableStore(new Set<number>());
         this.chatId = chatId;
         // If this is a group chat, chatUserIds will be populated when processing the chat events
         this.chatUserIds = new Set<string>(kind === "direct_chat" ? [chatId] : []);
@@ -339,14 +340,17 @@ export class ChatController {
             }
         });
 
-        const resp = await this.api.getUsers({
-            userGroups: [
-                {
-                    users: missingUserIds(get(userStore), new Set<string>(allUserIds)),
-                    updatedSince: BigInt(0),
-                },
-            ],
-        }, true);
+        const resp = await this.api.getUsers(
+            {
+                userGroups: [
+                    {
+                        users: missingUserIds(get(userStore), new Set<string>(allUserIds)),
+                        updatedSince: BigInt(0),
+                    },
+                ],
+            },
+            true
+        );
 
         userStore.addMany(resp.users);
     }

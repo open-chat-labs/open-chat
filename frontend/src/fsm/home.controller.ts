@@ -50,6 +50,7 @@ import { ChatController } from "./chat.controller";
 import { Poller } from "./poller";
 import { scrollStrategy } from "stores/settings";
 import { setCachedMessageFromNotification } from "../utils/caching";
+import { immutableStore } from "stores/immutable";
 
 const ONE_MINUTE = 60 * 1000;
 const ONE_HOUR = 60 * ONE_MINUTE;
@@ -63,7 +64,7 @@ export const currentUserKey = Symbol();
 export class HomeController {
     public messagesRead: IMessageReadTracker;
     private chatUpdatesSince?: bigint;
-    private serverChatSummaries: Writable<Record<string, ChatSummary>> = writable({});
+    private serverChatSummaries: Writable<Record<string, ChatSummary>> = immutableStore({});
     public chatSummaries: Readable<Record<string, ChatSummary>> = derived(
         [this.serverChatSummaries, unconfirmed],
         ([summaries, unconfirmed]) => {
@@ -112,7 +113,7 @@ export class HomeController {
     private async updateUsers() {
         try {
             const allUsers = get(userStore);
-            const usersToUpdate = new Set<string>();
+            const usersToUpdate = new Set<string>([this.user.userId]);
 
             // Update all users we have direct chats with
             for (const chat of Object.values(get(this.chatSummaries))) {
@@ -143,7 +144,10 @@ export class HomeController {
                 });
                 userStore.addMany(usersResp.users);
                 if (usersResp.serverTimestamp !== undefined) {
-                    userStore.setUpdated(batch.filter((u) => !usersResp.fromCache.has(u)), usersResp.serverTimestamp);
+                    userStore.setUpdated(
+                        batch.filter((u) => !usersResp.fromCache.has(u)),
+                        usersResp.serverTimestamp
+                    );
                 }
             }
             console.log("users updated");
@@ -156,13 +160,15 @@ export class HomeController {
         try {
             this.loading.set(!this.initialised);
             const chats = Object.values(get(this.serverChatSummaries));
+            const selectedChat = get(this.selectedChat);
             const chatsResponse =
                 this.chatUpdatesSince === undefined
-                    ? await this.api.getInitialState(this.messagesRead)
+                    ? await this.api.getInitialState(this.messagesRead, selectedChat?.chatId)
                     : await this.api.getUpdates(
                           chats,
                           updateArgsFromChats(this.chatUpdatesSince, chats),
-                          this.messagesRead
+                          this.messagesRead,
+                          selectedChat?.chatId
                       );
 
             this.chatUpdatesSince = chatsResponse.timestamp;
@@ -170,14 +176,17 @@ export class HomeController {
             if (chatsResponse.wasUpdated) {
                 const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
                 userIds.add(this.user.userId);
-                const usersResponse = await this.api.getUsers({
-                    userGroups: [
-                        {
-                            users: missingUserIds(get(userStore), userIds),
-                            updatedSince: BigInt(0),
-                        },
-                    ],
-                }, true);
+                const usersResponse = await this.api.getUsers(
+                    {
+                        userGroups: [
+                            {
+                                users: missingUserIds(get(userStore), userIds),
+                                updatedSince: BigInt(0),
+                            },
+                        ],
+                    },
+                    true
+                );
 
                 userStore.addMany(usersResponse.users);
                 blockedUsers.set(chatsResponse.blockedUsers);
@@ -412,20 +421,22 @@ export class HomeController {
 
     createDirectChat(chatId: string): void {
         this.serverChatSummaries.update((chatSummaries) => {
-            chatSummaries[chatId] = {
-                kind: "direct_chat",
-                them: chatId,
-                chatId,
-                readByMe: new DRange(),
-                readByThem: new DRange(),
-                latestMessage: undefined,
-                latestEventIndex: 0,
-                dateCreated: BigInt(Date.now()),
-                notificationsMuted: false,
-                metrics: emptyChatMetrics(),
-                myMetrics: emptyChatMetrics(),
+            return {
+                ...chatSummaries,
+                [chatId]: {
+                    kind: "direct_chat",
+                    them: chatId,
+                    chatId,
+                    readByMe: new DRange(),
+                    readByThem: new DRange(),
+                    latestMessage: undefined,
+                    latestEventIndex: 0,
+                    dateCreated: BigInt(Date.now()),
+                    notificationsMuted: false,
+                    metrics: emptyChatMetrics(),
+                    myMetrics: emptyChatMetrics(),
+                },
             };
-            return chatSummaries;
         });
         push(`/${chatId}`);
     }
@@ -677,10 +688,12 @@ export class HomeController {
 
     removeChat(chatId: string): void {
         this.serverChatSummaries.update((summaries) => {
-            delete summaries[chatId];
-            return {
-                ...summaries,
-            };
+            return Object.entries(summaries).reduce((agg, [k, v]) => {
+                if (k !== chatId) {
+                    agg[k] = v;
+                }
+                return agg;
+            }, {} as Record<string, ChatSummary>);
         });
     }
 
@@ -719,14 +732,17 @@ export class HomeController {
         const users = userIdsFromEvents([message]);
         const missingUsers = missingUserIds(get(userStore), users);
         if (missingUsers.length > 0) {
-            const usersResp = await this.api.getUsers({
-                userGroups: [
-                    {
-                        users: missingUsers,
-                        updatedSince: BigInt(0),
-                    },
-                ],
-            }, true);
+            const usersResp = await this.api.getUsers(
+                {
+                    userGroups: [
+                        {
+                            users: missingUsers,
+                            updatedSince: BigInt(0),
+                        },
+                    ],
+                },
+                true
+            );
             userStore.addMany(usersResp.users);
         }
     }

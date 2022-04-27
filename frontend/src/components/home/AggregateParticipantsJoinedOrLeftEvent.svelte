@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { UserSummary } from "../../domain/user/user";
+    import type { UserLookup, UserSummary } from "../../domain/user/user";
     import { _ } from "svelte-i18n";
     import { getParticipantsString } from "../../domain/chat/chat.utils";
     import { compareIsNotYouThenUsername, compareUsername } from "../../domain/user/user.utils";
@@ -11,23 +11,27 @@
     export let joined: Set<string>;
     export let left: Set<string>;
 
-    $: joinedText = buildText(joined, "userJoined");
-    $: leftText = buildText(left, "userLeft");
+    $: joinedText = buildText($userStore, joined, "userJoined");
+    $: leftText = buildText($userStore, left, "userLeft");
 
-    function buildText(userIds: Set<string>, template: string): string | undefined {
+    function buildText(
+        userStore: UserLookup,
+        userIds: Set<string>,
+        template: string
+    ): string | undefined {
         return userIds.size !== 0
             ? $_(template, {
                   values: {
-                      username: buildUserList(userIds),
+                      username: buildUserList(userStore, userIds),
                   },
               })
             : undefined;
     }
 
-    function buildUserList(userIds: Set<string>): string {
+    function buildUserList(userStore: UserLookup, userIds: Set<string>): string {
         return getParticipantsString(
             user!,
-            $userStore,
+            userStore,
             Array.from(userIds),
             $_("unknownUser"),
             $_("you"),

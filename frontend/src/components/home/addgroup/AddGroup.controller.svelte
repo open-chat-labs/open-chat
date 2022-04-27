@@ -22,6 +22,8 @@
     let canisterId: string | undefined;
     let candidateGroup: CandidateGroupChat = defaultCandidateGroup();
 
+    $: candidateGroup = candidateGroup;
+
     function reset() {
         newGroupState = "group_form";
         creatingCanister = false;
@@ -49,7 +51,7 @@
                 createPolls: "members",
                 sendMessages: "members",
                 reactToMessages: "members",
-            }
+            },
         };
     }
 

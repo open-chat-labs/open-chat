@@ -3,7 +3,7 @@ import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { OpenStorageAgent, UploadFileResponse } from "@open-ic/open-storage-agent";
 import type { IDataClient } from "./data.client.interface";
-import type { MessageContent } from "../../domain/chat/chat";
+import type { MessageContent, StoredMediaContent } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
 import type { BlobReference, StorageStatus, UploadDataResponse } from "../../domain/data/data";
 import { storageStore } from "../../stores/storage";
@@ -55,6 +55,7 @@ export class DataClient implements IDataClient {
     ): Promise<UploadDataResponse> {
         let byteLimit = 0;
         let bytesUsed = 0;
+        let updatedContent: StoredMediaContent | undefined = undefined;
 
         if (
             content.kind === "file_content" ||
@@ -69,7 +70,10 @@ export class DataClient implements IDataClient {
                     accessorIds,
                     content.blobData
                 );
-                content.blobReference = this.extractBlobReference(response);
+                updatedContent = {
+                    ...content,
+                    blobReference: this.extractBlobReference(response),
+                };
                 byteLimit = Number(response.byteLimit);
                 bytesUsed = Number(response.bytesUsed);
                 storageStore.set({
@@ -98,8 +102,17 @@ export class DataClient implements IDataClient {
                         content.imageData.blobData
                     ),
                 ]).then(([video, image]) => {
-                    content.videoData.blobReference = this.extractBlobReference(video);
-                    content.imageData.blobReference = this.extractBlobReference(image);
+                    updatedContent = {
+                        ...content,
+                        videoData: {
+                            ...content.videoData,
+                            blobReference: this.extractBlobReference(video),
+                        },
+                        imageData: {
+                            ...content.imageData,
+                            blobReference: this.extractBlobReference(image),
+                        },
+                    };
                     // TODO - include the bytes of the image too.
                     // We can't simply add the bytes because the user may have previously uploaded the same image, in
                     // which case we do not charge them for uploading it again. We need the OpenStorage agent to return
@@ -114,7 +127,7 @@ export class DataClient implements IDataClient {
             }
         }
 
-        return { success: true, byteLimit, bytesUsed };
+        return { success: true, byteLimit, bytesUsed, content: updatedContent };
     }
 
     extractBlobReference(response: UploadFileResponse): BlobReference {

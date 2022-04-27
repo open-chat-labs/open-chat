@@ -173,10 +173,10 @@ export class GroupClient extends CandidService implements IGroupClient {
     editMessage(message: Message): Promise<EditMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.chatId])
-            .then(() => {
+            .then(({ content }) => {
                 return this.handleResponse(
                     this.groupService.edit_message({
-                        content: apiMessageContent(message.content),
+                        content: apiMessageContent(content ?? message.content),
                         message_id: message.messageId,
                     }),
                     editMessageResponse
@@ -192,10 +192,10 @@ export class GroupClient extends CandidService implements IGroupClient {
     ): Promise<SendMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.chatId])
-            .then(() => {
+            .then(({ content }) => {
                 return this.handleResponse(
                     this.groupService.send_message({
-                        content: apiMessageContent(message.content),
+                        content: apiMessageContent(content ?? message.content),
                         message_id: message.messageId,
                         sender_name: senderName,
                         replies_to: apiOptional(
