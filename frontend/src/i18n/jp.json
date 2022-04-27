@@ -398,7 +398,8 @@
             "createPolls": "投票を作成する",
             "sendMessages": "メッセージを送る",
             "reactToMessages": "メッセージに反応する"
-        }
+        },
+        "advanced": "高度"
     },
     "updateNow": "今すぐリロード",
     "updateRequired": "OpenChatの新しいバージョンが利用可能です-{countdown}でリロード",
@@ -479,5 +480,10 @@
         "reactions": "反応",
         "deletedMessages": "削除されたメッセージ"
     },
-    "andNMore": "、 もっと"
+    "andNMore": "、 もっと",
+    "confirmMakeGroupPrivate": "このグループを絶対に非公開にしますか？その後、グループを再び公開することはできません。",
+    "makeGroupPrivate": "グループをプライベートにする",
+    "makeGroupPrivateSucceeded": "このグループは非公開になりました",
+    "makeGroupPrivateFailed": "グループをプライベートにすることができませんでした",
+    "groupVisibilityChangedBy": "{changedBy}グループを作成しました{visibility}"
 }

@@ -398,7 +398,8 @@
             "createPolls": "создавать опросы",
             "sendMessages": "отправлять сообщения",
             "reactToMessages": "реагировать на сообщения"
-        }
+        },
+        "advanced": "Передовой"
     },
     "updateNow": "перезагрузить сейчас",
     "updateRequired": "Доступна новая версия OpenChat — перезагрузка через {countdown} с.",
@@ -479,5 +480,10 @@
         "reactions": "реакции",
         "deletedMessages": "удаленные сообщения"
     },
-    "andNMore": ", и более"
+    "andNMore": ", и более",
+    "confirmMakeGroupPrivate": "Вы определенно хотите сделать эту группу закрытой? Вы не можете впоследствии снова сделать группу общедоступной!",
+    "makeGroupPrivate": "Сделать группу закрытой",
+    "makeGroupPrivateSucceeded": "Эта группа стала закрытой",
+    "makeGroupPrivateFailed": "Не удалось сделать группу закрытой",
+    "groupVisibilityChangedBy": "{changedBy} создал группу {visibility}"
 }

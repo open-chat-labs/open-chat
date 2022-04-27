@@ -399,7 +399,8 @@
             "createPolls": "tạo các cuộc thăm dò",
             "sendMessages": "gửi tin nhắn",
             "reactToMessages": "phản ứng với tin nhắn"
-        }
+        },
+        "advanced": "Trình độ cao"
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",
@@ -480,5 +481,10 @@
         "reactions": "phản ứng",
         "deletedMessages": "tin nhắn đã xóa"
     },
-    "andNMore": ", và hơn thế nữa"
+    "andNMore": ", và hơn thế nữa",
+    "confirmMakeGroupPrivate": "Bạn có chắc chắn muốn đặt nhóm này ở chế độ riêng tư không? Sau đó, bạn không thể công khai lại nhóm!",
+    "makeGroupPrivate": "Đặt nhóm ở chế độ riêng tư",
+    "makeGroupPrivateSucceeded": "Nhóm này đã được đặt ở chế độ riêng tư",
+    "makeGroupPrivateFailed": "Không thể đặt nhóm ở chế độ riêng tư",
+    "groupVisibilityChangedBy": "{changedBy} đã thành lập nhóm {visibility}"
 }
