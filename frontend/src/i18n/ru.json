@@ -479,5 +479,5 @@
         "reactions": "реакции",
         "deletedMessages": "удаленные сообщения"
     },
-    "andNMore": ", и более"
+    "andNMore": "и еще {n}"
 }
