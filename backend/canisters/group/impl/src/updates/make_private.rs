@@ -6,7 +6,7 @@ use group_canister::make_private::{Response::*, *};
 use group_index_canister::c2c_make_private;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{CanisterId, ChatId, GroupMadePrivate};
+use types::{CanisterId, ChatId, GroupVisibilityChanged};
 
 #[update]
 #[trace]
@@ -63,14 +63,15 @@ fn commit(runtime_state: &mut RuntimeState) {
     runtime_state.data.is_public = false;
 
     let now = runtime_state.env.now();
-    let event = GroupMadePrivate {
+    let event = GroupVisibilityChanged {
+        now_public: false,
         changed_by: runtime_state.data.owner_id,
     };
 
     runtime_state
         .data
         .events
-        .push_event(ChatEventInternal::GroupMadePrivate(Box::new(event)), now);
+        .push_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), now);
 
     handle_activity_notification(runtime_state);
 }
