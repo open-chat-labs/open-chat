@@ -100,7 +100,7 @@
         if (!me && !readByMe) {
             // todo - leaving this console log here for now just to make sure we are not *over* observing
             console.log("beginning to observe: ", msg.messageIndex);
-            observer.observe(msgElement);
+            observer?.observe(msgElement);
         }
 
         recalculateMediaDimensions();
