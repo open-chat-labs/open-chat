@@ -13,6 +13,7 @@
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
+    import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -141,6 +142,12 @@
         {user}
         changedBy={event.event.changedBy}
         property={$_("groupAvatar")}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "group_visibility_changed"}
+    <GroupVisibilityChangedEvent
+        {user}
+        nowPublic={event.event.nowPublic}
+        changedBy={event.event.changedBy}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "permissions_changed"}
     <PermissionsChangedEvent {user} event={event.event} timestamp={event.timestamp} />

@@ -23,6 +23,7 @@ import type {
     RegisterPollVoteResponse,
     GroupPermissions,
     EventsSuccessResult,
+    MakeGroupPrivateResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -216,6 +217,10 @@ export class CachingGroupClient implements IGroupClient {
 
     deleteGroup(): Promise<DeleteGroupResponse> {
         return this.client.deleteGroup();
+    }
+
+    makeGroupPrivate(): Promise<MakeGroupPrivateResponse> {
+        return this.client.makeGroupPrivate();
     }
 
     getPublicSummary(): Promise<GroupChatSummary | undefined> {

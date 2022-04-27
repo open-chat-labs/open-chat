@@ -368,7 +368,8 @@ export type GroupChatEvent =
     | PollVoteRegistered
     | PollVoteDeleted
     | PollEnded
-    | PermissionsChanged;
+    | PermissionsChanged
+    | GroupVisibilityChanged;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -498,6 +499,12 @@ export type PermissionsChanged = {
     kind: "permissions_changed";
     oldPermissions: GroupPermissions;
     newPermissions: GroupPermissions;
+    changedBy: string;
+};
+
+export type GroupVisibilityChanged = {
+    kind: "group_visibility_changed";
+    nowPublic: boolean;
     changedBy: string;
 };
 
@@ -648,6 +655,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     mentions: Mention[];
     ownerId?: string;
     permissions?: GroupPermissions;
+    public?: boolean;
 };
 
 export type MemberRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
@@ -949,6 +957,12 @@ export type ChangeRoleResponse =
     | "success";
 
 export type DeleteGroupResponse = "internal_error" | "not_authorised" | "success";
+
+export type MakeGroupPrivateResponse =
+    | "internal_error"
+    | "not_authorised"
+    | "already_private"
+    | "success";
 
 export type RemoveParticipantResponse =
     | "user_not_in_group"

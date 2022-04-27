@@ -398,7 +398,8 @@
             "createPolls": "Umfragen erstellen",
             "sendMessages": "Sende Nachrichten",
             "reactToMessages": "auf Nachrichten reagieren"
-        }
+        },
+        "advanced": "Fortschrittlich"
     },
     "updateNow": "jetzt neu laden",
     "updateRequired": "Eine neue Version von OpenChat ist verfügbar - Neuladen in {countdown}s",
@@ -479,5 +480,9 @@
         "reactions": "Reaktionen",
         "deletedMessages": "gelöschte Nachrichten"
     },
-    "andNMore": ", und {n} mehr"
+    "andNMore": ", und {n} mehr",
+    "confirmMakeGroupPrivate": "Möchten Sie diese Gruppe auf jeden Fall privat machen? Derzeit kann dieser Vorgang nicht rückgängig gemacht werden!",
+    "makeGroupPrivate": "Gruppe privat machen",
+    "makeGroupPrivateFailed": "Gruppe konnte nicht privat gemacht werden",
+    "groupVisibilityChangedBy": "{changedBy} hat die Gruppe {visibility} erstellt"
 }
