@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
+    import { rollbar } from "utils/logging";
 
     import { Poller } from "../fsm/poller";
 
@@ -11,6 +12,7 @@
     let clientVersion = window.OPENCHAT_WEBSITE_VERSION;
     let countdown = 30;
     let showBanner = false;
+    let errorCount = 0;
 
     onDestroy(() => poller.stop());
 
@@ -42,7 +44,13 @@
             .then((res) => res.json())
             .then((res) => {
                 console.log("Server version: ", res);
+                errorCount = 0;
                 return res.version;
+            })
+            .catch((err) => {
+                errorCount += 1;
+                rollbar.error(`Unable to load server version ${errorCount} times`, err);
+                return clientVersion;
             });
     }
 </script>
