@@ -49,7 +49,6 @@ export function usersResponse(candid: ApiUsersResponse): UsersResponse {
         return {
             serverTimestamp: timestamp,
             users: candid.Success.users.map((u) => partialUserSummary(u, timestamp)),
-            fromCache: new Set<string>(),
         };
     }
     throw new Error(`Unknown UserIndex.UsersResponse of ${candid}`);

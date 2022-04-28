@@ -169,7 +169,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
         return {
             serverTimestamp: response.serverTimestamp,
             users,
-            updated: requestedFromServer,
         };
     }
 

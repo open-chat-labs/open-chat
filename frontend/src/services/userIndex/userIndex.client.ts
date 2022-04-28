@@ -106,7 +106,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
             return Promise.resolve({
                 serverTimestamp: undefined,
                 users: [],
-                fromCache: new Set<string>()
             });
         }
         const args = {

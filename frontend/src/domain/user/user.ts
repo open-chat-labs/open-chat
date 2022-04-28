@@ -38,7 +38,6 @@ export type UsersArgs = {
 export type UsersResponse = {
     serverTimestamp?: bigint;
     users: PartialUserSummary[];
-    updated: Set<string>,
 };
 
 export enum UserStatus {
