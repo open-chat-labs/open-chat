@@ -222,13 +222,13 @@ export function setCachedChats(
             },
             userId
         );
-        Object.entries(latestMessages).flatMap(([chatId, message]) => [
-            eventStore.put(message, createCacheKey(chatId, message.index)),
-            mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`),
-        ]);
+        Object.entries(latestMessages).forEach(([chatId, message]) => {
+            eventStore.put(message, createCacheKey(chatId, message.index));
+            mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`);
+        });
         Object.entries(data.affectedEvents)
             .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
-            .map((key) => eventStore.delete(key));
+            .forEach((key) => eventStore.delete(key));
 
         return data;
     };
@@ -593,7 +593,7 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
     }
     const tx = (await db).transaction("chat_events", "readwrite", { durability: "relaxed" });
     const store = tx.objectStore("chat_events");
-    events.map((event) =>
+    events.forEach((event) =>
         store.put(makeSerialisable<T>(event, chatId), createCacheKey(chatId, event.index))
     );
 }
