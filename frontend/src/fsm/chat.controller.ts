@@ -728,7 +728,9 @@ export class ChatController {
                             reactions: toggleReaction(userId, e.event.reactions, reaction),
                         },
                     };
-                    overwriteCachedEvents(this.chatId, [updatedEvent]);
+                    overwriteCachedEvents(this.chatId, [updatedEvent]).catch((err) =>
+                        rollbar.error("Unable to overwrite cached event toggling reaction", err)
+                    );
                     if (userId === this.user.userId) {
                         rtcConnectionsManager.sendMessage([...this.chatUserIds], {
                             kind: "remote_user_toggled_reaction",

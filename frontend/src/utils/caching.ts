@@ -127,7 +127,7 @@ export async function removeCachedChat(
     const fromCache = await getCachedChats(db, userId);
     if (fromCache !== undefined) {
         fromCache.chatSummaries = fromCache.chatSummaries.filter((c) => c.chatId !== chatId);
-        setCachedChats(db, userId)(fromCache);
+        setCachedChats(db, userId, fromCache);
     }
 }
 
@@ -159,58 +159,59 @@ export async function getCachedChats(
         : undefined;
 }
 
-export function setCachedChats(
+export async function setCachedChats(
     db: Database,
-    userId: string
-): (data: MergedUpdatesResponse) => Promise<MergedUpdatesResponse> {
-    return async (data: MergedUpdatesResponse) => {
-        if (!data.wasUpdated) {
-            return data;
-        }
+    userId: string,
+    data: MergedUpdatesResponse
+): Promise<void> {
+    if (!data.wasUpdated) {
+        return;
+    }
 
-        const latestMessages: Record<string, EventWrapper<Message>> = {};
+    const latestMessages: Record<string, EventWrapper<Message>> = {};
 
-        // irritating hoop jumping to keep typescript happy here
-        const serialisable = data.chatSummaries
-            .filter((c) => !isPreviewing(c))
-            .map((c) => {
-                const latestMessage = c.latestMessage
-                    ? makeSerialisable(c.latestMessage, c.chatId)
-                    : undefined;
+    // irritating hoop jumping to keep typescript happy here
+    const serialisable = data.chatSummaries
+        .filter((c) => !isPreviewing(c))
+        .map((c) => {
+            const latestMessage = c.latestMessage
+                ? makeSerialisable(c.latestMessage, c.chatId)
+                : undefined;
 
-                if (latestMessage) {
-                    latestMessages[c.chatId] = latestMessage;
-                }
+            if (latestMessage) {
+                latestMessages[c.chatId] = latestMessage;
+            }
 
-                if (c.kind === "direct_chat") {
-                    return {
-                        ...c,
-                        readByMe: drangeToIndexRanges(c.readByMe),
-                        readByThem: drangeToIndexRanges(c.readByThem),
-                        latestMessage,
-                    };
-                }
+            if (c.kind === "direct_chat") {
+                return {
+                    ...c,
+                    readByMe: drangeToIndexRanges(c.readByMe),
+                    readByThem: drangeToIndexRanges(c.readByThem),
+                    latestMessage,
+                };
+            }
 
-                if (c.kind === "group_chat") {
-                    return {
-                        ...c,
-                        readByMe: drangeToIndexRanges(c.readByMe),
-                        latestMessage,
-                    };
-                }
+            if (c.kind === "group_chat") {
+                return {
+                    ...c,
+                    readByMe: drangeToIndexRanges(c.readByMe),
+                    latestMessage,
+                };
+            }
 
-                throw new UnsupportedValueError("Unrecognised chat type", c);
-            });
+            throw new UnsupportedValueError("Unrecognised chat type", c);
+        });
 
-        const tx = (await db).transaction(
-            ["chats", "chat_events", "message_index_event_index"],
-            "readwrite",
-            { durability: "relaxed" }
-        );
-        const chatsStore = tx.objectStore("chats");
-        const eventStore = tx.objectStore("chat_events");
-        const mapStore = tx.objectStore("message_index_event_index");
+    const tx = (await db).transaction(
+        ["chats", "chat_events", "message_index_event_index"],
+        "readwrite",
+        { durability: "relaxed" }
+    );
+    const chatsStore = tx.objectStore("chats");
+    const eventStore = tx.objectStore("chat_events");
+    const mapStore = tx.objectStore("message_index_event_index");
 
+    const promises: Promise<string | void>[] = [
         chatsStore.put(
             {
                 wasUpdated: true,
@@ -221,17 +222,18 @@ export function setCachedChats(
                 affectedEvents: {},
             },
             userId
-        );
-        Object.entries(latestMessages).forEach(([chatId, message]) => {
-            eventStore.put(message, createCacheKey(chatId, message.index));
-            mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`);
-        });
-        Object.entries(data.affectedEvents)
+        ),
+        ...Object.entries(latestMessages).flatMap(([chatId, message]) => [
+            eventStore.put(message, createCacheKey(chatId, message.index)),
+            mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`),
+        ]),
+        ...Object.entries(data.affectedEvents)
             .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
-            .forEach((key) => eventStore.delete(key));
+            .map((key) => eventStore.delete(key)),
+    ];
 
-        return data;
-    };
+    await Promise.all(promises);
+    await tx.done;
 }
 
 export async function getCachedEventsWindow<T extends ChatEvent>(
@@ -499,28 +501,29 @@ function indexRangesToDRange(ranges: IndexRange[]): DRange {
     return drange;
 }
 
-export function setCachedEvents<T extends ChatEvent>(
+export async function setCachedEvents<T extends ChatEvent>(
     db: Database,
-    chatId: string
-): (resp: EventsResponse<T>) => Promise<EventsResponse<T>> {
-    return async (resp: EventsResponse<T>) => {
-        if (resp === "events_failed") return Promise.resolve(resp);
-        const tx = (await db).transaction(
-            ["chat_events", "message_index_event_index"],
-            "readwrite",
-            { durability: "relaxed" }
-        );
-        const eventStore = tx.objectStore("chat_events");
-        const mapStore = tx.objectStore("message_index_event_index");
-        resp.events.concat(resp.affectedEvents).forEach(async (event) => {
-            eventStore.put(makeSerialisable<T>(event, chatId), createCacheKey(chatId, event.index));
+    chatId: string,
+    resp: EventsResponse<T>
+): Promise<void> {
+    if (resp === "events_failed") return;
+    const tx = (await db).transaction(["chat_events", "message_index_event_index"], "readwrite", {
+        durability: "relaxed",
+    });
+    const eventStore = tx.objectStore("chat_events");
+    const mapStore = tx.objectStore("message_index_event_index");
+    await Promise.all(
+        resp.events.concat(resp.affectedEvents).map(async (event) => {
+            await eventStore.put(
+                makeSerialisable<T>(event, chatId),
+                createCacheKey(chatId, event.index)
+            );
             if (event.event.kind === "message") {
-                mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`);
+                await mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`);
             }
-        });
-
-        return resp;
-    };
+        })
+    );
+    await tx.done;
 }
 
 export function setCachedMessageFromSendResponse(
@@ -533,7 +536,9 @@ export function setCachedMessageFromSendResponse(
 
         const event = messageToEvent(message, resp);
 
-        setCachedMessage(db, chatId, event);
+        setCachedMessage(db, chatId, event).catch((err) =>
+            rollbar.error("Unable to write message to cache: ", err)
+        );
 
         return resp;
     };
@@ -551,7 +556,9 @@ export function setCachedMessageFromNotification(
     const chatId =
         notification.kind === "group_notification" ? notification.chatId : notification.sender;
 
-    setCachedMessage(db, chatId, notification.message);
+    setCachedMessage(db, chatId, notification.message).catch((err) =>
+        rollbar.error("Unable to write notification message to the cache", err)
+    );
 }
 
 async function setCachedMessage(
@@ -564,11 +571,14 @@ async function setCachedMessage(
     });
     const eventStore = tx.objectStore("chat_events");
     const mapStore = tx.objectStore("message_index_event_index");
-    eventStore.put(
-        makeSerialisable(messageEvent, chatId),
-        createCacheKey(chatId, messageEvent.index)
-    );
-    mapStore.put(messageEvent.index, `${chatId}_${messageEvent.event.messageIndex}`);
+    await Promise.all([
+        eventStore.put(
+            makeSerialisable(messageEvent, chatId),
+            createCacheKey(chatId, messageEvent.index)
+        ),
+        mapStore.put(messageEvent.index, `${chatId}_${messageEvent.event.messageIndex}`),
+    ]);
+    await tx.done;
 }
 
 function messageToEvent(message: Message, resp: SendMessageSuccess): EventWrapper<Message> {
@@ -593,9 +603,12 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
     }
     const tx = (await db).transaction("chat_events", "readwrite", { durability: "relaxed" });
     const store = tx.objectStore("chat_events");
-    events.forEach((event) =>
-        store.put(makeSerialisable<T>(event, chatId), createCacheKey(chatId, event.index))
+    await Promise.all(
+        events.map((event) =>
+            store.put(makeSerialisable<T>(event, chatId), createCacheKey(chatId, event.index))
+        )
     );
+    await tx.done;
 }
 
 export async function getCachedGroupDetails(
@@ -617,7 +630,8 @@ export async function storeSoftDisabled(value: boolean): Promise<void> {
     if (db !== undefined) {
         const tx = (await db).transaction("soft_disabled", "readwrite", { durability: "relaxed" });
         const store = tx.objectStore("soft_disabled");
-        store.put(value, "soft_disabled");
+        await store.put(value, "soft_disabled");
+        await tx.done;
     }
 }
 
@@ -643,7 +657,9 @@ export async function getCachedUsers(db: Database, userIds: string[]): Promise<U
 export async function setCachedUsers(db: Database, users: UserSummary[]): Promise<void> {
     const tx = (await db).transaction("users", "readwrite", { durability: "relaxed" });
     const store = tx.objectStore("users");
-    users.forEach((u) => store.put(u, u.userId));
+
+    await Promise.all(users.map((u) => store.put(u, u.userId)));
+    await tx.done;
 }
 
 let db: Database | undefined;
