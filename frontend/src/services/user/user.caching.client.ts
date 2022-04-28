@@ -341,7 +341,7 @@ export class CachingUserClient implements IUserClient {
         return this.client.unblockUser(userId);
     }
 
-    async leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
+    leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
         removeCachedChat(this.db, this.userId, chatId);
         return this.client.leaveGroup(chatId);
     }
