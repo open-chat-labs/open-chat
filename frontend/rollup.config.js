@@ -268,7 +268,7 @@ export default [
                                     .toString()
                                     .replace(
                                         "//# sourceMappingURL=",
-                                        "//# sourceMappingURL=_/raw/"
+                                        "//# sourceMappingURL=./_/raw/"
                                     ),
                         },
                     ],
