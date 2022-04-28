@@ -23,6 +23,7 @@ import type {
     PendingICPWithdrawal,
     WithdrawCryptocurrencyResponse,
     EventsSuccessResult,
+    ChatEvent,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -56,14 +57,15 @@ import type {
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import { profile } from "../common/profiling";
 import { chunk, toRecord } from "../../utils/list";
-import { GroupClient } from "services/group/group.client";
+import { GroupClient } from "../../services/group/group.client";
 import type { Identity } from "@dfinity/agent";
 import { scrollStrategy } from "../../stores/settings";
 import { get } from "svelte/store";
 import type { IMessageReadTracker } from "../../stores/markRead";
-import { missingUserIds } from "domain/user/user.utils";
+import { missingUserIds } from "../../domain/user/user.utils";
 import { userStore } from "stores/user";
 import { UserIndexClient } from "services/userIndex/userIndex.client";
+import { rollbar } from "../../utils/logging";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -80,6 +82,23 @@ export class CachingUserClient implements IUserClient {
         private client: IUserClient
     ) {}
 
+    private setCachedChats(resp: MergedUpdatesResponse): MergedUpdatesResponse {
+        setCachedChats(this.db, this.userId, resp).catch((err) =>
+            rollbar.error("Error setting cached chats", err)
+        );
+        return resp;
+    }
+
+    private setCachedEvents<T extends ChatEvent>(
+        userId: string,
+        resp: EventsResponse<T>
+    ): EventsResponse<T> {
+        setCachedEvents(this.db, userId, resp).catch((err) =>
+            rollbar.error("Error writing cached group events", err)
+        );
+        return resp;
+    }
+
     private handleMissingEvents(
         userId: string,
         [cachedEvents, missing]: [EventsSuccessResult<DirectChatEvent>, Set<number>]
@@ -89,7 +108,7 @@ export class CachingUserClient implements IUserClient {
         } else {
             return this.client
                 .chatEventsByIndex([...missing], userId)
-                .then(setCachedEvents(this.db, userId))
+                .then((resp) => this.setCachedEvents(userId, resp))
                 .then((resp) => {
                     if (resp !== "events_failed") {
                         return mergeSuccessResponses(cachedEvents, resp);
@@ -130,7 +149,7 @@ export class CachingUserClient implements IUserClient {
             );
             return this.client
                 .chatEventsWindow(eventIndexRange, userId, messageIndex)
-                .then(setCachedEvents(this.db, userId));
+                .then((resp) => this.setCachedEvents(userId, resp));
         } else {
             return this.handleMissingEvents(userId, [cachedEvents, missing]);
         }
@@ -157,7 +176,7 @@ export class CachingUserClient implements IUserClient {
             console.log("We didn't get enough back from the cache, going to the api");
             return this.client
                 .chatEvents(eventIndexRange, userId, startIndex, ascending)
-                .then(setCachedEvents(this.db, userId));
+                .then((resp) => this.setCachedEvents(userId, resp));
         } else {
             return this.handleMissingEvents(userId, [cachedEvents, missing]);
         }
@@ -236,15 +255,17 @@ export class CachingUserClient implements IUserClient {
 
                     const missing = missingUserIds(get(userStore), userIds);
                     if (missing.length > 0) {
-                        return UserIndexClient.create(this.identity, this.db)
-                            .getUsers({
+                        return UserIndexClient.create(this.identity, this.db).getUsers(
+                            {
                                 userGroups: [
                                     {
                                         users: missing,
                                         updatedSince: BigInt(0),
                                     },
                                 ],
-                            }, true)
+                            },
+                            true
+                        );
                     }
                 });
             }
@@ -270,7 +291,7 @@ export class CachingUserClient implements IUserClient {
                     this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
                     return resp;
                 })
-                .then(setCachedChats(this.db, this.userId));
+                .then((resp) => this.setCachedChats(resp));
         } else {
             return this.client
                 .getInitialState(messagesRead)
@@ -278,7 +299,7 @@ export class CachingUserClient implements IUserClient {
                     this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
                     return resp;
                 })
-                .then(setCachedChats(this.db, this.userId));
+                .then((resp) => this.setCachedChats(resp));
         }
     }
 
@@ -296,7 +317,7 @@ export class CachingUserClient implements IUserClient {
                 this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
                 return resp;
             })
-            .then(setCachedChats(this.db, this.userId));
+            .then((resp) => this.setCachedChats(resp));
     }
 
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
@@ -339,8 +360,10 @@ export class CachingUserClient implements IUserClient {
         return this.client.unblockUser(userId);
     }
 
-    async leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
-        await removeCachedChat(this.db, this.userId, chatId);
+    leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
+        removeCachedChat(this.db, this.userId, chatId).catch((err) =>
+            rollbar.error("Failed to remove chat from cache", err)
+        );
         return this.client.leaveGroup(chatId);
     }
 

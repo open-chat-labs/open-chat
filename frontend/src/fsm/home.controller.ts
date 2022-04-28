@@ -644,11 +644,11 @@ export class HomeController {
             return;
         }
         const chatType = chat.kind === "direct_chat" ? "direct" : "group";
+        setCachedMessageFromNotification(notification);
         Promise.all([
             this.api.rehydrateMessage(chatType, chatId, message),
             this.addMissingUsersFromMessage(message),
-            setCachedMessageFromNotification(notification),
-        ]).then(([m, _, __]) => {
+        ]).then(([m, _]) => {
             this.updateSummaryWithConfirmedMessage(chatId, m);
 
             const selectedChat = get(this.selectedChat);

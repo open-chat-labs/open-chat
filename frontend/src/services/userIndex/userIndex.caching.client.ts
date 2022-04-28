@@ -21,6 +21,7 @@ import type {
 import { groupBy } from "../../utils/list";
 import { isUserSummary } from "../../utils/user";
 import { profile } from "../common/profiling";
+import { rollbar } from "../../utils/logging";
 
 /**
  * This exists to decorate the user index client so that we can provide a write through cache to
@@ -44,9 +45,16 @@ export class CachingUserIndexClient implements IUserIndexClient {
         const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
 
         // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
-        const mergedResponse = this.mergeGetUsersResponse(allUsers, requestedFromServer, response, fromCache);
+        const mergedResponse = this.mergeGetUsersResponse(
+            allUsers,
+            requestedFromServer,
+            response,
+            fromCache
+        );
 
-        await setCachedUsers(this.db, mergedResponse.users.filter(isUserSummary));
+        setCachedUsers(this.db, mergedResponse.users.filter(isUserSummary)).catch((err) =>
+            rollbar.error("Failed to save users to the cache", err)
+        );
 
         return mergedResponse;
     }
@@ -158,7 +166,7 @@ export class CachingUserIndexClient implements IUserIndexClient {
                     // our cached copy is up to date.
                     users.push({
                         ...cached,
-                        updated: response.serverTimestamp!
+                        updated: response.serverTimestamp!,
                     });
                 } else {
                     users.push(cached);

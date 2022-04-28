@@ -4,6 +4,7 @@ import type { ServiceContainer } from "../services/serviceContainer";
 import { notificationsSoftDisabled } from "../stores/notifications";
 import { toUint8Array } from "./base64";
 import { storeSoftDisabled } from "./caching";
+import { rollbar } from "./logging";
 
 // https://datatracker.ietf.org/doc/html/draft-thomson-webpush-vapid
 export const PUBLIC_VAPID_KEY =
@@ -180,7 +181,9 @@ export async function unsubscribeNotifications(
 
 export async function setSoftDisabled(softDisabled: boolean): Promise<void> {
     // add to indexdb so service worker has access
-    await storeSoftDisabled(softDisabled);
+    storeSoftDisabled(softDisabled).catch((err) =>
+        rollbar.error("Failed to set soft disabled", err)
+    );
 
     // add to svelte store
     notificationsSoftDisabled.set(softDisabled);

@@ -24,6 +24,7 @@ import type {
     GroupPermissions,
     EventsSuccessResult,
     MakeGroupPrivateResponse,
+    ChatEvent,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -42,7 +43,8 @@ import {
 } from "../../utils/caching";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { profile } from "../common/profiling";
-import { MAX_MISSING } from "domain/chat/chat.utils";
+import { MAX_MISSING } from "../../domain/chat/chat.utils";
+import { rollbar } from "../../utils/logging";
 
 /**
  * This exists to decorate the group client so that we can provide a write through cache to
@@ -55,6 +57,13 @@ export class CachingGroupClient implements IGroupClient {
         private client: IGroupClient
     ) {}
 
+    private setCachedEvents<T extends ChatEvent>(resp: EventsResponse<T>): EventsResponse<T> {
+        setCachedEvents(this.db, this.chatId, resp).catch((err) =>
+            rollbar.error("Error writing cached group events", err)
+        );
+        return resp;
+    }
+
     private handleMissingEvents([cachedEvents, missing]: [
         EventsSuccessResult<GroupChatEvent>,
         Set<number>
@@ -64,7 +73,7 @@ export class CachingGroupClient implements IGroupClient {
         } else {
             return this.client
                 .chatEventsByIndex([...missing])
-                .then(setCachedEvents(this.db, this.chatId))
+                .then((resp) => this.setCachedEvents(resp))
                 .then((resp) => {
                     if (resp !== "events_failed") {
                         return mergeSuccessResponses(cachedEvents, resp);
@@ -101,7 +110,7 @@ export class CachingGroupClient implements IGroupClient {
             );
             return this.client
                 .chatEventsWindow(eventIndexRange, messageIndex)
-                .then(setCachedEvents(this.db, this.chatId));
+                .then((resp) => this.setCachedEvents(resp));
         } else {
             return this.handleMissingEvents([cachedEvents, missing]);
         }
@@ -127,7 +136,7 @@ export class CachingGroupClient implements IGroupClient {
             console.log("We didn't get enough back from the cache, going to the api");
             return this.client
                 .chatEvents(eventIndexRange, startIndex, ascending)
-                .then(setCachedEvents(this.db, this.chatId));
+                .then((resp) => this.setCachedEvents(resp));
         } else {
             return this.handleMissingEvents([cachedEvents, missing]);
         }
@@ -235,7 +244,7 @@ export class CachingGroupClient implements IGroupClient {
 
             const resp = await this.client
                 .getMessagesByMessageIndex(fromCache.missing)
-                .then(setCachedEvents(this.db, this.chatId));
+                .then((resp) => this.setCachedEvents(resp));
 
             return resp === "events_failed"
                 ? "events_failed"
