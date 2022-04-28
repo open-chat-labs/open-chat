@@ -236,15 +236,17 @@ export class CachingUserClient implements IUserClient {
 
                     const missing = missingUserIds(get(userStore), userIds);
                     if (missing.length > 0) {
-                        return UserIndexClient.create(this.identity, this.db)
-                            .getUsers({
+                        return UserIndexClient.create(this.identity, this.db).getUsers(
+                            {
                                 userGroups: [
                                     {
                                         users: missing,
                                         updatedSince: BigInt(0),
                                     },
                                 ],
-                            }, true)
+                            },
+                            true
+                        );
                     }
                 });
             }
@@ -340,7 +342,7 @@ export class CachingUserClient implements IUserClient {
     }
 
     async leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
-        await removeCachedChat(this.db, this.userId, chatId);
+        removeCachedChat(this.db, this.userId, chatId);
         return this.client.leaveGroup(chatId);
     }
 

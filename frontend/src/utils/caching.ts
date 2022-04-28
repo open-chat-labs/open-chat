@@ -127,7 +127,7 @@ export async function removeCachedChat(
     const fromCache = await getCachedChats(db, userId);
     if (fromCache !== undefined) {
         fromCache.chatSummaries = fromCache.chatSummaries.filter((c) => c.chatId !== chatId);
-        await setCachedChats(db, userId)(fromCache);
+        setCachedChats(db, userId)(fromCache);
     }
 }
 
@@ -211,29 +211,24 @@ export function setCachedChats(
         const eventStore = tx.objectStore("chat_events");
         const mapStore = tx.objectStore("message_index_event_index");
 
-        const promises: Promise<string | void>[] = [
-            chatsStore.put(
-                {
-                    wasUpdated: true,
-                    chatSummaries: serialisable,
-                    timestamp: data.timestamp,
-                    blockedUsers: data.blockedUsers,
-                    avatarIdUpdate: undefined,
-                    affectedEvents: {},
-                },
-                userId
-            ),
-            ...Object.entries(latestMessages).flatMap(([chatId, message]) => [
-                eventStore.put(message, createCacheKey(chatId, message.index)),
-                mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`),
-            ]),
-            ...Object.entries(data.affectedEvents)
-                .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
-                .map((key) => eventStore.delete(key)),
-        ];
-
-        await Promise.all(promises);
-        await tx.done;
+        chatsStore.put(
+            {
+                wasUpdated: true,
+                chatSummaries: serialisable,
+                timestamp: data.timestamp,
+                blockedUsers: data.blockedUsers,
+                avatarIdUpdate: undefined,
+                affectedEvents: {},
+            },
+            userId
+        );
+        Object.entries(latestMessages).flatMap(([chatId, message]) => [
+            eventStore.put(message, createCacheKey(chatId, message.index)),
+            mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`),
+        ]);
+        Object.entries(data.affectedEvents)
+            .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
+            .map((key) => eventStore.delete(key));
 
         return data;
     };
@@ -517,18 +512,12 @@ export function setCachedEvents<T extends ChatEvent>(
         );
         const eventStore = tx.objectStore("chat_events");
         const mapStore = tx.objectStore("message_index_event_index");
-        await Promise.all(
-            resp.events.concat(resp.affectedEvents).map(async (event) => {
-                await eventStore.put(
-                    makeSerialisable<T>(event, chatId),
-                    createCacheKey(chatId, event.index)
-                );
-                if (event.event.kind === "message") {
-                    await mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`);
-                }
-            })
-        );
-        await tx.done;
+        resp.events.concat(resp.affectedEvents).forEach(async (event) => {
+            eventStore.put(makeSerialisable<T>(event, chatId), createCacheKey(chatId, event.index));
+            if (event.event.kind === "message") {
+                mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`);
+            }
+        });
 
         return resp;
     };
@@ -538,21 +527,21 @@ export function setCachedMessageFromSendResponse(
     db: Database,
     chatId: string,
     message: Message
-): (resp: SendMessageResponse) => Promise<SendMessageResponse> {
-    return async (resp: SendMessageResponse) => {
-        if (resp.kind !== "success") return Promise.resolve(resp);
+): (resp: SendMessageResponse) => SendMessageResponse {
+    return (resp: SendMessageResponse) => {
+        if (resp.kind !== "success") return resp;
 
         const event = messageToEvent(message, resp);
 
-        await setCachedMessage(db, chatId, event);
+        setCachedMessage(db, chatId, event);
 
         return resp;
     };
 }
 
-export async function setCachedMessageFromNotification(
+export function setCachedMessageFromNotification(
     notification: DirectNotification | GroupNotification
-): Promise<void> {
+): void {
     if (!process.env.CLIENT_CACHING) return;
 
     if (db === undefined) {
@@ -562,7 +551,7 @@ export async function setCachedMessageFromNotification(
     const chatId =
         notification.kind === "group_notification" ? notification.chatId : notification.sender;
 
-    await setCachedMessage(db, chatId, notification.message);
+    setCachedMessage(db, chatId, notification.message);
 }
 
 async function setCachedMessage(
@@ -575,14 +564,11 @@ async function setCachedMessage(
     });
     const eventStore = tx.objectStore("chat_events");
     const mapStore = tx.objectStore("message_index_event_index");
-    await Promise.all([
-        eventStore.put(
-            makeSerialisable(messageEvent, chatId),
-            createCacheKey(chatId, messageEvent.index)
-        ),
-        mapStore.put(messageEvent.index, `${chatId}_${messageEvent.event.messageIndex}`),
-    ]);
-    await tx.done;
+    eventStore.put(
+        makeSerialisable(messageEvent, chatId),
+        createCacheKey(chatId, messageEvent.index)
+    );
+    mapStore.put(messageEvent.index, `${chatId}_${messageEvent.event.messageIndex}`);
 }
 
 function messageToEvent(message: Message, resp: SendMessageSuccess): EventWrapper<Message> {
@@ -607,12 +593,9 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
     }
     const tx = (await db).transaction("chat_events", "readwrite", { durability: "relaxed" });
     const store = tx.objectStore("chat_events");
-    await Promise.all(
-        events.map((event) =>
-            store.put(makeSerialisable<T>(event, chatId), createCacheKey(chatId, event.index))
-        )
+    events.map((event) =>
+        store.put(makeSerialisable<T>(event, chatId), createCacheKey(chatId, event.index))
     );
-    await tx.done;
 }
 
 export async function getCachedGroupDetails(
@@ -634,8 +617,7 @@ export async function storeSoftDisabled(value: boolean): Promise<void> {
     if (db !== undefined) {
         const tx = (await db).transaction("soft_disabled", "readwrite", { durability: "relaxed" });
         const store = tx.objectStore("soft_disabled");
-        await store.put(value, "soft_disabled");
-        await tx.done;
+        store.put(value, "soft_disabled");
     }
 }
 
@@ -661,9 +643,7 @@ export async function getCachedUsers(db: Database, userIds: string[]): Promise<U
 export async function setCachedUsers(db: Database, users: UserSummary[]): Promise<void> {
     const tx = (await db).transaction("users", "readwrite", { durability: "relaxed" });
     const store = tx.objectStore("users");
-
-    await Promise.all(users.map((u) => store.put(u, u.userId)));
-    await tx.done;
+    users.forEach((u) => store.put(u, u.userId));
 }
 
 let db: Database | undefined;
