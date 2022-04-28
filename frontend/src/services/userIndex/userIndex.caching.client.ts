@@ -41,8 +41,10 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
         const response = await this.client.getUsers(args, allowStale);
 
+        const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
+
         // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
-        const mergedResponse = this.mergeGetUsersResponse(allUsers, response, fromCache);
+        const mergedResponse = this.mergeGetUsersResponse(allUsers, requestedFromServer, response, fromCache);
 
         await setCachedUsers(this.db, mergedResponse.users.filter(isUserSummary));
 
@@ -125,6 +127,7 @@ export class CachingUserIndexClient implements IUserIndexClient {
     // Merges the cached values into the response
     private mergeGetUsersResponse(
         allUsers: string[],
+        requestedFromServer: Set<string>,
         response: UsersResponse,
         fromCache: UserSummary[]
     ): UsersResponse {
@@ -136,7 +139,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
         const responseMap = new Map<string, PartialUserSummary>(
             response.users.map((u) => [u.userId, u])
         );
-        const fromCacheSet = new Set<string>();
 
         const users: PartialUserSummary[] = [];
 
@@ -151,15 +153,23 @@ export class CachingUserIndexClient implements IUserIndexClient {
                     blobReference: userResponse.blobReference ?? cached?.blobReference,
                 });
             } else if (cached !== undefined) {
-                users.push(cached);
-                fromCacheSet.add(userId);
+                if (requestedFromServer.has(userId)) {
+                    // If this user was requested from the server but wasn't included in the response, then that means
+                    // our cached copy is up to date.
+                    users.push({
+                        ...cached,
+                        updated: response.serverTimestamp!
+                    });
+                } else {
+                    users.push(cached);
+                }
             }
         }
 
         return {
             serverTimestamp: response.serverTimestamp,
             users,
-            fromCache: fromCacheSet,
+            updated: requestedFromServer,
         };
     }
 
