@@ -204,7 +204,8 @@ export function setCachedChats(
 
         const tx = (await db).transaction(
             ["chats", "chat_events", "message_index_event_index"],
-            "readwrite"
+            "readwrite",
+            { durability: "relaxed" }
         );
         const chatsStore = tx.objectStore("chats");
         const eventStore = tx.objectStore("chat_events");
@@ -511,7 +512,8 @@ export function setCachedEvents<T extends ChatEvent>(
         if (resp === "events_failed") return Promise.resolve(resp);
         const tx = (await db).transaction(
             ["chat_events", "message_index_event_index"],
-            "readwrite"
+            "readwrite",
+            { durability: "relaxed" }
         );
         const eventStore = tx.objectStore("chat_events");
         const mapStore = tx.objectStore("message_index_event_index");
@@ -568,7 +570,9 @@ async function setCachedMessage(
     chatId: string,
     messageEvent: EventWrapper<Message>
 ): Promise<void> {
-    const tx = (await db).transaction(["chat_events", "message_index_event_index"], "readwrite");
+    const tx = (await db).transaction(["chat_events", "message_index_event_index"], "readwrite", {
+        durability: "relaxed",
+    });
     const eventStore = tx.objectStore("chat_events");
     const mapStore = tx.objectStore("message_index_event_index");
     await Promise.all([
@@ -601,7 +605,7 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
     if (db === undefined) {
         throw new Error("Unable to open indexDB, cannot overwrite cache entries");
     }
-    const tx = (await db).transaction("chat_events", "readwrite");
+    const tx = (await db).transaction("chat_events", "readwrite", { durability: "relaxed" });
     const store = tx.objectStore("chat_events");
     await Promise.all(
         events.map((event) =>
@@ -628,7 +632,7 @@ export async function setCachedGroupDetails(
 
 export async function storeSoftDisabled(value: boolean): Promise<void> {
     if (db !== undefined) {
-        const tx = (await db).transaction("soft_disabled", "readwrite");
+        const tx = (await db).transaction("soft_disabled", "readwrite", { durability: "relaxed" });
         const store = tx.objectStore("soft_disabled");
         await store.put(value, "soft_disabled");
         await tx.done;
@@ -655,7 +659,7 @@ export async function getCachedUsers(db: Database, userIds: string[]): Promise<U
 }
 
 export async function setCachedUsers(db: Database, users: UserSummary[]): Promise<void> {
-    const tx = (await db).transaction("users", "readwrite");
+    const tx = (await db).transaction("users", "readwrite", { durability: "relaxed" });
     const store = tx.objectStore("users");
 
     await Promise.all(users.map((u) => store.put(u, u.userId)));
