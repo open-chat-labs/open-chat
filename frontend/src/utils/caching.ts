@@ -127,7 +127,7 @@ export async function removeCachedChat(
     const fromCache = await getCachedChats(db, userId);
     if (fromCache !== undefined) {
         fromCache.chatSummaries = fromCache.chatSummaries.filter((c) => c.chatId !== chatId);
-        setCachedChats(db, userId, fromCache);
+        await setCachedChats(db, userId, fromCache);
     }
 }
 
