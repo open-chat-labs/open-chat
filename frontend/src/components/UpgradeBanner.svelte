@@ -1,8 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
-    import { rollbar } from "utils/logging";
-
+    import { rollbar } from "../utils/logging";
     import { Poller } from "../fsm/poller";
 
     const VERSION_INTERVAL = 60 * 1000;
