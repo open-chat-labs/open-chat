@@ -144,10 +144,7 @@ export class HomeController {
                 });
                 userStore.addMany(usersResp.users);
                 if (usersResp.serverTimestamp !== undefined) {
-                    userStore.setUpdated(
-                        batch.filter((u) => !usersResp.fromCache.has(u)),
-                        usersResp.serverTimestamp
-                    );
+                    userStore.setUpdated(batch, usersResp.serverTimestamp);
                 }
             }
             console.log("users updated");
