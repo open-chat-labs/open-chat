@@ -114,7 +114,7 @@
     }
 
     function leaveGroup() {
-        dispatch("leaveGroup", $selectedChatSummary.chatId);
+        dispatch("leaveGroup", { kind: "leave", chatId: $selectedChatSummary.chatId });
     }
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary) {

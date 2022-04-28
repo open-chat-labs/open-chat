@@ -485,5 +485,6 @@
     "confirmMakeGroupPrivate": "Bạn có chắc chắn muốn đặt nhóm này ở chế độ riêng tư không? Hiện tại không thể hoàn tác thao tác này!",
     "makeGroupPrivate": "Đặt nhóm ở chế độ riêng tư",
     "makeGroupPrivateFailed": "Không thể đặt nhóm ở chế độ riêng tư",
-    "groupVisibilityChangedBy": "{changedBy} đã thành lập nhóm {visibility}"
+    "groupVisibilityChangedBy": "{changedBy} đã thành lập nhóm {visibility}",
+    "typeGroupName": "Vui lòng nhập ** {name} ** để xác nhận."
 }

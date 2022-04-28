@@ -4,11 +4,17 @@
     import ButtonGroup from "./ButtonGroup.svelte";
     import Overlay from "./Overlay.svelte";
     import { _ } from "svelte-i18n";
+    import Input from "./Input.svelte";
+    import Markdown from "./home/Markdown.svelte";
 
     export let message: string;
     export let action: (yes: boolean) => Promise<void>;
+    export let doubleCheck: { question: string; answer: string } | undefined = undefined;
 
     let inProgress = false;
+    let answer = "";
+
+    $: canConfirm = !inProgress && (doubleCheck === undefined || answer === doubleCheck.answer);
 
     function onClick(yes: boolean) {
         if (yes) {
@@ -22,18 +28,32 @@
 </script>
 
 <Overlay active={true}>
-    <ModalContent fill={true}>
+    <ModalContent>
         <span slot="header">{$_("areYouSure")}</span>
         <span slot="body">
-            <p class="confirm-msg">
+            <p>
                 {message}
             </p>
+
+            {#if doubleCheck !== undefined}
+                <p>
+                    <Markdown text={doubleCheck.question} />
+                </p>
+                <Input
+                    invalid={false}
+                    disabled={inProgress}
+                    autofocus={true}
+                    bind:value={answer}
+                    minlength={0}
+                    maxlength={200}
+                    countdown={false} />
+            {/if}
         </span>
         <span slot="footer">
             <ButtonGroup>
                 <Button
                     loading={inProgress}
-                    disabled={inProgress}
+                    disabled={!canConfirm}
                     small={true}
                     on:click={() => onClick(true)}>{$_("yesPlease")}</Button>
                 <Button
@@ -47,7 +67,7 @@
 </Overlay>
 
 <style type="text/scss">
-    .confirm-msg {
-        padding: $sp5;
+    p {
+        margin-bottom: $sp4;
     }
 </style>

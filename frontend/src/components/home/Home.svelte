@@ -52,7 +52,12 @@
         messageIndex: undefined,
     };
 
-    type ConfirmAction = "leave" | "delete" | "makePrivate" | undefined;
+    type ConfirmAction = "leave" | "delete" | "makePrivate";
+    type ConfirmActionEvent = {
+        kind: ConfirmAction;
+        chatId: string;
+        doubleCheck?: { question: string; answer: string };
+    };
 
     enum ModalType {
         None,
@@ -72,8 +77,7 @@
     let searchTerm: string = "";
     let searching: boolean = false;
     let searchResultsAvailable: boolean = false;
-    let confirmActionChatId: string | undefined;
-    let confirmAction: ConfirmAction = undefined;
+    let confirmActionEvent: ConfirmActionEvent | undefined;
     let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
@@ -87,7 +91,7 @@
     $: selectedChat = controller.selectedChat;
     $: wasmVersion = controller.user.wasmVersion;
     $: qs = new URLSearchParams($querystring);
-    $: confirmMessage = getConfirmMessage(confirmAction);
+    $: confirmMessage = getConfirmMessage(confirmActionEvent);
 
     function logout() {
         dispatch("logout");
@@ -261,45 +265,41 @@
             });
     }
 
-    function getConfirmMessage(confirmAction: ConfirmAction): string {
-        switch (confirmAction) {
+    function getConfirmMessage(confirmActionEvent: ConfirmActionEvent | undefined): string {
+        if (confirmActionEvent === undefined) return "";
+
+        switch (confirmActionEvent.kind) {
             case "leave":
                 return $_("confirmLeaveGroup");
             case "delete":
                 return $_("irreversible");
             case "makePrivate":
                 return $_("confirmMakeGroupPrivate");
-            default:
-                return "";
         }
     }
 
-    const triggerConfirm = (action: ConfirmAction) => (ev: CustomEvent<string>) => {
-        confirmAction = action;
-        confirmActionChatId = ev.detail;
-    };
+    function triggerConfirm(ev: CustomEvent<ConfirmActionEvent>) {
+        confirmActionEvent = ev.detail;
+    }
 
     function onConfirmAction(yes: boolean): Promise<void> {
-        const result = yes
-            ? doConfirmAction(confirmAction, confirmActionChatId!)
-            : Promise.resolve();
+        const result = yes ? doConfirmAction(confirmActionEvent!) : Promise.resolve();
 
         return result.finally(() => {
-            confirmAction = undefined;
-            confirmActionChatId = undefined;
+            confirmActionEvent = undefined;
         });
     }
 
-    function doConfirmAction(confirmAction: ConfirmAction, chatId: string): Promise<void> {
-        switch (confirmAction) {
+    function doConfirmAction(confirmActionEvent: ConfirmActionEvent): Promise<void> {
+        switch (confirmActionEvent.kind) {
             case "leave":
-                return controller.leaveGroup(chatId);
+                return controller.leaveGroup(confirmActionEvent.chatId);
             case "delete":
-                return controller.deleteGroup(chatId).then((_) => {
+                return controller.deleteGroup(confirmActionEvent.chatId).then((_) => {
                     rightPanelHistory = [];
                 });
             case "makePrivate":
-                return controller.makeGroupPrivate(chatId).then((_) => {
+                return controller.makeGroupPrivate(confirmActionEvent.chatId).then((_) => {
                     rightPanelHistory = [];
                 });
             default:
@@ -486,7 +486,7 @@
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}
                 on:unblockUser={unblockUser}
-                on:leaveGroup={triggerConfirm("leave")}
+                on:leaveGroup={triggerConfirm}
                 on:chatWith={chatWith}
                 on:replyPrivatelyTo={replyPrivatelyTo}
                 on:addParticipants={addParticipants}
@@ -521,16 +521,19 @@
                     on:showParticipants={showParticipants}
                     on:chatWith={chatWith}
                     on:blockUser={blockUser}
-                    on:deleteGroup={triggerConfirm("delete")}
-                    on:makeGroupPrivate={triggerConfirm("makePrivate")}
+                    on:deleteGroup={triggerConfirm}
+                    on:makeGroupPrivate={triggerConfirm}
                     on:updateChat={updateChat} />
             </div>
         {/if}
     </Overlay>
 {/if}
 
-{#if confirmAction !== undefined}
-    <AreYouSure message={confirmMessage} action={onConfirmAction} />
+{#if confirmActionEvent !== undefined}
+    <AreYouSure
+        doubleCheck={confirmActionEvent.doubleCheck}
+        message={confirmMessage}
+        action={onConfirmAction} />
 {/if}
 
 <Toast />
