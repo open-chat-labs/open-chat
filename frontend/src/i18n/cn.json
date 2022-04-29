@@ -484,5 +484,6 @@
     "confirmMakeGroupPrivate": "您确定要将此组设为私有吗？目前此操作无法撤消！",
     "makeGroupPrivate": "将群组设为私有",
     "makeGroupPrivateFailed": "无法将群组设为私有",
-    "groupVisibilityChangedBy": "{changedBy} 组 {visibility}"
+    "groupVisibilityChangedBy": "{changedBy} 组 {visibility}",
+    "typeGroupName": "请输入 **{name}** 进行确认。"
 }

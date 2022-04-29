@@ -484,5 +484,6 @@
     "confirmMakeGroupPrivate": "Вы определенно хотите сделать эту группу закрытой? В настоящее время эту операцию нельзя отменить!",
     "makeGroupPrivate": "Сделать группу закрытой",
     "makeGroupPrivateFailed": "Не удалось сделать группу закрытой",
-    "groupVisibilityChangedBy": "{changedBy} создал группу {visibility}"
+    "groupVisibilityChangedBy": "{changedBy} создал группу {visibility}",
+    "typeGroupName": "Введите **{name}** для подтверждения."
 }

@@ -19,9 +19,12 @@
 
     import "./theme/themes";
     import "./stores/fontSize";
+    import { showTrace } from "./services/common/profiling";
+    import Profiler from "./components/Profiler.svelte";
 
     let viewPortContent = "width=device-width, initial-scale=1";
     let controller: IdentityController = new IdentityController();
+    let profileTrace = showTrace();
     setContext("identityController", controller);
 
     $: identityState = controller.state;
@@ -73,6 +76,10 @@
     <Upgrading />
 {:else}
     <Loading />
+{/if}
+
+{#if profileTrace}
+    <Profiler />
 {/if}
 
 <UpgradeBanner />

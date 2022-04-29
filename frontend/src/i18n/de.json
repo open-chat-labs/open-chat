@@ -484,5 +484,6 @@
     "confirmMakeGroupPrivate": "Möchten Sie diese Gruppe auf jeden Fall privat machen? Derzeit kann dieser Vorgang nicht rückgängig gemacht werden!",
     "makeGroupPrivate": "Gruppe privat machen",
     "makeGroupPrivateFailed": "Gruppe konnte nicht privat gemacht werden",
-    "groupVisibilityChangedBy": "{changedBy} hat die Gruppe {visibility} erstellt"
+    "groupVisibilityChangedBy": "{changedBy} hat die Gruppe {visibility} erstellt",
+    "typeGroupName": "Bitte geben Sie zur Bestätigung **{name}** ein."
 }

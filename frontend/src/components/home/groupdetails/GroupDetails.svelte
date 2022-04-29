@@ -262,7 +262,7 @@
                 <AdvancedSection
                     on:deleteGroup
                     on:makeGroupPrivate
-                    chatId={originalGroup.chatId}
+                    group={originalGroup}
                     canMakeGroupPrivate={canMakeGroupPrivate(originalGroup)} />
             </CollapsibleCard>
         {/if}
