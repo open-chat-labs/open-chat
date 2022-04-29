@@ -15,8 +15,8 @@
             kind: "delete",
             chatId: group.chatId,
             doubleCheck: {
-                question: $_("typeGroupName", { values: { name: group.name } }),
-                answer: group.name,
+                challenge: $_("typeGroupName", { values: { name: group.name } }),
+                response: group.name,
             },
         });
     }

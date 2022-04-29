@@ -56,7 +56,7 @@
     type ConfirmActionEvent = {
         kind: ConfirmAction;
         chatId: string;
-        doubleCheck?: { question: string; answer: string };
+        doubleCheck?: { challenge: string; response: string };
     };
 
     enum ModalType {

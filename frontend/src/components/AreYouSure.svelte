@@ -9,12 +9,12 @@
 
     export let message: string;
     export let action: (yes: boolean) => Promise<void>;
-    export let doubleCheck: { question: string; answer: string } | undefined = undefined;
+    export let doubleCheck: { challenge: string; response: string } | undefined = undefined;
 
     let inProgress = false;
-    let answer = "";
+    let response = "";
 
-    $: canConfirm = !inProgress && (doubleCheck === undefined || answer === doubleCheck.answer);
+    $: canConfirm = !inProgress && (doubleCheck === undefined || response === doubleCheck.response);
 
     function onClick(yes: boolean) {
         if (yes) {
@@ -37,13 +37,13 @@
 
             {#if doubleCheck !== undefined}
                 <p>
-                    <Markdown text={doubleCheck.question} />
+                    <Markdown text={doubleCheck.challenge} />
                 </p>
                 <Input
                     invalid={false}
                     disabled={inProgress}
                     autofocus={true}
-                    bind:value={answer}
+                    bind:value={response}
                     minlength={0}
                     maxlength={200}
                     countdown={false} />
