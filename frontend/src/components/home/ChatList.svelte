@@ -22,7 +22,7 @@
     import NotificationsBar from "./NotificationsBar.svelte";
     import type { HomeController } from "../../fsm/home.controller";
     import Markdown from "./Markdown.svelte";
-    import { chatListScroll } from "stores/scrollPos";
+    import { chatListScroll } from "../../stores/scrollPos";
 
     export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
