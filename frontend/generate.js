@@ -132,6 +132,7 @@ const languages = [
     { lang: "jp", code: "ja" },
     { lang: "ru", code: "ru" },
     { lang: "vi", code: "vi" },
+    { lang: "iw", code: "iw" },
 ];
 
 languages.forEach(async ({ lang, code }) => {

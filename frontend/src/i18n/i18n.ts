@@ -9,6 +9,7 @@ import it from "./it.json";
 import cn from "./cn.json";
 import jp from "./jp.json";
 import ru from "./ru.json";
+import iw from "./iw.json";
 
 export const supportedLanguages = [
     {
@@ -55,6 +56,11 @@ export const supportedLanguages = [
         name: "русский",
         code: "ru",
         json: ru,
+    },
+    {
+        name: "עִברִית",
+        code: "iw",
+        json: iw,
     },
 ];
 
