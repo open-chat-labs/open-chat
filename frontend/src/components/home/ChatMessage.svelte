@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import Link from "../Link.svelte";
-    import type { UserSummary, UserLookup } from "../../domain/user/user";
+    import type { UserSummary } from "../../domain/user/user";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
@@ -15,7 +15,7 @@
     import MenuIcon from "../MenuIcon.svelte";
     import type { Message, EnhancedReplyContext } from "../../domain/chat/chat";
     import RepliesTo from "./RepliesTo.svelte";
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { afterUpdate, createEventDispatcher, onDestroy, onMount } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -26,6 +26,7 @@
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import TranslateIcon from "svelte-material-icons/Translate.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import PinOff from "svelte-material-icons/PinOff.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
@@ -143,6 +144,24 @@
 
     function deleteMessage() {
         dispatch("deleteMessage", msg);
+    }
+
+    function translateMessage() {
+        console.log("translate message into ", $locale);
+        if (msg.content.kind === "text_content") {
+            // TODO - change this to use the REST api rather than trying to use the node client
+            // translate.translate([msg.content.text], "fr" || "en").then(([trans]) => {
+            //     if (msg.content.kind === "text_content") {
+            //         msg = {
+            //             ...msg,
+            //             content: {
+            //                 ...msg.content,
+            //                 text: trans[0],
+            //             },
+            //         };
+            //     }
+            // });
+        }
     }
 
     // function editMessage() {
@@ -474,6 +493,13 @@
                                         <div slot="text">{$_("deleteMessage")}</div>
                                     </MenuItem>
                                 {/if}
+                                <MenuItem on:click={translateMessage}>
+                                    <TranslateIcon
+                                        size={$iconSize}
+                                        color={"var(--icon-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("translateMessage")}</div>
+                                </MenuItem>
                             </Menu>
                         </div>
                     </MenuIcon>

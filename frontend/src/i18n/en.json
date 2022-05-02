@@ -483,5 +483,6 @@
     "confirmMakeGroupPrivate": "Do you definitely want to make this group private? Currently this operation cannot be reversed!",
     "makeGroupPrivate": "Make group private",
     "makeGroupPrivateFailed": "Failed to make group private",
-    "groupVisibilityChangedBy": "{changedBy} made the group {visibility}"
+    "groupVisibilityChangedBy": "{changedBy} made the group {visibility}",
+    "translateMessage": "Translate message"
 }
