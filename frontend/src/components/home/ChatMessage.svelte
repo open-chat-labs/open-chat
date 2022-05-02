@@ -27,6 +27,7 @@
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import TranslateIcon from "svelte-material-icons/Translate.svelte";
+    import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import PinOff from "svelte-material-icons/PinOff.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
@@ -44,6 +45,8 @@
     import { avatarUrl } from "../../domain/user/user.utils";
     import * as shareFunctions from "../../domain/share";
     import { userStore } from "../../stores/user";
+    import { translationCodes } from "../../i18n/i18n";
+    import { toastStore } from "stores/toast";
 
     const dispatch = createEventDispatcher();
 
@@ -79,6 +82,8 @@
     let viewProfile = false;
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
+    let translated = false;
+    let originalText: string | undefined = undefined;
 
     $: sender = $userStore[senderId];
     $: username = sender?.username;
@@ -146,21 +151,50 @@
         dispatch("deleteMessage", msg);
     }
 
+    function untranslateMessage() {
+        translated = false;
+        if (msg.content.kind === "text_content" && originalText !== undefined) {
+            msg = {
+                ...msg,
+                content: {
+                    ...msg.content,
+                    text: originalText,
+                },
+            };
+        }
+    }
+
     function translateMessage() {
-        console.log("translate message into ", $locale);
         if (msg.content.kind === "text_content") {
-            // TODO - change this to use the REST api rather than trying to use the node client
-            // translate.translate([msg.content.text], "fr" || "en").then(([trans]) => {
-            //     if (msg.content.kind === "text_content") {
-            //         msg = {
-            //             ...msg,
-            //             content: {
-            //                 ...msg.content,
-            //                 text: trans[0],
-            //             },
-            //         };
-            //     }
-            // });
+            const params = new URLSearchParams();
+            params.append("q", msg.content.text);
+            params.append("target", translationCodes[$locale || "en"] || "en");
+            params.append("format", "text");
+            params.append("key", process.env.PUBLIC_TRANSLATE_API_KEY!);
+            fetch(`https://translation.googleapis.com/language/translate/v2?${params}`, {
+                method: "POST",
+            })
+                .then((resp) => resp.json())
+                .then(({ data: { translations } }) => {
+                    if (
+                        msg.content.kind === "text_content" &&
+                        Array.isArray(translations) &&
+                        translations.length > 0
+                    ) {
+                        translated = true;
+                        originalText = msg.content.text;
+                        msg = {
+                            ...msg,
+                            content: {
+                                ...msg.content,
+                                text: translations[0].translatedText,
+                            },
+                        };
+                    }
+                })
+                .catch((err) => {
+                    toastStore.showFailureToast("unableToTranslate");
+                });
         }
     }
 
@@ -493,13 +527,23 @@
                                         <div slot="text">{$_("deleteMessage")}</div>
                                     </MenuItem>
                                 {/if}
-                                <MenuItem on:click={translateMessage}>
-                                    <TranslateIcon
-                                        size={$iconSize}
-                                        color={"var(--icon-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("translateMessage")}</div>
-                                </MenuItem>
+                                {#if translated}
+                                    <MenuItem on:click={untranslateMessage}>
+                                        <TranslateOff
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("untranslateMessage")}</div>
+                                    </MenuItem>
+                                {:else}
+                                    <MenuItem on:click={translateMessage}>
+                                        <TranslateIcon
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("translateMessage")}</div>
+                                    </MenuItem>
+                                {/if}
                             </Menu>
                         </div>
                     </MenuIcon>

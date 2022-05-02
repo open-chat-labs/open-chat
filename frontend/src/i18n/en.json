@@ -484,5 +484,7 @@
     "makeGroupPrivate": "Make group private",
     "makeGroupPrivateFailed": "Failed to make group private",
     "groupVisibilityChangedBy": "{changedBy} made the group {visibility}",
-    "translateMessage": "Translate message"
+    "translateMessage": "Translate message",
+    "untranslateMessage": "Untranslate message",
+    "unableToTranslate": "Unable to translate"
 }
