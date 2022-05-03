@@ -494,5 +494,6 @@
         "title": "Tính năng cao cấp",
         "blurb": "Một số tính năng của OpenChat chỉ có sẵn cho các tài khoản trả phí. Bạn có thể nâng cấp tài khoản của mình bằng cách xác minh số điện thoại qua SMS hoặc trả một khoản phí ICP nhỏ.",
         "congratulations": "Bây giờ bạn có thể tận hưởng các tính năng cao cấp của chúng tôi!"
-    }
+    },
+    "faqUrlCopiedToClipboard": "Đã sao chép url câu hỏi thường gặp vào khay nhớ tạm!"
 }

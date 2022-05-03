@@ -493,5 +493,6 @@
         "title": "Premium-Funktion",
         "blurb": "Einige OpenChat-Funktionen sind nur für Premium-Konten verfügbar. Sie können Ihr Konto upgraden, indem Sie entweder eine Telefonnummer per SMS verifizieren oder eine kleine ICP-Gebühr zahlen.",
         "congratulations": "Sie können jetzt unsere Premium-Funktionen genießen!"
-    }
+    },
+    "faqUrlCopiedToClipboard": "FAQ-URL in die Zwischenablage kopiert!"
 }
