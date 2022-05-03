@@ -20,8 +20,6 @@
     import { pop } from "../../utils/transition";
     import { toastStore } from "../../stores/toast";
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
-    import { userStore } from "../../stores/user";
-    import type { UserLookup } from "../../domain/user/user";
     import type { ChatController } from "../../fsm/chat.controller";
     import type { MessageReadState } from "../../stores/markRead";
     import { menuStore } from "../../stores/menu";
@@ -517,6 +515,7 @@
                         on:pinMessage={pinMessage}
                         on:unpinMessage={unpinMessage}
                         on:registerVote={registerVote}
+                        on:upgrade
                         event={evt} />
                 {/each}
             {/each}

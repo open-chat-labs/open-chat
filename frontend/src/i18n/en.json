@@ -483,5 +483,13 @@
     "confirmMakeGroupPrivate": "Do you definitely want to make this group private? Currently this operation cannot be reversed!",
     "makeGroupPrivate": "Make group private",
     "makeGroupPrivateFailed": "Failed to make group private",
-    "groupVisibilityChangedBy": "{changedBy} made the group {visibility}"
+    "groupVisibilityChangedBy": "{changedBy} made the group {visibility}",
+    "translateMessage": "Translate",
+    "untranslateMessage": "Untranslate",
+    "unableToTranslate": "Unable to translate",
+    "premium": {
+        "title": "Premium Feature",
+        "blurb": "Some OpenChat features are only available to premium accounts. You can upgrade your account either by verifying a phone number via SMS or by paying a small ICP fee.",
+        "congratulations": "You can now enjoy our premium features!"
+    }
 }

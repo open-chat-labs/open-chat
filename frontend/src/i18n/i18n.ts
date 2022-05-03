@@ -11,6 +11,19 @@ import jp from "./jp.json";
 import ru from "./ru.json";
 import iw from "./iw.json";
 
+export const translationCodes: Record<string, string> = {
+    cn: "zh-cn",
+    de: "de",
+    es: "es",
+    en: "en",
+    fr: "fr",
+    it: "it",
+    jp: "ja",
+    ru: "ru",
+    vi: "vi",
+    iw: "iw",
+};
+
 export const supportedLanguages = [
     {
         name: "English",

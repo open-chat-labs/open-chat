@@ -483,5 +483,13 @@
     "confirmMakeGroupPrivate": "האם אתה בהחלט רוצה להפוך את הקבוצה הזו לפרטית? כרגע לא ניתן לבטל את הפעולה הזו!",
     "makeGroupPrivate": "הפוך את הקבוצה לפרטית",
     "makeGroupPrivateFailed": "הפיכת הקבוצה לפרטית נכשלה",
-    "groupVisibilityChangedBy": "{changedBy} יצר את הקבוצה {visibility}"
+    "groupVisibilityChangedBy": "{changedBy} יצר את הקבוצה {visibility}",
+    "translateMessage": "לתרגם",
+    "untranslateMessage": "בטל תרגום",
+    "unableToTranslate": "לא מצליח לתרגם",
+    "premium": {
+        "title": "תכונת פרימיום",
+        "blurb": "חלק מתכונות OpenChat זמינות רק לחשבונות פרימיום. אתה יכול לשדרג את חשבונך על ידי אימות מספר טלפון באמצעות SMS או על ידי תשלום עמלת ICP קטנה.",
+        "congratulations": "עכשיו אתה יכול ליהנות מתכונות הפרימיום שלנו!"
+    }
 }

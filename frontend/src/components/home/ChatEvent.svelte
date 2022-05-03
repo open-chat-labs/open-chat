@@ -76,6 +76,7 @@
         on:unpinMessage
         on:registerVote
         on:editMessage={editEvent}
+        on:upgrade
         eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />

@@ -486,5 +486,13 @@
     "makeGroupPrivate": "Đặt nhóm ở chế độ riêng tư",
     "makeGroupPrivateFailed": "Không thể đặt nhóm ở chế độ riêng tư",
     "groupVisibilityChangedBy": "{changedBy} đã thành lập nhóm {visibility}",
-    "typeGroupName": "Vui lòng nhập ** {name} ** để xác nhận."
+    "typeGroupName": "Vui lòng nhập ** {name} ** để xác nhận.",
+    "translateMessage": "Dịch",
+    "untranslateMessage": "Chưa dịch",
+    "unableToTranslate": "Không thể dịch",
+    "premium": {
+        "title": "Tính năng cao cấp",
+        "blurb": "Một số tính năng của OpenChat chỉ có sẵn cho các tài khoản trả phí. Bạn có thể nâng cấp tài khoản của mình bằng cách xác minh số điện thoại qua SMS hoặc trả một khoản phí ICP nhỏ.",
+        "congratulations": "Bây giờ bạn có thể tận hưởng các tính năng cao cấp của chúng tôi!"
+    }
 }

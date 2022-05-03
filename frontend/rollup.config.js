@@ -186,6 +186,9 @@ export default [
                 "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
                 "process.env.USERGEEK_APIKEY": process.env.USERGEEK_APIKEY,
                 "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
+                "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
+                    process.env.PUBLIC_TRANSLATE_API_KEY
+                ),
             }),
 
             html({
