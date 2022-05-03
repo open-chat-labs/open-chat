@@ -37,6 +37,7 @@
         background-color: var(--menu-bg);
         border: 1px solid var(--menu-bd);
         box-shadow: var(--menu-sh);
+        color: var(--menu-txt);
 
         display: flex;
         flex-direction: column;
