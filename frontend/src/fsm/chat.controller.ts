@@ -58,6 +58,7 @@ import { rollbar } from "../utils/logging";
 import { toastStore } from "../stores/toast";
 import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
+import { replace } from "svelte-spa-router";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
@@ -924,6 +925,7 @@ export class ChatController {
 
     clearFocusMessageIndex(): void {
         this.focusMessageIndex.set(undefined);
+        replace(`/${this.chatId}`);
     }
 
     earliestLoadedIndex(): number | undefined {

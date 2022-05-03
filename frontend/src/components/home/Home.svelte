@@ -156,6 +156,14 @@
                 }
             }
 
+            if (
+                params.chatId &&
+                params.messageIndex &&
+                params.chatId === $selectedChat?.chatId?.toString()
+            ) {
+                $selectedChat?.goToMessageIndex(Number(params.messageIndex), false);
+            }
+
             // if there is no chatId param, tell the machine to clear the selection
             if (params.chatId === null && $selectedChat !== undefined) {
                 controller.clearSelectedChat();
