@@ -493,5 +493,6 @@
         "title": "高级功能",
         "blurb": "某些 OpenChat 功能仅适用于高级帐户。您可以通过短信验证电话号码或支付少量 ICP 费用来升级您的帐户。",
         "congratulations": "您现在可以享受我们的高级功能了！"
-    }
+    },
+    "faqUrlCopiedToClipboard": "常见问题网址已复制到剪贴板！"
 }

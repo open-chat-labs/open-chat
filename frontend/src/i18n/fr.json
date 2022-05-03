@@ -493,5 +493,6 @@
         "title": "Fonction Premium",
         "blurb": "Certaines fonctionnalités d'OpenChat ne sont disponibles que pour les comptes premium. Vous pouvez mettre à niveau votre compte soit en vérifiant un numéro de téléphone par SMS, soit en payant une petite redevance ICP.",
         "congratulations": "Vous pouvez désormais profiter de nos fonctionnalités premium !"
-    }
+    },
+    "faqUrlCopiedToClipboard": "URL de la FAQ copiée dans le presse-papier !"
 }

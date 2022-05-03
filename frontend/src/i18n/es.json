@@ -494,5 +494,6 @@
         "title": "Función premium",
         "blurb": "Algunas funciones de OpenChat solo están disponibles para cuentas premium. Puede actualizar su cuenta verificando un número de teléfono a través de SMS o pagando una pequeña tarifa de ICP.",
         "congratulations": "¡Ya puedes disfrutar de nuestras funciones premium!"
-    }
+    },
+    "faqUrlCopiedToClipboard": "URL de preguntas frecuentes copiada al portapapeles."
 }

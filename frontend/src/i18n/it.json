@@ -493,5 +493,6 @@
         "title": "Funzionalità premium",
         "blurb": "Alcune funzionalità di OpenChat sono disponibili solo per gli account premium. Puoi aggiornare il tuo account verificando un numero di telefono tramite SMS o pagando una piccola commissione ICP.",
         "congratulations": "Ora puoi goderti le nostre funzionalità premium!"
-    }
+    },
+    "faqUrlCopiedToClipboard": "URL delle domande frequenti copiato negli appunti!"
 }

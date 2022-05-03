@@ -19,6 +19,8 @@
     import type { GroupChatSummary, MessageAction } from "../../domain/chat/chat";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
+    import { addQueryStringParam } from "utils/urls";
+    import { allQuestions, Questions } from "../../domain/faq";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -234,6 +236,18 @@
         const gifMatch = txt.match(/^\/gif( *(.*))$/);
         if (gifMatch && gifMatch[2] !== undefined) {
             dispatch("attachGif", gifMatch[2]);
+            return true;
+        }
+
+        const faqMatch = txt.match(/^\/faq( *(.*))$/);
+        if (faqMatch && faqMatch[2] !== undefined) {
+            if (allQuestions.includes(faqMatch[2] as Questions)) {
+                const url = addQueryStringParam(new URLSearchParams(), "faq", faqMatch[2]);
+                dispatch("sendMessage", [`[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](#${url})`, []]);
+            } else {
+                const url = addQueryStringParam(new URLSearchParams(), "faq", "");
+                dispatch("sendMessage", [`[🤔 FAQs](#${url})`, []]);
+            }
             return true;
         }
 

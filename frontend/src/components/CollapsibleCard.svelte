@@ -21,7 +21,10 @@
 
 <div class="card" class:bordered>
     <div class="header" class:open on:click={toggle}>
-        <h4>{headerText}</h4>
+        <slot name="titleSlot">
+            <h4>{headerText}</h4>
+        </slot>
+
         <div class="arrow" class:rtl={$rtlStore} class:open>
             <ChevronDown viewBox="0 -3 24 24" size={$iconSize} color={"var(--icon-txt)"} />
         </div>

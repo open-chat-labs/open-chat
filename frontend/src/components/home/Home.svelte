@@ -13,7 +13,7 @@
     import { createEventDispatcher, onDestroy, onMount, setContext, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import { push, replace, querystring } from "svelte-spa-router";
+    import { push, replace, querystring, location } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
     import type {
@@ -43,6 +43,7 @@
     import type { Share } from "../../domain/share";
     import { draftMessages } from "../../stores/draftMessages";
     import AreYouSure from "../AreYouSure.svelte";
+    import { removeQueryStringParam } from "utils/urls";
 
     const dispatch = createEventDispatcher();
 
@@ -162,6 +163,13 @@
                 params.chatId === $selectedChat?.chatId?.toString()
             ) {
                 $selectedChat?.goToMessageIndex(Number(params.messageIndex), false);
+            }
+
+            const faq = qs.get("faq");
+            if (faq !== null) {
+                faqQuestion = faq as Questions;
+                modal = ModalType.Faq;
+                replace(removeQueryStringParam(qs, "faq"));
             }
 
             // if there is no chatId param, tell the machine to clear the selection
