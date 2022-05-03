@@ -5,7 +5,7 @@
 <div class="confirmed">
     <h1>{$_("congratulations")}</h1>
     <p class="tada">🎉</p>
-    <p class="para">{$_("enjoyYourStorage")}</p>
+    <p class="para">{$_("premium.congratulations")}</p>
 </div>
 
 <style type="text/scss">

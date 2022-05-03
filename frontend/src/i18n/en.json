@@ -484,7 +484,12 @@
     "makeGroupPrivate": "Make group private",
     "makeGroupPrivateFailed": "Failed to make group private",
     "groupVisibilityChangedBy": "{changedBy} made the group {visibility}",
-    "translateMessage": "Translate message",
-    "untranslateMessage": "Untranslate message",
-    "unableToTranslate": "Unable to translate"
+    "translateMessage": "Translate",
+    "untranslateMessage": "Untranslate",
+    "unableToTranslate": "Unable to translate",
+    "premium": {
+        "title": "Premium Feature",
+        "blurb": "Some OpenChat features are only available to premium accounts. You can upgrade your account either by verifying a phone number via SMS or by paying a small ICP fee.",
+        "congratulations": "You can now enjoy our premium features!"
+    }
 }

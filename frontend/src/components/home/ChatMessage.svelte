@@ -47,6 +47,7 @@
     import { userStore } from "../../stores/user";
     import { translationCodes } from "../../i18n/i18n";
     import { toastStore } from "stores/toast";
+    import { storageStore } from "../../stores/storage";
 
     const dispatch = createEventDispatcher();
 
@@ -165,36 +166,40 @@
     }
 
     function translateMessage() {
-        if (msg.content.kind === "text_content") {
-            const params = new URLSearchParams();
-            params.append("q", msg.content.text);
-            params.append("target", translationCodes[$locale || "en"] || "en");
-            params.append("format", "text");
-            params.append("key", process.env.PUBLIC_TRANSLATE_API_KEY!);
-            fetch(`https://translation.googleapis.com/language/translate/v2?${params}`, {
-                method: "POST",
-            })
-                .then((resp) => resp.json())
-                .then(({ data: { translations } }) => {
-                    if (
-                        msg.content.kind === "text_content" &&
-                        Array.isArray(translations) &&
-                        translations.length > 0
-                    ) {
-                        translated = true;
-                        originalText = msg.content.text;
-                        msg = {
-                            ...msg,
-                            content: {
-                                ...msg.content,
-                                text: translations[0].translatedText,
-                            },
-                        };
-                    }
+        if ($storageStore.byteLimit === 0) {
+            dispatch("upgrade", "premium");
+        } else {
+            if (msg.content.kind === "text_content") {
+                const params = new URLSearchParams();
+                params.append("q", msg.content.text);
+                params.append("target", translationCodes[$locale || "en"] || "en");
+                params.append("format", "text");
+                params.append("key", process.env.PUBLIC_TRANSLATE_API_KEY!);
+                fetch(`https://translation.googleapis.com/language/translate/v2?${params}`, {
+                    method: "POST",
                 })
-                .catch((err) => {
-                    toastStore.showFailureToast("unableToTranslate");
-                });
+                    .then((resp) => resp.json())
+                    .then(({ data: { translations } }) => {
+                        if (
+                            msg.content.kind === "text_content" &&
+                            Array.isArray(translations) &&
+                            translations.length > 0
+                        ) {
+                            translated = true;
+                            originalText = msg.content.text;
+                            msg = {
+                                ...msg,
+                                content: {
+                                    ...msg.content,
+                                    text: translations[0].translatedText,
+                                },
+                            };
+                        }
+                    })
+                    .catch((_err) => {
+                        toastStore.showFailureToast("unableToTranslate");
+                    });
+            }
         }
     }
 

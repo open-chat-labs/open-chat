@@ -195,6 +195,7 @@
         on:replyTo={replyTo}
         on:messageRead={messageRead}
         on:chatWith
+        on:upgrade
         {controller}
         canPin={canPinMessages($chat)}
         canBlockUser={canBlockUsers($chat)}

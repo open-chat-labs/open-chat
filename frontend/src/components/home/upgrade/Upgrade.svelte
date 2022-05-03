@@ -5,13 +5,21 @@
     import Reload from "../../Reload.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Explain from "./Explain.svelte";
+    import Premium from "./Premium.svelte";
     import ICPUpgrade from "./ICPUpgrade.svelte";
     import type { ServiceContainer } from "../../../services/serviceContainer";
     import type { CreatedUser } from "../../../domain/user/user";
     import type { Questions } from "../../../domain/faq";
     import FaqModal from "../../FaqModal.svelte";
 
-    export let step: "explain" | "icp" | "sms";
+    const titles: Record<typeof step, string> = {
+        premium: $_("premium.title"),
+        explain: $_("insufficientStorage"),
+        sms: $_("register.requestCode"),
+        icp: $_("upgradeStorage"),
+    };
+
+    export let step: "premium" | "explain" | "icp" | "sms";
     export let api: ServiceContainer;
     export let user: CreatedUser;
 
@@ -40,9 +48,16 @@
     {:else}
         <ModalContent fadeDuration={0} fadeDelay={0} hideFooter={true} fill={true}>
             <span slot="header">
-                {step === "explain" ? $_("insufficientStorage") : $_("upgradeStorage")}
+                {titles[step]}
             </span>
             <span slot="body">
+                {#if step === "premium"}
+                    <Premium
+                        on:showFaqQuestion={showFaqQuestion}
+                        on:cancel
+                        on:upgradeIcp={upgradeViaICP}
+                        on:upgradeSms={upgradeViaSMS} />
+                {/if}
                 {#if step === "explain"}
                     <Explain
                         on:showFaqQuestion={showFaqQuestion}
