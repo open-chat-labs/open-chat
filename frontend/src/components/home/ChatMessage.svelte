@@ -532,22 +532,24 @@
                                         <div slot="text">{$_("deleteMessage")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if translated}
-                                    <MenuItem on:click={untranslateMessage}>
-                                        <TranslateOff
-                                            size={$iconSize}
-                                            color={"var(--icon-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("untranslateMessage")}</div>
-                                    </MenuItem>
-                                {:else}
-                                    <MenuItem on:click={translateMessage}>
-                                        <TranslateIcon
-                                            size={$iconSize}
-                                            color={"var(--icon-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">{$_("translateMessage")}</div>
-                                    </MenuItem>
+                                {#if msg.content.kind === "text_content"}
+                                    {#if translated}
+                                        <MenuItem on:click={untranslateMessage}>
+                                            <TranslateOff
+                                                size={$iconSize}
+                                                color={"var(--icon-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("untranslateMessage")}</div>
+                                        </MenuItem>
+                                    {:else}
+                                        <MenuItem on:click={translateMessage}>
+                                            <TranslateIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("translateMessage")}</div>
+                                        </MenuItem>
+                                    {/if}
                                 {/if}
                             </Menu>
                         </div>

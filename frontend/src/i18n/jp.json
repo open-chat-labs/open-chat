@@ -485,5 +485,13 @@
     "makeGroupPrivate": "グループをプライベートにする",
     "makeGroupPrivateFailed": "グループをプライベートにすることができませんでした",
     "groupVisibilityChangedBy": "{changedBy}がグループを{visibility}にしました",
-    "typeGroupName": "確認するには、**{name}**と入力してください。"
+    "typeGroupName": "確認するには、**{name}**と入力してください。",
+    "translateMessage": "翻訳",
+    "untranslateMessage": "翻訳しない",
+    "unableToTranslate": "翻訳できません",
+    "premium": {
+        "title": "プレミアム機能",
+        "blurb": "一部のOpenChat機能は、プレミアムアカウントでのみ利用できます。 SMSで電話番号を確認するか、少額のICP料金を支払うことで、アカウントをアップグレードできます。",
+        "congratulations": "プレミアム機能をお楽しみいただけます！"
+    }
 }

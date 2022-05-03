@@ -485,5 +485,13 @@
     "makeGroupPrivate": "将群组设为私有",
     "makeGroupPrivateFailed": "无法将群组设为私有",
     "groupVisibilityChangedBy": "{changedBy} 组 {visibility}",
-    "typeGroupName": "请输入 **{name}** 进行确认。"
+    "typeGroupName": "请输入 **{name}** 进行确认。",
+    "translateMessage": "翻译",
+    "untranslateMessage": "取消翻译",
+    "unableToTranslate": "无法翻译",
+    "premium": {
+        "title": "高级功能",
+        "blurb": "某些 OpenChat 功能仅适用于高级帐户。您可以通过短信验证电话号码或支付少量 ICP 费用来升级您的帐户。",
+        "congratulations": "您现在可以享受我们的高级功能了！"
+    }
 }

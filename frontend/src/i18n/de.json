@@ -485,5 +485,13 @@
     "makeGroupPrivate": "Gruppe privat machen",
     "makeGroupPrivateFailed": "Gruppe konnte nicht privat gemacht werden",
     "groupVisibilityChangedBy": "{changedBy} hat die Gruppe {visibility} erstellt",
-    "typeGroupName": "Bitte geben Sie zur Bestätigung **{name}** ein."
+    "typeGroupName": "Bitte geben Sie zur Bestätigung **{name}** ein.",
+    "translateMessage": "Übersetzen",
+    "untranslateMessage": "Unübersetzen",
+    "unableToTranslate": "Übersetzen nicht möglich",
+    "premium": {
+        "title": "Premium-Funktion",
+        "blurb": "Einige OpenChat-Funktionen sind nur für Premium-Konten verfügbar. Sie können Ihr Konto upgraden, indem Sie entweder eine Telefonnummer per SMS verifizieren oder eine kleine ICP-Gebühr zahlen.",
+        "congratulations": "Sie können jetzt unsere Premium-Funktionen genießen!"
+    }
 }
