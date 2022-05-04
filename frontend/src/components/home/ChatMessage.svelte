@@ -48,7 +48,7 @@
     import { translationCodes } from "../../i18n/i18n";
     import { toastStore } from "stores/toast";
     import { storageStore } from "../../stores/storage";
-    import { translationStore } from "stores/translation";
+    import { translationStore } from "../../stores/translation";
 
     const dispatch = createEventDispatcher();
 

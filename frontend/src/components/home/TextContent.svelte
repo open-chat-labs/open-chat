@@ -21,9 +21,8 @@
 
         return text;
     }
-
-    $: textContent =
-        content.kind === "text_content" ? $translationStore[Number(messageId)] ?? content.text : "";
 </script>
 
-<Markdown suppressLinks={pinned} text={truncateText(textContent)} />
+<Markdown
+    suppressLinks={pinned}
+    text={truncateText($translationStore[Number(messageId)] ?? content.text)} />
