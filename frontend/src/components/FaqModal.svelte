@@ -37,7 +37,7 @@
                 headerText={$_(`faq.${q}_q`)}>
                 <div class="header" slot="titleSlot">
                     <div class="copy" on:click|stopPropagation={() => copyUrl(q)}>
-                        <ContentCopy size={"1rem"} />
+                        <ContentCopy size={"1em"} />
                     </div>
                     <h4>{$_(`faq.${q}_q`)}</h4>
                 </div>

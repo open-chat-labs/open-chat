@@ -2,5 +2,5 @@ import { derived } from "svelte/store";
 import { mobileWidth } from "./screenDimensions";
 
 export const iconSize = derived(mobileWidth, ($mobileWidth) => {
-    return $mobileWidth ? "1.4rem" : "1.5rem";
+    return $mobileWidth ? "1.4em" : "1.5em";
 });
