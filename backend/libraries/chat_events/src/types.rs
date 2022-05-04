@@ -2,6 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
+use std::ops::{Deref, DerefMut};
 use types::{
     AvatarChanged, ChatMetrics, DeletedBy, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged, GroupNameChanged,
     GroupVisibilityChanged, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
@@ -89,6 +90,22 @@ impl ChatEventInternal {
                 | ChatEventInternal::PermissionsChanged(_)
                 | ChatEventInternal::GroupVisibilityChanged(_)
         )
+    }
+
+    pub fn as_message(&self) -> Option<&MessageInternal> {
+        if let ChatEventInternal::Message(m) = self {
+            Some(m.deref())
+        } else {
+            None
+        }
+    }
+
+    pub fn as_message_mut(&mut self) -> Option<&mut MessageInternal> {
+        if let ChatEventInternal::Message(m) = self {
+            Some(m.deref_mut())
+        } else {
+            None
+        }
     }
 
     pub fn add_to_metrics(

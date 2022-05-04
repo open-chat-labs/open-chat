@@ -1,5 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct EventIndex(u32);
@@ -19,5 +20,23 @@ impl From<u32> for EventIndex {
 impl From<EventIndex> for u32 {
     fn from(event_index: EventIndex) -> Self {
         event_index.0
+    }
+}
+
+impl From<EventIndex> for usize {
+    fn from(event_index: EventIndex) -> Self {
+        event_index.0.try_into().unwrap()
+    }
+}
+
+impl From<EventIndex> for u64 {
+    fn from(event_index: EventIndex) -> Self {
+        event_index.0.into()
+    }
+}
+
+impl Display for EventIndex {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }

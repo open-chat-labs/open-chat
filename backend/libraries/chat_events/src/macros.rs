@@ -43,7 +43,7 @@ macro_rules! generate_common_methods {
 
         pub fn get_events_window(
             &self,
-            mid_point: MessageIndex,
+            mid_point: EventIndex,
             max_messages: usize,
             max_events: usize,
             min_visible_event_index: EventIndex,
