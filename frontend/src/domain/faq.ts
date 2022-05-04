@@ -9,6 +9,7 @@ export const allQuestions = [
     "send_icp",
     "icp_account",
     "roadmap",
+    "shortcuts",
 ] as const;
 
 type QuestionsType = typeof allQuestions;
