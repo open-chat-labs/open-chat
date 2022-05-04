@@ -183,7 +183,7 @@ impl MessageContentInternal {
             MessageContentInternal::Audio(a) => MessageContent::Audio(a.clone()),
             MessageContentInternal::File(f) => MessageContent::File(f.clone()),
             MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
-            MessageContentInternal::Cryptocurrency(c) => MessageContent::CryptocurrencyV2(c.clone().into()),
+            MessageContentInternal::Cryptocurrency(c) => MessageContent::CryptocurrencyV2(c.clone()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
         }
