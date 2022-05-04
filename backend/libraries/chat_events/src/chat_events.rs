@@ -654,8 +654,15 @@ impl ChatEvents {
 }
 
 #[derive(Serialize, Deserialize, Default)]
+#[serde(from = "Vec<EventWrapper<ChatEventInternal>>")]
 struct ChatEventsVec {
     events: Vec<EventWrapper<ChatEventInternal>>,
+}
+
+impl From<Vec<EventWrapper<ChatEventInternal>>> for ChatEventsVec {
+    fn from(events: Vec<EventWrapper<ChatEventInternal>>) -> Self {
+        ChatEventsVec { events }
+    }
 }
 
 impl ChatEventsVec {
