@@ -25,4 +25,4 @@
 
 <Markdown
     suppressLinks={pinned}
-    text={truncateText($translationStore[Number(messageId)] ?? content.text)} />
+    text={truncateText($translationStore.get(Number(messageId)) ?? content.text)} />

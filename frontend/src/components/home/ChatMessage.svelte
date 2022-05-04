@@ -93,7 +93,7 @@
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
     $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
-    $: translated = $translationStore[Number(msg.messageId)] !== undefined;
+    $: translated = $translationStore.has(Number(msg.messageId));
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");

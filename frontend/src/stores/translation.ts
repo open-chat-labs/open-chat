@@ -1,19 +1,19 @@
 import { writable } from "svelte/store";
 
-type Lookup = Record<number, string>;
+type Lookup = Map<number, string>;
 
-const store = writable<Lookup>({});
+const store = writable<Lookup>(new Map());
 
 export const translationStore = {
     subscribe: store.subscribe,
     translate: (messageId: bigint, translation: string): void =>
         store.update((lookup) => {
-            lookup[Number(messageId)] = translation;
-            return lookup;
+            lookup.set(Number(messageId), translation);
+            return new Map([...lookup]);
         }),
     untranslate: (messageId: bigint): void =>
         store.update((lookup) => {
-            delete lookup[Number(messageId)];
-            return lookup;
+            lookup.delete(Number(messageId));
+            return new Map([...lookup]);
         }),
 };
