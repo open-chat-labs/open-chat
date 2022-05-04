@@ -35,7 +35,7 @@ pub enum MessageContentInternal {
     Audio(AudioContent),
     File(FileContent),
     Poll(PollContentInternal),
-    Cryptocurrency(CryptocurrencyContentV2Temp),
+    Cryptocurrency(CryptocurrencyContentV2),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
 }
@@ -113,8 +113,8 @@ impl MessageContent {
                 votes: HashMap::new(),
                 ended: false,
             }),
-            MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c.into()),
-            MessageContent::CryptocurrencyV2(c) => MessageContentInternal::Cryptocurrency(c.into()),
+            MessageContent::Cryptocurrency(_) => unreachable!(),
+            MessageContent::CryptocurrencyV2(c) => MessageContentInternal::Cryptocurrency(c),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
             MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
         }
@@ -183,7 +183,7 @@ impl MessageContentInternal {
             MessageContentInternal::Audio(a) => MessageContent::Audio(a.clone()),
             MessageContentInternal::File(f) => MessageContent::File(f.clone()),
             MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
-            MessageContentInternal::Cryptocurrency(c) => MessageContent::CryptocurrencyV2(c.clone().into()),
+            MessageContentInternal::Cryptocurrency(c) => MessageContent::CryptocurrencyV2(c.clone()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
         }
@@ -382,33 +382,6 @@ pub struct CryptocurrencyContentV2 {
     pub caption: Option<String>,
 }
 
-// This is just needed for the one time upgrade since we need to redefine the type but with
-// different deserialization behaviour.
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "CryptocurrencyContent")]
-pub struct CryptocurrencyContentV2Temp {
-    pub transfer: crate::cryptocurrency_v2::CryptocurrencyTransfer,
-    pub caption: Option<String>,
-}
-
-impl From<CryptocurrencyContentV2Temp> for CryptocurrencyContentV2 {
-    fn from(c: CryptocurrencyContentV2Temp) -> Self {
-        CryptocurrencyContentV2 {
-            transfer: c.transfer,
-            caption: c.caption,
-        }
-    }
-}
-
-impl From<CryptocurrencyContentV2> for CryptocurrencyContentV2Temp {
-    fn from(c: CryptocurrencyContentV2) -> Self {
-        CryptocurrencyContentV2Temp {
-            transfer: c.transfer,
-            caption: c.caption,
-        }
-    }
-}
-
 impl CryptocurrencyContentV2 {
     pub fn within_limit(&self) -> Result<(), u64> {
         if let crate::cryptocurrency_v2::CryptocurrencyTransfer::Pending(t) = &self.transfer {
@@ -418,15 +391,6 @@ impl CryptocurrencyContentV2 {
             }
         }
         Ok(())
-    }
-}
-
-impl From<CryptocurrencyContent> for CryptocurrencyContentV2Temp {
-    fn from(c: CryptocurrencyContent) -> Self {
-        CryptocurrencyContentV2Temp {
-            transfer: c.transfer.into(),
-            caption: c.caption,
-        }
     }
 }
 
