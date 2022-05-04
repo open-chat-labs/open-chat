@@ -324,7 +324,7 @@
         "icp_account_q": "我的 ICP 账户如何运作？",
         "icp_account_a": "创建 OpenChat 用户时，我们会自动创建一个 ICP 帐户。此帐户最初将为空。您可以通过将ICP转移到其地址来为帐户充值。如果您不知道如何购买 ICP，[本文](https://www.finder.com/uk/how-to-buy-internet-computer) 可能会对您有所帮助。一旦您的 OpenChat 帐户中有一些 ICP，您就可以通过特殊类型的消息将其直接发送到任何其他 OpenChat 用户的帐户。您还可以使用 OpenChat 帐户中的 ICP 将您的存储空间升级到总共 1GB。如果您想从您的 OpenChat ICP 帐户中提取 ICP，您可以通过转到您的用户配置文件的“帐户”部分并单击“管理”按钮来执行此操作。此屏幕让您可以选择将您的 OpenChat ICP 余额提取到您选择的任何其他地址。",
         "shortcuts_q": "有哪些快捷命令可用？",
-        "shortcuts_a": "您可以从消息输入框中使用几个快捷命令。 <br /><br /> `/poll` - 创建一个新的投票 <br /> `/search xyz` - 在当前聊天中搜索术语“xyz” <br />`/gif kittens` - 到搜索小猫 gif <br />`/icp 0.1` - 向某人发送 0.1 ICP <br />`/faq question_id*` - 创建并发布指向特定常见问题解答问题的格式化链接<br /><br / >接受参数的命令也可以不带参数使用。<br /><br />* 可用的常见问题 ID 有：ios_app、android_app、find_groups、style_messages、sms_icp、airdrop、security、send_icp、icp_account、roadmap、shortcuts"
+        "shortcuts_a": "您可以从消息输入框中使用几个快捷命令。 <br /><br /> `/poll` - 创建一个新的投票 <br /> `/search xyz` - 在当前聊天中搜索术语“xyz” <br />`/gif kittens` - 到搜索小猫 gif <br />`/icp 0.1` - 向某人发送 0.1 ICP <br />`/faq question_id*` - 创建并发布指向特定常见问题解答问题的格式化链接<br /><br /> 接受参数的命令也可以不带参数使用。<br /><br />* 可用的常见问题 ID 为：ios_app、android_app、find_groups、style_messages、sms_icp、airdrop、security、send_icp、icp_account、roadmap、shortcuts"
     },
     "roadmap": "路线图",
     "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",
