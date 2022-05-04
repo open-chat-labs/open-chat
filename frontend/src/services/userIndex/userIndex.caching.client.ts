@@ -166,6 +166,7 @@ export class CachingUserIndexClient implements IUserIndexClient {
                     // our cached copy is up to date.
                     users.push({
                         ...cached,
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         updated: response.serverTimestamp!,
                     });
                 } else {

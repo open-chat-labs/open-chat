@@ -1,7 +1,5 @@
 import type { Theme } from "./themes";
 
-const sp3 = "8px";
-
 const orangeAccent = "#ff9505";
 const pinkAccent = "hotpink";
 const blueAccent = "#22A7F2";
