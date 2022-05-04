@@ -48,6 +48,7 @@
     import { translationCodes } from "../../i18n/i18n";
     import { toastStore } from "stores/toast";
     import { storageStore } from "../../stores/storage";
+    import { translationStore } from "stores/translation";
 
     const dispatch = createEventDispatcher();
 
@@ -83,8 +84,6 @@
     let viewProfile = false;
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
-    let translated = false;
-    let originalText: string | undefined = undefined;
 
     $: sender = $userStore[senderId];
     $: username = sender?.username;
@@ -94,6 +93,7 @@
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
     $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
+    $: translated = $translationStore[Number(msg.messageId)] !== undefined;
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
@@ -153,16 +153,7 @@
     }
 
     function untranslateMessage() {
-        translated = false;
-        if (msg.content.kind === "text_content" && originalText !== undefined) {
-            msg = {
-                ...msg,
-                content: {
-                    ...msg.content,
-                    text: originalText,
-                },
-            };
-        }
+        translationStore.untranslate(msg.messageId);
     }
 
     function translateMessage() {
@@ -185,15 +176,10 @@
                             Array.isArray(translations) &&
                             translations.length > 0
                         ) {
-                            translated = true;
-                            originalText = msg.content.text;
-                            msg = {
-                                ...msg,
-                                content: {
-                                    ...msg.content,
-                                    text: translations[0].translatedText,
-                                },
-                            };
+                            translationStore.translate(
+                                msg.messageId,
+                                translations[0].translatedText
+                            );
                         }
                     })
                     .catch((_err) => {
@@ -418,6 +404,7 @@
                 {first}
                 {groupChat}
                 {senderId}
+                messageId={msg.messageId}
                 myUserId={user.userId}
                 content={msg.content}
                 height={mediaCalculatedHeight}

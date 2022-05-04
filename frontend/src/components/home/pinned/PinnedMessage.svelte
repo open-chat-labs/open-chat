@@ -96,6 +96,7 @@
             pinned={true}
             {senderId}
             {fill}
+            messageId={msg.messageId}
             first={true}
             groupChat={true}
             {me}

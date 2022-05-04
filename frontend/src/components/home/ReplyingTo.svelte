@@ -45,6 +45,7 @@
         fill={false}
         first={true}
         {me}
+        messageId={replyingTo.messageId}
         senderId={replyingTo.senderId}
         truncate={true}
         content={replyingTo.content}

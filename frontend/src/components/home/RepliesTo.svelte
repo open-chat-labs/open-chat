@@ -57,6 +57,7 @@
                 {preview}
                 {groupChat}
                 first={true}
+                messageId={repliesTo.messageId}
                 senderId={repliesTo.senderId}
                 fill={false}
                 reply={true}
