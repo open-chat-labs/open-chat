@@ -708,17 +708,18 @@ impl ChatEventsVec {
     }
 
     pub fn get_by_index(&self, indexes: &[EventIndex]) -> Vec<&EventWrapper<ChatEventInternal>> {
-        if let Some(offset) = self.offset() {
-            indexes
-                .into_iter()
-                .filter_map(|i| usize::from(*i).checked_sub(offset))
-                .filter_map(|i| self.events.get(i))
-                .collect()
-        } else {
-            Vec::new()
-        }
+        self.offset()
+            .map(|offset| {
+                indexes
+                    .iter()
+                    .filter_map(|i| usize::from(*i).checked_sub(offset))
+                    .filter_map(|i| self.events.get(i))
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn from_index(
         &self,
         start: EventIndex,
