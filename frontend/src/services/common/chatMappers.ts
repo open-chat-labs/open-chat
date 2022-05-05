@@ -25,7 +25,6 @@ import type {
     RegisterPollVoteResponse,
     GroupPermissions,
     PermissionRole,
-    ICPWithdrawal,
     PendingICPWithdrawal,
     GiphyContent,
     GiphyImage,
@@ -62,7 +61,6 @@ import type {
     ApiRegisterPollVoteResponse as ApiRegisterUserPollVoteResponse,
     ApiGroupPermissions,
     ApiPermissionRole,
-    ApiICPWithdrawal,
     ApiPendingCryptocurrencyWithdrawalV2,
     ApiGiphyContent,
     ApiGiphyImageVariant,
@@ -660,7 +658,9 @@ function apiCryptoTransfer(domain: CryptocurrencyTransfer): ApiCryptocurrencyTra
     throw new UnsupportedValueError("Unexpected transfer kind", domain);
 }
 
-export function apiPendingICPWithdrawal(domain: PendingICPWithdrawal): ApiPendingCryptocurrencyWithdrawalV2 {
+export function apiPendingICPWithdrawal(
+    domain: PendingICPWithdrawal
+): ApiPendingCryptocurrencyWithdrawalV2 {
     return {
         token: { InternetComputer: null },
         to: hexStringToBytes(domain.to),
