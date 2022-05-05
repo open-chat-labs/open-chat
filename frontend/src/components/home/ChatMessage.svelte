@@ -194,7 +194,9 @@
     }
 
     function editMessage() {
-        dispatch("editMessage");
+        if (canEdit) {
+            dispatch("editMessage");
+        }
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -370,6 +372,7 @@
             style={msgBubbleCalculatedWidth !== undefined
                 ? `width: ${msgBubbleCalculatedWidth}px`
                 : undefined}
+            on:dblclick={editMessage}
             class="message-bubble"
             class:focused
             class:editing
