@@ -1,5 +1,7 @@
 <script lang="ts">
     import Send from "svelte-material-icons/Send.svelte";
+    import ContentSaveEditOutline from "svelte-material-icons/ContentSaveEditOutline.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import { emojiStore } from "../../stores/emoji";
@@ -35,7 +37,6 @@
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
     $: replyingTo = controller.replyingTo;
-    $: chat = controller.chat;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -67,6 +68,11 @@
         if ($editingEvent && !initialisedEdit) {
             if ($editingEvent.event.content.kind === "text_content") {
                 inp.textContent = $editingEvent.event.content.text;
+                selectedRange = undefined;
+                restoreSelection();
+                initialisedEdit = true;
+            } else if ("caption" in $editingEvent.event.content) {
+                inp.textContent = $editingEvent.event.content.caption ?? "";
                 selectedRange = undefined;
                 restoreSelection();
                 initialisedEdit = true;
@@ -259,6 +265,10 @@
         return false;
     }
 
+    function cancelEdit() {
+        controller.cancelEditEvent();
+    }
+
     function sendMessage() {
         const txt = inp.innerText?.trim();
 
@@ -361,7 +371,10 @@
         query={emojiQuery} />
 {/if}
 
-<div class="message-entry" bind:clientHeight={messageEntryHeight}>
+<div
+    class="message-entry"
+    class:editing={$editingEvent !== undefined}
+    bind:clientHeight={messageEntryHeight}>
     {#if blocked}
         <div class="blocked">
             {$_("userIsBlocked")}
@@ -388,6 +401,7 @@
             bind:this={messageActions}
             bind:messageAction
             {controller}
+            editing={$editingEvent !== undefined}
             on:icpTransfer
             on:attachGif
             on:fileSelected />
@@ -414,19 +428,32 @@
             on:drop={onDrop}
             on:input={onInput}
             on:keypress={keyPress} />
-        {#if messageIsEmpty && audioMimeType !== undefined && audioSupported}
-            <div class="record">
-                <AudioAttacher
-                    mimeType={audioMimeType}
-                    bind:percentRecorded
-                    bind:recording
-                    bind:supported={audioSupported}
-                    on:audioCaptured />
-            </div>
+        {#if $editingEvent === undefined}
+            {#if messageIsEmpty && audioMimeType !== undefined && audioSupported}
+                <div class="record">
+                    <AudioAttacher
+                        mimeType={audioMimeType}
+                        bind:percentRecorded
+                        bind:recording
+                        bind:supported={audioSupported}
+                        on:audioCaptured />
+                </div>
+            {:else}
+                <div class="send" on:click={sendMessage}>
+                    <HoverIcon>
+                        <Send size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </div>
+            {/if}
         {:else}
             <div class="send" on:click={sendMessage}>
                 <HoverIcon>
-                    <Send size={$iconSize} color={"var(--icon-txt)"} />
+                    <ContentSaveEditOutline size={$iconSize} color={"var(--button-txt)"} />
+                </HoverIcon>
+            </div>
+            <div class="send" on:click={cancelEdit}>
+                <HoverIcon>
+                    <Close size={$iconSize} color={"var(--button-txt)"} />
                 </HoverIcon>
             </div>
         {/if}
@@ -442,6 +469,10 @@
         align-items: center;
         background-color: var(--entry-bg);
         padding: $sp3;
+
+        &.editing {
+            background-color: var(--button-bg);
+        }
     }
     .send {
         flex: 0 0 15px;

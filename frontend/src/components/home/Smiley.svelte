@@ -4,6 +4,8 @@
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
 
+    export let color: string;
+
     let open = true;
 
     function rand(min: number, max: number) {
@@ -39,15 +41,15 @@
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={$iconSize} height={$iconSize}>
     {#if open}
-        <ellipse class="left open" cx="9" cy="9.3" rx="1.4" ry="2" fill="var(--icon-txt)" />
-        <ellipse class="right open" cx="15" cy="9.3" rx="1.4" ry="2" fill="var(--icon-txt)" />
+        <ellipse class="left open" cx="9" cy="9.3" rx="1.4" ry="2" fill={color} />
+        <ellipse class="right open" cx="15" cy="9.3" rx="1.4" ry="2" fill={color} />
     {:else}
-        <line x1="6.5" y1="9.3" x2="11.5" y2="9" stroke-width="1" stroke="var(--icon-txt)" />
-        <line x1="13.5" y1="9" x2="17.5" y2="9.3" stroke-width="1" stroke="var(--icon-txt)" />
+        <line x1="6.5" y1="9.3" x2="11.5" y2="9" stroke-width="1" stroke={color} />
+        <line x1="13.5" y1="9" x2="17.5" y2="9.3" stroke-width="1" stroke={color} />
     {/if}
 
     <path
-        fill="var(--icon-txt)"
+        fill={color}
         d="
         M9.153 11.603
         m-3.204 1.362

@@ -163,7 +163,7 @@
 
 <div class="footer">
     <div class="footer-overlay">
-        {#if $replyingTo || $fileToAttach !== undefined}
+        {#if $editingEvent === undefined && ($replyingTo || $fileToAttach !== undefined)}
             <div class="draft-container">
                 {#if $replyingTo}
                     <ReplyingTo

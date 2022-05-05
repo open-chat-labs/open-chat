@@ -51,6 +51,7 @@
     $: focusMessageIndex = controller.focusMessageIndex;
     $: markRead = controller.markRead;
     $: pinned = controller.pinnedMessages;
+    $: editingEvent = controller.editingEvent;
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
@@ -504,6 +505,7 @@
                         publicGroup={controller.chatVal.kind === "group_chat" &&
                             controller.chatVal.public}
                         pinned={isPinned($pinned, evt)}
+                        editing={$editingEvent === evt}
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo

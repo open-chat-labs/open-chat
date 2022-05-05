@@ -20,6 +20,7 @@
     import { afterUpdate, createEventDispatcher, onDestroy, onMount } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
@@ -75,6 +76,7 @@
     export let canSend: boolean;
     export let canReact: boolean;
     export let publicGroup: boolean;
+    export let editing: boolean;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
@@ -84,7 +86,9 @@
     let viewProfile = false;
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
+    let poll = msg.content.kind === "poll_content";
 
+    $: canEdit = confirmed && !crypto && !poll && me;
     $: sender = $userStore[senderId];
     $: username = sender?.username;
     $: mediaDimensions = extractDimensions(msg.content);
@@ -189,9 +193,9 @@
         }
     }
 
-    // function editMessage() {
-    //     dispatch("editMessage");
-    // }
+    function editMessage() {
+        dispatch("editMessage");
+    }
 
     function selectReaction(ev: CustomEvent<string>) {
         toggleReaction(ev.detail);
@@ -368,6 +372,7 @@
                 : undefined}
             class="message-bubble"
             class:focused
+            class:editing
             class:fill={fill && !deleted}
             class:me
             class:deleted
@@ -416,6 +421,7 @@
                     {fill}
                     {timestamp}
                     {me}
+                    edited={msg.edited}
                     {confirmed}
                     {readByThem}
                     {crypto}
@@ -430,6 +436,7 @@
                 <pre>ReadByThem: {readByThem}</pre>
                 <pre>ReadByUs: {readByMe}</pre>
                 <pre>Pinned: {pinned}</pre>
+                <pre>edited: {msg.edited}</pre>
             {/if}
 
             {#if !deleted && !preview}
@@ -506,10 +513,15 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                <!-- <MenuItem on:click={editMessage}>
-                                    <PencilOutline size={"1.2em"} color={"var(--icon-txt)"} slot="icon" />
-                                    <div slot="text">{$_("editMessage")}</div>
-                                </MenuItem> -->
+                                {#if canEdit}
+                                    <MenuItem on:click={editMessage}>
+                                        <PencilOutline
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("editMessage")}</div>
+                                    </MenuItem>
+                                {/if}
                                 {#if (canDelete || me) && !crypto}
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline
@@ -822,6 +834,10 @@
         }
 
         &.focused {
+            box-shadow: 0 0 0 4px var(--toast-success-bg);
+        }
+
+        &.editing {
             box-shadow: 0 0 0 4px var(--toast-success-bg);
         }
 

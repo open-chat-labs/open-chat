@@ -17,12 +17,15 @@
 
     export let controller: ChatController;
     export let messageAction: MessageAction = undefined;
+    export let editing: boolean; // are we in edit mode - if so we must restrict what's available
 
     let drawOpen = false;
 
     $: fileToAttach = controller.fileToAttach;
-    $: useDrawer = $mobileWidth;
+    $: useDrawer = $mobileWidth && !editing;
     $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
+
+    $: iconColour = editing ? "var(--button-txt)" : "var(--icon-txt)";
 
     export function close() {
         drawOpen = false;
@@ -77,11 +80,11 @@
     <div class="open-draw" on:click|stopPropagation={toggleDraw}>
         {#if drawOpen || $fileToAttach !== undefined}
             <HoverIcon>
-                <TrayRemove size={$iconSize} color={"var(--icon-txt)"} />
+                <TrayRemove size={$iconSize} color={iconColour} />
             </HoverIcon>
         {:else}
             <HoverIcon>
-                <TrayPlus size={$iconSize} color={"var(--icon-txt)"} />
+                <TrayPlus size={$iconSize} color={iconColour} />
             </HoverIcon>
         {/if}
     </div>
@@ -91,31 +94,33 @@
     <div class="emoji" on:click|stopPropagation={toggleEmojiPicker}>
         {#if messageAction === "emoji"}
             <HoverIcon>
-                <Close size={$iconSize} color={"var(--icon-txt)"} />
+                <Close size={$iconSize} color={iconColour} />
             </HoverIcon>
         {:else}
             <HoverIcon>
-                <Smiley />
+                <Smiley color={iconColour} />
             </HoverIcon>
         {/if}
     </div>
-    <div class="attach">
-        <FileAttacher
-            open={$fileToAttach !== undefined}
-            on:fileSelected
-            on:open={() => (messageAction = "file")}
-            on:close={close} />
-    </div>
-    <div class="send-icp" on:click|stopPropagation={createICPTransfer}>
-        <HoverIcon title={"Send Crypto"}>
-            <SwapHorizontal size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
-    </div>
-    <div class="gif" on:click|stopPropagation={sendGif}>
-        <HoverIcon title={"Attach gif"}>
-            <StickerEmoji size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
-    </div>
+    {#if !editing}
+        <div class="attach">
+            <FileAttacher
+                open={$fileToAttach !== undefined}
+                on:fileSelected
+                on:open={() => (messageAction = "file")}
+                on:close={close} />
+        </div>
+        <div class="send-icp" on:click|stopPropagation={createICPTransfer}>
+            <HoverIcon title={"Send Crypto"}>
+                <SwapHorizontal size={$iconSize} color={iconColour} />
+            </HoverIcon>
+        </div>
+        <div class="gif" on:click|stopPropagation={sendGif}>
+            <HoverIcon title={"Attach gif"}>
+                <StickerEmoji size={$iconSize} color={iconColour} />
+            </HoverIcon>
+        </div>
+    {/if}
 </div>
 
 <style type="text/scss">
