@@ -99,12 +99,6 @@ type CryptocurrencyContent =
         caption: opt text;
     };
 
-type CryptocurrencyContentV2 =
-    record {
-        transfer: CryptocurrencyTransferV2;
-        caption: opt text;
-    };
-
 type DeletedContent =
     record {
         deleted_by: UserId;
@@ -453,8 +447,8 @@ type MessageContent =
         Audio: AudioContent;
         File: FileContent;
         Poll: PollContent;
-        Cryptocurrency: CryptocurrencyContent;
-        CryptocurrencyV2: CryptocurrencyContentV2;
+        Cryptocurrency: reserved;
+        CryptocurrencyV2: CryptocurrencyContent;
         Deleted: DeletedContent;
         Giphy: GiphyContent;
     };
@@ -733,229 +727,89 @@ type Version =
         patch: nat32;
     };
 
-// Cryptocurrency.rs
 type Cryptocurrency =
-    variant {
-        ICP;
-        Cycles;
-    };
-
-type CryptocurrencyV2 =
     variant {
         InternetComputer;
     };
 
-type CryptocurrencyAccount =
-    variant {
-        ICP: AccountIdentifier;
-        Cycles: CanisterId;
-    };
-
 type CryptocurrencyTransaction =
     variant {
-        Deposit: CryptocurrencyDepositV2;
-        Withdrawal: CryptocurrencyWithdrawalV2;
-        Transfer: CryptocurrencyTransferV2;
+        Deposit: CryptocurrencyDeposit;
+        Withdrawal: CryptocurrencyWithdrawal;
+        Transfer: CryptocurrencyTransfer;
     };
 
 type CryptocurrencyDeposit =
     variant {
-        Cycles: CyclesDeposit;
-        ICP: ICPDeposit;
+        Completed: CompletedCryptocurrencyDeposit;
     };
 
-type CryptocurrencyWithdrawal =
-    variant {
-        Cycles: CyclesWithdrawal;
-        ICP: ICPWithdrawal;
-    };
-
-type PendingCryptocurrencyWithdrawal =
-    variant {
-        ICP: PendingICPWithdrawal;
-        Cycles: PendingCyclesWithdrawal;
-    };
-
-type CompletedCryptocurrencyWithdrawal =
-    variant {
-        ICP: CompletedICPWithdrawal;
-        Cycles: CompletedCyclesWithdrawal;
-    };
-
-type FailedCryptocurrencyWithdrawal =
-    variant {
-        ICP: FailedICPWithdrawal;
-        Cycles: FailedCyclesWithdrawal;
-    };
-
-type CompletedCryptocurrencyTransfer =
-    variant {
-        ICP: CompletedICPTransfer;
-        Cycles: CompletedCyclesTransfer;
-    };
-
-type CyclesDeposit =
-    variant {
-        Completed: CompletedCyclesDeposit;
-    };
-
-type CompletedCyclesDeposit =
+type CompletedCryptocurrencyDeposit =
     record {
-        from: CanisterId;
-        cycles: Cycles;
-    };
-
-type ICPDeposit =
-    variant {
-        Completed: CompletedICPDeposit;
-    };
-
-type CompletedICPDeposit =
-    record {
+        token: Cryptocurrency;
         from_address: AccountIdentifier;
-        amount: ICP;
-        fee: ICP;
+        amount: Tokens;
+        fee: Tokens;
         memo: Memo;
         block_index: BlockIndex;
     };
 
-type CyclesWithdrawal =
+type CryptocurrencyWithdrawal =
     variant {
-        Pending: PendingCyclesWithdrawal;
-        Completed: CompletedCyclesWithdrawal;
-        Failed: FailedCyclesWithdrawal;
+        Pending: PendingCryptocurrencyWithdrawal;
+        Completed: CompletedCryptocurrencyWithdrawal;
+        Failed: FailedCryptocurrencyWithdrawal;
     };
 
-type PendingCyclesWithdrawal =
+type PendingCryptocurrencyWithdrawal =
     record {
-        to: CanisterId;
-        cycles: Cycles;
-    };
-
-type CompletedCyclesWithdrawal =
-    record {
-        to: CanisterId;
-        cycles: Cycles;
-    };
-
-type FailedCyclesWithdrawal =
-    record {
-        to: CanisterId;
-        cycles: Cycles;
-        error_message: text;
-    };
-
-type ICPWithdrawal =
-    variant {
-        Pending: PendingICPWithdrawal;
-        Completed: CompletedICPWithdrawal;
-        Failed: FailedICPWithdrawal;
-    };
-
-type PendingICPWithdrawal =
-    record {
+        token: Cryptocurrency;
         to: AccountIdentifier;
-        amount: ICP;
-        fee: opt ICP;
+        amount: Tokens;
+        fee: opt Tokens;
         memo: opt Memo;
     };
 
-type CompletedICPWithdrawal =
+type CompletedCryptocurrencyWithdrawal =
     record {
+        token: Cryptocurrency;
         to: AccountIdentifier;
-        amount: ICP;
-        fee: ICP;
+        amount: Tokens;
+        fee: Tokens;
         memo: Memo;
         block_index: BlockIndex;
         transaction_hash: TransactionHash;
     };
 
-type FailedICPWithdrawal =
+type FailedCryptocurrencyWithdrawal =
     record {
+        token: Cryptocurrency;
         to: AccountIdentifier;
-        amount: ICP;
-        fee: ICP;
+        amount: Tokens;
+        fee: Tokens;
         memo: Memo;
         error_message: text;
     };
 
 type CryptocurrencyTransfer =
     variant {
-        Cycles: CyclesTransfer;
-        ICP: ICPTransfer;
+        Pending: PendingCryptocurrencyTransfer;
+        Completed:CompletedCryptocurrencyTransfer;
+        Failed: FailedCryptocurrencyTransfer;
     };
 
-type CryptocurrencyDepositV2 =
-    variant {
-        Completed: CompletedCryptocurrencyDepositV2;
-    };
-
-type CompletedCryptocurrencyDepositV2 =
+type PendingCryptocurrencyTransfer =
     record {
-        token: CryptocurrencyV2;
-        from_address: AccountIdentifier;
-        amount: Tokens;
-        fee: Tokens;
-        memo: Memo;
-        block_index: BlockIndex;
-    };
-
-type CryptocurrencyWithdrawalV2 =
-    variant {
-        Pending: PendingCryptocurrencyWithdrawalV2;
-        Completed: CompletedCryptocurrencyWithdrawalV2;
-        Failed: FailedCryptocurrencyWithdrawalV2;
-    };
-
-type PendingCryptocurrencyWithdrawalV2 =
-    record {
-        token: CryptocurrencyV2;
-        to: AccountIdentifier;
-        amount: Tokens;
-        fee: opt Tokens;
-        memo: opt Memo;
-    };
-
-type CompletedCryptocurrencyWithdrawalV2 =
-    record {
-        token: CryptocurrencyV2;
-        to: AccountIdentifier;
-        amount: Tokens;
-        fee: Tokens;
-        memo: Memo;
-        block_index: BlockIndex;
-        transaction_hash: TransactionHash;
-    };
-
-type FailedCryptocurrencyWithdrawalV2 =
-    record {
-        token: CryptocurrencyV2;
-        to: AccountIdentifier;
-        amount: Tokens;
-        fee: Tokens;
-        memo: Memo;
-        error_message: text;
-    };
-
-type CryptocurrencyTransferV2 =
-    variant {
-        Pending: PendingCryptocurrencyTransferV2;
-        Completed:CompletedCryptocurrencyTransferV2;
-        Failed: FailedCryptocurrencyTransferV2;
-    };
-
-type PendingCryptocurrencyTransferV2 =
-    record {
-        token: CryptocurrencyV2;
+        token: Cryptocurrency;
         recipient: UserId;
         amount: Tokens;
         fee: opt Tokens;
         memo: opt Memo;
     };
 
-type CompletedCryptocurrencyTransferV2 =
+type CompletedCryptocurrencyTransfer =
     record {
-        token: CryptocurrencyV2;
+        token: Cryptocurrency;
         sender: UserId;
         recipient: UserId;
         amount: Tokens;
@@ -965,74 +819,12 @@ type CompletedCryptocurrencyTransferV2 =
         transaction_hash: TransactionHash;
     };
 
-type FailedCryptocurrencyTransferV2 =
+type FailedCryptocurrencyTransfer =
     record {
-        token: CryptocurrencyV2;
+        token: Cryptocurrency;
         recipient: UserId;
         amount: Tokens;
         fee: Tokens;
-        memo: Memo;
-        error_message: text;
-    };
-
-type CyclesTransfer =
-    variant {
-        Pending: PendingCyclesTransfer;
-        Completed: CompletedCyclesTransfer;
-        Failed: FailedCyclesTransfer;
-    };
-
-type PendingCyclesTransfer =
-    record {
-        recipient: UserId;
-        cycles: Cycles;
-    };
-
-type CompletedCyclesTransfer =
-    record {
-        sender: UserId;
-        recipient: UserId;
-        cycles: Cycles;
-    };
-
-type FailedCyclesTransfer =
-    record {
-        recipient: UserId;
-        cycles: Cycles;
-        error_message: text;
-    };
-
-type ICPTransfer =
-    variant {
-        Pending: PendingICPTransfer;
-        Completed: CompletedICPTransfer;
-        Failed: FailedICPTransfer;
-    };
-
-type PendingICPTransfer =
-    record {
-        recipient: UserId;
-        amount: ICP;
-        fee: opt ICP;
-        memo: opt Memo;
-    };
-
-type CompletedICPTransfer =
-    record {
-        sender: UserId;
-        recipient: UserId;
-        amount: ICP;
-        fee: ICP;
-        memo: Memo;
-        block_index: BlockIndex;
-        transaction_hash: TransactionHash;
-    };
-
-type FailedICPTransfer =
-    record {
-        recipient: UserId;
-        amount: ICP;
-        fee: ICP;
         memo: Memo;
         error_message: text;
     };

@@ -4,7 +4,7 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
-    AvatarChanged, ChatMetrics, DeletedBy, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged, GroupInviteChanged,
+    AvatarChanged, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged, GroupInviteChanged
     GroupNameChanged, GroupVisibilityChanged, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
     OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft,
     ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved, PermissionsChanged, PollVoteRegistered,
@@ -259,7 +259,7 @@ impl MessageInternal {
                     }
                 }
                 MessageContentInternal::Cryptocurrency(c) => match c.transfer.token() {
-                    types::cryptocurrency_v2::Cryptocurrency::InternetComputer => {
+                    Cryptocurrency::InternetComputer => {
                         adjust(&mut metrics.icp_messages);
                         adjust(&mut sender_metrics.icp_messages);
                     }

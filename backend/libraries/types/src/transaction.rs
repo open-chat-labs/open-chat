@@ -1,4 +1,6 @@
-use crate::TimestampMillis;
+use crate::{
+    CryptocurrencyDeposit, CryptocurrencyTransaction, CryptocurrencyTransfer, CryptocurrencyWithdrawal, TimestampMillis,
+};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +13,7 @@ pub struct TransactionWrapper {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum Transaction {
-    Cryptocurrency(crate::cryptocurrency_v2::CryptocurrencyTransaction),
+    Cryptocurrency(CryptocurrencyTransaction),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -21,20 +23,20 @@ pub enum TransactionStatus {
     Failed(String),
 }
 
-impl From<crate::cryptocurrency_v2::CryptocurrencyDeposit> for Transaction {
-    fn from(d: crate::cryptocurrency_v2::CryptocurrencyDeposit) -> Self {
-        Transaction::Cryptocurrency(crate::cryptocurrency_v2::CryptocurrencyTransaction::Deposit(d))
+impl From<CryptocurrencyDeposit> for Transaction {
+    fn from(d: CryptocurrencyDeposit) -> Self {
+        Transaction::Cryptocurrency(CryptocurrencyTransaction::Deposit(d))
     }
 }
 
-impl From<crate::cryptocurrency_v2::CryptocurrencyWithdrawal> for Transaction {
-    fn from(w: crate::cryptocurrency_v2::CryptocurrencyWithdrawal) -> Self {
-        Transaction::Cryptocurrency(crate::cryptocurrency_v2::CryptocurrencyTransaction::Withdrawal(w))
+impl From<CryptocurrencyWithdrawal> for Transaction {
+    fn from(w: CryptocurrencyWithdrawal) -> Self {
+        Transaction::Cryptocurrency(CryptocurrencyTransaction::Withdrawal(w))
     }
 }
 
-impl From<crate::cryptocurrency_v2::CryptocurrencyTransfer> for Transaction {
-    fn from(t: crate::cryptocurrency_v2::CryptocurrencyTransfer) -> Self {
-        Transaction::Cryptocurrency(crate::cryptocurrency_v2::CryptocurrencyTransaction::Transfer(t))
+impl From<CryptocurrencyTransfer> for Transaction {
+    fn from(t: CryptocurrencyTransfer) -> Self {
+        Transaction::Cryptocurrency(CryptocurrencyTransaction::Transfer(t))
     }
 }

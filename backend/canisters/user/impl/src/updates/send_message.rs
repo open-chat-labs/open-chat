@@ -6,7 +6,9 @@ use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{CanisterId, ContentValidationError, MessageContent, UserId};
+use types::{
+    CanisterId, CompletedCryptocurrencyTransfer, ContentValidationError, CryptocurrencyTransfer, MessageContent, UserId,
+};
 use user_canister::c2c_send_message::{self, C2CReplyContext};
 use user_canister::send_message::{Response::*, *};
 
@@ -27,7 +29,7 @@ async fn send_message(mut args: Args) -> Response {
     if let MessageContent::CryptocurrencyV2(c) = &mut args.content {
         completed_transfer = match process_transfer(c.transfer.clone(), args.recipient).await {
             Ok(transfer) => {
-                c.transfer = types::cryptocurrency_v2::CryptocurrencyTransfer::Completed(transfer.clone());
+                c.transfer = CryptocurrencyTransfer::Completed(transfer.clone());
                 Some(transfer)
             }
             Err(error) => {
@@ -66,7 +68,7 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Res
 
 fn send_message_impl(
     args: Args,
-    completed_transfer: Option<types::cryptocurrency_v2::CompletedCryptocurrencyTransfer>,
+    completed_transfer: Option<CompletedCryptocurrencyTransfer>,
     runtime_state: &mut RuntimeState,
 ) -> Response {
     let now = runtime_state.env.now();
@@ -110,7 +112,7 @@ fn send_message_impl(
     ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, false));
 
     if let Some(transfer) = completed_transfer {
-        TransferSuccessV2(TransferSuccessV2Result {
+        TransferSuccessV2(TransferSuccessResult {
             chat_id: recipient.into(),
             event_index: message_event.index,
             message_index: message_event.event.message_index,

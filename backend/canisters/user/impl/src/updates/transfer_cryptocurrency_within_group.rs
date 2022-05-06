@@ -4,7 +4,7 @@ use crate::{read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
-use types::{CryptocurrencyContentV2, MessageContent, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE};
+use types::{CryptocurrencyContent, CryptocurrencyTransfer, MessageContent, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE};
 use user_canister::transfer_cryptocurrency_within_group::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
@@ -28,8 +28,8 @@ async fn transfer_cryptocurrency_within_group(args: Args) -> Response {
 
     let c2c_args = group_canister::send_message::Args {
         message_id: args.message_id,
-        content: MessageContent::CryptocurrencyV2(CryptocurrencyContentV2 {
-            transfer: types::cryptocurrency_v2::CryptocurrencyTransfer::Completed(completed_transfer.clone()),
+        content: MessageContent::CryptocurrencyV2(CryptocurrencyContent {
+            transfer: CryptocurrencyTransfer::Completed(completed_transfer.clone()),
             caption: args.content.caption,
         }),
         sender_name: args.sender_name,
