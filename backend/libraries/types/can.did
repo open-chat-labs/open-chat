@@ -219,7 +219,7 @@ type GroupChatEvent =
         PollEnded: PollEnded;
         PermissionsChanged: PermissionsChanged;
         GroupVisibilityChanged: GroupVisibilityChanged;
-        GroupInviteChanged: GroupInviteChanged;
+        GroupInviteCodeChanged: GroupInviteCodeChanged;
     };
 
 type GroupChatEventWrapper =
@@ -549,7 +549,7 @@ type GroupVisibilityChanged =
         changed_by: UserId;
     };
 
-type GroupInviteChanged =
+type GroupInviteCodeChanged =
     record {
         change: GroupInviteChange;
         changed_by: UserId;

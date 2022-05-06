@@ -31,7 +31,7 @@ pub enum GroupChatEvent {
     PollEnded(PollEnded),
     PermissionsChanged(PermissionsChanged),
     GroupVisibilityChanged(GroupVisibilityChanged),
-    GroupInviteChanged(GroupInviteChanged),
+    GroupInviteCodeChanged(GroupInviteCodeChanged),
 }
 
 impl GroupChatEvent {
@@ -189,7 +189,7 @@ pub struct GroupVisibilityChanged {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupInviteChanged {
+pub struct GroupInviteCodeChanged {
     pub change: GroupInviteChange,
     pub changed_by: UserId,
 }

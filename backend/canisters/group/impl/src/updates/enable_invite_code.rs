@@ -7,7 +7,7 @@ use group_canister::{enable_invite_code, reset_invite_code};
 use ic_cdk_macros::update;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
-use types::{GroupInviteChange, GroupInviteChanged};
+use types::{GroupInviteChange, GroupInviteCodeChanged};
 use utils::canister;
 
 #[update]
@@ -57,7 +57,7 @@ async fn generate_and_store_code(caller: Principal, change: GroupInviteChange) -
 
         if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
             runtime_state.data.events.push_event(
-                ChatEventInternal::GroupInviteChanged(Box::new(GroupInviteChanged {
+                ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
                     change,
                     changed_by: participant.user_id,
                 })),

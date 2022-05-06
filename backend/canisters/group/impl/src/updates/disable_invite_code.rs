@@ -4,7 +4,7 @@ use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::disable_invite_code::{Response::*, *};
 use ic_cdk_macros::update;
-use types::{GroupInviteChange, GroupInviteChanged};
+use types::{GroupInviteChange, GroupInviteCodeChanged};
 
 #[update]
 #[trace]
@@ -22,7 +22,7 @@ fn disable_invite_code_impl(runtime_state: &mut RuntimeState) -> Response {
 
             let now = runtime_state.env.now();
             runtime_state.data.events.push_event(
-                ChatEventInternal::GroupInviteChanged(Box::new(GroupInviteChanged {
+                ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
                     change: GroupInviteChange::Disabled,
                     changed_by: participant.user_id,
                 })),
