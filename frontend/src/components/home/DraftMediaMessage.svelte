@@ -23,14 +23,14 @@
 
 <div class="msg-preview">
     {#if content.kind === "video_content"}
-        <VideoContent fill={false} {content} draft={true} />
+        <VideoContent edited={false} fill={false} {content} draft={true} />
     {:else if content.kind === "audio_content"}
-        <AudioContent {content} />
+        <AudioContent edited={false} {content} />
     {:else if content.kind === "image_content"}
-        <ImageContent fill={false} {content} draft={true} />
+        <ImageContent edited={false} fill={false} {content} draft={true} />
     {:else if content.kind === "file_content"}
         <div class="file-preview">
-            <FileContent me={true} {content} draft={true} />
+            <FileContent edited={false} me={true} {content} draft={true} />
         </div>
     {/if}
 </div>
