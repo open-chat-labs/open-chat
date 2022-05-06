@@ -16,7 +16,7 @@
     import MentionPicker from "./MentionPicker.svelte";
     import { userStore } from "stores/user";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
-    import type { User } from "../../domain/user/user";
+    import type { PartialUserSummary, User } from "../../domain/user/user";
     import Button from "../Button.svelte";
     import type { GroupChatSummary, MessageAction } from "../../domain/chat/chat";
     import { enterSend } from "../../stores/settings";
@@ -67,7 +67,7 @@
     $: {
         if ($editingEvent && !initialisedEdit) {
             if ($editingEvent.event.content.kind === "text_content") {
-                inp.textContent = $editingEvent.event.content.text;
+                inp.textContent = formatMentions($editingEvent.event.content.text);
                 selectedRange = undefined;
                 restoreSelection();
                 initialisedEdit = true;
@@ -195,6 +195,18 @@
             }
             e.preventDefault();
         }
+    }
+
+    function formatMentions(text: string): string {
+        return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
+            const u = $userStore[p1] as PartialUserSummary | undefined;
+            if (u?.username !== undefined) {
+                const username = u.username;
+                reverseUserLookup[username] = u.userId;
+                return `@${username}`;
+            }
+            return match;
+        });
     }
 
     // replace anything of the form @username with @UserId(xyz) where xyz is the userId
