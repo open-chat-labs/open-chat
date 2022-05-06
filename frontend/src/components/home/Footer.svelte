@@ -123,8 +123,8 @@
         }
     }
 
-    export function sendMessageWithContent(ev: CustomEvent<MessageContent>) {
-        sendMessageWithAttachment(undefined, [], ev.detail);
+    export function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
+        sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
@@ -163,7 +163,7 @@
 
 <div class="footer">
     <div class="footer-overlay">
-        {#if $replyingTo || $fileToAttach !== undefined}
+        {#if $editingEvent === undefined && ($replyingTo || $fileToAttach !== undefined)}
             <div class="draft-container">
                 {#if $replyingTo}
                     <ReplyingTo

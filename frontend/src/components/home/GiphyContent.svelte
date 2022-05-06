@@ -3,6 +3,7 @@
 <script lang="ts">
     import { rtlStore } from "../../stores/rtl";
     import type { GiphyContent } from "../../domain/chat/chat";
+    import { addEditedSuffix } from "../../domain/chat/chat.utils";
     import Markdown from "./Markdown.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
 
@@ -12,6 +13,7 @@
     export let reply: boolean = false;
     export let height: number | undefined = undefined;
     export let intersecting: boolean = true;
+    export let edited: boolean;
 
     let withCaption = content.caption !== undefined && content.caption !== "";
     let image = $mobileWidth ? content.mobile : content.desktop;
@@ -61,8 +63,8 @@
     {/if}
 </div>
 
-{#if content.caption !== undefined}
-    <Markdown text={content.caption} inline={!reply} />
+{#if content.caption !== undefined && content.caption !== ""}
+    <Markdown text={addEditedSuffix(content.caption, edited)} inline={!reply} />
 {/if}
 
 <style type="text/scss">

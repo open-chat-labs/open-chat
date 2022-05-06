@@ -6,6 +6,7 @@
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import { rtlStore } from "../../stores/rtl";
+    import { _ } from "svelte-i18n";
 
     export let timestamp: bigint;
     export let confirmed: boolean;
@@ -54,6 +55,7 @@
         width: 16px;
         height: 16px;
     }
+
     .time-and-ticks {
         @include font(light, normal, fs-50);
         display: flex;

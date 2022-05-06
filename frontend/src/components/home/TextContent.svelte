@@ -5,12 +5,14 @@
     import { translationStore } from "../../stores/translation";
     import { _ } from "svelte-i18n";
     import type { TextContent } from "../../domain/chat/chat";
+    import { addEditedSuffix } from "../../domain/chat/chat.utils";
 
     const SIZE_LIMIT = 1000;
     export let content: TextContent;
     export let truncate: boolean = false;
     export let pinned: boolean = false;
     export let messageId: bigint;
+    export let edited: boolean;
 
     function truncateText(text: string): string {
         // todo - we might be able to do something nicer than this with pure css, but we just need to do
@@ -19,7 +21,7 @@
             text = text.slice(0, SIZE_LIMIT) + "...";
         }
 
-        return text;
+        return addEditedSuffix(text, edited);
     }
 </script>
 

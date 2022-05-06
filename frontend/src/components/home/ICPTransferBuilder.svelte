@@ -116,7 +116,7 @@
                 amountE8s: draftAmountE8s,
             },
         };
-        dispatch("sendTransfer", content);
+        dispatch("sendTransfer", [content, undefined]);
         open = false;
     }
 </script>

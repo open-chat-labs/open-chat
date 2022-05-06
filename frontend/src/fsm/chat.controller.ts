@@ -563,8 +563,6 @@ export class ChatController {
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
         }
 
-        draftMessages.delete(this.chatId);
-
         if (get(this.editingEvent)) {
             this.events.update((events) => {
                 return events.map((e) => {
@@ -601,6 +599,8 @@ export class ChatController {
                 },
             });
         }
+
+        draftMessages.delete(this.chatId);
     }
 
     // This could be a message received in an `updates` response, from a notification, or via WebRTC.
@@ -968,6 +968,10 @@ export class ChatController {
 
     replyTo(context: EnhancedReplyContext): void {
         draftMessages.setReplyingTo(this.chatId, context);
+    }
+
+    cancelEditEvent(): void {
+        draftMessages.delete(this.chatId);
     }
 
     editEvent(event: EventWrapper<Message>): void {

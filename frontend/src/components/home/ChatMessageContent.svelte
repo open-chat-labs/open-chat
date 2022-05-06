@@ -28,20 +28,21 @@
     export let senderId: string;
     export let myUserId: string | undefined;
     export let messageId: bigint;
+    export let edited: boolean;
 </script>
 
 {#if content.kind === "text_content"}
-    <TextContent {truncate} {pinned} {messageId} {content} />
+    <TextContent {truncate} {pinned} {messageId} {content} {edited} />
 {:else if content.kind === "image_content"}
     <ImageObserver let:intersecting>
-        <ImageContent {intersecting} {fill} {content} {reply} {pinned} {height} />
+        <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
     </ImageObserver>
 {:else if content.kind === "video_content"}
-    <VideoContent {fill} {content} {reply} {height} />
+    <VideoContent {edited} {fill} {content} {reply} {height} />
 {:else if content.kind === "audio_content"}
-    <AudioContent {content} />
+    <AudioContent {edited} {content} />
 {:else if content.kind === "file_content"}
-    <FileContent {me} {content} {reply} />
+    <FileContent {edited} {me} {content} {reply} />
 {:else if content.kind === "deleted_content"}
     <DeletedContent {content} />
 {:else if content.kind === "crypto_content"}
@@ -52,6 +53,6 @@
     <PollContent {preview} {me} {content} {myUserId} on:registerVote />
 {:else if content.kind === "giphy_content"}
     <ImageObserver let:intersecting>
-        <GiphyContent {intersecting} {fill} {content} {reply} {height} />
+        <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} />
     </ImageObserver>
 {/if}
