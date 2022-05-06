@@ -33,11 +33,11 @@ async fn enable_invite_code(_args: enable_invite_code::Args) -> enable_invite_co
         Ok(c) => c,
     };
 
-    let code = if result.code.is_some() {
+    let code = if let Some(c) = result.code {
         mutate_state(|runtime_state| {
             runtime_state.data.invite_code_enabled = true;
         });
-        result.code.unwrap()
+        c
     } else {
         generate_and_store_code(result.caller, GroupInviteChange::Enabled).await
     };
