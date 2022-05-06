@@ -7,7 +7,7 @@ use group_canister::{enable_invite_code, reset_invite_code};
 use ic_cdk_macros::update;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
-use types::{GroupInviteChange, GroupInviteCodeChanged};
+use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
 use utils::canister;
 
 #[update]
@@ -16,7 +16,7 @@ async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code:
     run_regular_jobs();
 
     if let Ok(result) = read_state(prepare) {
-        let code = generate_and_store_code(result.caller, GroupInviteChange::Reset).await;
+        let code = generate_and_store_code(result.caller, GroupInviteCodeChange::Reset).await;
         reset_invite_code::Response::Success(reset_invite_code::SuccessResult { code })
     } else {
         reset_invite_code::Response::NotAuthorized
@@ -39,13 +39,13 @@ async fn enable_invite_code(_args: enable_invite_code::Args) -> enable_invite_co
         });
         c
     } else {
-        generate_and_store_code(result.caller, GroupInviteChange::Enabled).await
+        generate_and_store_code(result.caller, GroupInviteCodeChange::Enabled).await
     };
 
     enable_invite_code::Response::Success(enable_invite_code::SuccessResult { code })
 }
 
-async fn generate_and_store_code(caller: Principal, change: GroupInviteChange) -> u64 {
+async fn generate_and_store_code(caller: Principal, change: GroupInviteCodeChange) -> u64 {
     let seed = canister::get_random_seed().await;
     let mut rng = StdRng::from_seed(seed);
     let invite_code = rng.next_u64();

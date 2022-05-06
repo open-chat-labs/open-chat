@@ -190,12 +190,12 @@ pub struct GroupVisibilityChanged {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupInviteCodeChanged {
-    pub change: GroupInviteChange,
+    pub change: GroupInviteCodeChange,
     pub changed_by: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum GroupInviteChange {
+pub enum GroupInviteCodeChange {
     Enabled,
     Disabled,
     Reset,
