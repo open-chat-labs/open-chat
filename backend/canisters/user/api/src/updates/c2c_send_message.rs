@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex, ReplyContext};
+use types::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -8,7 +8,6 @@ pub struct Args {
     pub sender_message_index: MessageIndex,
     pub sender_name: String,
     pub content: MessageContent,
-    pub replies_to: Option<ReplyContext>,
     pub replies_to_v2: Option<C2CReplyContext>,
 }
 
