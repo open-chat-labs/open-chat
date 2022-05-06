@@ -62,7 +62,7 @@ fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut Runtime
         runtime_state.data.transactions.add(c.transfer.clone(), now);
     }
 
-    let replies_to = convert_reply_context(args.replies_to_v2, sender, runtime_state).or(args.replies_to);
+    let replies_to = convert_reply_context(args.replies_to_v2, sender, runtime_state);
 
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
