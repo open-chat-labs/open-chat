@@ -570,7 +570,6 @@ export class ChatController {
                         e.event.kind === "message" &&
                         e.event.messageId === messageEvent.event.messageId
                     ) {
-                        console.log("Updating: updated event in the list");
                         return messageEvent;
                     }
                     return e;
