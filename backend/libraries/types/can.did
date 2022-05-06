@@ -551,11 +551,11 @@ type GroupVisibilityChanged =
 
 type GroupInviteCodeChanged =
     record {
-        change: GroupInviteChange;
+        change: GroupCodeInviteChanged;
         changed_by: UserId;
     };
 
-type GroupInviteChange =
+type GroupCodeInviteChanged =
     variant {
         Enabled;
         Disabled;
