@@ -10,7 +10,7 @@ fn events_by_index(args: Args) -> Response {
 
 fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller) {
+    if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller, args.invite_code) {
         let mut event_indexes = args.events;
         if min_visible_event_index > EventIndex::default() {
             event_indexes.retain(|e| *e >= min_visible_event_index);

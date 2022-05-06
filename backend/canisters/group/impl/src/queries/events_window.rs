@@ -9,7 +9,7 @@ fn events_window(args: Args) -> Response {
 
 fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller) {
+    if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller, args.invite_code) {
         let user_id = runtime_state.data.participants.get(caller).map(|p| p.user_id);
         let latest_event_index = runtime_state.data.events.last().index;
 

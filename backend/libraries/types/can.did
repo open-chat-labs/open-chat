@@ -225,6 +225,7 @@ type GroupChatEvent =
         PollEnded: PollEnded;
         PermissionsChanged: PermissionsChanged;
         GroupVisibilityChanged: GroupVisibilityChanged;
+        GroupInviteChanged: GroupInviteChanged;
     };
 
 type GroupChatEventWrapper =
@@ -553,6 +554,19 @@ type GroupVisibilityChanged =
         now_public: bool;
         changed_by: UserId;
     };
+
+type GroupInviteChanged =
+    record {
+        change: GroupInviteChange;
+        changed_by: UserId;
+    };
+
+type GroupInviteChange =
+    variant {
+        Enabled;
+        Disabled;
+        Reset;
+    };  
 
 type PollConfig =
     record {
@@ -1110,6 +1124,7 @@ type GroupPermissions =
         delete_messages: PermissionRole;
         update_group: PermissionRole;
         pin_messages: PermissionRole;
+        invite_users: PermissionRole;
         create_polls: PermissionRole;
         send_messages: PermissionRole;
         react_to_messages: PermissionRole;

@@ -5,6 +5,7 @@ use types::{EventIndex, EventWrapper, GroupChatEvent};
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
     pub events: Vec<EventIndex>,
+    pub invite_code: Option<u64>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

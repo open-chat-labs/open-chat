@@ -169,6 +169,7 @@ type JoinGroupArgs =
     record {
         chat_id: ChatId;
         as_super_admin: bool;
+        invite_code: opt nat64;
     };
 
 type JoinGroupResponse =

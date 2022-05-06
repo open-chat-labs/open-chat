@@ -1576,6 +1576,7 @@ dependencies = [
  "notifications_canister",
  "notifications_canister_c2c_client",
  "open_storage_bucket_client",
+ "rand 0.7.3",
  "regex",
  "search",
  "serde",

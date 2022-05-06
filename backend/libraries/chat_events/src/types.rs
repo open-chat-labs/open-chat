@@ -4,8 +4,8 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
-    AvatarChanged, ChatMetrics, DeletedBy, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged, GroupNameChanged,
-    GroupVisibilityChanged, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
+    AvatarChanged, ChatMetrics, DeletedBy, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged, GroupInviteChanged,
+    GroupNameChanged, GroupVisibilityChanged, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
     OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft,
     ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved, PermissionsChanged, PollVoteRegistered,
     Reaction, ReplyContext, RoleChanged, TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
@@ -41,6 +41,7 @@ pub enum ChatEventInternal {
     PollEnded(Box<MessageIndex>),
     PermissionsChanged(Box<PermissionsChanged>),
     GroupVisibilityChanged(Box<GroupVisibilityChanged>),
+    GroupInviteChanged(Box<GroupInviteChanged>),
 }
 
 impl ChatEventInternal {
@@ -89,6 +90,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::PollEnded(_)
                 | ChatEventInternal::PermissionsChanged(_)
                 | ChatEventInternal::GroupVisibilityChanged(_)
+                | ChatEventInternal::GroupInviteChanged(_)
         )
     }
 
@@ -174,6 +176,7 @@ impl ChatEventInternal {
             ChatEventInternal::PollVoteRegistered(v) => Some(v.user_id),
             ChatEventInternal::PermissionsChanged(p) => Some(p.changed_by),
             ChatEventInternal::GroupVisibilityChanged(p) => Some(p.changed_by),
+            ChatEventInternal::GroupInviteChanged(p) => Some(p.changed_by),
             ChatEventInternal::MessageEdited(e)
             | ChatEventInternal::MessageDeleted(e)
             | ChatEventInternal::MessageReactionAdded(e)

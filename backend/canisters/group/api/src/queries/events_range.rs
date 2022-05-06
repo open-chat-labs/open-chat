@@ -6,6 +6,7 @@ use types::{EventIndex, EventWrapper, GroupChatEvent};
 pub struct Args {
     pub from_index: EventIndex,
     pub to_index: EventIndex,
+    pub invite_code: Option<u64>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
