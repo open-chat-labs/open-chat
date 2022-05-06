@@ -1,16 +1,19 @@
-use crate::guards::group_is_public;
 use crate::read_state;
 use crate::{RuntimeState, WASM_VERSION};
 use group_canister::public_summary::{Response::*, *};
 use ic_cdk_macros::query;
 use types::{Avatar, PublicGroupSummary};
 
-#[query(guard = "group_is_public")]
-fn public_summary(_: Args) -> Response {
-    read_state(public_summary_impl)
+#[query]
+fn public_summary(args: Args) -> Response {
+    read_state(|runtime_state: &RuntimeState| public_summary_impl(args, runtime_state))
 }
 
-fn public_summary_impl(runtime_state: &RuntimeState) -> Response {
+fn public_summary_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+    if !runtime_state.data.is_accessible_by_non_member(args.invite_code) {
+        return NotAuthorized;
+    }
+
     let data = &runtime_state.data;
     let latest_event = runtime_state.data.events.last();
 

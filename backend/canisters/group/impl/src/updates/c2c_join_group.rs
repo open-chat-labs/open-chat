@@ -1,6 +1,6 @@
 use crate::model::participants::AddResult;
 use crate::updates::handle_activity_notification;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_join_group::Response as ResponseV1;
@@ -21,7 +21,7 @@ async fn c2c_join_group(args: Args) -> ResponseV1 {
 async fn c2c_join_group_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    let prepare_result = mutate_state(prepare);
+    let prepare_result = read_state(prepare);
     let user_id = prepare_result.user_id;
 
     if args.as_super_admin {
@@ -42,7 +42,7 @@ struct PrepareResult {
     pub user_index_canister_id: CanisterId,
 }
 
-fn prepare(runtime_state: &mut RuntimeState) -> PrepareResult {
+fn prepare(runtime_state: &RuntimeState) -> PrepareResult {
     PrepareResult {
         user_id: runtime_state.env.caller().into(),
         user_index_canister_id: runtime_state.data.user_index_canister_id,
@@ -50,7 +50,7 @@ fn prepare(runtime_state: &mut RuntimeState) -> PrepareResult {
 }
 
 fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_public || args.as_super_admin {
+    if args.as_super_admin || runtime_state.data.is_accessible_by_non_member(args.invite_code) {
         if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
             return ParticipantLimitReached(limit);
         }

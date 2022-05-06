@@ -23,6 +23,7 @@ async fn join_group_v2(args: Args) -> Response {
     let c2c_args = c2c_join_group::Args {
         principal,
         as_super_admin: args.as_super_admin,
+        invite_code: args.invite_code,
     };
 
     match group_canister_c2c_client::c2c_join_group_v2(args.chat_id.into(), &c2c_args).await {

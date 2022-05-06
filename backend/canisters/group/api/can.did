@@ -176,6 +176,52 @@ type ChangeRoleResponse =
         Invalid;
     }; 
 
+type InviteCodeArgs =
+    record {        
+    };
+
+type InviteCodeResponse =
+    variant {
+        Success: record {
+            code: opt nat64;
+        };
+        NotAuthorized;
+    }; 
+
+type EnableInviteCodeArgs =
+    record {        
+    };
+
+type EnableInviteCodeResponse =
+    variant {
+        Success: record {
+            code: nat64;
+        };
+        NotAuthorized;
+    }; 
+
+type DisableInviteCodeArgs =
+    record {        
+    };
+
+type DisableInviteCodeResponse =
+    variant {
+        Success;
+        NotAuthorized;
+    }; 
+
+type ResetInviteCodeArgs =
+    record {        
+    };
+
+type ResetInviteCodeResponse =
+    variant {
+        Success: record {
+            code: nat64;
+        };
+        NotAuthorized;
+    }; 
+
 type UpdateGroupArgs =
     record {
         name: text;
@@ -294,17 +340,20 @@ type EventsArgs =
         ascending: bool;
         max_messages: nat32;
         max_events: nat32;
+        invite_code: opt nat64;
     };
 
 type EventsByIndexArgs =
     record {
         events: vec EventIndex;
+        invite_code: opt nat64;
     };
 
 type EventsRangeArgs =
     record {
         from_index: EventIndex;
         to_index: EventIndex;
+        invite_code: opt nat64;
     };
 
 type EventsWindowArgs =
@@ -312,6 +361,7 @@ type EventsWindowArgs =
         mid_point: MessageIndex;
         max_messages: nat32;
         max_events: nat32;
+        invite_code: opt nat64;
     };
 
 type EventsSuccessResult =
@@ -362,11 +412,14 @@ type SearchMessagesSuccessResult =
     };
 
 type PublicSummaryArgs =
-    record {};
+    record {
+        invite_code: opt nat64;
+    };
 
 type PublicSummaryResponse =
     variant {
         Success: PublicSummarySuccess;
+        NotAuthorized;
     };
 
 type PublicSummarySuccess =
@@ -387,6 +440,10 @@ service: {
     pin_message: (PinMessageArgs) -> (PinMessageResponse);
     unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
+    invite_code: (InviteCodeArgs) -> (InviteCodeResponse) query;
+    enable_invite_code: (EnableInviteCodeArgs) -> (EnableInviteCodeResponse);
+    disable_invite_code: (DisableInviteCodeArgs) -> (DisableInviteCodeResponse);
+    reset_invite_code: (ResetInviteCodeArgs) -> (ResetInviteCodeResponse);
 
     // Can be called by admins or regular users of public groups
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse); 
