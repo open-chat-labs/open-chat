@@ -88,7 +88,7 @@
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
 
-    $: canEdit = confirmed && !crypto && !poll && me;
+    $: canEdit = !crypto && !poll && me;
     $: sender = $userStore[senderId];
     $: username = sender?.username;
     $: mediaDimensions = extractDimensions(msg.content);
