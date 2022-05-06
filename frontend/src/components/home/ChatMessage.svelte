@@ -415,6 +415,7 @@
                 messageId={msg.messageId}
                 myUserId={user.userId}
                 content={msg.content}
+                edited={msg.edited}
                 height={mediaCalculatedHeight}
                 on:registerVote={registerVote} />
 
@@ -424,7 +425,6 @@
                     {fill}
                     {timestamp}
                     {me}
-                    edited={msg.edited}
                     {confirmed}
                     {readByThem}
                     {crypto}

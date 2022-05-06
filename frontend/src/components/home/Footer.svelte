@@ -123,8 +123,8 @@
         }
     }
 
-    export function sendMessageWithContent(ev: CustomEvent<MessageContent>) {
-        sendMessageWithAttachment(undefined, [], ev.detail);
+    export function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
+        sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {

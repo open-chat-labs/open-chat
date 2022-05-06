@@ -270,8 +270,7 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "deleted_content" &&
         content.kind !== "placeholder_content" &&
         content.kind !== "poll_content" &&
-        content.kind !== "crypto_content" &&
-        content.kind !== "giphy_content"
+        content.kind !== "crypto_content"
         ? { ...content, caption }
         : content;
 }
@@ -1425,4 +1424,9 @@ export function getFirstUnreadMessageIndex(
         getMinVisibleMessageIndex(chat),
         chat.latestMessage?.event.messageIndex
     );
+}
+
+export function addEditedSuffix(txt: string | undefined, edited: boolean): string {
+    if (txt === undefined || txt === "") return "";
+    return edited ? `${txt} <span class="edited-msg">(${get(_)("edited")})</span>` : txt;
 }

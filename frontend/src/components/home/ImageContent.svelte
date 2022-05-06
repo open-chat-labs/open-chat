@@ -3,6 +3,7 @@
 <script lang="ts">
     import { rtlStore } from "../../stores/rtl";
     import type { ImageContent } from "../../domain/chat/chat";
+    import { addEditedSuffix } from "../../domain/chat/chat.utils";
     import Markdown from "./Markdown.svelte";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
@@ -17,6 +18,7 @@
     export let pinned: boolean = false;
     export let height: number | undefined = undefined;
     export let intersecting: boolean = true;
+    export let edited: boolean;
 
     let imgElement: HTMLImageElement;
     let zoom = false;
@@ -100,8 +102,8 @@
     </div>
 {/if}
 
-{#if content.caption !== undefined}
-    <Markdown text={content.caption} inline={!reply} />
+{#if content.caption !== undefined && content.caption !== ""}
+    <Markdown text={addEditedSuffix(content.caption, edited)} inline={!reply} />
 {/if}
 
 {#if zoomable}

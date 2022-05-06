@@ -313,8 +313,11 @@ export class ServiceContainer implements MarkMessagesRead {
             content = this.rehydrateDataContent(content, "blobs");
         }
         if (content.kind === "video_content") {
-            content.videoData = this.rehydrateDataContent(content.videoData, "blobs");
-            content.imageData = this.rehydrateDataContent(content.imageData, "blobs");
+            return {
+                ...content,
+                videoData: this.rehydrateDataContent(content.videoData, "blobs"),
+                imageData: this.rehydrateDataContent(content.imageData, "blobs"),
+            };
         }
         return content;
     }

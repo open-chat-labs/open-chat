@@ -145,7 +145,6 @@
         if (selectedGif !== undefined) {
             const content: GiphyContent = {
                 kind: "giphy_content",
-                caption: message === "" ? undefined : message,
                 title: selectedGif.title,
                 desktop: {
                     height: Number(selectedGif.images.original.height),
@@ -160,7 +159,7 @@
                     mimeType: "image/gif",
                 },
             };
-            dispatch("sendGiphy", content);
+            dispatch("sendGiphy", [content, message === "" ? undefined : message]);
             open = false;
         }
     }

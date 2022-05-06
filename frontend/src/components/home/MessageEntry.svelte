@@ -1,6 +1,6 @@
 <script lang="ts">
     import Send from "svelte-material-icons/Send.svelte";
-    import ContentSaveEditOutline from "svelte-material-icons/ContentSaveEditOutline.svelte";
+    import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";

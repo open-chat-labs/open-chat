@@ -59,6 +59,7 @@
                 first={true}
                 messageId={repliesTo.messageId}
                 senderId={repliesTo.senderId}
+                edited={false}
                 fill={false}
                 reply={true}
                 myUserId={user.userId}

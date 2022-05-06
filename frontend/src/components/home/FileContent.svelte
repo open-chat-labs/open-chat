@@ -4,6 +4,7 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import type { FileContent } from "../../domain/chat/chat";
+    import { addEditedSuffix } from "../../domain/chat/chat.utils";
     import format from "../../utils/fileSize";
     import FileDownload from "svelte-material-icons/FileDownload.svelte";
     import Markdown from "./Markdown.svelte";
@@ -12,6 +13,7 @@
     export let me: boolean = false;
     export let reply: boolean = false;
     export let draft: boolean = false;
+    export let edited: boolean;
 
     let color = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
 </script>
@@ -28,7 +30,7 @@
         class="file-content">
         <div class="link-contents">
             <FileDownload size={"1.7em"} {color} />
-            {content.name}    
+            {content.name}
         </div>
     </a>
 
@@ -37,8 +39,8 @@
     </div>
 {/if}
 
-{#if content.caption !== undefined}
-    <Markdown text={content.caption} inline={!reply} />
+{#if content.caption !== undefined && content.caption !== ""}
+    <Markdown text={addEditedSuffix(content.caption, edited)} inline={!reply} />
 {/if}
 
 <style type="text/scss">
@@ -59,9 +61,13 @@
         }
     }
 
+    a {
+        color: inherit;
+    }
+
     .link-contents {
         display: flex;
-        flex-direction: row;        
+        flex-direction: row;
         align-items: center;
     }
 
@@ -82,7 +88,7 @@
         &:not(.caption) {
             display: inline-block;
         }
-        
+
         align-items: center;
         @include font(light, normal, fs-60);
         @include ellipsis();

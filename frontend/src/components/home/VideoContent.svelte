@@ -4,6 +4,7 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import type { VideoContent } from "../../domain/chat/chat";
+    import { addEditedSuffix } from "../../domain/chat/chat.utils";
     import Markdown from "./Markdown.svelte";
 
     export let content: VideoContent;
@@ -11,6 +12,7 @@
     export let draft: boolean = false;
     export let reply: boolean = false;
     export let height: number | undefined = undefined;
+    export let edited: boolean;
 
     let withCaption = content.caption !== undefined && content.caption !== "";
     let landscape = content.height < content.width;
@@ -34,8 +36,8 @@
     </video>
 </div>
 
-{#if content.caption !== undefined}
-    <Markdown text={content.caption} inline={!reply} />
+{#if content.caption !== undefined || content.caption === ""}
+    <Markdown text={addEditedSuffix(content.caption, edited)} inline={!reply} />
 {/if}
 
 <style type="text/scss">

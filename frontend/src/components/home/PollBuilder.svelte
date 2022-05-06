@@ -123,7 +123,7 @@
     }
 
     function start() {
-        dispatch("sendPoll", createPollContent());
+        dispatch("sendPoll", [createPollContent(), undefined]);
         open = false;
     }
 </script>

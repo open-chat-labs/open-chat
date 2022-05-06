@@ -585,6 +585,10 @@
 {/if}
 
 <style type="text/scss">
+    :global(.edited-msg) {
+        @include font(light, normal, fs-70);
+    }
+
     main {
         transition: margin ease-in-out 300ms, max-width ease-in-out 300ms;
         position: relative;
