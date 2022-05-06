@@ -81,7 +81,7 @@
         <img
             bind:this={imgElement}
             on:click={onClick}
-            on:dblclick={onDoubleClick}
+            on:dblclick|stopPropagation={onDoubleClick}
             on:error={() => (imgElement.src = content.thumbnailData)}
             class:landscape
             class:fill
