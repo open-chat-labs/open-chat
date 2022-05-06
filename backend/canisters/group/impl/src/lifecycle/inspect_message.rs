@@ -27,14 +27,15 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
                 role.can_change_roles(args.new_role, permissions)
             }
             "delete_group" => role.can_delete_group(),
-            "make_private" => role.can_make_group_private(),
+            "enable_invite_code" | "disable_invite_code" | "reset_invite_code" => role.can_invite_users(permissions),
+            "make_private" => role.can_change_group_visibility(),
             "pin_message" => role.can_pin_messages(permissions),
             "remove_participant" => role.can_remove_members(permissions),
+            "send_message" => role.can_send_messages(permissions),
+            "toggle_reaction" => role.can_react_to_messages(permissions),
             "unblock_user" => role.can_block_users(permissions),
             "unpin_message" => role.can_pin_messages(permissions),
             "update_group" => role.can_update_group(permissions),
-            "toggle_reaction" => role.can_react_to_messages(permissions),
-            "send_message" => role.can_send_messages(permissions),
             "delete_messages" | "edit_message" | "put_chunk" | "register_poll_vote" => true,
             _ => false,
         };

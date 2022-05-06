@@ -6,6 +6,7 @@ use types::{ChatId, GroupChatSummary};
 pub struct Args {
     pub chat_id: ChatId,
     pub as_super_admin: bool,
+    pub invite_code: Option<u64>,
 }
 
 #[allow(clippy::large_enum_variant)]

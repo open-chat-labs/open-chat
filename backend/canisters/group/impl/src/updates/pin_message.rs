@@ -8,7 +8,7 @@ use types::MessagePinned;
 
 #[update]
 #[trace]
-async fn pin_message(args: Args) -> Response {
+fn pin_message(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| pin_message_impl(args, state))

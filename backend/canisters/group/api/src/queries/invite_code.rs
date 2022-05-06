@@ -1,13 +1,9 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::PublicGroupSummary;
 
 #[derive(CandidType, Deserialize, Debug)]
-pub struct Args {
-    pub invite_code: Option<u64>,
-}
+pub struct Args {}
 
-#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -16,5 +12,5 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub summary: PublicGroupSummary,
+    pub code: Option<u64>,
 }

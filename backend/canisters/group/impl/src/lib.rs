@@ -155,6 +155,10 @@ struct Data {
     pub test_mode: bool,
     pub owner_id: UserId,
     pub permissions: GroupPermissions,
+    #[serde(default)]
+    pub invite_code: Option<u64>,
+    #[serde(default)]
+    pub invite_code_enabled: bool,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -199,17 +203,34 @@ impl Data {
             test_mode,
             owner_id: creator_user_id,
             permissions: permissions.unwrap_or_default(),
+            invite_code: None,
+            invite_code_enabled: false,
         }
     }
 
-    pub fn min_visible_event_index(&self, caller: Principal) -> Option<EventIndex> {
-        if self.is_public {
-            Some(EventIndex::default())
-        } else {
-            self.participants
-                .get_by_principal(&caller)
-                .map(|participant| participant.min_visible_event_index())
+    pub fn min_visible_event_index(&self, caller: Principal, invite_code: Option<u64>) -> Option<EventIndex> {
+        match self.participants.get_by_principal(&caller) {
+            Some(p) => Some(p.min_visible_event_index()),
+            None => {
+                if self.is_accessible_by_non_member(invite_code) && self.history_visible_to_new_joiners {
+                    Some(EventIndex::default())
+                } else {
+                    None
+                }
+            }
         }
+    }
+
+    pub fn is_accessible_by_non_member(&self, invite_code: Option<u64>) -> bool {
+        if self.invite_code_enabled {
+            if let Some(provided_code) = invite_code {
+                if let Some(stored_code) = self.invite_code {
+                    return provided_code == stored_code;
+                }
+            }
+        }
+
+        self.is_public
     }
 }
 

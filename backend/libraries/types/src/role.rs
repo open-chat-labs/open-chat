@@ -34,9 +34,15 @@ pub struct GroupPermissions {
     delete_messages: PermissionRole,
     update_group: PermissionRole,
     pin_messages: PermissionRole,
+    #[serde(default = "admin_permission")]
+    invite_users: PermissionRole,
     create_polls: PermissionRole,
     send_messages: PermissionRole,
     react_to_messages: PermissionRole,
+}
+
+fn admin_permission() -> PermissionRole {
+    PermissionRole::Admins
 }
 
 impl Default for GroupPermissions {
@@ -50,6 +56,7 @@ impl Default for GroupPermissions {
             delete_messages: PermissionRole::Admins,
             update_group: PermissionRole::Admins,
             pin_messages: PermissionRole::Admins,
+            invite_users: PermissionRole::Admins,
             create_polls: PermissionRole::Members,
             send_messages: PermissionRole::Members,
             react_to_messages: PermissionRole::Members,
@@ -133,12 +140,16 @@ impl Role {
         self.has_owner_rights()
     }
 
-    pub fn can_make_group_private(&self) -> bool {
+    pub fn can_change_group_visibility(&self) -> bool {
         self.has_owner_rights()
     }
 
     pub fn can_view_full_message_history(&self) -> bool {
         self.has_owner_rights()
+    }
+
+    pub fn can_invite_users(&self, permissions: &GroupPermissions) -> bool {
+        self.is_permitted(permissions.invite_users)
     }
 
     pub fn is_permitted(&self, permission_role: PermissionRole) -> bool {

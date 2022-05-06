@@ -6,6 +6,7 @@ mod events_by_index;
 mod events_range;
 mod events_window;
 mod http_request;
+mod invite_code;
 mod messages_by_message_index;
 mod public_summary;
 mod search_messages;

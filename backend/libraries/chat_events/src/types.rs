@@ -5,10 +5,11 @@ use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
     AvatarChanged, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated, GroupChatCreated, GroupDescriptionChanged,
-    GroupNameChanged, GroupVisibilityChanged, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
-    OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft,
-    ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved, PermissionsChanged, PollVoteRegistered,
-    Reaction, ReplyContext, RoleChanged, TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
+    GroupInviteCodeChanged, GroupNameChanged, GroupVisibilityChanged, MessageContentInternal, MessageId, MessageIndex,
+    MessagePinned, MessageUnpinned, OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin,
+    ParticipantJoined, ParticipantLeft, ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved,
+    PermissionsChanged, PollVoteRegistered, Reaction, ReplyContext, RoleChanged, TimestampMillis, UserId, UsersBlocked,
+    UsersUnblocked,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -41,6 +42,7 @@ pub enum ChatEventInternal {
     PollEnded(Box<MessageIndex>),
     PermissionsChanged(Box<PermissionsChanged>),
     GroupVisibilityChanged(Box<GroupVisibilityChanged>),
+    GroupInviteCodeChanged(Box<GroupInviteCodeChanged>),
 }
 
 impl ChatEventInternal {
@@ -89,6 +91,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::PollEnded(_)
                 | ChatEventInternal::PermissionsChanged(_)
                 | ChatEventInternal::GroupVisibilityChanged(_)
+                | ChatEventInternal::GroupInviteCodeChanged(_)
         )
     }
 
@@ -174,6 +177,7 @@ impl ChatEventInternal {
             ChatEventInternal::PollVoteRegistered(v) => Some(v.user_id),
             ChatEventInternal::PermissionsChanged(p) => Some(p.changed_by),
             ChatEventInternal::GroupVisibilityChanged(p) => Some(p.changed_by),
+            ChatEventInternal::GroupInviteCodeChanged(p) => Some(p.changed_by),
             ChatEventInternal::MessageEdited(e)
             | ChatEventInternal::MessageDeleted(e)
             | ChatEventInternal::MessageReactionAdded(e)
