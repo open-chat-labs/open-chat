@@ -1,8 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::cryptocurrency_v2::{
-    CompletedCryptocurrencyWithdrawal, FailedCryptocurrencyWithdrawal, PendingCryptocurrencyWithdrawal,
-};
+use types::{CompletedCryptocurrencyWithdrawal, FailedCryptocurrencyWithdrawal, PendingCryptocurrencyWithdrawal};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
