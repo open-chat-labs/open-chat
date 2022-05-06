@@ -390,6 +390,7 @@ type PublicGroupSummary =
         pinned_message: opt MessageIndex;
         wasm_version: Version;
         owner_id: UserId;
+        is_public: bool;
     };
 
 type ReplyContext =
