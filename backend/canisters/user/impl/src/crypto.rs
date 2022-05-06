@@ -1,12 +1,11 @@
 use crate::{mutate_state, read_state};
 use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE, MAINNET_LEDGER_CANISTER_ID};
 use ledger_utils::{calculate_transaction_hash, default_ledger_account};
-use types::cryptocurrency_v2::{
+use types::{
     CompletedCryptocurrencyTransfer, CompletedCryptocurrencyWithdrawal, CryptocurrencyTransfer, CryptocurrencyWithdrawal,
     FailedCryptocurrencyTransfer, FailedCryptocurrencyWithdrawal, PendingCryptocurrencyTransfer,
-    PendingCryptocurrencyWithdrawal,
+    PendingCryptocurrencyWithdrawal, UserId,
 };
-use types::UserId;
 
 pub enum TransferError {
     InvalidRequest(String),

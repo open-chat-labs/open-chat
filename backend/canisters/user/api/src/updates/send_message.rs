@@ -17,8 +17,7 @@ pub struct Args {
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    TransferSuccess(TransferSuccessResult),
-    TransferSuccessV2(TransferSuccessV2Result),
+    TransferSuccessV2(TransferSuccessResult),
     MessageEmpty,
     TextTooLong(u32),
     RecipientBlocked,
@@ -44,13 +43,4 @@ pub struct TransferSuccessResult {
     pub message_index: MessageIndex,
     pub timestamp: TimestampMillis,
     pub transfer: CompletedCryptocurrencyTransfer,
-}
-
-#[derive(CandidType, Deserialize, Debug)]
-pub struct TransferSuccessV2Result {
-    pub chat_id: ChatId,
-    pub event_index: EventIndex,
-    pub message_index: MessageIndex,
-    pub timestamp: TimestampMillis,
-    pub transfer: types::cryptocurrency_v2::CompletedCryptocurrencyTransfer,
 }

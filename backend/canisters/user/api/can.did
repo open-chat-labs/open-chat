@@ -17,19 +17,12 @@ type SendMessageResponse =
             message_index: MessageIndex;
             timestamp: TimestampMillis;
         };
-        TransferSuccess: record {
-            chat_id: ChatId;
-            event_index: EventIndex;
-            message_index: MessageIndex;
-            timestamp: TimestampMillis;
-            transfer: CompletedCryptocurrencyTransfer;
-        };
         TransferSuccessV2: record {
             chat_id: ChatId;
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
-            transfer: CompletedCryptocurrencyTransferV2;
+            transfer: CompletedCryptocurrencyTransfer;
         };
         MessageEmpty;
         TextTooLong: nat32;
@@ -307,7 +300,7 @@ type TransferCryptocurrencyWithinGroupArgs =
         message_id: MessageId;
         group_id: ChatId;
         recipient: UserId;
-        content: CryptocurrencyContentV2;
+        content: CryptocurrencyContent;
         sender_name: text;
         replies_to: opt GroupReplyContext;
         mentioned: vec User;
@@ -319,28 +312,28 @@ type TransferCryptocurrencyWithinGroupResponse =
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
-            transfer: CompletedCryptocurrencyTransferV2;
+            transfer: CompletedCryptocurrencyTransfer;
         };
         TextTooLong: nat32;
         RecipientBlocked;
-        CallerNotInGroup: opt CompletedCryptocurrencyTransferV2;
+        CallerNotInGroup: opt CompletedCryptocurrencyTransfer;
         CryptocurrencyNotSupported: Cryptocurrency;
         InvalidRequest: text;
         TransferFailed: text;
         TransferCannotBeZero;
         TransferLimitExceeded: nat64;
-        InternalError: record { text; CompletedCryptocurrencyTransferV2; };
+        InternalError: record { text; CompletedCryptocurrencyTransfer; };
     };
 
 type WithdrawCryptocurrencyRequest =
     record {
-        withdrawal: PendingCryptocurrencyWithdrawalV2;
+        withdrawal: PendingCryptocurrencyWithdrawal;
     };
 
 type WithdrawCryptocurrencyResponse =
     variant {
-        Success: CompletedCryptocurrencyWithdrawalV2;
-        TransactionFailed: FailedCryptocurrencyWithdrawalV2;
+        Success: CompletedCryptocurrencyWithdrawal;
+        TransactionFailed: FailedCryptocurrencyWithdrawal;
         CurrencyNotSupported;
     };
 

@@ -1,7 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::ContentValidationError::{InvalidPoll, TransferCannotBeZero, TransferLimitExceeded};
 use crate::RegisterVoteResult::SuccessNoChange;
-use crate::{CanisterId, CryptocurrencyTransfer, ICPTransfer, TimestampMillis, TotalVotes, UserId, VoteOperation};
+use crate::{CanisterId, Cryptocurrency, CryptocurrencyTransfer, TimestampMillis, TotalVotes, UserId, VoteOperation};
 use candid::CandidType;
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
@@ -21,8 +21,9 @@ pub enum MessageContent {
     Audio(AudioContent),
     File(FileContent),
     Poll(PollContent),
-    Cryptocurrency(CryptocurrencyContent),
-    CryptocurrencyV2(CryptocurrencyContentV2),
+    #[serde(skip)]
+    Cryptocurrency(candid::Reserved),
+    CryptocurrencyV2(CryptocurrencyContent),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
 }
@@ -35,7 +36,7 @@ pub enum MessageContentInternal {
     Audio(AudioContent),
     File(FileContent),
     Poll(PollContentInternal),
-    Cryptocurrency(CryptocurrencyContentV2),
+    Cryptocurrency(CryptocurrencyContent),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
 }
@@ -58,14 +59,6 @@ impl MessageContent {
                     return Err(InvalidPoll(reason));
                 }
             }
-            MessageContent::Cryptocurrency(c) => {
-                if c.transfer.is_zero() {
-                    return Err(TransferCannotBeZero);
-                }
-                if let Err(limit) = c.within_limit() {
-                    return Err(TransferLimitExceeded(limit));
-                }
-            }
             MessageContent::CryptocurrencyV2(c) => {
                 if c.transfer.amount() == Tokens::ZERO {
                     return Err(TransferCannotBeZero);
@@ -84,7 +77,7 @@ impl MessageContent {
             MessageContent::Audio(a) => a.blob_reference.is_none(),
             MessageContent::File(f) => f.blob_reference.is_none(),
             MessageContent::Poll(p) => p.config.options.is_empty(),
-            MessageContent::Cryptocurrency(c) => c.transfer.is_zero(),
+            MessageContent::Cryptocurrency(_) => unreachable!(),
             MessageContent::CryptocurrencyV2(c) => c.transfer.amount() == Tokens::ZERO,
             MessageContent::Deleted(_) => true,
             MessageContent::Giphy(_) => false,
@@ -166,7 +159,7 @@ impl MessageContent {
             MessageContent::Audio(a) => a.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
-            MessageContent::Cryptocurrency(c) => c.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::Cryptocurrency(_) => unreachable!(),
             MessageContent::CryptocurrencyV2(c) => c.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Deleted(_) => 0,
             MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
@@ -367,26 +360,8 @@ pub struct CryptocurrencyContent {
 
 impl CryptocurrencyContent {
     pub fn within_limit(&self) -> Result<(), u64> {
-        if let CryptocurrencyTransfer::ICP(ICPTransfer::Pending(icp)) = &self.transfer {
-            if icp.amount.e8s() > ICP_TRANSFER_LIMIT_E8S {
-                return Err(ICP_TRANSFER_LIMIT_E8S);
-            }
-        }
-        Ok(())
-    }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CryptocurrencyContentV2 {
-    pub transfer: crate::cryptocurrency_v2::CryptocurrencyTransfer,
-    pub caption: Option<String>,
-}
-
-impl CryptocurrencyContentV2 {
-    pub fn within_limit(&self) -> Result<(), u64> {
-        if let crate::cryptocurrency_v2::CryptocurrencyTransfer::Pending(t) = &self.transfer {
-            if t.token == crate::cryptocurrency_v2::Cryptocurrency::InternetComputer && t.amount.e8s() > ICP_TRANSFER_LIMIT_E8S
-            {
+        if let CryptocurrencyTransfer::Pending(t) = &self.transfer {
+            if t.token == Cryptocurrency::InternetComputer && t.amount.e8s() > ICP_TRANSFER_LIMIT_E8S {
                 return Err(ICP_TRANSFER_LIMIT_E8S);
             }
         }
