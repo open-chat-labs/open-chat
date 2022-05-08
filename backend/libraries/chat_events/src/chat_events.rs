@@ -473,7 +473,7 @@ impl ChatEvents {
                 .iter()
                 .map(|(r, u)| (r.clone(), u.iter().copied().collect()))
                 .collect(),
-            edited: message.last_updated.is_some(),
+            edited: message.last_edited.is_some(),
             forwarded: false,
         }
     }
