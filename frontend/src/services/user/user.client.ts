@@ -86,6 +86,8 @@ import { identity, toVoid } from "../../utils/mapping";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
 import type { IMessageReadTracker } from "../../stores/markRead";
+import { base64ToBigint } from "../../utils/base64";
+import type { GroupInvite } from "../../services/serviceContainer";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -97,9 +99,14 @@ export class UserClient extends CandidService implements IUserClient {
         this.userService = this.createServiceClient<UserService>(idlFactory, userId);
     }
 
-    static create(userId: string, identity: Identity, db?: Database): IUserClient {
+    static create(
+        userId: string,
+        identity: Identity,
+        db: Database | undefined,
+        groupInvite: GroupInvite | undefined
+    ): IUserClient {
         return db && process.env.CLIENT_CACHING && !cachingLocallyDisabled()
-            ? new CachingUserClient(db, identity, new UserClient(identity, userId))
+            ? new CachingUserClient(db, identity, new UserClient(identity, userId), groupInvite)
             : new UserClient(identity, userId);
     }
 
@@ -367,11 +374,12 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    joinGroup(chatId: string): Promise<JoinGroupResponse> {
+    joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse> {
         return this.handleResponse(
             this.userService.join_group_v2({
                 as_super_admin: false,
                 chat_id: Principal.fromText(chatId),
+                invite_code: apiOptional(base64ToBigint, inviteCode),
             }),
             joinGroupResponse
         );

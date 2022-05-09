@@ -5,7 +5,7 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import { flip } from "svelte/animate";
     import Input from "../Input.svelte";
-    import Toggle from "./profile/Toggle.svelte";
+    import Toggle from "../Toggle.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";

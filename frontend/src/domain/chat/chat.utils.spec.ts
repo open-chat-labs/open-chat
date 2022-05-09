@@ -84,6 +84,7 @@ const defaultGroupChat: GroupChatSummary = {
         deleteMessages: "admins",
         updateGroup: "admins",
         pinMessages: "admins",
+        inviteUsers: "admins",
         createPolls: "members",
         sendMessages: "members",
         reactToMessages: "members",

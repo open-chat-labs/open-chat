@@ -400,9 +400,30 @@
             "pinMessages": "pin mensajes",
             "createPolls": "crear encuestas",
             "sendMessages": "enviar mensajes",
-            "reactToMessages": "reaccionar a los mensajes"
+            "reactToMessages": "reaccionar a los mensajes",
+            "inviteUsers": "invitar a los usuarios",
+            "notPermitted": "No tienes permiso para {permission}"
         },
-        "advanced": "Avanzado"
+        "advanced": "Avanzado",
+        "invite": {
+            "inviteWithLink": "Invitar al grupo a través de un enlace",
+            "enableLink": "Habilitar enlace",
+            "resetLink": "Restablecer enlace",
+            "errorGettingLink": "No se puede obtener el enlace",
+            "errorEnablingLink": "No se puede habilitar el enlace",
+            "errorDisablingLink": "No se puede deshabilitar el enlace",
+            "errorResettingLink": "No se puede restablecer el enlace",
+            "confirmReset": "¿Seguro que quieres restablecer el enlace del grupo? Las personas ya no podrán unirse al grupo usando el enlace actual.",
+            "shareMessage": "Cualquier persona con este enlace puede obtener una vista previa y unirse al grupo.",
+            "shareMessageTrust": "Compártelo con personas de confianza.",
+            "linkCopiedToClipboard": "Enlace copiado al portapapeles",
+            "failedToCopyLinkToClipboard": "No se puede copiar el enlace al portapapeles",
+            "enabled": "activado",
+            "disabled": "desactivado",
+            "reset": "Reiniciar"
+        },
+        "welcome": "Bienvenido a",
+        "historyPrivateMessage": "Los mensajes antiguos no son visibles para los nuevos miembros."
     },
     "updateNow": "recargar ahora",
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",
@@ -497,5 +518,10 @@
         "blurb": "Algunas funciones de OpenChat solo están disponibles para cuentas premium. Puede actualizar su cuenta verificando un número de teléfono a través de SMS o pagando una pequeña tarifa de ICP.",
         "congratulations": "¡Ya puedes disfrutar de nuestras funciones premium!"
     },
-    "faqUrlCopiedToClipboard": "URL de preguntas frecuentes copiada al portapapeles."
+    "faqUrlCopiedToClipboard": "URL de preguntas frecuentes copiada al portapapeles.",
+    "thisIsPublicGroupWithN": "Este es un grupo público con miembros {number}",
+    "thisIsPrivateGroupWithN": "Este es un grupo privado con miembros {number}",
+    "copy": "Dupdo",
+    "failedToShareLink": "No se pudo compartir el enlace",
+    "groupInviteChangedBy": "{changedBy} {changed} la invitación del grupo"
 }

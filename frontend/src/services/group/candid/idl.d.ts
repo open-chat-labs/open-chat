@@ -47,6 +47,10 @@ import {
     UnpinMessageResponse,
     RegisterPollVoteResponse,
     SearchMessagesResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -95,6 +99,10 @@ export {
     UnpinMessageResponse as ApiUnpinMessageResponse,
     RegisterPollVoteResponse as ApiRegisterPollVoteResponse,
     SearchMessagesResponse as ApiSearchGroupChatResponse,
+    InviteCodeResponse as ApiInviteCodeResponse,
+    EnableInviteCodeResponse as ApiEnableInviteCodeResponse,
+    DisableInviteCodeResponse as ApiDisableInviteCodeResponse,
+    ResetInviteCodeResponse as ApiResetInviteCodeResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

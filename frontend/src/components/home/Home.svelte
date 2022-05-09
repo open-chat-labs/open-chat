@@ -13,7 +13,7 @@
     import { createEventDispatcher, onDestroy, onMount, setContext, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import { push, replace, querystring, location } from "svelte-spa-router";
+    import { push, replace, querystring } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
     import type {
@@ -57,7 +57,7 @@
     type ConfirmActionEvent = {
         kind: ConfirmAction;
         chatId: string;
-        doubleCheck?: { challenge: string; response: string };
+        doubleCheck: { challenge: string; response: string } | undefined;
     };
 
     enum ModalType {
@@ -132,7 +132,7 @@
             // if we have a chatid in the params then we need to select that chat
             if (params.chatId && params.chatId !== $selectedChat?.chatId?.toString()) {
                 // if the chat in the param is not known to us then we need to attempt to load the
-                // chat on the assumption that it is a public group chat that we want to preview
+                // chat on the assumption that it is a group we want to preview
                 // if we have an unknown chat in the param, then redirect to home
                 const chatId = params.chatId;
                 const messageIndex =
@@ -142,6 +142,14 @@
                     if (qs.get("type") === "direct") {
                         controller.createDirectChat(chatId);
                     } else {
+                        const code = qs.get("code");
+                        if (code) {
+                            controller.api.groupInvite = {
+                                chatId,
+                                code,
+                            };
+                        }
+
                         recommendedGroups = { kind: "loading" };
                         controller.previewChat(chatId).then((canPreview) => {
                             if (canPreview) {

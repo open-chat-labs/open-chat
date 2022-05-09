@@ -399,9 +399,30 @@
             "pinMessages": "Pin-Nachrichten",
             "createPolls": "Umfragen erstellen",
             "sendMessages": "Sende Nachrichten",
-            "reactToMessages": "auf Nachrichten reagieren"
+            "reactToMessages": "auf Nachrichten reagieren",
+            "inviteUsers": "Benutzer einladen",
+            "notPermitted": "Sie dürfen nicht {permission}"
         },
-        "advanced": "Fortschrittlich"
+        "advanced": "Fortschrittlich",
+        "invite": {
+            "inviteWithLink": "Per Link zur Gruppe einladen",
+            "enableLink": "Verknüpfung aktivieren",
+            "resetLink": "Verknüpfung zurücksetzen",
+            "errorGettingLink": "Link kann nicht abgerufen werden",
+            "errorEnablingLink": "Link kann nicht aktiviert werden",
+            "errorDisablingLink": "Link kann nicht deaktiviert werden",
+            "errorResettingLink": "Link kann nicht zurückgesetzt werden",
+            "confirmReset": "Möchten Sie den Gruppenlink wirklich zurücksetzen? Personen können der Gruppe nicht mehr über den aktuellen Link beitreten.",
+            "shareMessage": "Jeder mit diesem Link kann eine Vorschau anzeigen und der Gruppe beitreten.",
+            "shareMessageTrust": "Teilen Sie es mit Menschen, denen Sie vertrauen.",
+            "linkCopiedToClipboard": "Link in die Zwischenablage kopiert",
+            "failedToCopyLinkToClipboard": "Link kann nicht in die Zwischenablage kopiert werden",
+            "enabled": "aktiviert",
+            "disabled": "behindert",
+            "reset": "zurücksetzen"
+        },
+        "welcome": "Willkommen zu",
+        "historyPrivateMessage": "Alte Nachrichten sind für neue Mitglieder nicht sichtbar"
     },
     "updateNow": "jetzt neu laden",
     "updateRequired": "Eine neue Version von OpenChat ist verfügbar - Neuladen in {countdown}s",
@@ -496,5 +517,10 @@
         "blurb": "Einige OpenChat-Funktionen sind nur für Premium-Konten verfügbar. Sie können Ihr Konto upgraden, indem Sie entweder eine Telefonnummer per SMS verifizieren oder eine kleine ICP-Gebühr zahlen.",
         "congratulations": "Sie können jetzt unsere Premium-Funktionen genießen!"
     },
-    "faqUrlCopiedToClipboard": "FAQ-URL in die Zwischenablage kopiert!"
+    "faqUrlCopiedToClipboard": "FAQ-URL in die Zwischenablage kopiert!",
+    "thisIsPublicGroupWithN": "Dies ist eine öffentliche Gruppe mit {number} Mitgliedern",
+    "thisIsPrivateGroupWithN": "Dies ist eine private Gruppe mit {number} Mitgliedern",
+    "copy": "Kopieren",
+    "failedToShareLink": "Link konnte nicht geteilt werden",
+    "groupInviteChangedBy": "{changedBy} {changed} die Gruppeneinladung"
 }

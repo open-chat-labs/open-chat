@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Checkbox from "../../Checkbox.svelte";
+    import Checkbox from "./Checkbox.svelte";
     import { _ } from "svelte-i18n";
 
     export let checked: boolean = false;

@@ -39,11 +39,11 @@ export interface IUserClient {
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
         messagesRead: IMessageReadTracker,
-        selectedChatId?: string
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse>;
     getInitialState(
         messagesRead: IMessageReadTracker,
-        selectedChatId?: string
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse>;
     chatEventsWindow(
         eventIndexRange: IndexRange,
@@ -79,7 +79,7 @@ export interface IUserClient {
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
-    joinGroup(chatId: string): Promise<JoinGroupResponse>;
+    joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse>;
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse>;
     setAvatar(data: Uint8Array): Promise<BlobReference>;
     toggleReaction(

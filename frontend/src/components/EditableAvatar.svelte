@@ -135,8 +135,8 @@
 
     .photo-icon {
         border-radius: 50%;
-        width: 90px;
-        height: 90px;
+        width: 150px;
+        height: 150px;
         display: flex;
         justify-content: center;
         align-items: center;

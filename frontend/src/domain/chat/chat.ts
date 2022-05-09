@@ -369,7 +369,8 @@ export type GroupChatEvent =
     | PollVoteDeleted
     | PollEnded
     | PermissionsChanged
-    | GroupVisibilityChanged;
+    | GroupVisibilityChanged
+    | GroupInviteCodeChanged;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -507,6 +508,14 @@ export type GroupVisibilityChanged = {
     nowPublic: boolean;
     changedBy: string;
 };
+
+export type GroupInviteCodeChanged = {
+    kind: "group_invite_code_changed";
+    change: GroupInviteChange;
+    changedBy: string;
+};
+
+export type GroupInviteChange = "enabled" | "disabled" | "reset";
 
 export type MessagePinned = {
     kind: "message_pinned";
@@ -679,6 +688,7 @@ export type GroupPermissions = {
     deleteMessages: PermissionRole;
     updateGroup: PermissionRole;
     pinMessages: PermissionRole;
+    inviteUsers: PermissionRole;
     createPolls: PermissionRole;
     sendMessages: PermissionRole;
     reactToMessages: PermissionRole;
@@ -1072,6 +1082,29 @@ export type RegisterPollVoteResponse =
     | "out_of_range"
     | "poll_not_found"
     | "chat_not_found";
+
+export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised;
+
+export type InviteCodeSuccess = {
+    kind: "success";
+    code?: string;
+};
+
+export type EnableInviteCodeResponse = EnableInviteCodeSuccess | NotAuthorised;
+
+export type EnableInviteCodeSuccess = {
+    kind: "success";
+    code: string;
+};
+
+export type DisableInviteCodeResponse = "not_authorised" | "success";
+
+export type ResetInviteCodeResponse = ResetInviteCodeSuccess | NotAuthorised;
+
+export type ResetInviteCodeSuccess = {
+    kind: "success";
+    code: string;
+};
 
 export type MessageAction = "emoji" | "file" | undefined;
 

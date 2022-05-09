@@ -284,7 +284,7 @@
     }
 
     function canShare(): boolean {
-        return shareFunctions.canShare(msg.content);
+        return shareFunctions.canShareMessage(msg.content);
     }
 
     function shareMessage() {

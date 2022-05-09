@@ -34,7 +34,7 @@
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
-    import Toggle from "./Toggle.svelte";
+    import Toggle from "../../Toggle.svelte";
     import { setLocale, supportedLanguages } from "i18n/i18n";
     import type { ChatMetrics, ScrollStrategy } from "../../../domain/chat/chat";
     import { toastStore } from "../../../stores/toast";

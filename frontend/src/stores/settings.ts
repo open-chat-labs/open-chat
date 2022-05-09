@@ -25,6 +25,7 @@ export const groupInfoOpen = createLsBoolStore("openchat_group_info_section", tr
 export const groupVisibilityOpen = createLsBoolStore("openchat_group_visibility_section", true);
 export const groupPermissionsOpen = createLsBoolStore("openchat_group_permission_section", false);
 export const groupStatsOpen = createLsBoolStore("openchat_group_stats_section", false);
+export const groupInviteUsersOpen = createLsBoolStore("openchat_group_invite_users_section", false);
 export const groupAdvancedOpen = createLsBoolStore("openchat_group_advanced_section", false);
 
 function createLsBoolStore(key: string, def: boolean) {

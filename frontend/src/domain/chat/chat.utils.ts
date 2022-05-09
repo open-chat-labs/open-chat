@@ -124,6 +124,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "role_changed":
             case "permissions_changed":
             case "group_visibility_changed":
+            case "group_invite_code_changed":
                 userIds.add(e.event.changedBy);
                 break;
             case "group_chat_created":
@@ -184,6 +185,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "role_changed":
         case "permissions_changed":
         case "group_visibility_changed":
+        case "group_invite_code_changed":
             return event.changedBy;
         case "group_chat_created":
             return event.created_by;
@@ -1029,7 +1031,7 @@ function getLatestMessage(
 }
 
 export function isPreviewing(chat: ChatSummary): boolean {
-    return chat.kind === "group_chat" && chat.public && chat.myRole === "previewer";
+    return chat.kind === "group_chat" && chat.myRole === "previewer";
 }
 
 export function groupChatFromCandidate(
@@ -1226,6 +1228,14 @@ export function canEditGroupDetails(chat: ChatSummary): boolean {
 export function canPinMessages(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
         return isPermitted(chat.myRole, chat.permissions.pinMessages);
+    } else {
+        return false;
+    }
+}
+
+export function canInviteUsers(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return chat.public || isPermitted(chat.myRole, chat.permissions.inviteUsers);
     } else {
         return false;
     }

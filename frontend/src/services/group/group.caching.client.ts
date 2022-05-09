@@ -25,6 +25,10 @@ import type {
     EventsSuccessResult,
     MakeGroupPrivateResponse,
     ChatEvent,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -277,5 +281,21 @@ export class CachingGroupClient implements IGroupClient {
 
     searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse> {
         return this.client.searchGroupChat(searchTerm, maxResults);
+    }
+
+    getInviteCode(): Promise<InviteCodeResponse> {
+        return this.client.getInviteCode();
+    }
+
+    enableInviteCode(): Promise<EnableInviteCodeResponse> {
+        return this.client.enableInviteCode();
+    }
+
+    disableInviteCode(): Promise<DisableInviteCodeResponse> {
+        return this.client.disableInviteCode();
+    }
+
+    resetInviteCode(): Promise<ResetInviteCodeResponse> {
+        return this.client.resetInviteCode();
     }
 }

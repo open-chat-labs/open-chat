@@ -62,6 +62,10 @@ import type {
     PendingICPWithdrawal,
     WithdrawCryptocurrencyResponse,
     MakeGroupPrivateResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
@@ -101,6 +105,11 @@ function buildIdenticonUrl(userId: string) {
 
 export const apiKey = Symbol();
 
+export type GroupInvite = {
+    chatId: string;
+    code: string;
+};
+
 export class ServiceContainer implements MarkMessagesRead {
     private _userIndexClient: IUserIndexClient;
     private _onlineClient: IOnlineClient;
@@ -109,6 +118,7 @@ export class ServiceContainer implements MarkMessagesRead {
     private _notificationClient: INotificationsClient;
     private _ledgerClient: ILedgerClient;
     private _groupClients: Record<string, IGroupClient>;
+    private _groupInvite: GroupInvite | undefined;
     private db?: Database;
 
     constructor(private identity: Identity) {
@@ -121,14 +131,24 @@ export class ServiceContainer implements MarkMessagesRead {
         this._groupClients = {};
     }
 
+    public set groupInvite(value: GroupInvite) {
+        this._groupInvite = value;
+    }
+
     createUserClient(userId: string): ServiceContainer {
-        this._userClient = UserClient.create(userId, this.identity, this.db);
+        this._userClient = UserClient.create(userId, this.identity, this.db, this._groupInvite);
         return this;
     }
 
     private getGroupClient(chatId: string): IGroupClient {
         if (!this._groupClients[chatId]) {
-            this._groupClients[chatId] = GroupClient.create(chatId, this.identity, this.db);
+            const inviteCode = this.getProvidedInviteCode(chatId);
+            this._groupClients[chatId] = GroupClient.create(
+                chatId,
+                this.identity,
+                this.db,
+                inviteCode
+            );
         }
         return this._groupClients[chatId];
     }
@@ -138,6 +158,10 @@ export class ServiceContainer implements MarkMessagesRead {
             return this._userClient;
         }
         throw new Error("Attempted to use the user client before it has been initialised");
+    }
+
+    private getProvidedInviteCode(chatId: string): string | undefined {
+        return this._groupInvite?.chatId === chatId ? this._groupInvite.code : undefined;
     }
 
     editMessage(chat: ChatSummary, msg: Message): Promise<EditMessageResponse> {
@@ -394,7 +418,7 @@ export class ServiceContainer implements MarkMessagesRead {
                 );
             } else {
                 // it must be a group chat
-                const client = GroupClient.create(chatId, this.identity, this.db);
+                const client = this.getGroupClient(chatId);
                 missingMessages.push(
                     client
                         .chatEventsByIndex(idxs)
@@ -598,7 +622,7 @@ export class ServiceContainer implements MarkMessagesRead {
 
     getInitialState(
         messagesRead: IMessageReadTracker,
-        selectedChatId?: string
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         return this.userClient.getInitialState(messagesRead, selectedChatId).then((resp) => {
             return this.handleMergedUpdatesResponse(messagesRead, resp);
@@ -609,7 +633,7 @@ export class ServiceContainer implements MarkMessagesRead {
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
         messagesRead: IMessageReadTracker,
-        selectedChatId?: string
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         return this.userClient
             .getUpdates(chatSummaries, args, messagesRead, selectedChatId)
@@ -679,11 +703,16 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
+        if (this._groupInvite?.chatId === chatId) {
+            this._groupInvite = undefined;
+        }
+
         return this.userClient.leaveGroup(chatId);
     }
 
     joinGroup(chatId: string): Promise<JoinGroupResponse> {
-        return this.userClient.joinGroup(chatId);
+        const inviteCode = this.getProvidedInviteCode(chatId);
+        return this.userClient.joinGroup(chatId, inviteCode);
     }
 
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
@@ -767,7 +796,9 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     getBio(userId?: string): Promise<string> {
-        const userClient = userId ? UserClient.create(userId, this.identity) : this.userClient;
+        const userClient = userId
+            ? UserClient.create(userId, this.identity, undefined, undefined)
+            : this.userClient;
         return userClient.getBio();
     }
 
@@ -858,5 +889,21 @@ export class ServiceContainer implements MarkMessagesRead {
 
     withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
         return this.userClient.withdrawICP(domain);
+    }
+
+    getInviteCode(chatId: string): Promise<InviteCodeResponse> {
+        return this.getGroupClient(chatId).getInviteCode();
+    }
+
+    enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
+        return this.getGroupClient(chatId).enableInviteCode();
+    }
+
+    disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
+        return this.getGroupClient(chatId).disableInviteCode();
+    }
+
+    resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
+        return this.getGroupClient(chatId).resetInviteCode();
     }
 }
