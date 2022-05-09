@@ -8,8 +8,7 @@ import { initialiseTracking, startTrackingSession, endTrackingSession } from "..
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const ONE_MINUTE_MILLIS = 60 * 1000;
 
-// const isProd = process.env.NODE_ENV === "production";
-const isProd = true;
+const isProd = process.env.NODE_ENV === "production";
 
 // Use your local .env file to direct this to the local IC replica
 const IDENTITY_URL = process.env.INTERNET_IDENTITY_URL || "https://identity.ic0.app";
