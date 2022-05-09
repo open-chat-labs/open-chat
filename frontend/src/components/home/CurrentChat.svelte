@@ -9,6 +9,7 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import { onDestroy } from "svelte";
     import {
+        canInviteUsers,
         getFirstUnreadMention,
         getFirstUnreadMessageIndex,
         getMinVisibleMessageIndex,
@@ -202,6 +203,7 @@
         canDelete={canDeleteOtherUsersMessages($chat)}
         canSend={canSendMessages($chat)}
         canReact={canReactToMessages($chat)}
+        canInvite={canInviteUsers($chat)}
         {preview}
         {firstUnreadMention}
         {firstUnreadMessage}

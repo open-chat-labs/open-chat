@@ -94,51 +94,7 @@ export const Notification = IDL.Variant({
               }),
             }),
           }),
-          'Cryptocurrency' : IDL.Record({
-            'caption' : IDL.Opt(IDL.Text),
-            'transfer' : IDL.Variant({
-              'ICP' : IDL.Variant({
-                'Failed' : IDL.Record({
-                  'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'memo' : IDL.Nat64,
-                  'error_message' : IDL.Text,
-                  'recipient' : IDL.Principal,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                }),
-                'Completed' : IDL.Record({
-                  'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'transaction_hash' : IDL.Vec(IDL.Nat8),
-                  'block_index' : IDL.Nat64,
-                  'memo' : IDL.Nat64,
-                  'recipient' : IDL.Principal,
-                  'sender' : IDL.Principal,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                }),
-                'Pending' : IDL.Record({
-                  'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
-                  'memo' : IDL.Opt(IDL.Nat64),
-                  'recipient' : IDL.Principal,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                }),
-              }),
-              'Cycles' : IDL.Variant({
-                'Failed' : IDL.Record({
-                  'error_message' : IDL.Text,
-                  'recipient' : IDL.Principal,
-                  'cycles' : IDL.Nat,
-                }),
-                'Completed' : IDL.Record({
-                  'recipient' : IDL.Principal,
-                  'sender' : IDL.Principal,
-                  'cycles' : IDL.Nat,
-                }),
-                'Pending' : IDL.Record({
-                  'recipient' : IDL.Principal,
-                  'cycles' : IDL.Nat,
-                }),
-              }),
-            }),
-          }),
+          'Cryptocurrency' : IDL.Reserved,
           'Audio' : IDL.Record({
             'mime_type' : IDL.Text,
             'blob_reference' : IDL.Opt(
@@ -278,51 +234,7 @@ export const Notification = IDL.Variant({
               }),
             }),
           }),
-          'Cryptocurrency' : IDL.Record({
-            'caption' : IDL.Opt(IDL.Text),
-            'transfer' : IDL.Variant({
-              'ICP' : IDL.Variant({
-                'Failed' : IDL.Record({
-                  'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'memo' : IDL.Nat64,
-                  'error_message' : IDL.Text,
-                  'recipient' : IDL.Principal,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                }),
-                'Completed' : IDL.Record({
-                  'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'transaction_hash' : IDL.Vec(IDL.Nat8),
-                  'block_index' : IDL.Nat64,
-                  'memo' : IDL.Nat64,
-                  'recipient' : IDL.Principal,
-                  'sender' : IDL.Principal,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                }),
-                'Pending' : IDL.Record({
-                  'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
-                  'memo' : IDL.Opt(IDL.Nat64),
-                  'recipient' : IDL.Principal,
-                  'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                }),
-              }),
-              'Cycles' : IDL.Variant({
-                'Failed' : IDL.Record({
-                  'error_message' : IDL.Text,
-                  'recipient' : IDL.Principal,
-                  'cycles' : IDL.Nat,
-                }),
-                'Completed' : IDL.Record({
-                  'recipient' : IDL.Principal,
-                  'sender' : IDL.Principal,
-                  'cycles' : IDL.Nat,
-                }),
-                'Pending' : IDL.Record({
-                  'recipient' : IDL.Principal,
-                  'cycles' : IDL.Nat,
-                }),
-              }),
-            }),
-          }),
+          'Cryptocurrency' : IDL.Reserved,
           'Audio' : IDL.Record({
             'mime_type' : IDL.Text,
             'blob_reference' : IDL.Opt(

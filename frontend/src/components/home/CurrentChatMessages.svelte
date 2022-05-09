@@ -25,6 +25,7 @@
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
     import { iconSize } from "../../stores/iconSize";
+    import InitialGroupMessage from "./InitialGroupMessage.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -43,6 +44,7 @@
     export let canDelete: boolean;
     export let canSend: boolean;
     export let canReact: boolean;
+    export let canInvite: boolean;
     export let footer: boolean;
 
     $: chat = controller.chat;
@@ -502,6 +504,7 @@
                         {canDelete}
                         {canSend}
                         {canReact}
+                        {canInvite}
                         publicGroup={controller.chatVal.kind === "group_chat" &&
                             controller.chatVal.public}
                         pinned={isPinned($pinned, evt)}
@@ -523,6 +526,9 @@
             {/each}
         </div>
     {/each}
+    {#if $chat.kind === "group_chat"}
+        <InitialGroupMessage group={$chat} noVisibleEvents={$events.length === 0} />
+    {/if}
 </div>
 
 {#if !preview}

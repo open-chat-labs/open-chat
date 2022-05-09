@@ -69,6 +69,11 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
   });
+  const DisableInviteCodeArgs = IDL.Record({});
+  const DisableInviteCodeResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
     'height' : IDL.Nat32,
@@ -125,11 +130,11 @@ export const idlFactory = ({ IDL }) => {
     'width' : IDL.Nat32,
   });
   const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
-  const CryptocurrencyV2 = IDL.Variant({ 'InternetComputer' : IDL.Null });
+  const Cryptocurrency = IDL.Variant({ 'InternetComputer' : IDL.Null });
   const Memo = IDL.Nat64;
-  const FailedCryptocurrencyTransferV2 = IDL.Record({
+  const FailedCryptocurrencyTransfer = IDL.Record({
     'fee' : Tokens,
-    'token' : CryptocurrencyV2,
+    'token' : Cryptocurrency,
     'memo' : Memo,
     'error_message' : IDL.Text,
     'recipient' : UserId,
@@ -137,9 +142,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const TransactionHash = IDL.Vec(IDL.Nat8);
   const BlockIndex = IDL.Nat64;
-  const CompletedCryptocurrencyTransferV2 = IDL.Record({
+  const CompletedCryptocurrencyTransfer = IDL.Record({
     'fee' : Tokens,
-    'token' : CryptocurrencyV2,
+    'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
     'memo' : Memo,
@@ -147,73 +152,17 @@ export const idlFactory = ({ IDL }) => {
     'sender' : UserId,
     'amount' : Tokens,
   });
-  const PendingCryptocurrencyTransferV2 = IDL.Record({
+  const PendingCryptocurrencyTransfer = IDL.Record({
     'fee' : IDL.Opt(Tokens),
-    'token' : CryptocurrencyV2,
+    'token' : Cryptocurrency,
     'memo' : IDL.Opt(Memo),
     'recipient' : UserId,
     'amount' : Tokens,
-  });
-  const CryptocurrencyTransferV2 = IDL.Variant({
-    'Failed' : FailedCryptocurrencyTransferV2,
-    'Completed' : CompletedCryptocurrencyTransferV2,
-    'Pending' : PendingCryptocurrencyTransferV2,
-  });
-  const CryptocurrencyContentV2 = IDL.Record({
-    'caption' : IDL.Opt(IDL.Text),
-    'transfer' : CryptocurrencyTransferV2,
-  });
-  const ICP = Tokens;
-  const FailedICPTransfer = IDL.Record({
-    'fee' : ICP,
-    'memo' : Memo,
-    'error_message' : IDL.Text,
-    'recipient' : UserId,
-    'amount' : ICP,
-  });
-  const CompletedICPTransfer = IDL.Record({
-    'fee' : ICP,
-    'transaction_hash' : TransactionHash,
-    'block_index' : BlockIndex,
-    'memo' : Memo,
-    'recipient' : UserId,
-    'sender' : UserId,
-    'amount' : ICP,
-  });
-  const PendingICPTransfer = IDL.Record({
-    'fee' : IDL.Opt(ICP),
-    'memo' : IDL.Opt(Memo),
-    'recipient' : UserId,
-    'amount' : ICP,
-  });
-  const ICPTransfer = IDL.Variant({
-    'Failed' : FailedICPTransfer,
-    'Completed' : CompletedICPTransfer,
-    'Pending' : PendingICPTransfer,
-  });
-  const Cycles = IDL.Nat;
-  const FailedCyclesTransfer = IDL.Record({
-    'error_message' : IDL.Text,
-    'recipient' : UserId,
-    'cycles' : Cycles,
-  });
-  const CompletedCyclesTransfer = IDL.Record({
-    'recipient' : UserId,
-    'sender' : UserId,
-    'cycles' : Cycles,
-  });
-  const PendingCyclesTransfer = IDL.Record({
-    'recipient' : UserId,
-    'cycles' : Cycles,
-  });
-  const CyclesTransfer = IDL.Variant({
-    'Failed' : FailedCyclesTransfer,
-    'Completed' : CompletedCyclesTransfer,
-    'Pending' : PendingCyclesTransfer,
   });
   const CryptocurrencyTransfer = IDL.Variant({
-    'ICP' : ICPTransfer,
-    'Cycles' : CyclesTransfer,
+    'Failed' : FailedCryptocurrencyTransfer,
+    'Completed' : CompletedCryptocurrencyTransfer,
+    'Pending' : PendingCryptocurrencyTransfer,
   });
   const CryptocurrencyContent = IDL.Record({
     'caption' : IDL.Opt(IDL.Text),
@@ -243,8 +192,8 @@ export const idlFactory = ({ IDL }) => {
     'Poll' : PollContent,
     'Text' : TextContent,
     'Image' : ImageContent,
-    'CryptocurrencyV2' : CryptocurrencyContentV2,
-    'Cryptocurrency' : CryptocurrencyContent,
+    'CryptocurrencyV2' : CryptocurrencyContent,
+    'Cryptocurrency' : IDL.Reserved,
     'Audio' : AudioContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
@@ -258,8 +207,14 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
   });
+  const EnableInviteCodeArgs = IDL.Record({});
+  const EnableInviteCodeResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Record({ 'code' : IDL.Nat64 }),
+  });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
+    'invite_code' : IDL.Opt(IDL.Nat64),
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'ascending' : IDL.Bool,
@@ -335,6 +290,7 @@ export const idlFactory = ({ IDL }) => {
     'send_messages' : PermissionRole,
     'remove_members' : PermissionRole,
     'update_group' : PermissionRole,
+    'invite_users' : PermissionRole,
     'change_roles' : PermissionRole,
     'add_members' : PermissionRole,
     'create_polls' : PermissionRole,
@@ -349,6 +305,15 @@ export const idlFactory = ({ IDL }) => {
   const PollEnded = IDL.Record({
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
+  });
+  const GroupInviteCodeChange = IDL.Variant({
+    'Enabled' : IDL.Null,
+    'Disabled' : IDL.Null,
+    'Reset' : IDL.Null,
+  });
+  const GroupInviteCodeChanged = IDL.Record({
+    'changed_by' : UserId,
+    'change' : GroupInviteCodeChange,
   });
   const UsersUnblocked = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -397,6 +362,7 @@ export const idlFactory = ({ IDL }) => {
     'Message' : Message,
     'PermissionsChanged' : PermissionsChanged,
     'PollEnded' : PollEnded,
+    'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,
     'PollVoteRegistered' : UpdatedMessage,
     'ParticipantLeft' : ParticipantLeft,
@@ -424,15 +390,25 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
-  const EventsByIndexArgs = IDL.Record({ 'events' : IDL.Vec(EventIndex) });
+  const EventsByIndexArgs = IDL.Record({
+    'invite_code' : IDL.Opt(IDL.Nat64),
+    'events' : IDL.Vec(EventIndex),
+  });
   const EventsRangeArgs = IDL.Record({
+    'invite_code' : IDL.Opt(IDL.Nat64),
     'to_index' : EventIndex,
     'from_index' : EventIndex,
   });
   const EventsWindowArgs = IDL.Record({
     'mid_point' : MessageIndex,
+    'invite_code' : IDL.Opt(IDL.Nat64),
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
+  });
+  const InviteCodeArgs = IDL.Record({});
+  const InviteCodeResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Record({ 'code' : IDL.Opt(IDL.Nat64) }),
   });
   const MakePrivateArgs = IDL.Record({});
   const MakePrivateResponse = IDL.Variant({
@@ -464,13 +440,14 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : EventIndex,
   });
-  const PublicSummaryArgs = IDL.Record({});
+  const PublicSummaryArgs = IDL.Record({ 'invite_code' : IDL.Opt(IDL.Nat64) });
   const Version = IDL.Record({
     'major' : IDL.Nat32,
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
   });
   const PublicGroupSummary = IDL.Record({
+    'is_public' : IDL.Bool,
     'name' : IDL.Text,
     'wasm_version' : Version,
     'description' : IDL.Text,
@@ -485,6 +462,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const PublicSummarySuccess = IDL.Record({ 'summary' : PublicGroupSummary });
   const PublicSummaryResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
     'Success' : PublicSummarySuccess,
   });
   const VoteOperation = IDL.Variant({
@@ -512,6 +490,11 @@ export const idlFactory = ({ IDL }) => {
     'CannotRemoveSelf' : IDL.Null,
     'CannotRemoveUser' : IDL.Null,
     'InternalError' : IDL.Text,
+  });
+  const ResetInviteCodeArgs = IDL.Record({});
+  const ResetInviteCodeResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Record({ 'code' : IDL.Nat64 }),
   });
   const SearchMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
@@ -669,7 +652,17 @@ export const idlFactory = ({ IDL }) => {
         [DeleteMessagesResponse],
         [],
       ),
+    'disable_invite_code' : IDL.Func(
+        [DisableInviteCodeArgs],
+        [DisableInviteCodeResponse],
+        [],
+      ),
     'edit_message' : IDL.Func([EditMessageArgs], [EditMessageResponse], []),
+    'enable_invite_code' : IDL.Func(
+        [EnableInviteCodeArgs],
+        [EnableInviteCodeResponse],
+        [],
+      ),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
         [EventsByIndexArgs],
@@ -678,6 +671,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
+    'invite_code' : IDL.Func([InviteCodeArgs], [InviteCodeResponse], ['query']),
     'make_private' : IDL.Func([MakePrivateArgs], [MakePrivateResponse], []),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],
@@ -698,6 +692,11 @@ export const idlFactory = ({ IDL }) => {
     'remove_participant' : IDL.Func(
         [RemoveParticipantArgs],
         [RemoveParticipantResponse],
+        [],
+      ),
+    'reset_invite_code' : IDL.Func(
+        [ResetInviteCodeArgs],
+        [ResetInviteCodeResponse],
         [],
       ),
     'search_messages' : IDL.Func(

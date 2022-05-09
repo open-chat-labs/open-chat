@@ -399,9 +399,30 @@
             "pinMessages": "固定消息",
             "createPolls": "创建民意调查",
             "sendMessages": "发送信息",
-            "reactToMessages": "对消息做出反应"
+            "reactToMessages": "对消息做出反应",
+            "inviteUsers": "邀请用户",
+            "notPermitted": "您无权{permission}"
         },
-        "advanced": "先进的"
+        "advanced": "先进的",
+        "invite": {
+            "inviteWithLink": "通过链接邀请加入群组",
+            "enableLink": "启用链接",
+            "resetLink": "重置链接",
+            "errorGettingLink": "无法获取链接",
+            "errorEnablingLink": "无法启用链接",
+            "errorDisablingLink": "无法禁用链接",
+            "errorResettingLink": "无法重置链接",
+            "confirmReset": "您确定要重置群组链接吗？人们将无法再使用当前链接加入群组。",
+            "shareMessage": "知道此链接的任何人都可以预览和加入群组。",
+            "shareMessageTrust": "与您信任的人分享。",
+            "linkCopiedToClipboard": "链接已复制到剪贴板",
+            "failedToCopyLinkToClipboard": "无法将链接复制到剪贴板",
+            "enabled": "启用",
+            "disabled": "禁用",
+            "reset": "重启"
+        },
+        "welcome": "欢迎来到",
+        "historyPrivateMessage": "旧消息对新成员不可见"
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",
@@ -496,5 +517,10 @@
         "blurb": "某些 OpenChat 功能仅适用于高级帐户。您可以通过短信验证电话号码或支付少量 ICP 费用来升级您的帐户。",
         "congratulations": "您现在可以享受我们的高级功能了！"
     },
-    "faqUrlCopiedToClipboard": "常见问题网址已复制到剪贴板！"
+    "faqUrlCopiedToClipboard": "常见问题网址已复制到剪贴板！",
+    "thisIsPublicGroupWithN": "这是一个拥有 {number} 成员的公共群组",
+    "thisIsPrivateGroupWithN": "这是一个有 {number} 成员的私人群组",
+    "copy": "复制",
+    "failedToShareLink": "分享链接失败",
+    "groupInviteChangedBy": "{changedBy} {changed} 群组邀请"
 }

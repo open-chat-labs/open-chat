@@ -286,8 +286,9 @@ export class HomeController {
     }
 
     /**
-     * We may wish to look at (public group) chats without joining them.
-     * If so, we load the chat summary directly (assuming it is a public group chat)
+     * We may wish to look at chats without joining them.
+     * If the chat is either a public group or a private group with an invite code then
+     * we load the chat summary directly.
      * We will then add that chat to our chat list locally with a custom role of "Previewer"
      * This will allow us to interact with the chat in a readonly mode.
      *
@@ -304,7 +305,7 @@ export class HomeController {
         });
     }
 
-    selectChat(chatId: string, messageIndex?: number): void {
+    selectChat(chatId: string, messageIndex: number | undefined): void {
         closeNotificationsForChat(chatId);
 
         const chat = get(this.serverChatSummaries)[chatId];
@@ -725,14 +726,14 @@ export class HomeController {
             .then((resp) => {
                 if (resp.kind === "group_chat") {
                     this.addOrReplaceChat(resp);
-                    this.selectChat(group.chatId);
+                    this.selectChat(group.chatId, undefined);
                     return true;
                 } else if (resp.kind === "already_in_group") {
                     this.addOrReplaceChat({
                         ...group,
                         myRole: "participant" as MemberRole,
                     });
-                    this.selectChat(group.chatId);
+                    this.selectChat(group.chatId, undefined);
                     return true;
                 } else {
                     if (resp.kind === "blocked") {

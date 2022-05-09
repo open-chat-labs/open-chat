@@ -411,9 +411,30 @@
             "pinMessages": "הצמד הודעות",
             "createPolls": "ליצור סקרים",
             "sendMessages": "לשלוח הודעות",
-            "reactToMessages": "להגיב להודעות"
+            "reactToMessages": "להגיב להודעות",
+            "inviteUsers": "להזמין משתמשים",
+            "notPermitted": "אינך מורשה {permission}"
         },
-        "advanced": "מִתקַדֵם"
+        "advanced": "מִתקַדֵם",
+        "invite": {
+            "inviteWithLink": "הזמינו לקבוצה דרך הקישור",
+            "enableLink": "אפשר קישור",
+            "resetLink": "אפס קישור",
+            "errorGettingLink": "לא ניתן לקבל קישור",
+            "errorEnablingLink": "לא ניתן להפעיל קישור",
+            "errorDisablingLink": "לא ניתן להשבית את הקישור",
+            "errorResettingLink": "לא ניתן לאפס את הקישור",
+            "confirmReset": "האם אתה בטוח שברצונך לאפס את הקישור לקבוצה? אנשים לא יוכלו עוד להצטרף לקבוצה באמצעות הקישור הנוכחי.",
+            "shareMessage": "כל מי שיש לו קישור זה יכול לצפות בתצוגה מקדימה ולהצטרף לקבוצה.",
+            "shareMessageTrust": "שתף אותו עם אנשים שאתה סומך עליהם.",
+            "linkCopiedToClipboard": "הקישור הועתק ללוח",
+            "failedToCopyLinkToClipboard": "לא ניתן להעתיק את הקישור ללוח",
+            "enabled": "מופעל",
+            "disabled": "נָכֶה",
+            "reset": "אִתחוּל"
+        },
+        "welcome": "ברוך הבא ל",
+        "historyPrivateMessage": "הודעות ישנות אינן גלויות לחברים חדשים"
     },
     "updateNow": "טען מחדש עכשיו",
     "updateRequired": "גרסה חדשה של OpenChat זמינה - נטען מחדש ב-{countdown}s",
@@ -494,5 +515,10 @@
         "blurb": "חלק מתכונות OpenChat זמינות רק לחשבונות פרימיום. אתה יכול לשדרג את חשבונך על ידי אימות מספר טלפון באמצעות SMS או על ידי תשלום עמלת ICP קטנה.",
         "congratulations": "עכשיו אתה יכול ליהנות מתכונות הפרימיום שלנו!"
     },
-    "faqUrlCopiedToClipboard": "כתובת ה-URL של שאלות נפוצות הועתקה ללוח!"
+    "faqUrlCopiedToClipboard": "כתובת ה-URL של שאלות נפוצות הועתקה ללוח!",
+    "thisIsPublicGroupWithN": "זוהי קבוצה ציבורית עם חברים ב-{number}",
+    "thisIsPrivateGroupWithN": "זוהי קבוצה פרטית עם חברי {number}",
+    "copy": "עותק",
+    "failedToShareLink": "שיתוף הקישור נכשל",
+    "groupInviteChangedBy": "{changedBy} {changed} ההזמנה לקבוצה"
 }

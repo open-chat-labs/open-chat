@@ -158,9 +158,11 @@
     "toggleMuteNotificationsSucceeded": "Notifications successfully {operation}",
     "filterParticipants": "filter members",
     "markAllRead": "Mark all as read",
-    "publicGroupWithN": "Public group with {number} member(s)",
-    "privateGroupWithN": "Private group with {number} member(s)",
-    "groupWithN": "{number} member(s)",
+    "publicGroupWithN": "Public group with {number} members",
+    "privateGroupWithN": "Private group with {number} members",
+    "thisIsPublicGroupWithN": "This is a public group with {number} members",
+    "thisIsPrivateGroupWithN": "This is a private group with {number} members",
+    "groupWithN": "{number} members",
     "muted": "muted",
     "unmuted": "unmuted",
     "yesPlease": "Yes please",
@@ -411,14 +413,35 @@
             "pinMessages": "pin messages",
             "createPolls": "create polls",
             "sendMessages": "send messages",
-            "reactToMessages": "react to messages"
+            "reactToMessages": "react to messages",
+            "inviteUsers": "invite users",
+            "notPermitted": "You are not permitted to {permission}"
         },
-        "advanced": "Advanced"
+        "invite": {
+            "inviteWithLink": "Invite to group via link",
+            "enableLink": "Enable link",
+            "resetLink": "Reset link",
+            "errorGettingLink": "Unable to get link",
+            "errorEnablingLink": "Unable to enable link",
+            "errorDisablingLink": "Unable to disable link",
+            "errorResettingLink": "Unable to reset link",
+            "confirmReset": "Are you sure you want to reset the group link? People will no longer be able to join the group using the current link.",
+            "shareMessage": "Anyone with this link can preview and join the group. ",
+            "shareMessageTrust": "Share it with people you trust.",
+            "linkCopiedToClipboard": "Link copied to clipboard",
+            "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
+            "enabled": "enabled",
+            "disabled": "disabled",
+            "reset": "reset"
+        },
+        "advanced": "Advanced",
+        "welcome": "Welcome to ",
+        "historyPrivateMessage": "Old messages are not visible to new members"
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",
-    "readOnlyGroup": "This a read-only group",
-    "memberCount": "{count} member(s)",
+    "readOnlyGroup": "This is a read-only group",
+    "memberCount": "{count} members",
     "ownedBy": "Owned by @{username}",
     "icpTransfer": {
         "title": "Send ICP",
@@ -494,5 +517,8 @@
         "title": "Premium Feature",
         "blurb": "Some OpenChat features are only available to premium accounts. You can upgrade your account either by verifying a phone number via SMS or by paying a small ICP fee.",
         "congratulations": "You can now enjoy our premium features!"
-    }
+    },
+    "copy": "Copy",
+    "failedToShareLink": "Failed to share link",
+    "groupInviteChangedBy": "{changedBy} {changed} the group invite"
 }

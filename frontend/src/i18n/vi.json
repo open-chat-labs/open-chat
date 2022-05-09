@@ -400,9 +400,30 @@
             "pinMessages": "ghim tin nhắn",
             "createPolls": "tạo các cuộc thăm dò",
             "sendMessages": "gửi tin nhắn",
-            "reactToMessages": "phản ứng với tin nhắn"
+            "reactToMessages": "phản ứng với tin nhắn",
+            "inviteUsers": "mời người dùng",
+            "notPermitted": "Bạn không được phép {permission}"
         },
-        "advanced": "Trình độ cao"
+        "advanced": "Trình độ cao",
+        "invite": {
+            "inviteWithLink": "Mời vào nhóm qua liên kết",
+            "enableLink": "Bật liên kết",
+            "resetLink": "Đặt lại liên kết",
+            "errorGettingLink": "Không thể lấy liên kết",
+            "errorEnablingLink": "Không thể bật liên kết",
+            "errorDisablingLink": "Không thể tắt liên kết",
+            "errorResettingLink": "Không thể đặt lại liên kết",
+            "confirmReset": "Bạn có chắc chắn muốn đặt lại liên kết nhóm không? Mọi người sẽ không thể tham gia nhóm bằng liên kết hiện tại nữa.",
+            "shareMessage": "Bất kỳ ai có liên kết này đều có thể xem trước và tham gia nhóm.",
+            "shareMessageTrust": "Chia sẻ nó với những người bạn tin tưởng.",
+            "linkCopiedToClipboard": "Liên kết được sao chép vào khay nhớ tạm",
+            "failedToCopyLinkToClipboard": "Không thể sao chép liên kết vào khay nhớ tạm",
+            "enabled": "được kích hoạt",
+            "disabled": "Vô hiệu hóa",
+            "reset": "cài lại"
+        },
+        "welcome": "Chào mừng bạn đến",
+        "historyPrivateMessage": "Các tin nhắn cũ không hiển thị với các thành viên mới"
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",
@@ -497,5 +518,10 @@
         "blurb": "Một số tính năng của OpenChat chỉ có sẵn cho các tài khoản trả phí. Bạn có thể nâng cấp tài khoản của mình bằng cách xác minh số điện thoại qua SMS hoặc trả một khoản phí ICP nhỏ.",
         "congratulations": "Bây giờ bạn có thể tận hưởng các tính năng cao cấp của chúng tôi!"
     },
-    "faqUrlCopiedToClipboard": "Đã sao chép url câu hỏi thường gặp vào khay nhớ tạm!"
+    "faqUrlCopiedToClipboard": "Đã sao chép url câu hỏi thường gặp vào khay nhớ tạm!",
+    "thisIsPublicGroupWithN": "Đây là nhóm công khai có {number} thành viên",
+    "thisIsPrivateGroupWithN": "Đây là một nhóm riêng tư có {number} thành viên",
+    "copy": "Sao chép",
+    "failedToShareLink": "Không chia sẻ được liên kết",
+    "groupInviteChangedBy": "{changedBy} {changed} mời nhóm"
 }

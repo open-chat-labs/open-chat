@@ -10,10 +10,8 @@
     import Send from "svelte-material-icons/Send.svelte";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
-    import { apiKey } from "../../../services/serviceContainer";
-    import type { ServiceContainer } from "../../../services/serviceContainer";
-    import { ICP_TRANSFER_FEE_E8S } from "../../../domain/user/user";
-    import type { CreatedUser } from "../../../domain/user/user";
+    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
+    import { ICP_TRANSFER_FEE_E8S, CreatedUser } from "../../../domain/user/user";
     import { currentUserKey } from "../../../fsm/home.controller";
     import { formatICP } from "../../../utils/cryptoFormatter";
     import { rollbar } from "../../../utils/logging";

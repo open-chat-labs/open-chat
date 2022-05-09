@@ -19,6 +19,7 @@
         canEditGroupDetails,
         canDeleteGroup,
         canMakeGroupPrivate,
+        canInviteUsers,
     } from "../../../domain/chat/chat.utils";
     import { createEventDispatcher } from "svelte";
     import type { ChatController } from "../../../fsm/chat.controller";
@@ -32,11 +33,13 @@
     import {
         groupAdvancedOpen,
         groupInfoOpen,
+        groupInviteUsersOpen,
         groupPermissionsOpen,
         groupStatsOpen,
         groupVisibilityOpen,
-    } from "stores/settings";
+    } from "../../../stores/settings";
     import AdvancedSection from "./AdvancedSection.svelte";
+    import InviteUsers from "./InviteUsers.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -87,6 +90,7 @@
             p1.deleteMessages !== p2.deleteMessages ||
             p1.updateGroup !== p2.updateGroup ||
             p1.pinMessages !== p2.pinMessages ||
+            p1.inviteUsers !== p2.inviteUsers ||
             p1.createPolls !== p2.createPolls ||
             p1.sendMessages !== p2.sendMessages ||
             p1.reactToMessages !== p2.reactToMessages
@@ -172,10 +176,8 @@
                     <p class="photo-legend">{$_("group.addGroupPhoto")}</p>
                 {:else}
                     <Avatar url={avatarSrc} size={AvatarSize.ExtraLarge} />
-                {/if}
 
-                {#if !canEdit}
-                    <h3>{originalGroup.name}</h3>
+                    <h3 class="group-name">{originalGroup.name}</h3>
                     <p class="members">
                         {$_("memberCount", { values: { count: $participants.length } })}
                     </p>
@@ -234,19 +236,27 @@
                 {/if}
             </div>
         </CollapsibleCard>
+        {#if canInviteUsers(originalGroup)}
+            <CollapsibleCard
+                on:toggle={groupInviteUsersOpen.toggle}
+                open={$groupInviteUsersOpen}
+                headerText={$_("group.invite.inviteWithLink")}>
+                <InviteUsers group={originalGroup} />
+            </CollapsibleCard>
+        {/if}
         <CollapsibleCard
             on:toggle={groupPermissionsOpen.toggle}
             open={$groupPermissionsOpen}
             headerText={$_("group.permissions.permissions")}>
-            <!-- {#if canEditPermissions}
+            {#if canEditPermissions}
                 <GroupPermissionsEditor
                     bind:permissions={updatedGroup.permissions}
                     isPublic={originalGroup.public} />
-            {:else} -->
-            <GroupPermissionsViewer
-                bind:permissions={updatedGroup.permissions}
-                isPublic={originalGroup.public} />
-            <!-- {/if} -->
+            {:else}
+                <GroupPermissionsViewer
+                    bind:permissions={updatedGroup.permissions}
+                    isPublic={originalGroup.public} />
+            {/if}
         </CollapsibleCard>
         <CollapsibleCard
             on:toggle={groupStatsOpen.toggle}
@@ -355,6 +365,10 @@
 
     h3 {
         @include font(bold, normal, fs-120);
+    }
+
+    .group-name {
+        margin-top: $sp4;
     }
 
     .members {

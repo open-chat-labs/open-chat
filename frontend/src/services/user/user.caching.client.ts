@@ -66,6 +66,7 @@ import { missingUserIds } from "../../domain/user/user.utils";
 import { userStore } from "stores/user";
 import { UserIndexClient } from "services/userIndex/userIndex.client";
 import { rollbar } from "../../utils/logging";
+import type { GroupInvite } from "../../services/serviceContainer";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -79,7 +80,8 @@ export class CachingUserClient implements IUserClient {
     constructor(
         private db: Promise<IDBPDatabase<ChatSchema>>,
         private identity: Identity,
-        private client: IUserClient
+        private client: IUserClient,
+        private groupInvite: GroupInvite | undefined
     ) {}
 
     private setCachedChats(resp: MergedUpdatesResponse): MergedUpdatesResponse {
@@ -186,7 +188,7 @@ export class CachingUserClient implements IUserClient {
         cachedResponse: MergedUpdatesResponse | undefined,
         nextResponse: MergedUpdatesResponse,
         messagesRead: IMessageReadTracker,
-        selectedChatId?: string
+        selectedChatId: string | undefined
     ): Promise<void> {
         const cachedChats =
             cachedResponse === undefined
@@ -230,7 +232,16 @@ export class CachingUserClient implements IUserClient {
                 // fire and forget an events request that will prime the cache
                 if (chat.kind === "group_chat") {
                     // this is a bit gross, but I don't want this to leak outside of the caching layer
-                    const groupClient = GroupClient.create(chat.chatId, this.identity, this.db);
+                    const inviteCode =
+                        this.groupInvite?.chatId === chat.chatId
+                            ? this.groupInvite.code
+                            : undefined;
+                    const groupClient = GroupClient.create(
+                        chat.chatId,
+                        this.identity,
+                        this.db,
+                        inviteCode
+                    );
 
                     return targetMessageIndex !== undefined
                         ? groupClient.chatEventsWindow(range, targetMessageIndex)
@@ -275,7 +286,7 @@ export class CachingUserClient implements IUserClient {
     @profile("userCachingClient")
     async getInitialState(
         messagesRead: IMessageReadTracker,
-        selectedChatId?: string
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         // if we have cached chats we will rebuild the UpdateArgs from that cached data
@@ -284,7 +295,8 @@ export class CachingUserClient implements IUserClient {
                 .getUpdates(
                     cachedChats.chatSummaries,
                     updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries),
-                    messagesRead
+                    messagesRead,
+                    selectedChatId // WARNING: This was left undefined previously - is this correct now
                 )
                 .then((resp) => {
                     resp.wasUpdated = true;
@@ -294,7 +306,7 @@ export class CachingUserClient implements IUserClient {
                 .then((resp) => this.setCachedChats(resp));
         } else {
             return this.client
-                .getInitialState(messagesRead)
+                .getInitialState(messagesRead, selectedChatId)
                 .then((resp) => {
                     this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
                     return resp;
@@ -308,11 +320,11 @@ export class CachingUserClient implements IUserClient {
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
         messagesRead: IMessageReadTracker,
-        selectedChatId?: string
+        selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         return this.client
-            .getUpdates(chatSummaries, args, messagesRead)
+            .getUpdates(chatSummaries, args, messagesRead, selectedChatId) // WARNING: This was left undefined previously - is this correct now
             .then((resp) => {
                 this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
                 return resp;
@@ -367,8 +379,8 @@ export class CachingUserClient implements IUserClient {
         return this.client.leaveGroup(chatId);
     }
 
-    joinGroup(chatId: string): Promise<JoinGroupResponse> {
-        return this.client.joinGroup(chatId);
+    joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse> {
+        return this.client.joinGroup(chatId, inviteCode);
     }
 
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {

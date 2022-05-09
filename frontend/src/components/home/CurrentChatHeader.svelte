@@ -4,7 +4,6 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
-    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -32,7 +31,6 @@
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
     import type { Readable } from "svelte/store";
-    import { toastStore } from "../../stores/toast";
     import Link from "../Link.svelte";
     import { supported as notificationsSupported } from "../../utils/notifications";
     import { iconSize } from "../../stores/iconSize";
@@ -96,21 +94,6 @@
 
     function addParticipants() {
         dispatch("addParticipants");
-    }
-
-    function copyUrl() {
-        if ($selectedChatSummary.kind === "group_chat" && $selectedChatSummary.public) {
-            navigator.clipboard.writeText(window.location.href).then(
-                () => {
-                    toastStore.showSuccessToast("urlCopiedToClipboard");
-                },
-                () => {
-                    toastStore.showFailureToast("failedToCopyUrlToClipboard", {
-                        values: { url: window.location.href },
-                    });
-                }
-            );
-        }
     }
 
     function leaveGroup() {
@@ -277,20 +260,17 @@
                                     <div slot="text">{$_("addParticipants")}</div>
                                 </MenuItem>
                             {/if}
-                            {#if $selectedChatSummary.public}
-                                <MenuItem on:click={copyUrl}>
-                                    <ContentCopy
-                                        size={$iconSize}
-                                        color={"var(--icon-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("copyGroupUrl")}</div>
-                                </MenuItem>
-                            {/if}
                         {/if}
                         <MenuItem on:click={searchChat}>
                             <Magnify size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                             <div slot="text">{$_("searchChat")}</div>
                         </MenuItem>
+                        {#if hasPinned}
+                            <MenuItem on:click={showPinned}>
+                                <Pin size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                                <div slot="text">{$_("showPinned")}</div>
+                            </MenuItem>
+                        {/if}
                         {#if supportsNotifications}
                             {#if $selectedChatSummary.notificationsMuted === true}
                                 <MenuItem on:click={toggleMuteNotifications}>

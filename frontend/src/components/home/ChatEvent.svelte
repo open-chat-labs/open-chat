@@ -14,6 +14,7 @@
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
+    import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -36,6 +37,7 @@
     export let canDelete: boolean;
     export let canSend: boolean;
     export let canReact: boolean;
+    export let canInvite: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
 
@@ -152,6 +154,14 @@
         nowPublic={event.event.nowPublic}
         changedBy={event.event.changedBy}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "group_invite_code_changed"}
+    {#if canInvite}
+        <GroupInviteCodeChangedEvent
+            {user}
+            change={event.event.change}
+            changedBy={event.event.changedBy}
+            timestamp={event.timestamp} />
+    {/if}
 {:else if event.event.kind === "permissions_changed"}
     <PermissionsChangedEvent {user} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "poll_ended" && event.event.kind !== "participant_joined" && event.event.kind !== "participant_left"}

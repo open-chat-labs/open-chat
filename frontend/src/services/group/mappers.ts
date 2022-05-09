@@ -21,6 +21,10 @@ import type {
     ApiUnpinMessageResponse,
     ApiSearchGroupChatResponse,
     ApiMakePrivateResponse,
+    ApiInviteCodeResponse,
+    ApiEnableInviteCodeResponse,
+    ApiDisableInviteCodeResponse,
+    ApiResetInviteCodeResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -45,6 +49,11 @@ import type {
     PinMessageResponse,
     UnpinMessageResponse,
     MakeGroupPrivateResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
+    GroupInviteChange,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -52,6 +61,8 @@ import { groupPermissions, message, updatedMessage } from "../common/chatMappers
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { messageMatch } from "../user/mappers";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
+import { optional } from "../../utils/mapping";
+import { bigintToBase64 } from "utils/base64";
 
 function principalToString(p: Principal): string {
     return p.toString();
@@ -536,7 +547,77 @@ export function searchGroupChatResponse(
         };
     }
     throw new UnsupportedValueError(
-        "Unknown UserIndex.ApiSearchMessagesResponse type received",
+        "Unexpected UserIndex.ApiSearchMessagesResponse type received",
+        candid
+    );
+}
+
+export function inviteCodeResponse(candid: ApiInviteCodeResponse): InviteCodeResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            code: optional(candid.Success.code, bigintToBase64),
+        };
+    }
+    if ("NotAuthorized" in candid) {
+        return {
+            kind: "not_authorised",
+        };
+    }
+    throw new UnsupportedValueError("Unexpected Group.ApiInviteCodeResponse type received", candid);
+}
+
+export function enableInviteCodeResponse(
+    candid: ApiEnableInviteCodeResponse
+): EnableInviteCodeResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            code: bigintToBase64(candid.Success.code),
+        };
+    }
+    if ("NotAuthorized" in candid) {
+        return {
+            kind: "not_authorised",
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected Group.ApiEnableInviteCodeResponse type received",
+        candid
+    );
+}
+
+export function disableInviteCodeResponse(
+    candid: ApiDisableInviteCodeResponse
+): DisableInviteCodeResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiDisableInviteCodeResponse type received",
+        candid
+    );
+}
+
+export function resetInviteCodeResponse(
+    candid: ApiResetInviteCodeResponse
+): ResetInviteCodeResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            code: bigintToBase64(candid.Success.code),
+        };
+    }
+    if ("NotAuthorized" in candid) {
+        return {
+            kind: "not_authorised",
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected Group.ApiResetInviteCodeResponse type received",
         candid
     );
 }
@@ -736,6 +817,21 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "group_visibility_changed",
             nowPublic: candid.GroupVisibilityChanged.now_public,
             changedBy: candid.GroupVisibilityChanged.changed_by.toString(),
+        };
+    }
+
+    if ("GroupInviteCodeChanged" in candid) {
+        let change: GroupInviteCodeChanged = "disabled";
+        if ("Enabled" in candid.GroupInviteCodeChanged.change) {
+            change = "enabled";
+        } else if ("Reset" in candid.GroupInviteCodeChanged.change) {
+            change = "reset";
+        }
+
+        return {
+            kind: "group_invite_code_changed",
+            change,
+            changedBy: candid.GroupInviteCodeChanged.changed_by.toString(),
         };
     }
 
