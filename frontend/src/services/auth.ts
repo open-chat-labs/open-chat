@@ -1,26 +1,19 @@
 import type { Identity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
 import { AuthClient } from "@dfinity/auth-client";
 import { DelegationIdentity } from "@dfinity/identity";
 import { unregister } from "../utils/notifications";
-import { Usergeek } from "usergeek-ic-js";
 import { closeDb } from "../utils/caching";
+import { initialiseTracking, startTrackingSession, endTrackingSession } from "../utils/tracking";
 
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const ONE_MINUTE_MILLIS = 60 * 1000;
-
-const isProd = process.env.NODE_ENV === "production";
 
 // Use your local .env file to direct this to the local IC replica
 const IDENTITY_URL = process.env.INTERNET_IDENTITY_URL || "https://identity.ic0.app";
 
 const authClient = AuthClient.create();
 
-if (isProd) {
-    const apiKey = "process.env.USERGEEK_APIKEY";
-    Usergeek.init({ apiKey });
-    console.log("Usergeek initialised");
-}
+initialiseTracking();
 
 export function getIdentity(): Promise<Identity> {
     return authClient.then((c) => c.getIdentity());
@@ -47,18 +40,13 @@ export async function logout(): Promise<void> {
     await unregister();
     return authClient.then((c) => {
         c.logout();
-        if (isProd) {
-            Usergeek.setPrincipal(Principal.anonymous());
-        }
+        endTrackingSession();
         closeDb();
     });
 }
 
 export function startSession(identity: Identity): Promise<void> {
-    if (isProd) {
-        Usergeek.setPrincipal(identity.getPrincipal());
-        Usergeek.trackSession();
-    }
+    startTrackingSession(identity);
 
     return new Promise((resolve) => {
         const durationUntilSessionExpireMS = getTimeUntilSessionExpiryMs(identity);
