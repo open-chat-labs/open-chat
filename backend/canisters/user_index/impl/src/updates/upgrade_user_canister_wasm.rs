@@ -2,6 +2,7 @@ use crate::guards::caller_is_controller;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::trace;
 use ic_cdk_macros::update;
+use itertools::Itertools;
 use tracing::info;
 use user_index_canister::upgrade_user_canister_wasm::{Response::*, *};
 
@@ -20,7 +21,14 @@ fn upgrade_user_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState)
         runtime_state.data.canisters_requiring_upgrade.clear();
         runtime_state.data.user_canister_wasm = args.user_canister_wasm.decompress();
 
-        for user_id in runtime_state.data.users.iter().map(|u| u.user_id) {
+        for user_id in runtime_state
+            .data
+            .users
+            .iter()
+            .filter(|u| u.wasm_version != version)
+            .sorted_by_key(|u| -(u.last_online as i64))
+            .map(|u| u.user_id)
+        {
             runtime_state.data.canisters_requiring_upgrade.enqueue(user_id.into())
         }
 
