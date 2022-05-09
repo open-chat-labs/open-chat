@@ -238,15 +238,15 @@
             on:toggle={groupPermissionsOpen.toggle}
             open={$groupPermissionsOpen}
             headerText={$_("group.permissions.permissions")}>
-            {#if canEditPermissions}
+            <!-- {#if canEditPermissions}
                 <GroupPermissionsEditor
                     bind:permissions={updatedGroup.permissions}
                     isPublic={originalGroup.public} />
-            {:else}
-                <GroupPermissionsViewer
-                    bind:permissions={updatedGroup.permissions}
-                    isPublic={originalGroup.public} />
-            {/if}
+            {:else} -->
+            <GroupPermissionsViewer
+                bind:permissions={updatedGroup.permissions}
+                isPublic={originalGroup.public} />
+            <!-- {/if} -->
         </CollapsibleCard>
         <CollapsibleCard
             on:toggle={groupStatsOpen.toggle}
