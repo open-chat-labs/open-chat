@@ -17,7 +17,6 @@
     export let fadeDelay = 200;
     export let fixedWidth: boolean = true;
     export let fitToContent: boolean = false;
-    export let fullScreen: boolean = false;
     export let alignTo: DOMRect | undefined = undefined;
     export let actualWidth: number = 0;
 
@@ -68,7 +67,6 @@
     out:fade={{ duration: fadeDuration }}
     class:fixed-width={fixedWidth}
     class:fit_to_content={fitToContent}
-    class:full-screen={fullScreen}
     on:click|stopPropagation>
     {#if !hideHeader}
         <div class="header">
@@ -120,54 +118,46 @@
                 max-width: 850px;
             }
         }
-        .header {
-            @include font(bold, normal, fs-140);
-            padding: $sp4;
-            background-color: var(--modal-header-bg);
-            color: var(--modal-header-txt);
-            border-bottom: 1px solid var(--modal-header-bd);
-            @include mobile() {
-                border-radius: $sp4 $sp4 0 0;
-            }
+    }
+    .header {
+        @include font(bold, normal, fs-140);
+        padding: $sp4;
+        background-color: var(--modal-header-bg);
+        color: var(--modal-header-txt);
+        border-bottom: 1px solid var(--modal-header-bd);
+        @include mobile() {
+            border-radius: $sp4 $sp4 0 0;
         }
-        .body {
-            flex: 1;
-            padding: $sp4;
-            overflow-y: auto;
-            @include nice-scrollbar();
+    }
 
-            &.fill {
-                padding: 0;
-            }
+    .body {
+        flex: 1;
+        padding: $sp4;
+        overflow-y: auto;
+        @include nice-scrollbar();
 
-            @include mobile() {
-                padding: $sp3;
-            }
+        &.fill {
+            padding: 0;
         }
-        .footer {
-            padding: $sp4;
-            &.compact {
-                padding: $sp3 $sp4;
-            }
-            background-color: var(--modal-footer-bg);
-            color: var(--modal-footer-txt);
-            border-top: 1px solid var(--modal-footer-bd);
-            text-align: right;
-            @include mobile() {
-                border-radius: 0;
-            }
-            &.rtl {
-                text-align: left;
-            }
+
+        @include mobile() {
+            padding: $sp3;
         }
-        &.full-screen {
-            width: 100%;
-            max-height: none;
+    }
+    .footer {
+        padding: $sp4;
+        &.compact {
+            padding: $sp3 $sp4;
+        }
+        background-color: var(--modal-footer-bg);
+        color: var(--modal-footer-txt);
+        border-top: 1px solid var(--modal-footer-bd);
+        text-align: right;
+        @include mobile() {
             border-radius: 0;
-            @include fullHeight();
-            .body {
-                flex: none;
-            }
+        }
+        &.rtl {
+            text-align: left;
         }
     }
 </style>
