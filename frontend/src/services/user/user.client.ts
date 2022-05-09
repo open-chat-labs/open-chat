@@ -486,11 +486,17 @@ export class UserClient extends CandidService implements IUserClient {
         const args = {
             count: 20,
         };
-        return this.handleQueryResponse(
-            () => this.userService.recommended_groups(args),
+        // TODO - reinstate this later
+        return this.handleResponse(
+            this.userService.recommended_groups(args),
             recommendedGroupsResponse,
             args
         );
+        // return this.handleQueryResponse(
+        //     () => this.userService.recommended_groups(args),
+        //     recommendedGroupsResponse,
+        //     args
+        // );
     }
 
     @profile("userClient")
