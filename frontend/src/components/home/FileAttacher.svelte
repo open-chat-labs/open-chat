@@ -28,12 +28,23 @@
             if (target.files && target.files[0]) {
                 messageContentFromFile(target.files[0])
                     .then((content) => {
+                        console.log("file attacher: message content created: ", content);
                         dispatch("fileSelected", content);
                     })
-                    .catch((err) => toastStore.showFailureToast(err));
+                    .catch((err) => {
+                        console.log(
+                            "file attacher: error getting message content from file: ",
+                            err
+                        );
+                        toastStore.showFailureToast(err);
+                    });
 
                 e.currentTarget.value = "";
+            } else {
+                console.log("file attacher: target.files looks wrong: ", target.files);
             }
+        } else {
+            console.log("file attacher: target is not defined");
         }
     }
 </script>

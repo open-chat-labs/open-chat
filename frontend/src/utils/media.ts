@@ -50,8 +50,26 @@ export async function extractVideoThumbnail(
 ): Promise<[MediaExtract, MediaExtract]> {
     return new Promise<[MediaExtract, MediaExtract]>((resolve, _) => {
         const video = document.createElement("video");
+        console.log("file attacher: created video element");
+        video.addEventListener("loadstart", () => {
+            console.log("file attacher: loadstart: ", video.duration);
+        });
+        video.addEventListener("durationchange", () => {
+            console.log("file attacher: durationchange: ", video.duration);
+        });
+        video.addEventListener("progress", () => {
+            console.log("file attacher: progress: ", video.duration);
+        });
+        video.addEventListener("canplay", () => {
+            console.log("file attacher: canplay: ", video.duration);
+        });
+        video.addEventListener("canplaythrough", () => {
+            console.log("file attacher: canplaythrough: ", video.duration);
+        });
         video.addEventListener("loadedmetadata", () => {
+            console.log("file attacher: loadedmetadata: ", video.duration);
             video.addEventListener("seeked", () => {
+                console.log("file attacher: seeked");
                 resolve(
                     Promise.all([
                         changeDimensions(
@@ -68,7 +86,13 @@ export async function extractVideoThumbnail(
                     ])
                 );
             });
-            video.currentTime = 1;
+            try {
+                video.currentTime = 1;
+                console.log("file attacher: set currentTime: ", video.currentTime);
+            } catch (err) {
+                console.log("file attacher: ready state: ", video.readyState);
+                console.log("file attacher: error setting current time", err);
+            }
         });
         video.src = blobUrl;
     });
@@ -161,6 +185,8 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
         reader.onload = async (e: ProgressEvent<FileReader>) => {
             if (!e.target) return;
 
+            console.log("file attacher: file successfully loaded");
+
             const mimeType = file.type;
             const isImage = /^image/.test(mimeType);
             const isVideo = /^video/.test(mimeType);
@@ -170,6 +196,7 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
             let content: MessageContent;
 
             if (isVideo && data.byteLength > MAX_VIDEO_SIZE) {
+                console.log("file attacher: video is too big");
                 reject("maxVideoSize");
                 return;
             } else if (isAudio && data.byteLength > MAX_AUDIO_SIZE) {
@@ -181,6 +208,9 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
             }
 
             const blobUrl = dataToBlobUrl(data, mimeType);
+
+            console.log("file attacher: created blob url: ", blobUrl);
+
             if (isImage) {
                 const extract = await extractImageThumbnail(blobUrl, mimeType);
 
@@ -198,23 +228,31 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                     blobUrl: blobUrl,
                 };
             } else if (isVideo) {
-                const [thumb, image] = await extractVideoThumbnail(blobUrl, mimeType);
+                console.log("file attacher: about to extract video thumbnail");
 
-                content = {
-                    kind: "video_content",
-                    mimeType: mimeType,
-                    width: image.dimensions.width,
-                    height: image.dimensions.height,
-                    imageData: {
-                        blobData: new Uint8Array(image.data),
-                        blobUrl: image.url,
-                    },
-                    videoData: {
-                        blobData: new Uint8Array(data),
-                        blobUrl: blobUrl,
-                    },
-                    thumbnailData: thumb.url,
-                };
+                try {
+                    const [thumb, image] = await extractVideoThumbnail(blobUrl, mimeType);
+
+                    console.log("file attacher: about to create video content");
+                    content = {
+                        kind: "video_content",
+                        mimeType: mimeType,
+                        width: image.dimensions.width,
+                        height: image.dimensions.height,
+                        imageData: {
+                            blobData: new Uint8Array(image.data),
+                            blobUrl: image.url,
+                        },
+                        videoData: {
+                            blobData: new Uint8Array(data),
+                            blobUrl: blobUrl,
+                        },
+                        thumbnailData: thumb.url,
+                    };
+                } catch (err) {
+                    console.log("file attacher: failed to extract video thumbnail: ", err);
+                    content = { kind: "placeholder_content" };
+                }
             } else if (isAudio) {
                 content = {
                     kind: "audio_content",
