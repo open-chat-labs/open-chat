@@ -29,6 +29,7 @@ fn public_summary_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         pinned_message: None,
         wasm_version: WASM_VERSION.with(|v| **v.borrow()),
         owner_id: runtime_state.data.owner_id,
+        is_public: runtime_state.data.is_public,
     };
     Success(SuccessResult { summary })
 }
