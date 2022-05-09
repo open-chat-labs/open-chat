@@ -135,6 +135,7 @@ pub struct PublicGroupSummary {
     pub pinned_message: Option<MessageIndex>,
     pub wasm_version: Version,
     pub owner_id: UserId,
+    pub is_public: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
