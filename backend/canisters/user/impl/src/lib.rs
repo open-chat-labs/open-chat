@@ -4,7 +4,6 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::group_chats::GroupChats;
 use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
-use crate::model::transactions::Transactions;
 use crate::model::user_preferences::UserPreferences;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
@@ -118,7 +117,6 @@ struct Data {
     pub notifications_canister_ids: Vec<CanisterId>,
     pub callback_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
-    pub transactions: Transactions,
     pub test_mode: bool,
     pub user_preferences: UserPreferences,
     pub alerts: Alerts,
@@ -148,7 +146,6 @@ impl Data {
             notifications_canister_ids,
             callback_canister_id,
             avatar: Timestamped::default(),
-            transactions: Transactions::default(),
             test_mode,
             user_preferences: UserPreferences::default(),
             alerts: Alerts::default(),

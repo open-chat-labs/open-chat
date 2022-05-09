@@ -11,7 +11,6 @@ fn main() {
     generate_candid_method!(user, recommended_groups, query);
     generate_candid_method!(user, search_all_messages, query);
     generate_candid_method!(user, search_messages, query);
-    generate_candid_method!(user, transactions, query);
     generate_candid_method!(user, updates, query);
 
     generate_candid_method!(user, add_recommended_group_exclusions, update);
