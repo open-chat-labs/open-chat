@@ -11022,9 +11022,8 @@
             }
         },
         "usergeek-ic-js": {
-            "version": "git+ssh://git@github.com/julianjelfs/usergeek-ic-js.git#bcf4dffb3c1b884f06d34e353c693bae7552ad3d",
-            "from": "usergeek-ic-js@github:julianjelfs/usergeek-ic-js",
-            "dev": true
+            "version": "git+https://github.com/julianjelfs/usergeek-ic-js.git#9d375465caa271144eb7b84aa6d06a93b66fa06d",
+            "from": "git+https://github.com/julianjelfs/usergeek-ic-js.git"
         },
         "util": {
             "version": "0.12.3",
