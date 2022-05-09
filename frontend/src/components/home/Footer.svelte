@@ -22,6 +22,7 @@
     import { remainingStorage } from "../../stores/storage";
     import { createEventDispatcher, getContext } from "svelte";
     import { currentUserKey } from "../../fsm/home.controller";
+    import { trackEvent } from "../../utils/tracking";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -95,6 +96,11 @@
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                             controller.api.refreshAccountBalance(createdUser.icpAccount);
                         }
+                        trackEvent(
+                            $chat.kind === "direct_chat"
+                                ? "sent_direct_message"
+                                : "sent_group_message"
+                        );
                     } else {
                         controller.removeMessage(msg.messageId, controller.user.userId);
                         rollbar.warn("Error response sending message", resp);
