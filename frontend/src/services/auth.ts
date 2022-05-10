@@ -7,6 +7,7 @@ import { initialiseTracking, startTrackingSession, endTrackingSession } from "..
 
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const ONE_MINUTE_MILLIS = 60 * 1000;
+const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 
 // Use your local .env file to direct this to the local IC replica
 const IDENTITY_URL = process.env.INTERNET_IDENTITY_URL || "https://identity.ic0.app";
@@ -57,7 +58,7 @@ export function startSession(identity: Identity): Promise<void> {
         if (durationUntilLogoutMs <= 5 * ONE_MINUTE_MILLIS) {
             timeout();
         } else {
-            setTimeout(timeout, durationUntilLogoutMs);
+            setTimeout(timeout, Math.min(MAX_TIMEOUT_MS, durationUntilLogoutMs));
         }
     });
 }
