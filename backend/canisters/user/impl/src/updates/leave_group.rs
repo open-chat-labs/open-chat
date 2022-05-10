@@ -17,7 +17,11 @@ async fn leave_group(args: Args) -> Response {
         Ok(result) => match result {
             c2c_leave_group::Response::Success(_) | c2c_leave_group::Response::CallerNotInGroup => {
                 mutate_state(|state| commit(args.chat_id, state));
-                Success
+                if matches!(result, c2c_leave_group::Response::CallerNotInGroup) {
+                    CallerNotInGroup
+                } else {
+                    Success
+                }
             }
             c2c_leave_group::Response::OwnerCannotLeave => OwnerCannotLeave,
         },
