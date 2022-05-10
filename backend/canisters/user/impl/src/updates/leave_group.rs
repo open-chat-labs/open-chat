@@ -15,11 +15,14 @@ async fn leave_group(args: Args) -> Response {
 
     match group_canister_c2c_client::c2c_leave_group(args.chat_id.into(), &c2c_args).await {
         Ok(result) => match result {
-            c2c_leave_group::Response::Success(_) => {
+            c2c_leave_group::Response::Success(_) | c2c_leave_group::Response::CallerNotInGroup => {
                 mutate_state(|state| commit(args.chat_id, state));
-                Success
+                if matches!(result, c2c_leave_group::Response::CallerNotInGroup) {
+                    CallerNotInGroup
+                } else {
+                    Success
+                }
             }
-            c2c_leave_group::Response::CallerNotInGroup => CallerNotInGroup,
             c2c_leave_group::Response::OwnerCannotLeave => OwnerCannotLeave,
         },
         Err(error) => InternalError(format!("{error:?}")),
