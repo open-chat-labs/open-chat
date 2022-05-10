@@ -1,8 +1,9 @@
 use crate::types::{ChatEventInternal, MessageInternal, UpdatedMessageInternal};
 use candid::CandidType;
+use itertools::Itertools;
 use search::*;
 use serde::{Deserialize, Serialize};
-use std::cmp::min;
+use std::cmp::{min, Reverse};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::FromIterator;
@@ -515,8 +516,7 @@ impl ChatEvents {
     ) -> Vec<MessageMatch> {
         let query = Query::parse(search_term);
 
-        let mut matches: Vec<_> = self
-            .events
+        self.events
             .since(min_visible_event_index)
             .iter()
             .filter_map(|e| e.event.as_message().map(|m| (e, m)))
@@ -528,12 +528,7 @@ impl ChatEvents {
                     n => Some((n, m)),
                 }
             })
-            .collect();
-
-        matches.sort_unstable_by_key(|(s, _)| *s);
-
-        matches
-            .iter()
+            .sorted_unstable_by_key(|(s, _)| Reverse(*s))
             .take(max_results as usize)
             .map(|(s, m)| MessageMatch {
                 chat_id: self.chat_id,
