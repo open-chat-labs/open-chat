@@ -6,4 +6,9 @@ export OPEN_STORAGE_INDEX_CANISTER=rturd-qaaaa-aaaaf-aabaq-cai
 export LEDGER_CANISTER=ryjl3-tyaaa-aaaaa-aaaba-cai
 export BLOB_URL_PATTERN=https://{canisterId}.raw.ic0.app/{blobType}/
 
+npm i
+npm run typecheck
+npm run validate
+npm run lint
+npm run test
 npx rollup -c
