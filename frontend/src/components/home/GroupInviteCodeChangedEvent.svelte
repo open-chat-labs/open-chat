@@ -5,10 +5,10 @@
     import type { UserSummary } from "../../domain/user/user";
     import { _ } from "svelte-i18n";
     import { userStore } from "../../stores/user";
-    import type { GroupInviteChange } from "../../domain/chat/chat";
+    import type { GroupInviteCodeChange } from "../../domain/chat/chat";
 
     export let user: UserSummary | undefined;
-    export let change: GroupInviteChange;
+    export let change: GroupInviteCodeChange;
     export let changedBy: string;
     export let timestamp: bigint;
 

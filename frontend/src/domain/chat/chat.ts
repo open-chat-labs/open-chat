@@ -511,11 +511,11 @@ export type GroupVisibilityChanged = {
 
 export type GroupInviteCodeChanged = {
     kind: "group_invite_code_changed";
-    change: GroupInviteChange;
+    change: GroupInviteCodeChange;
     changedBy: string;
 };
 
-export type GroupInviteChange = "enabled" | "disabled" | "reset";
+export type GroupInviteCodeChange = "enabled" | "disabled" | "reset";
 
 export type MessagePinned = {
     kind: "message_pinned";
