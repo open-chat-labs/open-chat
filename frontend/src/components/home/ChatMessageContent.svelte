@@ -50,7 +50,7 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "poll_content"}
-    <PollContent {preview} {me} {content} {myUserId} on:registerVote />
+    <PollContent {preview} {me} {content} {myUserId} {senderId} on:registerVote />
 {:else if content.kind === "giphy_content"}
     <ImageObserver let:intersecting>
         <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} />
