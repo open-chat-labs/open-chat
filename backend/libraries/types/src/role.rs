@@ -34,15 +34,10 @@ pub struct GroupPermissions {
     delete_messages: PermissionRole,
     update_group: PermissionRole,
     pin_messages: PermissionRole,
-    #[serde(default = "admin_permission")]
     invite_users: PermissionRole,
     create_polls: PermissionRole,
     send_messages: PermissionRole,
     react_to_messages: PermissionRole,
-}
-
-fn admin_permission() -> PermissionRole {
-    PermissionRole::Admins
 }
 
 impl Default for GroupPermissions {

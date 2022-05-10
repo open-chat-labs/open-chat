@@ -30,7 +30,9 @@
                     .then((content) => {
                         dispatch("fileSelected", content);
                     })
-                    .catch((err) => toastStore.showFailureToast(err));
+                    .catch((err) => {
+                        toastStore.showFailureToast(err);
+                    });
 
                 e.currentTarget.value = "";
             }

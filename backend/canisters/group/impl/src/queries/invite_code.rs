@@ -13,7 +13,7 @@ fn invite_code_impl(runtime_state: &RuntimeState) -> Response {
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         if participant.role.can_invite_users(&runtime_state.data.permissions) {
             return Success(SuccessResult {
-                code: runtime_state.data.invite_code,
+                code: if runtime_state.data.invite_code_enabled { runtime_state.data.invite_code } else { None },
             });
         }
     }

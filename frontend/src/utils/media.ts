@@ -51,7 +51,16 @@ export async function extractVideoThumbnail(
     return new Promise<[MediaExtract, MediaExtract]>((resolve, _) => {
         const video = document.createElement("video");
         video.addEventListener("loadedmetadata", () => {
+            // if the currentTime is set too early the "seeked" event does not fire on iOS
+            // Can't find a better way to deal with it than this
+            let attempts = 0;
+            const loop = window.setInterval(() => {
+                if (attempts > 10) window.clearInterval(loop);
+                video.currentTime = 1;
+                attempts += 1;
+            }, 100);
             video.addEventListener("seeked", () => {
+                window.clearInterval(loop);
                 resolve(
                     Promise.all([
                         changeDimensions(
@@ -68,7 +77,6 @@ export async function extractVideoThumbnail(
                     ])
                 );
             });
-            video.currentTime = 1;
         });
         video.src = blobUrl;
     });
@@ -181,6 +189,7 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
             }
 
             const blobUrl = dataToBlobUrl(data, mimeType);
+
             if (isImage) {
                 const extract = await extractImageThumbnail(blobUrl, mimeType);
 
