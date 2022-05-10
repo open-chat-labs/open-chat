@@ -161,6 +161,7 @@
                         });
                     }
                 } else {
+                    recommendedGroups = { kind: "idle" };
                     controller.selectChat(chatId, messageIndex);
                 }
             }
@@ -307,6 +308,7 @@
     }
 
     function onConfirmAction(yes: boolean): Promise<void> {
+        console.log("selecting chat");
         const result = yes ? doConfirmAction(confirmActionEvent!) : Promise.resolve();
 
         return result.finally(() => {

@@ -487,10 +487,7 @@ export class UserClient extends CandidService implements IUserClient {
             count: 20,
         };
         return this.handleQueryResponse(
-            () => {
-                throw new Error("oh no");
-                return this.userService.recommended_groups(args);
-            },
+            () => this.userService.recommended_groups(args),
             recommendedGroupsResponse,
             args
         );
