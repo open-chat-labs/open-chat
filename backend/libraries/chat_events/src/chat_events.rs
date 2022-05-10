@@ -510,12 +510,10 @@ impl ChatEvents {
         &self,
         now: TimestampMillis,
         min_visible_event_index: EventIndex,
-        search_term: &str,
+        query: &Query,
         max_results: u8,
         my_user_id: UserId,
     ) -> Vec<MessageMatch> {
-        let query = Query::parse(search_term);
-
         self.events
             .since(min_visible_event_index)
             .iter()
@@ -523,7 +521,7 @@ impl ChatEvents {
             .filter_map(|(e, m)| {
                 let mut document: Document = (&m.content).into();
                 document.set_age(now - e.timestamp);
-                match document.calculate_score(&query) {
+                match document.calculate_score(query) {
                     0 => None,
                     n => Some((n, m)),
                 }
@@ -531,12 +529,12 @@ impl ChatEvents {
             .sorted_unstable_by_key(|(score, _)| *score)
             .rev()
             .take(max_results as usize)
-            .map(|(s, m)| MessageMatch {
+            .map(|(score, message)| MessageMatch {
                 chat_id: self.chat_id,
-                message_index: m.message_index,
-                sender: m.sender,
-                content: m.content.hydrate(Some(my_user_id)),
-                score: *s,
+                message_index: message.message_index,
+                sender: message.sender,
+                content: message.content.hydrate(Some(my_user_id)),
+                score,
             })
             .collect()
     }

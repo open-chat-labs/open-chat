@@ -1,6 +1,7 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
+use search::Query;
 use types::EventIndex;
 use user_canister::search_messages::{Response::*, *};
 
@@ -29,11 +30,12 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     };
 
     let my_user_id = runtime_state.env.canister_id().into();
+    let query = Query::parse(&args.search_term);
 
     let matches = direct_chat.events.search_messages(
         runtime_state.env.now(),
         EventIndex::default(),
-        &args.search_term,
+        &query,
         args.max_results,
         my_user_id,
     );
