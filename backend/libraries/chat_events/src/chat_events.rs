@@ -3,7 +3,7 @@ use candid::CandidType;
 use itertools::Itertools;
 use search::*;
 use serde::{Deserialize, Serialize};
-use std::cmp::{min, Reverse};
+use std::cmp::min;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::FromIterator;
@@ -528,7 +528,8 @@ impl ChatEvents {
                     n => Some((n, m)),
                 }
             })
-            .sorted_unstable_by_key(|(s, _)| Reverse(*s))
+            .sorted_unstable_by_key(|(score, _)| *score)
+            .rev()
             .take(max_results as usize)
             .map(|(s, m)| MessageMatch {
                 chat_id: self.chat_id,
