@@ -473,8 +473,6 @@
     ) {
         controller.registerPollVote(ev.detail.messageIndex, ev.detail.answerIndex, ev.detail.type);
     }
-
-    $: console.log("more available: ", morePrevAvailable);
 </script>
 
 <div
