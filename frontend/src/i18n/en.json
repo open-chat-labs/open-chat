@@ -346,7 +346,7 @@
     },
     "pinMessage": "Pin message",
     "unpinMessage": "Unpin message",
-    "showPinned": "Show pinned messages",
+    "showPinned": "Show pinned",
     "pinnedMessages": "Pinned messages",
     "pinMessageFailed": "Unable to pin message",
     "unpinMessageFailed": "Unable to unpin message",
