@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
-use types::{CanisterId, DirectMessageNotification, MessageContent, Notification, ReplyContext, UserId};
+use types::{CanisterId, DirectMessageNotification, Notification, ReplyContext, UserId};
 use user_canister::c2c_send_message::{Response::*, *};
 
 #[update]
@@ -57,10 +57,6 @@ async fn verify_user(user_index_canister_id: CanisterId, user_id: UserId) -> boo
 
 fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
-
-    if let MessageContent::CryptocurrencyV2(c) = &args.content {
-        runtime_state.data.transactions.add(c.transfer.clone(), now);
-    }
 
     let replies_to = convert_reply_context(args.replies_to_v2, sender, runtime_state);
 
