@@ -8,5 +8,4 @@ pub mod messages_by_message_index;
 pub mod recommended_groups;
 pub mod search_all_messages;
 pub mod search_messages;
-pub mod transactions;
 pub mod updates;
