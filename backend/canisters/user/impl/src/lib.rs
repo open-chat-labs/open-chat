@@ -12,10 +12,11 @@ use canister_state_macros::canister_state;
 use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
 use notifications_canister::c2c_push_notification;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
+use tracing::info;
 use types::{Avatar, CanisterId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
@@ -126,6 +127,7 @@ struct Data {
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
     pub bio: String,
+    #[serde(deserialize_with = "deserialize_cached_group_summaries")]
     pub cached_group_summaries: Option<CachedGroupSummaries>,
 }
 
@@ -194,4 +196,12 @@ pub struct Metrics {
 
 fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
+}
+
+// If we fail to deserialize the cached group summaries, simply set them to None and continue
+fn deserialize_cached_group_summaries<'de, D: Deserializer<'de>>(de: D) -> Result<Option<CachedGroupSummaries>, D::Error> {
+    Option::deserialize(de).or_else(|err| {
+        info!(%err, "Failed to deserialize cached group summaries");
+        Ok(None)
+    })
 }
