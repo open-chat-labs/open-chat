@@ -65,6 +65,7 @@
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
     let insideFromBottomThreshold: boolean = false;
+    let morePrevAvailable = controller.morePreviousMessagesAvailable();
 
     onMount(() => {
         const options = {
@@ -174,8 +175,6 @@
             initialised = true;
         }
     }
-
-    let morePrevAvailable = controller.morePreviousMessagesAvailable();
 
     function shouldLoadPreviousMessages() {
         morePrevAvailable = controller.morePreviousMessagesAvailable();
