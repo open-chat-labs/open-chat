@@ -53,7 +53,7 @@ import type {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
-    GroupInviteChange,
+    GroupInviteCodeChange,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -821,7 +821,7 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
     }
 
     if ("GroupInviteCodeChanged" in candid) {
-        let change: GroupInviteCodeChanged = "disabled";
+        let change: GroupInviteCodeChange = "disabled";
         if ("Enabled" in candid.GroupInviteCodeChanged.change) {
             change = "enabled";
         } else if ("Reset" in candid.GroupInviteCodeChanged.change) {
