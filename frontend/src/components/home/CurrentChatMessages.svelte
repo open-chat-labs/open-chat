@@ -65,6 +65,7 @@
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
     let insideFromBottomThreshold: boolean = false;
+    let morePrevAvailable = controller.morePreviousMessagesAvailable();
 
     onMount(() => {
         const options = {
@@ -109,7 +110,10 @@
         }, options);
     });
 
-    afterUpdate(() => setIfInsideFromBottomThreshold());
+    afterUpdate(() => {
+        setIfInsideFromBottomThreshold();
+        morePrevAvailable = controller.morePreviousMessagesAvailable();
+    });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
         messagesDiv?.scrollTo({
@@ -173,10 +177,8 @@
     }
 
     function shouldLoadPreviousMessages() {
-        return (
-            calculateFromTop() < MESSAGE_LOAD_THRESHOLD &&
-            controller.morePreviousMessagesAvailable()
-        );
+        morePrevAvailable = controller.morePreviousMessagesAvailable();
+        return calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
     }
 
     function shouldLoadNewMessages() {
@@ -526,7 +528,7 @@
             {/each}
         </div>
     {/each}
-    {#if $chat.kind === "group_chat"}
+    {#if $chat.kind === "group_chat" && !morePrevAvailable}
         <InitialGroupMessage group={$chat} noVisibleEvents={$events.length === 0} />
     {/if}
 </div>

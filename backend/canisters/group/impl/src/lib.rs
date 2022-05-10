@@ -155,9 +155,7 @@ struct Data {
     pub test_mode: bool,
     pub owner_id: UserId,
     pub permissions: GroupPermissions,
-    #[serde(default)]
     pub invite_code: Option<u64>,
-    #[serde(default)]
     pub invite_code_enabled: bool,
 }
 
