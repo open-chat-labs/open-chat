@@ -14,6 +14,7 @@
     export let me: boolean;
     export let myUserId: string | undefined;
     export let preview: boolean;
+    export let senderId: string;
 
     $: txtColor = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
 
@@ -25,7 +26,7 @@
 
     $: showVotes =
         content.ended ||
-        (haveIVoted &&
+        ((haveIVoted || senderId === myUserId) &&
             (content.config.showVotesBeforeEndDate || content.config.endDate === undefined));
 
     function vote(idx: number) {
