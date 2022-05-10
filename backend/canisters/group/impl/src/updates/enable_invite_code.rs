@@ -46,13 +46,13 @@ async fn enable_invite_code(_args: enable_invite_code::Args) -> enable_invite_co
         None => generate_code().await,
     };
 
-    mutate_state(|runtime_state| {
-        runtime_state.data.invite_code = Some(code);
-        runtime_state.data.invite_code_enabled = true;
-        if !initial_state.enabled {
+    if !initial_state.enabled {
+        mutate_state(|runtime_state| {
+            runtime_state.data.invite_code = Some(code);
+            runtime_state.data.invite_code_enabled = true;
             record_event(initial_state.caller, GroupInviteCodeChange::Enabled, runtime_state);
-        }
-    });
+        });
+    }
 
     enable_invite_code::Response::Success(enable_invite_code::SuccessResult { code })
 }
