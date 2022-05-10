@@ -55,8 +55,12 @@ export function copyMessageUrl(chatId: string, messageIndex: number): void {
     );
 }
 
-export function canShare(content: MessageContent): boolean {
-    if (navigator.share === undefined) {
+export function canShare(): boolean {
+    return navigator.share !== undefined;
+}
+
+export function canShareMessage(content: MessageContent): boolean {
+    if (!canShare()) {
         return false;
     }
 
@@ -98,6 +102,21 @@ export function shareMessage(userId: string, me: boolean, msg: Message): void {
             }),
         () => toastStore.showFailureToast("failedToShareMessage")
     );
+}
+
+export function shareLink(url: string): void {
+    const share = {
+        url,
+        files: [],
+    };
+    navigator.share(share).catch((e: DOMException) => {
+        if (e.name !== "AbortError") {
+            const errorMessage = `Failed to share link ${url}`;
+            console.log(`${errorMessage}: ${e}`);
+            rollbar.error(errorMessage, e);
+            toastStore.showFailureToast("failedToShareLink");
+        }
+    });
 }
 
 async function buildShareFromMessage(userId: string, me: boolean, msg: Message): Promise<Share> {

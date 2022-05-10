@@ -25,6 +25,10 @@ import type {
     RegisterPollVoteResponse,
     GroupPermissions,
     MakeGroupPrivateResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import { CandidService } from "../candidService";
@@ -49,6 +53,10 @@ import {
     unpinMessageResponse,
     searchGroupChatResponse,
     makeGroupPrivateResponse,
+    inviteCodeResponse,
+    enableInviteCodeResponse,
+    disableInviteCodeResponse,
+    resetInviteCodeResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -67,25 +75,36 @@ import { MAX_EVENTS, MAX_MESSAGES, mergeGroupChatDetails } from "../../domain/ch
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
+import { base64ToBigint } from "utils/base64";
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
 
-    constructor(identity: Identity, private chatId: string) {
+    constructor(
+        identity: Identity,
+        private chatId: string,
+        private inviteCode: string | undefined
+    ) {
         super(identity);
         this.groupService = this.createServiceClient<GroupService>(idlFactory, chatId);
     }
 
-    static create(chatId: string, identity: Identity, db?: Database): IGroupClient {
+    static create(
+        chatId: string,
+        identity: Identity,
+        db: Database | undefined,
+        inviteCode: string | undefined
+    ): IGroupClient {
         return db !== undefined && process.env.CLIENT_CACHING && !cachingLocallyDisabled()
-            ? new CachingGroupClient(db, chatId, new GroupClient(identity, chatId))
-            : new GroupClient(identity, chatId);
+            ? new CachingGroupClient(db, chatId, new GroupClient(identity, chatId, inviteCode))
+            : new GroupClient(identity, chatId, inviteCode);
     }
 
     @profile("groupClient")
     chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             events: eventIndexes,
+            invite_code: apiOptional(base64ToBigint, this.inviteCode),
         };
         return this.handleQueryResponse(
             () => this.groupService.events_by_index(args),
@@ -103,6 +122,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
+            invite_code: apiOptional(base64ToBigint, this.inviteCode),
         };
         return this.handleQueryResponse(
             () => this.groupService.events_window(args),
@@ -123,6 +143,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 max_events: MAX_EVENTS,
                 ascending: asc,
                 start_index: index,
+                invite_code: apiOptional(base64ToBigint, this.inviteCode),
             };
             return this.handleResponse(this.groupService.events(args), getEventsResponse, args);
         };
@@ -329,9 +350,11 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     @profile("groupClient")
     getPublicSummary(): Promise<GroupChatSummary | undefined> {
+        const args = { invite_code: apiOptional(base64ToBigint, this.inviteCode) };
         return this.handleQueryResponse(
-            () => this.groupService.public_summary({}),
-            publicSummaryResponse
+            () => this.groupService.public_summary(args),
+            publicSummaryResponse,
+            args
         ).catch((_err) => {
             // whatever error we get, just assume that we cannot get hold of the group
             return undefined;
@@ -396,6 +419,38 @@ export class GroupClient extends CandidService implements IGroupClient {
             () => this.groupService.search_messages(args),
             searchGroupChatResponse,
             args
+        );
+    }
+
+    @profile("groupClient")
+    getInviteCode(): Promise<InviteCodeResponse> {
+        return this.handleQueryResponse(
+            () => this.groupService.invite_code({}),
+            inviteCodeResponse
+        );
+    }
+
+    @profile("groupClient")
+    enableInviteCode(): Promise<EnableInviteCodeResponse> {
+        return this.handleQueryResponse(
+            () => this.groupService.enable_invite_code({}),
+            enableInviteCodeResponse
+        );
+    }
+
+    @profile("groupClient")
+    disableInviteCode(): Promise<DisableInviteCodeResponse> {
+        return this.handleQueryResponse(
+            () => this.groupService.disable_invite_code({}),
+            disableInviteCodeResponse
+        );
+    }
+
+    @profile("groupClient")
+    resetInviteCode(): Promise<ResetInviteCodeResponse> {
+        return this.handleQueryResponse(
+            () => this.groupService.reset_invite_code({}),
+            resetInviteCodeResponse
         );
     }
 }

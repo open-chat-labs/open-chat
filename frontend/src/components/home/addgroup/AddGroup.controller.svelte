@@ -34,7 +34,7 @@
         return {
             name: "",
             description: "",
-            historyVisible: false,
+            historyVisible: true,
             isPublic: false,
             participants: [],
             permissions: {
@@ -46,6 +46,7 @@
                 deleteMessages: "admins",
                 updateGroup: "admins",
                 pinMessages: "admins",
+                inviteUsers: "admins",
                 createPolls: "members",
                 sendMessages: "members",
                 reactToMessages: "members",

@@ -35,6 +35,11 @@
     <SelectPermissionRole
         label={$_("group.permissions.pinMessages")}
         bind:rolePermission={permissions.pinMessages} />
+    {#if !isPublic}
+        <SelectPermissionRole
+            label={$_("group.permissions.inviteUsers")}
+            bind:rolePermission={permissions.inviteUsers} />
+    {/if}
     <SelectPermissionRole
         label={$_("group.permissions.createPolls")}
         bind:rolePermission={permissions.createPolls} />

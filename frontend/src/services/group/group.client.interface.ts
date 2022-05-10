@@ -24,6 +24,10 @@ import type {
     RegisterPollVoteResponse,
     GroupPermissions,
     MakeGroupPrivateResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
 } from "../../domain/chat/chat";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 
@@ -75,4 +79,8 @@ export interface IGroupClient {
         voteType: "register" | "delete"
     ): Promise<RegisterPollVoteResponse>;
     searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse>;
+    getInviteCode(): Promise<InviteCodeResponse>;
+    enableInviteCode(): Promise<EnableInviteCodeResponse>;
+    disableInviteCode(): Promise<DisableInviteCodeResponse>;
+    resetInviteCode(): Promise<ResetInviteCodeResponse>;
 }

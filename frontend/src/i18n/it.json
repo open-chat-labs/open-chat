@@ -399,9 +399,30 @@
             "pinMessages": "appuntare i messaggi",
             "createPolls": "creare sondaggi",
             "sendMessages": "Manda messaggi",
-            "reactToMessages": "reagire ai messaggi"
+            "reactToMessages": "reagire ai messaggi",
+            "inviteUsers": "invitare gli utenti",
+            "notPermitted": "Non sei autorizzato a {permission}"
         },
-        "advanced": "Avanzate"
+        "advanced": "Avanzate",
+        "invite": {
+            "inviteWithLink": "Invita al gruppo tramite link",
+            "enableLink": "Abilita collegamento",
+            "resetLink": "Ripristina collegamento",
+            "errorGettingLink": "Impossibile ottenere il collegamento",
+            "errorEnablingLink": "Impossibile abilitare il collegamento",
+            "errorDisablingLink": "Impossibile disabilitare il collegamento",
+            "errorResettingLink": "Impossibile ripristinare il collegamento",
+            "confirmReset": "Sei sicuro di voler reimpostare il collegamento del gruppo? Le persone non potranno più unirsi al gruppo utilizzando il collegamento corrente.",
+            "shareMessage": "Chiunque abbia questo collegamento può visualizzare in anteprima e unirsi al gruppo.",
+            "shareMessageTrust": "Condividilo con le persone di cui ti fidi.",
+            "linkCopiedToClipboard": "Link copiato negli appunti",
+            "failedToCopyLinkToClipboard": "Impossibile copiare il collegamento negli appunti",
+            "enabled": "abilitato",
+            "disabled": "Disabilitato",
+            "reset": "Ripristina"
+        },
+        "welcome": "Benvenuto a",
+        "historyPrivateMessage": "I vecchi messaggi non sono visibili ai nuovi membri"
     },
     "updateNow": "ricarica ora",
     "updateRequired": "È disponibile una nuova versione di OpenChat, che si ricarica tra {countdown}s",
@@ -496,5 +517,10 @@
         "blurb": "Alcune funzionalità di OpenChat sono disponibili solo per gli account premium. Puoi aggiornare il tuo account verificando un numero di telefono tramite SMS o pagando una piccola commissione ICP.",
         "congratulations": "Ora puoi goderti le nostre funzionalità premium!"
     },
-    "faqUrlCopiedToClipboard": "URL delle domande frequenti copiato negli appunti!"
+    "faqUrlCopiedToClipboard": "URL delle domande frequenti copiato negli appunti!",
+    "thisIsPublicGroupWithN": "Questo è un gruppo pubblico con {number} membri",
+    "thisIsPrivateGroupWithN": "Questo è un gruppo privato con {number} membri",
+    "copy": "copia",
+    "failedToShareLink": "Impossibile condividere il collegamento",
+    "groupInviteChangedBy": "{changedBy} {changed} l'invito del gruppo"
 }
