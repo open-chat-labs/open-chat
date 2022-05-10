@@ -109,7 +109,10 @@
         }, options);
     });
 
-    afterUpdate(() => setIfInsideFromBottomThreshold());
+    afterUpdate(() => {
+        setIfInsideFromBottomThreshold();
+        morePrevAvailable = controller.morePreviousMessagesAvailable();
+    });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
         messagesDiv?.scrollTo({
@@ -172,11 +175,11 @@
         }
     }
 
+    let morePrevAvailable = controller.morePreviousMessagesAvailable();
+
     function shouldLoadPreviousMessages() {
-        return (
-            calculateFromTop() < MESSAGE_LOAD_THRESHOLD &&
-            controller.morePreviousMessagesAvailable()
-        );
+        morePrevAvailable = controller.morePreviousMessagesAvailable();
+        return calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
     }
 
     function shouldLoadNewMessages() {
@@ -470,6 +473,8 @@
     ) {
         controller.registerPollVote(ev.detail.messageIndex, ev.detail.answerIndex, ev.detail.type);
     }
+
+    $: console.log("more available: ", morePrevAvailable);
 </script>
 
 <div
@@ -526,7 +531,7 @@
             {/each}
         </div>
     {/each}
-    {#if $chat.kind === "group_chat"}
+    {#if $chat.kind === "group_chat" && !morePrevAvailable}
         <InitialGroupMessage group={$chat} noVisibleEvents={$events.length === 0} />
     {/if}
 </div>
