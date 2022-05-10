@@ -1,6 +1,7 @@
 use crate::{read_state, RuntimeState};
 use group_canister::c2c_search_messages::{Response::*, *};
 use ic_cdk_macros::query;
+use search::Query;
 
 #[query]
 fn c2c_search_messages(args: Args) -> Response {
@@ -14,11 +15,12 @@ fn c2c_search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Respons
     };
 
     let chat_id = runtime_state.env.canister_id().into();
+    let query = Query::parse(&args.search_term);
 
     let matches = runtime_state.data.events.search_messages(
         runtime_state.env.now(),
         participant.min_visible_event_index(),
-        &args.search_term,
+        &query,
         args.max_results,
         participant.user_id,
     );

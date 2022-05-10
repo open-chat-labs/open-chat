@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
-use chat_events::ChatEventInternal;
 use ic_cdk_macros::query;
+use itertools::Itertools;
 use search::*;
 use tracing::error;
-use types::UserId;
 use types::{ChatId, MessageMatch};
+use types::{EventIndex, UserId};
 use user_canister::search_all_messages::{Response::*, *};
 
 const MIN_TERM_LENGTH: u8 = 3;
@@ -63,33 +63,18 @@ fn search_all_direct_chats(args: &Args, runtime_state: &RuntimeState) -> Vec<Mes
     let query = Query::parse(&args.search_term);
     let my_user_id = runtime_state.env.canister_id().into();
 
-    let mut matches: Vec<_> = runtime_state
+    runtime_state
         .data
         .direct_chats
-        .get_all(Some(0))
-        .flat_map(|dc| dc.events.iter().map(move |e| (dc.them, e)))
-        .filter_map(|(their_user_id, e)| match &e.event {
-            ChatEventInternal::Message(m) => {
-                let mut document: Document = (&m.content).into();
-                document.set_age(now - e.timestamp);
-                match document.calculate_score(&query) {
-                    0 => None,
-                    n => Some(MessageMatch {
-                        chat_id: their_user_id.into(),
-                        sender: m.sender,
-                        message_index: m.message_index,
-                        score: n,
-                        content: m.content.hydrate(Some(my_user_id)),
-                    }),
-                }
-            }
-            _ => None,
+        .get_all(None)
+        .flat_map(|dc| {
+            dc.events
+                .search_messages(now, EventIndex::default(), &query, args.max_results, my_user_id)
         })
-        .collect();
-
-    matches.sort_unstable_by(|m1, m2| m2.score.cmp(&m1.score));
-
-    matches.into_iter().take(args.max_results as usize).collect()
+        .sorted_unstable_by_key(|m| m.score)
+        .rev()
+        .take(args.max_results as usize)
+        .collect()
 }
 
 async fn search_all_group_chats(
@@ -135,9 +120,11 @@ async fn search_all_group_chats(
         );
     }
 
-    let mut matches: Vec<MessageMatch> = successes.into_iter().flat_map(|r| r.matches).collect();
-
-    matches.sort_unstable_by(|m1, m2| m2.score.cmp(&m1.score));
-
-    matches.into_iter().take(max_results as usize).collect()
+    successes
+        .into_iter()
+        .flat_map(|r| r.matches)
+        .sorted_unstable_by_key(|m| m.score)
+        .rev()
+        .take(max_results as usize)
+        .collect()
 }

@@ -1,6 +1,7 @@
 use crate::{read_state, RuntimeState};
 use group_canister::search_messages::{Response::*, *};
 use ic_cdk_macros::query;
+use search::Query;
 
 const MIN_TERM_LENGTH: u8 = 3;
 const MAX_TERM_LENGTH: u8 = 30;
@@ -26,11 +27,12 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         None => return CallerNotInGroup,
         Some(p) => p,
     };
+    let query = Query::parse(&args.search_term);
 
     let matches = runtime_state.data.events.search_messages(
         runtime_state.env.now(),
         participant.min_visible_event_index(),
-        &args.search_term,
+        &query,
         args.max_results,
         participant.user_id,
     );
