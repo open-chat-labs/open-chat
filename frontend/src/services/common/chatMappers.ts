@@ -16,7 +16,7 @@ import type {
     CryptocurrencyContent,
     CryptocurrencyTransfer,
     ICPTransfer,
-    CyclesTransfer,
+    CompletedCryptocurrencyTransfer,
     GroupChatSummary,
     PollContent,
     PollVotes,
@@ -46,11 +46,8 @@ import type {
     ApiUpdatedMessage,
     ApiDeletedContent,
     ApiCryptocurrencyContent,
-    ApiCryptocurrencyContentV2,
     ApiCryptocurrencyTransfer,
-    ApiCryptocurrencyTransferV2,
-    ApiICPTransfer,
-    ApiCyclesTransfer,
+    ApiCompletedCryptocurrencyTransfer,
     ApiMessageIndexRange,
     ApiUser,
     ApiICP,
@@ -61,7 +58,7 @@ import type {
     ApiRegisterPollVoteResponse as ApiRegisterUserPollVoteResponse,
     ApiGroupPermissions,
     ApiPermissionRole,
-    ApiPendingCryptocurrencyWithdrawalV2,
+    ApiPendingCryptocurrencyWithdrawal,
     ApiGiphyContent,
     ApiGiphyImageVariant,
 } from "../user/candid/idl";
@@ -115,10 +112,10 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
         return deletedContent(candid.Deleted);
     }
     if ("Cryptocurrency" in candid) {
-        return cryptoContent(candid.Cryptocurrency);
+        throw new Error("MessageContent type 'Cryptocurrency' is deprecated");
     }
     if ("CryptocurrencyV2" in candid) {
-        return cryptoContentV2(candid.CryptocurrencyV2);
+        return cryptoContent(candid.CryptocurrencyV2);
     }
     if ("Poll" in candid) {
         return pollContent(candid.Poll);
@@ -226,128 +223,48 @@ function cryptoContent(candid: ApiCryptocurrencyContent): CryptocurrencyContent 
     };
 }
 
-function cryptoContentV2(candid: ApiCryptocurrencyContentV2): CryptocurrencyContent {
-    return {
-        kind: "crypto_content",
-        caption: optional(candid.caption, identity),
-        transfer: cryptoTransferV2(candid.transfer),
-    };
-}
-
 function cryptoTransfer(candid: ApiCryptocurrencyTransfer): CryptocurrencyTransfer {
-    if ("ICP" in candid) {
-        return icpTransfer(candid.ICP);
+    if ("Pending" in candid) {
+        return {
+            transferKind: "icp_transfer",
+            kind: "pending_icp_transfer",
+            recipient: candid.Pending.recipient.toString(),
+            amountE8s: candid.Pending.amount.e8s,
+            feeE8s: optional(candid.Pending.fee, (f) => f.e8s),
+            memo: optional(candid.Pending.memo, identity),
+        };
     }
-    if ("Cycles" in candid) {
-        return cyclesTransfer(candid.Cycles);
+    if ("Completed" in candid) {
+        return completedCryptoTransfer(candid.Completed);
+    }
+    if ("Failed" in candid) {
+        return {
+            transferKind: "icp_transfer",
+            kind: "failed_icp_transfer",
+            recipient: candid.Failed.recipient.toString(),
+            amountE8s: candid.Failed.amount.e8s,
+            feeE8s: candid.Failed.fee.e8s,
+            memo: candid.Failed.memo,
+            errorMessage: candid.Failed.error_message,
+        };
     }
     throw new UnsupportedValueError("Unexpected ApiCryptocurrencyTransfer type received", candid);
 }
 
-function cryptoTransferV2(candid: ApiCryptocurrencyTransferV2): CryptocurrencyTransfer {
-    if ("Pending" in candid) {
-        return {
-            transferKind: "icp_transfer",
-            kind: "pending_icp_transfer",
-            recipient: candid.Pending.recipient.toString(),
-            amountE8s: candid.Pending.amount.e8s,
-            feeE8s: optional(candid.Pending.fee, (f) => f.e8s),
-            memo: optional(candid.Pending.memo, identity),
-        };
-    }
-    if ("Completed" in candid) {
-        return {
-            transferKind: "icp_transfer",
-            kind: "completed_icp_transfer",
-            recipient: candid.Completed.recipient.toString(),
-            sender: candid.Completed.sender.toString(),
-            amountE8s: candid.Completed.amount.e8s,
-            feeE8s: candid.Completed.fee.e8s,
-            memo: candid.Completed.memo,
-            blockIndex: candid.Completed.block_index,
-            transactionHash: bytesToHexString(candid.Completed.transaction_hash),
-        };
-    }
-    if ("Failed" in candid) {
-        return {
-            transferKind: "icp_transfer",
-            kind: "failed_icp_transfer",
-            recipient: candid.Failed.recipient.toString(),
-            amountE8s: candid.Failed.amount.e8s,
-            feeE8s: candid.Failed.fee.e8s,
-            memo: candid.Failed.memo,
-            errorMessage: candid.Failed.error_message,
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiCryptocurrencyTransferV2 type received", candid);
-}
-
-function cyclesTransfer(candid: ApiCyclesTransfer): CyclesTransfer {
-    if ("Pending" in candid) {
-        return {
-            transferKind: "cycles_transfer",
-            kind: "pending_cycles_transfer",
-            recipient: candid.Pending.recipient.toString(),
-            cycles: candid.Pending.cycles,
-        };
-    }
-    if ("Completed" in candid) {
-        return {
-            transferKind: "cycles_transfer",
-            kind: "completed_cycles_transfer",
-            recipient: candid.Completed.recipient.toString(),
-            sender: candid.Completed.sender.toString(),
-            cycles: candid.Completed.cycles,
-        };
-    }
-    if ("Failed" in candid) {
-        return {
-            transferKind: "cycles_transfer",
-            kind: "failed_cycles_transfer",
-            recipient: candid.Failed.recipient.toString(),
-            cycles: candid.Failed.cycles,
-            errorMessage: candid.Failed.error_message,
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiCyclesTransfer type received", candid);
-}
-
-function icpTransfer(candid: ApiICPTransfer): ICPTransfer {
-    if ("Pending" in candid) {
-        return {
-            transferKind: "icp_transfer",
-            kind: "pending_icp_transfer",
-            recipient: candid.Pending.recipient.toString(),
-            amountE8s: candid.Pending.amount.e8s,
-            feeE8s: optional(candid.Pending.fee, (f) => f.e8s),
-            memo: optional(candid.Pending.memo, identity),
-        };
-    }
-    if ("Completed" in candid) {
-        return {
-            transferKind: "icp_transfer",
-            kind: "completed_icp_transfer",
-            recipient: candid.Completed.recipient.toString(),
-            sender: candid.Completed.sender.toString(),
-            amountE8s: candid.Completed.amount.e8s,
-            feeE8s: candid.Completed.fee.e8s,
-            memo: candid.Completed.memo,
-            blockIndex: candid.Completed.block_index,
-            transactionHash: bytesToHexString(candid.Completed.transaction_hash),
-        };
-    }
-    if ("Failed" in candid) {
-        return {
-            transferKind: "icp_transfer",
-            kind: "failed_icp_transfer",
-            recipient: candid.Failed.recipient.toString(),
-            amountE8s: candid.Failed.amount.e8s,
-            feeE8s: candid.Failed.fee.e8s,
-            memo: candid.Failed.memo,
-            errorMessage: candid.Failed.error_message,
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiICPTransfer type received", candid);
+export function completedCryptoTransfer(
+    candid: ApiCompletedCryptocurrencyTransfer
+): CompletedCryptocurrencyTransfer {
+    return {
+        transferKind: "icp_transfer",
+        kind: "completed_icp_transfer",
+        recipient: candid.recipient.toString(),
+        sender: candid.sender.toString(),
+        amountE8s: candid.amount.e8s,
+        feeE8s: candid.fee.e8s,
+        memo: candid.memo,
+        blockIndex: candid.block_index,
+        transactionHash: bytesToHexString(candid.transaction_hash),
+    };
 }
 
 function imageContent(candid: ApiImageContent): ImageContent {
@@ -643,14 +560,14 @@ function apiDeletedContent(domain: DeletedContent): ApiDeletedContent {
     };
 }
 
-export function apiCryptoContent(domain: CryptocurrencyContent): ApiCryptocurrencyContentV2 {
+export function apiCryptoContent(domain: CryptocurrencyContent): ApiCryptocurrencyContent {
     return {
         caption: apiOptional(identity, domain.caption),
         transfer: apiCryptoTransfer(domain.transfer),
     };
 }
 
-function apiCryptoTransfer(domain: CryptocurrencyTransfer): ApiCryptocurrencyTransferV2 {
+function apiCryptoTransfer(domain: CryptocurrencyTransfer): ApiCryptocurrencyTransfer {
     if (domain.transferKind === "cycles_transfer") {
         throw new Error("Sending cycles is not supported");
     }
@@ -662,7 +579,7 @@ function apiCryptoTransfer(domain: CryptocurrencyTransfer): ApiCryptocurrencyTra
 
 export function apiPendingICPWithdrawal(
     domain: PendingICPWithdrawal
-): ApiPendingCryptocurrencyWithdrawalV2 {
+): ApiPendingCryptocurrencyWithdrawal {
     return {
         token: { InternetComputer: null },
         to: hexStringToBytes(domain.to),
@@ -672,7 +589,7 @@ export function apiPendingICPWithdrawal(
     };
 }
 
-function apiICPTransfer(domain: ICPTransfer): ApiCryptocurrencyTransferV2 {
+function apiICPTransfer(domain: ICPTransfer): ApiCryptocurrencyTransfer {
     if (domain.kind === "pending_icp_transfer") {
         return {
             Pending: {
