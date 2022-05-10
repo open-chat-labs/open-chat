@@ -161,6 +161,7 @@
                         });
                     }
                 } else {
+                    recommendedGroups = { kind: "idle" };
                     controller.selectChat(chatId, messageIndex);
                 }
             }
