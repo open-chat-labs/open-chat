@@ -827,16 +827,6 @@ export interface TransactionWrapper {
   'timestamp' : TimestampMillis,
   'index' : number,
 }
-export interface TransactionsArgs {
-  'max_transactions' : number,
-  'ascending' : boolean,
-  'start_index' : number,
-}
-export type TransactionsResponse = { 'Success' : TransactionsSuccessResult };
-export interface TransactionsSuccessResult {
-  'latest_transaction_index' : [] | [number],
-  'transactions' : Array<TransactionWrapper>,
-}
 export interface TransferCryptocurrencyWithinGroupArgs {
   'content' : CryptocurrencyContent,
   'recipient' : UserId,
@@ -988,7 +978,6 @@ export interface _SERVICE {
   'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
       ToggleReactionResponse
     >,
-  'transactions' : (arg_0: TransactionsArgs) => Promise<TransactionsResponse>,
   'transfer_cryptocurrency_within_group' : (
       arg_0: TransferCryptocurrencyWithinGroupArgs,
     ) => Promise<TransferCryptocurrencyWithinGroupResponse>,
