@@ -15,12 +15,20 @@ use utils::canister;
 async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code::Response {
     run_regular_jobs();
 
-    if let Ok(result) = read_state(prepare) {
-        let code = generate_and_store_code(result.caller, GroupInviteCodeChange::Reset).await;
-        reset_invite_code::Response::Success(reset_invite_code::SuccessResult { code })
-    } else {
-        reset_invite_code::Response::NotAuthorized
-    }
+    let initial_state = match read_state(prepare) {
+        Err(_) => return reset_invite_code::Response::NotAuthorized,
+        Ok(c) => c,
+    };
+
+    let code = generate_code().await;
+
+    mutate_state(|runtime_state| {
+        runtime_state.data.invite_code = Some(code);
+        runtime_state.data.invite_code_enabled = true;
+        record_event(initial_state.caller, GroupInviteCodeChange::Reset, runtime_state);
+    });
+
+    reset_invite_code::Response::Success(reset_invite_code::SuccessResult { code })
 }
 
 #[update]
@@ -28,51 +36,53 @@ async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code:
 async fn enable_invite_code(_args: enable_invite_code::Args) -> enable_invite_code::Response {
     run_regular_jobs();
 
-    let result = match read_state(prepare) {
+    let initial_state = match read_state(prepare) {
         Err(_) => return enable_invite_code::Response::NotAuthorized,
         Ok(c) => c,
     };
 
-    let code = if let Some(c) = result.code {
-        mutate_state(|runtime_state| {
-            runtime_state.data.invite_code_enabled = true;
-        });
-        c
-    } else {
-        generate_and_store_code(result.caller, GroupInviteCodeChange::Enabled).await
+    let code = match initial_state.code {
+        Some(c) => c,
+        None => generate_code().await,
     };
+
+    mutate_state(|runtime_state| {
+        runtime_state.data.invite_code = Some(code);
+        runtime_state.data.invite_code_enabled = true;
+        if !initial_state.enabled {
+            record_event(initial_state.caller, GroupInviteCodeChange::Enabled, runtime_state);
+        }
+    });
 
     enable_invite_code::Response::Success(enable_invite_code::SuccessResult { code })
 }
 
-async fn generate_and_store_code(caller: Principal, change: GroupInviteCodeChange) -> u64 {
+async fn generate_code() -> u64 {
     let seed = canister::get_random_seed().await;
     let mut rng = StdRng::from_seed(seed);
-    let invite_code = rng.next_u64();
-    mutate_state(|runtime_state| {
-        runtime_state.data.invite_code = Some(invite_code);
-        runtime_state.data.invite_code_enabled = true;
+    rng.next_u64()
+}
 
-        let now = runtime_state.env.now();
+fn record_event(caller: Principal, change: GroupInviteCodeChange, runtime_state: &mut RuntimeState) {
+    let now = runtime_state.env.now();
 
-        if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-            runtime_state.data.events.push_event(
-                ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
-                    change,
-                    changed_by: participant.user_id,
-                })),
-                now,
-            );
+    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        runtime_state.data.events.push_event(
+            ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
+                change,
+                changed_by: participant.user_id,
+            })),
+            now,
+        );
 
-            handle_activity_notification(runtime_state);
-        }
-    });
-    invite_code
+        handle_activity_notification(runtime_state);
+    }
 }
 
 struct PrepareResult {
     caller: Principal,
     code: Option<u64>,
+    enabled: bool,
 }
 
 fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, ()> {
@@ -82,6 +92,7 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, ()> {
             return Ok(PrepareResult {
                 caller,
                 code: runtime_state.data.invite_code,
+                enabled: runtime_state.data.invite_code_enabled,
             });
         }
     }
