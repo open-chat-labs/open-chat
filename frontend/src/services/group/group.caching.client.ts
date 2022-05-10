@@ -49,6 +49,7 @@ import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { profile } from "../common/profiling";
 import { MAX_MISSING } from "../../domain/chat/chat.utils";
 import { rollbar } from "../../utils/logging";
+import type { ServiceRetryInterrupt } from "services/candidService";
 
 /**
  * This exists to decorate the group client so that we can provide a write through cache to
@@ -97,7 +98,8 @@ export class CachingGroupClient implements IGroupClient {
     @profile("groupCachingClient")
     async chatEventsWindow(
         eventIndexRange: IndexRange,
-        messageIndex: number
+        messageIndex: number,
+        interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<GroupChatEvent>(
             this.db,
@@ -113,7 +115,7 @@ export class CachingGroupClient implements IGroupClient {
                 totalMiss
             );
             return this.client
-                .chatEventsWindow(eventIndexRange, messageIndex)
+                .chatEventsWindow(eventIndexRange, messageIndex, interrupt)
                 .then((resp) => this.setCachedEvents(resp));
         } else {
             return this.handleMissingEvents([cachedEvents, missing]);
@@ -124,7 +126,8 @@ export class CachingGroupClient implements IGroupClient {
     async chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,
-        ascending: boolean
+        ascending: boolean,
+        interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents<GroupChatEvent>(
             this.db,
@@ -139,7 +142,7 @@ export class CachingGroupClient implements IGroupClient {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log("We didn't get enough back from the cache, going to the api");
             return this.client
-                .chatEvents(eventIndexRange, startIndex, ascending)
+                .chatEvents(eventIndexRange, startIndex, ascending, interrupt)
                 .then((resp) => this.setCachedEvents(resp));
         } else {
             return this.handleMissingEvents([cachedEvents, missing]);

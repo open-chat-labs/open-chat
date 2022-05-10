@@ -32,7 +32,7 @@ import type {
     WithdrawCryptocurrencyResponse,
     CryptocurrencyContent,
 } from "../../domain/chat/chat";
-import { CandidService } from "../candidService";
+import { CandidService, ServiceRetryInterrupt } from "../candidService";
 import {
     blockResponse,
     createGroupResponse,
@@ -151,7 +151,8 @@ export class UserClient extends CandidService implements IUserClient {
     async chatEventsWindow(
         _eventIndexRange: IndexRange,
         userId: string,
-        messageIndex: number
+        messageIndex: number,
+        interrupt: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>> {
         const args = {
             user_id: Principal.fromText(userId),
@@ -159,7 +160,12 @@ export class UserClient extends CandidService implements IUserClient {
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
         };
-        return this.handleResponse(this.userService.events_window(args), getEventsResponse, args);
+        return this.handleQueryResponse(
+            () => this.userService.events_window(args),
+            getEventsResponse,
+            args,
+            interrupt
+        );
     }
 
     @profile("userClient")
@@ -482,14 +488,15 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    getRecommendedGroups(): Promise<GroupChatSummary[]> {
+    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]> {
         const args = {
             count: 20,
         };
         return this.handleQueryResponse(
             () => this.userService.recommended_groups(args),
             recommendedGroupsResponse,
-            args
+            args,
+            interrupt
         );
     }
 
