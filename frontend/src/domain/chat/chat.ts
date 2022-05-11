@@ -752,6 +752,7 @@ export type GroupChatSummary = DataContent &
         public: boolean;
         myRole: MemberRole;
         permissions: GroupPermissions;
+        historyVisibleToNewJoiners: boolean;
     };
 
 export type Mention = {
