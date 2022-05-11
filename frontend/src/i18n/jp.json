@@ -213,7 +213,6 @@
     "yesterday": "昨日",
     "chatNotFound": "申し訳ございません - 選択されたチャットが見つかりませんでした",
     "leftGroup": "グループからの退出が完了しました",
-    "failedToLeaveGroup": "グループから削除するための入力に誤りがあります",
     "lastAdmin": "管理者はあなただけなので、グループから離れることはできません",
     "ownerCantLeave": "グループから離脱する前に、所有権を譲渡する必要があります",
     "owner": "オーナー",
@@ -522,5 +521,6 @@
     "thisIsPrivateGroupWithN": "これは{number}メンバーのプライベートグループです",
     "copy": "コピー",
     "failedToShareLink": "リンクの共有に失敗しました",
-    "groupInviteChangedBy": "{changedBy}{changed}グループの招待"
+    "groupInviteChangedBy": "{changedBy}{changed}グループの招待",
+    "failedToLeaveGroup": "グループからあなたを削除しようとしてエラーが発生しました"
 }

@@ -421,7 +421,7 @@ export class HomeController {
         return this.api
             .leaveGroup(chatId)
             .then((resp) => {
-                if (resp === "success") {
+                if (resp === "success" || resp === "not_in_group") {
                     toastStore.showSuccessToast("leftGroup");
                     this.removeChat(chatId);
                 } else {

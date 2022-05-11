@@ -213,7 +213,6 @@
     "yesterday": "Вчера",
     "chatNotFound": "Извините, мы не смогли найти выбранный чат",
     "leftGroup": "Вы успешно покинули группу",
-    "failedToLeaveGroup": "Произошла ошибка ввода при удалении вас из группы",
     "lastAdmin": "Вы не можете выйти из группы, так как вы единственный администратор",
     "ownerCantLeave": "Вы должны передать право владения, прежде чем покинуть группу",
     "owner": "Владелец",
@@ -522,5 +521,6 @@
     "thisIsPrivateGroupWithN": "Это частная группа с {number} участников",
     "copy": "Копировать",
     "failedToShareLink": "Не удалось поделиться ссылкой",
-    "groupInviteChangedBy": "{changedBy} {changed} приглашение в группу"
+    "groupInviteChangedBy": "{changedBy} {changed} приглашение в группу",
+    "failedToLeaveGroup": "Произошла ошибка при попытке удалить вас из группы"
 }

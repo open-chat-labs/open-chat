@@ -207,7 +207,6 @@
     "yesterday": "Ayer",
     "chatNotFound": "Lo sentimos, no pudimos encontrar el chat seleccionado",
     "leftGroup": "Has salido del grupo con éxito",
-    "failedToLeaveGroup": "Hubo un error al escribir para eliminarte del grupo",
     "lastAdmin": "No puedes abandonar el grupo ya que eres el único administrador",
     "ownerCantLeave": "Debes transferir la propiedad antes de poder abandonar el grupo",
     "owner": "dueño",
@@ -523,5 +522,6 @@
     "thisIsPrivateGroupWithN": "Este es un grupo privado con miembros {number}",
     "copy": "Dupdo",
     "failedToShareLink": "No se pudo compartir el enlace",
-    "groupInviteChangedBy": "{changedBy} {changed} la invitación del grupo"
+    "groupInviteChangedBy": "{changedBy} {changed} la invitación del grupo",
+    "failedToLeaveGroup": "Se ha producido un error al intentar eliminarte del grupo."
 }

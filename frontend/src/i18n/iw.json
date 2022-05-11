@@ -226,7 +226,6 @@
     "yesterday": "אתמול",
     "chatNotFound": "מצטערים - לא הצלחנו למצוא את הצ'אט שנבחר",
     "leftGroup": "עזבת בהצלחה את הקבוצה",
-    "failedToLeaveGroup": "אירעה שגיאה בהקלדה כדי להסיר אותך מהקבוצה",
     "lastAdmin": "אתה לא יכול לעזוב את הקבוצה מכיוון שאתה המנהל היחיד",
     "ownerCantLeave": "עליך להעביר בעלות לפני שתוכל לעזוב את הקבוצה",
     "owner": "בעלים",
@@ -520,5 +519,6 @@
     "thisIsPrivateGroupWithN": "זוהי קבוצה פרטית עם חברי {number}",
     "copy": "עותק",
     "failedToShareLink": "שיתוף הקישור נכשל",
-    "groupInviteChangedBy": "{changedBy} {changed} ההזמנה לקבוצה"
+    "groupInviteChangedBy": "{changedBy} {changed} ההזמנה לקבוצה",
+    "failedToLeaveGroup": "אירעה שגיאה בניסיון להסיר אותך מהקבוצה"
 }
