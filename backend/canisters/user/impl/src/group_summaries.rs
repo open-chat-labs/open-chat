@@ -32,16 +32,10 @@ pub(crate) struct Updates {
 }
 
 pub(crate) fn build_summaries_args(now: TimestampMillis, data: &Data) -> SummariesArgs {
-    let group_chat_ids: Vec<_> = data.group_chats.iter().map(|g| g.chat_id).collect();
-    let cached_group_summaries = data
-        .cached_group_summaries
-        .as_ref()
-        .map(|c| c.filtered(group_chat_ids.iter().copied().collect()));
-
     SummariesArgs {
         group_index_canister_id: data.group_index_canister_id,
-        group_chat_ids,
-        cached_group_summaries,
+        group_chat_ids: data.group_chats.iter().map(|g| g.chat_id).collect(),
+        cached_group_summaries: data.cached_group_summaries.clone(),
         now,
     }
 }

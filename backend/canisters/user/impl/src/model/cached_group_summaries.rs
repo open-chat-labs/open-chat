@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use types::{ChatId, GroupChatSummaryInternal, TimestampMillis};
 use user_canister::updates::{GroupChatUpdatesSince, UpdatesSince};
 
@@ -20,18 +19,6 @@ impl CachedGroupSummaries {
                     chat_id: g.chat_id,
                     updates_since: g.last_updated,
                 })
-                .collect(),
-        }
-    }
-
-    pub fn filtered(&self, group_chat_ids: HashSet<ChatId>) -> CachedGroupSummaries {
-        CachedGroupSummaries {
-            timestamp: self.timestamp,
-            groups: self
-                .groups
-                .iter()
-                .filter(|g| group_chat_ids.contains(&g.chat_id))
-                .cloned()
                 .collect(),
         }
     }
