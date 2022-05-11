@@ -67,6 +67,7 @@ import { userStore } from "stores/user";
 import { UserIndexClient } from "services/userIndex/userIndex.client";
 import { rollbar } from "../../utils/logging";
 import type { GroupInvite } from "../../services/serviceContainer";
+import type { ServiceRetryInterrupt } from "services/candidService";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -134,7 +135,8 @@ export class CachingUserClient implements IUserClient {
     async chatEventsWindow(
         eventIndexRange: IndexRange,
         userId: string,
-        messageIndex: number
+        messageIndex: number,
+        interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>> {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<DirectChatEvent>(
             this.db,
@@ -150,7 +152,7 @@ export class CachingUserClient implements IUserClient {
                 totalMiss
             );
             return this.client
-                .chatEventsWindow(eventIndexRange, userId, messageIndex)
+                .chatEventsWindow(eventIndexRange, userId, messageIndex, interrupt)
                 .then((resp) => this.setCachedEvents(userId, resp));
         } else {
             return this.handleMissingEvents(userId, [cachedEvents, missing]);
@@ -162,7 +164,8 @@ export class CachingUserClient implements IUserClient {
         eventIndexRange: IndexRange,
         userId: string,
         startIndex: number,
-        ascending: boolean
+        ascending: boolean,
+        interrupt: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
             this.db,
@@ -177,7 +180,7 @@ export class CachingUserClient implements IUserClient {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log("We didn't get enough back from the cache, going to the api");
             return this.client
-                .chatEvents(eventIndexRange, userId, startIndex, ascending)
+                .chatEvents(eventIndexRange, userId, startIndex, ascending, interrupt)
                 .then((resp) => this.setCachedEvents(userId, resp));
         } else {
             return this.handleMissingEvents(userId, [cachedEvents, missing]);
@@ -244,12 +247,18 @@ export class CachingUserClient implements IUserClient {
                     );
 
                     return targetMessageIndex !== undefined
-                        ? groupClient.chatEventsWindow(range, targetMessageIndex)
-                        : groupClient.chatEvents(range, chat.latestEventIndex, false);
+                        ? groupClient.chatEventsWindow(range, targetMessageIndex, () => true)
+                        : groupClient.chatEvents(range, chat.latestEventIndex, false, () => true);
                 } else {
                     return targetMessageIndex !== undefined
-                        ? this.chatEventsWindow(range, chat.chatId, targetMessageIndex)
-                        : this.chatEvents(range, chat.chatId, chat.latestEventIndex, false);
+                        ? this.chatEventsWindow(range, chat.chatId, targetMessageIndex, () => true)
+                        : this.chatEvents(
+                              range,
+                              chat.chatId,
+                              chat.latestEventIndex,
+                              false,
+                              () => true
+                          );
                 }
             });
 
@@ -275,7 +284,8 @@ export class CachingUserClient implements IUserClient {
                                     },
                                 ],
                             },
-                            true
+                            true,
+                            () => true
                         );
                     }
                 });
@@ -422,8 +432,8 @@ export class CachingUserClient implements IUserClient {
         return this.client.toggleMuteNotifications(chatId, muted);
     }
 
-    getRecommendedGroups(): Promise<GroupChatSummary[]> {
-        return this.client.getRecommendedGroups();
+    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]> {
+        return this.client.getRecommendedGroups(interrupt);
     }
 
     dismissRecommendation(chatId: string): Promise<void> {

@@ -94,6 +94,7 @@ import type { ICP } from "../domain/crypto/crypto";
 import { icpBalanceE8sStore } from "../stores/balance";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
+import type { ServiceRetryInterrupt } from "./candidService";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -785,9 +786,9 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.getGroupClient(chatId).getPublicSummary();
     }
 
-    getRecommendedGroups(): Promise<GroupChatSummary[]> {
+    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]> {
         return this.userClient
-            .getRecommendedGroups()
+            .getRecommendedGroups(interrupt)
             .then((groups) => groups.map((g) => this.rehydrateDataContent(g, "avatar")));
     }
 
