@@ -82,6 +82,7 @@ impl RuntimeState {
             description: data.description.clone(),
             avatar_id: Avatar::id(&data.avatar),
             is_public: data.is_public,
+            history_visible_to_new_joiners: data.history_visible_to_new_joiners,
             min_visible_event_index: participant.min_visible_event_index(),
             min_visible_message_index,
             latest_message: data

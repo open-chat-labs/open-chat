@@ -237,6 +237,7 @@ type GroupChatSummary =
         description: text;
         avatar_id: opt nat;
         is_public: bool;
+        history_visible_to_new_joiners: bool;
         min_visible_event_index: EventIndex;
         min_visible_message_index: MessageIndex;
         latest_message: opt MessageEventWrapper;
