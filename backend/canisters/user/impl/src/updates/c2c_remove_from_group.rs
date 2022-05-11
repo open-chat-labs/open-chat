@@ -18,6 +18,10 @@ fn c2c_remove_from_group_impl(args: Args, runtime_state: &mut RuntimeState) -> R
     if runtime_state.data.group_chats.remove(chat_id, now).is_some() {
         runtime_state.data.recommended_group_exclusions.add(chat_id, None, now);
 
+        if let Some(cached_groups) = &mut runtime_state.data.cached_group_summaries {
+            cached_groups.remove_group(&chat_id);
+        }
+
         let removed_from_group = RemovedFromGroup {
             chat_id,
             removed_by: args.removed_by,

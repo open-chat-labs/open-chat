@@ -124,6 +124,7 @@ struct Data {
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
     pub bio: String,
+    #[serde(skip_deserializing)]
     pub cached_group_summaries: Option<CachedGroupSummaries>,
 }
 
