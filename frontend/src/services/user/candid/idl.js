@@ -607,72 +607,6 @@ export const idlFactory = ({ IDL }) => {
     'Added' : EventIndex,
     'Removed' : EventIndex,
   });
-  const TransactionsArgs = IDL.Record({
-    'max_transactions' : IDL.Nat8,
-    'ascending' : IDL.Bool,
-    'start_index' : IDL.Nat32,
-  });
-  const AccountIdentifier = IDL.Vec(IDL.Nat8);
-  const CompletedCryptocurrencyDeposit = IDL.Record({
-    'fee' : Tokens,
-    'token' : Cryptocurrency,
-    'block_index' : BlockIndex,
-    'memo' : Memo,
-    'from_address' : AccountIdentifier,
-    'amount' : Tokens,
-  });
-  const CryptocurrencyDeposit = IDL.Variant({
-    'Completed' : CompletedCryptocurrencyDeposit,
-  });
-  const FailedCryptocurrencyWithdrawal = IDL.Record({
-    'to' : AccountIdentifier,
-    'fee' : Tokens,
-    'token' : Cryptocurrency,
-    'memo' : Memo,
-    'error_message' : IDL.Text,
-    'amount' : Tokens,
-  });
-  const CompletedCryptocurrencyWithdrawal = IDL.Record({
-    'to' : AccountIdentifier,
-    'fee' : Tokens,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'block_index' : BlockIndex,
-    'memo' : Memo,
-    'amount' : Tokens,
-  });
-  const PendingCryptocurrencyWithdrawal = IDL.Record({
-    'to' : AccountIdentifier,
-    'fee' : IDL.Opt(Tokens),
-    'token' : Cryptocurrency,
-    'memo' : IDL.Opt(Memo),
-    'amount' : Tokens,
-  });
-  const CryptocurrencyWithdrawal = IDL.Variant({
-    'Failed' : FailedCryptocurrencyWithdrawal,
-    'Completed' : CompletedCryptocurrencyWithdrawal,
-    'Pending' : PendingCryptocurrencyWithdrawal,
-  });
-  const CryptocurrencyTransaction = IDL.Variant({
-    'Deposit' : CryptocurrencyDeposit,
-    'Withdrawal' : CryptocurrencyWithdrawal,
-    'Transfer' : CryptocurrencyTransfer,
-  });
-  const Transaction = IDL.Variant({
-    'Cryptocurrency' : CryptocurrencyTransaction,
-  });
-  const TransactionWrapper = IDL.Record({
-    'transaction' : Transaction,
-    'timestamp' : TimestampMillis,
-    'index' : IDL.Nat32,
-  });
-  const TransactionsSuccessResult = IDL.Record({
-    'latest_transaction_index' : IDL.Opt(IDL.Nat32),
-    'transactions' : IDL.Vec(TransactionWrapper),
-  });
-  const TransactionsResponse = IDL.Variant({
-    'Success' : TransactionsSuccessResult,
-  });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const TransferCryptocurrencyWithinGroupArgs = IDL.Record({
@@ -720,6 +654,18 @@ export const idlFactory = ({ IDL }) => {
   const GroupDeletedAlert = IDL.Record({
     'deleted_by' : UserId,
     'chat_id' : ChatId,
+  });
+  const AccountIdentifier = IDL.Vec(IDL.Nat8);
+  const CompletedCryptocurrencyDeposit = IDL.Record({
+    'fee' : Tokens,
+    'token' : Cryptocurrency,
+    'block_index' : BlockIndex,
+    'memo' : Memo,
+    'from_address' : AccountIdentifier,
+    'amount' : Tokens,
+  });
+  const CryptocurrencyDeposit = IDL.Variant({
+    'Completed' : CompletedCryptocurrencyDeposit,
   });
   const RemovedFromGroupAlert = IDL.Record({
     'chat_id' : ChatId,
@@ -798,8 +744,32 @@ export const idlFactory = ({ IDL }) => {
     }),
     'InternalError' : IDL.Text,
   });
+  const PendingCryptocurrencyWithdrawal = IDL.Record({
+    'to' : AccountIdentifier,
+    'fee' : IDL.Opt(Tokens),
+    'token' : Cryptocurrency,
+    'memo' : IDL.Opt(Memo),
+    'amount' : Tokens,
+  });
   const WithdrawCryptocurrencyRequest = IDL.Record({
     'withdrawal' : PendingCryptocurrencyWithdrawal,
+  });
+  const FailedCryptocurrencyWithdrawal = IDL.Record({
+    'to' : AccountIdentifier,
+    'fee' : Tokens,
+    'token' : Cryptocurrency,
+    'memo' : Memo,
+    'error_message' : IDL.Text,
+    'amount' : Tokens,
+  });
+  const CompletedCryptocurrencyWithdrawal = IDL.Record({
+    'to' : AccountIdentifier,
+    'fee' : Tokens,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'block_index' : BlockIndex,
+    'memo' : Memo,
+    'amount' : Tokens,
   });
   const WithdrawCryptocurrencyResponse = IDL.Variant({
     'CurrencyNotSupported' : IDL.Null,
@@ -894,11 +864,6 @@ export const idlFactory = ({ IDL }) => {
         [ToggleReactionArgs],
         [ToggleReactionResponse],
         [],
-      ),
-    'transactions' : IDL.Func(
-        [TransactionsArgs],
-        [TransactionsResponse],
-        ['query'],
       ),
     'transfer_cryptocurrency_within_group' : IDL.Func(
         [TransferCryptocurrencyWithinGroupArgs],

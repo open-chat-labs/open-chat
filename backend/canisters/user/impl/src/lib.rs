@@ -4,7 +4,6 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::group_chats::GroupChats;
 use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
-use crate::model::transactions::Transactions;
 use crate::model::user_preferences::UserPreferences;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
@@ -12,11 +11,10 @@ use canister_state_macros::canister_state;
 use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
 use notifications_canister::c2c_push_notification;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
-use tracing::info;
 use types::{Avatar, CanisterId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
@@ -119,7 +117,6 @@ struct Data {
     pub notifications_canister_ids: Vec<CanisterId>,
     pub callback_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
-    pub transactions: Transactions,
     pub test_mode: bool,
     pub user_preferences: UserPreferences,
     pub alerts: Alerts,
@@ -127,7 +124,6 @@ struct Data {
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
     pub bio: String,
-    #[serde(deserialize_with = "deserialize_cached_group_summaries")]
     pub cached_group_summaries: Option<CachedGroupSummaries>,
 }
 
@@ -150,7 +146,6 @@ impl Data {
             notifications_canister_ids,
             callback_canister_id,
             avatar: Timestamped::default(),
-            transactions: Transactions::default(),
             test_mode,
             user_preferences: UserPreferences::default(),
             alerts: Alerts::default(),
@@ -196,12 +191,4 @@ pub struct Metrics {
 
 fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
-}
-
-// If we fail to deserialize the cached group summaries, simply set them to None and continue
-fn deserialize_cached_group_summaries<'de, D: Deserializer<'de>>(de: D) -> Result<Option<CachedGroupSummaries>, D::Error> {
-    Option::deserialize(de).or_else(|err| {
-        info!(%err, "Failed to deserialize cached group summaries");
-        Ok(None)
-    })
 }

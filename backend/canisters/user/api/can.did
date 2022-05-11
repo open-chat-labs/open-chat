@@ -462,24 +462,6 @@ type RecommendedGroupsSuccessResult =
         groups: vec PublicGroupSummary;
     };
 
-type TransactionsArgs =
-    record {
-        start_index: nat32;
-        ascending: bool;
-        max_transactions: nat8;
-    };
-
-type TransactionsResponse =
-    variant {
-        Success: TransactionsSuccessResult;
-    };
-
-type TransactionsSuccessResult =
-    record {
-        transactions: vec TransactionWrapper;
-        latest_transaction_index: opt nat32;
-    };
-
 type SearchMessagesArgs =
     record {
         user_id: UserId;
@@ -553,7 +535,6 @@ service: {
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
 
     recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
-    transactions: (TransactionsArgs) -> (TransactionsResponse) query;
     initial_state: (InitialStateArgs) -> (InitialStateResponse) query;
     updates: (UpdatesArgs) -> (UpdatesResponse) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat
