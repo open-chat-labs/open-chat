@@ -1,5 +1,5 @@
 [package]
-name = "user_index_canister"
+name = "transaction_notifier_c2c_client"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
@@ -7,10 +7,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.7.14"
-candid_gen = { path = "../../../libraries/candid_gen" }
-ic-ledger-types = "0.1.1"
-serde = "1.0.136"
-serde_bytes = "0.11"
+canister_client_macros = { path = "../../../libraries/canister_client_macros" }
+ic-cdk = "0.5.0"
+tracing = "0.1.33"
 transaction_notifier = { git = "https://github.com/open-ic/transaction-notifier", rev = "bdc46c1dca34fbdcbc32dce56fc7698a6e967ba5" }
 types = { path = "../../../libraries/types" }

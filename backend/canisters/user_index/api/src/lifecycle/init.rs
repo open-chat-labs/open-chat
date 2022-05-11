@@ -23,6 +23,8 @@ pub struct Args {
 
     pub open_storage_index_canister_id: CanisterId,
 
+    pub transaction_notifier_canister_id: CanisterId,
+
     pub ledger_canister_id: CanisterId,
 
     pub wasm_version: Version,

@@ -749,11 +749,12 @@ type CryptocurrencyDeposit =
 type CompletedCryptocurrencyDeposit =
     record {
         token: Cryptocurrency;
-        from_address: AccountIdentifier;
+        from: AccountIdentifier;
         amount: Tokens;
         fee: Tokens;
         memo: Memo;
         block_index: BlockIndex;
+        transaction_hash: TransactionHash;
     };
 
 type CryptocurrencyWithdrawal =

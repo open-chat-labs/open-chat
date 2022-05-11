@@ -1,4 +1,5 @@
 pub mod add_super_admin;
+pub mod add_token;
 pub mod c2c_mark_send_message_failed;
 pub mod c2c_mark_users_online;
 pub mod c2c_notify_low_balance;

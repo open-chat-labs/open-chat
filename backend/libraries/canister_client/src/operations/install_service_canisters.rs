@@ -30,12 +30,14 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     )
     .await;
 
-    let (callback_canister_id, open_storage_index_canister_id, ledger_canister_id) = futures::future::join3(
-        create_empty_canister(&management_canister),
-        create_empty_canister(&management_canister),
-        create_empty_canister(&management_canister),
-    )
-    .await;
+    let (callback_canister_id, open_storage_index_canister_id, transaction_notifier_canister_id, ledger_canister_id) =
+        futures::future::join4(
+            create_empty_canister(&management_canister),
+            create_empty_canister(&management_canister),
+            create_empty_canister(&management_canister),
+            create_empty_canister(&management_canister),
+        )
+        .await;
 
     println!("root canister id: {root_canister_id}");
     println!("user_index canister id: {user_index_canister_id}");
@@ -44,6 +46,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
     println!("users online aggregator canister id: {online_users_aggregator_canister_id}");
     println!("callback canister id: {callback_canister_id}");
     println!("open_storage_index canister id: {open_storage_index_canister_id}");
+    println!("transaction_notifier canister id: {transaction_notifier_canister_id}");
     println!("ledger canister id: {ledger_canister_id}");
 
     let canister_ids = CanisterIds {
@@ -54,6 +57,7 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
         online_users_aggregator: online_users_aggregator_canister_id,
         callback: callback_canister_id,
         open_storage_index: open_storage_index_canister_id,
+        transaction_notifier: transaction_notifier_canister_id,
         ledger: ledger_canister_id,
     };
 
@@ -115,6 +119,7 @@ async fn install_service_canisters_impl(
         online_users_aggregator_canister_id: canister_ids.online_users_aggregator,
         callback_canister_id: canister_ids.callback,
         open_storage_index_canister_id: canister_ids.open_storage_index,
+        transaction_notifier_canister_id: canister_ids.transaction_notifier,
         ledger_canister_id: canister_ids.ledger,
         wasm_version: version,
         test_mode,

@@ -1,6 +1,7 @@
 use crate::model::challenges::Challenges;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
+use crate::model::transaction_notifier_user_sync_queue::TransactionNotifierUserSyncQueue;
 use crate::model::user_map::UserMap;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
@@ -76,6 +77,11 @@ impl RuntimeState {
         self.data.online_users_aggregator_canister_ids.contains(&caller)
     }
 
+    pub fn is_caller_user_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.users.get_by_user_id(&caller.into()).is_some()
+    }
+
     pub fn generate_6_digit_code(&mut self) -> String {
         let random = self.env.random_u32();
         format!("{:0>6}", random % 1000000)
@@ -125,6 +131,10 @@ struct Data {
     pub callback_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
+    #[serde(default = "transaction_notifier_canister_id")]
+    pub transaction_notifier_canister_id: CanisterId,
+    #[serde(default)]
+    pub transaction_notifier_user_sync_queue: TransactionNotifierUserSyncQueue,
     #[serde(default = "ledger_canister_id")]
     pub ledger_canister_id: CanisterId,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
@@ -132,6 +142,10 @@ struct Data {
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
     pub challenges: Challenges,
+}
+
+fn transaction_notifier_canister_id() -> CanisterId {
+    Principal::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap()
 }
 
 fn ledger_canister_id() -> CanisterId {
@@ -149,6 +163,7 @@ impl Data {
         online_users_aggregator_canister_id: CanisterId,
         callback_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
+        transaction_notifier_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         canister_pool_target_size: u16,
         test_mode: bool,
@@ -168,6 +183,8 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id,
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            transaction_notifier_canister_id,
+            transaction_notifier_user_sync_queue: TransactionNotifierUserSyncQueue::default(),
             ledger_canister_id,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
@@ -192,6 +209,7 @@ impl Default for Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             online_users_aggregator_canister_ids: HashSet::new(),
             callback_canister_id: Principal::anonymous(),
+            transaction_notifier_canister_id: Principal::anonymous(),
             canister_pool: canister::Pool::new(5),
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id: Principal::anonymous(),

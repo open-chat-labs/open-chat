@@ -107,6 +107,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
         group_index_canister_id: runtime_state.data.group_index_canister_id,
         notifications_canister_ids: runtime_state.data.notifications_canister_ids.clone(),
         callback_canister_id: runtime_state.data.callback_canister_id,
+        transaction_notifier_canister_id: runtime_state.data.transaction_notifier_canister_id,
         ledger_canister_id: runtime_state.data.ledger_canister_id,
         wasm_version: canister_wasm.version,
         test_mode: runtime_state.data.test_mode,
@@ -124,6 +125,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
 fn commit(caller: Principal, username: String, wasm_version: Version, user_id: UserId, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
     runtime_state.data.users.release_username(&username);
+    runtime_state.data.transaction_notifier_user_sync_queue.push(user_id);
     runtime_state
         .data
         .users

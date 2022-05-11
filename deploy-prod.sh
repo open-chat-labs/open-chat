@@ -2,7 +2,8 @@
 
 IDENTITY=$1
 OPEN_STORAGE_INDEX_CANISTER_ID=$2
-TEST_MODE=$3
+TRANSACTION_NOTIFIER_CANISTER_ID=$3
+TEST_MODE=$4
 
 # Pass in the dfx identity name, the OpenStorage index canisterId, and test mode (true or false)
 # eg './deploy-local openchat rturd-qaaaa-aaaaf-aabaq-cai true'
@@ -38,4 +39,5 @@ cargo run \
   $ONLINE_USERS_AGGREGATOR_CANISTER_ID \
   $CALLBACK_CANISTER_ID \
   $OPEN_STORAGE_INDEX_CANISTER_ID \
+  $TRANSACTION_NOTIFIER_CANISTER_ID \
   $LEDGER_CANISTER_ID \

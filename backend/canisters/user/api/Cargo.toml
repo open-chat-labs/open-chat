@@ -12,4 +12,5 @@ candid_gen = { path = "../../../libraries/candid_gen" }
 ic-ledger-types = "0.1.1"
 serde = "1.0.136"
 serde_bytes = "0.11.5"
+transaction_notifier = { git = "https://github.com/open-ic/transaction-notifier", rev = "65d3bbe1dbe8db9b46502795f20d43a88615ac39" }
 types = { path = "../../../libraries/types" }

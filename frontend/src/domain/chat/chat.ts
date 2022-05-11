@@ -100,10 +100,12 @@ export type CompletedICPTransfer = {
 export type CompletedICPDeposit = {
     transferKind: "icp_deposit";
     kind: "completed_icp_deposit";
+    from: string,
     amountE8s: bigint;
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
+    transactionHash: string,
 };
 
 export type FailedICPTransfer = {

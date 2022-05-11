@@ -89,9 +89,10 @@ export type CheckUsernameResponse = { 'UsernameTaken' : null } |
 export interface CompletedCryptocurrencyDeposit {
   'fee' : Tokens,
   'token' : Cryptocurrency,
+  'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
+  'from' : AccountIdentifier,
   'memo' : Memo,
-  'from_address' : AccountIdentifier,
   'amount' : Tokens,
 }
 export interface CompletedCryptocurrencyTransfer {

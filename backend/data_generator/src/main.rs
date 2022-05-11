@@ -21,6 +21,7 @@ async fn main() {
         online_users_aggregator: opts.online_users_aggregator,
         callback: opts.callback,
         open_storage_index: opts.open_storage_index,
+        transaction_notifier: opts.transaction_notifier,
         ledger: opts.ledger,
     };
 
@@ -170,6 +171,7 @@ struct Opts {
     pub online_users_aggregator: CanisterId,
     pub callback: CanisterId,
     pub open_storage_index: CanisterId,
+    pub transaction_notifier: CanisterId,
     pub ledger: CanisterId,
     pub username: String,
     pub seed: Option<u32>,

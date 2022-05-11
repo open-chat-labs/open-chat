@@ -30,7 +30,6 @@ import type {
     ApiWithdrawCryptocurrencyResponse,
     ApiFailedCryptocurrencyWithdrawal,
     ApiCompletedCryptocurrencyWithdrawal,
-    ApiCompletedCryptocurrencyTransfer,
     ApiTransferCryptocurrencyWithinGroupResponse,
     ApiChatMetrics,
 } from "./candid/idl";
@@ -607,10 +606,12 @@ function cryptoDepositAlert(candid: ApiCryptocurrencyDeposit): CryptocurrencyDep
     return {
         transferKind: "icp_deposit",
         kind: "completed_icp_deposit",
+        from: bytesToHexString(candid.Completed.from),
         amountE8s: candid.Completed.amount.e8s,
         feeE8s: candid.Completed.fee.e8s,
         memo: candid.Completed.memo,
         blockIndex: candid.Completed.block_index,
+        transactionHash: bytesToHexString(candid.Completed.transaction_hash),
     };
 }
 

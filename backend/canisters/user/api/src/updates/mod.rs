@@ -22,6 +22,7 @@ pub mod join_group_v2;
 pub mod leave_group;
 pub mod mark_read;
 pub mod mute_notifications;
+pub mod notify_transaction;
 pub mod register_poll_vote;
 pub mod relinquish_group_super_admin;
 pub mod send_message;

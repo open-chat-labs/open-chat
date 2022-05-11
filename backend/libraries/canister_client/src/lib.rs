@@ -73,5 +73,6 @@ pub struct CanisterIds {
     pub online_users_aggregator: CanisterId,
     pub callback: CanisterId,
     pub open_storage_index: CanisterId,
+    pub transaction_notifier: CanisterId,
     pub ledger: CanisterId,
 }

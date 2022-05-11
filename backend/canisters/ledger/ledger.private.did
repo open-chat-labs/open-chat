@@ -1,4 +1,4 @@
-type ICPTs = record {
+type Tokens = record {
      e8s : nat64;
 };
 
@@ -18,6 +18,7 @@ type ArchiveOptions = record {
     node_max_memory_size_bytes: opt nat64;
     max_message_size_bytes: opt nat64;
     controller_id: principal;
+    cycles_for_archive_creation: opt nat64;
 };
 
 // Height of a ledger block.
@@ -36,16 +37,16 @@ type SubAccount = blob;
 type Transfer = variant {
     Burn: record {
         from: AccountIdentifier;
-        amount: ICPTs;
+        amount: Tokens;
     };
     Mint: record {
         to: AccountIdentifier;
-        amount: ICPTs;
+        amount: Tokens;
     };
     Send: record {
         from: AccountIdentifier;
         to: AccountIdentifier;
-        amount: ICPTs;
+        amount: Tokens;
     };
 };
 
@@ -58,8 +59,8 @@ type Transaction = record {
 // Arguments for the `send_dfx` call.
 type SendArgs = record {
     memo: Memo;
-    amount: ICPTs;
-    fee: ICPTs;
+    amount: Tokens;
+    fee: Tokens;
     from_subaccount: opt SubAccount;
     to: AccountIdentifier;
     created_at_time: opt TimeStamp;
@@ -70,7 +71,7 @@ type NotifyCanisterArgs = record {
     // The of the block to send a notification about.
     block_height: BlockHeight;
     // Max fee, should be 10000 e8s.
-    max_fee: ICPTs;
+    max_fee: Tokens;
     // Subaccount the payment came from.
     from_subaccount: opt SubAccount;
     // Canister that received the payment.
@@ -85,15 +86,18 @@ type AccountBalanceArgs = record {
 
 type LedgerCanisterInitPayload = record {
     minting_account: AccountIdentifier;
-    initial_values: vec record {AccountIdentifier; ICPTs};
+    initial_values: vec record {AccountIdentifier; Tokens};
     max_message_size_bytes: opt nat64;
     transaction_window: opt Duration;
     archive_options: opt ArchiveOptions;
     send_whitelist: vec principal;
+    transfer_fee: opt Tokens;
+    token_symbol: opt text;
+    token_name: opt text;
 };
 
 service: (LedgerCanisterInitPayload) -> {
   send_dfx : (SendArgs) -> (BlockHeight);
   notify_dfx: (NotifyCanisterArgs) -> ();
-  account_balance_dfx : (AccountBalanceArgs) -> (ICPTs) query;
+  account_balance_dfx : (AccountBalanceArgs) -> (Tokens) query;
 }

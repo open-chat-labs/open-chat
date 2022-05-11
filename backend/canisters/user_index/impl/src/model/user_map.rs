@@ -2,6 +2,8 @@ use crate::model::account_billing::AccountCharge;
 use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::{CandidType, Principal};
+use ic_ledger_types::AccountIdentifier;
+use ledger_utils::default_ledger_account;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
@@ -24,6 +26,8 @@ pub struct UserMap {
     cached_metrics: Timestamped<Metrics>,
     #[serde(skip)]
     users_with_unconfirmed_phone_numbers: HashSet<Principal>,
+    #[serde(skip)]
+    ledger_account_to_user: HashMap<AccountIdentifier, Principal>,
     unconfirmed_phone_numbers_last_pruned: TimestampMillis,
     reserved_usernames: HashSet<String>,
 }
@@ -53,6 +57,8 @@ impl UserMap {
 
             self.username_to_principal.insert(&user.username, *principal);
             self.user_id_to_principal.insert(user.user_id, *principal);
+            self.ledger_account_to_user
+                .insert(default_ledger_account(user.user_id.into()), *principal);
         }
     }
 
@@ -79,6 +85,8 @@ impl UserMap {
     ) {
         self.username_to_principal.insert(&username, principal);
         self.user_id_to_principal.insert(user_id, principal);
+        self.ledger_account_to_user
+            .insert(default_ledger_account(user_id.into()), principal);
 
         let user = User::new(principal, user_id, username, now, wasm_version);
         self.users_by_principal.insert(principal, user);
@@ -239,6 +247,12 @@ impl UserMap {
     pub fn get_by_username(&self, username: &str) -> Option<&User> {
         self.username_to_principal
             .get(username)
+            .and_then(|p| self.users_by_principal.get(p))
+    }
+
+    pub fn get_by_ledger_account(&self, account_identifier: &AccountIdentifier) -> Option<&User> {
+        self.ledger_account_to_user
+            .get(account_identifier)
             .and_then(|p| self.users_by_principal.get(p))
     }
 

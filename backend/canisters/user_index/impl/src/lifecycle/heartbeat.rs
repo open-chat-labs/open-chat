@@ -1,7 +1,9 @@
 use crate::model::user_map::UpdateUserResult;
 use crate::{mutate_state, read_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
+use candid::Principal;
 use group_canister::c2c_dismiss_super_admin;
 use ic_cdk_macros::heartbeat;
+use ledger_utils::default_ledger_account;
 use tracing::error;
 use types::{CanisterId, ChatId, Cycles, CyclesTopUp, UserId, Version};
 use utils::canister::{self, FailedUpgrade};
@@ -17,6 +19,7 @@ fn heartbeat() {
     topup_canister_pool::run();
     retry_failed_messages::run();
     sync_users_to_open_storage::run();
+    sync_users_to_transaction_notifier::run();
     calculate_metrics::run();
     dismiss_removed_super_admins::run();
     prune_unconfirmed_phone_numbers::run();
@@ -240,6 +243,51 @@ mod sync_users_to_open_storage {
 
     fn on_failure(users: Vec<UserConfig>, runtime_state: &mut RuntimeState) {
         runtime_state.data.open_storage_user_sync_queue.mark_sync_failed(users);
+    }
+}
+
+mod sync_users_to_transaction_notifier {
+    use super::*;
+    use transaction_notifier::subscribe::Subscription;
+
+    pub fn run() {
+        if let Some((canister_id, users)) = mutate_state(next_batch) {
+            ic_cdk::spawn(sync_users(canister_id, users));
+        }
+    }
+
+    fn next_batch(runtime_state: &mut RuntimeState) -> Option<(CanisterId, Vec<UserId>)> {
+        let users = runtime_state.data.transaction_notifier_user_sync_queue.try_start_sync()?;
+
+        Some((runtime_state.data.transaction_notifier_canister_id, users))
+    }
+
+    async fn sync_users(transaction_notifier_canister_id: CanisterId, users: Vec<UserId>) {
+        let args = transaction_notifier::subscribe::Args {
+            subscriptions: users
+                .iter()
+                .map(|u| Principal::from(*u))
+                .map(|p| Subscription {
+                    account_identifier: default_ledger_account(p),
+                    canister_ids: vec![p],
+                })
+                .collect(),
+        };
+        match transaction_notifier_c2c_client::subscribe(transaction_notifier_canister_id, &args).await {
+            Ok(_) => mutate_state(on_success),
+            Err(_) => mutate_state(|state| on_failure(users, state)),
+        }
+    }
+
+    fn on_success(runtime_state: &mut RuntimeState) {
+        runtime_state.data.transaction_notifier_user_sync_queue.mark_sync_completed();
+    }
+
+    fn on_failure(users: Vec<UserId>, runtime_state: &mut RuntimeState) {
+        runtime_state
+            .data
+            .transaction_notifier_user_sync_queue
+            .mark_sync_failed(&users);
     }
 }
 

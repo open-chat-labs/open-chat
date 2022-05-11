@@ -1,5 +1,7 @@
+use crate::model::address_book::AddressBook;
 use crate::model::alerts::Alerts;
 use crate::model::cached_group_summaries::CachedGroupSummaries;
+use crate::model::crypto_transactions::CryptoTransactions;
 use crate::model::direct_chats::DirectChats;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::group_chats::GroupChats;
@@ -60,6 +62,10 @@ impl RuntimeState {
         self.env.caller() == self.data.callback_canister_id
     }
 
+    pub fn is_caller_transaction_notifier_canister(&self) -> bool {
+        self.env.caller() == self.data.transaction_notifier_canister_id
+    }
+
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
         let random = self.env.random_u32() as usize;
 
@@ -116,9 +122,15 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub callback_canister_id: CanisterId,
+    #[serde(default = "transaction_notifier_canister_id")]
+    pub transaction_notifier_canister_id: CanisterId,
     #[serde(default = "ledger_canister_id")]
     pub ledger_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
+    #[serde(default)]
+    pub crypto_transactions: CryptoTransactions,
+    #[serde(default)]
+    pub address_book: AddressBook,
     pub test_mode: bool,
     pub user_preferences: UserPreferences,
     pub alerts: Alerts,
@@ -130,6 +142,10 @@ struct Data {
     pub cached_group_summaries: Option<CachedGroupSummaries>,
 }
 
+fn transaction_notifier_canister_id() -> CanisterId {
+    Principal::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap()
+}
+
 fn ledger_canister_id() -> CanisterId {
     MAINNET_LEDGER_CANISTER_ID
 }
@@ -137,10 +153,12 @@ fn ledger_canister_id() -> CanisterId {
 impl Data {
     pub fn new(
         owner: Principal,
+        my_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         callback_canister_id: CanisterId,
+        transaction_notifier_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
@@ -153,8 +171,11 @@ impl Data {
             group_index_canister_id,
             notifications_canister_ids,
             callback_canister_id,
+            transaction_notifier_canister_id,
             ledger_canister_id,
             avatar: Timestamped::default(),
+            crypto_transactions: CryptoTransactions::default(),
+            address_book: AddressBook::new(my_canister_id, user_index_canister_id),
             test_mode,
             user_preferences: UserPreferences::default(),
             alerts: Alerts::default(),

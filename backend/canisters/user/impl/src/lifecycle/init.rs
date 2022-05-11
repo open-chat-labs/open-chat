@@ -18,10 +18,12 @@ fn init(args: Args) {
 
     let data = Data::new(
         args.owner,
+        env.canister_id(),
         user_index_canister_id,
         args.group_index_canister_id,
         args.notifications_canister_ids,
         args.callback_canister_id,
+        args.transaction_notifier_canister_id,
         args.ledger_canister_id,
         args.test_mode,
     );

@@ -2,8 +2,9 @@ use crate::UserId;
 use candid::CandidType;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo, Tokens};
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Cryptocurrency {
     InternetComputer,
 }
@@ -16,6 +17,17 @@ impl Cryptocurrency {
     }
 }
 
+impl FromStr for Cryptocurrency {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "ICP" => Ok(Cryptocurrency::InternetComputer),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CryptocurrencyTransaction {
     Deposit(CryptocurrencyDeposit),
@@ -23,19 +35,66 @@ pub enum CryptocurrencyTransaction {
     Transfer(CryptocurrencyTransfer),
 }
 
+impl CryptocurrencyTransaction {
+    pub fn token(&self) -> Cryptocurrency {
+        match self {
+            CryptocurrencyTransaction::Deposit(t) => t.token(),
+            CryptocurrencyTransaction::Withdrawal(t) => t.token(),
+            CryptocurrencyTransaction::Transfer(t) => t.token(),
+        }
+    }
+
+    pub fn block_index(&self) -> Option<BlockIndex> {
+        match self {
+            CryptocurrencyTransaction::Deposit(t) => Some(t.block_index()),
+            CryptocurrencyTransaction::Withdrawal(t) => t.block_index(),
+            CryptocurrencyTransaction::Transfer(t) => t.block_index(),
+        }
+    }
+
+    pub fn transaction_hash(&self) -> Option<TransactionHash> {
+        match self {
+            CryptocurrencyTransaction::Deposit(t) => Some(t.transaction_hash()),
+            CryptocurrencyTransaction::Withdrawal(t) => t.transaction_hash(),
+            CryptocurrencyTransaction::Transfer(t) => t.transaction_hash(),
+        }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CryptocurrencyDeposit {
     Completed(CompletedCryptocurrencyDeposit),
 }
 
+impl CryptocurrencyDeposit {
+    pub fn token(&self) -> Cryptocurrency {
+        match self {
+            CryptocurrencyDeposit::Completed(d) => d.token,
+        }
+    }
+
+    pub fn block_index(&self) -> BlockIndex {
+        match self {
+            CryptocurrencyDeposit::Completed(d) => d.block_index,
+        }
+    }
+
+    pub fn transaction_hash(&self) -> TransactionHash {
+        match self {
+            CryptocurrencyDeposit::Completed(d) => d.transaction_hash,
+        }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CompletedCryptocurrencyDeposit {
     pub token: Cryptocurrency,
-    pub from_address: AccountIdentifier,
+    pub from: AccountIdentifier,
     pub amount: Tokens,
     pub fee: Tokens,
     pub memo: Memo,
     pub block_index: BlockIndex,
+    pub transaction_hash: TransactionHash,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -43,6 +102,32 @@ pub enum CryptocurrencyWithdrawal {
     Pending(PendingCryptocurrencyWithdrawal),
     Completed(CompletedCryptocurrencyWithdrawal),
     Failed(FailedCryptocurrencyWithdrawal),
+}
+
+impl CryptocurrencyWithdrawal {
+    pub fn token(&self) -> Cryptocurrency {
+        match self {
+            CryptocurrencyWithdrawal::Pending(w) => w.token,
+            CryptocurrencyWithdrawal::Completed(w) => w.token,
+            CryptocurrencyWithdrawal::Failed(w) => w.token,
+        }
+    }
+
+    pub fn block_index(&self) -> Option<BlockIndex> {
+        match self {
+            CryptocurrencyWithdrawal::Pending(_) => None,
+            CryptocurrencyWithdrawal::Completed(w) => Some(w.block_index),
+            CryptocurrencyWithdrawal::Failed(_) => None,
+        }
+    }
+
+    pub fn transaction_hash(&self) -> Option<TransactionHash> {
+        match self {
+            CryptocurrencyWithdrawal::Pending(_) => None,
+            CryptocurrencyWithdrawal::Completed(w) => Some(w.transaction_hash),
+            CryptocurrencyWithdrawal::Failed(_) => None,
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -119,6 +204,22 @@ impl CryptocurrencyTransfer {
             CryptocurrencyTransfer::Pending(t) => t.token,
             CryptocurrencyTransfer::Completed(t) => t.token,
             CryptocurrencyTransfer::Failed(t) => t.token,
+        }
+    }
+
+    pub fn block_index(&self) -> Option<BlockIndex> {
+        match self {
+            CryptocurrencyTransfer::Pending(_) => None,
+            CryptocurrencyTransfer::Completed(t) => Some(t.block_index),
+            CryptocurrencyTransfer::Failed(_) => None,
+        }
+    }
+
+    pub fn transaction_hash(&self) -> Option<TransactionHash> {
+        match self {
+            CryptocurrencyTransfer::Pending(_) => None,
+            CryptocurrencyTransfer::Completed(t) => Some(t.transaction_hash),
+            CryptocurrencyTransfer::Failed(_) => None,
         }
     }
 

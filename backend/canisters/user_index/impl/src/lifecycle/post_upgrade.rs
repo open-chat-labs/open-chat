@@ -20,6 +20,10 @@ fn post_upgrade(args: Args) {
 
     data.users.rehydrate();
 
+    for user in data.users.iter() {
+        data.transaction_notifier_user_sync_queue.push(user.user_id);
+    }
+
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);
 
