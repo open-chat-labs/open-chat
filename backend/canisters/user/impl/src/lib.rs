@@ -8,7 +8,7 @@ use crate::model::user_preferences::UserPreferences;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use ic_ledger_types::AccountIdentifier;
+use ic_ledger_types::{AccountIdentifier, MAINNET_LEDGER_CANISTER_ID};
 use ledger_utils::default_ledger_account;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -116,6 +116,8 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub callback_canister_id: CanisterId,
+    #[serde(default = "ledger_canister_id")]
+    pub ledger_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
     pub user_preferences: UserPreferences,
@@ -128,6 +130,10 @@ struct Data {
     pub cached_group_summaries: Option<CachedGroupSummaries>,
 }
 
+fn ledger_canister_id() -> CanisterId {
+    MAINNET_LEDGER_CANISTER_ID
+}
+
 impl Data {
     pub fn new(
         owner: Principal,
@@ -135,6 +141,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_ids: Vec<CanisterId>,
         callback_canister_id: CanisterId,
+        ledger_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -146,6 +153,7 @@ impl Data {
             group_index_canister_id,
             notifications_canister_ids,
             callback_canister_id,
+            ledger_canister_id,
             avatar: Timestamped::default(),
             test_mode,
             user_preferences: UserPreferences::default(),

@@ -1,5 +1,5 @@
 use crate::read_state;
-use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE, MAINNET_LEDGER_CANISTER_ID};
+use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE};
 use ledger_utils::{calculate_transaction_hash, default_ledger_account};
 use types::{
     CompletedCryptocurrencyTransfer, CompletedCryptocurrencyWithdrawal, CryptocurrencyTransfer, FailedCryptocurrencyTransfer,
@@ -35,11 +35,12 @@ pub async fn process_transfer(
 async fn send_to_ledger(
     pending_transfer: PendingCryptocurrencyTransfer,
 ) -> Result<CompletedCryptocurrencyTransfer, FailedCryptocurrencyTransfer> {
-    let (my_user_id, now) = read_state(|state| {
+    let (my_user_id, ledger_canister_id, now) = read_state(|state| {
         let my_user_id = state.env.canister_id().into();
+        let ledger_canister_id = state.data.ledger_canister_id;
         let now = state.env.now();
 
-        (my_user_id, now)
+        (my_user_id, ledger_canister_id, now)
     });
 
     let memo = pending_transfer.memo.unwrap_or(Memo(0));
@@ -58,7 +59,7 @@ async fn send_to_ledger(
 
     let transaction_hash = calculate_transaction_hash(my_user_id, &transfer_args);
 
-    match ic_ledger_types::transfer(MAINNET_LEDGER_CANISTER_ID, transfer_args).await {
+    match ic_ledger_types::transfer(ledger_canister_id, transfer_args).await {
         Ok(Ok(block_index)) => {
             let completed_transfer = pending_transfer.completed(my_user_id, fee, memo, block_index, transaction_hash);
             Ok(completed_transfer)
@@ -79,14 +80,16 @@ async fn send_to_ledger(
 pub async fn withdraw(
     pending_withdrawal: PendingCryptocurrencyWithdrawal,
 ) -> Result<CompletedCryptocurrencyWithdrawal, FailedCryptocurrencyWithdrawal> {
-    let memo = pending_withdrawal.memo.unwrap_or(Memo(0));
-    let fee = pending_withdrawal.fee.unwrap_or(DEFAULT_FEE);
-    let (my_user_id, now) = read_state(|state| {
+    let (my_user_id, ledger_canister_id, now) = read_state(|state| {
         let my_user_id = state.env.canister_id().into();
+        let ledger_canister_id = state.data.ledger_canister_id;
         let now = state.env.now();
 
-        (my_user_id, now)
+        (my_user_id, ledger_canister_id, now)
     });
+
+    let memo = pending_withdrawal.memo.unwrap_or(Memo(0));
+    let fee = pending_withdrawal.fee.unwrap_or(DEFAULT_FEE);
 
     let transfer_args = TransferArgs {
         memo,
@@ -101,7 +104,7 @@ pub async fn withdraw(
 
     let transaction_hash = calculate_transaction_hash(my_user_id, &transfer_args);
 
-    match ic_ledger_types::transfer(MAINNET_LEDGER_CANISTER_ID, transfer_args).await {
+    match ic_ledger_types::transfer(ledger_canister_id, transfer_args).await {
         Ok(Ok(block_index)) => {
             let completed_withdrawal = pending_withdrawal.completed(fee, memo, block_index, transaction_hash);
             Ok(completed_withdrawal)

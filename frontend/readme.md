@@ -100,3 +100,11 @@ A good strategy for developing UI in isolation of any business logic is to try t
 To run storybook simply run `npm run storybook` and it should start running on `http://localhost:6006`.
 
 Prefer to write storybook stories as svelte components rather than using js.
+
+## Local Ledger
+
+To get ICP when testing locally, run the following command -
+
+```
+dfx --identity $IDENTITY canister call ledger send_dfx '(record { memo = 0; amount = record { e8s = 1000000000 }; fee = record { e8s = 0 }; to = "$LEDGER_ACCOUNT" })'
+```

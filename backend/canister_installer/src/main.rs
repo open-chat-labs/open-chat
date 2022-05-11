@@ -16,6 +16,7 @@ async fn main() {
         online_users_aggregator: opts.online_users_aggregator,
         callback: opts.callback,
         open_storage_index: opts.open_storage_index,
+        ledger: opts.ledger,
     };
 
     let identity = get_dfx_identity(&opts.controller);
@@ -36,4 +37,5 @@ struct Opts {
     online_users_aggregator: CanisterId,
     callback: CanisterId,
     open_storage_index: CanisterId,
+    ledger: CanisterId,
 }

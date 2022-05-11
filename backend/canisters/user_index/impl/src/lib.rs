@@ -5,6 +5,7 @@ use crate::model::user_map::UserMap;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
+use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
@@ -124,11 +125,17 @@ struct Data {
     pub callback_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
+    #[serde(default = "ledger_canister_id")]
+    pub ledger_canister_id: CanisterId,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub super_admins: HashSet<UserId>,
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
     pub challenges: Challenges,
+}
+
+fn ledger_canister_id() -> CanisterId {
+    MAINNET_LEDGER_CANISTER_ID
 }
 
 impl Data {
@@ -142,6 +149,7 @@ impl Data {
         online_users_aggregator_canister_id: CanisterId,
         callback_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
+        ledger_canister_id: CanisterId,
         canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Self {
@@ -160,6 +168,7 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id,
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            ledger_canister_id,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),
@@ -187,6 +196,7 @@ impl Default for Data {
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id: Principal::anonymous(),
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            ledger_canister_id: Principal::anonymous(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),
