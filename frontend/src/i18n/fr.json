@@ -212,7 +212,6 @@
     "yesterday": "Hier",
     "chatNotFound": "Désolé - nous n'avons pas pu trouver le chat sélectionné",
     "leftGroup": "Vous avez réussi à quitter le groupe",
-    "failedToLeaveGroup": "Une erreur s'est produite lors de la saisie pour vous retirer du groupe",
     "lastAdmin": "Vous ne pouvez pas quitter le groupe car vous êtes le seul administrateur",
     "ownerCantLeave": "Vous devez transférer la propriété avant de pouvoir quitter le groupe",
     "owner": "propriétaire",
@@ -522,5 +521,6 @@
     "thisIsPrivateGroupWithN": "Ceci est un groupe privé avec {number} membres",
     "copy": "Copie",
     "failedToShareLink": "Impossible de partager le lien",
-    "groupInviteChangedBy": "{changedBy} {changed} l'invitation du groupe"
+    "groupInviteChangedBy": "{changedBy} {changed} l'invitation du groupe",
+    "failedToLeaveGroup": "Une erreur s'est produite lors de la tentative de suppression de vous du groupe"
 }

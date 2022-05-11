@@ -183,7 +183,6 @@
     "yesterday": "昨天",
     "chatNotFound": "抱歉 - 找不到该群",
     "leftGroup": "您已离开该群聊",
-    "failedToLeaveGroup": "离开群聊失败",
     "lastAdmin": "您是唯一的管理员，所以离开群聊失败",
     "ownerCantLeave": "您必须在离开群聊之前转交群主",
     "owner": "群主",
@@ -522,5 +521,6 @@
     "thisIsPrivateGroupWithN": "这是一个有 {number} 成员的私人群组",
     "copy": "复制",
     "failedToShareLink": "分享链接失败",
-    "groupInviteChangedBy": "{changedBy} {changed} 群组邀请"
+    "groupInviteChangedBy": "{changedBy} {changed} 群组邀请",
+    "failedToLeaveGroup": "尝试将您从群组中移除时出错"
 }

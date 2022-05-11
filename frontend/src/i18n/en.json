@@ -228,7 +228,7 @@
     "yesterday": "Yesterday",
     "chatNotFound": "Sorry - we couldn't find the selected chat",
     "leftGroup": "You have successfully left the group",
-    "failedToLeaveGroup": "There was an error typing to remove you from the group",
+    "failedToLeaveGroup": "There was an error trying to remove you from the group",
     "lastAdmin": "You can't leave the group as you are the only admin",
     "ownerCantLeave": "You must transfer ownership before you can leave the group",
     "owner": "owner",

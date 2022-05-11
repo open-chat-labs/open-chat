@@ -213,7 +213,6 @@
     "yesterday": "Ieri",
     "chatNotFound": "Spiacenti, non siamo riusciti a trovare la chat selezionata",
     "leftGroup": "Hai lasciato con successo il gruppo",
-    "failedToLeaveGroup": "Si è verificato un errore durante la digitazione per rimuoverti dal gruppo",
     "lastAdmin": "Non puoi lasciare il gruppo perché sei l'unico amministratore",
     "ownerCantLeave": "Devi trasferire la proprietà prima di poter lasciare il gruppo",
     "owner": "proprietario",
@@ -522,5 +521,6 @@
     "thisIsPrivateGroupWithN": "Questo è un gruppo privato con {number} membri",
     "copy": "copia",
     "failedToShareLink": "Impossibile condividere il collegamento",
-    "groupInviteChangedBy": "{changedBy} {changed} l'invito del gruppo"
+    "groupInviteChangedBy": "{changedBy} {changed} l'invito del gruppo",
+    "failedToLeaveGroup": "Si è verificato un errore durante il tentativo di rimuoverti dal gruppo"
 }
