@@ -128,7 +128,6 @@
     "ownershipTransferredBy": "{changedBy} a transféré la propriété du groupe à {changed} 🎉",
     "historyVisible": "historique de chat visible",
     "historyOnInfo": "L'historique complet des discussions sera visible pour les nouveaux membres. Attention maintenant ! 🤐",
-    "historyOffInfo": "Détendez-vous - les nouveaux membres ne verront les messages arriver qu'après leur inscription. 🤫",
     "privateGroupInfo": "Ce groupe sera limité aux personnes que vous aurez choisies.",
     "publicGroupUnique": "Les noms de groupe public doivent être uniques.",
     "publicGroupInfo": "Tout le monde pourra découvrir et rejoindre ce groupe.",
@@ -420,7 +419,8 @@
             "reset": "réinitialiser"
         },
         "welcome": "Bienvenue à",
-        "historyPrivateMessage": "Les anciens messages ne sont pas visibles pour les nouveaux membres"
+        "historyPrivateMessage": "Les anciens messages ne sont pas visibles pour les nouveaux membres",
+        "privateGroupInfo": "Les utilisateurs ne peuvent pas rejoindre ce groupe librement. Ils doivent être ajoutés ou invités par un membre autorisé."
     },
     "updateNow": "recharger maintenant",
     "updateRequired": "Une nouvelle version d'OpenChat est disponible - rechargement dans {countdown}s",
@@ -522,5 +522,6 @@
     "copy": "Copie",
     "failedToShareLink": "Impossible de partager le lien",
     "groupInviteChangedBy": "{changedBy} {changed} l'invitation du groupe",
-    "failedToLeaveGroup": "Une erreur s'est produite lors de la tentative de suppression de vous du groupe"
+    "failedToLeaveGroup": "Une erreur s'est produite lors de la tentative de suppression de vous du groupe",
+    "historyOffInfo": "Les nouveaux membres ne verront les messages arriver qu'après leur adhésion. 🤫"
 }
