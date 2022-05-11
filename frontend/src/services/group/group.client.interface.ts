@@ -30,17 +30,20 @@ import type {
     ResetInviteCodeResponse,
 } from "../../domain/chat/chat";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
+import type { ServiceRetryInterrupt } from "services/candidService";
 
 export interface IGroupClient {
     chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>>;
     chatEventsWindow(
         eventIndexRange: IndexRange,
-        messageIndex: number
+        messageIndex: number,
+        interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>>;
     chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,
-        ascending: boolean
+        ascending: boolean,
+        interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>>;
     addParticipants(
         userIds: string[],

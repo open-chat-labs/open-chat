@@ -31,7 +31,7 @@ import type {
     ResetInviteCodeResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
-import { CandidService } from "../candidService";
+import { CandidService, ServiceRetryInterrupt } from "../candidService";
 import {
     apiRole,
     addParticipantsResponse,
@@ -116,7 +116,8 @@ export class GroupClient extends CandidService implements IGroupClient {
     @profile("groupClient")
     async chatEventsWindow(
         _eventIndexRange: IndexRange,
-        messageIndex: number
+        messageIndex: number,
+        interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             max_messages: MAX_MESSAGES,
@@ -127,7 +128,8 @@ export class GroupClient extends CandidService implements IGroupClient {
         return this.handleQueryResponse(
             () => this.groupService.events_window(args),
             getEventsResponse,
-            args
+            args,
+            interrupt
         );
     }
 
@@ -135,7 +137,8 @@ export class GroupClient extends CandidService implements IGroupClient {
     chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,
-        ascending: boolean
+        ascending: boolean,
+        interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
             const args = {
@@ -145,7 +148,12 @@ export class GroupClient extends CandidService implements IGroupClient {
                 start_index: index,
                 invite_code: apiOptional(base64ToBigint, this.inviteCode),
             };
-            return this.handleResponse(this.groupService.events(args), getEventsResponse, args);
+            return this.handleQueryResponse(
+                () => this.groupService.events(args),
+                getEventsResponse,
+                args,
+                interrupt
+            );
         };
 
         return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending);
