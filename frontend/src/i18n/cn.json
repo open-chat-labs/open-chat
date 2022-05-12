@@ -421,7 +421,8 @@
         },
         "welcome": "欢迎来到",
         "historyPrivateMessage": "旧消息对新成员不可见",
-        "privateGroupInfo": "用户不能自由加入该群组。他们必须由授权成员添加或邀请。"
+        "privateGroupInfo": "用户不能自由加入该群组。他们必须由授权成员添加或邀请。",
+        "permissionsUpdateFailed": "权限更新失败"
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",

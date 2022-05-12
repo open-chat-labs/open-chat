@@ -29,6 +29,7 @@ import type {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
+    UpdatePermissionsResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import { CandidService, ServiceRetryInterrupt } from "../candidService";
@@ -57,6 +58,7 @@ import {
     enableInviteCodeResponse,
     disableInviteCodeResponse,
     resetInviteCodeResponse,
+    updatePermissionsResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -269,6 +271,14 @@ export class GroupClient extends CandidService implements IGroupClient {
                 ),
             }),
             updateGroupResponse
+        );
+    }
+
+    @profile("groupClient")
+    updatePermissions(permissions: GroupPermissions): Promise<UpdatePermissionsResponse> {
+        return this.handleResponse(
+            this.groupService.update_permissions({ permissions: apiGroupPermissions(permissions) }),
+            updatePermissionsResponse
         );
     }
 

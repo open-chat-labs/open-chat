@@ -66,6 +66,7 @@ import type {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
+    UpdatePermissionsResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
@@ -238,10 +239,16 @@ export class ServiceContainer implements MarkMessagesRead {
         chatId: string,
         name: string,
         desc: string,
-        avatar?: Uint8Array,
-        permissions?: GroupPermissions
+        avatar?: Uint8Array
     ): Promise<UpdateGroupResponse> {
-        return this.getGroupClient(chatId).updateGroup(name, desc, avatar, permissions);
+        return this.getGroupClient(chatId).updateGroup(name, desc, avatar);
+    }
+
+    updatePermissions(
+        chatId: string,
+        permissions: GroupPermissions
+    ): Promise<UpdatePermissionsResponse> {
+        return this.getGroupClient(chatId).updatePermissions(permissions);
     }
 
     addParticipants(

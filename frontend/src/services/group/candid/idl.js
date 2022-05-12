@@ -638,6 +638,14 @@ export const idlFactory = ({ IDL }) => {
     'NameTaken' : IDL.Null,
     'InternalError' : IDL.Null,
   });
+  const UpdatePermissionsArgs = IDL.Record({
+    'permissions' : GroupPermissions,
+  });
+  const UpdatePermissionsResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   return IDL.Service({
     'add_participants' : IDL.Func(
         [AddParticipantsArgs],
@@ -723,6 +731,11 @@ export const idlFactory = ({ IDL }) => {
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'unpin_message' : IDL.Func([UnpinMessageArgs], [UnpinMessageResponse], []),
     'update_group' : IDL.Func([UpdateGroupArgs], [UpdateGroupResponse], []),
+    'update_permissions' : IDL.Func(
+        [UpdatePermissionsArgs],
+        [UpdatePermissionsResponse],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => { return []; };

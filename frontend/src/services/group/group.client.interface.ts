@@ -28,6 +28,7 @@ import type {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
+    UpdatePermissionsResponse,
 } from "../../domain/chat/chat";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import type { ServiceRetryInterrupt } from "services/candidService";
@@ -64,6 +65,7 @@ export interface IGroupClient {
         avatar?: Uint8Array,
         permissions?: GroupPermissions
     ): Promise<UpdateGroupResponse>;
+    updatePermissions(permissions: GroupPermissions): Promise<UpdatePermissionsResponse>;
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;
     deleteMessage(messageId: bigint): Promise<DeleteMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;

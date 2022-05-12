@@ -1220,14 +1220,9 @@ export class ChatController {
             });
     }
 
-    updateGroup(
-        name: string,
-        desc: string,
-        avatar?: Uint8Array,
-        permissions?: GroupPermissions
-    ): Promise<boolean> {
+    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<boolean> {
         return this.api
-            .updateGroup(this.chatId, name, desc, avatar, permissions)
+            .updateGroup(this.chatId, name, desc, avatar)
             .then((resp) => {
                 const err = this.groupUpdateErrorMessage(resp);
                 if (err) {
@@ -1240,6 +1235,24 @@ export class ChatController {
             .catch((err) => {
                 rollbar.error("Update group failed: ", err);
                 toastStore.showFailureToast("groupUpdateFailed");
+                return false;
+            });
+    }
+
+    updatePermissions(permissions: GroupPermissions): Promise<boolean> {
+        return this.api
+            .updatePermissions(this.chatId, permissions)
+            .then((resp) => {
+                if (resp === "success") {
+                    return true;
+                } else {
+                    toastStore.showFailureToast("group.permissionsUpdateFailed");
+                    return false;
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Update permissions failed: ", err);
+                toastStore.showFailureToast("group.permissionsUpdateFailed");
                 return false;
             });
     }

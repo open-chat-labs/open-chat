@@ -437,7 +437,8 @@
         "advanced": "Advanced",
         "welcome": "Welcome to ",
         "historyPrivateMessage": "Old messages are not visible to new members",
-        "privateGroupInfo": "Users cannot join this group freely. They must either be added or invited by an authorised member."
+        "privateGroupInfo": "Users cannot join this group freely. They must either be added or invited by an authorised member.",
+        "permissionsUpdateFailed": "Permissions update failed"
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",
