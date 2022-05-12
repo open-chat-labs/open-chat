@@ -178,12 +178,11 @@ export class UserClient extends CandidService implements IUserClient {
                 ascending: asc,
             };
 
-              return this.handleQueryResponse(
-                  () => this.userService.events(args),
-                  getEventsResponse,
-                  args
-              );
-
+            return this.handleQueryResponse(
+                () => this.userService.events(args),
+                getEventsResponse,
+                args
+            );
         };
 
         return getChatEventsInLoop(getChatEventsFunc, eventIndexRange, startIndex, ascending);
