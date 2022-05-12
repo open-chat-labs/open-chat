@@ -133,7 +133,7 @@
     "ownershipTransferredBy": "{changedBy} transferred group ownership to {changed} 🎉",
     "historyVisible": "visible chat history",
     "historyOnInfo": "Full chat history will be visible to new joiners. Careful now! 🤐",
-    "historyOffInfo": "Relax - new joiners will only see messages arriving after they join. 🤫",
+    "historyOffInfo": "New joiners will only see messages arriving after they join. 🤫",
     "privateGroupInfo": "This group will be limited to the people that you choose.",
     "publicGroupUnique": "Public group names must be unique.",
     "publicGroupInfo": "Anyone will be able to discover and join this group.",
@@ -228,7 +228,7 @@
     "yesterday": "Yesterday",
     "chatNotFound": "Sorry - we couldn't find the selected chat",
     "leftGroup": "You have successfully left the group",
-    "failedToLeaveGroup": "There was an error typing to remove you from the group",
+    "failedToLeaveGroup": "There was an error trying to remove you from the group",
     "lastAdmin": "You can't leave the group as you are the only admin",
     "ownerCantLeave": "You must transfer ownership before you can leave the group",
     "owner": "owner",
@@ -436,7 +436,8 @@
         },
         "advanced": "Advanced",
         "welcome": "Welcome to ",
-        "historyPrivateMessage": "Old messages are not visible to new members"
+        "historyPrivateMessage": "Old messages are not visible to new members",
+        "privateGroupInfo": "Users cannot join this group freely. They must either be added or invited by an authorised member."
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",

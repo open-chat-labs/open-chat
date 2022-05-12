@@ -98,7 +98,6 @@
     "ownershipTransferredBy": "{changedBy} 将群主转交给 {changed} 🎉",
     "historyVisible": "可见的聊天记录",
     "historyOnInfo": "请注意，新入群的用户可以看见全部的聊天记录 🤐",
-    "historyOffInfo": "新入群的用户不能查看历史消息 🤫",
     "privateGroupInfo": "此群仅对指定成员可见",
     "publicGroupUnique": "公开群聊的名字不可与其他群聊重复",
     "publicGroupInfo": "任何人都可以搜索和加入此群",
@@ -183,7 +182,6 @@
     "yesterday": "昨天",
     "chatNotFound": "抱歉 - 找不到该群",
     "leftGroup": "您已离开该群聊",
-    "failedToLeaveGroup": "离开群聊失败",
     "lastAdmin": "您是唯一的管理员，所以离开群聊失败",
     "ownerCantLeave": "您必须在离开群聊之前转交群主",
     "owner": "群主",
@@ -422,7 +420,8 @@
             "reset": "重启"
         },
         "welcome": "欢迎来到",
-        "historyPrivateMessage": "旧消息对新成员不可见"
+        "historyPrivateMessage": "旧消息对新成员不可见",
+        "privateGroupInfo": "用户不能自由加入该群组。他们必须由授权成员添加或邀请。"
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",
@@ -522,5 +521,7 @@
     "thisIsPrivateGroupWithN": "这是一个有 {number} 成员的私人群组",
     "copy": "复制",
     "failedToShareLink": "分享链接失败",
-    "groupInviteChangedBy": "{changedBy} {changed} 群组邀请"
+    "groupInviteChangedBy": "{changedBy} {changed} 群组邀请",
+    "failedToLeaveGroup": "尝试将您从群组中移除时出错",
+    "historyOffInfo": "新加入者只会看到他们加入后到达的消息。 🤫"
 }

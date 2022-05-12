@@ -83,6 +83,7 @@
     let joining: GroupChatSummary | undefined = undefined;
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
     let share: Share = { title: "", text: "", url: "", files: [] };
+    let interruptRecommended = false;
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -162,6 +163,7 @@
                     }
                 } else {
                     recommendedGroups = { kind: "idle" };
+                    interruptRecommended = true;
                     controller.selectChat(chatId, messageIndex);
                 }
             }
@@ -407,11 +409,14 @@
     }
 
     function whatsHot() {
-        recommendedGroups = { kind: "loading" };
         controller.clearSelectedChat();
-        api.getRecommendedGroups()
-            .then((resp) => (recommendedGroups = { kind: "success", data: resp }))
-            .catch((err) => (recommendedGroups = { kind: "error", error: err.toString() }));
+        tick().then(() => {
+            interruptRecommended = false;
+            recommendedGroups = { kind: "loading" };
+            api.getRecommendedGroups((_n: number) => interruptRecommended)
+                .then((resp) => (recommendedGroups = { kind: "success", data: resp }))
+                .catch((err) => (recommendedGroups = { kind: "error", error: err.toString() }));
+        });
     }
 
     function upgrade(ev: CustomEvent<"explain" | "icp" | "sms">) {

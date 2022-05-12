@@ -66,6 +66,7 @@ const defaultGroupChat: GroupChatSummary = {
     readByMe: new DRange(),
     latestMessage: undefined,
     public: true,
+    historyVisibleToNewJoiners: false,
     joined: BigInt(0),
     minVisibleEventIndex: 0,
     minVisibleMessageIndex: 0,

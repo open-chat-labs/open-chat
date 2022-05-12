@@ -122,7 +122,6 @@
     "ownershipTransferredBy": "{changedBy} transfirió la propiedad del grupo a {changed} 🎉",
     "historyVisible": "historial de chat visible",
     "historyOnInfo": "El historial de chat completo será visible para los nuevos miembros. ¡Cuidado ahora! 🤐",
-    "historyOffInfo": "Relájate: los nuevos miembros solo verán los mensajes que lleguen después de unirse. 🤫",
     "privateGroupInfo": "Este grupo estará limitado a las personas que elijas.",
     "publicGroupUnique": "Los nombres de grupos públicos deben ser únicos.",
     "publicGroupInfo": "Cualquiera podrá descubrir y unirse a este grupo.",
@@ -207,7 +206,6 @@
     "yesterday": "Ayer",
     "chatNotFound": "Lo sentimos, no pudimos encontrar el chat seleccionado",
     "leftGroup": "Has salido del grupo con éxito",
-    "failedToLeaveGroup": "Hubo un error al escribir para eliminarte del grupo",
     "lastAdmin": "No puedes abandonar el grupo ya que eres el único administrador",
     "ownerCantLeave": "Debes transferir la propiedad antes de poder abandonar el grupo",
     "owner": "dueño",
@@ -423,7 +421,8 @@
             "reset": "Reiniciar"
         },
         "welcome": "Bienvenido a",
-        "historyPrivateMessage": "Los mensajes antiguos no son visibles para los nuevos miembros."
+        "historyPrivateMessage": "Los mensajes antiguos no son visibles para los nuevos miembros.",
+        "privateGroupInfo": "Los usuarios no pueden unirse a este grupo libremente. Deben ser agregados o invitados por un miembro autorizado."
     },
     "updateNow": "recargar ahora",
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",
@@ -523,5 +522,7 @@
     "thisIsPrivateGroupWithN": "Este es un grupo privado con miembros {number}",
     "copy": "Dupdo",
     "failedToShareLink": "No se pudo compartir el enlace",
-    "groupInviteChangedBy": "{changedBy} {changed} la invitación del grupo"
+    "groupInviteChangedBy": "{changedBy} {changed} la invitación del grupo",
+    "failedToLeaveGroup": "Se ha producido un error al intentar eliminarte del grupo.",
+    "historyOffInfo": "Los nuevos miembros solo verán los mensajes que lleguen después de unirse. 🤫"
 }

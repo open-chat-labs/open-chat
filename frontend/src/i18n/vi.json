@@ -123,7 +123,6 @@
     "ownershipTransferredBy": "{changedBy} đã chuyển quyền sở hữu nhóm cho {changed} 🎉",
     "historyVisible": "Hiển thị lịch sử trò chuyện",
     "historyOnInfo": "Toàn bộ lịch sử trò chuyện sẽ hiển thị cho những thành mới. Vui lòng cẩn trọng! 🤐",
-    "historyOffInfo": "Những người mới tham gia sẽ chỉ thấy tin nhắn đến sau khi họ tham gia.🤫",
     "privateGroupInfo": "Nhóm này sẽ được giới hạn cho những người mà bạn chọn",
     "publicGroupUnique": "Tên nhóm công khai không được lặp lại",
     "publicGroupInfo": "Bất kỳ ai cũng có thể tham gia nhóm này",
@@ -208,7 +207,6 @@
     "yesterday": "Hôm qua",
     "chatNotFound": "Xin lỗi, chúng tôi không thể tìm thấy nội dung cuộc trò chuyện đã chọn",
     "leftGroup": "Bạn đã rời khỏi nhóm",
-    "failedToLeaveGroup": "Đã xảy ra lỗi trong qua trình rời khỏi nhóm",
     "lastAdmin": "Bạn không thể rời nhóm vì bạn là Quản Trị Viên duy nhất",
     "ownerCantLeave": "Bạn phải chuyển quyền sở hữu trước khi có thể rời khỏi nhóm",
     "owner": "Chủ",
@@ -423,7 +421,8 @@
             "reset": "cài lại"
         },
         "welcome": "Chào mừng bạn đến",
-        "historyPrivateMessage": "Các tin nhắn cũ không hiển thị với các thành viên mới"
+        "historyPrivateMessage": "Các tin nhắn cũ không hiển thị với các thành viên mới",
+        "privateGroupInfo": "Người dùng không thể tham gia nhóm này một cách tự do. Họ phải được thêm vào hoặc được mời bởi một thành viên được ủy quyền."
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",
@@ -523,5 +522,7 @@
     "thisIsPrivateGroupWithN": "Đây là một nhóm riêng tư có {number} thành viên",
     "copy": "Sao chép",
     "failedToShareLink": "Không chia sẻ được liên kết",
-    "groupInviteChangedBy": "{changedBy} {changed} mời nhóm"
+    "groupInviteChangedBy": "{changedBy} {changed} mời nhóm",
+    "failedToLeaveGroup": "Đã xảy ra lỗi khi cố gắng xóa bạn khỏi nhóm",
+    "historyOffInfo": "Những người mới tham gia sẽ chỉ thấy tin nhắn đến sau khi họ tham gia. 🤫"
 }

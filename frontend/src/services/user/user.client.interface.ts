@@ -14,7 +14,6 @@ import type {
     MarkReadResponse,
     Message,
     IndexRange,
-    EventWrapper,
     ToggleReactionResponse,
     DeleteMessageResponse,
     JoinGroupResponse,
@@ -32,6 +31,7 @@ import type {
     SearchAllMessagesResponse,
 } from "../../domain/search/search";
 import type { SetBioResponse, UserSummary } from "../../domain/user/user";
+import type { ServiceRetryInterrupt } from "services/candidService";
 
 export interface IUserClient {
     userId: string;
@@ -48,7 +48,8 @@ export interface IUserClient {
     chatEventsWindow(
         eventIndexRange: IndexRange,
         userId: string,
-        messageIndex: number
+        messageIndex: number,
+        interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>>;
     chatEventsByIndex(
         eventIndexes: number[],
@@ -59,8 +60,7 @@ export interface IUserClient {
         userId: string,
         startIndex: number,
         ascending: boolean,
-        previouslyLoadedEvents?: EventWrapper<DirectChatEvent>[],
-        iterations?: number
+        interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
     editMessage(recipientId: string, message: Message): Promise<EditMessageResponse>;
@@ -98,7 +98,7 @@ export interface IUserClient {
         chatId: string,
         muted: boolean
     ): Promise<ToggleMuteNotificationResponse>;
-    getRecommendedGroups(): Promise<GroupChatSummary[]>;
+    getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]>;
     dismissRecommendation(chatId: string): Promise<void>;
     getBio(): Promise<string>;
     setBio(bio: string): Promise<SetBioResponse>;

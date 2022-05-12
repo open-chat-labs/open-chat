@@ -226,13 +226,18 @@
             {:else}
                 <h4>{$_("group.privateGroup")}</h4>
             {/if}
-
             <div class="info">
                 {#if originalGroup.public}
                     <p>{$_("publicGroupInfo")}</p>
-                    <p>{$_("publicGroupUnique")}</p>
                 {:else}
-                    <p>{$_("privateGroupInfo")}</p>
+                    <p>{$_("group.privateGroupInfo")}</p>
+                {/if}
+                {#if !originalGroup.public}
+                    {#if originalGroup.historyVisibleToNewJoiners}
+                        <p>{$_("historyOnInfo")}</p>
+                    {:else}
+                        <p>{$_("historyOffInfo")}</p>
+                    {/if}
                 {/if}
             </div>
         </CollapsibleCard>

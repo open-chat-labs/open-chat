@@ -11,6 +11,9 @@ function debug(msg: string): void {
     console.log(msg);
 }
 
+// This is a fn which will be given the retry iteration number and return a boolean indicating whether to *stop* retrying
+export type ServiceRetryInterrupt = (iterations: number) => boolean;
+
 export abstract class CandidService {
     protected createServiceClient<T>(factory: IDL.InterfaceFactory, canisterId: string): T {
         const agent = new HttpAgent({ identity: this.identity });
@@ -38,6 +41,7 @@ export abstract class CandidService {
         serviceCall: () => Promise<From>,
         mapper: (from: From) => To,
         args?: unknown,
+        interrupt?: ServiceRetryInterrupt,
         retries = 0
     ): Promise<To> {
         return serviceCall()
@@ -47,13 +51,20 @@ export abstract class CandidService {
                 if (
                     !(httpErr instanceof SessionExpiryError) &&
                     !(httpErr instanceof AuthError) &&
-                    retries < MAX_RETRIES
+                    retries < MAX_RETRIES &&
+                    !(interrupt && interrupt(retries)) // bail out of the retry if the caller tells us to
                 ) {
                     const delay = RETRY_DELAY * Math.pow(2, retries);
                     return new Promise((resolve, reject) => {
                         debug(`query: error occurred, retrying in ${delay}ms`);
                         window.setTimeout(() => {
-                            this.handleQueryResponse(serviceCall, mapper, args, retries + 1)
+                            this.handleQueryResponse(
+                                serviceCall,
+                                mapper,
+                                args,
+                                interrupt,
+                                retries + 1
+                            )
                                 .then(resolve)
                                 .catch(reject);
                         }, delay);

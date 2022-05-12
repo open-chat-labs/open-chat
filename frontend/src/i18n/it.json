@@ -128,7 +128,6 @@
     "ownershipTransferredBy": "{changedBy} ha trasferito la proprietà del gruppo a {changed} 🎉",
     "historyVisible": "cronologia chat visibile",
     "historyOnInfo": "La cronologia completa della chat sarà visibile ai nuovi iscritti. Attento ora! 🤐",
-    "historyOffInfo": "Rilassati: i nuovi iscritti vedranno i messaggi in arrivo solo dopo l'adesione. 🤫",
     "privateGroupInfo": "Questo gruppo sarà limitato alle persone che scegli.",
     "publicGroupUnique": "I nomi dei gruppi pubblici devono essere univoci.",
     "publicGroupInfo": "Chiunque potrà scoprire e unirsi a questo gruppo.",
@@ -213,7 +212,6 @@
     "yesterday": "Ieri",
     "chatNotFound": "Spiacenti, non siamo riusciti a trovare la chat selezionata",
     "leftGroup": "Hai lasciato con successo il gruppo",
-    "failedToLeaveGroup": "Si è verificato un errore durante la digitazione per rimuoverti dal gruppo",
     "lastAdmin": "Non puoi lasciare il gruppo perché sei l'unico amministratore",
     "ownerCantLeave": "Devi trasferire la proprietà prima di poter lasciare il gruppo",
     "owner": "proprietario",
@@ -422,7 +420,8 @@
             "reset": "Ripristina"
         },
         "welcome": "Benvenuto a",
-        "historyPrivateMessage": "I vecchi messaggi non sono visibili ai nuovi membri"
+        "historyPrivateMessage": "I vecchi messaggi non sono visibili ai nuovi membri",
+        "privateGroupInfo": "Gli utenti non possono unirsi a questo gruppo liberamente. Devono essere aggiunti o invitati da un membro autorizzato."
     },
     "updateNow": "ricarica ora",
     "updateRequired": "È disponibile una nuova versione di OpenChat, che si ricarica tra {countdown}s",
@@ -522,5 +521,7 @@
     "thisIsPrivateGroupWithN": "Questo è un gruppo privato con {number} membri",
     "copy": "copia",
     "failedToShareLink": "Impossibile condividere il collegamento",
-    "groupInviteChangedBy": "{changedBy} {changed} l'invito del gruppo"
+    "groupInviteChangedBy": "{changedBy} {changed} l'invito del gruppo",
+    "failedToLeaveGroup": "Si è verificato un errore durante il tentativo di rimuoverti dal gruppo",
+    "historyOffInfo": "I nuovi iscritti vedranno i messaggi in arrivo solo dopo l'adesione. 🤫"
 }
