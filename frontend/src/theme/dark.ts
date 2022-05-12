@@ -153,10 +153,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
             "disabled-bd": "#999999",
         },
 
-        link: {
-            underline: "#085d8c",
-        },
-
         modal: {
             bg: dark20,
             txt: dark60,
