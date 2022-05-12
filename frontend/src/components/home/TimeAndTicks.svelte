@@ -62,6 +62,7 @@
         align-items: center;
         float: right;
         margin-top: 7px;
+        pointer-events: none;
 
         @include mobile() {
             margin-top: 4px;
