@@ -143,47 +143,49 @@
         triggerTypingTimer();
     }
 
-    function triggerEmojiLookup(inputContent: string | null): void {
+    function uptoCaret(
+        inputContent: string | null,
+        fn: (slice: string, pos: number) => void
+    ): void {
         if (inputContent === null) return;
 
         const pos = window.getSelection()?.anchorOffset;
         if (pos === undefined) return;
 
         const slice = inputContent.slice(0, pos);
+        fn(slice, pos);
+    }
 
-        const matches = slice.match(emojiRegex);
-        if (matches !== null) {
-            if (matches.index !== undefined) {
-                rangeToReplace = [matches.index, pos];
-                emojiQuery = matches[1].toLowerCase() || undefined;
-                showEmojiSearch = true;
+    function triggerEmojiLookup(inputContent: string | null): void {
+        uptoCaret(inputContent, (slice: string, pos: number) => {
+            const matches = slice.match(emojiRegex);
+            if (matches !== null) {
+                if (matches.index !== undefined) {
+                    rangeToReplace = [matches.index, pos];
+                    emojiQuery = matches[1].toLowerCase() || undefined;
+                    showEmojiSearch = true;
+                }
+            } else {
+                showEmojiSearch = false;
+                emojiQuery = undefined;
             }
-        } else {
-            showEmojiSearch = false;
-            emojiQuery = undefined;
-        }
+        });
     }
 
     function triggerMentionLookup(inputContent: string | null): void {
-        if (inputContent === null) return;
-
-        const pos = window.getSelection()?.anchorOffset;
-        if (pos === undefined) return;
-
-        const slice = inputContent.slice(0, pos);
-
-        const matches = slice.match(mentionRegex);
-        if (matches !== null) {
-            if (matches.index !== undefined) {
-                rangeToReplace = [matches.index, pos];
-                mentionPrefix = matches[1].toLowerCase() || undefined;
-                showMentionPicker = true;
-                saveSelection();
+        uptoCaret(inputContent, (slice: string, pos: number) => {
+            const matches = slice.match(mentionRegex);
+            if (matches !== null) {
+                if (matches.index !== undefined) {
+                    rangeToReplace = [matches.index, pos];
+                    mentionPrefix = matches[1].toLowerCase() || undefined;
+                    showMentionPicker = true;
+                }
+            } else {
+                showMentionPicker = false;
+                mentionPrefix = undefined;
             }
-        } else {
-            showMentionPicker = false;
-            mentionPrefix = undefined;
-        }
+        });
     }
 
     function triggerTypingTimer() {
