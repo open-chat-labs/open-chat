@@ -41,6 +41,7 @@
             </p>
         {/if}
         <iframe
+            class:pinned
             class:fill
             width="100%"
             {height}
@@ -64,5 +65,9 @@
 
     iframe:not(.fill) {
         border-radius: $sp3;
+    }
+
+    iframe.pinned {
+        pointer-events: none;
     }
 </style>
