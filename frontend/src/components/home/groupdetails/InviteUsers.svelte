@@ -32,6 +32,8 @@
     $: link =
         `${window.location.origin}/#/${group.chatId}` + (!group.public ? `/?code=${code}` : "");
 
+    $: spinner = loading && code === undefined;
+
     onMount(() => {
         if (group.public) {
             ready = true;
@@ -143,10 +145,11 @@
                 id={"enable-invite-link"}
                 on:change={toggleLink}
                 disabled={loading}
+                waiting={loading}
                 label={$_("group.invite.enableLink")}
                 bind:checked />
 
-            <div class:loading />
+            <div class:spinner />
         </div>
     {/if}
     {#if group.public || (code !== undefined && checked)}
@@ -198,7 +201,7 @@
         display: flex;
         justify-content: space-between;
 
-        .loading {
+        .spinner {
             top: -12px;
             left: -16px;
             @include loading-spinner(1.5em, 0.5em, false, var(--button-spinner));

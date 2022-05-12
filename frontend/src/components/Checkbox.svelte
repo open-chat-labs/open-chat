@@ -2,13 +2,14 @@
     import { rtlStore } from "../stores/rtl";
     export let checked: boolean = false;
     export let disabled: boolean = false;
+    export let waiting: boolean = false;
     export let id: string;
     export let label: string | undefined;
     export let toggle: boolean = false;
     export let small: boolean = false; // only applies to toggles
 </script>
 
-<div class="checkbox" class:toggle class:rtl={$rtlStore}>
+<div class="checkbox" class:toggle class:waiting class:disabled class:rtl={$rtlStore}>
     <input {id} type="checkbox" bind:checked {disabled} on:change />
     <label class:small for={id}>{label}</label>
 </div>
@@ -90,6 +91,19 @@
 
         label:active:after {
             width: 60px;
+        }
+    }
+
+    .toggle {
+        &.disabled {
+            label {
+                cursor: default;
+            }
+        }
+        &.waiting {
+            label {
+                cursor: wait;
+            }
         }
     }
 </style>
