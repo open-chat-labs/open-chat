@@ -23,7 +23,6 @@
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "utils/urls";
     import { allQuestions, Questions } from "../../domain/faq";
-    import { replace } from "svelte-spa-router";
 
     export let controller: ChatController;
     export let blocked: boolean;
