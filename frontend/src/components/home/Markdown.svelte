@@ -83,7 +83,9 @@
         }
 
         try {
-            sanitized = DOMPurify.sanitize(parsed, { ALLOWED_ATTR: ["target", "href", "class"] });
+            sanitized = DOMPurify.sanitize(parsed, {
+                ALLOWED_ATTR: ["target", "href", "class"],
+            });
         } catch (err: any) {
             rollbar.error("Error sanitzing message content: ", err);
         }

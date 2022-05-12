@@ -182,6 +182,7 @@
             padding: 0;
             overflow: hidden;
             border: none;
+            line-height: 0;
         }
 
         &.deleted {

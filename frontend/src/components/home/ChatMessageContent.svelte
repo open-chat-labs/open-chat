@@ -32,7 +32,7 @@
 </script>
 
 {#if content.kind === "text_content"}
-    <TextContent {truncate} {pinned} {messageId} {content} {edited} />
+    <TextContent {fill} {truncate} {pinned} {messageId} {content} {edited} {height} />
 {:else if content.kind === "image_content"}
     <ImageObserver let:intersecting>
         <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
