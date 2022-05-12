@@ -243,6 +243,18 @@ type UpdateGroupResponse =
         InternalError;
     };
 
+type UpdatePermissionsArgs =
+    record {
+        permissions: GroupPermissions;
+    };
+
+type UpdatePermissionsResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        CallerNotInGroup;
+    };
+
 type PinMessageArgs =
     record {
         message_index: MessageIndex;
@@ -437,6 +449,7 @@ service: {
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group: (UpdateGroupArgs) -> (UpdateGroupResponse);
+    update_permissions: (UpdatePermissionsArgs) -> (UpdatePermissionsResponse);
     pin_message: (PinMessageArgs) -> (PinMessageResponse);
     unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
