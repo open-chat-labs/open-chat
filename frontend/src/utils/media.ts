@@ -130,10 +130,8 @@ export function fillMessage(msg: Message): boolean {
             msg.repliesTo === undefined
         );
     } else if (msg.content.kind === "text_content" && isSocialVideoLink(msg.content.text)) {
-        console.log("is video message");
         return true;
     } else {
-        console.log("Fill content: ", msg.content);
         return false;
     }
 }
