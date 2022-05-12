@@ -6,6 +6,7 @@
     import { _ } from "svelte-i18n";
     import type { TextContent } from "../../domain/chat/chat";
     import { addEditedSuffix } from "../../domain/chat/chat.utils";
+    import { youtubeRegex } from "../../utils/media";
 
     const SIZE_LIMIT = 1000;
     export let content: TextContent;
@@ -13,6 +14,8 @@
     export let pinned: boolean = false;
     export let messageId: bigint;
     export let edited: boolean;
+    export let height: number | undefined = undefined;
+    export let fill: boolean;
 
     function truncateText(text: string): string {
         // todo - we might be able to do something nicer than this with pure css, but we just need to do
@@ -23,8 +26,43 @@
 
         return addEditedSuffix(text, edited);
     }
+
+    $: text = truncateText($translationStore.get(Number(messageId)) ?? content.text);
+    $: socialVideoMatch = content.text.match(youtubeRegex());
 </script>
 
-<Markdown
-    suppressLinks={pinned}
-    text={truncateText($translationStore.get(Number(messageId)) ?? content.text)} />
+{#if !socialVideoMatch}
+    <Markdown suppressLinks={pinned} {text} />
+{:else}
+    <div class="social-video">
+        {#if socialVideoMatch[0] !== content.text}
+            <p class="social-video-txt">
+                <Markdown suppressLinks={pinned} {text} />
+            </p>
+        {/if}
+        <iframe
+            class:fill
+            width="100%"
+            {height}
+            src={`https://www.youtube.com/embed/${socialVideoMatch[1] ?? socialVideoMatch[2]}`}
+            title="YouTube video player"
+            frameborder="0"
+            allow="accelerometer;
+                    autoplay;
+                    clipboard-write;
+                    encrypted-media;
+                    gyroscope;
+                    picture-in-picture"
+            allowfullscreen />
+    </div>
+{/if}
+
+<style type="text/scss">
+    .social-video-txt {
+        margin-bottom: $sp3;
+    }
+
+    iframe:not(.fill) {
+        border-radius: $sp3;
+    }
+</style>
