@@ -4,6 +4,7 @@
 
     export let checked: boolean = false;
     export let disabled: boolean = false;
+    export let waiting: boolean = false;
     export let label: string | undefined = undefined;
     export let id: string;
     export let small: boolean = false;
@@ -11,7 +12,7 @@
 
 <div class="toggle-wrapper">
     <div class="toggle">
-        <Checkbox {small} {disabled} {id} toggle={true} on:change {label} bind:checked />
+        <Checkbox {small} {disabled} {waiting} {id} toggle={true} on:change {label} bind:checked />
     </div>
     {#if label !== undefined}
         <div class="label">

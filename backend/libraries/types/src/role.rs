@@ -26,18 +26,18 @@ impl From<FallbackRole> for Role {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupPermissions {
-    change_permissions: PermissionRole,
-    change_roles: PermissionRole,
-    add_members: PermissionRole,
-    remove_members: PermissionRole,
-    block_users: PermissionRole,
-    delete_messages: PermissionRole,
-    update_group: PermissionRole,
-    pin_messages: PermissionRole,
-    invite_users: PermissionRole,
-    create_polls: PermissionRole,
-    send_messages: PermissionRole,
-    react_to_messages: PermissionRole,
+    pub change_permissions: PermissionRole,
+    pub change_roles: PermissionRole,
+    pub add_members: PermissionRole,
+    pub remove_members: PermissionRole,
+    pub block_users: PermissionRole,
+    pub delete_messages: PermissionRole,
+    pub update_group: PermissionRole,
+    pub pin_messages: PermissionRole,
+    pub invite_users: PermissionRole,
+    pub create_polls: PermissionRole,
+    pub send_messages: PermissionRole,
+    pub react_to_messages: PermissionRole,
 }
 
 impl Default for GroupPermissions {

@@ -129,8 +129,11 @@ export function fillMessage(msg: Message): boolean {
             (msg.content.caption === undefined || msg.content.caption === "") &&
             msg.repliesTo === undefined
         );
+    } else if (msg.content.kind === "text_content" && isSocialVideoLink(msg.content.text)) {
+        return true;
+    } else {
+        return false;
     }
-    return false;
 }
 
 export function resizeImage(blobUrl: string, mimeType: string): Promise<MediaExtract> {
@@ -244,4 +247,47 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
             resolve(content);
         };
     });
+}
+
+/** Youtube link handling */
+export const youtubeRegex = (): RegExp =>
+    /https:\/\/(?:www.youtube.com\/watch\?v=([^/\s]*)|youtu.be\/([^/\s]*))/i;
+
+export function isYoutubeLink(text: string): boolean {
+    return matchesLink(text, text.match(youtubeRegex()));
+}
+
+export function containsYoutubeLink(text: string): boolean {
+    return containsLink(text, text.match(youtubeRegex()));
+}
+
+/** DSocial link handling - not currently used */
+export const dsocialRegex = (): RegExp =>
+    /https:\/\/(?:dsocial.app|dwqte-viaaa-aaaai-qaufq-cai.ic0.app)\/([^ /]*)(?:[^ ]*)/i;
+
+export function isDsocialLink(text: string): boolean {
+    return matchesLink(text, text.match(dsocialRegex()));
+}
+
+export function containsDsocialLink(text: string): boolean {
+    return containsLink(text, text.match(dsocialRegex()));
+}
+
+/** indicates that the message is a video link and nothing else */
+export function isSocialVideoLink(text: string): boolean {
+    return isYoutubeLink(text);
+}
+
+/** indicates that the message contains a video link but also has other content */
+export function containsSocialVideoLink(text: string): boolean {
+    return containsYoutubeLink(text);
+    // return containsDsocialLink(text) || containsYoutubeLink(text);
+}
+
+function containsLink(text: string, match: RegExpMatchArray | null): boolean {
+    return match ? match[0] !== text : false;
+}
+
+function matchesLink(text: string, match: RegExpMatchArray | null): boolean {
+    return match ? match[0] === text : false;
 }

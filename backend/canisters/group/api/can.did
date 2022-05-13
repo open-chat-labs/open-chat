@@ -243,6 +243,29 @@ type UpdateGroupResponse =
         InternalError;
     };
 
+type UpdatePermissionsArgs =
+    record {
+        change_permissions: opt PermissionRole;
+        change_roles: opt PermissionRole;
+        add_members: opt PermissionRole;
+        remove_members: opt PermissionRole;
+        block_users: opt PermissionRole;
+        delete_messages: opt PermissionRole;
+        update_group: opt PermissionRole;
+        pin_messages: opt PermissionRole;
+        invite_users: opt PermissionRole;
+        create_polls: opt PermissionRole;
+        send_messages: opt PermissionRole;
+        react_to_messages: opt PermissionRole;
+    };
+
+type UpdatePermissionsResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        CallerNotInGroup;
+    };
+
 type PinMessageArgs =
     record {
         message_index: MessageIndex;
@@ -437,6 +460,7 @@ service: {
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group: (UpdateGroupArgs) -> (UpdateGroupResponse);
+    update_permissions: (UpdatePermissionsArgs) -> (UpdatePermissionsResponse);
     pin_message: (PinMessageArgs) -> (PinMessageResponse);
     unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);

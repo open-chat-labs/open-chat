@@ -32,7 +32,7 @@
     import Pin from "svelte-material-icons/Pin.svelte";
     import PinOff from "svelte-material-icons/PinOff.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
-    import { fillMessage } from "../../utils/media";
+    import { containsSocialVideoLink, fillMessage, isSocialVideoLink } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
     import { mobileWidth, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import TimeAndTicks from "./TimeAndTicks.svelte";
@@ -228,6 +228,11 @@
             return $mobileWidth
                 ? { width: content.mobile.width, height: content.mobile.height }
                 : { width: content.desktop.width, height: content.desktop.height };
+        } else if (
+            content.kind === "text_content" &&
+            (isSocialVideoLink(content.text) || containsSocialVideoLink(content.text))
+        ) {
+            return { width: 560, height: 315 };
         }
 
         return undefined;
@@ -834,6 +839,7 @@
             padding: 0;
             overflow: hidden;
             border: none;
+            line-height: 0;
         }
 
         &.focused {

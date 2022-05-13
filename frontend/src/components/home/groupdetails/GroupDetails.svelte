@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Readable } from "svelte/store";
     import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
@@ -12,7 +13,6 @@
     import TextArea from "../../TextArea.svelte";
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../../domain/user/user.utils";
-    import type { UpdatedGroup } from "../../../fsm/rightPanel";
     import type { GroupChatSummary, GroupPermissions } from "../../../domain/chat/chat";
     import {
         canChangePermissions,
@@ -40,6 +40,7 @@
     } from "../../../stores/settings";
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsers from "./InviteUsers.svelte";
+    import { mergeKeepingOnlyChanged } from "../../../utils/object";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -47,17 +48,31 @@
     const dispatch = createEventDispatcher();
 
     export let controller: ChatController;
-    export let updatedGroup: UpdatedGroup;
-    export let originalGroup: GroupChatSummary;
 
-    $: participants = controller.participants;
+    let chat = controller.chat as Readable<GroupChatSummary>;
+
+    let updatedGroup = {
+        name: $chat.name,
+        desc: $chat.description,
+        avatar: $chat.blobUrl
+            ? {
+                  blobUrl: $chat.blobUrl,
+                  blobData: $chat.blobData,
+              }
+            : undefined,
+        permissions: { ...$chat.permissions },
+    };
 
     let showConfirmation = false;
     let confirmed = false;
     let saving = false;
     let viewProfile = false;
-    let myGroup = controller.user.userId === originalGroup.ownerId;
 
+    // capture a snapshot of the chat as it is right now
+    $: originalGroup = { ...$chat };
+    $: myGroup = controller.user.userId === originalGroup.ownerId;
+
+    $: participants = controller.participants;
     $: nameDirty = updatedGroup.name !== originalGroup.name;
     $: descDirty = updatedGroup.desc !== originalGroup.description;
     $: avatarDirty = updatedGroup.avatar?.blobUrl !== originalGroup.blobUrl;
@@ -65,7 +80,7 @@
         originalGroup.permissions,
         updatedGroup.permissions
     );
-    $: dirty = nameDirty || descDirty || avatarDirty || permissionsDirty;
+    $: dirty = nameDirty || descDirty || avatarDirty;
     $: canEdit = canEditGroupDetails(originalGroup);
     $: canEditPermissions = canChangePermissions(originalGroup);
     $: avatarSrc = avatarUrl(updatedGroup.avatar, "../assets/group.svg");
@@ -81,24 +96,12 @@
     }
 
     function havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
-        return (
-            p1.changePermissions !== p2.changePermissions ||
-            p1.changeRoles !== p2.changeRoles ||
-            p1.addMembers !== p2.addMembers ||
-            p1.removeMembers !== p2.removeMembers ||
-            p1.blockUsers !== p2.blockUsers ||
-            p1.deleteMessages !== p2.deleteMessages ||
-            p1.updateGroup !== p2.updateGroup ||
-            p1.pinMessages !== p2.pinMessages ||
-            p1.inviteUsers !== p2.inviteUsers ||
-            p1.createPolls !== p2.createPolls ||
-            p1.sendMessages !== p2.sendMessages ||
-            p1.reactToMessages !== p2.reactToMessages
-        );
+        const args = mergeKeepingOnlyChanged(p1, p2);
+        return Object.keys(args).length > 0;
     }
 
     function close() {
-        if (dirty && !confirmed) {
+        if ((dirty || permissionsDirty) && !confirmed) {
             confirmed = true;
             showConfirmation = true;
         } else {
@@ -121,13 +124,26 @@
     function updateGroup() {
         saving = true;
 
-        controller
-            .updateGroup(
-                updatedGroup.name,
-                updatedGroup.desc,
-                updatedGroup.avatar?.blobData,
-                permissionsDirty ? updatedGroup.permissions : undefined
-            )
+        const p1 = dirty ? doUpdateInfo() : Promise.resolve();
+        const p2 = permissionsDirty ? doUpdatePermissions() : Promise.resolve();
+
+        Promise.all([p1, p2]).finally(() => {
+            showConfirmation = saving = false;
+            dispatch("close");
+        });
+    }
+
+    function updateInfo() {
+        if (!dirty) return;
+
+        saving = true;
+
+        doUpdateInfo().finally(() => (saving = false));
+    }
+
+    function doUpdateInfo(): Promise<void> {
+        return controller
+            .updateGroup(updatedGroup.name, updatedGroup.desc, updatedGroup.avatar?.blobData)
             .then((success) => {
                 if (success) {
                     dispatch("updateChat", {
@@ -135,12 +151,29 @@
                         name: updatedGroup.name,
                         description: updatedGroup.desc,
                         blobUrl: updatedGroup.avatar?.blobUrl,
-                        permissions: updatedGroup.permissions,
                     });
-                    dispatch("close");
                 }
-            })
-            .finally(() => (showConfirmation = saving = false));
+            });
+    }
+
+    function updatePermissions() {
+        if (!permissionsDirty) return;
+
+        saving = true;
+
+        doUpdatePermissions().finally(() => (saving = false));
+    }
+
+    function doUpdatePermissions(): Promise<void> {
+        const args = mergeKeepingOnlyChanged(originalGroup.permissions, updatedGroup.permissions);
+        return controller.updatePermissions(args).then((success) => {
+            if (success) {
+                dispatch("updateChat", {
+                    ...originalGroup,
+                    permissions: updatedGroup.permissions,
+                });
+            }
+        });
     }
 
     function chatWithOwner() {
@@ -208,6 +241,14 @@
                     invalid={false}
                     maxlength={MAX_DESC_LENGTH}
                     placeholder={$_("newGroupDesc")} />
+
+                {#if canEdit}
+                    <Button
+                        on:click={updateInfo}
+                        fill
+                        disabled={!canEdit || !dirty || saving}
+                        loading={saving}>{$_("update")}</Button>
+                {/if}
             {:else if originalGroup.description !== ""}
                 <fieldset>
                     <legend>
@@ -257,6 +298,16 @@
                 <GroupPermissionsEditor
                     bind:permissions={updatedGroup.permissions}
                     isPublic={originalGroup.public} />
+
+                {#if canEditPermissions}
+                    <div class="update-permissions">
+                        <Button
+                            on:click={updatePermissions}
+                            fill
+                            disabled={!canEditPermissions || !permissionsDirty || saving}
+                            loading={saving}>{$_("update")}</Button>
+                    </div>
+                {/if}
             {:else}
                 <GroupPermissionsViewer
                     bind:permissions={updatedGroup.permissions}
@@ -283,19 +334,6 @@
         {/if}
     </div>
 </div>
-
-{#if canEdit || canEditPermissions}
-    <div class="cta">
-        <Button
-            on:click={updateGroup}
-            disabled={(permissionsDirty && !canEditPermissions) ||
-                (!permissionsDirty && dirty && !canEdit) ||
-                !dirty ||
-                saving}
-            fill={true}
-            loading={saving}>{$_("update")}</Button>
-    </div>
-{/if}
 
 <Overlay bind:active={showConfirmation}>
     <ModalContent fill={true}>
@@ -329,13 +367,6 @@
         margin-top: $sp4;
     }
 
-    .cta {
-        position: sticky;
-        bottom: 0;
-        height: 57px;
-        width: 100%;
-    }
-
     fieldset {
         border: 1px solid var(--input-bd);
         border-radius: $sp2;
@@ -357,7 +388,6 @@
         flex-direction: column;
         gap: $sp3;
         padding: $sp3;
-        padding-bottom: 0;
         @include mobile() {
             padding: 0 $sp3;
         }
@@ -406,5 +436,9 @@
                 margin-bottom: 0;
             }
         }
+    }
+
+    .update-permissions {
+        margin-top: $sp4;
     }
 </style>

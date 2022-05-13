@@ -61,6 +61,7 @@
     let emojiQuery: string | undefined;
     let messageEntryHeight: number;
     let messageActions: MessageActions;
+    let rangeToReplace: [number, number] | undefined = undefined;
 
     $: messageIsEmpty = ($textContent?.trim() ?? "").length === 0 && $fileToAttach === undefined;
 
@@ -142,31 +143,49 @@
         triggerTypingTimer();
     }
 
-    function triggerEmojiLookup(inputContent: string | null): void {
+    function uptoCaret(
+        inputContent: string | null,
+        fn: (slice: string, pos: number) => void
+    ): void {
         if (inputContent === null) return;
 
-        const matches = inputContent.match(emojiRegex);
-        if (matches !== null) {
-            emojiQuery = matches[1].toLowerCase() || undefined;
-            showEmojiSearch = true;
-        } else {
-            showEmojiSearch = false;
-            emojiQuery = undefined;
-        }
+        const pos = window.getSelection()?.anchorOffset;
+        if (pos === undefined) return;
+
+        const slice = inputContent.slice(0, pos);
+        fn(slice, pos);
+    }
+
+    function triggerEmojiLookup(inputContent: string | null): void {
+        uptoCaret(inputContent, (slice: string, pos: number) => {
+            const matches = slice.match(emojiRegex);
+            if (matches !== null) {
+                if (matches.index !== undefined) {
+                    rangeToReplace = [matches.index, pos];
+                    emojiQuery = matches[1].toLowerCase() || undefined;
+                    showEmojiSearch = true;
+                }
+            } else {
+                showEmojiSearch = false;
+                emojiQuery = undefined;
+            }
+        });
     }
 
     function triggerMentionLookup(inputContent: string | null): void {
-        if (inputContent === null) return;
-
-        const matches = inputContent.match(mentionRegex);
-        if (matches !== null) {
-            mentionPrefix = matches[1].toLowerCase() || undefined;
-            showMentionPicker = true;
-            saveSelection();
-        } else {
-            showMentionPicker = false;
-            mentionPrefix = undefined;
-        }
+        uptoCaret(inputContent, (slice: string, pos: number) => {
+            const matches = slice.match(mentionRegex);
+            if (matches !== null) {
+                if (matches.index !== undefined) {
+                    rangeToReplace = [matches.index, pos];
+                    mentionPrefix = matches[1].toLowerCase() || undefined;
+                    showMentionPicker = true;
+                }
+            } else {
+                showMentionPicker = false;
+                mentionPrefix = undefined;
+            }
+        });
     }
 
     function triggerTypingTimer() {
@@ -323,19 +342,43 @@
         sel?.addRange(range);
     }
 
+    function setCaretTo(pos: number) {
+        const range = document.createRange();
+        range.selectNodeContents(inp);
+        range.setStart(inp.childNodes[0], pos);
+        range.collapse(true);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+    }
+
     function onDrop(e: DragEvent) {
         dragging = false;
         dispatch("drop", e);
     }
 
+    function replaceTextWith(replacement: string) {
+        if (rangeToReplace === undefined) return;
+
+        const replaced = `${inp.textContent?.slice(
+            0,
+            rangeToReplace[0]
+        )}${replacement} ${inp.textContent?.slice(rangeToReplace[1])}`;
+        inp.textContent = replaced;
+
+        controller.setTextContent(inp.textContent || undefined);
+        setCaretTo(rangeToReplace[0] + replacement.length);
+        rangeToReplace = undefined;
+    }
+
     function mention(ev: CustomEvent<string>): void {
         const user = $userStore[ev.detail];
         const username = user?.username ?? $_("unknown");
-        inp.textContent = inp.textContent?.replace(mentionRegex, `@${username}`) || null;
-        controller.setTextContent(inp.textContent || undefined);
-        showMentionPicker = false;
-        setCaretToEnd();
+        const userLabel = `@${username}`;
 
+        replaceTextWith(userLabel);
+
+        showMentionPicker = false;
         if (user !== undefined) {
             reverseUserLookup[username] = user.userId;
         }
@@ -347,10 +390,8 @@
     }
 
     function completeEmoji(ev: CustomEvent<string>) {
-        inp.textContent = inp.textContent?.replace(emojiRegex, ev.detail) || null;
-        controller.setTextContent(inp.textContent || undefined);
+        replaceTextWith(ev.detail);
         showEmojiSearch = false;
-        setCaretToEnd();
     }
 
     function joinGroup() {

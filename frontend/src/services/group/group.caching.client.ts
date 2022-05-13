@@ -29,6 +29,7 @@ import type {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
+    UpdatePermissionsResponse,
 } from "../../domain/chat/chat";
 import type { User } from "../../domain/user/user";
 import type { IGroupClient } from "./group.client.interface";
@@ -179,13 +180,12 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.removeParticipant(userId);
     }
 
-    updateGroup(
-        name: string,
-        desc: string,
-        avatar?: Uint8Array,
-        permissions?: GroupPermissions
-    ): Promise<UpdateGroupResponse> {
-        return this.client.updateGroup(name, desc, avatar, permissions);
+    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
+        return this.client.updateGroup(name, desc, avatar);
+    }
+
+    updatePermissions(permissions: Partial<GroupPermissions>): Promise<UpdatePermissionsResponse> {
+        return this.client.updatePermissions(permissions);
     }
 
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse> {

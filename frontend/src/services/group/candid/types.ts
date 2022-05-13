@@ -824,6 +824,23 @@ export type UpdateGroupResponse = {
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null } |
   { 'InternalError' : null };
+export interface UpdatePermissionsArgs {
+  'block_users' : [] | [PermissionRole],
+  'change_permissions' : [] | [PermissionRole],
+  'delete_messages' : [] | [PermissionRole],
+  'send_messages' : [] | [PermissionRole],
+  'remove_members' : [] | [PermissionRole],
+  'update_group' : [] | [PermissionRole],
+  'invite_users' : [] | [PermissionRole],
+  'change_roles' : [] | [PermissionRole],
+  'add_members' : [] | [PermissionRole],
+  'create_polls' : [] | [PermissionRole],
+  'pin_messages' : [] | [PermissionRole],
+  'react_to_messages' : [] | [PermissionRole],
+}
+export type UpdatePermissionsResponse = { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,
@@ -916,4 +933,7 @@ export interface _SERVICE {
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
   'unpin_message' : (arg_0: UnpinMessageArgs) => Promise<UnpinMessageResponse>,
   'update_group' : (arg_0: UpdateGroupArgs) => Promise<UpdateGroupResponse>,
+  'update_permissions' : (arg_0: UpdatePermissionsArgs) => Promise<
+      UpdatePermissionsResponse
+    >,
 }

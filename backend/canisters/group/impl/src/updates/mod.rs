@@ -28,6 +28,7 @@ mod toggle_reaction;
 mod unblock_user;
 mod unpin_message;
 mod update_group;
+mod update_permissions;
 mod wallet_receive;
 
 const ONE_HOUR: Milliseconds = 60 * 60 * 1000;

@@ -420,7 +420,8 @@
         },
         "welcome": "Bienvenue à",
         "historyPrivateMessage": "Les anciens messages ne sont pas visibles pour les nouveaux membres",
-        "privateGroupInfo": "Les utilisateurs ne peuvent pas rejoindre ce groupe librement. Ils doivent être ajoutés ou invités par un membre autorisé."
+        "privateGroupInfo": "Les utilisateurs ne peuvent pas rejoindre ce groupe librement. Ils doivent être ajoutés ou invités par un membre autorisé.",
+        "permissionsUpdateFailed": "La mise à jour des autorisations a échoué"
     },
     "updateNow": "recharger maintenant",
     "updateRequired": "Une nouvelle version d'OpenChat est disponible - rechargement dans {countdown}s",

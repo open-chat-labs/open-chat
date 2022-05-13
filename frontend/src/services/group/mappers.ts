@@ -25,6 +25,7 @@ import type {
     ApiEnableInviteCodeResponse,
     ApiDisableInviteCodeResponse,
     ApiResetInviteCodeResponse,
+    ApiUpdatePermissionsResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -54,6 +55,7 @@ import type {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     GroupInviteCodeChange,
+    UpdatePermissionsResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -294,6 +296,24 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
         return "avatar_too_big";
     }
     throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
+}
+
+export function updatePermissionsResponse(
+    candid: ApiUpdatePermissionsResponse
+): UpdatePermissionsResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "not_in_group";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiUpdatePermissionsResponse type received",
+        candid
+    );
 }
 
 export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {
