@@ -68,10 +68,9 @@
     let saving = false;
     let viewProfile = false;
 
+    // capture a snapshot of the chat as it is right now
     $: originalGroup = { ...$chat };
     $: myGroup = controller.user.userId === originalGroup.ownerId;
-
-    // capture a snapshot of the chat as it is right now
 
     $: participants = controller.participants;
     $: nameDirty = updatedGroup.name !== originalGroup.name;
