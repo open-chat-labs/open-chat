@@ -21,6 +21,7 @@ async fn main() {
         online_users_aggregator: opts.online_users_aggregator,
         callback: opts.callback,
         open_storage_index: opts.open_storage_index,
+        ledger: opts.ledger,
     };
 
     run_data_generator(opts.url, canister_ids, opts.username, opts.seed, opts.max_groups).await;
@@ -169,6 +170,7 @@ struct Opts {
     pub online_users_aggregator: CanisterId,
     pub callback: CanisterId,
     pub open_storage_index: CanisterId,
+    pub ledger: CanisterId,
     pub username: String,
     pub seed: Option<u32>,
     pub max_groups: Option<u32>,

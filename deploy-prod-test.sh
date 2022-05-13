@@ -23,6 +23,7 @@ GROUP_INDEX_CANISTER_ID=$(dfx canister --network ic_test id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network ic_test id notifications)
 ONLINE_USERS_AGGREGATOR_CANISTER_ID=$(dfx canister --network ic_test id online_users_aggregator)
 CALLBACK_CANISTER_ID=$(dfx canister --network ic_test id callback)
+LEDGER_CANISTER_ID=ryjl3-tyaaa-aaaaa-aaaba-cai
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml \
@@ -36,3 +37,4 @@ cargo run \
   $ONLINE_USERS_AGGREGATOR_CANISTER_ID \
   $CALLBACK_CANISTER_ID \
   $OPEN_STORAGE_INDEX_CANISTER_ID \
+  $LEDGER_CANISTER_ID \
