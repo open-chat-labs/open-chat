@@ -42,7 +42,6 @@
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { formatLastOnlineDate } from "../../domain/user/user.utils";
-    import { chatListScroll } from "stores/scrollPos";
 
     const dispatch = createEventDispatcher();
 

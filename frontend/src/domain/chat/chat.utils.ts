@@ -43,7 +43,7 @@ import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
 import { formatICP } from "../../utils/cryptoFormatter";
 import { userStore } from "../../stores/user";
-import type { TypersByChat } from "stores/typing";
+import type { TypersByChat } from "../../stores/typing";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
@@ -257,8 +257,8 @@ export function getTypingString(
     if (typers.size > 1) {
         return format("membersAreTyping", { values: { number: typers.size } });
     } else {
-        const usernames = [...typers];
-        const username = users[usernames[0]]?.username ?? format("unknown");
+        const userIds = [...typers];
+        const username = users[userIds[0]]?.username ?? format("unknown");
         return format("memberIsTyping", { values: { username } });
     }
 }
