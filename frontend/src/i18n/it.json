@@ -524,5 +524,7 @@
     "failedToShareLink": "Impossibile condividere il collegamento",
     "groupInviteChangedBy": "{changedBy} {changed} l'invito del gruppo",
     "failedToLeaveGroup": "Si è verificato un errore durante il tentativo di rimuoverti dal gruppo",
-    "historyOffInfo": "I nuovi iscritti vedranno i messaggi in arrivo solo dopo l'adesione. 🤫"
+    "historyOffInfo": "I nuovi iscritti vedranno i messaggi in arrivo solo dopo l'adesione. 🤫",
+    "memberIsTyping": "{username} sta digitando",
+    "membersAreTyping": "{number} membri stanno digitando"
 }

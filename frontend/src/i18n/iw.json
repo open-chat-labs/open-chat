@@ -522,5 +522,7 @@
     "failedToShareLink": "שיתוף הקישור נכשל",
     "groupInviteChangedBy": "{changedBy} {changed} ההזמנה לקבוצה",
     "failedToLeaveGroup": "אירעה שגיאה בניסיון להסיר אותך מהקבוצה",
-    "historyOffInfo": "מצטרפים חדשים יראו הודעות שיגיעו רק לאחר שהצטרפו. 🤫"
+    "historyOffInfo": "מצטרפים חדשים יראו הודעות שיגיעו רק לאחר שהצטרפו. 🤫",
+    "memberIsTyping": "{username} מקליד",
+    "membersAreTyping": "חברי {number} מקלידים"
 }

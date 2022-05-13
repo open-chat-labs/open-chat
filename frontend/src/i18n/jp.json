@@ -524,5 +524,7 @@
     "failedToShareLink": "リンクの共有に失敗しました",
     "groupInviteChangedBy": "{changedBy}{changed}グループの招待",
     "failedToLeaveGroup": "グループからあなたを削除しようとしてエラーが発生しました",
-    "historyOffInfo": "新しい参加者には、参加後に到着するメッセージのみが表示されます。 🤫"
+    "historyOffInfo": "新しい参加者には、参加後に到着するメッセージのみが表示されます。 🤫",
+    "memberIsTyping": "{username}は入力中です",
+    "membersAreTyping": "{number}メンバーが入力しています"
 }
