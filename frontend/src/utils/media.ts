@@ -263,7 +263,7 @@ export function containsYoutubeLink(text: string): boolean {
 
 /** DSocial link handling - not currently used */
 export const dsocialRegex = (): RegExp =>
-    /https:\/\/(?:dsocial.app|dwqte-viaaa-aaaai-qaufq-cai.ic0.app)\/([^ /]*)(?:[^ ]*)/i;
+    /https:\/\/(?:dsocial.app|dwqte-viaaa-aaaai-qaufq-cai.ic0.app)\/([^\s/]*)(?:[^ ]*)/i;
 
 export function isDsocialLink(text: string): boolean {
     return matchesLink(text, text.match(dsocialRegex()));
