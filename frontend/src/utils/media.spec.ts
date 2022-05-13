@@ -99,6 +99,15 @@ describe("video link transform", () => {
                     const txt = "https://www.youtube.com/watch?v=9n1dtmzqnCU";
                     expect(txt.match(youtubeRegex())![1]).toEqual("9n1dtmzqnCU");
                 });
+                test("with appended linebreaks", () => {
+                    const txt = "https://www.youtube.com/watch?v=u8LMyWcKL_c\n\n\n\nThis dev";
+                    expect(txt.match(youtubeRegex())![1]).toEqual("u8LMyWcKL_c");
+                });
+                test("with preceeding linebreaks", () => {
+                    const txt =
+                        "Look at this link\n\n\nhttps://www.youtube.com/watch?v=u8LMyWcKL_c";
+                    expect(txt.match(youtubeRegex())![1]).toEqual("u8LMyWcKL_c");
+                });
                 test("with a prefix", () => {
                     const txt = "look at this link https://www.youtube.com/watch?v=9n1dtmzqnCU";
                     expect(txt.match(youtubeRegex())![1]).toEqual("9n1dtmzqnCU");
