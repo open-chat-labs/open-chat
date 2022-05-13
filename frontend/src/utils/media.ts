@@ -251,7 +251,7 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
 
 /** Youtube link handling */
 export const youtubeRegex = (): RegExp =>
-    /https:\/\/(?:www.youtube.com\/watch\?v=([^/ ]*)|youtu.be\/([^/ ]*))/i;
+    /https:\/\/(?:www.youtube.com\/watch\?v=([^/ \n\t]*)|youtu.be\/([^/ \n\t]*))/i;
 
 export function isYoutubeLink(text: string): boolean {
     return matchesLink(text, text.match(youtubeRegex()));
