@@ -638,6 +638,25 @@ export const idlFactory = ({ IDL }) => {
     'NameTaken' : IDL.Null,
     'InternalError' : IDL.Null,
   });
+  const UpdatePermissionsArgs = IDL.Record({
+    'block_users' : IDL.Opt(PermissionRole),
+    'change_permissions' : IDL.Opt(PermissionRole),
+    'delete_messages' : IDL.Opt(PermissionRole),
+    'send_messages' : IDL.Opt(PermissionRole),
+    'remove_members' : IDL.Opt(PermissionRole),
+    'update_group' : IDL.Opt(PermissionRole),
+    'invite_users' : IDL.Opt(PermissionRole),
+    'change_roles' : IDL.Opt(PermissionRole),
+    'add_members' : IDL.Opt(PermissionRole),
+    'create_polls' : IDL.Opt(PermissionRole),
+    'pin_messages' : IDL.Opt(PermissionRole),
+    'react_to_messages' : IDL.Opt(PermissionRole),
+  });
+  const UpdatePermissionsResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   return IDL.Service({
     'add_participants' : IDL.Func(
         [AddParticipantsArgs],
@@ -723,6 +742,11 @@ export const idlFactory = ({ IDL }) => {
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'unpin_message' : IDL.Func([UnpinMessageArgs], [UnpinMessageResponse], []),
     'update_group' : IDL.Func([UpdateGroupArgs], [UpdateGroupResponse], []),
+    'update_permissions' : IDL.Func(
+        [UpdatePermissionsArgs],
+        [UpdatePermissionsResponse],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => { return []; };

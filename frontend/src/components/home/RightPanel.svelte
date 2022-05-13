@@ -24,21 +24,6 @@
 
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1];
 
-    // capture a snapshot of the chat as it is right now
-    let originalGroup = { ...$chat };
-
-    let updatedGroup = {
-        name: $chat.name,
-        desc: $chat.description,
-        avatar: $chat.blobUrl
-            ? {
-                  blobUrl: $chat.blobUrl,
-                  blobData: $chat.blobData,
-              }
-            : undefined,
-        permissions: { ...$chat.permissions },
-    };
-
     function dismissAsAdmin(ev: CustomEvent<string>): void {
         controller.dismissAsAdmin(ev.detail);
     }
@@ -99,8 +84,6 @@
     {#if lastState === "group_details"}
         <GroupDetails
             {controller}
-            {originalGroup}
-            {updatedGroup}
             on:close={pop}
             on:deleteGroup
             on:makeGroupPrivate

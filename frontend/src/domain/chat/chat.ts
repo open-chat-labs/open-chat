@@ -1038,6 +1038,8 @@ export type UpdateGroupResponse =
     | "avatar_too_big"
     | "internal_error";
 
+export type UpdatePermissionsResponse = "success" | "not_authorised" | "not_in_group";
+
 export type ToggleReactionResponse =
     | "added"
     | "removed"

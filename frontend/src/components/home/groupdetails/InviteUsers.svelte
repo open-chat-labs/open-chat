@@ -138,20 +138,20 @@
     }
 </script>
 
-{#if ready}
-    {#if !group.public}
-        <div class="toggle-row">
-            <Toggle
-                id={"enable-invite-link"}
-                on:change={toggleLink}
-                disabled={loading}
-                waiting={loading}
-                label={$_("group.invite.enableLink")}
-                bind:checked />
+{#if !group.public}
+    <div class="toggle-row">
+        <Toggle
+            id={"enable-invite-link"}
+            on:change={toggleLink}
+            disabled={loading}
+            waiting={loading}
+            label={$_("group.invite.enableLink")}
+            bind:checked />
 
-            <div class:spinner />
-        </div>
-    {/if}
+        <div class:spinner />
+    </div>
+{/if}
+{#if ready}
     {#if group.public || (code !== undefined && checked)}
         <div class="link-enabled">
             <div class="link">{link}</div>

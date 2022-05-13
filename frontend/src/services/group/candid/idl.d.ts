@@ -29,6 +29,7 @@ import {
     RemoveParticipantResponse,
     MarkReadResponse,
     UpdateGroupResponse,
+    UpdatePermissionsResponse,
     ToggleReactionResponse,
     DeleteMessagesResponse,
     BlockUserResponse,
@@ -51,6 +52,7 @@ import {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
+    UpdatePermissionsArgs,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -81,6 +83,7 @@ export {
     RemoveParticipantResponse as ApiRemoveParticipantResponse,
     MarkReadResponse as ApiMarkReadResponse,
     UpdateGroupResponse as ApiUpdateGroupResponse,
+    UpdatePermissionsResponse as ApiUpdatePermissionsResponse,
     ToggleReactionResponse as ApiToggleReactionResponse,
     DeleteMessagesResponse as ApiDeleteMessageResponse,
     BlockUserResponse as ApiBlockUserResponse,
@@ -103,6 +106,7 @@ export {
     EnableInviteCodeResponse as ApiEnableInviteCodeResponse,
     DisableInviteCodeResponse as ApiDisableInviteCodeResponse,
     ResetInviteCodeResponse as ApiResetInviteCodeResponse,
+    UpdatePermissionsArgs as ApiUpdatePermissionsArgs,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
