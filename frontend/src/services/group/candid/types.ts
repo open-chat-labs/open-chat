@@ -824,7 +824,20 @@ export type UpdateGroupResponse = {
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null } |
   { 'InternalError' : null };
-export interface UpdatePermissionsArgs { 'permissions' : GroupPermissions }
+export interface UpdatePermissionsArgs {
+  'block_users' : [] | [PermissionRole],
+  'change_permissions' : [] | [PermissionRole],
+  'delete_messages' : [] | [PermissionRole],
+  'send_messages' : [] | [PermissionRole],
+  'remove_members' : [] | [PermissionRole],
+  'update_group' : [] | [PermissionRole],
+  'invite_users' : [] | [PermissionRole],
+  'change_roles' : [] | [PermissionRole],
+  'add_members' : [] | [PermissionRole],
+  'create_polls' : [] | [PermissionRole],
+  'pin_messages' : [] | [PermissionRole],
+  'react_to_messages' : [] | [PermissionRole],
+}
 export type UpdatePermissionsResponse = { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null };

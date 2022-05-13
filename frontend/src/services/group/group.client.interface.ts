@@ -59,13 +59,8 @@ export interface IGroupClient {
     editMessage(message: Message): Promise<EditMessageResponse>;
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
-    updateGroup(
-        name: string,
-        desc: string,
-        avatar?: Uint8Array,
-        permissions?: GroupPermissions
-    ): Promise<UpdateGroupResponse>;
-    updatePermissions(permissions: GroupPermissions): Promise<UpdatePermissionsResponse>;
+    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
+    updatePermissions(permissions: Partial<GroupPermissions>): Promise<UpdatePermissionsResponse>;
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;
     deleteMessage(messageId: bigint): Promise<DeleteMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;

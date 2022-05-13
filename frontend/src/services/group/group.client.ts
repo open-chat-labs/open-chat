@@ -65,9 +65,9 @@ import { CachingGroupClient } from "./group.caching.client";
 import { cachingLocallyDisabled, Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
 import {
-    apiGroupPermissions,
     apiMessageContent,
     apiOptional,
+    apiUpdatePermissions,
     apiUser,
     publicSummaryResponse,
     registerPollVoteResponse,
@@ -245,12 +245,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    updateGroup(
-        name: string,
-        desc: string,
-        avatar?: Uint8Array,
-        permissions?: GroupPermissions
-    ): Promise<UpdateGroupResponse> {
+    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group({
                 name: name,
@@ -265,19 +260,16 @@ export class GroupClient extends CandidService implements IGroupClient {
                                   data: Array.from(avatar),
                               },
                           },
-                permissions: apiOptional(
-                    (permissions) => apiGroupPermissions(permissions),
-                    permissions
-                ),
+                permissions: [],
             }),
             updateGroupResponse
         );
     }
 
     @profile("groupClient")
-    updatePermissions(permissions: GroupPermissions): Promise<UpdatePermissionsResponse> {
+    updatePermissions(permissions: Partial<GroupPermissions>): Promise<UpdatePermissionsResponse> {
         return this.handleResponse(
-            this.groupService.update_permissions({ permissions: apiGroupPermissions(permissions) }),
+            this.groupService.update_permissions(apiUpdatePermissions(permissions)),
             updatePermissionsResponse
         );
     }

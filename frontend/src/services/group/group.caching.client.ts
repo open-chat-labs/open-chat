@@ -180,16 +180,11 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.removeParticipant(userId);
     }
 
-    updateGroup(
-        name: string,
-        desc: string,
-        avatar?: Uint8Array,
-        permissions?: GroupPermissions
-    ): Promise<UpdateGroupResponse> {
-        return this.client.updateGroup(name, desc, avatar, permissions);
+    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
+        return this.client.updateGroup(name, desc, avatar);
     }
 
-    updatePermissions(permissions: GroupPermissions): Promise<UpdatePermissionsResponse> {
+    updatePermissions(permissions: Partial<GroupPermissions>): Promise<UpdatePermissionsResponse> {
         return this.client.updatePermissions(permissions);
     }
 

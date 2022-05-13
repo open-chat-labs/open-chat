@@ -246,7 +246,7 @@ export class ServiceContainer implements MarkMessagesRead {
 
     updatePermissions(
         chatId: string,
-        permissions: GroupPermissions
+        permissions: Partial<GroupPermissions>
     ): Promise<UpdatePermissionsResponse> {
         return this.getGroupClient(chatId).updatePermissions(permissions);
     }

@@ -52,6 +52,7 @@ import {
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
+    UpdatePermissionsArgs,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -105,6 +106,7 @@ export {
     EnableInviteCodeResponse as ApiEnableInviteCodeResponse,
     DisableInviteCodeResponse as ApiDisableInviteCodeResponse,
     ResetInviteCodeResponse as ApiResetInviteCodeResponse,
+    UpdatePermissionsArgs as ApiUpdatePermissionsArgs,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

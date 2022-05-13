@@ -40,6 +40,7 @@
     } from "../../../stores/settings";
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsers from "./InviteUsers.svelte";
+    import { mergeKeepingOnlyChanged } from "../../../utils/object";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -96,20 +97,8 @@
     }
 
     function havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
-        return (
-            p1.changePermissions !== p2.changePermissions ||
-            p1.changeRoles !== p2.changeRoles ||
-            p1.addMembers !== p2.addMembers ||
-            p1.removeMembers !== p2.removeMembers ||
-            p1.blockUsers !== p2.blockUsers ||
-            p1.deleteMessages !== p2.deleteMessages ||
-            p1.updateGroup !== p2.updateGroup ||
-            p1.pinMessages !== p2.pinMessages ||
-            p1.inviteUsers !== p2.inviteUsers ||
-            p1.createPolls !== p2.createPolls ||
-            p1.sendMessages !== p2.sendMessages ||
-            p1.reactToMessages !== p2.reactToMessages
-        );
+        const args = mergeKeepingOnlyChanged(p1, p2);
+        return Object.keys(args).length > 0;
     }
 
     function close() {
@@ -150,7 +139,7 @@
 
         saving = true;
 
-        doUpdateInfo().finally(() => (showConfirmation = saving = false));
+        doUpdateInfo().finally(() => (saving = false));
     }
 
     function doUpdateInfo(): Promise<void> {
@@ -173,11 +162,12 @@
 
         saving = true;
 
-        doUpdatePermissions().finally(() => (showConfirmation = saving = false));
+        doUpdatePermissions().finally(() => (saving = false));
     }
 
     function doUpdatePermissions(): Promise<void> {
-        return controller.updatePermissions(updatedGroup.permissions).then((success) => {
+        const args = mergeKeepingOnlyChanged(originalGroup.permissions, updatedGroup.permissions);
+        return controller.updatePermissions(args).then((success) => {
             if (success) {
                 dispatch("updateChat", {
                     ...originalGroup,

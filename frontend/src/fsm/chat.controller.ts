@@ -1239,7 +1239,7 @@ export class ChatController {
             });
     }
 
-    updatePermissions(permissions: GroupPermissions): Promise<boolean> {
+    updatePermissions(permissions: Partial<GroupPermissions>): Promise<boolean> {
         return this.api
             .updatePermissions(this.chatId, permissions)
             .then((resp) => {

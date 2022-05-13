@@ -1,3 +1,5 @@
+import { zip } from "./list";
+
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function deepFreeze(obj: any): any {
@@ -19,4 +21,13 @@ export function deepFreeze(obj: any): any {
     }
 
     return Object.freeze(obj);
+}
+
+// Takes two objects of the same type and returns a partial object where each property
+// takes the value of the second object if the values are different otherwise it is undefined
+export function mergeKeepingOnlyChanged<T>(orig: T, updated: T): Partial<T> {
+    return zip(Object.entries(orig), Object.entries(updated)).reduce(
+        (maybe, [[ok, ov], [_, uv]]) => (ov !== uv ? { ...maybe, [ok]: uv } : maybe),
+        {}
+    );
 }
