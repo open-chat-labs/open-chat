@@ -8,8 +8,58 @@ import {
     youtubeRegex,
 } from "./media";
 
+function extractIdTests(form: "short" | "long", url: string) {
+    describe(`${form} form`, () => {
+        test("no prefix or suffix", () => {
+            const txt = `${url}/3108-2045/some-video-title`;
+            expect(txt.match(dsocialRegex())![1]).toEqual("3108-2045");
+        });
+        test("with prefix", () => {
+            const txt = `look at this link ${url}/3108-2045/some-video-title`;
+            expect(txt.match(dsocialRegex())![1]).toEqual("3108-2045");
+        });
+        test("with suffix", () => {
+            const txt = `${url}/3108-2045/some-video-title look at this link`;
+            expect(txt.match(dsocialRegex())![1]).toEqual("3108-2045");
+        });
+        test("with prefix and suffix", () => {
+            const txt = `look at this link ${url}/3108-2045/some-video-title look at this link`;
+            expect(txt.match(dsocialRegex())![1]).toEqual("3108-2045");
+        });
+        test("with preceding newlines", () => {
+            const txt = `look at this link\n\n\n${url}/3108-2045/some-video-title`;
+            expect(txt.match(dsocialRegex())![1]).toEqual("3108-2045");
+        });
+        test("with appended newlines", () => {
+            const txt = `${url}/3108-2045/some-video-title\n\n\nlook at this link`;
+            expect(txt.match(dsocialRegex())![1]).toEqual("3108-2045");
+        });
+        test("without slug", () => {
+            const txt = `${url}/3108-2045`;
+            expect(txt.match(dsocialRegex())![1]).toEqual("3108-2045");
+        });
+        test("without slug and suffix", () => {
+            const txt = `${url}/3108-2045 look at this link`;
+            expect(txt.match(dsocialRegex())![1]).toEqual("3108-2045");
+        });
+        test("without slug and suffix and trailing slash", () => {
+            const txt = `${url}/3108-2045/ look at this link`;
+            expect(txt.match(dsocialRegex())![1]).toEqual("3108-2045");
+        });
+        test("without slug and trailing newlines", () => {
+            const txt = `${url}/3108-2045\n\n\nlook at this`;
+            expect(txt.match(dsocialRegex())![1]).toEqual("3108-2045");
+        });
+    });
+}
+
 describe("video link transform", () => {
     describe("dsocial", () => {
+        describe("extracting id", () => {
+            extractIdTests("short", "https://dsocial.app");
+            extractIdTests("long", "https://dwqte-viaaa-aaaai-qaufq-cai.ic0.app");
+        });
+
         describe("isDsocialLink", () => {
             test("long form", () => {
                 const txt =
@@ -31,10 +81,6 @@ describe("video link transform", () => {
                 const txt = "this is a nice video but no link";
                 expect(isDsocialLink(txt)).toEqual(false);
                 expect(containsDsocialLink(txt)).toEqual(false);
-            });
-            test("can extract id", () => {
-                const txt = "https://dsocial.app/3108-2045/some-video-title";
-                expect(txt.match(dsocialRegex())![1]).toEqual("3108-2045");
             });
         });
 
