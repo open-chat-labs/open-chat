@@ -14,6 +14,7 @@
     import { unsubscribeNotifications } from "../../utils/notifications";
     import type { GroupChatSummary } from "../../domain/chat/chat";
     import { emptyChatMetrics, mergeChatMetrics } from "../../domain/chat/chat.utils";
+    import { trackEvent } from "../../utils/tracking";
 
     export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -46,6 +47,11 @@
     function groupCreated(ev: CustomEvent<GroupChatSummary>) {
         controller.addOrReplaceChat(ev.detail);
         view = "showing-chat-list";
+        if (ev.detail.public) {
+            trackEvent("public_group_created");
+        } else {
+            trackEvent("private_group_created");
+        }
     }
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {

@@ -96,11 +96,19 @@
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                             controller.api.refreshAccountBalance(createdUser.icpAccount);
                         }
-                        trackEvent(
-                            $chat.kind === "direct_chat"
-                                ? "sent_direct_message"
-                                : "sent_group_message"
-                        );
+                        if ($chat.kind === "direct_chat") {
+                            trackEvent("sent_direct_message");
+                        } else {
+                            if ($chat.public) {
+                                trackEvent("sent_public_group_message");
+                            } else {
+                                trackEvent("sent_private_group_message");
+                            }
+                        }
+                        if (msg.repliesTo !== undefined) {
+                            // double counting here which I think is OK since we are limited to string events
+                            trackEvent("replied_to_message");
+                        }
                     } else {
                         controller.removeMessage(msg.messageId, controller.user.userId);
                         rollbar.warn("Error response sending message", resp);
