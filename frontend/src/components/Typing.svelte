@@ -9,8 +9,8 @@
         padding-bottom: $sp2;
         margin-top: -$sp2;
         @include font(bold, normal, fs-120);
-        color: var(--chatSummary-txt2);
-        display: flex;
+        color: inherit;
+        display: inline-flex;
 
         > div {
             animation: pulse 1s infinite;

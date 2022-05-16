@@ -26,9 +26,14 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import type { ChatSummary } from "../../domain/chat/chat";
-    import { canAddMembers, canCreatePolls, canLeaveGroup } from "../../domain/chat/chat.utils";
+    import {
+        canAddMembers,
+        canCreatePolls,
+        canLeaveGroup,
+        getTypingString,
+    } from "../../domain/chat/chat.utils";
     import Typing from "../Typing.svelte";
-    import { typing } from "../../stores/typing";
+    import { TypersByChat, typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
     import type { Readable } from "svelte/store";
     import Link from "../Link.svelte";
@@ -100,14 +105,14 @@
         dispatch("leaveGroup", { kind: "leave", chatId: $selectedChatSummary.chatId });
     }
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
+    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByChat) {
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus(now, $userStore, chatSummary.them),
                 subtext: formatLastOnlineDate(now, $userStore[chatSummary.them]),
-                typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
+                typing: getTypingString($userStore, chatSummary, typing),
             };
         }
         return {
@@ -117,7 +122,7 @@
             subtext: chatSummary.public
                 ? $_("publicGroupWithN", { values: { number: chatSummary.participantCount } })
                 : $_("privateGroupWithN", { values: { number: chatSummary.participantCount } }),
-            typing: false,
+            typing: getTypingString($userStore, chatSummary, typing),
         };
     }
 
@@ -135,7 +140,7 @@
         dispatch("showPinned");
     }
 
-    $: chat = normaliseChatSummary($now, $selectedChatSummary);
+    $: chat = normaliseChatSummary($now, $selectedChatSummary, $typing);
 </script>
 
 <SectionHeader shadow={true} flush={true}>
@@ -181,8 +186,8 @@
                 {$_("blocked")}
             {:else if preview}
                 {chat.subtext}
-            {:else if chat.typing}
-                <Typing />
+            {:else if chat.typing !== undefined}
+                {chat.typing} <Typing />
             {:else if isGroup}
                 <Link on:click={showParticipants}>
                     {chat.subtext}

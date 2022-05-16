@@ -43,6 +43,7 @@ import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
 import { formatICP } from "../../utils/cryptoFormatter";
 import { userStore } from "../../stores/user";
+import type { TypersByChat } from "../../stores/typing";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
@@ -242,6 +243,24 @@ export function indexIsInRanges(index: number, ranges: DRange): boolean {
 export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message): boolean {
     if (chat.kind === "group_chat") return true;
     return indexIsInRanges(messageIndex, chat.readByThem);
+}
+
+export function getTypingString(
+    users: UserLookup,
+    chatSummary: ChatSummary,
+    typing: TypersByChat
+): string | undefined {
+    const typers = typing[chatSummary.chatId];
+    if (typers === undefined || typers.size === 0) return undefined;
+
+    const format = get(_);
+    if (typers.size > 1) {
+        return format("membersAreTyping", { values: { number: typers.size } });
+    } else {
+        const userIds = [...typers];
+        const username = users[userIds[0]]?.username ?? format("unknown");
+        return format("memberIsTyping", { values: { username } });
+    }
 }
 
 export function getParticipantsString(

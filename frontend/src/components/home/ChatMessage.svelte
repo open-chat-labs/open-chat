@@ -14,6 +14,7 @@
     import Loading from "../Loading.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import type { Message, EnhancedReplyContext } from "../../domain/chat/chat";
+    import Typing from "../Typing.svelte";
     import RepliesTo from "./RepliesTo.svelte";
     import { _, locale } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
@@ -50,6 +51,7 @@
     import { toastStore } from "stores/toast";
     import { storageStore } from "../../stores/storage";
     import { translationStore } from "../../stores/translation";
+    import { typing } from "../../stores/typing";
 
     const dispatch = createEventDispatcher();
 
@@ -98,6 +100,7 @@
     $: fill = fillMessage(msg);
     $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
     $: translated = $translationStore.has(Number(msg.messageId));
+    $: senderTyping = $typing[chatId]?.has(senderId);
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
@@ -394,6 +397,11 @@
                     <Link underline={"hover"} on:click={openUserProfile}>
                         <h4 class="username" class:fill class:crypto>{username}</h4>
                     </Link>
+                    {#if senderTyping}
+                        <span class="typing">
+                            <Typing />
+                        </span>
+                    {/if}
                 </div>
             {/if}
             {#if msg.repliesTo !== undefined && !deleted}
@@ -664,6 +672,10 @@
                 right: 0;
                 border-radius: 0 0 0 $sp4;
             }
+        }
+
+        .typing {
+            color: var(--accent);
         }
     }
 

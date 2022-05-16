@@ -525,5 +525,7 @@
     "failedToShareLink": "Không chia sẻ được liên kết",
     "groupInviteChangedBy": "{changedBy} {changed} mời nhóm",
     "failedToLeaveGroup": "Đã xảy ra lỗi khi cố gắng xóa bạn khỏi nhóm",
-    "historyOffInfo": "Những người mới tham gia sẽ chỉ thấy tin nhắn đến sau khi họ tham gia. 🤫"
+    "historyOffInfo": "Những người mới tham gia sẽ chỉ thấy tin nhắn đến sau khi họ tham gia. 🤫",
+    "memberIsTyping": "{username} đang nhập",
+    "membersAreTyping": "{number} thành viên đang nhập"
 }
