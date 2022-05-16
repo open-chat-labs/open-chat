@@ -12,13 +12,14 @@
         getContentAsText,
         getDisplayDate,
         getMinVisibleMessageIndex,
+        getTypingString,
         isPreviewing,
     } from "../../domain/chat/chat.utils";
     import type { ChatSummary } from "../../domain/chat/chat";
     import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
-    import { typing } from "../../stores/typing";
+    import { TypersByChat, typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
     import type { IMessageReadTracker } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
@@ -39,20 +40,20 @@
     let unreadMessages: number;
     let unreadMentions: number;
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
+    function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByChat) {
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus(now, $userStore, chatSummary.them),
-                typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
+                typing: getTypingString($userStore, chatSummary, typing),
             };
         }
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
-            typing: false,
+            typing: getTypingString($userStore, chatSummary, typing),
         };
     }
 
@@ -101,7 +102,7 @@
         delOffset = -50;
     }
 
-    $: chat = normaliseChatSummary($now, chatSummary);
+    $: chat = normaliseChatSummary($now, chatSummary, $typing);
     $: lastMessage = formatLatestMessage(chatSummary, $userStore);
 
     $: {
@@ -150,8 +151,6 @@
     }
 
     $: displayDate = getDisplayDate(chatSummary);
-    $: isTyping =
-        chatSummary.kind === "direct_chat" && $typing[chatSummary.chatId]?.has(chatSummary.them);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
     $: preview = isPreviewing(chatSummary);
     $: canDelete =
@@ -185,13 +184,13 @@
         <div class="name-date">
             <h4 class="chat-name">{chat.name}</h4>
         </div>
-        {#if isTyping}
-            <Typing />
-        {:else}
-            <div class="chat-msg">
+        <div class="chat-msg">
+            {#if chat.typing !== undefined}
+                {chat.typing} <Typing />
+            {:else}
                 <Markdown text={lastMessage} oneLine={true} suppressLinks={true} inline={false} />
-            </div>
-        {/if}
+            {/if}
+        </div>
     </div>
     <!-- this date formatting is OK for now but we might want to use something like this: 
     https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->

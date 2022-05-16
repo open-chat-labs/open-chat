@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 
-type TypersByChat = Record<string, Set<string>>;
+export type TypersByChat = Record<string, Set<string>>;
 
 type UserTyping = {
     chatId: string;

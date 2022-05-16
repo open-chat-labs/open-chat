@@ -524,5 +524,7 @@
     "failedToShareLink": "分享链接失败",
     "groupInviteChangedBy": "{changedBy} {changed} 群组邀请",
     "failedToLeaveGroup": "尝试将您从群组中移除时出错",
-    "historyOffInfo": "新加入者只会看到他们加入后到达的消息。 🤫"
+    "historyOffInfo": "新加入者只会看到他们加入后到达的消息。 🤫",
+    "memberIsTyping": "{username} 正在输入",
+    "membersAreTyping": "{number} 成员正在输入"
 }

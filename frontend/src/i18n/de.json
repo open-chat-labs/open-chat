@@ -524,5 +524,7 @@
     "failedToShareLink": "Link konnte nicht geteilt werden",
     "groupInviteChangedBy": "{changedBy} {changed} die Gruppeneinladung",
     "failedToLeaveGroup": "Beim Versuch, Sie aus der Gruppe zu entfernen, ist ein Fehler aufgetreten",
-    "historyOffInfo": "Neue Teilnehmer sehen nur Nachrichten, die nach ihrem Beitritt eingehen. 🤫"
+    "historyOffInfo": "Neue Teilnehmer sehen nur Nachrichten, die nach ihrem Beitritt eingehen. 🤫",
+    "memberIsTyping": "{username} tippt",
+    "membersAreTyping": "{number} Mitglieder schreiben"
 }
