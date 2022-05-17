@@ -15,12 +15,12 @@ use user_canister::notify_transaction::*;
 
 #[update(guard = "caller_is_transaction_notifier_canister")]
 #[trace]
-async fn notify_transaction(args: Args) -> Response {
+async fn notify_transaction(args: Args) {
     run_regular_jobs();
 
     if let Ok(token) = Cryptocurrency::from_str(args.token_symbol.trim()) {
         if let Operation::Transfer { from, to, amount, fee } = args.block.transaction.operation {
-            process_transfer(token, from, to, amount, fee, args.block_index, args.block).await
+            process_transfer(token, from, to, amount, fee, args.block_index, args.block).await;
         }
     }
 }
