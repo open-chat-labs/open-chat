@@ -349,6 +349,7 @@ type InitialStateResponse =
             chats: vec ChatSummary;
             blocked_users: vec UserId;
             cycles_balance: Cycles;
+            alerts: vec Alert;
             upgrades_in_progress: vec ChatId;
             user_canister_wasm_version: Version;
         };
