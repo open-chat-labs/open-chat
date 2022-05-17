@@ -581,6 +581,7 @@ export type MergedUpdatesResponse = {
     blockedUsers: Set<string>;
     avatarIdUpdate: OptionUpdate<bigint>;
     affectedEvents: Record<string, number[]>;
+    alerts: Alert[];
     timestamp: bigint;
 };
 

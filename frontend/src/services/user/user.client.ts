@@ -31,6 +31,7 @@ import type {
     PendingICPWithdrawal,
     WithdrawCryptocurrencyResponse,
     CryptocurrencyContent,
+    Alert,
 } from "../../domain/chat/chat";
 import { CandidService, ServiceRetryInterrupt } from "../candidService";
 import {
@@ -88,6 +89,7 @@ import { profile } from "../common/profiling";
 import type { IMessageReadTracker } from "../../stores/markRead";
 import { base64ToBigint } from "../../utils/base64";
 import type { GroupInvite } from "../../services/serviceContainer";
+import { dedupe } from "utils/list";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -211,6 +213,7 @@ export class UserClient extends CandidService implements IUserClient {
             blockedUsers: resp.blockedUsers,
             avatarIdUpdate: undefined,
             affectedEvents: {},
+            alerts: [],
         };
     }
 
@@ -218,6 +221,7 @@ export class UserClient extends CandidService implements IUserClient {
     async getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
+        alerts: Alert[],
         _: IMessageReadTracker,
         _selectedChatId?: string
     ): Promise<MergedUpdatesResponse> {
@@ -260,6 +264,7 @@ export class UserClient extends CandidService implements IUserClient {
                 }
                 return result;
             }, {} as Record<string, number[]>),
+            alerts: dedupe((a, b) => a.id === b.id, [...alerts, ...updatesResponse.alerts]),
         };
     }
 

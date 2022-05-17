@@ -67,6 +67,7 @@ import type {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     UpdatePermissionsResponse,
+    Alert,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
@@ -640,11 +641,12 @@ export class ServiceContainer implements MarkMessagesRead {
     getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
+        alerts: Alert[],
         messagesRead: IMessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         return this.userClient
-            .getUpdates(chatSummaries, args, messagesRead, selectedChatId)
+            .getUpdates(chatSummaries, args, alerts, messagesRead, selectedChatId)
             .then((resp) => {
                 return this.handleMergedUpdatesResponse(messagesRead, resp);
             });

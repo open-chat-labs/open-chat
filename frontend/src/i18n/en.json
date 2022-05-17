@@ -524,5 +524,7 @@
     "failedToShareLink": "Failed to share link",
     "groupInviteChangedBy": "{changedBy} {changed} the group invite",
     "memberIsTyping": "{username} is typing",
-    "membersAreTyping": "{number} members are typing"
+    "membersAreTyping": "{number} members are typing",
+    "alerts": "Alerts",
+    "youreUpToDate": "You're all up to date"
 }

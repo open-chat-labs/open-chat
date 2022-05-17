@@ -30,7 +30,6 @@ import type {
     ApiWithdrawCryptocurrencyResponse,
     ApiFailedCryptocurrencyWithdrawal,
     ApiCompletedCryptocurrencyWithdrawal,
-    ApiCompletedCryptocurrencyTransfer,
     ApiTransferCryptocurrencyWithinGroupResponse,
     ApiChatMetrics,
 } from "./candid/idl";
@@ -63,7 +62,6 @@ import type {
     WithdrawCryptocurrencyResponse,
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
-    CompletedCryptocurrencyTransfer,
     ChatMetrics,
 } from "../../domain/chat/chat";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";

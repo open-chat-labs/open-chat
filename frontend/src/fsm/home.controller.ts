@@ -48,9 +48,10 @@ import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
 import { ChatController } from "./chat.controller";
 import { Poller } from "./poller";
-import { scrollStrategy } from "stores/settings";
+import { scrollStrategy } from "../stores/settings";
 import { setCachedMessageFromNotification } from "../utils/caching";
-import { immutableStore } from "stores/immutable";
+import { immutableStore } from "../stores/immutable";
+import { alertsStore } from "../stores/alerts";
 
 const ONE_MINUTE = 60 * 1000;
 const ONE_HOUR = 60 * ONE_MINUTE;
@@ -158,12 +159,14 @@ export class HomeController {
             this.loading.set(!this.initialised);
             const chats = Object.values(get(this.serverChatSummaries));
             const selectedChat = get(this.selectedChat);
+            const alerts = get(alertsStore);
             const chatsResponse =
                 this.chatUpdatesSince === undefined
                     ? await this.api.getInitialState(this.messagesRead, selectedChat?.chatId)
                     : await this.api.getUpdates(
                           chats,
                           updateArgsFromChats(this.chatUpdatesSince, chats),
+                          alerts,
                           this.messagesRead,
                           selectedChat?.chatId
                       );
@@ -187,6 +190,7 @@ export class HomeController {
 
                 userStore.addMany(usersResponse.users);
                 blockedUsers.set(chatsResponse.blockedUsers);
+                alertsStore.set(chatsResponse.alerts);
 
                 const selectedChat = get(this.selectedChat);
                 let selectedChatInvalid = true;

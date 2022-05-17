@@ -220,6 +220,7 @@ export async function setCachedChats(
                 blockedUsers: data.blockedUsers,
                 avatarIdUpdate: undefined,
                 affectedEvents: {},
+                alerts: data.alerts,
             },
             userId
         ),

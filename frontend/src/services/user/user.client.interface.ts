@@ -23,6 +23,7 @@ import type {
     RegisterPollVoteResponse,
     PendingICPWithdrawal,
     WithdrawCryptocurrencyResponse,
+    Alert,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
@@ -38,6 +39,7 @@ export interface IUserClient {
     getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
+        alerts: Alert[],
         messagesRead: IMessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse>;

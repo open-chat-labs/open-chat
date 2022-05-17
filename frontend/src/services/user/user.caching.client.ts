@@ -24,6 +24,7 @@ import type {
     WithdrawCryptocurrencyResponse,
     EventsSuccessResult,
     ChatEvent,
+    Alert,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -305,6 +306,7 @@ export class CachingUserClient implements IUserClient {
                 .getUpdates(
                     cachedChats.chatSummaries,
                     updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries),
+                    cachedChats.alerts,
                     messagesRead,
                     selectedChatId // WARNING: This was left undefined previously - is this correct now
                 )
@@ -329,12 +331,14 @@ export class CachingUserClient implements IUserClient {
     async getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
+        alerts: Alert[],
         messagesRead: IMessageReadTracker,
+
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         return this.client
-            .getUpdates(chatSummaries, args, messagesRead, selectedChatId) // WARNING: This was left undefined previously - is this correct now
+            .getUpdates(chatSummaries, args, alerts, messagesRead, selectedChatId) // WARNING: This was left undefined previously - is this correct now
             .then((resp) => {
                 this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
                 return resp;

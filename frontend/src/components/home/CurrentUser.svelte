@@ -19,6 +19,7 @@
     import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
     import AlertsButton from "./AlertsButton.svelte";
+    import { alertsStore } from "stores/alerts";
 
     const dispatch = createEventDispatcher();
 
@@ -41,7 +42,7 @@
         <h4 class="name" class:small>{user.username}</h4>
     </div>
     <span class="alerts" class:small>
-        <AlertsButton on:click={() => dispatch("showAlerts")} unread={true} />
+        <AlertsButton on:click={() => dispatch("showAlerts")} unread={$alertsStore.length > 0} />
     </span>
     <span class="menu" class:small>
         <MenuIcon>
