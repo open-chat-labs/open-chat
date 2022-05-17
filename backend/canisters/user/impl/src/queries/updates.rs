@@ -34,6 +34,7 @@ async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
                 // transactions: result.transactions,
                 blocked_users: result.blocked_users,
                 cycles_balance: 0,
+                alerts: result.alerts,
                 upgrades_in_progress: result.upgrades_in_progress,
                 user_canister_wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             })
