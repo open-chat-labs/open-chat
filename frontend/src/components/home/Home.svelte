@@ -361,7 +361,12 @@
     }
 
     function addParticipants() {
-        rightPanelHistory = [...rightPanelHistory, "add_participants"];
+        if ($selectedChat !== undefined) {
+            rightPanelHistory = [
+                ...rightPanelHistory,
+                { kind: "add_participants", controller: $selectedChat },
+            ];
+        }
     }
 
     function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -370,12 +375,24 @@
 
     function showParticipants() {
         if ($selectedChat !== undefined) {
-            rightPanelHistory = [...rightPanelHistory, "show_participants"];
+            rightPanelHistory = [
+                ...rightPanelHistory,
+                { kind: "show_participants", controller: $selectedChat },
+            ];
         }
     }
 
     function showGroupDetails() {
-        rightPanelHistory = [...rightPanelHistory, "group_details"];
+        if ($selectedChat !== undefined) {
+            rightPanelHistory = [
+                ...rightPanelHistory,
+                { kind: "group_details", controller: $selectedChat },
+            ];
+        }
+    }
+
+    function showAlerts() {
+        rightPanelHistory = [...rightPanelHistory, { kind: "show_alerts" }];
     }
 
     function updateChat(ev: CustomEvent<ChatSummary>) {
@@ -384,7 +401,10 @@
 
     function showPinned() {
         if ($selectedChat !== undefined) {
-            rightPanelHistory = [...rightPanelHistory, "show_pinned"];
+            rightPanelHistory = [
+                ...rightPanelHistory,
+                { kind: "show_pinned", controller: $selectedChat },
+            ];
         }
     }
 
@@ -501,6 +521,7 @@
                 on:searchEntered={performSearch}
                 on:chatWith={chatWith}
                 on:whatsHot={whatsHot}
+                on:showAlerts={showAlerts}
                 on:logout={logout}
                 on:upgrade={upgrade}
                 on:deleteDirectChat={deleteDirectChat}
@@ -535,29 +556,24 @@
     </main>
 {/if}
 
-{#if $selectedChat !== undefined}
-    <Overlay active={rightPanelHistory.length > 0}>
-        {#if rightPanelHistory.length > 0 && groupChat}
-            <div
-                transition:fly={{ x, duration: 200, easing: sineInOut }}
-                class="right-wrapper"
-                class:rtl={$rtlStore}>
-                <RightPanel
-                    {userId}
-                    controller={$selectedChat}
-                    bind:rightPanelHistory
-                    on:goToMessageIndex={goToMessageIndex}
-                    on:addParticipants={addParticipants}
-                    on:showParticipants={showParticipants}
-                    on:chatWith={chatWith}
-                    on:blockUser={blockUser}
-                    on:deleteGroup={triggerConfirm}
-                    on:makeGroupPrivate={triggerConfirm}
-                    on:updateChat={updateChat} />
-            </div>
-        {/if}
-    </Overlay>
-{/if}
+<Overlay active={rightPanelHistory.length > 0}>
+    <div
+        transition:fly={{ x, duration: 200, easing: sineInOut }}
+        class="right-wrapper"
+        class:rtl={$rtlStore}>
+        <RightPanel
+            {userId}
+            bind:rightPanelHistory
+            on:goToMessageIndex={goToMessageIndex}
+            on:addParticipants={addParticipants}
+            on:showParticipants={showParticipants}
+            on:chatWith={chatWith}
+            on:blockUser={blockUser}
+            on:deleteGroup={triggerConfirm}
+            on:makeGroupPrivate={triggerConfirm}
+            on:updateChat={updateChat} />
+    </div>
+</Overlay>
 
 {#if confirmActionEvent !== undefined}
     <AreYouSure

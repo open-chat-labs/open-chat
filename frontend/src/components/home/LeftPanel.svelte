@@ -75,6 +75,7 @@
             on:chatWith
             on:showRoadmap
             on:showFaq
+            on:showAlerts
             on:showAbout
             on:userAvatarSelected={userAvatarSelected}
             on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}

@@ -139,6 +139,7 @@
         on:whatsHot
         on:showAbout
         on:showFaq
+        on:showAlerts
         on:showRoadmap
         {user}
         on:unsubscribeNotifications
