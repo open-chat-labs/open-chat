@@ -3,7 +3,7 @@ import type { IDL } from "@dfinity/candid";
 import { rollbar } from "../utils/logging";
 import { AuthError, SessionExpiryError, toHttpError } from "./httpError";
 
-const MAX_RETRIES = 7;
+const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
 
 function debug(msg: string): void {

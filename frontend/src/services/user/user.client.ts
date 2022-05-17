@@ -213,7 +213,7 @@ export class UserClient extends CandidService implements IUserClient {
             blockedUsers: resp.blockedUsers,
             avatarIdUpdate: undefined,
             affectedEvents: {},
-            alerts: [],
+            alerts: resp.alerts,
         };
     }
 

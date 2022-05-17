@@ -300,7 +300,7 @@ export class HomeController {
      * it will just disppear (unless of course we still have the canisterId in the url)
      */
     previewChat(chatId: string): Promise<boolean> {
-        return this.api.previewChat(chatId).then((maybeChat) => {
+        return this.api.getPublicGroupSummary(chatId).then((maybeChat) => {
             if (maybeChat === undefined) {
                 return false;
             }

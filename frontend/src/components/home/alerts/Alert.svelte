@@ -15,12 +15,18 @@
 <style type="text/scss">
     .alert {
         padding: $sp3;
-        background-color: #efefef;
+        background-color: var(--participants-bg);
+        color: var(--participants-txt);
         @include box-shadow(1);
         margin-bottom: $sp3;
+        transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
 
         &:last-child {
             margin-bottom: 0;
+        }
+
+        &:hover {
+            background-color: var(--participants-hv);
         }
     }
 

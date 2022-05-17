@@ -525,6 +525,11 @@
     "groupInviteChangedBy": "{changedBy} {changed} the group invite",
     "memberIsTyping": "{username} is typing",
     "membersAreTyping": "{number} members are typing",
-    "alerts": "Alerts",
-    "youreUpToDate": "You're all up to date"
+    "alerts": {
+        "title": "Alerts",
+        "upToDate": "You're all up to date",
+        "nothingToSee": "Nothing to see",
+        "blockedBy": "@{username} blocked you from the group \"{groupname}\"",
+        "error": "Sorry, there was an error loading your alerts"
+    }
 }

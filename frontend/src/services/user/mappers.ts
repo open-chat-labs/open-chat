@@ -543,6 +543,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             chats: candid.Success.chats.map(chatSummary),
             timestamp: candid.Success.timestamp,
             cyclesBalance: candid.Success.cycles_balance,
+            alerts: candid.Success.alerts.map(alert),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);

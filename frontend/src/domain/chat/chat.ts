@@ -634,6 +634,7 @@ export type InitialStateResponse = {
     chats: ChatSummary[];
     timestamp: bigint;
     cyclesBalance: bigint;
+    alerts: Alert[];
 };
 
 export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpdates;

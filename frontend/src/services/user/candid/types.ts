@@ -468,6 +468,7 @@ export type InitialStateResponse = {
       'cycles_balance' : Cycles,
       'user_canister_wasm_version' : Version,
       'upgrades_in_progress' : Array<ChatId>,
+      'alerts' : Array<Alert>,
       'chats' : Array<ChatSummary>,
       'blocked_users' : Array<UserId>,
       'timestamp' : TimestampMillis,
