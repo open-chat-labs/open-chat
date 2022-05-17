@@ -5,7 +5,6 @@ use canister_api_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{AccountIdentifier, Block, BlockIndex, Operation, Tokens};
 use std::str::FromStr;
-use tracing::info;
 use types::Cryptocurrency;
 use types::{
     AlertDetails, CanisterId, CompletedCryptocurrencyDeposit, CompletedCryptocurrencyTransfer,
@@ -19,14 +18,9 @@ use user_canister::notify_transaction::*;
 async fn notify_transaction(args: Args) -> Response {
     run_regular_jobs();
 
-    info!("Here");
-
     if let Ok(token) = Cryptocurrency::from_str(args.token_symbol.trim()) {
-        match args.block.transaction.operation {
-            Operation::Transfer { from, to, amount, fee } => {
-                process_transfer(token, from, to, amount, fee, args.block_index, args.block).await
-            }
-            _ => {}
+        if let Operation::Transfer { from, to, amount, fee } = args.block.transaction.operation {
+            process_transfer(token, from, to, amount, fee, args.block_index, args.block).await
         }
     }
 }
@@ -41,8 +35,6 @@ async fn process_transfer(
     block: Block,
 ) -> Response {
     let accounts = read_state(|state| lookup_accounts_in_address_book(from, to, state));
-
-    info!(?accounts, "Inside 'process_transfer'");
 
     let (sent_by_me, other) = match (accounts.from, accounts.to) {
         (KnownOrUnknown::Known(AccountOwner::Me), other) => (true, other),
@@ -116,8 +108,6 @@ async fn process_transfer(
         }
         _ => return,
     };
-
-    info!(?transaction, "Adding transaction");
 
     mutate_state(|state| {
         if let CryptocurrencyTransaction::Deposit(d) = &transaction {

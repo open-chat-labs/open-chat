@@ -34,7 +34,7 @@ impl TransactionNotifierUserSyncQueue {
     }
 
     pub fn mark_sync_failed(&mut self, user_ids: &[UserId]) {
-        self.users.extend_from_slice(&user_ids);
+        self.users.extend_from_slice(user_ids);
         self.sync_in_progress = false;
     }
 }

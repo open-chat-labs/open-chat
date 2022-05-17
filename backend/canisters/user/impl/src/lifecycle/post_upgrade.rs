@@ -19,7 +19,7 @@ fn post_upgrade(args: Args) {
     let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
-    data.address_book = AddressBook::new(env.canister_id().into(), data.user_index_canister_id);
+    data.address_book = AddressBook::new(env.canister_id(), data.user_index_canister_id);
 
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);

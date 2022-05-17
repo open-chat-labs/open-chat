@@ -10,6 +10,7 @@ pub struct CryptoTransactions {
 }
 
 impl CryptoTransactions {
+    #[allow(dead_code)]
     pub fn get(&self, token: Cryptocurrency, block_index: BlockIndex) -> Option<(CryptocurrencyTransaction, Block)> {
         self.transactions.get(&token).and_then(|t| t.get(&block_index)).cloned()
     }

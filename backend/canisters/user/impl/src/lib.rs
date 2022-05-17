@@ -151,6 +151,7 @@ fn ledger_canister_id() -> CanisterId {
 }
 
 impl Data {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         owner: Principal,
         my_canister_id: CanisterId,
