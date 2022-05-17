@@ -246,10 +246,6 @@ export class UserClient extends CandidService implements IUserClient {
             updatesResponse.transactions.length > 0 ||
             updatesResponse.alerts.length > 0;
 
-        if (updatesResponse.alerts.length) {
-            console.log("Alerts", updatesResponse.alerts);
-        }
-
         return {
             wasUpdated: anyUpdates,
             chatSummaries: anyUpdates
