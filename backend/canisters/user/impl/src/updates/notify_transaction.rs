@@ -33,7 +33,7 @@ async fn process_transfer(
     fee: Tokens,
     block_index: BlockIndex,
     block: Block,
-) -> Response {
+) {
     let accounts = read_state(|state| lookup_accounts_in_address_book(from, to, state));
 
     let (sent_by_me, other) = match (accounts.from, accounts.to) {
@@ -60,8 +60,8 @@ async fn process_transfer(
                     mutate_state(|state| state.data.address_book.add(account_identifier, account.clone()));
                     account
                 }
-                Err(_) => {
-                    // TODO handle this!
+                Err(error) => {
+                    ic_cdk::api::call::reject(&format!("Failed to call user_index. Error: {:?}", error));
                     return;
                 }
             }
