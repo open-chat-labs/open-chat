@@ -18,10 +18,10 @@ fn main() {
     generate_candid_method!(user, block_user, update);
     generate_candid_method!(user, create_group, update);
     generate_candid_method!(user, delete_messages, update);
-    generate_candid_method!(user, dismiss_alerts, update);
     generate_candid_method!(user, edit_message, update);
     generate_candid_method!(user, join_group_v2, update);
     generate_candid_method!(user, leave_group, update);
+    generate_candid_method!(user, mark_alerts_read, update);
     generate_candid_method!(user, mark_read, update);
     generate_candid_method!(user, mute_notifications, update);
     generate_candid_method!(user, register_poll_vote, update);

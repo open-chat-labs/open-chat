@@ -121,6 +121,7 @@ struct Data {
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
     pub user_preferences: UserPreferences,
+    #[serde(skip_deserializing)]
     pub alerts: Alerts,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,

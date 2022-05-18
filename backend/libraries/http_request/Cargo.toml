@@ -12,6 +12,6 @@ canister_logger = { path = "../canister_logger" }
 num-traits = "0.2.14"
 serde = "1.0.136"
 serde_bytes = "0.11.5"
-serde_json = "1.0.64"
+serde_json = "1.0.81"
 types = { path = "../types" }
 utils = { path = "../utils" }
