@@ -1342,10 +1342,7 @@ export function buildCryptoTransferText(
     content: CryptocurrencyContent,
     me: boolean
 ): string | undefined {
-    if (
-        content.transfer.kind !== "completed_icp_transfer" &&
-        content.transfer.kind !== "pending_icp_transfer"
-    ) {
+    if (content.transfer.kind !== "completed" && content.transfer.kind !== "pending") {
         return undefined;
     }
 
@@ -1364,7 +1361,7 @@ export function buildCryptoTransferText(
     };
 
     const key =
-        content.transfer.kind === "completed_icp_transfer"
+        content.transfer.kind === "completed"
             ? "confirmedSent"
             : me
             ? "pendingSentByYou"
@@ -1381,7 +1378,7 @@ export function buildTransactionLink(content: CryptocurrencyContent): string | u
 }
 
 export function buildTransactionUrl(content: CryptocurrencyContent): string | undefined {
-    if (content.transfer.kind !== "completed_icp_transfer") {
+    if (content.transfer.kind !== "completed") {
         return undefined;
     }
 

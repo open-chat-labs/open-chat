@@ -19,7 +19,6 @@ import type {
     StaleMessage,
     CryptocurrencyContent,
     CryptocurrencyTransfer,
-    ICPTransfer,
     CompletedCryptocurrencyTransfer,
     GroupChatSummary,
     PollContent,
@@ -29,9 +28,10 @@ import type {
     RegisterPollVoteResponse,
     GroupPermissions,
     PermissionRole,
-    PendingICPWithdrawal,
+    PendingCryptocurrencyWithdrawal,
     GiphyContent,
     GiphyImage,
+    Cryptocurrency,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { User } from "../../domain/user/user";
@@ -65,6 +65,7 @@ import type {
     ApiPendingCryptocurrencyWithdrawal,
     ApiGiphyContent,
     ApiGiphyImageVariant,
+    ApiCryptocurrency,
 } from "../user/candid/idl";
 import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
 import { emptyChatMetrics } from "../../domain/chat/chat.utils";
@@ -227,11 +228,19 @@ function cryptoContent(candid: ApiCryptocurrencyContent): CryptocurrencyContent 
     };
 }
 
+export function token(_candid: ApiCryptocurrency): Cryptocurrency {
+    return "icp";
+}
+
+export function apiToken(_token: Cryptocurrency): ApiCryptocurrency {
+    return { InternetComputer: null };
+}
+
 function cryptoTransfer(candid: ApiCryptocurrencyTransfer): CryptocurrencyTransfer {
     if ("Pending" in candid) {
         return {
-            transferKind: "icp_transfer",
-            kind: "pending_icp_transfer",
+            kind: "pending",
+            token: token(candid.Pending.token),
             recipient: candid.Pending.recipient.toString(),
             amountE8s: candid.Pending.amount.e8s,
             feeE8s: optional(candid.Pending.fee, (f) => f.e8s),
@@ -243,8 +252,8 @@ function cryptoTransfer(candid: ApiCryptocurrencyTransfer): CryptocurrencyTransf
     }
     if ("Failed" in candid) {
         return {
-            transferKind: "icp_transfer",
-            kind: "failed_icp_transfer",
+            kind: "failed",
+            token: token(candid.Failed.token),
             recipient: candid.Failed.recipient.toString(),
             amountE8s: candid.Failed.amount.e8s,
             feeE8s: candid.Failed.fee.e8s,
@@ -259,8 +268,8 @@ export function completedCryptoTransfer(
     candid: ApiCompletedCryptocurrencyTransfer
 ): CompletedCryptocurrencyTransfer {
     return {
-        transferKind: "icp_transfer",
-        kind: "completed_icp_transfer",
+        kind: "completed",
+        token: token(candid.token),
         recipient: candid.recipient.toString(),
         sender: candid.sender.toString(),
         amountE8s: candid.amount.e8s,
@@ -591,32 +600,10 @@ export function apiCryptoContent(domain: CryptocurrencyContent): ApiCryptocurren
 }
 
 function apiCryptoTransfer(domain: CryptocurrencyTransfer): ApiCryptocurrencyTransfer {
-    if (domain.transferKind === "cycles_transfer") {
-        throw new Error("Sending cycles is not supported");
-    }
-    if (domain.transferKind === "icp_transfer") {
-        return apiICPTransfer(domain);
-    }
-    throw new UnsupportedValueError("Unexpected transfer kind", domain);
-}
-
-export function apiPendingICPWithdrawal(
-    domain: PendingICPWithdrawal
-): ApiPendingCryptocurrencyWithdrawal {
-    return {
-        token: { InternetComputer: null },
-        to: hexStringToBytes(domain.to),
-        amount: apiICP(domain.amountE8s),
-        fee: apiOptional(apiICP, domain.feeE8s),
-        memo: apiOptional(identity, domain.memo),
-    };
-}
-
-function apiICPTransfer(domain: ICPTransfer): ApiCryptocurrencyTransfer {
-    if (domain.kind === "pending_icp_transfer") {
+    if (domain.kind === "pending") {
         return {
             Pending: {
-                token: { InternetComputer: null },
+                token: apiToken(domain.token),
                 recipient: Principal.fromText(domain.recipient),
                 amount: apiICP(domain.amountE8s),
                 fee: apiOptional(apiICP, domain.feeE8s),
@@ -624,10 +611,10 @@ function apiICPTransfer(domain: ICPTransfer): ApiCryptocurrencyTransfer {
             },
         };
     }
-    if (domain.kind === "completed_icp_transfer") {
+    if (domain.kind === "completed") {
         return {
             Completed: {
-                token: { InternetComputer: null },
+                token: apiToken(domain.token),
                 recipient: Principal.fromText(domain.recipient),
                 sender: Principal.fromText(domain.sender),
                 amount: apiICP(domain.amountE8s),
@@ -638,10 +625,10 @@ function apiICPTransfer(domain: ICPTransfer): ApiCryptocurrencyTransfer {
             },
         };
     }
-    if (domain.kind === "failed_icp_transfer") {
+    if (domain.kind === "failed") {
         return {
             Failed: {
-                token: { InternetComputer: null },
+                token: apiToken(domain.token),
                 recipient: Principal.fromText(domain.recipient),
                 amount: apiICP(domain.amountE8s),
                 fee: apiICP(domain.feeE8s),
@@ -651,6 +638,18 @@ function apiICPTransfer(domain: ICPTransfer): ApiCryptocurrencyTransfer {
         };
     }
     throw new UnsupportedValueError("Unexpected cycles transfer kind", domain);
+}
+
+export function apiPendingCryptocurrencyWithdrawal(
+    domain: PendingCryptocurrencyWithdrawal
+): ApiPendingCryptocurrencyWithdrawal {
+    return {
+        token: apiToken(domain.token),
+        to: hexStringToBytes(domain.to),
+        amount: apiICP(domain.amountE8s),
+        fee: apiOptional(apiICP, domain.feeE8s),
+        memo: apiOptional(identity, domain.memo),
+    };
 }
 
 function apiTextContent(domain: TextContent): ApiTextContent {

@@ -59,14 +59,14 @@
 
         withdrawing = true;
         error = undefined;
-        api.withdrawICP({
-            kind: "pending_icp_withdrawal",
-            transferKind: "icp_withdrawal",
+        api.withdrawCryptocurrency({
+            kind: "pending",
+            token: "icp",
             to: targetAccount,
             amountE8s: amountToWithdrawE8s,
         })
             .then((resp) => {
-                if (resp.kind === "completed_icp_withdrawal") {
+                if (resp.kind === "completed") {
                     console.log(resp);
                     amountToWithdrawE8s = BigInt(0);
                     targetAccount = "";

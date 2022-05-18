@@ -21,7 +21,7 @@ import type {
     MarkReadRequest,
     GroupChatSummary,
     RegisterPollVoteResponse,
-    PendingICPWithdrawal,
+    PendingCryptocurrencyWithdrawal,
     WithdrawCryptocurrencyResponse,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
@@ -108,5 +108,7 @@ export interface IUserClient {
         answerIdx: number,
         voteType: "register" | "delete"
     ): Promise<RegisterPollVoteResponse>;
-    withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse>;
+    withdrawCryptocurrency(
+        domain: PendingCryptocurrencyWithdrawal
+    ): Promise<WithdrawCryptocurrencyResponse>;
 }
