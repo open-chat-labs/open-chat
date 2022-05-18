@@ -143,28 +143,15 @@ function extractMessageContentFromCryptoContent(
     content: CryptocurrencyContent,
     senderName: string
 ): ContentExtract {
-    if (content.transfer.transferKind === "cycles_transfer") {
-        if (
-            content.transfer.kind === "completed_cycles_transfer" ||
-            content.transfer.kind === "pending_cycles_transfer"
-        ) {
-            return {
-                text: `${senderName} sent ${content.transfer.cycles} cycles`,
-            };
-        }
-    } else if (content.transfer.transferKind === "icp_transfer") {
-        if (
-            content.transfer.kind === "completed_icp_transfer" ||
-            content.transfer.kind === "pending_icp_transfer"
-        ) {
-            return {
-                text: `${senderName} sent ${Number(content.transfer.amountE8s) / E8S_PER_ICP} ICP`,
-            };
-        }
+    if (content.transfer.kind === "completed" || content.transfer.kind === "pending") {
+        return {
+            text: `${senderName} sent ${Number(content.transfer.amountE8s) / E8S_PER_ICP} ICP`,
+        };
+    } else {
+        return {
+            text: `${senderName} sent a crypto transfer`,
+        };
     }
-    return {
-        text: `${senderName} sent a crypto transfer`,
-    };
 }
 
 function extractMessageContent(

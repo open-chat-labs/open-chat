@@ -772,7 +772,7 @@ export class HomeController {
 
     private hydrateBigIntsInContent(content: MessageContent): MessageContent {
         if (content.kind === "crypto_content") {
-            if (content.transfer.kind === "pending_icp_transfer") {
+            if (content.transfer.kind === "pending") {
                 return {
                     ...content,
                     transfer: {
@@ -789,7 +789,7 @@ export class HomeController {
                     },
                 };
             }
-            if (content.transfer.kind === "completed_icp_transfer") {
+            if (content.transfer.kind === "completed") {
                 return {
                     ...content,
                     transfer: {

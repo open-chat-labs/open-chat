@@ -25,109 +25,29 @@ export interface PlaceholderContent {
     kind: "placeholder_content";
 }
 
-export type PendingCyclesTransfer = {
-    transferKind: "cycles_transfer";
-    kind: "pending_cycles_transfer";
-    recipient: string;
-    cycles: bigint;
-};
+export type Cryptocurrency = "icp" | "btc" | "chat";
 
-export type CompletedCyclesTransfer = {
-    transferKind: "cycles_transfer";
-    kind: "completed_cycles_transfer";
-    recipient: string;
-    sender: string;
-    cycles: bigint;
-};
-
-export type FailedCyclesTransfer = {
-    transferKind: "cycles_transfer";
-    kind: "failed_cycles_transfer";
-    recipient: string;
-    cycles: bigint;
-    errorMessage: string;
-};
-
-export type PendingCyclesWithdrawal = {
-    transferKind: "cycles_withdrawal";
-    kind: "pending_cycles_withdrawal";
-    to: string;
-    cycles: bigint;
-};
-
-export type CompletedCyclesWithdrawal = {
-    transferKind: "cycles_withdrawal";
-    kind: "completed_cycles_withdrawal";
-    to: string;
-    cycles: bigint;
-};
-
-export type FailedCyclesWithdrawal = {
-    transferKind: "cycles_withdrawal";
-    kind: "failed_cycles_withdrawal";
-    cycles: bigint;
-    errorMessage: string;
-};
-
-export type CompletedCyclesDeposit = {
-    transferKind: "cycles_deposit";
-    kind: "completed_cycles_deposit";
-    from: string;
-    cycles: bigint;
-};
-
-export type PendingICPTransfer = {
-    transferKind: "icp_transfer";
-    kind: "pending_icp_transfer";
-    recipient: string;
-    amountE8s: bigint;
-    feeE8s?: bigint;
-    memo?: bigint;
-};
-
-export type CompletedICPTransfer = {
-    transferKind: "icp_transfer";
-    kind: "completed_icp_transfer";
-    recipient: string;
-    sender: string;
+export type CryptocurrencyDeposit = {
+    token: Cryptocurrency;
     amountE8s: bigint;
     feeE8s: bigint;
     memo: bigint;
     blockIndex: bigint;
-    transactionHash: string;
+    fromAddress: string;
 };
 
-export type CompletedICPDeposit = {
-    transferKind: "icp_deposit";
-    kind: "completed_icp_deposit";
-    amountE8s: bigint;
-    feeE8s: bigint;
-    memo: bigint;
-    blockIndex: bigint;
-};
-
-export type FailedICPTransfer = {
-    transferKind: "icp_transfer";
-    kind: "failed_icp_transfer";
-    recipient: string;
-    amountE8s: bigint;
-    feeE8s: bigint;
-    memo: bigint;
-    errorMessage: string;
-};
-
-export type PendingICPWithdrawal = {
-    transferKind: "icp_withdrawal";
-    kind: "pending_icp_withdrawal";
+export type PendingCryptocurrencyWithdrawal = {
+    kind: "pending";
+    token: Cryptocurrency;
     to: string;
     amountE8s: bigint;
     feeE8s?: bigint;
     memo?: bigint;
 };
 
-export type CompletedICPWithdrawal = {
-    transferKind: "icp_withdrawal";
-    kind: "completed_icp_withdrawal";
+export type CompletedCryptocurrencyWithdrawal = {
+    kind: "completed";
+    token: Cryptocurrency;
     to: string;
     amountE8s: bigint;
     feeE8s: bigint;
@@ -136,9 +56,9 @@ export type CompletedICPWithdrawal = {
     transactionHash: string;
 };
 
-export type FailedICPWithdrawal = {
-    transferKind: "icp_withdrawal";
-    kind: "failed_icp_withdrawal";
+export type FailedCryptocurrencyWithdrawal = {
+    kind: "failed";
+    token: Cryptocurrency;
     to: string;
     amountE8s: bigint;
     feeE8s: bigint;
@@ -150,26 +70,47 @@ export type WithdrawCryptocurrencyResponse =
     | { kind: "currency_not_supported" }
     | FailedCryptocurrencyWithdrawal
     | CompletedCryptocurrencyWithdrawal;
-export type FailedCryptocurrencyWithdrawal = FailedICPWithdrawal | FailedCyclesWithdrawal;
-export type CompletedCryptocurrencyWithdrawal = CompletedICPWithdrawal | CompletedCyclesWithdrawal;
-export type CompletedCryptocurrencyTransfer = CompletedCyclesTransfer | CompletedICPTransfer;
 
-export type CyclesTransfer = PendingCyclesTransfer | CompletedCyclesTransfer | FailedCyclesTransfer;
-export type CyclesWithdrawal =
-    | PendingCyclesWithdrawal
-    | CompletedCyclesWithdrawal
-    | FailedCyclesWithdrawal;
-export type CyclesDeposit = CompletedCyclesDeposit;
+export type CryptocurrencyWithdrawal =
+    | PendingCryptocurrencyWithdrawal
+    | CompletedCryptocurrencyWithdrawal
+    | FailedCryptocurrencyWithdrawal;
 
-export type ICPTransfer = PendingICPTransfer | CompletedICPTransfer | FailedICPTransfer;
-export type ICPWithdrawal = PendingICPWithdrawal | CompletedICPWithdrawal | FailedICPWithdrawal;
-export type ICPDeposit = CompletedICPDeposit;
+export type CompletedCryptocurrencyTransfer = {
+    kind: "completed";
+    token: Cryptocurrency;
+    recipient: string;
+    sender: string;
+    amountE8s: bigint;
+    feeE8s: bigint;
+    memo: bigint;
+    blockIndex: bigint;
+    transactionHash: string;
+};
 
-export type CryptocurrencyTransfer = CyclesTransfer | ICPTransfer;
+export type PendingCryptocurrencyTransfer = {
+    kind: "pending";
+    token: Cryptocurrency;
+    recipient: string;
+    amountE8s: bigint;
+    feeE8s?: bigint;
+    memo?: bigint;
+};
 
-export type CryptocurrencyWithdrawal = CyclesWithdrawal | ICPWithdrawal;
+export type FailedCryptocurrencyTransfer = {
+    kind: "failed";
+    token: Cryptocurrency;
+    recipient: string;
+    amountE8s: bigint;
+    feeE8s: bigint;
+    memo: bigint;
+    errorMessage: string;
+};
 
-export type CryptocurrencyDeposit = CyclesDeposit | ICPDeposit;
+export type CryptocurrencyTransfer =
+    | CompletedCryptocurrencyTransfer
+    | PendingCryptocurrencyTransfer
+    | FailedCryptocurrencyTransfer;
 
 export type CryptocurrencyTransaction =
     | CryptocurrencyTransfer
@@ -614,7 +555,7 @@ export type GroupDeletedAlert = {
     chatId: string;
 };
 
-export type CryptoDepositReceivedAlert = ICPDeposit | CyclesDeposit;
+export type CryptoDepositReceivedAlert = CryptocurrencyDeposit;
 
 export type RemovedFromGroupAlert = {
     kind: "removed_from_group_alert";
