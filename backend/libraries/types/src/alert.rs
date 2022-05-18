@@ -23,12 +23,16 @@ pub enum AlertDetails {
 pub struct RemovedFromGroup {
     pub chat_id: ChatId,
     pub removed_by: UserId,
+    #[serde(default)]
+    pub group_name: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupDeleted {
     pub chat_id: ChatId,
     pub deleted_by: UserId,
+    #[serde(default)]
+    pub group_name: String,
 }
 
 pub enum AlertId {
