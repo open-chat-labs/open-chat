@@ -6,6 +6,7 @@ use types::UserId;
 pub struct Args {
     pub removed_by: UserId,
     pub blocked: bool,
+    pub group_name: String,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

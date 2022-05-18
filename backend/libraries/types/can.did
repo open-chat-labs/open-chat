@@ -877,12 +877,14 @@ type RemovedFromGroupAlert =
     record {
         chat_id: ChatId;
         removed_by: UserId;
+        group_name: text;
     };
 
 type GroupDeletedAlert =
     record {
         chat_id: ChatId;
         deleted_by: UserId;
+        group_name: text;
     };
 
 type AlertId =
