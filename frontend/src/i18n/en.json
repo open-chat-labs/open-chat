@@ -529,7 +529,7 @@
         "title": "Alerts",
         "upToDate": "You're all up to date",
         "nothingToSee": "Nothing to see",
-        "blockedBy": "@{username} blocked you from the group \"{groupname}\"",
-        "error": "Sorry, there was an error loading your alerts"
+        "blockedBy": "**@{username}** blocked you from the group **{groupname}**",
+        "unknownGroup": "unknown group"
     }
 }

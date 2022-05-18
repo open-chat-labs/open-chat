@@ -85,6 +85,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bg: dark20,
             txt: dark60,
             hv: dark15,
+            tm: blueAccent,
         },
 
         entry: {

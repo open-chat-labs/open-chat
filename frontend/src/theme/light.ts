@@ -81,6 +81,7 @@ export function lightTheme(): Theme {
             bg: "#efefef",
             txt: "#191919",
             hv: "#e2e2e2",
+            tm: blueAccent,
         },
 
         entry: {

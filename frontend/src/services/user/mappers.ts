@@ -580,6 +580,7 @@ function alertDetails(candid: ApiAlertDetails): AlertDetails {
             kind: "group_deleted_alert",
             deletedBy: candid.GroupDeleted.deleted_by.toString(),
             chatId: candid.GroupDeleted.chat_id.toString(),
+            groupName: candid.GroupDeleted.group_name,
         };
     }
     if ("RemovedFromGroup" in candid) {
@@ -587,6 +588,7 @@ function alertDetails(candid: ApiAlertDetails): AlertDetails {
             kind: "removed_from_group_alert",
             removedBy: candid.RemovedFromGroup.removed_by.toString(),
             chatId: candid.RemovedFromGroup.chat_id.toString(),
+            groupName: candid.RemovedFromGroup.group_name,
         };
     }
     if ("BlockedFromGroup" in candid) {
@@ -594,6 +596,7 @@ function alertDetails(candid: ApiAlertDetails): AlertDetails {
             kind: "blocked_from_group_alert",
             blockedBy: candid.BlockedFromGroup.removed_by.toString(),
             chatId: candid.BlockedFromGroup.chat_id.toString(),
+            groupName: candid.BlockedFromGroup.group_name,
         };
     }
     if ("CryptocurrencyDepositReceived" in candid) {

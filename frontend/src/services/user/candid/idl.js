@@ -306,6 +306,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupDeletedAlert = IDL.Record({
     'deleted_by' : UserId,
     'chat_id' : ChatId,
+    'group_name' : IDL.Text,
   });
   const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const CompletedCryptocurrencyDeposit = IDL.Record({
@@ -322,6 +323,7 @@ export const idlFactory = ({ IDL }) => {
   const RemovedFromGroupAlert = IDL.Record({
     'chat_id' : ChatId,
     'removed_by' : UserId,
+    'group_name' : IDL.Text,
   });
   const AlertDetails = IDL.Variant({
     'GroupDeleted' : GroupDeletedAlert,

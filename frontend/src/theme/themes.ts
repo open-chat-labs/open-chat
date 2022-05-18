@@ -90,6 +90,7 @@ export interface Theme {
         bg: string;
         txt: string;
         hv: string;
+        tm: string;
     };
 
     entry: {

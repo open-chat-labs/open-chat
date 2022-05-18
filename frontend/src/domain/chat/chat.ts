@@ -613,6 +613,7 @@ export type GroupDeletedAlert = {
     kind: "group_deleted_alert";
     deletedBy: string;
     chatId: string;
+    groupName: string;
 };
 
 export type CryptoDepositReceivedAlert = ICPDeposit | CyclesDeposit;
@@ -621,12 +622,14 @@ export type RemovedFromGroupAlert = {
     kind: "removed_from_group_alert";
     removedBy: string;
     chatId: string;
+    groupName: string;
 };
 
 export type BlockedFromGroupAlert = {
     kind: "blocked_from_group_alert";
     blockedBy: string;
     chatId: string;
+    groupName: string;
 };
 
 export type InitialStateResponse = {
