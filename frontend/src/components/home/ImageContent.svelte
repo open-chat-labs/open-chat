@@ -106,8 +106,8 @@
     <Markdown text={addEditedSuffix(content.caption, edited)} inline={!reply} />
 {/if}
 
-{#if zoomable}
-    <Overlay dismissible={true} alignBottomOnMobile={false} bind:active={zoom}>
+{#if zoomable && zoom}
+    <Overlay dismissible={true} alignBottomOnMobile={false}>
         <ModalContent
             hideHeader={true}
             hideFooter={true}

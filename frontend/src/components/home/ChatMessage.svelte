@@ -307,7 +307,7 @@
 <svelte:window on:resize={recalculateMediaDimensions} />
 
 {#if showEmojiPicker && canReact}
-    <Overlay dismissible={true} bind:active={showEmojiPicker}>
+    <Overlay dismissible={true}>
         <ModalContent hideFooter={true} hideHeader={true} fill={true}>
             <span slot="body">
                 {#await import("./EmojiPicker.svelte")}

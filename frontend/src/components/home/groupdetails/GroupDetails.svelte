@@ -335,24 +335,26 @@
     </div>
 </div>
 
-<Overlay bind:active={showConfirmation}>
-    <ModalContent fill={true}>
-        <span slot="header">{$_("areYouSure")}</span>
-        <span slot="body">
-            <p class="unsaved">
-                {$_("unsavedGroupChanges")}
-            </p>
-        </span>
-        <span slot="footer" class="footer">
-            <ButtonGroup>
-                <Button loading={saving} disabled={saving} small={true} on:click={updateGroup}
-                    >{$_("save")}</Button>
-                <Button disabled={saving} small={true} on:click={close} secondary={true}
-                    >{$_("discard")}</Button>
-            </ButtonGroup>
-        </span>
-    </ModalContent>
-</Overlay>
+{#if showConfirmation}
+    <Overlay>
+        <ModalContent fill={true}>
+            <span slot="header">{$_("areYouSure")}</span>
+            <span slot="body">
+                <p class="unsaved">
+                    {$_("unsavedGroupChanges")}
+                </p>
+            </span>
+            <span slot="footer" class="footer">
+                <ButtonGroup>
+                    <Button loading={saving} disabled={saving} small={true} on:click={updateGroup}
+                        >{$_("save")}</Button>
+                    <Button disabled={saving} small={true} on:click={close} secondary={true}
+                        >{$_("discard")}</Button>
+                </ButtonGroup>
+            </span>
+        </ModalContent>
+    </Overlay>
+{/if}
 
 <style type="text/scss">
     .unsaved {

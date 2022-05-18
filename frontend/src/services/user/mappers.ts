@@ -20,9 +20,6 @@ import type {
     ApiMessageMatch,
     ApiEditMessageResponse,
     ApiInitialStateResponse,
-    ApiAlert,
-    ApiAlertDetails,
-    ApiCryptocurrencyDeposit,
     ApiRole,
     ApiMention,
     ApiRecommendedGroupsResponse,
@@ -53,9 +50,6 @@ import type {
     JoinGroupResponse,
     EditMessageResponse,
     InitialStateResponse,
-    Alert,
-    AlertDetails,
-    CryptocurrencyDeposit,
     MemberRole,
     Mention,
     GroupChatSummary,
@@ -64,7 +58,6 @@ import type {
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
     ChatMetrics,
-    MarkAlertsReadResponse,
 } from "../../domain/chat/chat";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -545,7 +538,6 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             chats: candid.Success.chats.map(chatSummary),
             timestamp: candid.Success.timestamp,
             cyclesBalance: candid.Success.cycles_balance,
-            alerts: candid.Success.alerts.map(alert),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
@@ -562,61 +554,9 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             timestamp: candid.Success.timestamp,
             cyclesBalance: optional(candid.Success.cycles_balance, identity),
             transactions: [], // todo - come back when we need this
-            alerts: candid.Success.alerts.map(alert),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
-}
-
-function alert(candid: ApiAlert): Alert {
-    return {
-        id: candid.id,
-        details: alertDetails(candid.details),
-        timestamp: Number(candid.timestamp),
-        read: candid.read,
-    };
-}
-
-function alertDetails(candid: ApiAlertDetails): AlertDetails {
-    if ("GroupDeleted" in candid) {
-        return {
-            kind: "group_deleted_alert",
-            deletedBy: candid.GroupDeleted.deleted_by.toString(),
-            chatId: candid.GroupDeleted.chat_id.toString(),
-            groupName: candid.GroupDeleted.group_name,
-        };
-    }
-    if ("RemovedFromGroup" in candid) {
-        return {
-            kind: "removed_from_group_alert",
-            removedBy: candid.RemovedFromGroup.removed_by.toString(),
-            chatId: candid.RemovedFromGroup.chat_id.toString(),
-            groupName: candid.RemovedFromGroup.group_name,
-        };
-    }
-    if ("BlockedFromGroup" in candid) {
-        return {
-            kind: "blocked_from_group_alert",
-            blockedBy: candid.BlockedFromGroup.removed_by.toString(),
-            chatId: candid.BlockedFromGroup.chat_id.toString(),
-            groupName: candid.BlockedFromGroup.group_name,
-        };
-    }
-    if ("CryptocurrencyDepositReceived" in candid) {
-        return cryptoDepositAlert(candid.CryptocurrencyDepositReceived);
-    }
-    throw new UnsupportedValueError("Unexpected ApiAlertDetails type received:", candid);
-}
-
-function cryptoDepositAlert(candid: ApiCryptocurrencyDeposit): CryptocurrencyDeposit {
-    return {
-        transferKind: "icp_deposit",
-        kind: "completed_icp_deposit",
-        amountE8s: candid.Completed.amount.e8s,
-        feeE8s: candid.Completed.fee.e8s,
-        memo: candid.Completed.memo,
-        blockIndex: candid.Completed.block_index,
-    };
 }
 
 function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
@@ -830,14 +770,4 @@ export function withdrawCryptoResponse(
         "Unexpected ApiWithdrawCryptocurrencyResponse type received",
         candid
     );
-}
-
-export function markAlertsReadResponse(candid: ApiMarkAlertsReadResponse): MarkAlertsReadResponse {
-    if ("Success" in candid) {
-        return { kind: "success" };
-    }
-    if ("PartialSuccess" in candid) {
-        return { kind: "partial_success", failedIds: candid.PartialSuccess };
-    }
-    throw new UnsupportedValueError("Unexpected ApiMarkAlertsReadResponse type received", candid);
 }

@@ -87,76 +87,78 @@
     }
 </script>
 
-<Overlay dismissible={true} bind:active={open}>
-    <ModalContent>
-        <span class="header" slot="header">
-            <div class="main-title">{$_("icpAccount.manageHeader")}</div>
-            <div class="balance">
-                <div class="amount">{formatICP(remainingBalanceE8s, 2)}</div>
-                <div class="label">
-                    {amountToWithdrawE8s > BigInt(0)
-                        ? $_("icpAccount.shortRemainingBalanceLabel")
-                        : $_("icpAccount.shortBalanceLabel")}
+{#if open}
+    <Overlay dismissible={true}>
+        <ModalContent>
+            <span class="header" slot="header">
+                <div class="main-title">{$_("icpAccount.manageHeader")}</div>
+                <div class="balance">
+                    <div class="amount">{formatICP(remainingBalanceE8s, 2)}</div>
+                    <div class="label">
+                        {amountToWithdrawE8s > BigInt(0)
+                            ? $_("icpAccount.shortRemainingBalanceLabel")
+                            : $_("icpAccount.shortBalanceLabel")}
+                    </div>
                 </div>
-            </div>
-            <div class="refresh" class:refreshing on:click={reset}>
-                <Refresh size={"1em"} color={"var(--accent)"} />
-            </div>
-        </span>
-        <form class="body" slot="body">
-            <h4 class="title">{$_("icpAccount.topUp")}</h4>
-            <AccountInfo qrSize={"smaller"} {user} />
-
-            <div class="or">
-                <hr />
-                <span>or</span>
-                <hr />
-            </div>
-
-            <h4 class="title">{$_("icpAccount.withdraw")}</h4>
-
-            <Legend>{$_("icpTransfer.amount")}</Legend>
-            <div class="icp-input">
-                <ICPInput
-                    maxAmountE8s={$icpBalanceE8sStore.e8s - ICP_TRANSFER_FEE_E8S}
-                    bind:amountE8s={amountToWithdrawE8s} />
-            </div>
-            <div class="target">
-                <Input
-                    bind:value={targetAccount}
-                    countdown={false}
-                    maxlength={100}
-                    placeholder={$_("icpAccount.withdrawTarget")} />
-
-                <div class="send" class:valid on:click={withdraw} class:withdrawing>
-                    {#if !withdrawing}
-                        <Send
-                            size={$iconSize}
-                            color={valid ? "var(--accent)" : "var(--icon-txt)"} />
-                    {/if}
+                <div class="refresh" class:refreshing on:click={reset}>
+                    <Refresh size={"1em"} color={"var(--accent)"} />
                 </div>
-            </div>
-            <div class="fee">
-                {$_("icpTransfer.fee", { values: { fee: formatICP(ICP_TRANSFER_FEE_E8S, 0) } })}
-            </div>
-            {#if error}
-                <ErrorMessage>{$_(error)}</ErrorMessage>
-            {/if}
-        </form>
-        <span class="footer" slot="footer">
-            <a
-                class="how-to"
-                href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
-                target="_blank">
-                {$_("howToBuyICP")}
-            </a>
-            <ButtonGroup>
-                <Button tiny={true} secondary={true} on:click={() => (open = false)}
-                    >{$_("close")}</Button>
-            </ButtonGroup>
-        </span>
-    </ModalContent>
-</Overlay>
+            </span>
+            <form class="body" slot="body">
+                <h4 class="title">{$_("icpAccount.topUp")}</h4>
+                <AccountInfo qrSize={"smaller"} {user} />
+
+                <div class="or">
+                    <hr />
+                    <span>or</span>
+                    <hr />
+                </div>
+
+                <h4 class="title">{$_("icpAccount.withdraw")}</h4>
+
+                <Legend>{$_("icpTransfer.amount")}</Legend>
+                <div class="icp-input">
+                    <ICPInput
+                        maxAmountE8s={$icpBalanceE8sStore.e8s - ICP_TRANSFER_FEE_E8S}
+                        bind:amountE8s={amountToWithdrawE8s} />
+                </div>
+                <div class="target">
+                    <Input
+                        bind:value={targetAccount}
+                        countdown={false}
+                        maxlength={100}
+                        placeholder={$_("icpAccount.withdrawTarget")} />
+
+                    <div class="send" class:valid on:click={withdraw} class:withdrawing>
+                        {#if !withdrawing}
+                            <Send
+                                size={$iconSize}
+                                color={valid ? "var(--accent)" : "var(--icon-txt)"} />
+                        {/if}
+                    </div>
+                </div>
+                <div class="fee">
+                    {$_("icpTransfer.fee", { values: { fee: formatICP(ICP_TRANSFER_FEE_E8S, 0) } })}
+                </div>
+                {#if error}
+                    <ErrorMessage>{$_(error)}</ErrorMessage>
+                {/if}
+            </form>
+            <span class="footer" slot="footer">
+                <a
+                    class="how-to"
+                    href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
+                    target="_blank">
+                    {$_("howToBuyICP")}
+                </a>
+                <ButtonGroup>
+                    <Button tiny={true} secondary={true} on:click={() => (open = false)}
+                        >{$_("close")}</Button>
+                </ButtonGroup>
+            </span>
+        </ModalContent>
+    </Overlay>
+{/if}
 
 <style type="text/scss">
     .or {

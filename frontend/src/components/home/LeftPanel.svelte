@@ -2,18 +2,14 @@
     import Panel from "../Panel.svelte";
     import ChatList from "./ChatList.svelte";
     import NewGroup from "./addgroup/AddGroup.controller.svelte";
-    import UserProfile from "./profile/UserProfile.svelte";
     import type {
         GroupSearchResponse,
         SearchAllMessagesResponse,
     } from "../../domain/search/search";
     import type { UserSummary } from "../../domain/user/user";
     import type { HomeController } from "../../fsm/home.controller";
-    import { userStore } from "../../stores/user";
-    import { nullUser } from "../../domain/user/user.utils";
     import { unsubscribeNotifications } from "../../utils/notifications";
     import type { GroupChatSummary } from "../../domain/chat/chat";
-    import { emptyChatMetrics, mergeChatMetrics } from "../../domain/chat/chat.utils";
     import { trackEvent } from "../../utils/tracking";
 
     export let controller: HomeController;
@@ -24,25 +20,11 @@
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
 
-    let profileComponent: UserProfile;
-
     $: api = controller.api;
     $: currentUser = controller.user;
     $: userId = controller.user!.userId;
-    $: user = controller.user ? $userStore[controller.user?.userId] : nullUser("unknown");
 
-    $: chats = controller.chatSummariesList;
-
-    $: combinedMetrics = $chats
-        .map((c) => c.myMetrics)
-        .reduce(mergeChatMetrics, emptyChatMetrics());
-
-    let view: "showing-chat-list" | "adding-group" | "showing-profile" = "showing-chat-list";
-
-    export function showProfile() {
-        view = "showing-profile";
-        profileComponent.reset();
-    }
+    let view: "showing-chat-list" | "adding-group" = "showing-chat-list";
 
     function groupCreated(ev: CustomEvent<GroupChatSummary>) {
         controller.addOrReplaceChat(ev.detail);
@@ -52,13 +34,6 @@
         } else {
             trackEvent("private_group_created");
         }
-    }
-
-    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
-        controller.updateUserAvatar({
-            blobData: ev.detail.data,
-            blobUrl: ev.detail.url,
-        });
     }
 </script>
 
@@ -75,13 +50,12 @@
             on:chatWith
             on:showRoadmap
             on:showFaq
-            on:showAlerts
             on:showAbout
-            on:userAvatarSelected={userAvatarSelected}
+            on:userAvatarSelected
             on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
             on:whatsHot
             on:newGroup={() => (view = "adding-group")}
-            on:profile={showProfile}
+            on:profile
             on:logout
             on:searchEntered
             on:deleteDirectChat
@@ -93,22 +67,10 @@
             {messageSearchResults}
             {controller} />
     </div>
-    <div class="profile" class:showing-profile={view === "showing-profile"}>
-        <UserProfile
-            bind:this={profileComponent}
-            on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
-            on:upgrade
-            on:showFaqQuestion
-            {user}
-            metrics={combinedMetrics}
-            on:userAvatarSelected={userAvatarSelected}
-            on:closeProfile={() => (view = "showing-chat-list")} />
-    </div>
 </Panel>
 
 <style type="text/scss">
     .new-group,
-    .profile,
     .chat-list {
         display: none;
         flex-direction: column;
@@ -121,11 +83,6 @@
     }
     .chat-list {
         &.showing-chat-list {
-            display: flex;
-        }
-    }
-    .profile {
-        &.showing-profile {
             display: flex;
         }
     }

@@ -72,18 +72,6 @@ export function lightTheme(): Theme {
             },
         },
 
-        alerts: {
-            bg: "transparent",
-            txt: "#ffffff",
-        },
-
-        alert: {
-            bg: "#efefef",
-            txt: "#191919",
-            hv: "#e2e2e2",
-            tm: blueAccent,
-        },
-
         entry: {
             bg: "#efefef",
             bd: "#dddddd",

@@ -18,8 +18,6 @@
     import { createEventDispatcher } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
-    import AlertsButton from "./AlertsButton.svelte";
-    import { alertsStore } from "stores/alerts";
 
     const dispatch = createEventDispatcher();
 
@@ -41,9 +39,6 @@
         <EditableAvatar {small} image={avatarUrl(user)} on:imageSelected={userAvatarSelected} />
         <h4 class="name" class:small>{user.username}</h4>
     </div>
-    <span class="alerts" class:small>
-        <AlertsButton on:click={() => dispatch("showAlerts")} />
-    </span>
     <span class="menu" class:small>
         <MenuIcon>
             <span slot="icon">
@@ -154,8 +149,7 @@
         }
     }
 
-    .menu,
-    .alerts {
+    .menu {
         position: absolute;
         top: 0;
         right: 1px;
@@ -168,17 +162,8 @@
         }
     }
 
-    .alerts {
-        right: 45px;
-    }
-
     .current-user-box.rtl .menu {
         right: unset;
         left: 0;
-    }
-
-    .current-user-box.rtl .alerts {
-        right: unset;
-        left: 45px;
     }
 </style>

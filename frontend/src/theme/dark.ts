@@ -75,19 +75,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
             },
         },
 
-        alerts: {
-            bg: dark10,
-            txt: dark60,
-        },
-
-        alert: {
-            ...defaultTheme.alert,
-            bg: dark20,
-            txt: dark60,
-            hv: dark15,
-            tm: blueAccent,
-        },
-
         entry: {
             bg: dark20,
             bd: dark15,

@@ -529,10 +529,12 @@
         "title": "Alerts",
         "upToDate": "You're all up to date",
         "nothingToSee": "Nothing to see",
-        "blockedBy": "**@{username}** blocked you from **{groupname}**",
-        "deletedBy": "**@{username}** deleted **{groupname}**",
-        "removedBy": "**@{username}** removed you from **{groupname}**",
+        "blockedBy": "_@{username}_ blocked you from _{groupname}_",
+        "deletedBy": "_@{username}_ deleted _{groupname}_",
+        "removedBy": "_@{username}_ removed you from _{groupname}_",
         "unknownGroup": "unknown group",
-        "failedToMarkRead": "There was an unexpected error marking alerts as read"
+        "failedToMarkRead": "There was an unexpected error marking alerts as read",
+        "icpDeposit": "You received a deposit of **{amount} ICP**",
+        "cyclesDeposit": "You received a deposit of **{amount} cycles**"
     }
 }

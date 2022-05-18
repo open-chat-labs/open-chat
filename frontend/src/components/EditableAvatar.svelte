@@ -74,23 +74,25 @@
     }
 </script>
 
-<Overlay bind:active={showModal}>
-    <ModalContent fill={true}>
-        <span slot="header">Crop image</span>
-        <span slot="body">
-            <div class="cropper">
-                <Cropper
-                    image={avatar}
-                    on:cropcomplete={onCrop}
-                    cropSize={{ width: CROP_SIZE, height: CROP_SIZE }}
-                    cropShape="round" />
-            </div>
-        </span>
-        <span slot="footer">
-            <Link on:click={cropImage}>Apply</Link>
-        </span>
-    </ModalContent>
-</Overlay>
+{#if showModal}
+    <Overlay>
+        <ModalContent fill={true}>
+            <span slot="header">Crop image</span>
+            <span slot="body">
+                <div class="cropper">
+                    <Cropper
+                        image={avatar}
+                        on:cropcomplete={onCrop}
+                        cropSize={{ width: CROP_SIZE, height: CROP_SIZE }}
+                        cropShape="round" />
+                </div>
+            </span>
+            <span slot="footer">
+                <Link on:click={cropImage}>Apply</Link>
+            </span>
+        </ModalContent>
+    </Overlay>
+{/if}
 
 <input
     hidden={true}

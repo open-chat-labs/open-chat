@@ -81,18 +81,6 @@ export interface Theme {
         };
     };
 
-    alerts: {
-        bg: string;
-        txt: string;
-    };
-
-    alert: {
-        bg: string;
-        txt: string;
-        hv: string;
-        tm: string;
-    };
-
     entry: {
         bg: string;
         bd: string;

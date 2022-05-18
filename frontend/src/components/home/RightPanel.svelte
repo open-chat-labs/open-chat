@@ -1,24 +1,36 @@
 <script lang="ts">
     import Panel from "../Panel.svelte";
+    import UserProfile from "./profile/UserProfile.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import AddParticipants from "./groupdetails/AddParticipants.svelte";
     import Participants from "./groupdetails/Participants.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
-    import Alerts from "./alerts/Alerts.svelte";
     import type { RightPanelState } from "../../fsm/rightPanel";
-    import type { FullParticipant } from "../../domain/chat/chat";
+    import type { ChatMetrics, FullParticipant } from "../../domain/chat/chat";
     import type { ChatController } from "../../fsm/chat.controller";
+    import { userStore } from "../../stores/user";
     import type { UserSummary } from "../../domain/user/user";
     import { toastStore } from "../../stores/toast";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
+    import { nullUser } from "../../domain/user/user.utils";
+    import { unsubscribeNotifications } from "../../utils/notifications";
+    import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     const dispatch = createEventDispatcher();
 
     export let rightPanelHistory: RightPanelState[];
     export let userId: string;
+    export let metrics: ChatMetrics;
 
+    const api = getContext<ServiceContainer>(apiKey);
     let savingParticipants = false;
+    let profileComponent: UserProfile;
 
+    $: user = $userStore[userId] ?? nullUser("unknown");
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
+
+    export function showProfile() {
+        profileComponent.reset();
+    }
 
     /** quite a few handlers require a controller which we don't always have. This wrapper just streamlines that a bit */
     function withController<T>(fn: (controller: ChatController, ev: CustomEvent<T>) => void) {
@@ -121,7 +133,15 @@
             on:goToMessageIndex={goToMessageIndex}
             controller={lastState.controller}
             on:close={pop} />
-    {:else if lastState.kind === "show_alerts"}
-        <Alerts on:close={pop} />
+    {:else if lastState.kind === "user_profile"}
+        <UserProfile
+            bind:this={profileComponent}
+            on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
+            on:upgrade
+            on:showFaqQuestion
+            {user}
+            {metrics}
+            on:userAvatarSelected
+            on:closeProfile={pop} />
     {/if}
 </Panel>

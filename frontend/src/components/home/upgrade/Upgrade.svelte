@@ -38,7 +38,7 @@
     }
 </script>
 
-<Overlay active={true}>
+<Overlay>
     {#if question !== undefined}
         <FaqModal
             fadeDuration={0}

@@ -31,8 +31,6 @@ import type {
     PendingICPWithdrawal,
     WithdrawCryptocurrencyResponse,
     CryptocurrencyContent,
-    Alert,
-    MarkAlertsReadResponse,
 } from "../../domain/chat/chat";
 import { CandidService, ServiceRetryInterrupt } from "../candidService";
 import {
@@ -56,7 +54,6 @@ import {
     unblockResponse,
     withdrawCryptoResponse,
     transferWithinGroupResponse,
-    markAlertsReadResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -215,7 +212,6 @@ export class UserClient extends CandidService implements IUserClient {
             blockedUsers: resp.blockedUsers,
             avatarIdUpdate: undefined,
             affectedEvents: {},
-            alerts: resp.alerts,
         };
     }
 
@@ -223,7 +219,6 @@ export class UserClient extends CandidService implements IUserClient {
     async getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
-        alerts: Alert[],
         _: IMessageReadTracker,
         _selectedChatId?: string
     ): Promise<MergedUpdatesResponse> {
@@ -249,12 +244,7 @@ export class UserClient extends CandidService implements IUserClient {
             updatesResponse.chatsRemoved.size > 0 ||
             updatesResponse.avatarIdUpdate !== undefined ||
             updatesResponse.cyclesBalance !== undefined ||
-            updatesResponse.transactions.length > 0 ||
-            updatesResponse.alerts.length > 0;
-
-        if (updatesResponse.alerts.length) {
-            console.log("Alerts", updatesResponse.alerts);
-        }
+            updatesResponse.transactions.length > 0;
 
         return {
             wasUpdated: anyUpdates,
@@ -270,7 +260,6 @@ export class UserClient extends CandidService implements IUserClient {
                 }
                 return result;
             }, {} as Record<string, number[]>),
-            alerts: dedupe((a, b) => a.id === b.id, [...alerts, ...updatesResponse.alerts]),
         };
     }
 
@@ -562,13 +551,5 @@ export class UserClient extends CandidService implements IUserClient {
             this.userService.withdraw_cryptocurrency(req),
             withdrawCryptoResponse
         );
-    }
-
-    @profile("userClient")
-    markAlertsAsRead(alertIds: string[]): Promise<MarkAlertsReadResponse> {
-        const req = {
-            alert_ids: alertIds,
-        };
-        return this.handleResponse(this.userService.mark_alerts_read(req), markAlertsReadResponse);
     }
 }

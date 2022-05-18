@@ -6,7 +6,7 @@ export type RightPanelState =
     | AddParticipantsPanel
     | ShowParticipantsPanel
     | ShowPinnedPanel
-    | ShowAlertsPanel
+    | UserProfilePanel
     | NoPanel;
 
 export type GroupPanel = {
@@ -21,6 +21,10 @@ export type GroupDetailsPanel = GroupPanel & {
     kind: "group_details";
 };
 
+export type UserProfilePanel = {
+    kind: "user_profile";
+};
+
 export type AddParticipantsPanel = GroupPanel & {
     kind: "add_participants";
 };
@@ -31,10 +35,6 @@ export type ShowParticipantsPanel = GroupPanel & {
 
 export type ShowPinnedPanel = GroupPanel & {
     kind: "show_pinned";
-};
-
-export type ShowAlertsPanel = {
-    kind: "show_alerts";
 };
 
 export type UpdatedAvatar = {

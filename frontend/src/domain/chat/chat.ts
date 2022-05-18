@@ -581,7 +581,6 @@ export type MergedUpdatesResponse = {
     blockedUsers: Set<string>;
     avatarIdUpdate: OptionUpdate<bigint>;
     affectedEvents: Record<string, number[]>;
-    alerts: Alert[];
     timestamp: bigint;
 };
 
@@ -594,43 +593,6 @@ export type UpdatesResponse = {
     timestamp: bigint;
     cyclesBalance?: bigint;
     transactions: CryptocurrencyTransfer[];
-    alerts: Alert[];
-};
-
-export type Alert = {
-    id: string;
-    details: AlertDetails;
-    timestamp: number;
-    read: boolean;
-};
-
-export type AlertDetails =
-    | GroupDeletedAlert
-    | CryptoDepositReceivedAlert
-    | RemovedFromGroupAlert
-    | BlockedFromGroupAlert;
-
-export type GroupDeletedAlert = {
-    kind: "group_deleted_alert";
-    deletedBy: string;
-    chatId: string;
-    groupName: string;
-};
-
-export type CryptoDepositReceivedAlert = ICPDeposit | CyclesDeposit;
-
-export type RemovedFromGroupAlert = {
-    kind: "removed_from_group_alert";
-    removedBy: string;
-    chatId: string;
-    groupName: string;
-};
-
-export type BlockedFromGroupAlert = {
-    kind: "blocked_from_group_alert";
-    blockedBy: string;
-    chatId: string;
-    groupName: string;
 };
 
 export type InitialStateResponse = {
@@ -638,7 +600,6 @@ export type InitialStateResponse = {
     chats: ChatSummary[];
     timestamp: bigint;
     cyclesBalance: bigint;
-    alerts: Alert[];
 };
 
 export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpdates;
@@ -1133,9 +1094,3 @@ export type ChatMetrics = {
     polls: number;
     reactions: number;
 };
-
-export type MarkAlertsReadResponse =
-    | {
-          kind: "success";
-      }
-    | { kind: "partial_success"; failedIds: string[] };
