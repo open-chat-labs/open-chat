@@ -862,7 +862,9 @@ type Alert =
     record {
         id: text;
         elapsed: Milliseconds;
+        timestamp: TimestampMillis;
         details: AlertDetails;
+        read: bool;
     };
 
 type AlertDetails =

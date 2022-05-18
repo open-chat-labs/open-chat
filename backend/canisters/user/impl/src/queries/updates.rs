@@ -196,13 +196,15 @@ fn finalize(
     let mut alerts = runtime_state.data.alerts.get_all(Some(updates_since), now);
     for group_deleted in group_chats_deleted {
         let alert = Alert {
-            id: AlertId::GroupDeleted(group_deleted.id).to_string(),
+            id: AlertId::GroupDeleted(group_deleted.clone()).to_string(),
             elapsed: now - group_deleted.timestamp,
+            timestamp: group_deleted.timestamp,
             details: AlertDetails::GroupDeleted(GroupDeleted {
                 chat_id: group_deleted.id,
                 deleted_by: group_deleted.deleted_by,
                 group_name: group_deleted.group_name,
             }),
+            read: false,
         };
         alerts.push(alert);
     }

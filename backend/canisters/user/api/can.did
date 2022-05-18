@@ -235,12 +235,12 @@ type SetPreferencesResponse =
         Success;
     };
 
-type DismissAlertsArgs =
+type MarkAlertsReadArgs =
     record {
         alert_ids: vec text;
     };
 
-type DismissAlertsResponse =
+type MarkAlertsReadResponse =
     variant {
         Success;
         PartialSuccess: vec text;
@@ -521,7 +521,7 @@ service: {
     mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);
     unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
     set_preferences: (SetPreferencesArgs) -> (SetPreferencesResponse);
-    dismiss_alerts: (DismissAlertsArgs) -> (DismissAlertsResponse);
+    mark_alerts_read: (MarkAlertsReadArgs) -> (MarkAlertsReadResponse);
     assume_group_super_admin: (AssumeGroupSuperAdminArgs) -> (AssumeGroupSuperAdminResponse);
     relinquish_group_super_admin: (RelinquishGroupSuperAdminArgs) -> (RelinquishGroupSuperAdminResponse);
     add_recommended_group_exclusions: (AddRecommendedGroupExclusionsArgs) -> (AddRecommendedGroupExclusionsResponse);

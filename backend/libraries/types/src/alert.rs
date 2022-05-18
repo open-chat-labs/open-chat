@@ -1,5 +1,5 @@
-use crate::{ChatId, CryptocurrencyDeposit, Milliseconds, UserId};
-use candid::{CandidType, Principal};
+use crate::{ChatId, CryptocurrencyDeposit, DeletedGroupInfo, Milliseconds, TimestampMillis, UserId};
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -8,7 +8,9 @@ use std::str::FromStr;
 pub struct Alert {
     pub id: String,
     pub elapsed: Milliseconds,
+    pub timestamp: TimestampMillis,
     pub details: AlertDetails,
+    pub read: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -23,7 +25,6 @@ pub enum AlertDetails {
 pub struct RemovedFromGroup {
     pub chat_id: ChatId,
     pub removed_by: UserId,
-    #[serde(default)]
     pub group_name: String,
 }
 
@@ -31,30 +32,25 @@ pub struct RemovedFromGroup {
 pub struct GroupDeleted {
     pub chat_id: ChatId,
     pub deleted_by: UserId,
-    #[serde(default)]
     pub group_name: String,
 }
 
 pub enum AlertId {
     Internal(u32),
-    GroupDeleted(ChatId),
+    GroupDeleted(DeletedGroupInfo),
 }
 
 impl FromStr for AlertId {
     type Err = ();
 
     fn from_str(ext_id: &str) -> Result<Self, Self::Err> {
-        let mut ext_id = ext_id.to_owned();
-        if ext_id.starts_with("in_") {
-            ext_id.replace_range(0..3, "");
-            ext_id.parse::<u32>().map(AlertId::Internal).map_err(|_| ())
-        } else if ext_id.starts_with("gd_") {
-            ext_id.replace_range(0..3, "");
-            Principal::from_text(&ext_id)
-                .map(|id| AlertId::GroupDeleted(id.into()))
+        match ext_id.split_at(3) {
+            ("in_", id) => id.parse::<u32>().map(AlertId::Internal).map_err(|_| ()),
+            ("gd_", base64) => base64::decode(base64)
                 .map_err(|_| ())
-        } else {
-            Err(())
+                .and_then(|json| serde_json::from_slice(&json).map_err(|_| ()))
+                .map(AlertId::GroupDeleted),
+            _ => Err(()),
         }
     }
 }
@@ -63,7 +59,7 @@ impl Display for AlertId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let ext_id = match self {
             AlertId::Internal(id) => format!("in_{id}"),
-            AlertId::GroupDeleted(chat_id) => format!("gd_{chat_id}"),
+            AlertId::GroupDeleted(d) => format!("gd_{}", base64::encode(&serde_json::to_vec(&d).unwrap())),
         };
 
         f.write_str(&ext_id)
