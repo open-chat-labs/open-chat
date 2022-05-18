@@ -86,6 +86,7 @@
         @include fullHeight();
         width: 100%;
         pointer-events: none;
+        overflow: hidden;
 
         @include mobile() {
             &.align-bottom {
