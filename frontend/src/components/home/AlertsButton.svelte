@@ -2,8 +2,9 @@
     import HoverIcon from "../HoverIcon.svelte";
     import BellOutline from "svelte-material-icons/BellOutline.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import { alertsStore } from "stores/alerts";
 
-    export let unread: boolean = false;
+    $: unread = $alertsStore.filter((a) => !a.read).length > 0;
 </script>
 
 <div class="alerts-button" class:unread on:click>

@@ -68,6 +68,7 @@ import type {
     ResetInviteCodeResponse,
     UpdatePermissionsResponse,
     Alert,
+    MarkAlertsReadResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, initDb } from "../utils/caching";
@@ -904,5 +905,9 @@ export class ServiceContainer implements MarkMessagesRead {
 
     resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
         return this.getGroupClient(chatId).resetInviteCode();
+    }
+
+    markAlertsAsRead(alertIds: string[]): Promise<MarkAlertsReadResponse> {
+        return this.userClient.markAlertsAsRead(alertIds);
     }
 }

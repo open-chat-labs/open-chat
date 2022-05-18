@@ -13,6 +13,8 @@ export interface AddedToGroupNotification {
 }
 export interface Alert {
   'id' : string,
+  'read' : boolean,
+  'timestamp' : TimestampMillis,
   'details' : AlertDetails,
   'elapsed' : Milliseconds,
 }
@@ -223,9 +225,6 @@ export interface DirectMessageNotification {
   'message' : MessageEventWrapper,
   'sender_name' : string,
 }
-export interface DismissAlertsArgs { 'alert_ids' : Array<string> }
-export type DismissAlertsResponse = { 'PartialSuccess' : Array<string> } |
-  { 'Success' : null };
 export interface EditMessageArgs {
   'content' : MessageContent,
   'user_id' : UserId,
@@ -504,6 +503,9 @@ export type LeaveGroupResponse = { 'GroupNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
+export interface MarkAlertsReadArgs { 'alert_ids' : Array<string> }
+export type MarkAlertsReadResponse = { 'PartialSuccess' : Array<string> } |
+  { 'Success' : null };
 export interface MarkReadArgs { 'messages_read' : Array<ChatMessagesRead> }
 export type MarkReadResponse = { 'Success' : null };
 export type Memo = bigint;
@@ -943,9 +945,6 @@ export interface _SERVICE {
   'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
       DeleteMessagesResponse
     >,
-  'dismiss_alerts' : (arg_0: DismissAlertsArgs) => Promise<
-      DismissAlertsResponse
-    >,
   'edit_message' : (arg_0: EditMessageArgs) => Promise<EditMessageResponse>,
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
@@ -954,6 +953,9 @@ export interface _SERVICE {
   'initial_state' : (arg_0: InitialStateArgs) => Promise<InitialStateResponse>,
   'join_group_v2' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
   'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
+  'mark_alerts_read' : (arg_0: MarkAlertsReadArgs) => Promise<
+      MarkAlertsReadResponse
+    >,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'messages_by_message_index' : (arg_0: MessagesByMessageIndexArgs) => Promise<
       MessagesByMessageIndexResponse

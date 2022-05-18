@@ -3,13 +3,12 @@
     import type { Alert } from "../../../domain/chat/chat";
 
     export let alert: Alert;
-    export let unread: boolean;
 
-    $: date = new Date(Number(alert.elapsed));
+    $: date = new Date(alert.timestamp);
     $: timestamp = `${toLongDateString(date)} @ ${toShortTimeString(date)}`;
 </script>
 
-<div class="alert" class:unread>
+<div class="alert" class:unread={!alert.read}>
     <slot details={alert.details} {timestamp} />
 </div>
 
@@ -21,7 +20,7 @@
         @include box-shadow(1);
         margin-bottom: $sp3;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
-        @include font(light, normal, fs-90);
+        @include font(light, normal, fs-100);
         border-left: solid 6px transparent;
 
         &:last-child {

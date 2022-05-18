@@ -9,39 +9,63 @@
     import { iconSize } from "../../../stores/iconSize";
     import { alertsStore } from "../../../stores/alerts";
     import { userStore } from "../../../stores/user";
-    import BlockedFromGroupAlert from "./BlockedFromGroupAlert.svelte";
-    import GroupDeletedAlert from "./GroupDeletedAlert.svelte";
-    import RemovedFromGroupAlert from "./RemovedFromGroupAlert.svelte";
+    import GroupAlert from "./GroupAlert.svelte";
     import Alert from "./Alert.svelte";
     import { missingUserIds } from "../../../domain/user/user.utils";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
+    import { toastStore } from "stores/toast";
+    import { rollbar } from "utils/logging";
 
     const dispatch = createEventDispatcher();
 
     $: empty = $alertsStore.length === 0;
 
+    let busy = false;
+
     const api = getContext<ServiceContainer>(apiKey);
 
+    function markAsUnread(unread: string[]) {
+        alertsStore.update((alerts) =>
+            alerts.map((a) => {
+                return unread.includes(a.id) ? { ...a, read: false } : a;
+            })
+        );
+    }
+
     function markAllRead() {
-        console.log("marking all alerts as read");
+        const unread = $alertsStore.filter((a) => !a.read).map((a) => a.id);
+        alertsStore.update((alerts) => alerts.map((a) => ({ ...a, read: true })));
+
+        if (unread.length > 0) {
+            busy = true;
+            api.markAlertsAsRead(unread)
+                .then((resp) => {
+                    if (resp.kind === "partial_success") {
+                        markAsUnread(resp.failedIds);
+                    }
+                })
+                .catch((err) => {
+                    toastStore.showFailureToast("alerts.failedToMarkRead");
+                    rollbar.error("Failed to mark alerts as read", err);
+                    markAsUnread(unread);
+                })
+                .finally(() => (busy = false));
+        }
     }
 
     onMount(() => {
-        const [userIds, groupIds] = $alertsStore.reduce(
-            ([userIds, groupIds], { details }) => {
+        const missing = missingUserIds(
+            $userStore,
+            $alertsStore.reduce((userIds, { details }) => {
                 if (details.kind === "blocked_from_group_alert")
-                    return [userIds.add(details.blockedBy), groupIds.add(details.chatId)];
-                if (details.kind === "group_deleted_alert")
-                    return [userIds.add(details.deletedBy), groupIds.add(details.chatId)];
+                    return userIds.add(details.blockedBy);
+                if (details.kind === "group_deleted_alert") return userIds.add(details.deletedBy);
                 if (details.kind === "removed_from_group_alert")
-                    return [userIds.add(details.removedBy), groupIds.add(details.chatId)];
-                if (details.kind === "completed_cycles_deposit")
-                    return [userIds.add(details.from), groupIds];
-                return [userIds, groupIds];
-            },
-            [new Set<string>(), new Set<string>()]
+                    return userIds.add(details.removedBy);
+                if (details.kind === "completed_cycles_deposit") return userIds.add(details.from);
+                return userIds;
+            }, new Set<string>())
         );
-        const missing = missingUserIds($userStore, userIds);
 
         api.getUsers(
             {
@@ -61,10 +85,12 @@
 
 <SectionHeader>
     <h4>{$_("alerts.title")}</h4>
-    <span title={$_("markAllRead")} class="icon" on:click={markAllRead}>
-        <HoverIcon>
-            <CheckboxMultipleMarked size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
+    <span title={$_("markAllRead")} class="icon" class:busy on:click={markAllRead}>
+        {#if !busy}
+            <HoverIcon>
+                <CheckboxMultipleMarked size={$iconSize} color={"var(--icon-txt)"} />
+            </HoverIcon>
+        {/if}
     </span>
     <span title={$_("close")} class="icon" on:click={() => dispatch("close")}>
         <HoverIcon>
@@ -80,13 +106,25 @@
         <div>{$_("alerts.nothingToSee")}</div>
     {:else}
         {#each $alertsStore as alert, i (alert.id)}
-            <Alert unread={i % 2 === 0} {alert} let:details let:timestamp>
+            <Alert {alert} let:details let:timestamp>
                 {#if details.kind === "blocked_from_group_alert"}
-                    <BlockedFromGroupAlert {details} {timestamp} />
+                    <GroupAlert
+                        groupName={details.groupName}
+                        userId={details.blockedBy}
+                        {timestamp}
+                        msgKey={"alerts.blockedBy"} />
                 {:else if details.kind == "group_deleted_alert"}
-                    <GroupDeletedAlert {details} />
+                    <GroupAlert
+                        groupName={details.groupName}
+                        userId={details.deletedBy}
+                        {timestamp}
+                        msgKey={"alerts.deletedBy"} />
                 {:else if details.kind == "removed_from_group_alert"}
-                    <RemovedFromGroupAlert {details} />
+                    <GroupAlert
+                        groupName={details.groupName}
+                        userId={details.removedBy}
+                        {timestamp}
+                        msgKey={"alerts.removedBy"} />
                 {/if}
             </Alert>
         {/each}
@@ -106,17 +144,19 @@
             justify-content: flex-end;
             align-items: center;
             @include font(book, normal, fs-120);
-            .sleep,
-            .rage {
+            .sleep {
                 @include font-size(fs-260);
             }
         }
     }
     h4 {
         flex: 1;
-        margin: 0;
+        margin: 0 $sp3;
     }
     .icon {
         flex: 0 0 30px;
+        &.busy {
+            @include loading-spinner(1.4em, 0.7em, false, var(--button-spinner));
+        }
     }
 </style>

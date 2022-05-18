@@ -25,6 +25,7 @@ import type {
     EventsSuccessResult,
     ChatEvent,
     Alert,
+    MarkAlertsReadResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -463,5 +464,9 @@ export class CachingUserClient implements IUserClient {
 
     withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
         return this.client.withdrawICP(domain);
+    }
+
+    markAlertsAsRead(alertIds: string[]): Promise<MarkAlertsReadResponse> {
+        return this.client.markAlertsAsRead(alertIds);
     }
 }

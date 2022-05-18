@@ -84,6 +84,7 @@ import {
     TransferCryptocurrencyWithinGroupResponse,
     TransferCryptocurrencyWithinGroupArgs,
     ChatMetrics,
+    MarkAlertsReadResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -170,6 +171,7 @@ export {
     GiphyContent as ApiGiphyContent,
     GiphyImageVariant as ApiGiphyImageVariant,
     ChatMetrics as ApiChatMetrics,
+    MarkAlertsReadResponse as ApiMarkAlertsReadResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

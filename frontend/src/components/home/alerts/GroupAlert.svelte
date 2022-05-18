@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { BlockedFromGroupAlert } from "../../../domain/chat/chat";
+    import type { GroupDeletedAlert } from "../../../domain/chat/chat";
     import Timestamp from "./Timestamp.svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "../Markdown.svelte";
@@ -8,10 +8,12 @@
     import { userStore } from "../../../stores/user";
     import { avatarUrl } from "../../../domain/user/user.utils";
 
-    export let details: BlockedFromGroupAlert;
+    export let groupName: string;
     export let timestamp: string;
+    export let userId: string;
+    export let msgKey: string;
 
-    $: user = $userStore[details.blockedBy];
+    $: user = $userStore[userId];
     $: username = user?.username ?? $_("unknown");
 </script>
 
@@ -21,8 +23,8 @@
     </div>
     <div class="msg">
         <Markdown
-            text={$_("alerts.blockedBy", {
-                values: { groupname: details.groupName || $_("alerts.unknownGroup"), username },
+            text={$_(msgKey, {
+                values: { groupname: groupName || $_("alerts.unknownGroup"), username },
             })} />
         <Timestamp {timestamp} />
     </div>

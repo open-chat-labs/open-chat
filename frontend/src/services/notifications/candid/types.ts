@@ -8,6 +8,8 @@ export interface AddedToGroupNotification {
 }
 export interface Alert {
   'id' : string,
+  'read' : boolean,
+  'timestamp' : TimestampMillis,
   'details' : AlertDetails,
   'elapsed' : Milliseconds,
 }

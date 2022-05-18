@@ -32,6 +32,7 @@ import type {
     ApiCompletedCryptocurrencyWithdrawal,
     ApiTransferCryptocurrencyWithinGroupResponse,
     ApiChatMetrics,
+    ApiMarkAlertsReadResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -63,6 +64,7 @@ import type {
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
     ChatMetrics,
+    MarkAlertsReadResponse,
 } from "../../domain/chat/chat";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -570,7 +572,8 @@ function alert(candid: ApiAlert): Alert {
     return {
         id: candid.id,
         details: alertDetails(candid.details),
-        elapsed: candid.elapsed,
+        timestamp: Number(candid.timestamp),
+        read: candid.read,
     };
 }
 
@@ -827,4 +830,14 @@ export function withdrawCryptoResponse(
         "Unexpected ApiWithdrawCryptocurrencyResponse type received",
         candid
     );
+}
+
+export function markAlertsReadResponse(candid: ApiMarkAlertsReadResponse): MarkAlertsReadResponse {
+    if ("Success" in candid) {
+        return { kind: "success" };
+    }
+    if ("PartialSuccess" in candid) {
+        return { kind: "partial_success", failedIds: candid.PartialSuccess };
+    }
+    throw new UnsupportedValueError("Unexpected ApiMarkAlertsReadResponse type received", candid);
 }

@@ -529,7 +529,10 @@
         "title": "Alerts",
         "upToDate": "You're all up to date",
         "nothingToSee": "Nothing to see",
-        "blockedBy": "**@{username}** blocked you from the group **{groupname}**",
-        "unknownGroup": "unknown group"
+        "blockedBy": "**@{username}** blocked you from **{groupname}**",
+        "deletedBy": "**@{username}** deleted **{groupname}**",
+        "removedBy": "**@{username}** removed you from **{groupname}**",
+        "unknownGroup": "unknown group",
+        "failedToMarkRead": "There was an unexpected error marking alerts as read"
     }
 }

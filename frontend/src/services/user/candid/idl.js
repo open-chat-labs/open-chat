@@ -84,11 +84,6 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const DismissAlertsArgs = IDL.Record({ 'alert_ids' : IDL.Vec(IDL.Text) });
-  const DismissAlertsResponse = IDL.Variant({
-    'PartialSuccess' : IDL.Vec(IDL.Text),
-    'Success' : IDL.Null,
-  });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
     'height' : IDL.Nat32,
@@ -333,6 +328,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const Alert = IDL.Record({
     'id' : IDL.Text,
+    'read' : IDL.Bool,
+    'timestamp' : TimestampMillis,
     'details' : AlertDetails,
     'elapsed' : Milliseconds,
   });
@@ -453,6 +450,11 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
+  });
+  const MarkAlertsReadArgs = IDL.Record({ 'alert_ids' : IDL.Vec(IDL.Text) });
+  const MarkAlertsReadResponse = IDL.Variant({
+    'PartialSuccess' : IDL.Vec(IDL.Text),
+    'Success' : IDL.Null,
   });
   const ChatMessagesRead = IDL.Record({
     'message_ranges' : IDL.Vec(MessageIndexRange),
@@ -799,11 +801,6 @@ export const idlFactory = ({ IDL }) => {
         [DeleteMessagesResponse],
         [],
       ),
-    'dismiss_alerts' : IDL.Func(
-        [DismissAlertsArgs],
-        [DismissAlertsResponse],
-        [],
-      ),
     'edit_message' : IDL.Func([EditMessageArgs], [EditMessageResponse], []),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
@@ -820,6 +817,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'join_group_v2' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
+    'mark_alerts_read' : IDL.Func(
+        [MarkAlertsReadArgs],
+        [MarkAlertsReadResponse],
+        [],
+      ),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],

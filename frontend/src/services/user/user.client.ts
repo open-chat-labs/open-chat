@@ -32,6 +32,7 @@ import type {
     WithdrawCryptocurrencyResponse,
     CryptocurrencyContent,
     Alert,
+    MarkAlertsReadResponse,
 } from "../../domain/chat/chat";
 import { CandidService, ServiceRetryInterrupt } from "../candidService";
 import {
@@ -55,6 +56,7 @@ import {
     unblockResponse,
     withdrawCryptoResponse,
     transferWithinGroupResponse,
+    markAlertsReadResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -253,7 +255,7 @@ export class UserClient extends CandidService implements IUserClient {
         if (updatesResponse.alerts.length) {
             console.log("Alerts", updatesResponse.alerts);
         }
-        
+
         return {
             wasUpdated: anyUpdates,
             chatSummaries: anyUpdates
@@ -560,5 +562,13 @@ export class UserClient extends CandidService implements IUserClient {
             this.userService.withdraw_cryptocurrency(req),
             withdrawCryptoResponse
         );
+    }
+
+    @profile("userClient")
+    markAlertsAsRead(alertIds: string[]): Promise<MarkAlertsReadResponse> {
+        const req = {
+            alert_ids: alertIds,
+        };
+        return this.handleResponse(this.userService.mark_alerts_read(req), markAlertsReadResponse);
     }
 }

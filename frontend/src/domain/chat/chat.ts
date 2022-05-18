@@ -600,7 +600,8 @@ export type UpdatesResponse = {
 export type Alert = {
     id: string;
     details: AlertDetails;
-    elapsed: bigint;
+    timestamp: number;
+    read: boolean;
 };
 
 export type AlertDetails =
@@ -1132,3 +1133,9 @@ export type ChatMetrics = {
     polls: number;
     reactions: number;
 };
+
+export type MarkAlertsReadResponse =
+    | {
+          kind: "success";
+      }
+    | { kind: "partial_success"; failedIds: string[] };

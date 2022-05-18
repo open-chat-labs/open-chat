@@ -42,7 +42,7 @@
         <h4 class="name" class:small>{user.username}</h4>
     </div>
     <span class="alerts" class:small>
-        <AlertsButton on:click={() => dispatch("showAlerts")} unread={$alertsStore.length > 0} />
+        <AlertsButton on:click={() => dispatch("showAlerts")} />
     </span>
     <span class="menu" class:small>
         <MenuIcon>

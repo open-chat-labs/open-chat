@@ -9,6 +9,6 @@
         margin-top: $sp3;
         text-transform: lowercase;
         color: var(--alert-tm);
-        @include font(book, normal, fs-60);
+        @include font(book, normal, fs-70);
     }
 </style>

@@ -24,6 +24,7 @@ import type {
     PendingICPWithdrawal,
     WithdrawCryptocurrencyResponse,
     Alert,
+    MarkAlertsReadResponse,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
@@ -111,4 +112,5 @@ export interface IUserClient {
         voteType: "register" | "delete"
     ): Promise<RegisterPollVoteResponse>;
     withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse>;
+    markAlertsAsRead(alertIds: string[]): Promise<MarkAlertsReadResponse>;
 }
