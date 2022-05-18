@@ -25,6 +25,7 @@ fn c2c_remove_from_group_impl(args: Args, runtime_state: &mut RuntimeState) -> R
         let removed_from_group = RemovedFromGroup {
             chat_id,
             removed_by: args.removed_by,
+            group_name: args.group_name,
         };
         let alert_details = if args.blocked {
             AlertDetails::BlockedFromGroup(removed_from_group)

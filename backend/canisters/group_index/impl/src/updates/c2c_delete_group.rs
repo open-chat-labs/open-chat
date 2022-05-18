@@ -23,7 +23,11 @@ fn c2c_delete_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
 
     if deleted {
         runtime_state.data.canisters_requiring_upgrade.remove(&chat_id.into());
-        runtime_state.data.deleted_groups.insert(chat_id, now, args.deleted_by);
+        runtime_state
+            .data
+            .deleted_groups
+            .insert(chat_id, args.deleted_by, args.group_name, now);
+
         Success
     } else {
         ChatNotFound

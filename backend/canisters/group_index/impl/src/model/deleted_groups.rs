@@ -14,7 +14,7 @@ impl DeletedGroups {
         self.groups.get(chat_id)
     }
 
-    pub fn insert(&mut self, chat_id: ChatId, now: TimestampMillis, deleted_by: UserId) -> bool {
+    pub fn insert(&mut self, chat_id: ChatId, deleted_by: UserId, group_name: String, now: TimestampMillis) -> bool {
         match self.groups.entry(chat_id) {
             Occupied(_) => false,
             Vacant(e) => {
@@ -22,6 +22,7 @@ impl DeletedGroups {
                     id: chat_id,
                     timestamp: now,
                     deleted_by,
+                    group_name,
                 });
                 true
             }

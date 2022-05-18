@@ -201,6 +201,7 @@ fn finalize(
             details: AlertDetails::GroupDeleted(GroupDeleted {
                 chat_id: group_deleted.id,
                 deleted_by: group_deleted.deleted_by,
+                group_name: group_deleted.group_name,
             }),
         };
         alerts.push(alert);

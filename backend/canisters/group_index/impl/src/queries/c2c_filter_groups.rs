@@ -11,7 +11,7 @@ fn c2c_active_and_deleted_groups_impl(args: Args, runtime_state: &RuntimeState) 
     let active_since = args.active_in_last.map(|d| runtime_state.env.now().saturating_sub(d));
     let all_deleted = &runtime_state.data.deleted_groups;
 
-    let deleted_groups = args.chat_ids.iter().filter_map(|id| all_deleted.get(id)).copied().collect();
+    let deleted_groups = args.chat_ids.iter().filter_map(|id| all_deleted.get(id)).cloned().collect();
 
     let mut active_groups = Vec::new();
     let mut upgrades_in_progress = Vec::new();

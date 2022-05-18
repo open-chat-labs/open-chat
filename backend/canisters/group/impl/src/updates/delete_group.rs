@@ -19,6 +19,7 @@ async fn delete_group(_args: Args) -> Response {
     let group_index_canister_id = prepare_result.group_index_canister_id;
     let c2c_delete_group_args = c2c_delete_group::Args {
         deleted_by: prepare_result.deleted_by,
+        group_name: prepare_result.group_name,
     };
 
     match group_index_canister_c2c_client::c2c_delete_group(group_index_canister_id, &c2c_delete_group_args).await {
@@ -37,6 +38,7 @@ struct PrepareResult {
     group_index_canister_id: CanisterId,
     chat_id: ChatId,
     deleted_by: UserId,
+    group_name: String,
 }
 
 fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -49,6 +51,7 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
                 group_index_canister_id: runtime_state.data.group_index_canister_id,
                 chat_id: runtime_state.env.canister_id().into(),
                 deleted_by: participant.user_id,
+                group_name: runtime_state.data.name.clone(),
             })
         }
     } else {
