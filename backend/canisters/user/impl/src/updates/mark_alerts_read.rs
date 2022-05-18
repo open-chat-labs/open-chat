@@ -21,7 +21,9 @@ fn mark_alerts_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
     for ext_id in args.alert_ids {
         match AlertId::from_str(&ext_id) {
             Ok(AlertId::Internal(id)) => {
-                runtime_state.data.alerts.mark_read(id);
+                if runtime_state.data.alerts.mark_read(id) {
+                    continue;
+                }
             }
             Ok(AlertId::GroupDeleted(delete_group_info)) => {
                 // Actually remove the group reference at this point
@@ -42,6 +44,7 @@ fn mark_alerts_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
                         delete_group_info.timestamp,
                     );
                     runtime_state.data.alerts.mark_read(id);
+                    continue;
                 }
             }
             _ => (),
