@@ -30,7 +30,6 @@ import type {
     ApiWithdrawCryptocurrencyResponse,
     ApiFailedCryptocurrencyWithdrawal,
     ApiCompletedCryptocurrencyWithdrawal,
-    ApiCompletedCryptocurrencyTransfer,
     ApiTransferCryptocurrencyWithinGroupResponse,
     ApiChatMetrics,
 } from "./candid/idl";
@@ -63,7 +62,6 @@ import type {
     WithdrawCryptocurrencyResponse,
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
-    CompletedCryptocurrencyTransfer,
     ChatMetrics,
 } from "../../domain/chat/chat";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
@@ -75,6 +73,7 @@ import {
     message,
     messageContent,
     publicGroupSummary,
+    token,
     updatedMessage,
 } from "../common/chatMappers";
 import type {
@@ -605,12 +604,12 @@ function alertDetails(candid: ApiAlertDetails): AlertDetails {
 
 function cryptoDepositAlert(candid: ApiCryptocurrencyDeposit): CryptocurrencyDeposit {
     return {
-        transferKind: "icp_deposit",
-        kind: "completed_icp_deposit",
+        token: token(candid.Completed.token),
         amountE8s: candid.Completed.amount.e8s,
         feeE8s: candid.Completed.fee.e8s,
         memo: candid.Completed.memo,
         blockIndex: candid.Completed.block_index,
+        fromAddress: bytesToHexString(candid.Completed.from_address),
     };
 }
 
@@ -784,8 +783,8 @@ export function failedCryptoWithdrawal(
     candid: ApiFailedCryptocurrencyWithdrawal
 ): FailedCryptocurrencyWithdrawal {
     return {
-        transferKind: "icp_withdrawal",
-        kind: "failed_icp_withdrawal",
+        kind: "failed",
+        token: token(candid.token),
         to: bytesToHexString(candid.to),
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
@@ -798,8 +797,8 @@ export function completedCryptoWithdrawal(
     candid: ApiCompletedCryptocurrencyWithdrawal
 ): CompletedCryptocurrencyWithdrawal {
     return {
-        transferKind: "icp_withdrawal",
-        kind: "completed_icp_withdrawal",
+        kind: "completed",
+        token: token(candid.token),
         to: bytesToHexString(candid.to),
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
