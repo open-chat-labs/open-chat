@@ -538,7 +538,6 @@
                 on:whatsHot={whatsHot}
                 on:profile={showProfile}
                 on:logout={logout}
-                on:upgrade={upgrade}
                 on:deleteDirectChat={deleteDirectChat}
                 on:loadMessage={loadMessage} />
         {/if}
@@ -587,6 +586,7 @@
                 on:addParticipants={addParticipants}
                 on:showParticipants={showParticipants}
                 on:chatWith={chatWith}
+                on:upgrade={upgrade}
                 on:blockUser={blockUser}
                 on:deleteGroup={triggerConfirm}
                 on:makeGroupPrivate={triggerConfirm}
