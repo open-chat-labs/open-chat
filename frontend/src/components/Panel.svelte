@@ -10,7 +10,7 @@
 
 <style type="text/scss">
     $left-width: 40%;
-    $right-width: 500px;
+    $right-width: 550px;
     $trans: ease-in-out 200ms;
 
     section {

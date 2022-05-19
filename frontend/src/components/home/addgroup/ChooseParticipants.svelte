@@ -41,7 +41,7 @@
     }
 </script>
 
-<SectionHeader>
+<SectionHeader flush={true}>
     <h4>{$_("chooseParticipants")}</h4>
     <Avatar url={"assets/group.svg"} status={UserStatus.None} size={AvatarSize.Tiny} />
 </SectionHeader>
@@ -89,7 +89,7 @@
     }
 
     .form-fields {
-        padding: 0;
+        padding: $sp3;
         flex: auto;
         overflow: auto;
     }

@@ -48,9 +48,9 @@ import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
 import { ChatController } from "./chat.controller";
 import { Poller } from "./poller";
-import { scrollStrategy } from "stores/settings";
+import { scrollStrategy } from "../stores/settings";
 import { setCachedMessageFromNotification } from "../utils/caching";
-import { immutableStore } from "stores/immutable";
+import { immutableStore } from "../stores/immutable";
 
 const ONE_MINUTE = 60 * 1000;
 const ONE_HOUR = 60 * ONE_MINUTE;
@@ -296,7 +296,7 @@ export class HomeController {
      * it will just disppear (unless of course we still have the canisterId in the url)
      */
     previewChat(chatId: string): Promise<boolean> {
-        return this.api.previewChat(chatId).then((maybeChat) => {
+        return this.api.getPublicGroupSummary(chatId).then((maybeChat) => {
             if (maybeChat === undefined) {
                 return false;
             }

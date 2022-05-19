@@ -43,7 +43,9 @@
     import type { Share } from "../../domain/share";
     import { draftMessages } from "../../stores/draftMessages";
     import AreYouSure from "../AreYouSure.svelte";
-    import { removeQueryStringParam } from "utils/urls";
+    import { removeQueryStringParam } from "../../utils/urls";
+    import { emptyChatMetrics, mergeChatMetrics } from "../../domain/chat/chat.utils";
+    import { trackEvent } from "../../utils/tracking";
 
     const dispatch = createEventDispatcher();
 
@@ -69,6 +71,7 @@
     }
     let faqQuestion: Questions | undefined = undefined;
     let modal = ModalType.None;
+    let rightPanel: RightPanel;
     setContext(apiKey, controller.api);
     setContext(currentUserKey, controller.user);
 
@@ -84,6 +87,7 @@
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
     let share: Share = { title: "", text: "", url: "", files: [] };
     let interruptRecommended = false;
+    let rightPanelHistory: RightPanelState[] = [];
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -94,6 +98,38 @@
     $: wasmVersion = controller.user.wasmVersion;
     $: qs = new URLSearchParams($querystring);
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
+    $: combinedMetrics = $chatSummariesList
+        .map((c) => c.myMetrics)
+        .reduce(mergeChatMetrics, emptyChatMetrics());
+    $: chat = $selectedChat?.chat;
+    $: x = $rtlStore ? -500 : 500;
+    $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
+    $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
+
+    /** SHOW LEFT
+     * MobileScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
+     * ==========================================================
+     * F             |  -            |  -            |  T
+     * T             |  T            |  -            |  F
+     * T             |  F            |  T            |  F
+     * T             |  F            |  F            |  T
+     */
+    $: showLeft =
+        !$mobileWidth ||
+        ($mobileWidth && params.chatId == null && recommendedGroups.kind === "idle");
+
+    /** SHOW MIDDLE
+     * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
+     * ==========================================================
+     * F             |  -            |  -            |  T
+     * T             |  T            |  -            |  T
+     * T             |  F            |  T            |  T
+     * T             |  F            |  F            |  F
+     */
+    $: showMiddle =
+        !$mobileWidth ||
+        ($mobileWidth && params.chatId != null) ||
+        ($mobileWidth && params.chatId == null && recommendedGroups.kind !== "idle");
 
     function logout() {
         dispatch("logout");
@@ -192,6 +228,13 @@
                 whatsHot();
             }
         }
+    }
+
+    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
+        controller.updateUserAvatar({
+            blobData: ev.detail.data,
+            blobUrl: ev.detail.url,
+        });
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
@@ -361,7 +404,12 @@
     }
 
     function addParticipants() {
-        rightPanelHistory = [...rightPanelHistory, "add_participants"];
+        if ($selectedChat !== undefined) {
+            rightPanelHistory = [
+                ...rightPanelHistory,
+                { kind: "add_participants", controller: $selectedChat },
+            ];
+        }
     }
 
     function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -370,12 +418,25 @@
 
     function showParticipants() {
         if ($selectedChat !== undefined) {
-            rightPanelHistory = [...rightPanelHistory, "show_participants"];
+            rightPanelHistory = [
+                ...rightPanelHistory,
+                { kind: "show_participants", controller: $selectedChat },
+            ];
         }
     }
 
+    function showProfile() {
+        rightPanelHistory = [...rightPanelHistory, { kind: "user_profile" }];
+        rightPanel?.showProfile();
+    }
+
     function showGroupDetails() {
-        rightPanelHistory = [...rightPanelHistory, "group_details"];
+        if ($selectedChat !== undefined) {
+            rightPanelHistory = [
+                ...rightPanelHistory,
+                { kind: "group_details", controller: $selectedChat },
+            ];
+        }
     }
 
     function updateChat(ev: CustomEvent<ChatSummary>) {
@@ -384,7 +445,10 @@
 
     function showPinned() {
         if ($selectedChat !== undefined) {
-            rightPanelHistory = [...rightPanelHistory, "show_pinned"];
+            rightPanelHistory = [
+                ...rightPanelHistory,
+                { kind: "show_pinned", controller: $selectedChat },
+            ];
         }
     }
 
@@ -444,43 +508,19 @@
         draftMessages.setTextContent(chatId, text);
     }
 
-    $: chat = $selectedChat?.chat;
+    function groupCreated(ev: CustomEvent<GroupChatSummary>) {
+        controller.addOrReplaceChat(ev.detail);
+        if (ev.detail.public) {
+            trackEvent("public_group_created");
+        } else {
+            trackEvent("private_group_created");
+        }
+        rightPanelHistory = [];
+    }
 
-    $: groupChat =
-        chat && $chat && $chat.kind === "group_chat"
-            ? (chat as Readable<GroupChatSummary>)
-            : undefined;
-
-    $: x = $rtlStore ? -300 : 300;
-
-    let rightPanelHistory: RightPanelState[] = [];
-
-    $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
-
-    /** SHOW LEFT
-     * MobileScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
-     * ==========================================================
-     * F             |  -            |  -            |  T
-     * T             |  T            |  -            |  F
-     * T             |  F            |  T            |  F
-     * T             |  F            |  F            |  T
-     */
-    $: showLeft =
-        !$mobileWidth ||
-        ($mobileWidth && params.chatId == null && recommendedGroups.kind === "idle");
-
-    /** SHOW MIDDLE
-     * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
-     * ==========================================================
-     * F             |  -            |  -            |  T
-     * T             |  T            |  -            |  T
-     * T             |  F            |  T            |  T
-     * T             |  F            |  F            |  F
-     */
-    $: showMiddle =
-        !$mobileWidth ||
-        ($mobileWidth && params.chatId != null) ||
-        ($mobileWidth && params.chatId == null && recommendedGroups.kind !== "idle");
+    function newGroup() {
+        rightPanelHistory = [...rightPanelHistory, { kind: "new_group_panel" }];
+    }
 </script>
 
 {#if controller.user}
@@ -499,10 +539,12 @@
                 on:showFaqQuestion={showFaqQuestion}
                 on:showRoadmap={() => (modal = ModalType.Roadmap)}
                 on:searchEntered={performSearch}
+                on:userAvatarSelected={userAvatarSelected}
                 on:chatWith={chatWith}
                 on:whatsHot={whatsHot}
+                on:newGroup={newGroup}
+                on:profile={showProfile}
                 on:logout={logout}
-                on:upgrade={upgrade}
                 on:deleteDirectChat={deleteDirectChat}
                 on:loadMessage={loadMessage} />
         {/if}
@@ -535,27 +577,29 @@
     </main>
 {/if}
 
-{#if $selectedChat !== undefined}
-    <Overlay active={rightPanelHistory.length > 0}>
-        {#if rightPanelHistory.length > 0 && groupChat}
-            <div
-                transition:fly={{ x, duration: 200, easing: sineInOut }}
-                class="right-wrapper"
-                class:rtl={$rtlStore}>
-                <RightPanel
-                    {userId}
-                    controller={$selectedChat}
-                    bind:rightPanelHistory
-                    on:goToMessageIndex={goToMessageIndex}
-                    on:addParticipants={addParticipants}
-                    on:showParticipants={showParticipants}
-                    on:chatWith={chatWith}
-                    on:blockUser={blockUser}
-                    on:deleteGroup={triggerConfirm}
-                    on:makeGroupPrivate={triggerConfirm}
-                    on:updateChat={updateChat} />
-            </div>
-        {/if}
+{#if rightPanelHistory.length > 0}
+    <Overlay fade={!$mobileWidth}>
+        <div
+            transition:fly={{ x, duration: rightPanelSlideDuration, easing: sineInOut }}
+            class="right-wrapper"
+            class:rtl={$rtlStore}>
+            <RightPanel
+                {userId}
+                metrics={combinedMetrics}
+                bind:this={rightPanel}
+                bind:rightPanelHistory
+                on:userAvatarSelected={userAvatarSelected}
+                on:goToMessageIndex={goToMessageIndex}
+                on:addParticipants={addParticipants}
+                on:showParticipants={showParticipants}
+                on:chatWith={chatWith}
+                on:upgrade={upgrade}
+                on:blockUser={blockUser}
+                on:deleteGroup={triggerConfirm}
+                on:makeGroupPrivate={triggerConfirm}
+                on:updateChat={updateChat}
+                on:groupCreated={groupCreated} />
+        </div>
     </Overlay>
 {/if}
 
@@ -581,7 +625,6 @@
     <Overlay
         dismissible={modal !== ModalType.Share}
         alignLeft={modal === ModalType.Share}
-        active
         on:close={closeModal}>
         {#if modal === ModalType.Faq}
             <FaqModal bind:question={faqQuestion} on:close={closeModal} />

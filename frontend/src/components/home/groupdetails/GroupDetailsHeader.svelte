@@ -23,7 +23,7 @@
     }
 </script>
 
-<SectionHeader flush={!$mobileWidth}>
+<SectionHeader flush={!$mobileWidth} shadow={true}>
     <span title={$_("participants")} class="participants" on:click={showParticipants}>
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />

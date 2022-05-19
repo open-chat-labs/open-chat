@@ -1,5 +1,6 @@
 <script lang="ts">
     import { avatarUrl } from "../../../domain/user/user.utils";
+    import SectionHeader from "../../SectionHeader.svelte";
     import type { CreatedUser, PartialUserSummary } from "../../../domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
@@ -188,6 +189,15 @@
 
 <ManageIcpAccount bind:this={manageIcpAccount} bind:open={managingIcpAccount} />
 
+<SectionHeader flush={true} shadow={true}>
+    <h4 class="title">{$_("profile")}</h4>
+    <span title={$_("close")} class="close" on:click={closeProfile}>
+        <HoverIcon>
+            <Close size={$iconSize} color={"var(--icon-txt)"} />
+        </HoverIcon>
+    </span>
+</SectionHeader>
+
 <form class="user-form" on:submit|preventDefault={saveUser}>
     <div class="user">
         <div class="avatar">
@@ -196,12 +206,6 @@
                 image={avatarUrl(user)}
                 on:imageSelected={userAvatarSelected} />
         </div>
-        <div class="close" on:click={closeProfile}>
-            <HoverIcon>
-                <Close size={$iconSize} color={"var(--icon-txt)"} />
-            </HoverIcon>
-        </div>
-
         <Legend>{$_("username")} ({$_("usernameRules")})</Legend>
         <UsernameInput
             bind:this={usernameInput}
@@ -428,11 +432,6 @@
         margin-bottom: $sp3;
         border-bottom: var(--profile-section-bd);
         color: var(--section-txt);
-
-        @include mobile() {
-            margin-bottom: 0;
-            border-bottom: var(--profile-section-xs-bd);
-        }
     }
 
     .para {
@@ -444,18 +443,17 @@
 
     .user-form {
         @include nice-scrollbar();
+        padding: $sp3;
     }
 
     .user {
         padding: $sp4;
         background-color: var(--profile-section-bg);
         position: relative;
-    }
 
-    .close {
-        position: absolute;
-        top: $sp3;
-        right: $sp3;
+        @include mobile() {
+            padding: $sp3;
+        }
     }
 
     .storage {
@@ -478,5 +476,13 @@
         border: 1px solid var(--input-bd);
         border-radius: $sp2;
         text-align: right;
+    }
+
+    .title {
+        flex: 1;
+        padding: 0 $sp4;
+    }
+    .close {
+        flex: 0 0 30px;
     }
 </style>

@@ -128,172 +128,178 @@
     }
 </script>
 
-<Overlay bind:active={open}>
-    <ModalContent>
-        <span slot="header">{$_("poll.create")}</span>
-        <span slot="body">
-            <div class="wrapper">
-                <TabControl let:isTitle let:isContent>
-                    <Tab id={0} {isTitle} {isContent}>
-                        <span slot="title">{$_("poll.poll")}</span>
-                        <form>
-                            <div class="section">
-                                <div class="legend">{$_("poll.questionLabel")}</div>
-                                <Input
-                                    bind:value={poll.pollQuestion}
-                                    autofocus={true}
-                                    minlength={0}
-                                    maxlength={MAX_QUESTION_LENGTH}
-                                    countdown={true}
-                                    placeholder={$_("poll.optionalQuestion")} />
-                            </div>
-
-                            {#if poll.pollAnswers.size > 0}
+{#if open}
+    <Overlay>
+        <ModalContent>
+            <span slot="header">{$_("poll.create")}</span>
+            <span slot="body">
+                <div class="wrapper">
+                    <TabControl let:isTitle let:isContent>
+                        <Tab id={0} {isTitle} {isContent}>
+                            <span slot="title">{$_("poll.poll")}</span>
+                            <form>
                                 <div class="section">
-                                    <div class="legend">{$_("poll.answersLabel")}</div>
-                                    {#each [...poll.pollAnswers] as answer, _i (answer)}
-                                        <div animate:flip={{ duration: 200 }} class="answer-text">
-                                            {answer}
+                                    <div class="legend">{$_("poll.questionLabel")}</div>
+                                    <Input
+                                        bind:value={poll.pollQuestion}
+                                        autofocus={true}
+                                        minlength={0}
+                                        maxlength={MAX_QUESTION_LENGTH}
+                                        countdown={true}
+                                        placeholder={$_("poll.optionalQuestion")} />
+                                </div>
+
+                                {#if poll.pollAnswers.size > 0}
+                                    <div class="section">
+                                        <div class="legend">{$_("poll.answersLabel")}</div>
+                                        {#each [...poll.pollAnswers] as answer, _i (answer)}
                                             <div
-                                                class="delete"
-                                                on:click={() => deleteAnswer(answer)}>
-                                                <DeleteOutline
+                                                animate:flip={{ duration: 200 }}
+                                                class="answer-text">
+                                                {answer}
+                                                <div
+                                                    class="delete"
+                                                    on:click={() => deleteAnswer(answer)}>
+                                                    <DeleteOutline
+                                                        size={$iconSize}
+                                                        color={"var(--icon-txt)"} />
+                                                </div>
+                                            </div>
+                                        {/each}
+                                    </div>
+                                {/if}
+
+                                {#if poll.pollAnswers.size < MAX_ANSWERS}
+                                    <div class="section">
+                                        <div class="legend">
+                                            {$_(
+                                                poll.pollAnswers.size < 2
+                                                    ? "poll.addAnswer"
+                                                    : "poll.addAnotherAnswer"
+                                            )}
+                                        </div>
+                                        <div class="next">
+                                            <div class="next-txt">
+                                                <Input
+                                                    bind:value={nextAnswer}
+                                                    disabled={poll.pollAnswers.size >= MAX_ANSWERS}
+                                                    minlength={1}
+                                                    maxlength={MAX_ANSWER_LENGTH}
+                                                    countdown={true}
+                                                    on:enter={addAnswer}
+                                                    placeholder={$_(
+                                                        poll.pollAnswers.size === MAX_ANSWERS
+                                                            ? "poll.maxReached"
+                                                            : "poll.answerText"
+                                                    )}>
+                                                    {#if answerError !== undefined}
+                                                        <ErrorMessage
+                                                            >{$_(answerError)}</ErrorMessage>
+                                                    {/if}
+                                                </Input>
+                                            </div>
+                                            <div class="add-btn" on:click={addAnswer}>
+                                                <PlusCircleOutline
                                                     size={$iconSize}
                                                     color={"var(--icon-txt)"} />
                                             </div>
                                         </div>
-                                    {/each}
-                                </div>
-                            {/if}
-
-                            {#if poll.pollAnswers.size < MAX_ANSWERS}
-                                <div class="section">
-                                    <div class="legend">
-                                        {$_(
-                                            poll.pollAnswers.size < 2
-                                                ? "poll.addAnswer"
-                                                : "poll.addAnotherAnswer"
-                                        )}
                                     </div>
-                                    <div class="next">
-                                        <div class="next-txt">
-                                            <Input
-                                                bind:value={nextAnswer}
-                                                disabled={poll.pollAnswers.size >= MAX_ANSWERS}
-                                                minlength={1}
-                                                maxlength={MAX_ANSWER_LENGTH}
-                                                countdown={true}
-                                                on:enter={addAnswer}
-                                                placeholder={$_(
-                                                    poll.pollAnswers.size === MAX_ANSWERS
-                                                        ? "poll.maxReached"
-                                                        : "poll.answerText"
-                                                )}>
-                                                {#if answerError !== undefined}
-                                                    <ErrorMessage>{$_(answerError)}</ErrorMessage>
-                                                {/if}
-                                            </Input>
-                                        </div>
-                                        <div class="add-btn" on:click={addAnswer}>
-                                            <PlusCircleOutline
-                                                size={$iconSize}
-                                                color={"var(--icon-txt)"} />
-                                        </div>
-                                    </div>
-                                </div>
-                            {/if}
-                        </form>
-                    </Tab>
-                    <Tab id={1} {isTitle} {isContent}>
-                        <span slot="title">{$_("poll.settings")}</span>
-                        <table>
-                            <tr>
-                                <td class="label">
-                                    {$_("poll.anonymous")}
-                                </td>
-                                <td>
-                                    <Toggle
-                                        small={true}
-                                        id={"anonymous"}
-                                        on:change={() => (poll.anonymous = !poll.anonymous)}
-                                        checked={poll.anonymous} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="label">
-                                    {$_("poll.allowMultipleVotes")}
-                                </td>
-                                <td>
-                                    <Toggle
-                                        small={true}
-                                        id={"allow-multiple"}
-                                        on:change={() =>
-                                            (poll.allowMultipleVotesPerUser =
-                                                !poll.allowMultipleVotesPerUser)}
-                                        checked={poll.allowMultipleVotesPerUser} />
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td class="label">
-                                    {$_("poll.limitedDuration")}
-                                </td>
-                                <td>
-                                    <Toggle
-                                        small={true}
-                                        id={"limited-duration"}
-                                        on:change={() =>
-                                            (poll.limitedDuration = !poll.limitedDuration)}
-                                        checked={poll.limitedDuration} />
-                                </td>
-                            </tr>
-
-                            {#if poll.limitedDuration}
+                                {/if}
+                            </form>
+                        </Tab>
+                        <Tab id={1} {isTitle} {isContent}>
+                            <span slot="title">{$_("poll.settings")}</span>
+                            <table>
                                 <tr>
                                     <td class="label">
-                                        {$_("poll.showBeforeEnd")}
+                                        {$_("poll.anonymous")}
                                     </td>
                                     <td>
                                         <Toggle
                                             small={true}
-                                            id={"show-before-end"}
+                                            id={"anonymous"}
+                                            on:change={() => (poll.anonymous = !poll.anonymous)}
+                                            checked={poll.anonymous} />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="label">
+                                        {$_("poll.allowMultipleVotes")}
+                                    </td>
+                                    <td>
+                                        <Toggle
+                                            small={true}
+                                            id={"allow-multiple"}
                                             on:change={() =>
-                                                (poll.showVotesBeforeEndDate =
-                                                    !poll.showVotesBeforeEndDate)}
-                                            checked={poll.showVotesBeforeEndDate} />
+                                                (poll.allowMultipleVotesPerUser =
+                                                    !poll.allowMultipleVotesPerUser)}
+                                            checked={poll.allowMultipleVotesPerUser} />
                                     </td>
                                 </tr>
 
                                 <tr>
                                     <td class="label">
-                                        {$_("poll.pollDuration")}
+                                        {$_("poll.limitedDuration")}
                                     </td>
-                                    <td class="durations">
-                                        {#each durations as d}
-                                            <div
-                                                class="duration"
-                                                on:click={() => (selectedDuration = d)}
-                                                class:selected={selectedDuration === d}>
-                                                {$_(`poll.${d}`)}
-                                            </div>
-                                        {/each}
+                                    <td>
+                                        <Toggle
+                                            small={true}
+                                            id={"limited-duration"}
+                                            on:change={() =>
+                                                (poll.limitedDuration = !poll.limitedDuration)}
+                                            checked={poll.limitedDuration} />
                                     </td>
                                 </tr>
-                            {/if}
-                        </table>
-                    </Tab>
-                </TabControl>
-            </div>
-        </span>
-        <span slot="footer">
-            <ButtonGroup>
-                <Button disabled={!valid} small={true} on:click={start}>{$_("poll.start")}</Button>
-                <Button small={true} secondary={true} on:click={() => (open = false)}
-                    >{$_("cancel")}</Button>
-            </ButtonGroup>
-        </span>
-    </ModalContent>
-</Overlay>
+
+                                {#if poll.limitedDuration}
+                                    <tr>
+                                        <td class="label">
+                                            {$_("poll.showBeforeEnd")}
+                                        </td>
+                                        <td>
+                                            <Toggle
+                                                small={true}
+                                                id={"show-before-end"}
+                                                on:change={() =>
+                                                    (poll.showVotesBeforeEndDate =
+                                                        !poll.showVotesBeforeEndDate)}
+                                                checked={poll.showVotesBeforeEndDate} />
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="label">
+                                            {$_("poll.pollDuration")}
+                                        </td>
+                                        <td class="durations">
+                                            {#each durations as d}
+                                                <div
+                                                    class="duration"
+                                                    on:click={() => (selectedDuration = d)}
+                                                    class:selected={selectedDuration === d}>
+                                                    {$_(`poll.${d}`)}
+                                                </div>
+                                            {/each}
+                                        </td>
+                                    </tr>
+                                {/if}
+                            </table>
+                        </Tab>
+                    </TabControl>
+                </div>
+            </span>
+            <span slot="footer">
+                <ButtonGroup>
+                    <Button disabled={!valid} small={true} on:click={start}
+                        >{$_("poll.start")}</Button>
+                    <Button small={true} secondary={true} on:click={() => (open = false)}
+                        >{$_("cancel")}</Button>
+                </ButtonGroup>
+            </span>
+        </ModalContent>
+    </Overlay>
+{/if}
 
 <style type="text/scss">
     :global(.tab-page .toggle-wrapper) {

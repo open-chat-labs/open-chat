@@ -54,14 +54,14 @@
     }
 </script>
 
-<SectionHeader>
+<SectionHeader flush={true} shadow={true}>
+    <Avatar url={"assets/group.svg"} status={UserStatus.None} size={AvatarSize.Tiny} />
+    <h4>{$_("createNewGroup")}</h4>
     <span title={$_("close")} class="close" on:click={cancel}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
-    <h4>{$_("createNewGroup")}</h4>
-    <Avatar url={"assets/group.svg"} status={UserStatus.None} size={AvatarSize.Tiny} />
 </SectionHeader>
 
 <form class="group-form" on:submit|preventDefault={createGroup}>
@@ -190,14 +190,7 @@
         overflow: auto;
         overflow-x: hidden;
         @include nice-scrollbar();
-    }
-
-    .form-fields {
-        padding: 0;
-        @include mobile() {
-            padding: $sp3;
-            padding-top: 0;
-        }
+        padding: $sp3;
     }
 
     .sub-section {

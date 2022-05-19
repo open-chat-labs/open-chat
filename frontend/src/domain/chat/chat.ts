@@ -534,39 +534,6 @@ export type UpdatesResponse = {
     timestamp: bigint;
     cyclesBalance?: bigint;
     transactions: CryptocurrencyTransfer[];
-    alerts: Alert[];
-};
-
-export type Alert = {
-    id: string;
-    details: AlertDetails;
-    elapsed: bigint;
-};
-
-export type AlertDetails =
-    | GroupDeletedAlert
-    | CryptoDepositReceivedAlert
-    | RemovedFromGroupAlert
-    | BlockedFromGroupAlert;
-
-export type GroupDeletedAlert = {
-    kind: "group_deleted_alert";
-    deletedBy: string;
-    chatId: string;
-};
-
-export type CryptoDepositReceivedAlert = CryptocurrencyDeposit;
-
-export type RemovedFromGroupAlert = {
-    kind: "removed_from_group_alert";
-    removedBy: string;
-    chatId: string;
-};
-
-export type BlockedFromGroupAlert = {
-    kind: "blocked_from_group_alert";
-    blockedBy: string;
-    chatId: string;
 };
 
 export type InitialStateResponse = {

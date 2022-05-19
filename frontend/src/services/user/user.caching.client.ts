@@ -330,6 +330,7 @@ export class CachingUserClient implements IUserClient {
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
         messagesRead: IMessageReadTracker,
+
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);

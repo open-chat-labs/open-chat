@@ -17,14 +17,23 @@
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
     import { createEventDispatcher } from "svelte";
-    import type { Readable, Writable } from "svelte/store";
+    import type { Readable } from "svelte/store";
     import type { UserLookup } from "../../../domain/user/user";
+    import type { ChatController } from "../../../fsm/chat.controller";
 
-    export let chat: Readable<GroupChatSummary>;
-    export let participants: Writable<ParticipantType[]>;
-    export let blockedUsers: Writable<Set<string>>;
+    export let controller: ChatController;
     export let userId: string;
     export let closeIcon: "close" | "back";
+
+    $: chat = controller.chat as Readable<GroupChatSummary>;
+    $: participants = controller.participants;
+    $: blockedUsers = controller.blockedUsers;
+    $: knownUsers = getKnownUsers($userStore, $participants, $blockedUsers);
+    $: me = knownUsers.find((u) => u.userId === userId);
+    $: others = knownUsers
+        .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId)
+        .sort(compareParticipants);
+    $: publicGroup = $chat.public;
 
     let searchTerm = "";
 
@@ -78,14 +87,6 @@
         return users;
     }
 
-    $: knownUsers = getKnownUsers($userStore, $participants, $blockedUsers);
-
-    $: me = knownUsers.find((u) => u.userId === userId);
-
-    $: others = knownUsers
-        .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId)
-        .sort(compareParticipants);
-
     function compareParticipants(
         a: FullParticipant | BlockedParticipant,
         b: FullParticipant | BlockedParticipant
@@ -101,8 +102,6 @@
         }
         return 0;
     }
-
-    let publicGroup = $chat.public;
 </script>
 
 <ParticipantsHeader

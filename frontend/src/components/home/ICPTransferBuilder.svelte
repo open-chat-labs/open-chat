@@ -121,128 +121,132 @@
     }
 </script>
 
-<Overlay dismissible={true} bind:active={open}>
-    <ModalContent fill={confirming}>
-        <span class="header" slot="header">
-            <div class="left">
-                <span class="avatar">
-                    <Avatar
-                        url={avatarUrl(receiver)}
-                        status={receiver
-                            ? getUserStatus($now, $userStore, receiver.userId)
-                            : UserStatus.None}
-                        size={AvatarSize.Small} />
-                </span>
-                <div class="main-title">
-                    {$_("icpTransfer.title")}
-                </div>
-            </div>
-            <div class="balance">
-                <div class="amount">{formatICP(remainingBalanceE8s, 4)}</div>
-                <div class="label">
-                    {draftAmountE8s > BigInt(0)
-                        ? $_("icpAccount.shortRemainingBalanceLabel")
-                        : $_("icpAccount.shortBalanceLabel")}
-                </div>
-            </div>
-            <div class="refresh" class:refreshing on:click={() => reset(draftAmountE8s)}>
-                <Refresh size={"1em"} color={"var(--accent)"} />
-            </div>
-        </span>
-        <form slot="body">
-            <div class="body" class:confirming class:zero={zero || toppingUp}>
-                {#if zero || toppingUp}
-                    <AccountInfo qrSize={"smaller"} {user} />
-                    {#if zero}
-                        <p>{$_("icpTransfer.zeroBalance")}</p>
-                    {/if}
-                    <p>{$_("icpTransfer.makeDeposit")}</p>
-                    <p class="back">
-                        <ArrowLeft size={"0.8em"} color={"var(--txt)"} />
-                        <Link underline="always" on:click={refreshAndContinue}>
-                            {$_("icpTransfer.done")}
-                        </Link>
-                    </p>
-                {:else if confirming}
-                    <div class="alert">
-                        <AlertOutline size={$iconSize} color={"var(--toast-failure-txt"} />
+{#if open}
+    <Overlay dismissible={true}>
+        <ModalContent fill={confirming}>
+            <span class="header" slot="header">
+                <div class="left">
+                    <span class="avatar">
+                        <Avatar
+                            url={avatarUrl(receiver)}
+                            status={receiver
+                                ? getUserStatus($now, $userStore, receiver.userId)
+                                : UserStatus.None}
+                            size={AvatarSize.Small} />
+                    </span>
+                    <div class="main-title">
+                        {$_("icpTransfer.title")}
                     </div>
-                    <div class="alert-txt">
-                        {$_("icpTransfer.warning")}
+                </div>
+                <div class="balance">
+                    <div class="amount">{formatICP(remainingBalanceE8s, 4)}</div>
+                    <div class="label">
+                        {draftAmountE8s > BigInt(0)
+                            ? $_("icpAccount.shortRemainingBalanceLabel")
+                            : $_("icpAccount.shortBalanceLabel")}
                     </div>
-                {:else}
-                    {#if group}
-                        <div class="receiver">
-                            <Legend>{$_("icpTransfer.receiver")}</Legend>
-                            <SingleUserSelector
-                                bind:selectedReceiver={receiver}
-                                participants={$participants}
-                                blockedUsers={$blockedUsers}
-                                autofocus={group} />
+                </div>
+                <div class="refresh" class:refreshing on:click={() => reset(draftAmountE8s)}>
+                    <Refresh size={"1em"} color={"var(--accent)"} />
+                </div>
+            </span>
+            <form slot="body">
+                <div class="body" class:confirming class:zero={zero || toppingUp}>
+                    {#if zero || toppingUp}
+                        <AccountInfo qrSize={"smaller"} {user} />
+                        {#if zero}
+                            <p>{$_("icpTransfer.zeroBalance")}</p>
+                        {/if}
+                        <p>{$_("icpTransfer.makeDeposit")}</p>
+                        <p class="back">
+                            <ArrowLeft size={"0.8em"} color={"var(--txt)"} />
+                            <Link underline="always" on:click={refreshAndContinue}>
+                                {$_("icpTransfer.done")}
+                            </Link>
+                        </p>
+                    {:else if confirming}
+                        <div class="alert">
+                            <AlertOutline size={$iconSize} color={"var(--toast-failure-txt"} />
                         </div>
+                        <div class="alert-txt">
+                            {$_("icpTransfer.warning")}
+                        </div>
+                    {:else}
+                        {#if group}
+                            <div class="receiver">
+                                <Legend>{$_("icpTransfer.receiver")}</Legend>
+                                <SingleUserSelector
+                                    bind:selectedReceiver={receiver}
+                                    participants={$participants}
+                                    blockedUsers={$blockedUsers}
+                                    autofocus={group} />
+                            </div>
+                        {/if}
+                        <div class="transfer">
+                            <Legend>{$_("icpTransfer.amount")}</Legend>
+                            <ICPInput
+                                autofocus={!group}
+                                maxAmountE8s={maxAmountE8s()}
+                                bind:amountE8s={draftAmountE8s} />
+                        </div>
+                        <div class="message">
+                            <Legend>{$_("icpTransfer.message")}</Legend>
+                            <Input
+                                maxlength={100}
+                                type={"text"}
+                                autofocus={false}
+                                countdown={true}
+                                placeholder={$_("icpTransfer.messagePlaceholder")}
+                                bind:value={message} />
+                        </div>
+                        <div class="fee">
+                            <span>
+                                {$_("icpTransfer.fee", {
+                                    values: { fee: formatICP(ICP_TRANSFER_FEE_E8S, 0) },
+                                })}
+                            </span>
+                        </div>
+                        {#if error}
+                            <ErrorMessage>{$_(error)}</ErrorMessage>
+                        {/if}
                     {/if}
-                    <div class="transfer">
-                        <Legend>{$_("icpTransfer.amount")}</Legend>
-                        <ICPInput
-                            autofocus={!group}
-                            maxAmountE8s={maxAmountE8s()}
-                            bind:amountE8s={draftAmountE8s} />
-                    </div>
-                    <div class="message">
-                        <Legend>{$_("icpTransfer.message")}</Legend>
-                        <Input
-                            maxlength={100}
-                            type={"text"}
-                            autofocus={false}
-                            countdown={true}
-                            placeholder={$_("icpTransfer.messagePlaceholder")}
-                            bind:value={message} />
-                    </div>
-                    <div class="fee">
-                        <span>
-                            {$_("icpTransfer.fee", {
-                                values: { fee: formatICP(ICP_TRANSFER_FEE_E8S, 0) },
-                            })}
-                        </span>
-                    </div>
-                    {#if error}
-                        <ErrorMessage>{$_(error)}</ErrorMessage>
+                </div>
+            </form>
+            <span class="footer" class:zero={zero || toppingUp} slot="footer">
+                {#if !zero && !toppingUp}
+                    <span class="topup">
+                        <Link underline={"always"} on:click={() => (toppingUp = true)}>
+                            {$_("icpAccount.topUp")}
+                        </Link>
+                    </span>
+                {:else if !$mobileWidth}
+                    <a
+                        class="how-to"
+                        href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
+                        target="_blank">
+                        {$_("howToBuyICP")}
+                    </a>
+                {/if}
+                <ButtonGroup>
+                    {#if zero}
+                        <Button
+                            disabled={refreshing}
+                            loading={refreshing}
+                            tiny={true}
+                            on:click={() => reset(draftAmountE8s)}>{$_("refresh")}</Button>
+                    {:else}
+                        <Button disabled={!valid} tiny={true} on:click={send}
+                            >{confirming
+                                ? $_("icpTransfer.confirm")
+                                : $_("icpTransfer.send")}</Button>
                     {/if}
-                {/if}
-            </div>
-        </form>
-        <span class="footer" class:zero={zero || toppingUp} slot="footer">
-            {#if !zero && !toppingUp}
-                <span class="topup">
-                    <Link underline={"always"} on:click={() => (toppingUp = true)}>
-                        {$_("icpAccount.topUp")}
-                    </Link>
-                </span>
-            {:else if !$mobileWidth}
-                <a
-                    class="how-to"
-                    href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
-                    target="_blank">
-                    {$_("howToBuyICP")}
-                </a>
-            {/if}
-            <ButtonGroup>
-                {#if zero}
-                    <Button
-                        disabled={refreshing}
-                        loading={refreshing}
-                        tiny={true}
-                        on:click={() => reset(draftAmountE8s)}>{$_("refresh")}</Button>
-                {:else}
-                    <Button disabled={!valid} tiny={true} on:click={send}
-                        >{confirming ? $_("icpTransfer.confirm") : $_("icpTransfer.send")}</Button>
-                {/if}
-                <Button tiny={true} secondary={true} on:click={() => (open = false)}
-                    >{$_("cancel")}</Button>
-            </ButtonGroup>
-        </span>
-    </ModalContent>
-</Overlay>
+                    <Button tiny={true} secondary={true} on:click={() => (open = false)}
+                        >{$_("cancel")}</Button>
+                </ButtonGroup>
+            </span>
+        </ModalContent>
+    </Overlay>
+{/if}
 
 <style type="text/scss">
     .header {
