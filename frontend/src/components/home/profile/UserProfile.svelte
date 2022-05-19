@@ -189,7 +189,7 @@
 
 <ManageIcpAccount bind:this={manageIcpAccount} bind:open={managingIcpAccount} />
 
-<SectionHeader flush={true}>
+<SectionHeader flush={true} shadow={true}>
     <h4 class="title">{$_("profile")}</h4>
     <span title={$_("close")} class="close" on:click={closeProfile}>
         <HoverIcon>
@@ -450,6 +450,10 @@
         padding: $sp4;
         background-color: var(--profile-section-bg);
         position: relative;
+
+        @include mobile() {
+            padding: $sp3;
+        }
     }
 
     .storage {

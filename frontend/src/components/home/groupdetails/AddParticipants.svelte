@@ -34,7 +34,7 @@
     }
 </script>
 
-<SectionHeader>
+<SectionHeader flush={true}>
     <h4>{$_("addParticipants")}</h4>
     <span title={$_("close")} class="close" on:click={cancelAddParticipant}>
         <HoverIcon>
@@ -81,11 +81,7 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        padding: 0 $sp3;
-
-        @include mobile() {
-            padding: 0;
-        }
+        padding: $sp3;
     }
     .cta {
         height: 57px;

@@ -515,6 +515,7 @@
         } else {
             trackEvent("private_group_created");
         }
+        rightPanelHistory = [];
     }
 
     function newGroup() {

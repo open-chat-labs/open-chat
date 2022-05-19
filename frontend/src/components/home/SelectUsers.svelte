@@ -36,11 +36,4 @@
     .pill {
         display: inline-block;
     }
-
-    @include mobile() {
-        .find-user,
-        .selected {
-            padding: 0 $sp3;
-        }
-    }
 </style>

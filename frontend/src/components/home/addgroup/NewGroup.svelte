@@ -54,7 +54,7 @@
     }
 </script>
 
-<SectionHeader flush={true}>
+<SectionHeader flush={true} shadow={true}>
     <Avatar url={"assets/group.svg"} status={UserStatus.None} size={AvatarSize.Tiny} />
     <h4>{$_("createNewGroup")}</h4>
     <span title={$_("close")} class="close" on:click={cancel}>
