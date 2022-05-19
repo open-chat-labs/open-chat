@@ -42,6 +42,7 @@
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { formatLastOnlineDate } from "../../domain/user/user.utils";
+    import { OPENCHAT_BOT } from "utils/user";
 
     const dispatch = createEventDispatcher();
 
@@ -56,6 +57,8 @@
 
     $: userId = $selectedChatSummary.kind === "direct_chat" ? $selectedChatSummary.them : "";
     $: isGroup = $selectedChatSummary.kind === "group_chat";
+    $: isBot = userId === OPENCHAT_BOT;
+    $: hasUserProfile = !isGroup && !isBot;
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -111,7 +114,7 @@
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus(now, $userStore, chatSummary.them),
-                subtext: formatLastOnlineDate(now, $userStore[chatSummary.them]),
+                subtext: isBot ? "" : formatLastOnlineDate(now, $userStore[chatSummary.them]),
                 typing: getTypingString($userStore, chatSummary, typing),
             };
         }
@@ -127,7 +130,7 @@
     }
 
     function openUserProfile() {
-        if (!isGroup) {
+        if (hasUserProfile) {
             viewProfile = true;
         }
     }
@@ -159,7 +162,7 @@
         <ViewUserProfile {userId} chatButton={false} on:close={closeUserProfile} />
     {/if}
 
-    <div class="avatar" class:is-direct={!isGroup} on:click={openUserProfile}>
+    <div class="avatar" class:has-user-profile={hasUserProfile} on:click={openUserProfile}>
         <Avatar
             statusBorder={"var(--section-bg)"}
             {blocked}
@@ -173,7 +176,7 @@
                 <span on:click={showGroupDetails} class="group-details">
                     {chat.name}
                 </span>
-            {:else if !isGroup}
+            {:else if hasUserProfile}
                 <span on:click={openUserProfile} class="user-link">
                     {chat.name}
                 </span>
@@ -338,7 +341,7 @@
     .avatar {
         flex: 0 0 55px;
 
-        &.is-direct {
+        &.has-user-profile {
             cursor: pointer;
         }
     }
