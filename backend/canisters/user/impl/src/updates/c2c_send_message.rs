@@ -22,7 +22,7 @@ async fn c2c_send_message(args: Args) -> Response {
         }
     };
 
-    mutate_state(|state| c2c_send_message_impl(sender_user_id, args, state))
+    mutate_state(|state| c2c_send_message_impl(sender_user_id, args, false, state))
 }
 
 enum SenderStatus {
@@ -55,7 +55,12 @@ async fn verify_user(user_index_canister_id: CanisterId, user_id: UserId) -> boo
     }
 }
 
-fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
+pub(crate) fn c2c_send_message_impl(
+    sender: UserId,
+    args: Args,
+    mute_notification: bool,
+    runtime_state: &mut RuntimeState,
+) -> Response {
     let now = runtime_state.env.now();
 
     let replies_to = convert_reply_context(args.replies_to_v2, sender, runtime_state);
@@ -76,17 +81,19 @@ fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut Runtime
 
     register_callbacks_if_required(sender, &message_event, runtime_state);
 
-    if let Some(chat) = runtime_state.data.direct_chats.get(&sender.into()) {
-        if !chat.notifications_muted.value {
-            let notification = Notification::DirectMessageNotification(DirectMessageNotification {
-                sender,
-                sender_name: args.sender_name,
-                message: message_event,
-            });
+    if !mute_notification {
+        if let Some(chat) = runtime_state.data.direct_chats.get(&sender.into()) {
+            if !chat.notifications_muted.value {
+                let notification = Notification::DirectMessageNotification(DirectMessageNotification {
+                    sender,
+                    sender_name: args.sender_name,
+                    message: message_event,
+                });
 
-            let recipient = runtime_state.env.canister_id().into();
+                let recipient = runtime_state.env.canister_id().into();
 
-            runtime_state.push_notification(vec![recipient], notification);
+                runtime_state.push_notification(vec![recipient], notification);
+            }
         }
     }
 

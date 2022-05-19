@@ -5,6 +5,7 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
+use user_index_canister::{OPENCHAT_BOT, OPENCHAT_BOT_PRINCIPAL, OPENCHAT_BOT_USERNAME};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
 
@@ -54,6 +55,16 @@ impl UserMap {
             self.username_to_principal.insert(&user.username, *principal);
             self.user_id_to_principal.insert(user.user_id, *principal);
         }
+    }
+
+    pub fn register_openchat_bot(&mut self, now: TimestampMillis) {
+        self.register(
+            OPENCHAT_BOT_PRINCIPAL,
+            OPENCHAT_BOT,
+            Version::default(),
+            OPENCHAT_BOT_USERNAME.to_string(),
+            now,
+        );
     }
 
     pub fn does_username_exist(&self, username: &str) -> bool {

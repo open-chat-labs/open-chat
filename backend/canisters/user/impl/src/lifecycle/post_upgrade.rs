@@ -1,5 +1,5 @@
 use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
-use crate::{Data, LOG_MESSAGES};
+use crate::{openchat_bot, Data, LOG_MESSAGES};
 use canister_api_macros::trace;
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use ic_cdk_macros::post_upgrade;
@@ -24,6 +24,8 @@ fn post_upgrade(args: Args) {
     if !log_messages.is_empty() || !trace_messages.is_empty() {
         LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
     }
+
+    openchat_bot::send_welcome_message();
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }

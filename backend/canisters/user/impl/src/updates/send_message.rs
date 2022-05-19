@@ -11,6 +11,7 @@ use types::{
 };
 use user_canister::c2c_send_message::{self, C2CReplyContext};
 use user_canister::send_message::{Response::*, *};
+use user_index_canister::OPENCHAT_BOT;
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
@@ -49,6 +50,11 @@ async fn send_message(mut args: Args) -> Response {
 fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Response> {
     if runtime_state.data.blocked_users.contains(&args.recipient) {
         return Err(RecipientBlocked);
+    }
+    if args.recipient == OPENCHAT_BOT {
+        return Err(InvalidRequest(
+            "Messaging the OpenChat Bot is not currently supported".to_string(),
+        ));
     }
 
     let now = runtime_state.env.now();
