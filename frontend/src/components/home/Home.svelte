@@ -679,7 +679,7 @@
         }
         @include size-above(xl) {
             &.showingRight {
-                max-width: 2000px;
+                max-width: 1920px;
             }
         }
     }

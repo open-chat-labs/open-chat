@@ -61,10 +61,12 @@
             @include size-below(xl) {
                 @include fullHeight();
                 max-width: 500px;
+                min-width: 500px;
             }
             @include mobile() {
                 width: 100%;
                 max-width: none;
+                min-width: none;
             }
         }
     }

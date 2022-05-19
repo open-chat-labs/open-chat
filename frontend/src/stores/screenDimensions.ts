@@ -41,7 +41,7 @@ export const screenWidth = derived(dimensions, ($dimensions) => {
         return ScreenWidth.Medium;
     } else if ($dimensions.width < 1200) {
         return ScreenWidth.Large;
-    } else if ($dimensions.width < 2000) {
+    } else if ($dimensions.width < 1920) {
         return ScreenWidth.ExtraLarge;
     } else {
         return ScreenWidth.ExtraExtraLarge;
