@@ -88,7 +88,6 @@ import { profile } from "../common/profiling";
 import type { IMessageReadTracker } from "../../stores/markRead";
 import { base64ToBigint } from "../../utils/base64";
 import type { GroupInvite } from "../../services/serviceContainer";
-import { dedupe } from "utils/list";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
