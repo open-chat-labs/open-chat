@@ -142,6 +142,9 @@
 <style type="text/scss">
     .search {
         padding: 0 $sp3;
+        @include size-above(xl) {
+            padding: 0;
+        }
 
         @include mobile() {
             padding: 0;

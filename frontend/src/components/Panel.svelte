@@ -10,20 +10,16 @@
 
 <style type="text/scss">
     $left-width: 40%;
-    $right-width: 550px;
-    $trans: ease-in-out 200ms;
+    $right-width: 40%;
 
     section {
-        transition: background $trans, width $trans, right $trans, padding $trans, left $trans,
-            padding-left $trans;
         background: var(--panel-bg);
         padding-bottom: 0;
         overflow: auto;
         overflow-x: hidden;
 
         &.middle {
-            flex: auto;
-            width: 100%;
+            flex: 7;
             padding-left: 0;
             padding-right: 0;
             @include mobile() {
@@ -32,11 +28,9 @@
         }
 
         &.left {
-            flex: 0 0 $left-width;
+            flex: 4;
             display: flex;
             flex-direction: column;
-            min-width: 236px;
-            max-width: 550px;
             position: relative;
             background: var(--panel-left-bg);
             @include mobile() {
@@ -46,17 +40,31 @@
                 flex: auto;
                 background: var(--panel-left-xs);
             }
+
+            @include size-below(md) {
+                flex: 5;
+            }
         }
 
         &.right {
+            flex: 4;
             background: var(--panel-right-bg);
             padding: 0px;
-            width: $right-width;
             display: flex;
             flex-direction: column;
-            @include fullHeight();
+
+            @include size-above(xl) {
+                background: var(--panel-left-bg);
+            }
+
+            /* Not that below xl the right panel is a modal and not in a flexbox container anymore! */
+            @include size-below(xl) {
+                @include fullHeight();
+                max-width: 500px;
+            }
             @include mobile() {
                 width: 100%;
+                max-width: none;
             }
         }
     }

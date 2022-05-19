@@ -12,7 +12,7 @@
     import Overlay from "../Overlay.svelte";
     import { createEventDispatcher, onDestroy, onMount, setContext, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { mobileWidth } from "../../stores/screenDimensions";
+    import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
     import { push, replace, querystring } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
@@ -33,7 +33,6 @@
         EnhancedReplyContext,
         GroupChatSummary,
     } from "../../domain/chat/chat";
-    import type { Readable } from "svelte/store";
     import { currentUserKey, HomeController } from "../../fsm/home.controller";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
@@ -105,6 +104,7 @@
     $: x = $rtlStore ? -500 : 500;
     $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
     $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
+    $: showingRight = rightPanelHistory.length > 0;
 
     /** SHOW LEFT
      * MobileScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
@@ -521,10 +521,12 @@
     function newGroup() {
         rightPanelHistory = [...rightPanelHistory, { kind: "new_group_panel" }];
     }
+
+    $: console.log("Screen Width: ", $screenWidth);
 </script>
 
 {#if controller.user}
-    <main>
+    <main class:showingRight>
         {#if showLeft}
             <LeftPanel
                 {controller}
@@ -574,10 +576,28 @@
                 on:showPinned={showPinned}
                 on:goToMessageIndex={goToMessageIndex} />
         {/if}
+        {#if $screenWidth === ScreenWidth.ExtraExtraLarge && rightPanelHistory.length > 0}
+            <RightPanel
+                {userId}
+                metrics={combinedMetrics}
+                bind:this={rightPanel}
+                bind:rightPanelHistory
+                on:userAvatarSelected={userAvatarSelected}
+                on:goToMessageIndex={goToMessageIndex}
+                on:addParticipants={addParticipants}
+                on:showParticipants={showParticipants}
+                on:chatWith={chatWith}
+                on:upgrade={upgrade}
+                on:blockUser={blockUser}
+                on:deleteGroup={triggerConfirm}
+                on:makeGroupPrivate={triggerConfirm}
+                on:updateChat={updateChat}
+                on:groupCreated={groupCreated} />
+        {/if}
     </main>
 {/if}
 
-{#if rightPanelHistory.length > 0}
+{#if $screenWidth !== ScreenWidth.ExtraExtraLarge && rightPanelHistory.length > 0}
     <Overlay fade={!$mobileWidth}>
         <div
             transition:fly={{ x, duration: rightPanelSlideDuration, easing: sineInOut }}
@@ -647,7 +667,7 @@
     }
 
     main {
-        transition: margin ease-in-out 300ms, max-width ease-in-out 300ms;
+        transition: max-width ease-in-out 150ms;
         position: relative;
         width: 100%;
         display: flex;
@@ -657,9 +677,14 @@
         @include size-below(xl) {
             max-width: 1400px;
         }
+        @include size-above(xl) {
+            &.showingRight {
+                max-width: 2000px;
+            }
+        }
     }
     :global(body) {
-        transition: color ease-in-out 300ms, padding ease-in-out 300ms;
+        transition: color ease-in-out 150ms, padding ease-in-out 150ms;
         padding: $sp4;
         --background-color: var(--theme-background);
         --text-color: var(--theme-text);

@@ -216,6 +216,10 @@
         &:not(.me):hover {
             background-color: var(--participants-hv);
         }
+
+        @include size-above(xl) {
+            margin: 0 0 $sp3 0;
+        }
     }
     .avatar {
         flex: 0 0 50px;

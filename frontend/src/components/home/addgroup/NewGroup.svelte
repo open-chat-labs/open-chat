@@ -191,6 +191,9 @@
         overflow-x: hidden;
         @include nice-scrollbar();
         padding: $sp3;
+        @include size-above(xl) {
+            padding: $sp3 0 0 0;
+        }
     }
 
     .sub-section {

@@ -434,6 +434,10 @@
         color: var(--section-txt);
     }
 
+    .stats {
+        margin-bottom: 0;
+    }
+
     .para {
         margin-bottom: $sp4;
         &.last {
@@ -443,7 +447,11 @@
 
     .user-form {
         @include nice-scrollbar();
+
         padding: $sp3;
+        @include size-above(xl) {
+            padding: $sp3 0 0 0;
+        }
     }
 
     .user {

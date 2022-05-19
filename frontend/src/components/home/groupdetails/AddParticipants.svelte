@@ -82,6 +82,10 @@
         display: flex;
         flex-direction: column;
         padding: $sp3;
+
+        @include size-above(xl) {
+            padding: $sp3 0 0 0;
+        }
     }
     .cta {
         height: 57px;

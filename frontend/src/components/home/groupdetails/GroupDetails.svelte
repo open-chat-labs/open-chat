@@ -41,6 +41,7 @@
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsers from "./InviteUsers.svelte";
     import { mergeKeepingOnlyChanged } from "../../../utils/object";
+    import { ScreenWidth, screenWidth } from "../../../stores/screenDimensions";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -71,7 +72,7 @@
     // capture a snapshot of the chat as it is right now
     $: originalGroup = { ...$chat };
     $: myGroup = controller.user.userId === originalGroup.ownerId;
-
+    $: padded = $screenWidth !== ScreenWidth.ExtraExtraLarge;
     $: participants = controller.participants;
     $: nameDirty = updatedGroup.name !== originalGroup.name;
     $: descDirty = updatedGroup.desc !== originalGroup.description;
@@ -390,6 +391,10 @@
         flex-direction: column;
         gap: $sp3;
         padding: $sp3;
+        @include size-above(xl) {
+            padding: $sp3 0 0 0;
+        }
+
         @include mobile() {
             padding: 0 $sp3;
         }

@@ -22,6 +22,7 @@ export const enum ScreenWidth {
     Medium = "Medium",
     Large = "Large",
     ExtraLarge = "ExtraLarge",
+    ExtraExtraLarge = "ExtraExtraLarge",
 }
 
 export const enum ScreenHeight {
@@ -40,8 +41,10 @@ export const screenWidth = derived(dimensions, ($dimensions) => {
         return ScreenWidth.Medium;
     } else if ($dimensions.width < 1200) {
         return ScreenWidth.Large;
-    } else {
+    } else if ($dimensions.width < 2000) {
         return ScreenWidth.ExtraLarge;
+    } else {
+        return ScreenWidth.ExtraExtraLarge;
     }
 });
 
