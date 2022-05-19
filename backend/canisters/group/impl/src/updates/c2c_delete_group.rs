@@ -1,15 +1,14 @@
 use crate::{read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
-use group_canister::delete_group::{Response::*, *};
+use group_canister::c2c_delete_group::{Response::*, *};
 use group_index_canister::c2c_delete_group;
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{CanisterId, ChatId, UserId};
 
-// TODO remove this!
 #[update]
 #[trace]
-async fn delete_group(_args: Args) -> Response {
+async fn c2c_delete_group(_args: Args) -> Response {
     run_regular_jobs();
 
     let prepare_result = match read_state(prepare) {
@@ -26,12 +25,12 @@ async fn delete_group(_args: Args) -> Response {
     match group_index_canister_c2c_client::c2c_delete_group(group_index_canister_id, &c2c_delete_group_args).await {
         Ok(response) => match response {
             c2c_delete_group::Response::ChatNotFound => {
-                error!(chat_id = %prepare_result.chat_id, "Group not found in index");
-                InternalError
+                error!(chat_id = %prepare_result.chat_id, "Group not found in group index");
+                InternalError("Group not found in group index".to_string())
             }
             c2c_delete_group::Response::Success => Success,
         },
-        Err(_) => InternalError,
+        Err(error) => InternalError(format!("{:?}", error)),
     }
 }
 
@@ -43,8 +42,8 @@ struct PrepareResult {
 }
 
 fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+    let caller = runtime_state.env.caller().into();
+    if let Some(participant) = runtime_state.data.participants.get_by_user_id(&caller) {
         if !participant.role.can_delete_group() {
             Err(NotAuthorized)
         } else {

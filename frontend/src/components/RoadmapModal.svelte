@@ -23,11 +23,11 @@
                     >Deposit ICP into your OpenChat account, send ICP as messages, withdraw ICP</del>
             </li>
             <li><del>Share messages and receive shares from other apps</del></li>
+            <li><del>Edit sent messages</del></li>
             <li>Send additional tokens as messages, such as BTC, ETH, Cycles, etc</li>
             <li>Message forwarding</li>
             <li>Improved UI design</li>
             <li>Tag messages (eg star) and search/filter by tag</li>
-            <li>Edit sent messages</li>
             <li>Organise events with calendar</li>
             <li>Performance enhancements (asset caching with etags, WebRTC improvements)</li>
             <li>Streamlined sign-in</li>

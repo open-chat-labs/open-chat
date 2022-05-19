@@ -29,7 +29,6 @@ import type {
     ApiCompletedCryptocurrencyWithdrawal,
     ApiTransferCryptocurrencyWithinGroupResponse,
     ApiChatMetrics,
-    ApiMarkAlertsReadResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -68,6 +67,7 @@ import {
     message,
     messageContent,
     publicGroupSummary,
+    token,
     updatedMessage,
 } from "../common/chatMappers";
 import type {
@@ -729,8 +729,8 @@ export function failedCryptoWithdrawal(
     candid: ApiFailedCryptocurrencyWithdrawal
 ): FailedCryptocurrencyWithdrawal {
     return {
-        transferKind: "icp_withdrawal",
-        kind: "failed_icp_withdrawal",
+        kind: "failed",
+        token: token(candid.token),
         to: bytesToHexString(candid.to),
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,
@@ -743,8 +743,8 @@ export function completedCryptoWithdrawal(
     candid: ApiCompletedCryptocurrencyWithdrawal
 ): CompletedCryptocurrencyWithdrawal {
     return {
-        transferKind: "icp_withdrawal",
-        kind: "completed_icp_withdrawal",
+        kind: "completed",
+        token: token(candid.token),
         to: bytesToHexString(candid.to),
         amountE8s: candid.amount.e8s,
         feeE8s: candid.fee.e8s,

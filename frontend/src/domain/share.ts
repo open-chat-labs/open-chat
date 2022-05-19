@@ -68,7 +68,7 @@ export function canShareMessage(content: MessageContent): boolean {
         return false;
     }
 
-    if (content.kind === "crypto_content" && content.transfer.kind === "failed_icp_transfer") {
+    if (content.kind === "crypto_content" && content.transfer.kind === "failed") {
         return false;
     }
 

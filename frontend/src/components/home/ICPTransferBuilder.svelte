@@ -110,8 +110,8 @@
             kind: "crypto_content",
             caption: message === "" ? undefined : message,
             transfer: {
-                transferKind: "icp_transfer",
-                kind: "pending_icp_transfer",
+                token: "icp",
+                kind: "pending",
                 recipient: receiver.userId,
                 amountE8s: draftAmountE8s,
             },

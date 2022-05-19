@@ -20,10 +20,10 @@ import type {
     MarkReadRequest,
     GroupChatSummary,
     RegisterPollVoteResponse,
-    PendingICPWithdrawal,
     WithdrawCryptocurrencyResponse,
     EventsSuccessResult,
     ChatEvent,
+    PendingCryptocurrencyWithdrawal,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -458,7 +458,9 @@ export class CachingUserClient implements IUserClient {
         return this.client.registerPollVote(otherUser, messageIdx, answerIdx, voteType);
     }
 
-    withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
-        return this.client.withdrawICP(domain);
+    withdrawCryptocurrency(
+        domain: PendingCryptocurrencyWithdrawal
+    ): Promise<WithdrawCryptocurrencyResponse> {
+        return this.client.withdrawCryptocurrency(domain);
     }
 }

@@ -59,7 +59,7 @@ import type {
     UnpinMessageResponse,
     RegisterPollVoteResponse,
     GroupPermissions,
-    PendingICPWithdrawal,
+    PendingCryptocurrencyWithdrawal,
     WithdrawCryptocurrencyResponse,
     MakeGroupPrivateResponse,
     InviteCodeResponse,
@@ -884,8 +884,10 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.userClient.registerPollVote(otherUser, messageIdx, answerIdx, voteType);
     }
 
-    withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
-        return this.userClient.withdrawICP(domain);
+    withdrawCryptocurrency(
+        domain: PendingCryptocurrencyWithdrawal
+    ): Promise<WithdrawCryptocurrencyResponse> {
+        return this.userClient.withdrawCryptocurrency(domain);
     }
 
     getInviteCode(chatId: string): Promise<InviteCodeResponse> {

@@ -7,6 +7,7 @@ use types::{CanisterId, Milliseconds, PublicGroupActivity, TimestampMillis};
 mod add_participants;
 mod block_user;
 mod c2c_assume_super_admin;
+mod c2c_delete_group;
 mod c2c_dismiss_super_admin;
 mod c2c_end_poll;
 mod c2c_join_group;

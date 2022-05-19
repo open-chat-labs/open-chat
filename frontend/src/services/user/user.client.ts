@@ -28,9 +28,9 @@ import type {
     MarkReadRequest,
     GroupChatSummary,
     RegisterPollVoteResponse,
-    PendingICPWithdrawal,
     WithdrawCryptocurrencyResponse,
     CryptocurrencyContent,
+    PendingCryptocurrencyWithdrawal,
 } from "../../domain/chat/chat";
 import { CandidService, ServiceRetryInterrupt } from "../candidService";
 import {
@@ -69,7 +69,7 @@ import {
     apiGroupPermissions,
     apiMessageContent,
     apiOptional,
-    apiPendingICPWithdrawal,
+    apiPendingCryptocurrencyWithdrawal,
     apiReplyContextArgs,
     registerPollVoteResponse,
 } from "../common/chatMappers";
@@ -543,9 +543,11 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    withdrawICP(domain: PendingICPWithdrawal): Promise<WithdrawCryptocurrencyResponse> {
+    withdrawCryptocurrency(
+        domain: PendingCryptocurrencyWithdrawal
+    ): Promise<WithdrawCryptocurrencyResponse> {
         const req = {
-            withdrawal: apiPendingICPWithdrawal(domain),
+            withdrawal: apiPendingCryptocurrencyWithdrawal(domain),
         };
         return this.handleResponse(
             this.userService.withdraw_cryptocurrency(req),
