@@ -173,6 +173,10 @@ export interface CyclesRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
+export interface DeleteGroupArgs { 'chat_id' : ChatId }
+export type DeleteGroupResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface DeleteMessagesArgs {
   'user_id' : UserId,
   'message_ids' : Array<MessageId>,
@@ -942,6 +946,7 @@ export interface _SERVICE {
   'bio' : (arg_0: BioArgs) => Promise<BioResponse>,
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
   'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
+  'delete_group' : (arg_0: DeleteGroupArgs) => Promise<DeleteGroupResponse>,
   'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
       DeleteMessagesResponse
     >,

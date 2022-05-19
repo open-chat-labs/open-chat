@@ -75,6 +75,12 @@ export const idlFactory = ({ IDL }) => {
     'MaxGroupsCreated' : IDL.Nat32,
     'InternalError' : IDL.Null,
   });
+  const DeleteGroupArgs = IDL.Record({ 'chat_id' : ChatId });
+  const DeleteGroupResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const MessageId = IDL.Nat;
   const DeleteMessagesArgs = IDL.Record({
     'user_id' : UserId,
@@ -796,6 +802,7 @@ export const idlFactory = ({ IDL }) => {
     'bio' : IDL.Func([BioArgs], [BioResponse], ['query']),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'create_group' : IDL.Func([CreateGroupArgs], [CreateGroupResponse], []),
+    'delete_group' : IDL.Func([DeleteGroupArgs], [DeleteGroupResponse], []),
     'delete_messages' : IDL.Func(
         [DeleteMessagesArgs],
         [DeleteMessagesResponse],
