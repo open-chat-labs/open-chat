@@ -673,9 +673,9 @@
         display: flex;
         gap: $sp3;
         margin: 0 auto;
-        max-width: 1600px;
-        @include size-below(xl) {
-            max-width: 1400px;
+        max-width: 1400px;
+        @include size-above(xxl) {
+            max-width: 1600px;
         }
         @include size-above(xl) {
             &.showingRight {

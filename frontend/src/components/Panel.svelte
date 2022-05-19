@@ -19,18 +19,30 @@
         overflow-x: hidden;
 
         &.middle {
-            flex: 7;
+            flex: 13;
             padding-left: 0;
             padding-right: 0;
             @include mobile() {
                 padding: 0;
             }
+
+            @include size-below(xxl) {
+                flex: 12;
+            }
+        }
+
+        &.left,
+        &.right {
+            flex: 7;
+            display: flex;
+            flex-direction: column;
+
+            @include size-below(xxl) {
+                flex: 8;
+            }
         }
 
         &.left {
-            flex: 4;
-            display: flex;
-            flex-direction: column;
             position: relative;
             background: var(--panel-left-bg);
             @include mobile() {
@@ -40,18 +52,11 @@
                 flex: auto;
                 background: var(--panel-left-xs);
             }
-
-            @include size-below(md) {
-                flex: 5;
-            }
         }
 
         &.right {
-            flex: 4;
             background: var(--panel-right-bg);
             padding: 0px;
-            display: flex;
-            flex-direction: column;
 
             @include size-above(xl) {
                 background: var(--panel-left-bg);
@@ -65,8 +70,8 @@
             }
             @include mobile() {
                 width: 100%;
+                min-width: 0;
                 max-width: none;
-                min-width: none;
             }
         }
     }
