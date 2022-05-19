@@ -524,17 +524,5 @@
     "failedToShareLink": "Failed to share link",
     "groupInviteChangedBy": "{changedBy} {changed} the group invite",
     "memberIsTyping": "{username} is typing",
-    "membersAreTyping": "{number} members are typing",
-    "alerts": {
-        "title": "Alerts",
-        "upToDate": "You're all up to date",
-        "nothingToSee": "Nothing to see",
-        "blockedBy": "_@{username}_ blocked you from _{groupname}_",
-        "deletedBy": "_@{username}_ deleted _{groupname}_",
-        "removedBy": "_@{username}_ removed you from _{groupname}_",
-        "unknownGroup": "unknown group",
-        "failedToMarkRead": "There was an unexpected error marking alerts as read",
-        "icpDeposit": "You received a deposit of **{amount} ICP**",
-        "cyclesDeposit": "You received a deposit of **{amount} cycles**"
-    }
+    "membersAreTyping": "{number} members are typing"
 }
