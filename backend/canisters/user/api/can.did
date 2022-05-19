@@ -192,6 +192,18 @@ type LeaveGroupResponse =
         OwnerCannotLeave;
     };
 
+type DeleteGroupArgs =
+    record {
+        chat_id: ChatId;
+    };
+
+type DeleteGroupResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        InternalError: text;
+    };
+
 type SetAvatarArgs =
     record {
         avatar: opt Avatar
@@ -517,6 +529,7 @@ service: {
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     join_group_v2: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
+    delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);
     unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
