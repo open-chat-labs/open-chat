@@ -58,12 +58,13 @@ export function partialUserSummary(
     candid: ApiPartialUserSummary,
     timestamp: bigint
 ): PartialUserSummary {
+    const userId = candid.user_id.toString();
     return {
-        userId: candid.user_id.toString(),
+        userId,
         username: optional(candid.username, identity),
         blobReference: optional(candid.avatar_id, (id) => ({
             blobId: id,
-            canisterId: candid.user_id.toString(),
+            canisterId: userId,
         })),
         lastOnline: Date.now() - candid.seconds_since_last_online * 1000,
         updated: timestamp,

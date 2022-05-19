@@ -96,6 +96,7 @@ import { icpBalanceE8sStore } from "../stores/balance";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import type { ServiceRetryInterrupt } from "./candidService";
+import { OPENCHAT_BOT, OPENCHAT_BOT_AVATAR } from "utils/user";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -512,7 +513,7 @@ export class ServiceContainer implements MarkMessagesRead {
             if (blobType === "avatar" && key) {
                 return {
                     ...dataContent,
-                    blobUrl: buildIdenticonUrl(key),
+                    blobUrl: key === OPENCHAT_BOT ? OPENCHAT_BOT_AVATAR : buildIdenticonUrl(key),
                 };
             }
         }
