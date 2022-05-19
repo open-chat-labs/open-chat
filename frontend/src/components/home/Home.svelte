@@ -45,6 +45,7 @@
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import { emptyChatMetrics, mergeChatMetrics } from "../../domain/chat/chat.utils";
+    import { trackEvent } from "../../utils/tracking";
 
     const dispatch = createEventDispatcher();
 
@@ -86,6 +87,7 @@
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
     let share: Share = { title: "", text: "", url: "", files: [] };
     let interruptRecommended = false;
+    let rightPanelHistory: RightPanelState[] = [];
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -99,6 +101,35 @@
     $: combinedMetrics = $chatSummariesList
         .map((c) => c.myMetrics)
         .reduce(mergeChatMetrics, emptyChatMetrics());
+    $: chat = $selectedChat?.chat;
+    $: x = $rtlStore ? -500 : 500;
+    $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
+    $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
+
+    /** SHOW LEFT
+     * MobileScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
+     * ==========================================================
+     * F             |  -            |  -            |  T
+     * T             |  T            |  -            |  F
+     * T             |  F            |  T            |  F
+     * T             |  F            |  F            |  T
+     */
+    $: showLeft =
+        !$mobileWidth ||
+        ($mobileWidth && params.chatId == null && recommendedGroups.kind === "idle");
+
+    /** SHOW MIDDLE
+     * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
+     * ==========================================================
+     * F             |  -            |  -            |  T
+     * T             |  T            |  -            |  T
+     * T             |  F            |  T            |  T
+     * T             |  F            |  F            |  F
+     */
+    $: showMiddle =
+        !$mobileWidth ||
+        ($mobileWidth && params.chatId != null) ||
+        ($mobileWidth && params.chatId == null && recommendedGroups.kind !== "idle");
 
     function logout() {
         dispatch("logout");
@@ -477,44 +508,18 @@
         draftMessages.setTextContent(chatId, text);
     }
 
-    $: chat = $selectedChat?.chat;
+    function groupCreated(ev: CustomEvent<GroupChatSummary>) {
+        controller.addOrReplaceChat(ev.detail);
+        if (ev.detail.public) {
+            trackEvent("public_group_created");
+        } else {
+            trackEvent("private_group_created");
+        }
+    }
 
-    $: groupChat =
-        chat && $chat && $chat.kind === "group_chat"
-            ? (chat as Readable<GroupChatSummary>)
-            : undefined;
-
-    $: x = $rtlStore ? -500 : 500;
-    $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
-
-    let rightPanelHistory: RightPanelState[] = [];
-
-    $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
-
-    /** SHOW LEFT
-     * MobileScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
-     * ==========================================================
-     * F             |  -            |  -            |  T
-     * T             |  T            |  -            |  F
-     * T             |  F            |  T            |  F
-     * T             |  F            |  F            |  T
-     */
-    $: showLeft =
-        !$mobileWidth ||
-        ($mobileWidth && params.chatId == null && recommendedGroups.kind === "idle");
-
-    /** SHOW MIDDLE
-     * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
-     * ==========================================================
-     * F             |  -            |  -            |  T
-     * T             |  T            |  -            |  T
-     * T             |  F            |  T            |  T
-     * T             |  F            |  F            |  F
-     */
-    $: showMiddle =
-        !$mobileWidth ||
-        ($mobileWidth && params.chatId != null) ||
-        ($mobileWidth && params.chatId == null && recommendedGroups.kind !== "idle");
+    function newGroup() {
+        rightPanelHistory = [...rightPanelHistory, { kind: "new_group_panel" }];
+    }
 </script>
 
 {#if controller.user}
@@ -536,6 +541,7 @@
                 on:userAvatarSelected={userAvatarSelected}
                 on:chatWith={chatWith}
                 on:whatsHot={whatsHot}
+                on:newGroup={newGroup}
                 on:profile={showProfile}
                 on:logout={logout}
                 on:deleteDirectChat={deleteDirectChat}
@@ -590,7 +596,8 @@
                 on:blockUser={blockUser}
                 on:deleteGroup={triggerConfirm}
                 on:makeGroupPrivate={triggerConfirm}
-                on:updateChat={updateChat} />
+                on:updateChat={updateChat}
+                on:groupCreated={groupCreated} />
         </div>
     </Overlay>
 {/if}

@@ -7,6 +7,7 @@ export type RightPanelState =
     | ShowParticipantsPanel
     | ShowPinnedPanel
     | UserProfilePanel
+    | NewGroupPanel
     | NoPanel;
 
 export type GroupPanel = {
@@ -23,6 +24,10 @@ export type GroupDetailsPanel = GroupPanel & {
 
 export type UserProfilePanel = {
     kind: "user_profile";
+};
+
+export type NewGroupPanel = {
+    kind: "new_group_panel";
 };
 
 export type AddParticipantsPanel = GroupPanel & {

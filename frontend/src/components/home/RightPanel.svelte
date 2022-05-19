@@ -3,18 +3,20 @@
     import UserProfile from "./profile/UserProfile.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import AddParticipants from "./groupdetails/AddParticipants.svelte";
+    import NewGroup from "./addgroup/AddGroup.controller.svelte";
     import Participants from "./groupdetails/Participants.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import type { RightPanelState } from "../../fsm/rightPanel";
     import type { ChatMetrics, FullParticipant } from "../../domain/chat/chat";
     import type { ChatController } from "../../fsm/chat.controller";
     import { userStore } from "../../stores/user";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { CreatedUser, UserSummary } from "../../domain/user/user";
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
     import { nullUser } from "../../domain/user/user.utils";
     import { unsubscribeNotifications } from "../../utils/notifications";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
+    import { currentUserKey } from "../../fsm/home.controller";
     const dispatch = createEventDispatcher();
 
     export let rightPanelHistory: RightPanelState[];
@@ -22,6 +24,8 @@
     export let metrics: ChatMetrics;
 
     const api = getContext<ServiceContainer>(apiKey);
+    const currentUser = getContext<CreatedUser>(currentUserKey);
+
     let savingParticipants = false;
     let profileComponent: UserProfile;
 
@@ -143,5 +147,7 @@
             {metrics}
             on:userAvatarSelected
             on:closeProfile={pop} />
+    {:else if lastState.kind === "new_group_panel"}
+        <NewGroup {currentUser} on:cancelNewGroup={pop} on:groupCreated />
     {/if}
 </Panel>
