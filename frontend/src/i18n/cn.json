@@ -438,7 +438,6 @@
     "addParticipants": "添加成员",
     "removeParticipantFailed": "无法删除成员",
     "participant": "成员",
-    "readOnlyGroup": "这是一个只读组",
     "memberCount": "{count} 个成员",
     "ownedBy": "归@{用户名}所有",
     "icpTransfer": {
@@ -526,5 +525,6 @@
     "failedToLeaveGroup": "尝试将您从群组中移除时出错",
     "historyOffInfo": "新加入者只会看到他们加入后到达的消息。 🤫",
     "memberIsTyping": "{username} 正在输入",
-    "membersAreTyping": "{number} 成员正在输入"
+    "membersAreTyping": "{number} 成员正在输入",
+    "readOnlyChat": "此聊天是只读的"
 }

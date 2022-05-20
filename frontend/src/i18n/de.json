@@ -438,7 +438,6 @@
     "addParticipants": "Mitglieder hinzufügen",
     "removeParticipantFailed": "Mitglied kann nicht entfernt werden",
     "participant": "Mitglied",
-    "readOnlyGroup": "Dies ist eine schreibgeschützte Gruppe",
     "memberCount": "{count} Mitglied(er)",
     "ownedBy": "Im Besitz von @{Benutzername}",
     "icpTransfer": {
@@ -526,5 +525,6 @@
     "failedToLeaveGroup": "Beim Versuch, Sie aus der Gruppe zu entfernen, ist ein Fehler aufgetreten",
     "historyOffInfo": "Neue Teilnehmer sehen nur Nachrichten, die nach ihrem Beitritt eingehen. 🤫",
     "memberIsTyping": "{username} tippt",
-    "membersAreTyping": "{number} Mitglieder schreiben"
+    "membersAreTyping": "{number} Mitglieder schreiben",
+    "readOnlyChat": "Dieser Chat ist schreibgeschützt"
 }

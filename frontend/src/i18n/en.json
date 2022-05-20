@@ -442,7 +442,6 @@
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",
-    "readOnlyGroup": "This is a read-only group",
     "memberCount": "{count} members",
     "ownedBy": "Owned by @{username}",
     "icpTransfer": {
@@ -524,5 +523,6 @@
     "failedToShareLink": "Failed to share link",
     "groupInviteChangedBy": "{changedBy} {changed} the group invite",
     "memberIsTyping": "{username} is typing",
-    "membersAreTyping": "{number} members are typing"
+    "membersAreTyping": "{number} members are typing",
+    "readOnlyChat": "This chat is read-only"
 }

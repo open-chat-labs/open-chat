@@ -438,7 +438,6 @@
     },
     "updateNow": "טען מחדש עכשיו",
     "updateRequired": "גרסה חדשה של OpenChat זמינה - נטען מחדש ב-{countdown}s",
-    "readOnlyGroup": "זו קבוצה לקריאה בלבד",
     "memberCount": "{count} חברים",
     "ownedBy": "בבעלות @{username}",
     "icpTransfer": {
@@ -524,5 +523,6 @@
     "failedToLeaveGroup": "אירעה שגיאה בניסיון להסיר אותך מהקבוצה",
     "historyOffInfo": "מצטרפים חדשים יראו הודעות שיגיעו רק לאחר שהצטרפו. 🤫",
     "memberIsTyping": "{username} מקליד",
-    "membersAreTyping": "חברי {number} מקלידים"
+    "membersAreTyping": "חברי {number} מקלידים",
+    "readOnlyChat": "הצ'אט הזה הוא לקריאה בלבד"
 }
