@@ -70,7 +70,7 @@
 </script>
 
 <div class="search-form" class:add={mode === "add"} class:edit={mode === "edit"}>
-    <span class="icon"><Magnify size={$iconSize} color={"#ccc"} /></span>
+    <span class="icon"><Magnify size={$iconSize} color={"#ccc"} viewBox="-5 -3 24 24" /></span>
     <input
         bind:this={inp}
         bind:value={searchTerm}
@@ -116,7 +116,6 @@
         display: flex;
         align-items: center;
         position: relative;
-        padding: $sp2 $sp4;
         border: 1px solid var(--chatSearch-bd);
 
         &.add {

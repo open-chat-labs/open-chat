@@ -243,12 +243,7 @@ export class UserClient extends CandidService implements IUserClient {
             updatesResponse.chatsRemoved.size > 0 ||
             updatesResponse.avatarIdUpdate !== undefined ||
             updatesResponse.cyclesBalance !== undefined ||
-            updatesResponse.transactions.length > 0 ||
-            updatesResponse.alerts.length > 0;
-
-        if (updatesResponse.alerts.length) {
-            console.log("Alerts", updatesResponse.alerts);
-        }
+            updatesResponse.transactions.length > 0;
 
         return {
             wasUpdated: anyUpdates,

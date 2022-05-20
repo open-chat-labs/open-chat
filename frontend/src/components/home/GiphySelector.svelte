@@ -194,81 +194,83 @@
     }
 </script>
 
-<Overlay dismissible={true} bind:active={open}>
-    <ModalContent large={true} bind:actualWidth={modalWidth}>
-        <div class="header" slot="header">
-            <div class="title">
-                {$_("sendGif")}
-            </div>
-            <div class="gif-search">
-                <Input
-                    maxlength={100}
-                    type={"text"}
-                    autofocus={true}
-                    countdown={true}
-                    placeholder={$_("search")}
-                    on:change={onChange}
-                    value={searchTerm} />
-            </div>
-        </div>
-        <form slot="body" class="gif-body" on:submit|preventDefault={send}>
-            {#if selectedImage !== undefined}
-                <div class="selected">
-                    <img
-                        class:landscape={selectedImage.width > selectedImage.height}
-                        src={selectedImage.url}
-                        alt={selectedGif?.title} />
+{#if open}
+    <Overlay dismissible={true}>
+        <ModalContent large={true} bind:actualWidth={modalWidth}>
+            <div class="header" slot="header">
+                <div class="title">
+                    {$_("sendGif")}
                 </div>
-            {:else}
-                <div
-                    class="giphy-container"
-                    bind:clientWidth={containerWidth}
-                    on:scroll={onScroll}
-                    bind:this={containerElement}>
-                    {#each Object.values(gifCache) as item (item.key)}
+                <div class="gif-search">
+                    <Input
+                        maxlength={100}
+                        type={"text"}
+                        autofocus={true}
+                        countdown={true}
+                        placeholder={$_("search")}
+                        on:change={onChange}
+                        value={searchTerm} />
+                </div>
+            </div>
+            <form slot="body" class="gif-body" on:submit|preventDefault={send}>
+                {#if selectedImage !== undefined}
+                    <div class="selected">
                         <img
-                            class="thumb"
-                            on:click={() => selectGif(item)}
-                            src={item.images.fixed_width.url}
-                            style={`width: ${imgWidth}px; top: ${item.top}px; left: ${item.left}px`}
-                            alt={item.title} />
-                    {/each}
-                </div>
-            {/if}
+                            class:landscape={selectedImage.width > selectedImage.height}
+                            src={selectedImage.url}
+                            alt={selectedGif?.title} />
+                    </div>
+                {:else}
+                    <div
+                        class="giphy-container"
+                        bind:clientWidth={containerWidth}
+                        on:scroll={onScroll}
+                        bind:this={containerElement}>
+                        {#each Object.values(gifCache) as item (item.key)}
+                            <img
+                                class="thumb"
+                                on:click={() => selectGif(item)}
+                                src={item.images.fixed_width.url}
+                                style={`width: ${imgWidth}px; top: ${item.top}px; left: ${item.left}px`}
+                                alt={item.title} />
+                        {/each}
+                    </div>
+                {/if}
 
-            {#if selectedGif === undefined}
-                <div class="powered-by">
-                    <img src="../assets/giphy_small.gif" alt="Powered by Giphy" />
-                </div>
-            {/if}
+                {#if selectedGif === undefined}
+                    <div class="powered-by">
+                        <img src="../assets/giphy_small.gif" alt="Powered by Giphy" />
+                    </div>
+                {/if}
 
-            <div class="message">
-                <Input
-                    maxlength={100}
-                    type={"text"}
-                    autofocus={false}
-                    countdown={true}
-                    placeholder={$_("icpTransfer.messagePlaceholder")}
-                    bind:value={message} />
-            </div>
-        </form>
-        <span class="footer" slot="footer" class:selected={selectedGif !== undefined}>
-            {#if selectedGif !== undefined}
-                <span class="close">
-                    <Link underline={"always"} on:click={clearSelectedGif}>
-                        {$_("backToResults")}
-                    </Link>
-                </span>
-            {/if}
-            <ButtonGroup align={$mobileWidth ? "center" : "end"}>
-                <Button tiny={true} disabled={selectedGif === undefined} on:click={send}
-                    >{$_("send")}</Button>
-                <Button tiny={true} secondary={true} on:click={() => (open = false)}
-                    >{$_("cancel")}</Button>
-            </ButtonGroup>
-        </span>
-    </ModalContent>
-</Overlay>
+                <div class="message">
+                    <Input
+                        maxlength={100}
+                        type={"text"}
+                        autofocus={false}
+                        countdown={true}
+                        placeholder={$_("icpTransfer.messagePlaceholder")}
+                        bind:value={message} />
+                </div>
+            </form>
+            <span class="footer" slot="footer" class:selected={selectedGif !== undefined}>
+                {#if selectedGif !== undefined}
+                    <span class="close">
+                        <Link underline={"always"} on:click={clearSelectedGif}>
+                            {$_("backToResults")}
+                        </Link>
+                    </span>
+                {/if}
+                <ButtonGroup align={$mobileWidth ? "center" : "end"}>
+                    <Button tiny={true} disabled={selectedGif === undefined} on:click={send}
+                        >{$_("send")}</Button>
+                    <Button tiny={true} secondary={true} on:click={() => (open = false)}
+                        >{$_("cancel")}</Button>
+                </ButtonGroup>
+            </span>
+        </ModalContent>
+    </Overlay>
+{/if}
 
 <style type="text/scss">
     :global(.gif-body .input-wrapper) {

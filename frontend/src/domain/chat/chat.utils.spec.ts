@@ -393,7 +393,6 @@ describe("merging updates", () => {
             timestamp: BigInt(0),
             blockedUsers: new Set<string>(),
             transactions: [],
-            alerts: [],
         };
         const merged = mergeChatUpdates(initialChats, updatesResponse);
         expect(merged.length).toEqual(2);
@@ -410,7 +409,6 @@ describe("merging updates", () => {
             timestamp: BigInt(0),
             blockedUsers: new Set<string>(),
             transactions: [],
-            alerts: [],
         };
         const merged = mergeChatUpdates(initialChats, updatesResponse);
         expect(merged.length).toEqual(7);
@@ -486,7 +484,6 @@ describe("merging updates", () => {
                 timestamp: BigInt(0),
                 blockedUsers: new Set<string>(),
                 transactions: [],
-                alerts: [],
             };
             expect(() => mergeChatUpdates(initialChats, updatesResponse)).toThrow();
         });
@@ -500,7 +497,6 @@ describe("merging updates", () => {
                 timestamp: BigInt(0),
                 blockedUsers: new Set<string>(),
                 transactions: [],
-                alerts: [],
             };
             const merged = mergeChatUpdates(initialChats, updatesResponse);
             const updated = merged.find((c) => c.chatId === "4");
@@ -523,7 +519,6 @@ describe("merging updates", () => {
                 timestamp: BigInt(0),
                 blockedUsers: new Set<string>(),
                 transactions: [],
-                alerts: [],
             };
             const merged = mergeChatUpdates(initialChats, updatesResponse);
             const updated = merged.find((c) => c.chatId === "2");

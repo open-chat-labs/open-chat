@@ -23,6 +23,7 @@
     :global(.links a) {
         margin-right: $sp3;
         text-decoration-color: var(--notificationBar-txt) !important;
+        color: inherit;
     }
 
     .notification-bar {

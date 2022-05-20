@@ -72,5 +72,9 @@
 
     .body {
         padding: $sp4;
+
+        @include mobile() {
+            padding: $sp3;
+        }
     }
 </style>

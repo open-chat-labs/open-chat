@@ -57,36 +57,38 @@
 
 <svelte:window on:resize={onWindowResize} />
 
-<Overlay dismissible={true} fade={modal} on:close={onClose} active={loaded}>
-    <ModalContent
-        hideHeader={true}
-        compactFooter={true}
-        fixedWidth={false}
-        large={modal}
-        {alignTo}
-        on:close>
-        <div slot="body" class="body" class:modal>
-            <Avatar url={avatarUrl(user)} size={AvatarSize.ExtraLarge} />
-            {#if user?.username !== undefined}
-                <h2>{user.username}</h2>
-            {/if}
-            {#if status.length > 0}
-                <p>{status}</p>
-            {/if}
-            {#if bio.length > 0}
-                <p class="bio"><Markdown text={bio} /></p>
-            {/if}
-        </div>
-        <div slot="footer" class="footer">
-            <ButtonGroup align={chatButton ? "fill" : "center"}>
-                {#if chatButton}
-                    <Button on:click={handleOpenDirectChat} small={true}>Chat</Button>
+{#if loaded}
+    <Overlay dismissible={true} fade={modal} on:close={onClose}>
+        <ModalContent
+            hideHeader={true}
+            compactFooter={true}
+            fixedWidth={false}
+            large={modal}
+            {alignTo}
+            on:close>
+            <div slot="body" class="body" class:modal>
+                <Avatar url={avatarUrl(user)} size={AvatarSize.ExtraLarge} />
+                {#if user?.username !== undefined}
+                    <h2>{user.username}</h2>
                 {/if}
-                <Button on:click={onClose} small={true} secondary={true}>Close</Button>
-            </ButtonGroup>
-        </div>
-    </ModalContent>
-</Overlay>
+                {#if status.length > 0}
+                    <p>{status}</p>
+                {/if}
+                {#if bio.length > 0}
+                    <p class="bio"><Markdown text={bio} /></p>
+                {/if}
+            </div>
+            <div slot="footer" class="footer">
+                <ButtonGroup align={chatButton ? "fill" : "center"}>
+                    {#if chatButton}
+                        <Button on:click={handleOpenDirectChat} small={true}>Chat</Button>
+                    {/if}
+                    <Button on:click={onClose} small={true} secondary={true}>Close</Button>
+                </ButtonGroup>
+            </div>
+        </ModalContent>
+    </Overlay>
+{/if}
 
 <style type="text/scss">
     .body {

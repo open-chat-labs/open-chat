@@ -13,6 +13,8 @@ export interface AddedToGroupNotification {
 }
 export interface Alert {
   'id' : string,
+  'read' : boolean,
+  'timestamp' : TimestampMillis,
   'details' : AlertDetails,
   'elapsed' : Milliseconds,
 }
@@ -171,6 +173,10 @@ export interface CyclesRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
+export interface DeleteGroupArgs { 'chat_id' : ChatId }
+export type DeleteGroupResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface DeleteMessagesArgs {
   'user_id' : UserId,
   'message_ids' : Array<MessageId>,
@@ -223,9 +229,6 @@ export interface DirectMessageNotification {
   'message' : MessageEventWrapper,
   'sender_name' : string,
 }
-export interface DismissAlertsArgs { 'alert_ids' : Array<string> }
-export type DismissAlertsResponse = { 'PartialSuccess' : Array<string> } |
-  { 'Success' : null };
 export interface EditMessageArgs {
   'content' : MessageContent,
   'user_id' : UserId,
@@ -398,7 +401,11 @@ export interface GroupChatUpdatesSince {
   'updates_since' : TimestampMillis,
   'chat_id' : ChatId,
 }
-export interface GroupDeletedAlert { 'deleted_by' : UserId, 'chat_id' : ChatId }
+export interface GroupDeletedAlert {
+  'deleted_by' : UserId,
+  'chat_id' : ChatId,
+  'group_name' : string,
+}
 export interface GroupDescriptionChanged {
   'new_description' : string,
   'previous_description' : string,
@@ -468,6 +475,7 @@ export type InitialStateResponse = {
       'cycles_balance' : Cycles,
       'user_canister_wasm_version' : Version,
       'upgrades_in_progress' : Array<ChatId>,
+      'alerts' : Array<Alert>,
       'chats' : Array<ChatSummary>,
       'blocked_users' : Array<UserId>,
       'timestamp' : TimestampMillis,
@@ -499,6 +507,9 @@ export type LeaveGroupResponse = { 'GroupNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
+export interface MarkAlertsReadArgs { 'alert_ids' : Array<string> }
+export type MarkAlertsReadResponse = { 'PartialSuccess' : Array<string> } |
+  { 'Success' : null };
 export interface MarkReadArgs { 'messages_read' : Array<ChatMessagesRead> }
 export type MarkReadResponse = { 'Success' : null };
 export type Memo = bigint;
@@ -718,6 +729,7 @@ export type RelinquishGroupSuperAdminResponse = { 'CallerNotInGroup' : null } |
 export interface RemovedFromGroupAlert {
   'chat_id' : ChatId,
   'removed_by' : UserId,
+  'group_name' : string,
 }
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
@@ -934,11 +946,9 @@ export interface _SERVICE {
   'bio' : (arg_0: BioArgs) => Promise<BioResponse>,
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
   'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
+  'delete_group' : (arg_0: DeleteGroupArgs) => Promise<DeleteGroupResponse>,
   'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
       DeleteMessagesResponse
-    >,
-  'dismiss_alerts' : (arg_0: DismissAlertsArgs) => Promise<
-      DismissAlertsResponse
     >,
   'edit_message' : (arg_0: EditMessageArgs) => Promise<EditMessageResponse>,
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
@@ -948,6 +958,9 @@ export interface _SERVICE {
   'initial_state' : (arg_0: InitialStateArgs) => Promise<InitialStateResponse>,
   'join_group_v2' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
   'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
+  'mark_alerts_read' : (arg_0: MarkAlertsReadArgs) => Promise<
+      MarkAlertsReadResponse
+    >,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'messages_by_message_index' : (arg_0: MessagesByMessageIndexArgs) => Promise<
       MessagesByMessageIndexResponse

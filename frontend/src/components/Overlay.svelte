@@ -1,10 +1,9 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, tick } from "svelte";
     import { onMount } from "svelte";
 
     const dispatch = createEventDispatcher();
 
-    export let active: boolean;
     export let fade: boolean = true;
     export let alignBottomOnMobile: boolean = true;
     export let dismissible: boolean = false;
@@ -22,6 +21,10 @@
         portal.className = "portal";
         document.body.appendChild(portal);
         portal.appendChild(ref);
+
+        if (fade) {
+            tick().then(() => ref.classList.add("faded"));
+        }
 
         window.addEventListener("popstate", popState);
         return () => {
@@ -48,7 +51,6 @@
     }
 
     function onClose() {
-        active = false;
         dispatch("close");
     }
 </script>
@@ -59,20 +61,22 @@
     <div
         bind:this={ref}
         class="overlay"
-        class:active
-        class:faded={fade}
         class:align-bottom={alignBottomOnMobile}
         class:align-left={alignLeft}
         on:click={onClick}>
-        {#if active}
-            <slot />
-        {/if}
+        <slot />
     </div>
 </div>
 
 <style type="text/scss">
     .blueprint {
         display: none;
+    }
+
+    :global(.overlay.faded) {
+        transition: background-color 150ms ease-in-out, backdrop-filter 150ms ease-in-out;
+        backdrop-filter: var(--modal-filter);
+        background-color: rgba(0, 0, 0, 0.5);
     }
 
     .overlay {
@@ -85,7 +89,6 @@
         left: 0;
         @include fullHeight();
         width: 100%;
-        pointer-events: none;
         overflow: hidden;
 
         @include mobile() {
@@ -96,16 +99,6 @@
 
         &.align-left {
             justify-content: left;
-        }
-
-        &.active {
-            pointer-events: all;
-
-            &.faded {
-                transition: background-color ease-in-out 100ms, backdrop-filter ease-in-out 100ms;
-                backdrop-filter: var(--modal-filter);
-                background-color: rgba(0, 0, 0, 0.5);
-            }
         }
     }
 </style>

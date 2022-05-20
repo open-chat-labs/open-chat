@@ -75,6 +75,12 @@ export const idlFactory = ({ IDL }) => {
     'MaxGroupsCreated' : IDL.Nat32,
     'InternalError' : IDL.Null,
   });
+  const DeleteGroupArgs = IDL.Record({ 'chat_id' : ChatId });
+  const DeleteGroupResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const MessageId = IDL.Nat;
   const DeleteMessagesArgs = IDL.Record({
     'user_id' : UserId,
@@ -82,11 +88,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const DeleteMessagesResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
-    'Success' : IDL.Null,
-  });
-  const DismissAlertsArgs = IDL.Record({ 'alert_ids' : IDL.Vec(IDL.Text) });
-  const DismissAlertsResponse = IDL.Variant({
-    'PartialSuccess' : IDL.Vec(IDL.Text),
     'Success' : IDL.Null,
   });
   const GiphyImageVariant = IDL.Record({
@@ -303,6 +304,41 @@ export const idlFactory = ({ IDL }) => {
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
   });
+  const GroupDeletedAlert = IDL.Record({
+    'deleted_by' : UserId,
+    'chat_id' : ChatId,
+    'group_name' : IDL.Text,
+  });
+  const AccountIdentifier = IDL.Vec(IDL.Nat8);
+  const CompletedCryptocurrencyDeposit = IDL.Record({
+    'fee' : Tokens,
+    'token' : Cryptocurrency,
+    'block_index' : BlockIndex,
+    'memo' : Memo,
+    'from_address' : AccountIdentifier,
+    'amount' : Tokens,
+  });
+  const CryptocurrencyDeposit = IDL.Variant({
+    'Completed' : CompletedCryptocurrencyDeposit,
+  });
+  const RemovedFromGroupAlert = IDL.Record({
+    'chat_id' : ChatId,
+    'removed_by' : UserId,
+    'group_name' : IDL.Text,
+  });
+  const AlertDetails = IDL.Variant({
+    'GroupDeleted' : GroupDeletedAlert,
+    'CryptocurrencyDepositReceived' : CryptocurrencyDeposit,
+    'RemovedFromGroup' : RemovedFromGroupAlert,
+    'BlockedFromGroup' : RemovedFromGroupAlert,
+  });
+  const Alert = IDL.Record({
+    'id' : IDL.Text,
+    'read' : IDL.Bool,
+    'timestamp' : TimestampMillis,
+    'details' : AlertDetails,
+    'elapsed' : Milliseconds,
+  });
   const ChatMetrics = IDL.Record({
     'audio_messages' : IDL.Nat64,
     'cycles_messages' : IDL.Nat64,
@@ -390,6 +426,7 @@ export const idlFactory = ({ IDL }) => {
       'cycles_balance' : Cycles,
       'user_canister_wasm_version' : Version,
       'upgrades_in_progress' : IDL.Vec(ChatId),
+      'alerts' : IDL.Vec(Alert),
       'chats' : IDL.Vec(ChatSummary),
       'blocked_users' : IDL.Vec(UserId),
       'timestamp' : TimestampMillis,
@@ -419,6 +456,11 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
+  });
+  const MarkAlertsReadArgs = IDL.Record({ 'alert_ids' : IDL.Vec(IDL.Text) });
+  const MarkAlertsReadResponse = IDL.Variant({
+    'PartialSuccess' : IDL.Vec(IDL.Text),
+    'Success' : IDL.Null,
   });
   const ChatMessagesRead = IDL.Record({
     'message_ranges' : IDL.Vec(MessageIndexRange),
@@ -652,37 +694,6 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
   });
   const UpdatesArgs = IDL.Record({ 'updates_since' : UpdatesSince });
-  const GroupDeletedAlert = IDL.Record({
-    'deleted_by' : UserId,
-    'chat_id' : ChatId,
-  });
-  const AccountIdentifier = IDL.Vec(IDL.Nat8);
-  const CompletedCryptocurrencyDeposit = IDL.Record({
-    'fee' : Tokens,
-    'token' : Cryptocurrency,
-    'block_index' : BlockIndex,
-    'memo' : Memo,
-    'from_address' : AccountIdentifier,
-    'amount' : Tokens,
-  });
-  const CryptocurrencyDeposit = IDL.Variant({
-    'Completed' : CompletedCryptocurrencyDeposit,
-  });
-  const RemovedFromGroupAlert = IDL.Record({
-    'chat_id' : ChatId,
-    'removed_by' : UserId,
-  });
-  const AlertDetails = IDL.Variant({
-    'GroupDeleted' : GroupDeletedAlert,
-    'CryptocurrencyDepositReceived' : CryptocurrencyDeposit,
-    'RemovedFromGroup' : RemovedFromGroupAlert,
-    'BlockedFromGroup' : RemovedFromGroupAlert,
-  });
-  const Alert = IDL.Record({
-    'id' : IDL.Text,
-    'details' : AlertDetails,
-    'elapsed' : Milliseconds,
-  });
   const PinnedMessageUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
@@ -791,14 +802,10 @@ export const idlFactory = ({ IDL }) => {
     'bio' : IDL.Func([BioArgs], [BioResponse], ['query']),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'create_group' : IDL.Func([CreateGroupArgs], [CreateGroupResponse], []),
+    'delete_group' : IDL.Func([DeleteGroupArgs], [DeleteGroupResponse], []),
     'delete_messages' : IDL.Func(
         [DeleteMessagesArgs],
         [DeleteMessagesResponse],
-        [],
-      ),
-    'dismiss_alerts' : IDL.Func(
-        [DismissAlertsArgs],
-        [DismissAlertsResponse],
         [],
       ),
     'edit_message' : IDL.Func([EditMessageArgs], [EditMessageResponse], []),
@@ -817,6 +824,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'join_group_v2' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
+    'mark_alerts_read' : IDL.Func(
+        [MarkAlertsReadArgs],
+        [MarkAlertsReadResponse],
+        [],
+      ),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],

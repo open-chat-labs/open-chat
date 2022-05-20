@@ -27,7 +27,7 @@
     }
 </script>
 
-<Overlay active={true}>
+<Overlay>
     <ModalContent>
         <span slot="header">{$_("areYouSure")}</span>
         <span slot="body">
