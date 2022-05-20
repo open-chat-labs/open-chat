@@ -19,6 +19,7 @@ export const enterSend = createLsBoolStore("openchat_entersend", !isTouchDevice)
 export const appearanceSectionOpen = createLsBoolStore("openchat_appearance_section", false);
 export const chatsSectionOpen = createLsBoolStore("openchat_chats_section", false);
 export const accountSectionOpen = createLsBoolStore("openchat_account_section", false);
+export const storageSectionOpen = createLsBoolStore("openchat_storage_section", false);
 export const statsSectionOpen = createLsBoolStore("openchat_user_stats_section", false);
 
 export const groupInfoOpen = createLsBoolStore("openchat_group_info_section", true);

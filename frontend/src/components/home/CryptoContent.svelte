@@ -37,7 +37,7 @@
         </div>
     {/if}
 {:else}
-    <div class="unexpected">{$_("icpTransfer.unexpected")}</div>
+    <div class="unexpected">{$_("tokenTransfer.unexpected")}</div>
 {/if}
 
 {#if content.caption !== undefined}

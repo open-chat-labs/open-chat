@@ -47,7 +47,7 @@
     }
 
     function createICPTransfer() {
-        dispatch("icpTransfer", BigInt(0));
+        dispatch("tokenTransfer");
         drawOpen = false;
     }
 

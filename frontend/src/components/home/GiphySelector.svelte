@@ -249,7 +249,7 @@
                         type={"text"}
                         autofocus={false}
                         countdown={true}
-                        placeholder={$_("icpTransfer.messagePlaceholder")}
+                        placeholder={$_("tokenTransfer.messagePlaceholder")}
                         bind:value={message} />
                 </div>
             </form>

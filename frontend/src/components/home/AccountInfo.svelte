@@ -9,7 +9,7 @@
     export let user: CreatedUser;
     export let qrSize: "default" | "smaller" = "default";
 
-    let accountSummary = collapseAccount(user.icpAccount);
+    let accountSummary = collapseAccount(user.cryptoAccount);
     function collapseAccount(account: string) {
         if (account.length > 20) {
             return account.slice(0, 10) + "..." + account.slice(account.length - 10);
@@ -18,13 +18,13 @@
     }
 
     function copyToClipboard() {
-        navigator.clipboard.writeText(user.icpAccount).then(
+        navigator.clipboard.writeText(user.cryptoAccount).then(
             () => {
                 toastStore.showSuccessToast("copiedToClipboard");
             },
             () => {
                 toastStore.showFailureToast("failedToCopyToClipboard", {
-                    values: { account: user.icpAccount },
+                    values: { account: user.cryptoAccount },
                 });
             }
         );
@@ -33,7 +33,7 @@
 
 <div class="account-info">
     <div class="qr" class:smaller={qrSize === "smaller"}>
-        <QR text={user.icpAccount} />
+        <QR text={user.cryptoAccount} />
     </div>
     <div class="receiver">
         <div class="account">

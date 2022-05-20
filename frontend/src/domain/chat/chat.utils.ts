@@ -41,7 +41,7 @@ import { unconfirmed } from "../../stores/unconfirmed";
 import type { IMessageReadTracker } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
-import { formatICP } from "../../utils/cryptoFormatter";
+import { formatTokens } from "../../utils/cryptoFormatter";
 import { userStore } from "../../stores/user";
 import type { TypersByChat } from "../../stores/typing";
 
@@ -68,7 +68,10 @@ export function getContentAsText(content: MessageContent): string {
     } else if (content.kind === "file_content") {
         text = captionedContent(content.name, content.caption);
     } else if (content.kind === "crypto_content") {
-        text = captionedContent(get(_)("icpTransfer.transfer"), content.caption);
+        text = captionedContent(
+            get(_)("tokenTransfer.transfer", { values: { token: content.transfer.token } }),
+            content.caption
+        );
     } else if (content.kind === "deleted_content") {
         text = "deleted message";
     } else if (content.kind === "placeholder_content") {
@@ -1357,9 +1360,10 @@ export function buildCryptoTransferText(
     }
 
     const values = {
-        amount: formatICP(content.transfer.amountE8s, 0),
+        amount: formatTokens(content.transfer.amountE8s, 0),
         receiver: username(content.transfer.recipient),
         sender: username(senderId),
+        token: content.transfer.token,
     };
 
     const key =
@@ -1369,13 +1373,13 @@ export function buildCryptoTransferText(
             ? "pendingSentByYou"
             : "pendingSent";
 
-    return get(_)(`icpTransfer.${key}`, { values });
+    return get(_)(`tokenTransfer.${key}`, { values });
 }
 
 export function buildTransactionLink(content: CryptocurrencyContent): string | undefined {
     const url = buildTransactionUrl(content);
     return url !== undefined
-        ? get(_)("icpTransfer.viewTransaction", { values: { url } })
+        ? get(_)("tokenTransfer.viewTransaction", { values: { url } })
         : undefined;
 }
 

@@ -91,8 +91,8 @@ import { DataClient } from "./data/data.client";
 import { storageStore } from "../stores/storage";
 import type { ILedgerClient } from "./ledger/ledger.client.interface";
 import { LedgerClient } from "./ledger/ledger.client";
-import type { ICP } from "../domain/crypto/crypto";
-import { icpBalanceE8sStore } from "../stores/balance";
+import type { Cryptocurrency, Tokens } from "../domain/crypto";
+import { cryptoBalance } from "../stores/crypto";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import type { ServiceRetryInterrupt } from "./candidService";
@@ -119,7 +119,7 @@ export class ServiceContainer implements MarkMessagesRead {
     private _groupIndexClient: IGroupIndexClient;
     private _userClient?: IUserClient;
     private _notificationClient: INotificationsClient;
-    private _ledgerClient: ILedgerClient;
+    private _ledgerClients: Record<Cryptocurrency, ILedgerClient>;
     private _groupClients: Record<string, IGroupClient>;
     private _groupInvite: GroupInvite | undefined;
     private db?: Database;
@@ -130,7 +130,11 @@ export class ServiceContainer implements MarkMessagesRead {
         this._userIndexClient = UserIndexClient.create(identity, this.db);
         this._groupIndexClient = GroupIndexClient.create(identity);
         this._notificationClient = NotificationsClient.create(identity);
-        this._ledgerClient = LedgerClient.create(identity);
+        this._ledgerClients = {
+            icp: LedgerClient.create(identity, "process.env.LEDGER_CANISTER_ICP"),
+            btc: LedgerClient.create(identity, "process.env.LEDGER_CANISTER_BTC"),
+            chat: LedgerClient.create(identity, "process.env.LEDGER_CANISTER_CHAT"),
+        };
         this._groupClients = {};
     }
 
@@ -835,15 +839,14 @@ export class ServiceContainer implements MarkMessagesRead {
         return this._userIndexClient.upgradeStorage(newLimitBytes);
     }
 
-    refreshAccountBalance(account: string): Promise<ICP> {
-        return this._ledgerClient
+    refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
+        return this._ledgerClients[crypto]
             .accountBalance(account)
             .then((val) => {
-                icpBalanceE8sStore.set(val);
+                cryptoBalance.set(crypto, val);
                 return val;
             })
             .catch((err) => {
-                icpBalanceE8sStore.set({ e8s: BigInt(0) });
                 throw err;
             });
     }

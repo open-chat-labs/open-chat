@@ -72,7 +72,7 @@
                 maxlength="100"
                 {autofocus}
                 bind:value={textValue}
-                placeholder={$_("icpTransfer.chooseReceiver")} />
+                placeholder={$_("tokenTransfer.chooseReceiver")} />
         </div>
     {/if}
 </div>

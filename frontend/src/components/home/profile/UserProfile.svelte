@@ -17,7 +17,6 @@
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import FontSize from "./FontSize.svelte";
     import { notificationStatus } from "../../../stores/notifications";
-    import { formatICP } from "../../../utils/cryptoFormatter";
     import Stats from "../Stats.svelte";
     import {
         askForNotificationPermission,
@@ -32,8 +31,9 @@
         enterSend,
         scrollStrategy,
         statsSectionOpen,
+        storageSectionOpen,
     } from "../../../stores/settings";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
     import Toggle from "../../Toggle.svelte";
     import { setLocale, supportedLanguages } from "i18n/i18n";
@@ -43,10 +43,13 @@
     import { userStore } from "../../../stores/user";
     import { ONE_GB, storageStore } from "../../../stores/storage";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
-    import ManageIcpAccount from "./ManageICPAccount.svelte";
+    import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
     import { currentUserKey } from "../../../fsm/home.controller";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { icpBalanceE8sStore } from "../../../stores/balance";
+    import { cryptoBalance } from "../../../stores/crypto";
+    import type { Cryptocurrency } from "../../../domain/crypto";
+    import LinkButton from "../../LinkButton.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
     const api: ServiceContainer = getContext(apiKey);
     const createdUser: CreatedUser = getContext(currentUserKey);
@@ -67,9 +70,9 @@
     let validUsername: string | undefined = undefined;
     let usernameInput: UsernameInput;
     let checkingUsername: boolean;
-    let manageIcpAccount: ManageIcpAccount;
-    let managingIcpAccount = false;
-    let balanceError: string | undefined = undefined;
+    let selectedCryptoAccount: Cryptocurrency | undefined = undefined;
+    let showManageCryptoAccount = false;
+    let balanceError: string | undefined;
 
     $: {
         setLocale(selectedLocale);
@@ -85,13 +88,6 @@
             originalBio = userbio = bio;
         });
     }
-
-    onMount(() => {
-        api.refreshAccountBalance(createdUser.icpAccount).catch((err) => {
-            balanceError = "unableToRefreshAccountBalance";
-            rollbar.error("Unable to refresh user's account balance", err);
-        });
-    });
 
     function whySms() {
         dispatch("showFaqQuestion", "sms_icp");
@@ -181,13 +177,23 @@
         dispatch("closeProfile");
     }
 
-    function showManageIcp() {
-        manageIcpAccount.reset();
-        managingIcpAccount = true;
+    function showManageCrypto(crypto: Cryptocurrency) {
+        selectedCryptoAccount = crypto;
+        showManageCryptoAccount = true;
+    }
+
+    function onBalanceRefreshed() {
+        balanceError = undefined;
+    }
+
+    function onBalanceRefreshError(ev: CustomEvent<string>) {
+        balanceError = ev.detail;
     }
 </script>
 
-<ManageIcpAccount bind:this={manageIcpAccount} bind:open={managingIcpAccount} />
+{#if showManageCryptoAccount && selectedCryptoAccount !== undefined}
+    <ManageCryptoAccount bind:token={selectedCryptoAccount} bind:open={showManageCryptoAccount} />
+{/if}
 
 <SectionHeader flush={true} shadow={true}>
     <h4 class="title">{$_("profile")}</h4>
@@ -316,57 +322,111 @@
         </CollapsibleCard>
     </div>
 
-    <div class="account">
+    <div class="accounts">
         <CollapsibleCard
             on:toggle={accountSectionOpen.toggle}
             open={$accountSectionOpen}
-            headerText={$_("account")}>
-            <div class="storage">
-                <Legend>{$_("storage")}</Legend>
-                {#if $storageStore.byteLimit === 0}
-                    <p class="para">
-                        {$_("noStorageAdvice")}
-                    </p>
-                    <p class="para last">
-                        {$_("chooseUpgrade")}
-
-                        <Link underline={"always"} on:click={whySms}>
-                            {$_("tellMeMore")}
-                        </Link>
-                    </p>
-                    <ButtonGroup align={"fill"}>
-                        <Button on:click={() => dispatch("upgrade", "sms")} small={true}
-                            >{$_("upgradeBySMS")}</Button>
-                        <Button on:click={() => dispatch("upgrade", "icp")} small={true}
-                            >{$_("upgradeByTransfer")}</Button>
-                    </ButtonGroup>
-                {:else}
-                    <StorageUsage />
-                    {#if $storageStore.byteLimit < ONE_GB}
-                        <p class="para">{$_("chooseTransfer")}</p>
-                        <div class="full-width-btn">
-                            <Button
-                                on:click={() => dispatch("upgrade", "icp")}
-                                fill={true}
-                                small={true}>{$_("upgradeStorage")}</Button>
-                        </div>
+            headerText={$_("accounts")}>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="token">{$_("cryptoAccount.token")}</th>
+                        <th class="balance">{$_("cryptoAccount.shortBalanceLabel")}</th>
+                        <th class="manage" />
+                    </tr>
+                </thead>
+                <tbody>
+                    {#if process.env.ENABLE_MULTI_CRYPTO}
+                        {#each cryptoBalance.tokens() as token}
+                            <tr>
+                                <td class="token">{token.toUpperCase()}</td>
+                                <td class="balance"
+                                    ><BalanceWithRefresh
+                                        {token}
+                                        value={$cryptoBalance[token]}
+                                        on:refreshed={onBalanceRefreshed}
+                                        on:error={onBalanceRefreshError} /></td>
+                                <td class="manage">
+                                    <LinkButton
+                                        underline={"hover"}
+                                        on:click={() => showManageCrypto(token)}
+                                        >{$_("cryptoAccount.manage")}</LinkButton>
+                                </td>
+                            </tr>
+                        {/each}
+                    {:else}
+                        <tr>
+                            <td class="token">ICP</td>
+                            <td class="balance"
+                                ><BalanceWithRefresh
+                                    token={"icp"}
+                                    value={$cryptoBalance["icp"]}
+                                    on:refreshed={onBalanceRefreshed}
+                                    on:error={onBalanceRefreshError} /></td>
+                            <td class="manage">
+                                <LinkButton
+                                    underline={"hover"}
+                                    on:click={() => showManageCrypto("icp")}
+                                    >{$_("cryptoAccount.manage")}</LinkButton>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="token"
+                                >BTC <span class="coming-soon"
+                                    >{$_("cryptoAccount.comingSoon")}</span
+                                ></td>
+                            <td class="balance">0.0000</td>
+                            <td class="manage" />
+                        </tr>
+                        <tr>
+                            <td class="token"
+                                >CHAT <span class="coming-soon"
+                                    >{$_("cryptoAccount.comingSoon")}</span
+                                ></td>
+                            <td class="balance">0.0000</td>
+                            <td class="manage" />
+                        </tr>
                     {/if}
-                {/if}
-            </div>
+                </tbody>
+            </table>
+            {#if balanceError !== undefined}
+                <ErrorMessage>{balanceError}</ErrorMessage>
+            {/if}
+        </CollapsibleCard>
+    </div>
 
-            <div class="icp">
-                <Legend>{$_("icpAccount.balanceLabel")}</Legend>
-                <div class="icp-balance">
-                    <div class="icp-balance-value">
-                        {formatICP($icpBalanceE8sStore.e8s, 4)}
+    <div class="storage">
+        <CollapsibleCard
+            on:toggle={storageSectionOpen.toggle}
+            open={$storageSectionOpen}
+            headerText={$_("storage")}>
+            {#if $storageStore.byteLimit === 0}
+                <p class="para">
+                    {$_("noStorageAdvice")}
+                </p>
+                <p class="para last">
+                    {$_("chooseUpgrade")}
+
+                    <Link underline={"always"} on:click={whySms}>
+                        {$_("tellMeMore")}
+                    </Link>
+                </p>
+                <ButtonGroup align={"fill"}>
+                    <Button on:click={() => dispatch("upgrade", "sms")} small={true}
+                        >{$_("upgradeBySMS")}</Button>
+                    <Button on:click={() => dispatch("upgrade", "icp")} small={true}
+                        >{$_("upgradeByTransfer")}</Button>
+                </ButtonGroup>
+            {:else}
+                <StorageUsage />
+                {#if $storageStore.byteLimit < ONE_GB}
+                    <p class="para">{$_("chooseTransfer")}</p>
+                    <div class="full-width-btn">
+                        <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small={true}
+                            >{$_("upgradeStorage")}</Button>
                     </div>
-                    <Button on:click={showManageIcp} fill={true} small={true}
-                        >{$_("icpAccount.manage")}</Button>
-                </div>
-                {#if balanceError !== undefined}
-                    <ErrorMessage>{$_(balanceError)}</ErrorMessage>
                 {/if}
-            </div>
+            {/if}
         </CollapsibleCard>
     </div>
 
@@ -426,9 +486,10 @@
 
     .user,
     .chats,
-    .account,
+    .accounts,
     .stats,
-    .appearance {
+    .appearance,
+    .storage {
         margin-bottom: $sp3;
         border-bottom: var(--profile-section-bd);
         color: var(--section-txt);
@@ -456,10 +517,6 @@
         }
     }
 
-    .storage {
-        margin-bottom: $sp5;
-    }
-
     .icp-balance {
         display: flex;
         gap: $sp3;
@@ -478,11 +535,33 @@
         text-align: right;
     }
 
+    .accounts {
+        table {
+            width: 100%;
+            th,
+            td {
+                padding: $sp3;
+            }
+            .token {
+                text-align: left;
+            }
+            .balance,
+            .manage {
+                text-align: right;
+            }
+        }
+    }
+
     .title {
         flex: 1;
         padding: 0 $sp4;
     }
+
     .close {
         flex: 0 0 30px;
+    }
+
+    .coming-soon {
+        @include font(light, normal, fs-90);
     }
 </style>

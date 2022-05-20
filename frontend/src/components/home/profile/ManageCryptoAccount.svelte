@@ -6,53 +6,48 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import Refresh from "svelte-material-icons/Refresh.svelte";
     import Send from "svelte-material-icons/Send.svelte";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
-    import { ICP_TRANSFER_FEE_E8S, CreatedUser } from "../../../domain/user/user";
+    import type { CreatedUser } from "../../../domain/user/user";
     import { currentUserKey } from "../../../fsm/home.controller";
-    import { formatICP } from "../../../utils/cryptoFormatter";
+    import { formatTokens } from "../../../utils/cryptoFormatter";
     import { rollbar } from "../../../utils/logging";
     import AccountInfo from "../AccountInfo.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
-    import { icpBalanceE8sStore } from "../../../stores/balance";
-    import ICPInput from "../ICPInput.svelte";
+    import { cryptoBalance } from "../../../stores/crypto";
+    import TokenInput from "../TokenInput.svelte";
+    import { Cryptocurrency, cryptoLookup } from "../../../domain/crypto";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
     export let open: boolean;
+    export let token: Cryptocurrency;
 
     const api = getContext<ServiceContainer>(apiKey);
     const user = getContext<CreatedUser>(currentUserKey);
 
-    let refreshing = false;
     let error: string | undefined = undefined;
     let targetAccount: string = "";
     let amountToWithdrawE8s = BigInt(0);
     let withdrawing = false;
+    let balanceWithRefresh: BalanceWithRefresh;
 
     // make sure that they are not trying to withdraw to the same account - I can see people trying to do that
     $: valid =
         amountToWithdrawE8s > BigInt(0) &&
         targetAccount !== "" &&
-        targetAccount !== user.icpAccount;
+        targetAccount !== user.cryptoAccount;
+
+    $: transferFees = cryptoLookup[token].transferFeesE8s;
+    $: symbol = cryptoLookup[token].symbol;
+    $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
 
     $: remainingBalanceE8s =
         amountToWithdrawE8s > BigInt(0)
-            ? $icpBalanceE8sStore.e8s - amountToWithdrawE8s - ICP_TRANSFER_FEE_E8S
-            : $icpBalanceE8sStore.e8s;
-
-    export function reset() {
-        refreshing = true;
-        error = undefined;
-        api.refreshAccountBalance(user.icpAccount)
-            .catch((err) => {
-                error = "unableToRefreshAccountBalance";
-                rollbar.error("Unable to refresh user's account balance", err);
-            })
-            .finally(() => (refreshing = false));
-    }
+            ? $cryptoBalance[token] - amountToWithdrawE8s - transferFees
+            : $cryptoBalance[token];
 
     function withdraw() {
         if (!valid) return;
@@ -61,7 +56,7 @@
         error = undefined;
         api.withdrawCryptocurrency({
             kind: "pending",
-            token: "icp",
+            token: token,
             to: targetAccount,
             amountE8s: amountToWithdrawE8s,
         })
@@ -70,20 +65,28 @@
                     console.log(resp);
                     amountToWithdrawE8s = BigInt(0);
                     targetAccount = "";
-                    reset();
-                    toastStore.showSuccessToast("icpAccount.withdrawalSucceeded");
+                    balanceWithRefresh.refresh();
+                    toastStore.showSuccessToast("cryptoAccount.withdrawalSucceeded");
                 } else {
-                    error = "icpAccount.withdrawalFailed";
-                    rollbar.error("Unable to withdraw ICP", resp);
-                    toastStore.showFailureToast("icpAccount.withdrawalFailed");
+                    error = "cryptoAccount.withdrawalFailed";
+                    rollbar.error(`Unable to withdraw ${symbol}`, resp);
+                    toastStore.showFailureToast("cryptoAccount.withdrawalFailed");
                 }
             })
             .catch((err) => {
-                error = "icpAccount.withdrawalFailed";
-                rollbar.error("Unable to withdraw ICP", err);
-                toastStore.showFailureToast("icpAccount.withdrawalFailed");
+                error = "cryptoAccount.withdrawalFailed";
+                rollbar.error(`Unable to withdraw ${symbol}`, err);
+                toastStore.showFailureToast("cryptoAccount.withdrawalFailed");
             })
             .finally(() => (withdrawing = false));
+    }
+
+    function onBalanceRefreshed() {
+        error = undefined;
+    }
+
+    function onBalanceRefreshError(ev: CustomEvent<string>) {
+        error = ev.detail;
     }
 </script>
 
@@ -91,21 +94,23 @@
     <Overlay dismissible={true}>
         <ModalContent>
             <span class="header" slot="header">
-                <div class="main-title">{$_("icpAccount.manageHeader")}</div>
-                <div class="balance">
-                    <div class="amount">{formatICP(remainingBalanceE8s, 2)}</div>
-                    <div class="label">
-                        {amountToWithdrawE8s > BigInt(0)
-                            ? $_("icpAccount.shortRemainingBalanceLabel")
-                            : $_("icpAccount.shortBalanceLabel")}
-                    </div>
+                <div class="main-title">
+                    {$_("cryptoAccount.manageHeader", { values: { symbol } })}
                 </div>
-                <div class="refresh" class:refreshing on:click={reset}>
-                    <Refresh size={"1em"} color={"var(--accent)"} />
-                </div>
+                <BalanceWithRefresh
+                    bind:this={balanceWithRefresh}
+                    {token}
+                    value={remainingBalanceE8s}
+                    label={amountToWithdrawE8s > BigInt(0)
+                        ? $_("cryptoAccount.shortRemainingBalanceLabel")
+                        : $_("cryptoAccount.shortBalanceLabel")}
+                    minDecimals={2}
+                    bold
+                    on:refreshed={onBalanceRefreshed}
+                    on:error={onBalanceRefreshError} />
             </span>
             <form class="body" slot="body">
-                <h4 class="title">{$_("icpAccount.topUp")}</h4>
+                <h4 class="title">{$_("cryptoAccount.topUp")}</h4>
                 <AccountInfo qrSize={"smaller"} {user} />
 
                 <div class="or">
@@ -114,12 +119,12 @@
                     <hr />
                 </div>
 
-                <h4 class="title">{$_("icpAccount.withdraw")}</h4>
+                <h4 class="title">{$_("cryptoAccount.withdraw")}</h4>
 
-                <Legend>{$_("icpTransfer.amount")}</Legend>
-                <div class="icp-input">
-                    <ICPInput
-                        maxAmountE8s={$icpBalanceE8sStore.e8s - ICP_TRANSFER_FEE_E8S}
+                <Legend>{$_("tokenTransfer.amount", { values: { token: symbol } })}</Legend>
+                <div class="token-input">
+                    <TokenInput
+                        maxAmountE8s={$cryptoBalance[token] - transferFees}
                         bind:amountE8s={amountToWithdrawE8s} />
                 </div>
                 <div class="target">
@@ -127,7 +132,7 @@
                         bind:value={targetAccount}
                         countdown={false}
                         maxlength={100}
-                        placeholder={$_("icpAccount.withdrawTarget")} />
+                        placeholder={$_("cryptoAccount.withdrawTarget")} />
 
                     <div class="send" class:valid on:click={withdraw} class:withdrawing>
                         {#if !withdrawing}
@@ -138,18 +143,17 @@
                     </div>
                 </div>
                 <div class="fee">
-                    {$_("icpTransfer.fee", { values: { fee: formatICP(ICP_TRANSFER_FEE_E8S, 0) } })}
+                    {$_("tokenTransfer.fee", {
+                        values: { fee: formatTokens(transferFees, 0), token: symbol },
+                    })}
                 </div>
                 {#if error}
                     <ErrorMessage>{$_(error)}</ErrorMessage>
                 {/if}
             </form>
             <span class="footer" slot="footer">
-                <a
-                    class="how-to"
-                    href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
-                    target="_blank">
-                    {$_("howToBuyICP")}
+                <a class="how-to" href={howToBuyUrl} target="_blank">
+                    {$_("howToBuyToken", { values: { token: symbol } })}
                 </a>
                 <ButtonGroup>
                     <Button tiny={true} secondary={true} on:click={() => (open = false)}
@@ -188,33 +192,6 @@
         .main-title {
             flex: auto;
         }
-
-        .balance {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            .amount {
-                @include font(bold, normal, fs-100);
-            }
-            .label {
-                @include font(light, normal, fs-70);
-            }
-        }
-
-        .refresh {
-            cursor: pointer;
-            height: $sp5;
-            width: $sp5;
-
-            &.refreshing {
-                @include spin();
-            }
-
-            @include mobile() {
-                height: 21.59px;
-                width: 21.59px;
-            }
-        }
     }
     .how-to {
         @include font(light, normal, fs-90);
@@ -236,7 +213,7 @@
         align-items: center;
     }
 
-    .icp-input {
+    .token-input {
         width: 250px;
         margin-bottom: $sp3;
     }
