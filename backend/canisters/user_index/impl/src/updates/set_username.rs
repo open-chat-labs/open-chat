@@ -63,11 +63,15 @@ pub fn validate_username(username: &str) -> UsernameValidationResult {
         return UsernameValidationResult::Invalid;
     }
 
-    if username.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
-        UsernameValidationResult::Ok
-    } else {
-        UsernameValidationResult::Invalid
+    if !username.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return UsernameValidationResult::Invalid;
     }
+
+    if username.replace("_", "").to_uppercase() == "OPENCHATBOT" {
+        return UsernameValidationResult::Invalid;
+    }
+
+    UsernameValidationResult::Ok
 }
 
 #[cfg(test)]
@@ -252,5 +256,6 @@ mod tests {
         assert!(matches!(validate_username("abcé"), UsernameValidationResult::Invalid));
         assert!(matches!(validate_username("abcṷ"), UsernameValidationResult::Invalid));
         assert!(matches!(validate_username("abc王"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("OpenChat_Bot"), UsernameValidationResult::Invalid));
     }
 }

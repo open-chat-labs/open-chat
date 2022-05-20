@@ -1,5 +1,6 @@
 use crate::crypto::{process_transfer, TransferError};
 use crate::guards::caller_is_owner;
+use crate::openchat_bot::OPENCHAT_BOT_USER_ID;
 use crate::updates::send_message_common::register_callbacks_if_required;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
@@ -11,7 +12,6 @@ use types::{
 };
 use user_canister::c2c_send_message::{self, C2CReplyContext};
 use user_canister::send_message::{Response::*, *};
-use user_index_canister::OPENCHAT_BOT;
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
@@ -51,7 +51,7 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Res
     if runtime_state.data.blocked_users.contains(&args.recipient) {
         return Err(RecipientBlocked);
     }
-    if args.recipient == OPENCHAT_BOT {
+    if args.recipient == OPENCHAT_BOT_USER_ID {
         return Err(InvalidRequest(
             "Messaging the OpenChat Bot is not currently supported".to_string(),
         ));

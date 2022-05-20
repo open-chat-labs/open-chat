@@ -249,7 +249,7 @@ export class UserClient extends CandidService implements IUserClient {
         if (updatesResponse.alerts.length) {
             console.log("Alerts", updatesResponse.alerts);
         }
-        
+
         return {
             wasUpdated: anyUpdates,
             chatSummaries: anyUpdates

@@ -38,6 +38,11 @@ thread_local! {
 
 canister_state!(RuntimeState);
 
+#[test]
+fn bot() {
+    println!("{:?}", OPENCHAT_BOT);
+}
+
 struct RuntimeState {
     pub env: Box<dyn Environment>,
     pub data: Data,

@@ -1,8 +1,12 @@
 use crate::updates::c2c_send_message::c2c_send_message_impl;
 use crate::{mutate_state, RuntimeState};
-use types::{MessageContent, TextContent};
+use candid::Principal;
+use types::{MessageContent, TextContent, UserId};
 use user_canister::c2c_send_message;
-use user_index_canister::{OPENCHAT_BOT, OPENCHAT_BOT_USERNAME};
+
+// zzyk3-openc-hatbo-tq7my-cai
+pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
+pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 
 pub const WELCOME_MESSAGE: &str = "Hello World!";
 
@@ -18,7 +22,7 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
     let message_index = runtime_state
         .data
         .direct_chats
-        .get(&OPENCHAT_BOT.into())
+        .get(&OPENCHAT_BOT_USER_ID.into())
         .and_then(|c| c.events.latest_message_index())
         .map(|i| i.incr())
         .unwrap_or_default();
@@ -38,5 +42,5 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
         replies_to_v2: None,
     };
 
-    c2c_send_message_impl(OPENCHAT_BOT, args, mute_notification, runtime_state);
+    c2c_send_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
 }

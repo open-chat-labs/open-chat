@@ -1,5 +1,5 @@
 use crate::lifecycle::{init_logger, init_state};
-use crate::{mutate_state, Data};
+use crate::Data;
 use canister_api_macros::trace;
 use ic_cdk_macros::init;
 use tracing::info;
@@ -33,11 +33,6 @@ fn init(args: Args) {
     );
 
     init_state(env, data, args.wasm_version);
-
-    mutate_state(|state| {
-        let now = state.env.now();
-        state.data.users.register_openchat_bot(now);
-    });
 
     info!(version = %args.wasm_version, "Initialization complete");
 }

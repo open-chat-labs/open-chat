@@ -42,7 +42,6 @@
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import { formatLastOnlineDate } from "../../domain/user/user.utils";
-    import { OPENCHAT_BOT } from "utils/user";
 
     const dispatch = createEventDispatcher();
 
@@ -57,7 +56,7 @@
 
     $: userId = $selectedChatSummary.kind === "direct_chat" ? $selectedChatSummary.them : "";
     $: isGroup = $selectedChatSummary.kind === "group_chat";
-    $: isBot = userId === OPENCHAT_BOT;
+    $: isBot = $userStore[userId]?.kind === "bot";
     $: hasUserProfile = !isGroup && !isBot;
 
     function clearSelection() {

@@ -111,6 +111,7 @@ function groupChatId(id: number): GroupChatSummary {
 function createUser(userId: string, username: string, seconds: number): PartialUserSummary {
     const now = Date.now();
     return {
+        kind: "user",
         userId,
         username,
         lastOnline: now - seconds * 1000,
