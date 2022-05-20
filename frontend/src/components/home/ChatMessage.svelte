@@ -409,7 +409,6 @@
                     <RepliesTo
                         {preview}
                         {chatId}
-                        {user}
                         {groupChat}
                         on:goToMessageIndex
                         repliesTo={msg.repliesTo} />

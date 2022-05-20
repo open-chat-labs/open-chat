@@ -17,6 +17,7 @@
     import { unsubscribeNotifications } from "../../utils/notifications";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import { currentUserKey } from "../../fsm/home.controller";
+    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     const dispatch = createEventDispatcher();
 
     export let rightPanelHistory: RightPanelState[];
@@ -31,6 +32,7 @@
 
     $: user = $userStore[userId] ?? nullUser("unknown");
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
+    $: modal = $screenWidth !== ScreenWidth.ExtraExtraLarge;
 
     export function showProfile() {
         profileComponent.reset();
@@ -97,14 +99,16 @@
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>): void {
         dispatch("goToMessageIndex", ev.detail);
-        pop();
+        if (modal) {
+            pop();
+        }
     }
 </script>
 
 <Panel right>
     {#if lastState.kind === "group_details"}
         <GroupDetails
-            controller={lastState.controller}
+            state={lastState}
             on:close={pop}
             on:deleteGroup
             on:makeGroupPrivate
@@ -135,7 +139,7 @@
         <PinnedMessages
             on:chatWith
             on:goToMessageIndex={goToMessageIndex}
-            controller={lastState.controller}
+            state={lastState}
             on:close={pop} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile

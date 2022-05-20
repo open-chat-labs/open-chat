@@ -1,4 +1,5 @@
-import type { GroupPermissions } from "domain/chat/chat";
+import type { GroupChatSummary, GroupPermissions } from "../domain/chat/chat";
+import { get, Readable } from "svelte/store";
 import type { ChatController } from "./chat.controller";
 
 export type RightPanelState =
@@ -18,7 +19,9 @@ export type NoPanel = {
     kind: "no_panel";
 };
 
-export type GroupDetailsPanel = GroupPanel & {
+export type GroupDetailsPanel = {
+    chat: GroupChatSummary;
+    participantCount: number;
     kind: "group_details";
 };
 
@@ -38,8 +41,10 @@ export type ShowParticipantsPanel = GroupPanel & {
     kind: "show_participants";
 };
 
-export type ShowPinnedPanel = GroupPanel & {
+export type ShowPinnedPanel = {
     kind: "show_pinned";
+    chatId: string;
+    pinned: Readable<Set<number>>;
 };
 
 export type UpdatedAvatar = {
@@ -53,3 +58,35 @@ export type UpdatedGroup = {
     avatar?: UpdatedAvatar;
     permissions: GroupPermissions;
 };
+
+/** what a horrible mess */
+export function updateRightPanelController(
+    history: RightPanelState[],
+    controller: ChatController | undefined
+): RightPanelState[] {
+    if (controller === undefined) return history;
+
+    return history.map((state) => {
+        if (state.kind === "group_details") {
+            const chat = controller.chatVal as GroupChatSummary;
+            const participants = get(controller.participants);
+            return {
+                ...state,
+                chat,
+                participantCount: participants.length,
+            };
+        } else if (state.kind === "show_pinned") {
+            return {
+                ...state,
+                pinned: controller.pinnedMessages,
+                chatId: controller.chatId,
+            };
+        } else if ("controller" in state) {
+            return {
+                ...state,
+                controller,
+            };
+        }
+        return state;
+    });
+}

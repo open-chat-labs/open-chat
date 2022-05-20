@@ -10,14 +10,12 @@ import type {
     EventWrapper,
     FullParticipant,
     GroupChatDetails,
-    GroupPermissions,
     LocalReaction,
     Message,
     MessageContent,
     Participant,
     MemberRole,
     SendMessageSuccess,
-    UpdateGroupResponse,
     TransferSuccess,
     CryptocurrencyContent,
 } from "../domain/chat/chat";
@@ -1218,54 +1216,6 @@ export class ChatController {
                 rollbar.error("Error unblocking user", err);
                 this.blockUserLocally(userId);
             });
-    }
-
-    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<boolean> {
-        return this.api
-            .updateGroup(this.chatId, name, desc, avatar)
-            .then((resp) => {
-                const err = this.groupUpdateErrorMessage(resp);
-                if (err) {
-                    toastStore.showFailureToast(err);
-                    return false;
-                } else {
-                    return true;
-                }
-            })
-            .catch((err) => {
-                rollbar.error("Update group failed: ", err);
-                toastStore.showFailureToast("groupUpdateFailed");
-                return false;
-            });
-    }
-
-    updatePermissions(permissions: Partial<GroupPermissions>): Promise<boolean> {
-        return this.api
-            .updatePermissions(this.chatId, permissions)
-            .then((resp) => {
-                if (resp === "success") {
-                    return true;
-                } else {
-                    toastStore.showFailureToast("group.permissionsUpdateFailed");
-                    return false;
-                }
-            })
-            .catch((err) => {
-                rollbar.error("Update permissions failed: ", err);
-                toastStore.showFailureToast("group.permissionsUpdateFailed");
-                return false;
-            });
-    }
-
-    private groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
-        if (resp === "success") return undefined;
-        if (resp === "unchanged") return undefined;
-        if (resp === "desc_too_long") return "groupDescTooLong";
-        if (resp === "internal_error") return "groupUpdateFailed";
-        if (resp === "not_authorised") return "groupUpdateFailed";
-        if (resp === "name_too_long") return "groupNameTooLong";
-        if (resp === "name_taken") return "groupAlreadyExists";
-        if (resp === "avatar_too_big") return "avatagTooBig";
     }
 
     messageRead(messageIndex: number, messageId: bigint): void {

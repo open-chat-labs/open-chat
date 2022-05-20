@@ -26,7 +26,7 @@
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
     import { initNotificationStores } from "../../stores/notifications";
-    import type { RightPanelState } from "../../fsm/rightPanel";
+    import { RightPanelState, updateRightPanelController } from "../../fsm/rightPanel";
     import { rollbar } from "../../utils/logging";
     import type {
         ChatSummary,
@@ -45,6 +45,7 @@
     import { removeQueryStringParam } from "../../utils/urls";
     import { emptyChatMetrics, mergeChatMetrics } from "../../domain/chat/chat.utils";
     import { trackEvent } from "../../utils/tracking";
+    import { get } from "svelte/store";
 
     const dispatch = createEventDispatcher();
 
@@ -191,6 +192,7 @@
                         controller.previewChat(chatId).then((canPreview) => {
                             if (canPreview) {
                                 controller.selectChat(chatId, messageIndex);
+                                resetRightPanel();
                                 recommendedGroups = { kind: "idle" };
                             } else {
                                 replace("/");
@@ -201,6 +203,7 @@
                     recommendedGroups = { kind: "idle" };
                     interruptRecommended = true;
                     controller.selectChat(chatId, messageIndex);
+                    resetRightPanel();
                 }
             }
 
@@ -230,6 +233,9 @@
         }
     }
 
+    function resetRightPanel() {
+        rightPanelHistory = updateRightPanelController(rightPanelHistory, $selectedChat);
+    }
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
         controller.updateUserAvatar({
             blobData: ev.detail.data,
@@ -426,15 +432,18 @@
     }
 
     function showProfile() {
-        rightPanelHistory = [...rightPanelHistory, { kind: "user_profile" }];
+        rightPanelHistory = [{ kind: "user_profile" }];
         rightPanel?.showProfile();
     }
 
     function showGroupDetails() {
         if ($selectedChat !== undefined) {
             rightPanelHistory = [
-                ...rightPanelHistory,
-                { kind: "group_details", controller: $selectedChat },
+                {
+                    kind: "group_details",
+                    participantCount: get($selectedChat.participants).length,
+                    chat: $selectedChat.chatVal as GroupChatSummary,
+                },
             ];
         }
     }
@@ -446,8 +455,11 @@
     function showPinned() {
         if ($selectedChat !== undefined) {
             rightPanelHistory = [
-                ...rightPanelHistory,
-                { kind: "show_pinned", controller: $selectedChat },
+                {
+                    kind: "show_pinned",
+                    chatId: $selectedChat.chatId,
+                    pinned: $selectedChat.pinnedMessages,
+                },
             ];
         }
     }
