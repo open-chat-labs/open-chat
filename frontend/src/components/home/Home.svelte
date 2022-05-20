@@ -588,7 +588,7 @@
                 on:showPinned={showPinned}
                 on:goToMessageIndex={goToMessageIndex} />
         {/if}
-        {#if $screenWidth === ScreenWidth.ExtraExtraLarge && rightPanelHistory.length > 0}
+        {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
             <RightPanel
                 {userId}
                 metrics={combinedMetrics}
@@ -690,9 +690,9 @@
             max-width: 1600px;
         }
         @include size-above(xl) {
-            &.showingRight {
-                max-width: 1920px;
-            }
+            // &.showingRight {
+            max-width: 1920px;
+            // }
         }
     }
     :global(body) {
