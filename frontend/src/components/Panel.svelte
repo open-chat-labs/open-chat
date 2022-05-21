@@ -19,15 +19,13 @@
         overflow-x: hidden;
 
         &.middle {
+            background: none;
             flex: 13;
             padding-left: 0;
             padding-right: 0;
+            max-width: 840px;
             @include mobile() {
                 padding: 0;
-            }
-
-            @include size-below(xxl) {
-                flex: 12;
             }
         }
 
@@ -36,10 +34,6 @@
             flex: 7;
             display: flex;
             flex-direction: column;
-
-            @include size-below(xxl) {
-                flex: 8;
-            }
         }
 
         &.left {

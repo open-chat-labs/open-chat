@@ -105,7 +105,6 @@
     $: x = $rtlStore ? -500 : 500;
     $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
     $: blocked = chat && $chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
-    $: showingRight = rightPanelHistory.length > 0;
 
     /** SHOW LEFT
      * MobileScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
@@ -538,7 +537,7 @@
 </script>
 
 {#if controller.user}
-    <main class:showingRight>
+    <main>
         {#if showLeft}
             <LeftPanel
                 {controller}
@@ -690,9 +689,7 @@
             max-width: 1600px;
         }
         @include size-above(xl) {
-            // &.showingRight {
-            max-width: 1920px;
-            // }
+            max-width: 1792px;
         }
     }
     :global(body) {

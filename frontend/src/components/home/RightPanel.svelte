@@ -18,6 +18,7 @@
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import { currentUserKey } from "../../fsm/home.controller";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
+    import BackgroundLogo from "../BackgroundLogo.svelte";
     const dispatch = createEventDispatcher();
 
     export let rightPanelHistory: RightPanelState[];
@@ -154,4 +155,16 @@
     {:else if lastState.kind === "new_group_panel"}
         <NewGroup {currentUser} on:cancelNewGroup={pop} on:groupCreated />
     {/if}
+    <BackgroundLogo
+        size={"700px"}
+        bottom={"-200px"}
+        right={"50px"}
+        left={"unset"}
+        opacity={"0.3"} />
+    <BackgroundLogo
+        size={"1200px"}
+        bottom={"150px"}
+        left={"-150px"}
+        right={"unset"}
+        opacity={"0.15"} />
 </Panel>
