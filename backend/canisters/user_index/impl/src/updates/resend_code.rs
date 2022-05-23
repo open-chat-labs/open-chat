@@ -1,6 +1,6 @@
 use crate::model::user::{PhoneStatus, UnconfirmedPhoneNumber};
 use crate::{mutate_state, RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use types::ConfirmationCodeSms;
 use user_index_canister::resend_code::{Response::*, *};

@@ -1,5 +1,5 @@
 [package]
-name = "canister_api_macros"
+name = "canister_tracing_macros"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"

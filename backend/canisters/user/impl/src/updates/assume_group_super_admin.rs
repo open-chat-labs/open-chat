@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use group_canister::c2c_assume_super_admin;
 use ic_cdk_macros::update;
 use tracing::error;

@@ -581,9 +581,9 @@ version = "0.1.0"
 dependencies = [
  "callback_canister",
  "candid",
- "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_tracing_macros",
  "futures",
  "http_request",
  "ic-cdk 0.5.0",
@@ -639,15 +639,6 @@ dependencies = [
 name = "candid_gen"
 version = "0.1.0"
 dependencies = [
- "quote",
- "syn",
-]
-
-[[package]]
-name = "canister_api_macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
  "quote",
  "syn",
 ]
@@ -713,6 +704,15 @@ dependencies = [
 name = "canister_state_macros"
 version = "0.1.0"
 source = "git+https://github.com/open-ic/ic-utils?rev=c7aa6b402a41b2cf5e67903055f2b809b68469c6#c7aa6b402a41b2cf5e67903055f2b809b68469c6"
+
+[[package]]
+name = "canister_tracing_macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "canister_upgrader"
@@ -1560,9 +1560,9 @@ dependencies = [
  "callback_canister",
  "callback_canister_c2c_client",
  "candid",
- "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_tracing_macros",
  "chat_events",
  "futures",
  "group_canister",
@@ -1628,9 +1628,9 @@ name = "group_index_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_tracing_macros",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
@@ -2526,9 +2526,9 @@ name = "notifications_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_tracing_macros",
  "http_request",
  "ic-cdk 0.5.0",
  "ic-cdk-macros",
@@ -2694,9 +2694,9 @@ name = "online_users_aggregator_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_tracing_macros",
  "http_request",
  "ic-cdk 0.5.0",
  "ic-cdk-macros",
@@ -3394,9 +3394,9 @@ name = "root_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_tracing_macros",
  "http_request",
  "ic-cdk 0.5.0",
  "ic-cdk-macros",
@@ -4436,9 +4436,9 @@ dependencies = [
  "callback_canister",
  "callback_canister_c2c_client",
  "candid",
- "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_tracing_macros",
  "chat_events",
  "futures",
  "group_canister",
@@ -4506,9 +4506,9 @@ name = "user_index_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_tracing_macros",
  "captcha",
  "futures",
  "group_canister",

@@ -1,7 +1,7 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::{enable_invite_code, reset_invite_code};
 use ic_cdk_macros::update;

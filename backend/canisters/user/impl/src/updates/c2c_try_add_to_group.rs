@@ -1,5 +1,5 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use user_canister::c2c_try_add_to_group::{Response::*, *};
 
