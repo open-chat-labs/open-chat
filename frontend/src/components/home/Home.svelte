@@ -13,7 +13,12 @@
     import Overlay from "../Overlay.svelte";
     import { createEventDispatcher, onDestroy, onMount, setContext, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
+    import {
+        dimensions,
+        mobileWidth,
+        screenWidth,
+        ScreenWidth,
+    } from "../../stores/screenDimensions";
     import { push, replace, querystring } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
@@ -46,7 +51,6 @@
     import { removeQueryStringParam } from "../../utils/urls";
     import { emptyChatMetrics, mergeChatMetrics } from "../../domain/chat/chat.utils";
     import { trackEvent } from "../../utils/tracking";
-    import { get } from "svelte/store";
 
     const dispatch = createEventDispatcher();
 
@@ -524,7 +528,8 @@
         rightPanelHistory = [...rightPanelHistory, { kind: "new_group_panel" }];
     }
 
-    $: console.log("Screen Width: ", $screenWidth);
+    $: bgHeight = $dimensions.height * 0.9;
+    $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
 
 {#if controller.user}
@@ -665,8 +670,13 @@
     </Overlay>
 {/if}
 
-<BackgroundLogo size={"700px"} bottom={"-200px"} right={"200px"} left={"unset"} opacity={"0.2"} />
-<BackgroundLogo size={"1200px"} bottom={"150px"} left={"-150px"} right={"unset"} opacity={"0.1"} />
+<BackgroundLogo
+    width={`${bgHeight}px`}
+    bottom={"unset"}
+    left={"0"}
+    opacity={"0.1"}
+    skew={"5deg"}
+    viewBox={`0 0 361 ${bgClip}`} />
 
 <style type="text/scss">
     :global(.edited-msg) {

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import BackgroundLogo from "../BackgroundLogo.svelte";
     import Panel from "../Panel.svelte";
     import UserProfile from "./profile/UserProfile.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
@@ -152,5 +153,14 @@
             on:closeProfile={pop} />
     {:else if lastState.kind === "new_group_panel"}
         <NewGroup {currentUser} on:cancelNewGroup={pop} on:groupCreated />
+    {/if}
+    {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
+        <BackgroundLogo
+            width={"700px"}
+            bottom={"-16px"}
+            right={"-16px"}
+            opacity={"0.35"}
+            skew={"-5deg"}
+            viewBox={"0 0 361 280"} />
     {/if}
 </Panel>

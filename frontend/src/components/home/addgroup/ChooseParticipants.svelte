@@ -92,5 +92,9 @@
         padding: $sp3;
         flex: auto;
         overflow: auto;
+
+        @include size-above(xl) {
+            padding: $sp3 0 0 0;
+        }
     }
 </style>

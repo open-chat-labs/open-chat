@@ -1,6 +1,6 @@
 import { readable, derived } from "svelte/store";
 
-const dimensions = readable(
+export const dimensions = readable(
     { width: window.innerWidth, height: window.innerHeight },
     function start(set) {
         function resize() {

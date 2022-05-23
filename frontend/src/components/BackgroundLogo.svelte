@@ -1,18 +1,17 @@
 <script lang="ts">
-    export let size: string;
+    export let width: string;
     export let bottom: string;
-    export let left: string;
-    export let right: string;
+    export let right: string = "unset";
+    export let left: string = "unset";
     export let opacity: string;
+    export let viewBox: string = "0 0 361 361";
+    export let skew: string = "0deg";
 
-    $: style = `width: ${size}; height: ${size}; bottom: ${bottom}; left: ${left}; right: ${right}; opacity: ${opacity}`;
+    $: style = `width: ${width}; bottom: ${bottom}; right: ${right}; left: ${left}; opacity: ${opacity}; transform: skewX(${skew})`;
 </script>
 
 <div class="logo" {style}>
-    <svg
-        viewBox="0 0 361 361"
-        xmlns="http://www.w3.org/2000/svg"
-        xmlns:xlink="http://www.w3.org/1999/xlink">
+    <svg {viewBox} xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
         <defs>
             <linearGradient id="gradient-5">
                 <stop style="stop-color: #5f2583;" offset="0" />
