@@ -3,7 +3,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import type { EventWrapper, Message } from "../../../domain/chat/chat";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { afterUpdate, createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import { rollbar } from "../../../utils/logging";
@@ -13,13 +13,11 @@
     import { groupMessagesByDate } from "../../../domain/chat/chat.utils";
     import { formatMessageDate } from "../../../utils/date";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
-    import type { ShowPinnedPanel } from "fsm/rightPanel";
     import type { CreatedUser } from "../../../domain/user/user";
     import { currentUserKey } from "../../../fsm/home.controller";
 
-    export let state: ShowPinnedPanel;
-
-    $: pinned = state.pinned;
+    export let pinned: Set<number>;
+    export let chatId: string;
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -38,9 +36,9 @@
     }
 
     $: {
-        if ($pinned.size > 0) {
+        if (pinned.size > 0) {
             messages = { kind: "loading" };
-            api.getGroupMessagesByMessageIndex(state.chatId, $pinned)
+            api.getGroupMessagesByMessageIndex(chatId, pinned)
                 .then((resp) => {
                     if (resp === "events_failed") {
                         rollbar.warn("Unable to load pinned messages: ", resp);
@@ -89,7 +87,7 @@
                 </div>
                 {#each dayGroup as message, _i (message.event.messageId)}
                     <PinnedMessage
-                        chatId={state.chatId}
+                        {chatId}
                         user={currentUser}
                         senderId={message.event.sender}
                         msg={message.event}

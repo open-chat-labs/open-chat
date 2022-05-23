@@ -12,7 +12,11 @@
     import TextArea from "../../TextArea.svelte";
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../../domain/user/user.utils";
-    import type { GroupPermissions, UpdateGroupResponse } from "../../../domain/chat/chat";
+    import type {
+        GroupChatSummary,
+        GroupPermissions,
+        UpdateGroupResponse,
+    } from "../../../domain/chat/chat";
     import {
         canChangePermissions,
         canEditGroupDetails,
@@ -43,7 +47,6 @@
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
     import { currentUserKey } from "../../../fsm/home.controller";
-    import type { GroupDetailsPanel } from "fsm/rightPanel";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -53,23 +56,25 @@
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
-    export let state: GroupDetailsPanel;
+    export let chat: GroupChatSummary;
+    export let participantCount: number;
 
+    let originalGroup = { ...chat };
     let updatedGroup = {
-        chatId: state.chat.chatId,
-        name: state.chat.name,
-        desc: state.chat.description,
-        avatar: state.chat.blobUrl
+        chatId: chat.chatId,
+        name: chat.name,
+        desc: chat.description,
+        avatar: chat.blobUrl
             ? {
-                  blobUrl: state.chat.blobUrl,
-                  blobData: state.chat.blobData,
+                  blobUrl: chat.blobUrl,
+                  blobData: chat.blobData,
               }
             : undefined,
-        permissions: { ...state.chat.permissions },
+        permissions: { ...chat.permissions },
     };
 
     $: {
-        if (updatedGroup.chatId !== state.chat.chatId) {
+        if (updatedGroup.chatId !== chat.chatId) {
             switchChat();
         }
     }
@@ -88,17 +93,18 @@
     function init() {
         confirmed = false;
         updatedGroup = {
-            chatId: state.chat.chatId,
-            name: state.chat.name,
-            desc: state.chat.description,
-            avatar: state.chat.blobUrl
+            chatId: chat.chatId,
+            name: chat.name,
+            desc: chat.description,
+            avatar: chat.blobUrl
                 ? {
-                      blobUrl: state.chat.blobUrl,
-                      blobData: state.chat.blobData,
+                      blobUrl: chat.blobUrl,
+                      blobData: chat.blobData,
                   }
                 : undefined,
-            permissions: { ...state.chat.permissions },
+            permissions: { ...chat.permissions },
         };
+        originalGroup = { ...chat };
     }
 
     let showConfirmation = false;
@@ -108,7 +114,6 @@
     let postConfirmation = () => dispatch("close");
 
     // capture a snapshot of the chat as it is right now
-    $: originalGroup = { ...state.chat };
     $: myGroup = currentUser.userId === originalGroup.ownerId;
     $: nameDirty = updatedGroup.name !== originalGroup.name;
     $: descDirty = updatedGroup.desc !== originalGroup.description;
@@ -204,6 +209,14 @@
                 const err = groupUpdateErrorMessage(resp);
                 if (err) {
                     toastStore.showFailureToast(err);
+                } else {
+                    originalGroup = {
+                        ...originalGroup,
+                        ...updatedGroup.avatar,
+                        name: updatedGroup.name,
+                        description: updatedGroup.desc,
+                    };
+                    dispatch("updateChat", originalGroup);
                 }
             })
             .catch((err) => {
@@ -222,15 +235,17 @@
 
     function doUpdatePermissions(): Promise<void> {
         const args = mergeKeepingOnlyChanged(originalGroup.permissions, updatedGroup.permissions);
+        console.log("Changed permissions: ", args);
 
         return api
             .updatePermissions(updatedGroup.chatId, args)
             .then((resp) => {
                 if (resp === "success") {
-                    dispatch("updateChat", {
+                    originalGroup = {
                         ...originalGroup,
                         permissions: updatedGroup.permissions,
-                    });
+                    };
+                    dispatch("updateChat", originalGroup);
                 } else {
                     toastStore.showFailureToast("group.permissionsUpdateFailed");
                 }
@@ -277,7 +292,7 @@
 
                     <h3 class="group-name">{originalGroup.name}</h3>
                     <p class="members">
-                        {$_("memberCount", { values: { count: state.participantCount } })}
+                        {$_("memberCount", { values: { count: participantCount } })}
                     </p>
                     <p class="owned-by" on:click={openUserProfile} class:my-group={myGroup}>
                         {$_("ownedBy", {

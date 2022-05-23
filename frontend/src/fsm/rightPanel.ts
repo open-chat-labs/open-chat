@@ -1,6 +1,5 @@
-import type { GroupChatSummary, GroupPermissions } from "../domain/chat/chat";
-import { get, Readable } from "svelte/store";
-import type { ChatController } from "./chat.controller";
+import type { ChatSummary, GroupPermissions } from "../domain/chat/chat";
+import type { Readable } from "svelte/store";
 
 export type RightPanelState =
     | GroupDetailsPanel
@@ -11,17 +10,11 @@ export type RightPanelState =
     | NewGroupPanel
     | NoPanel;
 
-export type GroupPanel = {
-    controller: ChatController;
-};
-
 export type NoPanel = {
     kind: "no_panel";
 };
 
 export type GroupDetailsPanel = {
-    chat: GroupChatSummary;
-    participantCount: number;
     kind: "group_details";
 };
 
@@ -33,18 +26,16 @@ export type NewGroupPanel = {
     kind: "new_group_panel";
 };
 
-export type AddParticipantsPanel = GroupPanel & {
+export type AddParticipantsPanel = {
     kind: "add_participants";
 };
 
-export type ShowParticipantsPanel = GroupPanel & {
+export type ShowParticipantsPanel = {
     kind: "show_participants";
 };
 
 export type ShowPinnedPanel = {
     kind: "show_pinned";
-    chatId: string;
-    pinned: Readable<Set<number>>;
 };
 
 export type UpdatedAvatar = {
@@ -59,34 +50,15 @@ export type UpdatedGroup = {
     permissions: GroupPermissions;
 };
 
-/** what a horrible mess */
-export function updateRightPanelController(
+export function filterByChatType(
     history: RightPanelState[],
-    controller: ChatController | undefined
+    chat: ChatSummary | undefined
 ): RightPanelState[] {
-    if (controller === undefined) return history;
-
-    return history.map((state) => {
-        if (state.kind === "group_details") {
-            const chat = controller.chatVal as GroupChatSummary;
-            const participants = get(controller.participants);
-            return {
-                ...state,
-                chat,
-                participantCount: participants.length,
-            };
-        } else if (state.kind === "show_pinned") {
-            return {
-                ...state,
-                pinned: controller.pinnedMessages,
-                chatId: controller.chatId,
-            };
-        } else if ("controller" in state) {
-            return {
-                ...state,
-                controller,
-            };
+    if (chat === undefined) return [];
+    return history.filter((panel) => {
+        if (chat.kind === "direct_chat") {
+            return ["new_group_panel", "user_profile"].includes(panel.kind);
         }
-        return state;
+        return true;
     });
 }

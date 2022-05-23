@@ -1,4 +1,5 @@
 <script lang="ts">
+    import BackgroundLogo from "../BackgroundLogo.svelte";
     import { _ } from "svelte-i18n";
     import LeftPanel from "./LeftPanel.svelte";
     import Toast from "../Toast.svelte";
@@ -26,7 +27,7 @@
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
     import { initNotificationStores } from "../../stores/notifications";
-    import { RightPanelState, updateRightPanelController } from "../../fsm/rightPanel";
+    import { filterByChatType, RightPanelState } from "../../fsm/rightPanel";
     import { rollbar } from "../../utils/logging";
     import type {
         ChatSummary,
@@ -233,7 +234,7 @@
     }
 
     function resetRightPanel() {
-        rightPanelHistory = updateRightPanelController(rightPanelHistory, $selectedChat);
+        rightPanelHistory = filterByChatType(rightPanelHistory, $selectedChat?.chatVal);
     }
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
         controller.updateUserAvatar({
@@ -410,10 +411,7 @@
 
     function addParticipants() {
         if ($selectedChat !== undefined) {
-            rightPanelHistory = [
-                ...rightPanelHistory,
-                { kind: "add_participants", controller: $selectedChat },
-            ];
+            rightPanelHistory = [...rightPanelHistory, { kind: "add_participants" }];
         }
     }
 
@@ -423,10 +421,7 @@
 
     function showParticipants() {
         if ($selectedChat !== undefined) {
-            rightPanelHistory = [
-                ...rightPanelHistory,
-                { kind: "show_participants", controller: $selectedChat },
-            ];
+            rightPanelHistory = [...rightPanelHistory, { kind: "show_participants" }];
         }
     }
 
@@ -440,8 +435,6 @@
             rightPanelHistory = [
                 {
                     kind: "group_details",
-                    participantCount: get($selectedChat.participants).length,
-                    chat: $selectedChat.chatVal as GroupChatSummary,
                 },
             ];
         }
@@ -456,8 +449,6 @@
             rightPanelHistory = [
                 {
                     kind: "show_pinned",
-                    chatId: $selectedChat.chatId,
-                    pinned: $selectedChat.pinnedMessages,
                 },
             ];
         }
@@ -590,6 +581,7 @@
         {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
             <RightPanel
                 {userId}
+                controller={$selectedChat}
                 metrics={combinedMetrics}
                 bind:this={rightPanel}
                 bind:rightPanelHistory
@@ -616,6 +608,7 @@
             class:rtl={$rtlStore}>
             <RightPanel
                 {userId}
+                controller={$selectedChat}
                 metrics={combinedMetrics}
                 bind:this={rightPanel}
                 bind:rightPanelHistory
@@ -671,6 +664,9 @@
         {/if}
     </Overlay>
 {/if}
+
+<BackgroundLogo size={"700px"} bottom={"-200px"} right={"200px"} left={"unset"} opacity={"0.2"} />
+<BackgroundLogo size={"1200px"} bottom={"150px"} left={"-150px"} right={"unset"} opacity={"0.1"} />
 
 <style type="text/scss">
     :global(.edited-msg) {

@@ -74,7 +74,7 @@
     }
 
     :global(.overlay.faded) {
-        transition: background-color 150ms ease-in-out, backdrop-filter 150ms ease-in-out;
+        // transition: background-color 100ms ease-in-out, backdrop-filter 100ms ease-in-out;
         backdrop-filter: var(--modal-filter);
         background-color: rgba(0, 0, 0, 0.5);
     }

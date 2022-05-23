@@ -7,7 +7,7 @@
     import Participants from "./groupdetails/Participants.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import type { RightPanelState } from "../../fsm/rightPanel";
-    import type { ChatMetrics, FullParticipant } from "../../domain/chat/chat";
+    import type { ChatMetrics, FullParticipant, GroupChatSummary } from "../../domain/chat/chat";
     import type { ChatController } from "../../fsm/chat.controller";
     import { userStore } from "../../stores/user";
     import type { CreatedUser, UserSummary } from "../../domain/user/user";
@@ -18,9 +18,10 @@
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import { currentUserKey } from "../../fsm/home.controller";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    import BackgroundLogo from "../BackgroundLogo.svelte";
+    import type { Readable } from "svelte/store";
     const dispatch = createEventDispatcher();
 
+    export let controller: ChatController | undefined;
     export let rightPanelHistory: RightPanelState[];
     export let userId: string;
     export let metrics: ChatMetrics;
@@ -34,43 +35,38 @@
     $: user = $userStore[userId] ?? nullUser("unknown");
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = $screenWidth !== ScreenWidth.ExtraExtraLarge;
+    $: groupChat = controller?.chat as Readable<GroupChatSummary>;
+    $: participants = controller?.participants;
+    $: pinned = controller?.pinnedMessages;
+    $: chatId = controller?.chatId;
 
     export function showProfile() {
         profileComponent.reset();
     }
 
-    /** quite a few handlers require a controller which we don't always have. This wrapper just streamlines that a bit */
-    function withController<T>(fn: (controller: ChatController, ev: CustomEvent<T>) => void) {
-        return (ev: CustomEvent<T>) => {
-            if ("controller" in lastState) {
-                fn(lastState.controller, ev);
-            }
-        };
+    function dismissAsAdmin(ev: CustomEvent<string>): void {
+        controller?.dismissAsAdmin(ev.detail);
     }
 
-    function dismissAsAdmin(controller: ChatController, ev: CustomEvent<string>): void {
-        controller.dismissAsAdmin(ev.detail);
+    function makeAdmin(ev: CustomEvent<string>): void {
+        controller?.makeAdmin(ev.detail);
     }
 
-    function makeAdmin(controller: ChatController, ev: CustomEvent<string>): void {
-        controller.makeAdmin(ev.detail);
-    }
-
-    function removeParticipant(controller: ChatController, ev: CustomEvent<string>): void {
-        controller.participants.update((ps) => ps.filter((p) => p.userId !== ev.detail));
-        controller.removeParticipant(ev.detail);
+    function removeParticipant(ev: CustomEvent<string>): void {
+        controller?.participants.update((ps) => ps.filter((p) => p.userId !== ev.detail));
+        controller?.removeParticipant(ev.detail);
     }
 
     function pop() {
         rightPanelHistory = rightPanelHistory.slice(0, rightPanelHistory.length - 1);
     }
 
-    function blockUser(controller: ChatController, ev: CustomEvent<{ userId: string }>) {
-        controller.blockUser(ev.detail.userId);
+    function blockUser(ev: CustomEvent<{ userId: string }>) {
+        controller?.blockUser(ev.detail.userId);
     }
 
-    async function transferOwnership(controller: ChatController, ev: CustomEvent<FullParticipant>) {
-        const success = await controller.transferOwnership(userId, ev.detail);
+    async function transferOwnership(ev: CustomEvent<FullParticipant>) {
+        const success = await controller?.transferOwnership(userId, ev.detail);
         if (success) {
             toastStore.showSuccessToast("transferOwnershipSucceeded");
         } else {
@@ -78,8 +74,8 @@
         }
     }
 
-    async function unblockUser(controller: ChatController, ev: CustomEvent<UserSummary>) {
-        const success = await controller.addParticipants(true, [ev.detail]);
+    async function unblockUser(ev: CustomEvent<UserSummary>) {
+        const success = await controller?.addParticipants(true, [ev.detail]);
         if (success) {
             toastStore.showSuccessToast("unblockUserSucceeded");
         } else {
@@ -87,9 +83,9 @@
         }
     }
 
-    async function saveParticipants(controller: ChatController, ev: CustomEvent<UserSummary[]>) {
+    async function saveParticipants(ev: CustomEvent<UserSummary[]>) {
         savingParticipants = true;
-        const success = await controller.addParticipants(false, ev.detail);
+        const success = await controller?.addParticipants(false, ev.detail);
         if (success) {
             pop();
         } else {
@@ -107,9 +103,10 @@
 </script>
 
 <Panel right>
-    {#if lastState.kind === "group_details"}
+    {#if lastState.kind === "group_details" && controller !== undefined}
         <GroupDetails
-            state={lastState}
+            chat={$groupChat}
+            participantCount={$participants?.length ?? 0}
             on:close={pop}
             on:deleteGroup
             on:makeGroupPrivate
@@ -120,27 +117,28 @@
         <AddParticipants
             busy={savingParticipants}
             closeIcon={rightPanelHistory.length > 1 ? "back" : "close"}
-            on:saveParticipants={withController(saveParticipants)}
+            on:saveParticipants={saveParticipants}
             on:cancelAddParticipants={pop} />
-    {:else if lastState.kind === "show_participants"}
+    {:else if lastState.kind === "show_participants" && controller !== undefined}
         <Participants
             closeIcon={rightPanelHistory.length > 1 ? "back" : "close"}
-            controller={lastState.controller}
+            {controller}
             {userId}
             on:close={pop}
-            on:blockUser={withController(blockUser)}
-            on:unblockUser={withController(unblockUser)}
-            on:transferOwnership={withController(transferOwnership)}
+            on:blockUser={blockUser}
+            on:unblockUser={unblockUser}
+            on:transferOwnership={transferOwnership}
             on:chatWith
             on:addParticipants
-            on:dismissAsAdmin={withController(dismissAsAdmin)}
-            on:removeParticipant={withController(removeParticipant)}
-            on:makeAdmin={withController(makeAdmin)} />
-    {:else if lastState.kind === "show_pinned"}
+            on:dismissAsAdmin={dismissAsAdmin}
+            on:removeParticipant={removeParticipant}
+            on:makeAdmin={makeAdmin} />
+    {:else if lastState.kind === "show_pinned" && chatId !== undefined && $pinned !== undefined}
         <PinnedMessages
             on:chatWith
             on:goToMessageIndex={goToMessageIndex}
-            state={lastState}
+            {chatId}
+            pinned={$pinned}
             on:close={pop} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile
@@ -155,16 +153,4 @@
     {:else if lastState.kind === "new_group_panel"}
         <NewGroup {currentUser} on:cancelNewGroup={pop} on:groupCreated />
     {/if}
-    <BackgroundLogo
-        size={"700px"}
-        bottom={"-200px"}
-        right={"50px"}
-        left={"unset"}
-        opacity={"0.3"} />
-    <BackgroundLogo
-        size={"1200px"}
-        bottom={"150px"}
-        left={"-150px"}
-        right={"unset"}
-        opacity={"0.15"} />
 </Panel>
