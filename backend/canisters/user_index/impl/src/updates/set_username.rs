@@ -67,7 +67,7 @@ pub fn validate_username(username: &str) -> UsernameValidationResult {
         return UsernameValidationResult::Invalid;
     }
 
-    if username.replace("_", "").to_uppercase() == "OPENCHATBOT" {
+    if username.replace('_', "").to_uppercase() == "OPENCHATBOT" {
         return UsernameValidationResult::Invalid;
     }
 
