@@ -1,7 +1,20 @@
 import type { PartialUserSummary, UserLookup } from "../domain/user/user";
 import { immutableStore } from "./immutable";
 
-const { subscribe, update } = immutableStore<UserLookup>({});
+const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
+const OPENCHAT_BOT_USERNAME = "OpenChatBot";
+const OPENCHAT_BOT_AVATAR_URL = "/oc-logo2.svg";
+
+const { subscribe, update } = immutableStore<UserLookup>({
+    OPENCHAT_BOT_USER_ID: {
+        kind: "bot",
+        userId: OPENCHAT_BOT_USER_ID,
+        username: OPENCHAT_BOT_USERNAME,
+        lastOnline: 0,
+        updated: BigInt(0),
+        blobUrl: OPENCHAT_BOT_AVATAR_URL,
+    },
+});
 
 export function overwriteUser(lookup: UserLookup, user: PartialUserSummary): UserLookup {
     return {

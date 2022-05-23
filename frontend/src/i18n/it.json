@@ -438,7 +438,6 @@
     "addParticipants": "Aggiungi membri",
     "removeParticipantFailed": "Impossibile rimuovere il membro",
     "participant": "membro",
-    "readOnlyGroup": "Questo è un gruppo di sola lettura",
     "memberCount": "{count} membro/i",
     "ownedBy": "Di proprietà di @{nomeutente}",
     "icpTransfer": {
@@ -526,5 +525,6 @@
     "failedToLeaveGroup": "Si è verificato un errore durante il tentativo di rimuoverti dal gruppo",
     "historyOffInfo": "I nuovi iscritti vedranno i messaggi in arrivo solo dopo l'adesione. 🤫",
     "memberIsTyping": "{username} sta digitando",
-    "membersAreTyping": "{number} membri stanno digitando"
+    "membersAreTyping": "{number} membri stanno digitando",
+    "readOnlyChat": "Questa chat è di sola lettura"
 }

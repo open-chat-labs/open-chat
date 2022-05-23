@@ -6,6 +6,12 @@ use std::fmt::{Debug, Display, Formatter};
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UserId(pub(crate) CanisterId);
 
+impl UserId {
+    pub const fn new(canister_id: CanisterId) -> UserId {
+        UserId(canister_id)
+    }
+}
+
 impl From<Principal> for UserId {
     fn from(principal: Principal) -> Self {
         UserId(principal)

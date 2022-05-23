@@ -5,6 +5,7 @@ describe("overwrite users", () => {
         const lookup = overwriteUser(
             {
                 abc: {
+                    kind: "user",
                     userId: "abc",
                     username: "julian_jelfs",
                     lastOnline: 10,
@@ -12,6 +13,7 @@ describe("overwrite users", () => {
                 },
             },
             {
+                kind: "user",
                 userId: "abc",
                 lastOnline: 20,
                 username: undefined,

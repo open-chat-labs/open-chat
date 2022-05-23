@@ -439,7 +439,6 @@
     "addParticipants": "Thêm thành viên",
     "removeParticipantFailed": "Không thể xóa thành viên",
     "participant": "hội viên",
-    "readOnlyGroup": "Đây là nhóm chỉ đọc",
     "memberCount": "{count} thành viên",
     "ownedBy": "Thuộc sở hữu của @ {username}",
     "icpTransfer": {
@@ -527,5 +526,6 @@
     "failedToLeaveGroup": "Đã xảy ra lỗi khi cố gắng xóa bạn khỏi nhóm",
     "historyOffInfo": "Những người mới tham gia sẽ chỉ thấy tin nhắn đến sau khi họ tham gia. 🤫",
     "memberIsTyping": "{username} đang nhập",
-    "membersAreTyping": "{number} thành viên đang nhập"
+    "membersAreTyping": "{number} thành viên đang nhập",
+    "readOnlyChat": "Cuộc trò chuyện này ở chế độ chỉ đọc"
 }

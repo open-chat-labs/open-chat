@@ -1,5 +1,6 @@
 use crate::crypto::{process_transfer, TransferError};
 use crate::guards::caller_is_owner;
+use crate::openchat_bot::OPENCHAT_BOT_USER_ID;
 use crate::updates::send_message_common::register_callbacks_if_required;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::trace;
@@ -49,6 +50,11 @@ async fn send_message(mut args: Args) -> Response {
 fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Response> {
     if runtime_state.data.blocked_users.contains(&args.recipient) {
         return Err(RecipientBlocked);
+    }
+    if args.recipient == OPENCHAT_BOT_USER_ID {
+        return Err(InvalidRequest(
+            "Messaging the OpenChat Bot is not currently supported".to_string(),
+        ));
     }
 
     let now = runtime_state.env.now();

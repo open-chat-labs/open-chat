@@ -5,6 +5,7 @@ export const E8S_PER_ICP = 100_000_000;
 export const ICP_TRANSFER_FEE_E8S = BigInt(10_000);
 
 export type UserLastOnline = {
+    kind: "user" | "bot";
     userId: string;
     lastOnline: number; // timestamp calculated from server response in seconds
     updated: bigint;

@@ -23,6 +23,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import { currentUserKey } from "../../fsm/home.controller";
     import { trackEvent } from "../../utils/tracking";
+    import { userStore } from "stores/user";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -37,7 +38,7 @@
     $: fileToAttach = controller.fileToAttach;
     $: editingEvent = controller.editingEvent;
     $: replyingTo = controller.replyingTo;
-    $: canSend = canSendMessages($chat);
+    $: canSend = canSendMessages($chat, $userStore);
 
     function cancelReply() {
         controller.cancelReply();
