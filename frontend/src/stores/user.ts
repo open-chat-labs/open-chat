@@ -1,14 +1,18 @@
 import type { PartialUserSummary, UserLookup } from "../domain/user/user";
 import { immutableStore } from "./immutable";
 
+const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
+const OPENCHAT_BOT_USERNAME = "OpenChatBot";
+const OPENCHAT_BOT_AVATAR_URL = "/oc-logo2.svg";
+
 const { subscribe, update } = immutableStore<UserLookup>({
-    "zzyk3-openc-hatbo-tq7my-cai": {
+    OPENCHAT_BOT_USER_ID: {
         kind: "bot",
-        userId: "zzyk3-openc-hatbo-tq7my-cai",
-        username: "OpenChatBot",
+        userId: OPENCHAT_BOT_USER_ID,
+        username: OPENCHAT_BOT_USERNAME,
         lastOnline: 0,
         updated: BigInt(0),
-        blobUrl: "/oc-logo2.svg",
+        blobUrl: OPENCHAT_BOT_AVATAR_URL,
     },
 });
 
