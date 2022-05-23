@@ -1,6 +1,6 @@
 <script lang="ts">
     import BackgroundLogo from "../BackgroundLogo.svelte";
-    import { _ } from "svelte-i18n";
+    import { number, _ } from "svelte-i18n";
     import LeftPanel from "./LeftPanel.svelte";
     import Toast from "../Toast.svelte";
     import AboutModal from "../AboutModal.svelte";
@@ -51,6 +51,7 @@
     import { removeQueryStringParam } from "../../utils/urls";
     import { emptyChatMetrics, mergeChatMetrics } from "../../domain/chat/chat.utils";
     import { trackEvent } from "../../utils/tracking";
+    import { numberOfColumns, newLayout } from "../../stores/layout";
 
     const dispatch = createEventDispatcher();
 
@@ -540,7 +541,7 @@
 </script>
 
 {#if controller.user}
-    <main>
+    <main class:new-layout={newLayout}>
         {#if showLeft}
             <LeftPanel
                 {controller}
@@ -590,7 +591,7 @@
                 on:showPinned={showPinned}
                 on:goToMessageIndex={goToMessageIndex} />
         {/if}
-        {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
+        {#if $numberOfColumns === 3}
             <RightPanel
                 {userId}
                 controller={$selectedChat}
@@ -612,7 +613,7 @@
     </main>
 {/if}
 
-{#if $screenWidth !== ScreenWidth.ExtraExtraLarge && rightPanelHistory.length > 0}
+{#if $numberOfColumns === 2 && rightPanelHistory.length > 0}
     <Overlay fade={!$mobileWidth}>
         <div
             transition:fly={{ x, duration: rightPanelSlideDuration, easing: sineInOut }}
@@ -697,12 +698,19 @@
         display: flex;
         gap: $sp3;
         margin: 0 auto;
-        max-width: 1400px;
-        @include size-above(xxl) {
-            max-width: 1600px;
+
+        &.new-layout {
+            max-width: 1400px;
+            @include size-above(xl) {
+                max-width: 1792px;
+            }
         }
-        @include size-above(xl) {
-            max-width: 1792px;
+
+        &:not(.new-layout) {
+            max-width: 1600px;
+            @include size-below(xl) {
+                max-width: 1400px;
+            }
         }
     }
     :global(body) {

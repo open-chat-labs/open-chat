@@ -20,6 +20,7 @@
     import { currentUserKey } from "../../fsm/home.controller";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import type { Readable } from "svelte/store";
+    import { numberOfColumns } from "stores/layout";
     const dispatch = createEventDispatcher();
 
     export let controller: ChatController | undefined;
@@ -35,7 +36,7 @@
 
     $: user = $userStore[userId] ?? nullUser("unknown");
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
-    $: modal = $screenWidth !== ScreenWidth.ExtraExtraLarge;
+    $: modal = $numberOfColumns === 2;
     $: groupChat = controller?.chat as Readable<GroupChatSummary>;
     $: participants = controller?.participants;
     $: pinned = controller?.pinnedMessages;

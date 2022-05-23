@@ -1,16 +1,18 @@
 <script lang="ts">
+    import { newLayout } from "../stores/layout";
+
     export let left: boolean = false;
     export let middle: boolean = false;
     export let right: boolean = false;
 </script>
 
-<section class:left class:right class:middle>
+<section class:new-layout={newLayout} class:left class:right class:middle>
     <slot />
 </section>
 
 <style type="text/scss">
     $left-width: 40%;
-    $right-width: 40%;
+    $right-width: 500px;
 
     section {
         background: var(--panel-bg);
@@ -19,13 +21,21 @@
         overflow-x: hidden;
 
         &.middle {
-            background: none;
-            flex: 13;
             padding-left: 0;
             padding-right: 0;
-            max-width: 840px;
             @include mobile() {
                 padding: 0;
+            }
+
+            &:not(.new-layout) {
+                width: 100%;
+                flex: auto;
+            }
+
+            &.new-layout {
+                max-width: 840px;
+                flex: 13;
+                background: none;
             }
         }
 
@@ -39,6 +49,7 @@
         &.left {
             position: relative;
             background: var(--panel-left-bg);
+
             @include mobile() {
                 width: 100%;
                 max-width: none;
@@ -48,7 +59,17 @@
             }
         }
 
-        &.right {
+        &:not(.new-layout).left {
+            min-width: 236px;
+            max-width: 550px;
+            flex: 0 0 $left-width;
+
+            @include mobile() {
+                flex: auto;
+            }
+        }
+
+        &.new-layout.right {
             background: var(--panel-right-bg);
             padding: 0px;
 
@@ -66,6 +87,16 @@
                 width: 100%;
                 min-width: 0;
                 max-width: none;
+            }
+        }
+
+        &:not(.new-layout).right {
+            width: $right-width;
+            display: flex;
+            flex-direction: column;
+            @include fullHeight();
+            @include mobile() {
+                width: 100%;
             }
         }
     }
