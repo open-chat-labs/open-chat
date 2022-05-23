@@ -521,7 +521,14 @@
         } else {
             trackEvent("private_group_created");
         }
-        rightPanelHistory = [];
+        rightPanelHistory =
+            $screenWidth === ScreenWidth.ExtraExtraLarge
+                ? [
+                      {
+                          kind: "group_details",
+                      },
+                  ]
+                : [];
     }
 
     function newGroup() {

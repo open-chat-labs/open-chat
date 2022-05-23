@@ -13,12 +13,10 @@
     const dispatch = createEventDispatcher();
 
     export let candidateGroup: CandidateGroupChat;
-    export let creatingCanister: boolean;
-    export let addingParticipants: boolean;
+    export let busy: boolean;
 
     $: numParticipants = candidateGroup.participants.length;
     $: selectedUsers = candidateGroup.participants.map((p) => p.user);
-    $: busy = creatingCanister || addingParticipants;
 
     function deleteParticipant(ev: CustomEvent<UserSummary>): void {
         candidateGroup.participants = candidateGroup.participants.filter(
@@ -48,7 +46,7 @@
 
 <div class="participants">
     <div class="form-fields">
-        {#if !addingParticipants}
+        {#if !busy}
             <SelectUsers
                 mode={"add"}
                 on:deleteUser={deleteParticipant}

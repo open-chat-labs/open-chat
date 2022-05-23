@@ -23,7 +23,7 @@
     const MAX_DESC_LENGTH = 1024;
 
     export let candidateGroup: CandidateGroupChat;
-    export let creatingCanister: boolean;
+    export let busy: boolean;
 
     let groupInfoOpen = true;
     let visibilityOpen = true;
@@ -146,11 +146,8 @@
     </div>
 </form>
 <div class="cta">
-    <Button
-        on:click={createGroup}
-        fill={true}
-        disabled={!valid || creatingCanister}
-        loading={creatingCanister}>{$_("submitNewGroup")}</Button>
+    <Button on:click={createGroup} fill={true} disabled={!valid || busy} loading={busy}
+        >{$_("submitNewGroup")}</Button>
 </div>
 
 <style type="text/scss">

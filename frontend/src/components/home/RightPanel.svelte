@@ -160,7 +160,6 @@
             bottom={"-16px"}
             right={"-16px"}
             opacity={"0.35"}
-            skew={"-5deg"}
             viewBox={"0 0 361 280"} />
     {/if}
 </Panel>
