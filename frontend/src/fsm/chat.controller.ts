@@ -392,10 +392,8 @@ export class ChatController {
             this.localReactions
         );
 
-        if (chat.kind === "group_chat") {
-            const userIds = userIdsFromEvents(updated);
-            await this.updateUserStore(userIds);
-        }
+        const userIds = userIdsFromEvents(updated);
+        await this.updateUserStore(userIds);
 
         this.events.set(updated);
 
