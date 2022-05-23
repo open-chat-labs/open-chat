@@ -8,11 +8,20 @@ use user_canister::c2c_send_message;
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 
-pub const WELCOME_MESSAGE: &str = "Hello World!";
+const WELCOME_MESSAGE: &str = "Hello World!";
+const EXISTING_USER_WELCOME_MESSAGE: &str = "Hello World!";
 
 pub fn send_welcome_message() {
     let content = MessageContent::Text(TextContent {
         text: WELCOME_MESSAGE.to_string(),
+    });
+
+    mutate_state(|state| send_message(content, true, state));
+}
+
+pub fn send_existing_user_welcome_message() {
+    let content = MessageContent::Text(TextContent {
+        text: EXISTING_USER_WELCOME_MESSAGE.to_string(),
     });
 
     mutate_state(|state| send_message(content, true, state));
