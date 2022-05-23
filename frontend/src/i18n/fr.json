@@ -438,7 +438,6 @@
     "addParticipants": "Ajouter des membres",
     "removeParticipantFailed": "Impossible de supprimer le membre",
     "participant": "membre",
-    "readOnlyGroup": "Ceci est un groupe en lecture seule",
     "memberCount": "{count} membre(s)",
     "ownedBy": "Propriété de @{username}",
     "icpTransfer": {
@@ -526,5 +525,6 @@
     "failedToLeaveGroup": "Une erreur s'est produite lors de la tentative de suppression de vous du groupe",
     "historyOffInfo": "Les nouveaux membres ne verront les messages arriver qu'après leur adhésion. 🤫",
     "memberIsTyping": "{username} est en train de taper",
-    "membersAreTyping": "{number} membres sont en train de taper"
+    "membersAreTyping": "{number} membres sont en train de taper",
+    "readOnlyChat": "Ce chat est en lecture seule"
 }

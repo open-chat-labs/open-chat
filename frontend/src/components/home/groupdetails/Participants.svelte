@@ -66,9 +66,9 @@
             const user = userStore[p.userId];
             if (user) {
                 users.push({
-                    kind: "full_participant",
                     ...user,
                     ...p,
+                    memberKind: "full_member",
                 });
             }
         });
@@ -77,9 +77,9 @@
                 const user = userStore[userId];
                 if (user) {
                     users.push({
-                        kind: "blocked_participant",
                         ...user,
                         role: "participant",
+                        memberKind: "blocked_member",
                     });
                 }
             });
@@ -91,8 +91,8 @@
         a: FullParticipant | BlockedParticipant,
         b: FullParticipant | BlockedParticipant
     ): number {
-        if (a.kind !== b.kind) {
-            return a.kind === "full_participant" ? -1 : 1;
+        if (a.memberKind !== b.memberKind) {
+            return a.memberKind === "full_member" ? -1 : 1;
         }
         if (a.role !== b.role) {
             if (a.role === "owner") return -1;
@@ -115,7 +115,7 @@
     <Search searching={false} bind:searchTerm placeholder={"filterParticipants"} />
 </div>
 
-{#if me !== undefined && me.kind === "full_participant"}
+{#if me !== undefined && me.memberKind === "full_member"}
     <Participant me={true} participant={me} />
 {/if}
 

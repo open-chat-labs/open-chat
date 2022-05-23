@@ -447,7 +447,7 @@
         </div>
     {:else if !canSend}
         <div class="disabled">
-            {$_("readOnlyGroup")}
+            {$_("readOnlyChat")}
         </div>
     {:else}
         <MessageActions

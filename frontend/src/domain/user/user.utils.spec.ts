@@ -1,4 +1,4 @@
-import type { UserLookup } from "./user";
+import type { PartialUserSummary, UserLookup } from "./user";
 import { init, register } from "svelte-i18n";
 import {
     buildUsernameList,
@@ -18,24 +18,28 @@ init({
 
 const lookup: UserLookup = {
     a: {
+        kind: "user",
         userId: "a",
         username: "a",
         lastOnline: now - 119 * 1000,
         updated: BigInt(0),
     },
     b: {
+        kind: "user",
         userId: "b",
         username: "b",
         lastOnline: now - 200 * 1000,
         updated: BigInt(0),
     },
     xyz: {
+        kind: "user",
         userId: "xyz",
         username: "julian_jelfs",
         lastOnline: 0,
         updated: BigInt(0),
     },
     alpha: {
+        kind: "user",
         userId: "alpha",
         username: "alpha",
         lastOnline: 0,
@@ -82,8 +86,8 @@ describe("missing userIds", () => {
 });
 
 describe("compare username", () => {
-    function toUser(username: string | undefined) {
-        return { userId: "a", username, lastOnline: now, updated: BigInt(0) };
+    function toUser(username: string | undefined): PartialUserSummary {
+        return { kind: "user", userId: "a", username, lastOnline: now, updated: BigInt(0) };
     }
     test("works with non-null usernames", () => {
         const users = ["zulu", "yanky", "foxtrot", "lima"].map(toUser);

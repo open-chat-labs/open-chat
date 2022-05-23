@@ -1,5 +1,5 @@
 use crate::lifecycle::{init_logger, init_state};
-use crate::Data;
+use crate::{openchat_bot, Data};
 use canister_api_macros::trace;
 use ic_cdk_macros::init;
 use tracing::info;
@@ -27,6 +27,8 @@ fn init(args: Args) {
     );
 
     init_state(env, data, args.wasm_version);
+
+    openchat_bot::send_welcome_message();
 
     info!(version = %args.wasm_version, "Initialization complete");
 }

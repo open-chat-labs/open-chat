@@ -44,7 +44,7 @@
         canBlockUser ||
         canUnblockUser;
 
-    $: isBlocked = participant.kind === "blocked_participant";
+    $: isBlocked = participant.memberKind === "blocked_member";
 
     function removeUser() {
         dispatch("removeParticipant", participant.userId);
@@ -106,13 +106,13 @@
     <span class="avatar">
         <Avatar
             statusBorder={hovering && !me ? "var(--participants-hv)" : "var(--participants-bg)"}
-            blocked={participant.kind === "blocked_participant"}
+            blocked={participant.memberKind === "blocked_member"}
             url={avatarUrl(participant)}
             status={getUserStatus($now, $userStore, participant.userId)}
             size={AvatarSize.Small} />
     </span>
     <div class="details">
-        <h4 class:blocked={participant.kind === "blocked_participant"}>
+        <h4 class:blocked={participant.memberKind === "blocked_member"}>
             {me ? $_("you") : participant.username ?? $_("unknownUser")}
         </h4>
         <span class="role">

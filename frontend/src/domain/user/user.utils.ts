@@ -74,6 +74,7 @@ export function compareIsNotYouThenUsername(
 
 export function nullUser(username: string): UserSummary {
     return {
+        kind: "user",
         userId: "null_user", // this might cause problems if we try to create a Principal from it
         username,
         lastOnline: 0,

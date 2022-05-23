@@ -23,7 +23,7 @@ import {
 } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
 import type { Notification } from "../domain/notifications";
-import type { CreatedUser } from "../domain/user/user";
+import type { CreatedUser, UserSummary } from "../domain/user/user";
 import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.utils";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type {
@@ -125,7 +125,7 @@ export class HomeController {
             // Also update any users who haven't been updated for at least an hour
             const now = BigInt(Date.now());
             for (const user of Object.values(allUsers)) {
-                if (now - user.updated > ONE_HOUR) {
+                if (now - user.updated > ONE_HOUR && user.kind === "user") {
                     usersToUpdate.add(user.userId);
                 }
             }
@@ -310,7 +310,8 @@ export class HomeController {
 
         const chat = get(this.serverChatSummaries)[chatId];
         if (chat !== undefined) {
-            const user = {
+            const user: UserSummary = {
+                kind: "user",
                 userId: this.user.userId,
                 username: this.user.username,
                 lastOnline: Date.now(),

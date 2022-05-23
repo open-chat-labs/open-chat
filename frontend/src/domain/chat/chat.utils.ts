@@ -1269,9 +1269,11 @@ export function canCreatePolls(chat: ChatSummary): boolean {
     }
 }
 
-export function canSendMessages(chat: ChatSummary): boolean {
+export function canSendMessages(chat: ChatSummary, userLookup: UserLookup): boolean {
     if (chat.kind === "group_chat") {
         return isPermitted(chat.myRole, chat.permissions.sendMessages);
+    } else if (userLookup[chat.them]?.kind === "bot") {
+        return false;
     } else {
         return true;
     }

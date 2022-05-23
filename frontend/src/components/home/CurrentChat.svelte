@@ -12,7 +12,6 @@
         canInviteUsers,
         getFirstUnreadMention,
         getFirstUnreadMessageIndex,
-        getMinVisibleMessageIndex,
         isPreviewing,
     } from "../../domain/chat/chat.utils";
     import type { EnhancedReplyContext, GroupChatSummary, Mention } from "../../domain/chat/chat";
@@ -28,6 +27,7 @@
     } from "../../domain/chat/chat.utils";
     import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
     import GiphySelector from "./GiphySelector.svelte";
+    import { userStore } from "stores/user";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -201,7 +201,7 @@
         canPin={canPinMessages($chat)}
         canBlockUser={canBlockUsers($chat)}
         canDelete={canDeleteOtherUsersMessages($chat)}
-        canSend={canSendMessages($chat)}
+        canSend={canSendMessages($chat, $userStore)}
         canReact={canReactToMessages($chat)}
         canInvite={canInviteUsers($chat)}
         {preview}

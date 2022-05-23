@@ -582,8 +582,9 @@ export type Participant = {
     userId: string;
 };
 
-export type FullParticipant = Participant & PartialUserSummary & { kind: "full_participant" };
-export type BlockedParticipant = Participant & PartialUserSummary & { kind: "blocked_participant" };
+export type FullParticipant = Participant & PartialUserSummary & { memberKind: "full_member" };
+export type BlockedParticipant = Participant &
+    PartialUserSummary & { memberKind: "blocked_member" };
 
 export type PermissionRole = "owner" | "admins" | "members";
 

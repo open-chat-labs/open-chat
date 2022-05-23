@@ -26,6 +26,7 @@ mod group_summaries;
 mod guards;
 mod lifecycle;
 mod model;
+mod openchat_bot;
 mod queries;
 mod regular_jobs;
 mod updates;

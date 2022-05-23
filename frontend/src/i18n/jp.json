@@ -438,7 +438,6 @@
     "addParticipants": "メンバーを追加する",
     "removeParticipantFailed": "メンバーを削除できません",
     "participant": "メンバー",
-    "readOnlyGroup": "これは読み取り専用グループです",
     "memberCount": "{カウント}メンバー",
     "ownedBy": "@ {username}が所有",
     "icpTransfer": {
@@ -526,5 +525,6 @@
     "failedToLeaveGroup": "グループからあなたを削除しようとしてエラーが発生しました",
     "historyOffInfo": "新しい参加者には、参加後に到着するメッセージのみが表示されます。 🤫",
     "memberIsTyping": "{username}は入力中です",
-    "membersAreTyping": "{number}メンバーが入力しています"
+    "membersAreTyping": "{number}メンバーが入力しています",
+    "readOnlyChat": "このチャットは読み取り専用です"
 }
