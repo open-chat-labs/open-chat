@@ -1,7 +1,7 @@
 use crate::updates::set_username::{validate_username, UsernameValidationResult};
 use crate::{mutate_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CANISTER_INITIAL_CYCLES_BALANCE, USER_LIMIT};
 use candid::Principal;
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use types::{CanisterId, CanisterWasm, Cycles, UserId, Version};
 use user_canister::init::Args as InitUserCanisterArgs;

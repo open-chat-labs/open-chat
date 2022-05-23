@@ -1,6 +1,6 @@
 use crate::lifecycle::UPGRADE_BUFFER_SIZE;
 use crate::{take_state, LOG_MESSAGES};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::pre_upgrade;
 use stable_memory::serialize_to_stable_memory;
 use tracing::info;

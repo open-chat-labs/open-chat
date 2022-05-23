@@ -1,7 +1,7 @@
 use crate::guards::caller_is_push_service;
 use crate::RuntimeState;
 use crate::{mutate_state, HashSet};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use notifications_canister::remove_subscriptions::{Response::*, *};
 use std::iter::FromIterator;

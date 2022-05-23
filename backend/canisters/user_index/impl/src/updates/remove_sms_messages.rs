@@ -1,6 +1,6 @@
 use crate::guards::caller_is_sms_sender;
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use user_index_canister::remove_sms_messages::{Response::*, *};
 
