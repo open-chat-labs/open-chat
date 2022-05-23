@@ -16,6 +16,14 @@ pub fn caller_is_user_index() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_group_index() -> Result<(), String> {
+    if read_state(|state| state.is_caller_group_index()) {
+        Ok(())
+    } else {
+        Err("Caller is not the group_index canister".to_owned())
+    }
+}
+
 pub fn caller_is_callback_canister() -> Result<(), String> {
     if read_state(|state| state.is_caller_callback_canister()) {
         Ok(())
