@@ -537,7 +537,6 @@
         <InitialGroupMessage group={$chat} noVisibleEvents={$events.length === 0} />
     {/if}
 </div>
-
 {#if !preview}
     <div
         title={$_("goToFirstMention")}
@@ -551,7 +550,6 @@
         </Fab>
     </div>
 {/if}
-
 <div
     title={$_("goToFirstMessage")}
     class:show={!insideFromBottomThreshold || unreadMessages > 0}
@@ -602,7 +600,9 @@
     .fab {
         transition: opacity ease-in-out 300ms;
         position: absolute;
+        @include z-index("fab");
         right: 20px;
+        bottom: 0;
         opacity: 0;
         pointer-events: none;
 
