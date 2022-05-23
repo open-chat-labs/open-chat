@@ -1,7 +1,7 @@
 use crate::updates::handle_activity_notification;
 use crate::updates::unblock_user::Response::*;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::unblock_user::*;
 use ic_cdk_macros::update;

@@ -1,6 +1,6 @@
 use crate::model::user_map::ConfirmPhoneNumberResult;
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use open_storage_index_canister::add_or_update_users::UserConfig;
 use user_index_canister::confirm_phone_number::{Response::*, *};

@@ -1,6 +1,6 @@
 use crate::updates::send_message_common::register_callbacks_if_required;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use types::{CanisterId, DirectMessageNotification, Notification, ReplyContext, UserId};

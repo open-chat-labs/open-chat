@@ -1,5 +1,5 @@
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use user_index_canister::c2c_set_avatar::{Response::*, *};
 

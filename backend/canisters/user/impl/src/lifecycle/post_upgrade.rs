@@ -1,7 +1,7 @@
 use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
 use crate::{openchat_bot, Data, LOG_MESSAGES};
-use canister_api_macros::trace;
 use canister_logger::{LogMessage, LogMessagesWrapper};
+use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;

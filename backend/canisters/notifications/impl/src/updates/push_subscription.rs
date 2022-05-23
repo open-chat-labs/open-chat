@@ -1,6 +1,6 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use notifications_canister::push_subscription::{Response::*, *};
 use types::{CanisterId, SubscriptionInfo, UserId};
