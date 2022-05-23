@@ -1,7 +1,6 @@
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{mutate_state, openchat_bot, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use types::{AlertDetails, RemovedFromGroup};
 use user_canister::c2c_remove_from_group::{Response::*, *};
 
 #[update]
@@ -22,17 +21,11 @@ fn c2c_remove_from_group_impl(args: Args, runtime_state: &mut RuntimeState) -> R
             cached_groups.remove_group(&chat_id);
         }
 
-        let removed_from_group = RemovedFromGroup {
-            chat_id,
-            removed_by: args.removed_by,
-            group_name: args.group_name,
-        };
-        let alert_details = if args.blocked {
-            AlertDetails::BlockedFromGroup(removed_from_group)
+        if args.blocked {
+            openchat_bot::send_blocked_from_group_message(args.removed_by, args.group_name, args.public, runtime_state);
         } else {
-            AlertDetails::RemovedFromGroup(removed_from_group)
-        };
-        runtime_state.data.alerts.add(alert_details, now);
+            openchat_bot::send_removed_from_group_message(args.removed_by, args.group_name, args.public, runtime_state);
+        }
     }
     Success
 }

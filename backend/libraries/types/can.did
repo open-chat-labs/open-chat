@@ -857,44 +857,6 @@ type NightMode =
         Auto;
     };
 
-// Alerts
-type Alert =
-    record {
-        id: text;
-        elapsed: Milliseconds;
-        timestamp: TimestampMillis;
-        details: AlertDetails;
-        read: bool;
-    };
-
-type AlertDetails =
-    variant {
-        RemovedFromGroup: RemovedFromGroupAlert;
-        BlockedFromGroup: RemovedFromGroupAlert;
-        GroupDeleted: GroupDeletedAlert;
-        CryptocurrencyDepositReceived: CryptocurrencyDeposit;
-    };
-
-type RemovedFromGroupAlert =
-    record {
-        chat_id: ChatId;
-        removed_by: UserId;
-        group_name: text;
-    };
-
-type GroupDeletedAlert =
-    record {
-        chat_id: ChatId;
-        deleted_by: UserId;
-        group_name: text;
-    };
-
-type AlertId =
-    variant {
-        Internal: nat32;
-        GroupDeleted: ChatId;
-    };
-
 type VideoContent =
     record {
         width: nat32;

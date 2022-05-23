@@ -7,6 +7,7 @@ pub struct Args {
     pub removed_by: UserId,
     pub blocked: bool,
     pub group_name: String,
+    pub public: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
