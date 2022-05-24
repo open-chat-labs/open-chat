@@ -1,6 +1,6 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::make_private::{Response::*, *};
 use group_index_canister::c2c_make_private;

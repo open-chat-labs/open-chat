@@ -1,6 +1,6 @@
 use crate::model::user_map::SubmitPhoneNumberResult;
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use types::ConfirmationCodeSms;
 use user_index_canister::submit_phone_number::{Response::*, *};

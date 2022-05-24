@@ -1,6 +1,6 @@
 use crate::guards::caller_is_user_index;
 use crate::{read_state, run_regular_jobs};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{Memo, TransferArgs, DEFAULT_FEE};
 use user_canister::c2c_charge_user_account::{Response::*, *};

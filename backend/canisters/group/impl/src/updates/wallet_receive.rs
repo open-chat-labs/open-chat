@@ -1,5 +1,5 @@
 use crate::run_regular_jobs;
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use utils::cycles::accept_cycles;
 

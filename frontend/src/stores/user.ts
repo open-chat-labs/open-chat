@@ -6,7 +6,7 @@ const OPENCHAT_BOT_USERNAME = "OpenChatBot";
 const OPENCHAT_BOT_AVATAR_URL = "/oc-logo2.svg";
 
 const { subscribe, update } = immutableStore<UserLookup>({
-    OPENCHAT_BOT_USER_ID: {
+    [OPENCHAT_BOT_USER_ID]: {
         kind: "bot",
         userId: OPENCHAT_BOT_USER_ID,
         username: OPENCHAT_BOT_USERNAME,

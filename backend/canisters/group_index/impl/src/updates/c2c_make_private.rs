@@ -1,5 +1,5 @@
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use group_index_canister::c2c_make_private::{Response::*, *};
 use ic_cdk_macros::update;
 use types::ChatId;

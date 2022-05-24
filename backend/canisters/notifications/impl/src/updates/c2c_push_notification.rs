@@ -1,5 +1,5 @@
 use crate::{mutate_state, RuntimeState, MAX_SUBSCRIPTION_AGE};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use notifications_canister::c2c_push_notification::{Response::*, *};
 use types::{Notification, NotificationEnvelope, UserId};

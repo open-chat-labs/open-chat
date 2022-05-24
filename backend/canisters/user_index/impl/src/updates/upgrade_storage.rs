@@ -1,7 +1,7 @@
 use crate::model::account_billing::{AccountCharge, AccountChargeDetails, StorageAccountChargeDetails};
 use crate::model::user::User;
 use crate::{mutate_state, read_state, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
 use open_storage_index_canister::add_or_update_users::UserConfig;

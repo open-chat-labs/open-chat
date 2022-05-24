@@ -1,5 +1,5 @@
 use crate::{mutate_state, read_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CANISTER_TOP_UP_AMOUNT};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use types::{CyclesTopUp, NotifyLowBalanceResponse, UserId};
 use utils::cycles::{can_spend_cycles, top_up_canister};

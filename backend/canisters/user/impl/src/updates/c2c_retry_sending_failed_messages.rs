@@ -1,7 +1,7 @@
 use super::send_message::send_to_recipients_canister;
 use crate::guards::caller_is_user_index;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use types::UserId;
 use user_canister::c2c_retry_sending_failed_messages::{Response::*, *};

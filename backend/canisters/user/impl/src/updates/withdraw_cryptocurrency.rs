@@ -1,7 +1,7 @@
 use crate::crypto::withdraw;
 use crate::guards::caller_is_owner;
 use crate::run_regular_jobs;
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use user_canister::withdraw_cryptocurrency::{Response::*, *};
 

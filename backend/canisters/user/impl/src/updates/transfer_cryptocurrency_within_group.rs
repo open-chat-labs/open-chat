@@ -1,7 +1,7 @@
 use crate::crypto::{process_transfer, TransferError};
 use crate::guards::caller_is_owner;
 use crate::{read_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
 use types::{CryptocurrencyContent, CryptocurrencyTransfer, MessageContent, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE};

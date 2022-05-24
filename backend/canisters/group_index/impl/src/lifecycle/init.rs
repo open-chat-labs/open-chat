@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_logger, init_state};
 use crate::Data;
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use group_index_canister::init::Args;
 use ic_cdk_macros::init;
 use tracing::info;

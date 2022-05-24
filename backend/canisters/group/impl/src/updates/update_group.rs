@@ -1,7 +1,7 @@
 use crate::updates::handle_activity_notification;
 use crate::updates::update_group::Response::*;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::update_group::*;
 use group_index_canister::{c2c_update_group, MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH, MIN_GROUP_NAME_LENGTH};
