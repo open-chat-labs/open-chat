@@ -7,6 +7,7 @@ use types::{ChatId, DeletedGroupInfo, UserId};
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct DeletedGroups {
     groups: HashMap<ChatId, DeletedGroupInfo>,
+    #[serde(default)]
     pending_group_deleted_notifications: VecDeque<(ChatId, UserId)>,
 }
 
