@@ -19,7 +19,7 @@
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
     import { currentUserKey } from "../../fsm/home.controller";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    import type { Readable } from "svelte/store";
+    import { Readable, writable } from "svelte/store";
     import { numberOfColumns } from "stores/layout";
     const dispatch = createEventDispatcher();
 
@@ -38,8 +38,8 @@
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = $numberOfColumns === 2;
     $: groupChat = controller?.chat as Readable<GroupChatSummary>;
-    $: participants = controller?.participants;
-    $: pinned = controller?.pinnedMessages;
+    $: participants = controller?.participants ?? writable([]);
+    $: pinned = controller?.pinnedMessages ?? writable(new Set<number>());
     $: chatId = controller?.chatId;
 
     export function showProfile() {
@@ -108,7 +108,7 @@
     {#if lastState.kind === "group_details" && controller !== undefined}
         <GroupDetails
             chat={$groupChat}
-            participantCount={$participants?.length ?? 0}
+            participantCount={$participants.length}
             on:close={pop}
             on:deleteGroup
             on:makeGroupPrivate
@@ -135,7 +135,7 @@
             on:dismissAsAdmin={dismissAsAdmin}
             on:removeParticipant={removeParticipant}
             on:makeAdmin={makeAdmin} />
-    {:else if lastState.kind === "show_pinned" && chatId !== undefined && $pinned !== undefined}
+    {:else if lastState.kind === "show_pinned" && chatId !== undefined}
         <PinnedMessages
             on:chatWith
             on:goToMessageIndex={goToMessageIndex}

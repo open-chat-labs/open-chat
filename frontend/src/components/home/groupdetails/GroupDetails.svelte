@@ -105,6 +105,9 @@
             permissions: { ...chat.permissions },
         };
         originalGroup = { ...chat };
+        if (canInvite) {
+            inviteComponent?.init(originalGroup);
+        }
     }
 
     let showConfirmation = false;
@@ -112,6 +115,7 @@
     let saving = false;
     let viewProfile = false;
     let postConfirmation = () => dispatch("close");
+    let inviteComponent: InviteUsers;
 
     // capture a snapshot of the chat as it is right now
     $: myGroup = currentUser.userId === originalGroup.ownerId;
@@ -125,6 +129,7 @@
     $: dirty = nameDirty || descDirty || avatarDirty;
     $: canEdit = canEditGroupDetails(originalGroup);
     $: canEditPermissions = canChangePermissions(originalGroup);
+    $: canInvite = canInviteUsers(originalGroup);
     $: avatarSrc = avatarUrl(updatedGroup.avatar, "../assets/group.svg");
 
     function openUserProfile() {
@@ -362,12 +367,12 @@
                 {/if}
             </div>
         </CollapsibleCard>
-        {#if canInviteUsers(originalGroup)}
+        {#if canInvite}
             <CollapsibleCard
                 on:toggle={groupInviteUsersOpen.toggle}
                 open={$groupInviteUsersOpen}
                 headerText={$_("group.invite.inviteWithLink")}>
-                <InviteUsers group={originalGroup} />
+                <InviteUsers bind:this={inviteComponent} group={originalGroup} />
             </CollapsibleCard>
         {/if}
         <CollapsibleCard
