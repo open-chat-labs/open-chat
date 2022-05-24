@@ -1,6 +1,6 @@
 use crate::guards::caller_is_controller;
 use crate::read_state;
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use root_canister::upgrade_user_index_canister::{Response::*, *};
 use types::Version;

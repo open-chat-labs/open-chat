@@ -1,7 +1,7 @@
 use crate::guards::caller_is_callback_canister;
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use chat_events::EndPollResult;
 use group_canister::c2c_end_poll::{Response::*, *};
 use ic_cdk_macros::update;

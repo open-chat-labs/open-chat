@@ -1,6 +1,6 @@
 use crate::model::public_groups::GroupCreatedArgs;
 use crate::{mutate_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
 use ic_cdk_macros::update;
 use types::{Avatar, CanisterId, CanisterWasm, ChatId, Cycles, Version};

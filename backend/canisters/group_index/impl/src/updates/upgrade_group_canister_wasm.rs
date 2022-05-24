@@ -1,5 +1,5 @@
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::trace;
+use canister_tracing_macros::trace;
 use group_index_canister::upgrade_group_canister_wasm::{Response::*, *};
 use ic_cdk_macros::update;
 use tracing::info;
