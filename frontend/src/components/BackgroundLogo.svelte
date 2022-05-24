@@ -1,6 +1,6 @@
 <script lang="ts">
     import { newLayout } from "stores/layout";
-    import { mobileWidth, ScreenWidth, screenWidth } from "stores/screenDimensions";
+    import { ScreenWidth, screenWidth } from "stores/screenDimensions";
 
     export let width: string;
     export let bottom: string;
@@ -26,13 +26,8 @@
             <defs>
                 <linearGradient id="gradient-5">
                     <stop style="stop-color: #5f2583;" offset="0" />
-                    <!-- <stop style="stop-color: #22A7F2;" offset="1" /> -->
                     <stop style="stop-color: rgb(240, 90, 36);" offset="1" />
                 </linearGradient>
-                <!-- <linearGradient id="gradient-5">
-                <stop style="stop-color: rgb(251, 176, 59);" offset="0" />
-                <stop style="stop-color: rgb(240, 90, 36);" offset="1" />
-            </linearGradient> -->
                 <linearGradient id="gradient-6">
                     <stop style="stop-color: rgb(95, 37, 131);" offset="0" />
                     <stop style="stop-color: rgb(237, 30, 121);" offset="1" />
