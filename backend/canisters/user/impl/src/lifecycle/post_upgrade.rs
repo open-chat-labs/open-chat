@@ -25,7 +25,7 @@ fn post_upgrade(args: Args) {
         LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
     }
 
-    openchat_bot::send_existing_user_welcome_message();
+    openchat_bot::send_existing_user_welcome_messages();
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
