@@ -11,19 +11,6 @@ export interface AddedToGroupNotification {
   'chat_id' : ChatId,
   'group_name' : string,
 }
-export interface Alert {
-  'id' : string,
-  'read' : boolean,
-  'timestamp' : TimestampMillis,
-  'details' : AlertDetails,
-  'elapsed' : Milliseconds,
-}
-export type AlertDetails = { 'GroupDeleted' : GroupDeletedAlert } |
-  { 'CryptocurrencyDepositReceived' : CryptocurrencyDeposit } |
-  { 'RemovedFromGroup' : RemovedFromGroupAlert } |
-  { 'BlockedFromGroup' : RemovedFromGroupAlert };
-export type AlertId = { 'Internal' : number } |
-  { 'GroupDeleted' : ChatId };
 export interface AssumeGroupSuperAdminArgs { 'chat_id' : ChatId }
 export type AssumeGroupSuperAdminResponse = { 'AlreadyOwner' : null } |
   { 'CallerNotInGroup' : null } |
@@ -401,11 +388,6 @@ export interface GroupChatUpdatesSince {
   'updates_since' : TimestampMillis,
   'chat_id' : ChatId,
 }
-export interface GroupDeletedAlert {
-  'deleted_by' : UserId,
-  'chat_id' : ChatId,
-  'group_name' : string,
-}
 export interface GroupDescriptionChanged {
   'new_description' : string,
   'previous_description' : string,
@@ -475,7 +457,6 @@ export type InitialStateResponse = {
       'cycles_balance' : Cycles,
       'user_canister_wasm_version' : Version,
       'upgrades_in_progress' : Array<ChatId>,
-      'alerts' : Array<Alert>,
       'chats' : Array<ChatSummary>,
       'blocked_users' : Array<UserId>,
       'timestamp' : TimestampMillis,
@@ -507,9 +488,6 @@ export type LeaveGroupResponse = { 'GroupNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
-export interface MarkAlertsReadArgs { 'alert_ids' : Array<string> }
-export type MarkAlertsReadResponse = { 'PartialSuccess' : Array<string> } |
-  { 'Success' : null };
 export interface MarkReadArgs { 'messages_read' : Array<ChatMessagesRead> }
 export type MarkReadResponse = { 'Success' : null };
 export type Memo = bigint;
@@ -726,11 +704,6 @@ export type RelinquishGroupSuperAdminResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
   { 'NotSuperAdmin' : null } |
   { 'InternalError' : string };
-export interface RemovedFromGroupAlert {
-  'chat_id' : ChatId,
-  'removed_by' : UserId,
-  'group_name' : string,
-}
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
@@ -884,7 +857,6 @@ export type UpdatesResponse = {
       'cycles_balance' : [] | [Cycles],
       'user_canister_wasm_version' : [] | [Version],
       'upgrades_in_progress' : Array<ChatId>,
-      'alerts' : Array<Alert>,
       'chats_updated' : Array<ChatSummaryUpdates>,
       'blocked_users' : Array<UserId>,
       'chats_added' : Array<ChatSummary>,
@@ -958,9 +930,6 @@ export interface _SERVICE {
   'initial_state' : (arg_0: InitialStateArgs) => Promise<InitialStateResponse>,
   'join_group_v2' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
   'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
-  'mark_alerts_read' : (arg_0: MarkAlertsReadArgs) => Promise<
-      MarkAlertsReadResponse
-    >,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'messages_by_message_index' : (arg_0: MessagesByMessageIndexArgs) => Promise<
       MessagesByMessageIndexResponse

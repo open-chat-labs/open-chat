@@ -53,6 +53,23 @@ pub(crate) fn send_group_deleted_message(
     send_message(content, false, runtime_state);
 }
 
+pub(crate) fn send_removed_from_group_message(
+    removed_by: UserId,
+    group_name: String,
+    public: bool,
+    blocked: bool,
+    runtime_state: &mut RuntimeState,
+) {
+    let visibility = if public { "Public" } else { "Private" };
+    let action = if blocked { "blocked" } else { "removed" };
+
+    let content = MessageContent::Text(TextContent {
+        text: format!("You were {action} from the group _{group_name} ({visibility})_ by @UserId({removed_by})"),
+    });
+
+    send_message(content, false, runtime_state);
+}
+
 fn send_message(content: MessageContent, mute_notification: bool, runtime_state: &mut RuntimeState) {
     let message_index = runtime_state
         .data

@@ -1,4 +1,3 @@
-use crate::model::alerts::Alerts;
 use crate::model::cached_group_summaries::CachedGroupSummaries;
 use crate::model::direct_chats::DirectChats;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
@@ -126,8 +125,6 @@ struct Data {
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
     pub user_preferences: UserPreferences,
-    #[serde(skip_deserializing)]
-    pub alerts: Alerts,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
@@ -163,7 +160,6 @@ impl Data {
             avatar: Timestamped::default(),
             test_mode,
             user_preferences: UserPreferences::default(),
-            alerts: Alerts::default(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             is_super_admin: false,
             recommended_group_exclusions: RecommendedGroupExclusions::default(),

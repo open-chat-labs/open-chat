@@ -25,7 +25,6 @@ pub mod delete_messages;
 pub mod edit_message;
 pub mod join_group;
 pub mod leave_group;
-pub mod mark_alerts_read;
 pub mod mark_read;
 pub mod mute_notifications;
 pub mod register_poll_vote;

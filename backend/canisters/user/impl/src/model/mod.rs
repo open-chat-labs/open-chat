@@ -1,4 +1,3 @@
-pub mod alerts;
 pub mod cached_group_summaries;
 pub mod direct_chat;
 pub mod direct_chats;
