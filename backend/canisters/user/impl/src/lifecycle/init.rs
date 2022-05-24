@@ -28,7 +28,7 @@ fn init(args: Args) {
 
     init_state(env, data, args.wasm_version);
 
-    openchat_bot::send_welcome_message();
+    openchat_bot::send_welcome_messages();
 
     info!(version = %args.wasm_version, "Initialization complete");
 }
