@@ -11,7 +11,7 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import { iconSize } from "../../stores/iconSize";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    import { validateICPInput } from "../../utils/cryptoFormatter";
+    import { validateTokenInput } from "../../utils/cryptoFormatter";
     import { audioRecordingMimeType } from "../../utils/media";
     import MentionPicker from "./MentionPicker.svelte";
     import { userStore } from "stores/user";
@@ -288,9 +288,12 @@
             return true;
         }
 
-        const icpMatch = txt.match(/^\/icp *(\d*[.,]?\d*)$/);
-        if (icpMatch && icpMatch[1] !== undefined) {
-            dispatch("icpTransfer", validateICPInput(icpMatch[1]).e8s);
+        const tokenMatch = txt.match(/^\/(icp|btc|chat) *(\d*[.,]?\d*)$/);
+        if (tokenMatch && tokenMatch[2] !== undefined) {
+            dispatch("tokenTransfer", {
+                token: tokenMatch[1],
+                amount: validateTokenInput(tokenMatch[2]).e8s,
+            });
             return true;
         }
         return false;
@@ -455,7 +458,7 @@
             bind:messageAction
             {controller}
             editing={$editingEvent !== undefined}
-            on:icpTransfer
+            on:tokenTransfer
             on:attachGif
             on:fileSelected />
 

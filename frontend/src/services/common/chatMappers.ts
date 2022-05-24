@@ -31,7 +31,6 @@ import type {
     PendingCryptocurrencyWithdrawal,
     GiphyContent,
     GiphyImage,
-    Cryptocurrency,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { User } from "../../domain/user/user";
@@ -69,6 +68,7 @@ import type {
 } from "../user/candid/idl";
 import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
 import { emptyChatMetrics } from "../../domain/chat/chat.utils";
+import type { Cryptocurrency } from "../../domain/crypto";
 
 export function message(candid: ApiMessage): Message {
     return {

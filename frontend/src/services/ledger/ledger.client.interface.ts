@@ -1,5 +1,5 @@
-import type { ICP } from "../../domain/crypto/crypto";
+import type { Tokens } from "../../domain/crypto";
 
 export interface ILedgerClient {
-    accountBalance(accountIdentifier: string): Promise<ICP>;
+    accountBalance(accountIdentifier: string): Promise<Tokens>;
 }

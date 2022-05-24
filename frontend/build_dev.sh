@@ -5,7 +5,10 @@ export DFX_NETWORK=local
 export DEV_PORT=5001
 export CLIENT_CACHING=true
 export OPEN_STORAGE_INDEX_CANISTER=rdmx6-jaaaa-aaaaa-aaadq-cai
-export LEDGER_CANISTER=qoctq-giaaa-aaaaa-aaaea-cai
+export LEDGER_CANISTER_ICP=qoctq-giaaa-aaaaa-aaaea-cai
+export LEDGER_CANISTER_BTC=qoctq-giaaa-aaaaa-aaaea-cai
+export LEDGER_CANISTER_CHAT=qoctq-giaaa-aaaaa-aaaea-cai
 export BLOB_URL_PATTERN=http://{canisterId}.localhost:8000/{blobType}/
+export ENABLE_MULTI_CRYPTO=true
 
 npx rollup -c $WATCH
