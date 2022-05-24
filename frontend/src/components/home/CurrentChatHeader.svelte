@@ -58,6 +58,7 @@
     $: isGroup = $selectedChatSummary.kind === "group_chat";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: hasUserProfile = !isGroup && !isBot;
+    $: pollsAllowed = !isBot && canCreatePolls($selectedChatSummary);
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -216,7 +217,7 @@
                 </div>
                 <div slot="menu">
                     <Menu>
-                        {#if $selectedChatSummary.kind === "direct_chat"}
+                        {#if $selectedChatSummary.kind === "direct_chat" && !isBot}
                             {#if blocked}
                                 <MenuItem on:click={unblockUser}>
                                     <Cancel
@@ -294,7 +295,7 @@
                                 </MenuItem>
                             {/if}
                         {/if}
-                        {#if canCreatePolls($selectedChatSummary)}
+                        {#if pollsAllowed}
                             <MenuItem on:click={createPoll}>
                                 <Poll size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
                                 <div slot="text">{$_("poll.create")}</div>
