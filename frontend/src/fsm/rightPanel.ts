@@ -1,5 +1,5 @@
-import type { GroupPermissions } from "domain/chat/chat";
-import type { ChatController } from "./chat.controller";
+import type { ChatSummary, GroupPermissions } from "../domain/chat/chat";
+import type { Readable } from "svelte/store";
 
 export type RightPanelState =
     | GroupDetailsPanel
@@ -10,15 +10,11 @@ export type RightPanelState =
     | NewGroupPanel
     | NoPanel;
 
-export type GroupPanel = {
-    controller: ChatController;
-};
-
 export type NoPanel = {
     kind: "no_panel";
 };
 
-export type GroupDetailsPanel = GroupPanel & {
+export type GroupDetailsPanel = {
     kind: "group_details";
 };
 
@@ -30,15 +26,15 @@ export type NewGroupPanel = {
     kind: "new_group_panel";
 };
 
-export type AddParticipantsPanel = GroupPanel & {
+export type AddParticipantsPanel = {
     kind: "add_participants";
 };
 
-export type ShowParticipantsPanel = GroupPanel & {
+export type ShowParticipantsPanel = {
     kind: "show_participants";
 };
 
-export type ShowPinnedPanel = GroupPanel & {
+export type ShowPinnedPanel = {
     kind: "show_pinned";
 };
 
@@ -53,3 +49,16 @@ export type UpdatedGroup = {
     avatar?: UpdatedAvatar;
     permissions: GroupPermissions;
 };
+
+export function filterByChatType(
+    history: RightPanelState[],
+    chat: ChatSummary | undefined
+): RightPanelState[] {
+    if (chat === undefined) return [];
+    return history.filter((panel) => {
+        if (chat.kind === "direct_chat") {
+            return ["new_group_panel", "user_profile"].includes(panel.kind);
+        }
+        return true;
+    });
+}

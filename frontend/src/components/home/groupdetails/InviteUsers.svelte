@@ -34,12 +34,12 @@
 
     $: spinner = loading && code === undefined;
 
-    onMount(() => {
+    export function init(group: GroupChatSummary) {
+        ready = false;
         if (group.public) {
             ready = true;
             return;
         }
-
         loading = true;
         api.getInviteCode(group.chatId)
             .then((resp) => {
@@ -59,7 +59,13 @@
             .finally(() => {
                 loading = false;
             });
-    });
+    }
+
+    /* we need to call this on mount but also when the chat changes. 
+       you would think we could do that in a $: block, but that seems to cause it 
+       to run twice on initial mount (grrrr)
+    */
+    onMount(() => init(group));
 
     function toggleLink() {
         if (loading) return;

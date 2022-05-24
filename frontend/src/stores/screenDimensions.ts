@@ -1,6 +1,6 @@
 import { readable, derived } from "svelte/store";
 
-const dimensions = readable(
+export const dimensions = readable(
     { width: window.innerWidth, height: window.innerHeight },
     function start(set) {
         function resize() {
@@ -22,6 +22,7 @@ export const enum ScreenWidth {
     Medium = "Medium",
     Large = "Large",
     ExtraLarge = "ExtraLarge",
+    ExtraExtraLarge = "ExtraExtraLarge",
 }
 
 export const enum ScreenHeight {
@@ -40,8 +41,10 @@ export const screenWidth = derived(dimensions, ($dimensions) => {
         return ScreenWidth.Medium;
     } else if ($dimensions.width < 1200) {
         return ScreenWidth.Large;
+    } else if ($dimensions.width < 1792) {
+        return ScreenWidth.ExtraLarge; // this is the default width on 15' macbook
     } else {
-        return ScreenWidth.ExtraLarge;
+        return ScreenWidth.ExtraExtraLarge;
     }
 });
 

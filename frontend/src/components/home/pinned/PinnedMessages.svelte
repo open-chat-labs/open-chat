@@ -3,20 +3,24 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import type { EventWrapper, Message } from "../../../domain/chat/chat";
-    import { createEventDispatcher, onMount } from "svelte";
+    import { afterUpdate, createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import { rollbar } from "../../../utils/logging";
     import type { RemoteData } from "../../../utils/remoteData";
     import Loading from "../../Loading.svelte";
-    import type { ChatController } from "../../../fsm/chat.controller";
     import PinnedMessage from "./PinnedMessage.svelte";
     import { groupMessagesByDate } from "../../../domain/chat/chat.utils";
     import { formatMessageDate } from "../../../utils/date";
+    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
+    import type { CreatedUser } from "../../../domain/user/user";
+    import { currentUserKey } from "../../../fsm/home.controller";
 
-    export let controller: ChatController;
+    export let pinned: Set<number>;
+    export let chatId: string;
 
-    $: pinned = controller.pinnedMessages;
+    const api = getContext<ServiceContainer>(apiKey);
+    const currentUser = getContext<CreatedUser>(currentUserKey);
 
     let messages: RemoteData<EventWrapper<Message>[][], string> = { kind: "idle" };
 
@@ -31,28 +35,31 @@
         dispatch("chatWith", ev.detail);
     }
 
-    onMount(() => {
-        messages = { kind: "loading" };
-        controller.api
-            .getGroupMessagesByMessageIndex(controller.chatId, $pinned)
-            .then((resp) => {
-                if (resp === "events_failed") {
-                    rollbar.warn("Unable to load pinned messages: ", resp);
-                    messages = { kind: "error", error: "Unable to load pinned messages" };
-                } else {
-                    messages = {
-                        kind: "success",
-                        data: groupMessagesByDate(
-                            resp.events.sort((a, b) => a.index - b.index)
-                        ).reverse(),
-                    };
-                }
-            })
-            .catch((err) => {
-                rollbar.error("Unable to load pinned messages: ", err);
-                messages = { kind: "error", error: err.toString() };
-            });
-    });
+    $: {
+        if (pinned.size > 0) {
+            messages = { kind: "loading" };
+            api.getGroupMessagesByMessageIndex(chatId, pinned)
+                .then((resp) => {
+                    if (resp === "events_failed") {
+                        rollbar.warn("Unable to load pinned messages: ", resp);
+                        messages = { kind: "error", error: "Unable to load pinned messages" };
+                    } else {
+                        messages = {
+                            kind: "success",
+                            data: groupMessagesByDate(
+                                resp.events.sort((a, b) => a.index - b.index)
+                            ).reverse(),
+                        };
+                    }
+                })
+                .catch((err) => {
+                    rollbar.error("Unable to load pinned messages: ", err);
+                    messages = { kind: "error", error: err.toString() };
+                });
+        } else {
+            messages = { kind: "success", data: [] };
+        }
+    }
 
     function dateGroupKey(group: EventWrapper<Message>[]): string {
         const first = group[0] && group[0] && group[0].timestamp;
@@ -80,11 +87,10 @@
                 </div>
                 {#each dayGroup as message, _i (message.event.messageId)}
                     <PinnedMessage
-                        chatId={controller.chatId}
-                        user={controller.user}
+                        {chatId}
+                        user={currentUser}
                         senderId={message.event.sender}
                         msg={message.event}
-                        me={controller.user.userId === message.event.sender}
                         on:chatWith={chatWith}
                         on:goToMessageIndex />
                 {/each}

@@ -17,16 +17,12 @@
     export let currentUser: User;
 
     let newGroupState: NewGroupState = "group_form";
-    let creatingCanister = false;
-    let addingParticipants = false;
-    let canisterId: string | undefined;
+    let busy = false;
     let candidateGroup: CandidateGroupChat = defaultCandidateGroup();
 
     function reset() {
         newGroupState = "group_form";
-        creatingCanister = false;
-        addingParticipants = false;
-        canisterId = undefined;
+        busy = false;
         candidateGroup = defaultCandidateGroup();
     }
 
@@ -65,85 +61,80 @@
         if (resp.kind === "max_groups_created") return "maxGroupsCreated";
     }
 
-    function onCreateGroup() {
-        if (canisterId === undefined) {
-            creatingCanister = true;
+    function createGroup() {
+        busy = true;
 
-            if (!candidateGroup.isPublic) {
-                newGroupState = "choosing_participants";
-            }
-
-            api.createGroupChat(candidateGroup)
-                .then((resp) => {
-                    if (resp.kind !== "success") {
-                        const err = groupCreationErrorMessage(resp);
-                        if (err) toastStore.showFailureToast(err);
-                        newGroupState = "group_form";
-                    } else {
-                        canisterId = resp.canisterId;
-                        if (candidateGroup.isPublic) {
-                            onGroupCreated();
-                        }
-                    }
-                })
-                .catch((err) => {
-                    rollbar.error("Unable to create group", err);
-                    toastStore.showFailureToast("groupCreationFailed");
+        api.createGroupChat(candidateGroup)
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    const err = groupCreationErrorMessage(resp);
+                    if (err) toastStore.showFailureToast(err);
                     newGroupState = "group_form";
-                })
-                .finally(() => (creatingCanister = false));
-        }
+                } else {
+                    return optionallyAddParticipants(resp.canisterId)
+                        .then(() => {
+                            onGroupCreated(resp.canisterId);
+                        })
+                        .catch((err) => {
+                            rollbar.error("Unable to add participants to group", err);
+                            toastStore.showFailureToast("addParticipantsFailed");
+                            newGroupState = "group_form";
+                        });
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Unable to create group", err);
+                toastStore.showFailureToast("groupCreationFailed");
+                newGroupState = "group_form";
+            })
+            .finally(() => (busy = false));
     }
 
-    function complete() {
-        if (canisterId !== undefined) {
-            addingParticipants = true;
-            api.addParticipants(
+    function optionallyAddParticipants(canisterId: string): Promise<void> {
+        if (candidateGroup.participants.length === 0) {
+            return Promise.resolve();
+        }
+        return api
+            .addParticipants(
                 canisterId,
                 candidateGroup.participants.map((p) => p.user.userId),
                 currentUser.username,
                 false
             )
-                .then((resp) => {
-                    if (resp.kind === "add_participants_success") {
-                        onGroupCreated();
-                    } else {
-                        toastStore.showFailureToast("addParticipantsFailed");
-                    }
-                })
-                .catch((err) => {
-                    rollbar.error("Unable to add participants to group", err);
-                    toastStore.showFailureToast("addParticipantsFailed");
-                })
-                .finally(() => (addingParticipants = false));
+            .then((resp) => {
+                if (resp.kind !== "add_participants_success") {
+                    Promise.reject("Unable to add participants to the new group");
+                }
+            });
+    }
+
+    function createOrChooseParticipants() {
+        if (!candidateGroup.isPublic) {
+            newGroupState = "choosing_participants";
+        } else {
+            createGroup();
         }
     }
 
-    function onGroupCreated() {
-        if (canisterId !== undefined) {
-            const url = `/${canisterId}`;
-            dispatch(
-                "groupCreated",
-                groupChatFromCandidate(currentUser.userId, canisterId, candidateGroup)
-            );
-            reset();
+    function onGroupCreated(canisterId: string) {
+        const url = `/${canisterId}`;
+        dispatch(
+            "groupCreated",
+            groupChatFromCandidate(currentUser.userId, canisterId, candidateGroup)
+        );
+        reset();
 
-            // tick ensure that the new chat will have made its way in to the chat list by the time we arrive at the route
-            tick().then(() => push(url)); // trigger the selection of the chat
-        }
+        // tick ensure that the new chat will have made its way in to the chat list by the time we arrive at the route
+        tick().then(() => push(url)); // trigger the selection of the chat
     }
 </script>
 
 {#if newGroupState === "group_form"}
     <NewGroup
-        {creatingCanister}
+        {busy}
         bind:candidateGroup
         on:cancelNewGroup
-        on:createGroup={onCreateGroup} />
+        on:createGroup={createOrChooseParticipants} />
 {:else if newGroupState === "choosing_participants"}
-    <ChooseParticipants
-        {creatingCanister}
-        {addingParticipants}
-        bind:candidateGroup
-        on:complete={complete} />
+    <ChooseParticipants {busy} bind:candidateGroup on:complete={createGroup} />
 {/if}
