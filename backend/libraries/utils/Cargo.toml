@@ -10,7 +10,7 @@ edition = "2021"
 candid = "0.7.14"
 canister_client_macros = { path = "../canister_client_macros" }
 getrandom = { version = "0.2.3", features = ["js"] }
-ic-cdk = "0.5.0"
+ic-cdk = "0.5.1"
 rand = "0.7.3"
 range-set = { version = "0.0.9", features = ["serde"], optional = true }
 serde = "1.0.136"
