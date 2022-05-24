@@ -16,7 +16,11 @@ pub(crate) fn send_welcome_message() {
         text: WELCOME_MESSAGE.to_string(),
     });
 
-    mutate_state(|state| send_message(content, true, state));
+    mutate_state(|state| {
+        if !bot_chat_exists(state) {
+            send_message(content, true, state);
+        }
+    });
 }
 
 pub(crate) fn send_existing_user_welcome_message() {
@@ -24,7 +28,11 @@ pub(crate) fn send_existing_user_welcome_message() {
         text: EXISTING_USER_WELCOME_MESSAGE.to_string(),
     });
 
-    mutate_state(|state| send_message(content, true, state));
+    mutate_state(|state| {
+        if !bot_chat_exists(state) {
+            send_message(content, true, state)
+        }
+    });
 }
 
 pub(crate) fn send_group_deleted_message(
@@ -70,4 +78,8 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
     };
 
     c2c_send_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
+}
+
+fn bot_chat_exists(runtime_state: &RuntimeState) -> bool {
+    runtime_state.data.direct_chats.get(&OPENCHAT_BOT_USER_ID.into()).is_some()
 }
