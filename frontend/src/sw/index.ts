@@ -8,7 +8,7 @@ import { UnsupportedValueError } from "../utils/error";
 import { notification as toNotification } from "../services/notifications/mappers";
 import { getSoftDisabled } from "../utils/caching";
 import { toUint8Array } from "../utils/base64";
-import { E8S_PER_TOKEN } from "../domain/crypto";
+import { Cryptocurrency, E8S_PER_TOKEN } from "../domain/crypto";
 
 export {};
 declare const self: ServiceWorkerGlobalScope;
@@ -146,13 +146,19 @@ function extractMessageContentFromCryptoContent(
 ): ContentExtract {
     if (content.transfer.kind === "completed" || content.transfer.kind === "pending") {
         return {
-            text: `${senderName} sent ${Number(content.transfer.amountE8s) / E8S_PER_TOKEN} ICP`,
+            text: `${senderName} sent ${
+                Number(content.transfer.amountE8s) / E8S_PER_TOKEN
+            } ${toSymbol(content.transfer.token)}`,
         };
     } else {
         return {
             text: `${senderName} sent a crypto transfer`,
         };
     }
+}
+
+function toSymbol(token: Cryptocurrency): string {
+    return token.toUpperCase();
 }
 
 function extractMessageContent(

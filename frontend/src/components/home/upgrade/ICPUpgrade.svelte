@@ -43,14 +43,14 @@
     function refreshBalance() {
         refreshing = true;
         error = undefined;
-        api.refreshAccountBalance("icp", user.cryptoAccount)
+        api.refreshAccountBalance(token, user.cryptoAccount)
             .then((resp) => {
                 accountBalance = Number(resp.e8s);
                 error = undefined;
             })
             .catch((err) => {
-                error = "unableToRefreshAccountBalance";
-                rollbar.error("Unable to refresh user's account balance", err);
+                error = $_("unableToRefreshAccountBalance", { values: { token } });
+                rollbar.error("Unable to refresh user's ICP account balance", err);
             })
             .finally(() => (refreshing = false));
     }
@@ -85,12 +85,12 @@
                     error = undefined;
                     confirmed = true;
                 } else {
-                    error = "register.unableToConfirmFee";
+                    error = $_("register.unableToConfirmFee");
                     rollbar.error("Unable to upgrade storage", resp);
                 }
             })
             .catch((err) => {
-                error = "register.unableToConfirmFee";
+                error = $_("register.unableToConfirmFee");
                 rollbar.error("Unable to upgrade storage", err);
             })
             .finally(() => (confirming = false));
@@ -152,7 +152,7 @@
         </p>
 
         {#if error}
-            <ErrorMessage>{$_(error)}</ErrorMessage>
+            <ErrorMessage>{error}</ErrorMessage>
         {/if}
     {/if}
 </div>
