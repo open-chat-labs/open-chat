@@ -288,7 +288,9 @@
             return true;
         }
 
-        const tokenMatch = txt.match(/^\/(icp|btc|chat) *(\d*[.,]?\d*)$/);
+        const tokenMatch = process.env.ENABLE_MULTI_CRYPTO
+            ? txt.match(/^\/(icp|btc|chat) *(\d*[.,]?\d*)$/)
+            : txt.match(/^\/(icp) *(\d*[.,]?\d*)$/);
         if (tokenMatch && tokenMatch[2] !== undefined) {
             dispatch("tokenTransfer", {
                 token: tokenMatch[1],
