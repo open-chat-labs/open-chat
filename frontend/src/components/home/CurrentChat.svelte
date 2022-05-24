@@ -16,7 +16,8 @@
     } from "../../domain/chat/chat.utils";
     import type { EnhancedReplyContext, GroupChatSummary, Mention } from "../../domain/chat/chat";
     import PollBuilder from "./PollBuilder.svelte";
-    import ICPTransferBuilder from "./ICPTransferBuilder.svelte";
+    import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
+	import { userStore } from "stores/user";
     import {
         canBlockUsers,
         canCreatePolls,
@@ -27,7 +28,8 @@
     } from "../../domain/chat/chat.utils";
     import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
     import GiphySelector from "./GiphySelector.svelte";
-    import { userStore } from "stores/user";
+    import type { Cryptocurrency } from "../../domain/crypto";
+    import { lastCryptoSent } from "../../stores/crypto";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -38,11 +40,10 @@
     let firstUnreadMessage: number | undefined;
     let firstUnreadMention: Mention | undefined;
     let creatingPoll = false;
-    let creatingICPTransfer = false;
+    let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
     let selectingGif = false;
     let footer: Footer;
     let pollBuilder: PollBuilder;
-    let icpTransferBuilder: ICPTransferBuilder;
     let giphySelector: GiphySelector;
     let showSearchHeader = false;
     let searchTerm = "";
@@ -117,11 +118,11 @@
         creatingPoll = true;
     }
 
-    function icpTransfer(ev: CustomEvent<bigint>) {
-        if (icpTransferBuilder !== undefined) {
-            icpTransferBuilder.reset(ev.detail);
-        }
-        creatingICPTransfer = true;
+    function tokenTransfer(ev: CustomEvent<{ token: Cryptocurrency; amount: bigint } | undefined>) {
+        creatingCryptoTransfer = ev.detail ?? {
+            token: $lastCryptoSent,
+            amount: BigInt(0),
+        };
     }
 
     function attachGif(ev: CustomEvent<string>) {
@@ -153,11 +154,14 @@
     on:sendPoll={footer.sendMessageWithContent}
     bind:open={creatingPoll} />
 
-<ICPTransferBuilder
-    bind:this={icpTransferBuilder}
-    on:sendTransfer={footer.sendMessageWithContent}
-    {controller}
-    bind:open={creatingICPTransfer} />
+{#if creatingCryptoTransfer !== undefined}
+    <CryptoTransferBuilder
+        token={creatingCryptoTransfer.token}
+        draftAmountE8s={creatingCryptoTransfer.amount}
+        on:sendTransfer={footer.sendMessageWithContent}
+        on:close={() => (creatingCryptoTransfer = undefined)}
+        {controller} />
+{/if}
 
 <GiphySelector
     bind:this={giphySelector}
@@ -220,7 +224,7 @@
             on:cancelPreview
             on:upgrade
             on:attachGif={attachGif}
-            on:icpTransfer={icpTransfer}
+            on:tokenTransfer={tokenTransfer}
             on:searchChat={searchChat}
             on:createPoll={createPoll} />
     {/if}

@@ -2,7 +2,7 @@ import { locale } from "svelte-i18n";
 import { get } from "svelte/store";
 import { getDecimalSeparator } from "./i18n";
 
-export function validateICPInput(value: string): ValidatedICPInput {
+export function validateTokenInput(value: string): ValidatedICPInput {
     const [replacementText, e8s] = validateInput(value, 8);
 
     return {
@@ -56,7 +56,7 @@ function parseBigInt(value: string): bigint | undefined {
     return integerRegex.test(value) ? BigInt(value) : undefined;
 }
 
-export function formatICP(
+export function formatTokens(
     e8s: bigint,
     minDecimals: number,
     decimalSeparatorOverride?: string

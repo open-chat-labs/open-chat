@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { formatICP, validateICPInput } from "../../utils/cryptoFormatter";
-    import { E8S_PER_ICP } from "../../domain/user/user";
+    import { formatTokens, validateTokenInput } from "../../utils/cryptoFormatter";
+    import { E8S_PER_TOKEN } from "../../domain/crypto";
     import { onMount } from "svelte";
 
     export let amountE8s: bigint = BigInt(0);
@@ -11,15 +11,15 @@
 
     onMount(() => {
         if (amountE8s > BigInt(0)) {
-            inputElement.value = formatICP(amountE8s, 0, ".");
+            inputElement.value = formatTokens(amountE8s, 0, ".");
         }
     });
 
     $: {
         if (inputElement !== undefined) {
-            const e8s = validateICPInput(inputElement.value).e8s;
+            const e8s = validateTokenInput(inputElement.value).e8s;
             if (e8s !== amountE8s) {
-                inputElement.value = formatICP(amountE8s, 0, ".");
+                inputElement.value = formatTokens(amountE8s, 0, ".");
             }
         }
     }
@@ -27,11 +27,11 @@
     function onInput(ev: Event) {
         const inputValue = (ev.target as HTMLInputElement).value;
 
-        let { replacementText, e8s } = validateICPInput(inputValue);
+        let { replacementText, e8s } = validateTokenInput(inputValue);
 
         if (e8s > maxAmountE8s) {
             e8s = maxAmountE8s;
-            inputElement.value = formatICP(maxAmountE8s, 0, ".");
+            inputElement.value = formatTokens(maxAmountE8s, 0, ".");
         } else if (replacementText !== undefined) {
             inputElement.value = replacementText;
         }
@@ -44,7 +44,7 @@
     {autofocus}
     class="amount-val"
     min={0}
-    max={Number(maxAmountE8s) / E8S_PER_ICP}
+    max={Number(maxAmountE8s) / E8S_PER_TOKEN}
     type="number"
     bind:this={inputElement}
     placeholder="0"
@@ -77,7 +77,7 @@
     }
 
     /* Firefox */
-    input[type=number] {
+    input[type="number"] {
         -moz-appearance: textfield;
     }
 </style>

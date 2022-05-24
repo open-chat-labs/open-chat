@@ -198,7 +198,7 @@ async function buildShareFromMessage(userId: string, me: boolean, msg: Message):
             }
             text += transactionUrl;
         }
-        share.text = text ?? get(_)("icpTransfer.unexpected");
+        share.text = text ?? get(_)("tokenTransfer.unexpected");
     }
 
     return share;

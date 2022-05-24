@@ -9,7 +9,7 @@
     import Congratulations from "./Congratulations.svelte";
     import type { CreatedUser } from "../../../domain/user/user";
     import type { ServiceContainer } from "../../../services/serviceContainer";
-    import { E8S_PER_ICP } from "../../../domain/user/user";
+    import { Cryptocurrency, cryptoLookup, E8S_PER_TOKEN } from "../../../domain/crypto";
     import { rollbar } from "utils/logging";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
@@ -28,25 +28,29 @@
     let refreshing = false;
     let accountBalance = 0;
 
-    $: icpBalance = accountBalance / E8S_PER_ICP; //balance in the user's account expressed as ICP
+    const symbol = "ICP";
+    const token: Cryptocurrency = "icp";
+
+    $: icpBalance = accountBalance / E8S_PER_TOKEN; //balance in the user's account expressed as ICP
     $: min = Math.ceil(($storageStore.byteLimit / ONE_GB) * 10); //the min bound expressed as number of 1/10 GB units
     $: newLimit = min;
     $: toPay = (newLimit - min) * icpPrice;
     $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
+    $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
 
     onMount(refreshBalance);
 
     function refreshBalance() {
         refreshing = true;
         error = undefined;
-        api.refreshAccountBalance(user.icpAccount)
+        api.refreshAccountBalance(token, user.cryptoAccount)
             .then((resp) => {
                 accountBalance = Number(resp.e8s);
                 error = undefined;
             })
             .catch((err) => {
-                error = "unableToRefreshAccountBalance";
-                rollbar.error("Unable to refresh user's account balance", err);
+                error = $_("unableToRefreshAccountBalance", { values: { token } });
+                rollbar.error("Unable to refresh user's ICP account balance", err);
             })
             .finally(() => (refreshing = false));
     }
@@ -81,12 +85,12 @@
                     error = undefined;
                     confirmed = true;
                 } else {
-                    error = "register.unableToConfirmFee";
+                    error = $_("register.unableToConfirmFee");
                     rollbar.error("Unable to upgrade storage", resp);
                 }
             })
             .catch((err) => {
-                error = "register.unableToConfirmFee";
+                error = $_("register.unableToConfirmFee");
                 rollbar.error("Unable to upgrade storage", err);
             })
             .finally(() => (confirming = false));
@@ -148,7 +152,7 @@
         </p>
 
         {#if error}
-            <ErrorMessage>{$_(error)}</ErrorMessage>
+            <ErrorMessage>{error}</ErrorMessage>
         {/if}
     {/if}
 </div>
@@ -157,11 +161,8 @@
         <Button small={true} on:click={cancel}>{$_("close")}</Button>
     {:else}
         {#if !$mobileWidth}
-            <a
-                class="how-to"
-                href={"https://www.finder.com/uk/how-to-buy-internet-computer"}
-                target="_blank">
-                {$_("howToBuyICP")}
+            <a class="how-to" href={howToBuyUrl} target="_blank">
+                {$_("howToBuyToken", { values: { token: symbol } })}
             </a>
         {/if}
         {#if insufficientFunds}

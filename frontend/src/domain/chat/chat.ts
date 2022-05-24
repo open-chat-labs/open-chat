@@ -2,6 +2,7 @@ import type DRange from "drange";
 import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
+import type { Cryptocurrency } from "../crypto";
 
 export type InternalError = { kind: "internal_error" };
 
@@ -24,8 +25,6 @@ export type IndexRange = [number, number];
 export interface PlaceholderContent {
     kind: "placeholder_content";
 }
-
-export type Cryptocurrency = "icp" | "btc" | "chat";
 
 export type CryptocurrencyDeposit = {
     token: Cryptocurrency;
