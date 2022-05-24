@@ -1,0 +1,18 @@
+[package]
+name = "canister_api_macros"
+version = "0.1.0"
+authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+proc-macro = true
+
+[dependencies]
+msgpack = { path = "../msgpack" }
+proc-macro2 = "1.0"
+quote = "1.0.10"
+serde = "1.0.136"
+serde_tokenstream = "0.1.3"
+syn = "1.0.81"

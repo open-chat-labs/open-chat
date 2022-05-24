@@ -23,7 +23,7 @@ pub fn trace(_: TokenStream, item: TokenStream) -> TokenStream {
         quote! { #inner_method_name ( #(#arg_names),* ) }
     };
 
-    let expanded = quote!(
+    let expanded = quote! {
         #[allow(unused_mut)]
         #[tracing::instrument(level = "trace")]
         #wrapper_sig {
@@ -32,7 +32,7 @@ pub fn trace(_: TokenStream, item: TokenStream) -> TokenStream {
             result
         }
         #inner
-    );
+    };
 
     TokenStream::from(expanded)
 }

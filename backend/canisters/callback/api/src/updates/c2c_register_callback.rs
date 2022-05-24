@@ -1,5 +1,5 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use types::TimestampMillis;
 
@@ -10,7 +10,7 @@ pub struct Args {
     pub timestamp: TimestampMillis,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
 }

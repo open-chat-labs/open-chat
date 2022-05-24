@@ -581,6 +581,7 @@ version = "0.1.0"
 dependencies = [
  "callback_canister",
  "candid",
+ "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
@@ -588,6 +589,7 @@ dependencies = [
  "http_request",
  "ic-cdk 0.5.1",
  "ic-cdk-macros",
+ "msgpack",
  "serde",
  "serde_bytes",
  "stable_memory",
@@ -640,6 +642,18 @@ name = "candid_gen"
 version = "0.1.0"
 dependencies = [
  "quote",
+ "syn",
+]
+
+[[package]]
+name = "canister_api_macros"
+version = "0.1.0"
+dependencies = [
+ "msgpack",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_tokenstream",
  "syn",
 ]
 
@@ -1934,8 +1948,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "953c6f940bbf1f79460849fa61cd3ac04768f8f0deb743d185860892f65cbff2"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=2c9dea120440bdc7ced21d0db96cda5cf9c734bf#2c9dea120440bdc7ced21d0db96cda5cf9c734bf"
 dependencies = [
  "candid",
  "cfg-if",
@@ -1945,8 +1958,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk-macros"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f50910f1df55124b5374847fd2b4e3515c426f6d1ce1a23503208e80832fbc2"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=2c9dea120440bdc7ced21d0db96cda5cf9c734bf#2c9dea120440bdc7ced21d0db96cda5cf9c734bf"
 dependencies = [
  "candid",
  "ic-cdk 0.5.1",
@@ -2412,6 +2424,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9f1c5b025cda876f66ef43a113f91ebc9f4ccef34843000e0adf6ebbab84e21"
 dependencies = [
  "winapi",
+]
+
+[[package]]
+name = "msgpack"
+version = "0.1.0"
+dependencies = [
+ "rmp-serde",
+ "serde",
 ]
 
 [[package]]
@@ -3353,19 +3373,20 @@ dependencies = [
 
 [[package]]
 name = "rmp"
-version = "0.8.10"
+version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f55e5fa1446c4d5dd1f5daeed2a4fe193071771a2636274d0d7a3b082aa7ad6"
+checksum = "44519172358fd6d58656c86ab8e7fbc9e1490c3e8f14d35ed78ca0dd07403c9f"
 dependencies = [
  "byteorder",
  "num-traits",
+ "paste",
 ]
 
 [[package]]
 name = "rmp-serde"
-version = "1.0.0"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3eedffbfcc6a428f230c04baf8f59bd73c1781361e4286111fe900849aaddaf"
+checksum = "25786b0d276110195fa3d6f3f31299900cf71dfbd6c28450f3f58a0e7f7a347e"
 dependencies = [
  "byteorder",
  "rmp",

@@ -1,8 +1,8 @@
 use crate::model::callbacks::Callback;
 use crate::{mutate_state, RuntimeState};
 use callback_canister::c2c_register_callback::{Response::*, *};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
 
 #[update]
 #[trace]
