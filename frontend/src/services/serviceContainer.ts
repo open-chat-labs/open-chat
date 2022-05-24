@@ -96,7 +96,7 @@ import { cryptoBalance } from "../stores/crypto";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import type { ServiceRetryInterrupt } from "./candidService";
-import { OPENCHAT_BOT, OPENCHAT_BOT_AVATAR } from "utils/user";
+import { OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_AVATAR_URL } from "../stores/user";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -517,7 +517,10 @@ export class ServiceContainer implements MarkMessagesRead {
             if (blobType === "avatar" && key) {
                 return {
                     ...dataContent,
-                    blobUrl: key === OPENCHAT_BOT ? OPENCHAT_BOT_AVATAR : buildIdenticonUrl(key),
+                    blobUrl:
+                        key === OPENCHAT_BOT_USER_ID
+                            ? OPENCHAT_BOT_AVATAR_URL
+                            : buildIdenticonUrl(key),
                 };
             }
         }
@@ -675,8 +678,8 @@ export class ServiceContainer implements MarkMessagesRead {
         return this._userIndexClient.checkUsername(username);
     }
 
-    setUsername(username: string): Promise<SetUsernameResponse> {
-        return this._userIndexClient.setUsername(username);
+    setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
+        return this._userIndexClient.setUsername(userId, username);
     }
 
     differentIdentity(identity: Identity): boolean {

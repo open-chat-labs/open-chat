@@ -106,6 +106,8 @@
                     .then((resp) => {
                         if (resp === "bio_too_long") {
                             bioError = "register.bioTooLong";
+                        } else {
+                            originalBio = userbio;
                         }
                     })
                     .catch((err) => {
@@ -118,13 +120,14 @@
         if (validUsername !== undefined) {
             promises.push(
                 api
-                    .setUsername(validUsername)
+                    .setUsername(user.userId, validUsername)
                     .then((resp) => {
                         if (resp === "success") {
                             userStore.add({
                                 ...user,
                                 username: validUsername,
                             });
+                            validUsername = undefined;
                         } else {
                             if (resp === "username_taken") {
                                 usernameError = "register.usernameTaken";

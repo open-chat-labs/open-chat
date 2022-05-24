@@ -145,7 +145,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     @profile("userIndexClient")
-    setUsername(username: string): Promise<SetUsernameResponse> {
+    setUsername(_userId: string, username: string): Promise<SetUsernameResponse> {
         return this.handleResponse(
             this.userService.set_username({
                 username: username,

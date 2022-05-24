@@ -662,6 +662,17 @@ export async function setCachedUsers(db: Database, users: UserSummary[]): Promis
     await tx.done;
 }
 
+export async function setUsername(db: Database, userId: string, username: string): Promise<void> {
+    const tx = (await db).transaction("users", "readwrite", { durability: "relaxed" });
+    const store = tx.objectStore("users");
+    const user = await store.get(userId);
+    if (user !== undefined) {
+        user.username = username;
+        await store.put(user, userId);
+    }
+    await tx.done;
+}
+
 let db: Database | undefined;
 
 export function getDb(): Database | undefined {
