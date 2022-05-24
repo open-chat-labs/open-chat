@@ -288,11 +288,11 @@
             return true;
         }
 
-        const icpMatch = txt.match(/^\/(icp|btc|chat) *(\d*[.,]?\d*)$/);
-        if (icpMatch && icpMatch[2] !== undefined) {
+        const tokenMatch = txt.match(/^\/(icp|btc|chat) *(\d*[.,]?\d*)$/);
+        if (tokenMatch && tokenMatch[2] !== undefined) {
             dispatch("tokenTransfer", {
-                token: icpMatch[1],
-                amount: validateTokenInput(icpMatch[2]).e8s,
+                token: tokenMatch[1],
+                amount: validateTokenInput(tokenMatch[2]).e8s,
             });
             return true;
         }

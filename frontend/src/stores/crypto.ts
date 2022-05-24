@@ -13,12 +13,11 @@ export const cryptoBalance = {
     subscribe: cryptoBalanceStore.subscribe,
     set: (crypto: Cryptocurrency, balance: Tokens): void => {
         cryptoBalanceStore.update((record) => {
-            record[crypto] = balance.e8s;
-            return { ...record };
+            return {
+                ...record,
+                [crypto]: balance.e8s,
+            };
         });
-    },
-    tokens: (): Cryptocurrency[] => {
-        return Object.keys(get(cryptoBalanceStore)).map((k) => k as Cryptocurrency);
     },
 };
 

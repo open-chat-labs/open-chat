@@ -47,7 +47,7 @@
     import { currentUserKey } from "../../../fsm/home.controller";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { cryptoBalance } from "../../../stores/crypto";
-    import type { Cryptocurrency } from "../../../domain/crypto";
+    import { Cryptocurrency, cryptoCurrencyList } from "../../../domain/crypto";
     import LinkButton from "../../LinkButton.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
@@ -337,7 +337,7 @@
                 </thead>
                 <tbody>
                     {#if process.env.ENABLE_MULTI_CRYPTO}
-                        {#each cryptoBalance.tokens() as token}
+                        {#each cryptoCurrencyList as token}
                             <tr>
                                 <td class="token">{token.toUpperCase()}</td>
                                 <td class="balance"

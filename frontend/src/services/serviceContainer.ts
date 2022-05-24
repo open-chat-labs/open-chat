@@ -840,15 +840,10 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
-        return this._ledgerClients[crypto]
-            .accountBalance(account)
-            .then((val) => {
-                cryptoBalance.set(crypto, val);
-                return val;
-            })
-            .catch((err) => {
-                throw err;
-            });
+        return this._ledgerClients[crypto].accountBalance(account).then((val) => {
+            cryptoBalance.set(crypto, val);
+            return val;
+        });
     }
 
     getGroupMessagesByMessageIndex(

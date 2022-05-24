@@ -46,7 +46,7 @@
         }
     }
 
-    function createICPTransfer() {
+    function createTokenTransfer() {
         dispatch("tokenTransfer");
         drawOpen = false;
     }
@@ -110,7 +110,7 @@
                 on:open={() => (messageAction = "file")}
                 on:close={close} />
         </div>
-        <div class="send-icp" on:click|stopPropagation={createICPTransfer}>
+        <div class="send-icp" on:click|stopPropagation={createTokenTransfer}>
             <HoverIcon title={"Send Crypto"}>
                 <SwapHorizontal size={$iconSize} color={iconColour} />
             </HoverIcon>

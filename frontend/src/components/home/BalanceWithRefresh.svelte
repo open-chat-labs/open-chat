@@ -42,7 +42,7 @@
     }
 </script>
 
-<div class="container" align-centre={label !== undefined}>
+<div class="container" class:align-centre={label === undefined}>
     <div class="balance">
         <div class="amount" class:bold>{formatTokens(value, minDecimals)}</div>
         {#if label !== undefined}
@@ -67,6 +67,8 @@
 
     .refresh {
         cursor: pointer;
+        // We want the size of the refresh icon (1em) to be 24px
+        // but we can't use rem units in SVGs
         @include font-size(fs-140);
         height: $sp5;
         width: $sp5;

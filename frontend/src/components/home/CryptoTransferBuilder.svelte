@@ -27,7 +27,12 @@
     import type { ChatController } from "../../fsm/chat.controller";
     import SingleUserSelector from "./SingleUserSelector.svelte";
     import Link from "../Link.svelte";
-    import { Cryptocurrency, cryptoLookup, E8S_PER_TOKEN } from "../../domain/crypto";
+    import {
+        Cryptocurrency,
+        cryptoCurrencyList,
+        cryptoLookup,
+        E8S_PER_TOKEN,
+    } from "../../domain/crypto";
     import Select from "../Select.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
 
@@ -150,7 +155,7 @@
                         <div>{$_("tokenTransfer.send")}</div>
                         <div>
                             <Select bind:value={token} margin={false} on:change={onTokenChanged}>
-                                {#each cryptoBalance.tokens() as t}
+                                {#each cryptoCurrencyList as t}
                                     <option value={t}>{cryptoLookup[t].symbol}</option>
                                 {/each}
                             </Select>
