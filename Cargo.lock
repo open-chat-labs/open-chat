@@ -570,7 +570,7 @@ dependencies = [
  "callback_canister",
  "candid",
  "canister_client_macros",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "tracing",
  "types",
 ]
@@ -586,7 +586,7 @@ dependencies = [
  "canister_tracing_macros",
  "futures",
  "http_request",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "ic-cdk-macros",
  "serde",
  "serde_bytes",
@@ -1537,7 +1537,7 @@ dependencies = [
  "candid",
  "canister_client_macros",
  "group_canister",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "tracing",
  "types",
 ]
@@ -1569,7 +1569,7 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "ic-cdk-macros",
  "itertools",
  "lazy_static",
@@ -1607,7 +1607,7 @@ version = "0.1.0"
 dependencies = [
  "canister_client_macros",
  "group_index_canister",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "tracing",
  "types",
 ]
@@ -1636,7 +1636,7 @@ dependencies = [
  "group_canister_c2c_client",
  "group_index_canister",
  "http_request",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "ic-cdk-macros",
  "rand 0.7.3",
  "search",
@@ -1933,8 +1933,9 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk"
-version = "0.5.0"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=92e71c53735016544e1d5fc650f5f9088cf80baa#92e71c53735016544e1d5fc650f5f9088cf80baa"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "953c6f940bbf1f79460849fa61cd3ac04768f8f0deb743d185860892f65cbff2"
 dependencies = [
  "candid",
  "cfg-if",
@@ -1943,11 +1944,12 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk-macros"
-version = "0.5.0"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=92e71c53735016544e1d5fc650f5f9088cf80baa#92e71c53735016544e1d5fc650f5f9088cf80baa"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f50910f1df55124b5374847fd2b4e3515c426f6d1ce1a23503208e80832fbc2"
 dependencies = [
  "candid",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "proc-macro2",
  "quote",
  "serde",
@@ -2506,7 +2508,7 @@ name = "notifications_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "notifications_canister",
  "tracing",
  "types",
@@ -2532,7 +2534,7 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "http_request",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "ic-cdk-macros",
  "notifications_canister",
  "serde",
@@ -2700,7 +2702,7 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "http_request",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "ic-cdk-macros",
  "online_users_aggregator_canister",
  "serde",
@@ -2733,7 +2735,7 @@ name = "open_storage_bucket_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "open_storage_bucket_canister",
  "tracing",
  "types",
@@ -2744,7 +2746,7 @@ name = "open_storage_bucket_client"
 version = "0.1.0"
 dependencies = [
  "futures",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "open_storage_bucket_canister",
  "open_storage_bucket_canister_c2c_client",
  "types",
@@ -2765,7 +2767,7 @@ name = "open_storage_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "open_storage_index_canister",
  "tracing",
  "types",
@@ -3400,7 +3402,7 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "http_request",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "ic-cdk-macros",
  "root_canister",
  "serde",
@@ -3883,7 +3885,7 @@ name = "stable_memory"
 version = "0.1.0"
 source = "git+https://github.com/open-ic/ic-utils?rev=c7aa6b402a41b2cf5e67903055f2b809b68469c6#c7aa6b402a41b2cf5e67903055f2b809b68469c6"
 dependencies = [
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "rmp-serde",
  "serde",
 ]
@@ -4414,7 +4416,7 @@ name = "user_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "tracing",
  "types",
  "user_canister",
@@ -4448,7 +4450,7 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "ic-cdk-macros",
  "ic-ledger-types",
  "itertools",
@@ -4486,7 +4488,7 @@ name = "user_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client_macros",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "tracing",
  "types",
  "user_index_canister",
@@ -4516,7 +4518,7 @@ dependencies = [
  "group_canister",
  "group_canister_c2c_client",
  "http_request",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "ic-cdk-macros",
  "ic-ledger-types",
  "itertools",
@@ -4550,7 +4552,7 @@ dependencies = [
  "candid",
  "canister_client_macros",
  "getrandom 0.2.6",
- "ic-cdk 0.5.0",
+ "ic-cdk 0.5.1",
  "rand 0.7.3",
  "range-set",
  "serde",

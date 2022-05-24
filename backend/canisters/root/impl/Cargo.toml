@@ -16,8 +16,8 @@ canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "c7aa6b402a41b2cf5e67903055f2b809b68469c6" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 http_request = { path = "../../../libraries/http_request" }
-ic-cdk = "0.5.0"
-ic-cdk-macros = "0.5.0"
+ic-cdk = "0.5.1"
+ic-cdk-macros = "0.5.1"
 root_canister = { path = "../api" }
 serde = "1.0.136"
 stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "c7aa6b402a41b2cf5e67903055f2b809b68469c6" }
