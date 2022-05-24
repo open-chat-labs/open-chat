@@ -4,9 +4,8 @@ use crate::{read_state, RuntimeState, WASM_VERSION};
 use ic_cdk_macros::query;
 use std::collections::{HashMap, HashSet};
 use types::{
-    Alert, AlertDetails, AlertId, ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary,
-    DirectChatSummaryUpdates, GroupChatSummary, GroupChatSummaryInternal, GroupChatSummaryUpdates,
-    GroupChatSummaryUpdatesInternal, GroupDeleted, OptionUpdate, TimestampMillis,
+    ChatId, ChatSummary, ChatSummaryUpdates, DeletedGroupInfo, DirectChatSummary, DirectChatSummaryUpdates, GroupChatSummary,
+    GroupChatSummaryInternal, GroupChatSummaryUpdates, GroupChatSummaryUpdatesInternal, OptionUpdate, TimestampMillis,
 };
 use user_canister::{initial_state, updates};
 use utils::range_set::convert_to_message_index_ranges;
@@ -31,10 +30,8 @@ async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
             initial_state::Response::Success(initial_state::SuccessResult {
                 timestamp: result.timestamp,
                 chats: result.chats_added,
-                // transactions: result.transactions,
                 blocked_users: result.blocked_users,
                 cycles_balance: 0,
-                alerts: result.alerts,
                 upgrades_in_progress: result.upgrades_in_progress,
                 user_canister_wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             })
@@ -191,35 +188,14 @@ fn finalize(
             OptionUpdate::from_update(update.as_ref().map(|a| a.id))
         });
 
-    // Combine the internal alerts with alerts based on deleted groups
-    // and sort so the most recent alerts are at the top
-    let mut alerts = runtime_state.data.alerts.get_all(Some(updates_since), now);
-    for group_deleted in group_chats_deleted {
-        let alert = Alert {
-            id: AlertId::GroupDeleted(group_deleted.clone()).to_string(),
-            elapsed: now - group_deleted.timestamp,
-            timestamp: group_deleted.timestamp,
-            details: AlertDetails::GroupDeleted(GroupDeleted {
-                chat_id: group_deleted.id,
-                deleted_by: group_deleted.deleted_by,
-                group_name: group_deleted.group_name,
-            }),
-            read: false,
-        };
-        alerts.push(alert);
-    }
-    alerts.sort_by_key(|a| a.elapsed);
-
     updates::SuccessResult {
         timestamp: now,
         chats_added,
         chats_updated,
         chats_removed,
-        // transactions,
         blocked_users,
         cycles_balance: None,
         avatar_id,
-        alerts,
         upgrades_in_progress: group_chat_upgrades_in_progress,
         user_canister_wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(updates_since).copied()),
     }

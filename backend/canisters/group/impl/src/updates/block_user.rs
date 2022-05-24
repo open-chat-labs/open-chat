@@ -22,6 +22,7 @@ async fn block_user(args: Args) -> Response {
             removed_by: prepare_result.my_user_id,
             blocked: true,
             group_name: prepare_result.group_name,
+            public: prepare_result.public,
         };
         let response = user_canister_c2c_client::c2c_remove_from_group(args.user_id.into(), &c2c_remove_from_group_args).await;
         if let Err(error) = response {
@@ -38,6 +39,7 @@ struct PrepareResult {
     my_user_id: UserId,
     is_blocked_user_participant: bool,
     group_name: String,
+    public: bool,
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -53,6 +55,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                     my_user_id: participant.user_id,
                     is_blocked_user_participant: false,
                     group_name: runtime_state.data.name.clone(),
+                    public: runtime_state.data.is_public,
                 }),
                 Some(participant_to_remove) => {
                     if participant_to_remove.role.can_be_removed() {
@@ -60,6 +63,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                             my_user_id: participant.user_id,
                             is_blocked_user_participant: true,
                             group_name: runtime_state.data.name.clone(),
+                            public: runtime_state.data.is_public,
                         })
                     } else {
                         Err(CannotBlockUser)

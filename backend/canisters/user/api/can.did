@@ -247,17 +247,6 @@ type SetPreferencesResponse =
         Success;
     };
 
-type MarkAlertsReadArgs =
-    record {
-        alert_ids: vec text;
-    };
-
-type MarkAlertsReadResponse =
-    variant {
-        Success;
-        PartialSuccess: vec text;
-    };
-
 type AssumeGroupSuperAdminArgs =
     record {
         chat_id: ChatId;
@@ -361,7 +350,6 @@ type InitialStateResponse =
             chats: vec ChatSummary;
             blocked_users: vec UserId;
             cycles_balance: Cycles;
-            alerts: vec Alert;
             upgrades_in_progress: vec ChatId;
             user_canister_wasm_version: Version;
         };
@@ -395,7 +383,6 @@ type UpdatesResponse =
             blocked_users: vec UserId;
             cycles_balance: opt Cycles;
             avatar_id: AvatarIdUpdate;
-            alerts: vec Alert;
             upgrades_in_progress: vec ChatId;
             user_canister_wasm_version: opt Version;
         };
@@ -534,7 +521,6 @@ service: {
     mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);
     unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
     set_preferences: (SetPreferencesArgs) -> (SetPreferencesResponse);
-    mark_alerts_read: (MarkAlertsReadArgs) -> (MarkAlertsReadResponse);
     assume_group_super_admin: (AssumeGroupSuperAdminArgs) -> (AssumeGroupSuperAdminResponse);
     relinquish_group_super_admin: (RelinquishGroupSuperAdminArgs) -> (RelinquishGroupSuperAdminResponse);
     add_recommended_group_exclusions: (AddRecommendedGroupExclusionsArgs) -> (AddRecommendedGroupExclusionsResponse);

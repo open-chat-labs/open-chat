@@ -6,19 +6,6 @@ export interface AddedToGroupNotification {
   'chat_id' : ChatId,
   'group_name' : string,
 }
-export interface Alert {
-  'id' : string,
-  'read' : boolean,
-  'timestamp' : TimestampMillis,
-  'details' : AlertDetails,
-  'elapsed' : Milliseconds,
-}
-export type AlertDetails = { 'GroupDeleted' : GroupDeletedAlert } |
-  { 'CryptocurrencyDepositReceived' : CryptocurrencyDeposit } |
-  { 'RemovedFromGroup' : RemovedFromGroupAlert } |
-  { 'BlockedFromGroup' : RemovedFromGroupAlert };
-export type AlertId = { 'Internal' : number } |
-  { 'GroupDeleted' : ChatId };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -310,11 +297,6 @@ export interface GroupChatSummaryUpdates {
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
 }
-export interface GroupDeletedAlert {
-  'deleted_by' : UserId,
-  'chat_id' : ChatId,
-  'group_name' : string,
-}
 export interface GroupDescriptionChanged {
   'new_description' : string,
   'previous_description' : string,
@@ -565,11 +547,6 @@ export interface PublicGroupSummary {
 }
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
-export interface RemovedFromGroupAlert {
-  'chat_id' : ChatId,
-  'removed_by' : UserId,
-  'group_name' : string,
-}
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,

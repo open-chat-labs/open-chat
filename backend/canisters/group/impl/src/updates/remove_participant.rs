@@ -21,6 +21,7 @@ async fn remove_participant(args: Args) -> Response {
         removed_by: prepare_result.removed_by,
         blocked: false,
         group_name: prepare_result.group_name,
+        public: prepare_result.public,
     };
     let response = user_canister_c2c_client::c2c_remove_from_group(args.user_id.into(), &c2c_remove_from_group_args).await;
     if let Err(error) = response {
@@ -35,6 +36,7 @@ async fn remove_participant(args: Args) -> Response {
 struct PrepareResult {
     removed_by: UserId,
     group_name: String,
+    public: bool,
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -50,6 +52,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                         Ok(PrepareResult {
                             removed_by: participant.user_id,
                             group_name: runtime_state.data.name.clone(),
+                            public: runtime_state.data.is_public,
                         })
                     } else {
                         Err(CannotRemoveUser)
