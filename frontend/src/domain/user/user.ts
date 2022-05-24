@@ -1,9 +1,6 @@
 import type { Version } from "../../domain/version";
 import type { DataContent } from "../data/data";
 
-export const E8S_PER_ICP = 100_000_000;
-export const ICP_TRANSFER_FEE_E8S = BigInt(10_000);
-
 export type UserLastOnline = {
     kind: "user" | "bot";
     userId: string;
@@ -91,7 +88,7 @@ export type PhoneStatus =
 export type CreatedUser = {
     kind: "created_user";
     username: string;
-    icpAccount: string;
+    cryptoAccount: string;
     phoneStatus: PhoneStatus;
     userId: string;
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";

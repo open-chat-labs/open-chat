@@ -5,7 +5,7 @@
     export let margin: boolean = true;
 </script>
 
-<select class:invalid class:margin {disabled} bind:value class={`select`}>
+<select class:invalid class:margin {disabled} bind:value class={`select`} on:change>
     <slot />
 </select>
 
@@ -18,9 +18,8 @@
         transition: border ease-in-out 300ms;
         display: block;
         width: 100%;
-        height: 40px;
         line-height: 24px;
-        padding: $sp1 $sp3;
+        padding: $sp3;
         @include font(book, normal, fs-100);
         color: var(--input-txt);
         background-color: var(--input-bg);

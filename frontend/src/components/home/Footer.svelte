@@ -95,7 +95,10 @@
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         controller.confirmMessage(msg, resp);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            controller.api.refreshAccountBalance(createdUser.icpAccount);
+                            controller.api.refreshAccountBalance(
+                                msg.content.transfer.token,
+                                createdUser.cryptoAccount
+                            );
                         }
                         if ($chat.kind === "direct_chat") {
                             trackEvent("sent_direct_message");
@@ -217,7 +220,7 @@
         on:sendMessage={sendMessage}
         on:createPoll
         on:searchChat
-        on:icpTransfer
+        on:tokenTransfer
         on:attachGif
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
