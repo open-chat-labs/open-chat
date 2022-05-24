@@ -3,7 +3,7 @@ import { immutableStore } from "./immutable";
 
 const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
 const OPENCHAT_BOT_USERNAME = "OpenChatBot";
-const OPENCHAT_BOT_AVATAR_URL = "/oc-logo2.svg";
+const OPENCHAT_BOT_AVATAR_URL = "assets/robot.svg";
 
 const { subscribe, update } = immutableStore<UserLookup>({
     [OPENCHAT_BOT_USER_ID]: {
