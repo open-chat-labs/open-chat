@@ -57,6 +57,10 @@ impl RuntimeState {
         self.env.caller() == self.data.user_index_canister_id
     }
 
+    pub fn is_caller_group_index(&self) -> bool {
+        self.env.caller() == self.data.group_index_canister_id
+    }
+
     pub fn is_caller_callback_canister(&self) -> bool {
         self.env.caller() == self.data.callback_canister_id
     }

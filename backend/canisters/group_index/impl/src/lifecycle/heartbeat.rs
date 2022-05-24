@@ -1,7 +1,7 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MIN_CYCLES_BALANCE};
 use ic_cdk_macros::heartbeat;
-use types::{CanisterId, ChatId, Cycles, CyclesTopUp, Version};
+use types::{CanisterId, ChatId, Cycles, CyclesTopUp, DeletedGroupInfo, UserId, Version};
 use utils::canister::{self, FailedUpgrade};
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, CYCLES_REQUIRED_FOR_UPGRADE};
 use utils::cycles::can_spend_cycles;
@@ -13,6 +13,7 @@ fn heartbeat() {
     upgrade_canisters::run();
     topup_canister_pool::run();
     calculate_hot_groups::run();
+    push_group_deleted_notifications::run();
     calculate_metrics::run();
 }
 
@@ -197,6 +198,37 @@ mod calculate_hot_groups {
             .filter_map(|r| if let Ok(Response::Success(result)) = r { Some(result) } else { None })
             .map(|r| r.summary.into())
             .collect()
+    }
+}
+
+mod push_group_deleted_notifications {
+    use super::*;
+
+    const MAX_BATCH_SIZE: usize = 100;
+
+    pub fn run() {
+        let batch = mutate_state(next_batch);
+        if !batch.is_empty() {
+            ic_cdk::spawn(push_notifications(batch));
+        }
+    }
+
+    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<(UserId, DeletedGroupInfo)> {
+        (0..MAX_BATCH_SIZE)
+            .map_while(|_| runtime_state.data.deleted_groups.dequeue_group_deleted_notification())
+            .collect()
+    }
+
+    async fn push_notifications(notifications: Vec<(UserId, DeletedGroupInfo)>) {
+        let futures: Vec<_> = notifications.into_iter().map(|(u, d)| push_notification(u, d)).collect();
+
+        futures::future::join_all(futures).await;
+    }
+
+    async fn push_notification(user_id: UserId, deleted_group: DeletedGroupInfo) {
+        let args = user_canister::c2c_notify_group_deleted::Args { deleted_group };
+        // TODO handle case where this fails
+        let _ = user_canister_c2c_client::c2c_notify_group_deleted(user_id.into(), &args).await;
     }
 }
 

@@ -9,4 +9,6 @@ pub struct DeletedGroupInfo {
     pub deleted_by: UserId,
     #[serde(default)]
     pub group_name: String,
+    #[serde(default)]
+    pub public: bool,
 }

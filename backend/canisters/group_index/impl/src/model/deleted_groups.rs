@@ -1,12 +1,14 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::HashMap;
-use types::{ChatId, DeletedGroupInfo, TimestampMillis, UserId};
+use std::collections::{HashMap, VecDeque};
+use types::{ChatId, DeletedGroupInfo, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct DeletedGroups {
     groups: HashMap<ChatId, DeletedGroupInfo>,
+    #[serde(default)]
+    pending_group_deleted_notifications: VecDeque<(ChatId, UserId)>,
 }
 
 impl DeletedGroups {
@@ -14,18 +16,25 @@ impl DeletedGroups {
         self.groups.get(chat_id)
     }
 
-    pub fn insert(&mut self, chat_id: ChatId, deleted_by: UserId, group_name: String, now: TimestampMillis) -> bool {
+    pub fn insert(&mut self, deleted_group: DeletedGroupInfo, members: Vec<UserId>) -> bool {
+        let chat_id = deleted_group.id;
+
         match self.groups.entry(chat_id) {
             Occupied(_) => false,
             Vacant(e) => {
-                e.insert(DeletedGroupInfo {
-                    id: chat_id,
-                    timestamp: now,
-                    deleted_by,
-                    group_name,
-                });
+                let deleted_by = deleted_group.deleted_by;
+                for user_id in members.into_iter().filter(|u| *u != deleted_by) {
+                    self.pending_group_deleted_notifications.push_back((chat_id, user_id));
+                }
+                e.insert(deleted_group);
                 true
             }
         }
+    }
+
+    pub fn dequeue_group_deleted_notification(&mut self) -> Option<(UserId, DeletedGroupInfo)> {
+        self.pending_group_deleted_notifications
+            .pop_front()
+            .and_then(|(chat_id, user_id)| self.groups.get(&chat_id).map(|d| (user_id, d.clone())))
     }
 }

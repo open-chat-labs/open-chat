@@ -11,20 +11,46 @@ pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 const WELCOME_MESSAGE: &str = "Hello World!";
 const EXISTING_USER_WELCOME_MESSAGE: &str = "Hello World!";
 
-pub fn send_welcome_message() {
+pub(crate) fn send_welcome_message() {
     let content = MessageContent::Text(TextContent {
         text: WELCOME_MESSAGE.to_string(),
     });
 
-    mutate_state(|state| send_message(content, true, state));
+    mutate_state(|state| {
+        if !bot_chat_exists(state) {
+            send_message(content, true, state);
+        }
+    });
 }
 
-pub fn send_existing_user_welcome_message() {
+pub(crate) fn send_existing_user_welcome_message() {
     let content = MessageContent::Text(TextContent {
         text: EXISTING_USER_WELCOME_MESSAGE.to_string(),
     });
 
-    mutate_state(|state| send_message(content, true, state));
+    mutate_state(|state| {
+        if !bot_chat_exists(state) {
+            send_message(content, true, state)
+        }
+    });
+}
+
+pub(crate) fn send_group_deleted_message(
+    deleted_by: UserId,
+    group_name: String,
+    public: bool,
+    runtime_state: &mut RuntimeState,
+) {
+    let visibility = if public { "Public" } else { "Private" };
+
+    let content = MessageContent::Text(TextContent {
+        text: format!(
+            "The group _{} ({})_ was deleted by @UserId({})",
+            group_name, visibility, deleted_by
+        ),
+    });
+
+    send_message(content, false, runtime_state);
 }
 
 fn send_message(content: MessageContent, mute_notification: bool, runtime_state: &mut RuntimeState) {
@@ -52,4 +78,8 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
     };
 
     c2c_send_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
+}
+
+fn bot_chat_exists(runtime_state: &RuntimeState) -> bool {
+    runtime_state.data.direct_chats.get(&OPENCHAT_BOT_USER_ID.into()).is_some()
 }
