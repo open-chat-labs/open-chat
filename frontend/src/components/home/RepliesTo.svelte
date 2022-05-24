@@ -6,22 +6,24 @@
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
     import ChatMessageContent from "./ChatMessageContent.svelte";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     const dispatch = createEventDispatcher();
     import { push } from "svelte-spa-router";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { CreatedUser, UserSummary } from "../../domain/user/user";
     import { userStore } from "../../stores/user";
     import { toTitleCase } from "../../utils/string";
+    import { currentUserKey } from "../../fsm/home.controller";
+
+    const currentUser = getContext<CreatedUser>(currentUserKey);
 
     export let chatId: string;
-    export let user: UserSummary;
     export let repliesTo: RehydratedReplyContext;
     export let preview: boolean;
     export let groupChat: boolean;
 
     let debug = false;
 
-    $: me = repliesTo.senderId === user?.userId;
+    $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
 
     function zoomToMessage() {
@@ -62,7 +64,7 @@
                 edited={false}
                 fill={false}
                 reply={true}
-                myUserId={user.userId}
+                myUserId={currentUser.userId}
                 content={repliesTo.content} />
             {#if debug}
                 <pre>EventIdx: {repliesTo.eventIndex}</pre>

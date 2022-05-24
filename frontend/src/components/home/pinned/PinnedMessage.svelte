@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import Link from "../../Link.svelte";
-    import type { UserSummary } from "../../../domain/user/user";
+    import type { CreatedUser } from "../../../domain/user/user";
     import ChatMessageContent from "../ChatMessageContent.svelte";
     import type { Message } from "../../../domain/chat/chat";
     import RepliesTo from "../RepliesTo.svelte";
@@ -17,10 +17,9 @@
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
-    export let user: UserSummary;
+    export let user: CreatedUser;
     export let senderId: string;
     export let msg: Message;
-    export let me: boolean;
 
     let sender = $userStore[senderId];
     let username = sender?.username;
@@ -31,6 +30,7 @@
 
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
+    $: me = user.userId === senderId;
 
     function chatWithUser() {
         closeUserProfile();
@@ -80,12 +80,7 @@
         {/if}
         {#if msg.repliesTo !== undefined && !deleted}
             {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                <RepliesTo
-                    preview={true}
-                    {chatId}
-                    {user}
-                    groupChat={true}
-                    repliesTo={msg.repliesTo} />
+                <RepliesTo preview={true} {chatId} groupChat={true} repliesTo={msg.repliesTo} />
             {:else}
                 <UnresolvedReply repliesTo={msg.repliesTo} />
             {/if}

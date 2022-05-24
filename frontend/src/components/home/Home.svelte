@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
+    import BackgroundLogo from "../BackgroundLogo.svelte";
+    import { number, _ } from "svelte-i18n";
     import LeftPanel from "./LeftPanel.svelte";
     import Toast from "../Toast.svelte";
     import AboutModal from "../AboutModal.svelte";
@@ -12,7 +13,12 @@
     import Overlay from "../Overlay.svelte";
     import { createEventDispatcher, onDestroy, onMount, setContext, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { mobileWidth } from "../../stores/screenDimensions";
+    import {
+        dimensions,
+        mobileWidth,
+        screenWidth,
+        ScreenWidth,
+    } from "../../stores/screenDimensions";
     import { push, replace, querystring } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
@@ -26,14 +32,13 @@
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
     import { initNotificationStores } from "../../stores/notifications";
-    import type { RightPanelState } from "../../fsm/rightPanel";
+    import { filterByChatType, RightPanelState } from "../../fsm/rightPanel";
     import { rollbar } from "../../utils/logging";
     import type {
         ChatSummary,
         EnhancedReplyContext,
         GroupChatSummary,
     } from "../../domain/chat/chat";
-    import type { Readable } from "svelte/store";
     import { currentUserKey, HomeController } from "../../fsm/home.controller";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
@@ -46,6 +51,7 @@
     import { removeQueryStringParam } from "../../utils/urls";
     import { emptyChatMetrics, mergeChatMetrics } from "../../domain/chat/chat.utils";
     import { trackEvent } from "../../utils/tracking";
+    import { numberOfColumns, newLayout } from "../../stores/layout";
 
     const dispatch = createEventDispatcher();
 
@@ -191,6 +197,7 @@
                         controller.previewChat(chatId).then((canPreview) => {
                             if (canPreview) {
                                 controller.selectChat(chatId, messageIndex);
+                                resetRightPanel();
                                 recommendedGroups = { kind: "idle" };
                             } else {
                                 replace("/");
@@ -201,6 +208,7 @@
                     recommendedGroups = { kind: "idle" };
                     interruptRecommended = true;
                     controller.selectChat(chatId, messageIndex);
+                    resetRightPanel();
                 }
             }
 
@@ -230,6 +238,9 @@
         }
     }
 
+    function resetRightPanel() {
+        rightPanelHistory = filterByChatType(rightPanelHistory, $selectedChat?.chatVal);
+    }
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
         controller.updateUserAvatar({
             blobData: ev.detail.data,
@@ -405,10 +416,7 @@
 
     function addParticipants() {
         if ($selectedChat !== undefined) {
-            rightPanelHistory = [
-                ...rightPanelHistory,
-                { kind: "add_participants", controller: $selectedChat },
-            ];
+            rightPanelHistory = [...rightPanelHistory, { kind: "add_participants" }];
         }
     }
 
@@ -418,23 +426,21 @@
 
     function showParticipants() {
         if ($selectedChat !== undefined) {
-            rightPanelHistory = [
-                ...rightPanelHistory,
-                { kind: "show_participants", controller: $selectedChat },
-            ];
+            rightPanelHistory = [...rightPanelHistory, { kind: "show_participants" }];
         }
     }
 
     function showProfile() {
-        rightPanelHistory = [...rightPanelHistory, { kind: "user_profile" }];
+        rightPanelHistory = [{ kind: "user_profile" }];
         rightPanel?.showProfile();
     }
 
     function showGroupDetails() {
         if ($selectedChat !== undefined) {
             rightPanelHistory = [
-                ...rightPanelHistory,
-                { kind: "group_details", controller: $selectedChat },
+                {
+                    kind: "group_details",
+                },
             ];
         }
     }
@@ -446,8 +452,9 @@
     function showPinned() {
         if ($selectedChat !== undefined) {
             rightPanelHistory = [
-                ...rightPanelHistory,
-                { kind: "show_pinned", controller: $selectedChat },
+                {
+                    kind: "show_pinned",
+                },
             ];
         }
     }
@@ -515,16 +522,26 @@
         } else {
             trackEvent("private_group_created");
         }
-        rightPanelHistory = [];
+        rightPanelHistory =
+            $screenWidth === ScreenWidth.ExtraExtraLarge
+                ? [
+                      {
+                          kind: "group_details",
+                      },
+                  ]
+                : [];
     }
 
     function newGroup() {
         rightPanelHistory = [...rightPanelHistory, { kind: "new_group_panel" }];
     }
+
+    $: bgHeight = $dimensions.height * 0.9;
+    $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
 
 {#if controller.user}
-    <main>
+    <main class:new-layout={newLayout}>
         {#if showLeft}
             <LeftPanel
                 {controller}
@@ -574,10 +591,29 @@
                 on:showPinned={showPinned}
                 on:goToMessageIndex={goToMessageIndex} />
         {/if}
+        {#if $numberOfColumns === 3}
+            <RightPanel
+                {userId}
+                controller={$selectedChat}
+                metrics={combinedMetrics}
+                bind:this={rightPanel}
+                bind:rightPanelHistory
+                on:userAvatarSelected={userAvatarSelected}
+                on:goToMessageIndex={goToMessageIndex}
+                on:addParticipants={addParticipants}
+                on:showParticipants={showParticipants}
+                on:chatWith={chatWith}
+                on:upgrade={upgrade}
+                on:blockUser={blockUser}
+                on:deleteGroup={triggerConfirm}
+                on:makeGroupPrivate={triggerConfirm}
+                on:updateChat={updateChat}
+                on:groupCreated={groupCreated} />
+        {/if}
     </main>
 {/if}
 
-{#if rightPanelHistory.length > 0}
+{#if $numberOfColumns === 2 && rightPanelHistory.length > 0}
     <Overlay fade={!$mobileWidth}>
         <div
             transition:fly={{ x, duration: rightPanelSlideDuration, easing: sineInOut }}
@@ -585,6 +621,7 @@
             class:rtl={$rtlStore}>
             <RightPanel
                 {userId}
+                controller={$selectedChat}
                 metrics={combinedMetrics}
                 bind:this={rightPanel}
                 bind:rightPanelHistory
@@ -641,25 +678,43 @@
     </Overlay>
 {/if}
 
+<BackgroundLogo
+    width={`${bgHeight}px`}
+    bottom={"unset"}
+    left={"0"}
+    opacity={"0.1"}
+    skew={"5deg"}
+    viewBox={`0 0 361 ${bgClip}`} />
+
 <style type="text/scss">
     :global(.edited-msg) {
         @include font(light, normal, fs-70);
     }
 
     main {
-        transition: margin ease-in-out 300ms, max-width ease-in-out 300ms;
+        transition: max-width ease-in-out 150ms;
         position: relative;
         width: 100%;
         display: flex;
         gap: $sp3;
         margin: 0 auto;
-        max-width: 1600px;
-        @include size-below(xl) {
+
+        &.new-layout {
             max-width: 1400px;
+            @include size-above(xl) {
+                max-width: 1792px;
+            }
+        }
+
+        &:not(.new-layout) {
+            max-width: 1600px;
+            @include size-below(xl) {
+                max-width: 1400px;
+            }
         }
     }
     :global(body) {
-        transition: color ease-in-out 300ms, padding ease-in-out 300ms;
+        transition: color ease-in-out 150ms, padding ease-in-out 150ms;
         padding: $sp4;
         --background-color: var(--theme-background);
         --text-color: var(--theme-text);

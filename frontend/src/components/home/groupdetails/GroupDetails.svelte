@@ -1,19 +1,22 @@
 <script lang="ts">
-    import type { Readable } from "svelte/store";
     import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Avatar from "../../Avatar.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Stats from "../Stats.svelte";
-    import { AvatarSize } from "../../../domain/user/user";
+    import { AvatarSize, CreatedUser } from "../../../domain/user/user";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../../domain/user/user.utils";
-    import type { GroupChatSummary, GroupPermissions } from "../../../domain/chat/chat";
+    import type {
+        GroupChatSummary,
+        GroupPermissions,
+        UpdateGroupResponse,
+    } from "../../../domain/chat/chat";
     import {
         canChangePermissions,
         canEditGroupDetails,
@@ -21,8 +24,7 @@
         canMakeGroupPrivate,
         canInviteUsers,
     } from "../../../domain/chat/chat.utils";
-    import { createEventDispatcher } from "svelte";
-    import type { ChatController } from "../../../fsm/chat.controller";
+    import { createEventDispatcher, getContext } from "svelte";
     import { userStore } from "../../../stores/user";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
@@ -41,38 +43,82 @@
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsers from "./InviteUsers.svelte";
     import { mergeKeepingOnlyChanged } from "../../../utils/object";
+    import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
+    import { toastStore } from "../../../stores/toast";
+    import { rollbar } from "../../../utils/logging";
+    import { currentUserKey } from "../../../fsm/home.controller";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
     const dispatch = createEventDispatcher();
 
-    export let controller: ChatController;
+    const api = getContext<ServiceContainer>(apiKey);
+    const currentUser = getContext<CreatedUser>(currentUserKey);
 
-    let chat = controller.chat as Readable<GroupChatSummary>;
+    export let chat: GroupChatSummary;
+    export let participantCount: number;
 
+    let originalGroup = { ...chat };
     let updatedGroup = {
-        name: $chat.name,
-        desc: $chat.description,
-        avatar: $chat.blobUrl
+        chatId: chat.chatId,
+        name: chat.name,
+        desc: chat.description,
+        avatar: chat.blobUrl
             ? {
-                  blobUrl: $chat.blobUrl,
-                  blobData: $chat.blobData,
+                  blobUrl: chat.blobUrl,
+                  blobData: chat.blobData,
               }
             : undefined,
-        permissions: { ...$chat.permissions },
+        permissions: { ...chat.permissions },
     };
+
+    $: {
+        if (updatedGroup.chatId !== chat.chatId) {
+            switchChat();
+        }
+    }
+
+    function switchChat() {
+        // check for unsaved changes
+        if ((dirty || permissionsDirty) && !confirmed) {
+            confirmed = true;
+            showConfirmation = true;
+            postConfirmation = init;
+        } else {
+            init();
+        }
+    }
+
+    function init() {
+        confirmed = false;
+        updatedGroup = {
+            chatId: chat.chatId,
+            name: chat.name,
+            desc: chat.description,
+            avatar: chat.blobUrl
+                ? {
+                      blobUrl: chat.blobUrl,
+                      blobData: chat.blobData,
+                  }
+                : undefined,
+            permissions: { ...chat.permissions },
+        };
+        originalGroup = { ...chat };
+        if (canInvite) {
+            inviteComponent?.init(originalGroup);
+        }
+    }
 
     let showConfirmation = false;
     let confirmed = false;
     let saving = false;
     let viewProfile = false;
+    let postConfirmation = () => dispatch("close");
+    let inviteComponent: InviteUsers;
 
     // capture a snapshot of the chat as it is right now
-    $: originalGroup = { ...$chat };
-    $: myGroup = controller.user.userId === originalGroup.ownerId;
-
-    $: participants = controller.participants;
+    $: myGroup = currentUser.userId === originalGroup.ownerId;
     $: nameDirty = updatedGroup.name !== originalGroup.name;
     $: descDirty = updatedGroup.desc !== originalGroup.description;
     $: avatarDirty = updatedGroup.avatar?.blobUrl !== originalGroup.blobUrl;
@@ -83,6 +129,7 @@
     $: dirty = nameDirty || descDirty || avatarDirty;
     $: canEdit = canEditGroupDetails(originalGroup);
     $: canEditPermissions = canChangePermissions(originalGroup);
+    $: canInvite = canInviteUsers(originalGroup);
     $: avatarSrc = avatarUrl(updatedGroup.avatar, "../assets/group.svg");
 
     function openUserProfile() {
@@ -100,13 +147,18 @@
         return Object.keys(args).length > 0;
     }
 
+    function clickClose() {
+        postConfirmation = () => dispatch("close");
+        close();
+    }
+
     function close() {
         if ((dirty || permissionsDirty) && !confirmed) {
             confirmed = true;
             showConfirmation = true;
         } else {
             showConfirmation = false;
-            dispatch("close");
+            postConfirmation();
         }
     }
 
@@ -129,30 +181,52 @@
 
         Promise.all([p1, p2]).finally(() => {
             showConfirmation = saving = false;
-            dispatch("close");
+            postConfirmation();
         });
     }
 
     function updateInfo() {
         if (!dirty) return;
-
         saving = true;
-
         doUpdateInfo().finally(() => (saving = false));
     }
 
+    function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
+        if (resp === "success") return undefined;
+        if (resp === "unchanged") return undefined;
+        if (resp === "desc_too_long") return "groupDescTooLong";
+        if (resp === "internal_error") return "groupUpdateFailed";
+        if (resp === "not_authorised") return "groupUpdateFailed";
+        if (resp === "name_too_long") return "groupNameTooLong";
+        if (resp === "name_taken") return "groupAlreadyExists";
+        if (resp === "avatar_too_big") return "avatagTooBig";
+    }
+
     function doUpdateInfo(): Promise<void> {
-        return controller
-            .updateGroup(updatedGroup.name, updatedGroup.desc, updatedGroup.avatar?.blobData)
-            .then((success) => {
-                if (success) {
-                    dispatch("updateChat", {
+        return api
+            .updateGroup(
+                updatedGroup.chatId,
+                updatedGroup.name,
+                updatedGroup.desc,
+                updatedGroup.avatar?.blobData
+            )
+            .then((resp) => {
+                const err = groupUpdateErrorMessage(resp);
+                if (err) {
+                    toastStore.showFailureToast(err);
+                } else {
+                    originalGroup = {
                         ...originalGroup,
+                        ...updatedGroup.avatar,
                         name: updatedGroup.name,
                         description: updatedGroup.desc,
-                        blobUrl: updatedGroup.avatar?.blobUrl,
-                    });
+                    };
+                    dispatch("updateChat", originalGroup);
                 }
+            })
+            .catch((err) => {
+                rollbar.error("Update group failed: ", err);
+                toastStore.showFailureToast("groupUpdateFailed");
             });
     }
 
@@ -166,14 +240,25 @@
 
     function doUpdatePermissions(): Promise<void> {
         const args = mergeKeepingOnlyChanged(originalGroup.permissions, updatedGroup.permissions);
-        return controller.updatePermissions(args).then((success) => {
-            if (success) {
-                dispatch("updateChat", {
-                    ...originalGroup,
-                    permissions: updatedGroup.permissions,
-                });
-            }
-        });
+        console.log("Changed permissions: ", args);
+
+        return api
+            .updatePermissions(updatedGroup.chatId, args)
+            .then((resp) => {
+                if (resp === "success") {
+                    originalGroup = {
+                        ...originalGroup,
+                        permissions: updatedGroup.permissions,
+                    };
+                    dispatch("updateChat", originalGroup);
+                } else {
+                    toastStore.showFailureToast("group.permissionsUpdateFailed");
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Update permissions failed: ", err);
+                toastStore.showFailureToast("group.permissionsUpdateFailed");
+            });
     }
 
     function chatWithOwner() {
@@ -192,7 +277,7 @@
         on:close={closeUserProfile} />
 {/if}
 
-<GroupDetailsHeader {saving} on:showParticipants={showParticipants} on:close={close} />
+<GroupDetailsHeader {saving} on:showParticipants={showParticipants} on:close={clickClose} />
 
 <div class="group-details">
     <div class="inner">
@@ -212,7 +297,7 @@
 
                     <h3 class="group-name">{originalGroup.name}</h3>
                     <p class="members">
-                        {$_("memberCount", { values: { count: $participants.length } })}
+                        {$_("memberCount", { values: { count: participantCount } })}
                     </p>
                     <p class="owned-by" on:click={openUserProfile} class:my-group={myGroup}>
                         {$_("ownedBy", {
@@ -282,12 +367,12 @@
                 {/if}
             </div>
         </CollapsibleCard>
-        {#if canInviteUsers(originalGroup)}
+        {#if canInvite}
             <CollapsibleCard
                 on:toggle={groupInviteUsersOpen.toggle}
                 open={$groupInviteUsersOpen}
                 headerText={$_("group.invite.inviteWithLink")}>
-                <InviteUsers group={originalGroup} />
+                <InviteUsers bind:this={inviteComponent} group={originalGroup} />
             </CollapsibleCard>
         {/if}
         <CollapsibleCard
@@ -390,6 +475,10 @@
         flex-direction: column;
         gap: $sp3;
         padding: $sp3;
+        @include size-above(xl) {
+            padding: $sp3 0 0 0;
+        }
+
         @include mobile() {
             padding: 0 $sp3;
         }
