@@ -44,6 +44,7 @@ import { get } from "svelte/store";
 import { formatTokens } from "../../utils/cryptoFormatter";
 import { userStore } from "../../stores/user";
 import type { TypersByChat } from "../../stores/typing";
+import { Cryptocurrency, cryptoLookup } from "../crypto";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
@@ -69,7 +70,9 @@ export function getContentAsText(content: MessageContent): string {
         text = captionedContent(content.name, content.caption);
     } else if (content.kind === "crypto_content") {
         text = captionedContent(
-            get(_)("tokenTransfer.transfer", { values: { token: content.transfer.token } }),
+            get(_)("tokenTransfer.transfer", {
+                values: { token: toSymbol(content.transfer.token) },
+            }),
             content.caption
         );
     } else if (content.kind === "deleted_content") {
@@ -84,6 +87,10 @@ export function getContentAsText(content: MessageContent): string {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
     return text.trim();
+}
+
+function toSymbol(token: Cryptocurrency): string {
+    return cryptoLookup[token].symbol;
 }
 
 function captionedContent(type: string, caption?: string): string {
@@ -1363,7 +1370,7 @@ export function buildCryptoTransferText(
         amount: formatTokens(content.transfer.amountE8s, 0),
         receiver: username(content.transfer.recipient),
         sender: username(senderId),
-        token: content.transfer.token,
+        token: toSymbol(content.transfer.token),
     };
 
     const key =
@@ -1387,7 +1394,7 @@ export function buildTransactionUrl(content: CryptocurrencyContent): string | un
     if (content.transfer.kind !== "completed") {
         return undefined;
     }
-
+    // TODO: Where can we see the transactions for other tokens? In OpenChat I suppose...
     return `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`;
 }
 

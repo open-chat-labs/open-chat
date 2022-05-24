@@ -9,6 +9,7 @@
     import type { CreatedUser } from "../../domain/user/user";
     import { currentUserKey } from "../../fsm/home.controller";
     import { buildCryptoTransferText, buildTransactionLink } from "../../domain/chat/chat.utils";
+    import { cryptoLookup } from "../../domain/crypto";
 
     export let content: CryptocurrencyContent;
     export let me: boolean = false;
@@ -16,6 +17,8 @@
     export let reply: boolean = false;
     export let senderId: string;
     export let groupChat: boolean;
+
+    let symbol = cryptoLookup[content.transfer.token].symbol;
 
     const user = getContext<CreatedUser>(currentUserKey);
     $: transferText = buildCryptoTransferText(user.userId, senderId, content, me);
@@ -25,7 +28,7 @@
 {#if transferText !== undefined}
     <div class="message">
         <div class="env" class:me class:first class:groupChat>
-            <Envelope />
+            <Envelope {symbol} />
         </div>
         <div class="txt">
             <span class="transfer-txt">{transferText}</span>

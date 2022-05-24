@@ -1,10 +1,11 @@
 <script lang="ts">
+    export let symbol: string;
 </script>
 
 <div class="envelope">
     <div class="back" />
     <div class="letter">
-        <div class="text">ICP</div>
+        <div class="text">{symbol}</div>
     </div>
     <div class="front" />
     <div class="top" />
