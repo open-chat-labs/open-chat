@@ -9,6 +9,7 @@
         padding-bottom: $sp2;
         margin-top: -$sp2;
         @include font(bold, normal, fs-120);
+        line-height: 90%;
         color: inherit;
         display: inline-flex;
 
