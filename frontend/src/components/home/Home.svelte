@@ -432,7 +432,7 @@
 
     function showProfile() {
         rightPanelHistory = [{ kind: "user_profile" }];
-        rightPanel?.showProfile();
+        tick().then(() => rightPanel?.showProfile());
     }
 
     function showGroupDetails() {

@@ -1,9 +1,9 @@
 import type { PartialUserSummary, UserLookup } from "../domain/user/user";
 import { immutableStore } from "./immutable";
 
-const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
-const OPENCHAT_BOT_USERNAME = "OpenChatBot";
-const OPENCHAT_BOT_AVATAR_URL = "assets/robot.svg";
+export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
+export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
+export const OPENCHAT_BOT_AVATAR_URL = "assets/robot.svg";
 
 const { subscribe, update } = immutableStore<UserLookup>({
     [OPENCHAT_BOT_USER_ID]: {
