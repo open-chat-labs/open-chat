@@ -20,7 +20,7 @@ pub struct ReplyContext {
     pub event_index: EventIndex,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct GroupReplyContext {
     pub event_index: EventIndex,
 }

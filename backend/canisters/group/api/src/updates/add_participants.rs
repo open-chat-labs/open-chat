@@ -1,15 +1,15 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::UserId;
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_ids: Vec<UserId>,
     pub added_by_name: String,
     pub allow_blocked_users: bool,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
     PartialSuccess(PartialSuccessResult),
@@ -19,7 +19,7 @@ pub enum Response {
     NotAuthorized,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct PartialSuccessResult {
     pub users_added: Vec<UserId>,
     pub users_already_in_group: Vec<UserId>,
@@ -29,7 +29,7 @@ pub struct PartialSuccessResult {
     pub errors: Vec<UserId>,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct FailedResult {
     pub users_already_in_group: Vec<UserId>,
     pub users_blocked_from_group: Vec<UserId>,

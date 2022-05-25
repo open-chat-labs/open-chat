@@ -1,8 +1,8 @@
 use candid::{CandidType, Principal};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::{CanisterId, CanisterWasm, Version};
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     // Only these principals can call upgrade_group_canister_wasm
     pub service_principals: Vec<Principal>,
