@@ -378,7 +378,9 @@
                                 >BTC <span class="coming-soon"
                                     >{$_("cryptoAccount.comingSoon")}</span
                                 ></td>
-                            <td class="balance">0.0000</td>
+                            <td class="balance">
+                                <BalanceWithRefresh value={BigInt(0)} disabled />
+                            </td>
                             <td class="manage" />
                         </tr>
                         <tr>
@@ -386,7 +388,9 @@
                                 >CHAT <span class="coming-soon"
                                     >{$_("cryptoAccount.comingSoon")}</span
                                 ></td>
-                            <td class="balance">0.0000</td>
+                            <td class="balance">
+                                <BalanceWithRefresh value={BigInt(0)} disabled />
+                            </td>
                             <td class="manage" />
                         </tr>
                     {/if}
@@ -555,6 +559,9 @@
             }
             .token {
                 text-align: left;
+            }
+            th.balance {
+                padding-right: 38px;
             }
             .balance,
             .manage {
