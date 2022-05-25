@@ -1,7 +1,7 @@
 use crate::canister;
 use candid::{CandidType, Nat, Principal};
 use ic_cdk::api;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 use tracing::error;
 use types::{CanisterId, Cycles};
@@ -52,7 +52,7 @@ pub async fn create(cycles_to_use: Cycles) -> Result<Principal, canister::Error>
         settings: Option<CanisterSettings>,
     }
 
-    #[derive(CandidType, Deserialize)]
+    #[derive(CandidType, Serialize, Deserialize)]
     struct CreateResult {
         canister_id: Principal,
     }
@@ -90,7 +90,7 @@ pub async fn create(cycles_to_use: Cycles) -> Result<Principal, canister::Error>
 }
 
 pub async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Vec<u8>) -> Result<(), canister::Error> {
-    #[derive(CandidType, Deserialize)]
+    #[derive(CandidType, Serialize, Deserialize)]
     enum InstallMode {
         #[serde(rename = "install")]
         Install,
@@ -100,7 +100,7 @@ pub async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Ve
         Upgrade,
     }
 
-    #[derive(CandidType, Deserialize)]
+    #[derive(CandidType, Serialize, Deserialize)]
     struct CanisterInstall {
         mode: InstallMode,
         canister_id: Principal,

@@ -1,11 +1,11 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::{
     ChatId, CompletedCryptocurrencyTransfer, Cryptocurrency, CryptocurrencyContent, EventIndex, GroupReplyContext, MessageId,
     MessageIndex, TimestampMillis, User, UserId,
 };
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub message_id: MessageId,
     pub group_id: ChatId,
@@ -16,7 +16,7 @@ pub struct Args {
     pub mentioned: Vec<User>,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     TextTooLong(u32),
@@ -30,7 +30,7 @@ pub enum Response {
     InternalError(String, CompletedCryptocurrencyTransfer),
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,

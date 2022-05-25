@@ -1,8 +1,8 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::{Avatar, ChatId, FieldTooLongResult, FieldTooShortResult, GroupPermissions};
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub is_public: bool,
     pub name: String,
@@ -12,7 +12,7 @@ pub struct Args {
     pub permissions: Option<GroupPermissions>,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     NameTooShort(FieldTooShortResult),
@@ -25,7 +25,7 @@ pub enum Response {
     InternalError,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub chat_id: ChatId,
 }

@@ -11,7 +11,7 @@ pub struct Args {
     pub replies_to_v2: Option<C2CReplyContext>,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
     Blocked,

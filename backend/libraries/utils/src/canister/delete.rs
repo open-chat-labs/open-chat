@@ -1,12 +1,12 @@
 use crate::canister;
 use candid::{CandidType, Principal};
 use ic_cdk::api;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::CanisterId;
 
 pub async fn delete(canister_id: CanisterId) -> Result<(), canister::Error> {
-    #[derive(CandidType, Deserialize)]
+    #[derive(CandidType, Serialize, Deserialize)]
     struct DeleteArgs {
         canister_id: Principal,
     }

@@ -1,8 +1,8 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::PermissionRole;
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub change_permissions: Option<PermissionRole>,
     pub change_roles: Option<PermissionRole>,
@@ -18,7 +18,7 @@ pub struct Args {
     pub react_to_messages: Option<PermissionRole>,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
     NotAuthorized,

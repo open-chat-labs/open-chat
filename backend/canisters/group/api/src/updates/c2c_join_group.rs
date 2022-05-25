@@ -1,15 +1,15 @@
 use crate::c2c_join_group_v2::Response as ResponseV2;
 use candid::{CandidType, Principal};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::MessageIndex;
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub principal: Principal,
     pub as_super_admin: bool,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     AlreadyInGroup,
@@ -20,7 +20,7 @@ pub enum Response {
     InternalError(String),
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub latest_message_index: Option<MessageIndex>,
 }

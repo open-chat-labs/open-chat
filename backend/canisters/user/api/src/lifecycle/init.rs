@@ -1,8 +1,8 @@
 use candid::{CandidType, Principal};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::{CanisterId, Version};
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub owner: Principal,
     pub group_index_canister_id: CanisterId,

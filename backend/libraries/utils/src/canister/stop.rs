@@ -1,12 +1,12 @@
 use crate::canister;
 use candid::{CandidType, Principal};
 use ic_cdk::api;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::CanisterId;
 
 pub async fn stop(canister_id: CanisterId) -> Result<(), canister::Error> {
-    #[derive(CandidType, Deserialize)]
+    #[derive(CandidType, Serialize, Deserialize)]
     struct StopArgs {
         canister_id: Principal,
     }
