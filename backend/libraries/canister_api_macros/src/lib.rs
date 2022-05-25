@@ -31,12 +31,18 @@ pub fn update(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut msgpack_item = item.clone();
     msgpack_item.sig.ident = Ident::new(&msgpack_name, Span::call_site());
 
-    let serializer = quote! { serializer = "serialize", };
-    let deserializer = quote! { deserializer = "deserialize" };
+    let serializer_name = format!("{msgpack_name}_serializer");
+    let serializer_ident = Ident::new(&serializer_name, Span::call_site());
+
+    let deserializer_name = format!("{msgpack_name}_deserializer");
+    let deserializer_ident = Ident::new(&deserializer_name, Span::call_site());
+
+    let serializer = quote! { serializer = #serializer_name, };
+    let deserializer = quote! { deserializer = #deserializer_name };
 
     let msg_pack = quote! {
-        use msgpack::serialize;
-        use msgpack::deserialize;
+        use msgpack::serialize as #serializer_ident;
+        use msgpack::deserialize as #deserializer_ident;
 
         #[ic_cdk_macros::update(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)]
         #msgpack_item
