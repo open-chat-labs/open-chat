@@ -51,7 +51,7 @@
     import { removeQueryStringParam } from "../../utils/urls";
     import { emptyChatMetrics, mergeChatMetrics } from "../../domain/chat/chat.utils";
     import { trackEvent } from "../../utils/tracking";
-    import { numberOfColumns, newLayout } from "../../stores/layout";
+    import { numberOfColumns, oldLayout } from "../../stores/layout";
 
     const dispatch = createEventDispatcher();
 
@@ -541,7 +541,7 @@
 </script>
 
 {#if controller.user}
-    <main class:new-layout={newLayout}>
+    <main class:old-layout={oldLayout}>
         {#if showLeft}
             <LeftPanel
                 {controller}
@@ -699,14 +699,14 @@
         gap: $sp3;
         margin: 0 auto;
 
-        &.new-layout {
+        &:not(.old-layout) {
             max-width: 1400px;
             @include size-above(xl) {
                 max-width: 1792px;
             }
         }
 
-        &:not(.new-layout) {
+        &.old-layout {
             max-width: 1600px;
             @include size-below(xl) {
                 max-width: 1400px;
