@@ -562,6 +562,9 @@
             }
             th.balance {
                 padding-right: 38px;
+                @include mobile() {
+                    padding-right: 34.2px;
+                }
             }
             .balance,
             .manage {
