@@ -1,18 +1,18 @@
 use candid::CandidType;
 use ic_ledger_types::AccountIdentifier;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::{CanisterUpgradeStatus, PhoneNumber, TimestampMillis, UserId, Version};
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {}
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     UserNotFound,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub user_id: UserId,
     pub username: String,
@@ -24,14 +24,14 @@ pub struct SuccessResult {
     pub icp_account: AccountIdentifier,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum PhoneStatus {
     None,
     Unconfirmed(UnconfirmedPhoneNumber),
     Confirmed,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct UnconfirmedPhoneNumber {
     pub phone_number: PhoneNumber,
     pub valid_until: TimestampMillis,

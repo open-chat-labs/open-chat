@@ -24,7 +24,7 @@ export interface IUserIndexClient {
         challengeAttempt: ChallengeAttempt
     ): Promise<RegisterUserResponse>;
     checkUsername(username: string): Promise<CheckUsernameResponse>;
-    setUsername(username: string): Promise<SetUsernameResponse>;
+    setUsername(userId: string, username: string): Promise<SetUsernameResponse>;
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse>;
     resendRegistrationCode(): Promise<ResendCodeResponse>;
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse>;

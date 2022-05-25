@@ -1,12 +1,12 @@
-use candid::{CandidType, Func, Nat};
-use serde::Deserialize;
+use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct HeaderField(pub String, pub String);
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct HttpRequest {
     pub method: String,
     pub url: String,
@@ -14,33 +14,11 @@ pub struct HttpRequest {
     pub body: ByteBuf,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct HttpResponse {
     pub status_code: u16,
     pub headers: Vec<HeaderField>,
     pub body: Cow<'static, ByteBuf>,
-    pub streaming_strategy: Option<StreamingStrategy>,
-}
-
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct Token {
-    pub key: String,
-    pub content_encoding: String,
-    pub index: Nat,
-    // The sha ensures that a client doesn't stream part of one version of an asset
-    // followed by part of a different asset, even if not checking the certificate.
-    pub sha256: Option<ByteBuf>,
-}
-
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum StreamingStrategy {
-    Callback { callback: Func, token: Token },
-}
-
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct StreamingCallbackHttpResponse {
-    pub body: ByteBuf,
-    pub token: Option<Token>,
 }
 
 impl HttpRequest {
@@ -59,7 +37,6 @@ impl HttpResponse {
             status_code: code,
             headers: Vec::new(),
             body: Cow::default(),
-            streaming_strategy: None,
         }
     }
 
@@ -91,7 +68,6 @@ impl HttpResponse {
             status_code,
             headers,
             body: Cow::default(),
-            streaming_strategy: None,
         }
     }
 }

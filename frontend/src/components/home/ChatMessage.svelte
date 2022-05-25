@@ -92,6 +92,7 @@
 
     $: canEdit = !crypto && !poll && me;
     $: sender = $userStore[senderId];
+    $: isBot = $userStore[senderId]?.kind === "bot";
     $: username = sender?.username;
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
@@ -382,6 +383,7 @@
                 : undefined}
             on:dblclick={editMessage}
             class="message-bubble"
+            class:bot={isBot}
             class:focused
             class:editing
             class:fill={fill && !deleted}
@@ -863,6 +865,10 @@
 
         &.deleted {
             opacity: 0.8;
+        }
+
+        &.bot {
+            font-family: courier;
         }
 
         &:after {

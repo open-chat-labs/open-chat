@@ -14,17 +14,20 @@
     const api = getContext<ServiceContainer>(apiKey);
     const user = getContext<CreatedUser>(currentUserKey);
 
-    export let token: Cryptocurrency;
+    export let token: Cryptocurrency = "icp";
     export let value: bigint;
     export let label: string | undefined = undefined;
     export let minDecimals = 4;
     export let bold = false;
+    export let disabled = false;
 
     let refreshing = false;
 
     onMount(refresh);
 
-    export function refresh(): Promise<void> {
+    export function refresh() {
+        if (disabled) return;
+
         dispatch("click");
         refreshing = true;
 
@@ -49,8 +52,8 @@
             <div class="label">{label}</div>
         {/if}
     </div>
-    <div class="refresh" class:refreshing on:click={refresh}>
-        <Refresh size={"1em"} color={"var(--accent)"} />
+    <div class="refresh" class:refreshing class:disabled on:click={refresh}>
+        <Refresh size={"1em"} color={disabled ? "var(--button-disabled)" : "var(--accent)"} />
     </div>
 </div>
 
@@ -66,7 +69,10 @@
     }
 
     .refresh {
-        cursor: pointer;
+        &:not(.disabled) {
+            cursor: pointer;
+        }
+
         // We want the size of the refresh icon (1em) to be 24px
         // but we can't use rem units in SVGs
         @include font-size(fs-140);

@@ -1,8 +1,8 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use types::{EventIndex, GroupReplyContext, InvalidPollReason, MessageContent, MessageId, MessageIndex, TimestampMillis, User};
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub message_id: MessageId,
     pub content: MessageContent,
@@ -11,7 +11,7 @@ pub struct Args {
     pub mentioned: Vec<User>,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     MessageEmpty,
@@ -21,7 +21,7 @@ pub enum Response {
     CallerNotInGroup,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,

@@ -1,5 +1,5 @@
 import type { IUserIndexClient } from "./userIndex.client.interface";
-import { ChatSchema, getCachedUsers, setCachedUsers } from "../../utils/caching";
+import { ChatSchema, getCachedUsers, setCachedUsers, setUsername } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
 import type {
     ChallengeAttempt,
@@ -90,8 +90,13 @@ export class CachingUserIndexClient implements IUserIndexClient {
         return this.client.checkUsername(username);
     }
 
-    setUsername(username: string): Promise<SetUsernameResponse> {
-        return this.client.setUsername(username);
+    setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
+        return this.client.setUsername(userId, username).then((res) => {
+            if (res === "success") {
+                setUsername(this.db, userId, username);
+            }
+            return res;
+        });
     }
 
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {

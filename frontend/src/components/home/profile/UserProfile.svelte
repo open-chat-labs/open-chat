@@ -106,6 +106,8 @@
                     .then((resp) => {
                         if (resp === "bio_too_long") {
                             bioError = "register.bioTooLong";
+                        } else {
+                            originalBio = userbio;
                         }
                     })
                     .catch((err) => {
@@ -118,13 +120,14 @@
         if (validUsername !== undefined) {
             promises.push(
                 api
-                    .setUsername(validUsername)
+                    .setUsername(user.userId, validUsername)
                     .then((resp) => {
                         if (resp === "success") {
                             userStore.add({
                                 ...user,
                                 username: validUsername,
                             });
+                            validUsername = undefined;
                         } else {
                             if (resp === "username_taken") {
                                 usernameError = "register.usernameTaken";
@@ -375,7 +378,9 @@
                                 >BTC <span class="coming-soon"
                                     >{$_("cryptoAccount.comingSoon")}</span
                                 ></td>
-                            <td class="balance">0.0000</td>
+                            <td class="balance">
+                                <BalanceWithRefresh value={BigInt(0)} disabled />
+                            </td>
                             <td class="manage" />
                         </tr>
                         <tr>
@@ -383,7 +388,9 @@
                                 >CHAT <span class="coming-soon"
                                     >{$_("cryptoAccount.comingSoon")}</span
                                 ></td>
-                            <td class="balance">0.0000</td>
+                            <td class="balance">
+                                <BalanceWithRefresh value={BigInt(0)} disabled />
+                            </td>
                             <td class="manage" />
                         </tr>
                     {/if}
@@ -552,6 +559,12 @@
             }
             .token {
                 text-align: left;
+            }
+            th.balance {
+                padding-right: 38px;
+                @include mobile() {
+                    padding-right: 34.2px;
+                }
             }
             .balance,
             .manage {

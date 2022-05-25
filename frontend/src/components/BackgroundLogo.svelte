@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { newLayout } from "stores/layout";
+    import { oldLayout } from "stores/layout";
     import { ScreenWidth, screenWidth } from "stores/screenDimensions";
 
     export let width: string;
@@ -13,7 +13,7 @@
     $: style = `width: ${width}; bottom: ${bottom}; right: ${right}; left: ${left}; opacity: ${opacity}; transform: skewX(${skew})`;
 
     $: show =
-        newLayout &&
+        !oldLayout &&
         ($screenWidth === ScreenWidth.ExtraExtraLarge || $screenWidth === ScreenWidth.ExtraLarge);
 </script>
 
