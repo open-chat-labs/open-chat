@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { newLayout } from "../stores/layout";
+    import { oldLayout } from "../stores/layout";
 
     export let left: boolean = false;
     export let middle: boolean = false;
     export let right: boolean = false;
 </script>
 
-<section class:new-layout={newLayout} class:left class:right class:middle>
+<section class:old-layout={oldLayout} class:left class:right class:middle>
     <slot />
 </section>
 
@@ -27,12 +27,12 @@
                 padding: 0;
             }
 
-            &:not(.new-layout) {
+            &.old-layout {
                 width: 100%;
                 flex: auto;
             }
 
-            &.new-layout {
+            &:not(.old-layout) {
                 max-width: 840px;
                 flex: 13;
                 background: none;
@@ -59,7 +59,7 @@
             }
         }
 
-        &:not(.new-layout).left {
+        &.old-layout.left {
             min-width: 236px;
             max-width: 550px;
             flex: 0 0 $left-width;
@@ -69,7 +69,7 @@
             }
         }
 
-        &.new-layout.right {
+        &:not(.old-layout).right {
             background: var(--panel-right-bg);
             padding: 0px;
 
@@ -90,7 +90,7 @@
             }
         }
 
-        &:not(.new-layout).right {
+        &.old-layout.right {
             width: $right-width;
             display: flex;
             flex-direction: column;
