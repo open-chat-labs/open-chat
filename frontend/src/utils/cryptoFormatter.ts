@@ -61,6 +61,9 @@ export function formatTokens(
     minDecimals: number,
     decimalSeparatorOverride?: string
 ): string {
+    if (e8s < 0) {
+        e8s = BigInt(0);
+    }
     return format(e8s, minDecimals, 8, decimalSeparatorOverride);
 }
 
