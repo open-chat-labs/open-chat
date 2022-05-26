@@ -3,19 +3,12 @@ use crate::updates::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
-use group_canister::c2c_join_group::Response as ResponseV1;
 use group_canister::c2c_join_group_v2::{Response::*, *};
 use ic_cdk_macros::update;
 use types::{CanisterId, EventIndex, MessageIndex, ParticipantJoined, UserId};
 use user_index_canister::c2c_is_super_admin;
 
 // Called via the user's user canister
-#[update]
-#[trace]
-async fn c2c_join_group(args: Args) -> ResponseV1 {
-    c2c_join_group_v2(args).await.into()
-}
-
 #[update]
 #[trace]
 async fn c2c_join_group_v2(args: Args) -> Response {
