@@ -50,6 +50,7 @@ pub enum EditMessageResult {
     NotFound,
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum DeleteMessageResult {
     Success(MessageContent),
     AlreadyDeleted,
