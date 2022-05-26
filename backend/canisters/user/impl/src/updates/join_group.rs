@@ -4,14 +4,7 @@ use canister_tracing_macros::trace;
 use group_canister::c2c_join_group_v2 as c2c_join_group;
 use ic_cdk_macros::update;
 use types::{ChatId, GroupChatSummary, MessageIndex, MessageIndexRange};
-use user_canister::join_group::Response as ResponseV1;
 use user_canister::join_group_v2::{Response::*, *};
-
-#[update(guard = "caller_is_owner")]
-#[trace]
-async fn join_group(args: Args) -> ResponseV1 {
-    join_group_v2(args).await.into()
-}
 
 #[update(guard = "caller_is_owner")]
 #[trace]
