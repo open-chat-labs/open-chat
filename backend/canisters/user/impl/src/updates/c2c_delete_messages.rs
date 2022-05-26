@@ -32,7 +32,8 @@ fn c2c_delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         }
 
         if !files_to_delete.is_empty() {
-            ic_cdk::spawn(open_storage_bucket_client::delete_files(files_to_delete));
+            let file_references = files_to_delete.iter().map(|br| (br.canister_id, br.blob_id)).collect();
+            ic_cdk::spawn(open_storage_bucket_client::delete_files(file_references));
         }
 
         Success
