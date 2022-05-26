@@ -5,7 +5,6 @@ type ChatId = CanisterId;
 type Cycles = nat;
 type EventIndex = nat32;
 type Tokens = record { e8s: nat64; };
-type Hash = blob;
 type ICP = Tokens;
 type Memo = nat64;
 type MessageId = nat;
@@ -42,8 +41,6 @@ type BlobReference =
     record {
         canister_id: CanisterId;
         blob_id: nat;
-        file_size: opt nat64;
-        file_hash: opt Hash;
     };
 
 type CanisterUpgradeStatus =
