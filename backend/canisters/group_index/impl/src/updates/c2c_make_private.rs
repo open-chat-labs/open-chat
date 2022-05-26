@@ -1,10 +1,10 @@
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_make_private::{Response::*, *};
-use ic_cdk_macros::update;
 use types::ChatId;
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 fn c2c_make_private(_args: Args) -> Response {
     mutate_state(c2c_make_private_impl)

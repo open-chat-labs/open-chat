@@ -1,9 +1,9 @@
 use crate::{mutate_state, openchat_bot, run_regular_jobs, RuntimeState};
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
 use user_canister::c2c_remove_from_group::{Response::*, *};
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 fn c2c_remove_from_group(args: Args) -> Response {
     run_regular_jobs();

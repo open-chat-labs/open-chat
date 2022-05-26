@@ -1,8 +1,8 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query_candid_and_msgpack;
 use group_index_canister::c2c_filter_groups::{Response::*, *};
-use ic_cdk_macros::query;
 
-#[query]
+#[query_candid_and_msgpack]
 fn c2c_filter_groups(args: Args) -> Response {
     read_state(|state| c2c_active_and_deleted_groups_impl(args, state))
 }

@@ -1574,6 +1574,7 @@ dependencies = [
  "callback_canister",
  "callback_canister_c2c_client",
  "candid",
+ "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
@@ -1587,6 +1588,7 @@ dependencies = [
  "ic-cdk-macros",
  "itertools",
  "lazy_static",
+ "msgpack",
  "notifications_canister",
  "notifications_canister_c2c_client",
  "open_storage_bucket_client",
@@ -1642,6 +1644,7 @@ name = "group_index_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
@@ -1652,6 +1655,7 @@ dependencies = [
  "http_request",
  "ic-cdk 0.5.1",
  "ic-cdk-macros",
+ "msgpack",
  "rand 0.7.3",
  "search",
  "serde",
@@ -2550,12 +2554,14 @@ name = "notifications_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
  "http_request",
  "ic-cdk 0.5.1",
  "ic-cdk-macros",
+ "msgpack",
  "notifications_canister",
  "serde",
  "stable_memory",
@@ -4461,6 +4467,7 @@ dependencies = [
  "callback_canister",
  "callback_canister_c2c_client",
  "candid",
+ "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
@@ -4476,6 +4483,7 @@ dependencies = [
  "ic-ledger-types",
  "itertools",
  "ledger_utils",
+ "msgpack",
  "notifications_canister",
  "notifications_canister_c2c_client",
  "open_storage_bucket_client",
@@ -4531,6 +4539,7 @@ name = "user_index_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
@@ -4545,6 +4554,7 @@ dependencies = [
  "itertools",
  "ledger_utils",
  "lodepng",
+ "msgpack",
  "open_storage_index_canister",
  "open_storage_index_canister_c2c_client",
  "rand 0.7.3",

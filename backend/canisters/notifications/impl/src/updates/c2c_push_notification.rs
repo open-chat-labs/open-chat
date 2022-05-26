@@ -1,10 +1,10 @@
 use crate::{mutate_state, RuntimeState, MAX_SUBSCRIPTION_AGE};
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
 use notifications_canister::c2c_push_notification::{Response::*, *};
 use types::{Notification, NotificationEnvelope, UserId};
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 fn c2c_push_notification(args: Args) -> Response {
     mutate_state(|state| c2c_push_notification_impl(args.recipients, args.notification, state))

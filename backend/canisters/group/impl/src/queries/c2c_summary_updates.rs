@@ -1,14 +1,14 @@
 use crate::{read_state, ParticipantInternal, RuntimeState, WASM_VERSION};
+use canister_api_macros::query_candid_and_msgpack;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
-use ic_cdk_macros::query;
 use std::collections::HashSet;
 use types::{
     EventIndex, EventWrapper, GroupChatSummaryUpdatesInternal, GroupPermissions, Mention, Message, MessageIndex, OptionUpdate,
     TimestampMillis, UserId, MAX_RETURNED_MENTIONS,
 };
 
-#[query]
+#[query_candid_and_msgpack]
 fn c2c_summary_updates(args: Args) -> Response {
     read_state(|state| c2c_summary_updates_impl(args, state))
 }

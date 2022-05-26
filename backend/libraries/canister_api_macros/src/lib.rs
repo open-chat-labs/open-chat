@@ -3,7 +3,22 @@ use proc_macro2::{Ident, Span};
 use quote::quote;
 use serde::Deserialize;
 use serde_tokenstream::from_tokenstream;
+use std::fmt::Formatter;
 use syn::{parse_macro_input, ItemFn};
+
+enum MethodType {
+    Update,
+    Query,
+}
+
+impl std::fmt::Display for MethodType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MethodType::Update => f.write_str("update"),
+            MethodType::Query => f.write_str("query"),
+        }
+    }
+}
 
 #[derive(Deserialize)]
 struct AttributeInput {
@@ -14,18 +29,24 @@ struct AttributeInput {
 }
 
 #[proc_macro_attribute]
-pub fn update(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn update_candid_and_msgpack(attr: TokenStream, item: TokenStream) -> TokenStream {
+    canister_api_method(MethodType::Update, attr, item)
+}
+
+#[proc_macro_attribute]
+pub fn query_candid_and_msgpack(attr: TokenStream, item: TokenStream) -> TokenStream {
+    canister_api_method(MethodType::Query, attr, item)
+}
+
+fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenStream) -> TokenStream {
     let input: AttributeInput = from_tokenstream(&attr.into()).unwrap();
     let item = parse_macro_input!(item as ItemFn);
+
+    let method_type = Ident::new(method_type.to_string().as_str(), Span::call_site());
 
     let name = input.name.unwrap_or(item.sig.ident.to_string());
     let guard = input.guard.map(|g| quote! { guard = #g, });
     let manual_reply = input.manual_reply.then(|| quote! { manual_reply = "true", });
-
-    let candid = quote! {
-        #[ic_cdk_macros::update(name = #name, #guard #manual_reply)]
-        #item
-    };
 
     let msgpack_name = format!("{name}_msgpack");
     let mut msgpack_item = item.clone();
@@ -40,17 +61,12 @@ pub fn update(attr: TokenStream, item: TokenStream) -> TokenStream {
     let serializer = quote! { serializer = #serializer_name, };
     let deserializer = quote! { deserializer = #deserializer_name };
 
-    let msg_pack = quote! {
+    TokenStream::from(quote! {
         use msgpack::serialize as #serializer_ident;
         use msgpack::deserialize as #deserializer_ident;
 
-        #[ic_cdk_macros::update(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)]
+        #[ic_cdk_macros::#method_type(name = #name, #guard #manual_reply)]
+        #[ic_cdk_macros::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)]
         #msgpack_item
-    };
-
-    TokenStream::from(quote! {
-        #candid
-
-        #msg_pack
     })
 }
