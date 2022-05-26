@@ -89,3 +89,4 @@ pub type Milliseconds = u64;
 pub type TimestampMillis = u64;
 pub type TimestampNanos = u64;
 pub type Salt = [u8; 32];
+pub type Hash = [u8; 32];

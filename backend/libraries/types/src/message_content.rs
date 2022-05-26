@@ -1,7 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::ContentValidationError::{InvalidPoll, TransferCannotBeZero, TransferLimitExceeded};
 use crate::RegisterVoteResult::SuccessNoChange;
-use crate::{CanisterId, Cryptocurrency, CryptocurrencyTransfer, TimestampMillis, TotalVotes, UserId, VoteOperation};
+use crate::{CanisterId, Cryptocurrency, CryptocurrencyTransfer, Hash, TimestampMillis, TotalVotes, UserId, VoteOperation};
 use candid::CandidType;
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
@@ -379,6 +379,8 @@ pub struct DeletedBy {
 pub struct BlobReference {
     pub canister_id: CanisterId,
     pub blob_id: u128,
+    pub file_size: Option<u64>,
+    pub fle_hash: Option<Hash>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
