@@ -48,7 +48,8 @@
     let error: string | undefined = undefined;
     let message = "";
     let confirming = false;
-    let receiver: PartialUserSummary | undefined = undefined;
+    let receiver: PartialUserSummary | undefined =
+        controller.chatVal.kind === "direct_chat" ? $userStore[controller.chatVal.them] : undefined;
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
