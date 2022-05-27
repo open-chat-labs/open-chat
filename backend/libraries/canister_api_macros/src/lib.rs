@@ -44,13 +44,11 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
 
     let method_type = Ident::new(method_type.to_string().as_str(), Span::call_site());
 
-    let name = input.name.unwrap_or(item.sig.ident.to_string());
+    let name = input.name.unwrap_or_else(|| item.sig.ident.to_string());
     let guard = input.guard.map(|g| quote! { guard = #g, });
     let manual_reply = input.manual_reply.then(|| quote! { manual_reply = "true", });
 
     let msgpack_name = format!("{name}_msgpack");
-    let mut msgpack_item = item.clone();
-    msgpack_item.sig.ident = Ident::new(&msgpack_name, Span::call_site());
 
     let serializer_name = format!("{msgpack_name}_serializer");
     let serializer_ident = Ident::new(&serializer_name, Span::call_site());
@@ -67,6 +65,6 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
 
         #[ic_cdk_macros::#method_type(name = #name, #guard #manual_reply)]
         #[ic_cdk_macros::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)]
-        #msgpack_item
+        #item
     })
 }
