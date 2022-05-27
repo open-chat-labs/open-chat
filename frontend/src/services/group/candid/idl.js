@@ -551,6 +551,7 @@ export const idlFactory = ({ IDL }) => {
   const SendMessageArgs = IDL.Record({
     'content' : MessageContent,
     'mentioned' : IDL.Vec(User),
+    'forwarding' : IDL.Bool,
     'sender_name' : IDL.Text,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(GroupReplyContext),

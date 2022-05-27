@@ -738,6 +738,7 @@ export interface SearchMessagesSuccessResult { 'matches' : Array<MessageMatch> }
 export interface SendMessageArgs {
   'content' : MessageContent,
   'recipient' : UserId,
+  'forwarding' : boolean,
   'sender_name' : string,
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],
