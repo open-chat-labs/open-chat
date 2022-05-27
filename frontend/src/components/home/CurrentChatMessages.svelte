@@ -188,20 +188,26 @@
         );
     }
 
-    function getScrollTopResetFn(previousHeight: number) {
-        return (newHeight: number, scrollTop: number) => {
-            if (messagesDiv === undefined) return;
-            const additionalHeight = newHeight - previousHeight;
-            messagesDiv.scrollTop = scrollTop - additionalHeight;
-            setIfInsideFromBottomThreshold();
-            scrollTopResetFn = undefined;
-        };
-    }
+    let expectedScrollTop: number | undefined = undefined;
 
-    let scrollTopResetFn: ((newHeight: number, scrollTop: number) => void) | undefined = undefined;
+    function scrollLeapDetected() {
+        return (
+            expectedScrollTop !== undefined &&
+            expectedScrollTop - (messagesDiv?.scrollTop ?? 0) > 500
+        );
+    }
 
     function onScroll() {
         if (!initialised) return;
+
+        if (scrollLeapDetected()) {
+            console.log("scroll: position has leapt unacceptably", messagesDiv?.scrollTop);
+            messagesDiv?.scrollTo({ top: expectedScrollTop, behavior: "auto" }); // this should trigger another call to onScroll
+            expectedScrollTop = undefined;
+            return;
+        } else {
+            expectedScrollTop = undefined;
+        }
 
         menuStore.hideMenu();
         tooltipStore.hide();
@@ -231,7 +237,6 @@
                 // Note - this fires even when we have entered our own message. This *seems* wrong but
                 // it is actually correct because we do want to load our own messages from the server
                 // so that any incorrect indexes are corrected and only the right thing goes in the cache
-                scrollTopResetFn = getScrollTopResetFn(messagesDiv?.scrollHeight ?? 0);
                 controller.loadNewMessages();
             }
         }
@@ -362,25 +367,26 @@
             controller.subscribe((evt) => {
                 switch (evt.event.kind) {
                     case "loaded_previous_messages":
-                        tick().then(resetScroll);
+                        tick()
+                            .then(resetScroll)
+                            .then(() => {
+                                expectedScrollTop = messagesDiv?.scrollTop ?? 0;
+                            });
                         break;
                     case "loaded_event_window":
                         const index = evt.event.messageIndex;
                         const preserveFocus = evt.event.preserveFocus;
                         const allowRecursion = evt.event.allowRecursion;
-                        tick().then(() =>
-                            scrollToMessageIndex(index, preserveFocus, allowRecursion)
-                        );
+                        tick().then(() => {
+                            expectedScrollTop = undefined;
+                            scrollToMessageIndex(index, preserveFocus, allowRecursion);
+                        });
                         initialised = true;
                         break;
                     case "loaded_new_messages":
                         // wait until the events are rendered
                         tick().then(() => {
-                            scrollTopResetFn &&
-                                scrollTopResetFn(
-                                    messagesDiv?.scrollHeight ?? 0,
-                                    messagesDiv?.scrollTop ?? 0
-                                );
+                            setIfInsideFromBottomThreshold();
                             if (insideFromBottomThreshold) {
                                 // only scroll if we are now within threshold from the bottom
                                 scrollBottom("smooth");

@@ -605,13 +605,14 @@ export class ServiceContainer implements MarkMessagesRead {
 
     private async handleMergedUpdatesResponse(
         messagesRead: IMessageReadTracker,
-        resp: MergedUpdatesResponse
+        resp: MergedUpdatesResponse,
+        rehydrateLastMessage = true
     ): Promise<MergedUpdatesResponse> {
         const chatSummaries = await Promise.all(
             resp.chatSummaries.map(async (chat) => {
                 messagesRead.syncWithServer(chat.chatId, chat.readByMe);
 
-                if (chat.latestMessage !== undefined) {
+                if (chat.latestMessage !== undefined && rehydrateLastMessage) {
                     const chatType = chat.kind === "direct_chat" ? "direct" : "group";
                     const latestMessage = await this.rehydrateMessage(
                         chatType,
@@ -641,7 +642,7 @@ export class ServiceContainer implements MarkMessagesRead {
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         return this.userClient.getInitialState(messagesRead, selectedChatId).then((resp) => {
-            return this.handleMergedUpdatesResponse(messagesRead, resp);
+            return this.handleMergedUpdatesResponse(messagesRead, resp, false);
         });
     }
 
