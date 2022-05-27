@@ -29,13 +29,12 @@ macro_rules! generate_common_methods {
             &self,
             start: EventIndex,
             ascending: bool,
-            max_messages: usize,
             max_events: usize,
             min_visible_event_index: EventIndex,
             my_user_id: Option<UserId>,
         ) -> Vec<EventWrapper<$chat_event_event>> {
             self.inner
-                .from_index(start, ascending, max_messages, max_events, min_visible_event_index)
+                .from_index(start, ascending, max_events, min_visible_event_index)
                 .into_iter()
                 .map(|e| self.hydrate_event(e, my_user_id))
                 .collect()
@@ -44,13 +43,12 @@ macro_rules! generate_common_methods {
         pub fn get_events_window(
             &self,
             mid_point: EventIndex,
-            max_messages: usize,
             max_events: usize,
             min_visible_event_index: EventIndex,
             my_user_id: Option<UserId>,
         ) -> Vec<EventWrapper<$chat_event_event>> {
             self.inner
-                .get_events_window(mid_point, max_messages, max_events, min_visible_event_index)
+                .get_events_window(mid_point, max_events, min_visible_event_index)
                 .into_iter()
                 .map(|e| self.hydrate_event(e, my_user_id))
                 .collect()

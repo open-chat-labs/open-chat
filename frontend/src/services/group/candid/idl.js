@@ -215,7 +215,6 @@ export const idlFactory = ({ IDL }) => {
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
     'invite_code' : IDL.Opt(IDL.Nat64),
-    'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'ascending' : IDL.Bool,
     'start_index' : EventIndex,
@@ -402,7 +401,6 @@ export const idlFactory = ({ IDL }) => {
   const EventsWindowArgs = IDL.Record({
     'mid_point' : MessageIndex,
     'invite_code' : IDL.Opt(IDL.Nat64),
-    'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
   });
   const InviteCodeArgs = IDL.Record({});

@@ -1,4 +1,4 @@
-import { isPreviewing, MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../domain/chat/chat.utils";
+import { isPreviewing, MAX_EVENTS, MAX_MISSING } from "../domain/chat/chat.utils";
 import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
@@ -276,7 +276,6 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     chatId: string,
     middleMessageIndex: number
 ): Promise<[EventWrapper<T>[], Set<number>, boolean]> {
-    let numMessages = 0;
     const events: EventWrapper<T>[] = [];
     const resolvedDb = await db;
     const missing = new Set<number>();
@@ -299,7 +298,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     let descIdx = eventIndex;
     let ascIdx = eventIndex + 1;
 
-    while (numMessages < MAX_MESSAGES && events.length < MAX_EVENTS && missing.size < MAX_MISSING) {
+    while (events.length < MAX_EVENTS && missing.size < MAX_MISSING) {
         // if we have exceeded the range of this chat then we have succeeded
         if (ascIdx > max && descIdx < min) {
             return [events, missing, false];
@@ -313,9 +312,6 @@ async function aggregateEventsWindow<T extends ChatEvent>(
             );
             if (ascEvt !== undefined) {
                 events.push(ascEvt);
-                if (ascEvt.event.kind === "message") {
-                    numMessages += 1;
-                }
             } else {
                 missing.add(ascIdx);
             }
@@ -331,9 +327,6 @@ async function aggregateEventsWindow<T extends ChatEvent>(
 
             if (descEvt !== undefined) {
                 events.push(descEvt);
-                if (descEvt.event.kind === "message") {
-                    numMessages += 1;
-                }
             } else {
                 missing.add(descIdx);
             }
@@ -368,7 +361,7 @@ async function aggregateEventsRanged<T extends ChatEvent>(
         missing.add(i);
     }
 
-    let result = await resolvedDb.getAll("chat_events", range);
+    const result = await resolvedDb.getAll("chat_events", range);
     result.forEach((evt) => {
         missing.delete(evt.index);
         events.push(evt as EnhancedWrapper<T>);
@@ -385,17 +378,16 @@ async function aggregateEventsUnranged<T extends ChatEvent>(
     startIndex: number,
     ascending: boolean
 ): Promise<[EnhancedWrapper<T>[], Set<number>]> {
-    let numMessages = 0;
     let currentIndex = startIndex;
     const events: EnhancedWrapper<T>[] = [];
     const resolvedDb = await db;
     const missing = new Set<number>();
 
-    // keep iterating until we get "enough" messages, we get MAX_EVENTS events, we go beyond the range of the chat, or
+    // keep iterating until we get MAX_EVENTS events, we go beyond the range of the chat, or
     // we get a full page of missing messages, return all the events that we found and the indexes of any that we did
     // not find
     const lStart = Date.now();
-    while (numMessages < MAX_MESSAGES && events.length < MAX_EVENTS && missing.size < MAX_MISSING) {
+    while (events.length < MAX_EVENTS && missing.size < MAX_MISSING) {
         // if we have exceeded the range of this chat then we have succeeded
         if ((currentIndex > max && ascending) || (currentIndex < min && !ascending)) {
             console.log("Looping took: ", Date.now() - lStart);
@@ -405,9 +397,6 @@ async function aggregateEventsUnranged<T extends ChatEvent>(
         const key = createCacheKey(chatId, currentIndex);
         const evt = await resolvedDb.get("chat_events", key);
         if (evt) {
-            if (evt.event.kind === "message") {
-                numMessages += 1;
-            }
             events.push(evt as EnhancedWrapper<T>);
         } else {
             console.log("Couldn't find key: ", key);

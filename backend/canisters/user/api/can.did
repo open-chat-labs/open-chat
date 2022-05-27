@@ -394,7 +394,6 @@ type EventsArgs =
         user_id: UserId;
         start_index: EventIndex;
         ascending: bool;
-        max_messages: nat32;
         max_events: nat32;
     };
 
@@ -415,7 +414,6 @@ type EventsWindowArgs =
     record {
         user_id: UserId;
         mid_point: MessageIndex;
-        max_messages: nat32;
         max_events: nat32;
     };
 

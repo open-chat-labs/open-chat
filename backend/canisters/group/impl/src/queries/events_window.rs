@@ -17,7 +17,6 @@ fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             if let Some(mid_point) = runtime_state.data.events.get_event_index_by_message_index(args.mid_point) {
                 let events = runtime_state.data.events.get_events_window(
                     mid_point,
-                    args.max_messages as usize,
                     args.max_events as usize,
                     min_visible_event_index,
                     user_id,

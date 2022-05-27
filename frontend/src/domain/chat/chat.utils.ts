@@ -48,7 +48,6 @@ import { Cryptocurrency, cryptoLookup } from "../crypto";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
-export const MAX_MESSAGES = 60;
 export const MAX_MISSING = 30;
 export const MAX_EVENTS = 200;
 

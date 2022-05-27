@@ -361,7 +361,6 @@ type EventsArgs =
     record {
         start_index: EventIndex;
         ascending: bool;
-        max_messages: nat32;
         max_events: nat32;
         invite_code: opt nat64;
     };
@@ -382,7 +381,6 @@ type EventsRangeArgs =
 type EventsWindowArgs =
     record {
         mid_point: MessageIndex;
-        max_messages: nat32;
         max_events: nat32;
         invite_code: opt nat64;
     };

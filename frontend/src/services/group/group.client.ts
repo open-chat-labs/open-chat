@@ -73,7 +73,7 @@ import {
     registerPollVoteResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
-import { MAX_EVENTS, MAX_MESSAGES, mergeGroupChatDetails } from "../../domain/chat/chat.utils";
+import { MAX_EVENTS, mergeGroupChatDetails } from "../../domain/chat/chat.utils";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
@@ -122,7 +122,6 @@ export class GroupClient extends CandidService implements IGroupClient {
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
-            max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
             invite_code: apiOptional(base64ToBigint, this.inviteCode),
@@ -144,7 +143,6 @@ export class GroupClient extends CandidService implements IGroupClient {
     ): Promise<EventsResponse<GroupChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
             const args = {
-                max_messages: MAX_MESSAGES,
                 max_events: MAX_EVENTS,
                 ascending: asc,
                 start_index: index,

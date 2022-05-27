@@ -16,7 +16,6 @@ fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         let (events, affected_events) = if let Some(mid_point) = chat.events.get_event_index_by_message_index(args.mid_point) {
             let events = chat.events.get_events_window(
                 mid_point,
-                args.max_messages as usize,
                 args.max_events as usize,
                 EventIndex::default(),
                 Some(my_user_id),
