@@ -901,7 +901,7 @@ mod tests {
                 .iter()
                 .filter(|e| matches!(e.event, ChatEventInternal::Message(_)))
                 .count(),
-            10
+            20
         );
 
         let event_indexes: Vec<u32> = results.iter().map(|e| e.index.into()).collect();
@@ -909,7 +909,7 @@ mod tests {
         let mid_point_index = results.iter().position(|e| e.index == mid_point);
 
         assert_eq!(mid_point_index.unwrap(), 3);
-        assert!(event_indexes.into_iter().eq(18u32..=37));
+        assert!(event_indexes.into_iter().eq(18u32..=57));
     }
 
     fn setup_events() -> ChatEvents {
