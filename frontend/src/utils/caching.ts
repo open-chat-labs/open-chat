@@ -20,10 +20,16 @@ import type { DirectNotification, GroupNotification } from "../domain/notificati
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
+import { profileStore } from "stores/profiling";
 
-const CACHE_VERSION = 27;
+const CACHE_VERSION = 28;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
+
+type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
+    chatId: string;
+    messageKey: string | undefined;
+};
 
 export interface ChatSchema extends DBSchema {
     chats: {
@@ -33,17 +39,15 @@ export interface ChatSchema extends DBSchema {
 
     chat_events: {
         key: string;
-        value: EventWrapper<ChatEvent>;
+        value: EnhancedWrapper<ChatEvent>;
+        indexes: {
+            messageIdx: string;
+        };
     };
 
     group_details: {
         key: string;
         value: GroupChatDetails;
-    };
-
-    message_index_event_index: {
-        key: string; // chatId_messageIndex
-        value: number;
     };
 
     // this is obsolete and preserved only to keep the type checker happy
@@ -95,16 +99,13 @@ export function openCache(principal: string): Database | undefined {
                     if (db.objectStoreNames.contains("media_data")) {
                         db.deleteObjectStore("media_data");
                     }
-                    if (db.objectStoreNames.contains("message_index_event_index")) {
-                        db.deleteObjectStore("message_index_event_index");
-                    }
                     if (db.objectStoreNames.contains("users")) {
                         db.deleteObjectStore("users");
                     }
-                    db.createObjectStore("chat_events");
+                    const chatEvents = db.createObjectStore("chat_events");
+                    chatEvents.createIndex("messageIdx", "messageKey");
                     db.createObjectStore("chats");
                     db.createObjectStore("group_details");
-                    db.createObjectStore("message_index_event_index");
                     db.createObjectStore("users");
                     if (!db.objectStoreNames.contains("soft_disabled")) {
                         db.createObjectStore("soft_disabled");
@@ -168,7 +169,7 @@ export async function setCachedChats(
         return;
     }
 
-    const latestMessages: Record<string, EventWrapper<Message>> = {};
+    const latestMessages: Record<string, EnhancedWrapper<Message>> = {};
 
     // irritating hoop jumping to keep typescript happy here
     const serialisable = data.chatSummaries
@@ -179,7 +180,11 @@ export async function setCachedChats(
                 : undefined;
 
             if (latestMessage) {
-                latestMessages[c.chatId] = latestMessage;
+                latestMessages[c.chatId] = {
+                    ...latestMessage,
+                    chatId: c.chatId,
+                    messageKey: createCacheKey(c.chatId, latestMessage.event.messageIndex),
+                };
             }
 
             if (c.kind === "direct_chat") {
@@ -202,14 +207,11 @@ export async function setCachedChats(
             throw new UnsupportedValueError("Unrecognised chat type", c);
         });
 
-    const tx = (await db).transaction(
-        ["chats", "chat_events", "message_index_event_index"],
-        "readwrite",
-        { durability: "relaxed" }
-    );
+    const tx = (await db).transaction(["chats", "chat_events"], "readwrite", {
+        durability: "relaxed",
+    });
     const chatsStore = tx.objectStore("chats");
     const eventStore = tx.objectStore("chat_events");
-    const mapStore = tx.objectStore("message_index_event_index");
 
     const promises: Promise<string | void>[] = [
         chatsStore.put(
@@ -225,7 +227,6 @@ export async function setCachedChats(
         ),
         ...Object.entries(latestMessages).flatMap(([chatId, message]) => [
             eventStore.put(message, createCacheKey(chatId, message.index)),
-            mapStore.put(message.index, `${chatId}_${message.event.messageIndex}`),
         ]),
         ...Object.entries(data.affectedEvents)
             .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
@@ -280,10 +281,13 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     const resolvedDb = await db;
     const missing = new Set<number>();
 
-    const eventIndex = await resolvedDb.get(
-        "message_index_event_index",
-        `${chatId}_${middleMessageIndex}`
+    // TODO come back to this and see if we can use a pair of cursors
+    const middleEvent = await resolvedDb.getFromIndex(
+        "chat_events",
+        "messageIdx",
+        createCacheKey(chatId, middleMessageIndex)
     );
+    const eventIndex = middleEvent?.index;
 
     if (eventIndex === undefined) {
         console.log(
@@ -340,25 +344,61 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     return [events, missing, false];
 }
 
-async function aggregateEvents<T extends ChatEvent>(
+async function aggregateEventsRanged<T extends ChatEvent>(
     db: Database,
     [min, max]: IndexRange,
     chatId: string,
     startIndex: number,
     ascending: boolean
-): Promise<[EventWrapper<T>[], Set<number>]> {
+): Promise<[EnhancedWrapper<T>[], Set<number>]> {
+    const events: EnhancedWrapper<T>[] = [];
+    const resolvedDb = await db;
+    const missing = new Set<number>();
+
+    const lowerBound = ascending ? startIndex : Math.max(min, startIndex - MAX_EVENTS);
+    const upperBound = ascending ? Math.min(max, startIndex + MAX_EVENTS) : startIndex;
+
+    console.log("aggregate events: events from ", lowerBound, " to ", upperBound);
+    const range = IDBKeyRange.bound(
+        createCacheKey(chatId, lowerBound),
+        createCacheKey(chatId, upperBound)
+    );
+
+    for (let i = lowerBound; i <= upperBound; i++) {
+        missing.add(i);
+    }
+
+    let result = await resolvedDb.getAll("chat_events", range);
+    result.forEach((evt) => {
+        missing.delete(evt.index);
+        events.push(evt as EnhancedWrapper<T>);
+    });
+
+    console.log("aggregate events: missing indexes: ", missing);
+    return [events, missing];
+}
+
+async function aggregateEventsUnranged<T extends ChatEvent>(
+    db: Database,
+    [min, max]: IndexRange,
+    chatId: string,
+    startIndex: number,
+    ascending: boolean
+): Promise<[EnhancedWrapper<T>[], Set<number>]> {
     let numMessages = 0;
     let currentIndex = startIndex;
-    const events: EventWrapper<T>[] = [];
+    const events: EnhancedWrapper<T>[] = [];
     const resolvedDb = await db;
     const missing = new Set<number>();
 
     // keep iterating until we get "enough" messages, we get MAX_EVENTS events, we go beyond the range of the chat, or
     // we get a full page of missing messages, return all the events that we found and the indexes of any that we did
     // not find
+    const lStart = Date.now();
     while (numMessages < MAX_MESSAGES && events.length < MAX_EVENTS && missing.size < MAX_MISSING) {
         // if we have exceeded the range of this chat then we have succeeded
         if ((currentIndex > max && ascending) || (currentIndex < min && !ascending)) {
+            console.log("Looping took: ", Date.now() - lStart);
             return [events, missing];
         }
 
@@ -368,7 +408,7 @@ async function aggregateEvents<T extends ChatEvent>(
             if (evt.event.kind === "message") {
                 numMessages += 1;
             }
-            events.push(evt as EventWrapper<T>);
+            events.push(evt as EnhancedWrapper<T>);
         } else {
             console.log("Couldn't find key: ", key);
             // let's continue aggregating events and just track the indexes that we couldn't find
@@ -381,8 +421,36 @@ async function aggregateEvents<T extends ChatEvent>(
             currentIndex -= 1;
         }
     }
-
     return [ascending ? events : events.reverse(), missing];
+}
+
+function measure<T>(key: string, fn: () => Promise<T>): Promise<T> {
+    const start = performance.now();
+    return fn().then((res) => {
+        const end = performance.now();
+        console.log(key, end - start);
+        profileStore.capture("aggregateEvents", end - start);
+        return res;
+    });
+}
+
+async function aggregateEvents<T extends ChatEvent>(
+    db: Database,
+    [min, max]: IndexRange,
+    chatId: string,
+    startIndex: number,
+    ascending: boolean
+): Promise<[EnhancedWrapper<T>[], Set<number>]> {
+    switch (localStorage.getItem("openchat_loadstrategy")) {
+        case "range":
+            return measure("aggregate events", () =>
+                aggregateEventsRanged(db, [min, max], chatId, startIndex, ascending)
+            );
+        default:
+            return measure("aggregate events", () =>
+                aggregateEventsUnranged(db, [min, max], chatId, startIndex, ascending)
+            );
+    }
 }
 
 export async function getCachedMessageByIndex<T extends ChatEvent>(
@@ -454,11 +522,13 @@ export function mergeSuccessResponses<T extends ChatEvent>(
 function makeSerialisable<T extends ChatEvent>(
     ev: EventWrapper<T>,
     chatId: string
-): EventWrapper<T> {
-    if (ev.event.kind !== "message") return ev;
+): EnhancedWrapper<T> {
+    if (ev.event.kind !== "message") return { ...ev, chatId, messageKey: undefined };
 
     return {
         ...ev,
+        chatId,
+        messageKey: createCacheKey(chatId, ev.event.messageIndex),
         event: {
             ...ev.event,
             content: removeBlobData(ev.event.content),
@@ -507,20 +577,16 @@ export async function setCachedEvents<T extends ChatEvent>(
     resp: EventsResponse<T>
 ): Promise<void> {
     if (resp === "events_failed") return;
-    const tx = (await db).transaction(["chat_events", "message_index_event_index"], "readwrite", {
+    const tx = (await db).transaction(["chat_events"], "readwrite", {
         durability: "relaxed",
     });
     const eventStore = tx.objectStore("chat_events");
-    const mapStore = tx.objectStore("message_index_event_index");
     await Promise.all(
         resp.events.concat(resp.affectedEvents).map(async (event) => {
             await eventStore.put(
                 makeSerialisable<T>(event, chatId),
                 createCacheKey(chatId, event.index)
             );
-            if (event.event.kind === "message") {
-                await mapStore.put(event.index, `${chatId}_${event.event.messageIndex}`);
-            }
         })
     );
     await tx.done;
@@ -566,17 +632,15 @@ async function setCachedMessage(
     chatId: string,
     messageEvent: EventWrapper<Message>
 ): Promise<void> {
-    const tx = (await db).transaction(["chat_events", "message_index_event_index"], "readwrite", {
+    const tx = (await db).transaction(["chat_events"], "readwrite", {
         durability: "relaxed",
     });
     const eventStore = tx.objectStore("chat_events");
-    const mapStore = tx.objectStore("message_index_event_index");
     await Promise.all([
         eventStore.put(
             makeSerialisable(messageEvent, chatId),
             createCacheKey(chatId, messageEvent.index)
         ),
-        mapStore.put(messageEvent.index, `${chatId}_${messageEvent.event.messageIndex}`),
     ]);
     await tx.done;
 }
@@ -700,18 +764,10 @@ export async function loadMessagesByMessageIndex(
 
     await Promise.all<Message | undefined>(
         [...messagesIndexes].map(async (msgIdx) => {
-            const eventIdx = await resolvedDb.get(
-                "message_index_event_index",
-                `${chatId}_${msgIdx}`
-            );
-            if (eventIdx === undefined) {
-                missing.add(msgIdx);
-                return undefined;
-            }
-            const evt: EventWrapper<ChatEvent> | undefined = await loadEventByIndex(
-                resolvedDb,
-                chatId,
-                eventIdx
+            const evt = await resolvedDb.getFromIndex(
+                "chat_events",
+                "messageIdx",
+                createCacheKey(chatId, msgIdx)
             );
             if (evt?.event.kind === "message") {
                 messages.push(evt as EventWrapper<Message>);
