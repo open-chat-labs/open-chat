@@ -318,6 +318,7 @@ export class UserClient extends CandidService implements IUserClient {
                         (replyContext) => apiReplyContextArgs(replyContext, replyingToChatId),
                         message.repliesTo
                     ),
+                    forwarding: false,
                 };
                 return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
             });
