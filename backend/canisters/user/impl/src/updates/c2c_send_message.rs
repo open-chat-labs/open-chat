@@ -1,12 +1,12 @@
 use crate::updates::send_message_common::register_callbacks_if_required;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::PushMessageArgs;
-use ic_cdk_macros::update;
 use types::{CanisterId, DirectMessageNotification, Notification, ReplyContext, UserId};
 use user_canister::c2c_send_message::{Response::*, *};
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 async fn c2c_send_message(args: Args) -> Response {
     run_regular_jobs();

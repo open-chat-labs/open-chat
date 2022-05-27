@@ -1,13 +1,13 @@
 use crate::model::participants::DismissSuperAdminResult;
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_relinquish_super_admin::{Response::*, *};
-use ic_cdk_macros::update;
 use types::ParticipantRelinquishesSuperAdmin;
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 fn c2c_relinquish_super_admin(_args: Args) -> Response {
     run_regular_jobs();

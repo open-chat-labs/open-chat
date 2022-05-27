@@ -1,9 +1,9 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query_candid_and_msgpack;
 use group_canister::c2c_search_messages::{Response::*, *};
-use ic_cdk_macros::query;
 use search::Query;
 
-#[query]
+#[query_candid_and_msgpack]
 fn c2c_search_messages(args: Args) -> Response {
     read_state(|state| c2c_search_messages_impl(args, state))
 }

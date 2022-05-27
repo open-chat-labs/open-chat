@@ -1,9 +1,9 @@
 use crate::guards::caller_is_notifications_canister;
 use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use canister_api_macros::query_candid_and_msgpack;
 use user_index_canister::c2c_lookup_user_id::*;
 
-#[query(guard = "caller_is_notifications_canister")]
+#[query_candid_and_msgpack(guard = "caller_is_notifications_canister")]
 fn c2c_lookup_user_id(args: Args) -> Response {
     read_state(|state| c2c_lookup_user_id_impl(args, state))
 }
