@@ -1,17 +1,17 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use candid::Encode;
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::{ChatEventInternal, GroupChatEvents, PushMessageArgs};
 use group_canister::send_message::{Response::*, *};
-use ic_cdk_macros::update;
 use serde_bytes::ByteBuf;
 use types::{
     CanisterId, ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, Message, MessageContent,
     MessageIndex, Notification, TimestampMillis, UserId,
 };
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 fn send_message(args: Args) -> Response {
     run_regular_jobs();
