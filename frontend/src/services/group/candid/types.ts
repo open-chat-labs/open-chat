@@ -728,6 +728,7 @@ export interface SelectedUpdatesSuccess {
 export interface SendMessageArgs {
   'content' : MessageContent,
   'mentioned' : Array<User>,
+  'forwarding' : boolean,
   'sender_name' : string,
   'message_id' : MessageId,
   'replies_to' : [] | [GroupReplyContext],

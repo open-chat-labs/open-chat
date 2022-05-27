@@ -238,6 +238,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                             message.repliesTo
                         ),
                         mentioned: mentioned.map(apiUser),
+                        forwarding: false,
                     }),
                     sendMessageResponse
                 );
