@@ -6,7 +6,6 @@ use types::{DirectChatEvent, EventWrapper, MessageIndex, UserId};
 pub struct Args {
     pub user_id: UserId,
     pub mid_point: MessageIndex,
-    pub max_messages: u32,
     pub max_events: u32,
 }
 
