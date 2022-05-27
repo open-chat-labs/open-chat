@@ -228,7 +228,6 @@ export type EditMessageResponse = { 'MessageNotFound' : null } |
 export type EventIndex = number;
 export interface EventsArgs {
   'user_id' : UserId,
-  'max_messages' : number,
   'max_events' : number,
   'ascending' : boolean,
   'start_index' : EventIndex,
@@ -251,7 +250,6 @@ export interface EventsSuccessResult {
 export interface EventsWindowArgs {
   'mid_point' : MessageIndex,
   'user_id' : UserId,
-  'max_messages' : number,
   'max_events' : number,
 }
 export interface FailedCryptocurrencyTransfer {

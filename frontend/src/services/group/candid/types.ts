@@ -231,7 +231,6 @@ export type EnableInviteCodeResponse = { 'NotAuthorized' : null } |
 export type EventIndex = number;
 export interface EventsArgs {
   'invite_code' : [] | [bigint],
-  'max_messages' : number,
   'max_events' : number,
   'ascending' : boolean,
   'start_index' : EventIndex,
@@ -255,7 +254,6 @@ export interface EventsSuccessResult {
 export interface EventsWindowArgs {
   'mid_point' : MessageIndex,
   'invite_code' : [] | [bigint],
-  'max_messages' : number,
   'max_events' : number,
 }
 export interface FailedCryptocurrencyTransfer {
