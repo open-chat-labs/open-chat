@@ -1,14 +1,14 @@
 use crate::model::participants::MakeSuperAdminResult;
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_assume_super_admin::{Response::*, *};
-use ic_cdk_macros::update;
 use types::{CanisterId, ParticipantAssumesSuperAdmin, UserId};
 use user_index_canister::c2c_is_super_admin;
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 async fn c2c_assume_super_admin(_args: Args) -> Response {
     run_regular_jobs();

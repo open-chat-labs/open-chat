@@ -1,9 +1,9 @@
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
 use user_index_canister::c2c_set_avatar::{Response::*, *};
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 fn c2c_set_avatar(args: Args) -> Response {
     mutate_state(|state| c2c_set_avatar_impl(args, state))

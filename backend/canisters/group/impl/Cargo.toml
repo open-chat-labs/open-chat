@@ -14,6 +14,7 @@ crate-type = ["cdylib"]
 callback_canister = { path = "../../callback/api" }
 callback_canister_c2c_client = { path = "../../callback/c2c_client" }
 candid = "0.7.14"
+canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "c7aa6b402a41b2cf5e67903055f2b809b68469c6" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
@@ -27,6 +28,7 @@ ic-cdk = "0.5.1"
 ic-cdk-macros = "0.5.1"
 itertools = "0.10.3"
 lazy_static = "1.4.0"
+msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 open_storage_bucket_client = { path = "../../../libraries/open_storage_bucket_client" }

@@ -1,11 +1,11 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
 use types::{ChatId, UserId};
 use user_canister::c2c_mark_read::{Response::*, *};
 use utils::range_set::insert_ranges;
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 fn c2c_mark_read(args: Args) -> Response {
     run_regular_jobs();

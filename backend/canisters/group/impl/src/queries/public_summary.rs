@@ -1,10 +1,10 @@
 use crate::read_state;
 use crate::{RuntimeState, WASM_VERSION};
+use canister_api_macros::query_candid_and_msgpack;
 use group_canister::public_summary::{Response::*, *};
-use ic_cdk_macros::query;
 use types::{Avatar, PublicGroupSummary};
 
-#[query]
+#[query_candid_and_msgpack]
 fn public_summary(args: Args) -> Response {
     read_state(|runtime_state: &RuntimeState| public_summary_impl(args, runtime_state))
 }

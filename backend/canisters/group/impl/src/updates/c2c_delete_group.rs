@@ -1,12 +1,12 @@
 use crate::{read_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use group_canister::c2c_delete_group::{Response::*, *};
 use group_index_canister::c2c_delete_group;
-use ic_cdk_macros::update;
 use tracing::error;
 use types::{CanisterId, ChatId, UserId};
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 async fn c2c_delete_group(_args: Args) -> Response {
     run_regular_jobs();

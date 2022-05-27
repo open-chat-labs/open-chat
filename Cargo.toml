@@ -36,6 +36,7 @@ members = [
     "backend/canisters/user_index/client",
     "backend/canisters/user_index/impl",
     "backend/data_generator",
+    "backend/libraries/canister_api_macros",
     "backend/libraries/canister_client",
     "backend/libraries/canister_client_macros",
     "backend/libraries/canister_logger",
@@ -45,6 +46,7 @@ members = [
     "backend/libraries/http_request",
     "backend/libraries/index_store",
     "backend/libraries/ledger_utils",
+    "backend/libraries/msgpack",
     "backend/libraries/open_storage_bucket_client",
     "backend/libraries/search",
     "backend/libraries/types",
@@ -63,4 +65,6 @@ opt-level = "z"
 codegen-units = 1
 
 [patch.crates-io]
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "0f21fbcbfef2c5faf8332d440a68256f8b43879c" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "0f21fbcbfef2c5faf8332d440a68256f8b43879c" }
 web-push = { git = "https://github.com/hpeebles/rust-web-push", rev = "c0424e229fab6094754338e6efb97efb9fcf56e5" }
