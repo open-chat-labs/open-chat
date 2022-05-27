@@ -649,7 +649,6 @@ dependencies = [
 name = "canister_api_macros"
 version = "0.1.0"
 dependencies = [
- "msgpack",
  "proc-macro2",
  "quote",
  "serde",
