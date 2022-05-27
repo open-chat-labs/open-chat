@@ -554,8 +554,7 @@ impl ChatEvents {
         max_events: usize,
         min_visible_event_index: EventIndex,
     ) -> Vec<&EventWrapper<ChatEventInternal>> {
-        self.events
-            .from_index(start, ascending, max_events, min_visible_event_index)
+        self.events.from_index(start, ascending, max_events, min_visible_event_index)
     }
 
     pub fn get_events_window(
@@ -564,8 +563,7 @@ impl ChatEvents {
         max_events: usize,
         min_visible_event_index: EventIndex,
     ) -> Vec<&EventWrapper<ChatEventInternal>> {
-        self.events
-            .get_window(mid_point, max_events, min_visible_event_index)
+        self.events.get_window(mid_point, max_events, min_visible_event_index)
     }
 
     pub fn get_event_index_by_message_index(&self, message_index: MessageIndex) -> Option<EventIndex> {
