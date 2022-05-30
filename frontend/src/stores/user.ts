@@ -5,7 +5,7 @@ export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
 export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
 export const OPENCHAT_BOT_AVATAR_URL = "assets/robot.svg";
 
-const { subscribe, update } = immutableStore<UserLookup>({
+const { subscribe, update, set } = immutableStore<UserLookup>({
     [OPENCHAT_BOT_USER_ID]: {
         kind: "bot",
         userId: OPENCHAT_BOT_USER_ID,
@@ -28,6 +28,7 @@ export function overwriteUser(lookup: UserLookup, user: PartialUserSummary): Use
 
 export const userStore = {
     subscribe,
+    set,
     add: (user: PartialUserSummary): void => {
         update((users) => overwriteUser(users, user));
     },

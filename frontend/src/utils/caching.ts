@@ -20,7 +20,9 @@ import type { DirectNotification, GroupNotification } from "../domain/notificati
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
-import { profileStore } from "stores/profiling";
+import { profileStore } from "../stores/profiling";
+import { userStore } from "../stores/user";
+import { toRecord } from "./list";
 
 const CACHE_VERSION = 28;
 
@@ -48,12 +50,6 @@ export interface ChatSchema extends DBSchema {
     group_details: {
         key: string;
         value: GroupChatDetails;
-    };
-
-    // this is obsolete and preserved only to keep the type checker happy
-    media_data: {
-        key: string;
-        value: Uint8Array;
     };
 
     soft_disabled: {
@@ -95,9 +91,6 @@ export function openCache(principal: string): Database | undefined {
                     }
                     if (db.objectStoreNames.contains("group_details")) {
                         db.deleteObjectStore("group_details");
-                    }
-                    if (db.objectStoreNames.contains("media_data")) {
-                        db.deleteObjectStore("media_data");
                     }
                     if (db.objectStoreNames.contains("users")) {
                         db.deleteObjectStore("users");
@@ -253,7 +246,7 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
     );
 
     if (!totalMiss && missing.size === 0) {
-        console.log("cache hit: ", events, Date.now() - start);
+        console.log("cache hit: ", events.length, Date.now() - start);
     }
 
     events.sort((a, b) => a.index - b.index);
@@ -276,11 +269,77 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     chatId: string,
     middleMessageIndex: number
 ): Promise<[EventWrapper<T>[], Set<number>, boolean]> {
+    if (localStorage.getItem("openchat_fast") === "true") {
+        return measure("aggregate events window", () =>
+            aggregateEventsWindowRanged(db, [min, max], chatId, middleMessageIndex)
+        );
+    } else {
+        return measure("aggregate events window", () =>
+            aggregateEventsWindowUnranged(db, [min, max], chatId, middleMessageIndex)
+        );
+    }
+}
+
+async function aggregateEventsWindowRanged<T extends ChatEvent>(
+    db: Database,
+    [min, max]: IndexRange,
+    chatId: string,
+    middleMessageIndex: number
+): Promise<[EventWrapper<T>[], Set<number>, boolean]> {
     const events: EventWrapper<T>[] = [];
     const resolvedDb = await db;
     const missing = new Set<number>();
 
-    // TODO come back to this and see if we can use a pair of cursors
+    const middleEvent = await resolvedDb.getFromIndex(
+        "chat_events",
+        "messageIdx",
+        createCacheKey(chatId, middleMessageIndex)
+    );
+    const midpoint = middleEvent?.index;
+
+    if (midpoint === undefined) {
+        console.log(
+            "cache total miss: could not even find the starting event index for the message window"
+        );
+        return [[], missing, true];
+    }
+
+    const half = MAX_EVENTS / 2;
+    const lowerBound = Math.max(min, midpoint - half);
+    const upperBound = Math.min(max, midpoint + half);
+
+    console.log("aggregate events window: events from ", lowerBound, " to ", upperBound);
+
+    const range = IDBKeyRange.bound(
+        createCacheKey(chatId, lowerBound),
+        createCacheKey(chatId, upperBound)
+    );
+
+    for (let i = lowerBound; i <= upperBound; i++) {
+        missing.add(i);
+    }
+
+    const result = await resolvedDb.getAll("chat_events", range);
+    result.forEach((evt) => {
+        missing.delete(evt.index);
+        events.push(evt as EnhancedWrapper<T>);
+    });
+
+    console.log("aggregate events window: missing indexes: ", missing);
+
+    return [events, missing, false];
+}
+
+async function aggregateEventsWindowUnranged<T extends ChatEvent>(
+    db: Database,
+    [min, max]: IndexRange,
+    chatId: string,
+    middleMessageIndex: number
+): Promise<[EventWrapper<T>[], Set<number>, boolean]> {
+    const events: EventWrapper<T>[] = [];
+    const resolvedDb = await db;
+    const missing = new Set<number>();
+
     const middleEvent = await resolvedDb.getFromIndex(
         "chat_events",
         "messageIdx",
@@ -418,7 +477,7 @@ function measure<T>(key: string, fn: () => Promise<T>): Promise<T> {
     return fn().then((res) => {
         const end = performance.now();
         console.log(key, end - start);
-        profileStore.capture("aggregateEvents", end - start);
+        profileStore.capture(key, end - start);
         return res;
     });
 }
@@ -430,15 +489,14 @@ async function aggregateEvents<T extends ChatEvent>(
     startIndex: number,
     ascending: boolean
 ): Promise<[EnhancedWrapper<T>[], Set<number>]> {
-    switch (localStorage.getItem("openchat_loadstrategy")) {
-        case "range":
-            return measure("aggregate events", () =>
-                aggregateEventsRanged(db, [min, max], chatId, startIndex, ascending)
-            );
-        default:
-            return measure("aggregate events", () =>
-                aggregateEventsUnranged(db, [min, max], chatId, startIndex, ascending)
-            );
+    if (localStorage.getItem("openchat_fast") === "true") {
+        return measure("aggregate events", () =>
+            aggregateEventsRanged(db, [min, max], chatId, startIndex, ascending)
+        );
+    } else {
+        return measure("aggregate events", () =>
+            aggregateEventsUnranged(db, [min, max], chatId, startIndex, ascending)
+        );
     }
 }
 
@@ -707,6 +765,10 @@ export async function getCachedUsers(db: Database, userIds: string[]): Promise<U
     }, [] as UserSummary[]);
 }
 
+export async function getAllUsers(db: Database): Promise<UserSummary[]> {
+    return (await db).getAll("users");
+}
+
 export async function setCachedUsers(db: Database, users: UserSummary[]): Promise<void> {
     const tx = (await db).transaction("users", "readwrite", { durability: "relaxed" });
     const store = tx.objectStore("users");
@@ -734,6 +796,12 @@ export function getDb(): Database | undefined {
 
 export function initDb(principal: string): Database | undefined {
     db = openCache(principal);
+    if (db && localStorage.getItem("openchat_fast") === "true") {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        measure("getAllUsers", () => getAllUsers(db!)).then((users) =>
+            userStore.set(toRecord(users, (u) => u.userId))
+        );
+    }
     return db;
 }
 
