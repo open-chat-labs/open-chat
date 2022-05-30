@@ -39,8 +39,8 @@ export const menuStore = {
             const xoffset = get(rtlStore) ? baseOffset : -baseOffset;
             const items = menu.querySelectorAll(".menu-item").length;
             const itemHeight = get(mobileWidth)
-                ? 41.4 + scale * mobileHeightStep
-                : 45 + scale * desktopHeightStep;
+                ? 36.7 + scale * mobileHeightStep
+                : 43 + scale * desktopHeightStep;
             const height = itemHeight * items;
             const left = Math.max(10, pos.x + xoffset);
             const top = pos.y > window.innerHeight / 2 ? pos.y - height : pos.y + pos.height;
