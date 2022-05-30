@@ -20,7 +20,6 @@ import type { DirectNotification, GroupNotification } from "../domain/notificati
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
-import { profileStore } from "../stores/profiling";
 
 const CACHE_VERSION = 28;
 
