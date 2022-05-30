@@ -251,15 +251,6 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
     return [{ events, affectedEvents: [] }, missing, totalMiss];
 }
 
-function loadEventByIndex<T extends ChatEvent>(
-    db: IDBPDatabase<ChatSchema>,
-    chatId: string,
-    idx: number
-): Promise<EventWrapper<T> | undefined> {
-    const key = createCacheKey(chatId, idx);
-    return db.get("chat_events", key) as Promise<EventWrapper<T> | undefined>;
-}
-
 async function aggregateEventsWindow<T extends ChatEvent>(
     db: Database,
     [min, max]: IndexRange,
