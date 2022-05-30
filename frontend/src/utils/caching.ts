@@ -1,4 +1,4 @@
-import { isPreviewing, MAX_EVENTS, MAX_MISSING } from "../domain/chat/chat.utils";
+import { isPreviewing, MAX_EVENTS } from "../domain/chat/chat.utils";
 import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
@@ -269,23 +269,6 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     chatId: string,
     middleMessageIndex: number
 ): Promise<[EventWrapper<T>[], Set<number>, boolean]> {
-    if (localStorage.getItem("openchat_fast") === "true") {
-        return measure("aggregate events window", () =>
-            aggregateEventsWindowRanged(db, [min, max], chatId, middleMessageIndex)
-        );
-    } else {
-        return measure("aggregate events window", () =>
-            aggregateEventsWindowUnranged(db, [min, max], chatId, middleMessageIndex)
-        );
-    }
-}
-
-async function aggregateEventsWindowRanged<T extends ChatEvent>(
-    db: Database,
-    [min, max]: IndexRange,
-    chatId: string,
-    middleMessageIndex: number
-): Promise<[EventWrapper<T>[], Set<number>, boolean]> {
     const events: EventWrapper<T>[] = [];
     const resolvedDb = await db;
     const missing = new Set<number>();
@@ -330,73 +313,7 @@ async function aggregateEventsWindowRanged<T extends ChatEvent>(
     return [events, missing, false];
 }
 
-async function aggregateEventsWindowUnranged<T extends ChatEvent>(
-    db: Database,
-    [min, max]: IndexRange,
-    chatId: string,
-    middleMessageIndex: number
-): Promise<[EventWrapper<T>[], Set<number>, boolean]> {
-    const events: EventWrapper<T>[] = [];
-    const resolvedDb = await db;
-    const missing = new Set<number>();
-
-    const middleEvent = await resolvedDb.getFromIndex(
-        "chat_events",
-        "messageIdx",
-        createCacheKey(chatId, middleMessageIndex)
-    );
-    const eventIndex = middleEvent?.index;
-
-    if (eventIndex === undefined) {
-        console.log(
-            "cache total miss: could not even find the starting event index for the message window"
-        );
-        return [[], missing, true];
-    }
-
-    let descIdx = eventIndex;
-    let ascIdx = eventIndex + 1;
-
-    while (events.length < MAX_EVENTS && missing.size < MAX_MISSING) {
-        // if we have exceeded the range of this chat then we have succeeded
-        if (ascIdx > max && descIdx < min) {
-            return [events, missing, false];
-        }
-
-        if (ascIdx <= max) {
-            const ascEvt: EventWrapper<T> | undefined = await loadEventByIndex(
-                resolvedDb,
-                chatId,
-                ascIdx
-            );
-            if (ascEvt !== undefined) {
-                events.push(ascEvt);
-            } else {
-                missing.add(ascIdx);
-            }
-            ascIdx += 1;
-        }
-
-        if (descIdx >= min) {
-            const descEvt: EventWrapper<T> | undefined = await loadEventByIndex(
-                resolvedDb,
-                chatId,
-                descIdx
-            );
-
-            if (descEvt !== undefined) {
-                events.push(descEvt);
-            } else {
-                missing.add(descIdx);
-            }
-            descIdx -= 1;
-        }
-    }
-
-    return [events, missing, false];
-}
-
-async function aggregateEventsRanged<T extends ChatEvent>(
+async function aggregateEvents<T extends ChatEvent>(
     db: Database,
     [min, max]: IndexRange,
     chatId: string,
@@ -430,48 +347,6 @@ async function aggregateEventsRanged<T extends ChatEvent>(
     return [events, missing];
 }
 
-async function aggregateEventsUnranged<T extends ChatEvent>(
-    db: Database,
-    [min, max]: IndexRange,
-    chatId: string,
-    startIndex: number,
-    ascending: boolean
-): Promise<[EnhancedWrapper<T>[], Set<number>]> {
-    let currentIndex = startIndex;
-    const events: EnhancedWrapper<T>[] = [];
-    const resolvedDb = await db;
-    const missing = new Set<number>();
-
-    // keep iterating until we get MAX_EVENTS events, we go beyond the range of the chat, or
-    // we get a full page of missing messages, return all the events that we found and the indexes of any that we did
-    // not find
-    const lStart = Date.now();
-    while (events.length < MAX_EVENTS && missing.size < MAX_MISSING) {
-        // if we have exceeded the range of this chat then we have succeeded
-        if ((currentIndex > max && ascending) || (currentIndex < min && !ascending)) {
-            console.log("Looping took: ", Date.now() - lStart);
-            return [events, missing];
-        }
-
-        const key = createCacheKey(chatId, currentIndex);
-        const evt = await resolvedDb.get("chat_events", key);
-        if (evt) {
-            events.push(evt as EnhancedWrapper<T>);
-        } else {
-            console.log("Couldn't find key: ", key);
-            // let's continue aggregating events and just track the indexes that we couldn't find
-            missing.add(currentIndex);
-        }
-
-        if (ascending) {
-            currentIndex += 1;
-        } else {
-            currentIndex -= 1;
-        }
-    }
-    return [ascending ? events : events.reverse(), missing];
-}
-
 function measure<T>(key: string, fn: () => Promise<T>): Promise<T> {
     const start = performance.now();
     return fn().then((res) => {
@@ -480,24 +355,6 @@ function measure<T>(key: string, fn: () => Promise<T>): Promise<T> {
         profileStore.capture(key, end - start);
         return res;
     });
-}
-
-async function aggregateEvents<T extends ChatEvent>(
-    db: Database,
-    [min, max]: IndexRange,
-    chatId: string,
-    startIndex: number,
-    ascending: boolean
-): Promise<[EnhancedWrapper<T>[], Set<number>]> {
-    if (localStorage.getItem("openchat_fast") === "true") {
-        return measure("aggregate events", () =>
-            aggregateEventsRanged(db, [min, max], chatId, startIndex, ascending)
-        );
-    } else {
-        return measure("aggregate events", () =>
-            aggregateEventsUnranged(db, [min, max], chatId, startIndex, ascending)
-        );
-    }
 }
 
 export async function getCachedMessageByIndex<T extends ChatEvent>(
@@ -796,7 +653,7 @@ export function getDb(): Database | undefined {
 
 export function initDb(principal: string): Database | undefined {
     db = openCache(principal);
-    if (db && localStorage.getItem("openchat_fast") === "true") {
+    if (db) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         measure("getAllUsers", () => getAllUsers(db!)).then((users) =>
             userStore.set(toRecord(users, (u) => u.userId))

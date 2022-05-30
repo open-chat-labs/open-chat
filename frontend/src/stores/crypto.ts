@@ -1,5 +1,6 @@
 import type { Cryptocurrency, Tokens } from "../domain/crypto";
-import { get, writable } from "svelte/store";
+import { writable } from "svelte/store";
+import { configKeys } from "../utils/config";
 
 type BalanceByCrypto = Record<Cryptocurrency, bigint>;
 
@@ -22,13 +23,13 @@ export const cryptoBalance = {
 };
 
 const lastCryptoSentStore = writable<Cryptocurrency>(
-    (localStorage.getItem("openchat_lastcryptosent") || "icp") as Cryptocurrency
+    (localStorage.getItem(configKeys.lastCryptoSent) || "icp") as Cryptocurrency
 );
 
 export const lastCryptoSent = {
     subscribe: lastCryptoSentStore.subscribe,
     set: (token: Cryptocurrency): void => {
         lastCryptoSentStore.set(token);
-        localStorage.setItem("openchat_lastcryptosent", token);
+        localStorage.setItem(configKeys.lastCryptoSent, token);
     },
 };

@@ -68,6 +68,7 @@ import { UserIndexClient } from "services/userIndex/userIndex.client";
 import { rollbar } from "../../utils/logging";
 import type { GroupInvite } from "../../services/serviceContainer";
 import type { ServiceRetryInterrupt } from "services/candidService";
+import { configKeys } from "../../utils/config";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -198,8 +199,8 @@ export class CachingUserClient implements IUserClient {
                 ? {}
                 : toRecord(cachedResponse.chatSummaries, (c) => c.chatId);
 
-        const limitTo = Number(localStorage.getItem("openchat_prime_cache_limit") || "50");
-        const batchSize = Number(localStorage.getItem("openchat_prime_cache_batch_size") || "5");
+        const limitTo = Number(localStorage.getItem(configKeys.primeCacheLimit) || "50");
+        const batchSize = Number(localStorage.getItem(configKeys.primeCacheBatchSize) || "5");
         const currentScrollStrategy = get(scrollStrategy);
 
         const orderedChats = nextResponse.chatSummaries
