@@ -149,31 +149,42 @@
         controller.attachFile(ev.detail);
     }
 
-    function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
-        const file = items[0]?.getAsFile();
-        if (!file) return;
+    function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
+        return items.reduce<File | undefined>((res, item) => {
+            if (item.kind === "file") {
+                return item.getAsFile() || undefined;
+            }
+            return res;
+        }, undefined);
+    }
 
-        messageContentFromFile(file)
-            .then((content) => controller.attachFile(content))
-            .catch((err) => toastStore.showFailureToast(err));
+    function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
+        const file = fileFromDataTransferItems(items);
+        if (file) {
+            messageContentFromFile(file)
+                .then((content) => controller.attachFile(content))
+                .catch((err) => toastStore.showFailureToast(err));
+        }
+    }
+
+    function onDataTransfer(data: DataTransfer): void {
+        const text = data.getData("text/plain") || data.getData("text/uri-list");
+        if (text) {
+            messageEntry.insertTextAtCaret(text);
+        }
+        messageContentFromDataTransferItemList([...data.items]);
     }
 
     function onDrop(e: CustomEvent<DragEvent>) {
         if (e.detail.dataTransfer) {
-            messageContentFromDataTransferItemList([...e.detail.dataTransfer.items]);
+            onDataTransfer(e.detail.dataTransfer);
             e.detail.preventDefault();
         }
     }
 
     function onPaste(e: ClipboardEvent) {
         if (e.clipboardData) {
-            messageContentFromDataTransferItemList(
-                [...e.clipboardData.items].filter((item) => /image/.test(item.type))
-            );
-            const text = e.clipboardData.getData("text/plain");
-            if (text) {
-                messageEntry.insertTextAtCaret(text);
-            }
+            onDataTransfer(e.clipboardData);
             e.preventDefault();
         }
     }
