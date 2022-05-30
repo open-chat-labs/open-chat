@@ -20,8 +20,8 @@ import type { DirectNotification, GroupNotification } from "../domain/notificati
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
-import { profileStore } from "stores/profiling";
-import { userStore } from "stores/user";
+import { profileStore } from "../stores/profiling";
+import { userStore } from "../stores/user";
 import { toRecord } from "./list";
 
 const CACHE_VERSION = 28;
