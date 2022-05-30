@@ -69,7 +69,7 @@ import type {
     UpdatePermissionsResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
-import { Database, initDb } from "../utils/caching";
+import { Database, getAllUsers, initDb } from "../utils/caching";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
@@ -96,7 +96,9 @@ import { cryptoBalance } from "../stores/crypto";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import type { ServiceRetryInterrupt } from "./candidService";
-import { OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_AVATAR_URL } from "../stores/user";
+import { OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_AVATAR_URL, userStore } from "../stores/user";
+import { toRecord } from "../utils/list";
+import { measure } from "./common/profiling";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -136,6 +138,16 @@ export class ServiceContainer implements MarkMessagesRead {
             chat: LedgerClient.create(identity, "process.env.LEDGER_CANISTER_CHAT"),
         };
         this._groupClients = {};
+        if (this.db) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            measure("getAllUsers", () => getAllUsers(this.db!)).then((users) => {
+                const lookup = toRecord(
+                    users.map((user) => this.rehydrateDataContent(user, "avatar", user.userId)),
+                    (u) => u.userId
+                );
+                userStore.set(lookup);
+            });
+        }
     }
 
     public set groupInvite(value: GroupInvite) {

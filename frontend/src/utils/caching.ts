@@ -21,8 +21,6 @@ import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 import { profileStore } from "../stores/profiling";
-import { userStore } from "../stores/user";
-import { toRecord } from "./list";
 
 const CACHE_VERSION = 28;
 
@@ -347,16 +345,6 @@ async function aggregateEvents<T extends ChatEvent>(
     return [events, missing];
 }
 
-function measure<T>(key: string, fn: () => Promise<T>): Promise<T> {
-    const start = performance.now();
-    return fn().then((res) => {
-        const end = performance.now();
-        console.log(key, end - start);
-        profileStore.capture(key, end - start);
-        return res;
-    });
-}
-
 export async function getCachedMessageByIndex<T extends ChatEvent>(
     db: Database,
     eventIndex: number,
@@ -653,12 +641,6 @@ export function getDb(): Database | undefined {
 
 export function initDb(principal: string): Database | undefined {
     db = openCache(principal);
-    if (db) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        measure("getAllUsers", () => getAllUsers(db!)).then((users) =>
-            userStore.set(toRecord(users, (u) => u.userId))
-        );
-    }
     return db;
 }
 
