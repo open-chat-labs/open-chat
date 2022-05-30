@@ -1,4 +1,5 @@
 use crate::guards::caller_is_owner;
+use crate::openchat_bot::OPENCHAT_BOT_USER_ID;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
@@ -29,20 +30,22 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             if !added.is_empty() {
                 direct_chat.read_by_me.timestamp = now;
 
-                let mut their_message_ranges = RangeSet::new();
-                for index in added
-                    .iter()
-                    .filter_map(|m| direct_chat.unread_message_index_map.get(&m.into()))
-                {
-                    their_message_ranges.insert(index.into());
-                }
+                if direct_chat.them != OPENCHAT_BOT_USER_ID {
+                    let mut their_message_ranges = RangeSet::new();
+                    for index in added
+                        .iter()
+                        .filter_map(|m| direct_chat.unread_message_index_map.get(&m.into()))
+                    {
+                        their_message_ranges.insert(index.into());
+                    }
 
-                if !their_message_ranges.is_empty() {
-                    ic_cdk::spawn(mark_read_on_recipients_canister(
-                        chat_messages_read.chat_id,
-                        their_message_ranges,
-                        added,
-                    ));
+                    if !their_message_ranges.is_empty() {
+                        ic_cdk::spawn(mark_read_on_recipients_canister(
+                            chat_messages_read.chat_id,
+                            their_message_ranges,
+                            added,
+                        ));
+                    }
                 }
             }
         }
