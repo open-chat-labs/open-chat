@@ -20,9 +20,6 @@ import type { DirectNotification, GroupNotification } from "../domain/notificati
 import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
-import { profileStore } from "../stores/profiling";
-import { userStore } from "../stores/user";
-import { toRecord } from "./list";
 
 const CACHE_VERSION = 28;
 
@@ -254,15 +251,6 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
     return [{ events, affectedEvents: [] }, missing, totalMiss];
 }
 
-function loadEventByIndex<T extends ChatEvent>(
-    db: IDBPDatabase<ChatSchema>,
-    chatId: string,
-    idx: number
-): Promise<EventWrapper<T> | undefined> {
-    const key = createCacheKey(chatId, idx);
-    return db.get("chat_events", key) as Promise<EventWrapper<T> | undefined>;
-}
-
 async function aggregateEventsWindow<T extends ChatEvent>(
     db: Database,
     [min, max]: IndexRange,
@@ -345,16 +333,6 @@ async function aggregateEvents<T extends ChatEvent>(
 
     console.log("aggregate events: missing indexes: ", missing);
     return [events, missing];
-}
-
-function measure<T>(key: string, fn: () => Promise<T>): Promise<T> {
-    const start = performance.now();
-    return fn().then((res) => {
-        const end = performance.now();
-        console.log(key, end - start);
-        profileStore.capture(key, end - start);
-        return res;
-    });
 }
 
 export async function getCachedMessageByIndex<T extends ChatEvent>(
@@ -653,12 +631,6 @@ export function getDb(): Database | undefined {
 
 export function initDb(principal: string): Database | undefined {
     db = openCache(principal);
-    if (db) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        measure("getAllUsers", () => getAllUsers(db!)).then((users) =>
-            userStore.set(toRecord(users, (u) => u.userId))
-        );
-    }
     return db;
 }
 
