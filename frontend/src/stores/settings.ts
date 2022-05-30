@@ -1,6 +1,7 @@
 import type { ScrollStrategy } from "../domain/chat/chat";
 import { writable } from "svelte/store";
 import { isTouchDevice } from "../utils/devices";
+import { configKeys } from "../utils/config";
 
 function boolFromLS(key: string, def: boolean): boolean {
     const val = localStorage.getItem(key);
@@ -14,20 +15,20 @@ function boolFromLS(key: string, def: boolean): boolean {
     }
 }
 
-export const enterSend = createLsBoolStore("openchat_entersend", !isTouchDevice);
+export const enterSend = createLsBoolStore(configKeys.enterSend, !isTouchDevice);
 
-export const appearanceSectionOpen = createLsBoolStore("openchat_appearance_section", false);
-export const chatsSectionOpen = createLsBoolStore("openchat_chats_section", false);
-export const accountSectionOpen = createLsBoolStore("openchat_account_section", false);
-export const storageSectionOpen = createLsBoolStore("openchat_storage_section", false);
-export const statsSectionOpen = createLsBoolStore("openchat_user_stats_section", false);
+export const appearanceSectionOpen = createLsBoolStore(configKeys.appearanceSection, false);
+export const chatsSectionOpen = createLsBoolStore(configKeys.chatsSection, false);
+export const accountSectionOpen = createLsBoolStore(configKeys.accountSection, false);
+export const storageSectionOpen = createLsBoolStore(configKeys.storageSection, false);
+export const statsSectionOpen = createLsBoolStore(configKeys.userStatsSection, false);
 
-export const groupInfoOpen = createLsBoolStore("openchat_group_info_section", true);
-export const groupVisibilityOpen = createLsBoolStore("openchat_group_visibility_section", true);
-export const groupPermissionsOpen = createLsBoolStore("openchat_group_permission_section", false);
-export const groupStatsOpen = createLsBoolStore("openchat_group_stats_section", false);
-export const groupInviteUsersOpen = createLsBoolStore("openchat_group_invite_users_section", false);
-export const groupAdvancedOpen = createLsBoolStore("openchat_group_advanced_section", false);
+export const groupInfoOpen = createLsBoolStore(configKeys.groupInfoSection, true);
+export const groupVisibilityOpen = createLsBoolStore(configKeys.groupVisibilitySection, true);
+export const groupPermissionsOpen = createLsBoolStore(configKeys.groupPermissionSection, false);
+export const groupStatsOpen = createLsBoolStore(configKeys.groupStatsSection, false);
+export const groupInviteUsersOpen = createLsBoolStore(configKeys.groupInviteUsersSections, false);
+export const groupAdvancedOpen = createLsBoolStore(configKeys.groupAdvancedSection, false);
 
 function createLsBoolStore(key: string, def: boolean) {
     const store = writable<boolean>(boolFromLS(key, def));
@@ -42,13 +43,13 @@ function createLsBoolStore(key: string, def: boolean) {
 }
 
 const scrollStratStore = writable<ScrollStrategy>(
-    (localStorage.getItem("openchat_scrollstrategy") || "latestMessage") as ScrollStrategy
+    (localStorage.getItem(configKeys.scrollStrategy) || "latestMessage") as ScrollStrategy
 );
 
 export const scrollStrategy = {
     subscribe: scrollStratStore.subscribe,
     set: (strategy: ScrollStrategy): void => {
         scrollStratStore.set(strategy);
-        localStorage.setItem("openchat_scrollstrategy", strategy);
+        localStorage.setItem(configKeys.scrollStrategy, strategy);
     },
 };

@@ -1,4 +1,5 @@
 import { init, locale, addMessages, getLocaleFromNavigator } from "svelte-i18n";
+import { configKeys } from "../utils/config";
 
 import en from "./en.json";
 import fr from "./fr.json";
@@ -87,10 +88,10 @@ init({
 });
 
 export function getStoredLocale(): string {
-    return localStorage.getItem("openchat_locale") ?? (getLocaleFromNavigator() || "en");
+    return localStorage.getItem(configKeys.locale) ?? (getLocaleFromNavigator() || "en");
 }
 
 export function setLocale(code: string): void {
     locale.set(code);
-    localStorage.setItem("openchat_locale", code);
+    localStorage.setItem(configKeys.locale, code);
 }
