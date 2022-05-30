@@ -1,4 +1,5 @@
 import { writable } from "svelte/store";
+import { configKeys } from "../utils/config";
 
 export type FontScale = 0 | 1 | 2 | 3 | 4;
 
@@ -14,13 +15,13 @@ function translateScale(scale: FontScale): string {
 }
 
 export function getCurrentFontSize(): FontScale {
-    const size = Number(localStorage.getItem("openchat_font_size") ?? "2") as FontScale;
+    const size = Number(localStorage.getItem(configKeys.fontSize) ?? "2") as FontScale;
     document.documentElement.style.setProperty("--font-size", translateScale(size));
     return size;
 }
 
 export function setFontSize(scale: FontScale): void {
     fontSizeScale.set(scale);
-    localStorage.setItem("openchat_font_size", scale.toString());
+    localStorage.setItem(configKeys.fontSize, scale.toString());
     document.documentElement.style.setProperty("--font-size", translateScale(scale));
 }
