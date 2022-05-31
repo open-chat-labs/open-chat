@@ -314,7 +314,7 @@
         "bioTooLong": "Votre biographie est trop longue",
         "codeExpired": "Le code que vous avez entré a expiré",
         "codeNotFound": "Le code que vous avez entré est introuvable",
-        "phoneAlreadyRegisterd": "Le numéro de téléphone est déjà enregistré",
+        "phoneAlreadyRegistered": "Le numéro de téléphone est déjà enregistré",
         "phoneAlreadyRegisteredByAnother": "Le numéro de téléphone est déjà enregistré par quelqu'un d'autre",
         "phoneInvalid": "Le numéro de téléphone est invalide",
         "userLimitReached": "La limite d'utilisateurs a été atteinte",

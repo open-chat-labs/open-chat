@@ -258,7 +258,7 @@
         "usernameTooLong": "用户名太长了",
         "codeExpired": "验证码已过期",
         "codeNotFound": "验证码无效",
-        "phoneAlreadyRegisterd": "手机号已被注册",
+        "phoneAlreadyRegistered": "手机号已被注册",
         "phoneAlreadyRegisteredByAnother": "手机号已被其他用户注册",
         "phoneInvalid": "无效手机号码",
         "userLimitReached": "已达到最大用户数",

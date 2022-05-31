@@ -48,7 +48,7 @@
         messageId={replyingTo.messageId}
         senderId={replyingTo.senderId}
         truncate={true}
-        edited={false}
+        edited={replyingTo.edited}
         content={replyingTo.content}
         myUserId={user.userId}
         reply={true} />

@@ -486,6 +486,7 @@ export class ServiceContainer implements MarkMessagesRead {
                         messageIndex: msg.messageIndex,
                         eventIndex: idx,
                         chatId,
+                        edited: msg.edited,
                     };
                 }
                 return ev;
