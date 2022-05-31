@@ -38,6 +38,7 @@
         ChatSummary,
         EnhancedReplyContext,
         GroupChatSummary,
+        Message,
     } from "../../domain/chat/chat";
     import { currentUserKey, HomeController } from "../../fsm/home.controller";
     import { mapRemoteData } from "../../utils/remoteData";
@@ -52,6 +53,7 @@
     import { emptyChatMetrics, mergeChatMetrics } from "../../domain/chat/chat.utils";
     import { trackEvent } from "../../utils/tracking";
     import { numberOfColumns, oldLayout } from "../../stores/layout";
+    import { messageToForwardStore } from "../../stores/messageToForward";
 
     const dispatch = createEventDispatcher();
 
@@ -73,8 +75,9 @@
         About,
         Faq,
         Roadmap,
-        Share,
+        SelectChat,
     }
+
     let faqQuestion: Questions | undefined = undefined;
     let modal = ModalType.None;
     let rightPanel: RightPanel;
@@ -94,6 +97,7 @@
     let share: Share = { title: "", text: "", url: "", files: [] };
     let interruptRecommended = false;
     let rightPanelHistory: RightPanelState[] = [];
+    let messageToForward: Message | undefined = undefined;
 
     $: userId = controller.user.userId;
     $: api = controller.api;
@@ -169,7 +173,7 @@
                 };
                 params.chatId = null;
                 history.replaceState(null, "", "/#/");
-                modal = ModalType.Share;
+                modal = ModalType.SelectChat;
             }
 
             // if we have a chatid in the params then we need to select that chat
@@ -424,6 +428,11 @@
         controller.replyPrivatelyTo(ev.detail);
     }
 
+    function forwardMessage(ev: CustomEvent<Message>) {
+        messageToForward = ev.detail;
+        modal = ModalType.SelectChat;
+    }
+
     function showParticipants() {
         if ($selectedChat !== undefined) {
             rightPanelHistory = [...rightPanelHistory, { kind: "show_participants" }];
@@ -494,9 +503,27 @@
         upgradeStorage = ev.detail;
     }
 
-    function onChatSelectedForShare(ev: CustomEvent<string>) {
+    function onSelectChat(ev: CustomEvent<string>) {
         closeModal();
-        const chatId = ev.detail;
+        if (messageToForward !== undefined) {
+            forwardToChat(ev.detail);
+            messageToForward = undefined;
+        } else {
+            shareWithChat(ev.detail);
+        }
+    }
+
+    function onCloseSelectChat() {
+        closeModal();
+        messageToForward = undefined;
+    }
+
+    function forwardToChat(chatId: string) {
+        push(`/${chatId}`);
+        messageToForwardStore.set(messageToForward);
+    }
+
+    function shareWithChat(chatId: string) {
         push(`/${chatId}`);
 
         const shareText = share.text ?? "";
@@ -589,7 +616,8 @@
                 on:dismissRecommendation={dismissRecommendation}
                 on:upgrade={upgrade}
                 on:showPinned={showPinned}
-                on:goToMessageIndex={goToMessageIndex} />
+                on:goToMessageIndex={goToMessageIndex}
+                on:forward={forwardMessage} />
         {/if}
         {#if $numberOfColumns === 3}
             <RightPanel
@@ -660,8 +688,8 @@
 
 {#if modal !== ModalType.None}
     <Overlay
-        dismissible={modal !== ModalType.Share}
-        alignLeft={modal === ModalType.Share}
+        dismissible={modal !== ModalType.SelectChat}
+        alignLeft={modal === ModalType.SelectChat}
         on:close={closeModal}>
         {#if modal === ModalType.Faq}
             <FaqModal bind:question={faqQuestion} on:close={closeModal} />
@@ -669,11 +697,11 @@
             <RoadmapModal on:close={closeModal} />
         {:else if modal === ModalType.About}
             <AboutModal canister={{ id: userId, wasmVersion }} on:close={closeModal} />
-        {:else if modal === ModalType.Share}
+        {:else if modal === ModalType.SelectChat}
             <SelectChatModal
                 chatsSummaries={$chatSummariesList}
-                on:close={closeModal}
-                on:select={onChatSelectedForShare} />
+                on:close={onCloseSelectChat}
+                on:select={onSelectChat} />
         {/if}
     </Overlay>
 {/if}

@@ -335,6 +335,7 @@ export function createMessage(
         messageIndex,
         reactions: [],
         edited: false,
+        forwarded: false,
     };
 }
 
@@ -1468,4 +1469,13 @@ export function getFirstUnreadMessageIndex(
 export function addEditedSuffix(txt: string | undefined, edited: boolean): string {
     if (txt === undefined || txt === "") return "";
     return edited ? `${txt} <span class="edited-msg">(${get(_)("edited")})</span>` : txt;
+}
+
+export function canForward(content: MessageContent): boolean {
+    return process.env.ENABLE_FORWARDING
+        ? content.kind !== "crypto_content" &&
+              content.kind !== "poll_content" &&
+              content.kind !== "deleted_content" &&
+              content.kind !== "placeholder_content"
+        : false;
 }

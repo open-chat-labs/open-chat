@@ -8,6 +8,7 @@ export LEDGER_CANISTER_BTC=ryjl3-tyaaa-aaaaa-aaaba-cai
 export LEDGER_CANISTER_CHAT=ryjl3-tyaaa-aaaaa-aaaba-cai
 export BLOB_URL_PATTERN=https://{canisterId}.raw.ic0.app/{blobType}/
 export ENABLE_MULTI_CRYPTO=false
+export ENABLE_FORWARDING=false
 
 npm i
 npm run typecheck

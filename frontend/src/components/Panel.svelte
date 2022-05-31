@@ -1,12 +1,18 @@
 <script lang="ts">
-    import { oldLayout } from "../stores/layout";
+    import { numberOfColumns, oldLayout } from "../stores/layout";
 
     export let left: boolean = false;
     export let middle: boolean = false;
     export let right: boolean = false;
+    export let forceModal: boolean = false;
 </script>
 
-<section class:old-layout={oldLayout} class:left class:right class:middle>
+<section
+    class:old-layout={oldLayout}
+    class:left
+    class:right
+    class:middle
+    class:modal={forceModal || $numberOfColumns == 2}>
     <slot />
 </section>
 
@@ -77,12 +83,13 @@
                 background: var(--panel-left-bg);
             }
 
-            /* Not that below xl the right panel is a modal and not in a flexbox container anymore! */
-            @include size-below(xl) {
+            &.modal.right {
+                background: var(--panel-right-bg);
                 @include fullHeight();
                 max-width: 500px;
                 min-width: 500px;
             }
+
             @include mobile() {
                 width: 100%;
                 min-width: 0;

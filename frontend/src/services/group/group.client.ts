@@ -244,6 +244,26 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
+    forwardMessage(
+        senderName: string,
+        mentioned: User[],
+        message: Message
+    ): Promise<SendMessageResponse> {
+        // TODO: first forward using the DataClient
+        return this.handleResponse(
+            this.groupService.send_message({
+                content: apiMessageContent(message.content),
+                message_id: message.messageId,
+                sender_name: senderName,
+                replies_to: [],
+                mentioned: mentioned.map(apiUser),
+                forwarding: message.forwarded,
+            }),
+            sendMessageResponse
+        );
+    }
+
+    @profile("groupClient")
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group({

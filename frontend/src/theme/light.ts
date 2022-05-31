@@ -201,17 +201,15 @@ export function lightTheme(): Theme {
                 txt: "#191919",
                 hv: "#efefef",
                 bd: "transparent",
+                muted: "#999999",
                 "reply-accent": blueAccent,
 
                 me: {
-                    // bg: "#ff69b4",
-                    // hv: "#ff4fa7",
-                    // bd: "#ff69b4",
-
                     txt: "#ffffff",
                     bg: "#d62c7d",
                     bd: "#d62c7d",
                     hv: "#EA4091",
+                    muted: "#cccccc",
                 },
             },
         },

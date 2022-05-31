@@ -71,6 +71,7 @@ pub(crate) fn c2c_send_message_impl(
         content: args.content.new_content_into_internal(),
         replies_to,
         now,
+        forwarded: args.forwarding,
     };
 
     let message_event =

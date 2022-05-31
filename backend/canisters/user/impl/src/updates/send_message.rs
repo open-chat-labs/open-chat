@@ -59,13 +59,16 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Res
 
     let now = runtime_state.env.now();
 
-    if let Err(error) = args.content.validate_for_new_message(now) {
+    if let Err(error) = args.content.validate_for_new_message(args.forwarding, now) {
         Err(match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
             ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
             ContentValidationError::TransferCannotBeZero => TransferCannotBeZero,
             ContentValidationError::TransferLimitExceeded(limit) => TransferLimitExceeded(limit),
+            ContentValidationError::InvalidTypeForForwarding => {
+                InvalidRequest("Cannot forward this type of message".to_string())
+            }
         })
     } else {
         Ok(())
@@ -87,6 +90,7 @@ fn send_message_impl(
         content: args.content.clone().new_content_into_internal(),
         replies_to: args.replies_to.clone(),
         now,
+        forwarded: args.forwarding,
     };
 
     let message_event = runtime_state
@@ -113,6 +117,7 @@ fn send_message_impl(
                     .map(C2CReplyContext::ThisChat)
             }
         }),
+        forwarding: args.forwarding,
     };
     ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, false));
 

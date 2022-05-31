@@ -35,6 +35,7 @@ pub struct PushMessageArgs {
     pub content: MessageContentInternal,
     pub replies_to: Option<ReplyContext>,
     pub now: TimestampMillis,
+    pub forwarded: bool,
 }
 
 pub struct EditMessageArgs {
@@ -160,6 +161,7 @@ impl ChatEvents {
             last_updated: None,
             last_edited: None,
             deleted_by: None,
+            forwarded: args.forwarded,
         };
         let message = self.hydrate_message(&message_internal, Some(message_internal.sender));
         let event_index = self.push_event(ChatEventInternal::Message(Box::new(message_internal)), args.now);
@@ -475,7 +477,7 @@ impl ChatEvents {
                 .map(|(r, u)| (r.clone(), u.iter().copied().collect()))
                 .collect(),
             edited: message.last_edited.is_some(),
-            forwarded: false,
+            forwarded: message.forwarded,
         }
     }
 
@@ -925,6 +927,7 @@ mod tests {
                 }),
                 replies_to: None,
                 now: i as u64,
+                forwarded: false,
             });
             events.push_event(
                 ChatEventInternal::MessageReactionAdded(Box::new(UpdatedMessageInternal {
