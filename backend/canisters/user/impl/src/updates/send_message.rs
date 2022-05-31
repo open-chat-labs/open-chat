@@ -66,7 +66,9 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Res
             ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
             ContentValidationError::TransferCannotBeZero => TransferCannotBeZero,
             ContentValidationError::TransferLimitExceeded(limit) => TransferLimitExceeded(limit),
-            ContentValidationError::InvalidTypeForForwarding => InvalidRequest("Cannot forward this type of message".to_string())
+            ContentValidationError::InvalidTypeForForwarding => {
+                InvalidRequest("Cannot forward this type of message".to_string())
+            }
         })
     } else {
         Ok(())

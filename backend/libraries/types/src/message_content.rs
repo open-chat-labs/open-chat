@@ -56,9 +56,7 @@ impl MessageContent {
     pub fn validate_for_new_message(&self, forwarding: bool, now: TimestampMillis) -> Result<(), ContentValidationError> {
         if forwarding {
             match self {
-                MessageContent::Poll(_) |
-                MessageContent::CryptocurrencyV2(_) |
-                MessageContent::Deleted(_) => {
+                MessageContent::Poll(_) | MessageContent::CryptocurrencyV2(_) | MessageContent::Deleted(_) => {
                     return Err(InvalidTypeForForwarding);
                 }
                 _ => {}

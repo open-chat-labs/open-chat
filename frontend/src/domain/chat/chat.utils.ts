@@ -45,7 +45,6 @@ import { formatTokens } from "../../utils/cryptoFormatter";
 import { userStore } from "../../stores/user";
 import type { TypersByChat } from "../../stores/typing";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
-import { messageContent } from "services/common/chatMappers";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;

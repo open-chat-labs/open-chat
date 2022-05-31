@@ -31,8 +31,10 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
                 ContentValidationError::TransferCannotBeZero | ContentValidationError::TransferLimitExceeded(_) => {
                     unreachable!()
-                },
-                ContentValidationError::InvalidTypeForForwarding => InvalidRequest("Cannot forward this type of message".to_string())
+                }
+                ContentValidationError::InvalidTypeForForwarding => {
+                    InvalidRequest("Cannot forward this type of message".to_string())
+                }
             };
         }
 
