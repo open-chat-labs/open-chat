@@ -29,8 +29,8 @@ itertools = "0.10.3"
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 lodepng = "3.6.1"
 msgpack = { path = "../../../libraries/msgpack" }
-open_storage_index_canister = { path = "../../open_storage_index/api" }
-open_storage_index_canister_c2c_client = { path = "../../open_storage_index/c2c_client" }
+open_storage_index_canister = { package = "index_canister", git = "https://github.com/open-ic/open-storage", rev = "5ab16ba20b57c2217901773224de4eae9dccab42" }
+open_storage_index_canister_c2c_client = { package = "index_canister_c2c_client", git = "https://github.com/open-ic/open-storage", rev = "5ab16ba20b57c2217901773224de4eae9dccab42" }
 rand = "0.7.3"
 rand_chacha = "0.2.2"
 rand_core = "0.5.1"

@@ -9,6 +9,6 @@ edition = "2021"
 [dependencies]
 futures = "0.3.21"
 ic-cdk = "0.5.1"
-open_storage_bucket_canister = { path = "../../canisters/open_storage_bucket/api" }
-open_storage_bucket_canister_c2c_client = { path = "../../canisters/open_storage_bucket/c2c_client" }
+open_storage_bucket_canister = { package = "bucket_canister", git = "https://github.com/open-ic/open-storage", rev = "5ab16ba20b57c2217901773224de4eae9dccab42" }
+open_storage_bucket_canister_c2c_client = { package = "bucket_canister_c2c_client", git = "https://github.com/open-ic/open-storage", rev = "5ab16ba20b57c2217901773224de4eae9dccab42" }
 types = { path = "../types" }
