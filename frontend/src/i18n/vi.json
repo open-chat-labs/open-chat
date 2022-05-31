@@ -309,7 +309,7 @@
         "bioTooLong": "Tiểu sử của bạn quá dài",
         "codeExpired": "Mã bạn nhập đã hết hạn và không còn hiệu lực",
         "codeNotFound": "Không tìm thấy mã bạn đã nhập",
-        "phoneAlreadyRegisterd": "Số điện thoại đã được đăng ký",
+        "phoneAlreadyRegistered": "Số điện thoại đã được đăng ký",
         "phoneAlreadyRegisteredByAnother": "Số điện thoại đã được đăng ký bởi một người dùng khác",
         "phoneInvalid": "Số điện thoại không tồn tại",
         "userLimitReached": "Số lượng người dùng đã đạt giới hạn",

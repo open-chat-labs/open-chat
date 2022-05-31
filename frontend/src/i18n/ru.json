@@ -313,7 +313,7 @@
         "bioTooLong": "Ваша биография слишком длинная",
         "codeExpired": "Срок действия введенного вами кода истек",
         "codeNotFound": "Введенный вами код не найден",
-        "phoneAlreadyRegisterd": "Номер телефона уже зарегистрирован",
+        "phoneAlreadyRegistered": "Номер телефона уже зарегистрирован",
         "phoneAlreadyRegisteredByAnother": "Номер телефона уже зарегистрирован кем-то другим",
         "phoneInvalid": "Номер телефона недействителен",
         "userLimitReached": "Лимит пользователя исчерпан.",

@@ -313,7 +313,7 @@
         "bioTooLong": "La tua biografia è troppo lunga",
         "codeExpired": "Il codice che hai inserito è scaduto",
         "codeNotFound": "Il codice inserito non è stato trovato",
-        "phoneAlreadyRegisterd": "Il numero di telefono è già registrato",
+        "phoneAlreadyRegistered": "Il numero di telefono è già registrato",
         "phoneAlreadyRegisteredByAnother": "Il numero di telefono è già registrato da qualcun altro",
         "phoneInvalid": "Il numero di telefono non è valido",
         "userLimitReached": "Il limite di utenti è stato raggiunto",

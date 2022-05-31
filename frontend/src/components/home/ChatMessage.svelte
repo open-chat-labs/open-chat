@@ -139,6 +139,7 @@
             sender,
             messageId: msg.messageId,
             messageIndex: msg.messageIndex,
+            edited: msg.edited,
         };
     }
 
