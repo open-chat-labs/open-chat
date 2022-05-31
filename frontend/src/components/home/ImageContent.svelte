@@ -107,7 +107,7 @@
 {/if}
 
 {#if zoomable && zoom}
-    <Overlay dismissible={true} alignBottomOnMobile={false}>
+    <Overlay on:close={() => (zoom = false)} dismissible={true} alignBottomOnMobile={false}>
         <ModalContent
             hideHeader={true}
             hideFooter={true}
