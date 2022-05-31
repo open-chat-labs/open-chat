@@ -310,7 +310,7 @@
         "bioTooLong": "Tu biografía es demasiado larga",
         "codeExpired": "El código ingresado ha expirado",
         "codeNotFound": "El código ingresado no se puede encontrar",
-        "phoneAlreadyRegisterd": "Este número ya está registrado",
+        "phoneAlreadyRegistered": "Este número ya está registrado",
         "phoneAlreadyRegisteredByAnother": "Este número ya se encuentra registrado por otro usuario",
         "phoneInvalid": "Numero telefónico inválido",
         "userLimitReached": "El usuario ha alcanzado el limite",

@@ -289,7 +289,7 @@
         "bioTooLong": "あなたの経歴は長すぎます",
         "codeExpired": "入力されたコードは有効期限が切れています",
         "codeNotFound": "入力されたコードは見つかりませんでした",
-        "phoneAlreadyRegisterd": "電話番号はすでに登録されています",
+        "phoneAlreadyRegistered": "電話番号はすでに登録されています",
         "phoneAlreadyRegisteredByAnother": "電話番号がすでに他の人によって登録されています",
         "phoneInvalid": "電話番号が無効です",
         "userLimitReached": "ユーザー数の上限に達しています",

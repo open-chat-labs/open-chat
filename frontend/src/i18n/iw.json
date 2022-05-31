@@ -304,7 +304,7 @@
         "bioTooLong": "הביוגרפיה שלך ארוכה מדי",
         "codeExpired": "פג תוקף הקוד שהזנת",
         "codeNotFound": "הקוד שהזנת לא נמצא",
-        "phoneAlreadyRegisterd": "מספר הטלפון כבר רשום",
+        "phoneAlreadyRegistered": "מספר הטלפון כבר רשום",
         "phoneAlreadyRegisteredByAnother": "מספר הטלפון כבר רשום על ידי מישהו אחר",
         "phoneInvalid": "מספר הטלפון אינו חוקי",
         "userLimitReached": "הגעת למגבלת המשתמשים",

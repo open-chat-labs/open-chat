@@ -18,6 +18,9 @@
     let withCaption = content.caption !== undefined && content.caption !== "";
     let image = $mobileWidth ? content.mobile : content.desktop;
     let landscape = image.height < image.width;
+    let style = `${height === undefined ? "" : `height: ${height}px;`} max-width: ${
+        image.width
+    }px;`;
 </script>
 
 <div class="img-wrapper">
@@ -27,7 +30,7 @@
             class:landscape
             class:fill
             class:withCaption
-            style={height === undefined ? undefined : `height: ${height}px`}
+            {style}
             class:draft
             title={content.caption ?? content.title}
             class:reply
@@ -40,7 +43,7 @@
             class:draft
             class:reply
             class:rtl={$rtlStore}
-            style={height === undefined ? undefined : `height: ${height}px`}
+            {style}
             src={content.mobile.url}
             alt={content.caption ?? content.title} />
     {:else}
@@ -56,7 +59,7 @@
             class:reply
             class:rtl={$rtlStore}
             title={content.caption ?? content.title}
-            style={height === undefined ? undefined : `height: ${height}px`}>
+            {style}>
             <track kind="captions" />
             <source src={content.desktop.url} type="video/mp4" />
         </video>

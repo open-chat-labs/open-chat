@@ -309,7 +309,7 @@
         "bioTooLong": "Your bio is too long",
         "codeExpired": "The code you entered has expired",
         "codeNotFound": "The code you entered was not found",
-        "phoneAlreadyRegisterd": "The phone number is already registered",
+        "phoneAlreadyRegistered": "The phone number is already registered",
         "phoneAlreadyRegisteredByAnother": "The phone number is already registered by someone else",
         "phoneInvalid": "The phone number is invalid",
         "userLimitReached": "The user limit has been reached",
@@ -526,5 +526,5 @@
     "memberIsTyping": "{username} is typing",
     "membersAreTyping": "{number} members are typing",
     "readOnlyChat": "This chat is read-only",
-	"accounts": "Accounts"
+    "accounts": "Accounts"
 }
