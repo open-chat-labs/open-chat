@@ -82,6 +82,7 @@
         on:registerVote
         on:editMessage={editEvent}
         on:upgrade
+        on:forward
         eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />

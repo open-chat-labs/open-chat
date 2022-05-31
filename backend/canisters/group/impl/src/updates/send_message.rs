@@ -24,13 +24,16 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(participant) = runtime_state.data.participants.get(caller) {
         let now = runtime_state.env.now();
 
-        if let Err(error) = args.content.validate_for_new_message(now) {
+        if let Err(error) = args.content.validate_for_new_message(args.forwarding, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
                 ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
                 ContentValidationError::TransferCannotBeZero | ContentValidationError::TransferLimitExceeded(_) => {
                     unreachable!()
+                }
+                ContentValidationError::InvalidTypeForForwarding => {
+                    InvalidRequest("Cannot forward this type of message".to_string())
                 }
             };
         }
@@ -57,6 +60,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             content: args.content.new_content_into_internal(),
             replies_to: args.replies_to.map(|r| r.into()),
             now,
+            forwarded: args.forwarding,
         };
 
         let message_event = runtime_state.data.events.push_message(push_message_args);

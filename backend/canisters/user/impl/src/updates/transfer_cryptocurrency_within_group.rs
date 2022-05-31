@@ -35,6 +35,7 @@ async fn transfer_cryptocurrency_within_group(args: Args) -> Response {
         sender_name: args.sender_name,
         replies_to: args.replies_to,
         mentioned: args.mentioned,
+        forwarding: false,
     };
 
     match group_canister_c2c_client::send_message(args.group_id.into(), &c2c_args).await {
@@ -49,6 +50,7 @@ async fn transfer_cryptocurrency_within_group(args: Args) -> Response {
             group_canister::send_message::Response::MessageEmpty
             | group_canister::send_message::Response::InvalidPoll(_)
             | group_canister::send_message::Response::NotAuthorized
+            | group_canister::send_message::Response::InvalidRequest(_)
             | group_canister::send_message::Response::TextTooLong(_) => unreachable!(),
         },
         Err(error) => InternalError(format!("{error:?}"), completed_transfer),

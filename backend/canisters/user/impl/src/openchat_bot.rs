@@ -105,6 +105,7 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
         sender_name: OPENCHAT_BOT_USERNAME.to_string(),
         content,
         replies_to_v2: None,
+        forwarding: false,
     };
 
     c2c_send_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);

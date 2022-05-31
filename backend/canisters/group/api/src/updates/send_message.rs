@@ -9,6 +9,8 @@ pub struct Args {
     pub sender_name: String,
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
+    #[serde(default)]
+    pub forwarding: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -19,6 +21,7 @@ pub enum Response {
     InvalidPoll(InvalidPollReason),
     NotAuthorized,
     CallerNotInGroup,
+    InvalidRequest(String),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

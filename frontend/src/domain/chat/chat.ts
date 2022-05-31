@@ -255,6 +255,7 @@ export type Message = {
     repliesTo?: ReplyContext;
     reactions: Reaction[];
     edited: boolean;
+    forwarded: boolean;
 };
 
 export type LocalReaction = {
