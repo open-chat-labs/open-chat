@@ -171,12 +171,15 @@
         }
 
         msg = {
-            ...msg,
-            content,
-            forwarded: msg.content.kind !== "giphy_content",
-            sender: controller.user.userId,
+            kind: "message",
             messageId: newMessageId(),
             messageIndex: controller.getNextMessageIndex(),
+            sender: controller.user.userId,
+            content,
+            repliesTo: undefined,
+            reactions: [],
+            edited: false,
+            forwarded: msg.content.kind !== "giphy_content",
         };
 
         controller.api
