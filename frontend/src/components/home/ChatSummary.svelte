@@ -171,7 +171,8 @@
     class:rtl={$rtlStore}
     on:mouseenter={() => (hovering = true)}
     on:mouseleave={() => (hovering = false)}
-    href={`/#/${chatSummary.chatId}`}>
+    href={`/#/${chatSummary.chatId}`}
+    on:click>
     <div class="avatar">
         <Avatar
             statusBorder={selected || hovering ? "var(--chatSummary-hv)" : "var(--chatSummary-bg)"}

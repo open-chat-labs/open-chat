@@ -84,6 +84,7 @@
 
     function chatWith(userId: string): void {
         dispatch("chatWith", userId);
+        closeSearch();
     }
 
     function loadMessage(msg: MessageMatch): void {
@@ -96,7 +97,7 @@
      */
     function selectGroup({ chatId }: GroupMatch): void {
         push(`/${chatId}`);
-        dispatch("searchEntered", "");
+        closeSearch();
     }
 
     function messageMatchDataContent({ chatId, sender }: MessageMatch): DataContent {
@@ -113,6 +114,10 @@
             return "";
         }
         return chat.kind === "group_chat" ? chat.name : $userStore[sender].username ?? "";
+    }
+
+    function closeSearch() {
+        dispatch("searchEntered", "");
     }
 
     let chatListElement: HTMLElement;
@@ -164,6 +169,7 @@
                         {chatSummary}
                         {userId}
                         selected={$selectedChat?.chatId === chatSummary.chatId}
+                        on:click={closeSearch}
                         on:deleteDirectChat />
                 {/each}
 
