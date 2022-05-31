@@ -205,6 +205,7 @@ export interface Theme {
             txt: string;
             hv: string;
             bd: string;
+            muted: string;
             "reply-accent": string;
 
             me: {
@@ -212,6 +213,7 @@ export interface Theme {
                 txt: string;
                 hv: string;
                 bd: string;
+                muted: string;
             };
         };
     };

@@ -60,7 +60,7 @@
     }
 </script>
 
-<Panel right>
+<Panel right forceModal>
     <SectionHeader flush gap>
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />

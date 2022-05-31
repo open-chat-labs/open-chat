@@ -12,6 +12,8 @@ pub struct Args {
     pub sender_name: String,
     pub content: MessageContent,
     pub replies_to: Option<ReplyContext>,
+    #[serde(default)]
+    pub forwarding: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

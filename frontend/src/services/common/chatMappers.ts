@@ -80,6 +80,7 @@ export function message(candid: ApiMessage): Message {
         messageIndex: candid.message_index,
         reactions: reactions(candid.reactions),
         edited: candid.edited,
+        forwarded: candid.forwarded,
     };
 }
 

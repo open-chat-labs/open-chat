@@ -7,17 +7,24 @@
     import { toastStore } from "../../stores/toast";
     import { _ } from "svelte-i18n";
     import type { ChatController } from "../../fsm/chat.controller";
-    import { onDestroy } from "svelte";
+    import { onDestroy, tick } from "svelte";
     import {
+        canForward,
         canInviteUsers,
         getFirstUnreadMention,
         getFirstUnreadMessageIndex,
         isPreviewing,
+        newMessageId,
     } from "../../domain/chat/chat.utils";
-    import type { EnhancedReplyContext, GroupChatSummary, Mention } from "../../domain/chat/chat";
+    import type {
+        EnhancedReplyContext,
+        GroupChatSummary,
+        Mention,
+        Message,
+    } from "../../domain/chat/chat";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
-	import { userStore } from "stores/user";
+    import { userStore } from "stores/user";
     import {
         canBlockUsers,
         canCreatePolls,
@@ -30,6 +37,8 @@
     import GiphySelector from "./GiphySelector.svelte";
     import type { Cryptocurrency } from "../../domain/crypto";
     import { lastCryptoSent } from "../../stores/crypto";
+    import { trackEvent } from "../../utils/tracking";
+    import { messageToForwardStore } from "../../stores/messageToForward";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -50,7 +59,9 @@
 
     $: pinned = controller.pinnedMessages;
     $: showFooter = !showSearchHeader;
-
+    $: chat = controller.chat;
+    $: canSend = canSendMessages($chat, $userStore);
+    $: preview = isPreviewing($chat);
     $: {
         if (chatId !== controller.chatId) {
             showSearchHeader = false;
@@ -61,9 +72,15 @@
                 controller.markRead,
                 controller.chatVal
             );
+
+            tick().then(() => {
+                if ($messageToForwardStore !== undefined) {
+                    forwardMessage($messageToForwardStore);
+                    messageToForwardStore.set(undefined);
+                }
+            });
         }
     }
-
     let unsub = controller.markRead.subscribe(() => {
         unreadMessages = controller.unreadMessageCount;
         firstUnreadMention = getFirstUnreadMention(controller.markRead, controller.chatVal);
@@ -142,9 +159,52 @@
         searchTerm = ev.detail;
     }
 
-    $: chat = controller.chat;
+    function forwardMessage(msg: Message) {
+        if (!canSend || !canForward(msg.content)) return;
 
-    $: preview = isPreviewing($chat);
+        // TODO check storage requirements
+
+        // Only forward the primary content not the caption
+        let content = { ...msg.content };
+        if ("caption" in content) {
+            content.caption = "";
+        }
+
+        msg = {
+            kind: "message",
+            messageId: newMessageId(),
+            messageIndex: controller.getNextMessageIndex(),
+            sender: controller.user.userId,
+            content,
+            repliesTo: undefined,
+            reactions: [],
+            edited: false,
+            forwarded: msg.content.kind !== "giphy_content",
+        };
+
+        controller.api
+            .forwardMessage($chat, controller.user, [], msg)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    controller.confirmMessage(msg, resp);
+                    trackEvent("forward_message");
+                } else {
+                    controller.removeMessage(msg.messageId, controller.user.userId);
+                    rollbar.warn("Error response forwarding message", resp);
+                    toastStore.showFailureToast("errorSendingMessage");
+                }
+            })
+            .catch((err) => {
+                controller.removeMessage(msg.messageId, controller.user.userId);
+                console.log(err);
+                toastStore.showFailureToast("errorSendingMessage");
+                rollbar.error("Exception forwarding message", err);
+            });
+
+        const nextEventIndex = controller.getNextEventIndex();
+        const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
+        controller.sendMessage(event);
+    }
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
@@ -201,11 +261,12 @@
         on:messageRead={messageRead}
         on:chatWith
         on:upgrade
+        on:forward
         {controller}
         canPin={canPinMessages($chat)}
         canBlockUser={canBlockUsers($chat)}
         canDelete={canDeleteOtherUsersMessages($chat)}
-        canSend={canSendMessages($chat, $userStore)}
+        {canSend}
         canReact={canReactToMessages($chat)}
         canInvite={canInviteUsers($chat)}
         {preview}

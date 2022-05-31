@@ -7,6 +7,7 @@ type SendMessageArgs =
         sender_name: text;
         replies_to: opt GroupReplyContext;
         mentioned: vec User;
+        forwarding: bool;
     };
 
 type SendMessageResponse =
@@ -21,6 +22,7 @@ type SendMessageResponse =
         InvalidPoll: InvalidPollReason;
         NotAuthorized;
         CallerNotInGroup;
+        InvalidRequest: text;
     };
 
 type EditMessageArgs =
