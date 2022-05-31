@@ -208,6 +208,13 @@
         </div>
     {/if}
     {#if !preview}
+        {#if !$mobileWidth}
+            <div class="search" on:click={searchChat}>
+                <HoverIcon>
+                    <Magnify size={$iconSize} color={"var(--icon-txt)"} />
+                </HoverIcon>
+            </div>
+        {/if}
         <div class="menu">
             <MenuIcon>
                 <div slot="icon">
@@ -355,6 +362,10 @@
         &:hover {
             text-decoration: underline;
         }
+    }
+
+    .search {
+        margin-left: 4px;
     }
 
     .chat-details {
