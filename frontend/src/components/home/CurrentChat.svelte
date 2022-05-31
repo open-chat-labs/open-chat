@@ -15,7 +15,6 @@
         getFirstUnreadMessageIndex,
         isPreviewing,
         newMessageId,
-        removeCaption,
     } from "../../domain/chat/chat.utils";
     import type {
         EnhancedReplyContext,
@@ -162,10 +161,18 @@
 
     function forwardMessage(msg: Message) {
         if (!canSend || !canForward(msg.content)) return;
+
         // TODO check storage requirements
+
+        // Only forward the primary content not the caption
+        let content = { ...msg.content };
+        if ("caption" in content) {
+            content.caption = "";
+        }
+
         msg = {
             ...msg,
-            content: removeCaption({ ...msg.content }),
+            content,
             forwarded: msg.content.kind !== "giphy_content",
             sender: controller.user.userId,
             messageId: newMessageId(),

@@ -1479,18 +1479,3 @@ export function canForward(content: MessageContent): boolean {
               content.kind !== "placeholder_content"
         : false;
 }
-
-export function removeCaption(content: MessageContent): MessageContent {
-    if (
-        content.kind === "audio_content" ||
-        content.kind === "image_content" ||
-        content.kind === "video_content" ||
-        content.kind === "file_content" ||
-        content.kind === "giphy_content" ||
-        content.kind === "crypto_content"
-    ) {
-        content.caption = "";
-    }
-
-    return content;
-}
