@@ -146,7 +146,7 @@
     $: chat = normaliseChatSummary($now, $selectedChatSummary, $typing);
 </script>
 
-<SectionHeader shadow={true} flush={true}>
+<SectionHeader shadow flush>
     {#if $mobileWidth}
         <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
             <HoverIcon>
@@ -209,7 +209,7 @@
     {/if}
     {#if !preview}
         {#if !$mobileWidth}
-            <div class="search" on:click={searchChat}>
+            <div class="search" class:rtl={$rtlStore} on:click={searchChat}>
                 <HoverIcon>
                     <Magnify size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
@@ -365,7 +365,10 @@
     }
 
     .search {
-        margin-left: 4px;
+        margin-left: $sp2;
+        &.rtl {
+            margin-right: $sp2;
+        }
     }
 
     .chat-details {
