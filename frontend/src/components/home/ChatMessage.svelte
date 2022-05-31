@@ -26,6 +26,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
+    import ChatProcessingOutline from "svelte-material-icons/ChatProcessingOutline.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import TranslateIcon from "svelte-material-icons/Translate.svelte";
@@ -151,6 +152,10 @@
 
     function reply() {
         dispatch("replyTo", createReplyContext());
+    }
+
+    function replyInThread() {
+        dispatch("replyInThread", msg);
     }
 
     function replyPrivately() {
@@ -511,6 +516,13 @@
                                             color={"var(--icon-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("reply")}</div>
+                                    </MenuItem>
+                                    <MenuItem on:click={replyInThread}>
+                                        <ChatProcessingOutline
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("thread.menu")}</div>
                                     </MenuItem>
                                 {/if}
                                 {#if confirmed && groupChat && !me}

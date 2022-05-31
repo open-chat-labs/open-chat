@@ -526,5 +526,9 @@
     "memberIsTyping": "{username} is typing",
     "membersAreTyping": "{number} members are typing",
     "readOnlyChat": "This chat is read-only",
-    "accounts": "Accounts"
+    "accounts": "Accounts",
+    "thread": {
+        "menu": "Reply in thread",
+        "title": "Thread"
+    }
 }

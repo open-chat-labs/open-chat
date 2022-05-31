@@ -524,6 +524,7 @@
                         editing={$editingEvent === evt}
                         on:chatWith
                         on:replyTo={replyTo}
+                        on:replyInThread
                         on:replyPrivatelyTo
                         on:deleteMessage={deleteMessage}
                         on:editEvent={editEvent}

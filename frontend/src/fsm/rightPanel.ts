@@ -1,5 +1,4 @@
 import type { ChatSummary, GroupPermissions } from "../domain/chat/chat";
-import type { Readable } from "svelte/store";
 
 export type RightPanelState =
     | GroupDetailsPanel
@@ -8,10 +7,15 @@ export type RightPanelState =
     | ShowPinnedPanel
     | UserProfilePanel
     | NewGroupPanel
+    | MessageThreadPanel
     | NoPanel;
 
 export type NoPanel = {
     kind: "no_panel";
+};
+
+export type MessageThreadPanel = {
+    kind: "message_thread_panel";
 };
 
 export type GroupDetailsPanel = {

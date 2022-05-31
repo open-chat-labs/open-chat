@@ -73,6 +73,7 @@
         on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
+        on:replyInThread
         on:selectReaction
         on:deleteMessage
         on:blockUser

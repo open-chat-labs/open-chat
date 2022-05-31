@@ -435,6 +435,16 @@
         tick().then(() => rightPanel?.showProfile());
     }
 
+    function replyInThread() {
+        if ($selectedChat !== undefined) {
+            rightPanelHistory = [
+                {
+                    kind: "message_thread_panel",
+                },
+            ];
+        }
+    }
+
     function showGroupDetails() {
         if ($selectedChat !== undefined) {
             rightPanelHistory = [
@@ -580,6 +590,7 @@
                 on:replyPrivatelyTo={replyPrivatelyTo}
                 on:addParticipants={addParticipants}
                 on:showGroupDetails={showGroupDetails}
+                on:replyInThread={replyInThread}
                 on:showParticipants={showParticipants}
                 on:updateChat={updateChat}
                 on:joinGroup={joinGroup}

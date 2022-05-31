@@ -17,7 +17,7 @@
     import type { EnhancedReplyContext, GroupChatSummary, Mention } from "../../domain/chat/chat";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
-	import { userStore } from "stores/user";
+    import { userStore } from "stores/user";
     import {
         canBlockUsers,
         canCreatePolls,
@@ -198,6 +198,7 @@
     <CurrentChatMessages
         on:replyPrivatelyTo
         on:replyTo={replyTo}
+        on:replyInThread
         on:messageRead={messageRead}
         on:chatWith
         on:upgrade
