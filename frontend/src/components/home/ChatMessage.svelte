@@ -26,6 +26,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
+    import ForwardIcon from "svelte-material-icons/Share.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import TranslateIcon from "svelte-material-icons/Translate.svelte";
@@ -52,6 +53,7 @@
     import { storageStore } from "../../stores/storage";
     import { translationStore } from "../../stores/translation";
     import { typing } from "../../stores/typing";
+    import { canForward } from "../../domain/chat/chat.utils";
 
     const dispatch = createEventDispatcher();
 
@@ -150,6 +152,10 @@
 
     function reply() {
         dispatch("replyTo", createReplyContext());
+    }
+
+    function forward() {
+        dispatch("forward", msg);
     }
 
     function replyPrivately() {
@@ -406,6 +412,19 @@
                     {/if}
                 </div>
             {/if}
+            {#if msg.forwarded}
+                <div class="forwarded">
+                    <div>
+                        <ForwardIcon
+                            size={$iconSize}
+                            color={me
+                                ? "var(--currentChat-msg-me-muted)"
+                                : "var(--currentChat-msg-muted)"}
+                            slot="icon" />
+                    </div>
+                    <div class="text">{"Forwarded"}</div>
+                </div>
+            {/if}
             {#if msg.repliesTo !== undefined && !deleted}
                 {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                     <RepliesTo
@@ -510,6 +529,15 @@
                                             color={"var(--icon-txt)"}
                                             slot="icon" />
                                         <div slot="text">{$_("reply")}</div>
+                                    </MenuItem>
+                                {/if}
+                                {#if canSend && canForward(msg.content)}
+                                    <MenuItem on:click={forward}>
+                                        <ForwardIcon
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("forward")}</div>
                                     </MenuItem>
                                 {/if}
                                 {#if confirmed && groupChat && !me}
@@ -875,6 +903,22 @@
             content: "";
             display: table;
             clear: both;
+        }
+
+        .forwarded {
+            color: var(--currentChat-msg-muted);
+            display: flex;
+            gap: $sp1;
+            align-items: center;
+            @include font-size(fs-80);
+            font-style: italic;
+            .text {
+                margin-bottom: $sp2;
+            }
+        }
+
+        &.me .forwarded {
+            color: var(--currentChat-msg-me-muted);
         }
     }
 

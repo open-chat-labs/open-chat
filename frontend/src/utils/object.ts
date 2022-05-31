@@ -26,6 +26,8 @@ export function deepFreeze(obj: any): any {
 // Takes two objects of the same type and returns a partial object where each property
 // takes the value of the second object if the values are different otherwise it is undefined
 export function mergeKeepingOnlyChanged<T>(orig: T, updated: T): Partial<T> {
+    if (orig == undefined) return updated;
+    if (updated == undefined) return orig;
     return zip(Object.entries(orig), Object.entries(updated)).reduce(
         (maybe, [[ok, ov], [_, uv]]) => (ov !== uv ? { ...maybe, [ok]: uv } : maybe),
         {}

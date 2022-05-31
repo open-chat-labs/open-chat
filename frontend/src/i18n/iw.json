@@ -215,8 +215,6 @@
     "youreBlocked": "מצטערים - נחסמת מהקבוצה הזו",
     "reply": "תשובה",
     "replyPrivately": "השב בפרטי",
-    "deleteMessage": "למחוק הודעה",
-    "editMessage": "ערוך הודעה",
     "messageDeleted": "ההודעה נמחקה על ידי {username} ב-{timestamp}",
     "deleteFailed": "לא ניתן למחוק את ההודעה שלך",
     "enterInviteCode": "הזן את קוד ההזמנה שלך",
@@ -339,8 +337,6 @@
         "shortcuts_a": "ישנן מספר פקודות קיצור שבהן תוכל להשתמש מתיבת הזנת ההודעה. <br /><br /> `/poll` - כדי ליצור סקר חדש <br /> `/search xyz` - כדי לחפש בצ'אט הנוכחי את המונח \"xyz\" <br />`/gif kittens` - כדי חפש גיפים של חתלתולים <br />`/icp 0.1` - כדי לשלוח 0.1 ICP למישהו <br />`/faq question_id*` - כדי ליצור ולפרסם קישור מעוצב לשאלת שאלות נפוצות ספציפיות <br /><br /> ניתן להשתמש בפקודות שמקבלות ארגומנט גם ללא הארגומנט.<br /><br />* מזהי שאלות נפוצות זמינים הם: ios_app, android_app, find_groups, style_messages, sms_icp, airdrop, security, send_icp, icp_account, מפת דרכים, קיצורי דרך",
         "shortcuts_q": "אילו פקודות קיצור זמינות?"
     },
-    "pinMessage": "הצמד הודעה",
-    "unpinMessage": "בטל את הצמדת ההודעה",
     "showPinned": "הצג הודעות מוצמדות",
     "pinnedMessages": "הודעות מוצמדות",
     "pinMessageFailed": "לא ניתן להצמיד הודעה",

@@ -534,6 +534,7 @@
                         on:unpinMessage={unpinMessage}
                         on:registerVote={registerVote}
                         on:upgrade
+                        on:forward
                         event={evt} />
                 {/each}
             {/each}

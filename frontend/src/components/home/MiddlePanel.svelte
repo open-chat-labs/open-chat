@@ -51,7 +51,8 @@
             on:upgrade
             on:cancelPreview
             on:showPinned
-            on:goToMessageIndex />
+            on:goToMessageIndex
+            on:forward />
     {/if}
 </Panel>
 

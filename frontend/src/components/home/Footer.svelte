@@ -11,7 +11,7 @@
         MessageAction,
         MessageContent,
     } from "../../domain/chat/chat";
-    import { canSendMessages } from "../../domain/chat/chat.utils";
+    import { canSendMessages, newMessageId } from "../../domain/chat/chat.utils";
     import { getMessageContent, getStorageRequiredForMessage } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import Loading from "../Loading.svelte";
@@ -23,7 +23,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import { currentUserKey } from "../../fsm/home.controller";
     import { trackEvent } from "../../utils/tracking";
-    import { userStore } from "stores/user";
+    import { userStore } from "../../stores/user";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -81,7 +81,6 @@
     ) {
         if (!canSend) return;
         if (textContent || fileToAttach) {
-            const nextEventIndex = controller.getNextEventIndex();
             const storageRequired = getStorageRequiredForMessage(fileToAttach);
             if ($remainingStorage < storageRequired) {
                 dispatch("upgrade", "explain");
@@ -126,6 +125,7 @@
                     rollbar.error("Exception sending message", err);
                 });
 
+            const nextEventIndex = controller.getNextEventIndex();
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
             controller.sendMessage(event);
         }

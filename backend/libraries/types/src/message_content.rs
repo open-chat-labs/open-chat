@@ -1,5 +1,5 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
-use crate::ContentValidationError::{InvalidPoll, TransferCannotBeZero, TransferLimitExceeded};
+use crate::ContentValidationError::*;
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{CanisterId, Cryptocurrency, CryptocurrencyTransfer, TimestampMillis, TotalVotes, UserId, VoteOperation};
 use candid::CandidType;
@@ -47,12 +47,24 @@ pub enum ContentValidationError {
     InvalidPoll(InvalidPollReason),
     TransferCannotBeZero,
     TransferLimitExceeded(u64),
+    InvalidTypeForForwarding,
 }
 
 impl MessageContent {
     // Determines if the content is valid for a new message, this should not be called on existing
     // messages
-    pub fn validate_for_new_message(&self, now: TimestampMillis) -> Result<(), ContentValidationError> {
+    pub fn validate_for_new_message(&self, forwarding: bool, now: TimestampMillis) -> Result<(), ContentValidationError> {
+        if forwarding {
+            match self {
+                MessageContent::Poll(_) |
+                MessageContent::CryptocurrencyV2(_) |
+                MessageContent::Deleted(_) => {
+                    return Err(InvalidTypeForForwarding);
+                }
+                _ => {}
+            };
+        }
+
         match self {
             MessageContent::Poll(p) => {
                 if let Err(reason) = p.config.validate(now) {
@@ -84,9 +96,9 @@ impl MessageContent {
         };
 
         if is_empty {
-            Err(ContentValidationError::Empty)
+            Err(Empty)
         } else if self.text_length() > MAX_TEXT_LENGTH_USIZE {
-            Err(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH))
+            Err(TextTooLong(MAX_TEXT_LENGTH))
         } else {
             Ok(())
         }

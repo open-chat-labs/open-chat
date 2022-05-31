@@ -7,6 +7,7 @@ const dark15 = "#383838";
 const dark20 = "#454545";
 const dark25 = "#525252";
 const dark45 = "#666666";
+const dark50 = "#777777";
 const dark60 = "#ababab";
 
 const blueAccent = "#085d8c";
@@ -195,6 +196,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 txt: dark60,
                 hv: dark10,
                 bd: dark15,
+                muted: dark45,
                 "reply-accent": blueAccent,
 
                 me: {
@@ -202,6 +204,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
                     txt: dark60,
                     hv: "#680034",
                     bd: "#820041",
+                    muted: dark50,
                 },
             },
         },

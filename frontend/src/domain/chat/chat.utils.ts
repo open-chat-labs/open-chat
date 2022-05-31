@@ -45,6 +45,7 @@ import { formatTokens } from "../../utils/cryptoFormatter";
 import { userStore } from "../../stores/user";
 import type { TypersByChat } from "../../stores/typing";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
+import { messageContent } from "services/common/chatMappers";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
@@ -335,6 +336,7 @@ export function createMessage(
         messageIndex,
         reactions: [],
         edited: false,
+        forwarded: false,
     };
 }
 
@@ -1468,4 +1470,28 @@ export function getFirstUnreadMessageIndex(
 export function addEditedSuffix(txt: string | undefined, edited: boolean): string {
     if (txt === undefined || txt === "") return "";
     return edited ? `${txt} <span class="edited-msg">(${get(_)("edited")})</span>` : txt;
+}
+
+export function canForward(content: MessageContent): boolean {
+    return process.env.ENABLE_FORWARDING
+        ? content.kind !== "crypto_content" &&
+              content.kind !== "poll_content" &&
+              content.kind !== "deleted_content" &&
+              content.kind !== "placeholder_content"
+        : false;
+}
+
+export function removeCaption(content: MessageContent): MessageContent {
+    if (
+        content.kind === "audio_content" ||
+        content.kind === "image_content" ||
+        content.kind === "video_content" ||
+        content.kind === "file_content" ||
+        content.kind === "giphy_content" ||
+        content.kind === "crypto_content"
+    ) {
+        content.caption = "";
+    }
+
+    return content;
 }

@@ -219,8 +219,8 @@
     "youreBlocked": "Sorry - you have been blocked from this group",
     "reply": "Reply",
     "replyPrivately": "Reply privately",
-    "deleteMessage": "Delete message",
-    "editMessage": "Edit message",
+    "deleteMessage": "Delete",
+    "editMessage": "Edit",
     "messageDeleted": "Message deleted by {username} on {timestamp}",
     "deleteFailed": "Unable to delete your message",
     "enterInviteCode": "Enter your invite code",
@@ -344,8 +344,8 @@
         "shortcuts_q": "Which shortcut commands are available?",
         "shortcuts_a": "There are several shortcut commands that you can use from the message entry input box. <br /><br /> `/poll` - to create a new poll <br /> `/search xyz` - to search the current chat for the term \"xyz\" <br />`/gif kittens` - to search for kitten gifs <br />`/icp 0.1` - to send 0.1 ICP to someone <br />`/faq question_id*` - to create and post a formatted link to a specific FAQ question <br /><br /> Commands which accept an argument can also be used without the argument.<br /><br />* Available faq question IDs are: ios_app, android_app, find_groups, style_messages, sms_icp, airdrop, security, send_icp, icp_account, roadmap, shortcuts"
     },
-    "pinMessage": "Pin message",
-    "unpinMessage": "Unpin message",
+    "pinMessage": "Pin",
+    "unpinMessage": "Unpin",
     "showPinned": "Show pinned",
     "pinnedMessages": "Pinned messages",
     "pinMessageFailed": "Unable to pin message",
@@ -526,5 +526,6 @@
     "memberIsTyping": "{username} is typing",
     "membersAreTyping": "{number} members are typing",
     "readOnlyChat": "This chat is read-only",
-	"accounts": "Accounts"
+    "accounts": "Accounts",
+    "forward": "Forward"
 }

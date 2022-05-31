@@ -318,6 +318,24 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
+    forwardMessage(
+        recipientId: string,
+        sender: UserSummary,
+        message: Message
+    ): Promise<SendMessageResponse> {
+        // TODO: first forward using the DataClient
+        const req: ApiSendMessageArgs = {
+            content: apiMessageContent(message.content),
+            recipient: Principal.fromText(recipientId),
+            sender_name: sender.username,
+            message_id: message.messageId,
+            replies_to: [],
+            forwarding: message.forwarded,
+        };
+        return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
+    }
+
+    @profile("userClient")
     sendGroupICPTransfer(
         groupId: string,
         recipientId: string,
