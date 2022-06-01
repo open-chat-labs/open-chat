@@ -581,6 +581,7 @@ export interface PublicGroupSummary {
 }
 export interface RegisterUserArgs {
   'username' : string,
+  'invited_by' : [] | [CanisterId],
   'challenge_attempt' : ChallengeAttempt,
 }
 export type RegisterUserResponse = { 'UsernameTaken' : null } |

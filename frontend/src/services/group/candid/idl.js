@@ -574,6 +574,7 @@ export const idlFactory = ({ IDL }) => {
     }),
     'MessageEmpty' : IDL.Null,
     'InvalidPoll' : InvalidPollReason,
+    'InvalidRequest' : IDL.Text,
   });
   const ToggleReactionArgs = IDL.Record({
     'message_id' : MessageId,

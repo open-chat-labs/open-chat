@@ -7,6 +7,7 @@ pub async fn register_user(
     user_identity: TestIdentity,
     username: String,
     user_index_canister_id: CanisterId,
+    invited_by: Option<CanisterId>,
 ) -> UserId {
     let identity = build_identity(user_identity);
     let agent = build_ic_agent(url, identity).await;
@@ -17,6 +18,7 @@ pub async fn register_user(
             key: 0,
             chars: "TEST".to_owned(),
         },
+        invited_by,
     };
 
     match user_index_canister_client::register_user(&agent, &user_index_canister_id, &register_user_args)
@@ -34,6 +36,7 @@ pub async fn register_default_user(url: String, user_index_canister_id: Canister
         TestIdentity::User1,
         USER1_DEFAULT_NAME.to_string(),
         user_index_canister_id,
+        None,
     )
     .await
 }
@@ -45,12 +48,14 @@ pub async fn register_2_default_users(url: String, user_index_canister_id: Canis
             TestIdentity::User1,
             USER1_DEFAULT_NAME.to_string(),
             user_index_canister_id,
+            None,
         ),
         register_user(
             url.clone(),
             TestIdentity::User2,
             USER2_DEFAULT_NAME.to_string(),
             user_index_canister_id,
+            None,
         ),
     )
     .await
@@ -63,18 +68,21 @@ pub async fn register_3_default_users(url: String, user_index_canister_id: Canis
             TestIdentity::User1,
             USER1_DEFAULT_NAME.to_string(),
             user_index_canister_id,
+            None,
         ),
         register_user(
             url.clone(),
             TestIdentity::User2,
             USER2_DEFAULT_NAME.to_string(),
             user_index_canister_id,
+            None,
         ),
         register_user(
             url.clone(),
             TestIdentity::User3,
             USER3_DEFAULT_NAME.to_string(),
             user_index_canister_id,
+            None,
         ),
     )
     .await

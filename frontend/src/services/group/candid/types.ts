@@ -742,7 +742,8 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
     }
   } |
   { 'MessageEmpty' : null } |
-  { 'InvalidPoll' : InvalidPollReason };
+  { 'InvalidPoll' : InvalidPollReason } |
+  { 'InvalidRequest' : string };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,

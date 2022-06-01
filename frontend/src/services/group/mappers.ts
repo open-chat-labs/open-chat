@@ -356,6 +356,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("NotAuthorized" in candid) {
         return { kind: "not_authorised" };
     }
+    if ("InvalidRequest" in candid) {
+        return { kind: "invalid_request" };
+    }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
