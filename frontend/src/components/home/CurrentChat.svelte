@@ -60,6 +60,9 @@
     $: pinned = controller.pinnedMessages;
     $: showFooter = !showSearchHeader;
     $: chat = controller.chat;
+    $: fileToAttach = controller.fileToAttach;
+    $: editingEvent = controller.editingEvent;
+    $: replyingTo = controller.replyingTo;
     $: canSend = canSendMessages($chat, $userStore);
     $: preview = isPreviewing($chat);
     $: {
@@ -278,6 +281,10 @@
     {#if showFooter}
         <Footer
             bind:this={footer}
+            chat={$chat}
+            fileToAttach={$fileToAttach}
+            editingEvent={$editingEvent}
+            replyingTo={$replyingTo}
             {joining}
             {preview}
             {blocked}
@@ -285,6 +292,7 @@
             on:joinGroup
             on:cancelPreview
             on:upgrade
+            on:cancelReply={() => controller.cancelReply()}
             on:attachGif={attachGif}
             on:tokenTransfer={tokenTransfer}
             on:searchChat={searchChat}

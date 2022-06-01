@@ -5,13 +5,15 @@
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
     import type {
+        ChatSummary,
+        EnhancedReplyContext,
         EventWrapper,
         GroupChatSummary,
         Message,
         MessageAction,
         MessageContent,
     } from "../../domain/chat/chat";
-    import { canSendMessages, newMessageId } from "../../domain/chat/chat.utils";
+    import { canSendMessages } from "../../domain/chat/chat.utils";
     import { getMessageContent, getStorageRequiredForMessage } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import Loading from "../Loading.svelte";
@@ -29,20 +31,16 @@
     export let blocked: boolean;
     export let preview: boolean;
     export let joining: GroupChatSummary | undefined;
+    export let chat: ChatSummary;
+    export let fileToAttach: MessageContent | undefined;
+    export let editingEvent: EventWrapper<Message> | undefined;
+    export let replyingTo: EnhancedReplyContext | undefined;
 
     const createdUser = getContext<CreatedUser>(currentUserKey);
     const dispatch = createEventDispatcher();
     let messageAction: MessageAction = undefined;
     let messageEntry: MessageEntry;
-    $: chat = controller.chat;
-    $: fileToAttach = controller.fileToAttach;
-    $: editingEvent = controller.editingEvent;
-    $: replyingTo = controller.replyingTo;
-    $: canSend = canSendMessages($chat, $userStore);
-
-    function cancelReply() {
-        controller.cancelReply();
-    }
+    $: canSend = canSendMessages(chat, $userStore);
 
     function editMessageWithAttachment(
         textContent: string | undefined,
@@ -57,7 +55,7 @@
             };
 
             controller.api
-                .editMessage($chat, msg!)
+                .editMessage(chat, msg!)
                 .then((resp) => {
                     if (resp !== "success") {
                         rollbar.warn("Error response editing", resp);
@@ -89,7 +87,7 @@
 
             const msg = controller.createMessage(textContent, fileToAttach);
             controller.api
-                .sendMessage($chat, controller.user, mentioned, msg)
+                .sendMessage(chat, controller.user, mentioned, msg)
                 .then((resp) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         controller.confirmMessage(msg, resp);
@@ -99,10 +97,10 @@
                                 createdUser.cryptoAccount
                             );
                         }
-                        if ($chat.kind === "direct_chat") {
+                        if (chat.kind === "direct_chat") {
                             trackEvent("sent_direct_message");
                         } else {
-                            if ($chat.public) {
+                            if (chat.public) {
                                 trackEvent("sent_public_group_message");
                             } else {
                                 trackEvent("sent_private_group_message");
@@ -134,10 +132,10 @@
     function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
         if (!canSend) return;
         let [text, mentioned] = ev.detail;
-        if ($editingEvent !== undefined) {
-            editMessageWithAttachment(text, $fileToAttach, $editingEvent);
+        if (editingEvent !== undefined) {
+            editMessageWithAttachment(text, fileToAttach, editingEvent);
         } else {
-            sendMessageWithAttachment(text, mentioned, $fileToAttach);
+            sendMessageWithAttachment(text, mentioned, fileToAttach);
         }
     }
 
@@ -192,19 +190,19 @@
 
 <div class="footer">
     <div class="footer-overlay">
-        {#if $editingEvent === undefined && ($replyingTo || $fileToAttach !== undefined)}
+        {#if editingEvent === undefined && (replyingTo || fileToAttach !== undefined)}
             <div class="draft-container">
-                {#if $replyingTo}
+                {#if replyingTo}
                     <ReplyingTo
-                        groupChat={$chat.kind === "group_chat"}
+                        groupChat={chat.kind === "group_chat"}
                         preview={true}
-                        on:cancelReply={cancelReply}
+                        on:cancelReply
                         user={controller.user}
-                        replyingTo={$replyingTo} />
+                        {replyingTo} />
                 {/if}
-                {#if $fileToAttach !== undefined}
-                    {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content" || $fileToAttach.kind === "file_content" || $fileToAttach.kind === "crypto_content"}
-                        <DraftMediaMessage content={$fileToAttach} />
+                {#if fileToAttach !== undefined}
+                    {#if fileToAttach.kind === "image_content" || fileToAttach.kind === "audio_content" || fileToAttach.kind === "video_content" || fileToAttach.kind === "file_content" || fileToAttach.kind === "crypto_content"}
+                        <DraftMediaMessage content={fileToAttach} />
                     {/if}
                 {/if}
             </div>
