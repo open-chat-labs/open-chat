@@ -294,8 +294,12 @@
                     userSearchResults,
                     messageSearchResults,
                 ]).then(() => {
-                    searchResultsAvailable = true;
-                    searching = false;
+                    if (searchTerm !== "") {
+                        searchResultsAvailable = true;
+                        searching = false;
+                    } else {
+                        clearSearch();
+                    }
                 });
             } catch (_err) {
                 searching = false;
