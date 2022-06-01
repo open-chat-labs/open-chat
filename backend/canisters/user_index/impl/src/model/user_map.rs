@@ -4,7 +4,7 @@ use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLO
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
+use types::{CanisterId, CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
 
@@ -76,11 +76,12 @@ impl UserMap {
         wasm_version: Version,
         username: String,
         now: TimestampMillis,
+        invited_by: Option<CanisterId>,
     ) {
         self.username_to_principal.insert(&username, principal);
         self.user_id_to_principal.insert(user_id, principal);
 
-        let user = User::new(principal, user_id, username, now, wasm_version);
+        let user = User::new(principal, user_id, username, now, wasm_version, invited_by);
         self.users_by_principal.insert(principal, user);
     }
 
@@ -369,6 +370,7 @@ impl UserMap {
             user.wasm_version,
             user.username.clone(),
             user.date_created,
+            None,
         );
         self.update(user);
     }
@@ -420,9 +422,9 @@ mod tests {
         let user_id2: UserId = Principal::from_slice(&[3, 2]).into();
         let user_id3: UserId = Principal::from_slice(&[3, 3]).into();
 
-        user_map.register(principal1, user_id1, Version::new(0, 0, 0), username1.clone(), 1);
-        user_map.register(principal2, user_id2, Version::new(0, 0, 0), username2.clone(), 2);
-        user_map.register(principal3, user_id3, Version::new(0, 0, 0), username3.clone(), 3);
+        user_map.register(principal1, user_id1, Version::new(0, 0, 0), username1.clone(), 1, None);
+        user_map.register(principal2, user_id2, Version::new(0, 0, 0), username2.clone(), 2, None);
+        user_map.register(principal3, user_id3, Version::new(0, 0, 0), username3.clone(), 3, None);
         user_map.submit_phone_number(principal3, phone_number3.clone(), "123".to_string(), 4);
 
         let phone_number_to_principal: Vec<_> = user_map
@@ -468,9 +470,9 @@ mod tests {
 
         let phone_number = PhoneNumber::new(44, "1111 111 111".to_owned());
 
-        user_map.register(principal1, user_id1, Version::new(0, 0, 0), "1".to_string(), 1);
+        user_map.register(principal1, user_id1, Version::new(0, 0, 0), "1".to_string(), 1, None);
         user_map.submit_phone_number(principal1, phone_number.clone(), "123".to_string(), 2);
-        user_map.register(principal2, user_id2, Version::new(0, 0, 0), "2".to_string(), 3);
+        user_map.register(principal2, user_id2, Version::new(0, 0, 0), "2".to_string(), 3, None);
 
         assert!(matches!(
             user_map.submit_phone_number(principal2, phone_number, "123".to_string(), 4),
@@ -491,7 +493,7 @@ mod tests {
 
         let user_id = Principal::from_slice(&[1, 1]).into();
 
-        user_map.register(principal, user_id, Version::new(0, 0, 0), username1, 1);
+        user_map.register(principal, user_id, Version::new(0, 0, 0), username1, 1, None);
         user_map.submit_phone_number(principal, phone_number1, "123".to_string(), 2);
 
         if let Some(original) = user_map.get_by_principal(&principal) {

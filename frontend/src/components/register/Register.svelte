@@ -62,7 +62,11 @@
         <div class="logo">
             <Logo />
         </div>
-        <EnterUsername api={controller.api()} originalUsername={$username} error={$error} on:submitUsername={submitUsername} />
+        <EnterUsername
+            api={controller.api()}
+            originalUsername={$username}
+            error={$error}
+            on:submitUsername={submitUsername} />
     {/if}
 </ModalPage>
 

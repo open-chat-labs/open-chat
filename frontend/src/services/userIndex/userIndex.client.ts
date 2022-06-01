@@ -35,6 +35,8 @@ import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 import { cachingLocallyDisabled, Database } from "../../utils/caching";
 import { profile } from "../common/profiling";
+import { apiOptional } from "../common/chatMappers";
+import { identity } from "../../utils/mapping";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userService: UserIndexService;
@@ -74,12 +76,14 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     @profile("userIndexClient")
     registerUser(
         username: string,
-        challengeAttempt: ChallengeAttempt
+        challengeAttempt: ChallengeAttempt,
+        invitedBy: string | undefined
     ): Promise<RegisterUserResponse> {
         return this.handleResponse(
             this.userService.register_user({
                 username,
                 challenge_attempt: challengeAttempt,
+                invited_by: apiOptional((userId) => Principal.fromText(userId), invitedBy),
             }),
             registerUserResponse
         );

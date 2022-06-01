@@ -21,6 +21,7 @@ type RegisterUserArgs =
     record {
         username: text;
         challenge_attempt: ChallengeAttempt;
+        invited_by: opt CanisterId;
     };
 
 type ChallengeAttempt = record {

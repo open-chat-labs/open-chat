@@ -1,7 +1,9 @@
 use crate::model::account_billing::AccountBilling;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary, Version};
+use types::{
+    CanisterId, CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary, Version,
+};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct User {
@@ -19,6 +21,8 @@ pub struct User {
     pub account_billing: AccountBilling,
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
+    #[serde(default)]
+    pub invited_by: Option<CanisterId>,
 }
 
 impl User {
@@ -63,7 +67,14 @@ impl Default for PhoneStatus {
 }
 
 impl User {
-    pub fn new(principal: Principal, user_id: UserId, username: String, now: TimestampMillis, wasm_version: Version) -> User {
+    pub fn new(
+        principal: Principal,
+        user_id: UserId,
+        username: String,
+        now: TimestampMillis,
+        wasm_version: Version,
+        invited_by: Option<CanisterId>,
+    ) -> User {
         User {
             principal,
             user_id,
@@ -79,6 +90,7 @@ impl User {
             account_billing: AccountBilling::default(),
             open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
+            invited_by,
         }
     }
 
@@ -133,6 +145,7 @@ impl Default for User {
             account_billing: AccountBilling::default(),
             open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
+            invited_by: None,
         }
     }
 }
