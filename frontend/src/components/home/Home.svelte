@@ -239,6 +239,12 @@
             if (params.chatId === null && !$mobileWidth && recommendedGroups.kind === "idle") {
                 whatsHot();
             }
+
+            if (params.chatId === null) {
+                rightPanelHistory = rightPanelHistory.filter(
+                    (panel) => panel.kind === "user_profile"
+                );
+            }
         }
     }
 
