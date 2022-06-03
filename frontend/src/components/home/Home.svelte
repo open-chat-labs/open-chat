@@ -779,6 +779,7 @@
         @include box-shadow(3);
         @include mobile() {
             width: 100%;
+            height: 100%;
         }
     }
 </style>
