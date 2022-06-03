@@ -14,15 +14,25 @@
     import type { CreatedUser } from "../../../domain/user/user";
     import { currentUserKey } from "../../../fsm/home.controller";
     import type { ChatController } from "../../../fsm/chat.controller";
+    import ChatMessage from "../ChatMessage.svelte";
+    import type { MessageReadState } from "../../../stores/markRead";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
     export let controller: ChatController;
+    export let root: EventWrapper<Message>;
+
+    let observer: IntersectionObserver = new IntersectionObserver(() => {});
+
     $: chat = controller.chat;
     $: fileToAttach = controller.fileToAttach;
     $: editingEvent = controller.editingEvent;
     $: replyingTo = controller.replyingTo;
+    $: textContent = controller.textContent;
+    $: participants = controller.participants;
+    $: blockedUsers = controller.blockedUsers;
+    $: markRead = controller.markRead;
 
     let footer: Footer;
     let messages: RemoteData<EventWrapper<Message>[][], string> = { kind: "idle" };
@@ -44,13 +54,24 @@
     onMount(() => {
         // fake load of message thread
         setTimeout(() => {
-            messages = { kind: "success", data: [] };
+            messages = { kind: "success", data: [[root]] };
         }, 1000);
     });
 
     function dateGroupKey(group: EventWrapper<Message>[]): string {
         const first = group[0] && group[0] && group[0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
+    }
+
+    function isReadByMe(_store: MessageReadState, evt: EventWrapper<Message>): boolean {
+        if (evt.event.kind === "message") {
+            return controller.markRead.isRead(
+                $chat.chatId,
+                evt.event.messageIndex,
+                evt.event.messageId
+            );
+        }
+        return true;
     }
 </script>
 
@@ -73,7 +94,45 @@
                     {formatMessageDate(dayGroup[0]?.timestamp, $_("today"), $_("yesterday"))}
                 </div>
                 {#each dayGroup as message, _i (message.event.messageId)}
-                    <pre>{JSON.stringify(message.event, null, 4)}</pre>
+                    <ChatMessage
+                        senderId={message.event.sender}
+                        focused={false}
+                        {observer}
+                        confirmed={false}
+                        readByMe={isReadByMe($markRead, message)}
+                        readByThem={false}
+                        chatId={$chat.chatId}
+                        chatType={$chat.kind}
+                        user={controller.user}
+                        me={false}
+                        first={false}
+                        last={false}
+                        preview={false}
+                        pinned={false}
+                        canPin={false}
+                        canBlockUser={true}
+                        canDelete={true}
+                        canSend={true}
+                        canReact={true}
+                        publicGroup={false}
+                        editing={false}
+                        on:chatWith
+                        on:goToMessageIndex
+                        on:replyPrivatelyTo
+                        on:replyTo
+                        on:replyInThread
+                        on:selectReaction
+                        on:deleteMessage
+                        on:blockUser
+                        on:pinMessage
+                        on:unpinMessage
+                        on:registerVote
+                        on:editMessage
+                        on:upgrade
+                        on:forward
+                        eventIndex={message.index}
+                        timestamp={message.timestamp}
+                        msg={message.event} />
                 {/each}
             </div>
         {/each}
@@ -89,6 +148,9 @@
     fileToAttach={$fileToAttach}
     editingEvent={$editingEvent}
     replyingTo={$replyingTo}
+    textContent={$textContent}
+    participants={$participants}
+    blockedUsers={$blockedUsers}
     {controller}
     on:joinGroup
     on:cancelPreview

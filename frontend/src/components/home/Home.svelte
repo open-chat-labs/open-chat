@@ -37,6 +37,7 @@
     import type {
         ChatSummary,
         EnhancedReplyContext,
+        EventWrapper,
         GroupChatSummary,
         Message,
     } from "../../domain/chat/chat";
@@ -444,11 +445,12 @@
         tick().then(() => rightPanel?.showProfile());
     }
 
-    function replyInThread() {
+    function replyInThread(ev: CustomEvent<EventWrapper<Message>>) {
         if ($selectedChat !== undefined) {
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",
+                    root: ev.detail,
                 },
             ];
         }

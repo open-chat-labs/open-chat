@@ -12,6 +12,7 @@
         Message,
         MessageAction,
         MessageContent,
+        Participant,
     } from "../../domain/chat/chat";
     import { canSendMessages } from "../../domain/chat/chat.utils";
     import { getMessageContent, getStorageRequiredForMessage } from "../../domain/chat/chat.utils";
@@ -35,6 +36,9 @@
     export let fileToAttach: MessageContent | undefined;
     export let editingEvent: EventWrapper<Message> | undefined;
     export let replyingTo: EnhancedReplyContext | undefined;
+    export let textContent: string | undefined;
+    export let participants: Participant[];
+    export let blockedUsers: Set<string>;
 
     const createdUser = getContext<CreatedUser>(currentUserKey);
     const dispatch = createEventDispatcher();
@@ -226,6 +230,12 @@
         {preview}
         {blocked}
         {joining}
+        {fileToAttach}
+        {editingEvent}
+        {replyingTo}
+        {textContent}
+        {participants}
+        {blockedUsers}
         on:sendMessage={sendMessage}
         on:createPoll
         on:searchChat

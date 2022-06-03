@@ -18,7 +18,15 @@
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import type { PartialUserSummary, User } from "../../domain/user/user";
     import Button from "../Button.svelte";
-    import type { GroupChatSummary, MessageAction } from "../../domain/chat/chat";
+    import type {
+        EnhancedReplyContext,
+        EventWrapper,
+        GroupChatSummary,
+        Message,
+        MessageAction,
+        MessageContent,
+        Participant,
+    } from "../../domain/chat/chat";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "utils/urls";
@@ -30,13 +38,12 @@
     export let canSend: boolean;
     export let messageAction: MessageAction = undefined;
     export let joining: GroupChatSummary | undefined;
-
-    $: textContent = controller.textContent;
-    $: editingEvent = controller.editingEvent;
-    $: fileToAttach = controller.fileToAttach;
-    $: participants = controller.participants;
-    $: blockedUsers = controller.blockedUsers;
-    $: replyingTo = controller.replyingTo;
+    export let fileToAttach: MessageContent | undefined;
+    export let editingEvent: EventWrapper<Message> | undefined;
+    export let replyingTo: EnhancedReplyContext | undefined;
+    export let textContent: string | undefined;
+    export let participants: Participant[];
+    export let blockedUsers: Set<string>;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -63,43 +70,48 @@
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
 
-    $: messageIsEmpty = ($textContent?.trim() ?? "").length === 0 && $fileToAttach === undefined;
+    $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
 
     $: {
-        if ($editingEvent && !initialisedEdit) {
-            if ($editingEvent.event.content.kind === "text_content") {
-                inp.textContent = formatMentions($editingEvent.event.content.text);
+        if (editingEvent && !initialisedEdit) {
+            if (editingEvent.event.content.kind === "text_content") {
+                inp.textContent = formatMentions(editingEvent.event.content.text);
                 selectedRange = undefined;
                 restoreSelection();
                 initialisedEdit = true;
-            } else if ("caption" in $editingEvent.event.content) {
-                inp.textContent = $editingEvent.event.content.caption ?? "";
+            } else if ("caption" in editingEvent.event.content) {
+                inp.textContent = editingEvent.event.content.caption ?? "";
                 selectedRange = undefined;
                 restoreSelection();
                 initialisedEdit = true;
             }
         } else if (inp) {
-            const text = $textContent ?? "";
+            const text = textContent ?? "";
             // Only set the textbox text when required rather than every time, because doing so sets the focus back to
             // the start of the textbox on some devices.
             if (inp.textContent !== text) {
-                inp.textContent = text;
-                setCaretToEnd();
+                // todo - this is going to be a bit of a problem when we can potentially have two instances of this component going at once
+
+                console.log("text content has changed - reseting");
+                // inp.textContent = text;
+                // setCaretToEnd();
             }
         }
-        if ($editingEvent === undefined) {
+        if (editingEvent === undefined) {
             initialisedEdit = false;
         }
     }
 
     $: {
-        if ($fileToAttach !== undefined || $replyingTo !== undefined) {
+        if (fileToAttach !== undefined || replyingTo !== undefined) {
+            console.log("attempting to focus 1");
             inp?.focus();
         }
     }
 
     $: {
         if (controller && $screenWidth === ScreenWidth.Large) {
+            console.log("attempting to focus 2");
             inp?.focus();
         }
     }
@@ -118,13 +130,14 @@
 
     // todo - doubt this will react properly
     $: placeholder =
-        $fileToAttach !== undefined
+        fileToAttach !== undefined
             ? $_("enterCaption")
             : dragging
             ? $_("dropFile")
             : $_("enterMessage");
 
     export function insertTextAtCaret(text: string) {
+        console.log("attempting to focus 3");
         inp?.focus();
         let range = window.getSelection()?.getRangeAt(0);
         if (range !== undefined) {
@@ -314,6 +327,7 @@
         }
         inp.textContent = "";
         controller.setTextContent(undefined);
+        console.log("attempting to focus 4");
         inp.focus();
         messageActions.close();
     }
@@ -326,6 +340,7 @@
     }
 
     function restoreSelection() {
+        console.log("attempting to focus 5");
         inp.focus();
         if (!selectedRange) {
             const range = new Range();
@@ -414,12 +429,12 @@
 
 {#if showMentionPicker}
     <MentionPicker
-        blockedUsers={$blockedUsers}
+        {blockedUsers}
         offset={messageEntryHeight}
         on:close={cancelMention}
         on:mention={mention}
         prefix={mentionPrefix}
-        participants={$participants} />
+        {participants} />
 {/if}
 
 {#if showEmojiSearch}
@@ -432,7 +447,7 @@
 
 <div
     class="message-entry"
-    class:editing={$editingEvent !== undefined}
+    class:editing={editingEvent !== undefined}
     bind:clientHeight={messageEntryHeight}>
     {#if blocked}
         <div class="blocked">
@@ -460,7 +475,7 @@
             bind:this={messageActions}
             bind:messageAction
             {controller}
-            editing={$editingEvent !== undefined}
+            editing={editingEvent !== undefined}
             on:tokenTransfer
             on:attachGif
             on:fileSelected />
@@ -487,7 +502,7 @@
             on:drop={onDrop}
             on:input={onInput}
             on:keypress={keyPress} />
-        {#if $editingEvent === undefined}
+        {#if editingEvent === undefined}
             {#if messageIsEmpty && audioMimeType !== undefined && audioSupported}
                 <div class="record">
                     <AudioAttacher

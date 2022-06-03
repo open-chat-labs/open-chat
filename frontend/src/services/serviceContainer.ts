@@ -493,15 +493,21 @@ export class ServiceContainer implements MarkMessagesRead {
                 const idx = ev.event.repliesTo.eventIndex;
                 const msg = messageEvents.find((me) => me.index === idx)?.event;
                 if (msg) {
-                    ev.event.repliesTo = {
-                        kind: "rehydrated_reply_context",
-                        content: this.rehydrateMessageContent(msg.content),
-                        senderId: msg.sender,
-                        messageId: msg.messageId,
-                        messageIndex: msg.messageIndex,
-                        eventIndex: idx,
-                        chatId,
-                        edited: msg.edited,
+                    return {
+                        ...ev,
+                        event: {
+                            ...ev.event,
+                            repliesTo: {
+                                kind: "rehydrated_reply_context",
+                                content: this.rehydrateMessageContent(msg.content),
+                                senderId: msg.sender,
+                                messageId: msg.messageId,
+                                messageIndex: msg.messageIndex,
+                                eventIndex: idx,
+                                chatId,
+                                edited: msg.edited,
+                            },
+                        },
                     };
                 }
                 return ev;

@@ -44,6 +44,10 @@
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
     }
+
+    function replyInThread() {
+        dispatch("replyInThread", event);
+    }
 </script>
 
 {#if event.event.kind === "message"}
@@ -73,7 +77,7 @@
         on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
-        on:replyInThread
+        on:replyInThread={replyInThread}
         on:selectReaction
         on:deleteMessage
         on:blockUser

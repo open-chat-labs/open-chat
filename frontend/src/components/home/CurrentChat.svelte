@@ -63,6 +63,10 @@
     $: fileToAttach = controller.fileToAttach;
     $: editingEvent = controller.editingEvent;
     $: replyingTo = controller.replyingTo;
+    $: textContent = controller.textContent;
+    $: participants = controller.participants;
+    $: blockedUsers = controller.blockedUsers;
+
     $: canSend = canSendMessages($chat, $userStore);
     $: preview = isPreviewing($chat);
     $: {
@@ -285,6 +289,9 @@
             fileToAttach={$fileToAttach}
             editingEvent={$editingEvent}
             replyingTo={$replyingTo}
+            textContent={$textContent}
+            participants={$participants}
+            blockedUsers={$blockedUsers}
             {joining}
             {preview}
             {blocked}
