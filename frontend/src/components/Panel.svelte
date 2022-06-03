@@ -1,18 +1,16 @@
 <script lang="ts">
     import { numberOfColumns, oldLayout } from "../stores/layout";
+    import { mobileWidth } from "../stores/screenDimensions";
 
     export let left: boolean = false;
     export let middle: boolean = false;
     export let right: boolean = false;
     export let forceModal: boolean = false;
+
+    $: modal = !$mobileWidth && (forceModal || $numberOfColumns === 2);
 </script>
 
-<section
-    class:old-layout={oldLayout}
-    class:left
-    class:right
-    class:middle
-    class:modal={forceModal || $numberOfColumns == 2}>
+<section class:old-layout={oldLayout} class:left class:right class:middle class:modal>
     <slot />
 </section>
 
@@ -91,7 +89,9 @@
             }
 
             @include mobile() {
+                background: var(--panel-right-bg);
                 width: 100%;
+                height: 100%;
                 min-width: 0;
                 max-width: none;
             }
