@@ -1,5 +1,4 @@
 import type { ChatSummary, GroupPermissions } from "../domain/chat/chat";
-import type { Readable } from "svelte/store";
 
 export type RightPanelState =
     | GroupDetailsPanel
