@@ -16,6 +16,15 @@
     import type { ChatController } from "../../../fsm/chat.controller";
     import ChatMessage from "../ChatMessage.svelte";
     import type { MessageReadState } from "../../../stores/markRead";
+    import { unconfirmed } from "../../../stores/unconfirmed";
+    import {
+        canBlockUsers,
+        canDeleteOtherUsersMessages,
+        canPinMessages,
+        canReactToMessages,
+        canSendMessages,
+    } from "domain/chat/chat.utils";
+    import { userStore } from "stores/user";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -33,6 +42,8 @@
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
     $: markRead = controller.markRead;
+    $: pinned = controller.pinnedMessages;
+    $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
 
     let footer: Footer;
     let messages: RemoteData<EventWrapper<Message>[][], string> = { kind: "idle" };
@@ -98,24 +109,24 @@
                         senderId={message.event.sender}
                         focused={false}
                         {observer}
-                        confirmed={false}
+                        confirmed={!unconfirmed.contains($chat.chatId, message.event.messageId)}
                         readByMe={isReadByMe($markRead, message)}
                         readByThem={false}
                         chatId={$chat.chatId}
                         chatType={$chat.kind}
                         user={controller.user}
-                        me={false}
+                        me={message.event.sender === currentUser.userId}
                         first={false}
                         last={false}
                         preview={false}
-                        pinned={false}
-                        canPin={false}
-                        canBlockUser={true}
-                        canDelete={true}
-                        canSend={true}
-                        canReact={true}
-                        publicGroup={false}
-                        editing={false}
+                        pinned={$pinned.has(message.event.messageIndex)}
+                        canPin={canPinMessages($chat)}
+                        canBlockUser={canBlockUsers($chat)}
+                        canDelete={canDeleteOtherUsersMessages($chat)}
+                        canSend={canSendMessages($chat, $userStore)}
+                        canReact={canReactToMessages($chat)}
+                        publicGroup={$chat.kind === "group_chat" && $chat.public}
+                        editing={$editingEvent === message}
                         on:chatWith
                         on:goToMessageIndex
                         on:replyPrivatelyTo
@@ -143,7 +154,7 @@
     bind:this={footer}
     joining={undefined}
     preview={false}
-    blocked={false}
+    {blocked}
     chat={$chat}
     fileToAttach={$fileToAttach}
     editingEvent={$editingEvent}
