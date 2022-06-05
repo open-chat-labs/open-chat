@@ -40,6 +40,7 @@
     export let canInvite: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
+    export let hasThread: boolean;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -73,6 +74,7 @@
         {canReact}
         {publicGroup}
         {editing}
+        {hasThread}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo

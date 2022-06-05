@@ -55,6 +55,7 @@
     import { trackEvent } from "../../utils/tracking";
     import { numberOfColumns, oldLayout } from "../../stores/layout";
     import { messageToForwardStore } from "../../stores/messageToForward";
+    import { threadStore } from "../../stores/thread";
 
     const dispatch = createEventDispatcher();
 
@@ -447,6 +448,7 @@
 
     function replyInThread(ev: CustomEvent<EventWrapper<Message>>) {
         if ($selectedChat !== undefined) {
+            threadStore.addToThread(ev.detail);
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",

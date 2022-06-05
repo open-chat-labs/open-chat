@@ -31,6 +31,7 @@
     export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
+    export let thread: boolean;
     export let joining: GroupChatSummary | undefined;
     export let chat: ChatSummary;
     export let fileToAttach: MessageContent | undefined;

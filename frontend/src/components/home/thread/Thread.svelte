@@ -24,7 +24,8 @@
         canReactToMessages,
         canSendMessages,
     } from "domain/chat/chat.utils";
-    import { userStore } from "stores/user";
+    import { userStore } from "../../../stores/user";
+    import { threadStore } from "../../../stores/thread";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -44,6 +45,8 @@
     $: markRead = controller.markRead;
     $: pinned = controller.pinnedMessages;
     $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
+
+    $: console.log("ThreadStore: ", $threadStore);
 
     let footer: Footer;
     let messages: RemoteData<EventWrapper<Message>[][], string> = { kind: "idle" };
@@ -127,6 +130,7 @@
                         canReact={canReactToMessages($chat)}
                         publicGroup={$chat.kind === "group_chat" && $chat.public}
                         editing={$editingEvent === message}
+                        hasThread={false}
                         on:chatWith
                         on:goToMessageIndex
                         on:replyPrivatelyTo
@@ -152,6 +156,7 @@
 
 <Footer
     bind:this={footer}
+    thread={true}
     joining={undefined}
     preview={false}
     {blocked}
