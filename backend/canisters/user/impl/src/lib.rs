@@ -30,6 +30,8 @@ mod queries;
 mod regular_jobs;
 mod updates;
 
+const DEFAULT_MAX_GROUPS_PER_USER: u32 = 10;
+
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
@@ -131,10 +133,16 @@ struct Data {
     pub bio: String,
     #[serde(skip_deserializing)]
     pub cached_group_summaries: Option<CachedGroupSummaries>,
+    #[serde(default = "max_groups")]
+    pub max_groups: u32,
 }
 
 fn ledger_canister_id() -> CanisterId {
     MAINNET_LEDGER_CANISTER_ID
+}
+
+fn max_groups() -> u32 {
+    DEFAULT_MAX_GROUPS_PER_USER
 }
 
 impl Data {
@@ -165,11 +173,20 @@ impl Data {
             recommended_group_exclusions: RecommendedGroupExclusions::default(),
             bio: "".to_string(),
             cached_group_summaries: None,
+            max_groups: DEFAULT_MAX_GROUPS_PER_USER,
         }
     }
 
     pub fn user_index_ledger_account(&self) -> AccountIdentifier {
         default_ledger_account(self.user_index_canister_id)
+    }
+
+    pub fn max_groups_created(&self) -> Option<u32> {
+        if self.group_chats.groups_created() >= self.max_groups {
+            Some(self.max_groups)
+        } else {
+            None
+        }
     }
 }
 

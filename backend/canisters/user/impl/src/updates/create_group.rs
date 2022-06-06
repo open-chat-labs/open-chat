@@ -53,7 +53,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
         false
     }
 
-    if let Some(max) = runtime_state.data.group_chats.max_groups_created() {
+    if let Some(max) = runtime_state.data.max_groups_created() {
         Err(MaxGroupsCreated(max))
     } else if is_throttled() {
         Err(Throttled)
@@ -99,6 +99,8 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
 }
 
 fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
-    runtime_state.data.group_chats.create(chat_id, now);
+    if runtime_state.data.max_groups_created().is_none() {
+        let now = runtime_state.env.now();
+        runtime_state.data.group_chats.create(chat_id, now);
+    }
 }
