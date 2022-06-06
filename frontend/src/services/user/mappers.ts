@@ -320,7 +320,7 @@ export function transferWithinGroupResponse(
         return { kind: "recipient_blocked" };
     }
     if ("InvalidRequest" in candid) {
-        return { kind: "invalid_request" };
+        return { kind: "invalid_request", reason: candid.InvalidRequest };
     }
     if ("TextTooLong" in candid) {
         return { kind: "text_too_long" };
@@ -377,7 +377,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
         return { kind: "recipient_blocked" };
     }
     if ("InvalidRequest" in candid) {
-        return { kind: "invalid_request" };
+        return { kind: "invalid_request", reason: candid.InvalidRequest };
     }
     if ("TextTooLong" in candid) {
         return { kind: "text_too_long" };
