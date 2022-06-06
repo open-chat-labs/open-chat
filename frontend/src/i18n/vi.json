@@ -525,5 +525,10 @@
     "membersAreTyping": "{number} thành viên đang nhập",
     "unableToRefreshAccountBalance": "Xin lỗi, chúng tôi không thể làm mới số dư tài khoản {token} của bạn",
     "accounts": "Tài khoản",
-    "readOnlyChat": "Cuộc trò chuyện này ở chế độ chỉ đọc"
+    "readOnlyChat": "Cuộc trò chuyện này ở chế độ chỉ đọc",
+    "deleteMessage": "Xóa bỏ",
+    "editMessage": "Chỉnh sửa",
+    "pinMessage": "Ghim",
+    "unpinMessage": "Bỏ ghim",
+    "forward": "Ở đằng trước"
 }

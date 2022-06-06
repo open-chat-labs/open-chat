@@ -524,5 +524,10 @@
     "membersAreTyping": "{number} membres sont en train de taper",
     "unableToRefreshAccountBalance": "Désolé, nous n'avons pas pu actualiser le solde de votre compte {token}",
     "accounts": "Comptes",
-    "readOnlyChat": "Ce chat est en lecture seule"
+    "readOnlyChat": "Ce chat est en lecture seule",
+    "deleteMessage": "Effacer",
+    "editMessage": "Éditer",
+    "pinMessage": "Broche",
+    "unpinMessage": "Détacher",
+    "forward": "Vers l'avant"
 }

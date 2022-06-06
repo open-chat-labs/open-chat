@@ -524,5 +524,10 @@
     "membersAreTyping": "{number} 成员正在输入",
     "unableToRefreshAccountBalance": "抱歉，我们无法刷新您的 {token} 帐户余额",
     "accounts": "账户",
-    "readOnlyChat": "此聊天是只读的"
+    "readOnlyChat": "此聊天是只读的",
+    "deleteMessage": "删除",
+    "editMessage": "编辑",
+    "pinMessage": "别针",
+    "unpinMessage": "取消固定",
+    "forward": "向前"
 }

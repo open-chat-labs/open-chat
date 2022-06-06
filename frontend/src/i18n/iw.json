@@ -522,5 +522,10 @@
     "membersAreTyping": "חברי {number} מקלידים",
     "unableToRefreshAccountBalance": "מצטערים, לא הצלחנו לרענן את יתרת החשבון שלך ב-{token}",
     "accounts": "חשבונות",
-    "readOnlyChat": "הצ'אט הזה הוא לקריאה בלבד"
+    "readOnlyChat": "הצ'אט הזה הוא לקריאה בלבד",
+    "deleteMessage": "לִמְחוֹק",
+    "editMessage": "לַעֲרוֹך",
+    "pinMessage": "פִּין",
+    "unpinMessage": "לְהוֹצִיא סִיכָּה",
+    "forward": "קָדִימָה"
 }
