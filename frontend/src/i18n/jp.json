@@ -524,5 +524,10 @@
     "membersAreTyping": "{number}メンバーが入力しています",
     "readOnlyChat": "このチャットは読み取り専用です",
     "unableToRefreshAccountBalance": "申し訳ありませんが、{token}アカウントの残高を更新できませんでした",
-    "accounts": "アカウント"
+    "accounts": "アカウント",
+    "deleteMessage": "消去",
+    "editMessage": "編集",
+    "pinMessage": "ピン",
+    "unpinMessage": "Unpin",
+    "forward": "前方"
 }
