@@ -239,6 +239,12 @@
             if (params.chatId === null && !$mobileWidth && recommendedGroups.kind === "idle") {
                 whatsHot();
             }
+
+            if (params.chatId === null) {
+                rightPanelHistory = rightPanelHistory.filter(
+                    (panel) => panel.kind === "user_profile"
+                );
+            }
         }
     }
 
@@ -779,6 +785,7 @@
         @include box-shadow(3);
         @include mobile() {
             width: 100%;
+            height: 100%;
         }
     }
 </style>
