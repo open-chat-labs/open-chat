@@ -4,8 +4,6 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{ChatId, MessageIndex, TimestampMillis};
 
-const MAX_GROUPS_PER_USER: u32 = 10;
-
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupChats {
     groups_created: u32,
@@ -39,13 +37,9 @@ impl GroupChats {
     }
 
     pub fn create(&mut self, chat_id: ChatId, now: TimestampMillis) -> bool {
-        if self.groups_created >= MAX_GROUPS_PER_USER {
-            false
-        } else {
-            self.join(chat_id, false, false, None, now);
-            self.groups_created += 1;
-            true
-        }
+        self.join(chat_id, false, false, None, now);
+        self.groups_created += 1;
+        true
     }
 
     pub fn join(
@@ -89,14 +83,6 @@ impl GroupChats {
             .take_while(|g| g.timestamp > timestamp)
             .map(|g| g.chat_id)
             .collect()
-    }
-
-    pub fn max_groups_created(&self) -> Option<u32> {
-        if self.groups_created >= MAX_GROUPS_PER_USER {
-            Some(MAX_GROUPS_PER_USER)
-        } else {
-            None
-        }
     }
 
     pub fn groups_created(&self) -> u32 {
