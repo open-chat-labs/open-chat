@@ -31,7 +31,7 @@ export class RegisterController {
         private _api: ServiceContainer,
         private currentUser: CurrentUserResponse,
         private _onComplete: (user: CreatedUser) => void,
-        private _invitedBy: string | undefined
+        private _referredBy: string | undefined
     ) {
         if (currentUser.kind === "unknown_user") {
             // Try to create a challenge.
@@ -55,7 +55,7 @@ export class RegisterController {
 
         if (this._challengeAttempt !== undefined) {
             // The user already has an untried challenge attempt so call register_user
-            this.registerUser(username, this._challengeAttempt, this._invitedBy);
+            this.registerUser(username, this._challengeAttempt, this._referredBy);
         } else if (get(this.challenge) === undefined) {
             // The challenge isn't ready yet so wait...
             this.state.set({ kind: "spinning" });
@@ -73,7 +73,7 @@ export class RegisterController {
 
         if (username !== undefined) {
             // The username has been entered so try to register the user.
-            this.registerUser(username, challengeAttempt, this._invitedBy);
+            this.registerUser(username, challengeAttempt, this._referredBy);
         } else {
             // The username has not been set so goto the "username" panel.
             this.state.set({ kind: "awaiting_username" });
