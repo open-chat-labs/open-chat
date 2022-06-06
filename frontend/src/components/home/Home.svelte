@@ -446,13 +446,13 @@
         tick().then(() => rightPanel?.showProfile());
     }
 
-    function replyInThread(ev: CustomEvent<EventWrapper<Message>>) {
+    function replyInThread(ev: CustomEvent<[string, EventWrapper<Message>]>) {
         if ($selectedChat !== undefined) {
-            threadStore.addToThread(ev.detail);
+            threadStore.addToThread(ev.detail[0], ev.detail[1]);
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",
-                    root: ev.detail,
+                    threadId: ev.detail[0],
                 },
             ];
         }

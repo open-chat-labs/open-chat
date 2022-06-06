@@ -256,6 +256,14 @@ export type Message = {
     reactions: Reaction[];
     edited: boolean;
     forwarded: boolean;
+    thread?: ThreadSummary;
+};
+
+export type ThreadSummary = {
+    threadId: string;
+    participantIds: Set<string>;
+    numberOfReplies: number;
+    latestEventIndex: number;
 };
 
 export type LocalReaction = {

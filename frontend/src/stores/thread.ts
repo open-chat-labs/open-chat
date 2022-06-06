@@ -1,32 +1,37 @@
 import { writable } from "svelte/store";
-import type { ChatEvent, EventWrapper, Message } from "../domain/chat/chat";
+import type { EventWrapper, Message, ThreadSummary } from "../domain/chat/chat";
 
 /**
- * This is just a dummy store to simulate the state tracking for a threaded message
+ * This just holds some dummy state for us while we don't have an api
  */
 
-type ThreadLookup = Record<number, Record<number, EventWrapper<Message>>>;
+// threadId -> events
+type ThreadLookup = Record<string, EventWrapper<Message>[]>;
 
-const { subscribe, update, set } = writable<ThreadLookup>({});
+// messageId -> ThreadSummary for fake threads
+type ThreadSummaryLookup = Record<number, ThreadSummary>;
+
+export const threadSummaryStore = writable<ThreadSummaryLookup>({
+    20604599553837410939685844215614406656: {
+        threadId: "thread1",
+        participantIds: new Set(["sbzkb-zqaaa-aaaaa-aaaiq-cai", "sgymv-uiaaa-aaaaa-aaaia-cai"]),
+        numberOfReplies: 5,
+        latestEventIndex: 12345,
+    },
+});
+
+const { subscribe, set, update } = writable<ThreadLookup>({});
 
 export const threadStore = {
     subscribe,
-    update,
     set,
-    addToThread: (event: EventWrapper<Message>): void => {
+    addToThread: (threadId: string, event: EventWrapper<Message>): void => {
         update((lookup) => {
-            const id = Number(event.event.messageId);
-            if (lookup[id] === undefined) {
-                lookup[id] = {};
+            if (lookup[threadId] === undefined) {
+                lookup[threadId] = [];
             }
-            lookup[id][id] = event;
+            lookup[threadId].push(event);
             return lookup;
         });
     },
 };
-
-export function hasThread(lookup: ThreadLookup, event: EventWrapper<ChatEvent>): boolean {
-    if (event.event.kind !== "message") return false;
-    const id = Number(event.event.messageId);
-    return lookup[id] !== undefined;
-}

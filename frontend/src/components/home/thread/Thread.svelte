@@ -25,13 +25,13 @@
         canSendMessages,
     } from "domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
-    import { threadStore } from "../../../stores/thread";
+    import { threadStore, threadSummaryStore } from "../../../stores/thread";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
     export let controller: ChatController;
-    export let root: EventWrapper<Message>;
+    export let threadId: string;
 
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
 
@@ -45,8 +45,6 @@
     $: markRead = controller.markRead;
     $: pinned = controller.pinnedMessages;
     $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
-
-    $: console.log("ThreadStore: ", $threadStore);
 
     let footer: Footer;
     let messages: RemoteData<EventWrapper<Message>[][], string> = { kind: "idle" };
@@ -68,7 +66,7 @@
     onMount(() => {
         // fake load of message thread
         setTimeout(() => {
-            messages = { kind: "success", data: [[root]] };
+            messages = { kind: "success", data: [$threadStore[threadId] ?? []] };
         }, 1000);
     });
 
@@ -130,7 +128,7 @@
                         canReact={canReactToMessages($chat)}
                         publicGroup={$chat.kind === "group_chat" && $chat.public}
                         editing={$editingEvent === message}
-                        hasThread={false}
+                        threadSummary={$threadSummaryStore[Number(message.event.messageId)]}
                         on:chatWith
                         on:goToMessageIndex
                         on:replyPrivatelyTo

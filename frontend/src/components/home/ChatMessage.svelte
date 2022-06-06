@@ -13,7 +13,7 @@
     import MenuItem from "../MenuItem.svelte";
     import Loading from "../Loading.svelte";
     import MenuIcon from "../MenuIcon.svelte";
-    import type { Message, EnhancedReplyContext } from "../../domain/chat/chat";
+    import type { Message, EnhancedReplyContext, ThreadSummary } from "../../domain/chat/chat";
     import Typing from "../Typing.svelte";
     import RepliesTo from "./RepliesTo.svelte";
     import { _, locale } from "svelte-i18n";
@@ -55,6 +55,7 @@
     import { translationStore } from "../../stores/translation";
     import { typing } from "../../stores/typing";
     import { canForward } from "../../domain/chat/chat.utils";
+    import Thread from "./thread/Thread.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -82,13 +83,13 @@
     export let canReact: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let hasThread: boolean;
+    export let threadSummary: ThreadSummary | undefined;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
     let groupChat = chatType === "group_chat";
     let showEmojiPicker = false;
-    let debug = true;
+    let debug = false;
     let viewProfile = false;
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
@@ -480,7 +481,6 @@
                 <pre>ReadByUs: {readByMe}</pre>
                 <pre>Pinned: {pinned}</pre>
                 <pre>edited: {msg.edited}</pre>
-                <pre>hasThread: {hasThread}</pre>
             {/if}
 
             {#if !deleted && !preview}
@@ -626,6 +626,10 @@
             </div>
         {/if}
     </div>
+
+    {#if threadSummary !== undefined}
+        <div>threadSummary: {JSON.stringify(threadSummary, null, 4)}</div>
+    {/if}
 
     {#if msg.reactions.length > 0 && !deleted}
         <div class="message-reactions" class:me class:indent={showAvatar}>

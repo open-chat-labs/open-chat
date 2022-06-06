@@ -9,7 +9,7 @@
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import AggregateParticipantsJoinedOrLeftEvent from "./AggregateParticipantsJoinedOrLeftEvent.svelte";
     import type { UserSummary } from "../../domain/user/user";
-    import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
+    import type { ChatEvent, EventWrapper, Message, ThreadSummary } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
@@ -40,7 +40,7 @@
     export let canInvite: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let hasThread: boolean;
+    export let threadSummary: ThreadSummary | undefined;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -74,7 +74,7 @@
         {canReact}
         {publicGroup}
         {editing}
-        {hasThread}
+        {threadSummary}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo
