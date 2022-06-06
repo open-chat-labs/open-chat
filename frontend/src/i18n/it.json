@@ -524,5 +524,10 @@
     "membersAreTyping": "{number} membri stanno digitando",
     "unableToRefreshAccountBalance": "Spiacenti, non siamo riusciti ad aggiornare il saldo del tuo account {token}",
     "accounts": "Conti",
-    "readOnlyChat": "Questa chat è di sola lettura"
+    "readOnlyChat": "Questa chat è di sola lettura",
+    "deleteMessage": "Elimina",
+    "editMessage": "Modificare",
+    "pinMessage": "Spillo",
+    "unpinMessage": "Sblocca",
+    "forward": "Inoltrare"
 }

@@ -525,5 +525,10 @@
     "membersAreTyping": "{number} miembros están escribiendo",
     "unableToRefreshAccountBalance": "Lo sentimos, no pudimos actualizar el saldo de su cuenta {token}",
     "accounts": "cuentas",
-    "readOnlyChat": "Este chat es de solo lectura"
+    "readOnlyChat": "Este chat es de solo lectura",
+    "deleteMessage": "Borrar",
+    "editMessage": "Editar",
+    "pinMessage": "Alfiler",
+    "unpinMessage": "Desprender",
+    "forward": "Delantero"
 }

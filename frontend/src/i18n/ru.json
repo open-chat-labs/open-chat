@@ -524,5 +524,10 @@
     "membersAreTyping": "{number} участники печатают",
     "unableToRefreshAccountBalance": "К сожалению, нам не удалось обновить баланс вашего аккаунта {token}",
     "accounts": "Счета",
-    "readOnlyChat": "Этот чат доступен только для чтения"
+    "readOnlyChat": "Этот чат доступен только для чтения",
+    "deleteMessage": "Удалить",
+    "editMessage": "Редактировать",
+    "pinMessage": "Штырь",
+    "unpinMessage": "Открепить",
+    "forward": "Вперед"
 }

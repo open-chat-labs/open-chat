@@ -524,5 +524,10 @@
     "membersAreTyping": "{number} Mitglieder schreiben",
     "unableToRefreshAccountBalance": "Leider konnten wir Ihren {token}-Kontostand nicht aktualisieren",
     "accounts": "Konten",
-    "readOnlyChat": "Dieser Chat ist schreibgeschützt"
+    "readOnlyChat": "Dieser Chat ist schreibgeschützt",
+    "deleteMessage": "Löschen",
+    "editMessage": "Bearbeiten",
+    "pinMessage": "Stift",
+    "unpinMessage": "Lösen",
+    "forward": "Nach vorne"
 }
