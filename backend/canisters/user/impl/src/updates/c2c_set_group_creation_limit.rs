@@ -13,6 +13,6 @@ fn c2c_set_group_creation_limit(args: Args) -> Response {
 }
 
 fn c2c_set_group_creation_limit_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.max_groups = args.max_groups;
+    runtime_state.data.group_creation_limit = args.group_creation_limit;
     Success
 }

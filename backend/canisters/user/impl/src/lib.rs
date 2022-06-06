@@ -30,7 +30,7 @@ mod queries;
 mod regular_jobs;
 mod updates;
 
-const DEFAULT_MAX_GROUPS_PER_USER: u32 = 10;
+const DEFAULT_GROUP_CREATION_LIMIT: u32 = 10;
 
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
@@ -133,16 +133,16 @@ struct Data {
     pub bio: String,
     #[serde(skip_deserializing)]
     pub cached_group_summaries: Option<CachedGroupSummaries>,
-    #[serde(default = "max_groups")]
-    pub max_groups: u32,
+    #[serde(default = "group_creation_limit")]
+    pub group_creation_limit: u32,
 }
 
 fn ledger_canister_id() -> CanisterId {
     MAINNET_LEDGER_CANISTER_ID
 }
 
-fn max_groups() -> u32 {
-    DEFAULT_MAX_GROUPS_PER_USER
+fn group_creation_limit() -> u32 {
+    DEFAULT_GROUP_CREATION_LIMIT
 }
 
 impl Data {
@@ -173,7 +173,7 @@ impl Data {
             recommended_group_exclusions: RecommendedGroupExclusions::default(),
             bio: "".to_string(),
             cached_group_summaries: None,
-            max_groups: DEFAULT_MAX_GROUPS_PER_USER,
+            group_creation_limit: DEFAULT_GROUP_CREATION_LIMIT,
         }
     }
 
@@ -182,8 +182,8 @@ impl Data {
     }
 
     pub fn max_groups_created(&self) -> Option<u32> {
-        if self.group_chats.groups_created() >= self.max_groups {
-            Some(self.max_groups)
+        if self.group_chats.groups_created() >= self.group_creation_limit {
+            Some(self.group_creation_limit)
         } else {
             None
         }
