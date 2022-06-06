@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
-    ChatId, CompletedCryptocurrencyTransfer, Cryptocurrency, CryptocurrencyContent, EventIndex, GroupReplyContext, MessageId,
+    ChatId, CompletedCryptocurrencyTransfer, Cryptocurrency, CryptocurrencyContentV2, EventIndex, GroupReplyContext, MessageId,
     MessageIndex, TimestampMillis, User, UserId,
 };
 
@@ -10,7 +10,7 @@ pub struct Args {
     pub message_id: MessageId,
     pub group_id: ChatId,
     pub recipient: UserId,
-    pub content: CryptocurrencyContent,
+    pub content: CryptocurrencyContentV2,
     pub sender_name: String,
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,

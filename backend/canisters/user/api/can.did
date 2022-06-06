@@ -303,7 +303,7 @@ type TransferCryptocurrencyWithinGroupArgs =
         message_id: MessageId;
         group_id: ChatId;
         recipient: UserId;
-        content: CryptocurrencyContent;
+        content: CryptocurrencyContentV2;
         sender_name: text;
         replies_to: opt GroupReplyContext;
         mentioned: vec User;
