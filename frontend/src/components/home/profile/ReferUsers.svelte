@@ -12,7 +12,7 @@
 
     const user = getContext<CreatedUser>(currentUserKey);
 
-    let link = `${window.location.origin}/?rb=${user.userId}`;
+    let link = `${window.location.origin}/?ref=${user.userId}`;
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(

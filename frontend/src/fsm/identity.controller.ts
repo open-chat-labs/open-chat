@@ -55,7 +55,7 @@ export class IdentityController {
                         this._api!,
                         user,
                         (registeredUser) => this.onCreatedUser(id, registeredUser),
-                        new URLSearchParams(window.location.search).get("rb") ?? undefined
+                        new URLSearchParams(window.location.search).get("ref") ?? undefined
                     );
                     break;
                 case "created_user":
