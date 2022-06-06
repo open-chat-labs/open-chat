@@ -164,7 +164,7 @@ export const idlFactory = ({ IDL }) => {
     'Completed' : CompletedCryptocurrencyTransfer,
     'Pending' : PendingCryptocurrencyTransfer,
   });
-  const CryptocurrencyContent = IDL.Record({
+  const CryptocurrencyContentV2 = IDL.Record({
     'caption' : IDL.Opt(IDL.Text),
     'transfer' : CryptocurrencyTransfer,
   });
@@ -192,7 +192,7 @@ export const idlFactory = ({ IDL }) => {
     'Poll' : PollContent,
     'Text' : TextContent,
     'Image' : ImageContent,
-    'CryptocurrencyV2' : CryptocurrencyContent,
+    'CryptocurrencyV2' : CryptocurrencyContentV2,
     'Cryptocurrency' : IDL.Reserved,
     'Audio' : AudioContent,
     'Video' : VideoContent,
@@ -574,6 +574,7 @@ export const idlFactory = ({ IDL }) => {
     }),
     'MessageEmpty' : IDL.Null,
     'InvalidPoll' : InvalidPollReason,
+    'InvalidRequest' : IDL.Text,
   });
   const ToggleReactionArgs = IDL.Record({
     'message_id' : MessageId,

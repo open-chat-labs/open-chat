@@ -116,7 +116,7 @@ export type CreateChallengeArgs = {};
 export type CreateChallengeResponse = { 'Throttled' : null } |
   { 'Success' : Challenge };
 export type Cryptocurrency = { 'InternetComputer' : null };
-export interface CryptocurrencyContent {
+export interface CryptocurrencyContentV2 {
   'caption' : [] | [string],
   'transfer' : CryptocurrencyTransfer,
 }
@@ -423,7 +423,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
-  { 'CryptocurrencyV2' : CryptocurrencyContent } |
+  { 'CryptocurrencyV2' : CryptocurrencyContentV2 } |
   { 'Cryptocurrency' : any } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
