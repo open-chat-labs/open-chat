@@ -536,16 +536,6 @@
         }
     }
 
-    // .user {
-    //     padding: $sp4;
-    //     background-color: var(--profile-section-bg);
-    //     position: relative;
-
-    //     @include mobile() {
-    //         padding: $sp3;
-    //     }
-    // }
-
     .icp-balance {
         display: flex;
         gap: $sp3;
