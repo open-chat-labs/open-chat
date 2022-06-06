@@ -48,7 +48,7 @@ import type {
     ApiReplyContext,
     ApiUpdatedMessage,
     ApiDeletedContent,
-    ApiCryptocurrencyContent,
+    ApiCryptocurrencyContentV2,
     ApiCryptocurrencyTransfer,
     ApiCompletedCryptocurrencyTransfer,
     ApiMessageIndexRange,
@@ -221,7 +221,7 @@ function deletedContent(candid: ApiDeletedContent): DeletedContent {
     };
 }
 
-function cryptoContent(candid: ApiCryptocurrencyContent): CryptocurrencyContent {
+function cryptoContent(candid: ApiCryptocurrencyContentV2): CryptocurrencyContent {
     return {
         kind: "crypto_content",
         caption: optional(candid.caption, identity),
@@ -593,7 +593,7 @@ function apiDeletedContent(domain: DeletedContent): ApiDeletedContent {
     };
 }
 
-export function apiCryptoContent(domain: CryptocurrencyContent): ApiCryptocurrencyContent {
+export function apiCryptoContent(domain: CryptocurrencyContent): ApiCryptocurrencyContentV2 {
     return {
         caption: apiOptional(identity, domain.caption),
         transfer: apiCryptoTransfer(domain.transfer),

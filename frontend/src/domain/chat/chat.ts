@@ -846,6 +846,7 @@ export type SendMessageRecipientBlocked = {
 
 export type SendMessageInvalidRequest = {
     kind: "invalid_request";
+    reason: string;
 };
 
 export type SendMessageTooLong = {
