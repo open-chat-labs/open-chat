@@ -22,7 +22,7 @@ export interface IUserIndexClient {
     registerUser(
         username: string,
         challengeAttempt: ChallengeAttempt,
-        invitedBy: string | undefined
+        referredBy: string | undefined
     ): Promise<RegisterUserResponse>;
     checkUsername(username: string): Promise<CheckUsernameResponse>;
     setUsername(userId: string, username: string): Promise<SetUsernameResponse>;

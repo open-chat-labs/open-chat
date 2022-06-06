@@ -39,7 +39,7 @@ async fn register_user(args: Args) -> Response {
                     args.username,
                     prepare_ok.canister_wasm.version,
                     user_id,
-                    args.invited_by,
+                    args.referred_by,
                     state,
                 )
             });
@@ -127,7 +127,7 @@ fn commit(
     username: String,
     wasm_version: Version,
     user_id: UserId,
-    invited_by: Option<CanisterId>,
+    referred_by: Option<UserId>,
     runtime_state: &mut RuntimeState,
 ) {
     let now = runtime_state.env.now();
@@ -135,7 +135,7 @@ fn commit(
     runtime_state
         .data
         .users
-        .register(caller, user_id, wasm_version, username, now, invited_by);
+        .register(caller, user_id, wasm_version, username, now, referred_by);
 }
 
 fn rollback(username: &str, canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {

@@ -1,9 +1,7 @@
 use crate::model::account_billing::AccountBilling;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{
-    CanisterId, CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary, Version,
-};
+use types::{CyclesTopUp, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct User {
@@ -22,7 +20,7 @@ pub struct User {
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
     #[serde(default)]
-    pub invited_by: Option<CanisterId>,
+    pub referred_by: Option<UserId>,
 }
 
 impl User {
@@ -73,7 +71,7 @@ impl User {
         username: String,
         now: TimestampMillis,
         wasm_version: Version,
-        invited_by: Option<CanisterId>,
+        referred_by: Option<UserId>,
     ) -> User {
         User {
             principal,
@@ -90,7 +88,7 @@ impl User {
             account_billing: AccountBilling::default(),
             open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
-            invited_by,
+            referred_by,
         }
     }
 
@@ -145,7 +143,7 @@ impl Default for User {
             account_billing: AccountBilling::default(),
             open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
-            invited_by: None,
+            referred_by: None,
         }
     }
 }

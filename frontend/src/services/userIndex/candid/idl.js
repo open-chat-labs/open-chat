@@ -78,7 +78,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const RegisterUserArgs = IDL.Record({
     'username' : IDL.Text,
-    'invited_by' : IDL.Opt(CanisterId),
+    'referred_by' : IDL.Opt(UserId),
     'challenge_attempt' : ChallengeAttempt,
   });
   const RegisterUserResponse = IDL.Variant({

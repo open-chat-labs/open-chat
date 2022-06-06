@@ -7,7 +7,7 @@ pub async fn register_user(
     user_identity: TestIdentity,
     username: String,
     user_index_canister_id: CanisterId,
-    invited_by: Option<CanisterId>,
+    referred_by: Option<UserId>,
 ) -> UserId {
     let identity = build_identity(user_identity);
     let agent = build_ic_agent(url, identity).await;
@@ -18,7 +18,7 @@ pub async fn register_user(
             key: 0,
             chars: "TEST".to_owned(),
         },
-        invited_by,
+        referred_by,
     };
 
     match user_index_canister_client::register_user(&agent, &user_index_canister_id, &register_user_args)

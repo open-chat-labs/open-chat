@@ -4,7 +4,7 @@ use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLO
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use types::{CanisterId, CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
+use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, Timestamped, UserId, Version};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
 
@@ -76,12 +76,12 @@ impl UserMap {
         wasm_version: Version,
         username: String,
         now: TimestampMillis,
-        invited_by: Option<CanisterId>,
+        referred_by: Option<UserId>,
     ) {
         self.username_to_principal.insert(&username, principal);
         self.user_id_to_principal.insert(user_id, principal);
 
-        let user = User::new(principal, user_id, username, now, wasm_version, invited_by);
+        let user = User::new(principal, user_id, username, now, wasm_version, referred_by);
         self.users_by_principal.insert(principal, user);
     }
 

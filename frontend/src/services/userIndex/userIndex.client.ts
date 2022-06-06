@@ -77,13 +77,13 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     registerUser(
         username: string,
         challengeAttempt: ChallengeAttempt,
-        invitedBy: string | undefined
+        referredBy: string | undefined
     ): Promise<RegisterUserResponse> {
         return this.handleResponse(
             this.userService.register_user({
                 username,
                 challenge_attempt: challengeAttempt,
-                invited_by: apiOptional((userId) => Principal.fromText(userId), invitedBy),
+                referred_by: apiOptional((userId) => Principal.fromText(userId), referredBy),
             }),
             registerUserResponse
         );

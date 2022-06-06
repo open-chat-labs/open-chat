@@ -1,12 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, ChallengeAttempt, UserId};
+use types::{ChallengeAttempt, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub username: String,
     pub challenge_attempt: ChallengeAttempt,
-    pub invited_by: Option<CanisterId>,
+    pub referred_by: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

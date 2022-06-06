@@ -408,8 +408,6 @@
             "confirmReset": "Möchten Sie den Gruppenlink wirklich zurücksetzen? Personen können der Gruppe nicht mehr über den aktuellen Link beitreten.",
             "shareMessage": "Jeder mit diesem Link kann eine Vorschau anzeigen und der Gruppe beitreten.",
             "shareMessageTrust": "Teilen Sie es mit Menschen, denen Sie vertrauen.",
-            "linkCopiedToClipboard": "Link in die Zwischenablage kopiert",
-            "failedToCopyLinkToClipboard": "Link kann nicht in die Zwischenablage kopiert werden",
             "enabled": "aktiviert",
             "disabled": "behindert",
             "reset": "zurücksetzen"
@@ -524,5 +522,15 @@
     "membersAreTyping": "{number} Mitglieder schreiben",
     "unableToRefreshAccountBalance": "Leider konnten wir Ihren {token}-Kontostand nicht aktualisieren",
     "accounts": "Konten",
-    "readOnlyChat": "Dieser Chat ist schreibgeschützt"
+    "readOnlyChat": "Dieser Chat ist schreibgeschützt",
+    "linkCopiedToClipboard": "Link in die Zwischenablage kopiert",
+    "failedToCopyLinkToClipboard": "Link kann nicht in die Zwischenablage kopiert werden",
+    "deleteMessage": "Löschen",
+    "editMessage": "Bearbeiten",
+    "pinMessage": "Stift",
+    "unpinMessage": "Lösen",
+    "forward": "Nach vorne",
+    "referralHeader": "Freunde/Familie einladen",
+    "userReferralMessage": "Teilen Sie diesen Link zu OpenChat mit Freunden und Familie. Für jede Person, die sich mit Ihrem Link registriert und ein verifizierter Benutzer wird, erhalten Sie eine Belohnung in Form von CHAT-Token (wird in den kommenden Wochen bestätigt). Sie können den Link jetzt teilen und wir vergeben nachträglich CHAT-Token, sobald sie verfügbar sind.",
+    "userInfoHeader": "Öffentlichkeit"
 }

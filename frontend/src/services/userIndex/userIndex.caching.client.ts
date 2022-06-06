@@ -70,9 +70,9 @@ export class CachingUserIndexClient implements IUserIndexClient {
     registerUser(
         username: string,
         challengeAttempt: ChallengeAttempt,
-        invitedBy: string | undefined
+        referredBy: string | undefined
     ): Promise<RegisterUserResponse> {
-        return this.client.registerUser(username, challengeAttempt, invitedBy);
+        return this.client.registerUser(username, challengeAttempt, referredBy);
     }
 
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {

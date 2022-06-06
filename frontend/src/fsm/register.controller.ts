@@ -94,10 +94,10 @@ export class RegisterController {
     private registerUser(
         username: string,
         challengeAttempt: ChallengeAttempt,
-        invitedBy: string | undefined
+        referredBy: string | undefined
     ): void {
         this.state.set({ kind: "spinning" });
-        this._api.registerUser(username, challengeAttempt, invitedBy).then((resp) => {
+        this._api.registerUser(username, challengeAttempt, referredBy).then((resp) => {
             this.state.set({ kind: "awaiting_username" });
             if (resp === "username_taken") {
                 this.error.set("register.usernameTaken");

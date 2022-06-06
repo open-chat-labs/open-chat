@@ -428,8 +428,6 @@
             "confirmReset": "Are you sure you want to reset the group link? People will no longer be able to join the group using the current link.",
             "shareMessage": "Anyone with this link can preview and join the group. ",
             "shareMessageTrust": "Share it with people you trust.",
-            "linkCopiedToClipboard": "Link copied to clipboard",
-            "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
             "enabled": "enabled",
             "disabled": "disabled",
             "reset": "reset"
@@ -527,5 +525,10 @@
     "membersAreTyping": "{number} members are typing",
     "readOnlyChat": "This chat is read-only",
     "accounts": "Accounts",
-    "forward": "Forward"
+    "forward": "Forward",
+    "linkCopiedToClipboard": "Link copied to clipboard",
+    "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
+    "referralHeader": "Invite friends/family",
+    "userReferralMessage": "Share this link to OpenChat with friends and family. For each person who registers with your link and goes on to become a verified user you will receive a reward of CHAT tokens (to be confirmed in coming weeks). You can go ahead and share the link now and we will retrospectively award CHAT tokens once they are available.",
+    "userInfoHeader": "Public"
 }
