@@ -351,7 +351,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
         return { kind: "message_empty" };
     }
     if ("InvalidRequest" in candid) {
-        return { kind: "invalid_request", reason: candid.InvalidRequest }
+        return { kind: "invalid_request", reason: candid.InvalidRequest };
     }
     if ("InvalidPoll" in candid) {
         return { kind: "invalid_poll" };

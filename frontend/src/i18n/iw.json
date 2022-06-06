@@ -420,8 +420,6 @@
             "confirmReset": "האם אתה בטוח שברצונך לאפס את הקישור לקבוצה? אנשים לא יוכלו עוד להצטרף לקבוצה באמצעות הקישור הנוכחי.",
             "shareMessage": "כל מי שיש לו קישור זה יכול לצפות בתצוגה מקדימה ולהצטרף לקבוצה.",
             "shareMessageTrust": "שתף אותו עם אנשים שאתה סומך עליהם.",
-            "linkCopiedToClipboard": "הקישור הועתק ללוח",
-            "failedToCopyLinkToClipboard": "לא ניתן להעתיק את הקישור ללוח",
             "enabled": "מופעל",
             "disabled": "נָכֶה",
             "reset": "אִתחוּל"
@@ -523,9 +521,14 @@
     "unableToRefreshAccountBalance": "מצטערים, לא הצלחנו לרענן את יתרת החשבון שלך ב-{token}",
     "accounts": "חשבונות",
     "readOnlyChat": "הצ'אט הזה הוא לקריאה בלבד",
+    "linkCopiedToClipboard": "הקישור הועתק ללוח",
+    "failedToCopyLinkToClipboard": "לא ניתן להעתיק את הקישור ללוח",
     "deleteMessage": "לִמְחוֹק",
     "editMessage": "לַעֲרוֹך",
     "pinMessage": "פִּין",
     "unpinMessage": "לְהוֹצִיא סִיכָּה",
-    "forward": "קָדִימָה"
+    "forward": "קָדִימָה",
+    "referralHeader": "הזמן חברים/משפחה",
+    "userReferralMessage": "שתף את הקישור הזה ל-OpenChat עם חברים ובני משפחה. עבור כל אדם שנרשם עם הקישור שלך וימשיך להיות משתמש מאומת, תקבל פרס של אסימוני CHAT (שיאושר בשבועות הקרובים). אתה יכול להמשיך ולשתף את הקישור עכשיו ואנו נעניק בדיעבד אסימוני CHAT ברגע שהם יהיו זמינים.",
+    "userInfoHeader": "פּוּמְבֵּי"
 }

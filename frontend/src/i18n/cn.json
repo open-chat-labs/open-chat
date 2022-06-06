@@ -408,8 +408,6 @@
             "confirmReset": "您确定要重置群组链接吗？人们将无法再使用当前链接加入群组。",
             "shareMessage": "知道此链接的任何人都可以预览和加入群组。",
             "shareMessageTrust": "与您信任的人分享。",
-            "linkCopiedToClipboard": "链接已复制到剪贴板",
-            "failedToCopyLinkToClipboard": "无法将链接复制到剪贴板",
             "enabled": "启用",
             "disabled": "禁用",
             "reset": "重启"
@@ -525,9 +523,14 @@
     "unableToRefreshAccountBalance": "抱歉，我们无法刷新您的 {token} 帐户余额",
     "accounts": "账户",
     "readOnlyChat": "此聊天是只读的",
+    "linkCopiedToClipboard": "链接已复制到剪贴板",
+    "failedToCopyLinkToClipboard": "无法将链接复制到剪贴板",
     "deleteMessage": "删除",
     "editMessage": "编辑",
     "pinMessage": "别针",
     "unpinMessage": "取消固定",
-    "forward": "向前"
+    "forward": "向前",
+    "referralHeader": "邀请朋友/家人",
+    "userReferralMessage": "与朋友和家人分享此 OpenChat 链接。对于每个使用您的链接注册并继续成为经过验证的用户的人，您将获得 CHAT 代币奖励（将在未来几周内确认）。您现在可以继续分享链接，一旦 CHAT 代币可用，我们将追溯奖励它们。",
+    "userInfoHeader": "上市"
 }

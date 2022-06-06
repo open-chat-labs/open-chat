@@ -17,9 +17,11 @@ function boolFromLS(key: string, def: boolean): boolean {
 
 export const enterSend = createLsBoolStore(configKeys.enterSend, !isTouchDevice);
 
+export const userInfoOpen = createLsBoolStore(configKeys.userInfoSection, true);
 export const appearanceSectionOpen = createLsBoolStore(configKeys.appearanceSection, false);
 export const chatsSectionOpen = createLsBoolStore(configKeys.chatsSection, false);
 export const accountSectionOpen = createLsBoolStore(configKeys.accountSection, false);
+export const referralOpen = createLsBoolStore(configKeys.referralSection, false);
 export const storageSectionOpen = createLsBoolStore(configKeys.storageSection, false);
 export const statsSectionOpen = createLsBoolStore(configKeys.userStatsSection, false);
 

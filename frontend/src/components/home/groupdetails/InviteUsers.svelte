@@ -131,10 +131,10 @@
     function onCopy() {
         navigator.clipboard.writeText(link).then(
             () => {
-                toastStore.showSuccessToast("group.invite.linkCopiedToClipboard");
+                toastStore.showSuccessToast("linkCopiedToClipboard");
             },
             () => {
-                toastStore.showFailureToast("group.invite.failedToCopyLinkToClipboard");
+                toastStore.showFailureToast("failedToCopyLinkToClipboard");
             }
         );
     }

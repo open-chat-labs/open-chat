@@ -409,8 +409,6 @@
             "confirmReset": "¿Seguro que quieres restablecer el enlace del grupo? Las personas ya no podrán unirse al grupo usando el enlace actual.",
             "shareMessage": "Cualquier persona con este enlace puede obtener una vista previa y unirse al grupo.",
             "shareMessageTrust": "Compártelo con personas de confianza.",
-            "linkCopiedToClipboard": "Enlace copiado al portapapeles",
-            "failedToCopyLinkToClipboard": "No se puede copiar el enlace al portapapeles",
             "enabled": "activado",
             "disabled": "desactivado",
             "reset": "Reiniciar"
@@ -526,9 +524,14 @@
     "unableToRefreshAccountBalance": "Lo sentimos, no pudimos actualizar el saldo de su cuenta {token}",
     "accounts": "cuentas",
     "readOnlyChat": "Este chat es de solo lectura",
+    "linkCopiedToClipboard": "Enlace copiado al portapapeles",
+    "failedToCopyLinkToClipboard": "No se puede copiar el enlace al portapapeles",
     "deleteMessage": "Borrar",
     "editMessage": "Editar",
     "pinMessage": "Alfiler",
     "unpinMessage": "Desprender",
-    "forward": "Delantero"
+    "forward": "Delantero",
+    "referralHeader": "Invitar a amigos/familiares",
+    "userReferralMessage": "Comparta este enlace a OpenChat con amigos y familiares. Por cada persona que se registre con su enlace y se convierta en un usuario verificado, recibirá una recompensa de tokens CHAT (a confirmar en las próximas semanas). Puede continuar y compartir el enlace ahora y otorgaremos tokens de CHAT retrospectivamente una vez que estén disponibles.",
+    "userInfoHeader": "Público"
 }

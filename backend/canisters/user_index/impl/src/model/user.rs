@@ -19,6 +19,8 @@ pub struct User {
     pub account_billing: AccountBilling,
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
+    #[serde(default)]
+    pub referred_by: Option<UserId>,
 }
 
 impl User {
@@ -63,7 +65,14 @@ impl Default for PhoneStatus {
 }
 
 impl User {
-    pub fn new(principal: Principal, user_id: UserId, username: String, now: TimestampMillis, wasm_version: Version) -> User {
+    pub fn new(
+        principal: Principal,
+        user_id: UserId,
+        username: String,
+        now: TimestampMillis,
+        wasm_version: Version,
+        referred_by: Option<UserId>,
+    ) -> User {
         User {
             principal,
             user_id,
@@ -79,6 +88,7 @@ impl User {
             account_billing: AccountBilling::default(),
             open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
+            referred_by,
         }
     }
 
@@ -133,6 +143,7 @@ impl Default for User {
             account_billing: AccountBilling::default(),
             open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
+            referred_by: None,
         }
     }
 }

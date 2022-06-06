@@ -857,9 +857,10 @@ export class ServiceContainer implements MarkMessagesRead {
 
     registerUser(
         username: string,
-        challengeAttempt: ChallengeAttempt
+        challengeAttempt: ChallengeAttempt,
+        referredBy: string | undefined
     ): Promise<RegisterUserResponse> {
-        return this._userIndexClient.registerUser(username, challengeAttempt);
+        return this._userIndexClient.registerUser(username, challengeAttempt, referredBy);
     }
 
     getUserStorageLimits(): Promise<void> {

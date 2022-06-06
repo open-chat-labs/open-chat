@@ -1,7 +1,7 @@
 <script lang="ts">
     import { avatarUrl } from "../../../domain/user/user.utils";
     import SectionHeader from "../../SectionHeader.svelte";
-    import type { CreatedUser, PartialUserSummary } from "../../../domain/user/user";
+    import type { PartialUserSummary } from "../../../domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -29,9 +29,11 @@
         appearanceSectionOpen,
         chatsSectionOpen,
         enterSend,
+        referralOpen,
         scrollStrategy,
         statsSectionOpen,
         storageSectionOpen,
+        userInfoOpen,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
@@ -44,15 +46,14 @@
     import { ONE_GB, storageStore } from "../../../stores/storage";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
-    import { currentUserKey } from "../../../fsm/home.controller";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { cryptoBalance } from "../../../stores/crypto";
     import { Cryptocurrency, cryptoCurrencyList } from "../../../domain/crypto";
     import LinkButton from "../../LinkButton.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import ReferUsers from "./ReferUsers.svelte";
 
     const api: ServiceContainer = getContext(apiKey);
-    const createdUser: CreatedUser = getContext(currentUserKey);
 
     const dispatch = createEventDispatcher();
     const MAX_BIO_LENGTH = 2000;
@@ -209,43 +210,48 @@
 
 <form class="user-form" on:submit|preventDefault={saveUser}>
     <div class="user">
-        <div class="avatar">
-            <EditableAvatar
-                overlayIcon={true}
-                image={avatarUrl(user)}
-                on:imageSelected={userAvatarSelected} />
-        </div>
-        <Legend>{$_("username")} ({$_("usernameRules")})</Legend>
-        <UsernameInput
-            bind:this={usernameInput}
-            {api}
-            originalUsername={user?.username ?? ""}
-            bind:validUsername
-            bind:checking={checkingUsername}
-            bind:error={usernameError}>
-            {#if usernameError !== undefined}
-                <ErrorMessage>{$_(usernameError)}</ErrorMessage>
-            {/if}
-        </UsernameInput>
+        <CollapsibleCard
+            on:toggle={userInfoOpen.toggle}
+            open={$userInfoOpen}
+            headerText={$_("userInfoHeader")}>
+            <div class="avatar">
+                <EditableAvatar
+                    overlayIcon={true}
+                    image={avatarUrl(user)}
+                    on:imageSelected={userAvatarSelected} />
+            </div>
+            <Legend>{$_("username")} ({$_("usernameRules")})</Legend>
+            <UsernameInput
+                bind:this={usernameInput}
+                {api}
+                originalUsername={user?.username ?? ""}
+                bind:validUsername
+                bind:checking={checkingUsername}
+                bind:error={usernameError}>
+                {#if usernameError !== undefined}
+                    <ErrorMessage>{$_(usernameError)}</ErrorMessage>
+                {/if}
+            </UsernameInput>
 
-        <Legend>{$_("bio")} ({$_("supportsMarkdown")})</Legend>
-        <TextArea
-            rows={3}
-            bind:value={userbio}
-            invalid={false}
-            maxlength={MAX_BIO_LENGTH}
-            placeholder={$_("enterBio")}>
-            {#if bioError !== undefined}
-                <ErrorMessage>{bioError}</ErrorMessage>
-            {/if}
-        </TextArea>
-        <div class="full-width-btn">
-            <Button
-                loading={saving || checkingUsername}
-                disabled={(!bioDirty && validUsername === undefined) || saving}
-                fill={true}
-                small={true}>{$_("update")}</Button>
-        </div>
+            <Legend>{$_("bio")} ({$_("supportsMarkdown")})</Legend>
+            <TextArea
+                rows={3}
+                bind:value={userbio}
+                invalid={false}
+                maxlength={MAX_BIO_LENGTH}
+                placeholder={$_("enterBio")}>
+                {#if bioError !== undefined}
+                    <ErrorMessage>{bioError}</ErrorMessage>
+                {/if}
+            </TextArea>
+            <div class="full-width-btn">
+                <Button
+                    loading={saving || checkingUsername}
+                    disabled={(!bioDirty && validUsername === undefined) || saving}
+                    fill={true}
+                    small={true}>{$_("update")}</Button>
+            </div>
+        </CollapsibleCard>
     </div>
 
     <div class="appearance">
@@ -401,7 +407,14 @@
             {/if}
         </CollapsibleCard>
     </div>
-
+    <div class="invite">
+        <CollapsibleCard
+            on:toggle={referralOpen.toggle}
+            open={$referralOpen}
+            headerText={$_("referralHeader")}>
+            <ReferUsers />
+        </CollapsibleCard>
+    </div>
     <div class="storage">
         <CollapsibleCard
             on:toggle={storageSectionOpen.toggle}
@@ -493,6 +506,7 @@
 
     .user,
     .chats,
+    .invite,
     .accounts,
     .stats,
     .appearance,
@@ -519,16 +533,6 @@
         padding: $sp3;
         @include size-above(xl) {
             padding: $sp3 0 0 0;
-        }
-    }
-
-    .user {
-        padding: $sp4;
-        background-color: var(--profile-section-bg);
-        position: relative;
-
-        @include mobile() {
-            padding: $sp3;
         }
     }
 
