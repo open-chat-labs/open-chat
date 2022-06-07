@@ -15,8 +15,11 @@ fn c2c_notify_user_event(args: Args) -> Response {
 
 fn c2c_notify_user_event_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     match args.event {
-        UserEvent::PhoneNumberConfirmed(_) | UserEvent::StorageUpgraded(_) => {
-            runtime_state.data.make_user_premium();
+        UserEvent::PhoneNumberConfirmed(_) => {
+            runtime_state.data.set_user_verified();
+        }
+        UserEvent::StorageUpgraded(ev) => {
+            runtime_state.data.set_paid_storage(ev.new_limit);
         }
     }
     Success

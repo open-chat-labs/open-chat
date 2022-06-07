@@ -137,7 +137,9 @@ struct Data {
     #[serde(default = "group_creation_limit")]
     pub group_creation_limit: u32,
     #[serde(default)]
-    pub is_premium: bool,
+    pub paid_storage_limit: u64,
+    #[serde(default)]
+    pub phone_is_verified: bool,
 }
 
 fn ledger_canister_id() -> CanisterId {
@@ -177,7 +179,8 @@ impl Data {
             bio: "".to_string(),
             cached_group_summaries: None,
             group_creation_limit: BASIC_GROUP_CREATION_LIMIT,
-            is_premium: false,
+            paid_storage_limit: 0,
+            phone_is_verified: false,
         }
     }
 
@@ -193,11 +196,14 @@ impl Data {
         }
     }
 
-    pub fn make_user_premium(&mut self) {
-        if !self.is_premium {
-            self.is_premium = true;
-            self.group_creation_limit = PREMIUM_GROUP_CREATION_LIMIT;
-        }
+    pub fn set_user_verified(&mut self) {
+        self.phone_is_verified = true;
+        self.group_creation_limit = PREMIUM_GROUP_CREATION_LIMIT;
+    }
+
+    pub fn set_paid_storage(&mut self, storage_limit: u64) {
+        self.paid_storage_limit = storage_limit;
+        self.group_creation_limit = PREMIUM_GROUP_CREATION_LIMIT;
     }
 }
 
