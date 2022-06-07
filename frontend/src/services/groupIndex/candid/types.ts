@@ -426,9 +426,6 @@ export interface MessageUnpinned {
   'message_index' : MessageIndex,
 }
 export type Milliseconds = bigint;
-export type NightMode = { 'On' : null } |
-  { 'Off' : null } |
-  { 'Auto' : null };
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -437,24 +434,6 @@ export type Notification = {
 export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
-}
-export interface OptionalUserPreferences {
-  'large_emoji' : [] | [boolean],
-  'notification_preferences' : [] | [
-    {
-      'private_group_chats' : [] | [boolean],
-      'direct_chats' : [] | [boolean],
-      'silent' : [] | [boolean],
-      'public_group_chats' : [] | [boolean],
-      'vibrate' : [] | [boolean],
-    }
-  ],
-  'night_mode' : [] | [NightMode],
-  'language' : [] | [string],
-  'enter_key_sends' : [] | [boolean],
-  'generate_link_previews' : [] | [boolean],
-  'use_system_emoji' : [] | [boolean],
-  'enable_animations' : [] | [boolean],
 }
 export interface OwnershipTransferred {
   'old_owner' : UserId,

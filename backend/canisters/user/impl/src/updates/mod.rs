@@ -33,7 +33,6 @@ pub mod relinquish_group_super_admin;
 pub mod send_message;
 pub mod set_avatar;
 pub mod set_bio;
-pub mod set_preferences;
 pub mod toggle_reaction;
 pub mod transfer_cryptocurrency_within_group;
 pub mod unblock_user;

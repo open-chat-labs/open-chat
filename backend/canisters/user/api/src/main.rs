@@ -29,7 +29,6 @@ fn main() {
     generate_candid_method!(user, send_message, update);
     generate_candid_method!(user, set_avatar, update);
     generate_candid_method!(user, set_bio, update);
-    generate_candid_method!(user, set_preferences, update);
     generate_candid_method!(user, toggle_reaction, update);
     generate_candid_method!(user, transfer_cryptocurrency_within_group, update);
     generate_candid_method!(user, unblock_user, update);

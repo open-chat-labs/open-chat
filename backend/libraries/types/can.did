@@ -831,32 +831,6 @@ type FailedCryptocurrencyTransfer =
         error_message: text;
     };
 
-// Preferences
-type OptionalUserPreferences =
-    record {
-        enter_key_sends: opt bool;
-        enable_animations: opt bool;
-        night_mode: opt NightMode;
-        large_emoji: opt bool;
-        use_system_emoji: opt bool;
-        generate_link_previews: opt bool;
-        notification_preferences: opt record {
-            direct_chats: opt bool;
-            private_group_chats: opt bool;
-            public_group_chats: opt bool;
-            silent: opt bool;
-            vibrate: opt bool;
-        };
-        language: opt text;
-    };
-
-type NightMode =
-    variant {
-        On;
-        Off;
-        Auto;
-    };
-
 type VideoContent =
     record {
         width: nat32;
