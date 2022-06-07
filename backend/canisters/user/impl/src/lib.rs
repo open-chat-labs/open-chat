@@ -30,7 +30,8 @@ mod queries;
 mod regular_jobs;
 mod updates;
 
-const DEFAULT_GROUP_CREATION_LIMIT: u32 = 10;
+const BASIC_GROUP_CREATION_LIMIT: u32 = 10;
+const PREMIUM_GROUP_CREATION_LIMIT: u32 = 25;
 
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
@@ -135,6 +136,8 @@ struct Data {
     pub cached_group_summaries: Option<CachedGroupSummaries>,
     #[serde(default = "group_creation_limit")]
     pub group_creation_limit: u32,
+    #[serde(default)]
+    pub is_premium: bool,
 }
 
 fn ledger_canister_id() -> CanisterId {
@@ -142,7 +145,7 @@ fn ledger_canister_id() -> CanisterId {
 }
 
 fn group_creation_limit() -> u32 {
-    DEFAULT_GROUP_CREATION_LIMIT
+    BASIC_GROUP_CREATION_LIMIT
 }
 
 impl Data {
@@ -173,7 +176,8 @@ impl Data {
             recommended_group_exclusions: RecommendedGroupExclusions::default(),
             bio: "".to_string(),
             cached_group_summaries: None,
-            group_creation_limit: DEFAULT_GROUP_CREATION_LIMIT,
+            group_creation_limit: BASIC_GROUP_CREATION_LIMIT,
+            is_premium: false,
         }
     }
 
@@ -186,6 +190,13 @@ impl Data {
             Some(self.group_creation_limit)
         } else {
             None
+        }
+    }
+
+    pub fn make_user_premium(&mut self) {
+        if !self.is_premium {
+            self.is_premium = true;
+            self.group_creation_limit = PREMIUM_GROUP_CREATION_LIMIT;
         }
     }
 }
