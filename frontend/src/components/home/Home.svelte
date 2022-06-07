@@ -590,7 +590,6 @@
                 {searching}
                 on:showAbout={() => (modal = ModalType.About)}
                 on:showFaq={() => (modal = ModalType.Faq)}
-                on:showFaqQuestion={showFaqQuestion}
                 on:showRoadmap={() => (modal = ModalType.Roadmap)}
                 on:searchEntered={performSearch}
                 on:userAvatarSelected={userAvatarSelected}
@@ -636,6 +635,7 @@
                 metrics={combinedMetrics}
                 bind:this={rightPanel}
                 bind:rightPanelHistory
+                on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
                 on:addParticipants={addParticipants}
@@ -663,6 +663,7 @@
                 metrics={combinedMetrics}
                 bind:this={rightPanel}
                 bind:rightPanelHistory
+                on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
                 on:addParticipants={addParticipants}

@@ -26,7 +26,7 @@
     }
 </script>
 
-<ModalContent {fadeDuration} {fadeDelay} large={true} on:close>
+<ModalContent {fadeDuration} {fadeDelay} large on:close>
     <div slot="header">{$_("faq.header")}</div>
     <div class="faq-body" slot="body">
         {#each allQuestions as q}
