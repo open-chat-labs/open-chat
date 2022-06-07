@@ -4,7 +4,7 @@ use types::UserEvent;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub event: UserEvent,
+    pub events: Vec<UserEvent>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
