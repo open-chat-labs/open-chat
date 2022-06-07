@@ -31,7 +31,7 @@
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
     export let controller: ChatController;
-    export let threadId: string;
+    export let threadId: string | undefined;
 
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
 
@@ -66,7 +66,10 @@
     onMount(() => {
         // fake load of message thread
         setTimeout(() => {
-            messages = { kind: "success", data: [$threadStore[threadId] ?? []] };
+            console.log("ThreadId: ", threadId);
+            if (threadId !== undefined) {
+                messages = { kind: "success", data: [$threadStore[threadId] ?? []] };
+            }
         }, 1000);
     });
 
@@ -117,7 +120,7 @@
                         chatType={$chat.kind}
                         user={controller.user}
                         me={message.event.sender === currentUser.userId}
-                        first={false}
+                        first={true}
                         last={false}
                         preview={false}
                         pinned={$pinned.has(message.event.messageIndex)}
@@ -128,7 +131,7 @@
                         canReact={canReactToMessages($chat)}
                         publicGroup={$chat.kind === "group_chat" && $chat.public}
                         editing={$editingEvent === message}
-                        threadSummary={$threadSummaryStore[Number(message.event.messageId)]}
+                        threadSummary={undefined}
                         on:chatWith
                         on:goToMessageIndex
                         on:replyPrivatelyTo

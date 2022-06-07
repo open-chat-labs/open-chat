@@ -55,8 +55,6 @@
     import { translationStore } from "../../stores/translation";
     import { typing } from "../../stores/typing";
     import { canForward } from "../../domain/chat/chat.utils";
-    import LinkButton from "../LinkButton.svelte";
-    import Thread from "./thread/Thread.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -159,8 +157,8 @@
         dispatch("replyTo", createReplyContext());
     }
 
-    function replyInThread() {
-        dispatch("replyInThread", msg);
+    function replyInThread(threadId: string) {
+        dispatch("replyInThread", threadId);
     }
 
     function forward() {
@@ -539,7 +537,7 @@
                                             slot="icon" />
                                         <div slot="text">{$_("reply")}</div>
                                     </MenuItem>
-                                    <MenuItem on:click={replyInThread}>
+                                    <MenuItem on:click={() => console.log("reply in thread")}>
                                         <ChatProcessingOutline
                                             size={$iconSize}
                                             color={"var(--icon-txt)"}
@@ -631,7 +629,9 @@
 
     {#if threadSummary !== undefined}
         <div class="thread-summary-wrapper" class:me class:indent={showAvatar}>
-            <div class="thread-summary" on:click={replyInThread}>
+            <div
+                class="thread-summary"
+                on:click={() => threadSummary && replyInThread(threadSummary.threadId)}>
                 <div class="thread-avatars">
                     {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
                         <Avatar

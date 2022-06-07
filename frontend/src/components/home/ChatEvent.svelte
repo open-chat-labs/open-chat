@@ -46,8 +46,8 @@
         dispatch("editEvent", event as EventWrapper<Message>);
     }
 
-    function replyInThread() {
-        dispatch("replyInThread", event);
+    function replyInThread(ev: CustomEvent<string>) {
+        dispatch("replyInThread", [ev.detail, event]);
     }
 </script>
 

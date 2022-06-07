@@ -448,6 +448,7 @@
 
     function replyInThread(ev: CustomEvent<[string, EventWrapper<Message>]>) {
         if ($selectedChat !== undefined) {
+            console.log("Thread: ", ev.detail[0]);
             threadStore.addToThread(ev.detail[0], ev.detail[1]);
             rightPanelHistory = [
                 {
