@@ -55,6 +55,7 @@
     import { translationStore } from "../../stores/translation";
     import { typing } from "../../stores/typing";
     import { canForward } from "../../domain/chat/chat.utils";
+    import LinkButton from "../LinkButton.svelte";
     import Thread from "./thread/Thread.svelte";
 
     const dispatch = createEventDispatcher();
@@ -617,13 +618,6 @@
             {/if}
         </div>
 
-        <!-- Urgh this is going to need some restructuring  -->
-        {#if threadSummary !== undefined}
-            <div class="thread-summary" class:me class:indent={showAvatar}>
-                threadSummary: {JSON.stringify(threadSummary, null, 4)}
-            </div>
-        {/if}
-
         {#if !me && !deleted && canReact}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
@@ -634,6 +628,37 @@
             </div>
         {/if}
     </div>
+
+    {#if threadSummary !== undefined}
+        <div class="thread-summary-wrapper" class:me class:indent={showAvatar}>
+            <div class="thread-summary" on:click={replyInThread}>
+                <div class="thread-avatars">
+                    {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
+                        <Avatar
+                            url={avatarUrl($userStore[participantId])}
+                            size={AvatarSize.Miniscule} />
+                    {/each}
+                    {#if threadSummary.participantIds.size > 5}
+                        <div class="thread-extra">
+                            {`+${threadSummary.participantIds.size - 5}`}
+                        </div>
+                    {/if}
+                </div>
+                <div class="thread-legend">
+                    <span
+                        >{$_("thread.nreplies", {
+                            values: {
+                                number: threadSummary.numberOfReplies.toString(),
+                                replies:
+                                    threadSummary.numberOfReplies === 1
+                                        ? $_("thread.reply")
+                                        : $_("thread.replies"),
+                            },
+                        })}&#8594;</span>
+                </div>
+            </div>
+        </div>
+    {/if}
 
     {#if msg.reactions.length > 0 && !deleted}
         <div class="message-reactions" class:me class:indent={showAvatar}>
@@ -749,7 +774,7 @@
     }
 
     .message-reactions,
-    .thread-summary {
+    .thread-summary-wrapper {
         display: flex;
         justify-content: flex-start;
         flex-wrap: wrap;
@@ -763,6 +788,46 @@
             @include mobile() {
                 margin-left: $avatar-width-mob;
             }
+        }
+    }
+
+    .thread-summary {
+        display: inline-flex;
+        align-items: center;
+        gap: $sp2;
+        padding: $sp2 $sp3;
+        border-radius: $sp3;
+        margin-bottom: $sp2;
+        cursor: pointer;
+        transition: background 200ms ease-in-out;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .thread-avatars {
+            display: flex;
+            gap: $sp2;
+        }
+
+        .thread-legend {
+            @include font(light, normal, fs-80);
+            @include font(book, normal, fs-80);
+            color: var(--timeline-txt);
+            margin-left: $sp2;
+        }
+
+        .thread-extra {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            width: toRem(25);
+            height: toRem(25);
+            color: var(--timeline-txt);
+            @include font-size(fs-60);
+            background-color: rgba(0, 0, 0, 0.15);
         }
     }
 

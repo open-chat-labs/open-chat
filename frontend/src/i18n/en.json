@@ -530,6 +530,9 @@
     "forward": "Forward",
     "thread": {
         "menu": "Reply in thread",
-        "title": "Thread"
+        "title": "Thread",
+        "replies": "replies",
+        "reply": "reply",
+        "nreplies": "{number} {replies} (view thread) "
     }
 }

@@ -264,6 +264,7 @@ export type ThreadSummary = {
     participantIds: Set<string>;
     numberOfReplies: number;
     latestEventIndex: number;
+    latestEventTimestamp: number;
 };
 
 export type LocalReaction = {

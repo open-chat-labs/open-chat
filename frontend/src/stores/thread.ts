@@ -14,9 +14,17 @@ type ThreadSummaryLookup = Record<number, ThreadSummary>;
 export const threadSummaryStore = writable<ThreadSummaryLookup>({
     20604599553837410939685844215614406656: {
         threadId: "thread1",
-        participantIds: new Set(["sbzkb-zqaaa-aaaaa-aaaiq-cai", "sgymv-uiaaa-aaaaa-aaaia-cai"]),
+        participantIds: new Set([
+            "sbzkb-zqaaa-aaaaa-aaaiq-cai",
+            "sgymv-uiaaa-aaaaa-aaaia-cai",
+            "si2b5-pyaaa-aaaaa-aaaja-cai",
+            "sp3hj-caaaa-aaaaa-aaajq-cai",
+            "s24we-diaaa-aaaaa-aaaka-cai",
+            "st75y-vaaaa-aaaaa-aaalq-cai",
+        ]),
         numberOfReplies: 5,
         latestEventIndex: 12345,
+        latestEventTimestamp: 0,
     },
 });
 
