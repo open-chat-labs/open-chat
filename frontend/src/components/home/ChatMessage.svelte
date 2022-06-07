@@ -616,6 +616,14 @@
                 </div>
             {/if}
         </div>
+
+        <!-- Urgh this is going to need some restructuring  -->
+        {#if threadSummary !== undefined}
+            <div class="thread-summary" class:me class:indent={showAvatar}>
+                threadSummary: {JSON.stringify(threadSummary, null, 4)}
+            </div>
+        {/if}
+
         {#if !me && !deleted && canReact}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
@@ -626,10 +634,6 @@
             </div>
         {/if}
     </div>
-
-    {#if threadSummary !== undefined}
-        <div>threadSummary: {JSON.stringify(threadSummary, null, 4)}</div>
-    {/if}
 
     {#if msg.reactions.length > 0 && !deleted}
         <div class="message-reactions" class:me class:indent={showAvatar}>
@@ -744,7 +748,8 @@
         opacity: 0;
     }
 
-    .message-reactions {
+    .message-reactions,
+    .thread-summary {
         display: flex;
         justify-content: flex-start;
         flex-wrap: wrap;
