@@ -3,7 +3,6 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::group_chats::GroupChats;
 use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
-use crate::model::user_preferences::UserPreferences;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
@@ -127,7 +126,6 @@ struct Data {
     pub ledger_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
-    pub user_preferences: UserPreferences,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
@@ -172,7 +170,6 @@ impl Data {
             ledger_canister_id,
             avatar: Timestamped::default(),
             test_mode,
-            user_preferences: UserPreferences::default(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             is_super_admin: false,
             recommended_group_exclusions: RecommendedGroupExclusions::default(),

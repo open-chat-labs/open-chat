@@ -238,16 +238,6 @@ type UnmuteNotificationsResponse =
         ChatNotFound;
     };
 
-type SetPreferencesArgs =
-    record {
-        preferences: OptionalUserPreferences;
-    };
-
-type SetPreferencesResponse =
-    variant {
-        Success;
-    };
-
 type AssumeGroupSuperAdminArgs =
     record {
         chat_id: ChatId;
@@ -519,7 +509,6 @@ service: {
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);
     unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
-    set_preferences: (SetPreferencesArgs) -> (SetPreferencesResponse);
     assume_group_super_admin: (AssumeGroupSuperAdminArgs) -> (AssumeGroupSuperAdminResponse);
     relinquish_group_super_admin: (RelinquishGroupSuperAdminArgs) -> (RelinquishGroupSuperAdminResponse);
     add_recommended_group_exclusions: (AddRecommendedGroupExclusionsArgs) -> (AddRecommendedGroupExclusionsResponse);

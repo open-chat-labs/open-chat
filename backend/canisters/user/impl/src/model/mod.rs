@@ -6,4 +6,3 @@ pub mod group_chat;
 pub mod group_chats;
 pub mod recommended_group_exclusions;
 pub mod unread_message_index_map;
-pub mod user_preferences;
