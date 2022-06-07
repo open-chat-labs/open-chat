@@ -53,7 +53,6 @@
             <span slot="body">
                 {#if step === "premium"}
                     <Premium
-                        on:showFaqQuestion={showFaqQuestion}
                         on:cancel
                         on:upgradeIcp={upgradeViaICP}
                         on:upgradeSms={upgradeViaSMS} />

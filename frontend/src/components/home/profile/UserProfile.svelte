@@ -7,7 +7,6 @@
     import StorageUsage from "../../StorageUsage.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
-    import Link from "../../Link.svelte";
     import Button from "../../Button.svelte";
     import Legend from "../../Legend.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -427,9 +426,9 @@
                 <p class="para last">
                     {$_("chooseUpgrade")}
 
-                    <Link underline={"always"} on:click={whySms}>
+                    <LinkButton underline={"always"} on:click={whySms}>
                         {$_("tellMeMore")}
-                    </Link>
+                    </LinkButton>
                 </p>
                 <ButtonGroup align={"fill"}>
                     <Button on:click={() => dispatch("upgrade", "sms")} small={true}
