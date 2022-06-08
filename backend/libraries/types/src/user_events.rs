@@ -12,13 +12,13 @@ pub enum UserEvent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PhoneNumberConfirmed {
     pub phone_number: PhoneNumber,
-    pub storage_acquired: u64,
+    pub storage_added: u64,
     pub new_storage_limit: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct StorageUpgraded {
     pub cost: CryptoAmount,
-    pub storage_acquired: u64,
+    pub storage_added: u64,
     pub new_storage_limit: u64,
 }
