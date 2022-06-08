@@ -10,5 +10,7 @@ pub struct Args {
     pub callback_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub wasm_version: Version,
+    #[serde(default)]
+    pub username: String,
     pub test_mode: bool,
 }
