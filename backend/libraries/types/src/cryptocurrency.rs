@@ -204,3 +204,9 @@ pub struct FailedCryptocurrencyTransfer {
 }
 
 pub type TransactionHash = [u8; 32];
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CryptoAmount {
+    pub token: Cryptocurrency,
+    pub amount: Tokens,
+}
