@@ -13,7 +13,7 @@ use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
 use types::{
     CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, CryptoAmount, Cryptocurrency, Cycles, PhoneNumberConfirmed,
-    StorageUpgraded, TimestampMillis, Timestamped, UserEvent, UserId, Version,
+    StorageUpgraded, TimestampMillis, Timestamped, UserEvent, UserId, UsernameChanged, Version,
 };
 use utils::canister::CanistersRequiringUpgrade;
 use utils::env::Environment;
@@ -187,6 +187,14 @@ impl Data {
 
     pub fn patch_user_events_for_existing_users(&mut self) {
         for user in self.users.iter() {
+            // For every user queue a UsernameChanged event
+            self.user_event_sync_queue.push(
+                user.user_id,
+                UserEvent::UsernameChanged(UsernameChanged {
+                    username: user.username.clone(),
+                }),
+            );
+
             // For every user with a confirmed phone number queue a PhoneNumberConfirmed event
             let mut confirmed_phone = false;
             if let PhoneStatus::Confirmed(n) = &user.phone_status {
