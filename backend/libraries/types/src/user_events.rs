@@ -5,8 +5,14 @@ use crate::{CryptoAmount, PhoneNumber};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum UserEvent {
+    UsernameChanged(UsernameChanged),
     PhoneNumberConfirmed(PhoneNumberConfirmed),
     StorageUpgraded(StorageUpgraded),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct UsernameChanged {
+    pub username: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

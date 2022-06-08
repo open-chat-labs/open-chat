@@ -22,6 +22,9 @@ fn c2c_notify_user_event_impl(args: Args, runtime_state: &mut RuntimeState) -> R
 
 fn process_event(event: UserEvent, runtime_state: &mut RuntimeState) {
     match event {
+        UserEvent::UsernameChanged(ev) => {
+            runtime_state.data.username = ev.username;
+        }
         UserEvent::PhoneNumberConfirmed(ev) => {
             runtime_state.data.phone_is_verified = true;
             runtime_state.data.storage_limit = ev.new_storage_limit;

@@ -493,6 +493,21 @@ type BioResponse =
         Success: text;
     };
 
+type PublicProfileArgs = record {};
+
+type PublicProfileResponse =
+    variant {
+        Success: PublicProfile;
+    };
+
+type PublicProfile = 
+    record {
+        username: text;
+        bio: text;
+        is_premium: bool;
+        phone_is_verified: bool;
+    };
+
 service: {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
@@ -528,4 +543,5 @@ service: {
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat
     search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query; // Uses ICQC to search all group chats too
     bio: (BioArgs) -> (BioResponse) query;
+    public_profile: (PublicProfileArgs) -> (PublicProfileResponse) query;
 }
