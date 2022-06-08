@@ -6,7 +6,7 @@ use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
 use open_storage_index_canister::add_or_update_users::UserConfig;
 use std::cmp::max;
-use types::ICP;
+use types::{CryptoAmount, Cryptocurrency, StorageUpgraded, UserEvent, ICP};
 use user_index_canister::upgrade_storage::{Response::*, *};
 
 const FEE_PER_GB: ICP = ICP::from_e8s(ICP::SUBDIVIDABLE_BY); // 0.1 ICP
@@ -78,6 +78,8 @@ fn process_charge(
 ) -> Response {
     let now = runtime_state.env.now();
 
+    let storage_added = new_storage_limit_bytes - user.open_storage_limit_bytes;
+
     let charge = AccountCharge {
         amount: charge_amount,
         timestamp: now,
@@ -94,6 +96,18 @@ fn process_charge(
         .data
         .users
         .set_storage_limit(&user.user_id, new_storage_limit_bytes);
+
+    runtime_state.data.user_event_sync_queue.push(
+        user.user_id,
+        UserEvent::StorageUpgraded(StorageUpgraded {
+            cost: CryptoAmount {
+                token: Cryptocurrency::InternetComputer,
+                amount: charge_amount,
+            },
+            storage_added,
+            new_storage_limit: new_storage_limit_bytes,
+        }),
+    );
 
     runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
         user_id: user.principal,

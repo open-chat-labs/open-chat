@@ -5,11 +5,16 @@ use crate::model::user_map::UserMap;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
+use ic_ledger_types::{Tokens, MAINNET_LEDGER_CANISTER_ID};
+use model::user::PhoneStatus;
+use model::user_event_sync_queue::UserEventSyncQueue;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
-use types::{CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, TimestampMillis, Timestamped, UserId, Version};
+use types::{
+    CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, CryptoAmount, Cryptocurrency, Cycles, PhoneNumberConfirmed,
+    StorageUpgraded, TimestampMillis, Timestamped, UserEvent, UserId, Version,
+};
 use utils::canister::CanistersRequiringUpgrade;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
@@ -125,6 +130,8 @@ struct Data {
     pub callback_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
+    #[serde(default)]
+    pub user_event_sync_queue: UserEventSyncQueue,
     #[serde(default = "ledger_canister_id")]
     pub ledger_canister_id: CanisterId,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
@@ -168,12 +175,47 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id,
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            user_event_sync_queue: UserEventSyncQueue::default(),
             ledger_canister_id,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),
             test_mode,
             challenges: Challenges::new(test_mode),
+        }
+    }
+
+    pub fn patch_user_events_for_existing_users(&mut self) {
+        for user in self.users.iter() {
+            // For every user with a confirmed phone number queue a PhoneNumberConfirmed event
+            let mut confirmed_phone = false;
+            if let PhoneStatus::Confirmed(n) = &user.phone_status {
+                confirmed_phone = true;
+                self.user_event_sync_queue.push(
+                    user.user_id,
+                    UserEvent::PhoneNumberConfirmed(PhoneNumberConfirmed {
+                        phone_number: n.clone(),
+                        storage_added: CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE,
+                        new_storage_limit: CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE,
+                    }),
+                );
+            }
+
+            // For every user with a positive storage limit beyond that for having a confirmed phone number queue a StorageUpgraded event
+            let paid_threshold = if confirmed_phone { CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE } else { 0 };
+            if user.open_storage_limit_bytes > paid_threshold {
+                self.user_event_sync_queue.push(
+                    user.user_id,
+                    UserEvent::StorageUpgraded(StorageUpgraded {
+                        cost: CryptoAmount {
+                            token: Cryptocurrency::InternetComputer,
+                            amount: Tokens::ZERO, // Doesn't matter because we're not doing anythng with it yet
+                        },
+                        storage_added: user.open_storage_limit_bytes - paid_threshold,
+                        new_storage_limit: user.open_storage_limit_bytes,
+                    }),
+                );
+            }
         }
     }
 }
@@ -196,6 +238,7 @@ impl Default for Data {
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id: Principal::anonymous(),
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            user_event_sync_queue: UserEventSyncQueue::default(),
             ledger_canister_id: Principal::anonymous(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
