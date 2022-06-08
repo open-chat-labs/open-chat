@@ -2,6 +2,7 @@ use crate::model::user_map::UpdateUserResult;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
+use types::{UserEvent, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
 
 const MAX_USERNAME_LENGTH: u16 = 25;
@@ -30,10 +31,18 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         let mut user_to_update = user.clone();
-        user_to_update.username = username;
+        user_to_update.username = username.clone();
         user_to_update.date_updated = now;
+        let user_id = user.user_id;
         match runtime_state.data.users.update(user_to_update) {
-            UpdateUserResult::Success => Success,
+            UpdateUserResult::Success => {
+                runtime_state
+                    .data
+                    .user_event_sync_queue
+                    .push(user_id, UserEvent::UsernameChanged(UsernameChanged { username }));
+
+                Success
+            }
             UpdateUserResult::UsernameTaken => UsernameTaken,
             UpdateUserResult::UserNotFound => UserNotFound,
             result => panic!("Unexpected result returned when updating username: {result:?}"),
