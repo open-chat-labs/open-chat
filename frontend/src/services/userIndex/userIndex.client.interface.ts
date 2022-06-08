@@ -21,7 +21,8 @@ export interface IUserIndexClient {
     createChallenge: () => Promise<CreateChallengeResponse>;
     registerUser(
         username: string,
-        challengeAttempt: ChallengeAttempt
+        challengeAttempt: ChallengeAttempt,
+        referredBy: string | undefined
     ): Promise<RegisterUserResponse>;
     checkUsername(username: string): Promise<CheckUsernameResponse>;
     setUsername(userId: string, username: string): Promise<SetUsernameResponse>;

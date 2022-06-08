@@ -6,6 +6,7 @@ use types::{ChallengeAttempt, UserId};
 pub struct Args {
     pub username: String,
     pub challenge_attempt: ChallengeAttempt,
+    pub referred_by: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

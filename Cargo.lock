@@ -595,6 +595,7 @@ dependencies = [
  "candid",
  "canister_client_macros 0.1.0",
  "ic-cdk 0.5.1",
+ "msgpack",
  "tracing",
  "types 0.1.0",
 ]
@@ -1589,6 +1590,7 @@ dependencies = [
  "canister_client_macros 0.1.0",
  "group_canister",
  "ic-cdk 0.5.1",
+ "msgpack",
  "tracing",
  "types 0.1.0",
 ]
@@ -1661,6 +1663,7 @@ dependencies = [
  "canister_client_macros 0.1.0",
  "group_index_canister",
  "ic-cdk 0.5.1",
+ "msgpack",
  "tracing",
  "types 0.1.0",
 ]
@@ -2594,6 +2597,7 @@ version = "0.1.0"
 dependencies = [
  "canister_client_macros 0.1.0",
  "ic-cdk 0.5.1",
+ "msgpack",
  "notifications_canister",
  "tracing",
  "types 0.1.0",
@@ -4474,6 +4478,7 @@ version = "0.1.0"
 dependencies = [
  "canister_client_macros 0.1.0",
  "ic-cdk 0.5.1",
+ "msgpack",
  "tracing",
  "types 0.1.0",
  "user_canister",
@@ -4548,6 +4553,7 @@ version = "0.1.0"
 dependencies = [
  "canister_client_macros 0.1.0",
  "ic-cdk 0.5.1",
+ "msgpack",
  "tracing",
  "types 0.1.0",
  "user_index_canister",
@@ -4614,6 +4620,7 @@ dependencies = [
  "canister_client_macros 0.1.0",
  "getrandom 0.2.6",
  "ic-cdk 0.5.1",
+ "msgpack",
  "rand 0.7.3",
  "range-set",
  "serde",

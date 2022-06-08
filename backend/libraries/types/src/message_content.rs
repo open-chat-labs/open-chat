@@ -23,7 +23,7 @@ pub enum MessageContent {
     Poll(PollContent),
     #[serde(skip)]
     Cryptocurrency(candid::Reserved),
-    CryptocurrencyV2(CryptocurrencyContent),
+    CryptocurrencyV2(CryptocurrencyContentV2),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
 }
@@ -36,7 +36,7 @@ pub enum MessageContentInternal {
     Audio(AudioContent),
     File(FileContent),
     Poll(PollContentInternal),
-    Cryptocurrency(CryptocurrencyContent),
+    Cryptocurrency(CryptocurrencyContentV2),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
 }
@@ -363,12 +363,12 @@ pub enum RegisterVoteResult {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CryptocurrencyContent {
+pub struct CryptocurrencyContentV2 {
     pub transfer: CryptocurrencyTransfer,
     pub caption: Option<String>,
 }
 
-impl CryptocurrencyContent {
+impl CryptocurrencyContentV2 {
     pub fn within_limit(&self) -> Result<(), u64> {
         if let CryptocurrencyTransfer::Pending(t) = &self.transfer {
             if t.token == Cryptocurrency::InternetComputer && t.amount.e8s() > ICP_TRANSFER_LIMIT_E8S {

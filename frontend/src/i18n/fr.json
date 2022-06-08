@@ -407,8 +407,6 @@
             "confirmReset": "Voulez-vous vraiment réinitialiser le lien du groupe ? Les personnes ne pourront plus rejoindre le groupe en utilisant le lien actuel.",
             "shareMessage": "Toute personne disposant de ce lien peut prévisualiser et rejoindre le groupe.",
             "shareMessageTrust": "Partagez-le avec des personnes de confiance.",
-            "linkCopiedToClipboard": "Lien copié dans le presse-papiers",
-            "failedToCopyLinkToClipboard": "Impossible de copier le lien dans le presse-papiers",
             "enabled": "activé",
             "disabled": "désactivé",
             "reset": "réinitialiser"
@@ -524,5 +522,15 @@
     "membersAreTyping": "{number} membres sont en train de taper",
     "unableToRefreshAccountBalance": "Désolé, nous n'avons pas pu actualiser le solde de votre compte {token}",
     "accounts": "Comptes",
-    "readOnlyChat": "Ce chat est en lecture seule"
+    "readOnlyChat": "Ce chat est en lecture seule",
+    "linkCopiedToClipboard": "Lien copié dans le presse-papiers",
+    "failedToCopyLinkToClipboard": "Impossible de copier le lien dans le presse-papiers",
+    "deleteMessage": "Effacer",
+    "editMessage": "Éditer",
+    "pinMessage": "Broche",
+    "unpinMessage": "Détacher",
+    "forward": "Vers l'avant",
+    "referralHeader": "Inviter des amis/famille",
+    "userReferralMessage": "Partagez ce lien vers OpenChat avec vos amis et votre famille. Pour chaque personne qui s'inscrit avec votre lien et devient un utilisateur vérifié, vous recevrez une récompense de jetons CHAT (à confirmer dans les semaines à venir). Vous pouvez continuer et partager le lien maintenant et nous attribuerons rétrospectivement les jetons CHAT une fois qu'ils seront disponibles.",
+    "userInfoHeader": "Public"
 }

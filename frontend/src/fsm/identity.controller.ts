@@ -54,7 +54,8 @@ export class IdentityController {
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         this._api!,
                         user,
-                        (registeredUser) => this.onCreatedUser(id, registeredUser)
+                        (registeredUser) => this.onCreatedUser(id, registeredUser),
+                        new URLSearchParams(window.location.search).get("ref") ?? undefined
                     );
                     break;
                 case "created_user":

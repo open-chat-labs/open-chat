@@ -241,6 +241,12 @@
             if (params.chatId === null && !$mobileWidth && recommendedGroups.kind === "idle") {
                 whatsHot();
             }
+
+            if (params.chatId === null) {
+                rightPanelHistory = rightPanelHistory.filter(
+                    (panel) => panel.kind === "user_profile"
+                );
+            }
         }
     }
 
@@ -296,8 +302,12 @@
                     userSearchResults,
                     messageSearchResults,
                 ]).then(() => {
-                    searchResultsAvailable = true;
-                    searching = false;
+                    if (searchTerm !== "") {
+                        searchResultsAvailable = true;
+                        searching = false;
+                    } else {
+                        clearSearch();
+                    }
                 });
             } catch (_err) {
                 searching = false;
@@ -595,7 +605,6 @@
                 {searching}
                 on:showAbout={() => (modal = ModalType.About)}
                 on:showFaq={() => (modal = ModalType.Faq)}
-                on:showFaqQuestion={showFaqQuestion}
                 on:showRoadmap={() => (modal = ModalType.Roadmap)}
                 on:searchEntered={performSearch}
                 on:userAvatarSelected={userAvatarSelected}
@@ -642,6 +651,7 @@
                 metrics={combinedMetrics}
                 bind:this={rightPanel}
                 bind:rightPanelHistory
+                on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
                 on:addParticipants={addParticipants}
@@ -669,6 +679,7 @@
                 metrics={combinedMetrics}
                 bind:this={rightPanel}
                 bind:rightPanelHistory
+                on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
                 on:addParticipants={addParticipants}
@@ -791,6 +802,7 @@
         @include box-shadow(3);
         @include mobile() {
             width: 100%;
+            height: 100%;
         }
     }
 </style>

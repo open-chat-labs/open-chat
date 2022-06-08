@@ -13,7 +13,11 @@
     import MenuItem from "../MenuItem.svelte";
     import Loading from "../Loading.svelte";
     import MenuIcon from "../MenuIcon.svelte";
-    import type { Message, EnhancedReplyContext, ThreadSummary } from "../../domain/chat/chat";
+    import type {
+        Message,
+        EnhancedReplyContext,
+        ThreadSummary as ThreadSummaryType,
+    } from "../../domain/chat/chat";
     import Typing from "../Typing.svelte";
     import RepliesTo from "./RepliesTo.svelte";
     import { _, locale } from "svelte-i18n";
@@ -55,6 +59,7 @@
     import { translationStore } from "../../stores/translation";
     import { typing } from "../../stores/typing";
     import { canForward } from "../../domain/chat/chat.utils";
+    import ThreadSummary from "./ThreadSummary.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -82,7 +87,7 @@
     export let canReact: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let threadSummary: ThreadSummary | undefined;
+    export let threadSummary: ThreadSummaryType | undefined;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
@@ -628,36 +633,7 @@
     </div>
 
     {#if threadSummary !== undefined}
-        <div class="thread-summary-wrapper" class:me class:indent={showAvatar}>
-            <div
-                class="thread-summary"
-                on:click={() => threadSummary && replyInThread(threadSummary.threadId)}>
-                <div class="thread-avatars">
-                    {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
-                        <Avatar
-                            url={avatarUrl($userStore[participantId])}
-                            size={AvatarSize.Miniscule} />
-                    {/each}
-                    {#if threadSummary.participantIds.size > 5}
-                        <div class="thread-extra">
-                            {`+${threadSummary.participantIds.size - 5}`}
-                        </div>
-                    {/if}
-                </div>
-                <div class="thread-legend">
-                    <span
-                        >{$_("thread.nreplies", {
-                            values: {
-                                number: threadSummary.numberOfReplies.toString(),
-                                replies:
-                                    threadSummary.numberOfReplies === 1
-                                        ? $_("thread.reply")
-                                        : $_("thread.replies"),
-                            },
-                        })}&#8594;</span>
-                </div>
-            </div>
-        </div>
+        <ThreadSummary {threadSummary} indent={showAvatar} {me} />
     {/if}
 
     {#if msg.reactions.length > 0 && !deleted}
@@ -773,8 +749,7 @@
         opacity: 0;
     }
 
-    .message-reactions,
-    .thread-summary-wrapper {
+    .message-reactions {
         display: flex;
         justify-content: flex-start;
         flex-wrap: wrap;
@@ -788,46 +763,6 @@
             @include mobile() {
                 margin-left: $avatar-width-mob;
             }
-        }
-    }
-
-    .thread-summary {
-        display: inline-flex;
-        align-items: center;
-        gap: $sp2;
-        padding: $sp2 $sp3;
-        border-radius: $sp3;
-        margin-bottom: $sp2;
-        cursor: pointer;
-        transition: background 200ms ease-in-out;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-
-        &:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .thread-avatars {
-            display: flex;
-            gap: $sp2;
-        }
-
-        .thread-legend {
-            @include font(light, normal, fs-80);
-            @include font(book, normal, fs-80);
-            color: var(--timeline-txt);
-            margin-left: $sp2;
-        }
-
-        .thread-extra {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 50%;
-            width: toRem(25);
-            height: toRem(25);
-            color: var(--timeline-txt);
-            @include font-size(fs-60);
-            background-color: rgba(0, 0, 0, 0.15);
         }
     }
 

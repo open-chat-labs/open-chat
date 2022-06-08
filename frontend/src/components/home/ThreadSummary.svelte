@@ -1,0 +1,124 @@
+<script lang="ts">
+    import { createEventDispatcher } from "svelte";
+    import type { ThreadSummary } from "../../domain/chat/chat";
+    import { _ } from "svelte-i18n";
+    import { mobileWidth } from "../../stores/screenDimensions";
+    import Avatar from "../Avatar.svelte";
+    import { AvatarSize } from "../../domain/user/user";
+    import { avatarUrl } from "../../domain/user/user.utils";
+    import { userStore } from "../../stores/user";
+    import { formatMessageDate } from "../../utils/date";
+
+    export let threadSummary: ThreadSummary;
+    export let indent: boolean;
+    export let me: boolean;
+
+    const dispatch = createEventDispatcher();
+
+    function replyInThread(threadId: string) {
+        dispatch("replyInThread", threadId);
+    }
+</script>
+
+<div class="thread-summary-wrapper" class:me class:indent>
+    <div
+        class="thread-summary"
+        on:click={() => threadSummary && replyInThread(threadSummary.threadId)}>
+        <div class="thread-avatars">
+            {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
+                <Avatar url={avatarUrl($userStore[participantId])} size={AvatarSize.Miniscule} />
+            {/each}
+            {#if threadSummary.participantIds.size > 5}
+                <div class="thread-extra">
+                    {`+${threadSummary.participantIds.size - 5}`}
+                </div>
+            {/if}
+        </div>
+        <div class="thread-legend">
+            <span
+                >{$_("thread.nreplies", {
+                    values: {
+                        number: threadSummary.numberOfReplies.toString(),
+                        replies:
+                            threadSummary.numberOfReplies === 1
+                                ? $_("thread.reply")
+                                : $_("thread.replies"),
+                        message: $mobileWidth
+                            ? ""
+                            : $_("thread.lastMessage", {
+                                  values: {
+                                      date: formatMessageDate(
+                                          threadSummary.latestEventTimestamp,
+                                          $_("today"),
+                                          $_("yesterday"),
+                                          true
+                                      ),
+                                  },
+                              }),
+                    },
+                })}&#8594;</span>
+        </div>
+    </div>
+</div>
+
+<style type="text/scss">
+    $avatar-width: 53px;
+    $avatar-width-mob: 43px;
+
+    .thread-summary-wrapper {
+        display: flex;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+
+        &.me {
+            justify-content: flex-end;
+        }
+
+        &.indent {
+            margin-left: $avatar-width;
+            @include mobile() {
+                margin-left: $avatar-width-mob;
+            }
+        }
+    }
+
+    .thread-summary {
+        display: inline-flex;
+        align-items: center;
+        gap: $sp2;
+        padding: $sp2 $sp3;
+        border-radius: $sp3;
+        margin-bottom: $sp2;
+        cursor: pointer;
+        transition: background 200ms ease-in-out;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .thread-avatars {
+            display: flex;
+            gap: $sp2;
+        }
+
+        .thread-legend {
+            @include font(light, normal, fs-80);
+            @include font(book, normal, fs-80);
+            color: var(--timeline-txt);
+            margin-left: $sp2;
+        }
+
+        .thread-extra {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            width: toRem(25);
+            height: toRem(25);
+            color: var(--timeline-txt);
+            @include font-size(fs-60);
+            background-color: rgba(0, 0, 0, 0.15);
+        }
+    }
+</style>

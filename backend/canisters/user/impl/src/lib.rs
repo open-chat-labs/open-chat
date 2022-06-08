@@ -3,7 +3,6 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::group_chats::GroupChats;
 use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
-use crate::model::user_preferences::UserPreferences;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
@@ -29,6 +28,9 @@ mod openchat_bot;
 mod queries;
 mod regular_jobs;
 mod updates;
+
+const BASIC_GROUP_CREATION_LIMIT: u32 = 10;
+const PREMIUM_GROUP_CREATION_LIMIT: u32 = 25;
 
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
@@ -124,17 +126,26 @@ struct Data {
     pub ledger_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
-    pub user_preferences: UserPreferences,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
     pub bio: String,
     #[serde(skip_deserializing)]
     pub cached_group_summaries: Option<CachedGroupSummaries>,
+    #[serde(default = "group_creation_limit")]
+    pub group_creation_limit: u32,
+    #[serde(default)]
+    pub paid_storage_limit: u64,
+    #[serde(default)]
+    pub phone_is_verified: bool,
 }
 
 fn ledger_canister_id() -> CanisterId {
     MAINNET_LEDGER_CANISTER_ID
+}
+
+fn group_creation_limit() -> u32 {
+    BASIC_GROUP_CREATION_LIMIT
 }
 
 impl Data {
@@ -159,17 +170,37 @@ impl Data {
             ledger_canister_id,
             avatar: Timestamped::default(),
             test_mode,
-            user_preferences: UserPreferences::default(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             is_super_admin: false,
             recommended_group_exclusions: RecommendedGroupExclusions::default(),
             bio: "".to_string(),
             cached_group_summaries: None,
+            group_creation_limit: BASIC_GROUP_CREATION_LIMIT,
+            paid_storage_limit: 0,
+            phone_is_verified: false,
         }
     }
 
     pub fn user_index_ledger_account(&self) -> AccountIdentifier {
         default_ledger_account(self.user_index_canister_id)
+    }
+
+    pub fn max_groups_created(&self) -> Option<u32> {
+        if self.group_chats.groups_created() >= self.group_creation_limit {
+            Some(self.group_creation_limit)
+        } else {
+            None
+        }
+    }
+
+    pub fn set_user_verified(&mut self) {
+        self.phone_is_verified = true;
+        self.group_creation_limit = PREMIUM_GROUP_CREATION_LIMIT;
+    }
+
+    pub fn set_paid_storage(&mut self, storage_limit: u64) {
+        self.paid_storage_limit = storage_limit;
+        self.group_creation_limit = PREMIUM_GROUP_CREATION_LIMIT;
     }
 }
 

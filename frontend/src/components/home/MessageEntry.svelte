@@ -290,16 +290,21 @@
             return true;
         }
 
-        const faqMatch = txt.match(/^\/faq( *(.*))$/);
-        if (faqMatch && faqMatch[2] !== undefined) {
-            if (allQuestions.includes(faqMatch[2] as Questions)) {
-                const url = addQueryStringParam(new URLSearchParams(), "faq", faqMatch[2]);
-                dispatch("sendMessage", [`[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](#${url})`, []]);
-            } else {
-                const url = addQueryStringParam(new URLSearchParams(), "faq", "");
-                dispatch("sendMessage", [`[🤔 FAQs](#${url})`, []]);
+        if (controller.chatVal.kind === "group_chat") {
+            const faqMatch = txt.match(/^\/faq( *(.*))$/);
+            if (faqMatch && faqMatch[2] !== undefined) {
+                if (allQuestions.includes(faqMatch[2] as Questions)) {
+                    const url = addQueryStringParam(new URLSearchParams(), "faq", faqMatch[2]);
+                    dispatch("sendMessage", [
+                        `[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](#${url})`,
+                        [],
+                    ]);
+                } else {
+                    const url = addQueryStringParam(new URLSearchParams(), "faq", "");
+                    dispatch("sendMessage", [`[🤔 FAQs](#${url})`, []]);
+                }
+                return true;
             }
-            return true;
         }
 
         const tokenMatch = process.env.ENABLE_MULTI_CRYPTO

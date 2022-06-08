@@ -22,9 +22,9 @@ export const threadSummaryStore = writable<ThreadSummaryLookup>({
             "s24we-diaaa-aaaaa-aaaka-cai",
             "st75y-vaaaa-aaaaa-aaalq-cai",
         ]),
-        numberOfReplies: 5,
+        numberOfReplies: 6,
         latestEventIndex: 12345,
-        latestEventTimestamp: 0,
+        latestEventTimestamp: BigInt(1654682280233),
     },
 });
 

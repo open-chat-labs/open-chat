@@ -12,5 +12,6 @@ generate_c2c_call!(c2c_remove_from_group);
 generate_c2c_call!(c2c_retry_sending_failed_messages);
 generate_c2c_call!(c2c_revoke_super_admin);
 generate_c2c_call!(c2c_send_message);
+generate_c2c_call!(c2c_notify_user_event);
 generate_c2c_call!(c2c_toggle_reaction);
 generate_c2c_call!(c2c_try_add_to_group);

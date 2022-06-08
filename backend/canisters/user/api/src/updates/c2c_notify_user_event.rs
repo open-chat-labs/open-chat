@@ -1,10 +1,10 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::OptionalUserPreferences;
+use types::UserEvent;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub preferences: OptionalUserPreferences,
+    pub event: UserEvent,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

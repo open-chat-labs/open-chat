@@ -116,7 +116,7 @@ export type CreateChallengeArgs = {};
 export type CreateChallengeResponse = { 'Throttled' : null } |
   { 'Success' : Challenge };
 export type Cryptocurrency = { 'InternetComputer' : null };
-export interface CryptocurrencyContent {
+export interface CryptocurrencyContentV2 {
   'caption' : [] | [string],
   'transfer' : CryptocurrencyTransfer,
 }
@@ -423,7 +423,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
-  { 'CryptocurrencyV2' : CryptocurrencyContent } |
+  { 'CryptocurrencyV2' : CryptocurrencyContentV2 } |
   { 'Cryptocurrency' : any } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
@@ -456,9 +456,6 @@ export interface MessageUnpinned {
   'message_index' : MessageIndex,
 }
 export type Milliseconds = bigint;
-export type NightMode = { 'On' : null } |
-  { 'Off' : null } |
-  { 'Auto' : null };
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -467,24 +464,6 @@ export type Notification = {
 export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
-}
-export interface OptionalUserPreferences {
-  'large_emoji' : [] | [boolean],
-  'notification_preferences' : [] | [
-    {
-      'private_group_chats' : [] | [boolean],
-      'direct_chats' : [] | [boolean],
-      'silent' : [] | [boolean],
-      'public_group_chats' : [] | [boolean],
-      'vibrate' : [] | [boolean],
-    }
-  ],
-  'night_mode' : [] | [NightMode],
-  'language' : [] | [string],
-  'enter_key_sends' : [] | [boolean],
-  'generate_link_previews' : [] | [boolean],
-  'use_system_emoji' : [] | [boolean],
-  'enable_animations' : [] | [boolean],
 }
 export interface OwnershipTransferred {
   'old_owner' : UserId,
@@ -581,6 +560,7 @@ export interface PublicGroupSummary {
 }
 export interface RegisterUserArgs {
   'username' : string,
+  'referred_by' : [] | [UserId],
   'challenge_attempt' : ChallengeAttempt,
 }
 export type RegisterUserResponse = { 'UsernameTaken' : null } |

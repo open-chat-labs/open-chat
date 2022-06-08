@@ -180,7 +180,7 @@ export const idlFactory = ({ IDL }) => {
     'Completed' : CompletedCryptocurrencyTransfer,
     'Pending' : PendingCryptocurrencyTransfer,
   });
-  const CryptocurrencyContent = IDL.Record({
+  const CryptocurrencyContentV2 = IDL.Record({
     'caption' : IDL.Opt(IDL.Text),
     'transfer' : CryptocurrencyTransfer,
   });
@@ -208,7 +208,7 @@ export const idlFactory = ({ IDL }) => {
     'Poll' : PollContent,
     'Text' : TextContent,
     'Image' : ImageContent,
-    'CryptocurrencyV2' : CryptocurrencyContent,
+    'CryptocurrencyV2' : CryptocurrencyContentV2,
     'Cryptocurrency' : IDL.Reserved,
     'Audio' : AudioContent,
     'Video' : VideoContent,
@@ -569,33 +569,6 @@ export const idlFactory = ({ IDL }) => {
     'TooLong' : FieldTooLongResult,
     'Success' : IDL.Null,
   });
-  const NightMode = IDL.Variant({
-    'On' : IDL.Null,
-    'Off' : IDL.Null,
-    'Auto' : IDL.Null,
-  });
-  const OptionalUserPreferences = IDL.Record({
-    'large_emoji' : IDL.Opt(IDL.Bool),
-    'notification_preferences' : IDL.Opt(
-      IDL.Record({
-        'private_group_chats' : IDL.Opt(IDL.Bool),
-        'direct_chats' : IDL.Opt(IDL.Bool),
-        'silent' : IDL.Opt(IDL.Bool),
-        'public_group_chats' : IDL.Opt(IDL.Bool),
-        'vibrate' : IDL.Opt(IDL.Bool),
-      })
-    ),
-    'night_mode' : IDL.Opt(NightMode),
-    'language' : IDL.Opt(IDL.Text),
-    'enter_key_sends' : IDL.Opt(IDL.Bool),
-    'generate_link_previews' : IDL.Opt(IDL.Bool),
-    'use_system_emoji' : IDL.Opt(IDL.Bool),
-    'enable_animations' : IDL.Opt(IDL.Bool),
-  });
-  const SetPreferencesArgs = IDL.Record({
-    'preferences' : OptionalUserPreferences,
-  });
-  const SetPreferencesResponse = IDL.Variant({ 'Success' : IDL.Null });
   const ToggleReactionArgs = IDL.Record({
     'user_id' : UserId,
     'message_id' : MessageId,
@@ -611,7 +584,7 @@ export const idlFactory = ({ IDL }) => {
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const TransferCryptocurrencyWithinGroupArgs = IDL.Record({
-    'content' : CryptocurrencyContent,
+    'content' : CryptocurrencyContentV2,
     'recipient' : UserId,
     'mentioned' : IDL.Vec(User),
     'group_id' : ChatId,
@@ -821,11 +794,6 @@ export const idlFactory = ({ IDL }) => {
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
     'set_bio' : IDL.Func([SetBioArgs], [SetBioResponse], []),
-    'set_preferences' : IDL.Func(
-        [SetPreferencesArgs],
-        [SetPreferencesResponse],
-        [],
-      ),
     'toggle_reaction' : IDL.Func(
         [ToggleReactionArgs],
         [ToggleReactionResponse],

@@ -264,7 +264,7 @@ export type ThreadSummary = {
     participantIds: Set<string>;
     numberOfReplies: number;
     latestEventIndex: number;
-    latestEventTimestamp: number;
+    latestEventTimestamp: bigint;
 };
 
 export type LocalReaction = {
@@ -855,6 +855,7 @@ export type SendMessageRecipientBlocked = {
 
 export type SendMessageInvalidRequest = {
     kind: "invalid_request";
+    reason: string;
 };
 
 export type SendMessageTooLong = {

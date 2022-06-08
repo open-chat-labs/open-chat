@@ -38,7 +38,7 @@ mod subscription;
 mod timestamped;
 mod transaction;
 mod user;
-mod user_preferences;
+mod user_events;
 mod user_summary;
 mod version;
 
@@ -79,7 +79,7 @@ pub use subscription::*;
 pub use timestamped::*;
 pub use transaction::*;
 pub use user::*;
-pub use user_preferences::*;
+pub use user_events::*;
 pub use user_summary::*;
 pub use version::*;
 
