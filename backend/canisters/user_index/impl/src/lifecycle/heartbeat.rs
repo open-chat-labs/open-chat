@@ -251,7 +251,7 @@ mod sync_events_to_user_canisters {
 
     pub fn run() {
         if let Some(users_events) = mutate_state(next_batch) {
-            for (user_id, events) in users_events.into_iter() {
+            for (user_id, events) in users_events {
                 ic_cdk::spawn(sync_events(user_id, events));
             }
         }

@@ -33,15 +33,15 @@ impl UserEventSyncQueue {
             None
         } else {
             self.sync_in_progress = true;
-            let mut results = Vec::new();
             let users = if self.queue.len() <= MAX_USERS_PER_BATCH {
                 mem::take(&mut self.queue)
             } else {
                 self.queue.drain(..MAX_USERS_PER_BATCH).collect()
             };
 
-            for user_id in users.into_iter() {
-                if let Some((_, events)) = self.user_events.remove_entry(&user_id) {
+            let mut results = Vec::new();
+            for user_id in users {
+                if let Some(events) = self.user_events.remove(&user_id).filter(|events| !events.is_empty()) {
                     results.push((user_id, events));
                 }
             }

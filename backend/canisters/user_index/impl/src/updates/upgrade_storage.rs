@@ -78,7 +78,7 @@ fn process_charge(
 ) -> Response {
     let now = runtime_state.env.now();
 
-    let storage_added = new_storage_limit_bytes - user.open_storage_limit_bytes;
+    let requested_storage_increase = new_storage_limit_bytes.saturating_sub(user.open_storage_limit_bytes);
 
     let charge = AccountCharge {
         amount: charge_amount,
@@ -104,7 +104,7 @@ fn process_charge(
                 token: Cryptocurrency::InternetComputer,
                 amount: charge_amount,
             },
-            storage_added,
+            storage_added: requested_storage_increase,
             new_storage_limit: new_storage_limit_bytes,
         }),
     );
