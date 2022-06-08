@@ -3,7 +3,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Footer from "../Footer.svelte";
-    import type { EventWrapper, Message } from "../../../domain/chat/chat";
+    import type { EventWrapper, Message, ThreadSummary } from "../../../domain/chat/chat";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
@@ -23,15 +23,17 @@
         canPinMessages,
         canReactToMessages,
         canSendMessages,
-    } from "domain/chat/chat.utils";
+        groupEvents,
+    } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
-    import { threadStore, threadSummaryStore } from "../../../stores/thread";
+    import { threadStore } from "../../../stores/thread";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
     export let controller: ChatController;
-    export let threadId: string | undefined;
+    export let threadSummary: ThreadSummary | undefined;
+    export let rootEvent: EventWrapper<Message>;
 
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
 
@@ -47,7 +49,7 @@
     $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
 
     let footer: Footer;
-    let messages: RemoteData<EventWrapper<Message>[][], string> = { kind: "idle" };
+    let messages: RemoteData<EventWrapper<Message>[][][], string> = { kind: "idle" };
 
     const dispatch = createEventDispatcher();
 
@@ -61,20 +63,30 @@
      * AND we need that draft event to be persisted if we close the thread. So we need a thread store (which still only offers in memory persistence).
      *
      * The footer *must* be decoupled from the chat controller
+     *
+     * TODO - there might end up being quite a bit of duplication between this component and CurrentChatMessages - let's wait and see what it looks like
+     * and deal with that later
      */
 
     onMount(() => {
         // fake load of message thread
         setTimeout(() => {
-            console.log("ThreadId: ", threadId);
-            if (threadId !== undefined) {
-                messages = { kind: "success", data: [$threadStore[threadId] ?? []] };
+            console.log("ThreadSummary: ", threadSummary);
+            if (threadSummary !== undefined) {
+                messages = {
+                    kind: "success",
+                    data: groupEvents(
+                        [rootEvent, ...($threadStore[rootEvent.event.messageIndex] ?? [])] ?? [
+                            rootEvent,
+                        ]
+                    ) as EventWrapper<Message>[][][],
+                };
             }
         }, 1000);
     });
 
-    function dateGroupKey(group: EventWrapper<Message>[]): string {
-        const first = group[0] && group[0] && group[0].timestamp;
+    function dateGroupKey(group: EventWrapper<Message>[][]): string {
+        const first = group[0] && group[0][0] && group[0][0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
@@ -106,49 +118,51 @@
         {#each messages.data as dayGroup, _di (dateGroupKey(dayGroup))}
             <div class="day-group">
                 <div class="date-label">
-                    {formatMessageDate(dayGroup[0]?.timestamp, $_("today"), $_("yesterday"))}
+                    {formatMessageDate(dayGroup[0][0]?.timestamp, $_("today"), $_("yesterday"))}
                 </div>
-                {#each dayGroup as message, _i (message.event.messageId)}
-                    <ChatMessage
-                        senderId={message.event.sender}
-                        focused={false}
-                        {observer}
-                        confirmed={!unconfirmed.contains($chat.chatId, message.event.messageId)}
-                        readByMe={isReadByMe($markRead, message)}
-                        readByThem={false}
-                        chatId={$chat.chatId}
-                        chatType={$chat.kind}
-                        user={controller.user}
-                        me={message.event.sender === currentUser.userId}
-                        first={true}
-                        last={false}
-                        preview={false}
-                        pinned={$pinned.has(message.event.messageIndex)}
-                        canPin={canPinMessages($chat)}
-                        canBlockUser={canBlockUsers($chat)}
-                        canDelete={canDeleteOtherUsersMessages($chat)}
-                        canSend={canSendMessages($chat, $userStore)}
-                        canReact={canReactToMessages($chat)}
-                        publicGroup={$chat.kind === "group_chat" && $chat.public}
-                        editing={$editingEvent === message}
-                        threadSummary={undefined}
-                        on:chatWith
-                        on:goToMessageIndex
-                        on:replyPrivatelyTo
-                        on:replyTo
-                        on:replyInThread
-                        on:selectReaction
-                        on:deleteMessage
-                        on:blockUser
-                        on:pinMessage
-                        on:unpinMessage
-                        on:registerVote
-                        on:editMessage
-                        on:upgrade
-                        on:forward
-                        eventIndex={message.index}
-                        timestamp={message.timestamp}
-                        msg={message.event} />
+                {#each dayGroup as userGroup, _ui (controller.userGroupKey(userGroup))}
+                    {#each userGroup as evt, _i (evt.event.messageId.toString())}
+                        <ChatMessage
+                            senderId={evt.event.sender}
+                            focused={false}
+                            {observer}
+                            confirmed={!unconfirmed.contains($chat.chatId, evt.event.messageId)}
+                            readByMe={isReadByMe($markRead, evt)}
+                            readByThem={false}
+                            chatId={$chat.chatId}
+                            chatType={$chat.kind}
+                            user={controller.user}
+                            me={evt.event.sender === currentUser.userId}
+                            first={true}
+                            last={false}
+                            preview={false}
+                            pinned={$pinned.has(evt.event.messageIndex)}
+                            canPin={canPinMessages($chat)}
+                            canBlockUser={canBlockUsers($chat)}
+                            canDelete={canDeleteOtherUsersMessages($chat)}
+                            canSend={canSendMessages($chat, $userStore)}
+                            canReact={canReactToMessages($chat)}
+                            publicGroup={$chat.kind === "group_chat" && $chat.public}
+                            editing={$editingEvent === evt}
+                            threadSummary={undefined}
+                            on:chatWith
+                            on:goToMessageIndex
+                            on:replyPrivatelyTo
+                            on:replyTo
+                            on:replyInThread
+                            on:selectReaction
+                            on:deleteMessage
+                            on:blockUser
+                            on:pinMessage
+                            on:unpinMessage
+                            on:registerVote
+                            on:editMessage
+                            on:upgrade
+                            on:forward
+                            eventIndex={evt.index}
+                            timestamp={evt.timestamp}
+                            msg={evt.event} />
+                    {/each}
                 {/each}
             </div>
         {/each}

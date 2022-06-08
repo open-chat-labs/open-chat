@@ -27,7 +27,7 @@
     import { iconSize } from "../../stores/iconSize";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import { trackEvent } from "../../utils/tracking";
-    import { threadStore, threadSummaryStore } from "../../stores/thread";
+    import { threadSummaryStore } from "../../stores/thread";
 
     // TODO - cannot use the threadStore like this because we are inside an immutable component and it does not react
     // properly. Will either need to make this component not immutable (might be a relief) or we will have to pass the

@@ -1,4 +1,10 @@
-import type { ChatSummary, GroupPermissions } from "../domain/chat/chat";
+import type {
+    ChatSummary,
+    EventWrapper,
+    GroupPermissions,
+    Message,
+    ThreadSummary,
+} from "../domain/chat/chat";
 
 export type RightPanelState =
     | GroupDetailsPanel
@@ -16,7 +22,8 @@ export type NoPanel = {
 
 export type MessageThreadPanel = {
     kind: "message_thread_panel";
-    threadId: string;
+    threadSummary?: ThreadSummary;
+    rootEvent: EventWrapper<Message>;
 };
 
 export type GroupDetailsPanel = {

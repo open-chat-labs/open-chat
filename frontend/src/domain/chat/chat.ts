@@ -260,7 +260,6 @@ export type Message = {
 };
 
 export type ThreadSummary = {
-    threadId: string;
     participantIds: Set<string>;
     numberOfReplies: number;
     latestEventIndex: number;

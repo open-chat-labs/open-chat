@@ -633,7 +633,7 @@
     </div>
 
     {#if threadSummary !== undefined}
-        <ThreadSummary {threadSummary} indent={showAvatar} {me} />
+        <ThreadSummary {threadSummary} indent={showAvatar} {me} on:replyInThread />
     {/if}
 
     {#if msg.reactions.length > 0 && !deleted}

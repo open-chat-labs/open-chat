@@ -40,6 +40,7 @@
         EventWrapper,
         GroupChatSummary,
         Message,
+        ThreadSummary,
     } from "../../domain/chat/chat";
     import { currentUserKey, HomeController } from "../../fsm/home.controller";
     import { mapRemoteData } from "../../utils/remoteData";
@@ -456,14 +457,15 @@
         tick().then(() => rightPanel?.showProfile());
     }
 
-    function replyInThread(ev: CustomEvent<[string, EventWrapper<Message>]>) {
+    function replyInThread(
+        ev: CustomEvent<{ rootEvent: EventWrapper<Message>; threadSummary?: ThreadSummary }>
+    ) {
         if ($selectedChat !== undefined) {
-            console.log("Thread: ", ev.detail[0]);
-            threadStore.addToThread(ev.detail[0], ev.detail[1]);
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",
-                    threadId: ev.detail[0],
+                    threadSummary: ev.detail.threadSummary,
+                    rootEvent: ev.detail.rootEvent,
                 },
             ];
         }
