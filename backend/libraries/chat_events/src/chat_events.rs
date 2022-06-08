@@ -7,7 +7,7 @@ use std::cmp::min;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::FromIterator;
-use std::ops::RangeInclusive;
+use std::ops::{Deref, DerefMut, RangeInclusive};
 use types::*;
 
 #[derive(Serialize, Deserialize)]
@@ -441,7 +441,7 @@ impl ChatEvents {
     }
 
     pub fn last(&self) -> &EventWrapper<ChatEventInternal> {
-        self.events.inner().last().unwrap()
+        self.events.last().unwrap()
     }
 
     pub fn latest_message_index(&self) -> Option<MessageIndex> {
@@ -453,7 +453,7 @@ impl ChatEvents {
     }
 
     pub fn iter(&self) -> impl DoubleEndedIterator<Item = &EventWrapper<ChatEventInternal>> {
-        self.events.inner().iter()
+        self.events.iter()
     }
 
     pub fn since(&self, event_index: EventIndex) -> &[EventWrapper<ChatEventInternal>] {
@@ -602,7 +602,7 @@ impl ChatEvents {
     pub fn affected_event_indexes_since(&self, since: TimestampMillis, max_results: usize) -> Vec<EventIndex> {
         let mut affected_events = HashSet::new();
 
-        for EventWrapper { event, .. } in self.events.inner().iter().rev().take_while(|e| e.timestamp > since) {
+        for EventWrapper { event, .. } in self.events.iter().rev().take_while(|e| e.timestamp > since) {
             if let Some(index) = self.affected_event_index(event) {
                 if affected_events.insert(index) && affected_events.len() == max_results {
                     break;
@@ -637,11 +637,11 @@ impl ChatEvents {
     }
 
     pub fn len(&self) -> usize {
-        self.events.inner().len()
+        self.events.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.events.inner().is_empty()
+        self.events.is_empty()
     }
 }
 
@@ -801,12 +801,22 @@ impl ChatEventsVec {
         self.events.last().map_or(EventIndex::default(), |e| e.index.incr())
     }
 
-    pub fn inner(&self) -> &[EventWrapper<ChatEventInternal>] {
-        &self.events
-    }
-
     fn offset(&self) -> Option<usize> {
         self.events.first().map(|e| e.index.into())
+    }
+}
+
+impl Deref for ChatEventsVec {
+    type Target = Vec<EventWrapper<ChatEventInternal>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.events
+    }
+}
+
+impl DerefMut for ChatEventsVec {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.events
     }
 }
 
