@@ -129,6 +129,8 @@ struct Data {
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
+    #[serde(default)]
+    pub username: String,
     pub bio: String,
     #[serde(skip_deserializing)]
     pub cached_group_summaries: Option<CachedGroupSummaries>,
@@ -149,6 +151,7 @@ fn group_creation_limit() -> u32 {
 }
 
 impl Data {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         owner: Principal,
         user_index_canister_id: CanisterId,
@@ -156,6 +159,7 @@ impl Data {
         notifications_canister_ids: Vec<CanisterId>,
         callback_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
+        username: String,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -173,6 +177,7 @@ impl Data {
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             is_super_admin: false,
             recommended_group_exclusions: RecommendedGroupExclusions::default(),
+            username,
             bio: "".to_string(),
             cached_group_summaries: None,
             group_creation_limit: BASIC_GROUP_CREATION_LIMIT,

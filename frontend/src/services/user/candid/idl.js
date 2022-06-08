@@ -443,6 +443,14 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
   });
+  const PublicProfileArgs = IDL.Record({});
+  const PublicProfile = IDL.Record({
+    'bio' : IDL.Text,
+    'is_premium' : IDL.Bool,
+    'username' : IDL.Text,
+    'phone_is_verified' : IDL.Bool,
+  });
+  const PublicProfileResponse = IDL.Variant({ 'Success' : PublicProfile });
   const RecommendedGroupsArgs = IDL.Record({ 'count' : IDL.Nat8 });
   const PublicGroupSummary = IDL.Record({
     'is_public' : IDL.Bool,
@@ -765,6 +773,11 @@ export const idlFactory = ({ IDL }) => {
         [MuteNotificationsArgs],
         [MuteNotificationsResponse],
         [],
+      ),
+    'public_profile' : IDL.Func(
+        [PublicProfileArgs],
+        [PublicProfileResponse],
+        ['query'],
       ),
     'recommended_groups' : IDL.Func(
         [RecommendedGroupsArgs],

@@ -655,6 +655,14 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
+export interface PublicProfile {
+  'bio' : string,
+  'is_premium' : boolean,
+  'username' : string,
+  'phone_is_verified' : boolean,
+}
+export type PublicProfileArgs = {};
+export type PublicProfileResponse = { 'Success' : PublicProfile };
 export interface RecommendedGroupsArgs { 'count' : number }
 export type RecommendedGroupsResponse = {
     'Success' : RecommendedGroupsSuccessResult
@@ -912,6 +920,9 @@ export interface _SERVICE {
     >,
   'mute_notifications' : (arg_0: MuteNotificationsArgs) => Promise<
       MuteNotificationsResponse
+    >,
+  'public_profile' : (arg_0: PublicProfileArgs) => Promise<
+      PublicProfileResponse
     >,
   'recommended_groups' : (arg_0: RecommendedGroupsArgs) => Promise<
       RecommendedGroupsResponse
