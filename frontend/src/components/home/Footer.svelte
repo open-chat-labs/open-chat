@@ -242,7 +242,12 @@
         {textContent}
         {participants}
         {blockedUsers}
+        {chat}
         on:sendMessage={sendMessage}
+        on:cancelEditEvent
+        on:setTextContent
+        on:startTyping
+        on:stopTyping
         on:createPoll
         on:searchChat
         on:tokenTransfer
@@ -251,8 +256,7 @@
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         on:joinGroup
-        on:cancelPreview
-        {controller} />
+        on:cancelPreview />
 </div>
 
 <style type="text/scss">

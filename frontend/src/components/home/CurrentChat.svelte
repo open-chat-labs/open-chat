@@ -212,6 +212,10 @@
         const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
         controller.sendMessage(event);
     }
+
+    function setTextContent(ev: CustomEvent<string | undefined>): void {
+        controller.setTextContent(ev.detail);
+    }
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
@@ -302,6 +306,10 @@
             on:upgrade
             on:cancelReply={() => controller.cancelReply()}
             on:clearAttachment={() => controller.clearAttachment()}
+            on:cancelEditEvent={() => controller.cancelEditEvent()}
+            on:setTextContent={setTextContent}
+            on:startTyping={() => controller.startTyping()}
+            on:stopTyping={() => controller.stopTyping()}
             on:attachGif={attachGif}
             on:tokenTransfer={tokenTransfer}
             on:searchChat={searchChat}

@@ -192,6 +192,10 @@
     participants={$participants}
     blockedUsers={$blockedUsers}
     {controller}
+    on:cancelEditEvent
+    on:setTextContent
+    on:startTyping
+    on:stopTyping
     on:joinGroup
     on:cancelPreview
     on:upgrade

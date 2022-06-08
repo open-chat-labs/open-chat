@@ -8,7 +8,6 @@
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
-    import type { ChatController } from "../../fsm/chat.controller";
     import { iconSize } from "../../stores/iconSize";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { validateTokenInput } from "../../utils/cryptoFormatter";
@@ -19,6 +18,7 @@
     import type { PartialUserSummary, User } from "../../domain/user/user";
     import Button from "../Button.svelte";
     import type {
+        ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
         GroupChatSummary,
@@ -32,7 +32,7 @@
     import { addQueryStringParam } from "utils/urls";
     import { allQuestions, Questions } from "../../domain/faq";
 
-    export let controller: ChatController;
+    export let chat: ChatSummary;
     export let blocked: boolean;
     export let preview: boolean;
     export let canSend: boolean;
@@ -110,7 +110,7 @@
     }
 
     $: {
-        if (controller && $screenWidth === ScreenWidth.Large) {
+        if ($screenWidth === ScreenWidth.Large) {
             console.log("attempting to focus 2");
             inp?.focus();
         }
@@ -145,13 +145,13 @@
             range.insertNode(document.createTextNode(text));
             range.collapse(false);
             const inputContent = inp.textContent ?? "";
-            controller.setTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
+            dispatch("setTextContent", inputContent.trim().length === 0 ? undefined : inputContent);
         }
     }
 
     function onInput() {
         const inputContent = inp.textContent ?? "";
-        controller.setTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
+        dispatch("setTextContent", inputContent.trim().length === 0 ? undefined : inputContent);
         triggerMentionLookup(inputContent);
         triggerEmojiLookup(inputContent);
         triggerTypingTimer();
@@ -207,16 +207,13 @@
             const now = Date.now();
             if (now - lastTypingUpdate > USER_TYPING_EVENT_MIN_INTERVAL_MS) {
                 lastTypingUpdate = now;
-                controller.startTyping();
+                dispatch("startTyping");
             }
             if (typingTimer !== undefined) {
                 clearTimeout(typingTimer);
             }
 
-            typingTimer = setTimeout(
-                () => controller.stopTyping(),
-                MARK_TYPING_STOPPED_INTERVAL_MS
-            );
+            typingTimer = setTimeout(() => dispatch("stopTyping"), MARK_TYPING_STOPPED_INTERVAL_MS);
         });
     }
 
@@ -224,7 +221,7 @@
         if (e.key === "Enter" && $enterSend && !e.shiftKey) {
             if (!messageIsEmpty) {
                 sendMessage();
-                controller.stopTyping();
+                dispatch("stopTyping");
             }
             e.preventDefault();
         }
@@ -290,7 +287,7 @@
             return true;
         }
 
-        if (controller.chatVal.kind === "group_chat") {
+        if (chat.kind === "group_chat") {
             const faqMatch = txt.match(/^\/faq( *(.*))$/);
             if (faqMatch && faqMatch[2] !== undefined) {
                 if (allQuestions.includes(faqMatch[2] as Questions)) {
@@ -321,7 +318,7 @@
     }
 
     function cancelEdit() {
-        controller.cancelEditEvent();
+        dispatch("cancelEditEvent");
     }
 
     function sendMessage() {
@@ -331,7 +328,8 @@
             dispatch("sendMessage", expandMentions(txt));
         }
         inp.textContent = "";
-        controller.setTextContent(undefined);
+        dispatch("setTextContent", undefined);
+
         console.log("attempting to focus 4");
         inp.focus();
         messageActions.close();
@@ -392,7 +390,7 @@
         )}${replacement} ${inp.textContent?.slice(rangeToReplace[1])}`;
         inp.textContent = replaced;
 
-        controller.setTextContent(inp.textContent || undefined);
+        dispatch("setTextContent", inp.textContent || undefined);
         setCaretTo(rangeToReplace[0] + replacement.length);
         rangeToReplace = undefined;
     }
@@ -422,13 +420,13 @@
 
     function joinGroup() {
         dispatch("joinGroup", {
-            group: controller.chatVal,
+            group: chat,
             select: true,
         });
     }
 
     function cancelPreview() {
-        dispatch("cancelPreview", controller.chatId);
+        dispatch("cancelPreview", chat.chatId);
     }
 </script>
 
