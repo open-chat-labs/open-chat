@@ -8,9 +8,8 @@ use user_canister::c2c_send_message;
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 
-const WELCOME_MESSAGE: &str = "Welcome to OpenChat!";
-
-const INITIAL_MESSAGES: &[&str] = &[
+const WELCOME_MESSAGES: &[&str] = &[
+    "Welcome to OpenChat!",
     "I am the OpenChat bot. I will send you messages to let you know about events that don't belong to any other chat, such as if crypto has been deposited into your OpenChat account(s) or if you've been removed from a group. In the future you'll be able to ask me questions or send me commands.",
     "To follow all the updates to OpenChat join the [OpenChat Updates](https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app/#/eucat-raaaa-aaaaf-adn7q-cai) group.",
     "To request new features join the [Feature Requests](https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app/#/vfaj4-zyaaa-aaaaf-aabya-cai) group.",
@@ -20,32 +19,15 @@ const INITIAL_MESSAGES: &[&str] = &[
 pub(crate) fn send_welcome_messages() {
     mutate_state(|state| {
         if !bot_chat_exists(state) {
-            let content = MessageContent::Text(TextContent {
-                text: WELCOME_MESSAGE.to_string(),
-            });
+            for message in WELCOME_MESSAGES.iter() {
+                let content = MessageContent::Text(TextContent {
+                    text: message.to_string(),
+                });
 
-            send_message(content, true, state);
-            send_initial_messages(state);
+                send_message(content, true, state);
+            }
         }
     });
-}
-
-pub(crate) fn send_existing_user_welcome_messages() {
-    mutate_state(|state| {
-        if !bot_chat_exists(state) {
-            send_initial_messages(state);
-        }
-    });
-}
-
-fn send_initial_messages(state: &mut RuntimeState) {
-    for message in INITIAL_MESSAGES.iter() {
-        let content = MessageContent::Text(TextContent {
-            text: message.to_string(),
-        });
-
-        send_message(content, true, state);
-    }
 }
 
 pub(crate) fn send_group_deleted_message(
