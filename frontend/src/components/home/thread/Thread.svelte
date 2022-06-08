@@ -171,7 +171,7 @@
 
 <Footer
     bind:this={footer}
-    thread={true}
+    threadRootMessageIndex={rootEvent.event.messageIndex}
     joining={undefined}
     preview={false}
     {blocked}

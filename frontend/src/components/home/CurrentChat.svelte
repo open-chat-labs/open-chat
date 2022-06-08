@@ -292,7 +292,7 @@
             textContent={$textContent}
             participants={$participants}
             blockedUsers={$blockedUsers}
-            thread={false}
+            threadRootMessageIndex={undefined}
             {joining}
             {preview}
             {blocked}
