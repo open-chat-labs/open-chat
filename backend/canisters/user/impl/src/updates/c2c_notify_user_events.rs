@@ -26,7 +26,7 @@ fn process_event(event: UserEvent, runtime_state: &mut RuntimeState) {
             runtime_state.data.set_user_verified();
         }
         UserEvent::StorageUpgraded(ev) => {
-            runtime_state.data.set_paid_storage(ev.new_limit);
+            runtime_state.data.set_paid_storage(ev.storage_limit);
         }
     }
 }

@@ -16,6 +16,5 @@ pub struct PhoneNumberConfirmed {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct StorageUpgraded {
-    pub prev_limit: u64,
-    pub new_limit: u64,
+    pub storage_limit: u64,
 }

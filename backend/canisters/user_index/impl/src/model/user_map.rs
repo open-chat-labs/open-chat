@@ -203,9 +203,14 @@ impl UserMap {
                     } else if (confirmation_code != p.confirmation_code) && !test_code {
                         ConfirmPhoneNumberResult::CodeIncorrect
                     } else {
-                        user.phone_status = PhoneStatus::Confirmed(p.phone_number.clone());
+                        let phone_number = p.phone_number.clone();
+                        user.phone_status = PhoneStatus::Confirmed(phone_number.clone());
                         user.open_storage_limit_bytes += CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE;
-                        ConfirmPhoneNumberResult::Success(Some(user.open_storage_limit_bytes))
+                        ConfirmPhoneNumberResult::Success(ConfirmPhoneNumberSuccess {
+                            user_id: user.user_id,
+                            new_byte_limit: user.open_storage_limit_bytes,
+                            phone_number,
+                        })
                     }
                 }
                 // We remove unconfirmed phone numbers once their confirmation codes expire, so we
@@ -392,11 +397,17 @@ pub enum SubmitPhoneNumberResult {
 }
 
 pub enum ConfirmPhoneNumberResult {
-    Success(Option<u64>),
+    Success(ConfirmPhoneNumberSuccess),
     CodeExpired,
     CodeIncorrect,
     AlreadyConfirmed,
     UserNotFound,
+}
+
+pub struct ConfirmPhoneNumberSuccess {
+    pub user_id: UserId,
+    pub new_byte_limit: u64,
+    pub phone_number: PhoneNumber,
 }
 
 #[cfg(test)]

@@ -3,6 +3,7 @@ use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use open_storage_index_canister::add_or_update_users::UserConfig;
+use types::{PhoneNumberConfirmed, UserEvent};
 use user_index_canister::confirm_phone_number::{Response::*, *};
 
 #[update]
@@ -20,20 +21,23 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
         .users
         .confirm_phone_number(caller, args.confirmation_code, runtime_state.data.test_mode, now)
     {
-        ConfirmPhoneNumberResult::Success(Some(new_byte_limit)) => {
+        ConfirmPhoneNumberResult::Success(result) => {
+            runtime_state.data.user_event_sync_queue.push(
+                result.user_id,
+                UserEvent::PhoneNumberConfirmed(PhoneNumberConfirmed {
+                    phone_number: result.phone_number,
+                }),
+            );
             // NOTE: If we later allow a user to change their already confimed phone number
             // we must remember not to increase their byte_limit in this case
             runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
                 user_id: caller,
-                byte_limit: new_byte_limit,
+                byte_limit: result.new_byte_limit,
             });
             Success(SuccessResult {
-                open_storage_limit_bytes: new_byte_limit,
+                open_storage_limit_bytes: result.new_byte_limit,
             })
         }
-        ConfirmPhoneNumberResult::Success(None) => Success(SuccessResult {
-            open_storage_limit_bytes: 0,
-        }),
         ConfirmPhoneNumberResult::CodeExpired => ConfirmationCodeExpired,
         ConfirmPhoneNumberResult::CodeIncorrect => ConfirmationCodeIncorrect,
         ConfirmPhoneNumberResult::AlreadyConfirmed => AlreadyClaimed,
