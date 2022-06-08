@@ -38,6 +38,9 @@
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
 
     $: chat = controller.chat;
+
+    // TODO - all these things need to be stored in their own store rather than the chat controller
+    // should we create a threadController or is it better to try to get away from controllers
     $: fileToAttach = controller.fileToAttach;
     $: editingEvent = controller.editingEvent;
     $: replyingTo = controller.replyingTo;
@@ -66,6 +69,8 @@
      *
      * TODO - there might end up being quite a bit of duplication between this component and CurrentChatMessages - let's wait and see what it looks like
      * and deal with that later
+     *
+     * TODO - we can have a store also which contains draft messages for each thread and pass that into the footer if it exists
      */
 
     onMount(() => {
