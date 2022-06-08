@@ -11,17 +11,16 @@
     import { createEventDispatcher } from "svelte";
     import type { ChatController } from "../../fsm/chat.controller";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { MessageAction } from "../../domain/chat/chat";
+    import type { MessageAction, MessageContent } from "../../domain/chat/chat";
 
     const dispatch = createEventDispatcher();
 
-    export let controller: ChatController;
     export let messageAction: MessageAction = undefined;
     export let editing: boolean; // are we in edit mode - if so we must restrict what's available
+    export let fileToAttach: MessageContent | undefined;
 
     let drawOpen = false;
 
-    $: fileToAttach = controller.fileToAttach;
     $: useDrawer = $mobileWidth && !editing;
     $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
 
@@ -30,7 +29,7 @@
     export function close() {
         drawOpen = false;
         if (fileToAttach !== undefined) {
-            controller.clearAttachment();
+            dispatch("clearAttachment");
         }
         messageAction = undefined;
     }
@@ -38,8 +37,8 @@
     function toggleAction(action: MessageAction) {
         if (messageAction === action) {
             messageAction = undefined;
-            if ($fileToAttach !== undefined) {
-                controller.clearAttachment();
+            if (fileToAttach !== undefined) {
+                dispatch("clearAttachment");
             }
         } else {
             messageAction = action;
@@ -56,7 +55,7 @@
     }
 
     function toggleDraw() {
-        if (drawOpen || $fileToAttach !== undefined) {
+        if (drawOpen || fileToAttach !== undefined) {
             close();
         } else {
             drawOpen = true;
@@ -78,7 +77,7 @@
 
 {#if useDrawer}
     <div class="open-draw" on:click|stopPropagation={toggleDraw}>
-        {#if drawOpen || $fileToAttach !== undefined}
+        {#if drawOpen || fileToAttach !== undefined}
             <HoverIcon>
                 <TrayRemove size={$iconSize} color={iconColour} />
             </HoverIcon>
@@ -105,7 +104,7 @@
     {#if !editing}
         <div class="attach">
             <FileAttacher
-                open={$fileToAttach !== undefined}
+                open={fileToAttach !== undefined}
                 on:fileSelected
                 on:open={() => (messageAction = "file")}
                 on:close={close} />

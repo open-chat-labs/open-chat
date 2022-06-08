@@ -71,6 +71,10 @@
      * and deal with that later
      *
      * TODO - we can have a store also which contains draft messages for each thread and pass that into the footer if it exists
+     *
+     * we need to remove the chat controller from the Footer and its descendants and instead just pass down functions. That way we can have
+     * the thread footer behave differently without the Footer knowing anything about it. The main footer will just pass down controller methods
+     * but the Thread footer will receive plain old functions wrapping svelte stores probably
      */
 
     onMount(() => {
@@ -193,6 +197,7 @@
     on:upgrade
     on:attachGif
     on:cancelReply
+    on:clearAttachment
     on:tokenTransfer
     on:searchChat
     on:createPoll />

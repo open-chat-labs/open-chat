@@ -27,6 +27,7 @@
     import { currentUserKey } from "../../fsm/home.controller";
     import { trackEvent } from "../../utils/tracking";
     import { userStore } from "../../stores/user";
+    import { apiKey, ServiceContainer } from "../../services/serviceContainer";
 
     export let controller: ChatController;
     export let blocked: boolean;
@@ -41,6 +42,7 @@
     export let participants: Participant[];
     export let blockedUsers: Set<string>;
 
+    const api = getContext<ServiceContainer>(apiKey);
     const createdUser = getContext<CreatedUser>(currentUserKey);
     const dispatch = createEventDispatcher();
     let messageAction: MessageAction = undefined;
@@ -59,8 +61,7 @@
                 content: getMessageContent(textContent ?? undefined, fileToAttach),
             };
 
-            controller.api
-                .editMessage(chat, msg!)
+            api.editMessage(chat, msg!)
                 .then((resp) => {
                     if (resp !== "success") {
                         rollbar.warn("Error response editing", resp);
@@ -90,14 +91,18 @@
                 return;
             }
 
+            if (threadRootMessageIndex !== undefined) {
+                console.log("let's create a thread message");
+                return;
+            }
+
             const msg = controller.createMessage(textContent, fileToAttach);
-            controller.api
-                .sendMessage(chat, controller.user, mentioned, msg)
+            api.sendMessage(chat, controller.user, mentioned, msg)
                 .then((resp) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         controller.confirmMessage(msg, resp);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            controller.api.refreshAccountBalance(
+                            api.refreshAccountBalance(
                                 msg.content.transfer.token,
                                 createdUser.cryptoAccount
                             );
@@ -242,6 +247,7 @@
         on:searchChat
         on:tokenTransfer
         on:attachGif
+        on:clearAttachment
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         on:joinGroup

@@ -301,6 +301,7 @@
             on:cancelPreview
             on:upgrade
             on:cancelReply={() => controller.cancelReply()}
+            on:clearAttachment={() => controller.clearAttachment()}
             on:attachGif={attachGif}
             on:tokenTransfer={tokenTransfer}
             on:searchChat={searchChat}

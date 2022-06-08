@@ -479,10 +479,11 @@
         <MessageActions
             bind:this={messageActions}
             bind:messageAction
-            {controller}
+            {fileToAttach}
             editing={editingEvent !== undefined}
             on:tokenTransfer
             on:attachGif
+            on:clearAttachment
             on:fileSelected />
 
         {#if recording}
