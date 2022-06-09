@@ -48,9 +48,12 @@ import type {
     ApiReplyContext,
     ApiUpdatedMessage,
     ApiDeletedContent,
+    ApiCryptocurrencyContent,
     ApiCryptocurrencyContentV2,
     ApiCryptocurrencyTransfer,
+    ApiCryptoTransaction,
     ApiCompletedCryptocurrencyTransfer,
+    ApiCompletedCryptoTransaction,
     ApiMessageIndexRange,
     ApiUser,
     ApiICP,
@@ -118,10 +121,10 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
         return deletedContent(candid.Deleted);
     }
     if ("Cryptocurrency" in candid) {
-        throw new Error("MessageContent type 'Cryptocurrency' is deprecated");
+        return cryptoContent(candid.Cryptocurrency);
     }
     if ("CryptocurrencyV2" in candid) {
-        return cryptoContent(candid.CryptocurrencyV2);
+        return cryptoContentOld(candid.CryptocurrencyV2);
     }
     if ("Poll" in candid) {
         return pollContent(candid.Poll);
@@ -221,11 +224,19 @@ function deletedContent(candid: ApiDeletedContent): DeletedContent {
     };
 }
 
-function cryptoContent(candid: ApiCryptocurrencyContentV2): CryptocurrencyContent {
+function cryptoContent(candid: ApiCryptocurrencyContent): CryptocurrencyContent {
     return {
         kind: "crypto_content",
         caption: optional(candid.caption, identity),
         transfer: cryptoTransfer(candid.transfer),
+    };
+}
+
+function cryptoContentOld(candid: ApiCryptocurrencyContentV2): CryptocurrencyContent {
+    return {
+        kind: "crypto_content",
+        caption: optional(candid.caption, identity),
+        transfer: cryptoTransferOld(candid.transfer),
     };
 }
 
@@ -237,7 +248,35 @@ export function apiToken(_token: Cryptocurrency): ApiCryptocurrency {
     return { InternetComputer: null };
 }
 
-function cryptoTransfer(candid: ApiCryptocurrencyTransfer): CryptocurrencyTransfer {
+function cryptoTransfer(candid: ApiCryptoTransaction): CryptocurrencyTransfer {
+    if ("Pending" in candid) {
+        return {
+            kind: "pending",
+            token: token(candid.Pending.token),
+            recipient: "User" in candid.Pending.to ? candid.Pending.to.User.toString() : "",
+            amountE8s: candid.Pending.amount.e8s,
+            feeE8s: optional(candid.Pending.fee, (f) => f.e8s),
+            memo: optional(candid.Pending.memo, identity),
+        };
+    }
+    if ("Completed" in candid) {
+        return completedCryptoTransfer(candid.Completed);
+    }
+    if ("Failed" in candid) {
+        return {
+            kind: "failed",
+            token: token(candid.Failed.token),
+            recipient: "User" in candid.Failed.to ? candid.Failed.to.User.toString() : "",
+            amountE8s: candid.Failed.amount.e8s,
+            feeE8s: candid.Failed.fee.e8s,
+            memo: candid.Failed.memo,
+            errorMessage: candid.Failed.error_message,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiCryptocurrencyTransfer type received", candid);
+}
+
+function cryptoTransferOld(candid: ApiCryptocurrencyTransfer): CryptocurrencyTransfer {
     if ("Pending" in candid) {
         return {
             kind: "pending",
@@ -249,7 +288,7 @@ function cryptoTransfer(candid: ApiCryptocurrencyTransfer): CryptocurrencyTransf
         };
     }
     if ("Completed" in candid) {
-        return completedCryptoTransfer(candid.Completed);
+        return completedCryptoTransferOld(candid.Completed);
     }
     if ("Failed" in candid) {
         return {
@@ -266,6 +305,22 @@ function cryptoTransfer(candid: ApiCryptocurrencyTransfer): CryptocurrencyTransf
 }
 
 export function completedCryptoTransfer(
+    candid: ApiCompletedCryptoTransaction
+): CompletedCryptocurrencyTransfer {
+    return {
+        kind: "completed",
+        token: token(candid.token),
+        recipient: "User" in candid.to ? candid.to.User[0].toString() : "",
+        sender: "User" in candid.from ? candid.from.User[0].toString() : "",
+        amountE8s: candid.amount.e8s,
+        feeE8s: candid.fee.e8s,
+        memo: candid.memo,
+        blockIndex: candid.block_index,
+        transactionHash: bytesToHexString(candid.transaction_hash),
+    };
+}
+
+export function completedCryptoTransferOld(
     candid: ApiCompletedCryptocurrencyTransfer
 ): CompletedCryptocurrencyTransfer {
     return {

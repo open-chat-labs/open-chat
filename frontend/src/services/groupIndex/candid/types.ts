@@ -62,6 +62,17 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export interface CompletedCryptoTransaction {
+  'to' : CryptoAccountFull,
+  'fee' : Tokens,
+  'created' : TimestampMillis,
+  'token' : Cryptocurrency,
+  'transaction_hash' : TransactionHash,
+  'block_index' : BlockIndex,
+  'from' : CryptoAccountFull,
+  'memo' : Memo,
+  'amount' : Tokens,
+}
 export interface CompletedCryptocurrencyDeposit {
   'fee' : Tokens,
   'token' : Cryptocurrency,
@@ -93,7 +104,22 @@ export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
+export type CryptoAccount = { 'Mint' : null } |
+  { 'User' : UserId } |
+  { 'Account' : AccountIdentifier };
+export type CryptoAccountFull = { 'UserIndex' : AccountIdentifier } |
+  { 'Named' : [string, AccountIdentifier] } |
+  { 'Mint' : null } |
+  { 'User' : [UserId, AccountIdentifier] } |
+  { 'Unknown' : AccountIdentifier };
+export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
+  { 'Completed' : CompletedCryptoTransaction } |
+  { 'Pending' : PendingCryptoTransaction };
 export type Cryptocurrency = { 'InternetComputer' : null };
+export interface CryptocurrencyContent {
+  'caption' : [] | [string],
+  'transfer' : CryptoTransaction,
+}
 export interface CryptocurrencyContentV2 {
   'caption' : [] | [string],
   'transfer' : CryptocurrencyTransfer,
@@ -167,6 +193,17 @@ export interface DirectMessageNotification {
   'sender_name' : string,
 }
 export type EventIndex = number;
+export interface FailedCryptoTransaction {
+  'to' : CryptoAccountFull,
+  'fee' : Tokens,
+  'created' : TimestampMillis,
+  'token' : Cryptocurrency,
+  'transaction_hash' : TransactionHash,
+  'from' : CryptoAccountFull,
+  'memo' : Memo,
+  'error_message' : string,
+  'amount' : Tokens,
+}
 export interface FailedCryptocurrencyTransfer {
   'fee' : Tokens,
   'token' : Cryptocurrency,
@@ -394,7 +431,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'CryptocurrencyV2' : CryptocurrencyContentV2 } |
-  { 'Cryptocurrency' : any } |
+  { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
   { 'Deleted' : DeletedContent };
@@ -466,6 +503,20 @@ export interface ParticipantsAdded {
 export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
+}
+export interface PendingCryptoTransaction {
+  'to' : CryptoAccount,
+  'fee' : [] | [Tokens],
+  'token' : Cryptocurrency,
+  'memo' : [] | [Memo],
+  'amount' : Tokens,
+}
+export interface PendingCryptoTransfer {
+  'to' : UserId,
+  'fee' : [] | [Tokens],
+  'token' : Cryptocurrency,
+  'memo' : [] | [Memo],
+  'amount' : Tokens,
 }
 export interface PendingCryptocurrencyTransfer {
   'fee' : [] | [Tokens],

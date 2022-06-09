@@ -895,12 +895,6 @@ type CryptoAccountFull =
         Unknown: AccountIdentifier;
     };
 
-type CryptoTransactionStatus =
-    variant {
-        Completed: BlockIndex;
-        Failed: text;
-    };
-
 type PendingCryptoTransfer =
     record {
         token: Cryptocurrency;

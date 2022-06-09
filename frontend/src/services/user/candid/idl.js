@@ -184,6 +184,57 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'transfer' : CryptocurrencyTransfer,
   });
+  const AccountIdentifier = IDL.Vec(IDL.Nat8);
+  const CryptoAccountFull = IDL.Variant({
+    'UserIndex' : AccountIdentifier,
+    'Named' : IDL.Tuple(IDL.Text, AccountIdentifier),
+    'Mint' : IDL.Null,
+    'User' : IDL.Tuple(UserId, AccountIdentifier),
+    'Unknown' : AccountIdentifier,
+  });
+  const FailedCryptoTransaction = IDL.Record({
+    'to' : CryptoAccountFull,
+    'fee' : Tokens,
+    'created' : TimestampMillis,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'from' : CryptoAccountFull,
+    'memo' : Memo,
+    'error_message' : IDL.Text,
+    'amount' : Tokens,
+  });
+  const CompletedCryptoTransaction = IDL.Record({
+    'to' : CryptoAccountFull,
+    'fee' : Tokens,
+    'created' : TimestampMillis,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'block_index' : BlockIndex,
+    'from' : CryptoAccountFull,
+    'memo' : Memo,
+    'amount' : Tokens,
+  });
+  const CryptoAccount = IDL.Variant({
+    'Mint' : IDL.Null,
+    'User' : UserId,
+    'Account' : AccountIdentifier,
+  });
+  const PendingCryptoTransaction = IDL.Record({
+    'to' : CryptoAccount,
+    'fee' : IDL.Opt(Tokens),
+    'token' : Cryptocurrency,
+    'memo' : IDL.Opt(Memo),
+    'amount' : Tokens,
+  });
+  const CryptoTransaction = IDL.Variant({
+    'Failed' : FailedCryptoTransaction,
+    'Completed' : CompletedCryptoTransaction,
+    'Pending' : PendingCryptoTransaction,
+  });
+  const CryptocurrencyContent = IDL.Record({
+    'caption' : IDL.Opt(IDL.Text),
+    'transfer' : CryptoTransaction,
+  });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
     'blob_reference' : IDL.Opt(BlobReference),
@@ -209,7 +260,7 @@ export const idlFactory = ({ IDL }) => {
     'Text' : TextContent,
     'Image' : ImageContent,
     'CryptocurrencyV2' : CryptocurrencyContentV2,
-    'Cryptocurrency' : IDL.Reserved,
+    'Cryptocurrency' : CryptocurrencyContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
@@ -567,6 +618,13 @@ export const idlFactory = ({ IDL }) => {
     'RecipientBlocked' : IDL.Null,
     'InvalidRequest' : IDL.Text,
     'TransferFailed' : IDL.Text,
+    'TransferSuccess' : IDL.Record({
+      'timestamp' : TimestampMillis,
+      'chat_id' : ChatId,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptoTransaction,
+      'message_index' : MessageIndex,
+    }),
   });
   const SetAvatarArgs = IDL.Record({ 'avatar' : IDL.Opt(Avatar) });
   const SetAvatarResponse = IDL.Variant({
@@ -616,6 +674,32 @@ export const idlFactory = ({ IDL }) => {
     'InvalidRequest' : IDL.Text,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptocurrencyTransfer),
+    'CryptocurrencyNotSupported' : Cryptocurrency,
+  });
+  const TransferCryptocurrencyWithinGroupV2Args = IDL.Record({
+    'content' : CryptocurrencyContent,
+    'recipient' : UserId,
+    'mentioned' : IDL.Vec(User),
+    'group_id' : ChatId,
+    'sender_name' : IDL.Text,
+    'message_id' : MessageId,
+    'replies_to' : IDL.Opt(GroupReplyContext),
+  });
+  const TransferCryptocurrencyWithinGroupV2Response = IDL.Variant({
+    'TextTooLong' : IDL.Nat32,
+    'TransferLimitExceeded' : Tokens,
+    'CallerNotInGroup' : IDL.Opt(CompletedCryptoTransaction),
+    'TransferCannotBeZero' : IDL.Null,
+    'Success' : IDL.Record({
+      'timestamp' : TimestampMillis,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptoTransaction,
+      'message_index' : MessageIndex,
+    }),
+    'RecipientBlocked' : IDL.Null,
+    'InvalidRequest' : IDL.Text,
+    'TransferFailed' : IDL.Text,
+    'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'CryptocurrencyNotSupported' : Cryptocurrency,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
@@ -695,7 +779,6 @@ export const idlFactory = ({ IDL }) => {
     }),
     'InternalError' : IDL.Text,
   });
-  const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const PendingCryptocurrencyWithdrawal = IDL.Record({
     'to' : AccountIdentifier,
     'fee' : IDL.Opt(Tokens),
@@ -816,6 +899,11 @@ export const idlFactory = ({ IDL }) => {
     'transfer_cryptocurrency_within_group' : IDL.Func(
         [TransferCryptocurrencyWithinGroupArgs],
         [TransferCryptocurrencyWithinGroupResponse],
+        [],
+      ),
+    'transfer_cryptocurrency_within_group_v2' : IDL.Func(
+        [TransferCryptocurrencyWithinGroupV2Args],
+        [TransferCryptocurrencyWithinGroupV2Response],
         [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),

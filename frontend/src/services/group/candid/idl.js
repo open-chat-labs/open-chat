@@ -168,6 +168,57 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'transfer' : CryptocurrencyTransfer,
   });
+  const AccountIdentifier = IDL.Vec(IDL.Nat8);
+  const CryptoAccountFull = IDL.Variant({
+    'UserIndex' : AccountIdentifier,
+    'Named' : IDL.Tuple(IDL.Text, AccountIdentifier),
+    'Mint' : IDL.Null,
+    'User' : IDL.Tuple(UserId, AccountIdentifier),
+    'Unknown' : AccountIdentifier,
+  });
+  const FailedCryptoTransaction = IDL.Record({
+    'to' : CryptoAccountFull,
+    'fee' : Tokens,
+    'created' : TimestampMillis,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'from' : CryptoAccountFull,
+    'memo' : Memo,
+    'error_message' : IDL.Text,
+    'amount' : Tokens,
+  });
+  const CompletedCryptoTransaction = IDL.Record({
+    'to' : CryptoAccountFull,
+    'fee' : Tokens,
+    'created' : TimestampMillis,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'block_index' : BlockIndex,
+    'from' : CryptoAccountFull,
+    'memo' : Memo,
+    'amount' : Tokens,
+  });
+  const CryptoAccount = IDL.Variant({
+    'Mint' : IDL.Null,
+    'User' : UserId,
+    'Account' : AccountIdentifier,
+  });
+  const PendingCryptoTransaction = IDL.Record({
+    'to' : CryptoAccount,
+    'fee' : IDL.Opt(Tokens),
+    'token' : Cryptocurrency,
+    'memo' : IDL.Opt(Memo),
+    'amount' : Tokens,
+  });
+  const CryptoTransaction = IDL.Variant({
+    'Failed' : FailedCryptoTransaction,
+    'Completed' : CompletedCryptoTransaction,
+    'Pending' : PendingCryptoTransaction,
+  });
+  const CryptocurrencyContent = IDL.Record({
+    'caption' : IDL.Opt(IDL.Text),
+    'transfer' : CryptoTransaction,
+  });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
     'blob_reference' : IDL.Opt(BlobReference),
@@ -193,7 +244,7 @@ export const idlFactory = ({ IDL }) => {
     'Text' : TextContent,
     'Image' : ImageContent,
     'CryptocurrencyV2' : CryptocurrencyContentV2,
-    'Cryptocurrency' : IDL.Reserved,
+    'Cryptocurrency' : CryptocurrencyContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
