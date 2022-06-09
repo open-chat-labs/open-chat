@@ -503,7 +503,7 @@ type PublicProfileResponse =
 type PublicProfile = 
     record {
         username: text;
-        avatar: opt Avatar;
+        avatar_id: opt nat;
         bio: text;
         is_premium: bool;
         phone_is_verified: bool;

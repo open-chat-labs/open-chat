@@ -448,8 +448,8 @@ export const idlFactory = ({ IDL }) => {
     'bio' : IDL.Text,
     'is_premium' : IDL.Bool,
     'username' : IDL.Text,
+    'avatar_id' : IDL.Opt(IDL.Nat),
     'phone_is_verified' : IDL.Bool,
-    'avatar' : IDL.Opt(Avatar),
   });
   const PublicProfileResponse = IDL.Variant({ 'Success' : PublicProfile });
   const RecommendedGroupsArgs = IDL.Record({ 'count' : IDL.Nat8 });
