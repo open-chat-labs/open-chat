@@ -660,6 +660,7 @@ export interface PublicProfile {
   'is_premium' : boolean,
   'username' : string,
   'phone_is_verified' : boolean,
+  'avatar' : [] | [Avatar],
 }
 export type PublicProfileArgs = {};
 export type PublicProfileResponse = { 'Success' : PublicProfile };
