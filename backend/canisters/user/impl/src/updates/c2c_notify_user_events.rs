@@ -7,7 +7,7 @@ use user_canister::c2c_notify_user_events::{Response::*, *};
 
 #[update_candid_and_msgpack(guard = "caller_is_user_index")]
 #[trace]
-fn c2c_notify_user_event(args: Args) -> Response {
+fn c2c_notify_user_events(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| c2c_notify_user_event_impl(args, state))

@@ -659,6 +659,7 @@ export interface PublicProfile {
   'bio' : string,
   'is_premium' : boolean,
   'username' : string,
+  'avatar_id' : [] | [bigint],
   'phone_is_verified' : boolean,
 }
 export type PublicProfileArgs = {};
