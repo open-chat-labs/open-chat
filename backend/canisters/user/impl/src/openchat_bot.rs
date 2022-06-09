@@ -95,7 +95,7 @@ fn to_gb(bytes: u64) -> String {
 
 fn to_tokens(tokens: Tokens) -> String {
     const E8S_PER_TOKEN: u64 = 100_000_000;
-    format_to_decimal_places(tokens.e8s() as f64 / E8S_PER_TOKEN as f64, 2)
+    format_to_decimal_places(tokens.e8s() as f64 / E8S_PER_TOKEN as f64, 8)
 }
 
 fn send_text_message(text: String, runtime_state: &mut RuntimeState) {
