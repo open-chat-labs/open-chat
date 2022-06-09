@@ -11,6 +11,7 @@ type ThreadLookup = Record<number, EventWrapper<Message>[]>;
 // messageIndex -> ThreadSummary for fake threads
 type ThreadSummaryLookup = Record<number, ThreadSummary>;
 
+// todo this needs to be per chat! but let's work out whether this is going to be permanent first
 export const threadSummaryStore = writable<ThreadSummaryLookup>({
     54: {
         participantIds: new Set([
@@ -51,4 +52,20 @@ export const threadStore = {
             return store;
         });
     },
+    replaceMessageInThread: (messageIndex: number, evt: EventWrapper<Message>): void => {
+        update((store) => {
+            if (store[messageIndex] === undefined) {
+                return store;
+            }
+            store[messageIndex] = store[messageIndex].map((ev) =>
+                ev.index === evt.index ? evt : ev
+            );
+            return store;
+        });
+    },
 };
+
+export function getNextEventIndex(lookup: ThreadLookup, messageIndex: number): number {
+    const evts = lookup[messageIndex] ?? [];
+    return (evts[evts.length - 1]?.index ?? 0) + 1;
+}

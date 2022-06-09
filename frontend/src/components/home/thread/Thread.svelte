@@ -27,11 +27,12 @@
         canReactToMessages,
         canSendMessages,
         createMessage,
+        getMessageContent,
         getStorageRequiredForMessage,
         groupEvents,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
-    import { threadStore } from "../../../stores/thread";
+    import { getNextEventIndex, threadStore } from "../../../stores/thread";
     import { derived, readable } from "svelte/store";
     import { draftThreadMessages } from "../../../stores/draftThreadMessages";
     import { remainingStorage } from "../../../stores/storage";
@@ -91,19 +92,33 @@
         if (!canSend) return;
         let [text, mentioned] = ev.detail;
         if ($editingEvent !== undefined) {
-            // editMessageWithAttachment(text, $fileToAttach, $editingEvent);
-            console.log("edit message");
+            editMessageWithAttachment(text, $fileToAttach, $editingEvent);
         } else {
             sendMessageWithAttachment(text, mentioned, $fileToAttach);
         }
+        draftThreadMessages.delete(messageIndex);
+    }
+
+    // todo - lots of duplication here with chatController.editEvent
+    function editEvent(ev: EventWrapper<Message>): void {
+        draftThreadMessages.setEditingEvent(messageIndex, ev);
+        draftThreadMessages.setAttachment(
+            messageIndex,
+            ev.event.content.kind !== "text_content" ? ev.event.content : undefined
+        );
+        draftThreadMessages.setReplyingTo(
+            messageIndex,
+            ev.event.repliesTo && ev.event.repliesTo.kind === "rehydrated_reply_context"
+                ? {
+                      ...ev.event.repliesTo,
+                      content: ev.event.content,
+                      sender: $userStore[ev.event.sender],
+                  }
+                : undefined
+        );
     }
 
     function getNextMessageIndex() {
-        // TODO - sort this out
-        return 0;
-    }
-
-    function getNextEventIndex(): number {
         // TODO - sort this out
         return 0;
     }
@@ -134,7 +149,7 @@
             const msg = newMessage();
 
             // we don't have an api for this yet so let's just write the message to the thread store
-            const nextEventIndex = getNextEventIndex();
+            const nextEventIndex = getNextEventIndex($threadStore, messageIndex);
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
             threadStore.addMessageToThread(messageIndex, event);
 
@@ -176,16 +191,46 @@
         }
     }
 
+    function editMessageWithAttachment(
+        textContent: string | undefined,
+        fileToAttach: MessageContent | undefined,
+        editingEvent: EventWrapper<Message>
+    ) {
+        if (textContent || fileToAttach) {
+            const msg = {
+                ...editingEvent.event,
+                edited: true,
+                content: getMessageContent(textContent ?? undefined, fileToAttach),
+            };
+
+            const event = { ...editingEvent, event: msg! };
+            threadStore.replaceMessageInThread(messageIndex, event);
+            // controller.sendMessage(event);
+
+            // api.editMessage($chat, msg!)
+            //     .then((resp) => {
+            //         if (resp !== "success") {
+            //             rollbar.warn("Error response editing", resp);
+            //             toastStore.showFailureToast("errorEditingMessage");
+            //         }
+            //     })
+            //     .catch((err) => {
+            //         rollbar.error("Exception sending message", err);
+            //         toastStore.showFailureToast("errorEditingMessage");
+            //     });
+        }
+    }
+
     function cancelReply() {
-        console.log("cancel reply");
+        draftThreadMessages.setReplyingTo(messageIndex, undefined);
     }
 
     function clearAttachment() {
-        console.log("clearAttachment");
+        draftThreadMessages.setAttachment(messageIndex, undefined);
     }
 
     function cancelEditEvent() {
-        console.log("cancelEditEvent");
+        draftThreadMessages.delete(messageIndex);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>) {
@@ -200,8 +245,8 @@
         controller.stopTyping();
     }
 
-    function fileSelected() {
-        console.log("fileSelected");
+    function fileSelected(ev: CustomEvent<MessageContent>) {
+        draftThreadMessages.setAttachment(messageIndex, ev.detail);
     }
 
     function attachGif() {
@@ -261,6 +306,7 @@
                         publicGroup={$chat.kind === "group_chat" && $chat.public}
                         editing={$editingEvent === evt}
                         threadSummary={undefined}
+                        selectedThreadMessageIndex={undefined}
                         on:chatWith
                         on:goToMessageIndex
                         on:replyPrivatelyTo
@@ -272,7 +318,7 @@
                         on:pinMessage
                         on:unpinMessage
                         on:registerVote
-                        on:editMessage
+                        on:editMessage={() => editEvent(evt)}
                         on:upgrade
                         on:forward
                         eventIndex={evt.index}

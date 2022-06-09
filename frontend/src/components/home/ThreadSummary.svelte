@@ -98,6 +98,7 @@
 
         &.selected {
             background: #ff9505;
+            // background: darken(#ff9505, 5%);
             // border: 1px solid #ff9505;
             // background: var(--button-bg);
         }
