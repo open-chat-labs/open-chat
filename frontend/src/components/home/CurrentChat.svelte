@@ -7,23 +7,28 @@
     import { toastStore } from "../../stores/toast";
     import { _ } from "svelte-i18n";
     import type { ChatController } from "../../fsm/chat.controller";
-    import { onDestroy, tick } from "svelte";
+    import { createEventDispatcher, getContext, onDestroy, tick } from "svelte";
     import {
         canForward,
         canInviteUsers,
         getFirstUnreadMention,
         getFirstUnreadMessageIndex,
+        getMessageContent,
+        getStorageRequiredForMessage,
         isPreviewing,
         newMessageId,
     } from "../../domain/chat/chat.utils";
     import type {
         EnhancedReplyContext,
+        EventWrapper,
         GroupChatSummary,
         Mention,
         Message,
+        MessageContent,
     } from "../../domain/chat/chat";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
+    import { remainingStorage } from "../../stores/storage";
     import { userStore } from "stores/user";
     import {
         canBlockUsers,
@@ -39,10 +44,17 @@
     import { lastCryptoSent } from "../../stores/crypto";
     import { trackEvent } from "../../utils/tracking";
     import { messageToForwardStore } from "../../stores/messageToForward";
+    import type { CreatedUser, User } from "../../domain/user/user";
+    import { apiKey, ServiceContainer } from "../../services/serviceContainer";
+    import { currentUserKey } from "../../fsm/home.controller";
 
     export let controller: ChatController;
     export let blocked: boolean;
     export let joining: GroupChatSummary | undefined;
+
+    const dispatch = createEventDispatcher();
+    const api = getContext<ServiceContainer>(apiKey);
+    const createdUser = getContext<CreatedUser>(currentUserKey);
 
     let chatId = controller.chatId;
     let unreadMessages = 0;
@@ -51,7 +63,6 @@
     let creatingPoll = false;
     let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
     let selectingGif = false;
-    let footer: Footer;
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
     let showSearchHeader = false;
@@ -149,6 +160,10 @@
         };
     }
 
+    function fileSelected(ev: CustomEvent<MessageContent>) {
+        controller.attachFile(ev.detail);
+    }
+
     function attachGif(ev: CustomEvent<string>) {
         selectingGif = true;
         if (giphySelector !== undefined) {
@@ -164,6 +179,105 @@
     function searchChat(ev: CustomEvent<string>) {
         showSearchHeader = true;
         searchTerm = ev.detail;
+    }
+
+    function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
+        if (!canSend) return;
+        let [text, mentioned] = ev.detail;
+        if ($editingEvent !== undefined) {
+            editMessageWithAttachment(text, $fileToAttach, $editingEvent);
+        } else {
+            sendMessageWithAttachment(text, mentioned, $fileToAttach);
+        }
+    }
+
+    function editMessageWithAttachment(
+        textContent: string | undefined,
+        fileToAttach: MessageContent | undefined,
+        editingEvent: EventWrapper<Message>
+    ) {
+        if (textContent || fileToAttach) {
+            const msg = {
+                ...editingEvent.event,
+                edited: true,
+                content: getMessageContent(textContent ?? undefined, fileToAttach),
+            };
+
+            api.editMessage($chat, msg!)
+                .then((resp) => {
+                    if (resp !== "success") {
+                        rollbar.warn("Error response editing", resp);
+                        toastStore.showFailureToast("errorEditingMessage");
+                    }
+                })
+                .catch((err) => {
+                    rollbar.error("Exception sending message", err);
+                    toastStore.showFailureToast("errorEditingMessage");
+                });
+
+            const event = { ...editingEvent, event: msg! };
+            controller.sendMessage(event);
+        }
+    }
+
+    function sendMessageWithAttachment(
+        textContent: string | undefined,
+        mentioned: User[],
+        fileToAttach: MessageContent | undefined
+    ) {
+        if (!canSend) return;
+        if (textContent || fileToAttach) {
+            const storageRequired = getStorageRequiredForMessage(fileToAttach);
+            if ($remainingStorage < storageRequired) {
+                dispatch("upgrade", "explain");
+                return;
+            }
+
+            const msg = controller.createMessage(textContent, fileToAttach);
+            api.sendMessage($chat, controller.user, mentioned, msg)
+                .then((resp) => {
+                    if (resp.kind === "success" || resp.kind === "transfer_success") {
+                        controller.confirmMessage(msg, resp);
+                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                            api.refreshAccountBalance(
+                                msg.content.transfer.token,
+                                createdUser.cryptoAccount
+                            );
+                        }
+                        if ($chat.kind === "direct_chat") {
+                            trackEvent("sent_direct_message");
+                        } else {
+                            if ($chat.public) {
+                                trackEvent("sent_public_group_message");
+                            } else {
+                                trackEvent("sent_private_group_message");
+                            }
+                        }
+                        if (msg.repliesTo !== undefined) {
+                            // double counting here which I think is OK since we are limited to string events
+                            trackEvent("replied_to_message");
+                        }
+                    } else {
+                        controller.removeMessage(msg.messageId, controller.user.userId);
+                        rollbar.warn("Error response sending message", resp);
+                        toastStore.showFailureToast("errorSendingMessage");
+                    }
+                })
+                .catch((err) => {
+                    controller.removeMessage(msg.messageId, controller.user.userId);
+                    console.log(err);
+                    toastStore.showFailureToast("errorSendingMessage");
+                    rollbar.error("Exception sending message", err);
+                });
+
+            const nextEventIndex = controller.getNextEventIndex();
+            const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
+            controller.sendMessage(event);
+        }
+    }
+
+    export function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
+        sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
     }
 
     function forwardMessage(msg: Message) {
@@ -222,14 +336,14 @@
 
 <PollBuilder
     bind:this={pollBuilder}
-    on:sendPoll={footer.sendMessageWithContent}
+    on:sendPoll={sendMessageWithContent}
     bind:open={creatingPoll} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
         token={creatingCryptoTransfer.token}
         draftAmountE8s={creatingCryptoTransfer.amount}
-        on:sendTransfer={footer.sendMessageWithContent}
+        on:sendTransfer={sendMessageWithContent}
         on:close={() => (creatingCryptoTransfer = undefined)}
         {controller} />
 {/if}
@@ -237,7 +351,7 @@
 <GiphySelector
     bind:this={giphySelector}
     bind:open={selectingGif}
-    on:sendGiphy={footer.sendMessageWithContent} />
+    on:sendGiphy={sendMessageWithContent} />
 
 <div class="wrapper">
     {#if showSearchHeader}
@@ -288,7 +402,6 @@
         {unreadMessages} />
     {#if showFooter}
         <Footer
-            bind:this={footer}
             chat={$chat}
             fileToAttach={$fileToAttach}
             editingEvent={$editingEvent}
@@ -296,11 +409,10 @@
             textContent={$textContent}
             participants={$participants}
             blockedUsers={$blockedUsers}
-            threadRootMessageIndex={undefined}
+            user={controller.user}
             {joining}
             {preview}
             {blocked}
-            {controller}
             on:joinGroup
             on:cancelPreview
             on:upgrade
@@ -310,6 +422,9 @@
             on:setTextContent={setTextContent}
             on:startTyping={() => controller.startTyping()}
             on:stopTyping={() => controller.stopTyping()}
+            on:fileSelected={fileSelected}
+            on:audioCaptured={fileSelected}
+            on:sendMessage={sendMessage}
             on:attachGif={attachGif}
             on:tokenTransfer={tokenTransfer}
             on:searchChat={searchChat}

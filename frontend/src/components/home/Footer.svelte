@@ -15,24 +15,15 @@
         Participant,
     } from "../../domain/chat/chat";
     import { canSendMessages } from "../../domain/chat/chat.utils";
-    import { getMessageContent, getStorageRequiredForMessage } from "../../domain/chat/chat.utils";
-    import { rollbar } from "../../utils/logging";
     import Loading from "../Loading.svelte";
-    import type { ChatController } from "../../fsm/chat.controller";
-    import type { CreatedUser, User } from "../../domain/user/user";
+    import type { UserSummary } from "../../domain/user/user";
     import Reload from "../Reload.svelte";
     import { _ } from "svelte-i18n";
-    import { remainingStorage } from "../../stores/storage";
-    import { createEventDispatcher, getContext } from "svelte";
-    import { currentUserKey } from "../../fsm/home.controller";
-    import { trackEvent } from "../../utils/tracking";
     import { userStore } from "../../stores/user";
-    import { apiKey, ServiceContainer } from "../../services/serviceContainer";
+    import { createEventDispatcher } from "svelte";
 
-    export let controller: ChatController;
     export let blocked: boolean;
     export let preview: boolean;
-    export let threadRootMessageIndex: number | undefined;
     export let joining: GroupChatSummary | undefined;
     export let chat: ChatSummary;
     export let fileToAttach: MessageContent | undefined;
@@ -41,121 +32,13 @@
     export let textContent: string | undefined;
     export let participants: Participant[];
     export let blockedUsers: Set<string>;
+    export let user: UserSummary;
 
-    const api = getContext<ServiceContainer>(apiKey);
-    const createdUser = getContext<CreatedUser>(currentUserKey);
     const dispatch = createEventDispatcher();
+
     let messageAction: MessageAction = undefined;
     let messageEntry: MessageEntry;
     $: canSend = canSendMessages(chat, $userStore);
-
-    function editMessageWithAttachment(
-        textContent: string | undefined,
-        fileToAttach: MessageContent | undefined,
-        editingEvent: EventWrapper<Message>
-    ) {
-        if (textContent || fileToAttach) {
-            const msg = {
-                ...editingEvent.event,
-                edited: true,
-                content: getMessageContent(textContent ?? undefined, fileToAttach),
-            };
-
-            api.editMessage(chat, msg!)
-                .then((resp) => {
-                    if (resp !== "success") {
-                        rollbar.warn("Error response editing", resp);
-                        toastStore.showFailureToast("errorEditingMessage");
-                    }
-                })
-                .catch((err) => {
-                    rollbar.error("Exception sending message", err);
-                    toastStore.showFailureToast("errorEditingMessage");
-                });
-
-            const event = { ...editingEvent, event: msg! };
-            controller.sendMessage(event);
-        }
-    }
-
-    function sendMessageWithAttachment(
-        textContent: string | undefined,
-        mentioned: User[],
-        fileToAttach: MessageContent | undefined
-    ) {
-        if (!canSend) return;
-        if (textContent || fileToAttach) {
-            const storageRequired = getStorageRequiredForMessage(fileToAttach);
-            if ($remainingStorage < storageRequired) {
-                dispatch("upgrade", "explain");
-                return;
-            }
-
-            if (threadRootMessageIndex !== undefined) {
-                console.log("let's create a thread message");
-                return;
-            }
-
-            const msg = controller.createMessage(textContent, fileToAttach);
-            api.sendMessage(chat, controller.user, mentioned, msg)
-                .then((resp) => {
-                    if (resp.kind === "success" || resp.kind === "transfer_success") {
-                        controller.confirmMessage(msg, resp);
-                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            api.refreshAccountBalance(
-                                msg.content.transfer.token,
-                                createdUser.cryptoAccount
-                            );
-                        }
-                        if (chat.kind === "direct_chat") {
-                            trackEvent("sent_direct_message");
-                        } else {
-                            if (chat.public) {
-                                trackEvent("sent_public_group_message");
-                            } else {
-                                trackEvent("sent_private_group_message");
-                            }
-                        }
-                        if (msg.repliesTo !== undefined) {
-                            // double counting here which I think is OK since we are limited to string events
-                            trackEvent("replied_to_message");
-                        }
-                    } else {
-                        controller.removeMessage(msg.messageId, controller.user.userId);
-                        rollbar.warn("Error response sending message", resp);
-                        toastStore.showFailureToast("errorSendingMessage");
-                    }
-                })
-                .catch((err) => {
-                    controller.removeMessage(msg.messageId, controller.user.userId);
-                    console.log(err);
-                    toastStore.showFailureToast("errorSendingMessage");
-                    rollbar.error("Exception sending message", err);
-                });
-
-            const nextEventIndex = controller.getNextEventIndex();
-            const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
-            controller.sendMessage(event);
-        }
-    }
-
-    function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
-        if (!canSend) return;
-        let [text, mentioned] = ev.detail;
-        if (editingEvent !== undefined) {
-            editMessageWithAttachment(text, fileToAttach, editingEvent);
-        } else {
-            sendMessageWithAttachment(text, mentioned, fileToAttach);
-        }
-    }
-
-    export function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
-        sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
-    }
-
-    function fileSelected(ev: CustomEvent<MessageContent>) {
-        controller.attachFile(ev.detail);
-    }
 
     function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
         return items.reduce<File | undefined>((res, item) => {
@@ -170,7 +53,7 @@
         const file = fileFromDataTransferItems(items);
         if (file) {
             messageContentFromFile(file)
-                .then((content) => controller.attachFile(content))
+                .then((content) => dispatch("fileSelected", content))
                 .catch((err) => toastStore.showFailureToast(err));
         }
     }
@@ -207,7 +90,7 @@
                         groupChat={chat.kind === "group_chat"}
                         preview={true}
                         on:cancelReply
-                        user={controller.user}
+                        {user}
                         {replyingTo} />
                 {/if}
                 {#if fileToAttach !== undefined}
@@ -243,7 +126,7 @@
         {participants}
         {blockedUsers}
         {chat}
-        on:sendMessage={sendMessage}
+        on:sendMessage
         on:cancelEditEvent
         on:setTextContent
         on:startTyping
@@ -253,8 +136,8 @@
         on:tokenTransfer
         on:attachGif
         on:clearAttachment
-        on:fileSelected={fileSelected}
-        on:audioCaptured={fileSelected}
+        on:fileSelected
+        on:audioCaptured
         on:joinGroup
         on:cancelPreview />
 </div>

@@ -72,6 +72,8 @@
 
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
 
+    $: console.log("Text content: ", textContent);
+
     $: {
         if (editingEvent && !initialisedEdit) {
             if (editingEvent.event.content.kind === "text_content") {
@@ -90,11 +92,9 @@
             // Only set the textbox text when required rather than every time, because doing so sets the focus back to
             // the start of the textbox on some devices.
             if (inp.textContent !== text) {
-                // todo - this is going to be a bit of a problem when we can potentially have two instances of this component going at once
-
                 console.log("text content has changed - reseting");
-                // inp.textContent = text;
-                // setCaretToEnd();
+                inp.textContent = text;
+                setCaretToEnd();
             }
         }
         if (editingEvent === undefined) {

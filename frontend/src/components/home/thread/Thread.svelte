@@ -27,6 +27,8 @@
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
     import { threadStore } from "../../../stores/thread";
+    import { derived, readable } from "svelte/store";
+    import { draftThreadMessages } from "../../../stores/draftThreadMessages";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -38,20 +40,24 @@
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
 
     $: chat = controller.chat;
+    $: messageIndex = rootEvent.event.messageIndex;
 
     // TODO - all these things need to be stored in their own store rather than the chat controller
     // should we create a threadController or is it better to try to get away from controllers
-    $: fileToAttach = controller.fileToAttach;
-    $: editingEvent = controller.editingEvent;
-    $: replyingTo = controller.replyingTo;
-    $: textContent = controller.textContent;
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
     $: markRead = controller.markRead;
     $: pinned = controller.pinnedMessages;
     $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
 
-    let footer: Footer;
+    $: draftMessage = readable(draftThreadMessages.get(messageIndex), (set) =>
+        draftThreadMessages.subscribe((d) => set(d[messageIndex] ?? {}))
+    );
+    $: textContent = derived(draftMessage, (d) => d.textContent);
+    $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
+    $: fileToAttach = derived(draftMessage, (d) => d.attachment);
+    $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
+
     let messages: RemoteData<EventWrapper<Message>[][][], string> = { kind: "idle" };
 
     const dispatch = createEventDispatcher();
@@ -59,23 +65,6 @@
     function close() {
         dispatch("close");
     }
-
-    /**
-     * We need to manage a list of events here *and* potentially a draft event.
-     *
-     * AND we need that draft event to be persisted if we close the thread. So we need a thread store (which still only offers in memory persistence).
-     *
-     * The footer *must* be decoupled from the chat controller
-     *
-     * TODO - there might end up being quite a bit of duplication between this component and CurrentChatMessages - let's wait and see what it looks like
-     * and deal with that later
-     *
-     * TODO - we can have a store also which contains draft messages for each thread and pass that into the footer if it exists
-     *
-     * we need to remove the chat controller from the Footer and its descendants and instead just pass down functions. That way we can have
-     * the thread footer behave differently without the Footer knowing anything about it. The main footer will just pass down controller methods
-     * but the Thread footer will receive plain old functions wrapping svelte stores probably
-     */
 
     onMount(() => {
         // fake load of message thread
@@ -108,6 +97,54 @@
             );
         }
         return true;
+    }
+
+    function sendMessage(ev: CustomEvent<EventWrapper<Message>>): void {
+        console.log("send message");
+    }
+
+    function cancelReply() {
+        console.log("cancel reply");
+    }
+
+    function clearAttachment() {
+        console.log("clearAttachment");
+    }
+
+    function cancelEditEvent() {
+        console.log("cancelEditEvent");
+    }
+
+    function setTextContent(ev: CustomEvent<string | undefined>) {
+        draftThreadMessages.setTextContent(messageIndex, ev.detail);
+    }
+
+    function startTyping() {
+        controller.startTyping();
+    }
+
+    function stopTyping() {
+        controller.stopTyping();
+    }
+
+    function fileSelected() {
+        console.log("fileSelected");
+    }
+
+    function attachGif() {
+        console.log("attachGif");
+    }
+
+    function tokenTransfer() {
+        console.log("tokenTransfer");
+    }
+
+    function searchChat() {
+        console.log("searchChat");
+    }
+
+    function createPoll() {
+        console.log("createPoll");
     }
 </script>
 
@@ -179,11 +216,6 @@
 </div>
 
 <Footer
-    bind:this={footer}
-    threadRootMessageIndex={rootEvent.event.messageIndex}
-    joining={undefined}
-    preview={false}
-    {blocked}
     chat={$chat}
     fileToAttach={$fileToAttach}
     editingEvent={$editingEvent}
@@ -191,20 +223,26 @@
     textContent={$textContent}
     participants={$participants}
     blockedUsers={$blockedUsers}
-    {controller}
-    on:cancelEditEvent
-    on:setTextContent
-    on:startTyping
-    on:stopTyping
+    user={controller.user}
+    joining={undefined}
+    preview={false}
+    {blocked}
     on:joinGroup
     on:cancelPreview
     on:upgrade
-    on:attachGif
-    on:cancelReply
-    on:clearAttachment
-    on:tokenTransfer
-    on:searchChat
-    on:createPoll />
+    on:cancelReply={cancelReply}
+    on:clearAttachment={clearAttachment}
+    on:cancelEditEvent={cancelEditEvent}
+    on:setTextContent={setTextContent}
+    on:startTyping={startTyping}
+    on:stopTyping={stopTyping}
+    on:fileSelected={fileSelected}
+    on:audioCaptured={fileSelected}
+    on:sendMessage={sendMessage}
+    on:attachGif={attachGif}
+    on:tokenTransfer={tokenTransfer}
+    on:searchChat={searchChat}
+    on:createPoll={createPoll} />
 
 <style type="text/scss">
     h4 {
