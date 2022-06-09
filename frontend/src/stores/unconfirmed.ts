@@ -17,19 +17,13 @@ export const unconfirmed = {
     },
     add: (chatId: string, message: EventWrapper<Message>): void => {
         store.update((state) => {
-            let chatEvents = state[chatId];
-            if (chatEvents === undefined) {
-                chatEvents = {
-                    messages: [],
-                    messageIds: new Set<bigint>(),
-                };
-                state[chatId] = chatEvents;
-            }
-            chatEvents.messages.push(message);
-            chatEvents.messageIds.add(message.event.messageId);
+            const chatEvents = state[chatId];
             return {
                 ...state,
-                [chatId]: chatEvents,
+                [chatId]: {
+                    messages: [...chatEvents?.messages ?? [], message],
+                    messageIds: new Set<bigint>([...chatEvents?.messageIds ?? [], message.event.messageId])
+                },
             };
         });
     },
@@ -40,14 +34,15 @@ export const unconfirmed = {
         if (get(store)[chatId]?.messageIds.has(messageId)) {
             store.update((state) => {
                 const chatEvents = state[chatId];
-                if (chatEvents?.messageIds.delete(messageId)) {
+                const messageIds = new Set<bigint>([...chatEvents?.messageIds ?? []]);
+                if (messageIds.delete(messageId)) {
                     return {
                         ...state,
                         [chatId]: {
                             messages: chatEvents.messages.filter(
                                 (e) => e.event.messageId !== messageId
                             ),
-                            messageIds: chatEvents.messageIds,
+                            messageIds,
                         },
                     };
                 }
