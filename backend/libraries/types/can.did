@@ -93,6 +93,12 @@ type ConfirmationCodeSms =
          confirmation_code: text;
     };
 
+type CryptocurrencyContent =
+    record {
+        transfer: CryptoTransaction;
+        caption: opt text;
+    };
+
 type CryptocurrencyContentV2 =
     record {
         transfer: CryptocurrencyTransfer;
@@ -449,7 +455,7 @@ type MessageContent =
         Audio: AudioContent;
         File: FileContent;
         Poll: PollContent;
-        Cryptocurrency: reserved;
+        Cryptocurrency: CryptocurrencyContent;
         CryptocurrencyV2: CryptocurrencyContentV2;
         Deleted: DeletedContent;
         Giphy: GiphyContent;
@@ -829,6 +835,79 @@ type FailedCryptocurrencyTransfer =
         fee: Tokens;
         memo: Memo;
         error_message: text;
+    };
+
+type CryptoTransaction =
+    variant {
+        Pending: PendingCryptoTransaction;
+        Completed: CompletedCryptoTransaction;
+        Failed: FailedCryptoTransaction;
+    };
+
+type PendingCryptoTransaction =
+    record {
+        token: Cryptocurrency;
+        amount: Tokens;
+        to: CryptoAccount;
+        fee: opt Tokens;
+        memo: opt Memo;
+    };
+
+type CompletedCryptoTransaction =
+    record {
+        token: Cryptocurrency;
+        amount: Tokens;
+        fee: Tokens;
+        from: CryptoAccountFull;
+        to: CryptoAccountFull;
+        memo: Memo;
+        created: TimestampMillis;
+        transaction_hash: TransactionHash;
+        block_index: BlockIndex;
+    };
+
+type FailedCryptoTransaction =
+    record {
+        token: Cryptocurrency;
+        amount: Tokens;
+        fee: Tokens;
+        from: CryptoAccountFull;
+        to: CryptoAccountFull;
+        memo: Memo;
+        created: TimestampMillis;
+        transaction_hash: TransactionHash;
+        error_message: text;
+    };
+
+type CryptoAccount =
+    variant {
+        Mint;
+        User: UserId;
+        Account: AccountIdentifier;
+    };
+
+type CryptoAccountFull =
+    variant {
+        Mint;
+        User: record { UserId; AccountIdentifier };
+        UserIndex: AccountIdentifier;
+        Named: record { text; AccountIdentifier };
+        Unknown: AccountIdentifier;
+    };
+
+type CryptoTransactionStatus =
+    variant {
+        Completed: BlockIndex;
+        Failed: text;
+    };
+
+type PendingCryptoTransfer =
+    record {
+        token: Cryptocurrency;
+        amount: Tokens;
+        to: UserId;
+        fee: opt Tokens;
+        memo: opt Memo;
     };
 
 type VideoContent =

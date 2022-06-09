@@ -1,4 +1,4 @@
-use crate::crypto::{process_transfer, TransferError};
+use crate::crypto::process_transaction;
 use crate::guards::caller_is_owner;
 use crate::openchat_bot::OPENCHAT_BOT_USER_ID;
 use crate::updates::send_message_common::register_callbacks_if_required;
@@ -7,9 +7,7 @@ use canister_tracing_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{
-    CanisterId, CompletedCryptocurrencyTransfer, ContentValidationError, CryptocurrencyTransfer, MessageContent, UserId,
-};
+use types::{CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContent, UserId};
 use user_canister::c2c_send_message::{self, C2CReplyContext};
 use user_canister::send_message::{Response::*, *};
 
@@ -20,6 +18,8 @@ use user_canister::send_message::{Response::*, *};
 async fn send_message(mut args: Args) -> Response {
     run_regular_jobs();
 
+    args.content.transform_to_new_crypto_type();
+
     if let Err(response) = read_state(|state| validate_request(&args, state)) {
         return response;
     }
@@ -27,21 +27,18 @@ async fn send_message(mut args: Args) -> Response {
     let mut completed_transfer = None;
     // If the message includes a pending cryptocurrency transfer, we process that and then update
     // the message to contain the completed transfer.
-    if let MessageContent::CryptocurrencyV2(c) = &mut args.content {
-        completed_transfer = match process_transfer(c.transfer.clone(), args.recipient).await {
-            Ok(transfer) => {
-                c.transfer = CryptocurrencyTransfer::Completed(transfer.clone());
-                Some(transfer)
-            }
-            Err(error) => {
-                return match error {
-                    TransferError::InvalidRequest(reason) => InvalidRequest(reason),
-                    TransferError::TransferFailed(failed_transfer) => TransferFailed(failed_transfer.error_message),
-                }
-            }
+    if let MessageContent::Cryptocurrency(c) = &mut args.content {
+        let pending_transaction = match &c.transfer {
+            CryptoTransaction::Pending(t) => t.clone(),
+            _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
         };
-    } else if matches!(args.content, MessageContent::Cryptocurrency(_)) {
-        return InvalidRequest("Must use MessageContent::CryptocurrencyV2".to_string());
+        completed_transfer = match process_transaction(pending_transaction).await {
+            Ok(completed) => {
+                c.transfer = CryptoTransaction::Completed(completed.clone());
+                Some(completed)
+            }
+            Err(failed) => return TransferFailed(failed.error_message),
+        };
     }
 
     mutate_state(|state| send_message_impl(args, completed_transfer, state))
@@ -77,7 +74,7 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Res
 
 fn send_message_impl(
     args: Args,
-    completed_transfer: Option<CompletedCryptocurrencyTransfer>,
+    completed_transfer: Option<CompletedCryptoTransaction>,
     runtime_state: &mut RuntimeState,
 ) -> Response {
     let now = runtime_state.env.now();
@@ -87,7 +84,7 @@ fn send_message_impl(
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
         sender: my_user_id,
-        content: args.content.clone().new_content_into_internal(),
+        content: args.content.clone().new_content_into_internal(now),
         replies_to: args.replies_to.clone(),
         now,
         forwarded: args.forwarding,
@@ -122,7 +119,7 @@ fn send_message_impl(
     ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, false));
 
     if let Some(transfer) = completed_transfer {
-        TransferSuccessV2(TransferSuccessResult {
+        TransferSuccess(TransferSuccessResult {
             chat_id: recipient.into(),
             event_index: message_event.index,
             message_index: message_event.event.message_index,

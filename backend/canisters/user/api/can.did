@@ -18,6 +18,13 @@ type SendMessageResponse =
             message_index: MessageIndex;
             timestamp: TimestampMillis;
         };
+        TransferSuccess: record {
+            chat_id: ChatId;
+            event_index: EventIndex;
+            message_index: MessageIndex;
+            timestamp: TimestampMillis;
+            transfer: CompletedCryptoTransaction;
+        };
         TransferSuccessV2: record {
             chat_id: ChatId;
             event_index: EventIndex;
@@ -318,6 +325,36 @@ type TransferCryptocurrencyWithinGroupResponse =
         InternalError: record { text; CompletedCryptocurrencyTransfer; };
     };
 
+type TransferCryptocurrencyWithinGroupV2Args =
+    record {
+        message_id: MessageId;
+        group_id: ChatId;
+        recipient: UserId;
+        content: CryptocurrencyContent;
+        sender_name: text;
+        replies_to: opt GroupReplyContext;
+        mentioned: vec User;
+    };
+
+type TransferCryptocurrencyWithinGroupV2Response =
+    variant {
+        Success: record {
+            event_index: EventIndex;
+            message_index: MessageIndex;
+            timestamp: TimestampMillis;
+            transfer: CompletedCryptoTransaction;
+        };
+        TextTooLong: nat32;
+        RecipientBlocked;
+        CallerNotInGroup: opt CompletedCryptoTransaction;
+        CryptocurrencyNotSupported: Cryptocurrency;
+        InvalidRequest: text;
+        TransferFailed: text;
+        TransferCannotBeZero;
+        TransferLimitExceeded: Tokens;
+        InternalError: record { text; CompletedCryptoTransaction; };
+    };
+
 type WithdrawCryptocurrencyRequest =
     record {
         withdrawal: PendingCryptocurrencyWithdrawal;
@@ -529,6 +566,7 @@ service: {
     add_recommended_group_exclusions: (AddRecommendedGroupExclusionsArgs) -> (AddRecommendedGroupExclusionsResponse);
     set_bio: (SetBioArgs) -> (SetBioResponse);
     transfer_cryptocurrency_within_group: (TransferCryptocurrencyWithinGroupArgs) -> (TransferCryptocurrencyWithinGroupResponse);
+    transfer_cryptocurrency_within_group_v2: (TransferCryptocurrencyWithinGroupV2Args) -> (TransferCryptocurrencyWithinGroupV2Response);
     withdraw_cryptocurrency: (WithdrawCryptocurrencyRequest) -> (WithdrawCryptocurrencyResponse);
 
     events: (EventsArgs) -> (EventsResponse) query;
