@@ -2,8 +2,9 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::ContentValidationError::*;
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{
-    CanisterId, CompletedCryptoTransactionInternal, CryptoAccount, CryptoTransaction, CryptoTransactionInternal,
-    Cryptocurrency, CryptocurrencyTransfer, PendingCryptoTransaction, TimestampMillis, TotalVotes, UserId, VoteOperation,
+    CanisterId, CompletedCryptoTransactionInternal, CompletedCryptocurrencyTransfer, CryptoAccount, CryptoTransaction,
+    CryptoTransactionInternal, Cryptocurrency, CryptocurrencyTransfer, PendingCryptoTransaction, PendingCryptocurrencyTransfer,
+    TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -221,8 +222,31 @@ impl MessageContentInternal {
             MessageContentInternal::Audio(a) => MessageContent::Audio(a.clone()),
             MessageContentInternal::File(f) => MessageContent::File(f.clone()),
             MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
-            // TODO
-            MessageContentInternal::CryptocurrencyNew(_) => unreachable!(),
+            MessageContentInternal::CryptocurrencyNew(c) => MessageContent::CryptocurrencyV2(CryptocurrencyContentV2 {
+                transfer: match &c.transfer {
+                    CryptoTransactionInternal::Pending(t) => CryptocurrencyTransfer::Pending(PendingCryptocurrencyTransfer {
+                        token: t.token,
+                        recipient: t.to.user_id().unwrap(),
+                        amount: t.amount,
+                        fee: t.fee,
+                        memo: t.memo,
+                    }),
+                    CryptoTransactionInternal::Completed(t) => {
+                        CryptocurrencyTransfer::Completed(CompletedCryptocurrencyTransfer {
+                            token: t.token,
+                            sender: t.from.user_id().unwrap(),
+                            recipient: t.to.user_id().unwrap(),
+                            amount: t.amount,
+                            fee: t.fee,
+                            memo: t.memo,
+                            block_index: t.block_index,
+                            transaction_hash: t.transaction_hash,
+                        })
+                    }
+                    _ => unreachable!(),
+                },
+                caption: c.caption.clone(),
+            }),
             MessageContentInternal::Cryptocurrency(c) => MessageContent::CryptocurrencyV2(c.clone()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),

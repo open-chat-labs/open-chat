@@ -79,6 +79,16 @@ pub enum CryptoAccount {
     Account(AccountIdentifier),
 }
 
+impl CryptoAccount {
+    pub fn user_id(&self) -> Option<UserId> {
+        if let CryptoAccount::User(user_id) = self {
+            Some(*user_id)
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CryptoTransactionInternal {
     Pending(PendingCryptoTransaction),
