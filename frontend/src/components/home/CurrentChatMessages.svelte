@@ -525,7 +525,7 @@
                         {canReact}
                         {canInvite}
                         threadSummary={evt.event.kind === "message"
-                            ? $threadSummaryStore[Number(evt.event.messageId)]
+                            ? $threadSummaryStore[Number(evt.event.messageIndex)]
                             : undefined}
                         publicGroup={controller.chatVal.kind === "group_chat" &&
                             controller.chatVal.public}

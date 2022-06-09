@@ -27,9 +27,18 @@ export const threadSummaryStore = writable<ThreadSummaryLookup>({
     },
 });
 
-const { subscribe, set } = writable<ThreadLookup>({});
+const { subscribe, set, update } = writable<ThreadLookup>({});
 
 export const threadStore = {
     subscribe,
     set,
+    addMessageToThread: (messageIndex: number, evt: EventWrapper<Message>): void => {
+        update((store) => {
+            if (store[messageIndex] === undefined) {
+                store[messageIndex] = [];
+            }
+            store[messageIndex].push(evt);
+            return store;
+        });
+    },
 };
