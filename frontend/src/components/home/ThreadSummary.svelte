@@ -12,6 +12,7 @@
     export let threadSummary: ThreadSummary;
     export let indent: boolean;
     export let me: boolean;
+    export let selected: boolean;
 
     const dispatch = createEventDispatcher();
 
@@ -21,7 +22,7 @@
 </script>
 
 <div class="thread-summary-wrapper" class:me class:indent>
-    <div class="thread-summary" on:click={() => threadSummary && replyInThread()}>
+    <div class="thread-summary" class:selected on:click={() => threadSummary && replyInThread()}>
         <div class="thread-avatars">
             {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
                 <Avatar url={avatarUrl($userStore[participantId])} size={AvatarSize.Miniscule} />
@@ -91,8 +92,14 @@
         transition: background 200ms ease-in-out;
         border: 1px solid rgba(255, 255, 255, 0.2);
 
-        &:hover {
+        &:not(.selected):hover {
             background: rgba(255, 255, 255, 0.1);
+        }
+
+        &.selected {
+            background: #ff9505;
+            // border: 1px solid #ff9505;
+            // background: var(--button-bg);
         }
 
         .thread-avatars {

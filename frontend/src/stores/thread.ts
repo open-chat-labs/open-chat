@@ -25,6 +25,16 @@ export const threadSummaryStore = writable<ThreadSummaryLookup>({
         latestEventIndex: 12345,
         latestEventTimestamp: BigInt(1654682280233),
     },
+    55: {
+        participantIds: new Set([
+            "sbzkb-zqaaa-aaaaa-aaaiq-cai",
+            "sgymv-uiaaa-aaaaa-aaaia-cai",
+            "si2b5-pyaaa-aaaaa-aaaja-cai",
+        ]),
+        numberOfReplies: 10,
+        latestEventIndex: 12345,
+        latestEventTimestamp: BigInt(1654682280233),
+    },
 });
 
 const { subscribe, set, update } = writable<ThreadLookup>({});

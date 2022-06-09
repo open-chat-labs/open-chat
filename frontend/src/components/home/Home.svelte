@@ -102,6 +102,10 @@
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
 
+    $: selectedThreadMessageIndex = rightPanelHistory.reduce<number | undefined>((i, s) => {
+        if (s.kind === "message_thread_panel") return s.rootEvent.event.messageIndex;
+        return undefined;
+    }, undefined);
     $: userId = controller.user.userId;
     $: api = controller.api;
     $: chatsLoading = controller.loading;
@@ -622,6 +626,7 @@
             <MiddlePanel
                 {recommendedGroups}
                 {joining}
+                {selectedThreadMessageIndex}
                 loadingChats={$chatsLoading}
                 blocked={!!blocked}
                 controller={$selectedChat}

@@ -53,6 +53,7 @@
     export let canReact: boolean;
     export let canInvite: boolean;
     export let footer: boolean;
+    export let selectedThreadMessageIndex: number | undefined;
 
     $: chat = controller.chat;
     $: loading = controller.loading;
@@ -517,6 +518,7 @@
                         me={isMe(evt)}
                         first={i === 0}
                         last={i + 1 === userGroup.length}
+                        {selectedThreadMessageIndex}
                         {preview}
                         {canPin}
                         {canBlockUser}

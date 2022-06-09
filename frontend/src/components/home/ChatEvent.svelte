@@ -41,6 +41,7 @@
     export let publicGroup: boolean;
     export let editing: boolean;
     export let threadSummary: ThreadSummary | undefined;
+    export let selectedThreadMessageIndex: number | undefined;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -54,6 +55,7 @@
 {#if event.event.kind === "message"}
     <ChatMessage
         senderId={event.event.sender}
+        {selectedThreadMessageIndex}
         {focused}
         {observer}
         {confirmed}

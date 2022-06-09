@@ -88,6 +88,7 @@
     export let publicGroup: boolean;
     export let editing: boolean;
     export let threadSummary: ThreadSummaryType | undefined;
+    export let selectedThreadMessageIndex: number | undefined;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
@@ -633,7 +634,12 @@
     </div>
 
     {#if threadSummary !== undefined}
-        <ThreadSummary {threadSummary} indent={showAvatar} {me} on:replyInThread />
+        <ThreadSummary
+            selected={msg.messageIndex === selectedThreadMessageIndex}
+            {threadSummary}
+            indent={showAvatar}
+            {me}
+            on:replyInThread />
     {/if}
 
     {#if msg.reactions.length > 0 && !deleted}
