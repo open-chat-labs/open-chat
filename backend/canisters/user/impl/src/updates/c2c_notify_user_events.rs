@@ -8,10 +8,10 @@ use user_canister::c2c_notify_user_events::{Response::*, *};
 #[update_candid_and_msgpack(guard = "caller_is_user_index")]
 #[trace]
 fn c2c_notify_user_events(args: Args) -> Response {
-    mutate_state(|state| c2c_notify_user_event_impl(args, state))
+    mutate_state(|state| c2c_notify_user_events_impl(args, state))
 }
 
-fn c2c_notify_user_event_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn c2c_notify_user_events_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     for event in args.events {
         process_event(event, runtime_state);
     }
