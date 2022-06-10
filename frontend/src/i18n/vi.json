@@ -533,5 +533,6 @@
     "forward": "Ở đằng trước",
     "referralHeader": "Mời bạn bè / gia đình",
     "userReferralMessage": "Chia sẻ liên kết này tới OpenChat với bạn bè và gia đình. Đối với mỗi người đăng ký bằng liên kết của bạn và trở thành người dùng đã được xác minh, bạn sẽ nhận được phần thưởng là mã thông báo CHAT (sẽ được xác nhận trong những tuần tới). Bạn có thể tiếp tục và chia sẻ liên kết ngay bây giờ và chúng tôi sẽ truy tặng mã thông báo CHAT khi chúng có sẵn.",
-    "userInfoHeader": "Công cộng"
+    "userInfoHeader": "Công cộng",
+    "noChatsAvailable": "Không có cuộc trò chuyện nào!"
 }

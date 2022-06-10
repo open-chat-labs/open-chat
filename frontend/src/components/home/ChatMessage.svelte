@@ -532,7 +532,7 @@
                                         <div slot="text">{$_("reply")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if canSend && canForward(msg.content)}
+                                {#if canForward(msg.content)}
                                     <MenuItem on:click={forward}>
                                         <ForwardIcon
                                             size={$iconSize}

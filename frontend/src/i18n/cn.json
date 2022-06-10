@@ -532,5 +532,6 @@
     "forward": "向前",
     "referralHeader": "邀请朋友/家人",
     "userReferralMessage": "与朋友和家人分享此 OpenChat 链接。对于每个使用您的链接注册并继续成为经过验证的用户的人，您将获得 CHAT 代币奖励（将在未来几周内确认）。您现在可以继续分享链接，一旦 CHAT 代币可用，我们将追溯奖励它们。",
-    "userInfoHeader": "上市"
+    "userInfoHeader": "上市",
+    "noChatsAvailable": "没有可用的聊天！"
 }
