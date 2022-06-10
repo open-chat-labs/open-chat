@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index;
-use crate::{mutate_state, openchat_bot, run_regular_jobs, RuntimeState, PREMIUM_GROUP_CREATION_LIMIT};
+use crate::{mutate_state, RuntimeState, PREMIUM_GROUP_CREATION_LIMIT};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use types::UserEvent;
@@ -27,12 +27,12 @@ fn process_event(event: UserEvent, runtime_state: &mut RuntimeState) {
             runtime_state.data.phone_is_verified = true;
             runtime_state.data.storage_limit = ev.new_storage_limit;
             runtime_state.data.group_creation_limit = PREMIUM_GROUP_CREATION_LIMIT;
-            openchat_bot::send_phone_number_confirmed_bot_message(&ev, runtime_state);
+            //openchat_bot::send_phone_number_confirmed_bot_message(&ev, runtime_state);
         }
         UserEvent::StorageUpgraded(ev) => {
             runtime_state.data.storage_limit = ev.new_storage_limit;
             runtime_state.data.group_creation_limit = PREMIUM_GROUP_CREATION_LIMIT;
-            openchat_bot::send_storage_ugraded_bot_message(&ev, runtime_state);
+            //openchat_bot::send_storage_ugraded_bot_message(&ev, runtime_state);
         }
     }
 }
