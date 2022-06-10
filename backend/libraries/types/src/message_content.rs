@@ -12,10 +12,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
-const E8S_PER_ICP: u64 = 100_000_000;
+const E8S_PER_TOKEN: u64 = 100_000_000;
 pub const MAX_TEXT_LENGTH: u32 = 5_000;
 pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
-pub const ICP_TRANSFER_LIMIT: Tokens = Tokens::from_e8s(10 * E8S_PER_ICP);
+pub const ICP_TRANSFER_LIMIT: Tokens = Tokens::from_e8s(10 * E8S_PER_TOKEN);
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContent {
