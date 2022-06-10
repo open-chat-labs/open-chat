@@ -11,7 +11,6 @@ pub struct Message {
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
     pub edited: bool,
-    #[serde(default)]
     pub forwarded: bool,
 }
 

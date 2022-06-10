@@ -6,7 +6,7 @@ use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use ic_ledger_types::{AccountIdentifier, MAINNET_LEDGER_CANISTER_ID};
+use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -122,32 +122,19 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
     pub callback_canister_id: CanisterId,
-    #[serde(default = "ledger_canister_id")]
     pub ledger_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
-    #[serde(default)]
     pub username: String,
     pub bio: String,
     #[serde(skip_deserializing)]
     pub cached_group_summaries: Option<CachedGroupSummaries>,
-    #[serde(default = "group_creation_limit")]
     pub group_creation_limit: u32,
-    #[serde(default)]
     pub storage_limit: u64,
-    #[serde(default)]
     pub phone_is_verified: bool,
-}
-
-fn ledger_canister_id() -> CanisterId {
-    MAINNET_LEDGER_CANISTER_ID
-}
-
-fn group_creation_limit() -> u32 {
-    BASIC_GROUP_CREATION_LIMIT
 }
 
 impl Data {
