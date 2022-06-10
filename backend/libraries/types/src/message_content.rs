@@ -56,7 +56,7 @@ pub enum ContentValidationError {
 }
 
 impl MessageContent {
-    pub fn transform_to_new_crypto_type(&mut self) {
+    pub fn transform_pending_message_to_new_crypto_type(&mut self) {
         if let MessageContent::CryptocurrencyV2(c) = &self {
             let new_format = match c.transfer.clone() {
                 CryptocurrencyTransfer::Pending(t) => CryptoTransaction::Pending(PendingCryptoTransaction {
