@@ -6,7 +6,7 @@ use std::{
 };
 use types::{UserEvent, UserId};
 
-const MAX_USERS_PER_BATCH: usize = 5;
+const MAX_USERS_PER_BATCH: usize = 1;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserEventSyncQueue {
