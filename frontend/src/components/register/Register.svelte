@@ -8,7 +8,7 @@
     import EnterUsername from "./EnterUsername.svelte";
     import type { RegisterController } from "../../fsm/register.controller";
     import type { IdentityController } from "../../fsm/identity.controller";
-    import type { ChallengeAttempt } from "domain/user/user";
+    import type { ChallengeAttempt } from "../../domain/user/user";
 
     export let controller: RegisterController;
     export let identityController: IdentityController;

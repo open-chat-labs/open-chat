@@ -532,5 +532,6 @@
     "forward": "Nach vorne",
     "referralHeader": "Freunde/Familie einladen",
     "userReferralMessage": "Teilen Sie diesen Link zu OpenChat mit Freunden und Familie. Für jede Person, die sich mit Ihrem Link registriert und ein verifizierter Benutzer wird, erhalten Sie eine Belohnung in Form von CHAT-Token (wird in den kommenden Wochen bestätigt). Sie können den Link jetzt teilen und wir vergeben nachträglich CHAT-Token, sobald sie verfügbar sind.",
-    "userInfoHeader": "Öffentlichkeit"
+    "userInfoHeader": "Öffentlichkeit",
+    "noChatsAvailable": "Keine Chats verfügbar!"
 }

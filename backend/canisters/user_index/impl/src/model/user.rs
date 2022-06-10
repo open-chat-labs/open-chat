@@ -19,7 +19,6 @@ pub struct User {
     pub account_billing: AccountBilling,
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
-    #[serde(default)]
     pub referred_by: Option<UserId>,
 }
 

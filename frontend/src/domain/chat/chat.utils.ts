@@ -1472,10 +1472,10 @@ export function addEditedSuffix(txt: string | undefined, edited: boolean): strin
 }
 
 export function canForward(content: MessageContent): boolean {
-    return process.env.ENABLE_FORWARDING
-        ? content.kind !== "crypto_content" &&
-              content.kind !== "poll_content" &&
-              content.kind !== "deleted_content" &&
-              content.kind !== "placeholder_content"
-        : false;
+    return (
+        content.kind !== "crypto_content" &&
+        content.kind !== "poll_content" &&
+        content.kind !== "deleted_content" &&
+        content.kind !== "placeholder_content"
+    );
 }
