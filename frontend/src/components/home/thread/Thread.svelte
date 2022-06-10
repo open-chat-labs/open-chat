@@ -273,10 +273,6 @@
         };
     }
 
-    function searchChat() {
-        console.log("searchChat");
-    }
-
     function createPoll() {
         if (!canCreatePolls($chat)) return;
 
@@ -408,7 +404,6 @@
     on:sendMessage={sendMessage}
     on:attachGif={attachGif}
     on:tokenTransfer={tokenTransfer}
-    on:searchChat={searchChat}
     on:createPoll={createPoll} />
 
 <style type="text/scss">
