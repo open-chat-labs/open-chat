@@ -9,7 +9,6 @@ pub struct Args {
     pub sender_name: String,
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
-    #[serde(default)]
     pub forwarding: bool,
 }
 

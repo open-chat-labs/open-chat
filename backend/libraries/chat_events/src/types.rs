@@ -199,7 +199,6 @@ pub struct MessageInternal {
     pub last_updated: Option<TimestampMillis>,
     pub last_edited: Option<TimestampMillis>,
     pub deleted_by: Option<DeletedBy>,
-    #[serde(default)]
     pub forwarded: bool,
 }
 

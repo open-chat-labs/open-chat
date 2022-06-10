@@ -9,7 +9,6 @@ pub struct Args {
     pub sender_name: String,
     pub content: MessageContent,
     pub replies_to_v2: Option<C2CReplyContext>,
-    #[serde(default)]
     pub forwarding: bool,
 }
 

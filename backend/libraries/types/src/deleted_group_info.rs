@@ -7,8 +7,6 @@ pub struct DeletedGroupInfo {
     pub id: ChatId,
     pub timestamp: TimestampMillis,
     pub deleted_by: UserId,
-    #[serde(default)]
     pub group_name: String,
-    #[serde(default)]
     pub public: bool,
 }
