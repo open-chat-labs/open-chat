@@ -62,6 +62,7 @@ pub(crate) fn send_removed_from_group_message(
     send_text_message(text, runtime_state);
 }
 
+#[allow(dead_code)]
 pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirmed, runtime_state: &mut RuntimeState) {
     let storage_added = to_gb(event.storage_added);
     let new_group_limit = PREMIUM_GROUP_CREATION_LIMIT.to_string();
@@ -71,6 +72,7 @@ pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirm
     send_text_message(text, runtime_state);
 }
 
+#[allow(dead_code)]
 pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, runtime_state: &mut RuntimeState) {
     let amount_paid = to_tokens(event.cost.amount);
     let token = event.cost.token.token_symbol();
@@ -88,11 +90,13 @@ pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, runtime_
     send_text_message(text, runtime_state);
 }
 
+#[allow(dead_code)]
 fn to_gb(bytes: u64) -> String {
     const BYTES_PER_1GB: u64 = 1024 * 1024 * 1024;
     format_to_decimal_places(bytes as f64 / BYTES_PER_1GB as f64, 2)
 }
 
+#[allow(dead_code)]
 fn to_tokens(tokens: Tokens) -> String {
     const E8S_PER_TOKEN: u64 = 100_000_000;
     format_to_decimal_places(tokens.e8s() as f64 / E8S_PER_TOKEN as f64, 8)
