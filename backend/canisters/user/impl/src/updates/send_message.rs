@@ -7,7 +7,10 @@ use canister_tracing_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContent, UserId};
+use types::{
+    CanisterId, CompletedCryptoTransaction, CompletedCryptocurrencyTransfer, ContentValidationError, CryptoAccount,
+    CryptocurrencyTransfer, MessageContent, PendingCryptoTransaction, UserId,
+};
 use user_canister::c2c_send_message::{self, C2CReplyContext};
 use user_canister::send_message::{Response::*, *};
 
@@ -18,8 +21,6 @@ use user_canister::send_message::{Response::*, *};
 async fn send_message(mut args: Args) -> Response {
     run_regular_jobs();
 
-    args.content.transform_to_new_crypto_type();
-
     if let Err(response) = read_state(|state| validate_request(&args, state)) {
         return response;
     }
@@ -27,14 +28,29 @@ async fn send_message(mut args: Args) -> Response {
     let mut completed_transfer = None;
     // If the message includes a pending cryptocurrency transfer, we process that and then update
     // the message to contain the completed transfer.
-    if let MessageContent::Cryptocurrency(c) = &mut args.content {
+    if let MessageContent::CryptocurrencyV2(c) = &mut args.content {
         let pending_transaction = match &c.transfer {
-            CryptoTransaction::Pending(t) => t.clone(),
+            CryptocurrencyTransfer::Pending(t) => PendingCryptoTransaction {
+                token: t.token,
+                amount: t.amount,
+                to: CryptoAccount::User(t.recipient),
+                fee: t.fee,
+                memo: t.memo,
+            },
             _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
         };
         completed_transfer = match process_transaction(pending_transaction).await {
             Ok(completed) => {
-                c.transfer = CryptoTransaction::Completed(completed.clone());
+                c.transfer = CryptocurrencyTransfer::Completed(CompletedCryptocurrencyTransfer {
+                    token: completed.token,
+                    sender: completed.from.user_id().unwrap(),
+                    recipient: completed.to.user_id().unwrap(),
+                    amount: completed.amount,
+                    fee: completed.fee,
+                    memo: completed.memo,
+                    block_index: completed.block_index,
+                    transaction_hash: completed.transaction_hash,
+                });
                 Some(completed)
             }
             Err(failed) => return TransferFailed(failed.error_message),

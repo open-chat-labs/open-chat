@@ -72,6 +72,16 @@ pub enum CryptoAccountFull {
     Unknown(AccountIdentifier),
 }
 
+impl CryptoAccountFull {
+    pub fn user_id(&self) -> Option<UserId> {
+        if let CryptoAccountFull::User(user_id, _) = self {
+            Some(*user_id)
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CryptoAccount {
     Mint,
