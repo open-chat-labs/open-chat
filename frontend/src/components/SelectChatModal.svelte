@@ -17,9 +17,9 @@
 
     export let chatsSummaries: ChatSummary[];
 
-    $: chats = chatsSummaries.map((c) => normaliseChatSummary($now, c));
-
     const dispatch = createEventDispatcher();
+
+    $: chats = chatsSummaries.map((c) => normaliseChatSummary($now, c));
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
@@ -72,19 +72,23 @@
             </HoverIcon>
         </span>
     </SectionHeader>
-    <div class="body">
-        {#each chats as chat}
-            <div class="row" class:rtl={$rtlStore} on:click={() => selectChat(chat.id)}>
-                <div class="avatar">
-                    <Avatar url={chat.avatarUrl} size={AvatarSize.Small} />
+    {#if chats.length === 0}
+        <div class="no-chats">{$_("noChatsAvailable")}</div>
+    {:else}
+        <div class="body">
+            {#each chats as chat}
+                <div class="row" class:rtl={$rtlStore} on:click={() => selectChat(chat.id)}>
+                    <div class="avatar">
+                        <Avatar url={chat.avatarUrl} size={AvatarSize.Small} />
+                    </div>
+                    <div class="details">
+                        <div class="name">{chat.name}</div>
+                        <div class="description">{chat.description}</div>
+                    </div>
                 </div>
-                <div class="details">
-                    <div class="name">{chat.name}</div>
-                    <div class="description">{chat.description}</div>
-                </div>
-            </div>
-        {/each}
-    </div>
+            {/each}
+        </div>
+    {/if}
 </Panel>
 
 <style type="text/scss">
@@ -92,6 +96,14 @@
         flex: 1;
         margin: 0;
         margin-top: 2px;
+    }
+
+    .no-chats {
+        margin: $sp3;
+        padding: $sp3 $sp4;
+        background-color: var(--chatSummary-bg);
+        @include font(bold, normal, fs-100);
+        color: var(--error);
     }
 
     .close {
