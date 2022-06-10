@@ -16,6 +16,10 @@ pub struct UserEventSyncQueue {
 }
 
 impl UserEventSyncQueue {
+    pub fn len(&self) -> usize {
+        self.queue.len()
+    }
+
     pub fn push(&mut self, user_id: UserId, event: UserEvent) {
         match self.user_events.entry(user_id) {
             Vacant(e) => {

@@ -20,9 +20,6 @@ fn post_upgrade(args: Args) {
 
     data.users.rehydrate();
 
-    // TODO: Remove this once it has run for the first time
-    data.patch_user_events_for_existing_users();
-
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);
 
