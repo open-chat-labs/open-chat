@@ -30,6 +30,12 @@
     $: identityState = controller.state;
 
     onMount(() => {
+        const referredBy = new URLSearchParams(window.location.search).get("ref") ?? undefined;
+        if (referredBy !== undefined) {
+            controller.setReferredBy(referredBy);
+            history.replaceState(null, "", "/#/");
+        }
+
         if (mobileOperatingSystem === "iOS") {
             viewPortContent += ", maximum-scale=1";
         }
