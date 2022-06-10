@@ -63,6 +63,7 @@ import { UnsupportedValueError } from "../../utils/error";
 import {
     apiMessageIndexRanges,
     completedCryptoTransfer,
+    completedCryptoTransferOld,
     groupPermissions,
     message,
     messageContent,
@@ -310,7 +311,7 @@ export function transferWithinGroupResponse(
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(candid.Success.transfer),
+            transfer: completedCryptoTransferOld(candid.Success.transfer),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -361,13 +362,22 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             eventIndex: candid.Success.event_index,
         };
     }
+    if ("TransferSuccess" in candid) {
+        return {
+            kind: "transfer_success",
+            timestamp: candid.TransferSuccess.timestamp,
+            messageIndex: candid.TransferSuccess.message_index,
+            eventIndex: candid.TransferSuccess.event_index,
+            transfer: completedCryptoTransfer(candid.TransferSuccess.transfer),
+        };
+    }
     if ("TransferSuccessV2" in candid) {
         return {
             kind: "transfer_success",
             timestamp: candid.TransferSuccessV2.timestamp,
             messageIndex: candid.TransferSuccessV2.message_index,
             eventIndex: candid.TransferSuccessV2.event_index,
-            transfer: completedCryptoTransfer(candid.TransferSuccessV2.transfer),
+            transfer: completedCryptoTransferOld(candid.TransferSuccessV2.transfer),
         };
     }
     if ("TransferCannotBeZero" in candid) {
