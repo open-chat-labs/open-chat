@@ -28,6 +28,7 @@ export class IdentityController {
     public homeController?: HomeController;
     private _user?: User;
     private markOnlinePoller: Poller | undefined;
+    private _referredBy: string | undefined = undefined;
 
     constructor() {
         getIdentity().then((id) => this.loadedIdentity(id));
@@ -55,7 +56,7 @@ export class IdentityController {
                         this._api!,
                         user,
                         (registeredUser) => this.onCreatedUser(id, registeredUser),
-                        new URLSearchParams(window.location.search).get("ref") ?? undefined
+                        this._referredBy
                     );
                     break;
                 case "created_user":
@@ -118,5 +119,9 @@ export class IdentityController {
 
     public acknowledgeExpiry(): void {
         this.login();
+    }
+
+    public setReferredBy(referredBy: string): void {
+        this._referredBy = referredBy;
     }
 }
