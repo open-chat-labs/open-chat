@@ -111,6 +111,8 @@
     }
 
     .body {
+        overflow: auto;
+        @include nice-scrollbar();
         @include mobile() {
             width: 100%;
         }
