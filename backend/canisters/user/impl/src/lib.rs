@@ -29,8 +29,8 @@ mod queries;
 mod regular_jobs;
 mod updates;
 
-const BASIC_GROUP_CREATION_LIMIT: u32 = 10;
-const PREMIUM_GROUP_CREATION_LIMIT: u32 = 25;
+pub const BASIC_GROUP_CREATION_LIMIT: u32 = 10;
+pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 25;
 
 thread_local! {
     static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
@@ -129,13 +129,15 @@ struct Data {
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,
     pub recommended_group_exclusions: RecommendedGroupExclusions,
+    #[serde(default)]
+    pub username: String,
     pub bio: String,
     #[serde(skip_deserializing)]
     pub cached_group_summaries: Option<CachedGroupSummaries>,
     #[serde(default = "group_creation_limit")]
     pub group_creation_limit: u32,
     #[serde(default)]
-    pub paid_storage_limit: u64,
+    pub storage_limit: u64,
     #[serde(default)]
     pub phone_is_verified: bool,
 }
@@ -149,6 +151,7 @@ fn group_creation_limit() -> u32 {
 }
 
 impl Data {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         owner: Principal,
         user_index_canister_id: CanisterId,
@@ -156,6 +159,7 @@ impl Data {
         notifications_canister_ids: Vec<CanisterId>,
         callback_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
+        username: String,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -173,10 +177,11 @@ impl Data {
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             is_super_admin: false,
             recommended_group_exclusions: RecommendedGroupExclusions::default(),
+            username,
             bio: "".to_string(),
             cached_group_summaries: None,
             group_creation_limit: BASIC_GROUP_CREATION_LIMIT,
-            paid_storage_limit: 0,
+            storage_limit: 0,
             phone_is_verified: false,
         }
     }
@@ -191,16 +196,6 @@ impl Data {
         } else {
             None
         }
-    }
-
-    pub fn set_user_verified(&mut self) {
-        self.phone_is_verified = true;
-        self.group_creation_limit = PREMIUM_GROUP_CREATION_LIMIT;
-    }
-
-    pub fn set_paid_storage(&mut self, storage_limit: u64) {
-        self.paid_storage_limit = storage_limit;
-        self.group_creation_limit = PREMIUM_GROUP_CREATION_LIMIT;
     }
 }
 

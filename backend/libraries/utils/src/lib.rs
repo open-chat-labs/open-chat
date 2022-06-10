@@ -4,6 +4,7 @@ pub mod consts;
 pub mod cycles;
 pub mod env;
 pub mod event_stream;
+pub mod format;
 pub mod iterator_extensions;
 pub mod memory;
 pub mod rand;

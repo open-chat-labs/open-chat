@@ -5,7 +5,7 @@ use crate::model::user_map::UserMap;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
+use model::user_event_sync_queue::UserEventSyncQueue;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
@@ -105,6 +105,7 @@ impl RuntimeState {
             super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
             user_wasm_version: self.data.user_canister_wasm.version,
             inflight_challenges: self.data.challenges.count(),
+            user_events_queue_length: self.data.user_event_sync_queue.len(),
         }
     }
 }
@@ -125,17 +126,13 @@ struct Data {
     pub callback_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
-    #[serde(default = "ledger_canister_id")]
+    pub user_event_sync_queue: UserEventSyncQueue,
     pub ledger_canister_id: CanisterId,
     pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub super_admins: HashSet<UserId>,
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
     pub challenges: Challenges,
-}
-
-fn ledger_canister_id() -> CanisterId {
-    MAINNET_LEDGER_CANISTER_ID
 }
 
 impl Data {
@@ -168,6 +165,7 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id,
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            user_event_sync_queue: UserEventSyncQueue::default(),
             ledger_canister_id,
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
@@ -196,6 +194,7 @@ impl Default for Data {
             total_cycles_spent_on_canisters: 0,
             open_storage_index_canister_id: Principal::anonymous(),
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            user_event_sync_queue: UserEventSyncQueue::default(),
             ledger_canister_id: Principal::anonymous(),
             failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             super_admins: HashSet::new(),
@@ -228,4 +227,5 @@ pub struct Metrics {
     pub super_admins: u8,
     pub super_admins_to_dismiss: u32,
     pub inflight_challenges: u32,
+    pub user_events_queue_length: usize,
 }

@@ -17,6 +17,7 @@ fn heartbeat() {
     topup_canister_pool::run();
     retry_failed_messages::run();
     sync_users_to_open_storage::run();
+    sync_events_to_user_canisters::run();
     calculate_metrics::run();
     dismiss_removed_super_admins::run();
     prune_unconfirmed_phone_numbers::run();
@@ -240,6 +241,40 @@ mod sync_users_to_open_storage {
 
     fn on_failure(users: Vec<UserConfig>, runtime_state: &mut RuntimeState) {
         runtime_state.data.open_storage_user_sync_queue.mark_sync_failed(users);
+    }
+}
+
+mod sync_events_to_user_canisters {
+    use types::UserEvent;
+
+    use super::*;
+
+    pub fn run() {
+        if let Some(users_events) = mutate_state(next_batch) {
+            for (user_id, events) in users_events {
+                ic_cdk::spawn(sync_events(user_id, events));
+            }
+        }
+    }
+
+    fn next_batch(runtime_state: &mut RuntimeState) -> Option<Vec<(UserId, Vec<UserEvent>)>> {
+        runtime_state.data.user_event_sync_queue.try_start_sync()
+    }
+
+    async fn sync_events(user_id: UserId, events: Vec<UserEvent>) {
+        let args = user_canister::c2c_notify_user_events::Args { events: events.clone() };
+        match user_canister_c2c_client::c2c_notify_user_events(user_id.into(), &args).await {
+            Ok(_) => mutate_state(on_success),
+            Err(_) => mutate_state(|state| on_failure(user_id, events, state)),
+        }
+    }
+
+    fn on_success(runtime_state: &mut RuntimeState) {
+        runtime_state.data.user_event_sync_queue.mark_sync_completed();
+    }
+
+    fn on_failure(user_id: UserId, events: Vec<UserEvent>, runtime_state: &mut RuntimeState) {
+        runtime_state.data.user_event_sync_queue.mark_sync_failed(user_id, events);
     }
 }
 

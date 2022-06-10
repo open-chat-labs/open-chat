@@ -110,6 +110,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
         callback_canister_id: runtime_state.data.callback_canister_id,
         ledger_canister_id: runtime_state.data.ledger_canister_id,
         wasm_version: canister_wasm.version,
+        username: args.username.clone(),
         test_mode: runtime_state.data.test_mode,
     };
 
