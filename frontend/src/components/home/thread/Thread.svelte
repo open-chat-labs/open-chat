@@ -100,6 +100,8 @@
     }
 
     // todo - lots of duplication here with chatController.editEvent
+    // todo - there is a problem when editing the root message of a thread (in either middle or thread panel)
+    // the edit needs to also be reflected in the other window - maybe this will just work when the update loop stuff is done
     function editEvent(ev: EventWrapper<Message>): void {
         draftThreadMessages.setEditingEvent(messageIndex, ev);
         draftThreadMessages.setAttachment(
@@ -341,6 +343,7 @@
     user={controller.user}
     joining={undefined}
     preview={false}
+    mode={"thread"}
     {blocked}
     on:joinGroup
     on:cancelPreview

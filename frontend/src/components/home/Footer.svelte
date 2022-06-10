@@ -33,6 +33,7 @@
     export let participants: Participant[];
     export let blockedUsers: Set<string>;
     export let user: UserSummary;
+    export let mode: "thread" | "message" = "message";
 
     const dispatch = createEventDispatcher();
 
@@ -79,6 +80,10 @@
             e.preventDefault();
         }
     }
+
+    function emojiSelected(ev: CustomEvent<string>) {
+        messageEntry?.insertTextAtCaret(ev.detail);
+    }
 </script>
 
 <div class="footer">
@@ -104,7 +109,7 @@
             {#await import("./EmojiPicker.svelte")}
                 <div class="loading-emoji"><Loading /></div>
             {:then picker}
-                <svelte:component this={picker.default} />
+                <svelte:component this={picker.default} {mode} on:emojiSelected={emojiSelected} />
             {:catch _error}
                 <Reload>{$_("unableToLoadEmojiPicker")}</Reload>
             {/await}

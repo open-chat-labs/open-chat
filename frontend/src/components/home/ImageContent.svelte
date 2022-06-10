@@ -219,6 +219,7 @@
             max-width: none;
             max-height: calc(var(--vh, 1vh) * 50);
             width: auto;
+            width: -webkit-fill-available;
             height: 100%;
         }
 

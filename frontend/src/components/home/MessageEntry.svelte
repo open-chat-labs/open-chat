@@ -4,7 +4,6 @@
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
-    import { emojiStore } from "../../stores/emoji";
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
@@ -72,8 +71,6 @@
 
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
 
-    $: console.log("Text content: ", textContent);
-
     $: {
         if (editingEvent && !initialisedEdit) {
             if (editingEvent.event.content.kind === "text_content") {
@@ -113,18 +110,6 @@
         if ($screenWidth === ScreenWidth.Large) {
             console.log("attempting to focus 2");
             inp?.focus();
-        }
-    }
-
-    $: {
-        if ($emojiStore !== undefined) {
-            if (inp) {
-                restoreSelection();
-                document.execCommand("insertText", false, $emojiStore);
-                messageIsEmpty = false;
-                saveSelection();
-                emojiStore.set(undefined);
-            }
         }
     }
 

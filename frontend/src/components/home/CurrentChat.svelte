@@ -412,6 +412,7 @@
             participants={$participants}
             blockedUsers={$blockedUsers}
             user={controller.user}
+            mode={"message"}
             {joining}
             {preview}
             {blocked}
