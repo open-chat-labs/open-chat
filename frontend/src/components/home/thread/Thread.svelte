@@ -22,6 +22,7 @@
     import { unconfirmed } from "../../../stores/unconfirmed";
     import {
         canBlockUsers,
+        canCreatePolls,
         canDeleteOtherUsersMessages,
         canPinMessages,
         canReactToMessages,
@@ -36,6 +37,8 @@
     import { derived, readable } from "svelte/store";
     import { draftThreadMessages } from "../../../stores/draftThreadMessages";
     import { remainingStorage } from "../../../stores/storage";
+    import PollBuilder from "../PollBuilder.svelte";
+    import GiphySelector from "../GiphySelector.svelte";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -45,6 +48,10 @@
     export let rootEvent: EventWrapper<Message>;
 
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
+    let pollBuilder: PollBuilder;
+    let giphySelector: GiphySelector;
+    let creatingPoll = false;
+    let selectingGif = false;
 
     $: chat = controller.chat;
     $: messageIndex = rootEvent.event.messageIndex;
@@ -125,13 +132,16 @@
         return 0;
     }
 
-    function newMessage(): Message {
+    function newMessage(
+        textContent: string | undefined,
+        fileToAttach: MessageContent | undefined
+    ): Message {
         return createMessage(
             currentUser.userId,
             getNextMessageIndex(),
-            $textContent,
+            textContent,
             $replyingTo,
-            $fileToAttach
+            fileToAttach
         );
     }
 
@@ -141,6 +151,7 @@
         fileToAttach: MessageContent | undefined
     ) {
         if (!canSend) return;
+
         if (textContent || fileToAttach) {
             const storageRequired = getStorageRequiredForMessage(fileToAttach);
             if ($remainingStorage < storageRequired) {
@@ -148,7 +159,7 @@
                 return;
             }
 
-            const msg = newMessage();
+            const msg = newMessage(textContent, fileToAttach);
 
             // we don't have an api for this yet so let's just write the message to the thread store
             const nextEventIndex = getNextEventIndex($threadStore, messageIndex);
@@ -251,10 +262,6 @@
         draftThreadMessages.setAttachment(messageIndex, ev.detail);
     }
 
-    function attachGif() {
-        console.log("attachGif");
-    }
-
     function tokenTransfer() {
         console.log("tokenTransfer");
     }
@@ -264,9 +271,35 @@
     }
 
     function createPoll() {
-        console.log("createPoll");
+        if (!canCreatePolls($chat)) return;
+
+        if (pollBuilder !== undefined) {
+            pollBuilder.resetPoll();
+        }
+        creatingPoll = true;
+    }
+
+    function attachGif(ev: CustomEvent<string>) {
+        selectingGif = true;
+        if (giphySelector !== undefined) {
+            giphySelector.reset(ev.detail);
+        }
+    }
+
+    function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
+        sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
     }
 </script>
+
+<PollBuilder
+    bind:this={pollBuilder}
+    on:sendPoll={sendMessageWithContent}
+    bind:open={creatingPoll} />
+
+<GiphySelector
+    bind:this={giphySelector}
+    bind:open={selectingGif}
+    on:sendGiphy={sendMessageWithContent} />
 
 <SectionHeader flush={true} shadow={true}>
     <h4>{$_("thread.title")}</h4>
