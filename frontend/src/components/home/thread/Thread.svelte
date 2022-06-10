@@ -39,6 +39,9 @@
     import { remainingStorage } from "../../../stores/storage";
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
+    import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
+    import type { Cryptocurrency } from "domain/crypto";
+    import { lastCryptoSent } from "stores/crypto";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -51,6 +54,7 @@
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
     let creatingPoll = false;
+    let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
     let selectingGif = false;
 
     $: chat = controller.chat;
@@ -262,8 +266,11 @@
         draftThreadMessages.setAttachment(messageIndex, ev.detail);
     }
 
-    function tokenTransfer() {
-        console.log("tokenTransfer");
+    function tokenTransfer(ev: CustomEvent<{ token: Cryptocurrency; amount: bigint } | undefined>) {
+        creatingCryptoTransfer = ev.detail ?? {
+            token: $lastCryptoSent,
+            amount: BigInt(0),
+        };
     }
 
     function searchChat() {
@@ -300,6 +307,15 @@
     bind:this={giphySelector}
     bind:open={selectingGif}
     on:sendGiphy={sendMessageWithContent} />
+
+{#if creatingCryptoTransfer !== undefined}
+    <CryptoTransferBuilder
+        token={creatingCryptoTransfer.token}
+        draftAmountE8s={creatingCryptoTransfer.amount}
+        on:sendTransfer={sendMessageWithContent}
+        on:close={() => (creatingCryptoTransfer = undefined)}
+        {controller} />
+{/if}
 
 <SectionHeader flush={true} shadow={true}>
     <h4>{$_("thread.title")}</h4>
