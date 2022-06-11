@@ -55,7 +55,8 @@
                                   },
                               }),
                     },
-                })}&#8594;</span>
+                })}
+                <div class:selected class="arrow">&#8595;</div></span>
         </div>
     </div>
 </div>
@@ -78,6 +79,16 @@
             @include mobile() {
                 margin-left: $avatar-width-mob;
             }
+        }
+    }
+
+    .arrow {
+        transition: transform 200ms ease-in-out;
+        display: inline-block;
+        transform-origin: 50% 50%;
+
+        &.selected {
+            transform: rotate(-90deg);
         }
     }
 
