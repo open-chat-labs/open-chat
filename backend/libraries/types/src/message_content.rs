@@ -123,7 +123,7 @@ impl MessageContent {
             MessageContent::Audio(a) => a.blob_reference.is_none(),
             MessageContent::File(f) => f.blob_reference.is_none(),
             MessageContent::Poll(p) => p.config.options.is_empty(),
-            MessageContent::Cryptocurrency(_) => unreachable!(),
+            MessageContent::Cryptocurrency(c) => c.transfer.amount() == Tokens::ZERO,
             MessageContent::CryptocurrencyV2(c) => c.transfer.amount() == Tokens::ZERO,
             MessageContent::Deleted(_) => true,
             MessageContent::Giphy(_) => false,
