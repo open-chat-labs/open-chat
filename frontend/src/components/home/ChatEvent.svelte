@@ -47,7 +47,7 @@
         dispatch("editEvent", event as EventWrapper<Message>);
     }
 
-    function replyInThread(ev: CustomEvent<ThreadSummary>) {
+    function replyInThread(ev: CustomEvent<Message>) {
         dispatch("replyInThread", { rootEvent: event, threadSummary: ev.detail });
     }
 </script>

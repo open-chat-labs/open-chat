@@ -9,7 +9,7 @@
         MessageContent,
         ThreadSummary,
     } from "../../../domain/chat/chat";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import { formatMessageDate } from "../../../utils/date";
@@ -33,7 +33,7 @@
         groupEvents,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
-    import { getNextEventIndex, threadStore } from "../../../stores/thread";
+    import { getNextEventIndex, threadStore, threadSummaryStore } from "../../../stores/thread";
     import { derived, readable } from "svelte/store";
     import { draftThreadMessages } from "../../../stores/draftThreadMessages";
     import { remainingStorage } from "../../../stores/storage";
@@ -57,6 +57,14 @@
     let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
     let selectingGif = false;
 
+    onMount(() => {
+        // todo this can't just be done onMount but it'll do for now
+        // for now we fake load events and add them to the store (store must de-dupe and sort)
+        window.setTimeout(() => {
+            threadStore.addMessageToThread(rootEvent.event.messageIndex, rootEvent, rootEvent);
+        }, 500);
+    });
+
     $: chat = controller.chat;
     $: messageIndex = rootEvent.event.messageIndex;
     $: participants = controller.participants;
@@ -73,7 +81,7 @@
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
     $: canSend = canSendMessages($chat, $userStore);
     $: messages = groupEvents(
-        [rootEvent, ...($threadStore[rootEvent.event.messageIndex] ?? [])] ?? [rootEvent]
+        $threadStore[rootEvent.event.messageIndex] ?? []
     ).reverse() as EventWrapper<Message>[][][];
 
     const dispatch = createEventDispatcher();
@@ -168,7 +176,7 @@
             // we don't have an api for this yet so let's just write the message to the thread store
             const nextEventIndex = getNextEventIndex($threadStore, messageIndex);
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
-            threadStore.addMessageToThread(messageIndex, event);
+            threadStore.addMessageToThread(messageIndex, rootEvent, event);
 
             // api.sendMessage($chat, controller.user, mentioned, msg)
             //     .then((resp) => {

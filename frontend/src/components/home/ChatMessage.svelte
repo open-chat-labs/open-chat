@@ -30,7 +30,6 @@
     import Close from "svelte-material-icons/Close.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
-    import ChatProcessingOutline from "svelte-material-icons/ChatProcessingOutline.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
@@ -163,8 +162,9 @@
         dispatch("replyTo", createReplyContext());
     }
 
-    function replyInThread(threadId: string) {
-        dispatch("replyInThread", threadId);
+    // this is called if we are starting a new thread so we pass undefined as the threadSummary param
+    function replyInThread() {
+        dispatch("replyInThread", undefined);
     }
 
     function forward() {
@@ -543,11 +543,8 @@
                                             slot="icon" />
                                         <div slot="text">{$_("reply")}</div>
                                     </MenuItem>
-                                    <MenuItem on:click={() => console.log("reply in thread")}>
-                                        <ChatProcessingOutline
-                                            size={$iconSize}
-                                            color={"var(--icon-txt)"}
-                                            slot="icon" />
+                                    <MenuItem on:click={replyInThread}>
+                                        <span class="thread" slot="icon">🧵</span>
                                         <div slot="text">{$_("thread.menu")}</div>
                                     </MenuItem>
                                 {/if}
@@ -709,6 +706,10 @@
 
     :global(.actions .reaction .wrapper) {
         padding: 6px;
+    }
+
+    .thread {
+        @include font(bold, normal, fs-110);
     }
 
     .message-wrapper {

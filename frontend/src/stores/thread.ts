@@ -1,4 +1,5 @@
 import { writable } from "svelte/store";
+import { dedupe } from "../utils/list";
 import type { EventWrapper, Message, ThreadSummary } from "../domain/chat/chat";
 
 /**
@@ -9,10 +10,10 @@ import type { EventWrapper, Message, ThreadSummary } from "../domain/chat/chat";
 type ThreadLookup = Record<number, EventWrapper<Message>[]>;
 
 // messageIndex -> ThreadSummary for fake threads
-type ThreadSummaryLookup = Record<number, ThreadSummary>;
+export type ThreadSummaryLookup = Record<number, ThreadSummary>;
 
 // todo this needs to be per chat! but let's work out whether this is going to be permanent first
-export const threadSummaryStore = writable<ThreadSummaryLookup>({
+const internalThreadSummaryStore = writable<ThreadSummaryLookup>({
     54: {
         participantIds: new Set([
             "sbzkb-zqaaa-aaaaa-aaaiq-cai",
@@ -38,18 +39,67 @@ export const threadSummaryStore = writable<ThreadSummaryLookup>({
     },
 });
 
+export const threadSummaryStore = {
+    subscribe: internalThreadSummaryStore.subscribe,
+    addMessageToThread: (rootEvt: EventWrapper<Message>, evt: EventWrapper<Message>): void => {
+        internalThreadSummaryStore.update((lookup) => {
+            const summary = lookup[rootEvt.event.messageIndex];
+            return summary
+                ? {
+                      ...lookup,
+                      [rootEvt.event.messageIndex]: {
+                          ...summary,
+                          participantIds: summary.participantIds.add(evt.event.sender),
+                          numberOfReplies: summary.numberOfReplies + 1,
+                          latestEventIndex: evt.index,
+                          latestEventTimestamp: evt.timestamp,
+                      },
+                  }
+                : lookup;
+        });
+    },
+    createThread: (ev: EventWrapper<Message>): void => {
+        internalThreadSummaryStore.update((lookup) => {
+            const summary = lookup[ev.event.messageIndex] ?? {
+                participantIds: new Set<string>([ev.event.sender]),
+                numberOfReplies: 0,
+                latestEventIndex: -1,
+                latestEventTimestamp: BigInt(0),
+            };
+            return {
+                ...lookup,
+                [ev.event.messageIndex]: summary,
+            };
+        });
+    },
+};
+
 const { subscribe, set, update } = writable<ThreadLookup>({});
 
 export const threadStore = {
     subscribe,
     set,
-    addMessageToThread: (messageIndex: number, evt: EventWrapper<Message>): void => {
+    addMessageToThread: (
+        messageIndex: number,
+        rootEvt: EventWrapper<Message>,
+        evt: EventWrapper<Message>
+    ): void => {
         update((store) => {
-            if (store[messageIndex] === undefined) {
-                store[messageIndex] = [];
+            let evts = store[messageIndex] ?? [];
+            evts.push(evt);
+            evts = dedupe(
+                (a, b) => a.index === b.index,
+                evts.sort((a, b) => a.index - b.index)
+            );
+            if (evt !== rootEvt) {
+                // we are adding a new message to the root of the thread so we should create a thread summary
+                threadSummaryStore.createThread(rootEvt);
+                threadSummaryStore.addMessageToThread(rootEvt, evt);
             }
-            store[messageIndex].push(evt);
-            return store;
+            return {
+                ...store,
+                [messageIndex]: evts,
+            };
         });
     },
     replaceMessageInThread: (messageIndex: number, evt: EventWrapper<Message>): void => {

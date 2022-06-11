@@ -490,6 +490,8 @@
     ) {
         controller.registerPollVote(ev.detail.messageIndex, ev.detail.answerIndex, ev.detail.type);
     }
+
+    $: console.log("Threads: ", $threadSummaryStore);
 </script>
 
 <div
