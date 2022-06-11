@@ -43,6 +43,7 @@
     export let textContent: string | undefined;
     export let participants: Participant[];
     export let blockedUsers: Set<string>;
+    export let mode: "thread" | "message" = "message";
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -463,6 +464,7 @@
             bind:this={messageActions}
             bind:messageAction
             {fileToAttach}
+            {mode}
             editing={editingEvent !== undefined}
             on:tokenTransfer
             on:attachGif

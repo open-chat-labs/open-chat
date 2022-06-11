@@ -120,6 +120,7 @@
         bind:messageAction
         on:paste={onPaste}
         on:drop={onDrop}
+        {mode}
         {canSend}
         {preview}
         {blocked}

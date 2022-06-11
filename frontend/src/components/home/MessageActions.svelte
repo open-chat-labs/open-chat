@@ -18,10 +18,11 @@
     export let messageAction: MessageAction = undefined;
     export let editing: boolean; // are we in edit mode - if so we must restrict what's available
     export let fileToAttach: MessageContent | undefined;
+    export let mode: "thread" | "message" = "message";
 
     let drawOpen = false;
 
-    $: useDrawer = $mobileWidth && !editing;
+    $: useDrawer = (mode == "thread" || $mobileWidth) && !editing;
     $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
 
     $: iconColour = editing ? "var(--button-txt)" : "var(--icon-txt)";
