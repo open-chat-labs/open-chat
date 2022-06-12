@@ -499,7 +499,7 @@
                         </div>
                         <div slot="menu">
                             <Menu>
-                                {#if publicGroup && confirmed}
+                                {#if publicGroup && confirmed && !inThread}
                                     {#if canShare()}
                                         <MenuItem on:click={shareMessage}>
                                             <ShareIcon
@@ -517,7 +517,7 @@
                                         <div slot="text">{$_("copyMessageUrl")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if confirmed && canPin}
+                                {#if confirmed && canPin && !inThread}
                                     {#if pinned}
                                         <MenuItem on:click={unpinMessage}>
                                             <PinOff
@@ -551,7 +551,7 @@
                                         </MenuItem>
                                     {/if}
                                 {/if}
-                                {#if canSend && canForward(msg.content)}
+                                {#if canSend && canForward(msg.content) && !inThread}
                                     <MenuItem on:click={forward}>
                                         <ForwardIcon
                                             size={$iconSize}
