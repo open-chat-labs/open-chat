@@ -29,11 +29,6 @@
     import { trackEvent } from "../../utils/tracking";
     import { threadSummaryStore } from "../../stores/thread";
 
-    // TODO - cannot use the threadStore like this because we are inside an immutable component and it does not react
-    // properly. Will either need to make this component not immutable (might be a relief) or we will have to pass the
-    // threadstore through (annoying). Not too worried at the moment since the threadstore is just a temporary thing
-    // anyway.
-
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -528,6 +523,7 @@
                         {canSend}
                         {canReact}
                         {canInvite}
+                        inThread={false}
                         threadSummary={evt.event.kind === "message"
                             ? $threadSummaryStore[Number(evt.event.messageIndex)]
                             : undefined}

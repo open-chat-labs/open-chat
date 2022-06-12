@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 import { dedupe } from "../utils/list";
-import type { EventWrapper, Message, ThreadSummary } from "../domain/chat/chat";
+import type { EventWrapper, Message, MessageContent, ThreadSummary } from "../domain/chat/chat";
 
 /**
  * This just holds some dummy state for us while we don't have an api
@@ -113,9 +113,38 @@ export const threadStore = {
             return store;
         });
     },
+    replaceMessageContent: (
+        rootMessageIndex: number,
+        messageIndex: number,
+        content: MessageContent
+    ): void => {
+        update((store) => {
+            if (store[rootMessageIndex] === undefined) {
+                return store;
+            }
+            store[rootMessageIndex] = store[rootMessageIndex].map((ev) =>
+                ev.event.messageIndex === messageIndex
+                    ? {
+                          ...ev,
+                          event: {
+                              ...ev.event,
+                              content,
+                          },
+                      }
+                    : ev
+            );
+            return store;
+        });
+    },
 };
 
-export function getNextEventIndex(lookup: ThreadLookup, messageIndex: number): number {
+export function getNextEventAndMessageIndexes(
+    lookup: ThreadLookup,
+    messageIndex: number
+): [number, number] {
     const evts = lookup[messageIndex] ?? [];
-    return (evts[evts.length - 1]?.index ?? 0) + 1;
+    return [
+        (evts[evts.length - 1]?.index ?? 0) + 1,
+        (evts[evts.length - 1]?.event?.messageIndex ?? 0) + 1,
+    ];
 }

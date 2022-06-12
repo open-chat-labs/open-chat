@@ -33,7 +33,11 @@
         groupEvents,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
-    import { getNextEventIndex, threadStore, threadSummaryStore } from "../../../stores/thread";
+    import {
+        getNextEventAndMessageIndexes,
+        threadStore,
+        threadSummaryStore,
+    } from "../../../stores/thread";
     import { derived, readable } from "svelte/store";
     import { draftThreadMessages } from "../../../stores/draftThreadMessages";
     import { remainingStorage } from "../../../stores/storage";
@@ -57,13 +61,13 @@
     let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
     let selectingGif = false;
 
-    onMount(() => {
-        // todo this can't just be done onMount but it'll do for now
-        // for now we fake load events and add them to the store (store must de-dupe and sort)
+    $: {
         window.setTimeout(() => {
+            // todo this annoyingly fires twice - sigh
+            console.log("adding root message to thread");
             threadStore.addMessageToThread(rootEvent.event.messageIndex, rootEvent, rootEvent);
         }, 500);
-    });
+    }
 
     $: chat = controller.chat;
     $: messageIndex = rootEvent.event.messageIndex;
@@ -139,18 +143,14 @@
         );
     }
 
-    function getNextMessageIndex() {
-        // TODO - sort this out
-        return 0;
-    }
-
     function newMessage(
         textContent: string | undefined,
-        fileToAttach: MessageContent | undefined
+        fileToAttach: MessageContent | undefined,
+        nextMessageIndex: number
     ): Message {
         return createMessage(
             currentUser.userId,
-            getNextMessageIndex(),
+            nextMessageIndex,
             textContent,
             $replyingTo,
             fileToAttach
@@ -171,10 +171,14 @@
                 return;
             }
 
-            const msg = newMessage(textContent, fileToAttach);
+            const [nextEventIndex, nextMessageIndex] = getNextEventAndMessageIndexes(
+                $threadStore,
+                messageIndex
+            );
+
+            const msg = newMessage(textContent, fileToAttach, nextMessageIndex);
 
             // we don't have an api for this yet so let's just write the message to the thread store
-            const nextEventIndex = getNextEventIndex($threadStore, messageIndex);
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
             threadStore.addMessageToThread(messageIndex, rootEvent, event);
 
@@ -300,6 +304,14 @@
     function sendMessageWithContent(ev: CustomEvent<[MessageContent, string | undefined]>) {
         sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
     }
+
+    function deleteMessage(ev: CustomEvent<Message>): void {
+        threadStore.replaceMessageContent(rootEvent.event.messageIndex, ev.detail.messageIndex, {
+            kind: "deleted_content",
+            deletedBy: currentUser.userId,
+            timestamp: BigInt(Date.now()),
+        });
+    }
 </script>
 
 <PollBuilder
@@ -352,6 +364,7 @@
                         first={true}
                         last={false}
                         preview={false}
+                        inThread={true}
                         pinned={$pinned.has(evt.event.messageIndex)}
                         canPin={canPinMessages($chat)}
                         canBlockUser={canBlockUsers($chat)}
@@ -368,7 +381,7 @@
                         on:replyTo
                         on:replyInThread
                         on:selectReaction
-                        on:deleteMessage
+                        on:deleteMessage={deleteMessage}
                         on:blockUser
                         on:pinMessage
                         on:unpinMessage

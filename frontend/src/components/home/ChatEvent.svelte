@@ -42,6 +42,7 @@
     export let editing: boolean;
     export let threadSummary: ThreadSummary | undefined;
     export let selectedThreadMessageIndex: number | undefined;
+    export let inThread: boolean;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
@@ -77,6 +78,7 @@
         {publicGroup}
         {editing}
         {threadSummary}
+        {inThread}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo

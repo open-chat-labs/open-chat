@@ -88,6 +88,7 @@
     export let editing: boolean;
     export let threadSummary: ThreadSummaryType | undefined;
     export let selectedThreadMessageIndex: number | undefined;
+    export let inThread: boolean;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
@@ -543,10 +544,12 @@
                                             slot="icon" />
                                         <div slot="text">{$_("reply")}</div>
                                     </MenuItem>
-                                    <MenuItem on:click={replyInThread}>
-                                        <span class="thread" slot="icon">🧵</span>
-                                        <div slot="text">{$_("thread.menu")}</div>
-                                    </MenuItem>
+                                    {#if !inThread}
+                                        <MenuItem on:click={replyInThread}>
+                                            <span class="thread" slot="icon">🧵</span>
+                                            <div slot="text">{$_("thread.menu")}</div>
+                                        </MenuItem>
+                                    {/if}
                                 {/if}
                                 {#if canSend && canForward(msg.content)}
                                     <MenuItem on:click={forward}>
