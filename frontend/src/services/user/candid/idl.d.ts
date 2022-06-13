@@ -88,6 +88,7 @@ import {
     TransferCryptocurrencyWithinGroupArgs,
     ChatMetrics,
     Cryptocurrency,
+    PublicProfileResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -178,6 +179,7 @@ export {
     GiphyImageVariant as ApiGiphyImageVariant,
     ChatMetrics as ApiChatMetrics,
     Cryptocurrency as ApiCryptocurrency,
+    PublicProfileResponse as ApiPublicProfileResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

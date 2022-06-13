@@ -42,9 +42,12 @@ import type { IMessageReadTracker } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
 import { formatTokens } from "../../utils/cryptoFormatter";
-import { userStore } from "../../stores/user";
+import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../../stores/user";
 import type { TypersByChat } from "../../stores/typing";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
+import Identicon from "identicon.js";
+import md5 from "md5";
+import type { BlobReference } from "../../domain/data/data";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
@@ -1478,4 +1481,30 @@ export function canForward(content: MessageContent): boolean {
         content.kind !== "deleted_content" &&
         content.kind !== "placeholder_content"
     );
+}
+
+export function buildUserAvatarUrl(userId: string, avatarId?: bigint): string {
+    return avatarId !== undefined
+        ? buildBlobUrl(userId, avatarId, "avatar")
+        : userId === OPENCHAT_BOT_USER_ID
+        ? OPENCHAT_BOT_AVATAR_URL
+        : buildIdenticonUrl(userId);
+}
+
+export function buildBlobUrl(
+    canisterId: string,
+    blobId: bigint,
+    blobType: "blobs" | "avatar"
+): string {
+    return `${"process.env.BLOB_URL_PATTERN"
+        .replace("{canisterId}", canisterId)
+        .replace("{blobType}", blobType)}${blobId}`;
+}
+
+function buildIdenticonUrl(userId: string): string {
+    const identicon = new Identicon(md5(userId), {
+        margin: 0,
+        format: "svg",
+    });
+    return `data:image/svg+xml;base64,${identicon}`;
 }

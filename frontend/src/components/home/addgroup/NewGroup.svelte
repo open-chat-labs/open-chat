@@ -10,7 +10,7 @@
     import TextArea from "../../TextArea.svelte";
     import Button from "../../Button.svelte";
     import Checkbox from "../../Checkbox.svelte";
-    import { avatarUrl } from "../../../domain/user/user.utils";
+    import { groupAvatarUrl } from "../../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
     import type { CandidateGroupChat } from "../../../domain/chat/chat";
     import { iconSize } from "../../../stores/iconSize";
@@ -69,7 +69,7 @@
         <CollapsibleCard open={groupInfoOpen} headerText={$_("group.groupInfo")}>
             <div class="sub-section photo">
                 <EditableAvatar
-                    image={avatarUrl(candidateGroup.avatar, "../assets/group.svg")}
+                    image={groupAvatarUrl(candidateGroup.avatar)}
                     on:imageSelected={groupAvatarSelected} />
                 <p class="photo-legend">{$_("group.addGroupPhoto")}</p>
             </div>

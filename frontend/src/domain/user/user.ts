@@ -26,6 +26,14 @@ export type User = {
     username: string;
 };
 
+export type PublicProfile = {
+    username: string;
+    avatarId?: bigint;
+    bio: string;
+    isPremium: boolean;
+    phoneIsVerified: boolean;
+};
+
 export type UsersArgs = {
     userGroups: {
         users: string[];

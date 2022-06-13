@@ -11,11 +11,12 @@ import {
 
 const ONLINE_THRESHOLD = 120;
 
-export function avatarUrl<T extends { blobUrl?: string }>(
-    dataContent?: T,
-    fallback = "../assets/unknownUserAvatar.svg"
-): string {
-    return dataContent?.blobUrl ?? fallback;
+export function userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
+    return dataContent?.blobUrl ?? "../assets/unknownUserAvatar.svg";
+}
+
+export function groupAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
+    return dataContent?.blobUrl ?? "../assets/group.svg";
 }
 
 export function phoneNumberToString({ countryCode, number }: PhoneNumber): string {

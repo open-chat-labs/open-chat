@@ -3,7 +3,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { AvatarSize } from "../domain/user/user";
     import type { UserSummary } from "../domain/user/user";
-    import { avatarUrl, userStatus } from "../domain/user/user.utils";
+    import { userAvatarUrl, userStatus } from "../domain/user/user.utils";
     import Avatar from "./Avatar.svelte";
     import Loading from "./Loading.svelte";
     import { _ } from "svelte-i18n";
@@ -98,7 +98,7 @@
                         statusBorder={hovering
                             ? "var(--participants-hv)"
                             : "var(--participants-bg)"}
-                        url={avatarUrl(user)}
+                        url={userAvatarUrl(user)}
                         status={userStatus($now, user)}
                         size={AvatarSize.Small} />
                 </span>

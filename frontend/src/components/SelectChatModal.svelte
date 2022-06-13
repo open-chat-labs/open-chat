@@ -5,7 +5,7 @@
     import Avatar from "./Avatar.svelte";
     import { AvatarSize, UserStatus } from "../domain/user/user";
     import { userStore } from "../stores/user";
-    import { avatarUrl as getAvatarUrl, getUserStatus } from "../domain/user/user.utils";
+    import { userAvatarUrl, groupAvatarUrl, getUserStatus } from "../domain/user/user.utils";
     import Panel from "./Panel.svelte";
     import { iconSize } from "../stores/iconSize";
     import HoverIcon from "./HoverIcon.svelte";
@@ -26,14 +26,14 @@
             return {
                 id: chatSummary.chatId,
                 name: $userStore[chatSummary.them]?.username,
-                avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
+                avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
                 description: buildDirectChatDescription(chatSummary, now),
             };
         }
         return {
             id: chatSummary.chatId,
             name: chatSummary.name,
-            avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
+            avatarUrl: groupAvatarUrl(chatSummary),
             description: buildGroupChatDescription(chatSummary),
         };
     }

@@ -7,7 +7,7 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import { avatarUrl as getAvatarUrl } from "../../domain/user/user.utils";
+    import { groupAvatarUrl } from "../../domain/user/user.utils";
     import { AvatarSize, UserStatus } from "domain/user/user";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -84,7 +84,7 @@
                     {#if !$mobileWidth}
                         <div class="avatar">
                             <Avatar
-                                url={getAvatarUrl(group, "../assets/group.svg")}
+                                url={groupAvatarUrl(group)}
                                 status={UserStatus.None}
                                 size={AvatarSize.Small} />
                         </div>
@@ -94,7 +94,7 @@
                             {#if $mobileWidth}
                                 <div class="avatar">
                                     <Avatar
-                                        url={getAvatarUrl(group, "../assets/group.svg")}
+                                        url={groupAvatarUrl(group)}
                                         status={UserStatus.None}
                                         size={AvatarSize.Tiny} />
                                 </div>
