@@ -2,8 +2,8 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::ContentValidationError::*;
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{
-    CanisterId, CompletedCryptoTransactionInternal, CompletedCryptocurrencyTransfer, CryptoAccount, CryptoTransaction,
-    CryptoTransactionInternal, Cryptocurrency, CryptocurrencyTransfer, PendingCryptoTransaction, PendingCryptocurrencyTransfer,
+    CanisterId, CompletedCryptoTransaction, CompletedCryptoTransactionInternal, CryptoAccount, CryptoAccountFull,
+    CryptoTransaction, CryptoTransactionInternal, Cryptocurrency, CryptocurrencyTransfer, PendingCryptoTransaction,
     TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
 use candid::CandidType;
@@ -39,9 +39,8 @@ pub enum MessageContentInternal {
     Audio(AudioContent),
     File(FileContent),
     Poll(PollContentInternal),
-    // TODO rename this after 'V2' version is removed
-    CryptocurrencyNew(CryptocurrencyContentInternal),
-    Cryptocurrency(CryptocurrencyContentV2),
+    #[serde(alias = "CryptocurrencyNew")]
+    Cryptocurrency(CryptocurrencyContentInternal),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
 }
@@ -152,8 +151,8 @@ impl MessageContent {
                 votes: HashMap::new(),
                 ended: false,
             }),
-            MessageContent::Cryptocurrency(c) => MessageContentInternal::CryptocurrencyNew(c.into()),
-            MessageContent::CryptocurrencyV2(c) => MessageContentInternal::CryptocurrencyNew((c, now).into()),
+            MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c.into()),
+            MessageContent::CryptocurrencyV2(c) => MessageContentInternal::Cryptocurrency((c, now).into()),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
             MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
         }
@@ -222,32 +221,24 @@ impl MessageContentInternal {
             MessageContentInternal::Audio(a) => MessageContent::Audio(a.clone()),
             MessageContentInternal::File(f) => MessageContent::File(f.clone()),
             MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
-            MessageContentInternal::CryptocurrencyNew(c) => MessageContent::CryptocurrencyV2(CryptocurrencyContentV2 {
+            MessageContentInternal::Cryptocurrency(c) => MessageContent::Cryptocurrency(CryptocurrencyContent {
                 transfer: match &c.transfer {
-                    CryptoTransactionInternal::Pending(t) => CryptocurrencyTransfer::Pending(PendingCryptocurrencyTransfer {
+                    CryptoTransactionInternal::Pending(t) => CryptoTransaction::Pending(t.clone()),
+                    CryptoTransactionInternal::Completed(t) => CryptoTransaction::Completed(CompletedCryptoTransaction {
                         token: t.token,
-                        recipient: t.to.user_id().unwrap(),
                         amount: t.amount,
                         fee: t.fee,
+                        from: CryptoAccountFull::user(t.from.user_id().unwrap()),
+                        to: CryptoAccountFull::user(t.to.user_id().unwrap()),
                         memo: t.memo,
+                        created: t.created,
+                        block_index: t.block_index,
+                        transaction_hash: t.transaction_hash,
                     }),
-                    CryptoTransactionInternal::Completed(t) => {
-                        CryptocurrencyTransfer::Completed(CompletedCryptocurrencyTransfer {
-                            token: t.token,
-                            sender: t.from.user_id().unwrap(),
-                            recipient: t.to.user_id().unwrap(),
-                            amount: t.amount,
-                            fee: t.fee,
-                            memo: t.memo,
-                            block_index: t.block_index,
-                            transaction_hash: t.transaction_hash,
-                        })
-                    }
                     _ => unreachable!(),
                 },
                 caption: c.caption.clone(),
             }),
-            MessageContentInternal::Cryptocurrency(c) => MessageContent::CryptocurrencyV2(c.clone()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
         }
