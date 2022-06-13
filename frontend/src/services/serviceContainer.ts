@@ -525,8 +525,7 @@ export class ServiceContainer implements MarkMessagesRead {
         return {
             ...userSummary,
             blobData: undefined,
-            blobUrl:
-                ref !== undefined ? buildUserAvatarUrl(userSummary.userId, ref.blobId) : undefined,
+            blobUrl: buildUserAvatarUrl(userSummary.userId, ref?.blobId ?? undefined),
         };
     }
 
