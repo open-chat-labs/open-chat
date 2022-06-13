@@ -49,7 +49,7 @@ import {
     userIdsFromEvents,
 } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
-import type { SetBioResponse, UserSummary } from "../../domain/user/user";
+import type { PublicProfile, SetBioResponse, UserSummary } from "../../domain/user/user";
 import type {
     SearchDirectChatResponse,
     SearchAllMessagesResponse,
@@ -455,6 +455,10 @@ export class CachingUserClient implements IUserClient {
 
     getBio(): Promise<string> {
         return this.client.getBio();
+    }
+
+    getPublicProfile(): Promise<PublicProfile> {
+        return this.client.getPublicProfile();
     }
 
     setBio(bio: string): Promise<SetBioResponse> {

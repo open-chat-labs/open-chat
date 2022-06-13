@@ -12,7 +12,7 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { _ } from "svelte-i18n";
-    import { avatarUrl } from "../../domain/user/user.utils";
+    import { userAvatarUrl } from "../../domain/user/user.utils";
     import { mobileWidth, ScreenHeight, screenHeight } from "../../stores/screenDimensions";
     import type { PartialUserSummary } from "../../domain/user/user";
     import { createEventDispatcher } from "svelte";
@@ -36,7 +36,7 @@
 
 <div class="current-user-box" class:small class:rtl={$rtlStore}>
     <div class="current-user" class:rtl={$rtlStore} class:small>
-        <EditableAvatar {small} image={avatarUrl(user)} on:imageSelected={userAvatarSelected} />
+        <EditableAvatar {small} image={userAvatarUrl(user)} on:imageSelected={userAvatarSelected} />
         <h4 class="name" class:small>{user.username}</h4>
     </div>
     <span class="menu" class:small>

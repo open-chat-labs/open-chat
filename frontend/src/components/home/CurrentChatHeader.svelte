@@ -1,6 +1,6 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
-    import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import { groupAvatarUrl, userAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { mobileWidth } from "../../stores/screenDimensions";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
@@ -112,7 +112,7 @@
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
-                avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
+                avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus(now, $userStore, chatSummary.them),
                 subtext: isBot ? "" : formatLastOnlineDate(now, $userStore[chatSummary.them]),
                 typing: getTypingString($userStore, chatSummary, typing),
@@ -121,7 +121,7 @@
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
-            avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
+            avatarUrl: groupAvatarUrl(chatSummary),
             subtext: chatSummary.public
                 ? $_("publicGroupWithN", { values: { number: chatSummary.participantCount } })
                 : $_("privateGroupWithN", { values: { number: chatSummary.participantCount } }),

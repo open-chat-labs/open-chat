@@ -17,11 +17,10 @@ import type {
     PartialUserSummary,
     ChallengeAttempt,
     CreateChallengeResponse,
+    PublicProfile,
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
-import Identicon from "identicon.js";
-import md5 from "md5";
 import type {
     EventsResponse,
     UpdateArgs,
@@ -96,17 +95,10 @@ import { cryptoBalance } from "../stores/crypto";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import type { ServiceRetryInterrupt } from "./candidService";
-import { OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_AVATAR_URL, userStore } from "../stores/user";
+import { userStore } from "../stores/user";
 import { toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
-
-function buildIdenticonUrl(userId: string) {
-    const identicon = new Identicon(md5(userId), {
-        margin: 0,
-        format: "svg",
-    });
-    return `data:image/svg+xml;base64,${identicon}`;
-}
+import { buildBlobUrl, buildUserAvatarUrl } from "../domain/chat/chat.utils";
 
 export const apiKey = Symbol();
 
@@ -142,7 +134,7 @@ export class ServiceContainer implements MarkMessagesRead {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             measure("getAllUsers", () => getAllUsers(this.db!)).then((users) => {
                 const lookup = toRecord(
-                    users.map((user) => this.rehydrateDataContent(user, "avatar", user.userId)),
+                    users.map((user) => this.rehydrateUserSummary(user)),
                     (u) => u.userId
                 );
                 userStore.set(lookup);
@@ -374,13 +366,13 @@ export class ServiceContainer implements MarkMessagesRead {
                 content.kind === "audio_content") &&
             content.blobReference !== undefined
         ) {
-            content = this.rehydrateDataContent(content, "blobs");
+            content = this.rehydrateDataContent(content);
         }
         if (content.kind === "video_content") {
             return {
                 ...content,
-                videoData: this.rehydrateDataContent(content.videoData, "blobs"),
-                imageData: this.rehydrateDataContent(content.imageData, "blobs"),
+                videoData: this.rehydrateDataContent(content.videoData),
+                imageData: this.rehydrateDataContent(content.imageData),
             };
         }
         return content;
@@ -528,31 +520,28 @@ export class ServiceContainer implements MarkMessagesRead {
         return resp;
     }
 
+    rehydrateUserSummary<T extends UserSummary | PartialUserSummary>(userSummary: T): T {
+        const ref = userSummary.blobReference;
+        return {
+            ...userSummary,
+            blobData: undefined,
+            blobUrl:
+                ref !== undefined ? buildUserAvatarUrl(userSummary.userId, ref.blobId) : undefined,
+        };
+    }
+
     rehydrateDataContent<T extends DataContent>(
         dataContent: T,
-        blobType: "blobs" | "avatar",
-        key?: string
+        blobType: "blobs" | "avatar" = "blobs"
     ): T {
-        if (dataContent.blobReference !== undefined) {
-            return {
-                ...dataContent,
-                blobData: undefined,
-                blobUrl: `${"process.env.BLOB_URL_PATTERN"
-                    .replace("{canisterId}", dataContent.blobReference.canisterId)
-                    .replace("{blobType}", blobType)}${dataContent.blobReference.blobId}`,
-            };
-        } else {
-            if (blobType === "avatar" && key) {
-                return {
-                    ...dataContent,
-                    blobUrl:
-                        key === OPENCHAT_BOT_USER_ID
-                            ? OPENCHAT_BOT_AVATAR_URL
-                            : buildIdenticonUrl(key),
-                };
-            }
-        }
-        return dataContent;
+        const ref = dataContent.blobReference;
+        return ref !== undefined
+            ? {
+                  ...dataContent,
+                  blobData: undefined,
+                  blobUrl: buildBlobUrl(ref.canisterId, ref.blobId, blobType),
+              }
+            : dataContent;
     }
 
     async rehydrateMessage(
@@ -569,7 +558,7 @@ export class ServiceContainer implements MarkMessagesRead {
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
         return this._userIndexClient
             .searchUsers(searchTerm, maxResults)
-            .then((users) => users.map((u) => this.rehydrateDataContent(u, "avatar", u.userId)));
+            .then((users) => users.map((u) => this.rehydrateUserSummary(u)));
     }
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
@@ -627,7 +616,7 @@ export class ServiceContainer implements MarkMessagesRead {
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
         return this._userIndexClient.getUsers(users, allowStale).then((resp) => ({
             ...resp,
-            users: resp.users.map((u) => this.rehydrateDataContent(u, "avatar", u.userId)),
+            users: resp.users.map((u) => this.rehydrateUserSummary(u)),
         }));
     }
 
@@ -845,6 +834,13 @@ export class ServiceContainer implements MarkMessagesRead {
             ? UserClient.create(userId, this.identity, undefined, undefined)
             : this.userClient;
         return userClient.getBio();
+    }
+
+    getPublicProfile(userId?: string): Promise<PublicProfile> {
+        const userClient = userId
+            ? UserClient.create(userId, this.identity, undefined, undefined)
+            : this.userClient;
+        return userClient.getPublicProfile();
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
