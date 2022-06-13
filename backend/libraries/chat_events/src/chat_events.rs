@@ -81,43 +81,6 @@ pub enum ToggleReactionResult {
 }
 
 impl ChatEvents {
-    pub fn migrate_to_new_crypto_message_content(&mut self) {
-        for event in self.events.iter_mut() {
-            if let ChatEventInternal::Message(m) = &mut event.event {
-                if let MessageContentInternal::Cryptocurrency(c) = &m.content {
-                    m.content = MessageContentInternal::CryptocurrencyNew(CryptocurrencyContentInternal {
-                        transfer: match &c.transfer {
-                            CryptocurrencyTransfer::Pending(t) => {
-                                CryptoTransactionInternal::Pending(PendingCryptoTransaction {
-                                    token: t.token,
-                                    amount: t.amount,
-                                    to: CryptoAccount::User(t.recipient),
-                                    fee: t.fee,
-                                    memo: t.memo,
-                                })
-                            }
-                            CryptocurrencyTransfer::Completed(t) => {
-                                CryptoTransactionInternal::Completed(CompletedCryptoTransactionInternal {
-                                    token: t.token,
-                                    amount: t.amount,
-                                    fee: t.fee,
-                                    from: CryptoAccount::User(t.sender),
-                                    to: CryptoAccount::User(t.recipient),
-                                    memo: t.memo,
-                                    created: event.timestamp,
-                                    transaction_hash: t.transaction_hash,
-                                    block_index: t.block_index,
-                                })
-                            }
-                            CryptocurrencyTransfer::Failed(_) => unreachable!(),
-                        },
-                        caption: c.caption.clone(),
-                    })
-                }
-            }
-        }
-    }
-
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
             chat_type: ChatType::Direct,

@@ -260,12 +260,6 @@ impl MessageInternal {
                         }
                     }
                 }
-                MessageContentInternal::CryptocurrencyNew(c) => match c.transfer.token() {
-                    Cryptocurrency::InternetComputer => {
-                        adjust(&mut metrics.icp_messages);
-                        adjust(&mut sender_metrics.icp_messages);
-                    }
-                },
                 MessageContentInternal::Cryptocurrency(c) => match c.transfer.token() {
                     Cryptocurrency::InternetComputer => {
                         adjust(&mut metrics.icp_messages);

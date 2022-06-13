@@ -1,6 +1,6 @@
 use crate::{Cryptocurrency, TimestampMillis, TransactionHash, UserId};
 use candid::CandidType;
-use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo, Tokens};
+use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo, Tokens, DEFAULT_SUBACCOUNT};
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -73,6 +73,10 @@ pub enum CryptoAccountFull {
 }
 
 impl CryptoAccountFull {
+    pub fn user(user_id: UserId) -> CryptoAccountFull {
+        CryptoAccountFull::User(user_id, AccountIdentifier::new(&user_id.into(), &DEFAULT_SUBACCOUNT))
+    }
+
     pub fn user_id(&self) -> Option<UserId> {
         if let CryptoAccountFull::User(user_id, _) = self {
             Some(*user_id)
