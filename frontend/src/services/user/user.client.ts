@@ -2,7 +2,7 @@ import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import {
     ApiSendMessageArgs,
-    ApiTransferCryptocurrencyWithinGroupArgs,
+    ApiTransferCryptoWithinGroupArgs,
     idlFactory,
     UserService,
 } from "./candid/idl";
@@ -61,10 +61,10 @@ import { compareChats, MAX_EVENTS, mergeChatUpdates } from "../../domain/chat/ch
 import { cachingLocallyDisabled, Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
-    apiCryptoContent,
     apiGroupPermissions,
     apiMessageContent,
     apiOptional,
+    apiPendingCryptoContent,
     apiPendingCryptocurrencyWithdrawal,
     apiReplyContextArgs,
     registerPollVoteResponse,
@@ -343,8 +343,8 @@ export class UserClient extends CandidService implements IUserClient {
         sender: UserSummary,
         message: Message
     ): Promise<SendMessageResponse> {
-        const req: ApiTransferCryptocurrencyWithinGroupArgs = {
-            content: apiCryptoContent(message.content as CryptocurrencyContent),
+        const req: ApiTransferCryptoWithinGroupArgs = {
+            content: apiPendingCryptoContent(message.content as CryptocurrencyContent),
             recipient: Principal.fromText(recipientId),
             sender_name: sender.username,
             mentioned: [],
@@ -356,7 +356,7 @@ export class UserClient extends CandidService implements IUserClient {
             ),
         };
         return this.handleResponse(
-            this.userService.transfer_cryptocurrency_within_group(req),
+            this.userService.transfer_crypto_within_group(req),
             transferWithinGroupResponse
         );
     }
@@ -570,7 +570,7 @@ export class UserClient extends CandidService implements IUserClient {
             withdrawal: apiPendingCryptocurrencyWithdrawal(domain),
         };
         return this.handleResponse(
-            this.userService.withdraw_cryptocurrency(req),
+            this.userService.withdraw_crypto(req),
             withdrawCryptoResponse
         );
     }

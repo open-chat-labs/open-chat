@@ -68,7 +68,7 @@ pub(crate) fn c2c_send_message_impl(
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
         sender,
-        content: args.content.new_content_into_internal(now),
+        content: args.content.new_content_into_internal(),
         replies_to,
         now,
         forwarded: args.forwarding,

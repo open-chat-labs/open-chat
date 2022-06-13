@@ -129,45 +129,6 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
-  const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
-  const Cryptocurrency = IDL.Variant({ 'InternetComputer' : IDL.Null });
-  const Memo = IDL.Nat64;
-  const FailedCryptocurrencyTransfer = IDL.Record({
-    'fee' : Tokens,
-    'token' : Cryptocurrency,
-    'memo' : Memo,
-    'error_message' : IDL.Text,
-    'recipient' : UserId,
-    'amount' : Tokens,
-  });
-  const TransactionHash = IDL.Vec(IDL.Nat8);
-  const BlockIndex = IDL.Nat64;
-  const CompletedCryptocurrencyTransfer = IDL.Record({
-    'fee' : Tokens,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'block_index' : BlockIndex,
-    'memo' : Memo,
-    'recipient' : UserId,
-    'sender' : UserId,
-    'amount' : Tokens,
-  });
-  const PendingCryptocurrencyTransfer = IDL.Record({
-    'fee' : IDL.Opt(Tokens),
-    'token' : Cryptocurrency,
-    'memo' : IDL.Opt(Memo),
-    'recipient' : UserId,
-    'amount' : Tokens,
-  });
-  const CryptocurrencyTransfer = IDL.Variant({
-    'Failed' : FailedCryptocurrencyTransfer,
-    'Completed' : CompletedCryptocurrencyTransfer,
-    'Pending' : PendingCryptocurrencyTransfer,
-  });
-  const CryptocurrencyContentV2 = IDL.Record({
-    'caption' : IDL.Opt(IDL.Text),
-    'transfer' : CryptocurrencyTransfer,
-  });
   const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const CryptoAccountFull = IDL.Variant({
     'UserIndex' : AccountIdentifier,
@@ -176,6 +137,10 @@ export const idlFactory = ({ IDL }) => {
     'User' : IDL.Tuple(UserId, AccountIdentifier),
     'Unknown' : AccountIdentifier,
   });
+  const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
+  const Cryptocurrency = IDL.Variant({ 'InternetComputer' : IDL.Null });
+  const TransactionHash = IDL.Vec(IDL.Nat8);
+  const Memo = IDL.Nat64;
   const FailedCryptoTransaction = IDL.Record({
     'to' : CryptoAccountFull,
     'fee' : Tokens,
@@ -187,6 +152,7 @@ export const idlFactory = ({ IDL }) => {
     'error_message' : IDL.Text,
     'amount' : Tokens,
   });
+  const BlockIndex = IDL.Nat64;
   const CompletedCryptoTransaction = IDL.Record({
     'to' : CryptoAccountFull,
     'fee' : Tokens,
@@ -243,7 +209,6 @@ export const idlFactory = ({ IDL }) => {
     'Poll' : PollContent,
     'Text' : TextContent,
     'Image' : ImageContent,
-    'CryptocurrencyV2' : CryptocurrencyContentV2,
     'Cryptocurrency' : CryptocurrencyContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,

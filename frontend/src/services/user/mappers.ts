@@ -24,10 +24,10 @@ import type {
     ApiMention,
     ApiRecommendedGroupsResponse,
     ApiSetBioResponse,
-    ApiWithdrawCryptocurrencyResponse,
+    ApiWithdrawCryptoResponse,
     ApiFailedCryptocurrencyWithdrawal,
     ApiCompletedCryptocurrencyWithdrawal,
-    ApiTransferCryptocurrencyWithinGroupResponse,
+    ApiTransferCryptoWithinGroupResponse,
     ApiChatMetrics,
     ApiPublicProfileResponse,
 } from "./candid/idl";
@@ -64,7 +64,6 @@ import { UnsupportedValueError } from "../../utils/error";
 import {
     apiMessageIndexRanges,
     completedCryptoTransfer,
-    completedCryptoTransferOld,
     groupPermissions,
     message,
     messageContent,
@@ -318,7 +317,7 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
 }
 
 export function transferWithinGroupResponse(
-    candid: ApiTransferCryptocurrencyWithinGroupResponse
+    candid: ApiTransferCryptoWithinGroupResponse
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -326,7 +325,7 @@ export function transferWithinGroupResponse(
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransferOld(candid.Success.transfer),
+            transfer: completedCryptoTransfer(candid.Success.transfer),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -384,15 +383,6 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             messageIndex: candid.TransferSuccess.message_index,
             eventIndex: candid.TransferSuccess.event_index,
             transfer: completedCryptoTransfer(candid.TransferSuccess.transfer),
-        };
-    }
-    if ("TransferSuccessV2" in candid) {
-        return {
-            kind: "transfer_success",
-            timestamp: candid.TransferSuccessV2.timestamp,
-            messageIndex: candid.TransferSuccessV2.message_index,
-            eventIndex: candid.TransferSuccessV2.event_index,
-            transfer: completedCryptoTransferOld(candid.TransferSuccessV2.transfer),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -780,7 +770,7 @@ export function completedCryptoWithdrawal(
 }
 
 export function withdrawCryptoResponse(
-    candid: ApiWithdrawCryptocurrencyResponse
+    candid: ApiWithdrawCryptoResponse
 ): WithdrawCryptocurrencyResponse {
     if ("CurrencyNotSupported" in candid) {
         return { kind: "currency_not_supported" };

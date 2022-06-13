@@ -7,10 +7,7 @@ use canister_tracing_macros::trace;
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{
-    CanisterId, CompletedCryptoTransaction, CompletedCryptocurrencyTransfer, ContentValidationError, CryptoAccount,
-    CryptocurrencyTransfer, MessageContent, PendingCryptoTransaction, UserId,
-};
+use types::{CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContent, UserId};
 use user_canister::c2c_send_message::{self, C2CReplyContext};
 use user_canister::send_message::{Response::*, *};
 
@@ -28,29 +25,14 @@ async fn send_message(mut args: Args) -> Response {
     let mut completed_transfer = None;
     // If the message includes a pending cryptocurrency transfer, we process that and then update
     // the message to contain the completed transfer.
-    if let MessageContent::CryptocurrencyV2(c) = &mut args.content {
+    if let MessageContent::Cryptocurrency(c) = &mut args.content {
         let pending_transaction = match &c.transfer {
-            CryptocurrencyTransfer::Pending(t) => PendingCryptoTransaction {
-                token: t.token,
-                amount: t.amount,
-                to: CryptoAccount::User(t.recipient),
-                fee: t.fee,
-                memo: t.memo,
-            },
+            CryptoTransaction::Pending(t) => t.clone(),
             _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
         };
         completed_transfer = match process_transaction(pending_transaction).await {
             Ok(completed) => {
-                c.transfer = CryptocurrencyTransfer::Completed(CompletedCryptocurrencyTransfer {
-                    token: completed.token,
-                    sender: completed.from.user_id().unwrap(),
-                    recipient: completed.to.user_id().unwrap(),
-                    amount: completed.amount,
-                    fee: completed.fee,
-                    memo: completed.memo,
-                    block_index: completed.block_index,
-                    transaction_hash: completed.transaction_hash,
-                });
+                c.transfer = CryptoTransaction::Completed(completed.clone());
                 Some(completed)
             }
             Err(failed) => return TransferFailed(failed.error_message),
@@ -100,7 +82,7 @@ fn send_message_impl(
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
         sender: my_user_id,
-        content: args.content.clone().new_content_into_internal(now),
+        content: args.content.clone().new_content_into_internal(),
         replies_to: args.replies_to.clone(),
         now,
         forwarded: args.forwarding,

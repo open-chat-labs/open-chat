@@ -25,13 +25,6 @@ type SendMessageResponse =
             timestamp: TimestampMillis;
             transfer: CompletedCryptoTransaction;
         };
-        TransferSuccessV2: record {
-            chat_id: ChatId;
-            event_index: EventIndex;
-            message_index: MessageIndex;
-            timestamp: TimestampMillis;
-            transfer: CompletedCryptocurrencyTransfer;
-        };
         MessageEmpty;
         TextTooLong: nat32;
         RecipientBlocked;
@@ -295,36 +288,6 @@ type SetBioResponse =
         TooLong: FieldTooLongResult;
     };
 
-type TransferCryptocurrencyWithinGroupArgs =
-    record {
-        message_id: MessageId;
-        group_id: ChatId;
-        recipient: UserId;
-        content: CryptocurrencyContentV2;
-        sender_name: text;
-        replies_to: opt GroupReplyContext;
-        mentioned: vec User;
-    };
-
-type TransferCryptocurrencyWithinGroupResponse =
-    variant {
-        Success: record {
-            event_index: EventIndex;
-            message_index: MessageIndex;
-            timestamp: TimestampMillis;
-            transfer: CompletedCryptocurrencyTransfer;
-        };
-        TextTooLong: nat32;
-        RecipientBlocked;
-        CallerNotInGroup: opt CompletedCryptocurrencyTransfer;
-        CryptocurrencyNotSupported: Cryptocurrency;
-        InvalidRequest: text;
-        TransferFailed: text;
-        TransferCannotBeZero;
-        TransferLimitExceeded: nat64;
-        InternalError: record { text; CompletedCryptocurrencyTransfer; };
-    };
-
 type TransferCryptoWithinGroupArgs =
     record {
         message_id: MessageId;
@@ -353,18 +316,6 @@ type TransferCryptoWithinGroupResponse =
         TransferCannotBeZero;
         TransferLimitExceeded: Tokens;
         InternalError: record { text; CompletedCryptoTransaction; };
-    };
-
-type WithdrawCryptocurrencyRequest =
-    record {
-        withdrawal: PendingCryptocurrencyWithdrawal;
-    };
-
-type WithdrawCryptocurrencyResponse =
-    variant {
-        Success: CompletedCryptocurrencyWithdrawal;
-        TransactionFailed: FailedCryptocurrencyWithdrawal;
-        CurrencyNotSupported;
     };
 
 type WithdrawCryptoRequest =
@@ -579,9 +530,7 @@ service: {
     add_recommended_group_exclusions: (AddRecommendedGroupExclusionsArgs) -> (AddRecommendedGroupExclusionsResponse);
     set_bio: (SetBioArgs) -> (SetBioResponse);
     transfer_crypto_within_group: (TransferCryptoWithinGroupArgs) -> (TransferCryptoWithinGroupResponse);
-    transfer_cryptocurrency_within_group: (TransferCryptocurrencyWithinGroupArgs) -> (TransferCryptocurrencyWithinGroupResponse);
     withdraw_crypto: (WithdrawCryptoRequest) -> (WithdrawCryptoResponse);
-    withdraw_cryptocurrency: (WithdrawCryptocurrencyRequest) -> (WithdrawCryptocurrencyResponse);
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;

@@ -57,7 +57,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let push_message_args = PushMessageArgs {
             sender,
             message_id: args.message_id,
-            content: args.content.new_content_into_internal(now),
+            content: args.content.new_content_into_internal(),
             replies_to: args.replies_to.map(|r| r.into()),
             now,
             forwarded: args.forwarding,
