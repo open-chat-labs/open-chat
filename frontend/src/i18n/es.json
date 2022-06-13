@@ -533,5 +533,13 @@
     "forward": "Delantero",
     "referralHeader": "Invitar a amigos/familiares",
     "userReferralMessage": "Comparta este enlace a OpenChat con amigos y familiares. Por cada persona que se registre con su enlace y se convierta en un usuario verificado, recibirá una recompensa de tokens CHAT (a confirmar en las próximas semanas). Puede continuar y compartir el enlace ahora y otorgaremos tokens de CHAT retrospectivamente una vez que estén disponibles.",
-    "userInfoHeader": "Público"
+    "userInfoHeader": "Público",
+    "thread": {
+        "menu": "Responder en hilo",
+        "title": "Hilo",
+        "replies": "respuestas",
+        "reply": "respuesta",
+        "lastMessage": "(último mensaje {date})",
+        "nreplies": "{number} {replies} {message}"
+    }
 }
