@@ -367,6 +367,18 @@ type WithdrawCryptocurrencyResponse =
         CurrencyNotSupported;
     };
 
+type WithdrawCryptoRequest =
+    record {
+        withdrawal: PendingCryptoTransaction;
+    };
+
+type WithdrawCryptoResponse =
+    variant {
+        Success: CompletedCryptoTransaction;
+        TransactionFailed: FailedCryptoTransaction;
+        CurrencyNotSupported;
+    };
+
 type InitialStateArgs =
     record {
     };
@@ -568,6 +580,7 @@ service: {
     set_bio: (SetBioArgs) -> (SetBioResponse);
     transfer_cryptocurrency_within_group: (TransferCryptocurrencyWithinGroupArgs) -> (TransferCryptocurrencyWithinGroupResponse);
     transfer_cryptocurrency_within_group_v2: (TransferCryptocurrencyWithinGroupV2Args) -> (TransferCryptocurrencyWithinGroupV2Response);
+    withdraw_crypto: (WithdrawCryptoRequest) -> (WithdrawCryptoResponse);
     withdraw_cryptocurrency: (WithdrawCryptocurrencyRequest) -> (WithdrawCryptocurrencyResponse);
 
     events: (EventsArgs) -> (EventsResponse) query;

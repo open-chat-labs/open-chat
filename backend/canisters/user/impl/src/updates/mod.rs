@@ -38,6 +38,7 @@ pub mod transfer_cryptocurrency_within_group;
 pub mod transfer_cryptocurrency_within_group_v2;
 pub mod unblock_user;
 pub mod wallet_receive;
+pub mod withdraw_crypto;
 pub mod withdraw_cryptocurrency;
 
 mod send_message_common {
