@@ -54,6 +54,7 @@ import {
     unblockResponse,
     withdrawCryptoResponse,
     transferWithinGroupResponse,
+    publicProfileResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import { compareChats, MAX_EVENTS, mergeChatUpdates } from "../../domain/chat/chat.utils";
@@ -70,7 +71,7 @@ import {
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
-import type { SetBioResponse, UserSummary } from "../../domain/user/user";
+import type { PublicProfile, SetBioResponse, UserSummary } from "../../domain/user/user";
 import type {
     SearchAllMessagesResponse,
     SearchDirectChatResponse,
@@ -527,6 +528,14 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleQueryResponse(
             () => this.userService.bio({}),
             (candid) => candid.Success
+        );
+    }
+
+    @profile("userClient")
+    getPublicProfile(): Promise<PublicProfile> {
+        return this.handleQueryResponse(
+            () => this.userService.public_profile({}),
+            publicProfileResponse
         );
     }
 

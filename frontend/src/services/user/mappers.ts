@@ -29,6 +29,7 @@ import type {
     ApiCompletedCryptocurrencyWithdrawal,
     ApiTransferCryptocurrencyWithinGroupResponse,
     ApiChatMetrics,
+    ApiPublicProfileResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -76,8 +77,22 @@ import type {
     SearchDirectChatResponse,
     SearchAllMessagesResponse,
 } from "../../domain/search/search";
-import type { SetBioResponse } from "../../domain/user/user";
+import type { PublicProfile, SetBioResponse } from "../../domain/user/user";
 import type { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
+
+export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
+    if ("Success" in candid) {
+        const profile = candid.Success;
+        return {
+            username: profile.username,
+            avatarId: optional(profile.avatar_id, identity),
+            bio: profile.bio,
+            isPremium: profile.is_premium,
+            phoneIsVerified: profile.phone_is_verified,
+        };
+    }
+    throw new UnsupportedValueError(`Unexpected ApiPublicProfileResponse type received`, candid);
+}
 
 export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
     if ("Success" in candid) {

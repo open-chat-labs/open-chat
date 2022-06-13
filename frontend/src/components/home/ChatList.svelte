@@ -15,7 +15,7 @@
     import { createEventDispatcher, onMount, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import { push } from "svelte-spa-router";
-    import { avatarUrl } from "../../domain/user/user.utils";
+    import { groupAvatarUrl, userAvatarUrl } from "../../domain/user/user.utils";
     import { getContentAsText, getMinVisibleMessageIndex } from "../../domain/chat/chat.utils";
     import type { DataContent } from "../../domain/data/data";
     import { userStore } from "../../stores/user";
@@ -181,7 +181,7 @@
                                 {#each resp.matches as group, i (group.chatId)}
                                     <SearchResult
                                         index={i}
-                                        avatarUrl={avatarUrl(group, "../assets/group.svg")}
+                                        avatarUrl={groupAvatarUrl(group)}
                                         on:click={() => selectGroup(group)}>
                                         <h4 class="search-item-title">
                                             {group.name}
@@ -203,7 +203,7 @@
                                 {#each resp as user, i (user.userId)}
                                     <SearchResult
                                         index={i}
-                                        avatarUrl={avatarUrl(user)}
+                                        avatarUrl={userAvatarUrl(user)}
                                         on:click={() => chatWith(user.userId)}>
                                         <h4 class="search-item-title">
                                             @{user.username}
@@ -222,10 +222,7 @@
                                 {#each resp.matches as msg, i (`${msg.chatId}_${msg.messageIndex}`)}
                                     <SearchResult
                                         index={i}
-                                        avatarUrl={avatarUrl(
-                                            messageMatchDataContent(msg),
-                                            "../assets/group.svg"
-                                        )}
+                                        avatarUrl={groupAvatarUrl(messageMatchDataContent(msg))}
                                         showSpinner={false}
                                         on:click={() => loadMessage(msg)}>
                                         <h4 class="search-item-title">

@@ -9,7 +9,7 @@
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import { userAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import Legend from "../Legend.svelte";
@@ -145,7 +145,7 @@
             <div class="left">
                 <span class="avatar">
                     <Avatar
-                        url={avatarUrl(receiver)}
+                        url={userAvatarUrl(receiver)}
                         status={receiver
                             ? getUserStatus($now, $userStore, receiver.userId)
                             : UserStatus.None}

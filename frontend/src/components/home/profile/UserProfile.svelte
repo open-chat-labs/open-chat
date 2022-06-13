@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { avatarUrl } from "../../../domain/user/user.utils";
+    import { userAvatarUrl } from "../../../domain/user/user.utils";
     import SectionHeader from "../../SectionHeader.svelte";
     import type { PartialUserSummary } from "../../../domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
@@ -216,7 +216,7 @@
             <div class="avatar">
                 <EditableAvatar
                     overlayIcon={true}
-                    image={avatarUrl(user)}
+                    image={userAvatarUrl(user)}
                     on:imageSelected={userAvatarSelected} />
             </div>
             <Legend>{$_("username")} ({$_("usernameRules")})</Legend>

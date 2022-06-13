@@ -4,7 +4,7 @@
     import { createEventDispatcher } from "svelte";
     import { AvatarSize, UserStatus } from "../domain/user/user";
     import type { UserSummary } from "../domain/user/user";
-    import { avatarUrl } from "../domain/user/user.utils";
+    import { userAvatarUrl } from "../domain/user/user.utils";
     const dispatch = createEventDispatcher();
 
     export let mode: "add" | "edit";
@@ -17,7 +17,7 @@
 
 <div class="pill" class:add={mode === "add"} class:edit={mode === "edit"}>
     <div class="avatar">
-        <Avatar url={avatarUrl(user)} status={UserStatus.None} size={AvatarSize.Small} />
+        <Avatar url={userAvatarUrl(user)} status={UserStatus.None} size={AvatarSize.Small} />
     </div>
     <div class="username">{user.username}</div>
     <div on:click={deleteUser} class="delete">

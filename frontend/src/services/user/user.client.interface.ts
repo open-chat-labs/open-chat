@@ -30,7 +30,7 @@ import type {
     SearchDirectChatResponse,
     SearchAllMessagesResponse,
 } from "../../domain/search/search";
-import type { SetBioResponse, UserSummary } from "../../domain/user/user";
+import type { PublicProfile, SetBioResponse, UserSummary } from "../../domain/user/user";
 import type { ServiceRetryInterrupt } from "services/candidService";
 
 export interface IUserClient {
@@ -106,6 +106,7 @@ export interface IUserClient {
     getRecommendedGroups(interrupt: ServiceRetryInterrupt): Promise<GroupChatSummary[]>;
     dismissRecommendation(chatId: string): Promise<void>;
     getBio(): Promise<string>;
+    getPublicProfile(): Promise<PublicProfile>;
     setBio(bio: string): Promise<SetBioResponse>;
     registerPollVote(
         otherUser: string,

@@ -4,7 +4,7 @@
     import Avatar from "../Avatar.svelte";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { GroupChatSummary } from "../../domain/chat/chat";
-    import { avatarUrl } from "../../domain/user/user.utils";
+    import { groupAvatarUrl } from "../../domain/user/user.utils";
     import { _ } from "svelte-i18n";
 
     export let group: GroupChatSummary;
@@ -19,10 +19,7 @@
         </div>
     {/if}
     <div>
-        <Avatar
-            url={avatarUrl(group, "../assets/group.svg")}
-            status={UserStatus.None}
-            size={AvatarSize.ExtraLarge} />
+        <Avatar url={groupAvatarUrl(group)} status={UserStatus.None} size={AvatarSize.ExtraLarge} />
     </div>
     <div>
         {$_(group.public ? "thisIsPublicGroupWithN" : "thisIsPrivateGroupWithN", {
