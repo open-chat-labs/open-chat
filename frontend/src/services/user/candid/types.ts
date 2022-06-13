@@ -858,6 +858,32 @@ export interface TransactionWrapper {
   'timestamp' : TimestampMillis,
   'index' : number,
 }
+export interface TransferCryptoWithinGroupArgs {
+  'content' : CryptocurrencyContent,
+  'recipient' : UserId,
+  'mentioned' : Array<User>,
+  'group_id' : ChatId,
+  'sender_name' : string,
+  'message_id' : MessageId,
+  'replies_to' : [] | [GroupReplyContext],
+}
+export type TransferCryptoWithinGroupResponse = { 'TextTooLong' : number } |
+  { 'TransferLimitExceeded' : Tokens } |
+  { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
+  { 'TransferCannotBeZero' : null } |
+  {
+    'Success' : {
+      'timestamp' : TimestampMillis,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptoTransaction,
+      'message_index' : MessageIndex,
+    }
+  } |
+  { 'RecipientBlocked' : null } |
+  { 'InvalidRequest' : string } |
+  { 'TransferFailed' : string } |
+  { 'InternalError' : [string, CompletedCryptoTransaction] } |
+  { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface TransferCryptocurrencyWithinGroupArgs {
   'content' : CryptocurrencyContentV2,
   'recipient' : UserId,
@@ -885,34 +911,6 @@ export type TransferCryptocurrencyWithinGroupResponse = {
   { 'InvalidRequest' : string } |
   { 'TransferFailed' : string } |
   { 'InternalError' : [string, CompletedCryptocurrencyTransfer] } |
-  { 'CryptocurrencyNotSupported' : Cryptocurrency };
-export interface TransferCryptocurrencyWithinGroupV2Args {
-  'content' : CryptocurrencyContent,
-  'recipient' : UserId,
-  'mentioned' : Array<User>,
-  'group_id' : ChatId,
-  'sender_name' : string,
-  'message_id' : MessageId,
-  'replies_to' : [] | [GroupReplyContext],
-}
-export type TransferCryptocurrencyWithinGroupV2Response = {
-    'TextTooLong' : number
-  } |
-  { 'TransferLimitExceeded' : Tokens } |
-  { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
-  { 'TransferCannotBeZero' : null } |
-  {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'event_index' : EventIndex,
-      'transfer' : CompletedCryptoTransaction,
-      'message_index' : MessageIndex,
-    }
-  } |
-  { 'RecipientBlocked' : null } |
-  { 'InvalidRequest' : string } |
-  { 'TransferFailed' : string } |
-  { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
@@ -975,6 +973,12 @@ export interface VideoContent {
 }
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
+export interface WithdrawCryptoRequest {
+  'withdrawal' : PendingCryptoTransaction,
+}
+export type WithdrawCryptoResponse = { 'CurrencyNotSupported' : null } |
+  { 'TransactionFailed' : FailedCryptoTransaction } |
+  { 'Success' : CompletedCryptoTransaction };
 export interface WithdrawCryptocurrencyRequest {
   'withdrawal' : PendingCryptocurrencyWithdrawal,
 }
@@ -1034,17 +1038,20 @@ export interface _SERVICE {
   'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
       ToggleReactionResponse
     >,
+  'transfer_crypto_within_group' : (
+      arg_0: TransferCryptoWithinGroupArgs,
+    ) => Promise<TransferCryptoWithinGroupResponse>,
   'transfer_cryptocurrency_within_group' : (
       arg_0: TransferCryptocurrencyWithinGroupArgs,
     ) => Promise<TransferCryptocurrencyWithinGroupResponse>,
-  'transfer_cryptocurrency_within_group_v2' : (
-      arg_0: TransferCryptocurrencyWithinGroupV2Args,
-    ) => Promise<TransferCryptocurrencyWithinGroupV2Response>,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
   'unmute_notifications' : (arg_0: UnmuteNotificationsArgs) => Promise<
       UnmuteNotificationsResponse
     >,
   'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
+  'withdraw_crypto' : (arg_0: WithdrawCryptoRequest) => Promise<
+      WithdrawCryptoResponse
+    >,
   'withdraw_cryptocurrency' : (arg_0: WithdrawCryptocurrencyRequest) => Promise<
       WithdrawCryptocurrencyResponse
     >,
