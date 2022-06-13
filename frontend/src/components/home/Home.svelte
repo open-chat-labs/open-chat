@@ -246,7 +246,7 @@
 
             if (params.chatId === null) {
                 rightPanelHistory = rightPanelHistory.filter(
-                    (panel) => panel.kind === "user_profile"
+                    (panel) => panel.kind === "user_profile" || panel.kind === "new_group_panel"
                 );
             }
         }
