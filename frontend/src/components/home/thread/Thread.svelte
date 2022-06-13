@@ -4,6 +4,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import Footer from "../Footer.svelte";
     import type {
+        EnhancedReplyContext,
         EventWrapper,
         Message,
         MessageContent,
@@ -44,8 +45,9 @@
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
-    import type { Cryptocurrency } from "domain/crypto";
-    import { lastCryptoSent } from "stores/crypto";
+    import type { Cryptocurrency } from "../../../domain/crypto";
+    import { lastCryptoSent } from "../../../stores/crypto";
+    import { trackEvent } from "../../../utils/tracking";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -84,6 +86,7 @@
     $: fileToAttach = derived(draftMessage, (d) => d.attachment);
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
     $: canSend = canSendMessages($chat, $userStore);
+    $: canReact = canReactToMessages($chat);
     $: messages = groupEvents(
         $threadStore[rootEvent.event.messageIndex] ?? []
     ).reverse() as EventWrapper<Message>[][][];
@@ -312,6 +315,61 @@
             timestamp: BigInt(Date.now()),
         });
     }
+
+    function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
+        draftThreadMessages.setReplyingTo(messageIndex, ev.detail);
+    }
+
+    function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
+        if (!canReact) return;
+        // optimistic update
+
+        // todo - this is not exactly going to work at the moment because the controller method goes through the list of
+        // loaded events whereas we need to go through the thread events
+        controller.toggleReaction(
+            ev.detail.message.messageId,
+            ev.detail.reaction,
+            controller.user.userId
+        );
+
+        // const apiPromise =
+        //     $chat.kind === "group_chat"
+        //         ? api.toggleGroupChatReaction(
+        //               $chat.chatId,
+        //               ev.detail.message.messageId,
+        //               ev.detail.reaction
+        //           )
+        //         : api.toggleDirectChatReaction(
+        //               $chat.them,
+        //               ev.detail.message.messageId,
+        //               ev.detail.reaction
+        //           );
+
+        // apiPromise
+        //     .then((resp) => {
+        //         if (resp !== "added" && resp !== "removed") {
+        //             // toggle again to undo
+        //             controller.toggleReaction(
+        //                 ev.detail.message.messageId,
+        //                 ev.detail.reaction,
+        //                 controller.user.userId
+        //             );
+        //         } else {
+        //             if (resp === "added") {
+        //                 trackEvent("reacted_to_message");
+        //             }
+        //         }
+        //     })
+        //     .catch((err) => {
+        //         // toggle again to undo
+        //         console.log("Reaction failed: ", err);
+        //         controller.toggleReaction(
+        //             ev.detail.message.messageId,
+        //             ev.detail.reaction,
+        //             controller.user.userId
+        //         );
+        //     });
+    }
 </script>
 
 <PollBuilder
@@ -378,9 +436,9 @@
                         on:chatWith
                         on:goToMessageIndex
                         on:replyPrivatelyTo
-                        on:replyTo
+                        on:replyTo={replyTo}
                         on:replyInThread
-                        on:selectReaction
+                        on:selectReaction={selectReaction}
                         on:deleteMessage={deleteMessage}
                         on:blockUser
                         on:pinMessage
