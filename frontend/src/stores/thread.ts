@@ -1,6 +1,17 @@
 import { writable } from "svelte/store";
 import { dedupe } from "../utils/list";
-import type { EventWrapper, Message, MessageContent, ThreadSummary } from "../domain/chat/chat";
+import type {
+    EventWrapper,
+    LocalReaction,
+    Message,
+    MessageContent,
+    ThreadSummary,
+} from "../domain/chat/chat";
+import { containsReaction, toggleReaction } from "../domain/chat/chat.utils";
+
+// todo - do we really need something separate from the chat controller here. Can the whole thing just be global since
+// the key is messageId - it should always be unique
+const localReactions: Record<string, LocalReaction[]> = {};
 
 /**
  * This just holds some dummy state for us while we don't have an api
@@ -133,6 +144,57 @@ export const threadStore = {
                       }
                     : ev
             );
+            return store;
+        });
+    },
+    toggleReaction: (
+        rootMessageIndex: number,
+        messageId: bigint,
+        reaction: string,
+        userId: string
+    ): void => {
+        messageId = BigInt(messageId);
+        const key = messageId.toString();
+        if (localReactions[key] === undefined) {
+            localReactions[key] = [];
+        }
+        const messageReactions = localReactions[key];
+        update((store) => {
+            store[rootMessageIndex].map((e) => {
+                if (e.event.kind === "message" && e.event.messageId === messageId) {
+                    const addOrRemove = containsReaction(userId, reaction, e.event.reactions)
+                        ? "remove"
+                        : "add";
+                    messageReactions.push({
+                        reaction,
+                        timestamp: Date.now(),
+                        kind: addOrRemove,
+                        userId,
+                    });
+                    const updatedEvent = {
+                        ...e,
+                        event: {
+                            ...e.event,
+                            reactions: toggleReaction(userId, e.event.reactions, reaction),
+                        },
+                    };
+                    // overwriteCachedEvents(this.chatId, [updatedEvent]).catch((err) =>
+                    //     rollbar.error("Unable to overwrite cached event toggling reaction", err)
+                    // );
+                    // if (userId === this.user.userId) {
+                    //     rtcConnectionsManager.sendMessage([...this.chatUserIds], {
+                    //         kind: "remote_user_toggled_reaction",
+                    //         chatType: this.chatVal.kind,
+                    //         chatId: this.chatVal.chatId,
+                    //         messageId,
+                    //         userId,
+                    //         reaction,
+                    //     });
+                    // }
+                    return updatedEvent;
+                }
+                return e;
+            });
             return store;
         });
     },
