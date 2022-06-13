@@ -650,6 +650,32 @@ export const idlFactory = ({ IDL }) => {
   });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
+  const TransferCryptoWithinGroupArgs = IDL.Record({
+    'content' : CryptocurrencyContent,
+    'recipient' : UserId,
+    'mentioned' : IDL.Vec(User),
+    'group_id' : ChatId,
+    'sender_name' : IDL.Text,
+    'message_id' : MessageId,
+    'replies_to' : IDL.Opt(GroupReplyContext),
+  });
+  const TransferCryptoWithinGroupResponse = IDL.Variant({
+    'TextTooLong' : IDL.Nat32,
+    'TransferLimitExceeded' : Tokens,
+    'CallerNotInGroup' : IDL.Opt(CompletedCryptoTransaction),
+    'TransferCannotBeZero' : IDL.Null,
+    'Success' : IDL.Record({
+      'timestamp' : TimestampMillis,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptoTransaction,
+      'message_index' : MessageIndex,
+    }),
+    'RecipientBlocked' : IDL.Null,
+    'InvalidRequest' : IDL.Text,
+    'TransferFailed' : IDL.Text,
+    'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
+    'CryptocurrencyNotSupported' : Cryptocurrency,
+  });
   const TransferCryptocurrencyWithinGroupArgs = IDL.Record({
     'content' : CryptocurrencyContentV2,
     'recipient' : UserId,
@@ -674,32 +700,6 @@ export const idlFactory = ({ IDL }) => {
     'InvalidRequest' : IDL.Text,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptocurrencyTransfer),
-    'CryptocurrencyNotSupported' : Cryptocurrency,
-  });
-  const TransferCryptocurrencyWithinGroupV2Args = IDL.Record({
-    'content' : CryptocurrencyContent,
-    'recipient' : UserId,
-    'mentioned' : IDL.Vec(User),
-    'group_id' : ChatId,
-    'sender_name' : IDL.Text,
-    'message_id' : MessageId,
-    'replies_to' : IDL.Opt(GroupReplyContext),
-  });
-  const TransferCryptocurrencyWithinGroupV2Response = IDL.Variant({
-    'TextTooLong' : IDL.Nat32,
-    'TransferLimitExceeded' : Tokens,
-    'CallerNotInGroup' : IDL.Opt(CompletedCryptoTransaction),
-    'TransferCannotBeZero' : IDL.Null,
-    'Success' : IDL.Record({
-      'timestamp' : TimestampMillis,
-      'event_index' : EventIndex,
-      'transfer' : CompletedCryptoTransaction,
-      'message_index' : MessageIndex,
-    }),
-    'RecipientBlocked' : IDL.Null,
-    'InvalidRequest' : IDL.Text,
-    'TransferFailed' : IDL.Text,
-    'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'CryptocurrencyNotSupported' : Cryptocurrency,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
@@ -778,6 +778,14 @@ export const idlFactory = ({ IDL }) => {
       'timestamp' : TimestampMillis,
     }),
     'InternalError' : IDL.Text,
+  });
+  const WithdrawCryptoRequest = IDL.Record({
+    'withdrawal' : PendingCryptoTransaction,
+  });
+  const WithdrawCryptoResponse = IDL.Variant({
+    'CurrencyNotSupported' : IDL.Null,
+    'TransactionFailed' : FailedCryptoTransaction,
+    'Success' : CompletedCryptoTransaction,
   });
   const PendingCryptocurrencyWithdrawal = IDL.Record({
     'to' : AccountIdentifier,
@@ -896,14 +904,14 @@ export const idlFactory = ({ IDL }) => {
         [ToggleReactionResponse],
         [],
       ),
+    'transfer_crypto_within_group' : IDL.Func(
+        [TransferCryptoWithinGroupArgs],
+        [TransferCryptoWithinGroupResponse],
+        [],
+      ),
     'transfer_cryptocurrency_within_group' : IDL.Func(
         [TransferCryptocurrencyWithinGroupArgs],
         [TransferCryptocurrencyWithinGroupResponse],
-        [],
-      ),
-    'transfer_cryptocurrency_within_group_v2' : IDL.Func(
-        [TransferCryptocurrencyWithinGroupV2Args],
-        [TransferCryptocurrencyWithinGroupV2Response],
         [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
@@ -913,6 +921,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
+    'withdraw_crypto' : IDL.Func(
+        [WithdrawCryptoRequest],
+        [WithdrawCryptoResponse],
+        [],
+      ),
     'withdraw_cryptocurrency' : IDL.Func(
         [WithdrawCryptocurrencyRequest],
         [WithdrawCryptocurrencyResponse],

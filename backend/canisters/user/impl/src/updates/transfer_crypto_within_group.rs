@@ -7,11 +7,11 @@ use ic_ledger_types::Tokens;
 use types::{
     CryptoTransaction, CryptocurrencyContent, MessageContent, ICP_TRANSFER_LIMIT, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
 };
-use user_canister::transfer_cryptocurrency_within_group_v2::{Response::*, *};
+use user_canister::transfer_crypto_within_group::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
-async fn transfer_cryptocurrency_within_group_v2(args: Args) -> Response {
+async fn transfer_crypto_within_group(args: Args) -> Response {
     run_regular_jobs();
 
     if let Err(response) = read_state(|state| validate_request(&args, state)) {

@@ -325,7 +325,7 @@ type TransferCryptocurrencyWithinGroupResponse =
         InternalError: record { text; CompletedCryptocurrencyTransfer; };
     };
 
-type TransferCryptocurrencyWithinGroupV2Args =
+type TransferCryptoWithinGroupArgs =
     record {
         message_id: MessageId;
         group_id: ChatId;
@@ -336,7 +336,7 @@ type TransferCryptocurrencyWithinGroupV2Args =
         mentioned: vec User;
     };
 
-type TransferCryptocurrencyWithinGroupV2Response =
+type TransferCryptoWithinGroupResponse =
     variant {
         Success: record {
             event_index: EventIndex;
@@ -578,8 +578,8 @@ service: {
     relinquish_group_super_admin: (RelinquishGroupSuperAdminArgs) -> (RelinquishGroupSuperAdminResponse);
     add_recommended_group_exclusions: (AddRecommendedGroupExclusionsArgs) -> (AddRecommendedGroupExclusionsResponse);
     set_bio: (SetBioArgs) -> (SetBioResponse);
+    transfer_crypto_within_group: (TransferCryptoWithinGroupArgs) -> (TransferCryptoWithinGroupResponse);
     transfer_cryptocurrency_within_group: (TransferCryptocurrencyWithinGroupArgs) -> (TransferCryptocurrencyWithinGroupResponse);
-    transfer_cryptocurrency_within_group_v2: (TransferCryptocurrencyWithinGroupV2Args) -> (TransferCryptocurrencyWithinGroupV2Response);
     withdraw_crypto: (WithdrawCryptoRequest) -> (WithdrawCryptoResponse);
     withdraw_cryptocurrency: (WithdrawCryptocurrencyRequest) -> (WithdrawCryptocurrencyResponse);
 
