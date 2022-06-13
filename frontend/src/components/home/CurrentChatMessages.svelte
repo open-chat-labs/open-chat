@@ -3,6 +3,7 @@
 <script lang="ts">
     import { afterUpdate, createEventDispatcher, onMount, setContext, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
+    import Robot from "../Robot.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Fab from "../Fab.svelte";
@@ -28,6 +29,7 @@
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import { trackEvent } from "../../utils/tracking";
     import { threadSummaryStore } from "../../stores/thread";
+    import { userStore } from "../../stores/user";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -57,6 +59,7 @@
     $: markRead = controller.markRead;
     $: pinned = controller.pinnedMessages;
     $: editingEvent = controller.editingEvent;
+    $: isBot = $chat.kind === "direct_chat" && $userStore[$chat.them]?.kind === "bot";
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
@@ -552,6 +555,9 @@
     {/each}
     {#if $chat.kind === "group_chat" && !morePrevAvailable}
         <InitialGroupMessage group={$chat} noVisibleEvents={$events.length === 0} />
+    {/if}
+    {#if isBot && !morePrevAvailable}
+        <Robot />
     {/if}
 </div>
 {#if !preview}
