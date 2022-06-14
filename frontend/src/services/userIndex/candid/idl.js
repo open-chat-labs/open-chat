@@ -65,6 +65,7 @@ export const idlFactory = ({ IDL }) => {
       'phone_status' : PhoneStatus,
       'wasm_version' : Version,
       'icp_account' : AccountIdentifier,
+      'referrals' : IDL.Vec(UserId),
       'user_id' : UserId,
       'avatar_id' : IDL.Opt(IDL.Nat),
       'canister_upgrade_status' : CanisterUpgradeStatus,

@@ -37,5 +37,8 @@ fn process_event(event: UserEvent, runtime_state: &mut RuntimeState) {
         UserEvent::UserCreated(ev) => {
             runtime_state.data.user_created = ev.timestamp;
         }
+        UserEvent::ReferredUserRegistered(_ev) => {
+            //openchat_bot::send_referred_user_joined_message(&ev, runtime_state);
+        }
     }
 }

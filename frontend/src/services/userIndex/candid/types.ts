@@ -169,6 +169,7 @@ export type CurrentUserResponse = {
       'phone_status' : PhoneStatus,
       'wasm_version' : Version,
       'icp_account' : AccountIdentifier,
+      'referrals' : Array<UserId>,
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,

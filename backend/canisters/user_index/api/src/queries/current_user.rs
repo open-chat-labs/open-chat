@@ -6,6 +6,7 @@ use types::{CanisterUpgradeStatus, PhoneNumber, TimestampMillis, UserId, Version
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {}
 
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -22,6 +23,7 @@ pub struct SuccessResult {
     pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
     pub icp_account: AccountIdentifier,
+    pub referrals: Vec<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
