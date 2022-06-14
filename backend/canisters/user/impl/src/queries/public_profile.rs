@@ -11,6 +11,7 @@ fn public_profile(_args: Args) -> Response {
             bio: state.data.bio.clone(),
             is_premium: state.data.phone_is_verified || state.data.storage_limit > 0,
             phone_is_verified: state.data.phone_is_verified,
+            created: state.data.user_created,
         })
     })
 }
