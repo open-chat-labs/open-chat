@@ -374,7 +374,7 @@ impl UserMap {
     }
 
     pub fn referrals(&self, user_id: &UserId) -> Vec<UserId> {
-        self.user_referrals[user_id].clone()
+        self.user_referrals.get(user_id).map_or(Vec::new(), |refs| refs.clone())
     }
 
     fn get_by_user_id_mut_internal(&mut self, user_id: &UserId) -> Option<&mut User> {
