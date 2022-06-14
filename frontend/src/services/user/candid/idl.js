@@ -498,6 +498,7 @@ export const idlFactory = ({ IDL }) => {
   const PublicProfile = IDL.Record({
     'bio' : IDL.Text,
     'is_premium' : IDL.Bool,
+    'created' : TimestampMillis,
     'username' : IDL.Text,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'phone_is_verified' : IDL.Bool,

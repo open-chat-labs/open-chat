@@ -9,7 +9,10 @@ use model::user_event_sync_queue::UserEventSyncQueue;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
-use types::{CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, TimestampMillis, Timestamped, UserId, Version};
+use types::{
+    CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, TimestampMillis, Timestamped, UserCreated, UserEvent,
+    UserId, Version,
+};
 use utils::canister::CanistersRequiringUpgrade;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
@@ -172,6 +175,14 @@ impl Data {
             super_admins_to_dismiss: VecDeque::new(),
             test_mode,
             challenges: Challenges::new(test_mode),
+        }
+    }
+
+    pub fn send_user_created_event_for_existing_users(&mut self, now: TimestampMillis) {
+        for user in self.users.iter() {
+            // For every user queue a UserCreated event
+            self.user_event_sync_queue
+                .push(user.user_id, UserEvent::UserCreated(UserCreated { timestamp: now }));
         }
     }
 }

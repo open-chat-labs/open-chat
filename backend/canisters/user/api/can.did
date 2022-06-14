@@ -556,6 +556,7 @@ type PublicProfile =
         bio: text;
         is_premium: bool;
         phone_is_verified: bool;
+        created: TimestampMillis;
     };
 
 service: {

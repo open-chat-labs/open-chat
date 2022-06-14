@@ -25,6 +25,7 @@ fn init(args: Args) {
         args.ledger_canister_id,
         args.username,
         args.test_mode,
+        env.now(),
     );
 
     init_state(env, data, args.wasm_version);

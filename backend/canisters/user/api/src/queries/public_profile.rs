@@ -1,5 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use types::TimestampMillis;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {}
@@ -16,4 +17,5 @@ pub struct PublicProfile {
     pub bio: String,
     pub is_premium: bool,
     pub phone_is_verified: bool,
+    pub created: TimestampMillis,
 }
