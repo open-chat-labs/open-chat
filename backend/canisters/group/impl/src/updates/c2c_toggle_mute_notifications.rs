@@ -1,9 +1,9 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_candid_and_msgpack;
+use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_canister::c2c_toggle_mute_notifications::{Response::*, *};
 
-#[update_candid_and_msgpack]
+#[update_msgpack]
 #[trace]
 fn c2c_toggle_mute_notifications(args: Args) -> Response {
     run_regular_jobs();

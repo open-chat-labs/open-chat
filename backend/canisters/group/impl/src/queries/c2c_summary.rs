@@ -1,9 +1,9 @@
 use crate::read_state;
 use crate::RuntimeState;
-use canister_api_macros::query_candid_and_msgpack;
+use canister_api_macros::query_msgpack;
 use group_canister::c2c_summary::{Response::*, *};
 
-#[query_candid_and_msgpack]
+#[query_msgpack]
 fn c2c_summary(_: Args) -> Response {
     read_state(c2c_summary_impl)
 }
