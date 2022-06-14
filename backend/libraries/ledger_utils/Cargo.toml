@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 candid = "0.7.14"
 ic-ledger-types = "0.1.1"
-serde = "1.0.136"
+serde = "1.0.137"
 serde_cbor = "0.11.2"
 sha2 = "0.10.2"
 types = { path = "../types" }
