@@ -34,5 +34,8 @@ fn process_event(event: UserEvent, runtime_state: &mut RuntimeState) {
             runtime_state.data.group_creation_limit = PREMIUM_GROUP_CREATION_LIMIT;
             //openchat_bot::send_storage_ugraded_bot_message(&ev, runtime_state);
         }
+        UserEvent::UserCreated(ev) => {
+            runtime_state.data.user_created = ev.timestamp;
+        }
     }
 }

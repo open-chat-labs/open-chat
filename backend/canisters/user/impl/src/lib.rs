@@ -135,6 +135,8 @@ struct Data {
     pub group_creation_limit: u32,
     pub storage_limit: u64,
     pub phone_is_verified: bool,
+    #[serde(default)]
+    pub user_created: TimestampMillis,
 }
 
 impl Data {
@@ -148,6 +150,7 @@ impl Data {
         ledger_canister_id: CanisterId,
         username: String,
         test_mode: bool,
+        now: TimestampMillis,
     ) -> Data {
         Data {
             owner,
@@ -170,6 +173,7 @@ impl Data {
             group_creation_limit: BASIC_GROUP_CREATION_LIMIT,
             storage_limit: 0,
             phone_is_verified: false,
+            user_created: now,
         }
     }
 

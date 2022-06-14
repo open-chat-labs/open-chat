@@ -7,6 +7,7 @@ use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
 use utils::env::canister::CanisterEnv;
+use utils::env::Environment;
 
 #[post_upgrade]
 #[trace]
@@ -19,6 +20,9 @@ fn post_upgrade(args: Args) {
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
     data.users.rehydrate();
+
+    // TODO: Remove this once it has run for the first time
+    data.send_user_created_event_for_existing_users(env.now());
 
     init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);

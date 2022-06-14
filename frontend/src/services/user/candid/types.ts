@@ -631,6 +631,7 @@ export interface PublicGroupSummary {
 export interface PublicProfile {
   'bio' : string,
   'is_premium' : boolean,
+  'created' : TimestampMillis,
   'username' : string,
   'avatar_id' : [] | [bigint],
   'phone_is_verified' : boolean,
