@@ -3,7 +3,7 @@ use crate::{mutate_state, RuntimeState, MIN_CYCLES_BALANCE, USER_CANISTER_INITIA
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use types::{CanisterId, CanisterWasm, Cycles, UserId, Version};
+use types::{CanisterId, CanisterWasm, Cycles, ReferredUserRegistered, UserEvent, UserId, Version};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_index_canister::register_user::{Response::*, *};
 use utils::canister;
@@ -136,7 +136,14 @@ fn commit(
     runtime_state
         .data
         .users
-        .register(caller, user_id, wasm_version, username, now, referred_by);
+        .register(caller, user_id, wasm_version, username.clone(), now, referred_by);
+
+    if let Some(referred_by) = referred_by {
+        runtime_state.data.user_event_sync_queue.push(
+            referred_by,
+            UserEvent::ReferredUserRegistered(ReferredUserRegistered { user_id, username }),
+        );
+    }
 }
 
 fn rollback(username: &str, canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {

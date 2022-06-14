@@ -39,6 +39,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             open_storage_limit_bytes: u.open_storage_limit_bytes,
             phone_status,
             icp_account: default_ledger_account(u.user_id.into()),
+            referrals: runtime_state.data.users.referrals(&u.user_id),
         })
     } else {
         UserNotFound
