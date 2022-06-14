@@ -8,4 +8,4 @@ edition = "2021"
 
 [dependencies]
 rmp-serde = "1.1.0"
-serde = "1.0.136"
+serde = "1.0.137"

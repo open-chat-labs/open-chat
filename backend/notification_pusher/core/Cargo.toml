@@ -15,7 +15,7 @@ index_store = { path = "../../libraries/index_store" }
 notifications_canister = { path = "../../canisters/notifications/api" }
 notifications_canister_client = { path = "../../canisters/notifications/client" }
 openssl = { version = "0.10.35", features = ["vendored"] }
-serde = "1.0.136"
+serde = "1.0.137"
 tokio = { version = "1.10.0", features = ["macros", "time"] }
 tracing = "0.1.33"
 types = { path = "../../libraries/types" }

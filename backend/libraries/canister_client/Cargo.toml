@@ -22,7 +22,7 @@ ic-utils = "0.15.0"
 notifications_canister = { path = "../../canisters/notifications/api" }
 root_canister = { path = "../../canisters/root/api" }
 root_canister_client = { path = "../../canisters/root/client" }
-serde = "1.0.136"
+serde = "1.0.137"
 types = { path = "../types", default-features = false }
 user_canister = { path = "../../canisters/user/api" }
 user_canister_client = { path = "../../canisters/user/client" }
