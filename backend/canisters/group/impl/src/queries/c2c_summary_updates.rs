@@ -1,5 +1,5 @@
 use crate::{read_state, ParticipantInternal, RuntimeState, WASM_VERSION};
-use canister_api_macros::query_candid_and_msgpack;
+use canister_api_macros::query_msgpack;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_summary_updates::{Response::*, *};
 use std::collections::HashSet;
@@ -8,7 +8,7 @@ use types::{
     TimestampMillis, UserId, MAX_RETURNED_MENTIONS,
 };
 
-#[query_candid_and_msgpack]
+#[query_msgpack]
 fn c2c_summary_updates(args: Args) -> Response {
     read_state(|state| c2c_summary_updates_impl(args, state))
 }

@@ -1,11 +1,11 @@
 use crate::guards::caller_is_user_index;
 use crate::{read_state, run_regular_jobs};
-use canister_api_macros::update_candid_and_msgpack;
+use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use ic_ledger_types::{Memo, TransferArgs, DEFAULT_FEE};
 use user_canister::c2c_charge_user_account::{Response::*, *};
 
-#[update_candid_and_msgpack(guard = "caller_is_user_index")]
+#[update_msgpack(guard = "caller_is_user_index")]
 #[trace]
 async fn c2c_charge_user_account(args: Args) -> Response {
     run_regular_jobs();

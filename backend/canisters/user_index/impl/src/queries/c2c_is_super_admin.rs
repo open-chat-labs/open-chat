@@ -1,8 +1,8 @@
 use crate::{read_state, RuntimeState};
-use canister_api_macros::query_candid_and_msgpack;
+use canister_api_macros::query_msgpack;
 use user_index_canister::c2c_is_super_admin::{Response::*, *};
 
-#[query_candid_and_msgpack]
+#[query_msgpack]
 fn c2c_is_super_admin(args: Args) -> Response {
     read_state(|state| c2c_is_super_admin_impl(args, state))
 }

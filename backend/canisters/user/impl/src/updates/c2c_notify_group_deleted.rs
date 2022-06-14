@@ -1,10 +1,10 @@
 use crate::guards::caller_is_group_index;
 use crate::{mutate_state, openchat_bot, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_candid_and_msgpack;
+use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use user_canister::c2c_notify_group_deleted::{Response::*, *};
 
-#[update_candid_and_msgpack(guard = "caller_is_group_index")]
+#[update_msgpack(guard = "caller_is_group_index")]
 #[trace]
 fn c2c_notify_group_deleted(args: Args) -> Response {
     run_regular_jobs();
