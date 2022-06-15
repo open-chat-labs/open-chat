@@ -93,33 +93,6 @@ export interface CompletedCryptoTransaction {
   'memo' : Memo,
   'amount' : Tokens,
 }
-export interface CompletedCryptocurrencyDeposit {
-  'fee' : Tokens,
-  'token' : Cryptocurrency,
-  'block_index' : BlockIndex,
-  'memo' : Memo,
-  'from_address' : AccountIdentifier,
-  'amount' : Tokens,
-}
-export interface CompletedCryptocurrencyTransfer {
-  'fee' : Tokens,
-  'token' : Cryptocurrency,
-  'transaction_hash' : TransactionHash,
-  'block_index' : BlockIndex,
-  'memo' : Memo,
-  'recipient' : UserId,
-  'sender' : UserId,
-  'amount' : Tokens,
-}
-export interface CompletedCryptocurrencyWithdrawal {
-  'to' : AccountIdentifier,
-  'fee' : Tokens,
-  'token' : Cryptocurrency,
-  'transaction_hash' : TransactionHash,
-  'block_index' : BlockIndex,
-  'memo' : Memo,
-  'amount' : Tokens,
-}
 export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
@@ -160,26 +133,6 @@ export interface CryptocurrencyContent {
   'caption' : [] | [string],
   'transfer' : CryptoTransaction,
 }
-export interface CryptocurrencyContentV2 {
-  'caption' : [] | [string],
-  'transfer' : CryptocurrencyTransfer,
-}
-export type CryptocurrencyDeposit = {
-    'Completed' : CompletedCryptocurrencyDeposit
-  };
-export type CryptocurrencyTransaction = { 'Deposit' : CryptocurrencyDeposit } |
-  { 'Withdrawal' : CryptocurrencyWithdrawal } |
-  { 'Transfer' : CryptocurrencyTransfer };
-export type CryptocurrencyTransfer = {
-    'Failed' : FailedCryptocurrencyTransfer
-  } |
-  { 'Completed' : CompletedCryptocurrencyTransfer } |
-  { 'Pending' : PendingCryptocurrencyTransfer };
-export type CryptocurrencyWithdrawal = {
-    'Failed' : FailedCryptocurrencyWithdrawal
-  } |
-  { 'Completed' : CompletedCryptocurrencyWithdrawal } |
-  { 'Pending' : PendingCryptocurrencyWithdrawal };
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
   'recipient' : Principal,
@@ -285,22 +238,6 @@ export interface FailedCryptoTransaction {
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : CryptoAccountFull,
-  'memo' : Memo,
-  'error_message' : string,
-  'amount' : Tokens,
-}
-export interface FailedCryptocurrencyTransfer {
-  'fee' : Tokens,
-  'token' : Cryptocurrency,
-  'memo' : Memo,
-  'error_message' : string,
-  'recipient' : UserId,
-  'amount' : Tokens,
-}
-export interface FailedCryptocurrencyWithdrawal {
-  'to' : AccountIdentifier,
-  'fee' : Tokens,
-  'token' : Cryptocurrency,
   'memo' : Memo,
   'error_message' : string,
   'amount' : Tokens,
@@ -547,7 +484,6 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
-  { 'CryptocurrencyV2' : CryptocurrencyContentV2 } |
   { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
@@ -644,20 +580,6 @@ export interface PendingCryptoTransaction {
 }
 export interface PendingCryptoTransfer {
   'to' : UserId,
-  'fee' : [] | [Tokens],
-  'token' : Cryptocurrency,
-  'memo' : [] | [Memo],
-  'amount' : Tokens,
-}
-export interface PendingCryptocurrencyTransfer {
-  'fee' : [] | [Tokens],
-  'token' : Cryptocurrency,
-  'memo' : [] | [Memo],
-  'recipient' : UserId,
-  'amount' : Tokens,
-}
-export interface PendingCryptocurrencyWithdrawal {
-  'to' : AccountIdentifier,
   'fee' : [] | [Tokens],
   'token' : Cryptocurrency,
   'memo' : [] | [Memo],
@@ -785,15 +707,6 @@ export interface SendMessageArgs {
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'TransferLimitExceeded' : bigint } |
-  {
-    'TransferSuccessV2' : {
-      'timestamp' : TimestampMillis,
-      'chat_id' : ChatId,
-      'event_index' : EventIndex,
-      'transfer' : CompletedCryptocurrencyTransfer,
-      'message_index' : MessageIndex,
-    }
-  } |
   { 'TransferCannotBeZero' : null } |
   {
     'Success' : {
@@ -849,16 +762,7 @@ export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
-export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
 export type TransactionHash = Array<number>;
-export type TransactionStatus = { 'Failed' : string } |
-  { 'Complete' : null } |
-  { 'Pending' : null };
-export interface TransactionWrapper {
-  'transaction' : Transaction,
-  'timestamp' : TimestampMillis,
-  'index' : number,
-}
 export interface TransferCryptoWithinGroupArgs {
   'content' : CryptocurrencyContent,
   'recipient' : UserId,
@@ -884,34 +788,6 @@ export type TransferCryptoWithinGroupResponse = { 'TextTooLong' : number } |
   { 'InvalidRequest' : string } |
   { 'TransferFailed' : string } |
   { 'InternalError' : [string, CompletedCryptoTransaction] } |
-  { 'CryptocurrencyNotSupported' : Cryptocurrency };
-export interface TransferCryptocurrencyWithinGroupArgs {
-  'content' : CryptocurrencyContentV2,
-  'recipient' : UserId,
-  'mentioned' : Array<User>,
-  'group_id' : ChatId,
-  'sender_name' : string,
-  'message_id' : MessageId,
-  'replies_to' : [] | [GroupReplyContext],
-}
-export type TransferCryptocurrencyWithinGroupResponse = {
-    'TextTooLong' : number
-  } |
-  { 'TransferLimitExceeded' : bigint } |
-  { 'CallerNotInGroup' : [] | [CompletedCryptocurrencyTransfer] } |
-  { 'TransferCannotBeZero' : null } |
-  {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'event_index' : EventIndex,
-      'transfer' : CompletedCryptocurrencyTransfer,
-      'message_index' : MessageIndex,
-    }
-  } |
-  { 'RecipientBlocked' : null } |
-  { 'InvalidRequest' : string } |
-  { 'TransferFailed' : string } |
-  { 'InternalError' : [string, CompletedCryptocurrencyTransfer] } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
@@ -980,12 +856,6 @@ export interface WithdrawCryptoRequest {
 export type WithdrawCryptoResponse = { 'CurrencyNotSupported' : null } |
   { 'TransactionFailed' : FailedCryptoTransaction } |
   { 'Success' : CompletedCryptoTransaction };
-export interface WithdrawCryptocurrencyRequest {
-  'withdrawal' : PendingCryptocurrencyWithdrawal,
-}
-export type WithdrawCryptocurrencyResponse = { 'CurrencyNotSupported' : null } |
-  { 'TransactionFailed' : FailedCryptocurrencyWithdrawal } |
-  { 'Success' : CompletedCryptocurrencyWithdrawal };
 export interface _SERVICE {
   'add_recommended_group_exclusions' : (
       arg_0: AddRecommendedGroupExclusionsArgs,
@@ -1042,9 +912,6 @@ export interface _SERVICE {
   'transfer_crypto_within_group' : (
       arg_0: TransferCryptoWithinGroupArgs,
     ) => Promise<TransferCryptoWithinGroupResponse>,
-  'transfer_cryptocurrency_within_group' : (
-      arg_0: TransferCryptocurrencyWithinGroupArgs,
-    ) => Promise<TransferCryptocurrencyWithinGroupResponse>,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
   'unmute_notifications' : (arg_0: UnmuteNotificationsArgs) => Promise<
       UnmuteNotificationsResponse
@@ -1052,8 +919,5 @@ export interface _SERVICE {
   'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
   'withdraw_crypto' : (arg_0: WithdrawCryptoRequest) => Promise<
       WithdrawCryptoResponse
-    >,
-  'withdraw_cryptocurrency' : (arg_0: WithdrawCryptocurrencyRequest) => Promise<
-      WithdrawCryptocurrencyResponse
     >,
 }

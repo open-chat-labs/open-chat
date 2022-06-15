@@ -86,33 +86,6 @@ export interface CompletedCryptoTransaction {
   'memo' : Memo,
   'amount' : Tokens,
 }
-export interface CompletedCryptocurrencyDeposit {
-  'fee' : Tokens,
-  'token' : Cryptocurrency,
-  'block_index' : BlockIndex,
-  'memo' : Memo,
-  'from_address' : AccountIdentifier,
-  'amount' : Tokens,
-}
-export interface CompletedCryptocurrencyTransfer {
-  'fee' : Tokens,
-  'token' : Cryptocurrency,
-  'transaction_hash' : TransactionHash,
-  'block_index' : BlockIndex,
-  'memo' : Memo,
-  'recipient' : UserId,
-  'sender' : UserId,
-  'amount' : Tokens,
-}
-export interface CompletedCryptocurrencyWithdrawal {
-  'to' : AccountIdentifier,
-  'fee' : Tokens,
-  'token' : Cryptocurrency,
-  'transaction_hash' : TransactionHash,
-  'block_index' : BlockIndex,
-  'memo' : Memo,
-  'amount' : Tokens,
-}
 export interface ConfirmPhoneNumberArgs { 'confirmation_code' : string }
 export type ConfirmPhoneNumberResponse = { 'AlreadyClaimed' : null } |
   { 'Success' : SuccessResult } |
@@ -142,26 +115,6 @@ export interface CryptocurrencyContent {
   'caption' : [] | [string],
   'transfer' : CryptoTransaction,
 }
-export interface CryptocurrencyContentV2 {
-  'caption' : [] | [string],
-  'transfer' : CryptocurrencyTransfer,
-}
-export type CryptocurrencyDeposit = {
-    'Completed' : CompletedCryptocurrencyDeposit
-  };
-export type CryptocurrencyTransaction = { 'Deposit' : CryptocurrencyDeposit } |
-  { 'Withdrawal' : CryptocurrencyWithdrawal } |
-  { 'Transfer' : CryptocurrencyTransfer };
-export type CryptocurrencyTransfer = {
-    'Failed' : FailedCryptocurrencyTransfer
-  } |
-  { 'Completed' : CompletedCryptocurrencyTransfer } |
-  { 'Pending' : PendingCryptocurrencyTransfer };
-export type CryptocurrencyWithdrawal = {
-    'Failed' : FailedCryptocurrencyWithdrawal
-  } |
-  { 'Completed' : CompletedCryptocurrencyWithdrawal } |
-  { 'Pending' : PendingCryptocurrencyWithdrawal };
 export type CurrentUserArgs = {};
 export type CurrentUserResponse = {
     'Success' : {
@@ -237,22 +190,6 @@ export interface FailedCryptoTransaction {
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : CryptoAccountFull,
-  'memo' : Memo,
-  'error_message' : string,
-  'amount' : Tokens,
-}
-export interface FailedCryptocurrencyTransfer {
-  'fee' : Tokens,
-  'token' : Cryptocurrency,
-  'memo' : Memo,
-  'error_message' : string,
-  'recipient' : UserId,
-  'amount' : Tokens,
-}
-export interface FailedCryptocurrencyWithdrawal {
-  'to' : AccountIdentifier,
-  'fee' : Tokens,
-  'token' : Cryptocurrency,
   'memo' : Memo,
   'error_message' : string,
   'amount' : Tokens,
@@ -461,7 +398,6 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
-  { 'CryptocurrencyV2' : CryptocurrencyContentV2 } |
   { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
@@ -544,20 +480,6 @@ export interface PendingCryptoTransaction {
 }
 export interface PendingCryptoTransfer {
   'to' : UserId,
-  'fee' : [] | [Tokens],
-  'token' : Cryptocurrency,
-  'memo' : [] | [Memo],
-  'amount' : Tokens,
-}
-export interface PendingCryptocurrencyTransfer {
-  'fee' : [] | [Tokens],
-  'token' : Cryptocurrency,
-  'memo' : [] | [Memo],
-  'recipient' : UserId,
-  'amount' : Tokens,
-}
-export interface PendingCryptocurrencyWithdrawal {
-  'to' : AccountIdentifier,
   'fee' : [] | [Tokens],
   'token' : Cryptocurrency,
   'memo' : [] | [Memo],
@@ -686,16 +608,7 @@ export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
-export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
 export type TransactionHash = Array<number>;
-export type TransactionStatus = { 'Failed' : string } |
-  { 'Complete' : null } |
-  { 'Pending' : null };
-export interface TransactionWrapper {
-  'transaction' : Transaction,
-  'timestamp' : TimestampMillis,
-  'index' : number,
-}
 export interface TransferCyclesArgs {
   'recipient' : UserId,
   'sender' : UserId,

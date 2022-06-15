@@ -216,7 +216,7 @@ impl ChatEvents {
                 if matches!(message.content, MessageContentInternal::Deleted(_)) {
                     EditMessageResult::NotFound
                 } else {
-                    message.content = args.content.new_content_into_internal(0);
+                    message.content = args.content.new_content_into_internal();
                     message.last_updated = Some(args.now);
                     message.last_edited = Some(args.now);
                     self.push_event(

@@ -2,9 +2,8 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::ContentValidationError::*;
 use crate::RegisterVoteResult::SuccessNoChange;
 use crate::{
-    CanisterId, CompletedCryptoTransaction, CompletedCryptoTransactionInternal, CryptoAccount, CryptoAccountFull,
-    CryptoTransaction, CryptoTransactionInternal, Cryptocurrency, CryptocurrencyTransfer, PendingCryptoTransaction,
-    TimestampMillis, TotalVotes, UserId, VoteOperation,
+    CanisterId, CompletedCryptoTransaction, CryptoAccountFull, CryptoTransaction, CryptoTransactionInternal, TimestampMillis,
+    TotalVotes, UserId, VoteOperation,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -26,7 +25,6 @@ pub enum MessageContent {
     File(FileContent),
     Poll(PollContent),
     Cryptocurrency(CryptocurrencyContent),
-    CryptocurrencyV2(CryptocurrencyContentV2),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
 }
@@ -55,34 +53,12 @@ pub enum ContentValidationError {
 }
 
 impl MessageContent {
-    pub fn transform_pending_message_to_new_crypto_type(&mut self) {
-        if let MessageContent::CryptocurrencyV2(c) = &self {
-            let new_format = match c.transfer.clone() {
-                CryptocurrencyTransfer::Pending(t) => CryptoTransaction::Pending(PendingCryptoTransaction {
-                    token: t.token,
-                    amount: t.amount,
-                    to: CryptoAccount::User(t.recipient),
-                    fee: t.fee,
-                    memo: t.memo,
-                }),
-                _ => unreachable!(),
-            };
-            *self = MessageContent::Cryptocurrency(CryptocurrencyContent {
-                transfer: new_format,
-                caption: c.caption.clone(),
-            })
-        }
-    }
-
     // Determines if the content is valid for a new message, this should not be called on existing
     // messages
     pub fn validate_for_new_message(&self, forwarding: bool, now: TimestampMillis) -> Result<(), ContentValidationError> {
         if forwarding {
             match self {
-                MessageContent::Poll(_)
-                | MessageContent::Cryptocurrency(_)
-                | MessageContent::CryptocurrencyV2(_)
-                | MessageContent::Deleted(_) => {
+                MessageContent::Poll(_) | MessageContent::Cryptocurrency(_) | MessageContent::Deleted(_) => {
                     return Err(InvalidTypeForForwarding);
                 }
                 _ => {}
@@ -104,14 +80,6 @@ impl MessageContent {
                     return Err(TransferLimitExceeded(ICP_TRANSFER_LIMIT.e8s()));
                 }
             }
-            MessageContent::CryptocurrencyV2(c) => {
-                if c.transfer.amount() == Tokens::ZERO {
-                    return Err(TransferCannotBeZero);
-                }
-                if let Err(limit) = c.within_limit() {
-                    return Err(TransferLimitExceeded(limit));
-                }
-            }
             _ => {}
         };
 
@@ -123,7 +91,6 @@ impl MessageContent {
             MessageContent::File(f) => f.blob_reference.is_none(),
             MessageContent::Poll(p) => p.config.options.is_empty(),
             MessageContent::Cryptocurrency(c) => c.transfer.amount() == Tokens::ZERO,
-            MessageContent::CryptocurrencyV2(c) => c.transfer.amount() == Tokens::ZERO,
             MessageContent::Deleted(_) => true,
             MessageContent::Giphy(_) => false,
         };
@@ -139,7 +106,7 @@ impl MessageContent {
 
     // This must only be called on the content of new messages, this is because for polls it will
     // set the votes to empty
-    pub fn new_content_into_internal(self, now: TimestampMillis) -> MessageContentInternal {
+    pub fn new_content_into_internal(self) -> MessageContentInternal {
         match self {
             MessageContent::Text(t) => MessageContentInternal::Text(t),
             MessageContent::Image(i) => MessageContentInternal::Image(i),
@@ -152,7 +119,6 @@ impl MessageContent {
                 ended: false,
             }),
             MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c.into()),
-            MessageContent::CryptocurrencyV2(c) => MessageContentInternal::Cryptocurrency((c, now).into()),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
             MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
         }
@@ -188,7 +154,6 @@ impl MessageContent {
             MessageContent::Text(_)
             | MessageContent::Poll(_)
             | MessageContent::Cryptocurrency(_)
-            | MessageContent::CryptocurrencyV2(_)
             | MessageContent::Deleted(_)
             | MessageContent::Giphy(_) => {}
         }
@@ -205,7 +170,6 @@ impl MessageContent {
             MessageContent::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
             MessageContent::Cryptocurrency(c) => c.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::CryptocurrencyV2(c) => c.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Deleted(_) => 0,
             MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
         }
@@ -430,54 +394,6 @@ impl From<CryptocurrencyContent> for CryptocurrencyContentInternal {
     fn from(c: CryptocurrencyContent) -> Self {
         CryptocurrencyContentInternal {
             transfer: c.transfer.into(),
-            caption: c.caption,
-        }
-    }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CryptocurrencyContentV2 {
-    pub transfer: CryptocurrencyTransfer,
-    pub caption: Option<String>,
-}
-
-impl CryptocurrencyContentV2 {
-    pub fn within_limit(&self) -> Result<(), u64> {
-        if let CryptocurrencyTransfer::Pending(t) = &self.transfer {
-            if t.token == Cryptocurrency::InternetComputer && t.amount > ICP_TRANSFER_LIMIT {
-                return Err(ICP_TRANSFER_LIMIT.e8s());
-            }
-        }
-        Ok(())
-    }
-}
-
-impl From<(CryptocurrencyContentV2, TimestampMillis)> for CryptocurrencyContentInternal {
-    fn from((c, timestamp): (CryptocurrencyContentV2, TimestampMillis)) -> Self {
-        CryptocurrencyContentInternal {
-            transfer: match c.transfer {
-                CryptocurrencyTransfer::Pending(t) => CryptoTransactionInternal::Pending(PendingCryptoTransaction {
-                    token: t.token,
-                    amount: t.amount,
-                    to: CryptoAccount::User(t.recipient),
-                    fee: t.fee,
-                    memo: t.memo,
-                }),
-                CryptocurrencyTransfer::Completed(t) => {
-                    CryptoTransactionInternal::Completed(CompletedCryptoTransactionInternal {
-                        token: t.token,
-                        amount: t.amount,
-                        fee: t.fee,
-                        from: CryptoAccount::User(t.sender),
-                        to: CryptoAccount::User(t.recipient),
-                        memo: t.memo,
-                        created: timestamp,
-                        transaction_hash: t.transaction_hash,
-                        block_index: t.block_index,
-                    })
-                }
-                CryptocurrencyTransfer::Failed(_) => unreachable!(),
-            },
             caption: c.caption,
         }
     }
