@@ -30,15 +30,25 @@ struct AttributeInput {
 
 #[proc_macro_attribute]
 pub fn update_candid_and_msgpack(attr: TokenStream, item: TokenStream) -> TokenStream {
-    canister_api_method(MethodType::Update, attr, item)
+    canister_api_method(MethodType::Update, attr, item, true)
 }
 
 #[proc_macro_attribute]
 pub fn query_candid_and_msgpack(attr: TokenStream, item: TokenStream) -> TokenStream {
-    canister_api_method(MethodType::Query, attr, item)
+    canister_api_method(MethodType::Query, attr, item, true)
 }
 
-fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenStream) -> TokenStream {
+#[proc_macro_attribute]
+pub fn update_msgpack(attr: TokenStream, item: TokenStream) -> TokenStream {
+    canister_api_method(MethodType::Update, attr, item, false)
+}
+
+#[proc_macro_attribute]
+pub fn query_msgpack(attr: TokenStream, item: TokenStream) -> TokenStream {
+    canister_api_method(MethodType::Query, attr, item, false)
+}
+
+fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenStream, include_candid: bool) -> TokenStream {
     let input: AttributeInput = from_tokenstream(&attr.into()).unwrap();
     let item = parse_macro_input!(item as ItemFn);
 
@@ -59,12 +69,20 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
     let serializer = quote! { serializer = #serializer_name, };
     let deserializer = quote! { deserializer = #deserializer_name };
 
+    let candid = if include_candid {
+        quote! { #[ic_cdk_macros::#method_type(name = #name, #guard #manual_reply)] }
+    } else {
+        quote! {}
+    };
+    let msgpack =
+        quote! { #[ic_cdk_macros::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)] };
+
     TokenStream::from(quote! {
         use msgpack::serialize as #serializer_ident;
         use msgpack::deserialize as #deserializer_ident;
 
-        #[ic_cdk_macros::#method_type(name = #name, #guard #manual_reply)]
-        #[ic_cdk_macros::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)]
+        #candid
+        #msgpack
         #item
     })
 }

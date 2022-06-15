@@ -26,6 +26,8 @@ pub struct UserMap {
     users_with_unconfirmed_phone_numbers: HashSet<Principal>,
     unconfirmed_phone_numbers_last_pruned: TimestampMillis,
     reserved_usernames: HashSet<String>,
+    #[serde(skip)]
+    user_referrals: HashMap<UserId, Vec<UserId>>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Default, Debug)]
@@ -50,6 +52,10 @@ impl UserMap {
                 }
                 _ => {}
             };
+
+            if let Some(referred_by) = user.referred_by {
+                self.user_referrals.entry(referred_by).or_default().push(user.user_id);
+            }
 
             self.username_to_principal.insert(&user.username, *principal);
             self.user_id_to_principal.insert(user.user_id, *principal);
@@ -83,6 +89,10 @@ impl UserMap {
 
         let user = User::new(principal, user_id, username, now, wasm_version, referred_by);
         self.users_by_principal.insert(principal, user);
+
+        if let Some(ref_by) = referred_by {
+            self.user_referrals.entry(ref_by).or_default().push(user_id);
+        }
     }
 
     pub fn update(&mut self, user: User) -> UpdateUserResult {
@@ -361,6 +371,10 @@ impl UserMap {
 
     pub fn len(&self) -> usize {
         self.users_by_principal.len()
+    }
+
+    pub fn referrals(&self, user_id: &UserId) -> Vec<UserId> {
+        self.user_referrals.get(user_id).map_or(Vec::new(), |refs| refs.clone())
     }
 
     fn get_by_user_id_mut_internal(&mut self, user_id: &UserId) -> Option<&mut User> {

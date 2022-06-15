@@ -1,5 +1,5 @@
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_candid_and_msgpack;
+use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use user_index_canister::c2c_mark_send_message_failed::{Response::*, *};
 
@@ -9,7 +9,7 @@ use user_index_canister::c2c_mark_send_message_failed::{Response::*, *};
 // upgrade. If that happens the user's canister will instead call c2c_mark_send_message_failed, the
 // user_index will then call back into the user's canister once the recipient's canister has
 // finished upgrading allowing the canister to try sending the message again.
-#[update_candid_and_msgpack]
+#[update_msgpack]
 #[trace]
 fn c2c_mark_send_message_failed(args: Args) -> Response {
     mutate_state(|state| c2c_mark_send_message_failed_impl(args, state))

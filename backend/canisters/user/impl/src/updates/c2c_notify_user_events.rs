@@ -1,11 +1,11 @@
 use crate::guards::caller_is_user_index;
 use crate::{mutate_state, RuntimeState, PREMIUM_GROUP_CREATION_LIMIT};
-use canister_api_macros::update_candid_and_msgpack;
+use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use types::UserEvent;
 use user_canister::c2c_notify_user_events::{Response::*, *};
 
-#[update_candid_and_msgpack(guard = "caller_is_user_index")]
+#[update_msgpack(guard = "caller_is_user_index")]
 #[trace]
 fn c2c_notify_user_events(args: Args) -> Response {
     mutate_state(|state| c2c_notify_user_events_impl(args, state))
@@ -36,6 +36,9 @@ fn process_event(event: UserEvent, runtime_state: &mut RuntimeState) {
         }
         UserEvent::UserCreated(ev) => {
             runtime_state.data.user_created = ev.timestamp;
+        }
+        UserEvent::ReferredUserRegistered(_ev) => {
+            //openchat_bot::send_referred_user_joined_message(&ev, runtime_state);
         }
     }
 }

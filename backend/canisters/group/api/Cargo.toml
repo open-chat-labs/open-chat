@@ -9,6 +9,6 @@ edition = "2021"
 [dependencies]
 candid = "0.7.14"
 candid_gen = { path = "../../../libraries/candid_gen" }
-serde = "1.0.136"
-serde_bytes = "0.11.5"
+serde = "1.0.137"
+serde_bytes = "0.11.6"
 types = { path = "../../../libraries/types" }

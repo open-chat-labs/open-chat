@@ -1,6 +1,6 @@
 use crate::model::public_groups::GroupCreatedArgs;
 use crate::{mutate_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE};
-use canister_api_macros::update_candid_and_msgpack;
+use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
 use types::{Avatar, CanisterId, CanisterWasm, ChatId, Cycles, Version};
@@ -8,7 +8,7 @@ use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
-#[update_candid_and_msgpack]
+#[update_msgpack]
 #[trace]
 async fn c2c_create_group(args: Args) -> Response {
     let name = args.name.to_owned();

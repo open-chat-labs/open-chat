@@ -1,11 +1,11 @@
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_candid_and_msgpack;
+use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_delete_group::{Response::*, *};
 use types::{CanisterId, ChatId, DeletedGroupInfo};
 use utils::canister::{delete, stop};
 
-#[update_candid_and_msgpack]
+#[update_msgpack]
 #[trace]
 fn c2c_delete_group(args: Args) -> Response {
     mutate_state(|state| c2c_delete_group_impl(args, state))
