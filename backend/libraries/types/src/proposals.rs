@@ -1,12 +1,12 @@
-use crate::{CanisterId, TimestampMillis, UserId};
+use crate::{CanisterId, NeuronId, ProposalId, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Proposal {
-    pub id: u64,
-    pub proposer: u64,
+    pub id: ProposalId,
+    pub proposer: NeuronId,
     pub title: Option<String>,
     pub summary: String,
     pub url: String,
@@ -16,8 +16,8 @@ pub struct Proposal {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ProposalContent {
     pub governance_canister_id: CanisterId,
-    pub proposal_id: u64,
-    pub proposer: u64,
+    pub proposal_id: ProposalId,
+    pub proposer: NeuronId,
     pub title: Option<String>,
     pub summary: String,
     pub url: String,
@@ -30,8 +30,8 @@ pub struct ProposalContent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ProposalContentInternal {
     pub governance_canister_id: CanisterId,
-    pub proposal_id: u64,
-    pub proposer: u64,
+    pub proposal_id: ProposalId,
+    pub proposer: NeuronId,
     pub title: Option<String>,
     pub summary: String,
     pub url: String,
