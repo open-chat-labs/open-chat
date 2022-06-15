@@ -2,7 +2,7 @@ use crate::updates::c2c_send_message::c2c_send_message_impl;
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use candid::Principal;
 use ic_ledger_types::Tokens;
-use types::{MessageContent, PhoneNumberConfirmed, StorageUpgraded, TextContent, UserId};
+use types::{MessageContent, MessageId, PhoneNumberConfirmed, StorageUpgraded, TextContent, UserId};
 use user_canister::c2c_send_message;
 use utils::format::format_to_decimal_places;
 
@@ -116,12 +116,7 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
         .map(|i| i.incr())
         .unwrap_or_default();
 
-    let mut message_id_bytes = [0; 16];
-    for index in (0..4).map(|i| 4 * i) {
-        message_id_bytes[index..index + 4].copy_from_slice(&runtime_state.env.random_u32().to_ne_bytes());
-    }
-
-    let message_id = u128::from_ne_bytes(message_id_bytes).into();
+    let message_id = MessageId::generate(|| runtime_state.env.random_u32());
 
     let args = c2c_send_message::Args {
         message_id,
