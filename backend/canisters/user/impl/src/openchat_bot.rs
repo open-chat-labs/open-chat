@@ -17,7 +17,7 @@ const WELCOME_MESSAGES: &[&str] = &[
     "To request new features join the [Feature Requests](/#/vfaj4-zyaaa-aaaaf-aabya-cai) group.",
     "To report bugs join the [Bug Reports](/#/sycha-wyaaa-aaaaf-aabka-cai) group.",
     "To provide feedback in general join the [Product Feedback](/#/s7dbu-3aaaa-aaaaf-aabkq-cai) group.",
-    "Please keep posts relevant to each group. If you just want to say \"hi\" post in the [OpenChat group](/#/vmdca-pqaaa-aaaaf-aabzq-cai). If you repeatedly spam a group you will be blocked from it."];
+    "Please keep posts relevant to each group. If you just want to say \"hi\", post in the [OpenChat group](/#/vmdca-pqaaa-aaaaf-aabzq-cai)."];
 
 pub(crate) fn send_welcome_messages() {
     mutate_state(|state| {
@@ -92,7 +92,7 @@ pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, runtime_
 pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, runtime_state: &mut RuntimeState) {
     let user_id = event.user_id;
 
-    let text = format!("User @UserId({user_id}) has just registered with your invite code!");
+    let text = format!("User @UserId({user_id}) has just registered with your referral code!");
 
     send_text_message(text, runtime_state);
 }
