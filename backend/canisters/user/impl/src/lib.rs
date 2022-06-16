@@ -135,7 +135,6 @@ struct Data {
     pub group_creation_limit: u32,
     pub storage_limit: u64,
     pub phone_is_verified: bool,
-    #[serde(default)]
     pub user_created: TimestampMillis,
 }
 
