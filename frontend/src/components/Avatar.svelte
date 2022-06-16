@@ -11,6 +11,7 @@
 
 <div
     class="avatar"
+    class:weeny={size === AvatarSize.Weeny}
     class:tiny={size === AvatarSize.Tiny}
     class:small={size === AvatarSize.Small}
     class:medium={size === AvatarSize.Medium}
@@ -50,6 +51,11 @@
         border-radius: 50%;
         position: relative;
         margin: 0 auto;
+
+        &.weeny {
+            width: toRem(20);
+            height: toRem(20);
+        }
 
         &.tiny {
             width: toRem(35);

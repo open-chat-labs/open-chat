@@ -172,6 +172,9 @@ export class HomeController {
 
             if (chatsResponse.wasUpdated) {
                 const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
+                for (const userId of this.user.referrals) {
+                    userIds.add(userId);
+                }
                 userIds.add(this.user.userId);
                 const usersResponse = await this.api.getUsers(
                     {
