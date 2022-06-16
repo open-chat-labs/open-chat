@@ -306,10 +306,9 @@
     <div class="invite">
         <CollapsibleCard
             on:toggle={referralOpen.toggle}
-            on:showFaqQuestion
             open={$referralOpen}
             headerText={$_("referralHeader")}>
-            <ReferUsers />
+            <ReferUsers on:showFaqQuestion />
         </CollapsibleCard>
     </div>
     <div class="chats">
