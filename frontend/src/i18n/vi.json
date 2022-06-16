@@ -89,7 +89,6 @@
     "change": "thay đổi",
     "noChatSelected": "Hiện không có cuộc trò chuyện nào được chọn",
     "selectAChat": "Tìm kiếm bạn, tạo nhóm mới hoặc chọn một cuộc trò chuyện",
-    "recommendedGroups": "Các nhóm được đề xuất",
     "selectAGroup": "Chọn một nhóm để xem trước hoặc tham gia",
     "newChat": "Cuộc trò truyện mới",
     "newGroup": "Nhóm mới",
@@ -242,8 +241,18 @@
         "send_icp_a": "Khi gửi ICP dưới dạng tin nhắn trò chuyện, quá trình chuyển được thực hiện bởi sổ cái ICP, khoản phí này phải chịu khoản phí bắt buộc là 0,0001 ICP. Phí này được ghi như một phần của giao thức IC và không được nhận bởi bất kỳ bên nào.",
         "icp_account_q": "Tài khoản ICP của tôi hoạt động như thế nào?",
         "icp_account_a": "Khi người dùng OpenChat được tạo, chúng tôi sẽ tự động tạo tài khoản ICP. Tài khoản này ban đầu sẽ trống. Bạn có thể nạp tiền vào tài khoản bằng cách chuyển ICP đến địa chỉ của nó. Nếu bạn không biết cách mua ICP, [bài viết này] (https://www.finder.com/uk/how-to-buy-internet-computer) có thể giúp bạn. Khi bạn có một số ICP trong tài khoản OpenChat của mình, bạn sẽ có thể gửi trực tiếp nó đến tài khoản của bất kỳ người dùng OpenChat nào khác thông qua một loại tin nhắn đặc biệt. Bạn cũng có thể sử dụng ICP từ tài khoản OpenChat của mình để nâng cấp tổng dung lượng lên tới 1GB. Nếu bạn muốn rút ICP từ tài khoản OpenChat ICP của mình, bạn có thể thực hiện việc này bằng cách chuyển đến phần Tài khoản trong hồ sơ người dùng của bạn và nhấp vào nút \"Quản lý\". Màn hình này cung cấp cho bạn tùy chọn rút số dư ICP trong OpenChat của bạn đến bất kỳ địa chỉ nào khác mà bạn chọn.",
-        "shortcuts_a": "Có một số lệnh tắt mà bạn có thể sử dụng từ hộp nhập mục nhập tin nhắn. <br /> <br /> `/ thăm dò` - để tạo một cuộc thăm dò mới <br />` / search xyz` - để tìm kiếm thuật ngữ \"xyz\" <br /> `/ gif kittens` - để tìm kiếm kitten gifs <br /> `/ icp 0.1` - để gửi 0.1 ICP cho ai đó <br /> '/ faq question_id *' - để tạo và đăng một liên kết có định dạng tới một câu hỏi thường gặp cụ thể <br /> <br /> Các lệnh chấp nhận một đối số cũng có thể được sử dụng mà không cần đối số. <br /> <br /> * Các ID câu hỏi thường gặp có sẵn là: ios_app, android_app, find_groups, style_messages, sms_icp, airdrop, security, send_icp, icp_account, route, shortcuts",
-        "shortcuts_q": "Có những lệnh tắt nào?"
+        "shortcuts_a": "Có một số lệnh tắt mà bạn có thể sử dụng từ hộp nhập mục nhập tin nhắn. <br /> <br /> `/ thăm dò` - để tạo một cuộc thăm dò mới <br />` / search xyz` - để tìm kiếm thuật ngữ \"xyz\" <br /> `/ gif kittens` - để tìm kiếm kitten gifs <br /> `/ icp 0.1` - để gửi 0.1 ICP cho ai đó <br /> '/ faq question_id *' - để tạo và đăng một liên kết có định dạng tới một câu hỏi thường gặp cụ thể <br /> <br /> Các lệnh chấp nhận một đối số cũng có thể được sử dụng mà không cần đối số. <br /> <br /> * Các ID câu hỏi thường gặp có sẵn là: ios_app, android_app, find_groups, style_messages, sms_icp, airdrop, security, send_icp, icp_account, route, badges, shortcuts",
+        "shortcuts_q": "Có những lệnh tắt nào?",
+        "badges_q": "Các phù hiệu hồ sơ là gì?",
+        "badges_a": "Mỗi huy hiệu được trao cho việc tương tác với OpenChat - càng nhiều huy hiệu càng tốt! Hiện tại, số lượng huy hiệu có hạn và việc thiết kế chúng tốn ít công sức nhưng chúng tôi hy vọng cả hai điều này sẽ thay đổi! Đây là một tính năng thử nghiệm và chúng tôi sẽ trả lời phản hồi của bạn.",
+        "badges_a_phone": "Xác minh số điện thoại của bạn (menu chính -> hồ sơ -> bộ nhớ)",
+        "badges_a_storage": "Có được bộ nhớ để tải lên / gửi / lưu trữ các thông điệp tệp như hình ảnh và video",
+        "badges_a_new": "Người dùng mới",
+        "badges_a_1week": "Người dùng trong> 1 tuần",
+        "badges_a_1month": "Người dùng trong> 1 tháng",
+        "badges_a_3month": "Người dùng trong> 3 tháng",
+        "badges_a_6month": "Người dùng trong> 6 tháng",
+        "badges_a_1year": "Người dùng trong> 1 năm"
     },
     "roadmap": "Lộ trình",
     "here": "tại đây",
@@ -255,7 +264,7 @@
         "welcomeTo": "Chào mừng bạn đến với ...",
         "blurbPartOne": "Một ứng dụng trò chuyện phi tập trung, trực quan, an toàn chạy hoàn toàn trên ",
         "blurbPartTwo": " - một blockchain với quy mô internet đầu tiên trên thế giới. Tìm hiểu thêm ",
-        "signIn": "Đăng nhập"
+        "signIn": "Đăng nhập hoặc Đăng ký"
     },
     "reactions": {
         "greaterThan99People": "99+ người dùng",
@@ -534,5 +543,15 @@
     "referralHeader": "Mời bạn bè / gia đình",
     "userReferralMessage": "Chia sẻ liên kết này tới OpenChat với bạn bè và gia đình. Đối với mỗi người đăng ký bằng liên kết của bạn và trở thành người dùng đã được xác minh, bạn sẽ nhận được phần thưởng là mã thông báo CHAT (sẽ được xác nhận trong những tuần tới). Bạn có thể tiếp tục và chia sẻ liên kết ngay bây giờ và chúng tôi sẽ truy tặng mã thông báo CHAT khi chúng có sẵn.",
     "userInfoHeader": "Công cộng",
-    "noChatsAvailable": "Không có cuộc trò chuyện nào!"
+    "noChatsAvailable": "Không có cuộc trò chuyện nào!",
+    "recommendedGroups": "Nhóm nóng",
+    "invitedUsers": "Người dùng được mời",
+    "badge_title_phone": "Huy hiệu điện thoại đã xác minh!",
+    "badge_title_storage": "Huy hiệu bộ nhớ OpenChat!",
+    "badge_title_new": "Huy hiệu người dùng mới!",
+    "badge_title_1week": "Huy hiệu 1 tuần!",
+    "badge_title_1month": "Huy hiệu 1 tháng!",
+    "badge_title_3month": "Huy hiệu 3 tháng!",
+    "badge_title_6month": "Huy hiệu 6 tháng!",
+    "badge_title_1year": "Huy hiệu 1 năm!"
 }

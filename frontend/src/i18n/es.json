@@ -88,7 +88,6 @@
     "change": "cambiar",
     "noChatSelected": "No hay ningún chat seleccionado actualmente",
     "selectAChat": "Busca un amigo, crea un nuevo grupo o selecciona un chat.",
-    "recommendedGroups": "Grupos recomendados",
     "selectAGroup": "Selecciona un grupo para una vista previa o unirse.",
     "newChat": "Nuevo chat",
     "newGroup": "Nuevo grupo",
@@ -241,8 +240,18 @@
         "send_icp_a": "Al enviar ICP como un mensaje de chat, la transferencia la realiza el libro mayor de ICP, lo que incurre en una tarifa obligatoria de 0,0001 ICP. Esta tarifa se quema como parte del protocolo IC y ninguna de las partes la recibe.",
         "icp_account_q": "¿Cómo funciona mi cuenta ICP?",
         "icp_account_a": "Cuando se crea un usuario de OpenChat, automáticamente creamos una cuenta ICP. Esta cuenta inicialmente estará vacía. Puede recargar la cuenta transfiriendo ICP a su dirección. Si no sabe cómo comprar ICP, [este artículo](https://www.finder.com/uk/how-to-buy-internet-computer) puede ayudarlo. Una vez que tenga algún ICP en su cuenta de OpenChat, podrá enviarlo directamente a la cuenta de cualquier otro usuario de OpenChat a través de un tipo especial de mensaje. También puede usar el ICP de su cuenta de OpenChat para actualizar su almacenamiento hasta 1 GB en total. Si desea retirar el ICP de su cuenta OpenChat ICP, puede hacerlo yendo a la sección Cuenta de su perfil de usuario y haciendo clic en el botón \"Administrar\". Esta pantalla le da la opción de retirar su saldo de OpenChat ICP a cualquier otra dirección de su elección.",
-        "shortcuts_a": "Hay varios comandos de acceso directo que puede usar desde el cuadro de entrada de entrada de mensajes. <br /><br /> `/poll` - para crear una nueva encuesta <br /> `/search xyz` - para buscar el término \"xyz\" en el chat actual <br />`/gif gatitos` - para buscar gifs de gatitos <br />`/icp 0.1` - para enviar 0.1 ICP a alguien <br />`/faq question_id*` - para crear y publicar un enlace formateado a una pregunta frecuente específica <br /><br /> Los comandos que aceptan un argumento también se pueden usar sin el argumento.<br /><br />* Los ID de preguntas frecuentes disponibles son: ios_app, android_app, find_groups, style_messages, sms_icp, airdrop, security, send_icp, icp_account, roadmap, atajos",
-        "shortcuts_q": "¿Qué comandos de acceso directo están disponibles?"
+        "shortcuts_a": "Hay varios comandos de acceso directo que puede usar desde el cuadro de entrada de entrada de mensajes. <br /><br /> `/poll` - para crear una nueva encuesta <br /> `/search xyz` - para buscar el término \"xyz\" en el chat actual <br />`/gif gatitos` - para buscar gifs de gatitos <br />`/icp 0.1` - para enviar 0.1 ICP a alguien <br />`/faq question_id*` - para crear y publicar un enlace formateado a una pregunta frecuente específica <br /><br /> Los comandos que aceptan un argumento también se pueden usar sin el argumento.<br /><br />* Los ID de preguntas frecuentes disponibles son: ios_app, android_app, find_groups, style_messages, sms_icp, airdrop, security, send_icp, icp_account, roadmap, badges, shortcuts",
+        "shortcuts_q": "¿Qué comandos de acceso directo están disponibles?",
+        "badges_q": "¿Qué son las insignias de perfil?",
+        "badges_a": "Cada insignia se otorga por interactuar con OpenChat: ¡cuantas más insignias, mejor! Por el momento, la cantidad de insignias es limitada y su diseño requiere poco esfuerzo, ¡pero esperamos que ambas cosas cambien! Esta es una característica experimental y responderemos a sus comentarios.",
+        "badges_a_phone": "Verifica tu número de teléfono (menú principal -> perfil -> almacenamiento)",
+        "badges_a_storage": "Adquirir almacenamiento para cargar/enviar/almacenar archivos de mensajes como imágenes y videos",
+        "badges_a_new": "Nuevo Usuario",
+        "badges_a_1week": "Usuario durante > 1 semana",
+        "badges_a_1month": "Usuario durante > 1 mes",
+        "badges_a_3month": "Usuario durante > 3 meses",
+        "badges_a_6month": "Usuario durante > 6 meses",
+        "badges_a_1year": "Usuario durante > 1 año"
     },
     "roadmap": "Roadmap",
     "here": "aquí",
@@ -254,7 +263,7 @@
         "welcomeTo": "Bienvenido a ...",
         "blurbPartOne": "Una aplicación de chat segura, intuitiva y descentralizada que se ejecuta completamente en ",
         "blurbPartTwo": " - la primer cadena de bloques a escala de internet del mundo. Leer más ",
-        "signIn": "Entrar"
+        "signIn": "Ingresa o Registro"
     },
     "reactions": {
         "greaterThan99People": "+99 personas",
@@ -534,5 +543,15 @@
     "referralHeader": "Invitar a amigos/familiares",
     "userReferralMessage": "Comparta este enlace a OpenChat con amigos y familiares. Por cada persona que se registre con su enlace y se convierta en un usuario verificado, recibirá una recompensa de tokens CHAT (a confirmar en las próximas semanas). Puede continuar y compartir el enlace ahora y otorgaremos tokens de CHAT retrospectivamente una vez que estén disponibles.",
     "userInfoHeader": "Público",
-    "noChatsAvailable": "¡No hay chats disponibles!"
+    "noChatsAvailable": "¡No hay chats disponibles!",
+    "recommendedGroups": "Grupos calientes",
+    "invitedUsers": "Usuarios invitados",
+    "badge_title_phone": "Insignia de teléfono verificada!",
+    "badge_title_storage": "¡Insignia de almacenamiento de OpenChat!",
+    "badge_title_new": "¡Nuevo distintivo de usuario!",
+    "badge_title_1week": "Insignia de 1 semana!",
+    "badge_title_1month": "Insignia de 1 mes!",
+    "badge_title_3month": "Insignia de 3 meses!",
+    "badge_title_6month": "Insignia de 6 meses!",
+    "badge_title_1year": "insignia de 1 año!"
 }

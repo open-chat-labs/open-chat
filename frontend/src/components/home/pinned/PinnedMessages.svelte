@@ -91,6 +91,7 @@
                         user={currentUser}
                         senderId={message.event.sender}
                         msg={message.event}
+                        on:showFaqQuestion
                         on:chatWith={chatWith}
                         on:goToMessageIndex />
                 {/each}

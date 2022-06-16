@@ -535,6 +535,7 @@
                         on:registerVote={registerVote}
                         on:upgrade
                         on:forward
+                        on:showFaqQuestion
                         event={evt} />
                 {/each}
             {/each}

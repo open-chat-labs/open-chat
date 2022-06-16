@@ -247,6 +247,7 @@
             on:showParticipants
             on:leaveGroup
             on:showPinned
+            on:showFaqQuestion
             on:createPoll={createPoll}
             on:searchChat={searchChat}
             {blocked}
@@ -262,6 +263,7 @@
         on:chatWith
         on:upgrade
         on:forward
+        on:showFaqQuestion
         {controller}
         canPin={canPinMessages($chat)}
         canBlockUser={canBlockUsers($chat)}

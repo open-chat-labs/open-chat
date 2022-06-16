@@ -1,3 +1,8 @@
+export const ONE_MINUTE = 1000 * 60;
+export const ONE_HOUR = ONE_MINUTE * 60;
+export const ONE_DAY = ONE_HOUR * 24;
+export const ONE_WEEK = ONE_DAY * 7;
+
 export function getStartOfToday(): Date {
     return getStartOfDay(new Date());
 }
@@ -42,7 +47,7 @@ export function areOnSameDay(left: Date, right: Date): boolean {
 export function getMinutesSince(date: Date): number {
     const now = new Date();
     const diffMillis: number = now.getTime() - date.getTime();
-    return diffMillis / 1000 / 60;
+    return diffMillis / ONE_MINUTE;
 }
 
 export function toDayOfWeekString(date: Date): string {

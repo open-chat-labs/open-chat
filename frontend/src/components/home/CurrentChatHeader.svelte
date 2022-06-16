@@ -159,7 +159,11 @@
         </div>
     {/if}
     {#if viewProfile}
-        <ViewUserProfile {userId} chatButton={false} on:close={closeUserProfile} />
+        <ViewUserProfile
+            {userId}
+            chatButton={false}
+            on:close={closeUserProfile}
+            on:showFaqQuestion />
     {/if}
 
     <div class="avatar" class:has-user-profile={hasUserProfile} on:click={openUserProfile}>

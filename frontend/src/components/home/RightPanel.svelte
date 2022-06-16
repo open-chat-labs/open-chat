@@ -25,6 +25,7 @@
 
     export let controller: ChatController | undefined;
     export let rightPanelHistory: RightPanelState[];
+    46;
     export let userId: string;
     export let metrics: ChatMetrics;
 
@@ -32,7 +33,6 @@
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
     let savingParticipants = false;
-    let profileComponent: UserProfile;
 
     $: user = $userStore[userId] ?? nullUser("unknown");
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
@@ -41,10 +41,6 @@
     $: participants = controller?.participants ?? writable([]);
     $: pinned = controller?.pinnedMessages ?? writable(new Set<number>());
     $: chatId = controller?.chatId;
-
-    export function showProfile() {
-        profileComponent.reset();
-    }
 
     function dismissAsAdmin(ev: CustomEvent<string>): void {
         controller?.dismissAsAdmin(ev.detail);
@@ -110,6 +106,7 @@
             chat={$groupChat}
             participantCount={$participants.length}
             on:close={pop}
+            on:showFaqQuestion
             on:deleteGroup
             on:makeGroupPrivate
             on:chatWith
@@ -132,19 +129,20 @@
             on:transferOwnership={transferOwnership}
             on:chatWith
             on:addParticipants
+            on:showFaqQuestion
             on:dismissAsAdmin={dismissAsAdmin}
             on:removeParticipant={removeParticipant}
             on:makeAdmin={makeAdmin} />
     {:else if lastState.kind === "show_pinned" && chatId !== undefined}
         <PinnedMessages
             on:chatWith
+            on:showFaqQuestion
             on:goToMessageIndex={goToMessageIndex}
             {chatId}
             pinned={$pinned}
             on:close={pop} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile
-            bind:this={profileComponent}
             on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
             on:upgrade
             on:showFaqQuestion

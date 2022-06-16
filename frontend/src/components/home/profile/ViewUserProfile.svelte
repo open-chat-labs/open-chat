@@ -13,6 +13,7 @@
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import { rollbar } from "../../../utils/logging";
     import { buildUserAvatarUrl } from "domain/chat/chat.utils";
+    import Badges from "./Badges.svelte";
 
     const api: ServiceContainer = getContext(apiKey);
     const dispatch = createEventDispatcher();
@@ -55,6 +56,10 @@
             onClose();
         }
     }
+
+    function openBadgesFaq() {
+        dispatch("showFaqQuestion", "badges");
+    }
 </script>
 
 <svelte:window on:resize={onWindowResize} />
@@ -71,6 +76,9 @@
             <div slot="body" class="body" class:modal>
                 <Avatar url={avatarUrl} size={AvatarSize.ExtraLarge} />
                 <h2>{profile.username}</h2>
+                <div class="badges-section" on:click={openBadgesFaq}>
+                    <Badges {profile} />
+                </div>
                 {#if status.length > 0}
                     <p>{status}</p>
                 {/if}
@@ -117,6 +125,14 @@
             .bio {
                 max-height: none;
             }
+        }
+
+        .badges-section {
+            width: 100%;
+            padding: $sp2;
+            border: 1px solid #e0e0e0;
+            border-radius: $sp2;
+            margin: $sp3 0;
         }
     }
 </style>

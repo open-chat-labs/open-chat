@@ -95,7 +95,7 @@
     "change": "change",
     "noChatSelected": "No chat currently selected",
     "selectAChat": "Search for a friend, create a new group or select a chat.",
-    "recommendedGroups": "Recommended groups",
+    "recommendedGroups": "Hot groups",
     "selectAGroup": "Select a group to preview or join.",
     "newChat": "New chat",
     "newGroup": "New group",
@@ -255,7 +255,7 @@
         "welcomeTo": "Welcome to ...",
         "blurbPartOne": "A secure, intuitive, decentralized chat app running entirely on ",
         "blurbPartTwo": " - the world's first internet-scale blockchain. Read more ",
-        "signIn": "Sign in"
+        "signIn": "Sign-in or Register"
     },
     "reactions": {
         "greaterThan99People": "99+ people",
@@ -342,7 +342,17 @@
         "icp_account_q": "How does my ICP account work?",
         "icp_account_a": "When an OpenChat user is created, we automatically create an ICP account. This account will initially be empty. You can top the account up by transfering ICP to its address. If you don't know how to buy ICP, [this article](https://www.finder.com/uk/how-to-buy-internet-computer) may help you. Once you have some ICP in your OpenChat account you will be able to send it directly to the account of any other OpenChat user via a special kind of message. You can also use the ICP from your OpenChat account to upgrade your storage up to 1GB in total. If you would like to withdraw the ICP from your OpenChat ICP account you can do so by going to the Account section of your user profile and clicking the \"Manage\" button. This screen gives you the option to withdraw your OpenChat ICP balance to any other address of your choosing.",
         "shortcuts_q": "Which shortcut commands are available?",
-        "shortcuts_a": "There are several shortcut commands that you can use from the message entry input box. <br /><br /> `/poll` - to create a new poll <br /> `/search xyz` - to search the current chat for the term \"xyz\" <br />`/gif kittens` - to search for kitten gifs <br />`/icp 0.1` - to send 0.1 ICP to someone <br />`/faq question_id*` - to create and post a formatted link to a specific FAQ question <br /><br /> Commands which accept an argument can also be used without the argument.<br /><br />* Available faq question IDs are: ios_app, android_app, find_groups, style_messages, sms_icp, airdrop, security, send_icp, icp_account, roadmap, shortcuts"
+        "shortcuts_a": "There are several shortcut commands that you can use from the message entry input box. <br /><br /> `/poll` - to create a new poll <br /> `/search xyz` - to search the current chat for the term \"xyz\" <br />`/gif kittens` - to search for kitten gifs <br />`/icp 0.1` - to send 0.1 ICP to someone <br />`/faq question_id*` - to create and post a formatted link to a specific FAQ question <br /><br /> Commands which accept an argument can also be used without the argument.<br /><br />* Available faq question IDs are: ios_app, android_app, find_groups, style_messages, sms_icp, airdrop, security, send_icp, icp_account, roadmap, badges, shortcuts",
+        "badges_q": "What are the profile badges?",
+        "badges_a": "Each badge is awarded for engaging with OpenChat - the more badges the better! At the moment the number of badges is limited and their design is low effort but we expect both these things to change! This is an experimental feature and we'll respond to your feedback.",
+        "badges_a_phone": "Verify your phone number (main menu -> profile -> storage)",
+        "badges_a_storage": "Acquire storage for uploading/sending/storing file messages like images and videos",
+        "badges_a_new": "New user",
+        "badges_a_1week": "User for > 1 week",
+        "badges_a_1month": "User for > 1 month",
+        "badges_a_3month": "User for > 3 months",
+        "badges_a_6month": "User for > 6 months",
+        "badges_a_1year": "User for > 1 year"
     },
     "pinMessage": "Pin",
     "unpinMessage": "Unpin",
@@ -531,5 +541,14 @@
     "referralHeader": "Invite friends/family",
     "userReferralMessage": "Share this link to OpenChat with friends and family. For each person who registers with your link and goes on to become a verified user you will receive a reward of CHAT tokens (to be confirmed in coming weeks). You can go ahead and share the link now and we will retrospectively award CHAT tokens once they are available.",
     "userInfoHeader": "Public",
-    "noChatsAvailable": "No chats available!"
+    "noChatsAvailable": "No chats available!",
+    "invitedUsers": "Invited users",
+    "badge_title_phone": "Verified phone badge!",
+    "badge_title_storage": "OpenChat storage badge!",
+    "badge_title_new": "New user badge!",
+    "badge_title_1week": "1 week badge!",
+    "badge_title_1month": "1 month badge!",
+    "badge_title_3month": "3 month badge!",
+    "badge_title_6month": "6 month badge!",
+    "badge_title_1year": "1 year badge!"
 }

@@ -59,6 +59,7 @@
     <ViewUserProfile
         alignTo={usernameLinkBoundingRect}
         userId={sender.userId}
+        on:showFaqQuestion
         on:openDirectChat={chatWithUser}
         on:close={closeUserProfile} />
 {/if}

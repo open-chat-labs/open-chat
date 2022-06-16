@@ -91,6 +91,7 @@
 
 {#if viewProfile}
     <ViewUserProfile
+        on:showFaqQuestion
         userId={participant.userId}
         on:openDirectChat={participantSelected}
         on:close={closeUserProfile} />

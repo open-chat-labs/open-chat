@@ -349,6 +349,7 @@
     <ViewUserProfile
         alignTo={alignProfileTo}
         userId={sender.userId}
+        on:showFaqQuestion
         on:openDirectChat={chatWithUser}
         on:close={closeUserProfile} />
 {/if}

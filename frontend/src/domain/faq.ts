@@ -1,6 +1,7 @@
 export const allQuestions = [
     "ios_app",
     "android_app",
+    "badges",
     "find_groups",
     "style_messages",
     "sms_icp",

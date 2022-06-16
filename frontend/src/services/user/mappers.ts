@@ -88,6 +88,7 @@ export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicP
             bio: profile.bio,
             isPremium: profile.is_premium,
             phoneIsVerified: profile.phone_is_verified,
+            created: profile.created,
         };
     }
     throw new UnsupportedValueError(`Unexpected ApiPublicProfileResponse type received`, candid);

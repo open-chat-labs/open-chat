@@ -64,7 +64,6 @@
     "change": "更改",
     "noChatSelected": "没有聊天被选中",
     "selectAChat": "搜索好友，创建群聊或选择一个聊天",
-    "recommendedGroups": "推荐的群聊",
     "selectAGroup": "选择群聊",
     "newChat": "新的聊天",
     "newGroup": "新的群聊",
@@ -203,7 +202,7 @@
         "welcomeTo": "欢迎来到 ...",
         "blurbPartOne": "一个安全，易用，去中心化的聊天软件。完全搭建在",
         "blurbPartTwo": " - 世界上首个互联网量级的区块链上. 了解更多详情 ",
-        "signIn": "登录"
+        "signIn": "登录或注册"
     },
     "reactions": {
         "greaterThan99People": "99+ 用户",
@@ -318,8 +317,18 @@
         "send_icp_a": "将 ICP 作为聊天消息发送时，由 ICP 账本执行转账，这会产生 0.0001 ICP 的强制性费用。这笔费用作为 IC 协议的一部分被烧毁，任何一方都不会收到。",
         "icp_account_q": "我的 ICP 账户如何运作？",
         "icp_account_a": "创建 OpenChat 用户时，我们会自动创建一个 ICP 帐户。此帐户最初将为空。您可以通过将ICP转移到其地址来为帐户充值。如果您不知道如何购买 ICP，[本文](https://www.finder.com/uk/how-to-buy-internet-computer) 可能会对您有所帮助。一旦您的 OpenChat 帐户中有一些 ICP，您就可以通过特殊类型的消息将其直接发送到任何其他 OpenChat 用户的帐户。您还可以使用 OpenChat 帐户中的 ICP 将您的存储空间升级到总共 1GB。如果您想从您的 OpenChat ICP 帐户中提取 ICP，您可以通过转到您的用户配置文件的“帐户”部分并单击“管理”按钮来执行此操作。此屏幕让您可以选择将您的 OpenChat ICP 余额提取到您选择的任何其他地址。",
-        "shortcuts_a": "您可以从消息输入框中使用几个快捷命令。 <br /><br /> `/poll` - 创建一个新的投票 <br /> `/search xyz` - 在当前聊天中搜索术语“xyz” <br />`/gif kittens` - 到搜索小猫 gif <br />`/icp 0.1` - 向某人发送 0.1 ICP <br />`/faq question_id*` - 创建并发布指向特定常见问题解答问题的格式化链接<br /><br /> 接受参数的命令也可以不带参数使用。<br /><br />* 可用的常见问题 ID 为：ios_app、android_app、find_groups、style_messages、sms_icp、airdrop、security、send_icp、icp_account、roadmap、shortcuts",
-        "shortcuts_q": "哪些快捷命令可用？"
+        "shortcuts_a": "您可以从消息输入框中使用几个快捷命令。 <br /><br /> `/poll` - 创建一个新的投票 <br /> `/search xyz` - 在当前聊天中搜索术语“xyz” <br />`/gif kittens` - 到搜索小猫 gif <br />`/icp 0.1` - 向某人发送 0.1 ICP <br />`/faq question_id*` - 创建并发布指向特定常见问题解答问题的格式化链接<br /><br /> 接受参数的命令也可以不带参数使用。<br /><br />* 可用的常见问题 ID 为：ios_app、android_app、find_groups、style_messages、sms_icp、airdrop、security、send_icp、icp_account、roadmap、badges、shortcuts",
+        "shortcuts_q": "哪些快捷命令可用？",
+        "badges_q": "什么是个人资料徽章？",
+        "badges_a": "每个徽章都因参与 OpenChat 而获得 - 徽章越多越好！目前徽章的数量是有限的，而且它们的设计也很简单，但我们希望这两者都能改变！这是一项实验性功能，我们会回复您的反馈。",
+        "badges_a_phone": "验证您的电话号码（主菜单 -> 个人资料 -> 存储）",
+        "badges_a_storage": "获取用于上传/发送/存储文件消息（如图像和视频）的存储空间",
+        "badges_a_new": "新用户",
+        "badges_a_1week": "用户超过 1 周",
+        "badges_a_1month": "用户超过 1 个月",
+        "badges_a_3month": "用户超过 3 个月",
+        "badges_a_6month": "用户超过 6 个月",
+        "badges_a_1year": "用户超过 1 年"
     },
     "roadmap": "路线图",
     "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",
@@ -533,5 +542,15 @@
     "referralHeader": "邀请朋友/家人",
     "userReferralMessage": "与朋友和家人分享此 OpenChat 链接。对于每个使用您的链接注册并继续成为经过验证的用户的人，您将获得 CHAT 代币奖励（将在未来几周内确认）。您现在可以继续分享链接，一旦 CHAT 代币可用，我们将追溯奖励它们。",
     "userInfoHeader": "上市",
-    "noChatsAvailable": "没有可用的聊天！"
+    "noChatsAvailable": "没有可用的聊天！",
+    "recommendedGroups": "热门团体",
+    "invitedUsers": "受邀用户",
+    "badge_title_phone": "已验证的手机徽章！",
+    "badge_title_storage": "OpenChat 存储徽章！",
+    "badge_title_new": "新用户徽章！",
+    "badge_title_1week": "1 周徽章！",
+    "badge_title_1month": "1个月徽章！",
+    "badge_title_3month": "3个月徽章！",
+    "badge_title_6month": "6个月徽章！",
+    "badge_title_1year": "1年徽章！"
 }

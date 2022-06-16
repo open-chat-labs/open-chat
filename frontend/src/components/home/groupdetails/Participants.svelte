@@ -129,6 +129,7 @@
         canBlockUser={canBlockUsers($chat)}
         canUnblockUser={canUnblockUsers($chat)}
         canRemoveMember={canRemoveMembers($chat)}
+        on:showFaqQuestion
         on:blockUser
         on:unblockUser
         on:chatWith

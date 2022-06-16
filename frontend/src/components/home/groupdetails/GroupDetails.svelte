@@ -273,6 +273,7 @@
 {#if viewProfile}
     <ViewUserProfile
         userId={originalGroup.ownerId}
+        on:showFaqQuestion
         on:openDirectChat={chatWithOwner}
         on:close={closeUserProfile} />
 {/if}

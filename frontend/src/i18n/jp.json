@@ -93,7 +93,6 @@
     "change": "変更",
     "noChatSelected": "現在選択されているチャットはありません",
     "selectAChat": "友達を検索したり、新しいグループを作ったり、チャットを選択することができます",
-    "recommendedGroups": "おすすめのグループ",
     "selectAGroup": "プレビューまたは参加するグループを選択する",
     "newChat": "新規チャット",
     "newGroup": "新規グループ",
@@ -233,7 +232,7 @@
         "welcomeTo": "ようこそ...",
         "blurbPartOne": "のみで動作する安全で直感的な分散型チャットアプリです。 ",
         "blurbPartTwo": " - 世界初のインターネットスケールブロックチェーン 続きを読む ",
-        "signIn": "サインイン"
+        "signIn": "サインインまたは登録"
     },
     "reactions": {
         "greaterThan99People": "99名以上",
@@ -319,8 +318,18 @@
         "send_icp_a": "ICPをチャットメッセージとして送信する場合、転送はICP元帳によって実行され、0.0001ICPの必須料金が発生します。この料金はICプロトコルの一部として燃やされ、いかなる当事者も受け取りません。",
         "icp_account_q": "ICPアカウントはどのように機能しますか？",
         "icp_account_a": "OpenChatユーザーが作成されると、ICPアカウントが自動的に作成されます。このアカウントは最初は空になります。 ICPをそのアドレスに転送することにより、アカウントを補充できます。 ICPの購入方法がわからない場合は、[この記事]（https://www.finder.com/uk/how-to-buy-internet-computer）が役立つ場合があります。 OpenChatアカウントにICPを設定すると、特別な種類のメッセージを介して、他のOpenChatユーザーのアカウントに直接送信できるようになります。 OpenChatアカウントのICPを使用して、ストレージを合計で最大1GBまでアップグレードすることもできます。 OpenChat ICPアカウントからICPを撤回する場合は、ユーザープロファイルの[アカウント]セクションに移動し、[管理]ボタンをクリックします。この画面には、OpenChatICPの残高を選択した他のアドレスに引き出すオプションがあります。",
-        "shortcuts_a": "メッセージ入力入力ボックスから使用できるいくつかのショートカットコマンドがあります。 <br /> <br />`/poll`-新しいポーリングを作成する<br/>`/searchxyz`-現在のチャットで「xyz」という用語を検索する<br/>`/ gif kittens`-to子猫のgifを検索<br/>`/icp0.1`-誰かに0.1ICPを送信する<br/>`/faqquestion_id*`-特定のFAQ質問へのフォーマットされたリンクを作成して投稿する<br/><br/>引数を受け入れるコマンドは、引数なしでも使用できます。<br /> <br /> *使用可能なよくある質問IDは、ios_app、android_app、find_groups、style_messages、sms_icp、airdrop、security、send_icp、icp_account、roadmap、shortcutsです。",
-        "shortcuts_q": "どのショートカットコマンドを使用できますか？"
+        "shortcuts_a": "メッセージ入力入力ボックスから使用できるいくつかのショートカットコマンドがあります。 <br /> <br />`/poll`-新しいポーリングを作成する<br/>`/searchxyz`-現在のチャットで「xyz」という用語を検索する<br/>`/ gif kittens`-to子猫のgifを検索<br/>`/icp0.1`-誰かに0.1ICPを送信する<br/>`/faqquestion_id*`-特定のFAQ質問へのフォーマットされたリンクを作成して投稿する<br/><br/>引数を受け入れるコマンドは、引数なしでも使用できます。<br /> <br /> *使用可能なよくある質問IDは、ios_app、android_app、find_groups、style_messages、sms_icp、airdrop、security、send_icp、icp_account、roadmap、badges、shortcutsです。",
+        "shortcuts_q": "どのショートカットコマンドを使用できますか？",
+        "badges_q": "プロファイルバッジとは何ですか？",
+        "badges_a": "各バッジは、OpenChatを利用した場合に授与されます。バッジが多いほど、優れています。現時点では、バッジの数は限られており、デザインも手間がかかりませんが、これらの両方が変わることを期待しています。これは実験的な機能であり、フィードバックに対応します。",
+        "badges_a_phone": "電話番号を確認します（メインメニュー->プロファイル->ストレージ）",
+        "badges_a_storage": "画像や動画などのファイルメッセージをアップロード/送信/保存するためのストレージを取得します",
+        "badges_a_new": "新しいユーザー",
+        "badges_a_1week": "1週間以上のユーザー",
+        "badges_a_1month": "1か月以上のユーザー",
+        "badges_a_3month": "3か月以上のユーザー",
+        "badges_a_6month": "6か月以上のユーザー",
+        "badges_a_1year": "1年以上のユーザー"
     },
     "roleChanged": "{changedBy}は、{changed}の役割を{oldRole}から{newRole}に変更しました",
     "yourRoleChanged": "{changedBy}が役割を{oldRole}から{newRole}に変更しました",
@@ -533,5 +542,15 @@
     "referralHeader": "友達や家族を招待する",
     "userReferralMessage": "OpenChatへのこのリンクを友人や家族と共有してください。あなたのリンクに登録し、確認済みのユーザーになるたびに、CHATトークンの報酬を受け取ります（数週間以内に確認されます）。今すぐリンクを共有してください。CHATトークンが利用可能になったら、遡及的に授与します。",
     "userInfoHeader": "公衆",
-    "noChatsAvailable": "チャットはありません！"
+    "noChatsAvailable": "チャットはありません！",
+    "recommendedGroups": "ホットグループ",
+    "invitedUsers": "招待されたユーザー",
+    "badge_title_phone": "確認済みの電話バッジ！",
+    "badge_title_storage": "OpenChatストレージバッジ！",
+    "badge_title_new": "新しいユーザーバッジ！",
+    "badge_title_1week": "1週間のバッジ！",
+    "badge_title_1month": "1か月のバッジ！",
+    "badge_title_3month": "3か月のバッジ！",
+    "badge_title_6month": "6か月のバッジ！",
+    "badge_title_1year": "1年バッジ！"
 }

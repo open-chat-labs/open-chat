@@ -52,6 +52,7 @@
             on:cancelPreview
             on:showPinned
             on:goToMessageIndex
+            on:showFaqQuestion
             on:forward />
     {/if}
 </Panel>

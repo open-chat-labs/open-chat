@@ -15,6 +15,8 @@
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../stores/iconSize";
     import type { PollContent, TotalPollVotes } from "domain/chat/chat";
+    import { ONE_HOUR, ONE_DAY, ONE_WEEK } from "../../utils/date";
+
     const dispatch = createEventDispatcher();
 
     const MAX_QUESTION_LENGTH = 250;
@@ -90,10 +92,6 @@
             return { kind: "hidden_poll_votes", votes: 0 };
         }
     }
-
-    const ONE_HOUR = 1000 * 60 * 60;
-    const ONE_DAY = ONE_HOUR * 24;
-    const ONE_WEEK = ONE_DAY * 7;
 
     function createPollEndDate() {
         if (!poll.limitedDuration) return undefined;

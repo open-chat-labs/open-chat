@@ -93,7 +93,6 @@
     "change": "Änderung",
     "noChatSelected": "Derzeit kein Chat ausgewählt",
     "selectAChat": "Suchen Sie nach einem Freund, erstellen Sie eine neue Gruppe oder wählen Sie einen Chat aus.",
-    "recommendedGroups": "Empfohlene Gruppen",
     "selectAGroup": "Wählen Sie eine Gruppe für die Vorschau aus oder treten Sie ihr bei.",
     "newChat": "Neuer Chat",
     "newGroup": "Neue Gruppe",
@@ -246,8 +245,18 @@
         "send_icp_a": "Beim Senden von ICP als Chat-Nachricht wird die Übertragung vom ICP-Ledger durchgeführt, für das eine obligatorische Gebühr von 0,0001 ICP anfällt. Diese Gebühr wird als Teil des IC-Protokolls verbrannt und wird von keiner Partei empfangen.",
         "icp_account_q": "Wie funktioniert mein ICP-Konto?",
         "icp_account_a": "Wenn ein OpenChat-Benutzer erstellt wird, erstellen wir automatisch ein ICP-Konto. Dieses Konto ist zunächst leer. Sie können das Konto aufladen, indem Sie ICP an seine Adresse überweisen. Wenn Sie nicht wissen, wie man ICP kauft, kann Ihnen [dieser Artikel](https://www.finder.com/uk/how-to-buy-internet-computer) helfen. Sobald Sie etwas ICP in Ihrem OpenChat-Konto haben, können Sie es über eine spezielle Art von Nachricht direkt an das Konto eines anderen OpenChat-Benutzers senden. Sie können auch das ICP von Ihrem OpenChat-Konto verwenden, um Ihren Speicherplatz auf insgesamt bis zu 1 GB aufzurüsten. Wenn Sie das ICP von Ihrem OpenChat ICP-Konto abheben möchten, können Sie dies tun, indem Sie zum Abschnitt Konto Ihres Benutzerprofils gehen und auf die Schaltfläche „Verwalten“ klicken. Dieser Bildschirm gibt Ihnen die Möglichkeit, Ihr OpenChat ICP-Guthaben an eine andere Adresse Ihrer Wahl abzuheben.",
-        "shortcuts_a": "Es gibt mehrere Kurzbefehle, die Sie im Eingabefeld für die Nachrichteneingabe verwenden können. <br /><br /> `/poll` - um eine neue Umfrage zu erstellen <br /> `/search xyz` - um den aktuellen Chat nach dem Begriff \"xyz\" zu durchsuchen <br />`/gif kittens` - um nach Kätzchen-Gifs suchen <br />`/icp 0.1` - um 0,1 ICP an jemanden zu senden <br />`/faq question_id*` - um einen formatierten Link zu einer bestimmten FAQ-Frage zu erstellen und zu posten <br /><br /> Befehle, die ein Argument akzeptieren, können auch ohne das Argument verwendet werden.<br /><br />* Verfügbare FAQ-Frage-IDs sind: ios_app, android_app, find_groups, style_messages, sms_icp, airdrop, security, send_icp, icp_account, roadmap, shorts",
-        "shortcuts_q": "Welche Shortcut-Befehle sind verfügbar?"
+        "shortcuts_a": "Es gibt mehrere Kurzbefehle, die Sie im Eingabefeld für die Nachrichteneingabe verwenden können. <br /><br /> `/poll` - um eine neue Umfrage zu erstellen <br /> `/search xyz` - um den aktuellen Chat nach dem Begriff \"xyz\" zu durchsuchen <br />`/gif kittens` - um nach Kätzchen-Gifs suchen <br />`/icp 0.1` - um 0,1 ICP an jemanden zu senden <br />`/faq question_id*` - um einen formatierten Link zu einer bestimmten FAQ-Frage zu erstellen und zu posten <br /><br /> Befehle, die ein Argument akzeptieren, können auch ohne das Argument verwendet werden.<br /><br />* Verfügbare FAQ-Frage-IDs sind: ios_app, android_app, find_groups, style_messages, sms_icp, airdrop, security, send_icp, icp_account, roadmap, badges, shorts",
+        "shortcuts_q": "Welche Shortcut-Befehle sind verfügbar?",
+        "badges_q": "Was sind die Profilabzeichen?",
+        "badges_a": "Jedes Abzeichen wird für die Interaktion mit OpenChat vergeben – je mehr Abzeichen, desto besser! Im Moment ist die Anzahl der Abzeichen begrenzt und ihr Design ist mit geringem Aufwand verbunden, aber wir erwarten, dass sich beides ändert! Dies ist eine experimentelle Funktion und wir werden auf Ihr Feedback reagieren.",
+        "badges_a_phone": "Verifizieren Sie Ihre Telefonnummer (Hauptmenü -> Profil -> Speicher)",
+        "badges_a_storage": "Erwerben Sie Speicherplatz zum Hochladen/Senden/Speichern von Dateinachrichten wie Bildern und Videos",
+        "badges_a_new": "Neuer Benutzer",
+        "badges_a_1week": "Benutzer seit > 1 Woche",
+        "badges_a_1month": "Benutzer seit > 1 Monat",
+        "badges_a_3month": "Benutzer seit > 3 Monaten",
+        "badges_a_6month": "Benutzer seit > 6 Monaten",
+        "badges_a_1year": "Benutzer seit > 1 Jahr"
     },
     "roadmap": "Fahrplan",
     "here": "Hier",
@@ -259,7 +268,7 @@
         "welcomeTo": "Willkommen zu ...",
         "blurbPartOne": "Eine sichere, intuitive, dezentralisierte Chat-App, die vollständig auf läuft",
         "blurbPartTwo": " - die weltweit erste Blockchain im Internetmaßstab. Weiterlesen",
-        "signIn": "Anmelden"
+        "signIn": "Einloggen oder Registrieren"
     },
     "reactions": {
         "greaterThan99People": "99+ Leute",
@@ -533,5 +542,15 @@
     "referralHeader": "Freunde/Familie einladen",
     "userReferralMessage": "Teilen Sie diesen Link zu OpenChat mit Freunden und Familie. Für jede Person, die sich mit Ihrem Link registriert und ein verifizierter Benutzer wird, erhalten Sie eine Belohnung in Form von CHAT-Token (wird in den kommenden Wochen bestätigt). Sie können den Link jetzt teilen und wir vergeben nachträglich CHAT-Token, sobald sie verfügbar sind.",
     "userInfoHeader": "Öffentlichkeit",
-    "noChatsAvailable": "Keine Chats verfügbar!"
+    "noChatsAvailable": "Keine Chats verfügbar!",
+    "recommendedGroups": "Heiße Gruppen",
+    "invitedUsers": "Eingeladene Benutzer",
+    "badge_title_phone": "Verifiziertes Telefonabzeichen!",
+    "badge_title_storage": "OpenChat-Speicherabzeichen!",
+    "badge_title_new": "Neuer Benutzerausweis!",
+    "badge_title_1week": "1-Wochen-Abzeichen!",
+    "badge_title_1month": "1 Monat Abzeichen!",
+    "badge_title_3month": "3-Monats-Abzeichen!",
+    "badge_title_6month": "6 Monate Abzeichen!",
+    "badge_title_1year": "1 Jahr Abzeichen!"
 }

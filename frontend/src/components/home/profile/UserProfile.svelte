@@ -3,6 +3,7 @@
     import SectionHeader from "../../SectionHeader.svelte";
     import type { PartialUserSummary } from "../../../domain/user/user";
     import Close from "svelte-material-icons/Close.svelte";
+    import InfoIcon from "svelte-material-icons/InformationOutline.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
@@ -51,6 +52,7 @@
     import LinkButton from "../../LinkButton.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ReferUsers from "./ReferUsers.svelte";
+    import Badges from "./Badges.svelte";
 
     const api: ServiceContainer = getContext(apiKey);
 
@@ -68,7 +70,6 @@
     let supportsNotifications = notificationsSupported();
     let saving = false;
     let validUsername: string | undefined = undefined;
-    let usernameInput: UsernameInput;
     let checkingUsername: boolean;
     let selectedCryptoAccount: Cryptocurrency | undefined = undefined;
     let showManageCryptoAccount = false;
@@ -79,15 +80,6 @@
     }
 
     $: bioDirty = userbio !== originalBio;
-
-    export function reset() {
-        usernameInput.reset();
-        usernameError = undefined;
-        bioError = undefined;
-        api.getBio().then((bio) => {
-            originalBio = userbio = bio;
-        });
-    }
 
     function whySms() {
         dispatch("showFaqQuestion", "sms_icp");
@@ -192,6 +184,10 @@
     function onBalanceRefreshError(ev: CustomEvent<string>) {
         balanceError = ev.detail;
     }
+
+    function openBadgesFaq() {
+        dispatch("showFaqQuestion", "badges");
+    }
 </script>
 
 {#if showManageCryptoAccount && selectedCryptoAccount !== undefined}
@@ -221,7 +217,6 @@
             </div>
             <Legend>{$_("username")} ({$_("usernameRules")})</Legend>
             <UsernameInput
-                bind:this={usernameInput}
                 {api}
                 originalUsername={user?.username ?? ""}
                 bind:validUsername
@@ -243,6 +238,19 @@
                     <ErrorMessage>{bioError}</ErrorMessage>
                 {/if}
             </TextArea>
+
+            {#await api.getPublicProfile(user.userId) then profile}
+                <Legend>
+                    {$_("badges")}
+                    <div class="info-icon" on:click={openBadgesFaq}>
+                        <InfoIcon size={"1.2em"} color={"var(--icon-txt)"} />
+                    </div>
+                </Legend>
+                <div class="sub-section">
+                    <Badges {profile} on:click={openBadgesFaq} />
+                </div>
+            {/await}
+
             <div class="full-width-btn">
                 <Button
                     loading={saving || checkingUsername}
@@ -252,7 +260,6 @@
             </div>
         </CollapsibleCard>
     </div>
-
     <div class="appearance">
         <CollapsibleCard
             on:toggle={appearanceSectionOpen.toggle}
@@ -296,7 +303,15 @@
             </div>
         </CollapsibleCard>
     </div>
-
+    <div class="invite">
+        <CollapsibleCard
+            on:toggle={referralOpen.toggle}
+            on:showFaqQuestion
+            open={$referralOpen}
+            headerText={$_("referralHeader")}>
+            <ReferUsers />
+        </CollapsibleCard>
+    </div>
     <div class="chats">
         <CollapsibleCard
             on:toggle={chatsSectionOpen.toggle}
@@ -329,7 +344,6 @@
             {/each}
         </CollapsibleCard>
     </div>
-
     <div class="accounts">
         <CollapsibleCard
             on:toggle={accountSectionOpen.toggle}
@@ -404,14 +418,6 @@
             {#if balanceError !== undefined}
                 <ErrorMessage>{balanceError}</ErrorMessage>
             {/if}
-        </CollapsibleCard>
-    </div>
-    <div class="invite">
-        <CollapsibleCard
-            on:toggle={referralOpen.toggle}
-            open={$referralOpen}
-            headerText={$_("referralHeader")}>
-            <ReferUsers />
         </CollapsibleCard>
     </div>
     <div class="storage">
@@ -587,5 +593,16 @@
 
     .coming-soon {
         @include font(light, normal, fs-90);
+    }
+
+    .sub-section {
+        padding: $sp3;
+        border: 1px solid var(--input-bd);
+        border-radius: $sp2;
+    }
+
+    .info-icon {
+        display: inline-block;
+        cursor: pointer;
     }
 </style>
