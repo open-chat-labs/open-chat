@@ -44,7 +44,7 @@ import {
     joinGroupResponse,
     leaveGroupResponse,
     markReadResponse,
-    recommendedGroupsResponse,
+    hotGroupsResponse,
     searchDirectChatResponse,
     searchAllMessagesResponse,
     sendMessageResponse,
@@ -506,7 +506,7 @@ export class UserClient extends CandidService implements IUserClient {
         };
         return this.handleQueryResponse(
             () => this.userService.recommended_groups(args),
-            recommendedGroupsResponse,
+            hotGroupsResponse,
             args,
             interrupt
         );
@@ -569,9 +569,6 @@ export class UserClient extends CandidService implements IUserClient {
         const req = {
             withdrawal: apiPendingCryptocurrencyWithdrawal(domain),
         };
-        return this.handleResponse(
-            this.userService.withdraw_crypto(req),
-            withdrawCryptoResponse
-        );
+        return this.handleResponse(this.userService.withdraw_crypto(req), withdrawCryptoResponse);
     }
 }

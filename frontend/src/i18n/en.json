@@ -95,7 +95,7 @@
     "change": "change",
     "noChatSelected": "No chat currently selected",
     "selectAChat": "Search for a friend, create a new group or select a chat.",
-    "recommendedGroups": "Hot groups",
+    "hotGroups": "Hot groups",
     "selectAGroup": "Select a group to preview or join.",
     "newChat": "New chat",
     "newGroup": "New group",

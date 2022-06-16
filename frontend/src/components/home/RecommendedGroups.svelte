@@ -64,12 +64,12 @@
                     </HoverIcon>
                 </div>
                 <div>
-                    <h1 class="title">{$_("recommendedGroups")}</h1>
+                    <h1 class="title">{$_("hotGroups")}</h1>
                     <p class="subtitle">{$_("selectAGroup")}</p>
                 </div>
             </SectionHeader>
         {:else}
-            <h1 class="title">{$_("recommendedGroups")}</h1>
+            <h1 class="title">{$_("hotGroups")}</h1>
             <p class="subtitle">{$_("selectAGroup")}</p>
         {/if}
 

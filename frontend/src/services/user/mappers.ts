@@ -104,9 +104,7 @@ export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
     throw new UnsupportedValueError(`Unexpected ApiSetBioResponse type received`, candid);
 }
 
-export function recommendedGroupsResponse(
-    candid: ApiRecommendedGroupsResponse
-): GroupChatSummary[] {
+export function hotGroupsResponse(candid: ApiRecommendedGroupsResponse): GroupChatSummary[] {
     if ("Success" in candid) {
         return candid.Success.groups.map(publicGroupSummary);
     }
