@@ -17,10 +17,13 @@ async fn main() {
         CanisterName::Notifications => {
             upgrade_notifications_canister(identity, opts.url, opts.notifications, opts.version).await
         }
-        CanisterName::Root => upgrade_root_canister(identity, opts.url, opts.root, opts.version).await,
         CanisterName::OnlineUsersAggregator => {
             upgrade_online_users_aggregator_canister(identity, opts.url, opts.online_users_aggregator, opts.version).await
         }
+        CanisterName::ProposalsBot => {
+            upgrade_proposals_bot_canister(identity, opts.url, opts.proposals_bot, opts.version).await
+        }
+        CanisterName::Root => upgrade_root_canister(identity, opts.url, opts.root, opts.version).await,
         CanisterName::User => upgrade_user_canister(identity, opts.url, opts.user_index, opts.version).await,
         CanisterName::UserIndex => upgrade_user_index_canister(identity, opts.url, opts.root, opts.version).await,
     };
@@ -36,6 +39,7 @@ struct Opts {
     notifications: CanisterId,
     online_users_aggregator: CanisterId,
     callback: CanisterId,
+    proposals_bot: CanisterId,
     canister_to_upgrade: CanisterName,
     version: Version,
 }

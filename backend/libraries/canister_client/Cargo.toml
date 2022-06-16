@@ -20,6 +20,7 @@ group_index_canister_client = { path = "../../canisters/group_index/client" }
 ic-agent = "0.15.0"
 ic-utils = "0.15.0"
 notifications_canister = { path = "../../canisters/notifications/api" }
+proposals_bot_canister = { path = "../../canisters/proposals_bot/api" }
 root_canister = { path = "../../canisters/root/api" }
 root_canister_client = { path = "../../canisters/root/client" }
 serde = "1.0.137"
