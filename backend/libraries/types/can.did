@@ -621,7 +621,7 @@ type ProposalContent =
         governance_canister_id: CanisterId;
         proposal_id: ProposalId;
         proposer: NeuronId;
-        title: opt text;
+        title: text;
         summary: text;
         url: text;
         deadline: TimestampMillis;
