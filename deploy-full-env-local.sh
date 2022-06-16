@@ -14,13 +14,13 @@ II_FETCH_ROOT_KEY=1 dfx deploy --no-wallet --argument '(null)'
 popd
 
 # Create the OpenChat canisters
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 ledger
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 root
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 user_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 group_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 online_users_aggregator
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 callback
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 ledger
 USER_INDEX_CANISTER_ID=$(dfx canister id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister id group_index)
 
