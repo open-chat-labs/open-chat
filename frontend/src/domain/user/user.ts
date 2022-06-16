@@ -53,6 +53,7 @@ export enum UserStatus {
 }
 
 export enum AvatarSize {
+    Weeny,
     Tiny,
     Small,
     Medium,
@@ -102,6 +103,7 @@ export type CreatedUser = {
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
     wasmVersion: Version;
     openStorageLimitBytes: number;
+    referrals: string[];
 };
 
 export type UserNotFound = {
