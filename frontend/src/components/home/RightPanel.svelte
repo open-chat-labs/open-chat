@@ -25,7 +25,6 @@
 
     export let controller: ChatController | undefined;
     export let rightPanelHistory: RightPanelState[];
-    46;
     export let userId: string;
     export let metrics: ChatMetrics;
 
