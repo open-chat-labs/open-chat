@@ -165,6 +165,14 @@ export const Notification = IDL.Variant({
         }),
         'edited' : IDL.Bool,
         'sender' : IDL.Principal,
+        'thread_summary' : IDL.Opt(
+          IDL.Record({
+            'latest_event_timestamp' : IDL.Nat64,
+            'participant_ids' : IDL.Vec(IDL.Text),
+            'reply_count' : IDL.Nat32,
+            'latest_event_index' : IDL.Nat32,
+          })
+        ),
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
@@ -348,6 +356,14 @@ export const Notification = IDL.Variant({
         }),
         'edited' : IDL.Bool,
         'sender' : IDL.Principal,
+        'thread_summary' : IDL.Opt(
+          IDL.Record({
+            'latest_event_timestamp' : IDL.Nat64,
+            'participant_ids' : IDL.Vec(IDL.Text),
+            'reply_count' : IDL.Nat32,
+            'latest_event_index' : IDL.Nat32,
+          })
+        ),
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({

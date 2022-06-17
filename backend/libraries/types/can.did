@@ -123,6 +123,7 @@ type DirectChatEvent =
         PollVoteRegistered: UpdatedMessage;
         PollVoteDeleted: UpdatedMessage;
         PollEnded: PollEnded;
+        ThreadUpdated: ThreadUpdated;
     };
 
 type DirectChatEventWrapper =
@@ -223,6 +224,7 @@ type GroupChatEvent =
         PermissionsChanged: PermissionsChanged;
         GroupVisibilityChanged: GroupVisibilityChanged;
         GroupInviteCodeChanged: GroupInviteCodeChanged;
+        ThreadUpdated: ThreadUpdated;
     };
 
 type GroupChatEventWrapper =
@@ -327,6 +329,7 @@ type Message =
         content: MessageContent;
         replies_to: opt ReplyContext;
         reactions: vec record { text; vec UserId; };
+        thread_summary: opt ThreadSummary;
         edited: bool;
         forwarded: bool;
     };
@@ -837,4 +840,18 @@ type PermissionRole =
         Owner;
         Admins;
         Members;
+    };
+
+type ThreadSummary =
+    record {
+        participant_ids: vec text;
+        reply_count: nat32;
+        latest_event_index: EventIndex;
+        latest_event_timestamp: TimestampMillis;
+    };
+
+type ThreadUpdated =
+    record {
+        event_index: EventIndex;
+        message_index: MessageIndex;
     };

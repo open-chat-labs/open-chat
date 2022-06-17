@@ -5,6 +5,7 @@ type SendMessageArgs =
         recipient: UserId;
         sender_name: text;
         message_id: MessageId;
+        thread_root_message_index: opt MessageIndex;
         content: MessageContent;
         replies_to: opt ReplyContext;
         forwarding: bool;
@@ -383,6 +384,7 @@ type UpdatesResponse =
 type EventsArgs =
     record {
         user_id: UserId;
+        thread_root_message_index: opt MessageIndex;
         start_index: EventIndex;
         ascending: bool;
         max_events: nat32;
@@ -391,12 +393,14 @@ type EventsArgs =
 type EventsByIndexArgs =
     record {
         user_id: UserId;
+        thread_root_message_index: opt MessageIndex;
         events: vec EventIndex;
     };
 
 type EventsRangeArgs =
     record {
         user_id: UserId;
+        thread_root_message_index: opt MessageIndex;
         from_index: EventIndex;
         to_index: EventIndex;
     };
@@ -404,6 +408,7 @@ type EventsRangeArgs =
 type EventsWindowArgs =
     record {
         user_id: UserId;
+        thread_root_message_index: opt MessageIndex;
         mid_point: MessageIndex;
         max_events: nat32;
     };
@@ -423,6 +428,7 @@ type EventsResponse =
 type MessagesByMessageIndexArgs =
     record {
         user_id: UserId;
+        thread_root_message_index: opt MessageIndex;
         messages: vec MessageIndex;
     };
 

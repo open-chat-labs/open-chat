@@ -479,6 +479,7 @@ impl ChatEvents {
                 .collect(),
             edited: message.last_edited.is_some(),
             forwarded: message.forwarded,
+            thread_summary: None,
         }
     }
 
