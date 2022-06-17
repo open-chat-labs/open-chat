@@ -53,8 +53,8 @@
         margin: 0 auto;
 
         &.miniscule {
-            width: toRem(25);
-            height: toRem(25);
+            width: toRem(20);
+            height: toRem(20);
         }
 
         &.tiny {
