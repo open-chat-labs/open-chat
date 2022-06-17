@@ -37,7 +37,9 @@ impl From<&MessageContentInternal> for Document {
                 }
             }
             MessageContentInternal::GovernanceProposal(p) => {
-                document.add_field(p.title.clone(), 1.0);
+                if let Some(title) = p.title.clone() {
+                    document.add_field(title, 1.0);
+                }
                 document.add_field(p.summary.clone(), 1.0);
             }
             MessageContentInternal::Deleted(_) => {}
