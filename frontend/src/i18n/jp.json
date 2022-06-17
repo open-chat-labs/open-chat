@@ -230,7 +230,8 @@
         "welcomeTo": "ようこそ...",
         "blurbPartOne": "のみで動作する安全で直感的な分散型チャットアプリです。 ",
         "blurbPartTwo": " - 世界初のインターネットスケールブロックチェーン 続きを読む ",
-        "signIn": "サインイン"
+        "signIn": "サインイン",
+        "signInOrRegister": "サインインまたは登録"
     },
     "reactions": {
         "greaterThan99People": "99名以上",

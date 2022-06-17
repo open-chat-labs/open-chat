@@ -200,7 +200,8 @@
         "welcomeTo": "欢迎来到 ...",
         "blurbPartOne": "一个安全，易用，去中心化的聊天软件。完全搭建在",
         "blurbPartTwo": " - 世界上首个互联网量级的区块链上. 了解更多详情 ",
-        "signIn": "登录"
+        "signIn": "登录",
+        "signInOrRegister": "登录或注册"
     },
     "reactions": {
         "greaterThan99People": "99+ 用户",
