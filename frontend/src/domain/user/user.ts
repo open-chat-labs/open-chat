@@ -32,6 +32,7 @@ export type PublicProfile = {
     bio: string;
     isPremium: boolean;
     phoneIsVerified: boolean;
+    created: bigint;
 };
 
 export type UsersArgs = {
