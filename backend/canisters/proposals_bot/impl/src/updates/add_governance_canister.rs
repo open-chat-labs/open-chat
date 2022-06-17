@@ -52,7 +52,7 @@ async fn get_next_proposal_id(governance_canister_id: CanisterId) -> Result<u64,
 
 async fn create_group(args: &Args) -> Result<ChatId, Response> {
     let (group_index_canister_id, my_principal) =
-        read_state(|state| (state.data.group_index_canister_id, state.env.canister_id().into()));
+        read_state(|state| (state.data.group_index_canister_id, state.env.canister_id()));
 
     let create_group_args = group_index_canister::c2c_create_group::Args {
         is_public: true,
