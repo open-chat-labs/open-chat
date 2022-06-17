@@ -84,7 +84,6 @@
 
     let faqQuestion: Questions | undefined = undefined;
     let modal = ModalType.None;
-    let rightPanel: RightPanel;
     setContext(apiKey, controller.api);
     setContext(currentUserKey, controller.user);
 
@@ -452,7 +451,6 @@
 
     function showProfile() {
         rightPanelHistory = [{ kind: "user_profile" }];
-        tick().then(() => rightPanel?.showProfile());
     }
 
     function showGroupDetails() {
@@ -641,7 +639,6 @@
                 {userId}
                 controller={$selectedChat}
                 metrics={combinedMetrics}
-                bind:this={rightPanel}
                 bind:rightPanelHistory
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
@@ -669,7 +666,6 @@
                 {userId}
                 controller={$selectedChat}
                 metrics={combinedMetrics}
-                bind:this={rightPanel}
                 bind:rightPanelHistory
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
