@@ -35,7 +35,6 @@
     } from "../../domain/crypto";
     import Select from "../Select.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
-    import Reply from "svelte-material-icons/Reply.svelte";
 
     const dispatch = createEventDispatcher();
 
