@@ -14,7 +14,7 @@
     import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import Legend from "../Legend.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import type { CreatedUser } from "../../domain/user/user";
     import { now } from "../../stores/time";
     import { userStore } from "../../stores/user";
@@ -35,6 +35,7 @@
     } from "../../domain/crypto";
     import Select from "../Select.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
+    import Reply from "svelte-material-icons/Reply.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -61,6 +62,7 @@
     $: group = $chat.kind === "group_chat";
     $: blockedUsers = controller.blockedUsers;
     $: participants = controller.participants;
+    $: replyingTo = controller.replyingTo;
     $: remainingBalanceE8s =
         draftAmountE8s > BigInt(0)
             ? $cryptoBalance[token] - draftAmountE8s - transferFees
@@ -71,6 +73,13 @@
         receiver !== undefined &&
         !tokenChanging;
     $: zero = $cryptoBalance[token] <= transferFees && !tokenChanging;
+
+    onMount(() => {
+        // default the receiver to the reply sender if we are replying to a specific message
+        if ($replyingTo !== undefined) {
+            receiver = $userStore[$replyingTo.senderId];
+        }
+    });
 
     function reset() {
         confirming = false;
