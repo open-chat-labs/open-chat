@@ -36,6 +36,7 @@ pub mod set_bio;
 pub mod toggle_reaction;
 pub mod transfer_crypto_within_group;
 pub mod unblock_user;
+pub mod vote_on_proposal;
 pub mod wallet_receive;
 pub mod withdraw_crypto;
 

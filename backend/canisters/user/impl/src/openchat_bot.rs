@@ -2,7 +2,10 @@ use crate::updates::c2c_send_message::c2c_send_message_impl;
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use candid::Principal;
 use ic_ledger_types::Tokens;
-use types::{MessageContent, MessageId, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
+use types::{
+    CanisterId, MessageContent, MessageId, NeuronId, PhoneNumberConfirmed, ProposalId, ReferredUserRegistered, StorageUpgraded,
+    TextContent, UserId,
+};
 use user_canister::c2c_send_message;
 use utils::format::format_to_decimal_places;
 
@@ -93,6 +96,61 @@ pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, 
     let user_id = event.user_id;
 
     let text = format!("User @UserId({user_id}) has just registered with your referral code!");
+
+    send_text_message(text, runtime_state);
+}
+
+pub(crate) fn send_voted_on_proposal_message(
+    governance_canister_id: CanisterId,
+    proposal_id: ProposalId,
+    adopt: bool,
+    voted: Vec<NeuronId>,
+    unable_to_vote: Vec<(NeuronId, String)>,
+    errors: Vec<(NeuronId, String)>,
+    runtime_state: &mut RuntimeState,
+) {
+    let mut lines = Vec::new();
+    if !voted.is_empty() {
+        lines.push("Vote recorded.".to_string());
+    } else {
+        lines.push("Failed to record vote".to_string());
+    }
+    lines.push(String::new());
+    lines.push(format!("Governance canister Id: {governance_canister_id}"));
+    lines.push(format!("Proposal Id: {proposal_id}"));
+    lines.push(format!("Adopt: {}", if adopt { "Yes" } else { "No" }));
+    lines.push(String::new());
+    if voted.is_empty() && unable_to_vote.is_empty() && errors.is_empty() {
+        lines.push(String::new());
+        lines.push("No linked neurons found".to_string());
+        lines.push("In order to vote from within OpenChat you must add your OpenChat UserId as a hotkey to any neurons you wish to vote with".to_string());
+        lines.push(format!("Your OpenChat UserId is {}", runtime_state.env.canister_id()));
+    } else {
+        if !voted.is_empty() {
+            lines.push("The following neurons voted:".to_string());
+            for n in voted {
+                lines.push(n.to_string());
+            }
+        }
+
+        if !unable_to_vote.is_empty() {
+            lines.push(String::new());
+            lines.push("The following neurons were unable to vote:".to_string());
+            for (n, e) in unable_to_vote {
+                lines.push(format!("{n} - {e}"));
+            }
+        }
+
+        if !errors.is_empty() {
+            lines.push(String::new());
+            lines.push("An error occurred while trying to vote with the following neurons:".to_string());
+            for (n, e) in errors {
+                lines.push(format!("{n} - {e}"));
+            }
+        }
+    }
+
+    let text = lines.join("\n");
 
     send_text_message(text, runtime_state);
 }
