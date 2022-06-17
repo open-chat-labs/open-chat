@@ -54,6 +54,7 @@ export enum UserStatus {
 }
 
 export enum AvatarSize {
+    Miniscule,
     Weeny,
     Tiny,
     Small,

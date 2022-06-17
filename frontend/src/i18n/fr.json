@@ -531,6 +531,14 @@
     "referralHeader": "Inviter des amis/famille",
     "userReferralMessage": "Partagez ce lien vers OpenChat avec vos amis et votre famille. Pour chaque personne qui s'inscrit avec votre lien et devient un utilisateur vérifié, vous recevrez une récompense de jetons CHAT (à confirmer dans les semaines à venir). Vous pouvez continuer et partager le lien maintenant et nous attribuerons rétrospectivement les jetons CHAT une fois qu'ils seront disponibles.",
     "userInfoHeader": "Public",
+    "thread": {
+        "menu": "Répondre dans le fil",
+        "title": "Fil de discussion",
+        "replies": "réponses",
+        "reply": "Réponse",
+        "lastMessage": "(dernier message {date})",
+        "nreplies": "{number} {replies} {message}"
+    },
     "noChatsAvailable": "Aucun chat disponible !",
     "invitedUsers": "Utilisateurs invités",
     "hotGroups": "Groupes chauds",
