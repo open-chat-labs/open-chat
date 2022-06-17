@@ -10,7 +10,7 @@
         MessageContent,
         ThreadSummary,
     } from "../../../domain/chat/chat";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import { formatMessageDate } from "../../../utils/date";
@@ -34,11 +34,7 @@
         groupEvents,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
-    import {
-        getNextEventAndMessageIndexes,
-        threadStore,
-        threadSummaryStore,
-    } from "../../../stores/thread";
+    import { getNextEventAndMessageIndexes, threadStore } from "../../../stores/thread";
     import { derived, readable } from "svelte/store";
     import { draftThreadMessages } from "../../../stores/draftThreadMessages";
     import { remainingStorage } from "../../../stores/storage";
@@ -47,7 +43,6 @@
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
     import type { Cryptocurrency } from "../../../domain/crypto";
     import { lastCryptoSent } from "../../../stores/crypto";
-    import { trackEvent } from "../../../utils/tracking";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -62,6 +57,7 @@
     let creatingPoll = false;
     let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
     let selectingGif = false;
+    let focusMessageIndex: number | undefined = undefined;
 
     $: {
         window.setTimeout(() => {
@@ -103,13 +99,6 @@
     }
 
     function isReadByMe(_store: MessageReadState, evt: EventWrapper<Message>): boolean {
-        if (evt.event.kind === "message") {
-            return controller.markRead.isRead(
-                $chat.chatId,
-                evt.event.messageIndex,
-                evt.event.messageId
-            );
-        }
         return true;
     }
 
@@ -370,6 +359,27 @@
         //         );
         //     });
     }
+
+    // TODO - this is another piece of duplication that we need to get rid of
+    function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
+        if (ev.detail.index < 0) {
+            focusMessageIndex = undefined;
+            return;
+        }
+
+        focusMessageIndex = ev.detail.index;
+        const element = document.querySelector(
+            `.thread-messages [data-index='${ev.detail.index}']`
+        );
+        if (element) {
+            element.scrollIntoView({ behavior: "auto", block: "center" });
+            setTimeout(() => {
+                focusMessageIndex = undefined;
+            }, 200);
+        } else {
+            console.log(`message index ${ev.detail.index} not found`);
+        }
+    }
 </script>
 
 <PollBuilder
@@ -410,11 +420,11 @@
                 {#each userGroup as evt, _i (evt.event.messageId.toString())}
                     <ChatMessage
                         senderId={evt.event.sender}
-                        focused={false}
+                        focused={evt.event.messageIndex === focusMessageIndex}
                         {observer}
                         confirmed={!unconfirmed.contains($chat.chatId, evt.event.messageId)}
-                        readByMe={isReadByMe($markRead, evt)}
-                        readByThem={false}
+                        readByMe={true}
+                        readByThem={true}
                         chatId={$chat.chatId}
                         chatType={$chat.kind}
                         user={controller.user}
@@ -423,7 +433,7 @@
                         last={false}
                         preview={false}
                         inThread={true}
-                        pinned={$pinned.has(evt.event.messageIndex)}
+                        pinned={false}
                         canPin={canPinMessages($chat)}
                         canBlockUser={canBlockUsers($chat)}
                         canDelete={canDeleteOtherUsersMessages($chat)}
@@ -434,7 +444,7 @@
                         threadSummary={undefined}
                         selectedThreadMessageIndex={undefined}
                         on:chatWith
-                        on:goToMessageIndex
+                        on:goToMessageIndex={goToMessageIndex}
                         on:replyPrivatelyTo
                         on:replyTo={replyTo}
                         on:replyInThread

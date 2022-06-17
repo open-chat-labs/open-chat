@@ -48,7 +48,7 @@
     }
 </script>
 
-<svelte:window on:mousemove={mouseMove} />
+<svelte:window on:mouseenter={mouseMove} on:mousemove={mouseMove} />
 
 <div class="robot">
     <svg
