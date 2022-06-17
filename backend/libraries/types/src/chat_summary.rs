@@ -308,8 +308,6 @@ pub struct ChatMetrics {
     pub replies: u64,
     pub edits: u64,
     pub reactions: u64,
-    #[serde(default)]
-    pub proposals: u64,
     pub last_active: TimestampMillis,
 }
 
