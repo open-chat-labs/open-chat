@@ -48,8 +48,6 @@
     "account": "Konto",
     "whatsHot": "Was läuft?",
     "notInterested": "Nicht interessiert",
-    "recommendSomething": "Empfehlen Sie einige Gruppen",
-    "noRecommendations": "Keine Empfehlungen 😭",
     "checkBackLater": "Bitte versuchen Sie es später erneut.",
     "refresh": "Aktualisierung",
     "goHome": "Start",
@@ -93,7 +91,6 @@
     "change": "Änderung",
     "noChatSelected": "Derzeit kein Chat ausgewählt",
     "selectAChat": "Suchen Sie nach einem Freund, erstellen Sie eine neue Gruppe oder wählen Sie einen Chat aus.",
-    "recommendedGroups": "Empfohlene Gruppen",
     "selectAGroup": "Wählen Sie eine Gruppe für die Vorschau aus oder treten Sie ihr bei.",
     "newChat": "Neuer Chat",
     "newGroup": "Neue Gruppe",
@@ -534,5 +531,8 @@
     "userReferralMessage": "Teilen Sie diesen Link zu OpenChat mit Freunden und Familie. Für jede Person, die sich mit Ihrem Link registriert und ein verifizierter Benutzer wird, erhalten Sie eine Belohnung in Form von CHAT-Token (wird in den kommenden Wochen bestätigt). Sie können den Link jetzt teilen und wir vergeben nachträglich CHAT-Token, sobald sie verfügbar sind.",
     "userInfoHeader": "Öffentlichkeit",
     "noChatsAvailable": "Keine Chats verfügbar!",
-    "invitedUsers": "Eingeladene Benutzer"
+    "invitedUsers": "Eingeladene Benutzer",
+    "showHotGroups": "Zeig mir ein paar heiße Gruppen",
+    "noHotGroups": "Keine heißen Gruppen 😭",
+    "hotGroups": "Heiße Gruppen"
 }
