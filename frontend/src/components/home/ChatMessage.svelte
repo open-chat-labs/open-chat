@@ -551,7 +551,7 @@
                                         </MenuItem>
                                     {/if} -->
                                 {/if}
-                                {#if canSend && canForward(msg.content) && !inThread}
+                                {#if canForward(msg.content) && !inThread}
                                     <MenuItem on:click={forward}>
                                         <ForwardIcon
                                             size={$iconSize}
