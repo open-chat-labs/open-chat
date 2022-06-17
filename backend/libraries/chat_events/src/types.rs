@@ -271,10 +271,6 @@ impl MessageInternal {
                     adjust(&mut metrics.giphy_messages);
                     adjust(&mut sender_metrics.giphy_messages);
                 }
-                MessageContentInternal::GovernanceProposal(_) => {
-                    adjust(&mut metrics.proposals);
-                    adjust(&mut sender_metrics.proposals);
-                }
             }
 
             for user_id in self.reactions.iter().flat_map(|(_, u)| u.iter()) {
