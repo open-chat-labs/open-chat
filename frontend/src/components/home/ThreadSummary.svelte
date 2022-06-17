@@ -5,7 +5,7 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "../../domain/user/user";
-    import { avatarUrl } from "../../domain/user/user.utils";
+    import { userAvatarUrl } from "../../domain/user/user.utils";
     import { userStore } from "../../stores/user";
     import { formatMessageDate } from "../../utils/date";
 
@@ -25,7 +25,9 @@
     <div class="thread-summary" class:selected on:click={() => threadSummary && replyInThread()}>
         <div class="thread-avatars">
             {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
-                <Avatar url={avatarUrl($userStore[participantId])} size={AvatarSize.Miniscule} />
+                <Avatar
+                    url={userAvatarUrl($userStore[participantId])}
+                    size={AvatarSize.Miniscule} />
             {/each}
             {#if threadSummary.participantIds.size > 5}
                 <div class="thread-extra">

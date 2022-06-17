@@ -9,8 +9,6 @@ import type {
 } from "../domain/chat/chat";
 import { containsReaction, toggleReaction } from "../domain/chat/chat.utils";
 
-// todo - do we really need something separate from the chat controller here. Can the whole thing just be global since
-// the key is messageId - it should always be unique
 const localReactions: Record<string, LocalReaction[]> = {};
 
 /**
@@ -24,31 +22,7 @@ type ThreadLookup = Record<number, EventWrapper<Message>[]>;
 export type ThreadSummaryLookup = Record<number, ThreadSummary>;
 
 // todo this needs to be per chat! but let's work out whether this is going to be permanent first
-const internalThreadSummaryStore = writable<ThreadSummaryLookup>({
-    54: {
-        participantIds: new Set([
-            "sbzkb-zqaaa-aaaaa-aaaiq-cai",
-            "sgymv-uiaaa-aaaaa-aaaia-cai",
-            "si2b5-pyaaa-aaaaa-aaaja-cai",
-            "sp3hj-caaaa-aaaaa-aaajq-cai",
-            "s24we-diaaa-aaaaa-aaaka-cai",
-            "st75y-vaaaa-aaaaa-aaalq-cai",
-        ]),
-        numberOfReplies: 6,
-        latestEventIndex: 12345,
-        latestEventTimestamp: BigInt(1654682280233),
-    },
-    55: {
-        participantIds: new Set([
-            "sbzkb-zqaaa-aaaaa-aaaiq-cai",
-            "sgymv-uiaaa-aaaaa-aaaia-cai",
-            "si2b5-pyaaa-aaaaa-aaaja-cai",
-        ]),
-        numberOfReplies: 10,
-        latestEventIndex: 12345,
-        latestEventTimestamp: BigInt(1654682280233),
-    },
-});
+const internalThreadSummaryStore = writable<ThreadSummaryLookup>({});
 
 export const threadSummaryStore = {
     subscribe: internalThreadSummaryStore.subscribe,
@@ -147,6 +121,7 @@ export const threadStore = {
             return store;
         });
     },
+    // todo - this is not ready and isn't going to work yet
     toggleReaction: (
         rootMessageIndex: number,
         messageId: bigint,
@@ -178,19 +153,6 @@ export const threadStore = {
                             reactions: toggleReaction(userId, e.event.reactions, reaction),
                         },
                     };
-                    // overwriteCachedEvents(this.chatId, [updatedEvent]).catch((err) =>
-                    //     rollbar.error("Unable to overwrite cached event toggling reaction", err)
-                    // );
-                    // if (userId === this.user.userId) {
-                    //     rtcConnectionsManager.sendMessage([...this.chatUserIds], {
-                    //         kind: "remote_user_toggled_reaction",
-                    //         chatType: this.chatVal.kind,
-                    //         chatId: this.chatVal.chatId,
-                    //         messageId,
-                    //         userId,
-                    //         reaction,
-                    //     });
-                    // }
                     return updatedEvent;
                 }
                 return e;

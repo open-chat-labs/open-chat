@@ -360,7 +360,7 @@
         //     });
     }
 
-    // TODO - this is another piece of duplication that we need to get rid of
+    // TODO - this is another piece of (almost) duplication that we need to get rid of
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
         if (ev.detail.index < 0) {
             focusMessageIndex = undefined;
