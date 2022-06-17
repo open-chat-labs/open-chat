@@ -3,6 +3,7 @@
 <script lang="ts">
     import { afterUpdate, createEventDispatcher, onMount, setContext, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
+    import Robot from "../Robot.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Fab from "../Fab.svelte";
@@ -27,6 +28,8 @@
     import { iconSize } from "../../stores/iconSize";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import { trackEvent } from "../../utils/tracking";
+    import { threadSummaryStore } from "../../stores/thread";
+    import { userStore } from "../../stores/user";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -47,6 +50,7 @@
     export let canReact: boolean;
     export let canInvite: boolean;
     export let footer: boolean;
+    export let selectedThreadMessageIndex: number | undefined;
 
     $: chat = controller.chat;
     $: loading = controller.loading;
@@ -55,6 +59,7 @@
     $: markRead = controller.markRead;
     $: pinned = controller.pinnedMessages;
     $: editingEvent = controller.editingEvent;
+    $: isBot = $chat.kind === "direct_chat" && $userStore[$chat.them]?.kind === "bot";
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
@@ -492,6 +497,8 @@
     ) {
         controller.registerPollVote(ev.detail.messageIndex, ev.detail.answerIndex, ev.detail.type);
     }
+
+    $: console.log("Threads: ", $threadSummaryStore);
 </script>
 
 <div
@@ -520,6 +527,7 @@
                         me={isMe(evt)}
                         first={i === 0}
                         last={i + 1 === userGroup.length}
+                        {selectedThreadMessageIndex}
                         {preview}
                         {canPin}
                         {canBlockUser}
@@ -527,12 +535,17 @@
                         {canSend}
                         {canReact}
                         {canInvite}
+                        inThread={false}
+                        threadSummary={evt.event.kind === "message"
+                            ? $threadSummaryStore[Number(evt.event.messageIndex)]
+                            : undefined}
                         publicGroup={controller.chatVal.kind === "group_chat" &&
                             controller.chatVal.public}
                         pinned={isPinned($pinned, evt)}
                         editing={$editingEvent === evt}
                         on:chatWith
                         on:replyTo={replyTo}
+                        on:replyInThread
                         on:replyPrivatelyTo
                         on:deleteMessage={deleteMessage}
                         on:editEvent={editEvent}
@@ -551,6 +564,9 @@
     {/each}
     {#if $chat.kind === "group_chat" && !morePrevAvailable}
         <InitialGroupMessage group={$chat} noVisibleEvents={$events.length === 0} />
+    {/if}
+    {#if isBot && !morePrevAvailable}
+        <Robot />
     {/if}
 </div>
 {#if !preview}

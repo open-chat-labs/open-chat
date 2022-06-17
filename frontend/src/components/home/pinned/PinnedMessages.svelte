@@ -3,7 +3,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import type { EventWrapper, Message } from "../../../domain/chat/chat";
-    import { afterUpdate, createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import { rollbar } from "../../../utils/logging";

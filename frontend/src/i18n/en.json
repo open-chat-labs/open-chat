@@ -527,6 +527,14 @@
     "readOnlyChat": "This chat is read-only",
     "accounts": "Accounts",
     "forward": "Forward",
+    "thread": {
+        "menu": "Reply in thread",
+        "title": "Thread",
+        "replies": "replies",
+        "reply": "reply",
+        "lastMessage": "(last message {date}) ",
+        "nreplies": "{number} {replies} {message}"
+    },
     "linkCopiedToClipboard": "Link copied to clipboard",
     "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
     "referralHeader": "Invite friends/family",

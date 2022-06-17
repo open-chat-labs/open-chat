@@ -37,8 +37,10 @@
     import type {
         ChatSummary,
         EnhancedReplyContext,
+        EventWrapper,
         GroupChatSummary,
         Message,
+        ThreadSummary,
     } from "../../domain/chat/chat";
     import { currentUserKey, HomeController } from "../../fsm/home.controller";
     import { mapRemoteData } from "../../utils/remoteData";
@@ -58,6 +60,7 @@
     import { trackEvent } from "../../utils/tracking";
     import { numberOfColumns, oldLayout } from "../../stores/layout";
     import { messageToForwardStore } from "../../stores/messageToForward";
+    import { threadStore } from "../../stores/thread";
 
     const dispatch = createEventDispatcher();
 
@@ -102,6 +105,10 @@
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
 
+    $: selectedThreadMessageIndex = rightPanelHistory.reduce<number | undefined>(
+        (_, s) => (s.kind === "message_thread_panel" ? s.rootEvent.event.messageIndex : undefined),
+        undefined
+    );
     $: userId = controller.user.userId;
     $: api = controller.api;
     $: chatsLoading = controller.loading;
@@ -453,6 +460,20 @@
         rightPanelHistory = [{ kind: "user_profile" }];
     }
 
+    function replyInThread(
+        ev: CustomEvent<{ rootEvent: EventWrapper<Message>; threadSummary?: ThreadSummary }>
+    ) {
+        if ($selectedChat !== undefined) {
+            rightPanelHistory = [
+                {
+                    kind: "message_thread_panel",
+                    threadSummary: ev.detail.threadSummary,
+                    rootEvent: ev.detail.rootEvent,
+                },
+            ];
+        }
+    }
+
     function showGroupDetails() {
         if ($selectedChat !== undefined) {
             rightPanelHistory = [
@@ -611,6 +632,7 @@
             <MiddlePanel
                 {hotGroups}
                 {joining}
+                {selectedThreadMessageIndex}
                 loadingChats={$chatsLoading}
                 blocked={!!blocked}
                 controller={$selectedChat}
@@ -622,6 +644,7 @@
                 on:replyPrivatelyTo={replyPrivatelyTo}
                 on:addParticipants={addParticipants}
                 on:showGroupDetails={showGroupDetails}
+                on:replyInThread={replyInThread}
                 on:showParticipants={showParticipants}
                 on:updateChat={updateChat}
                 on:joinGroup={joinGroup}

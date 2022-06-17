@@ -9,7 +9,7 @@
     import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import AggregateParticipantsJoinedOrLeftEvent from "./AggregateParticipantsJoinedOrLeftEvent.svelte";
     import type { UserSummary } from "../../domain/user/user";
-    import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
+    import type { ChatEvent, EventWrapper, Message, ThreadSummary } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
@@ -40,15 +40,23 @@
     export let canInvite: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
+    export let threadSummary: ThreadSummary | undefined;
+    export let selectedThreadMessageIndex: number | undefined;
+    export let inThread: boolean;
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
+    }
+
+    function replyInThread(ev: CustomEvent<Message>) {
+        dispatch("replyInThread", { rootEvent: event, threadSummary: ev.detail });
     }
 </script>
 
 {#if event.event.kind === "message"}
     <ChatMessage
         senderId={event.event.sender}
+        {selectedThreadMessageIndex}
         {focused}
         {observer}
         {confirmed}
@@ -69,10 +77,13 @@
         {canReact}
         {publicGroup}
         {editing}
+        {threadSummary}
+        {inThread}
         on:chatWith
         on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
+        on:replyInThread={replyInThread}
         on:selectReaction
         on:deleteMessage
         on:blockUser
