@@ -30,6 +30,7 @@ fn map_proposal(p: ProposalInfo) -> Result<Proposal, &'static str> {
 
     Ok(Proposal {
         id: p.id.ok_or("id not set")?.id,
+        topic: p.topic,
         proposer: p.proposer.ok_or("proposer not set")?.id,
         title: proposal.title.ok_or("title not set")?,
         summary: proposal.summary,
@@ -68,6 +69,7 @@ pub mod governance_response_types {
     #[derive(CandidType, Deserialize)]
     pub struct ProposalInfo {
         pub id: Option<WrappedProposalId>,
+        pub topic: i32,
         pub proposer: Option<WrappedNeuronId>,
         pub proposal: Option<Proposal>,
         pub proposal_timestamp_seconds: u64,

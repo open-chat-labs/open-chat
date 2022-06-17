@@ -1,9 +1,11 @@
-use crate::governance_client;
+use crate::governance_client::{self, ListProposalInfo, WrappedProposalId};
 use crate::model::nervous_systems::ProposalToPush;
 use crate::mutate_state;
 use ic_cdk_macros::heartbeat;
 use tracing::error;
 use types::{CanisterId, ChatId, MessageContent, MessageId, Proposal, ProposalContent, ProposalId};
+
+const EXCHANGE_RATE_TOPIC: i32 = 2;
 
 #[heartbeat]
 fn heartbeat() {
@@ -13,7 +15,6 @@ fn heartbeat() {
 
 mod retrieve_proposals {
     use super::*;
-    use crate::governance_client::{ListProposalInfo, WrappedProposalId};
 
     pub fn run() {
         if let Some((governance_canister_id, next_proposal_id)) = mutate_state(|state| {
@@ -41,10 +42,12 @@ mod retrieve_proposals {
                     if let Some(proposal_result) = response.into_iter().next() {
                         match proposal_result.proposal {
                             Ok(proposal) => {
-                                state
-                                    .data
-                                    .nervous_systems
-                                    .enqueue_proposal(&governance_canister_id, proposal, false);
+                                if proposal.topic != EXCHANGE_RATE_TOPIC {
+                                    state
+                                        .data
+                                        .nervous_systems
+                                        .enqueue_proposal(&governance_canister_id, proposal, false);
+                                }
                             }
                             Err(error) => {
                                 error!(error = error.as_str(), "Failed to transform proposal");
