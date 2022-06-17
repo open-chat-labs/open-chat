@@ -241,7 +241,6 @@
             </div>
         </CollapsibleCard>
     </div>
-
     <div class="appearance">
         <CollapsibleCard
             on:toggle={appearanceSectionOpen.toggle}
@@ -285,7 +284,14 @@
             </div>
         </CollapsibleCard>
     </div>
-
+    <div class="invite">
+        <CollapsibleCard
+            on:toggle={referralOpen.toggle}
+            open={$referralOpen}
+            headerText={$_("referralHeader")}>
+            <ReferUsers />
+        </CollapsibleCard>
+    </div>
     <div class="chats">
         <CollapsibleCard
             on:toggle={chatsSectionOpen.toggle}
@@ -318,7 +324,6 @@
             {/each}
         </CollapsibleCard>
     </div>
-
     <div class="accounts">
         <CollapsibleCard
             on:toggle={accountSectionOpen.toggle}
@@ -395,14 +400,6 @@
             {/if}
         </CollapsibleCard>
     </div>
-    <div class="invite">
-        <CollapsibleCard
-            on:toggle={referralOpen.toggle}
-            open={$referralOpen}
-            headerText={$_("referralHeader")}>
-            <ReferUsers />
-        </CollapsibleCard>
-    </div>
     <div class="storage">
         <CollapsibleCard
             on:toggle={storageSectionOpen.toggle}
@@ -437,7 +434,6 @@
             {/if}
         </CollapsibleCard>
     </div>
-
     <div class="stats">
         <CollapsibleCard
             on:toggle={statsSectionOpen.toggle}
