@@ -11,7 +11,7 @@
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
     import { _ } from "svelte-i18n";
-    import { avatarUrl } from "../../../domain/user/user.utils";
+    import { groupAvatarUrl } from "../../../domain/user/user.utils";
     import type {
         GroupChatSummary,
         GroupPermissions,
@@ -130,7 +130,7 @@
     $: canEdit = canEditGroupDetails(originalGroup);
     $: canEditPermissions = canChangePermissions(originalGroup);
     $: canInvite = canInviteUsers(originalGroup);
-    $: avatarSrc = avatarUrl(updatedGroup.avatar, "../assets/group.svg");
+    $: avatarSrc = groupAvatarUrl(updatedGroup.avatar);
 
     function openUserProfile() {
         if (!myGroup) {

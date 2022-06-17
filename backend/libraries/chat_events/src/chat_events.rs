@@ -3,11 +3,11 @@ use candid::CandidType;
 use itertools::Itertools;
 use search::*;
 use serde::{Deserialize, Serialize};
-use std::cmp::min;
+use std::cmp::{max, min};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::FromIterator;
-use std::ops::{Deref, DerefMut, RangeInclusive};
+use std::ops::{Bound, Deref, DerefMut, RangeBounds, RangeInclusive};
 use types::*;
 
 #[derive(Serialize, Deserialize)]
@@ -51,6 +51,7 @@ pub enum EditMessageResult {
     NotFound,
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum DeleteMessageResult {
     Success(MessageContent),
     AlreadyDeleted,
@@ -669,15 +670,11 @@ impl ChatEventsVec {
     }
 
     pub fn get(&self, event_index: EventIndex) -> Option<&EventWrapper<ChatEventInternal>> {
-        let offset = self.offset()?;
-        let index = usize::from(event_index).checked_sub(offset)?;
-        self.events.get(index)
+        self.events.get(usize::from(event_index))
     }
 
     pub fn get_mut(&mut self, event_index: EventIndex) -> Option<&mut EventWrapper<ChatEventInternal>> {
-        let offset = self.offset()?;
-        let index = usize::from(event_index).checked_sub(offset)?;
-        self.events.get_mut(index)
+        self.events.get_mut(usize::from(event_index))
     }
 
     pub fn since(&self, event_index: EventIndex) -> &[EventWrapper<ChatEventInternal>] {
@@ -685,29 +682,13 @@ impl ChatEventsVec {
     }
 
     pub fn get_range(&self, range: RangeInclusive<EventIndex>) -> &[EventWrapper<ChatEventInternal>] {
-        if let Some(offset) = self.offset() {
-            if let Some(end) = usize::from(*range.end()).checked_sub(offset) {
-                let start = usize::from(*range.start()).saturating_sub(offset);
-                if start < self.events.len() {
-                    let end = min(end, self.events.len().saturating_sub(1));
-                    return &self.events[start..=end];
-                }
-            }
-        }
-
-        &[]
+        let start = usize::from(*range.start());
+        let end = usize::from(*range.end());
+        self.events_range_safe(start..=end, 0)
     }
 
     pub fn get_by_index(&self, indexes: &[EventIndex]) -> Vec<&EventWrapper<ChatEventInternal>> {
-        self.offset()
-            .map(|offset| {
-                indexes
-                    .iter()
-                    .filter_map(|i| usize::from(*i).checked_sub(offset))
-                    .filter_map(|i| self.events.get(i))
-                    .collect()
-            })
-            .unwrap_or_default()
+        indexes.iter().filter_map(|i| self.events.get(usize::from(*i))).collect()
     }
 
     #[allow(clippy::wrong_self_convention)]
@@ -718,27 +699,24 @@ impl ChatEventsVec {
         max_events: usize,
         min_visible_event_index: EventIndex,
     ) -> Vec<&EventWrapper<ChatEventInternal>> {
-        if let Some(start_index) = self.offset().and_then(|o| usize::from(start).checked_sub(o)) {
-            let iter: Box<dyn Iterator<Item = &EventWrapper<ChatEventInternal>>> = if ascending {
-                let range = &self.events[start_index..];
-                Box::new(range.iter())
-            } else {
-                let range = &self.events[..=start_index];
-                Box::new(range.iter().rev())
-            };
-
-            let mut events = Vec::new();
-
-            for event in iter.take_while(|e| e.index >= min_visible_event_index).take(max_events) {
-                events.push(event);
-            }
-            if !ascending {
-                events.reverse();
-            }
-            events
+        let start_index = usize::from(start);
+        let min_visible_index = usize::from(min_visible_event_index);
+        let iter: Box<dyn Iterator<Item = &EventWrapper<ChatEventInternal>>> = if ascending {
+            let range = &self.events_range_safe(start_index.., min_visible_index);
+            Box::new(range.iter())
         } else {
-            Vec::new()
+            let range = &self.events_range_safe(..=start_index, min_visible_index);
+            Box::new(range.iter().rev())
+        };
+
+        let mut events = Vec::new();
+        for event in iter.take(max_events) {
+            events.push(event);
         }
+        if !ascending {
+            events.reverse();
+        }
+        events
     }
 
     pub fn get_window(
@@ -747,62 +725,80 @@ impl ChatEventsVec {
         max_events: usize,
         min_visible_event_index: EventIndex,
     ) -> Vec<&EventWrapper<ChatEventInternal>> {
-        if mid_point >= min_visible_event_index {
-            if let Some(offset) = self.offset() {
-                if let Some(mid_point_index) = usize::from(mid_point).checked_sub(offset) {
-                    let min_visible_index = usize::from(min_visible_event_index).saturating_sub(offset);
-                    let mut forwards_iter = self.events[mid_point_index..].iter();
-                    let mut backwards_iter = self.events[min_visible_index..mid_point_index].iter().rev();
+        let mid_point_index = usize::from(mid_point);
+        let min_visible_index = usize::from(min_visible_event_index);
+        let mut forwards_iter = self.events_range_safe(mid_point_index.., min_visible_index).iter();
+        let mut backwards_iter = self
+            .events_range_safe(min_visible_index..mid_point_index, min_visible_index)
+            .iter()
+            .rev();
 
-                    let mut events = VecDeque::new();
+        let mut events = VecDeque::new();
 
-                    let mut max_reached = false;
-                    let mut min_reached = false;
+        let mut max_reached = false;
+        let mut min_reached = false;
 
-                    let mut iter_forwards = true;
+        let mut iter_forwards = true;
 
-                    // Alternates between iterating forwards and backwards (unless either end is
-                    // reached) adding one event each time until the message limit is reached, the
-                    // event limit is reached, or there are no more events available.
-                    loop {
-                        if events.len() == max_events || (min_reached && max_reached) {
-                            break;
-                        }
+        // Alternates between iterating forwards and backwards (unless either end is
+        // reached) adding one event each time until the message limit is reached, the
+        // event limit is reached, or there are no more events available.
+        loop {
+            if events.len() == max_events || (min_reached && max_reached) {
+                break;
+            }
 
-                        if iter_forwards {
-                            if let Some(next) = forwards_iter.next() {
-                                events.push_back(next);
-                            } else {
-                                max_reached = true;
-                            }
-                            if !min_reached {
-                                iter_forwards = false;
-                            }
-                        } else {
-                            if let Some(previous) = backwards_iter.next() {
-                                events.push_front(previous);
-                            } else {
-                                min_reached = true;
-                            }
-                            if !max_reached {
-                                iter_forwards = true;
-                            }
-                        }
-                    }
-
-                    return Vec::from_iter(events);
+            if iter_forwards {
+                if let Some(next) = forwards_iter.next() {
+                    events.push_back(next);
+                } else {
+                    max_reached = true;
+                }
+                if !min_reached {
+                    iter_forwards = false;
+                }
+            } else {
+                if let Some(previous) = backwards_iter.next() {
+                    events.push_front(previous);
+                } else {
+                    min_reached = true;
+                }
+                if !max_reached {
+                    iter_forwards = true;
                 }
             }
         }
-        Vec::new()
+
+        Vec::from_iter(events)
     }
 
     pub fn next_event_index(&self) -> EventIndex {
         self.events.last().map_or(EventIndex::default(), |e| e.index.incr())
     }
 
-    fn offset(&self) -> Option<usize> {
-        self.events.first().map(|e| e.index.into())
+    fn events_range_safe(
+        &self,
+        range: impl RangeBounds<usize>,
+        min_visible_index: usize,
+    ) -> &[EventWrapper<ChatEventInternal>] {
+        let start = match range.start_bound().cloned() {
+            Bound::Included(s) => max(s, min_visible_index),
+            Bound::Excluded(s) => max(s.saturating_sub(1), min_visible_index),
+            Bound::Unbounded => min_visible_index,
+        };
+
+        let max = self.events.len();
+        let end = match range.end_bound().cloned() {
+            Bound::Included(e) => min(e.saturating_add(1), max),
+            Bound::Excluded(e) => min(e, max),
+            Bound::Unbounded => max,
+        };
+
+        if start < end {
+            &self.events[start..end]
+        } else {
+            &[]
+        }
     }
 }
 
@@ -880,6 +876,28 @@ mod tests {
         let event_indexes: Vec<u32> = results.iter().map(|e| e.index.into()).collect();
 
         assert!(event_indexes.into_iter().eq(16u32..=40));
+    }
+
+    #[test]
+    fn from_index_start_index_exceeds_max() {
+        let events = setup_events();
+
+        let results = events.from_index(u32::MAX.into(), true, 25, EventIndex::default());
+
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn from_index_rev_start_index_exceeds_max() {
+        let events = setup_events();
+
+        let results = events.from_index(u32::MAX.into(), false, 25, EventIndex::default());
+
+        assert_eq!(results.len(), 25);
+
+        let event_indexes: Vec<u32> = results.iter().map(|e| e.index.into()).collect();
+
+        assert!(event_indexes.into_iter().eq(72u32..=96));
     }
 
     #[test]

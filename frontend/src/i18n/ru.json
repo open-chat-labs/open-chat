@@ -540,5 +540,7 @@
         "reply": "Ответить",
         "lastMessage": "(последнее сообщение {date})",
         "nreplies": "{number} {replies} {message}"
-    }
+    },
+    "noChatsAvailable": "Нет доступных чатов!",
+    "invitedUsers": "Приглашенные пользователи"
 }

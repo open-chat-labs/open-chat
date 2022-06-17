@@ -11,7 +11,7 @@
     import { AvatarSize } from "../../domain/user/user";
     import type { PartialUserSummary } from "../../domain/user/user";
     import type { CreatedUser } from "../../domain/user/user";
-    import { avatarUrl } from "../../domain/user/user.utils";
+    import { userAvatarUrl } from "../../domain/user/user.utils";
     import { currentUserKey } from "../../fsm/home.controller";
     import { mobileWidth } from "../../stores/screenDimensions";
 
@@ -106,7 +106,7 @@
         <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
             <MenuItem selected={itemIndex === index} on:click={() => mention(item.userId)}>
                 <div class="avatar" slot="icon">
-                    <Avatar url={avatarUrl($userStore[item.userId])} size={AvatarSize.Tiny} />
+                    <Avatar url={userAvatarUrl($userStore[item.userId])} size={AvatarSize.Tiny} />
                 </div>
                 <div slot="text">
                     {$userStore[item.userId]?.username ?? $_("unknown")}

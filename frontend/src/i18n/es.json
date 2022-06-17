@@ -541,5 +541,7 @@
         "reply": "respuesta",
         "lastMessage": "(último mensaje {date})",
         "nreplies": "{number} {replies} {message}"
-    }
+    },
+    "noChatsAvailable": "¡No hay chats disponibles!",
+    "invitedUsers": "Usuarios invitados"
 }

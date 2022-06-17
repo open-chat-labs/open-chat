@@ -14,7 +14,7 @@
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
     import { _ } from "svelte-i18n";
-    import { avatarUrl, getUserStatus } from "../../../domain/user/user.utils";
+    import { userAvatarUrl, getUserStatus } from "../../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
     import type { BlockedParticipant, FullParticipant } from "../../../domain/chat/chat";
     import { userStore } from "../../../stores/user";
@@ -107,7 +107,7 @@
         <Avatar
             statusBorder={hovering && !me ? "var(--participants-hv)" : "var(--participants-bg)"}
             blocked={participant.memberKind === "blocked_member"}
-            url={avatarUrl(participant)}
+            url={userAvatarUrl(participant)}
             status={getUserStatus($now, $userStore, participant.userId)}
             size={AvatarSize.Small} />
     </span>

@@ -2,16 +2,17 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Avatar from "../../Avatar.svelte";
     import Markdown from "../Markdown.svelte";
-    import { AvatarSize } from "../../../domain/user/user";
+    import { AvatarSize, PublicProfile } from "../../../domain/user/user";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import type { PartialUserSummary } from "../../../domain/user/user";
-    import { avatarUrl, formatLastOnlineDate } from "../../../domain/user/user.utils";
+    import { formatLastOnlineDate } from "../../../domain/user/user.utils";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import { rollbar } from "../../../utils/logging";
+    import { buildUserAvatarUrl } from "domain/chat/chat.utils";
 
     const api: ServiceContainer = getContext(apiKey);
     const dispatch = createEventDispatcher();
@@ -20,20 +21,21 @@
     export let alignTo: DOMRect | undefined = undefined;
     export let chatButton = true;
 
-    let bio = "";
+    let profile: PublicProfile | undefined = undefined;
     let user: PartialUserSummary | undefined;
-    let loaded = false;
 
     $: modal = alignTo === undefined || $mobileWidth;
     $: status = formatLastOnlineDate(Date.now(), user);
+    $: avatarUrl =
+        profile !== undefined
+            ? buildUserAvatarUrl(userId, profile.avatarId)
+            : "../assets/unknownUserAvatar.svg";
 
     onMount(async () => {
         try {
             const task1 = api.getUser(userId);
-            const task2 = api.getBio(userId);
+            profile = await api.getPublicProfile(userId);
             user = await task1;
-            bio = await task2;
-            loaded = true;
         } catch (e: any) {
             rollbar.error("Failed to load user profile", e);
             onClose();
@@ -57,7 +59,7 @@
 
 <svelte:window on:resize={onWindowResize} />
 
-{#if loaded}
+{#if profile !== undefined}
     <Overlay dismissible={true} fade={modal} on:close={onClose}>
         <ModalContent
             hideHeader={true}
@@ -67,15 +69,13 @@
             {alignTo}
             on:close>
             <div slot="body" class="body" class:modal>
-                <Avatar url={avatarUrl(user)} size={AvatarSize.ExtraLarge} />
-                {#if user?.username !== undefined}
-                    <h2>{user.username}</h2>
-                {/if}
+                <Avatar url={avatarUrl} size={AvatarSize.ExtraLarge} />
+                <h2>{profile.username}</h2>
                 {#if status.length > 0}
                     <p>{status}</p>
                 {/if}
-                {#if bio.length > 0}
-                    <p class="bio"><Markdown text={bio} /></p>
+                {#if profile.bio.length > 0}
+                    <p class="bio"><Markdown text={profile.bio} /></p>
                 {/if}
             </div>
             <div slot="footer" class="footer">

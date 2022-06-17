@@ -540,5 +540,7 @@
         "reply": "返事",
         "lastMessage": "（最後のメッセージ{date}）",
         "nreplies": "{number} {replies} {message}"
-    }
+    },
+    "noChatsAvailable": "チャットはありません！",
+    "invitedUsers": "招待されたユーザー"
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserLookup } from "../../domain/user/user";
-    import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import { groupAvatarUrl, userAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import Delete from "svelte-material-icons/Delete.svelte";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
@@ -44,7 +44,7 @@
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
-                avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
+                avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus(now, $userStore, chatSummary.them),
                 typing: getTypingString($userStore, chatSummary, typing),
             };
@@ -52,7 +52,7 @@
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
-            avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
+            avatarUrl: groupAvatarUrl(chatSummary),
             typing: getTypingString($userStore, chatSummary, typing),
         };
     }

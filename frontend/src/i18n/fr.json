@@ -540,5 +540,7 @@
         "reply": "Réponse",
         "lastMessage": "(dernier message {date})",
         "nreplies": "{number} {replies} {message}"
-    }
+    },
+    "noChatsAvailable": "Aucun chat disponible !",
+    "invitedUsers": "Utilisateurs invités"
 }

@@ -540,5 +540,7 @@
         "reply": "回复",
         "lastMessage": "（最后一条消息 {date}）",
         "nreplies": "{number} {replies} {message}"
-    }
+    },
+    "noChatsAvailable": "没有可用的聊天！",
+    "invitedUsers": "受邀用户"
 }

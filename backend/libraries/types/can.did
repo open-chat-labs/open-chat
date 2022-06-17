@@ -10,6 +10,8 @@ type Memo = nat64;
 type MessageId = nat;
 type MessageIndex = nat32;
 type Milliseconds = nat64;
+type NeuronId = nat64;
+type ProposalId = nat64;
 type TimestampMillis = nat64;
 type TimestampNanos = nat64;
 type TransactionHash = blob;
@@ -72,6 +74,7 @@ type ChatMetrics =
         replies: nat64;
         edits: nat64;
         reactions: nat64;
+        proposals: nat64;
         last_active: TimestampMillis;
     };
 
@@ -93,9 +96,9 @@ type ConfirmationCodeSms =
          confirmation_code: text;
     };
 
-type CryptocurrencyContentV2 =
+type CryptocurrencyContent =
     record {
-        transfer: CryptocurrencyTransfer;
+        transfer: CryptoTransaction;
         caption: opt text;
     };
 
@@ -449,10 +452,10 @@ type MessageContent =
         Audio: AudioContent;
         File: FileContent;
         Poll: PollContent;
-        Cryptocurrency: reserved;
-        CryptocurrencyV2: CryptocurrencyContentV2;
+        Cryptocurrency: CryptocurrencyContent;
         Deleted: DeletedContent;
         Giphy: GiphyContent;
+        GovernanceProposal: ProposalContent;
     };
 
 type MessageIndexRange =
@@ -613,6 +616,20 @@ type ParticipantsRemoved =
         removed_by: UserId;
     };
 
+type ProposalContent =
+    record {
+        governance_canister_id: CanisterId;
+        proposal_id: ProposalId;
+        proposer: NeuronId;
+        title: text;
+        summary: text;
+        url: text;
+        deadline: TimestampMillis;
+        adopt_votes: nat32;
+        reject_votes: nat32;
+        my_vote: opt bool;
+    };
+
 type TotalPollVotes =
     variant {
         Visible: vec record { nat32; vec UserId };
@@ -695,25 +712,6 @@ type TextContent =
         text: text;
     };
 
-type Transaction =
-    variant {
-        Cryptocurrency: CryptocurrencyTransaction;
-    };
-
-type TransactionStatus =
-    variant {
-        Pending;
-        Complete;
-        Failed: text;
-    };
-
-type TransactionWrapper =
-    record {
-        index: nat32;
-        timestamp: TimestampMillis;
-        transaction: Transaction;
-    };
-
 type UserSummary =
     record {
         user_id: UserId;
@@ -734,101 +732,71 @@ type Cryptocurrency =
         InternetComputer;
     };
 
-type CryptocurrencyTransaction =
+type CryptoTransaction =
     variant {
-        Deposit: CryptocurrencyDeposit;
-        Withdrawal: CryptocurrencyWithdrawal;
-        Transfer: CryptocurrencyTransfer;
+        Pending: PendingCryptoTransaction;
+        Completed: CompletedCryptoTransaction;
+        Failed: FailedCryptoTransaction;
     };
 
-type CryptocurrencyDeposit =
-    variant {
-        Completed: CompletedCryptocurrencyDeposit;
-    };
-
-type CompletedCryptocurrencyDeposit =
+type PendingCryptoTransaction =
     record {
         token: Cryptocurrency;
-        from_address: AccountIdentifier;
         amount: Tokens;
-        fee: Tokens;
-        memo: Memo;
-        block_index: BlockIndex;
-    };
-
-type CryptocurrencyWithdrawal =
-    variant {
-        Pending: PendingCryptocurrencyWithdrawal;
-        Completed: CompletedCryptocurrencyWithdrawal;
-        Failed: FailedCryptocurrencyWithdrawal;
-    };
-
-type PendingCryptocurrencyWithdrawal =
-    record {
-        token: Cryptocurrency;
-        to: AccountIdentifier;
-        amount: Tokens;
+        to: CryptoAccount;
         fee: opt Tokens;
         memo: opt Memo;
     };
 
-type CompletedCryptocurrencyWithdrawal =
+type CompletedCryptoTransaction =
     record {
         token: Cryptocurrency;
-        to: AccountIdentifier;
         amount: Tokens;
         fee: Tokens;
+        from: CryptoAccountFull;
+        to: CryptoAccountFull;
         memo: Memo;
-        block_index: BlockIndex;
+        created: TimestampMillis;
         transaction_hash: TransactionHash;
+        block_index: BlockIndex;
     };
 
-type FailedCryptocurrencyWithdrawal =
+type FailedCryptoTransaction =
     record {
         token: Cryptocurrency;
-        to: AccountIdentifier;
         amount: Tokens;
         fee: Tokens;
+        from: CryptoAccountFull;
+        to: CryptoAccountFull;
         memo: Memo;
+        created: TimestampMillis;
+        transaction_hash: TransactionHash;
         error_message: text;
     };
 
-type CryptocurrencyTransfer =
+type CryptoAccount =
     variant {
-        Pending: PendingCryptocurrencyTransfer;
-        Completed:CompletedCryptocurrencyTransfer;
-        Failed: FailedCryptocurrencyTransfer;
+        Mint;
+        User: UserId;
+        Account: AccountIdentifier;
     };
 
-type PendingCryptocurrencyTransfer =
+type CryptoAccountFull =
+    variant {
+        Mint;
+        User: record { UserId; AccountIdentifier };
+        UserIndex: AccountIdentifier;
+        Named: record { text; AccountIdentifier };
+        Unknown: AccountIdentifier;
+    };
+
+type PendingCryptoTransfer =
     record {
         token: Cryptocurrency;
-        recipient: UserId;
         amount: Tokens;
+        to: UserId;
         fee: opt Tokens;
         memo: opt Memo;
-    };
-
-type CompletedCryptocurrencyTransfer =
-    record {
-        token: Cryptocurrency;
-        sender: UserId;
-        recipient: UserId;
-        amount: Tokens;
-        fee: Tokens;
-        memo: Memo;
-        block_index: BlockIndex;
-        transaction_hash: TransactionHash;
-    };
-
-type FailedCryptocurrencyTransfer =
-    record {
-        token: Cryptocurrency;
-        recipient: UserId;
-        amount: Tokens;
-        fee: Tokens;
-        memo: Memo;
-        error_message: text;
     };
 
 type VideoContent =

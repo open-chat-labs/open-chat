@@ -10,5 +10,5 @@ edition = "2021"
 candid = "0.7.14"
 itertools = "0.10.3"
 search = { path = "../search" }
-serde = "1.0.136"
+serde = "1.0.137"
 types = { path = "../types" }

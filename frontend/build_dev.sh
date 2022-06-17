@@ -10,6 +10,5 @@ export LEDGER_CANISTER_BTC=qoctq-giaaa-aaaaa-aaaea-cai
 export LEDGER_CANISTER_CHAT=qoctq-giaaa-aaaaa-aaaea-cai
 export BLOB_URL_PATTERN=http://{canisterId}.localhost:8000/{blobType}/
 export ENABLE_MULTI_CRYPTO=true
-export ENABLE_FORWARDING=true
 
 npx rollup -c $WATCH

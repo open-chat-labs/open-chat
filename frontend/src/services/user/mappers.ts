@@ -24,11 +24,12 @@ import type {
     ApiMention,
     ApiRecommendedGroupsResponse,
     ApiSetBioResponse,
-    ApiWithdrawCryptocurrencyResponse,
+    ApiWithdrawCryptoResponse,
     ApiFailedCryptocurrencyWithdrawal,
     ApiCompletedCryptocurrencyWithdrawal,
-    ApiTransferCryptocurrencyWithinGroupResponse,
+    ApiTransferCryptoWithinGroupResponse,
     ApiChatMetrics,
+    ApiPublicProfileResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -75,8 +76,22 @@ import type {
     SearchDirectChatResponse,
     SearchAllMessagesResponse,
 } from "../../domain/search/search";
-import type { SetBioResponse } from "../../domain/user/user";
+import type { PublicProfile, SetBioResponse } from "../../domain/user/user";
 import type { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
+
+export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
+    if ("Success" in candid) {
+        const profile = candid.Success;
+        return {
+            username: profile.username,
+            avatarId: optional(profile.avatar_id, identity),
+            bio: profile.bio,
+            isPremium: profile.is_premium,
+            phoneIsVerified: profile.phone_is_verified,
+        };
+    }
+    throw new UnsupportedValueError(`Unexpected ApiPublicProfileResponse type received`, candid);
+}
 
 export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
     if ("Success" in candid) {
@@ -302,7 +317,7 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
 }
 
 export function transferWithinGroupResponse(
-    candid: ApiTransferCryptocurrencyWithinGroupResponse
+    candid: ApiTransferCryptoWithinGroupResponse
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -361,13 +376,13 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             eventIndex: candid.Success.event_index,
         };
     }
-    if ("TransferSuccessV2" in candid) {
+    if ("TransferSuccess" in candid) {
         return {
             kind: "transfer_success",
-            timestamp: candid.TransferSuccessV2.timestamp,
-            messageIndex: candid.TransferSuccessV2.message_index,
-            eventIndex: candid.TransferSuccessV2.event_index,
-            transfer: completedCryptoTransfer(candid.TransferSuccessV2.transfer),
+            timestamp: candid.TransferSuccess.timestamp,
+            messageIndex: candid.TransferSuccess.message_index,
+            eventIndex: candid.TransferSuccess.event_index,
+            transfer: completedCryptoTransfer(candid.TransferSuccess.transfer),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -755,7 +770,7 @@ export function completedCryptoWithdrawal(
 }
 
 export function withdrawCryptoResponse(
-    candid: ApiWithdrawCryptocurrencyResponse
+    candid: ApiWithdrawCryptoResponse
 ): WithdrawCryptocurrencyResponse {
     if ("CurrencyNotSupported" in candid) {
         return { kind: "currency_not_supported" };

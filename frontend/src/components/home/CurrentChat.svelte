@@ -29,7 +29,7 @@
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
     import { remainingStorage } from "../../stores/storage";
-    import { userStore } from "stores/user";
+    import { userStore } from "../../stores/user";
     import {
         canBlockUsers,
         canCreatePolls,

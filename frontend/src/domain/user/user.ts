@@ -26,6 +26,14 @@ export type User = {
     username: string;
 };
 
+export type PublicProfile = {
+    username: string;
+    avatarId?: bigint;
+    bio: string;
+    isPremium: boolean;
+    phoneIsVerified: boolean;
+};
+
 export type UsersArgs = {
     userGroups: {
         users: string[];
@@ -46,6 +54,7 @@ export enum UserStatus {
 
 export enum AvatarSize {
     Miniscule,
+    Weeny,
     Tiny,
     Small,
     Medium,
@@ -95,6 +104,7 @@ export type CreatedUser = {
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
     wasmVersion: Version;
     openStorageLimitBytes: number;
+    referrals: string[];
 };
 
 export type UserNotFound = {

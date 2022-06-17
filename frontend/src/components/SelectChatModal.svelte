@@ -5,7 +5,7 @@
     import Avatar from "./Avatar.svelte";
     import { AvatarSize, UserStatus } from "../domain/user/user";
     import { userStore } from "../stores/user";
-    import { avatarUrl as getAvatarUrl, getUserStatus } from "../domain/user/user.utils";
+    import { userAvatarUrl, groupAvatarUrl, getUserStatus } from "../domain/user/user.utils";
     import Panel from "./Panel.svelte";
     import { iconSize } from "../stores/iconSize";
     import HoverIcon from "./HoverIcon.svelte";
@@ -17,23 +17,23 @@
 
     export let chatsSummaries: ChatSummary[];
 
-    $: chats = chatsSummaries.map((c) => normaliseChatSummary($now, c));
-
     const dispatch = createEventDispatcher();
+
+    $: chats = chatsSummaries.map((c) => normaliseChatSummary($now, c));
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
             return {
                 id: chatSummary.chatId,
                 name: $userStore[chatSummary.them]?.username,
-                avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
+                avatarUrl: userAvatarUrl($userStore[chatSummary.them]),
                 description: buildDirectChatDescription(chatSummary, now),
             };
         }
         return {
             id: chatSummary.chatId,
             name: chatSummary.name,
-            avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
+            avatarUrl: groupAvatarUrl(chatSummary),
             description: buildGroupChatDescription(chatSummary),
         };
     }
@@ -72,19 +72,23 @@
             </HoverIcon>
         </span>
     </SectionHeader>
-    <div class="body">
-        {#each chats as chat}
-            <div class="row" class:rtl={$rtlStore} on:click={() => selectChat(chat.id)}>
-                <div class="avatar">
-                    <Avatar url={chat.avatarUrl} size={AvatarSize.Small} />
+    {#if chats.length === 0}
+        <div class="no-chats">{$_("noChatsAvailable")}</div>
+    {:else}
+        <div class="body">
+            {#each chats as chat}
+                <div class="row" class:rtl={$rtlStore} on:click={() => selectChat(chat.id)}>
+                    <div class="avatar">
+                        <Avatar url={chat.avatarUrl} size={AvatarSize.Small} />
+                    </div>
+                    <div class="details">
+                        <div class="name">{chat.name}</div>
+                        <div class="description">{chat.description}</div>
+                    </div>
                 </div>
-                <div class="details">
-                    <div class="name">{chat.name}</div>
-                    <div class="description">{chat.description}</div>
-                </div>
-            </div>
-        {/each}
-    </div>
+            {/each}
+        </div>
+    {/if}
 </Panel>
 
 <style type="text/scss">
@@ -94,11 +98,21 @@
         margin-top: 2px;
     }
 
+    .no-chats {
+        margin: $sp3;
+        padding: $sp3 $sp4;
+        background-color: var(--chatSummary-bg);
+        @include font(bold, normal, fs-100);
+        color: var(--error);
+    }
+
     .close {
         flex: 0 0 30px;
     }
 
     .body {
+        overflow: auto;
+        @include nice-scrollbar();
         @include mobile() {
             width: 100%;
         }

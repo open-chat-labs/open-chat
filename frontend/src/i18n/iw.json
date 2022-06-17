@@ -538,5 +538,7 @@
         "reply": "תשובה",
         "lastMessage": "(הודעה אחרונה {date})",
         "nreplies": "{number} {replies} {message}"
-    }
+    },
+    "noChatsAvailable": "אין צ'אטים זמינים!",
+    "invitedUsers": "משתמשים מוזמנים"
 }

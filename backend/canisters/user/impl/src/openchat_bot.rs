@@ -2,7 +2,7 @@ use crate::updates::c2c_send_message::c2c_send_message_impl;
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use candid::Principal;
 use ic_ledger_types::Tokens;
-use types::{MessageContent, PhoneNumberConfirmed, StorageUpgraded, TextContent, UserId};
+use types::{MessageContent, MessageId, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, TextContent, UserId};
 use user_canister::c2c_send_message;
 use utils::format::format_to_decimal_places;
 
@@ -13,10 +13,11 @@ pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 const WELCOME_MESSAGES: &[&str] = &[
     "Welcome to OpenChat!",
     "I am the OpenChat bot. I will send you messages to let you know about events that don't belong to any other chat, such as if crypto has been deposited into your OpenChat account(s) or if you've been removed from a group. In the future you'll be able to ask me questions or send me commands.",
-    "To follow all the updates to OpenChat join the [OpenChat Updates](https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app/#/eucat-raaaa-aaaaf-adn7q-cai) group.",
-    "To request new features join the [Feature Requests](https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app/#/vfaj4-zyaaa-aaaaf-aabya-cai) group.",
-    "To report bugs join the [Bug Reports](https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app/#/sycha-wyaaa-aaaaf-aabka-cai) group.",
-    "To provide feedback in general join the [Product Feedback](https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app/#/s7dbu-3aaaa-aaaaf-aabkq-cai) group."];
+    "To follow all the updates to OpenChat join the [OpenChat Updates](/#/eucat-raaaa-aaaaf-adn7q-cai) group.",
+    "To request new features join the [Feature Requests](/#/vfaj4-zyaaa-aaaaf-aabya-cai) group.",
+    "To report bugs join the [Bug Reports](/#/sycha-wyaaa-aaaaf-aabka-cai) group.",
+    "To provide feedback in general join the [Product Feedback](/#/s7dbu-3aaaa-aaaaf-aabkq-cai) group.",
+    "Please keep posts relevant to each group. If you just want to say \"hi\", post in the [OpenChat group](/#/vmdca-pqaaa-aaaaf-aabzq-cai)."];
 
 pub(crate) fn send_welcome_messages() {
     mutate_state(|state| {
@@ -62,7 +63,6 @@ pub(crate) fn send_removed_from_group_message(
     send_text_message(text, runtime_state);
 }
 
-#[allow(dead_code)]
 pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirmed, runtime_state: &mut RuntimeState) {
     let storage_added = to_gb(event.storage_added);
     let new_group_limit = PREMIUM_GROUP_CREATION_LIMIT.to_string();
@@ -72,7 +72,6 @@ pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirm
     send_text_message(text, runtime_state);
 }
 
-#[allow(dead_code)]
 pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, runtime_state: &mut RuntimeState) {
     let amount_paid = to_tokens(event.cost.amount);
     let token = event.cost.token.token_symbol();
@@ -90,13 +89,19 @@ pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, runtime_
     send_text_message(text, runtime_state);
 }
 
-#[allow(dead_code)]
+pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, runtime_state: &mut RuntimeState) {
+    let user_id = event.user_id;
+
+    let text = format!("User @UserId({user_id}) has just registered with your referral code!");
+
+    send_text_message(text, runtime_state);
+}
+
 fn to_gb(bytes: u64) -> String {
     const BYTES_PER_1GB: u64 = 1024 * 1024 * 1024;
     format_to_decimal_places(bytes as f64 / BYTES_PER_1GB as f64, 2)
 }
 
-#[allow(dead_code)]
 fn to_tokens(tokens: Tokens) -> String {
     const E8S_PER_TOKEN: u64 = 100_000_000;
     format_to_decimal_places(tokens.e8s() as f64 / E8S_PER_TOKEN as f64, 8)
@@ -116,12 +121,7 @@ fn send_message(content: MessageContent, mute_notification: bool, runtime_state:
         .map(|i| i.incr())
         .unwrap_or_default();
 
-    let mut message_id_bytes = [0; 16];
-    for index in (0..4).map(|i| 4 * i) {
-        message_id_bytes[index..index + 4].copy_from_slice(&runtime_state.env.random_u32().to_ne_bytes());
-    }
-
-    let message_id = u128::from_ne_bytes(message_id_bytes).into();
+    let message_id = MessageId::generate(|| runtime_state.env.random_u32());
 
     let args = c2c_send_message::Args {
         message_id,

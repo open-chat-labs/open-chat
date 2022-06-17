@@ -2,7 +2,7 @@ import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import {
     ApiSendMessageArgs,
-    ApiTransferCryptocurrencyWithinGroupArgs,
+    ApiTransferCryptoWithinGroupArgs,
     idlFactory,
     UserService,
 } from "./candid/idl";
@@ -54,23 +54,24 @@ import {
     unblockResponse,
     withdrawCryptoResponse,
     transferWithinGroupResponse,
+    publicProfileResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import { compareChats, MAX_EVENTS, mergeChatUpdates } from "../../domain/chat/chat.utils";
 import { cachingLocallyDisabled, Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
-    apiCryptoContent,
     apiGroupPermissions,
     apiMessageContent,
     apiOptional,
+    apiPendingCryptoContent,
     apiPendingCryptocurrencyWithdrawal,
     apiReplyContextArgs,
     registerPollVoteResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
-import type { SetBioResponse, UserSummary } from "../../domain/user/user";
+import type { PublicProfile, SetBioResponse, UserSummary } from "../../domain/user/user";
 import type {
     SearchAllMessagesResponse,
     SearchDirectChatResponse,
@@ -342,8 +343,8 @@ export class UserClient extends CandidService implements IUserClient {
         sender: UserSummary,
         message: Message
     ): Promise<SendMessageResponse> {
-        const req: ApiTransferCryptocurrencyWithinGroupArgs = {
-            content: apiCryptoContent(message.content as CryptocurrencyContent),
+        const req: ApiTransferCryptoWithinGroupArgs = {
+            content: apiPendingCryptoContent(message.content as CryptocurrencyContent),
             recipient: Principal.fromText(recipientId),
             sender_name: sender.username,
             mentioned: [],
@@ -355,7 +356,7 @@ export class UserClient extends CandidService implements IUserClient {
             ),
         };
         return this.handleResponse(
-            this.userService.transfer_cryptocurrency_within_group(req),
+            this.userService.transfer_crypto_within_group(req),
             transferWithinGroupResponse
         );
     }
@@ -531,6 +532,14 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
+    getPublicProfile(): Promise<PublicProfile> {
+        return this.handleQueryResponse(
+            () => this.userService.public_profile({}),
+            publicProfileResponse
+        );
+    }
+
+    @profile("userClient")
     setBio(bio: string): Promise<SetBioResponse> {
         return this.handleResponse(this.userService.set_bio({ text: bio }), setBioResponse);
     }
@@ -561,7 +570,7 @@ export class UserClient extends CandidService implements IUserClient {
             withdrawal: apiPendingCryptocurrencyWithdrawal(domain),
         };
         return this.handleResponse(
-            this.userService.withdraw_cryptocurrency(req),
+            this.userService.withdraw_crypto(req),
             withdrawCryptoResponse
         );
     }

@@ -29,12 +29,12 @@ itertools = "0.10.3"
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 lodepng = "3.6.1"
 msgpack = { path = "../../../libraries/msgpack" }
-open_storage_index_canister = { package = "index_canister", git = "https://github.com/open-ic/open-storage", rev = "5ab16ba20b57c2217901773224de4eae9dccab42" }
-open_storage_index_canister_c2c_client = { package = "index_canister_c2c_client", git = "https://github.com/open-ic/open-storage", rev = "5ab16ba20b57c2217901773224de4eae9dccab42" }
+open_storage_index_canister = { package = "index_canister", git = "https://github.com/open-ic/open-storage", rev = "6f530e95b96b6d84e89963ed4744dc2632cb8622" }
+open_storage_index_canister_c2c_client = { package = "index_canister_c2c_client", git = "https://github.com/open-ic/open-storage", rev = "6f530e95b96b6d84e89963ed4744dc2632cb8622" }
 rand = "0.7.3"
 rand_chacha = "0.2.2"
 rand_core = "0.5.1"
-serde = "1.0.136"
+serde = "1.0.137"
 stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "c7aa6b402a41b2cf5e67903055f2b809b68469c6" }
 tracing = "0.1.33"
 types = { path = "../../../libraries/types", features = ["compression"] }

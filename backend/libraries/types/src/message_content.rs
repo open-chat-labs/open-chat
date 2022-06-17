@@ -1,17 +1,20 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::ContentValidationError::*;
 use crate::RegisterVoteResult::SuccessNoChange;
-use crate::{CanisterId, Cryptocurrency, CryptocurrencyTransfer, TimestampMillis, TotalVotes, UserId, VoteOperation};
+use crate::{
+    CanisterId, CompletedCryptoTransaction, CryptoAccountFull, CryptoTransaction, CryptoTransactionInternal, ProposalContent,
+    ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
+};
 use candid::CandidType;
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
+const E8S_PER_TOKEN: u64 = 100_000_000;
 pub const MAX_TEXT_LENGTH: u32 = 5_000;
 pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
-const E8S_PER_ICP: u64 = 100_000_000;
-const ICP_TRANSFER_LIMIT_E8S: u64 = 10 * E8S_PER_ICP;
+pub const ICP_TRANSFER_LIMIT: Tokens = Tokens::from_e8s(10 * E8S_PER_TOKEN);
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContent {
@@ -21,11 +24,10 @@ pub enum MessageContent {
     Audio(AudioContent),
     File(FileContent),
     Poll(PollContent),
-    #[serde(skip)]
-    Cryptocurrency(candid::Reserved),
-    CryptocurrencyV2(CryptocurrencyContentV2),
+    Cryptocurrency(CryptocurrencyContent),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
+    GovernanceProposal(ProposalContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -36,9 +38,11 @@ pub enum MessageContentInternal {
     Audio(AudioContent),
     File(FileContent),
     Poll(PollContentInternal),
-    Cryptocurrency(CryptocurrencyContentV2),
+    #[serde(alias = "CryptocurrencyNew")]
+    Cryptocurrency(CryptocurrencyContentInternal),
     Deleted(DeletedBy),
     Giphy(GiphyContent),
+    GovernanceProposal(ProposalContentInternal),
 }
 
 pub enum ContentValidationError {
@@ -56,7 +60,7 @@ impl MessageContent {
     pub fn validate_for_new_message(&self, forwarding: bool, now: TimestampMillis) -> Result<(), ContentValidationError> {
         if forwarding {
             match self {
-                MessageContent::Poll(_) | MessageContent::CryptocurrencyV2(_) | MessageContent::Deleted(_) => {
+                MessageContent::Poll(_) | MessageContent::Cryptocurrency(_) | MessageContent::Deleted(_) => {
                     return Err(InvalidTypeForForwarding);
                 }
                 _ => {}
@@ -69,12 +73,13 @@ impl MessageContent {
                     return Err(InvalidPoll(reason));
                 }
             }
-            MessageContent::CryptocurrencyV2(c) => {
-                if c.transfer.amount() == Tokens::ZERO {
+            MessageContent::Cryptocurrency(c) => {
+                let amount = c.transfer.amount();
+                if amount == Tokens::ZERO {
                     return Err(TransferCannotBeZero);
                 }
-                if let Err(limit) = c.within_limit() {
-                    return Err(TransferLimitExceeded(limit));
+                if amount > ICP_TRANSFER_LIMIT {
+                    return Err(TransferLimitExceeded(ICP_TRANSFER_LIMIT.e8s()));
                 }
             }
             _ => {}
@@ -87,10 +92,10 @@ impl MessageContent {
             MessageContent::Audio(a) => a.blob_reference.is_none(),
             MessageContent::File(f) => f.blob_reference.is_none(),
             MessageContent::Poll(p) => p.config.options.is_empty(),
-            MessageContent::Cryptocurrency(_) => unreachable!(),
-            MessageContent::CryptocurrencyV2(c) => c.transfer.amount() == Tokens::ZERO,
+            MessageContent::Cryptocurrency(c) => c.transfer.amount() == Tokens::ZERO,
             MessageContent::Deleted(_) => true,
             MessageContent::Giphy(_) => false,
+            MessageContent::GovernanceProposal(_) => false,
         };
 
         if is_empty {
@@ -116,10 +121,12 @@ impl MessageContent {
                 votes: HashMap::new(),
                 ended: false,
             }),
-            MessageContent::Cryptocurrency(_) => unreachable!(),
-            MessageContent::CryptocurrencyV2(c) => MessageContentInternal::Cryptocurrency(c),
+            MessageContent::Cryptocurrency(c) => MessageContentInternal::Cryptocurrency(c.into()),
             MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
             MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
+            MessageContent::GovernanceProposal(p) => {
+                MessageContentInternal::GovernanceProposal(ProposalContentInternal::new(p))
+            }
         }
     }
 
@@ -153,9 +160,9 @@ impl MessageContent {
             MessageContent::Text(_)
             | MessageContent::Poll(_)
             | MessageContent::Cryptocurrency(_)
-            | MessageContent::CryptocurrencyV2(_)
             | MessageContent::Deleted(_)
-            | MessageContent::Giphy(_) => {}
+            | MessageContent::Giphy(_)
+            | MessageContent::GovernanceProposal(_) => {}
         }
 
         references
@@ -169,10 +176,10 @@ impl MessageContent {
             MessageContent::Audio(a) => a.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
-            MessageContent::Cryptocurrency(_) => unreachable!(),
-            MessageContent::CryptocurrencyV2(c) => c.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::Cryptocurrency(c) => c.caption.as_ref().map_or(0, |t| t.len()),
             MessageContent::Deleted(_) => 0,
             MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContent::GovernanceProposal(p) => p.summary.len(),
         }
     }
 }
@@ -186,9 +193,27 @@ impl MessageContentInternal {
             MessageContentInternal::Audio(a) => MessageContent::Audio(a.clone()),
             MessageContentInternal::File(f) => MessageContent::File(f.clone()),
             MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
-            MessageContentInternal::Cryptocurrency(c) => MessageContent::CryptocurrencyV2(c.clone()),
+            MessageContentInternal::Cryptocurrency(c) => MessageContent::Cryptocurrency(CryptocurrencyContent {
+                transfer: match &c.transfer {
+                    CryptoTransactionInternal::Pending(t) => CryptoTransaction::Pending(t.clone()),
+                    CryptoTransactionInternal::Completed(t) => CryptoTransaction::Completed(CompletedCryptoTransaction {
+                        token: t.token,
+                        amount: t.amount,
+                        fee: t.fee,
+                        from: CryptoAccountFull::user(t.from.user_id().unwrap()),
+                        to: CryptoAccountFull::user(t.to.user_id().unwrap()),
+                        memo: t.memo,
+                        created: t.created,
+                        block_index: t.block_index,
+                        transaction_hash: t.transaction_hash,
+                    }),
+                    _ => unreachable!(),
+                },
+                caption: c.caption.clone(),
+            }),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
+            MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(p.hydrate(my_user_id)),
         }
     }
 }
@@ -363,19 +388,23 @@ pub enum RegisterVoteResult {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CryptocurrencyContentV2 {
-    pub transfer: CryptocurrencyTransfer,
+pub struct CryptocurrencyContent {
+    pub transfer: CryptoTransaction,
     pub caption: Option<String>,
 }
 
-impl CryptocurrencyContentV2 {
-    pub fn within_limit(&self) -> Result<(), u64> {
-        if let CryptocurrencyTransfer::Pending(t) = &self.transfer {
-            if t.token == Cryptocurrency::InternetComputer && t.amount.e8s() > ICP_TRANSFER_LIMIT_E8S {
-                return Err(ICP_TRANSFER_LIMIT_E8S);
-            }
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CryptocurrencyContentInternal {
+    pub transfer: CryptoTransactionInternal,
+    pub caption: Option<String>,
+}
+
+impl From<CryptocurrencyContent> for CryptocurrencyContentInternal {
+    fn from(c: CryptocurrencyContent) -> Self {
+        CryptocurrencyContentInternal {
+            transfer: c.transfer.into(),
+            caption: c.caption,
         }
-        Ok(())
     }
 }
 

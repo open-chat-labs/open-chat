@@ -199,7 +199,6 @@ pub struct MessageInternal {
     pub last_updated: Option<TimestampMillis>,
     pub last_edited: Option<TimestampMillis>,
     pub deleted_by: Option<DeletedBy>,
-    #[serde(default)]
     pub forwarded: bool,
 }
 
@@ -271,6 +270,10 @@ impl MessageInternal {
                 MessageContentInternal::Giphy(_) => {
                     adjust(&mut metrics.giphy_messages);
                     adjust(&mut sender_metrics.giphy_messages);
+                }
+                MessageContentInternal::GovernanceProposal(_) => {
+                    adjust(&mut metrics.proposals);
+                    adjust(&mut sender_metrics.proposals);
                 }
             }
 

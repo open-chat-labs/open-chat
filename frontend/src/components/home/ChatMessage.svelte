@@ -49,7 +49,7 @@
     import MessageReaction from "./MessageReaction.svelte";
     import Reload from "../Reload.svelte";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
-    import { avatarUrl } from "../../domain/user/user.utils";
+    import { userAvatarUrl } from "../../domain/user/user.utils";
     import * as shareFunctions from "../../domain/share";
     import { userStore } from "../../stores/user";
     import { translationCodes } from "../../i18n/i18n";
@@ -389,7 +389,7 @@
                 {#if first}
                     <div class="avatar" on:click={openUserProfile}>
                         <Avatar
-                            url={avatarUrl(sender)}
+                            url={userAvatarUrl(sender)}
                             size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
                     </div>
                 {/if}

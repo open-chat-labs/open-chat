@@ -52,7 +52,11 @@
     import { draftMessages } from "../../stores/draftMessages";
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
-    import { emptyChatMetrics, mergeChatMetrics } from "../../domain/chat/chat.utils";
+    import {
+        canSendMessages,
+        emptyChatMetrics,
+        mergeChatMetrics,
+    } from "../../domain/chat/chat.utils";
     import { trackEvent } from "../../utils/tracking";
     import { numberOfColumns, oldLayout } from "../../stores/layout";
     import { messageToForwardStore } from "../../stores/messageToForward";
@@ -249,7 +253,7 @@
 
             if (params.chatId === null) {
                 rightPanelHistory = rightPanelHistory.filter(
-                    (panel) => panel.kind === "user_profile"
+                    (panel) => panel.kind === "user_profile" || panel.kind === "new_group_panel"
                 );
             }
         }
@@ -594,6 +598,13 @@
         rightPanelHistory = [...rightPanelHistory, { kind: "new_group_panel" }];
     }
 
+    function filterChatSelection(
+        chats: ChatSummary[],
+        selectedChatId: string | undefined
+    ): ChatSummary[] {
+        return chats.filter((c) => selectedChatId !== c.chatId && canSendMessages(c, $userStore));
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -733,7 +744,7 @@
             <AboutModal canister={{ id: userId, wasmVersion }} on:close={closeModal} />
         {:else if modal === ModalType.SelectChat}
             <SelectChatModal
-                chatsSummaries={$chatSummariesList}
+                chatsSummaries={filterChatSelection($chatSummariesList, $selectedChat?.chatId)}
                 on:close={onCloseSelectChat}
                 on:select={onSelectChat} />
         {/if}

@@ -509,25 +509,25 @@ dependencies = [
 [[package]]
 name = "bucket_canister"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42#5ab16ba20b57c2217901773224de4eae9dccab42"
+source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
 dependencies = [
  "candid",
- "candid_gen 0.1.0 (git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42)",
+ "candid_gen 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
  "serde",
  "serde_bytes",
- "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42)",
+ "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
 ]
 
 [[package]]
 name = "bucket_canister_c2c_client"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42#5ab16ba20b57c2217901773224de4eae9dccab42"
+source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
 dependencies = [
  "bucket_canister",
- "canister_client_macros 0.1.0 (git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42)",
+ "canister_client_macros 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
  "ic-cdk 0.5.1",
  "tracing",
- "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42)",
+ "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
 ]
 
 [[package]]
@@ -673,7 +673,7 @@ dependencies = [
 [[package]]
 name = "candid_gen"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42#5ab16ba20b57c2217901773224de4eae9dccab42"
+source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
 dependencies = [
  "quote",
  "syn",
@@ -728,7 +728,7 @@ dependencies = [
 [[package]]
 name = "canister_client_macros"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42#5ab16ba20b57c2217901773224de4eae9dccab42"
+source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
 
 [[package]]
 name = "canister_installer"
@@ -2095,25 +2095,25 @@ dependencies = [
 [[package]]
 name = "index_canister"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42#5ab16ba20b57c2217901773224de4eae9dccab42"
+source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
 dependencies = [
  "candid",
- "candid_gen 0.1.0 (git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42)",
+ "candid_gen 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
  "serde",
  "serde_bytes",
- "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42)",
+ "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
 ]
 
 [[package]]
 name = "index_canister_c2c_client"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42#5ab16ba20b57c2217901773224de4eae9dccab42"
+source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
 dependencies = [
- "canister_client_macros 0.1.0 (git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42)",
+ "canister_client_macros 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
  "ic-cdk 0.5.1",
  "index_canister",
  "tracing",
- "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42)",
+ "types 0.1.0 (git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622)",
 ]
 
 [[package]]
@@ -2759,9 +2759,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.10.0"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87f3e037eac156d1775da914196f0f37741a274155e34a0b7e427c35d2a2ecb9"
+checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
 
 [[package]]
 name = "online_users_aggregator_canister"
@@ -3146,11 +3146,11 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.37"
+version = "1.0.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec757218438d5fda206afc041538b2f6d889286160d649a86a24d37e1235afd1"
+checksum = "c54b25569025b7fc9651de43004ae593a75ad88543b17178aa5e1b9c4f15f56f"
 dependencies = [
- "unicode-xid",
+ "unicode-ident",
 ]
 
 [[package]]
@@ -3675,18 +3675,18 @@ checksum = "d65bd28f48be7196d222d95b9243287f48d27aca604e08497513019ff0502cc4"
 
 [[package]]
 name = "serde"
-version = "1.0.136"
+version = "1.0.137"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce31e24b01e1e524df96f1c2fdd054405f8d7376249a5110886fb4b658484789"
+checksum = "61ea8d54c77f8315140a05f4c7237403bf38b72704d031543aa1d16abbf517d1"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_bytes"
-version = "0.11.5"
+version = "0.11.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16ae07dd2f88a366f15bd0632ba725227018c69a1c8550a927324f8eb8368bb9"
+checksum = "212e73464ebcde48d723aa02eb270ba62eff38a9b732df31f33f1b4e145f3a54"
 dependencies = [
  "serde",
 ]
@@ -3703,9 +3703,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.136"
+version = "1.0.137"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08597e7152fcd306f41838ed3e37be9eaeed2b61c42e2117266a554fab4662f9"
+checksum = "1f26faba0c3959972377d3b2d306ee9f71faee9714294e41bb777f83f88578be"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3986,13 +3986,13 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.91"
+version = "1.0.96"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b683b2b825c8eef438b77c36a06dc262294da3d5a5813fac20da149241dcd44d"
+checksum = "0748dd251e24453cb8717f0354206b91557e4ec8703673a4b30208f2abaf1ebf"
 dependencies = [
  "proc-macro2",
  "quote",
- "unicode-xid",
+ "unicode-ident",
 ]
 
 [[package]]
@@ -4281,9 +4281,9 @@ checksum = "360dfd1d6d30e05fda32ace2c8c70e9c0a9da713275777f5a4dbb8a1893930c6"
 
 [[package]]
 name = "tracing"
-version = "0.1.33"
+version = "0.1.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80b9fa4360528139bc96100c160b7ae879f5567f49f1782b0b02035b0358ebf3"
+checksum = "a400e31aa60b9d44a52a8ee0343b5b18566b03a8321e0d321f695cf56e940160"
 dependencies = [
  "cfg-if",
  "log",
@@ -4305,11 +4305,11 @@ dependencies = [
 
 [[package]]
 name = "tracing-core"
-version = "0.1.24"
+version = "0.1.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90442985ee2f57c9e1b548ee72ae842f4a9a20e3f417cc38dbc5dc684d9bb4ee"
+checksum = "7709595b8878a4965ce5e87ebf880a7d39c9afc6837721b21a5a816a8117d921"
 dependencies = [
- "lazy_static",
+ "once_cell",
  "valuable",
 ]
 
@@ -4395,7 +4395,7 @@ dependencies = [
 [[package]]
 name = "types"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/open-storage?rev=5ab16ba20b57c2217901773224de4eae9dccab42#5ab16ba20b57c2217901773224de4eae9dccab42"
+source = "git+https://github.com/open-ic/open-storage?rev=6f530e95b96b6d84e89963ed4744dc2632cb8622#6f530e95b96b6d84e89963ed4744dc2632cb8622"
 dependencies = [
  "candid",
  "hex",
@@ -4408,6 +4408,12 @@ name = "unicode-bidi"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1a01404663e3db436ed2746d9fefef640d868edae3cceb81c3b8d5732fda678f"
+
+[[package]]
+name = "unicode-ident"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5bd2fe26506023ed7b5e1e315add59d6f584c621d037f9368fea9cfb988f368c"
 
 [[package]]
 name = "unicode-normalization"
