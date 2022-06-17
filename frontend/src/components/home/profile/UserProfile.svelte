@@ -68,7 +68,6 @@
     let supportsNotifications = notificationsSupported();
     let saving = false;
     let validUsername: string | undefined = undefined;
-    let usernameInput: UsernameInput;
     let checkingUsername: boolean;
     let selectedCryptoAccount: Cryptocurrency | undefined = undefined;
     let showManageCryptoAccount = false;
@@ -79,15 +78,6 @@
     }
 
     $: bioDirty = userbio !== originalBio;
-
-    export function reset() {
-        usernameInput.reset();
-        usernameError = undefined;
-        bioError = undefined;
-        api.getBio().then((bio) => {
-            originalBio = userbio = bio;
-        });
-    }
 
     function whySms() {
         dispatch("showFaqQuestion", "sms_icp");
@@ -221,7 +211,6 @@
             </div>
             <Legend>{$_("username")} ({$_("usernameRules")})</Legend>
             <UsernameInput
-                bind:this={usernameInput}
                 {api}
                 originalUsername={user?.username ?? ""}
                 bind:validUsername
