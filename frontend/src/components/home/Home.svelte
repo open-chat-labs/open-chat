@@ -105,10 +105,10 @@
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
 
-    $: selectedThreadMessageIndex = rightPanelHistory.reduce<number | undefined>((i, s) => {
-        if (s.kind === "message_thread_panel") return s.rootEvent.event.messageIndex;
-        return undefined;
-    }, undefined);
+    $: selectedThreadMessageIndex = rightPanelHistory.reduce<number | undefined>(
+        (_, s) => (s.kind === "message_thread_panel" ? s.rootEvent.event.messageIndex : undefined),
+        undefined
+    );
     $: userId = controller.user.userId;
     $: api = controller.api;
     $: chatsLoading = controller.loading;

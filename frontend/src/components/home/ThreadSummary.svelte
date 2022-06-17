@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
-    import type { EventWrapper, Message, ThreadSummary } from "../../domain/chat/chat";
+    import type { ThreadSummary } from "../../domain/chat/chat";
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../stores/screenDimensions";
     import Avatar from "../Avatar.svelte";
@@ -22,7 +22,7 @@
 </script>
 
 <div class="thread-summary-wrapper" class:me class:indent>
-    <div class="thread-summary" class:selected on:click={() => threadSummary && replyInThread()}>
+    <div class="thread-summary" class:selected on:click={() => replyInThread()}>
         <div class="thread-avatars">
             {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
                 <Avatar
