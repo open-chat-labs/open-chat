@@ -8,7 +8,7 @@
 <div class="wrapper">
     <h1 class="title">{$_("noChatSelected")}</h1>
     <p class="subtitle">{$_("selectAChat")}</p>
-    <Button on:click={() => dispatch("recommend")}>{$_("recommendSomething")}</Button>
+    <Button on:click={() => dispatch("recommend")}>{$_("showHotGroups")}</Button>
 </div>
 
 <style type="text/scss">

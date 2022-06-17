@@ -45,8 +45,6 @@
     "account": "Tài khoản",
     "whatsHot": "Nhóm đang HOT🔥",
     "notInterested": "Không cần chú ý",
-    "recommendSomething": "Giới thiệu Nhóm",
-    "noRecommendations": "Không tìm thấy giới thiệu nào 😫",
     "checkBackLater": "Xin vui lòng thử lại",
     "refresh": "Tải lại",
     "goHome": "Trang chủ",
@@ -89,7 +87,6 @@
     "change": "thay đổi",
     "noChatSelected": "Hiện không có cuộc trò chuyện nào được chọn",
     "selectAChat": "Tìm kiếm bạn, tạo nhóm mới hoặc chọn một cuộc trò chuyện",
-    "recommendedGroups": "Các nhóm được đề xuất",
     "selectAGroup": "Chọn một nhóm để xem trước hoặc tham gia",
     "newChat": "Cuộc trò truyện mới",
     "newGroup": "Nhóm mới",
@@ -535,5 +532,8 @@
     "userReferralMessage": "Chia sẻ liên kết này tới OpenChat với bạn bè và gia đình. Đối với mỗi người đăng ký bằng liên kết của bạn và trở thành người dùng đã được xác minh, bạn sẽ nhận được phần thưởng là mã thông báo CHAT (sẽ được xác nhận trong những tuần tới). Bạn có thể tiếp tục và chia sẻ liên kết ngay bây giờ và chúng tôi sẽ truy tặng mã thông báo CHAT khi chúng có sẵn.",
     "userInfoHeader": "Công cộng",
     "noChatsAvailable": "Không có cuộc trò chuyện nào!",
-    "invitedUsers": "Người dùng được mời"
+    "invitedUsers": "Người dùng được mời",
+    "hotGroups": "Nhóm nóng",
+    "showHotGroups": "Cho tôi xem một số nhóm nóng",
+    "noHotGroups": "Không có nhóm nóng 😭"
 }
