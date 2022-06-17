@@ -87,7 +87,6 @@
 
     let faqQuestion: Questions | undefined = undefined;
     let modal = ModalType.None;
-    let rightPanel: RightPanel;
     setContext(apiKey, controller.api);
     setContext(currentUserKey, controller.user);
 
@@ -98,7 +97,7 @@
     let searching: boolean = false;
     let searchResultsAvailable: boolean = false;
     let confirmActionEvent: ConfirmActionEvent | undefined;
-    let recommendedGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
+    let hotGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
     let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
     let share: Share = { title: "", text: "", url: "", files: [] };
@@ -136,8 +135,7 @@
      * T             |  F            |  F            |  T
      */
     $: showLeft =
-        !$mobileWidth ||
-        ($mobileWidth && params.chatId == null && recommendedGroups.kind === "idle");
+        !$mobileWidth || ($mobileWidth && params.chatId == null && hotGroups.kind === "idle");
 
     /** SHOW MIDDLE
      * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
@@ -150,7 +148,7 @@
     $: showMiddle =
         !$mobileWidth ||
         ($mobileWidth && params.chatId != null) ||
-        ($mobileWidth && params.chatId == null && recommendedGroups.kind !== "idle");
+        ($mobileWidth && params.chatId == null && hotGroups.kind !== "idle");
 
     function logout() {
         dispatch("logout");
@@ -208,19 +206,19 @@
                             };
                         }
 
-                        recommendedGroups = { kind: "loading" };
+                        hotGroups = { kind: "loading" };
                         controller.previewChat(chatId).then((canPreview) => {
                             if (canPreview) {
                                 controller.selectChat(chatId, messageIndex);
                                 resetRightPanel();
-                                recommendedGroups = { kind: "idle" };
+                                hotGroups = { kind: "idle" };
                             } else {
                                 replace("/");
                             }
                         });
                     }
                 } else {
-                    recommendedGroups = { kind: "idle" };
+                    hotGroups = { kind: "idle" };
                     interruptRecommended = true;
                     controller.selectChat(chatId, messageIndex);
                     resetRightPanel();
@@ -247,7 +245,7 @@
                 controller.clearSelectedChat();
             }
 
-            if (params.chatId === null && !$mobileWidth && recommendedGroups.kind === "idle") {
+            if (params.chatId === null && !$mobileWidth && hotGroups.kind === "idle") {
                 whatsHot();
             }
 
@@ -278,13 +276,11 @@
     }
 
     function cancelRecommendations() {
-        recommendedGroups = { kind: "idle" };
+        hotGroups = { kind: "idle" };
     }
 
     function dismissRecommendation(ev: CustomEvent<string>) {
-        recommendedGroups = mapRemoteData(recommendedGroups, (data) =>
-            data.filter((g) => g.chatId !== ev.detail)
-        );
+        hotGroups = mapRemoteData(hotGroups, (data) => data.filter((g) => g.chatId !== ev.detail));
         api.dismissRecommendation(ev.detail);
     }
 
@@ -462,7 +458,6 @@
 
     function showProfile() {
         rightPanelHistory = [{ kind: "user_profile" }];
-        tick().then(() => rightPanel?.showProfile());
     }
 
     function replyInThread(
@@ -509,7 +504,7 @@
             .joinGroup(joining)
             .then((success) => {
                 if (success && ev.detail.select) {
-                    recommendedGroups = { kind: "idle" };
+                    hotGroups = { kind: "idle" };
                     push(`/${ev.detail.group.chatId}`);
                 }
             })
@@ -527,10 +522,10 @@
         controller.clearSelectedChat();
         tick().then(() => {
             interruptRecommended = false;
-            recommendedGroups = { kind: "loading" };
+            hotGroups = { kind: "loading" };
             api.getRecommendedGroups((_n: number) => interruptRecommended)
-                .then((resp) => (recommendedGroups = { kind: "success", data: resp }))
-                .catch((err) => (recommendedGroups = { kind: "error", error: err.toString() }));
+                .then((resp) => (hotGroups = { kind: "success", data: resp }))
+                .catch((err) => (hotGroups = { kind: "error", error: err.toString() }));
         });
     }
 
@@ -635,7 +630,7 @@
         {/if}
         {#if showMiddle}
             <MiddlePanel
-                {recommendedGroups}
+                {hotGroups}
                 {joining}
                 {selectedThreadMessageIndex}
                 loadingChats={$chatsLoading}
@@ -667,7 +662,6 @@
                 {userId}
                 controller={$selectedChat}
                 metrics={combinedMetrics}
-                bind:this={rightPanel}
                 bind:rightPanelHistory
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
@@ -695,7 +689,6 @@
                 {userId}
                 controller={$selectedChat}
                 metrics={combinedMetrics}
-                bind:this={rightPanel}
                 bind:rightPanelHistory
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}

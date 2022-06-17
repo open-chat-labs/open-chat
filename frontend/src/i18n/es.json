@@ -44,8 +44,6 @@
     "account": "Cuenta",
     "whatsHot": "Recomendaciones",
     "notInterested": "No me interesa",
-    "recommendSomething": "Recomendar algunos grupos",
-    "noRecommendations": "Sin recomendaciones 😭",
     "checkBackLater": "Por favor, inténtalo de nuevo más tarde. ",
     "refresh": "Actualizar",
     "goHome": "Inicio",
@@ -88,7 +86,6 @@
     "change": "cambiar",
     "noChatSelected": "No hay ningún chat seleccionado actualmente",
     "selectAChat": "Busca un amigo, crea un nuevo grupo o selecciona un chat.",
-    "recommendedGroups": "Grupos recomendados",
     "selectAGroup": "Selecciona un grupo para una vista previa o unirse.",
     "newChat": "Nuevo chat",
     "newGroup": "Nuevo grupo",
@@ -254,7 +251,8 @@
         "welcomeTo": "Bienvenido a ...",
         "blurbPartOne": "Una aplicación de chat segura, intuitiva y descentralizada que se ejecuta completamente en ",
         "blurbPartTwo": " - la primer cadena de bloques a escala de internet del mundo. Leer más ",
-        "signIn": "Entrar"
+        "signIn": "Entrar",
+        "signInOrRegister": "Ingresa o Registro"
     },
     "reactions": {
         "greaterThan99People": "+99 personas",
@@ -543,5 +541,8 @@
         "nreplies": "{number} {replies} {message}"
     },
     "noChatsAvailable": "¡No hay chats disponibles!",
-    "invitedUsers": "Usuarios invitados"
+    "invitedUsers": "Usuarios invitados",
+    "hotGroups": "Grupos calientes",
+    "showHotGroups": "Muéstrame algunos grupos calientes",
+    "noHotGroups": "No hay grupos calientes 😭"
 }

@@ -45,8 +45,6 @@
     "account": "Tài khoản",
     "whatsHot": "Nhóm đang HOT🔥",
     "notInterested": "Không cần chú ý",
-    "recommendSomething": "Giới thiệu Nhóm",
-    "noRecommendations": "Không tìm thấy giới thiệu nào 😫",
     "checkBackLater": "Xin vui lòng thử lại",
     "refresh": "Tải lại",
     "goHome": "Trang chủ",
@@ -89,7 +87,6 @@
     "change": "thay đổi",
     "noChatSelected": "Hiện không có cuộc trò chuyện nào được chọn",
     "selectAChat": "Tìm kiếm bạn, tạo nhóm mới hoặc chọn một cuộc trò chuyện",
-    "recommendedGroups": "Các nhóm được đề xuất",
     "selectAGroup": "Chọn một nhóm để xem trước hoặc tham gia",
     "newChat": "Cuộc trò truyện mới",
     "newGroup": "Nhóm mới",
@@ -255,7 +252,8 @@
         "welcomeTo": "Chào mừng bạn đến với ...",
         "blurbPartOne": "Một ứng dụng trò chuyện phi tập trung, trực quan, an toàn chạy hoàn toàn trên ",
         "blurbPartTwo": " - một blockchain với quy mô internet đầu tiên trên thế giới. Tìm hiểu thêm ",
-        "signIn": "Đăng nhập"
+        "signIn": "Đăng nhập",
+        "signInOrRegister": "Đăng nhập hoặc Đăng ký"
     },
     "reactions": {
         "greaterThan99People": "99+ người dùng",
@@ -543,5 +541,8 @@
         "nreplies": "{number} {replies} {message}"
     },
     "noChatsAvailable": "Không có cuộc trò chuyện nào!",
-    "invitedUsers": "Người dùng được mời"
+    "invitedUsers": "Người dùng được mời",
+    "hotGroups": "Nhóm nóng",
+    "showHotGroups": "Cho tôi xem một số nhóm nóng",
+    "noHotGroups": "Không có nhóm nóng 😭"
 }

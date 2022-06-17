@@ -48,8 +48,6 @@
     "account": "Compte",
     "whatsHot": "Ce qui est chaud?",
     "notInterested": "Pas intéressé",
-    "recommendSomething": "Recommander certains groupes",
-    "noRecommendations": "Aucune recommandation 😭",
     "checkBackLater": "Veuillez réessayer plus tard.",
     "refresh": "Rafraîchir",
     "goHome": "Accueil",
@@ -93,7 +91,6 @@
     "change": "monnaie",
     "noChatSelected": "Aucun chat actuellement sélectionné",
     "selectAChat": "Recherchez un ami, créez un nouveau groupe ou sélectionnez un chat.",
-    "recommendedGroups": "Groupes recommandés",
     "selectAGroup": "Sélectionnez un groupe à prévisualiser ou à rejoindre.",
     "newChat": "Nouvelle conversation",
     "newGroup": "Nouveau groupe",
@@ -258,7 +255,8 @@
         "welcomeTo": "Bienvenue à ...",
         "blurbPartOne": "Une application de chat sécurisée, intuitive et décentralisée fonctionnant entièrement sur",
         "blurbPartTwo": " - la première blockchain au monde à l'échelle d'Internet. Lire la suite",
-        "signIn": "S'identifier"
+        "signIn": "S'identifier",
+        "signInOrRegister": "Connexion ou Inscription"
     },
     "reactions": {
         "greaterThan99People": "99+ personnes",
@@ -542,5 +540,8 @@
         "nreplies": "{number} {replies} {message}"
     },
     "noChatsAvailable": "Aucun chat disponible !",
-    "invitedUsers": "Utilisateurs invités"
+    "invitedUsers": "Utilisateurs invités",
+    "hotGroups": "Groupes chauds",
+    "showHotGroups": "Montrez-moi des groupes chauds",
+    "noHotGroups": "Pas de groupes chauds 😭"
 }

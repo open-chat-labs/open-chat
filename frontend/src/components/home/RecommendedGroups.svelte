@@ -64,12 +64,12 @@
                     </HoverIcon>
                 </div>
                 <div>
-                    <h1 class="title">{$_("recommendedGroups")}</h1>
+                    <h1 class="title">{$_("hotGroups")}</h1>
                     <p class="subtitle">{$_("selectAGroup")}</p>
                 </div>
             </SectionHeader>
         {:else}
-            <h1 class="title">{$_("recommendedGroups")}</h1>
+            <h1 class="title">{$_("hotGroups")}</h1>
             <p class="subtitle">{$_("selectAGroup")}</p>
         {/if}
 
@@ -133,7 +133,7 @@
             </div>
         {/each}
     {:else}
-        <h1 class="title">{$_("noRecommendations")}</h1>
+        <h1 class="title">{$_("noHotGroups")}</h1>
         <p class="subtitle">{$_("checkBackLater")}</p>
         <ButtonGroup align={"fill"}>
             <Button small={true} on:click={cancelRecommendations}>{$_("close")}</Button>

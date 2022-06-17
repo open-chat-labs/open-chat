@@ -33,7 +33,6 @@
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
     let savingParticipants = false;
-    let profileComponent: UserProfile;
 
     $: user = $userStore[userId] ?? nullUser("unknown");
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
@@ -42,10 +41,6 @@
     $: participants = controller?.participants ?? writable([]);
     $: pinned = controller?.pinnedMessages ?? writable(new Set<number>());
     $: chatId = controller?.chatId;
-
-    export function showProfile() {
-        profileComponent.reset();
-    }
 
     function dismissAsAdmin(ev: CustomEvent<string>): void {
         controller?.dismissAsAdmin(ev.detail);
@@ -145,7 +140,6 @@
             on:close={pop} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile
-            bind:this={profileComponent}
             on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
             on:upgrade
             on:showFaqQuestion
