@@ -252,7 +252,8 @@
         "welcomeTo": "Chào mừng bạn đến với ...",
         "blurbPartOne": "Một ứng dụng trò chuyện phi tập trung, trực quan, an toàn chạy hoàn toàn trên ",
         "blurbPartTwo": " - một blockchain với quy mô internet đầu tiên trên thế giới. Tìm hiểu thêm ",
-        "signIn": "Đăng nhập"
+        "signIn": "Đăng nhập",
+        "signInOrRegister": "Đăng nhập hoặc Đăng ký"
     },
     "reactions": {
         "greaterThan99People": "99+ người dùng",

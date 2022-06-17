@@ -255,7 +255,8 @@
         "welcomeTo": "Welcome to ...",
         "blurbPartOne": "A secure, intuitive, decentralized chat app running entirely on ",
         "blurbPartTwo": " - the world's first internet-scale blockchain. Read more ",
-        "signIn": "Sign in"
+        "signIn": "Sign-in",
+        "signInOrRegister": "Sign-in or Register"
     },
     "reactions": {
         "greaterThan99People": "99+ people",

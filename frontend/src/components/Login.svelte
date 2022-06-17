@@ -23,7 +23,7 @@
         >.
     </p>
     <Button disabled={loading} {loading} on:click={() => dispatch("login")}
-        >{$_("login.signIn")}</Button>
+        >{$_("login.signInOrRegister")}</Button>
 </ModalPage>
 
 <style type="text/scss">

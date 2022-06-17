@@ -251,7 +251,8 @@
         "welcomeTo": "Bienvenido a ...",
         "blurbPartOne": "Una aplicación de chat segura, intuitiva y descentralizada que se ejecuta completamente en ",
         "blurbPartTwo": " - la primer cadena de bloques a escala de internet del mundo. Leer más ",
-        "signIn": "Entrar"
+        "signIn": "Entrar",
+        "signInOrRegister": "Ingresa o Registro"
     },
     "reactions": {
         "greaterThan99People": "+99 personas",
