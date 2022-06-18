@@ -176,6 +176,12 @@ pub struct PollEnded {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ProposalVoteRegistered {
+    pub user_id: UserId,
+    pub message_id: MessageId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PermissionsChanged {
     pub old_permissions: GroupPermissions,
     pub new_permissions: GroupPermissions,

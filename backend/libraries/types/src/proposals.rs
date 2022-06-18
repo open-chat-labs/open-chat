@@ -55,6 +55,26 @@ impl ProposalContentInternal {
         }
     }
 
+    pub fn register_vote(&mut self, user_id: UserId, adopt: bool) -> Option<bool> {
+        if adopt {
+            if self.reject_votes.contains(&user_id) {
+                Some(false)
+            } else if !self.adopt_votes.insert(user_id) {
+                Some(true)
+            } else {
+                None
+            }
+        } else {
+            if self.adopt_votes.contains(&user_id) {
+                Some(true)
+            } else if !self.reject_votes.insert(user_id) {
+                Some(false)
+            } else {
+                None
+            }
+        }
+    }
+
     pub fn hydrate(&self, my_user_id: Option<UserId>) -> ProposalContent {
         ProposalContent {
             governance_canister_id: self.governance_canister_id,

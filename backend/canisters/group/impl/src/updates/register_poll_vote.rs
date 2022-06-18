@@ -1,7 +1,7 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::RegisterVoteResult;
+use chat_events::RegisterPollVoteResult;
 use group_canister::register_poll_vote::{Response::*, *};
 use ic_cdk_macros::update;
 
@@ -27,14 +27,14 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
         );
 
         match result {
-            RegisterVoteResult::Success(votes) => {
+            RegisterPollVoteResult::Success(votes) => {
                 handle_activity_notification(runtime_state);
                 Success(votes)
             }
-            RegisterVoteResult::SuccessNoChange(votes) => Success(votes),
-            RegisterVoteResult::PollEnded => PollEnded,
-            RegisterVoteResult::PollNotFound => PollNotFound,
-            RegisterVoteResult::OptionIndexOutOfRange => OptionIndexOutOfRange,
+            RegisterPollVoteResult::SuccessNoChange(votes) => Success(votes),
+            RegisterPollVoteResult::PollEnded => PollEnded,
+            RegisterPollVoteResult::PollNotFound => PollNotFound,
+            RegisterPollVoteResult::OptionIndexOutOfRange => OptionIndexOutOfRange,
         }
     } else {
         CallerNotInGroup
