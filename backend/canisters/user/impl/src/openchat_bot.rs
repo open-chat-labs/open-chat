@@ -83,7 +83,7 @@ pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, runtime_
     let text = if event.storage_added == event.new_storage_limit {
         format!("Thank you for [buying storage](/#/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). You paid {amount_paid} {token} for {storage_added} GB of storage. This will allow you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit}).")
     } else {
-        format!("Thank you for buying more storage. You {amount_paid} {token} for {storage_added} GB of storage giving you {storage_total} GB in total.")
+        format!("Thank you for buying more storage. You paid {amount_paid} {token} for {storage_added} GB of storage giving you {storage_total} GB in total.")
     };
 
     send_text_message(text, runtime_state);
