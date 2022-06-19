@@ -64,18 +64,6 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
           }),
-          'GovernanceProposal' : IDL.Record({
-            'url' : IDL.Text,
-            'title' : IDL.Text,
-            'my_vote' : IDL.Opt(IDL.Bool),
-            'reject_votes' : IDL.Nat32,
-            'deadline' : IDL.Nat64,
-            'adopt_votes' : IDL.Nat32,
-            'summary' : IDL.Text,
-            'proposal_id' : IDL.Nat64,
-            'governance_canister_id' : IDL.Principal,
-            'proposer' : IDL.Nat64,
-          }),
           'Cryptocurrency' : IDL.Record({
             'caption' : IDL.Opt(IDL.Text),
             'transfer' : IDL.Variant({
@@ -246,18 +234,6 @@ export const Notification = IDL.Variant({
             'thumbnail_data' : IDL.Text,
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
-          }),
-          'GovernanceProposal' : IDL.Record({
-            'url' : IDL.Text,
-            'title' : IDL.Text,
-            'my_vote' : IDL.Opt(IDL.Bool),
-            'reject_votes' : IDL.Nat32,
-            'deadline' : IDL.Nat64,
-            'adopt_votes' : IDL.Nat32,
-            'summary' : IDL.Text,
-            'proposal_id' : IDL.Nat64,
-            'governance_canister_id' : IDL.Principal,
-            'proposer' : IDL.Nat64,
           }),
           'Cryptocurrency' : IDL.Record({
             'caption' : IDL.Opt(IDL.Text),
