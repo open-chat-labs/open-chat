@@ -21,7 +21,7 @@ mod model;
 mod queries;
 mod updates;
 
-pub const USER_LIMIT: usize = 20_000;
+pub const USER_LIMIT: usize = 25_000;
 
 const MIN_CYCLES_BALANCE: Cycles = 5_000_000_000_000; // 5T
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 500_000_000_000; // 0.5T cycles
