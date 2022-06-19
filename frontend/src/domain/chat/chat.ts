@@ -289,7 +289,8 @@ export type DirectChatEvent =
     | PollVoteDeleted
     | PollVoteRegistered
     | PollEnded
-    | DirectChatCreated;
+    | DirectChatCreated
+    | ThreadUpdated;
 
 export type GroupChatEvent =
     | Message
@@ -320,7 +321,8 @@ export type GroupChatEvent =
     | PollEnded
     | PermissionsChanged
     | GroupVisibilityChanged
-    | GroupInviteCodeChanged;
+    | GroupInviteCodeChanged
+    | ThreadUpdated;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -442,6 +444,12 @@ export type PollVoteDeleted = {
 
 export type PollEnded = {
     kind: "poll_ended";
+    messageIndex: number;
+    eventIndex: number;
+};
+
+export type ThreadUpdated = {
+    kind: "thread_updated";
     messageIndex: number;
     eventIndex: number;
 };

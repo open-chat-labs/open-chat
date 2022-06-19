@@ -858,6 +858,14 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("ThreadUpdated" in candid) {
+        return {
+            kind: "thread_updated",
+            messageIndex: candid.ThreadUpdated.message_index,
+            eventIndex: candid.ThreadUpdated.event_index,
+        };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
 }
 
