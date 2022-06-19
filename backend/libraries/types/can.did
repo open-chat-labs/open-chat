@@ -826,7 +826,7 @@ type PermissionRole =
 
 type ThreadSummary =
     record {
-        participant_ids: vec text;
+        participant_ids: vec UserId;
         reply_count: nat32;
         latest_event_index: EventIndex;
         latest_event_timestamp: TimestampMillis;
