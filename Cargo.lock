@@ -4626,6 +4626,7 @@ dependencies = [
  "canister_client_macros 0.1.0",
  "getrandom 0.2.6",
  "ic-cdk 0.5.1",
+ "itertools",
  "msgpack",
  "rand 0.7.3",
  "range-set",
