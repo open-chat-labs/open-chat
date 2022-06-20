@@ -205,6 +205,7 @@ pub enum GroupInviteCodeChange {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ThreadUpdated {
+    pub updated_by: UserId,
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
 }

@@ -12,7 +12,7 @@ use types::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
-    chat_type: ChatType,
+    chat_type: ChatEventsType,
     chat_id: ChatId,
     events: ChatEventsVec,
     message_id_map: HashMap<MessageId, EventIndex>,
@@ -24,7 +24,7 @@ pub struct ChatEvents {
 }
 
 #[derive(CandidType, Serialize, Deserialize)]
-enum ChatType {
+enum ChatEventsType {
     Direct,
     Group,
     Thread,
@@ -84,7 +84,7 @@ pub enum ToggleReactionResult {
 impl ChatEvents {
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_type: ChatType::Direct,
+            chat_type: ChatEventsType::Direct,
             chat_id: them.into(),
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
@@ -108,7 +108,7 @@ impl ChatEvents {
         now: TimestampMillis,
     ) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_type: ChatType::Group,
+            chat_type: ChatEventsType::Group,
             chat_id,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
@@ -131,9 +131,9 @@ impl ChatEvents {
         events
     }
 
-    pub fn new_thread_chat(chat_id: ChatId) -> ChatEvents {
+    pub fn new_thread(chat_id: ChatId) -> ChatEvents {
         ChatEvents {
-            chat_type: ChatType::Thread,
+            chat_type: ChatEventsType::Thread,
             chat_id,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
@@ -191,9 +191,9 @@ impl ChatEvents {
 
     pub fn push_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> EventIndex {
         let valid = match self.chat_type {
-            ChatType::Direct => event.is_valid_for_direct_chat(),
-            ChatType::Group => event.is_valid_for_group_chat(),
-            ChatType::Thread => event.is_valid_for_thread(),
+            ChatEventsType::Direct => event.is_valid_for_direct_chat(),
+            ChatEventsType::Group => event.is_valid_for_group_chat(),
+            ChatEventsType::Thread => event.is_valid_for_thread(),
         };
 
         if !valid {
@@ -526,10 +526,11 @@ impl ChatEvents {
         }
     }
 
-    pub fn hydrate_thread_updated(&self, message_index: MessageIndex) -> ThreadUpdated {
+    pub fn hydrate_thread_updated(&self, updated_by: UserId, message_index: MessageIndex) -> ThreadUpdated {
         let event_index = self.message_index_map.get(&message_index).copied().unwrap_or_default();
 
         ThreadUpdated {
+            updated_by,
             message_index,
             event_index,
         }

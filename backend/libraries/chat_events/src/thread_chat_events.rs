@@ -13,7 +13,7 @@ pub struct ThreadChatEvents {
 
 impl ThreadChatEvents {
     pub fn new(chat_id: ChatId) -> Self {
-        let events = ChatEvents::new_thread_chat(chat_id);
+        let events = ChatEvents::new_thread(chat_id);
 
         ThreadChatEvents { inner: events }
     }

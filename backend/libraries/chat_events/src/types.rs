@@ -43,7 +43,7 @@ pub enum ChatEventInternal {
     PermissionsChanged(Box<PermissionsChanged>),
     GroupVisibilityChanged(Box<GroupVisibilityChanged>),
     GroupInviteCodeChanged(Box<GroupInviteCodeChanged>),
-    ThreadUpdated(Box<MessageIndex>),
+    ThreadUpdated(Box<ThreadUpdatedInternal>),
 }
 
 impl ChatEventInternal {
@@ -200,9 +200,8 @@ impl ChatEventInternal {
             | ChatEventInternal::MessageReactionAdded(e)
             | ChatEventInternal::MessageReactionRemoved(e)
             | ChatEventInternal::PollVoteDeleted(e) => Some(e.updated_by),
-            ChatEventInternal::PollEnded(_) | ChatEventInternal::DirectChatCreated(_) | ChatEventInternal::ThreadUpdated(_) => {
-                None
-            }
+            ChatEventInternal::PollEnded(_) | ChatEventInternal::DirectChatCreated(_) => None,
+            ChatEventInternal::ThreadUpdated(e) => Some(e.updated_by),
         }
     }
 }
@@ -310,6 +309,12 @@ impl MessageInternal {
 pub struct UpdatedMessageInternal {
     pub updated_by: UserId,
     pub message_id: MessageId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ThreadUpdatedInternal {
+    pub updated_by: UserId,
+    pub message_index: MessageIndex,
 }
 
 fn incr(counter: &mut u64) {
