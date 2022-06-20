@@ -2,10 +2,10 @@ import "../../../libraries/types/can.did";
 
 type SendMessageArgs =
     record {
-        recipient: UserId;
-        sender_name: text;
-        message_id: MessageId;
         thread_root_message_index: opt MessageIndex;
+        recipient: UserId;
+        message_id: MessageId;
+        sender_name: text;
         content: MessageContent;
         replies_to: opt ReplyContext;
         forwarding: bool;
@@ -39,6 +39,7 @@ type SendMessageResponse =
 type EditMessageArgs =
     record {
         user_id: UserId;
+        thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         content: MessageContent;
     };
@@ -54,6 +55,7 @@ type EditMessageResponse =
 type DeleteMessagesArgs =
     record {
         user_id: UserId;
+        thread_root_message_index: opt MessageIndex;
         message_ids: vec MessageId;
     };
 
@@ -66,6 +68,7 @@ type DeleteMessagesResponse =
 type RegisterPollVoteArgs =
     record {
         user_id: UserId;
+        thread_root_message_index: opt MessageIndex;
         message_index: MessageIndex;
         poll_option: nat32;
         operation: VoteOperation;
@@ -83,6 +86,7 @@ type RegisterPollVoteResponse =
 type ToggleReactionArgs =
     record {
         user_id: UserId;
+        thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         reaction: text;
     };
@@ -104,6 +108,7 @@ type MarkReadArgs =
 type ChatMessagesRead =
     record {
         chat_id: ChatId;
+        thread_root_message_index: opt MessageIndex;
         message_ranges: vec MessageIndexRange;
     };
 

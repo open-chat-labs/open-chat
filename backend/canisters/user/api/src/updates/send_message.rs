@@ -7,9 +7,9 @@ use types::{
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub message_id: MessageId,
-    pub thread_root_message_index: Option<MessageIndex>,
     pub recipient: UserId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
     pub sender_name: String,
     pub content: MessageContent,
     pub replies_to: Option<ReplyContext>,
