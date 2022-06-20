@@ -1,4 +1,4 @@
-use crate::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, UserId};
+use crate::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -10,6 +10,7 @@ pub struct Message {
     pub content: MessageContent,
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
+    pub thread_summary: Option<ThreadSummary>,
     pub edited: bool,
     pub forwarded: bool,
 }

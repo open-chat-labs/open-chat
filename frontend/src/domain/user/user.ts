@@ -32,6 +32,7 @@ export type PublicProfile = {
     bio: string;
     isPremium: boolean;
     phoneIsVerified: boolean;
+    created: bigint;
 };
 
 export type UsersArgs = {
@@ -53,7 +54,7 @@ export enum UserStatus {
 }
 
 export enum AvatarSize {
-    Weeny,
+    Miniscule,
     Tiny,
     Small,
     Medium,

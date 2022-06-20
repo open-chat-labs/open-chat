@@ -49,8 +49,6 @@
     "account": "חֶשְׁבּוֹן",
     "whatsHot": "מה לוהט?",
     "notInterested": "לא מעוניין",
-    "recommendSomething": "ממליץ על כמה קבוצות",
-    "noRecommendations": "אין המלצות 😭",
     "checkBackLater": "בבקשה נסה שוב מאוחר יותר.",
     "refresh": "לְרַעֲנֵן",
     "goHome": "בית",
@@ -94,7 +92,6 @@
     "change": "שינוי",
     "noChatSelected": "לא נבחר צ'אט כרגע",
     "selectAChat": "חפש חבר, צור קבוצה חדשה או בחר צ'אט.",
-    "recommendedGroups": "קבוצות מומלצות",
     "selectAGroup": "בחר קבוצה לתצוגה מקדימה או להצטרף אליה.",
     "newChat": "שיחה חדשה",
     "newGroup": "קבוצה חדשה",
@@ -248,7 +245,8 @@
         "welcomeTo": "ברוך הבא ל ...",
         "blurbPartOne": "אפליקציית צ'אט מאובטחת, אינטואיטיבית, מבוזרת פועלת כולה",
         "blurbPartTwo": " - הבלוקצ'יין הראשון בעולם בקנה מידה אינטרנטי. קרא עוד",
-        "signIn": "להתחבר"
+        "signIn": "להתחבר",
+        "signInOrRegister": "היכנס או הירשם"
     },
     "reactions": {
         "greaterThan99People": "99+ אנשים",
@@ -531,6 +529,17 @@
     "referralHeader": "הזמן חברים/משפחה",
     "userReferralMessage": "שתף את הקישור הזה ל-OpenChat עם חברים ובני משפחה. עבור כל אדם שנרשם עם הקישור שלך וימשיך להיות משתמש מאומת, תקבל פרס של אסימוני CHAT (שיאושר בשבועות הקרובים). אתה יכול להמשיך ולשתף את הקישור עכשיו ואנו נעניק בדיעבד אסימוני CHAT ברגע שהם יהיו זמינים.",
     "userInfoHeader": "פּוּמְבֵּי",
+    "thread": {
+        "menu": "תשובה בשרשור",
+        "title": "פְּתִיל",
+        "replies": "עונה",
+        "reply": "תשובה",
+        "lastMessage": "(הודעה אחרונה {date})",
+        "nreplies": "{number} {replies} {message}"
+    },
     "noChatsAvailable": "אין צ'אטים זמינים!",
-    "invitedUsers": "משתמשים מוזמנים"
+    "invitedUsers": "משתמשים מוזמנים",
+    "hotGroups": "קבוצות לוהטות",
+    "showHotGroups": "תראה לי כמה קבוצות חמות",
+    "noHotGroups": "אין קבוצות לוהטות 😭"
 }

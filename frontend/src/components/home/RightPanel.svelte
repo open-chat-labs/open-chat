@@ -21,6 +21,7 @@
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { Readable, writable } from "svelte/store";
     import { numberOfColumns } from "stores/layout";
+    import Thread from "./thread/Thread.svelte";
     const dispatch = createEventDispatcher();
 
     export let controller: ChatController | undefined;
@@ -32,7 +33,6 @@
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
     let savingParticipants = false;
-    let profileComponent: UserProfile;
 
     $: user = $userStore[userId] ?? nullUser("unknown");
     $: lastState = rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" };
@@ -41,10 +41,6 @@
     $: participants = controller?.participants ?? writable([]);
     $: pinned = controller?.pinnedMessages ?? writable(new Set<number>());
     $: chatId = controller?.chatId;
-
-    export function showProfile() {
-        profileComponent.reset();
-    }
 
     function dismissAsAdmin(ev: CustomEvent<string>): void {
         controller?.dismissAsAdmin(ev.detail);
@@ -144,7 +140,6 @@
             on:close={pop} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile
-            bind:this={profileComponent}
             on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
             on:upgrade
             on:showFaqQuestion
@@ -154,6 +149,12 @@
             on:closeProfile={pop} />
     {:else if lastState.kind === "new_group_panel"}
         <NewGroup {currentUser} on:cancelNewGroup={pop} on:groupCreated />
+    {:else if lastState.kind === "message_thread_panel" && controller !== undefined}
+        <Thread
+            rootEvent={lastState.rootEvent}
+            {controller}
+            threadSummary={lastState.threadSummary}
+            on:close={pop} />
     {/if}
     {#if $screenWidth === ScreenWidth.ExtraExtraLarge}
         <BackgroundLogo

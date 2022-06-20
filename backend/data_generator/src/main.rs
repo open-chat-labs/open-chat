@@ -64,6 +64,7 @@ async fn run_data_generator(
             Action::SendDirectMessage(a, u, n) => {
                 let args = user_canister::send_message::Args {
                     message_id: (rng.next_u64() as u128).into(),
+                    thread_root_message_index: None,
                     recipient: target_user,
                     sender_name: n,
                     content: MessageContent::Text(build_text_content(&mut rng)),
@@ -75,6 +76,7 @@ async fn run_data_generator(
             Action::SendGroupMessage(a, g, n) => {
                 let args = group_canister::send_message::Args {
                     message_id: (rng.next_u64() as u128).into(),
+                    thread_root_message_index: None,
                     sender_name: n,
                     content: MessageContent::Text(build_text_content(&mut rng)),
                     replies_to: None,

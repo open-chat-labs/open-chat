@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
 use types::{CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, TimestampMillis, Timestamped, UserId, Version};
-use utils::canister::CanistersRequiringUpgrade;
+use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 use utils::{canister, memory};
@@ -21,7 +21,7 @@ mod model;
 mod queries;
 mod updates;
 
-pub const USER_LIMIT: usize = 20_000;
+pub const USER_LIMIT: usize = 25_000;
 
 const MIN_CYCLES_BALANCE: Cycles = 5_000_000_000_000; // 5T
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 500_000_000_000; // 0.5T cycles
@@ -97,7 +97,7 @@ impl RuntimeState {
             users_online_1_week: user_metrics.users_online_1_week,
             users_online_1_month: user_metrics.users_online_1_month,
             canister_upgrades_completed: canister_upgrades_metrics.completed as u64,
-            canister_upgrades_failed: canister_upgrades_metrics.failed as u64,
+            canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             sms_messages_in_queue: self.data.sms_messages.len() as u32,
@@ -219,7 +219,7 @@ pub struct Metrics {
     pub users_online_1_month: u32,
     pub canisters_in_pool: u16,
     pub canister_upgrades_completed: u64,
-    pub canister_upgrades_failed: u64,
+    pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
     pub user_wasm_version: Version,

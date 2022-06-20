@@ -32,6 +32,7 @@ pub enum GroupChatEvent {
     PermissionsChanged(PermissionsChanged),
     GroupVisibilityChanged(GroupVisibilityChanged),
     GroupInviteCodeChanged(GroupInviteCodeChanged),
+    ThreadUpdated(ThreadUpdated),
 }
 
 impl GroupChatEvent {
@@ -44,6 +45,7 @@ impl GroupChatEvent {
             GroupChatEvent::PollVoteRegistered(v) => Some(v.event_index),
             GroupChatEvent::PollVoteDeleted(v) => Some(v.event_index),
             GroupChatEvent::PollEnded(p) => Some(p.event_index),
+            GroupChatEvent::ThreadUpdated(t) => Some(t.event_index),
             _ => None,
         }
     }
@@ -202,6 +204,12 @@ pub enum GroupInviteCodeChange {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ThreadUpdated {
+    pub event_index: EventIndex,
+    pub message_index: MessageIndex,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum DirectChatEvent {
     Message(Box<Message>),
     DirectChatCreated(DirectChatCreated),
@@ -212,6 +220,7 @@ pub enum DirectChatEvent {
     PollVoteRegistered(UpdatedMessage),
     PollVoteDeleted(UpdatedMessage),
     PollEnded(PollEnded),
+    ThreadUpdated(ThreadUpdated),
 }
 
 impl DirectChatEvent {
@@ -224,6 +233,7 @@ impl DirectChatEvent {
             DirectChatEvent::PollVoteRegistered(v) => Some(v.event_index),
             DirectChatEvent::PollVoteDeleted(v) => Some(v.event_index),
             DirectChatEvent::PollEnded(p) => Some(p.event_index),
+            DirectChatEvent::ThreadUpdated(t) => Some(t.event_index),
             _ => None,
         }
     }

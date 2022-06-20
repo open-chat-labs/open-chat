@@ -3,6 +3,7 @@ import "../../../libraries/types/can.did";
 type SendMessageArgs =
     record {
         message_id: MessageId;
+        thread_root_message_index: opt MessageIndex;
         content: MessageContent;
         sender_name: text;
         replies_to: opt GroupReplyContext;
@@ -361,6 +362,7 @@ type SelectedUpdatesResponse =
 
 type EventsArgs =
     record {
+        thread_root_message_index: opt MessageIndex;
         start_index: EventIndex;
         ascending: bool;
         max_events: nat32;
@@ -369,12 +371,14 @@ type EventsArgs =
 
 type EventsByIndexArgs =
     record {
+        thread_root_message_index: opt MessageIndex;
         events: vec EventIndex;
         invite_code: opt nat64;
     };
 
 type EventsRangeArgs =
     record {
+        thread_root_message_index: opt MessageIndex;
         from_index: EventIndex;
         to_index: EventIndex;
         invite_code: opt nat64;
@@ -382,6 +386,7 @@ type EventsRangeArgs =
 
 type EventsWindowArgs =
     record {
+        thread_root_message_index: opt MessageIndex;
         mid_point: MessageIndex;
         max_events: nat32;
         invite_code: opt nat64;
@@ -402,6 +407,7 @@ type EventsResponse =
 
 type MessagesByMessageIndexArgs =
     record {
+        thread_root_message_index: opt MessageIndex;
         messages: vec MessageIndex;
     };
 

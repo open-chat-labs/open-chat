@@ -13,7 +13,11 @@
     import MenuItem from "../MenuItem.svelte";
     import Loading from "../Loading.svelte";
     import MenuIcon from "../MenuIcon.svelte";
-    import type { Message, EnhancedReplyContext } from "../../domain/chat/chat";
+    import type {
+        Message,
+        EnhancedReplyContext,
+        ThreadSummary as ThreadSummaryType,
+    } from "../../domain/chat/chat";
     import Typing from "../Typing.svelte";
     import RepliesTo from "./RepliesTo.svelte";
     import { _, locale } from "svelte-i18n";
@@ -54,6 +58,7 @@
     import { translationStore } from "../../stores/translation";
     import { typing } from "../../stores/typing";
     import { canForward } from "../../domain/chat/chat.utils";
+    import ThreadSummary from "./ThreadSummary.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -81,6 +86,9 @@
     export let canReact: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
+    export let threadSummary: ThreadSummaryType | undefined;
+    export let selectedThreadMessageIndex: number | undefined;
+    export let inThread: boolean;
 
     let msgElement: HTMLElement;
     let msgBubbleElement: HTMLElement;
@@ -153,6 +161,11 @@
 
     function reply() {
         dispatch("replyTo", createReplyContext());
+    }
+
+    // this is called if we are starting a new thread so we pass undefined as the threadSummary param
+    function replyInThread() {
+        dispatch("replyInThread", undefined);
     }
 
     function forward() {
@@ -486,7 +499,7 @@
                         </div>
                         <div slot="menu">
                             <Menu>
-                                {#if publicGroup && confirmed}
+                                {#if publicGroup && confirmed && !inThread}
                                     {#if canShare()}
                                         <MenuItem on:click={shareMessage}>
                                             <ShareIcon
@@ -504,7 +517,7 @@
                                         <div slot="text">{$_("copyMessageUrl")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if confirmed && canPin}
+                                {#if confirmed && canPin && !inThread}
                                     {#if pinned}
                                         <MenuItem on:click={unpinMessage}>
                                             <PinOff
@@ -531,8 +544,14 @@
                                             slot="icon" />
                                         <div slot="text">{$_("reply")}</div>
                                     </MenuItem>
+                                    <!-- {#if !inThread}
+                                        <MenuItem on:click={replyInThread}>
+                                            <span class="thread" slot="icon">🧵</span>
+                                            <div slot="text">{$_("thread.menu")}</div>
+                                        </MenuItem>
+                                    {/if} -->
                                 {/if}
-                                {#if canForward(msg.content)}
+                                {#if canForward(msg.content) && !inThread}
                                     <MenuItem on:click={forward}>
                                         <ForwardIcon
                                             size={$iconSize}
@@ -602,6 +621,7 @@
                 </div>
             {/if}
         </div>
+
         {#if !me && !deleted && canReact}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
@@ -612,6 +632,15 @@
             </div>
         {/if}
     </div>
+
+    {#if threadSummary !== undefined}
+        <ThreadSummary
+            selected={msg.messageIndex === selectedThreadMessageIndex}
+            {threadSummary}
+            indent={showAvatar}
+            {me}
+            on:replyInThread />
+    {/if}
 
     {#if msg.reactions.length > 0 && !deleted}
         <div class="message-reactions" class:me class:indent={showAvatar}>
@@ -680,6 +709,10 @@
 
     :global(.actions .reaction .wrapper) {
         padding: 6px;
+    }
+
+    .thread {
+        @include font(bold, normal, fs-110);
     }
 
     .message-wrapper {

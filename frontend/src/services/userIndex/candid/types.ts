@@ -145,6 +145,7 @@ export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'Message' : Message } |
   { 'PollEnded' : PollEnded } |
+  { 'ThreadUpdated' : ThreadUpdated } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'PollVoteDeleted' : UpdatedMessage } |
@@ -244,6 +245,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'PermissionsChanged' : PermissionsChanged } |
   { 'PollEnded' : PollEnded } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
+  { 'ThreadUpdated' : ThreadUpdated } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
@@ -388,6 +390,7 @@ export interface Message {
   'content' : MessageContent,
   'edited' : boolean,
   'sender' : UserId,
+  'thread_summary' : [] | [ThreadSummary],
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],
   'reactions' : Array<[string, Array<UserId>]>,
@@ -602,6 +605,16 @@ export interface SuccessResult { 'open_storage_limit_bytes' : bigint }
 export type SuperAdminsArgs = {};
 export type SuperAdminsResponse = { 'Success' : { 'users' : Array<UserId> } };
 export interface TextContent { 'text' : string }
+export interface ThreadSummary {
+  'latest_event_timestamp' : TimestampMillis,
+  'participant_ids' : Array<UserId>,
+  'reply_count' : number,
+  'latest_event_index' : EventIndex,
+}
+export interface ThreadUpdated {
+  'event_index' : EventIndex,
+  'message_index' : MessageIndex,
+}
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export interface Tokens { 'e8s' : bigint }
