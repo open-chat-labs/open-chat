@@ -4,7 +4,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ops::{Deref, DerefMut};
-use types::{ThreadChatEvent, EventIndex, EventWrapper, UserId, ChatId};
+use types::{ChatId, EventIndex, EventWrapper, ThreadChatEvent, UserId};
 
 #[derive(Serialize, Deserialize)]
 pub struct ThreadChatEvents {

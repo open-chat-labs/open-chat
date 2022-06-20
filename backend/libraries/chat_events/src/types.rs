@@ -200,9 +200,9 @@ impl ChatEventInternal {
             | ChatEventInternal::MessageReactionAdded(e)
             | ChatEventInternal::MessageReactionRemoved(e)
             | ChatEventInternal::PollVoteDeleted(e) => Some(e.updated_by),
-            ChatEventInternal::PollEnded(_) 
-            | ChatEventInternal::DirectChatCreated(_) 
-            | ChatEventInternal::ThreadUpdated(_) => None,
+            ChatEventInternal::PollEnded(_) | ChatEventInternal::DirectChatCreated(_) | ChatEventInternal::ThreadUpdated(_) => {
+                None
+            }
         }
     }
 }
