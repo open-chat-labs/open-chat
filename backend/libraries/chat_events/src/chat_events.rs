@@ -27,6 +27,7 @@ pub struct ChatEvents {
 enum ChatType {
     Direct,
     Group,
+    Thread,
 }
 
 pub struct PushMessageArgs {
@@ -130,6 +131,20 @@ impl ChatEvents {
         events
     }
 
+    pub fn new_thread_chat(chat_id: ChatId) -> ChatEvents {
+        ChatEvents {
+            chat_type: ChatType::Thread,
+            chat_id,
+            events: ChatEventsVec::default(),
+            message_id_map: HashMap::new(),
+            message_index_map: HashMap::new(),
+            latest_message_event_index: None,
+            latest_message_index: None,
+            metrics: ChatMetrics::default(),
+            per_user_metrics: HashMap::new(),
+        }
+    }
+
     pub fn get(&self, event_index: EventIndex) -> Option<&EventWrapper<ChatEventInternal>> {
         self.events.get(event_index)
     }
@@ -178,6 +193,7 @@ impl ChatEvents {
         let valid = match self.chat_type {
             ChatType::Direct => event.is_valid_for_direct_chat(),
             ChatType::Group => event.is_valid_for_group_chat(),
+            ChatType::Thread => event.is_valid_for_thread(),
         };
 
         if !valid {
@@ -505,6 +521,15 @@ impl ChatEvents {
         let event_index = self.message_index_map.get(&message_index).copied().unwrap_or_default();
 
         PollEnded {
+            message_index,
+            event_index,
+        }
+    }
+
+    pub fn hydrate_thread_updated(&self, message_index: MessageIndex) -> ThreadUpdated {
+        let event_index = self.message_index_map.get(&message_index).copied().unwrap_or_default();
+
+        ThreadUpdated {
             message_index,
             event_index,
         }
