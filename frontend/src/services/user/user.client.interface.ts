@@ -53,13 +53,15 @@ export interface IUserClient {
     ): Promise<EventsResponse<DirectChatEvent>>;
     chatEventsByIndex(
         eventIndexes: number[],
-        userId: string
+        userId: string,
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>>;
     chatEvents(
         eventIndexRange: IndexRange,
         userId: string,
         startIndex: number,
         ascending: boolean,
+        threadRootMessageIndex?: number,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;

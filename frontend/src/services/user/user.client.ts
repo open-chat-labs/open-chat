@@ -130,7 +130,8 @@ export class UserClient extends CandidService implements IUserClient {
     @profile("userClient")
     chatEventsByIndex(
         eventIndexes: number[],
-        userId: string
+        userId: string,
+        _threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
         const args = {
             user_id: Principal.fromText(userId),
@@ -168,7 +169,8 @@ export class UserClient extends CandidService implements IUserClient {
         eventIndexRange: IndexRange,
         userId: string,
         startIndex: number,
-        ascending: boolean
+        ascending: boolean,
+        _threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
             const args = {
@@ -569,9 +571,6 @@ export class UserClient extends CandidService implements IUserClient {
         const req = {
             withdrawal: apiPendingCryptocurrencyWithdrawal(domain),
         };
-        return this.handleResponse(
-            this.userService.withdraw_crypto(req),
-            withdrawCryptoResponse
-        );
+        return this.handleResponse(this.userService.withdraw_crypto(req), withdrawCryptoResponse);
     }
 }

@@ -166,14 +166,16 @@ export class CachingUserClient implements IUserClient {
         userId: string,
         startIndex: number,
         ascending: boolean,
-        interrupt: ServiceRetryInterrupt
+        threadRootMessageIndex?: number,
+        interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
             this.db,
             eventIndexRange,
             userId,
             startIndex,
-            ascending
+            ascending,
+            threadRootMessageIndex
         );
 
         // we may or may not have all of the requested events
@@ -181,7 +183,14 @@ export class CachingUserClient implements IUserClient {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log("We didn't get enough back from the cache, going to the api");
             return this.client
-                .chatEvents(eventIndexRange, userId, startIndex, ascending, interrupt)
+                .chatEvents(
+                    eventIndexRange,
+                    userId,
+                    startIndex,
+                    ascending,
+                    threadRootMessageIndex,
+                    interrupt
+                )
                 .then((resp) => this.setCachedEvents(userId, resp));
         } else {
             return this.handleMissingEvents(userId, [cachedEvents, missing]);
@@ -249,7 +258,13 @@ export class CachingUserClient implements IUserClient {
 
                     return targetMessageIndex !== undefined
                         ? groupClient.chatEventsWindow(range, targetMessageIndex, () => true)
-                        : groupClient.chatEvents(range, chat.latestEventIndex, false, () => true);
+                        : groupClient.chatEvents(
+                              range,
+                              chat.latestEventIndex,
+                              false,
+                              undefined,
+                              () => true
+                          );
                 } else {
                     return targetMessageIndex !== undefined
                         ? this.chatEventsWindow(range, chat.chatId, targetMessageIndex, () => true)
@@ -258,6 +273,7 @@ export class CachingUserClient implements IUserClient {
                               chat.chatId,
                               chat.latestEventIndex,
                               false,
+                              undefined,
                               () => true
                           );
                 }

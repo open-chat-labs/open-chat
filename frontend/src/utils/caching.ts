@@ -21,7 +21,7 @@ import type { UserSummary } from "../domain/user/user";
 import { rollbar } from "./logging";
 import { UnsupportedValueError } from "./error";
 
-const CACHE_VERSION = 28;
+const CACHE_VERSION = 29;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -37,6 +37,14 @@ export interface ChatSchema extends DBSchema {
     };
 
     chat_events: {
+        key: string;
+        value: EnhancedWrapper<ChatEvent>;
+        indexes: {
+            messageIdx: string;
+        };
+    };
+
+    thread_events: {
         key: string;
         value: EnhancedWrapper<ChatEvent>;
         indexes: {
@@ -68,8 +76,14 @@ export function cachingLocallyDisabled(): boolean {
     return !!localStorage.getItem("openchat_nocache");
 }
 
-export function createCacheKey(chatId: string, index: number): string {
-    return `${chatId}_${padMessageIndex(index)}`;
+export function createCacheKey(
+    chatId: string,
+    index: number,
+    threadRootMessageIndex?: number
+): string {
+    return threadRootMessageIndex === undefined
+        ? `${chatId}_${padMessageIndex(index)}`
+        : `${chatId}_${threadRootMessageIndex}_${padMessageIndex(index)}`;
 }
 
 export function openCache(principal: string): Database | undefined {
@@ -83,6 +97,9 @@ export function openCache(principal: string): Database | undefined {
                     if (db.objectStoreNames.contains("chat_events")) {
                         db.deleteObjectStore("chat_events");
                     }
+                    if (db.objectStoreNames.contains("thread_events")) {
+                        db.deleteObjectStore("thread_events");
+                    }
                     if (db.objectStoreNames.contains("chats")) {
                         db.deleteObjectStore("chats");
                     }
@@ -94,6 +111,8 @@ export function openCache(principal: string): Database | undefined {
                     }
                     const chatEvents = db.createObjectStore("chat_events");
                     chatEvents.createIndex("messageIdx", "messageKey");
+                    const threadEvents = db.createObjectStore("thread_events");
+                    threadEvents.createIndex("messageIdx", "messageKey");
                     db.createObjectStore("chats");
                     db.createObjectStore("group_details");
                     db.createObjectStore("users");
@@ -306,7 +325,8 @@ async function aggregateEvents<T extends ChatEvent>(
     [min, max]: IndexRange,
     chatId: string,
     startIndex: number,
-    ascending: boolean
+    ascending: boolean,
+    threadRootMessageIndex?: number
 ): Promise<[EnhancedWrapper<T>[], Set<number>]> {
     const events: EnhancedWrapper<T>[] = [];
     const resolvedDb = await db;
@@ -317,15 +337,17 @@ async function aggregateEvents<T extends ChatEvent>(
 
     console.log("aggregate events: events from ", lowerBound, " to ", upperBound);
     const range = IDBKeyRange.bound(
-        createCacheKey(chatId, lowerBound),
-        createCacheKey(chatId, upperBound)
+        createCacheKey(chatId, lowerBound, threadRootMessageIndex),
+        createCacheKey(chatId, upperBound, threadRootMessageIndex)
     );
 
     for (let i = lowerBound; i <= upperBound; i++) {
         missing.add(i);
     }
 
-    const result = await resolvedDb.getAll("chat_events", range);
+    const store = threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
+
+    const result = await resolvedDb.getAll(store, range);
     result.forEach((evt) => {
         missing.delete(evt.index);
         events.push(evt as EnhancedWrapper<T>);
@@ -338,16 +360,18 @@ async function aggregateEvents<T extends ChatEvent>(
 export async function getCachedMessageByIndex<T extends ChatEvent>(
     db: Database,
     eventIndex: number,
-    chatId: string
+    chatId: string,
+    threadRootMessageIndex?: number
 ): Promise<EventWrapper<T> | undefined> {
-    const key = createCacheKey(chatId, eventIndex);
+    const key = createCacheKey(chatId, eventIndex, threadRootMessageIndex);
     return (await db).get("chat_events", key) as Promise<EventWrapper<T> | undefined>;
 }
 
 export async function getCachedEventsByIndex<T extends ChatEvent>(
     db: Database,
     eventIndexes: number[],
-    chatId: string
+    chatId: string,
+    _threadRootMessageIndex?: number
 ): Promise<[EventsSuccessResult<T>, Set<number>]> {
     const missing = new Set<number>();
     const returnedEvents = await Promise.all(
@@ -369,7 +393,8 @@ export async function getCachedEvents<T extends ChatEvent>(
     eventIndexRange: IndexRange,
     chatId: string,
     startIndex: number,
-    ascending: boolean
+    ascending: boolean,
+    threadRootMessageIndex?: number
 ): Promise<[EventsSuccessResult<T>, Set<number>]> {
     console.log("cache: ", eventIndexRange, startIndex, ascending);
     const start = Date.now();
@@ -378,7 +403,8 @@ export async function getCachedEvents<T extends ChatEvent>(
         eventIndexRange,
         chatId,
         startIndex,
-        ascending
+        ascending,
+        threadRootMessageIndex
     );
 
     if (missing.size === 0) {
@@ -403,14 +429,15 @@ export function mergeSuccessResponses<T extends ChatEvent>(
 // we need to strip out the blobData promise from any media content because that cannot be serialised
 function makeSerialisable<T extends ChatEvent>(
     ev: EventWrapper<T>,
-    chatId: string
+    chatId: string,
+    threadRootMessageIndex?: number
 ): EnhancedWrapper<T> {
     if (ev.event.kind !== "message") return { ...ev, chatId, messageKey: undefined };
 
     return {
         ...ev,
         chatId,
-        messageKey: createCacheKey(chatId, ev.event.messageIndex),
+        messageKey: createCacheKey(chatId, ev.event.messageIndex, threadRootMessageIndex),
         event: {
             ...ev.event,
             content: removeBlobData(ev.event.content),
@@ -456,7 +483,8 @@ function indexRangesToDRange(ranges: IndexRange[]): DRange {
 export async function setCachedEvents<T extends ChatEvent>(
     db: Database,
     chatId: string,
-    resp: EventsResponse<T>
+    resp: EventsResponse<T>,
+    threadRootMessageIndex?: number
 ): Promise<void> {
     if (resp === "events_failed") return;
     const tx = (await db).transaction(["chat_events"], "readwrite", {
@@ -467,7 +495,7 @@ export async function setCachedEvents<T extends ChatEvent>(
         resp.events.concat(resp.affectedEvents).map(async (event) => {
             await eventStore.put(
                 makeSerialisable<T>(event, chatId),
-                createCacheKey(chatId, event.index)
+                createCacheKey(chatId, event.index, threadRootMessageIndex)
             );
         })
     );
@@ -512,7 +540,8 @@ export function setCachedMessageFromNotification(
 async function setCachedMessage(
     db: Database,
     chatId: string,
-    messageEvent: EventWrapper<Message>
+    messageEvent: EventWrapper<Message>,
+    threadRootMessageIndex?: number
 ): Promise<void> {
     const tx = (await db).transaction(["chat_events"], "readwrite", {
         durability: "relaxed",
@@ -521,7 +550,7 @@ async function setCachedMessage(
     await Promise.all([
         eventStore.put(
             makeSerialisable(messageEvent, chatId),
-            createCacheKey(chatId, messageEvent.index)
+            createCacheKey(chatId, messageEvent.index, threadRootMessageIndex)
         ),
     ]);
     await tx.done;
@@ -540,7 +569,8 @@ function messageToEvent(message: Message, resp: SendMessageSuccess): EventWrappe
 
 export async function overwriteCachedEvents<T extends ChatEvent>(
     chatId: string,
-    events: EventWrapper<T>[]
+    events: EventWrapper<T>[],
+    threadRootMessageIndex?: number
 ): Promise<void> {
     if (!process.env.CLIENT_CACHING) return;
 
@@ -551,7 +581,10 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
     const store = tx.objectStore("chat_events");
     await Promise.all(
         events.map((event) =>
-            store.put(makeSerialisable<T>(event, chatId), createCacheKey(chatId, event.index))
+            store.put(
+                makeSerialisable<T>(event, chatId),
+                createCacheKey(chatId, event.index, threadRootMessageIndex)
+            )
         )
     );
     await tx.done;

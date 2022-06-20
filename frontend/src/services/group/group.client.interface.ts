@@ -34,7 +34,10 @@ import type { SearchGroupChatResponse } from "../../domain/search/search";
 import type { ServiceRetryInterrupt } from "services/candidService";
 
 export interface IGroupClient {
-    chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>>;
+    chatEventsByIndex(
+        eventIndexes: number[],
+        threadRootMessageIndex?: number
+    ): Promise<EventsResponse<GroupChatEvent>>;
     chatEventsWindow(
         eventIndexRange: IndexRange,
         messageIndex: number,
@@ -44,6 +47,7 @@ export interface IGroupClient {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
+        threadRootMessageIndex?: number,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>>;
     addParticipants(

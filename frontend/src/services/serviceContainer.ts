@@ -303,23 +303,31 @@ export class ServiceContainer implements MarkMessagesRead {
         eventIndexRange: IndexRange,
         theirUserId: string,
         startIndex: number,
-        ascending: boolean
+        ascending: boolean,
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
             "direct",
             theirUserId,
-            this.userClient.chatEvents(eventIndexRange, theirUserId, startIndex, ascending)
+            this.userClient.chatEvents(
+                eventIndexRange,
+                theirUserId,
+                startIndex,
+                ascending,
+                threadRootMessageIndex
+            )
         );
     }
 
     directChatEventsByEventIndex(
         theirUserId: string,
-        eventIndexes: number[]
+        eventIndexes: number[],
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
             "direct",
             theirUserId,
-            this.userClient.chatEventsByIndex(eventIndexes, theirUserId)
+            this.userClient.chatEventsByIndex(eventIndexes, theirUserId, threadRootMessageIndex)
         );
     }
 
@@ -339,23 +347,30 @@ export class ServiceContainer implements MarkMessagesRead {
         eventIndexRange: IndexRange,
         chatId: string,
         startIndex: number,
-        ascending: boolean
+        ascending: boolean,
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             "group",
             chatId,
-            this.getGroupClient(chatId).chatEvents(eventIndexRange, startIndex, ascending)
+            this.getGroupClient(chatId).chatEvents(
+                eventIndexRange,
+                startIndex,
+                ascending,
+                threadRootMessageIndex
+            )
         );
     }
 
     groupChatEventsByEventIndex(
         chatId: string,
-        eventIndexes: number[]
+        eventIndexes: number[],
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             "group",
             chatId,
-            this.getGroupClient(chatId).chatEventsByIndex(eventIndexes)
+            this.getGroupClient(chatId).chatEventsByIndex(eventIndexes, threadRootMessageIndex)
         );
     }
 

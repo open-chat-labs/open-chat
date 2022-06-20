@@ -90,10 +90,16 @@ export class CachingGroupClient implements IGroupClient {
     }
 
     @profile("groupCachingClient")
-    chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>> {
-        return getCachedEventsByIndex<GroupChatEvent>(this.db, eventIndexes, this.chatId).then(
-            (res) => this.handleMissingEvents(res)
-        );
+    chatEventsByIndex(
+        eventIndexes: number[],
+        threadRootMessageIndex?: number
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        return getCachedEventsByIndex<GroupChatEvent>(
+            this.db,
+            eventIndexes,
+            this.chatId,
+            threadRootMessageIndex
+        ).then((res) => this.handleMissingEvents(res));
     }
 
     @profile("groupCachingClient")
@@ -128,6 +134,7 @@ export class CachingGroupClient implements IGroupClient {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
+        threadRootMessageIndex?: number,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents<GroupChatEvent>(
@@ -135,7 +142,8 @@ export class CachingGroupClient implements IGroupClient {
             eventIndexRange,
             this.chatId,
             startIndex,
-            ascending
+            ascending,
+            threadRootMessageIndex
         );
 
         // we may or may not have all of the requested events
@@ -143,7 +151,13 @@ export class CachingGroupClient implements IGroupClient {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log("We didn't get enough back from the cache, going to the api");
             return this.client
-                .chatEvents(eventIndexRange, startIndex, ascending, interrupt)
+                .chatEvents(
+                    eventIndexRange,
+                    startIndex,
+                    ascending,
+                    threadRootMessageIndex,
+                    interrupt
+                )
                 .then((resp) => this.setCachedEvents(resp));
         } else {
             return this.handleMissingEvents([cachedEvents, missing]);

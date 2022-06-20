@@ -103,7 +103,10 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>> {
+    chatEventsByIndex(
+        eventIndexes: number[],
+        _threadRootMessageIndex?: number
+    ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             events: eventIndexes,
             invite_code: apiOptional(base64ToBigint, this.inviteCode),
@@ -139,6 +142,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
+        _threadRootMessageIndex?: number,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
