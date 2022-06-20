@@ -10,6 +10,8 @@ type Memo = nat64;
 type MessageId = nat;
 type MessageIndex = nat32;
 type Milliseconds = nat64;
+type NeuronId = nat64;
+type ProposalId = nat64;
 type TimestampMillis = nat64;
 type TimestampNanos = nat64;
 type TransactionHash = blob;
@@ -72,6 +74,7 @@ type ChatMetrics =
         replies: nat64;
         edits: nat64;
         reactions: nat64;
+        proposals: nat64;
         last_active: TimestampMillis;
     };
 
@@ -455,6 +458,7 @@ type MessageContent =
         Cryptocurrency: CryptocurrencyContent;
         Deleted: DeletedContent;
         Giphy: GiphyContent;
+        GovernanceProposal: ProposalContent;
     };
 
 type MessageIndexRange =
@@ -613,6 +617,20 @@ type ParticipantsRemoved =
     record {
         user_ids: vec UserId;
         removed_by: UserId;
+    };
+
+type ProposalContent =
+    record {
+        governance_canister_id: CanisterId;
+        proposal_id: ProposalId;
+        proposer: NeuronId;
+        title: text;
+        summary: text;
+        url: text;
+        deadline: TimestampMillis;
+        adopt_votes: nat32;
+        reject_votes: nat32;
+        my_vote: opt bool;
     };
 
 type TotalPollVotes =
