@@ -54,6 +54,7 @@ struct Data {
     pub service_owner_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
+    pub nns_governance_canister_id: CanisterId,
     pub test_mode: bool,
 }
 
@@ -62,6 +63,7 @@ impl Data {
         service_owner_principals: HashSet<Principal>,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
+        nns_governance_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -69,6 +71,7 @@ impl Data {
             service_owner_principals,
             user_index_canister_id,
             group_index_canister_id,
+            nns_governance_canister_id,
             test_mode,
         }
     }

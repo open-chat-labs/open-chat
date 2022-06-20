@@ -18,6 +18,7 @@ fn init(args: Args) {
         args.service_owner_principals.into_iter().collect(),
         args.user_index_canister_id,
         args.group_index_canister_id,
+        args.nns_governance_canister_id,
         args.test_mode,
     );
 

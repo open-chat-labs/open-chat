@@ -7,7 +7,9 @@ use ic_agent::identity::BasicIdentity;
 use ic_agent::Identity;
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
-use types::Version;
+use types::{CanisterId, Version};
+
+const NNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
 
 pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: String, test_mode: bool) -> CanisterIds {
     let principal = identity.sender().unwrap();
@@ -163,6 +165,7 @@ async fn install_service_canisters_impl(
         service_owner_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         group_index_canister_id: canister_ids.group_index,
+        nns_governance_canister_id: NNS_GOVERNANCE_CANISTER_ID,
         wasm_version: version,
         test_mode,
     };

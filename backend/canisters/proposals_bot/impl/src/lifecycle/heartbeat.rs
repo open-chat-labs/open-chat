@@ -1,6 +1,6 @@
 use crate::model::nervous_systems::ProposalToPush;
-use crate::mutate_state;
 use crate::nns_governance_client::{self, ListProposalInfo, WrappedProposalId};
+use crate::{mutate_state, RuntimeState};
 use ic_cdk_macros::heartbeat;
 use tracing::error;
 use types::{CanisterId, ChatId, MessageContent, MessageId, Proposal, ProposalContent, ProposalId};
@@ -17,15 +17,21 @@ mod retrieve_proposals {
     use super::*;
 
     pub fn run() {
-        if let Some((governance_canister_id, next_proposal_id)) = mutate_state(|state| {
-            let now = state.env.now();
-            state.data.nervous_systems.start_next_sync(now)
-        }) {
-            ic_cdk::spawn(retrieve_proposals(governance_canister_id, next_proposal_id));
+        if let Some((governance_canister_id, next_proposal_id, is_nns)) = mutate_state(get_next) {
+            if is_nns {
+                ic_cdk::spawn(retrieve_nns_proposal(governance_canister_id, next_proposal_id));
+            }
         }
     }
 
-    async fn retrieve_proposals(governance_canister_id: CanisterId, next_proposal_id: ProposalId) {
+    fn get_next(runtime_state: &mut RuntimeState) -> Option<(CanisterId, ProposalId, bool)> {
+        let now = runtime_state.env.now();
+        let (governance_canister_id, proposal_id) = runtime_state.data.nervous_systems.start_next_sync(now)?;
+        let is_nns = governance_canister_id == runtime_state.data.nns_governance_canister_id;
+        Some((governance_canister_id, proposal_id, is_nns))
+    }
+
+    async fn retrieve_nns_proposal(governance_canister_id: CanisterId, next_proposal_id: ProposalId) {
         let args = ListProposalInfo {
             limit: 1,
             before_proposal: Some(WrappedProposalId {
@@ -39,18 +45,19 @@ mod retrieve_proposals {
         match nns_governance_client::list_proposals(governance_canister_id, args).await {
             Ok(response) => {
                 mutate_state(|state| {
-                    if let Some(proposal_result) = response.into_iter().next() {
-                        match proposal_result.proposal {
-                            Ok(proposal) => {
-                                if proposal.topic != EXCHANGE_RATE_TOPIC {
+                    if let Some(proposal_info) = response.into_iter().next() {
+                        // We ignore exchange rate proposals
+                        if proposal_info.topic != EXCHANGE_RATE_TOPIC {
+                            match Proposal::try_from(proposal_info) {
+                                Ok(proposal) => {
                                     state
                                         .data
                                         .nervous_systems
                                         .enqueue_proposal(&governance_canister_id, proposal, false);
                                 }
-                            }
-                            Err(error) => {
-                                error!(error = error.as_str(), "Failed to transform proposal");
+                                Err(error) => {
+                                    error!(error, "Failed to transform proposal");
+                                }
                             }
                         }
                         state

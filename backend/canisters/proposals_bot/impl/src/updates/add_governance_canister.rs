@@ -1,6 +1,6 @@
 use crate::guards::caller_is_service_owner;
 use crate::nns_governance_client::ListProposalInfo;
-use crate::{mutate_state, nns_governance_client, read_state};
+use crate::{mutate_state, nns_governance_client, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use proposals_bot_canister::add_governance_canister::{Response::*, *};
@@ -9,13 +9,18 @@ use types::{CanisterId, ChatId, GroupPermissions, PermissionRole};
 #[update(guard = "caller_is_service_owner")]
 #[trace]
 async fn add_governance_canister(args: Args) -> Response {
-    if read_state(|state| state.data.nervous_systems.exists(&args.governance_canister_id)) {
-        return AlreadyAdded;
-    }
-
-    let next_proposal_id = match get_next_proposal_id(args.governance_canister_id).await {
-        Ok(id) => id,
+    let is_nns = match read_state(|state| prepare(&args, state)) {
+        Ok(result) => result.is_nns,
         Err(response) => return response,
+    };
+
+    let next_proposal_id = if is_nns {
+        match get_next_nns_proposal_id(args.governance_canister_id).await {
+            Ok(id) => id,
+            Err(response) => return response,
+        }
+    } else {
+        unreachable!()
     };
 
     let chat_id = match create_group(&args).await {
@@ -32,7 +37,20 @@ async fn add_governance_canister(args: Args) -> Response {
     Success
 }
 
-async fn get_next_proposal_id(governance_canister_id: CanisterId) -> Result<u64, Response> {
+struct PrepareResult {
+    is_nns: bool,
+}
+
+fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if runtime_state.data.nervous_systems.exists(&args.governance_canister_id) {
+        Err(AlreadyAdded)
+    } else {
+        let is_nns = args.governance_canister_id == runtime_state.data.nns_governance_canister_id;
+        Ok(PrepareResult { is_nns })
+    }
+}
+
+async fn get_next_nns_proposal_id(governance_canister_id: CanisterId) -> Result<u64, Response> {
     let list_proposals_args = ListProposalInfo {
         limit: 1,
         before_proposal: None,
@@ -42,7 +60,7 @@ async fn get_next_proposal_id(governance_canister_id: CanisterId) -> Result<u64,
     };
 
     match nns_governance_client::list_proposals(governance_canister_id, list_proposals_args).await {
-        Ok(response) => Ok(response.into_iter().next().map_or(1, |p| p.proposal_id + 1)),
+        Ok(response) => Ok(response.into_iter().next().and_then(|p| p.id).map_or(1, |p| p.id)),
         Err(error) => Err(InternalError(format!(
             "Error calling 'list_proposals' on canister '{}': {:?}",
             governance_canister_id, error

@@ -10,7 +10,6 @@ pub struct Proposal {
     pub title: String,
     pub summary: String,
     pub url: String,
-    pub topic: i32,
     pub deadline: TimestampMillis,
 }
 

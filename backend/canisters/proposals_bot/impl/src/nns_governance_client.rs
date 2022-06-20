@@ -3,9 +3,9 @@ use candid::CandidType;
 use ic_cdk::api::call::CallResult;
 use serde::Deserialize;
 use tracing::error;
-use types::{CanisterId, NeuronId, Proposal, ProposalId};
+use types::{CanisterId, NeuronId, ProposalId};
 
-pub async fn list_proposals(governance_canister_id: CanisterId, args: ListProposalInfo) -> CallResult<Vec<ProposalResult>> {
+pub async fn list_proposals(governance_canister_id: CanisterId, args: ListProposalInfo) -> CallResult<Vec<ProposalInfo>> {
     let method_name = "list_proposals";
     let response: CallResult<(ListProposalInfoResponse,)> =
         ic_cdk::api::call::call(governance_canister_id, method_name, (&args,)).await;
@@ -14,29 +14,7 @@ pub async fn list_proposals(governance_canister_id: CanisterId, args: ListPropos
         error!(method_name, error_code = ?error.0, error_message = error.1.as_str(), "Error calling c2c");
     }
 
-    response.map(|r| {
-        r.0.proposal_info
-            .into_iter()
-            .map(|p| ProposalResult {
-                proposal_id: p.id.as_ref().unwrap().id,
-                proposal: map_proposal(p).map_err(|s| s.to_string()),
-            })
-            .collect()
-    })
-}
-
-fn map_proposal(p: ProposalInfo) -> Result<Proposal, &'static str> {
-    let proposal = p.proposal.ok_or("proposal not set")?;
-
-    Ok(Proposal {
-        id: p.id.ok_or("id not set")?.id,
-        topic: p.topic,
-        proposer: p.proposer.ok_or("proposer not set")?.id,
-        title: proposal.title.ok_or("title not set")?,
-        summary: proposal.summary,
-        url: proposal.url,
-        deadline: p.deadline_timestamp_seconds.ok_or("deadline_timestamp_seconds not set")? * 1000,
-    })
+    response.map(|r| r.0.proposal_info)
 }
 
 #[derive(CandidType, Deserialize)]
@@ -46,11 +24,6 @@ pub struct ListProposalInfo {
     pub exclude_topic: Vec<i32>,
     pub include_reward_status: Vec<i32>,
     pub include_status: Vec<i32>,
-}
-
-pub struct ProposalResult {
-    pub proposal_id: ProposalId,
-    pub proposal: Result<Proposal, String>,
 }
 
 #[derive(CandidType, Deserialize)]
@@ -74,6 +47,23 @@ pub mod governance_response_types {
         pub proposal: Option<Proposal>,
         pub proposal_timestamp_seconds: u64,
         pub deadline_timestamp_seconds: Option<u64>,
+    }
+
+    impl TryFrom<ProposalInfo> for types::Proposal {
+        type Error = &'static str;
+
+        fn try_from(p: ProposalInfo) -> Result<Self, Self::Error> {
+            let proposal = p.proposal.ok_or("proposal not set")?;
+
+            Ok(types::Proposal {
+                id: p.id.ok_or("id not set")?.id,
+                proposer: p.proposer.ok_or("proposer not set")?.id,
+                title: proposal.title.ok_or("title not set")?,
+                summary: proposal.summary,
+                url: proposal.url,
+                deadline: p.deadline_timestamp_seconds.ok_or("deadline_timestamp_seconds not set")? * 1000,
+            })
+        }
     }
 
     #[derive(CandidType, Deserialize)]
