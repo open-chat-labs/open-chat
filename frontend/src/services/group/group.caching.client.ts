@@ -63,23 +63,26 @@ export class CachingGroupClient implements IGroupClient {
         private client: IGroupClient
     ) {}
 
-    private setCachedEvents<T extends ChatEvent>(resp: EventsResponse<T>): EventsResponse<T> {
-        setCachedEvents(this.db, this.chatId, resp).catch((err) =>
+    private setCachedEvents<T extends ChatEvent>(
+        resp: EventsResponse<T>,
+        threadRootMessageIndex?: number
+    ): EventsResponse<T> {
+        setCachedEvents(this.db, this.chatId, resp, threadRootMessageIndex).catch((err) =>
             rollbar.error("Error writing cached group events", err)
         );
         return resp;
     }
 
-    private handleMissingEvents([cachedEvents, missing]: [
-        EventsSuccessResult<GroupChatEvent>,
-        Set<number>
-    ]): Promise<EventsResponse<GroupChatEvent>> {
+    private handleMissingEvents(
+        [cachedEvents, missing]: [EventsSuccessResult<GroupChatEvent>, Set<number>],
+        threadRootMessageIndex?: number
+    ): Promise<EventsResponse<GroupChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
         } else {
             return this.client
-                .chatEventsByIndex([...missing])
-                .then((resp) => this.setCachedEvents(resp))
+                .chatEventsByIndex([...missing], threadRootMessageIndex)
+                .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
                 .then((resp) => {
                     if (resp !== "events_failed") {
                         return mergeSuccessResponses(cachedEvents, resp);
@@ -99,7 +102,7 @@ export class CachingGroupClient implements IGroupClient {
             eventIndexes,
             this.chatId,
             threadRootMessageIndex
-        ).then((res) => this.handleMissingEvents(res));
+        ).then((res) => this.handleMissingEvents(res, threadRootMessageIndex));
     }
 
     @profile("groupCachingClient")
@@ -158,9 +161,9 @@ export class CachingGroupClient implements IGroupClient {
                     threadRootMessageIndex,
                     interrupt
                 )
-                .then((resp) => this.setCachedEvents(resp));
+                .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
         } else {
-            return this.handleMissingEvents([cachedEvents, missing]);
+            return this.handleMissingEvents([cachedEvents, missing], threadRootMessageIndex);
         }
     }
 
@@ -175,20 +178,22 @@ export class CachingGroupClient implements IGroupClient {
     sendMessage(
         senderName: string,
         mentioned: User[],
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         return this.client
-            .sendMessage(senderName, mentioned, message)
+            .sendMessage(senderName, mentioned, message, threadRootMessageIndex)
             .then(setCachedMessageFromSendResponse(this.db, this.chatId, message));
     }
 
     forwardMessage(
         senderName: string,
         mentioned: User[],
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         return this.client
-            .forwardMessage(senderName, mentioned, message)
+            .forwardMessage(senderName, mentioned, message, threadRootMessageIndex)
             .then(setCachedMessageFromSendResponse(this.db, this.chatId, message));
     }
 

@@ -95,9 +95,10 @@ export class CachingUserClient implements IUserClient {
 
     private setCachedEvents<T extends ChatEvent>(
         userId: string,
-        resp: EventsResponse<T>
+        resp: EventsResponse<T>,
+        threadRootMessageIndex?: number
     ): EventsResponse<T> {
-        setCachedEvents(this.db, userId, resp).catch((err) =>
+        setCachedEvents(this.db, userId, resp, threadRootMessageIndex).catch((err) =>
             rollbar.error("Error writing cached group events", err)
         );
         return resp;
@@ -105,14 +106,15 @@ export class CachingUserClient implements IUserClient {
 
     private handleMissingEvents(
         userId: string,
-        [cachedEvents, missing]: [EventsSuccessResult<DirectChatEvent>, Set<number>]
+        [cachedEvents, missing]: [EventsSuccessResult<DirectChatEvent>, Set<number>],
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
         } else {
             return this.client
-                .chatEventsByIndex([...missing], userId)
-                .then((resp) => this.setCachedEvents(userId, resp))
+                .chatEventsByIndex([...missing], userId, threadRootMessageIndex)
+                .then((resp) => this.setCachedEvents(userId, resp, threadRootMessageIndex))
                 .then((resp) => {
                     if (resp !== "events_failed") {
                         return mergeSuccessResponses(cachedEvents, resp);
@@ -125,11 +127,15 @@ export class CachingUserClient implements IUserClient {
     @profile("userCachingClient")
     async chatEventsByIndex(
         eventIndexes: number[],
-        userId: string
+        userId: string,
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
-        return getCachedEventsByIndex<DirectChatEvent>(this.db, eventIndexes, userId).then((res) =>
-            this.handleMissingEvents(userId, res)
-        );
+        return getCachedEventsByIndex<DirectChatEvent>(
+            this.db,
+            eventIndexes,
+            userId,
+            threadRootMessageIndex
+        ).then((res) => this.handleMissingEvents(userId, res, threadRootMessageIndex));
     }
 
     @profile("userCachingClient")
@@ -191,9 +197,13 @@ export class CachingUserClient implements IUserClient {
                     threadRootMessageIndex,
                     interrupt
                 )
-                .then((resp) => this.setCachedEvents(userId, resp));
+                .then((resp) => this.setCachedEvents(userId, resp, threadRootMessageIndex));
         } else {
-            return this.handleMissingEvents(userId, [cachedEvents, missing]);
+            return this.handleMissingEvents(
+                userId,
+                [cachedEvents, missing],
+                threadRootMessageIndex
+            );
         }
     }
 
@@ -385,10 +395,11 @@ export class CachingUserClient implements IUserClient {
         recipientId: string,
         sender: UserSummary,
         message: Message,
-        replyingToChatId?: string
+        replyingToChatId?: string,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         return this.client
-            .sendMessage(recipientId, sender, message, replyingToChatId)
+            .sendMessage(recipientId, sender, message, replyingToChatId, threadRootMessageIndex)
             .then(setCachedMessageFromSendResponse(this.db, this.userId, message));
     }
 
@@ -396,10 +407,11 @@ export class CachingUserClient implements IUserClient {
     forwardMessage(
         recipientId: string,
         sender: UserSummary,
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         return this.client
-            .forwardMessage(recipientId, sender, message)
+            .forwardMessage(recipientId, sender, message, threadRootMessageIndex)
             .then(setCachedMessageFromSendResponse(this.db, this.userId, message));
     }
 

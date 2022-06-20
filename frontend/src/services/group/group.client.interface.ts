@@ -58,12 +58,14 @@ export interface IGroupClient {
     sendMessage(
         senderName: string,
         mentioned: User[],
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse>;
     forwardMessage(
         senderName: string,
         mentioned: User[],
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse>;
     editMessage(message: Message): Promise<EditMessageResponse>;
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse>;

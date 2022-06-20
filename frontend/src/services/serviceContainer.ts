@@ -189,7 +189,8 @@ export class ServiceContainer implements MarkMessagesRead {
         chat: ChatSummary,
         user: UserSummary,
         mentioned: User[],
-        msg: Message
+        msg: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         if (chat.kind === "group_chat") {
             if (msg.content.kind === "crypto_content") {
@@ -200,7 +201,13 @@ export class ServiceContainer implements MarkMessagesRead {
                     msg
                 );
             }
-            return this.sendGroupMessage(chat.chatId, user.username, mentioned, msg);
+            return this.sendGroupMessage(
+                chat.chatId,
+                user.username,
+                mentioned,
+                msg,
+                threadRootMessageIndex
+            );
         }
         if (chat.kind === "direct_chat") {
             const replyingToChatId =
@@ -209,7 +216,13 @@ export class ServiceContainer implements MarkMessagesRead {
                 chat.chatId !== msg.repliesTo.chatId
                     ? msg.repliesTo.chatId
                     : undefined;
-            return this.sendDirectMessage(chat.them, user, msg, replyingToChatId);
+            return this.sendDirectMessage(
+                chat.them,
+                user,
+                msg,
+                replyingToChatId,
+                threadRootMessageIndex
+            );
         }
         throw new UnsupportedValueError("Unexpect chat type", chat);
     }
@@ -218,13 +231,19 @@ export class ServiceContainer implements MarkMessagesRead {
         chat: ChatSummary,
         user: UserSummary,
         mentioned: User[],
-        msg: Message
+        msg: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         if (chat.kind === "group_chat") {
-            return this.getGroupClient(chat.chatId).forwardMessage(user.username, mentioned, msg);
+            return this.getGroupClient(chat.chatId).forwardMessage(
+                user.username,
+                mentioned,
+                msg,
+                threadRootMessageIndex
+            );
         }
         if (chat.kind === "direct_chat") {
-            return this.userClient.forwardMessage(chat.them, user, msg);
+            return this.userClient.forwardMessage(chat.them, user, msg, threadRootMessageIndex);
         }
         throw new UnsupportedValueError("Unexpect chat type", chat);
     }
@@ -233,9 +252,15 @@ export class ServiceContainer implements MarkMessagesRead {
         chatId: string,
         senderName: string,
         mentioned: User[],
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
-        return this.getGroupClient(chatId).sendMessage(senderName, mentioned, message);
+        return this.getGroupClient(chatId).sendMessage(
+            senderName,
+            mentioned,
+            message,
+            threadRootMessageIndex
+        );
     }
 
     private editGroupMessage(chatId: string, message: Message): Promise<EditMessageResponse> {
@@ -246,9 +271,16 @@ export class ServiceContainer implements MarkMessagesRead {
         recipientId: string,
         sender: UserSummary,
         message: Message,
-        replyingToChatId?: string
+        replyingToChatId?: string,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
-        return this.userClient.sendMessage(recipientId, sender, message, replyingToChatId);
+        return this.userClient.sendMessage(
+            recipientId,
+            sender,
+            message,
+            replyingToChatId,
+            threadRootMessageIndex
+        );
     }
 
     private editDirectMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {

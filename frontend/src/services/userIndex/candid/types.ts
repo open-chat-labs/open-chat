@@ -63,7 +63,6 @@ export interface ChatMetrics {
   'replies' : bigint,
   'video_messages' : bigint,
   'polls' : bigint,
-  'proposals' : bigint,
   'reactions' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
@@ -146,6 +145,7 @@ export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'Message' : Message } |
   { 'PollEnded' : PollEnded } |
+  { 'ThreadUpdated' : ThreadUpdated } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'PollVoteDeleted' : UpdatedMessage } |
@@ -245,6 +245,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'PermissionsChanged' : PermissionsChanged } |
   { 'PollEnded' : PollEnded } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
+  { 'ThreadUpdated' : ThreadUpdated } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
@@ -389,6 +390,7 @@ export interface Message {
   'content' : MessageContent,
   'edited' : boolean,
   'sender' : UserId,
+  'thread_summary' : [] | [ThreadSummary],
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],
   'reactions' : Array<[string, Array<UserId>]>,
@@ -399,7 +401,6 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
-  { 'GovernanceProposal' : ProposalContent } |
   { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
@@ -432,7 +433,6 @@ export interface MessageUnpinned {
   'message_index' : MessageIndex,
 }
 export type Milliseconds = bigint;
-export type NeuronId = bigint;
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -521,19 +521,6 @@ export interface PollEnded {
   'message_index' : MessageIndex,
 }
 export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
-export interface ProposalContent {
-  'url' : string,
-  'title' : string,
-  'my_vote' : [] | [boolean],
-  'reject_votes' : number,
-  'deadline' : TimestampMillis,
-  'adopt_votes' : number,
-  'summary' : string,
-  'proposal_id' : ProposalId,
-  'governance_canister_id' : CanisterId,
-  'proposer' : NeuronId,
-}
-export type ProposalId = bigint;
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'name' : string,
@@ -618,6 +605,16 @@ export interface SuccessResult { 'open_storage_limit_bytes' : bigint }
 export type SuperAdminsArgs = {};
 export type SuperAdminsResponse = { 'Success' : { 'users' : Array<UserId> } };
 export interface TextContent { 'text' : string }
+export interface ThreadSummary {
+  'latest_event_timestamp' : TimestampMillis,
+  'participant_ids' : Array<UserId>,
+  'reply_count' : number,
+  'latest_event_index' : EventIndex,
+}
+export interface ThreadUpdated {
+  'event_index' : EventIndex,
+  'message_index' : MessageIndex,
+}
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export interface Tokens { 'e8s' : bigint }

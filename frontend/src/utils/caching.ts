@@ -335,7 +335,6 @@ async function aggregateEvents<T extends ChatEvent>(
     const lowerBound = ascending ? startIndex : Math.max(min, startIndex - MAX_EVENTS);
     const upperBound = ascending ? Math.min(max, startIndex + MAX_EVENTS) : startIndex;
 
-    console.log("aggregate events: events from ", lowerBound, " to ", upperBound);
     const range = IDBKeyRange.bound(
         createCacheKey(chatId, lowerBound, threadRootMessageIndex),
         createCacheKey(chatId, upperBound, threadRootMessageIndex)
@@ -364,19 +363,20 @@ export async function getCachedMessageByIndex<T extends ChatEvent>(
     threadRootMessageIndex?: number
 ): Promise<EventWrapper<T> | undefined> {
     const key = createCacheKey(chatId, eventIndex, threadRootMessageIndex);
-    return (await db).get("chat_events", key) as Promise<EventWrapper<T> | undefined>;
+    const store = threadRootMessageIndex ? "thread_events" : "chat_events";
+    return (await db).get(store, key) as Promise<EventWrapper<T> | undefined>;
 }
 
 export async function getCachedEventsByIndex<T extends ChatEvent>(
     db: Database,
     eventIndexes: number[],
     chatId: string,
-    _threadRootMessageIndex?: number
+    threadRootMessageIndex?: number
 ): Promise<[EventsSuccessResult<T>, Set<number>]> {
     const missing = new Set<number>();
     const returnedEvents = await Promise.all(
         eventIndexes.map((idx) =>
-            getCachedMessageByIndex(db, idx, chatId).then((evt) => {
+            getCachedMessageByIndex(db, idx, chatId, threadRootMessageIndex).then((evt) => {
                 if (evt === undefined) {
                     missing.add(idx);
                 }
@@ -487,10 +487,12 @@ export async function setCachedEvents<T extends ChatEvent>(
     threadRootMessageIndex?: number
 ): Promise<void> {
     if (resp === "events_failed") return;
-    const tx = (await db).transaction(["chat_events"], "readwrite", {
+    const store = threadRootMessageIndex ? "thread_events" : "chat_events";
+
+    const tx = (await db).transaction([store], "readwrite", {
         durability: "relaxed",
     });
-    const eventStore = tx.objectStore("chat_events");
+    const eventStore = tx.objectStore(store);
     await Promise.all(
         resp.events.concat(resp.affectedEvents).map(async (event) => {
             await eventStore.put(
@@ -543,10 +545,11 @@ async function setCachedMessage(
     messageEvent: EventWrapper<Message>,
     threadRootMessageIndex?: number
 ): Promise<void> {
-    const tx = (await db).transaction(["chat_events"], "readwrite", {
+    const store = threadRootMessageIndex ? "thread_events" : "chat_events";
+    const tx = (await db).transaction([store], "readwrite", {
         durability: "relaxed",
     });
-    const eventStore = tx.objectStore("chat_events");
+    const eventStore = tx.objectStore(store);
     await Promise.all([
         eventStore.put(
             makeSerialisable(messageEvent, chatId),
@@ -577,8 +580,9 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
     if (db === undefined) {
         throw new Error("Unable to open indexDB, cannot overwrite cache entries");
     }
-    const tx = (await db).transaction("chat_events", "readwrite", { durability: "relaxed" });
-    const store = tx.objectStore("chat_events");
+    const storeName = threadRootMessageIndex ? "thread_events" : "chat_events";
+    const tx = (await db).transaction(storeName, "readwrite", { durability: "relaxed" });
+    const store = tx.objectStore(storeName);
     await Promise.all(
         events.map((event) =>
             store.put(
@@ -671,6 +675,8 @@ export function closeDb(): void {
     db = undefined;
 }
 
+// for now this is only used for loading pinned messages so we can ignore the idea of
+// thread root message index, but it might come up later
 export async function loadMessagesByMessageIndex(
     db: Database,
     chatId: string,

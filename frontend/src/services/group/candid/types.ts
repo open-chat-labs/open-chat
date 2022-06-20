@@ -98,7 +98,6 @@ export interface ChatMetrics {
   'replies' : bigint,
   'video_messages' : bigint,
   'polls' : bigint,
-  'proposals' : bigint,
   'reactions' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
@@ -158,6 +157,7 @@ export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'Message' : Message } |
   { 'PollEnded' : PollEnded } |
+  { 'ThreadUpdated' : ThreadUpdated } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'PollVoteDeleted' : UpdatedMessage } |
@@ -213,16 +213,19 @@ export interface EventsArgs {
   'invite_code' : [] | [bigint],
   'max_events' : number,
   'ascending' : boolean,
+  'thread_root_message_index' : [] | [MessageIndex],
   'start_index' : EventIndex,
 }
 export interface EventsByIndexArgs {
   'invite_code' : [] | [bigint],
   'events' : Array<EventIndex>,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface EventsRangeArgs {
   'invite_code' : [] | [bigint],
   'to_index' : EventIndex,
   'from_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type EventsResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : EventsSuccessResult };
@@ -235,6 +238,7 @@ export interface EventsWindowArgs {
   'mid_point' : MessageIndex,
   'invite_code' : [] | [bigint],
   'max_events' : number,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface FailedCryptoTransaction {
   'to' : CryptoAccountFull,
@@ -297,6 +301,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'PermissionsChanged' : PermissionsChanged } |
   { 'PollEnded' : PollEnded } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
+  { 'ThreadUpdated' : ThreadUpdated } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'PollVoteRegistered' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
@@ -449,6 +454,7 @@ export interface Message {
   'content' : MessageContent,
   'edited' : boolean,
   'sender' : UserId,
+  'thread_summary' : [] | [ThreadSummary],
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],
   'reactions' : Array<[string, Array<UserId>]>,
@@ -459,7 +465,6 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
-  { 'GovernanceProposal' : ProposalContent } |
   { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
@@ -491,7 +496,10 @@ export interface MessageUnpinned {
   'unpinned_by' : UserId,
   'message_index' : MessageIndex,
 }
-export interface MessagesByMessageIndexArgs { 'messages' : Array<MessageIndex> }
+export interface MessagesByMessageIndexArgs {
+  'messages' : Array<MessageIndex>,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
 export type MessagesByMessageIndexResponse = { 'CallerNotInGroup' : null } |
   {
     'Success' : {
@@ -500,7 +508,6 @@ export type MessagesByMessageIndexResponse = { 'CallerNotInGroup' : null } |
     }
   };
 export type Milliseconds = bigint;
-export type NeuronId = bigint;
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -591,19 +598,6 @@ export interface PollEnded {
   'message_index' : MessageIndex,
 }
 export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
-export interface ProposalContent {
-  'url' : string,
-  'title' : string,
-  'my_vote' : [] | [boolean],
-  'reject_votes' : number,
-  'deadline' : TimestampMillis,
-  'adopt_votes' : number,
-  'summary' : string,
-  'proposal_id' : ProposalId,
-  'governance_canister_id' : CanisterId,
-  'proposer' : NeuronId,
-}
-export type ProposalId = bigint;
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'name' : string,
@@ -698,6 +692,7 @@ export interface SendMessageArgs {
   'sender_name' : string,
   'message_id' : MessageId,
   'replies_to' : [] | [GroupReplyContext],
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'CallerNotInGroup' : null } |
@@ -722,6 +717,16 @@ export interface SubscriptionInfo {
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
+export interface ThreadSummary {
+  'latest_event_timestamp' : TimestampMillis,
+  'participant_ids' : Array<UserId>,
+  'reply_count' : number,
+  'latest_event_index' : EventIndex,
+}
+export interface ThreadUpdated {
+  'event_index' : EventIndex,
+  'message_index' : MessageIndex,
+}
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export interface ToggleReactionArgs {

@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMillis, Timestamped, Version};
-use utils::canister::{self, CanistersRequiringUpgrade};
+use utils::canister::{self, CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
 use utils::memory;
 use utils::time::MINUTE_IN_MS;
@@ -64,7 +64,7 @@ impl RuntimeState {
             deleted_private_groups: 0,
             canisters_in_pool: self.data.canister_pool.len() as u16,
             canister_upgrades_completed: canister_upgrades_metrics.completed as u64,
-            canister_upgrades_failed: canister_upgrades_metrics.failed as u64,
+            canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             group_wasm_version: self.data.group_canister_wasm.version,
@@ -186,7 +186,7 @@ pub struct Metrics {
     pub deleted_private_groups: u64,
     pub canisters_in_pool: u16,
     pub canister_upgrades_completed: u64,
-    pub canister_upgrades_failed: u64,
+    pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
     pub group_wasm_version: Version,

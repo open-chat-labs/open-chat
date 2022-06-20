@@ -131,9 +131,10 @@ export class UserClient extends CandidService implements IUserClient {
     chatEventsByIndex(
         eventIndexes: number[],
         userId: string,
-        _threadRootMessageIndex?: number
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
         const args = {
+            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(userId),
             events: eventIndexes,
         };
@@ -151,7 +152,9 @@ export class UserClient extends CandidService implements IUserClient {
         messageIndex: number,
         interrupt: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>> {
+        const thread_root_message_index: [] = [];
         const args = {
+            thread_root_message_index,
             user_id: Principal.fromText(userId),
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
@@ -173,7 +176,9 @@ export class UserClient extends CandidService implements IUserClient {
         _threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
+            const thread_root_message_index: [] = [];
             const args = {
+                thread_root_message_index,
                 user_id: Principal.fromText(userId),
                 max_events: MAX_EVENTS,
                 start_index: index,
@@ -300,7 +305,8 @@ export class UserClient extends CandidService implements IUserClient {
         recipientId: string,
         sender: UserSummary,
         message: Message,
-        replyingToChatId?: string
+        replyingToChatId?: string,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.userId, recipientId])
@@ -315,6 +321,7 @@ export class UserClient extends CandidService implements IUserClient {
                         message.repliesTo
                     ),
                     forwarding: false,
+                    thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 };
                 return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
             });
@@ -324,7 +331,8 @@ export class UserClient extends CandidService implements IUserClient {
     forwardMessage(
         recipientId: string,
         sender: UserSummary,
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         // TODO: first forward using the DataClient
         const req: ApiSendMessageArgs = {
@@ -334,6 +342,7 @@ export class UserClient extends CandidService implements IUserClient {
             message_id: message.messageId,
             replies_to: [],
             forwarding: message.forwarded,
+            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
         };
         return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
     }

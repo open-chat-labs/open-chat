@@ -5,6 +5,7 @@ use types::{EventIndex, EventWrapper, Message, MessageIndex, UserId};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
+    pub thread_root_message_index: Option<MessageIndex>,
     pub messages: Vec<MessageIndex>,
 }
 

@@ -145,20 +145,6 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
-  const ProposalId = IDL.Nat64;
-  const NeuronId = IDL.Nat64;
-  const ProposalContent = IDL.Record({
-    'url' : IDL.Text,
-    'title' : IDL.Text,
-    'my_vote' : IDL.Opt(IDL.Bool),
-    'reject_votes' : IDL.Nat32,
-    'deadline' : TimestampMillis,
-    'adopt_votes' : IDL.Nat32,
-    'summary' : IDL.Text,
-    'proposal_id' : ProposalId,
-    'governance_canister_id' : CanisterId,
-    'proposer' : NeuronId,
-  });
   const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const CryptoAccountFull = IDL.Variant({
     'UserIndex' : AccountIdentifier,
@@ -239,7 +225,6 @@ export const idlFactory = ({ IDL }) => {
     'Poll' : PollContent,
     'Text' : TextContent,
     'Image' : ImageContent,
-    'GovernanceProposal' : ProposalContent,
     'Cryptocurrency' : CryptocurrencyContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,
@@ -256,11 +241,13 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserBlocked' : IDL.Null,
   });
+  const MessageIndex = IDL.Nat32;
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
     'user_id' : UserId,
     'max_events' : IDL.Nat32,
     'ascending' : IDL.Bool,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
     'start_index' : EventIndex,
   });
   const UpdatedMessage = IDL.Record({
@@ -268,16 +255,22 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'event_index' : EventIndex,
   });
+  const ThreadSummary = IDL.Record({
+    'latest_event_timestamp' : TimestampMillis,
+    'participant_ids' : IDL.Vec(UserId),
+    'reply_count' : IDL.Nat32,
+    'latest_event_index' : EventIndex,
+  });
   const ReplyContext = IDL.Record({
     'chat_id_if_other' : IDL.Opt(ChatId),
     'event_index' : EventIndex,
   });
-  const MessageIndex = IDL.Nat32;
   const Message = IDL.Record({
     'forwarded' : IDL.Bool,
     'content' : MessageContent,
     'edited' : IDL.Bool,
     'sender' : UserId,
+    'thread_summary' : IDL.Opt(ThreadSummary),
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(ReplyContext),
     'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
@@ -287,12 +280,17 @@ export const idlFactory = ({ IDL }) => {
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
   });
+  const ThreadUpdated = IDL.Record({
+    'event_index' : EventIndex,
+    'message_index' : MessageIndex,
+  });
   const DirectChatCreated = IDL.Record({});
   const DirectChatEvent = IDL.Variant({
     'MessageReactionRemoved' : UpdatedMessage,
     'MessageReactionAdded' : UpdatedMessage,
     'Message' : Message,
     'PollEnded' : PollEnded,
+    'ThreadUpdated' : ThreadUpdated,
     'PollVoteRegistered' : UpdatedMessage,
     'MessageDeleted' : UpdatedMessage,
     'PollVoteDeleted' : UpdatedMessage,
@@ -315,16 +313,19 @@ export const idlFactory = ({ IDL }) => {
   const EventsByIndexArgs = IDL.Record({
     'user_id' : UserId,
     'events' : IDL.Vec(EventIndex),
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const EventsRangeArgs = IDL.Record({
     'user_id' : UserId,
     'to_index' : EventIndex,
     'from_index' : EventIndex,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const EventsWindowArgs = IDL.Record({
     'mid_point' : MessageIndex,
     'user_id' : UserId,
     'max_events' : IDL.Nat32,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const InitialStateArgs = IDL.Record({});
   const Cycles = IDL.Nat;
@@ -348,7 +349,6 @@ export const idlFactory = ({ IDL }) => {
     'replies' : IDL.Nat64,
     'video_messages' : IDL.Nat64,
     'polls' : IDL.Nat64,
-    'proposals' : IDL.Nat64,
     'reactions' : IDL.Nat64,
   });
   const FallbackRole = IDL.Variant({
@@ -462,6 +462,7 @@ export const idlFactory = ({ IDL }) => {
   const MessagesByMessageIndexArgs = IDL.Record({
     'messages' : IDL.Vec(MessageIndex),
     'user_id' : UserId,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
@@ -570,6 +571,7 @@ export const idlFactory = ({ IDL }) => {
     'sender_name' : IDL.Text,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(ReplyContext),
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const InvalidPollReason = IDL.Variant({
     'DuplicateOptions' : IDL.Null,

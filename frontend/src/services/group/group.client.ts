@@ -73,11 +73,11 @@ import {
     registerPollVoteResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
-import { MAX_EVENTS, mergeGroupChatDetails } from "../../domain/chat/chat.utils";
+import { identity, MAX_EVENTS, mergeGroupChatDetails } from "../../domain/chat/chat.utils";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
-import { base64ToBigint } from "utils/base64";
+import { base64ToBigint } from "../../utils/base64";
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
@@ -105,9 +105,10 @@ export class GroupClient extends CandidService implements IGroupClient {
     @profile("groupClient")
     chatEventsByIndex(
         eventIndexes: number[],
-        _threadRootMessageIndex?: number
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
+            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             events: eventIndexes,
             invite_code: apiOptional(base64ToBigint, this.inviteCode),
         };
@@ -124,7 +125,9 @@ export class GroupClient extends CandidService implements IGroupClient {
         messageIndex: number,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
+        const thread_root_message_index: [] = [];
         const args = {
+            thread_root_message_index,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
             invite_code: apiOptional(base64ToBigint, this.inviteCode),
@@ -146,7 +149,9 @@ export class GroupClient extends CandidService implements IGroupClient {
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
+            const thread_root_message_index: [] = [];
             const args = {
+                thread_root_message_index,
                 max_events: MAX_EVENTS,
                 ascending: asc,
                 start_index: index,
@@ -223,7 +228,8 @@ export class GroupClient extends CandidService implements IGroupClient {
     sendMessage(
         senderName: string,
         mentioned: User[],
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.chatId])
@@ -241,6 +247,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                         ),
                         mentioned: mentioned.map(apiUser),
                         forwarding: false,
+                        thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                     }),
                     sendMessageResponse
                 );
@@ -251,7 +258,8 @@ export class GroupClient extends CandidService implements IGroupClient {
     forwardMessage(
         senderName: string,
         mentioned: User[],
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         // TODO: first forward using the DataClient
         return this.handleResponse(
@@ -262,6 +270,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 replies_to: [],
                 mentioned: mentioned.map(apiUser),
                 forwarding: message.forwarded,
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             }),
             sendMessageResponse
         );
@@ -396,7 +405,9 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     @profile("groupClient")
     getMessagesByMessageIndex(messageIndexes: Set<number>): Promise<EventsResponse<Message>> {
+        const thread_root_message_index: [] = [];
         const args = {
+            thread_root_message_index,
             messages: [...messageIndexes],
         };
         return this.handleQueryResponse(
