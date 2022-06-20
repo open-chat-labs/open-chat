@@ -9,10 +9,10 @@ use types::{CanisterId, Cycles, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 use utils::memory;
 
-mod governance_client;
 mod guards;
 mod lifecycle;
 mod model;
+mod nns_governance_client;
 mod queries;
 mod updates;
 

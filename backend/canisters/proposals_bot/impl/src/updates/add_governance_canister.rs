@@ -1,6 +1,6 @@
-use crate::governance_client::ListProposalInfo;
 use crate::guards::caller_is_service_owner;
-use crate::{governance_client, mutate_state, read_state};
+use crate::nns_governance_client::ListProposalInfo;
+use crate::{mutate_state, nns_governance_client, read_state};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use proposals_bot_canister::add_governance_canister::{Response::*, *};
@@ -41,7 +41,7 @@ async fn get_next_proposal_id(governance_canister_id: CanisterId) -> Result<u64,
         include_status: Vec::new(),
     };
 
-    match governance_client::list_proposals(governance_canister_id, list_proposals_args).await {
+    match nns_governance_client::list_proposals(governance_canister_id, list_proposals_args).await {
         Ok(response) => Ok(response.into_iter().next().map_or(1, |p| p.proposal_id + 1)),
         Err(error) => Err(InternalError(format!(
             "Error calling 'list_proposals' on canister '{}': {:?}",

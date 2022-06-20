@@ -1,4 +1,4 @@
-use crate::governance_client::governance_response_types::{ListProposalInfoResponse, ProposalInfo};
+use crate::nns_governance_client::governance_response_types::{ListProposalInfoResponse, ProposalInfo};
 use candid::CandidType;
 use ic_cdk::api::call::CallResult;
 use serde::Deserialize;

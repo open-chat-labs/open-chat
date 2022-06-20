@@ -1,6 +1,6 @@
-use crate::governance_client::{self, ListProposalInfo, WrappedProposalId};
 use crate::model::nervous_systems::ProposalToPush;
 use crate::mutate_state;
+use crate::nns_governance_client::{self, ListProposalInfo, WrappedProposalId};
 use ic_cdk_macros::heartbeat;
 use tracing::error;
 use types::{CanisterId, ChatId, MessageContent, MessageId, Proposal, ProposalContent, ProposalId};
@@ -36,7 +36,7 @@ mod retrieve_proposals {
             include_status: Vec::new(),
         };
 
-        match governance_client::list_proposals(governance_canister_id, args).await {
+        match nns_governance_client::list_proposals(governance_canister_id, args).await {
             Ok(response) => {
                 mutate_state(|state| {
                     if let Some(proposal_result) = response.into_iter().next() {
