@@ -618,6 +618,7 @@ export type GroupPermissions = {
     createPolls: PermissionRole;
     sendMessages: PermissionRole;
     reactToMessages: PermissionRole;
+    replyInThread: PermissionRole;
 };
 
 export type GroupChatDetailsResponse = "caller_not_in_group" | GroupChatDetails;

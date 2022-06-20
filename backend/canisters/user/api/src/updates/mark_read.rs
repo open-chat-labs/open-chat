@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, MessageIndexRange};
+use types::{ChatId, MessageIndex, MessageIndexRange};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -10,6 +10,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct ChatMessagesRead {
     pub chat_id: ChatId,
+    pub thread_root_message_index: Option<MessageIndex>,
     pub message_ranges: Vec<MessageIndexRange>,
 }
 

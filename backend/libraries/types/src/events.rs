@@ -205,6 +205,7 @@ pub enum GroupInviteCodeChange {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ThreadUpdated {
+    pub updated_by: UserId,
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
 }
@@ -234,6 +235,33 @@ impl DirectChatEvent {
             DirectChatEvent::PollVoteDeleted(v) => Some(v.event_index),
             DirectChatEvent::PollEnded(p) => Some(p.event_index),
             DirectChatEvent::ThreadUpdated(t) => Some(t.event_index),
+            _ => None,
+        }
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum ThreadChatEvent {
+    Message(Box<Message>),
+    MessageEdited(UpdatedMessage),
+    MessageDeleted(UpdatedMessage),
+    MessageReactionAdded(UpdatedMessage),
+    MessageReactionRemoved(UpdatedMessage),
+    PollVoteRegistered(UpdatedMessage),
+    PollVoteDeleted(UpdatedMessage),
+    PollEnded(PollEnded),
+}
+
+impl ThreadChatEvent {
+    pub fn affected_event(&self) -> Option<EventIndex> {
+        match self {
+            ThreadChatEvent::MessageEdited(m) => Some(m.event_index),
+            ThreadChatEvent::MessageDeleted(m) => Some(m.event_index),
+            ThreadChatEvent::MessageReactionAdded(r) => Some(r.event_index),
+            ThreadChatEvent::MessageReactionRemoved(r) => Some(r.event_index),
+            ThreadChatEvent::PollVoteRegistered(v) => Some(v.event_index),
+            ThreadChatEvent::PollVoteDeleted(v) => Some(v.event_index),
+            ThreadChatEvent::PollEnded(p) => Some(p.event_index),
             _ => None,
         }
     }

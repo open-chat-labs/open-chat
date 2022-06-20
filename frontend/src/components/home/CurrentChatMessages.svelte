@@ -380,10 +380,8 @@
                             .then(() => {
                                 // there is a possibility here we will not have loaded enough *visible* events
                                 // after grouping of certain events. In that case we may need to immediately go and load more
-                                if (localStorage.getItem("openchat_recursive_load") === "true") {
-                                    if (shouldLoadPreviousMessages()) {
-                                        controller.loadPreviousMessages();
-                                    }
+                                if (shouldLoadPreviousMessages()) {
+                                    controller.loadPreviousMessages();
                                 }
                             });
                         break;
