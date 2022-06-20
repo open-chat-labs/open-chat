@@ -90,6 +90,7 @@ const defaultGroupChat: GroupChatSummary = {
         createPolls: "members",
         sendMessages: "members",
         reactToMessages: "members",
+        replyInThread: "members",
     },
     metrics: emptyChatMetrics(),
     myMetrics: emptyChatMetrics(),

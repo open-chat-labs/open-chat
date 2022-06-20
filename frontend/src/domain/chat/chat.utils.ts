@@ -1303,6 +1303,14 @@ export function canReactToMessages(chat: ChatSummary): boolean {
     }
 }
 
+export function canReplyInThread(chat: ChatSummary): boolean {
+    if (chat.kind === "group_chat") {
+        return isPermitted(chat.myRole, chat.permissions.replyInThread);
+    } else {
+        return true;
+    }
+}
+
 export function canBeRemoved(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
         return !hasOwnerRights(chat.myRole);
