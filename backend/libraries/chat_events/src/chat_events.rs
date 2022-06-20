@@ -12,7 +12,8 @@ use types::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
-    chat_type: ChatEventsType,
+    #[serde(alias = "chat_type")]
+    events_type: ChatEventsType,
     chat_id: ChatId,
     events: ChatEventsVec,
     message_id_map: HashMap<MessageId, EventIndex>,
@@ -84,7 +85,7 @@ pub enum ToggleReactionResult {
 impl ChatEvents {
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_type: ChatEventsType::Direct,
+            events_type: ChatEventsType::Direct,
             chat_id: them.into(),
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
@@ -108,7 +109,7 @@ impl ChatEvents {
         now: TimestampMillis,
     ) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_type: ChatEventsType::Group,
+            events_type: ChatEventsType::Group,
             chat_id,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
@@ -133,7 +134,7 @@ impl ChatEvents {
 
     pub fn new_thread(chat_id: ChatId) -> ChatEvents {
         ChatEvents {
-            chat_type: ChatEventsType::Thread,
+            events_type: ChatEventsType::Thread,
             chat_id,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
@@ -190,7 +191,7 @@ impl ChatEvents {
     }
 
     pub fn push_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> EventIndex {
-        let valid = match self.chat_type {
+        let valid = match self.events_type {
             ChatEventsType::Direct => event.is_valid_for_direct_chat(),
             ChatEventsType::Group => event.is_valid_for_group_chat(),
             ChatEventsType::Thread => event.is_valid_for_thread(),
