@@ -260,6 +260,7 @@ type UpdatePermissionsArgs =
         create_polls: opt PermissionRole;
         send_messages: opt PermissionRole;
         react_to_messages: opt PermissionRole;
+        reply_in_thread: opt PermissionRole;
     };
 
 type UpdatePermissionsResponse =

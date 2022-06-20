@@ -833,6 +833,7 @@ type GroupPermissions =
         create_polls: PermissionRole;
         send_messages: PermissionRole;
         react_to_messages: PermissionRole;
+        reply_in_thread: PermissionRole;
     };
 
 type PermissionRole =
