@@ -1,7 +1,9 @@
+use crate::governance_clients::common::{RawProposal, WrappedProposalId};
+use crate::governance_clients::nns::ListProposalInfo;
+use crate::governance_clients::sns::ListProposals;
 use crate::model::nervous_systems::ProposalToPush;
-use crate::nns_governance_client::{self, ListProposalInfo};
-use crate::sns_governance_client::{self, ListProposals};
-use crate::{mutate_state, RuntimeState, WrappedProposalId};
+use crate::{mutate_state, RuntimeState};
+use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::heartbeat;
 use tracing::error;
 use types::{CanisterId, ChatId, MessageContent, MessageId, Proposal, ProposalContent, ProposalId};
@@ -14,8 +16,7 @@ fn heartbeat() {
 
 mod retrieve_proposals {
     use super::*;
-    use crate::RawProposal;
-    use ic_cdk::api::call::CallResult;
+    use crate::governance_clients;
 
     pub fn run() {
         if let Some((governance_canister_id, next_proposal_id, is_nns)) = mutate_state(get_next) {
@@ -45,7 +46,7 @@ mod retrieve_proposals {
             include_status: Vec::new(),
         };
 
-        let response = nns_governance_client::list_proposals(governance_canister_id, args).await;
+        let response = governance_clients::nns::list_proposals(governance_canister_id, args).await;
         handle_proposal_response(governance_canister_id, next_proposal_id, response);
     }
 
@@ -60,7 +61,7 @@ mod retrieve_proposals {
             include_status: Vec::new(),
         };
 
-        let response = sns_governance_client::list_proposals(governance_canister_id, args).await;
+        let response = governance_clients::sns::list_proposals(governance_canister_id, args).await;
         handle_proposal_response(governance_canister_id, next_proposal_id, response);
     }
 
