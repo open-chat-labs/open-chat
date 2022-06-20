@@ -46,7 +46,7 @@ mod retrieve_proposals {
             include_status: Vec::new(),
         };
 
-        let response = governance_clients::nns::list_proposals(governance_canister_id, args).await;
+        let response = governance_clients::nns::list_proposals(governance_canister_id, &args).await;
         handle_proposal_response(governance_canister_id, next_proposal_id, response);
     }
 
@@ -61,7 +61,7 @@ mod retrieve_proposals {
             include_status: Vec::new(),
         };
 
-        let response = governance_clients::sns::list_proposals(governance_canister_id, args).await;
+        let response = governance_clients::sns::list_proposals(governance_canister_id, &args).await;
         handle_proposal_response(governance_canister_id, next_proposal_id, response);
     }
 

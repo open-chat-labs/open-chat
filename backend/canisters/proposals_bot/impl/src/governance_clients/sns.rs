@@ -4,12 +4,12 @@ use candid::CandidType;
 use ic_cdk::api::call::CallResult;
 use serde::Deserialize;
 use tracing::error;
-use types::CanisterId;
+use types::{CanisterId, ProposalId};
 
-pub async fn list_proposals(governance_canister_id: CanisterId, args: ListProposals) -> CallResult<Vec<ProposalData>> {
+pub async fn list_proposals(governance_canister_id: CanisterId, args: &ListProposals) -> CallResult<Vec<ProposalData>> {
     let method_name = "list_proposals";
     let response: CallResult<(ListProposalsResponse,)> =
-        ic_cdk::api::call::call(governance_canister_id, method_name, (&args,)).await;
+        ic_cdk::api::call::call(governance_canister_id, method_name, (args,)).await;
 
     if let Err(error) = &response {
         error!(method_name, error_code = ?error.0, error_message = error.1.as_str(), "Error calling c2c");
@@ -46,6 +46,10 @@ pub mod governance_response_types {
     }
 
     impl RawProposal for ProposalData {
+        fn id(&self) -> ProposalId {
+            self.id.as_ref().map_or(ProposalId::default(), |p| p.id)
+        }
+
         fn is_excluded(&self) -> bool {
             false
         }

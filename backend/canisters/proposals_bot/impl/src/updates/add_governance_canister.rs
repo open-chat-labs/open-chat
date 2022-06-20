@@ -1,7 +1,10 @@
+use crate::governance_clients::common::RawProposal;
+use crate::governance_clients::sns::ListProposals;
 use crate::governance_clients::{self, nns::ListProposalInfo};
 use crate::guards::caller_is_service_owner;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
+use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
 use proposals_bot_canister::add_governance_canister::{Response::*, *};
 use types::{CanisterId, ChatId, GroupPermissions, PermissionRole};
@@ -14,13 +17,13 @@ async fn add_governance_canister(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let next_proposal_id = if is_nns {
-        match get_next_nns_proposal_id(args.governance_canister_id).await {
-            Ok(id) => id,
-            Err(response) => return response,
-        }
+    let next_proposal_id = match if is_nns {
+        get_next_nns_proposal_id(args.governance_canister_id).await
     } else {
-        unreachable!()
+        get_next_sns_proposal_id(args.governance_canister_id).await
+    } {
+        Ok(id) => id,
+        Err(response) => return response,
     };
 
     let chat_id = match create_group(&args).await {
@@ -34,6 +37,7 @@ async fn add_governance_canister(args: Args) -> Response {
             .nervous_systems
             .add(args.name, args.governance_canister_id, chat_id, next_proposal_id);
     });
+
     Success
 }
 
@@ -59,8 +63,26 @@ async fn get_next_nns_proposal_id(governance_canister_id: CanisterId) -> Result<
         include_status: Vec::new(),
     };
 
-    match governance_clients::nns::list_proposals(governance_canister_id, list_proposals_args).await {
-        Ok(response) => Ok(response.into_iter().next().and_then(|p| p.id).map_or(1, |p| p.id)),
+    let response = governance_clients::nns::list_proposals(governance_canister_id, &list_proposals_args).await;
+    handle_response(governance_canister_id, response)
+}
+
+async fn get_next_sns_proposal_id(governance_canister_id: CanisterId) -> Result<u64, Response> {
+    let list_proposals_args = ListProposals {
+        limit: 1,
+        before_proposal: None,
+        exclude_type: Vec::new(),
+        include_reward_status: Vec::new(),
+        include_status: Vec::new(),
+    };
+
+    let response = governance_clients::sns::list_proposals(governance_canister_id, &list_proposals_args).await;
+    handle_response(governance_canister_id, response)
+}
+
+fn handle_response<R: RawProposal>(governance_canister_id: CanisterId, response: CallResult<Vec<R>>) -> Result<u64, Response> {
+    match response {
+        Ok(response) => Ok(response.into_iter().next().map_or(1, |p| p.id())),
         Err(error) => Err(InternalError(format!(
             "Error calling 'list_proposals' on canister '{}': {:?}",
             governance_canister_id, error
