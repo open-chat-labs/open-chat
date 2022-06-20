@@ -145,6 +145,20 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const ProposalId = IDL.Nat64;
+  const NeuronId = IDL.Nat64;
+  const ProposalContent = IDL.Record({
+    'url' : IDL.Text,
+    'title' : IDL.Text,
+    'my_vote' : IDL.Opt(IDL.Bool),
+    'reject_votes' : IDL.Nat32,
+    'deadline' : TimestampMillis,
+    'adopt_votes' : IDL.Nat32,
+    'summary' : IDL.Text,
+    'proposal_id' : ProposalId,
+    'governance_canister_id' : CanisterId,
+    'proposer' : NeuronId,
+  });
   const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const CryptoAccountFull = IDL.Variant({
     'UserIndex' : AccountIdentifier,
@@ -225,6 +239,7 @@ export const idlFactory = ({ IDL }) => {
     'Poll' : PollContent,
     'Text' : TextContent,
     'Image' : ImageContent,
+    'GovernanceProposal' : ProposalContent,
     'Cryptocurrency' : CryptocurrencyContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,
@@ -349,6 +364,7 @@ export const idlFactory = ({ IDL }) => {
     'replies' : IDL.Nat64,
     'video_messages' : IDL.Nat64,
     'polls' : IDL.Nat64,
+    'proposals' : IDL.Nat64,
     'reactions' : IDL.Nat64,
   });
   const FallbackRole = IDL.Variant({
