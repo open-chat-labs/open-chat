@@ -1,11 +1,10 @@
 use crate::model::nervous_systems::ProposalToPush;
-use crate::nns_governance_client::{self, ListProposalInfo, WrappedProposalId};
-use crate::{mutate_state, RuntimeState};
+use crate::nns_governance_client::{self, ListProposalInfo};
+use crate::sns_governance_client::{self, ListProposals};
+use crate::{mutate_state, RuntimeState, WrappedProposalId};
 use ic_cdk_macros::heartbeat;
 use tracing::error;
 use types::{CanisterId, ChatId, MessageContent, MessageId, Proposal, ProposalContent, ProposalId};
-
-const EXCHANGE_RATE_TOPIC: i32 = 2;
 
 #[heartbeat]
 fn heartbeat() {
@@ -15,11 +14,15 @@ fn heartbeat() {
 
 mod retrieve_proposals {
     use super::*;
+    use crate::RawProposal;
+    use ic_cdk::api::call::CallResult;
 
     pub fn run() {
         if let Some((governance_canister_id, next_proposal_id, is_nns)) = mutate_state(get_next) {
             if is_nns {
                 ic_cdk::spawn(retrieve_nns_proposal(governance_canister_id, next_proposal_id));
+            } else {
+                ic_cdk::spawn(retrieve_sns_proposal(governance_canister_id, next_proposal_id));
             }
         }
     }
@@ -42,13 +45,36 @@ mod retrieve_proposals {
             include_status: Vec::new(),
         };
 
-        match nns_governance_client::list_proposals(governance_canister_id, args).await {
+        let response = nns_governance_client::list_proposals(governance_canister_id, args).await;
+        handle_proposal_response(governance_canister_id, next_proposal_id, response);
+    }
+
+    async fn retrieve_sns_proposal(governance_canister_id: CanisterId, next_proposal_id: ProposalId) {
+        let args = ListProposals {
+            limit: 1,
+            before_proposal: Some(WrappedProposalId {
+                id: next_proposal_id + 1,
+            }),
+            exclude_type: Vec::new(),
+            include_reward_status: Vec::new(),
+            include_status: Vec::new(),
+        };
+
+        let response = sns_governance_client::list_proposals(governance_canister_id, args).await;
+        handle_proposal_response(governance_canister_id, next_proposal_id, response);
+    }
+
+    fn handle_proposal_response<R: RawProposal>(
+        governance_canister_id: CanisterId,
+        next_proposal_id: u64,
+        response: CallResult<Vec<R>>,
+    ) {
+        match response {
             Ok(response) => {
                 mutate_state(|state| {
-                    if let Some(proposal_info) = response.into_iter().next() {
-                        // We ignore exchange rate proposals
-                        if proposal_info.topic != EXCHANGE_RATE_TOPIC {
-                            match Proposal::try_from(proposal_info) {
+                    if let Some(raw_proposal) = response.into_iter().next() {
+                        if !raw_proposal.is_excluded() {
+                            match raw_proposal.try_into() {
                                 Ok(proposal) => {
                                     state
                                         .data

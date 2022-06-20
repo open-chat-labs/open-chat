@@ -5,7 +5,7 @@ use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, Cycles, TimestampMillis, Timestamped, Version};
+use types::{CanisterId, Cycles, NeuronId, Proposal, ProposalId, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 use utils::memory;
 
@@ -14,6 +14,7 @@ mod lifecycle;
 mod model;
 mod nns_governance_client;
 mod queries;
+mod sns_governance_client;
 mod updates;
 
 thread_local! {
@@ -83,4 +84,18 @@ pub struct Metrics {
     pub memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct WrappedProposalId {
+    pub id: ProposalId,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct WrappedNeuronId {
+    pub id: NeuronId,
+}
+
+pub trait RawProposal: TryInto<Proposal, Error = &'static str> {
+    fn is_excluded(&self) -> bool;
 }
