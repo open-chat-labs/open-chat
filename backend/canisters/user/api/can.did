@@ -2,8 +2,8 @@ import "../../../libraries/types/can.did";
 
 type SendMessageArgs =
     record {
-        thread_root_message_index: opt MessageIndex;
         recipient: UserId;
+        thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         sender_name: text;
         content: MessageContent;
