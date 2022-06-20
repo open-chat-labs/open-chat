@@ -43,6 +43,7 @@ pub enum ChatEventInternal {
     PermissionsChanged(Box<PermissionsChanged>),
     GroupVisibilityChanged(Box<GroupVisibilityChanged>),
     GroupInviteCodeChanged(Box<GroupInviteCodeChanged>),
+    ThreadUpdated(Box<ThreadUpdatedInternal>),
 }
 
 impl ChatEventInternal {
@@ -58,6 +59,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::PollVoteRegistered(_)
                 | ChatEventInternal::PollVoteDeleted(_)
                 | ChatEventInternal::PollEnded(_)
+                | ChatEventInternal::ThreadUpdated(_)
         )
     }
 
@@ -92,6 +94,21 @@ impl ChatEventInternal {
                 | ChatEventInternal::PermissionsChanged(_)
                 | ChatEventInternal::GroupVisibilityChanged(_)
                 | ChatEventInternal::GroupInviteCodeChanged(_)
+                | ChatEventInternal::ThreadUpdated(_)
+        )
+    }
+
+    pub fn is_valid_for_thread(&self) -> bool {
+        matches!(
+            self,
+            ChatEventInternal::Message(_)
+                | ChatEventInternal::MessageEdited(_)
+                | ChatEventInternal::MessageDeleted(_)
+                | ChatEventInternal::MessageReactionAdded(_)
+                | ChatEventInternal::MessageReactionRemoved(_)
+                | ChatEventInternal::PollVoteRegistered(_)
+                | ChatEventInternal::PollVoteDeleted(_)
+                | ChatEventInternal::PollEnded(_)
         )
     }
 
@@ -183,6 +200,7 @@ impl ChatEventInternal {
             | ChatEventInternal::MessageReactionAdded(e)
             | ChatEventInternal::MessageReactionRemoved(e)
             | ChatEventInternal::PollVoteDeleted(e) => Some(e.updated_by),
+            ChatEventInternal::ThreadUpdated(e) => Some(e.updated_by),
             ChatEventInternal::PollEnded(_) | ChatEventInternal::DirectChatCreated(_) => None,
         }
     }
@@ -291,6 +309,12 @@ impl MessageInternal {
 pub struct UpdatedMessageInternal {
     pub updated_by: UserId,
     pub message_id: MessageId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ThreadUpdatedInternal {
+    pub updated_by: UserId,
+    pub message_index: MessageIndex,
 }
 
 fn incr(counter: &mut u64) {
