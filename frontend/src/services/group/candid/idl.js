@@ -318,6 +318,7 @@ export const idlFactory = ({ IDL }) => {
     'add_members' : PermissionRole,
     'create_polls' : PermissionRole,
     'pin_messages' : PermissionRole,
+    'reply_in_thread' : PermissionRole,
     'react_to_messages' : PermissionRole,
   });
   const PermissionsChanged = IDL.Record({
@@ -684,6 +685,7 @@ export const idlFactory = ({ IDL }) => {
     'add_members' : IDL.Opt(PermissionRole),
     'create_polls' : IDL.Opt(PermissionRole),
     'pin_messages' : IDL.Opt(PermissionRole),
+    'reply_in_thread' : IDL.Opt(PermissionRole),
     'react_to_messages' : IDL.Opt(PermissionRole),
   });
   const UpdatePermissionsResponse = IDL.Variant({

@@ -404,6 +404,7 @@ export interface GroupPermissions {
   'add_members' : PermissionRole,
   'create_polls' : PermissionRole,
   'pin_messages' : PermissionRole,
+  'reply_in_thread' : PermissionRole,
   'react_to_messages' : PermissionRole,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }

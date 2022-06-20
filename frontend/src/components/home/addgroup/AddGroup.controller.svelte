@@ -46,6 +46,7 @@
                 createPolls: "members",
                 sendMessages: "members",
                 reactToMessages: "members",
+                replyInThread: "members",
             },
         };
     }

@@ -40,6 +40,7 @@ export const idlFactory = ({ IDL }) => {
     'add_members' : PermissionRole,
     'create_polls' : PermissionRole,
     'pin_messages' : PermissionRole,
+    'reply_in_thread' : PermissionRole,
     'react_to_messages' : PermissionRole,
   });
   const Avatar = IDL.Record({
