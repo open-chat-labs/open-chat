@@ -1,8 +1,7 @@
-use std::collections::HashSet;
-
 use crate::{EventIndex, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ThreadSummary {

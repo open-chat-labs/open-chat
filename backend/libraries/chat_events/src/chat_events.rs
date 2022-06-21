@@ -41,7 +41,7 @@ pub struct PushMessageArgs {
     pub forwarded: bool,
 }
 
-pub struct RelyToThreadArgs {
+pub struct ReplyToThreadArgs {
     pub thread_message_index: MessageIndex,
     pub sender: UserId,
     pub latest_event_index: EventIndex,
@@ -199,7 +199,7 @@ impl ChatEvents {
         }
     }
 
-    pub fn add_reply_to_thread(&mut self, args: RelyToThreadArgs) -> Option<ThreadSummaryInternal> {
+    pub fn add_reply_to_thread(&mut self, args: ReplyToThreadArgs) -> Option<ThreadSummaryInternal> {
         if let Some(root_message) = self
             .get_event_index_by_message_index(args.thread_message_index)
             .and_then(|e| self.events.get_mut(e))

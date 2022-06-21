@@ -1,13 +1,12 @@
-use std::collections::HashSet;
-
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use candid::Encode;
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::{ChatEventInternal, GroupChatEvents, PushMessageArgs, RelyToThreadArgs, ThreadChatEvents};
+use chat_events::{ChatEventInternal, GroupChatEvents, PushMessageArgs, ReplyToThreadArgs, ThreadChatEvents};
 use group_canister::send_message::{Response::*, *};
 use serde_bytes::ByteBuf;
+use std::collections::HashSet;
 use types::{
     CanisterId, ChatId, ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, Message,
     MessageContent, MessageIndex, Notification, TimestampMillis, UserId,
@@ -69,7 +68,8 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             forwarded: args.forwarding,
         };
 
-        let (message_event, thread_participants, root_message_sender, first_reply) = match args.thread_root_message_index {
+        let (message_event, thread_participants, root_message_sender, first_thread_reply) = match args.thread_root_message_index
+        {
             Some(thread_message_index) => {
                 if let Some(root_message) = runtime_state.data.events.message_by_message_index(thread_message_index) {
                     let root_message_sender = root_message.event.sender;
@@ -86,7 +86,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     let thread_summary = runtime_state
                         .data
                         .events
-                        .add_reply_to_thread(RelyToThreadArgs {
+                        .add_reply_to_thread(ReplyToThreadArgs {
                             thread_message_index,
                             sender,
                             latest_event_index: message_event.index,
@@ -129,9 +129,12 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         }
 
         // If this is the first message in a thread then mention the original sender/message
-        if let (Some(user_id), Some(root_messge_index)) = (root_message_sender, args.thread_root_message_index) {
-            if first_reply {
-                runtime_state.data.participants.add_mention(&user_id, None, root_messge_index);
+        if let (Some(user_id), Some(root_message_index)) = (root_message_sender, args.thread_root_message_index) {
+            if first_thread_reply {
+                runtime_state
+                    .data
+                    .participants
+                    .add_mention(&user_id, None, root_message_index);
             }
         }
 
