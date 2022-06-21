@@ -1,11 +1,11 @@
 use candid::{CandidType, Principal};
 use chat_events::GroupChatEvents;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::{
-    EventIndex, FallbackRole, GroupPermissions, Mention, MessageIndex, Participant, Role, TimestampMillis, UserId,
-    MAX_RETURNED_MENTIONS,
+    EventIndex, FallbackRole, GroupPermissions, Mention, MentionInternal, MessageIndex, Participant, Role, TimestampMillis,
+    UserId, MAX_RETURNED_MENTIONS,
 };
 
 const MAX_PARTICIPANTS_PER_GROUP: u32 = 100_000;
@@ -139,10 +139,10 @@ impl Participants {
         self.blocked.contains(user_id)
     }
 
-    pub fn users_to_notify(&self, my_user_id: UserId) -> HashSet<UserId> {
+    pub fn users_to_notify(&self, thread_participants: Option<&HashSet<UserId>>) -> HashSet<UserId> {
         self.by_principal
             .values()
-            .filter(|p| p.user_id != my_user_id && !p.notifications_muted)
+            .filter(|p| !p.notifications_muted && thread_participants.map_or(true, |ps| ps.contains(&p.user_id)))
             .map(|p| p.user_id)
             .collect()
     }
@@ -296,10 +296,18 @@ impl Participants {
         self.admin_count
     }
 
-    pub fn add_mention(&mut self, user_id: &UserId, message_index: MessageIndex) -> bool {
+    pub fn add_mention(
+        &mut self,
+        user_id: &UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_index: MessageIndex,
+    ) -> bool {
         if let Some(p) = self.get_by_user_id_mut(user_id) {
-            if p.mentions.is_empty() || (message_index > *p.mentions.last().unwrap()) {
-                p.mentions.push(message_index);
+            if p.mentions.is_empty() || (message_index > p.mentions.last().unwrap().message_index) {
+                p.mentions.push(MentionInternal {
+                    thread_root_message_index,
+                    message_index,
+                });
                 return true;
             }
         }
@@ -348,10 +356,26 @@ pub struct ParticipantInternal {
     pub date_added: TimestampMillis,
     pub role: Role,
     pub notifications_muted: bool,
-    pub mentions: Vec<MessageIndex>,
+    #[serde(deserialize_with = "deserialize_mention")]
+    pub mentions: Vec<MentionInternal>,
 
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,
+}
+
+fn deserialize_mention<'de, D>(deserializer: D) -> Result<Vec<MentionInternal>, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    let mentions: Vec<MessageIndex> = de::Deserialize::deserialize(deserializer)?;
+
+    Ok(mentions
+        .iter()
+        .map(|message_index| MentionInternal {
+            thread_root_message_index: None,
+            message_index: *message_index,
+        })
+        .collect())
 }
 
 impl ParticipantInternal {

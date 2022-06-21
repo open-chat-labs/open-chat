@@ -24,6 +24,7 @@ type SendMessageResponse =
         NotAuthorized;
         CallerNotInGroup;
         InvalidRequest: text;
+        ThreadMessageNotFound;
     };
 
 type EditMessageArgs =
