@@ -1,6 +1,5 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use candid::Encode;
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::{ChatEventInternal, GroupChatEvents, PushMessageArgs};
@@ -125,9 +124,9 @@ fn register_callbacks_if_required(message_event: &EventWrapper<Message>, runtime
 }
 
 async fn register_end_poll_callback(canister_id: CanisterId, message_index: MessageIndex, end_date: TimestampMillis) {
-    let payload = ByteBuf::from(Encode!(&group_canister::c2c_end_poll::Args { message_index }).unwrap());
+    let payload = ByteBuf::from(msgpack::serialize(&group_canister::c2c_end_poll::Args { message_index }));
     let args = callback_canister::c2c_register_callback::Args {
-        method_name: "c2c_end_poll".to_string(),
+        method_name: "c2c_end_poll_msgpack".to_string(),
         payload,
         timestamp: end_date,
     };
