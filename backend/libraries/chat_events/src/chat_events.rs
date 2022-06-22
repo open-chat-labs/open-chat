@@ -827,6 +827,22 @@ impl ChatEvents {
         }
     }
 
+    pub fn end_overdue_polls(&mut self, now: TimestampMillis) {
+        let mut overdue_polls = Vec::new();
+        for message in self.events.iter().filter_map(|e| e.event.as_message()) {
+            if let MessageContentInternal::Poll(p) = &message.content {
+                if let Some(end_date) = p.config.end_date {
+                    if end_date < now {
+                        overdue_polls.push(message.message_index);
+                    }
+                }
+            }
+        }
+        for message_index in overdue_polls {
+            self.end_poll(message_index, now);
+        }
+    }
+
     pub fn get(&self, event_index: EventIndex) -> Option<&EventWrapper<ChatEventInternal>> {
         self.events.get(event_index)
     }
