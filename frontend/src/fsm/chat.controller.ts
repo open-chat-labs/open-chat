@@ -625,7 +625,9 @@ export class ChatController {
             }
 
             // If it is unconfirmed then we simply append it
-            this.appendMessage(messageEvent);
+            if (this.appendMessage(messageEvent)) {
+                unconfirmed.add(this.chatId, messageEvent);
+            }
         }
 
         this.raiseEvent({
