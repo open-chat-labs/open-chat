@@ -215,35 +215,34 @@ impl ChatEvents {
         }
     }
 
-    pub fn add_reply_to_thread(&mut self, args: ReplyToThreadArgs) -> Option<ThreadSummary> {
-        if let Some(root_message) = self
+    pub fn add_reply_to_thread(&mut self, args: ReplyToThreadArgs) -> ThreadSummary {
+        let thread_message_index = args.thread_message_index;
+        let root_message = self
             .get_event_index_by_message_index(args.thread_message_index)
             .and_then(|e| self.events.get_mut(e))
             .and_then(|e| e.event.as_message_mut())
-        {
-            let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummary::default);
-            summary.reply_count += 1;
-            summary.latest_event_index = args.latest_event_index;
-            summary.latest_event_timestamp = args.now;
+            .unwrap_or_else(|| panic!("Root thread message not found with message index {thread_message_index:?}"));
 
-            if !summary.participant_ids.iter().any(|p| *p == args.sender) {
-                summary.participant_ids.push(args.sender);
-            }
+        let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummary::default);
+        summary.reply_count += 1;
+        summary.latest_event_index = args.latest_event_index;
+        summary.latest_event_timestamp = args.now;
 
-            let summary_clone = summary.clone();
-
-            self.push_event(
-                ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
-                    updated_by: args.sender,
-                    message_index: args.thread_message_index,
-                })),
-                args.now,
-            );
-
-            Some(summary_clone)
-        } else {
-            None
+        if !summary.participant_ids.iter().any(|p| *p == args.sender) {
+            summary.participant_ids.push(args.sender);
         }
+
+        let summary_clone = summary.clone();
+
+        self.push_event(
+            ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
+                updated_by: args.sender,
+                message_index: thread_message_index,
+            })),
+            args.now,
+        );
+
+        summary_clone
     }
 
     pub fn push_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> EventIndex {
