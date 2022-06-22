@@ -82,16 +82,12 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
                     let message_event = thread_events.push_message(push_message_args);
 
-                    let thread_summary = runtime_state
-                        .data
-                        .events
-                        .add_reply_to_thread(ReplyToThreadArgs {
-                            thread_message_index,
-                            sender,
-                            latest_event_index: message_event.index,
-                            now,
-                        })
-                        .unwrap();
+                    let thread_summary = runtime_state.data.events.add_reply_to_thread(ReplyToThreadArgs {
+                        thread_message_index,
+                        sender,
+                        latest_event_index: message_event.index,
+                        now,
+                    });
 
                     (
                         message_event,
