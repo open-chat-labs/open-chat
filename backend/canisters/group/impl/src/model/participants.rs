@@ -139,12 +139,20 @@ impl Participants {
         self.blocked.contains(user_id)
     }
 
-    pub fn users_to_notify(&self, thread_participants: Option<&HashSet<UserId>>) -> HashSet<UserId> {
-        self.by_principal
-            .values()
-            .filter(|p| !p.notifications_muted && thread_participants.map_or(true, |ps| ps.contains(&p.user_id)))
-            .map(|p| p.user_id)
-            .collect()
+    pub fn users_to_notify(&self, thread_participants: Option<&Vec<UserId>>) -> HashSet<UserId> {
+        if let Some(thread_participants) = thread_participants {
+            thread_participants
+                .iter()
+                .filter(|user_id| self.get_by_user_id(user_id).map_or(false, |p| p.notifications_muted))
+                .copied()
+                .collect()
+        } else {
+            self.by_principal
+                .values()
+                .filter(|p| !p.notifications_muted)
+                .map(|p| p.user_id)
+                .collect()
+        }
     }
 
     pub fn user_limit_reached(&self) -> Option<u32> {

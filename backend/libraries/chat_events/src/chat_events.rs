@@ -199,17 +199,20 @@ impl ChatEvents {
         }
     }
 
-    pub fn add_reply_to_thread(&mut self, args: ReplyToThreadArgs) -> Option<ThreadSummaryInternal> {
+    pub fn add_reply_to_thread(&mut self, args: ReplyToThreadArgs) -> Option<ThreadSummary> {
         if let Some(root_message) = self
             .get_event_index_by_message_index(args.thread_message_index)
             .and_then(|e| self.events.get_mut(e))
             .and_then(|e| e.event.as_message_mut())
         {
-            let mut summary = root_message.thread_summary.get_or_insert(ThreadSummaryInternal::default());
-            summary.participant_ids.insert(args.sender);
+            let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummary::default);
             summary.reply_count += 1;
             summary.latest_event_index = args.latest_event_index;
             summary.latest_event_timestamp = args.now;
+
+            if !summary.participant_ids.iter().any(|p| *p == args.sender) {
+                summary.participant_ids.push(args.sender);
+            }
 
             let summary_clone = summary.clone();
 

@@ -149,7 +149,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let notification = Notification::GroupMessageNotification(GroupMessageNotification {
             chat_id: runtime_state.env.canister_id().into(),
-            thread_root_message_index: None,
+            thread_root_message_index: args.thread_root_message_index,
             group_name: runtime_state.data.name.clone(),
             sender,
             sender_name: args.sender_name,
