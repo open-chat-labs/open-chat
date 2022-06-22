@@ -16,6 +16,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
+    ThreadMessageNotFound,
     MessageEmpty,
     TextTooLong(u32),
     InvalidPoll(InvalidPollReason),

@@ -98,6 +98,7 @@ export interface ChatMetrics {
   'replies' : bigint,
   'video_messages' : bigint,
   'polls' : bigint,
+  'proposals' : bigint,
   'reactions' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
@@ -145,7 +146,10 @@ export type DeleteGroupArgs = {};
 export type DeleteGroupResponse = { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'InternalError' : null };
-export interface DeleteMessagesArgs { 'message_ids' : Array<MessageId> }
+export interface DeleteMessagesArgs {
+  'message_ids' : Array<MessageId>,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
 export type DeleteMessagesResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : null };
 export interface DeletedContent {
@@ -201,6 +205,7 @@ export type DisableInviteCodeResponse = { 'NotAuthorized' : null } |
 export interface EditMessageArgs {
   'content' : MessageContent,
   'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
@@ -447,6 +452,7 @@ export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,
   'event_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
   'mentioned_by' : UserId,
   'message_index' : MessageIndex,
 }
@@ -466,6 +472,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
+  { 'GovernanceProposal' : ProposalContent } |
   { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
@@ -509,6 +516,7 @@ export type MessagesByMessageIndexResponse = { 'CallerNotInGroup' : null } |
     }
   };
 export type Milliseconds = bigint;
+export type NeuronId = bigint;
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -599,6 +607,19 @@ export interface PollEnded {
   'message_index' : MessageIndex,
 }
 export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
+export interface ProposalContent {
+  'url' : string,
+  'title' : string,
+  'my_vote' : [] | [boolean],
+  'reject_votes' : number,
+  'deadline' : TimestampMillis,
+  'adopt_votes' : number,
+  'summary' : string,
+  'proposal_id' : ProposalId,
+  'governance_canister_id' : CanisterId,
+  'proposer' : NeuronId,
+}
+export type ProposalId = bigint;
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'name' : string,
@@ -620,6 +641,7 @@ export interface PublicSummarySuccess { 'summary' : PublicGroupSummary }
 export interface RegisterPollVoteArgs {
   'poll_option' : number,
   'operation' : VoteOperation,
+  'thread_root_message_index' : [] | [MessageIndex],
   'message_index' : MessageIndex,
 }
 export type RegisterPollVoteResponse = { 'CallerNotInGroup' : null } |
@@ -696,6 +718,7 @@ export interface SendMessageArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
+  { 'ThreadMessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   {
@@ -725,6 +748,7 @@ export interface ThreadSummary {
   'latest_event_index' : EventIndex,
 }
 export interface ThreadUpdated {
+  'updated_by' : UserId,
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
@@ -732,6 +756,7 @@ export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export interface ToggleReactionArgs {
   'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : string,
 }
 export type ToggleReactionResponse = { 'MessageNotFound' : null } |

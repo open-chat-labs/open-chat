@@ -174,7 +174,7 @@ fn process_events(
         .mentions
         .iter()
         .rev()
-        .filter(|m| **m >= lowest_message_index)
+        .filter(|m| m.message_index >= lowest_message_index)
         .filter_map(|message_index| runtime_state.data.events.hydrate_mention(message_index))
         .take(MAX_RETURNED_MENTIONS)
         .collect();

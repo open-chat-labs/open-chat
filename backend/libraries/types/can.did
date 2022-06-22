@@ -315,6 +315,7 @@ type AvatarIdUpdate =
 
 type Mention =
     record {
+        thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         message_index: MessageIndex;
         event_index: EventIndex;

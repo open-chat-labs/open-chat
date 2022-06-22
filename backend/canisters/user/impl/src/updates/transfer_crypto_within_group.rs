@@ -53,6 +53,7 @@ async fn transfer_crypto_within_group(args: Args) -> Response {
             group_canister::send_message::Response::MessageEmpty
             | group_canister::send_message::Response::InvalidPoll(_)
             | group_canister::send_message::Response::NotAuthorized
+            | group_canister::send_message::Response::ThreadMessageNotFound
             | group_canister::send_message::Response::InvalidRequest(_)
             | group_canister::send_message::Response::TextTooLong(_) => unreachable!(),
         },
