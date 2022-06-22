@@ -4,6 +4,7 @@ use types::MessageIndex;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
 }
 

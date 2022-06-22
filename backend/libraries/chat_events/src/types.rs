@@ -8,8 +8,8 @@ use types::{
     GroupInviteCodeChanged, GroupNameChanged, GroupVisibilityChanged, MessageContentInternal, MessageId, MessageIndex,
     MessagePinned, MessageUnpinned, OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin,
     ParticipantJoined, ParticipantLeft, ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved,
-    PermissionsChanged, PollVoteRegistered, Reaction, ReplyContext, RoleChanged, TimestampMillis, UserId, UsersBlocked,
-    UsersUnblocked,
+    PermissionsChanged, PollVoteRegistered, Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, UserId,
+    UsersBlocked, UsersUnblocked,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -217,6 +217,7 @@ pub struct MessageInternal {
     pub last_updated: Option<TimestampMillis>,
     pub last_edited: Option<TimestampMillis>,
     pub deleted_by: Option<DeletedBy>,
+    pub thread_summary: Option<ThreadSummary>,
     pub forwarded: bool,
 }
 
