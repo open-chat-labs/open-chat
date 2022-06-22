@@ -53,7 +53,7 @@ type DeleteMessagesResponse =
         CallerNotInGroup;
     };
 
-type RegisterPollVoteergs =
+type RegisterPollVoteArgs =
     record {
         thread_root_message_index: opt MessageIndex;
         message_index: MessageIndex;
