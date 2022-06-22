@@ -38,6 +38,7 @@ pub struct GroupPermissions {
     pub create_polls: PermissionRole,
     pub send_messages: PermissionRole,
     pub react_to_messages: PermissionRole,
+    #[serde(default)]
     pub reply_in_thread: PermissionRole,
 }
 
