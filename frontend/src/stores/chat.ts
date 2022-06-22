@@ -113,6 +113,8 @@ async function loadChats(api: ServiceContainer, messagesRead: IMessageReadTracke
             return;
         }
 
+        console.log("poll: loading chats");
+
         chatsLoading.set(!chatsInitialised);
         const chats = Object.values(get(serverChatSummariesStore));
         const chatId = get(selectedChatId);
