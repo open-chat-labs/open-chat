@@ -40,6 +40,7 @@ export const idlFactory = ({ IDL }) => {
     'add_members' : PermissionRole,
     'create_polls' : PermissionRole,
     'pin_messages' : PermissionRole,
+    'reply_in_thread' : PermissionRole,
     'react_to_messages' : PermissionRole,
   });
   const Avatar = IDL.Record({
@@ -82,9 +83,11 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
   });
   const MessageId = IDL.Nat;
+  const MessageIndex = IDL.Nat32;
   const DeleteMessagesArgs = IDL.Record({
     'user_id' : UserId,
     'message_ids' : IDL.Vec(MessageId),
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const DeleteMessagesResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
@@ -249,6 +252,7 @@ export const idlFactory = ({ IDL }) => {
     'content' : MessageContent,
     'user_id' : UserId,
     'message_id' : MessageId,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const EditMessageResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
@@ -256,7 +260,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserBlocked' : IDL.Null,
   });
-  const MessageIndex = IDL.Nat32;
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
     'user_id' : UserId,
@@ -296,6 +299,7 @@ export const idlFactory = ({ IDL }) => {
     'message_index' : MessageIndex,
   });
   const ThreadUpdated = IDL.Record({
+    'updated_by' : UserId,
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
   });
@@ -384,6 +388,7 @@ export const idlFactory = ({ IDL }) => {
   const Mention = IDL.Record({
     'message_id' : MessageId,
     'event_index' : EventIndex,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
     'mentioned_by' : UserId,
     'message_index' : MessageIndex,
   });
@@ -470,6 +475,7 @@ export const idlFactory = ({ IDL }) => {
   const ChatMessagesRead = IDL.Record({
     'message_ranges' : IDL.Vec(MessageIndexRange),
     'chat_id' : ChatId,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MarkReadArgs = IDL.Record({
     'messages_read' : IDL.Vec(ChatMessagesRead),
@@ -532,6 +538,7 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'poll_option' : IDL.Nat32,
     'operation' : VoteOperation,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
     'message_index' : MessageIndex,
   });
   const RegisterPollVoteResponse = IDL.Variant({
@@ -632,6 +639,7 @@ export const idlFactory = ({ IDL }) => {
   const ToggleReactionArgs = IDL.Record({
     'user_id' : UserId,
     'message_id' : MessageId,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
     'reaction' : IDL.Text,
   });
   const ToggleReactionResponse = IDL.Variant({

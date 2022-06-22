@@ -981,18 +981,31 @@ export class ServiceContainer implements MarkMessagesRead {
         chatId: string,
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
-        return this.getGroupClient(chatId).registerPollVote(messageIdx, answerIdx, voteType);
+        return this.getGroupClient(chatId).registerPollVote(
+            messageIdx,
+            answerIdx,
+            voteType,
+            threadRootMessageIndex
+        );
     }
 
     registerDirectChatPollVote(
         otherUser: string,
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
-        return this.userClient.registerPollVote(otherUser, messageIdx, answerIdx, voteType);
+        return this.userClient.registerPollVote(
+            otherUser,
+            messageIdx,
+            answerIdx,
+            voteType,
+            threadRootMessageIndex
+        );
     }
 
     withdrawCryptocurrency(

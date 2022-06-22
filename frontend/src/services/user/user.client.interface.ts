@@ -125,7 +125,8 @@ export interface IUserClient {
         otherUser: string,
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse>;
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal

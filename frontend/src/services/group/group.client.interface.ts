@@ -94,7 +94,8 @@ export interface IGroupClient {
     registerPollVote(
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse>;
     searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse>;
     getInviteCode(): Promise<InviteCodeResponse>;

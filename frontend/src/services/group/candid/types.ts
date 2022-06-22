@@ -146,7 +146,10 @@ export type DeleteGroupArgs = {};
 export type DeleteGroupResponse = { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'InternalError' : null };
-export interface DeleteMessagesArgs { 'message_ids' : Array<MessageId> }
+export interface DeleteMessagesArgs {
+  'message_ids' : Array<MessageId>,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
 export type DeleteMessagesResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : null };
 export interface DeletedContent {
@@ -202,6 +205,7 @@ export type DisableInviteCodeResponse = { 'NotAuthorized' : null } |
 export interface EditMessageArgs {
   'content' : MessageContent,
   'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
@@ -405,6 +409,7 @@ export interface GroupPermissions {
   'add_members' : PermissionRole,
   'create_polls' : PermissionRole,
   'pin_messages' : PermissionRole,
+  'reply_in_thread' : PermissionRole,
   'react_to_messages' : PermissionRole,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
@@ -447,6 +452,7 @@ export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,
   'event_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
   'mentioned_by' : UserId,
   'message_index' : MessageIndex,
 }
@@ -635,6 +641,7 @@ export interface PublicSummarySuccess { 'summary' : PublicGroupSummary }
 export interface RegisterPollVoteArgs {
   'poll_option' : number,
   'operation' : VoteOperation,
+  'thread_root_message_index' : [] | [MessageIndex],
   'message_index' : MessageIndex,
 }
 export type RegisterPollVoteResponse = { 'CallerNotInGroup' : null } |
@@ -711,6 +718,7 @@ export interface SendMessageArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
+  { 'ThreadMessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   {
@@ -740,6 +748,7 @@ export interface ThreadSummary {
   'latest_event_index' : EventIndex,
 }
 export interface ThreadUpdated {
+  'updated_by' : UserId,
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
@@ -747,6 +756,7 @@ export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export interface ToggleReactionArgs {
   'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : string,
 }
 export type ToggleReactionResponse = { 'MessageNotFound' : null } |
@@ -800,6 +810,7 @@ export interface UpdatePermissionsArgs {
   'add_members' : [] | [PermissionRole],
   'create_polls' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
+  'reply_in_thread' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }
 export type UpdatePermissionsResponse = { 'CallerNotInGroup' : null } |

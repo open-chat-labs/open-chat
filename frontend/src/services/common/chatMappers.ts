@@ -370,6 +370,7 @@ export function groupPermissions(candid: ApiGroupPermissions): GroupPermissions 
         createPolls: permissionRole(candid.create_polls),
         sendMessages: permissionRole(candid.send_messages),
         reactToMessages: permissionRole(candid.react_to_messages),
+        replyInThread: permissionRole(candid.reply_in_thread),
     };
 }
 
@@ -387,6 +388,7 @@ export function apiGroupPermissions(permissions: GroupPermissions): ApiGroupPerm
         create_polls: apiPermissionRole(permissions.createPolls),
         send_messages: apiPermissionRole(permissions.sendMessages),
         react_to_messages: apiPermissionRole(permissions.reactToMessages),
+        reply_in_thread: apiPermissionRole(permissions.replyInThread),
     };
 }
 
@@ -406,6 +408,7 @@ export function apiUpdatePermissions(
         create_polls: apiOptional(apiPermissionRole, permissions.createPolls),
         send_messages: apiOptional(apiPermissionRole, permissions.sendMessages),
         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
+        reply_in_thread: apiOptional(apiPermissionRole, permissions.replyInThread),
     };
 }
 
@@ -689,6 +692,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
             createPolls: "owner",
             sendMessages: "owner",
             reactToMessages: "owner",
+            replyInThread: "owner",
         },
         metrics: emptyChatMetrics(),
         myMetrics: emptyChatMetrics(),

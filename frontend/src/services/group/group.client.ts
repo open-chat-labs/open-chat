@@ -216,6 +216,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             .then(({ content }) => {
                 return this.handleResponse(
                     this.groupService.edit_message({
+                        thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                         content: apiMessageContent(content ?? message.content),
                         message_id: message.messageId,
                     }),
@@ -314,6 +315,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     ): Promise<ToggleReactionResponse> {
         return this.handleResponse(
             this.groupService.toggle_reaction({
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 reaction,
             }),
@@ -328,6 +330,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     ): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.groupService.delete_messages({
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_ids: [messageId],
             }),
             deleteMessageResponse
@@ -448,10 +451,12 @@ export class GroupClient extends CandidService implements IGroupClient {
     registerPollVote(
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
         return this.handleResponse(
             this.groupService.register_poll_vote({
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 poll_option: answerIdx,
                 operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
                 message_index: messageIdx,

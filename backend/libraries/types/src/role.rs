@@ -38,6 +38,7 @@ pub struct GroupPermissions {
     pub create_polls: PermissionRole,
     pub send_messages: PermissionRole,
     pub react_to_messages: PermissionRole,
+    pub reply_in_thread: PermissionRole,
 }
 
 impl Default for GroupPermissions {
@@ -55,6 +56,7 @@ impl Default for GroupPermissions {
             create_polls: PermissionRole::Members,
             send_messages: PermissionRole::Members,
             react_to_messages: PermissionRole::Members,
+            reply_in_thread: PermissionRole::Members,
         }
     }
 }
@@ -121,6 +123,10 @@ impl Role {
 
     pub fn can_react_to_messages(&self, permissions: &GroupPermissions) -> bool {
         self.is_permitted(permissions.react_to_messages)
+    }
+
+    pub fn can_reply_in_thread(&self, permissions: &GroupPermissions) -> bool {
+        self.is_permitted(permissions.reply_in_thread)
     }
 
     pub fn can_be_removed(&self) -> bool {

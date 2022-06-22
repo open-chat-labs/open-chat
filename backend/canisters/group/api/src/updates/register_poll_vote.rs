@@ -4,6 +4,7 @@ use types::{MessageIndex, PollVotes, VoteOperation};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
     pub poll_option: u32,
     pub operation: VoteOperation,

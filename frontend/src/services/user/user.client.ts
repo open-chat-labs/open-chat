@@ -298,6 +298,7 @@ export class UserClient extends CandidService implements IUserClient {
                 const req = {
                     content: apiMessageContent(content ?? message.content),
                     user_id: Principal.fromText(recipientId),
+                    thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                     message_id: message.messageId,
                 };
                 return this.handleResponse(this.userService.edit_message(req), editMessageResponse);
@@ -424,6 +425,7 @@ export class UserClient extends CandidService implements IUserClient {
             this.userService.mark_read({
                 messages_read: request.map(({ chatId, ranges }) => ({
                     chat_id: Principal.fromText(chatId),
+                    thread_root_message_index: [],
                     message_ranges: ranges.subranges().map((r) => ({
                         from: r.low,
                         to: r.high,
@@ -444,6 +446,7 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.toggle_reaction({
                 user_id: Principal.fromText(otherUserId),
+                thread_root_message_index: [],
                 message_id: messageId,
                 reaction,
             }),
@@ -460,6 +463,7 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.delete_messages({
                 user_id: Principal.fromText(otherUserId),
+                thread_root_message_index: [],
                 message_ids: [messageId],
             }),
             deleteMessageResponse
@@ -569,11 +573,13 @@ export class UserClient extends CandidService implements IUserClient {
         otherUser: string,
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
         return this.handleResponse(
             this.userService.register_poll_vote({
                 user_id: Principal.fromText(otherUser),
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 poll_option: answerIdx,
                 operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
                 message_index: messageIdx,

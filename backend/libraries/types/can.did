@@ -315,6 +315,7 @@ type AvatarIdUpdate =
 
 type Mention =
     record {
+        thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         message_index: MessageIndex;
         event_index: EventIndex;
@@ -833,6 +834,7 @@ type GroupPermissions =
         create_polls: PermissionRole;
         send_messages: PermissionRole;
         react_to_messages: PermissionRole;
+        reply_in_thread: PermissionRole;
     };
 
 type PermissionRole =
@@ -852,6 +854,7 @@ type ThreadSummary =
 
 type ThreadUpdated =
     record {
+        updated_by: UserId;
         event_index: EventIndex;
         message_index: MessageIndex;
     };

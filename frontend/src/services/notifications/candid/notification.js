@@ -187,6 +187,7 @@ export const Notification = IDL.Variant({
       'index' : IDL.Nat32,
     }),
     'sender_name' : IDL.Text,
+    'thread_root_message_index' : IDL.Opt(IDL.Nat32),
   }),
   'GroupMessageNotification' : IDL.Record({
     'hide' : IDL.Bool,
@@ -379,6 +380,7 @@ export const Notification = IDL.Variant({
     }),
     'sender_name' : IDL.Text,
     'chat_id' : IDL.Principal,
+    'thread_root_message_index' : IDL.Opt(IDL.Nat32),
     'group_name' : IDL.Text,
   }),
   'AddedToGroupNotification' : IDL.Record({

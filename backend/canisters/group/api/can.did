@@ -24,10 +24,12 @@ type SendMessageResponse =
         NotAuthorized;
         CallerNotInGroup;
         InvalidRequest: text;
+        ThreadMessageNotFound;
     };
 
 type EditMessageArgs =
     record {
+        thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         content: MessageContent;
     };
@@ -41,6 +43,7 @@ type EditMessageResponse =
 
 type DeleteMessagesArgs =
     record {
+        thread_root_message_index: opt MessageIndex;
         message_ids: vec MessageId;
     };
 
@@ -50,8 +53,9 @@ type DeleteMessagesResponse =
         CallerNotInGroup;
     };
 
-type RegisterPollVoteArgs =
+type RegisterPollVoteergs =
     record {
+        thread_root_message_index: opt MessageIndex;
         message_index: MessageIndex;
         poll_option: nat32;
         operation: VoteOperation;
@@ -68,6 +72,7 @@ type RegisterPollVoteResponse =
 
 type ToggleReactionArgs =
     record {
+        thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         reaction: text;
     };
@@ -260,6 +265,7 @@ type UpdatePermissionsArgs =
         create_polls: opt PermissionRole;
         send_messages: opt PermissionRole;
         react_to_messages: opt PermissionRole;
+        reply_in_thread: opt PermissionRole;
     };
 
 type UpdatePermissionsResponse =

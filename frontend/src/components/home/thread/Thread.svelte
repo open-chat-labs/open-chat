@@ -284,6 +284,13 @@
         sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
     }
 
+    function registerVote(
+        ev: CustomEvent<{ messageIndex: number; answerIndex: number; type: "register" | "delete" }>
+    ) {
+        console.log("register vote - todo");
+        // controller.registerPollVote(ev.detail.messageIndex, ev.detail.answerIndex, ev.detail.type);
+    }
+
     function deleteMessage(ev: CustomEvent<Message>): void {
         threadStore.replaceMessageContent(threadRootMessageIndex, ev.detail.messageIndex, {
             kind: "deleted_content",
@@ -469,7 +476,7 @@
                         on:blockUser
                         on:pinMessage
                         on:unpinMessage
-                        on:registerVote
+                        on:registerVote={registerVote}
                         on:editMessage={() => editEvent(evt)}
                         on:upgrade
                         on:forward

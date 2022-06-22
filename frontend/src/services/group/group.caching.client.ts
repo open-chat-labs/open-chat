@@ -313,9 +313,15 @@ export class CachingGroupClient implements IGroupClient {
     registerPollVote(
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
-        return this.client.registerPollVote(messageIdx, answerIdx, voteType);
+        return this.client.registerPollVote(
+            messageIdx,
+            answerIdx,
+            voteType,
+            threadRootMessageIndex
+        );
     }
 
     searchGroupChat(searchTerm: string, maxResults: number): Promise<SearchGroupChatResponse> {

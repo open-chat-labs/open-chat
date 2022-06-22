@@ -16,6 +16,7 @@ pub struct Args {
     pub create_polls: Option<PermissionRole>,
     pub send_messages: Option<PermissionRole>,
     pub react_to_messages: Option<PermissionRole>,
+    pub reply_in_thread: Option<PermissionRole>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

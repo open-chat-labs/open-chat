@@ -506,9 +506,16 @@ export class CachingUserClient implements IUserClient {
         otherUser: string,
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
-        return this.client.registerPollVote(otherUser, messageIdx, answerIdx, voteType);
+        return this.client.registerPollVote(
+            otherUser,
+            messageIdx,
+            answerIdx,
+            voteType,
+            threadRootMessageIndex
+        );
     }
 
     withdrawCryptocurrency(

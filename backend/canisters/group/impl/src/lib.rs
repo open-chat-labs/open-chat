@@ -3,10 +3,11 @@ use crate::model::participants::{ParticipantInternal, Participants};
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use chat_events::GroupChatEvents;
+use chat_events::{GroupChatEvents, ThreadChatEvents};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::ops::Deref;
 use types::{
     Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, MessageIndex, Milliseconds,
@@ -158,6 +159,8 @@ struct Data {
     pub permissions: GroupPermissions,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
+    #[serde(default)]
+    pub threads: HashMap<MessageIndex, ThreadChatEvents>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -204,6 +207,7 @@ impl Data {
             permissions: permissions.unwrap_or_default(),
             invite_code: None,
             invite_code_enabled: false,
+            threads: HashMap::new(),
         }
     }
 

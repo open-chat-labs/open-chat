@@ -60,6 +60,7 @@ export type ChatId = CanisterId;
 export interface ChatMessagesRead {
   'message_ranges' : Array<MessageIndexRange>,
   'chat_id' : ChatId,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface ChatMetrics {
   'audio_messages' : bigint,
@@ -147,6 +148,7 @@ export type DeleteGroupResponse = { 'NotAuthorized' : null } |
 export interface DeleteMessagesArgs {
   'user_id' : UserId,
   'message_ids' : Array<MessageId>,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type DeleteMessagesResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
@@ -201,6 +203,7 @@ export interface EditMessageArgs {
   'content' : MessageContent,
   'user_id' : UserId,
   'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
@@ -405,6 +408,7 @@ export interface GroupPermissions {
   'add_members' : PermissionRole,
   'create_polls' : PermissionRole,
   'pin_messages' : PermissionRole,
+  'reply_in_thread' : PermissionRole,
   'react_to_messages' : PermissionRole,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
@@ -473,6 +477,7 @@ export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,
   'event_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
   'mentioned_by' : UserId,
   'message_index' : MessageIndex,
 }
@@ -674,6 +679,7 @@ export interface RegisterPollVoteArgs {
   'user_id' : UserId,
   'poll_option' : number,
   'operation' : VoteOperation,
+  'thread_root_message_index' : [] | [MessageIndex],
   'message_index' : MessageIndex,
 }
 export type RegisterPollVoteResponse = { 'ChatNotFound' : null } |
@@ -778,6 +784,7 @@ export interface ThreadSummary {
   'latest_event_index' : EventIndex,
 }
 export interface ThreadUpdated {
+  'updated_by' : UserId,
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
@@ -786,6 +793,7 @@ export type TimestampNanos = bigint;
 export interface ToggleReactionArgs {
   'user_id' : UserId,
   'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : string,
 }
 export type ToggleReactionResponse = { 'MessageNotFound' : null } |

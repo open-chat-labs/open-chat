@@ -1,4 +1,5 @@
 use crate::types::{ChatEventInternal, MessageInternal, UpdatedMessageInternal};
+use crate::ThreadUpdatedInternal;
 use candid::CandidType;
 use itertools::Itertools;
 use search::*;
@@ -12,7 +13,8 @@ use types::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
-    chat_type: ChatType,
+    #[serde(alias = "chat_type")]
+    events_type: ChatEventsType,
     chat_id: ChatId,
     events: ChatEventsVec,
     message_id_map: HashMap<MessageId, EventIndex>,
@@ -24,9 +26,10 @@ pub struct ChatEvents {
 }
 
 #[derive(CandidType, Serialize, Deserialize)]
-enum ChatType {
+enum ChatEventsType {
     Direct,
     Group,
+    Thread,
 }
 
 pub struct PushMessageArgs {
@@ -36,6 +39,13 @@ pub struct PushMessageArgs {
     pub replies_to: Option<ReplyContext>,
     pub now: TimestampMillis,
     pub forwarded: bool,
+}
+
+pub struct ReplyToThreadArgs {
+    pub thread_message_index: MessageIndex,
+    pub sender: UserId,
+    pub latest_event_index: EventIndex,
+    pub now: TimestampMillis,
 }
 
 pub struct EditMessageArgs {
@@ -83,7 +93,7 @@ pub enum ToggleReactionResult {
 impl ChatEvents {
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_type: ChatType::Direct,
+            events_type: ChatEventsType::Direct,
             chat_id: them.into(),
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
@@ -107,7 +117,7 @@ impl ChatEvents {
         now: TimestampMillis,
     ) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_type: ChatType::Group,
+            events_type: ChatEventsType::Group,
             chat_id,
             events: ChatEventsVec::default(),
             message_id_map: HashMap::new(),
@@ -128,6 +138,36 @@ impl ChatEvents {
         );
 
         events
+    }
+
+    pub fn new_thread(chat_id: ChatId) -> ChatEvents {
+        ChatEvents {
+            events_type: ChatEventsType::Thread,
+            chat_id,
+            events: ChatEventsVec::default(),
+            message_id_map: HashMap::new(),
+            message_index_map: HashMap::new(),
+            latest_message_event_index: None,
+            latest_message_index: None,
+            metrics: ChatMetrics::default(),
+            per_user_metrics: HashMap::new(),
+        }
+    }
+
+    pub fn end_overdue_polls(&mut self, now: TimestampMillis) {
+        let mut overdue_polls = Vec::new();
+        for message in self.events.iter().filter_map(|e| e.event.as_message()) {
+            if let MessageContentInternal::Poll(p) = &message.content {
+                if let Some(end_date) = p.config.end_date {
+                    if end_date < now {
+                        overdue_polls.push(message.message_index);
+                    }
+                }
+            }
+        }
+        for message_index in overdue_polls {
+            self.end_poll(message_index, now);
+        }
     }
 
     pub fn get(&self, event_index: EventIndex) -> Option<&EventWrapper<ChatEventInternal>> {
@@ -162,6 +202,7 @@ impl ChatEvents {
             last_updated: None,
             last_edited: None,
             deleted_by: None,
+            thread_summary: None,
             forwarded: args.forwarded,
         };
         let message = self.hydrate_message(&message_internal, Some(message_internal.sender));
@@ -174,10 +215,42 @@ impl ChatEvents {
         }
     }
 
+    pub fn add_reply_to_thread(&mut self, args: ReplyToThreadArgs) -> Option<ThreadSummary> {
+        if let Some(root_message) = self
+            .get_event_index_by_message_index(args.thread_message_index)
+            .and_then(|e| self.events.get_mut(e))
+            .and_then(|e| e.event.as_message_mut())
+        {
+            let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummary::default);
+            summary.reply_count += 1;
+            summary.latest_event_index = args.latest_event_index;
+            summary.latest_event_timestamp = args.now;
+
+            if !summary.participant_ids.iter().any(|p| *p == args.sender) {
+                summary.participant_ids.push(args.sender);
+            }
+
+            let summary_clone = summary.clone();
+
+            self.push_event(
+                ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
+                    updated_by: args.sender,
+                    message_index: args.thread_message_index,
+                })),
+                args.now,
+            );
+
+            Some(summary_clone)
+        } else {
+            None
+        }
+    }
+
     pub fn push_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> EventIndex {
-        let valid = match self.chat_type {
-            ChatType::Direct => event.is_valid_for_direct_chat(),
-            ChatType::Group => event.is_valid_for_group_chat(),
+        let valid = match self.events_type {
+            ChatEventsType::Direct => event.is_valid_for_direct_chat(),
+            ChatEventsType::Group => event.is_valid_for_group_chat(),
+            ChatEventsType::Thread => event.is_valid_for_thread(),
         };
 
         if !valid {
@@ -510,6 +583,16 @@ impl ChatEvents {
         }
     }
 
+    pub fn hydrate_thread_updated(&self, updated_by: UserId, message_index: MessageIndex) -> ThreadUpdated {
+        let event_index = self.message_index_map.get(&message_index).copied().unwrap_or_default();
+
+        ThreadUpdated {
+            updated_by,
+            message_index,
+            event_index,
+        }
+    }
+
     pub fn search_messages(
         &self,
         now: TimestampMillis,
@@ -590,10 +673,11 @@ impl ChatEvents {
             .map(|m| m.message_index)
     }
 
-    pub fn hydrate_mention(&self, message_index: &MessageIndex) -> Option<Mention> {
-        let event_index = *self.message_index_map.get(message_index)?;
+    pub fn hydrate_mention(&self, mention: &MentionInternal) -> Option<Mention> {
+        let event_index = *self.message_index_map.get(&mention.message_index)?;
 
         self.get(event_index).and_then(|e| e.event.as_message()).map(|m| Mention {
+            thread_root_message_index: mention.thread_root_message_index,
             message_id: m.message_id,
             message_index: m.message_index,
             event_index,
