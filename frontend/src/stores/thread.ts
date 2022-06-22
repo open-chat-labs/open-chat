@@ -7,7 +7,11 @@ import type {
     MessageContent,
     ThreadSummary,
 } from "../domain/chat/chat";
-import { containsReaction, toggleReaction } from "../domain/chat/chat.utils";
+import {
+    containsReaction,
+    toggleReaction,
+    updateEventPollContent,
+} from "../domain/chat/chat.utils";
 
 const localReactions: Record<string, LocalReaction[]> = {};
 
@@ -126,6 +130,20 @@ export const threadStore = {
                           },
                       }
                     : ev
+            );
+            return store;
+        });
+    },
+    registerVote: (
+        rootMessageIndex: number,
+        messageIndex: number,
+        answerIndex: number,
+        type: "register" | "delete",
+        userId: string
+    ): void => {
+        update((store) => {
+            store[rootMessageIndex] = store[rootMessageIndex].map((e) =>
+                updateEventPollContent(messageIndex, answerIndex, type, userId, e)
             );
             return store;
         });

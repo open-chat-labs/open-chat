@@ -1,5 +1,5 @@
 import { push } from "svelte-spa-router";
-import { derived, get, readable, Readable, Writable, writable } from "svelte/store";
+import { get, readable, Writable, writable } from "svelte/store";
 import DRange from "drange";
 import type {
     ChatSummary,
@@ -12,12 +12,10 @@ import type {
     MessageContent,
 } from "../domain/chat/chat";
 import {
-    compareChats,
     emptyChatMetrics,
     getContentAsText,
     getFirstUnreadMention,
     getFirstUnreadMessageIndex,
-    mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
     userIdsFromEvents,
 } from "../domain/chat/chat.utils";
@@ -47,10 +45,15 @@ import { chunk, groupBy } from "../utils/list";
 import { rollbar } from "../utils/logging";
 import { closeNotificationsForChat } from "../utils/notifications";
 import { ChatController } from "./chat.controller";
-import { Poller } from "./poller";
+import type { Poller } from "./poller";
 import { scrollStrategy } from "../stores/settings";
 import { setCachedMessageFromNotification } from "../utils/caching";
-import { immutableStore } from "../stores/immutable";
+import {
+    chatSummariesListStore,
+    chatSummariesStore,
+    serverChatSummariesStore,
+    startChatPoller,
+} from "../stores/chat";
 
 const ONE_MINUTE = 60 * 1000;
 const ONE_HOUR = 60 * ONE_MINUTE;
@@ -64,48 +67,28 @@ export const currentUserKey = Symbol();
 export class HomeController {
     public messagesRead: IMessageReadTracker;
     private chatUpdatesSince?: bigint;
-    private serverChatSummaries: Writable<Record<string, ChatSummary>> = immutableStore({});
-    public chatSummaries: Readable<Record<string, ChatSummary>> = derived(
-        [this.serverChatSummaries, unconfirmed],
-        ([summaries, unconfirmed]) => {
-            return Object.entries(summaries).reduce<Record<string, ChatSummary>>(
-                (result, [chatId, summary]) => {
-                    result[chatId] = mergeUnconfirmedIntoSummary(
-                        this.user.userId,
-                        summary,
-                        unconfirmed[chatId]?.messages
-                    );
-                    return result;
-                },
-                {}
-            );
-        }
-    );
-    public chatSummariesList = derived(this.chatSummaries, (summaries) =>
-        Object.values(summaries).sort(compareChats)
-    );
     public initialised = false;
     public selectedChat: Writable<ChatController | undefined> = writable(undefined);
-    public loading = writable(false);
     private chatPoller: Poller | undefined;
     private usersPoller: Poller | undefined;
 
     constructor(public api: ServiceContainer, public user: CreatedUser) {
         this.messagesRead = new MessageReadTracker(api);
         if (process.env.NODE_ENV !== "test") {
-            this.loadChats().then(() => {
-                this.chatPoller = new Poller(
-                    () => this.loadChats(),
-                    CHAT_UPDATE_INTERVAL,
-                    CHAT_UPDATE_IDLE_INTERVAL
-                );
-                this.usersPoller = new Poller(
-                    () => this.updateUsers(),
-                    USER_UPDATE_INTERVAL,
-                    USER_UPDATE_INTERVAL
-                );
-                rtcConnectionsManager.subscribe((msg) => this.handleWebRtcMessage(msg));
-            });
+            this.chatPoller = startChatPoller(api, this.messagesRead);
+            // this.loadChats().then(() => {
+            // this.chatPoller = new Poller(
+            //     () => this.loadChats(),
+            //     CHAT_UPDATE_INTERVAL,
+            //     CHAT_UPDATE_IDLE_INTERVAL
+            // );
+            // this.usersPoller = new Poller(
+            //     () => this.updateUsers(),
+            //     USER_UPDATE_INTERVAL,
+            //     USER_UPDATE_INTERVAL
+            // );
+            // });
+            rtcConnectionsManager.subscribe((msg) => this.handleWebRtcMessage(msg));
             this.api.getUserStorageLimits();
         }
     }
@@ -116,7 +99,7 @@ export class HomeController {
             const usersToUpdate = new Set<string>([this.user.userId]);
 
             // Update all users we have direct chats with
-            for (const chat of Object.values(get(this.chatSummaries))) {
+            for (const chat of Object.values(get(chatSummariesStore))) {
                 if (chat.kind == "direct_chat") {
                     usersToUpdate.add(chat.them);
                 }
@@ -153,10 +136,10 @@ export class HomeController {
         }
     }
 
+    // TODO move this internal to the chat store
     private async loadChats() {
         try {
-            this.loading.set(!this.initialised);
-            const chats = Object.values(get(this.serverChatSummaries));
+            const chats = Object.values(get(serverChatSummariesStore));
             const selectedChat = get(this.selectedChat);
             const chatsResponse =
                 this.chatUpdatesSince === undefined
@@ -196,7 +179,7 @@ export class HomeController {
                 const selectedChat = get(this.selectedChat);
                 let selectedChatInvalid = true;
 
-                this.serverChatSummaries.set(
+                serverChatSummariesStore.set(
                     chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
                         rec[chat.chatId] = chat;
                         if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
@@ -240,7 +223,7 @@ export class HomeController {
             rollbar.error("Error loading chats", err as Error);
             throw err;
         } finally {
-            this.loading.set(false);
+            // this.loading.set(false);
         }
     }
 
@@ -313,7 +296,7 @@ export class HomeController {
     selectChat(chatId: string, messageIndex: number | undefined): void {
         closeNotificationsForChat(chatId);
 
-        const chat = get(this.serverChatSummaries)[chatId];
+        const chat = get(serverChatSummariesStore)[chatId];
         if (chat !== undefined) {
             const user: UserSummary = {
                 kind: "user",
@@ -341,7 +324,10 @@ export class HomeController {
                 }
 
                 const readableChatSummary = readable(chat, (set) =>
-                    this.serverChatSummaries.subscribe((summaries) => {
+                    // TODO - when and where does this get unsubscribed
+                    // we should get rid of this by just having a selectedChatId store
+                    // and then a selectedChatSummary derived store
+                    serverChatSummariesStore.subscribe((summaries) => {
                         if (summaries[chatId] !== undefined) {
                             set(summaries[chatId]);
                         }
@@ -398,7 +384,8 @@ export class HomeController {
             .makeGroupPrivate(chatId)
             .then((resp) => {
                 if (resp === "success") {
-                    this.serverChatSummaries.update((summaries) => {
+                    // TODO push this logic into the store itself
+                    serverChatSummariesStore.update((summaries) => {
                         const summary = summaries[chatId];
                         if (summary === undefined || summary.kind !== "group_chat") {
                             return summaries;
@@ -451,7 +438,8 @@ export class HomeController {
     }
 
     createDirectChat(chatId: string): void {
-        this.serverChatSummaries.update((chatSummaries) => {
+        // TODO push this logic into the store itself
+        serverChatSummariesStore.update((chatSummaries) => {
             return {
                 ...chatSummaries,
                 [chatId]: {
@@ -473,7 +461,7 @@ export class HomeController {
     }
 
     replyPrivatelyTo(context: EnhancedReplyContext): void {
-        const chat = get(this.chatSummariesList).find((c) => {
+        const chat = get(chatSummariesListStore).find((c) => {
             return c.kind === "direct_chat" && c.them === context.sender?.userId;
         });
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -489,13 +477,13 @@ export class HomeController {
     }
 
     private findDirectChatByUserId(userId: string): DirectChatSummary | undefined {
-        return get(this.chatSummariesList).find(
+        return get(chatSummariesListStore).find(
             (c) => c.kind === "direct_chat" && c.them === userId
         ) as DirectChatSummary | undefined;
     }
 
     private findChatById(chatId: string): ChatSummary | undefined {
-        return get(this.chatSummaries)[chatId];
+        return get(chatSummariesStore)[chatId];
     }
 
     private findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
@@ -682,7 +670,8 @@ export class HomeController {
         chatId: string,
         message: EventWrapper<Message>
     ): void {
-        this.serverChatSummaries.update((summaries) => {
+        // TODO maybe push this into the store
+        serverChatSummariesStore.update((summaries) => {
             const summary = summaries[chatId];
             if (summary === undefined) return summaries;
 
@@ -707,7 +696,8 @@ export class HomeController {
     }
 
     addOrReplaceChat(chat: ChatSummary): void {
-        this.serverChatSummaries.update((summaries) => {
+        // TODO push into the store
+        serverChatSummariesStore.update((summaries) => {
             return {
                 ...summaries,
                 [chat.chatId]: chat,
@@ -716,7 +706,8 @@ export class HomeController {
     }
 
     removeChat(chatId: string): void {
-        this.serverChatSummaries.update((summaries) => {
+        // TODO push into the store
+        serverChatSummariesStore.update((summaries) => {
             return Object.entries(summaries).reduce((agg, [k, v]) => {
                 if (k !== chatId) {
                     agg[k] = v;

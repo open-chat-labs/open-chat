@@ -235,6 +235,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.chatId])
             .then(({ content }) => {
+                console.log("Thread: ", threadRootMessageIndex);
                 return this.handleResponse(
                     this.groupService.send_message({
                         content: apiMessageContent(content ?? message.content),

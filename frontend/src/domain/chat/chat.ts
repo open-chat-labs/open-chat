@@ -18,7 +18,8 @@ export type MessageContent =
     | PlaceholderContent
     | PollContent
     | CryptocurrencyContent
-    | GiphyContent;
+    | GiphyContent
+    | ProposalContent;
 
 export type IndexRange = [number, number];
 
@@ -135,6 +136,20 @@ export interface GiphyContent {
     title: string;
     desktop: GiphyImage; //will be "original" from the giphy api
     mobile: GiphyImage; //will be "downsized_large" from the giphy api
+}
+
+export interface ProposalContent {
+    kind: "proposal_content";
+    url: string;
+    title: string;
+    myVote?: boolean;
+    rejectVotes: number;
+    deadline: bigint;
+    adoptVotes: number;
+    summary: string;
+    proposalId: bigint;
+    governanceCanisterId: string;
+    proposer: bigint;
 }
 
 export interface ImageContent extends DataContent {

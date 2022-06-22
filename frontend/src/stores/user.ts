@@ -1,4 +1,4 @@
-import type { PartialUserSummary, UserLookup } from "../domain/user/user";
+import type { CreatedUser, PartialUserSummary, UserLookup } from "../domain/user/user";
 import { immutableStore } from "./immutable";
 
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
@@ -26,6 +26,8 @@ export function overwriteUser(lookup: UserLookup, user: PartialUserSummary): Use
         },
     };
 }
+
+export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
 export const userStore = {
     subscribe,

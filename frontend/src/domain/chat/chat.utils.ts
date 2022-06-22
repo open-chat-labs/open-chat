@@ -47,7 +47,6 @@ import type { TypersByChat } from "../../stores/typing";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
 import Identicon from "identicon.js";
 import md5 from "md5";
-import type { BlobReference } from "../../domain/data/data";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
@@ -83,6 +82,8 @@ export function getContentAsText(content: MessageContent): string {
         text = "placeholder content";
     } else if (content.kind === "poll_content") {
         text = "poll";
+    } else if (content.kind === "proposal_content") {
+        text = "governance proposal";
     } else if (content.kind === "giphy_content") {
         text = captionedContent(get(_)("giphyMessage"), content.caption);
     } else {
@@ -305,6 +306,7 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "deleted_content" &&
         content.kind !== "placeholder_content" &&
         content.kind !== "poll_content" &&
+        content.kind !== "proposal_content" &&
         content.kind !== "crypto_content"
         ? { ...content, caption }
         : content;
@@ -1117,6 +1119,33 @@ export function getStorageRequiredForMessage(content: MessageContent | undefined
         default:
             return 0;
     }
+}
+
+export function updateEventPollContent<T extends ChatEvent>(
+    messageIndex: number,
+    answerIndex: number,
+    type: "register" | "delete",
+    userId: string,
+    evt: EventWrapper<T>
+): EventWrapper<T> {
+    if (
+        evt.event.kind === "message" &&
+        evt.event.messageIndex === messageIndex &&
+        evt.event.content.kind === "poll_content"
+    ) {
+        console.log("Updated poll: ", evt.event.content);
+        return {
+            ...evt,
+            event: {
+                ...evt.event,
+                content: {
+                    ...evt.event.content,
+                    votes: updatePollVotes(userId, evt.event.content, answerIndex, type),
+                },
+            },
+        };
+    }
+    return evt;
 }
 
 export function updatePollVotes(

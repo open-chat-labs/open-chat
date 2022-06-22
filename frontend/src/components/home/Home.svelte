@@ -40,7 +40,6 @@
         EventWrapper,
         GroupChatSummary,
         Message,
-        ThreadSummary,
     } from "../../domain/chat/chat";
     import { currentUserKey, HomeController } from "../../fsm/home.controller";
     import { mapRemoteData } from "../../utils/remoteData";
@@ -60,7 +59,7 @@
     import { trackEvent } from "../../utils/tracking";
     import { numberOfColumns, oldLayout } from "../../stores/layout";
     import { messageToForwardStore } from "../../stores/messageToForward";
-    import { threadStore } from "../../stores/thread";
+    import { chatSummariesListStore, chatSummariesStore, chatsLoading } from "../../stores/chat";
 
     const dispatch = createEventDispatcher();
 
@@ -111,14 +110,11 @@
     );
     $: userId = controller.user.userId;
     $: api = controller.api;
-    $: chatsLoading = controller.loading;
-    $: chatSummaries = controller.chatSummaries;
-    $: chatSummariesList = controller.chatSummariesList;
     $: selectedChat = controller.selectedChat;
     $: wasmVersion = controller.user.wasmVersion;
     $: qs = new URLSearchParams($querystring);
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
-    $: combinedMetrics = $chatSummariesList
+    $: combinedMetrics = $chatSummariesListStore
         .map((c) => c.myMetrics)
         .reduce(mergeChatMetrics, emptyChatMetrics());
     $: chat = $selectedChat?.chat;
@@ -194,7 +190,7 @@
                 const messageIndex =
                     params.messageIndex == null ? undefined : Number(params.messageIndex);
 
-                if ($chatSummaries[chatId] === undefined) {
+                if ($chatSummariesStore[chatId] === undefined) {
                     if (qs.get("type") === "direct") {
                         controller.createDirectChat(chatId);
                     } else {
@@ -417,7 +413,7 @@
     }
 
     function chatWith(ev: CustomEvent<string>) {
-        const chat = $chatSummariesList.find((c) => {
+        const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === ev.detail;
         });
         if (chat) {
@@ -734,7 +730,7 @@
             <AboutModal canister={{ id: userId, wasmVersion }} on:close={closeModal} />
         {:else if modal === ModalType.SelectChat}
             <SelectChatModal
-                chatsSummaries={filterChatSelection($chatSummariesList, $selectedChat?.chatId)}
+                chatsSummaries={filterChatSelection($chatSummariesListStore, $selectedChat?.chatId)}
                 on:close={onCloseSelectChat}
                 on:select={onSelectChat} />
         {/if}

@@ -8,7 +8,6 @@
         EventWrapper,
         Message,
         MessageContent,
-        ThreadSummary,
     } from "../../../domain/chat/chat";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -288,7 +287,47 @@
         ev: CustomEvent<{ messageIndex: number; answerIndex: number; type: "register" | "delete" }>
     ) {
         console.log("register vote - todo");
-        // controller.registerPollVote(ev.detail.messageIndex, ev.detail.answerIndex, ev.detail.type);
+
+        // update the store
+        threadStore.registerVote(
+            threadRootMessageIndex,
+            ev.detail.messageIndex,
+            ev.detail.answerIndex,
+            ev.detail.type,
+            currentUser.userId
+        );
+
+        // make the api call
+        const promise =
+            $chat.kind === "group_chat"
+                ? api.registerGroupChatPollVote(
+                      $chat.chatId,
+                      ev.detail.messageIndex,
+                      ev.detail.answerIndex,
+                      ev.detail.type,
+                      threadRootMessageIndex
+                  )
+                : api.registerDirectChatPollVote(
+                      $chat.them,
+                      ev.detail.messageIndex,
+                      ev.detail.answerIndex,
+                      ev.detail.type,
+                      threadRootMessageIndex
+                  );
+
+        promise
+            .then((resp) => {
+                if (resp !== "success") {
+                    toastStore.showFailureToast("poll.voteFailed");
+                    rollbar.error("Poll vote failed: ", resp);
+                    console.log("poll vote failed: ", resp);
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("poll.voteFailed");
+                rollbar.error("Poll vote failed: ", err);
+                console.log("poll vote failed: ", err);
+            });
     }
 
     function deleteMessage(ev: CustomEvent<Message>): void {

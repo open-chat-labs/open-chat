@@ -1,4 +1,5 @@
 import type { Identity } from "@dfinity/agent";
+import { currentUserStore } from "stores/user";
 import { Writable, writable } from "svelte/store";
 import type { CreatedUser, User } from "../domain/user/user";
 import { getIdentity, login, logout, startSession } from "../services/auth";
@@ -73,6 +74,7 @@ export class IdentityController {
         } else {
             this.state.set("logged_in");
             this._api?.createUserClient(user.userId);
+            currentUserStore.set(user);
             this._user = { ...user };
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.homeController = new HomeController(this._api!, user);
@@ -108,6 +110,7 @@ export class IdentityController {
             this.markOnlinePoller?.stop();
             this.markOnlinePoller = undefined;
             this.state.set("requires_login");
+            currentUserStore.set(undefined);
             return;
         });
     }

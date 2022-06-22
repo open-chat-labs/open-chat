@@ -30,7 +30,6 @@ import {
     isPreviewing,
     mergeUnconfirmedIntoSummary,
     pruneLocalReactions,
-    updatePollVotes,
     replaceAffected,
     replaceLocal,
     replaceMessageContent,
@@ -38,6 +37,7 @@ import {
     toggleReaction,
     userIdsFromEvents,
     indexIsInRanges,
+    updateEventPollContent,
 } from "../domain/chat/chat.utils";
 import type { UserSummary } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -228,42 +228,20 @@ export class ChatController {
      * In order to get the UI to update immediately, we want to find the poll message that we are referring to,
      * and update it to reflect the user's vote
      */
-    private updatePollContent(
+    private findAndUpdatePollContent(
         messageIndex: number,
         answerIndex: number,
         type: "register" | "delete"
     ): void {
         this.events.update((events) => {
-            return events.map((evt) => {
-                if (
-                    evt.event.kind === "message" &&
-                    evt.event.messageIndex === messageIndex &&
-                    evt.event.content.kind === "poll_content"
-                ) {
-                    console.log("Updated poll: ", evt.event.content);
-                    return {
-                        ...evt,
-                        event: {
-                            ...evt.event,
-                            content: {
-                                ...evt.event.content,
-                                votes: updatePollVotes(
-                                    this.user.userId,
-                                    evt.event.content,
-                                    answerIndex,
-                                    type
-                                ),
-                            },
-                        },
-                    };
-                }
-                return evt;
-            });
+            return events.map((evt) =>
+                updateEventPollContent(messageIndex, answerIndex, type, this.user.userId, evt)
+            );
         });
     }
 
     registerPollVote(messageIndex: number, answerIndex: number, type: "register" | "delete"): void {
-        this.updatePollContent(messageIndex, answerIndex, type);
+        this.findAndUpdatePollContent(messageIndex, answerIndex, type);
         const promise =
             this.chatVal.kind === "group_chat"
                 ? this.api.registerGroupChatPollVote(this.chatId, messageIndex, answerIndex, type)
