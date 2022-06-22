@@ -378,10 +378,10 @@ where
     let mentions: Vec<MessageIndex> = de::Deserialize::deserialize(deserializer)?;
 
     Ok(mentions
-        .iter()
+        .into_iter()
         .map(|message_index| MentionInternal {
             thread_root_message_index: None,
-            message_index: *message_index,
+            message_index,
         })
         .collect())
 }
