@@ -210,7 +210,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    editMessage(message: Message): Promise<EditMessageResponse> {
+    editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.chatId])
             .then(({ content }) => {
@@ -307,7 +307,11 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse> {
+    toggleReaction(
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<ToggleReactionResponse> {
         return this.handleResponse(
             this.groupService.toggle_reaction({
                 message_id: messageId,
@@ -318,7 +322,10 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    deleteMessage(messageId: bigint): Promise<DeleteMessageResponse> {
+    deleteMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.groupService.delete_messages({
                 message_ids: [messageId],

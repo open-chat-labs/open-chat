@@ -64,6 +64,15 @@ const { subscribe, set, update } = writable<ThreadLookup>({});
 export const threadStore = {
     subscribe,
     set,
+    removeMessageFromThread: (threadRootMessageIndex: number, messageIndex: number): void => {
+        update((store) => {
+            const evts = store[threadRootMessageIndex] ?? [];
+            return {
+                ...store,
+                [threadRootMessageIndex]: evts.filter((e) => e.event.messageIndex !== messageIndex),
+            };
+        });
+    },
     addMessageToThread: (
         messageIndex: number,
         rootEvt: EventWrapper<Message>,

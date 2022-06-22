@@ -67,13 +67,20 @@ export interface IGroupClient {
         message: Message,
         threadRootMessageIndex?: number
     ): Promise<SendMessageResponse>;
-    editMessage(message: Message): Promise<EditMessageResponse>;
+    editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse>;
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
     updatePermissions(permissions: Partial<GroupPermissions>): Promise<UpdatePermissionsResponse>;
-    toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;
-    deleteMessage(messageId: bigint): Promise<DeleteMessageResponse>;
+    toggleReaction(
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<ToggleReactionResponse>;
+    deleteMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     getGroupDetails(latestEventIndex: number): Promise<GroupChatDetailsResponse>;

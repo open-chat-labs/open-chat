@@ -287,7 +287,11 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    editMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
+    editMessage(
+        recipientId: string,
+        message: Message,
+        threadRootMessageIndex?: number
+    ): Promise<EditMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.userId, recipientId])
             .then(({ content }) => {
@@ -434,7 +438,8 @@ export class UserClient extends CandidService implements IUserClient {
     toggleReaction(
         otherUserId: string,
         messageId: bigint,
-        reaction: string
+        reaction: string,
+        threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
         return this.handleResponse(
             this.userService.toggle_reaction({
@@ -447,7 +452,11 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse> {
+    deleteMessage(
+        otherUserId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.userService.delete_messages({
                 user_id: Principal.fromText(otherUserId),

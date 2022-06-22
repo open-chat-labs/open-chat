@@ -65,7 +65,11 @@ export interface IUserClient {
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
-    editMessage(recipientId: string, message: Message): Promise<EditMessageResponse>;
+    editMessage(
+        recipientId: string,
+        message: Message,
+        threadRootMessageIndex?: number
+    ): Promise<EditMessageResponse>;
     sendMessage(
         recipientId: string,
         sender: UserSummary,
@@ -94,9 +98,14 @@ export interface IUserClient {
     toggleReaction(
         otherUserId: string,
         messageId: bigint,
-        reaction: string
+        reaction: string,
+        threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse>;
-    deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse>;
+    deleteMessage(
+        otherUserId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse>;
     searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse>;
     searchDirectChat(
         userId: string,

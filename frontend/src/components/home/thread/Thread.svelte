@@ -19,7 +19,6 @@
     import { currentUserKey } from "../../../fsm/home.controller";
     import type { ChatController } from "../../../fsm/chat.controller";
     import ChatMessage from "../ChatMessage.svelte";
-    import type { MessageReadState } from "../../../stores/markRead";
     import { unconfirmed } from "../../../stores/unconfirmed";
     import {
         canBlockUsers,
@@ -43,12 +42,14 @@
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
     import type { Cryptocurrency } from "../../../domain/crypto";
     import { lastCryptoSent } from "../../../stores/crypto";
+    import { trackEvent } from "../../../utils/tracking";
+    import { rollbar } from "../../../utils/logging";
+    import { toastStore } from "../../../stores/toast";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
 
     export let controller: ChatController;
-    export let threadSummary: ThreadSummary | undefined;
     export let rootEvent: EventWrapper<Message>;
 
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
@@ -63,19 +64,19 @@
         window.setTimeout(() => {
             // todo this annoyingly fires twice - sigh
             console.log("adding root message to thread");
-            threadStore.addMessageToThread(rootEvent.event.messageIndex, rootEvent, rootEvent);
+            threadStore.addMessageToThread(threadRootMessageIndex, rootEvent, rootEvent);
         }, 500);
     }
 
     $: chat = controller.chat;
-    $: messageIndex = rootEvent.event.messageIndex;
+    $: threadRootMessageIndex = rootEvent.event.messageIndex;
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
     $: markRead = controller.markRead;
     $: pinned = controller.pinnedMessages;
     $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
-    $: draftMessage = readable(draftThreadMessages.get(messageIndex), (set) =>
-        draftThreadMessages.subscribe((d) => set(d[messageIndex] ?? {}))
+    $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
+        draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {}))
     );
     $: textContent = derived(draftMessage, (d) => d.textContent);
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
@@ -84,7 +85,7 @@
     $: canSend = canSendMessages($chat, $userStore);
     $: canReact = canReactToMessages($chat);
     $: messages = groupEvents(
-        $threadStore[rootEvent.event.messageIndex] ?? []
+        $threadStore[threadRootMessageIndex] ?? []
     ).reverse() as EventWrapper<Message>[][][];
 
     const dispatch = createEventDispatcher();
@@ -98,10 +99,6 @@
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
-    function isReadByMe(_store: MessageReadState, evt: EventWrapper<Message>): boolean {
-        return true;
-    }
-
     function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
         console.log("send message: ", ev.detail);
         if (!canSend) return;
@@ -111,20 +108,20 @@
         } else {
             sendMessageWithAttachment(text, mentioned, $fileToAttach);
         }
-        draftThreadMessages.delete(messageIndex);
+        draftThreadMessages.delete(threadRootMessageIndex);
     }
 
     // todo - lots of duplication here with chatController.editEvent
     // todo - there is a problem when editing the root message of a thread (in either middle or thread panel)
     // the edit needs to also be reflected in the other window - maybe this will just work when the update loop stuff is done
     function editEvent(ev: EventWrapper<Message>): void {
-        draftThreadMessages.setEditingEvent(messageIndex, ev);
+        draftThreadMessages.setEditingEvent(threadRootMessageIndex, ev);
         draftThreadMessages.setAttachment(
-            messageIndex,
+            threadRootMessageIndex,
             ev.event.content.kind !== "text_content" ? ev.event.content : undefined
         );
         draftThreadMessages.setReplyingTo(
-            messageIndex,
+            threadRootMessageIndex,
             ev.event.repliesTo && ev.event.repliesTo.kind === "rehydrated_reply_context"
                 ? {
                       ...ev.event.repliesTo,
@@ -165,50 +162,42 @@
 
             const [nextEventIndex, nextMessageIndex] = getNextEventAndMessageIndexes(
                 $threadStore,
-                messageIndex
+                threadRootMessageIndex
             );
 
             const msg = newMessage(textContent, fileToAttach, nextMessageIndex);
-
-            // we don't have an api for this yet so let's just write the message to the thread store
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
-            threadStore.addMessageToThread(messageIndex, rootEvent, event);
 
-            // api.sendMessage($chat, controller.user, mentioned, msg)
-            //     .then((resp) => {
-            //         if (resp.kind === "success" || resp.kind === "transfer_success") {
-            //             controller.confirmMessage(msg, resp);
-            //             if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-            //                 api.refreshAccountBalance(
-            //                     msg.content.transfer.token,
-            //                     currentUser.cryptoAccount
-            //                 );
-            //             }
-            //             if ($chat.kind === "direct_chat") {
-            //                 trackEvent("sent_direct_message");
-            //             } else {
-            //                 if ($chat.public) {
-            //                     trackEvent("sent_public_group_message");
-            //                 } else {
-            //                     trackEvent("sent_private_group_message");
-            //                 }
-            //             }
-            //             if (msg.repliesTo !== undefined) {
-            //                 // double counting here which I think is OK since we are limited to string events
-            //                 trackEvent("replied_to_message");
-            //             }
-            //         } else {
-            //             controller.removeMessage(msg.messageId, controller.user.userId);
-            //             rollbar.warn("Error response sending message", resp);
-            //             toastStore.showFailureToast("errorSendingMessage");
-            //         }
-            //     })
-            //     .catch((err) => {
-            //         controller.removeMessage(msg.messageId, controller.user.userId);
-            //         console.log(err);
-            //         toastStore.showFailureToast("errorSendingMessage");
-            //         rollbar.error("Exception sending message", err);
-            //     });
+            unconfirmed.add($chat.chatId, event);
+            threadStore.addMessageToThread(threadRootMessageIndex, rootEvent, event);
+
+            api.sendMessage($chat, controller.user, mentioned, msg, threadRootMessageIndex)
+                .then((resp) => {
+                    if (resp.kind === "success" || resp.kind === "transfer_success") {
+                        unconfirmed.delete($chat.chatId, msg.messageId);
+                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                            api.refreshAccountBalance(
+                                msg.content.transfer.token,
+                                currentUser.cryptoAccount
+                            );
+                        }
+                        trackEvent("sent_threaded_message");
+                    } else {
+                        threadStore.removeMessageFromThread(
+                            threadRootMessageIndex,
+                            msg.messageIndex
+                        );
+                        rollbar.warn("Error response sending message", resp);
+                        toastStore.showFailureToast("errorSendingMessage");
+                    }
+                })
+                .catch((err) => {
+                    threadStore.removeMessageFromThread(threadRootMessageIndex, msg.messageIndex);
+                    console.log(err);
+                    unconfirmed.delete($chat.chatId, msg.messageId);
+                    toastStore.showFailureToast("errorSendingMessage");
+                    rollbar.error("Exception sending message", err);
+                });
         }
     }
 
@@ -225,37 +214,35 @@
             };
 
             const event = { ...editingEvent, event: msg! };
-            threadStore.replaceMessageInThread(messageIndex, event);
-            // controller.sendMessage(event);
-
-            // api.editMessage($chat, msg!)
-            //     .then((resp) => {
-            //         if (resp !== "success") {
-            //             rollbar.warn("Error response editing", resp);
-            //             toastStore.showFailureToast("errorEditingMessage");
-            //         }
-            //     })
-            //     .catch((err) => {
-            //         rollbar.error("Exception sending message", err);
-            //         toastStore.showFailureToast("errorEditingMessage");
-            //     });
+            threadStore.replaceMessageInThread(threadRootMessageIndex, event);
+            api.editMessage($chat, msg, threadRootMessageIndex)
+                .then((resp) => {
+                    if (resp !== "success") {
+                        rollbar.warn("Error response editing", resp);
+                        toastStore.showFailureToast("errorEditingMessage");
+                    }
+                })
+                .catch((err) => {
+                    rollbar.error("Exception sending message", err);
+                    toastStore.showFailureToast("errorEditingMessage");
+                });
         }
     }
 
     function cancelReply() {
-        draftThreadMessages.setReplyingTo(messageIndex, undefined);
+        draftThreadMessages.setReplyingTo(threadRootMessageIndex, undefined);
     }
 
     function clearAttachment() {
-        draftThreadMessages.setAttachment(messageIndex, undefined);
+        draftThreadMessages.setAttachment(threadRootMessageIndex, undefined);
     }
 
     function cancelEditEvent() {
-        draftThreadMessages.delete(messageIndex);
+        draftThreadMessages.delete(threadRootMessageIndex);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>) {
-        draftThreadMessages.setTextContent(messageIndex, ev.detail);
+        draftThreadMessages.setTextContent(threadRootMessageIndex, ev.detail);
     }
 
     function startTyping() {
@@ -267,7 +254,7 @@
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
-        draftThreadMessages.setAttachment(messageIndex, ev.detail);
+        draftThreadMessages.setAttachment(threadRootMessageIndex, ev.detail);
     }
 
     function tokenTransfer(ev: CustomEvent<{ token: Cryptocurrency; amount: bigint } | undefined>) {
@@ -298,66 +285,95 @@
     }
 
     function deleteMessage(ev: CustomEvent<Message>): void {
-        threadStore.replaceMessageContent(rootEvent.event.messageIndex, ev.detail.messageIndex, {
+        threadStore.replaceMessageContent(threadRootMessageIndex, ev.detail.messageIndex, {
             kind: "deleted_content",
             deletedBy: currentUser.userId,
             timestamp: BigInt(Date.now()),
         });
+
+        const apiPromise =
+            $chat.kind === "group_chat"
+                ? api.deleteGroupMessage($chat.chatId, ev.detail.messageId, threadRootMessageIndex)
+                : api.deleteDirectMessage($chat.them, ev.detail.messageId, threadRootMessageIndex);
+
+        apiPromise
+            .then((resp) => {
+                // check it worked - undo if it didn't
+                if (resp !== "success") {
+                    toastStore.showFailureToast("deleteFailed");
+                    threadStore.replaceMessageContent(
+                        threadRootMessageIndex,
+                        ev.detail.messageIndex,
+                        ev.detail.content
+                    );
+                }
+            })
+            .catch((_err) => {
+                toastStore.showFailureToast("deleteFailed");
+                threadStore.replaceMessageContent(
+                    threadRootMessageIndex,
+                    ev.detail.messageIndex,
+                    ev.detail.content
+                );
+            });
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
-        draftThreadMessages.setReplyingTo(messageIndex, ev.detail);
+        draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
     }
 
     function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
         if (!canReact) return;
         // optimistic update
 
-        // todo - this is not exactly going to work at the moment because the controller method goes through the list of
-        // loaded events whereas we need to go through the thread events
-        controller.toggleReaction(
-            ev.detail.message.messageId,
-            ev.detail.reaction,
-            controller.user.userId
-        );
+        // todo - we need to separate what this controller method does so that we can have a thread version
+        // and that needs to be done in a way that minimises duplication
+        // controller.toggleReaction(
+        //     ev.detail.message.messageId,
+        //     ev.detail.reaction,
+        //     controller.user.userId
+        // );
 
-        // const apiPromise =
-        //     $chat.kind === "group_chat"
-        //         ? api.toggleGroupChatReaction(
-        //               $chat.chatId,
-        //               ev.detail.message.messageId,
-        //               ev.detail.reaction
-        //           )
-        //         : api.toggleDirectChatReaction(
-        //               $chat.them,
-        //               ev.detail.message.messageId,
-        //               ev.detail.reaction
-        //           );
+        const apiPromise =
+            $chat.kind === "group_chat"
+                ? api.toggleGroupChatReaction(
+                      $chat.chatId,
+                      ev.detail.message.messageId,
+                      ev.detail.reaction,
+                      threadRootMessageIndex
+                  )
+                : api.toggleDirectChatReaction(
+                      $chat.them,
+                      ev.detail.message.messageId,
+                      ev.detail.reaction,
+                      threadRootMessageIndex
+                  );
 
-        // apiPromise
-        //     .then((resp) => {
-        //         if (resp !== "added" && resp !== "removed") {
-        //             // toggle again to undo
-        //             controller.toggleReaction(
-        //                 ev.detail.message.messageId,
-        //                 ev.detail.reaction,
-        //                 controller.user.userId
-        //             );
-        //         } else {
-        //             if (resp === "added") {
-        //                 trackEvent("reacted_to_message");
-        //             }
-        //         }
-        //     })
-        //     .catch((err) => {
-        //         // toggle again to undo
-        //         console.log("Reaction failed: ", err);
-        //         controller.toggleReaction(
-        //             ev.detail.message.messageId,
-        //             ev.detail.reaction,
-        //             controller.user.userId
-        //         );
-        //     });
+        apiPromise
+            .then((resp) => {
+                if (resp !== "added" && resp !== "removed") {
+                    // toggle again to undo
+                    console.log("Reaction failed: ", resp);
+                    // controller.toggleReaction(
+                    //     ev.detail.message.messageId,
+                    //     ev.detail.reaction,
+                    //     controller.user.userId
+                    // );
+                } else {
+                    if (resp === "added") {
+                        trackEvent("reacted_to_message");
+                    }
+                }
+            })
+            .catch((err) => {
+                // toggle again to undo
+                console.log("Reaction failed: ", err);
+                // controller.toggleReaction(
+                //     ev.detail.message.messageId,
+                //     ev.detail.reaction,
+                //     controller.user.userId
+                // );
+            });
     }
 
     // TODO - this is another piece of (almost) duplication that we need to get rid of

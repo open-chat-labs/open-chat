@@ -165,7 +165,7 @@
 
     // this is called if we are starting a new thread so we pass undefined as the threadSummary param
     function replyInThread() {
-        dispatch("replyInThread", undefined);
+        dispatch("replyInThread");
     }
 
     function forward() {

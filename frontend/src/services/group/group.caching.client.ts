@@ -197,8 +197,8 @@ export class CachingGroupClient implements IGroupClient {
             .then(setCachedMessageFromSendResponse(this.db, this.chatId, message));
     }
 
-    editMessage(message: Message): Promise<EditMessageResponse> {
-        return this.client.editMessage(message);
+    editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
+        return this.client.editMessage(message, threadRootMessageIndex);
     }
 
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
@@ -217,12 +217,19 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.updatePermissions(permissions);
     }
 
-    toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse> {
-        return this.client.toggleReaction(messageId, reaction);
+    toggleReaction(
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<ToggleReactionResponse> {
+        return this.client.toggleReaction(messageId, reaction, threadRootMessageIndex);
     }
 
-    deleteMessage(messageId: bigint): Promise<DeleteMessageResponse> {
-        return this.client.deleteMessage(messageId);
+    deleteMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse> {
+        return this.client.deleteMessage(messageId, threadRootMessageIndex);
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {

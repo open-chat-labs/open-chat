@@ -374,8 +374,12 @@ export class CachingUserClient implements IUserClient {
         return this.client.createGroup(group);
     }
 
-    editMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
-        return this.client.editMessage(recipientId, message);
+    editMessage(
+        recipientId: string,
+        message: Message,
+        threadRootMessageIndex?: number
+    ): Promise<EditMessageResponse> {
+        return this.client.editMessage(recipientId, message, threadRootMessageIndex);
     }
 
     @profile("userCachingClient")
@@ -445,13 +449,18 @@ export class CachingUserClient implements IUserClient {
     toggleReaction(
         otherUserId: string,
         messageId: bigint,
-        reaction: string
+        reaction: string,
+        threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
-        return this.client.toggleReaction(otherUserId, messageId, reaction);
+        return this.client.toggleReaction(otherUserId, messageId, reaction, threadRootMessageIndex);
     }
 
-    deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse> {
-        return this.client.deleteMessage(otherUserId, messageId);
+    deleteMessage(
+        otherUserId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse> {
+        return this.client.deleteMessage(otherUserId, messageId, threadRootMessageIndex);
     }
 
     searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse> {

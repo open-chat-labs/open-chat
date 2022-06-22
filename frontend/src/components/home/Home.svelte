@@ -460,14 +460,11 @@
         rightPanelHistory = [{ kind: "user_profile" }];
     }
 
-    function replyInThread(
-        ev: CustomEvent<{ rootEvent: EventWrapper<Message>; threadSummary?: ThreadSummary }>
-    ) {
+    function replyInThread(ev: CustomEvent<{ rootEvent: EventWrapper<Message> }>) {
         if ($selectedChat !== undefined) {
             rightPanelHistory = [
                 {
                     kind: "message_thread_panel",
-                    threadSummary: ev.detail.threadSummary,
                     rootEvent: ev.detail.rootEvent,
                 },
             ];
