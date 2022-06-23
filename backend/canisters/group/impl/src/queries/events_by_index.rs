@@ -11,13 +11,12 @@ fn events_by_index(args: Args) -> Response {
 fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller, args.invite_code) {
-        let mut event_indexes = args.events;
-
-        if let Some(chat_events) = runtime_state
+        if let Some((chat_events, min_visible_event_index)) = runtime_state
             .data
             .chat_events(args.thread_root_message_index, min_visible_event_index)
         {
-            if args.thread_root_message_index.is_none() && min_visible_event_index > EventIndex::default() {
+            let mut event_indexes = args.events;
+            if min_visible_event_index > EventIndex::default() {
                 event_indexes.retain(|e| *e >= min_visible_event_index);
             }
 

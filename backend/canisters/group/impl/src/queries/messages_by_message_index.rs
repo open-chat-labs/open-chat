@@ -1,7 +1,7 @@
 use crate::{read_state, RuntimeState};
 use group_canister::messages_by_message_index::{Response::*, *};
 use ic_cdk_macros::query;
-use types::{EventIndex, EventWrapper};
+use types::EventWrapper;
 
 #[query]
 fn messages_by_message_index(args: Args) -> Response {
@@ -11,16 +11,12 @@ fn messages_by_message_index(args: Args) -> Response {
 fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get(caller) {
-        let mut min_visible_event_index = participant.min_visible_event_index();
+        let min_visible_event_index = participant.min_visible_event_index();
 
-        if let Some(chat_events) = runtime_state
+        if let Some((chat_events, min_visible_event_index)) = runtime_state
             .data
             .chat_events(args.thread_root_message_index, min_visible_event_index)
         {
-            if args.thread_root_message_index.is_some() {
-                min_visible_event_index = EventIndex::default();
-            }
-
             let messages: Vec<_> = args
                 .messages
                 .into_iter()

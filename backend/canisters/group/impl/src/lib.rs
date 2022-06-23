@@ -249,14 +249,15 @@ impl Data {
         &self,
         thread_message_index: Option<MessageIndex>,
         min_visible_event_index: EventIndex,
-    ) -> Option<&ChatEvents> {
+    ) -> Option<(&ChatEvents, EventIndex)> {
         if let Some(thread_message_index) = thread_message_index {
             self.events
                 .get_event_index_by_message_index(thread_message_index)
                 .filter(|thread_event_index| *thread_event_index >= min_visible_event_index)
                 .and_then(|_| self.threads.get(&thread_message_index))
+                .map(|events| (events, EventIndex::default()))
         } else {
-            Some(&self.events)
+            Some((&self.events, min_visible_event_index))
         }
     }
 }

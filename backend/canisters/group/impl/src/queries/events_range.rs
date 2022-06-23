@@ -2,7 +2,6 @@ use crate::{read_state, RuntimeState};
 use group_canister::events_range::{Response::*, *};
 use ic_cdk_macros::query;
 use std::cmp::max;
-use types::EventIndex;
 
 #[query]
 fn events_range(args: Args) -> Response {
@@ -11,15 +10,11 @@ fn events_range(args: Args) -> Response {
 
 fn events_range_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(mut min_visible_event_index) = runtime_state.data.min_visible_event_index(caller, args.invite_code) {
-        if let Some(chat_events) = runtime_state
+    if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller, args.invite_code) {
+        if let Some((chat_events, min_visible_event_index)) = runtime_state
             .data
             .chat_events(args.thread_root_message_index, min_visible_event_index)
         {
-            if args.thread_root_message_index.is_some() {
-                min_visible_event_index = EventIndex::default();
-            }
-
             let from_index = max(args.from_index, min_visible_event_index);
             let user_id = runtime_state.data.participants.get(caller).map(|p| p.user_id);
             let events = chat_events.get_range(from_index, args.to_index, user_id);
