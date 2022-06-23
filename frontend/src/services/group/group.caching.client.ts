@@ -168,16 +168,6 @@ export class CachingGroupClient implements IGroupClient {
             .then(setCachedMessageFromSendResponse(this.db, this.chatId, message));
     }
 
-    forwardMessage(
-        senderName: string,
-        mentioned: User[],
-        message: Message
-    ): Promise<SendMessageResponse> {
-        return this.client
-            .forwardMessage(senderName, mentioned, message)
-            .then(setCachedMessageFromSendResponse(this.db, this.chatId, message));
-    }
-
     editMessage(message: Message): Promise<EditMessageResponse> {
         return this.client.editMessage(message);
     }

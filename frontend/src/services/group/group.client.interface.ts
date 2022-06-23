@@ -56,11 +56,6 @@ export interface IGroupClient {
         mentioned: User[],
         message: Message
     ): Promise<SendMessageResponse>;
-    forwardMessage(
-        senderName: string,
-        mentioned: User[],
-        message: Message
-    ): Promise<SendMessageResponse>;
     editMessage(message: Message): Promise<EditMessageResponse>;
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;

@@ -5,7 +5,7 @@ import { OpenStorageAgent, UploadFileResponse } from "@open-ic/open-storage-agen
 import type { IDataClient } from "./data.client.interface";
 import type { MessageContent, StoredMediaContent } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
-import type { BlobReference, StorageStatus, UploadDataResponse } from "../../domain/data/data";
+import type { BlobReference, StorageStatus } from "../../domain/data/data";
 import { storageStore } from "../../stores/storage";
 
 export class DataClient implements IDataClient {
@@ -52,9 +52,9 @@ export class DataClient implements IDataClient {
     async uploadData(
         content: MessageContent,
         accessorCanisterIds: string[]
-    ): Promise<UploadDataResponse> {
-        let byteLimit = 0;
-        let bytesUsed = 0;
+    ): Promise<StoredMediaContent | undefined> {
+        let byteLimit: number | undefined = undefined;
+        let bytesUsed: number | undefined = undefined;
         let updatedContent: StoredMediaContent | undefined = undefined;
 
         if (
@@ -74,12 +74,8 @@ export class DataClient implements IDataClient {
                     ...content,
                     blobReference: this.extractBlobReference(response),
                 };
-                byteLimit = Number(response.byteLimit);
-                bytesUsed = Number(response.bytesUsed);
-                storageStore.set({
-                    byteLimit,
-                    bytesUsed,
-                });
+                byteLimit = Number(response.projectedAllowance.byteLimit);
+                bytesUsed = Number(response.projectedAllowance.bytesUsedAfterOperation);
             }
         } else if (content.kind === "video_content") {
             if (
@@ -113,21 +109,132 @@ export class DataClient implements IDataClient {
                             blobReference: this.extractBlobReference(image),
                         },
                     };
-                    // TODO - include the bytes of the image too.
-                    // We can't simply add the bytes because the user may have previously uploaded the same image, in
-                    // which case we do not charge them for uploading it again. We need the OpenStorage agent to return
-                    // additional data.
-                    byteLimit = Number(video.byteLimit);
-                    bytesUsed = Number(video.bytesUsed);
-                    storageStore.set({
-                        byteLimit,
-                        bytesUsed,
-                    });
+                    byteLimit = Number(video.projectedAllowance.byteLimit);
+                    bytesUsed = Number(
+                        video.projectedAllowance.bytesUsedAfterOperation +
+                        image.projectedAllowance.bytesUsedAfterOperation -
+                        image.projectedAllowance.bytesUsed
+                    );
                 });
             }
         }
 
-        return { success: true, byteLimit, bytesUsed, content: updatedContent };
+        if (bytesUsed !== undefined && byteLimit !== undefined) {
+            storageStore.set({
+                byteLimit,
+                bytesUsed,
+            });
+        }
+
+        return updatedContent;
+    }
+
+    async forwardData(
+        content: MessageContent,
+        accessorCanisterIds: string[]
+    ): Promise<StoredMediaContent | undefined> {
+        let byteLimit: number | undefined = undefined;
+        let bytesUsed: number | undefined = undefined;
+        let updatedContent: StoredMediaContent | undefined = undefined;
+        let error: string | undefined = undefined;
+
+        if (
+            content.kind === "file_content" ||
+            content.kind === "image_content" ||
+            content.kind === "audio_content"
+        ) {
+            if (content.blobReference !== undefined) {
+                const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
+
+                const response = await this.openStorageAgent.forwardFile(
+                    Principal.fromText(content.blobReference.canisterId),
+                    content.blobReference.blobId,
+                    accessorIds
+                );
+                if (response.kind === "success") {
+                    byteLimit = Number(response.projectedAllowance.byteLimit);
+                    bytesUsed = Number(response.projectedAllowance.bytesUsedAfterOperation);
+                    updatedContent = {
+                        ...content,
+                        blobReference: {
+                            canisterId: content.blobReference.canisterId,
+                            blobId: response.newFileId
+                        }
+                    };
+                } else {
+                    if (response.kind === "allowance_exceeded") {
+                        byteLimit = Number(response.projectedAllowance.byteLimit);
+                        bytesUsed = Number(response.projectedAllowance.bytesUsed);
+                    }
+                    error = response.kind;
+                }
+            }
+        } else if (content.kind === "video_content") {
+            if (
+                content.videoData.blobReference !== undefined &&
+                content.imageData.blobReference !== undefined
+            ) {
+                const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
+                const videoCanisterId = content.videoData.blobReference.canisterId;
+                const imageCanisterId = content.imageData.blobReference.canisterId;
+
+                await Promise.all([
+                    this.openStorageAgent.forwardFile(
+                        Principal.fromText(videoCanisterId),
+                        content.videoData.blobReference.blobId,
+                        accessorIds,
+                    ),
+                    this.openStorageAgent.forwardFile(
+                        Principal.fromText(imageCanisterId),
+                        content.imageData.blobReference.blobId,
+                        accessorIds,
+                    ),
+                ]).then(([video, image]) => {
+
+                    if (video.kind === "success" && image.kind === "success") {
+                        byteLimit = Number(video.projectedAllowance.byteLimit);
+                        bytesUsed = Number(
+                            video.projectedAllowance.bytesUsedAfterOperation +
+                            image.projectedAllowance.bytesUsedAfterOperation -
+                            image.projectedAllowance.bytesUsed
+                        );
+                        updatedContent = {
+                            ...content,
+                            videoData: {
+                                ...content.videoData,
+                                blobReference: {
+                                    canisterId: videoCanisterId,
+                                    blobId: video.newFileId,
+                                }
+                            },
+                            imageData: {
+                                ...content.imageData,
+                                blobReference: {
+                                    canisterId: imageCanisterId,
+                                    blobId: image.newFileId,
+                                },
+                            },
+                        };
+                    } else if (video.kind === "success") {
+                        byteLimit = Number(video.projectedAllowance.byteLimit);
+                        bytesUsed = Number(video.projectedAllowance.bytesUsedAfterOperation);
+                        error = image.kind;
+                    } else {
+                        if (video.kind === "allowance_exceeded") {
+                            byteLimit = Number(video.projectedAllowance.byteLimit);
+                            bytesUsed = Number(video.projectedAllowance.bytesUsed);
+                        }
+                        error = video.kind;
+                    }
+                });
+            }
+        }
+
+        if (error !== undefined) {
+            throw new Error("Unable to forward file: " + error);
+        }
+
+        return updatedContent;
     }
 
     extractBlobReference(response: UploadFileResponse): BlobReference {
