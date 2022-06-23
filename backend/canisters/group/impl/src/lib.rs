@@ -251,14 +251,10 @@ impl Data {
         min_visible_event_index: EventIndex,
     ) -> Option<&ChatEvents> {
         if let Some(thread_message_index) = thread_message_index {
-            if let Some(thread_event_index) = self.events.get_event_index_by_message_index(thread_message_index) {
-                if thread_event_index >= min_visible_event_index {
-                    if let Some(thread_events) = self.threads.get(&thread_message_index) {
-                        return Some(thread_events);
-                    }
-                }
-            }
-            None
+            self.events
+                .get_event_index_by_message_index(thread_message_index)
+                .filter(|thread_event_index| *thread_event_index >= min_visible_event_index)
+                .and_then(|_| self.threads.get(&thread_message_index))
         } else {
             Some(&self.events)
         }
