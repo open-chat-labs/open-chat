@@ -17,7 +17,7 @@
     import { nullUser } from "../../domain/user/user.utils";
     import { unsubscribeNotifications } from "../../utils/notifications";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
-    import { currentUserKey } from "../../fsm/home.controller";
+    import { currentUserKey } from "../../stores/user";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { Readable, writable } from "svelte/store";
     import { numberOfColumns } from "stores/layout";

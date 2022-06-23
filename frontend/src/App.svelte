@@ -7,11 +7,10 @@
     import Router from "svelte-spa-router";
     import { routes } from "./routes";
     import Login from "./components/Login.svelte";
-    const Register = () => import("./components/register/Register.svelte");
+    import Register from "./components/register/Register.svelte";
     import Upgrading from "./components/upgrading/Upgrading.svelte";
     import Loading from "./components/Loading.svelte";
     import SessionExpired from "./components/sessionExpired/SessionExpired.svelte";
-    import Lazy from "./components/Lazy.svelte";
     import { SessionExpiryError } from "./services/httpError";
     import UpgradeBanner from "./components/UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "./utils/devices";
@@ -26,7 +25,6 @@
     import type { CreatedUser } from "./domain/user/user";
     import { Poller } from "./fsm/poller";
     import { getIdentity, login, logout, startSession } from "./services/auth";
-    import { RegisterController } from "./fsm/register.controller";
     import { clearSelectedChat, currentUserStore, startChatPoller } from "./stores/chat";
     import { apiStore } from "./stores/api";
     import { rtcConnectionsManager } from "./domain/webrtc/RtcConnectionsManager";
@@ -49,14 +47,13 @@
     let profileTrace = showTrace();
 
     let identityState = writable<IdentityState>("requires_login");
+    let identity: Identity;
     let api: ServiceContainer;
     let markOnlinePoller: Poller | undefined;
     let chatPoller: Poller | undefined;
     let usersPoller: Poller | undefined;
     let referredBy: string | undefined = undefined;
-    let registerController: RegisterController | undefined = undefined;
     let messagesRead: IMessageReadTracker;
-    let createdUser: CreatedUser;
 
     onMount(() => {
         referredBy = new URLSearchParams(window.location.search).get("ref") ?? undefined;
@@ -75,6 +72,7 @@
     });
 
     function loadedIdentity(id: Identity) {
+        identity = id;
         const anon = id.getPrincipal().isAnonymous();
         identityState.set(anon ? "requires_login" : "loading_user");
         if (!anon) {
@@ -90,13 +88,6 @@
             switch (user.kind) {
                 case "unknown_user":
                     identityState.set("registering");
-                    registerController = new RegisterController(
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        api!,
-                        user,
-                        (registeredUser) => onCreatedUser(id, registeredUser),
-                        referredBy
-                    );
                     break;
                 case "created_user":
                     onCreatedUser(id, user);
@@ -105,12 +96,15 @@
         });
     }
 
+    function registeredUser(ev: CustomEvent<CreatedUser>) {
+        onCreatedUser(identity, ev.detail);
+    }
+
     function onCreatedUser(id: Identity, user: CreatedUser): void {
         if (user.canisterUpgradeStatus === "in_progress") {
             identityState.set("upgrading_user");
             window.setTimeout(() => loadUser(id), UPGRADE_POLL_INTERVAL);
         } else {
-            createdUser = user;
             identityState.set("logged_in");
             api?.createUserClient(user.userId);
             currentUserStore.set(user);
@@ -120,7 +114,6 @@
             startSession(id).then(() => endSession());
             chatPoller = startChatPoller(api!, messagesRead);
             usersPoller = startUserUpdatePoller(api);
-            // TODO: rtcConnectionsManager.subscribe((msg) => this.handleWebRtcMessage(msg));
             api.getUserStorageLimits();
         }
     }
@@ -130,10 +123,11 @@
     }
 
     function performLogout(): Promise<void> {
+        console.log("logging out");
         return logout().then(() => {
+            identityState.set("requires_login");
             currentUserStore.set(undefined);
             apiStore.set(undefined);
-            identityState.set("requires_login");
             messagesRead?.stop();
             chatPoller?.stop();
             usersPoller?.stop();
@@ -185,8 +179,8 @@
 
 {#if $identityState === "requires_login" || $identityState === "logging_in"}
     <Login loading={$identityState === "logging_in"} on:login={() => doLogin()} />
-{:else if $identityState === "registering" && registerController !== undefined}
-    <Lazy component={Register} on:logout={performLogout} controller={registerController} />
+{:else if $identityState === "registering"}
+    <Register on:logout={performLogout} on:createdUser={registeredUser} {api} {referredBy} />
 {:else if $identityState === "logged_in"}
     <Router routes={routes(messagesRead, performLogout)} />
 {:else if $identityState == "expired"}

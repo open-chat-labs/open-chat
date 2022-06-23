@@ -4,35 +4,137 @@
     import Toast from "../Toast.svelte";
     import ModalPage from "../ModalPage.svelte";
     import Complete from "./Complete.svelte";
-    import Challenge from "./Challenge.svelte";
+    import ChallengeComponent from "./Challenge.svelte";
     import EnterUsername from "./EnterUsername.svelte";
-    import type { RegisterController } from "../../fsm/register.controller";
-    import type { ChallengeAttempt } from "../../domain/user/user";
-    import { createEventDispatcher } from "svelte";
-
-    export let controller: RegisterController;
+    import type { ChallengeAttempt, CreatedUser, Challenge } from "../../domain/user/user";
+    import { createEventDispatcher, onMount } from "svelte";
+    import type { ServiceContainer } from "../../services/serviceContainer";
+    import { writable, Writable } from "svelte/store";
 
     const dispatch = createEventDispatcher();
 
-    $: state = controller.state;
-    $: username = controller.username;
-    $: error = controller.error;
-    $: challenge = controller.challenge;
+    type Spinning = { kind: "spinning" };
+    type AwaitingUsername = { kind: "awaiting_username" };
+    type AwaitingChallengeAttempt = { kind: "awaiting_challenge_attempt" };
+    type AwaitingCompletion = { kind: "awaiting_completion" };
+
+    type RegisterState =
+        | Spinning
+        | AwaitingUsername
+        | AwaitingChallengeAttempt
+        | AwaitingCompletion;
+
+    export let api: ServiceContainer;
+    export let referredBy: string | undefined;
+
+    let state: Writable<RegisterState> = writable({ kind: "awaiting_username" });
+    let error: Writable<string | undefined> = writable(undefined);
+    let username: Writable<string | undefined> = writable(undefined);
+    let challenge: Writable<Challenge | undefined> = writable(undefined);
+    let challengeAttempt: ChallengeAttempt | undefined = undefined;
+    let createdUser: CreatedUser | undefined = undefined;
+
+    onMount(() => {
+        createChallenge();
+    });
 
     function submitUsername(ev: CustomEvent<{ username: string }>) {
-        controller.submitUsername(ev.detail.username);
+        username.set(ev.detail.username);
+
+        if (challengeAttempt !== undefined) {
+            // The user already has an untried challenge attempt so call register_user
+            registerUser(ev.detail.username, challengeAttempt, referredBy);
+        } else if ($challenge === undefined) {
+            // The challenge isn't ready yet so wait...
+            state.set({ kind: "spinning" });
+        } else {
+            // The challenge is ready so goto the "challenge" panel.
+            state.set({ kind: "awaiting_challenge_attempt" });
+        }
+    }
+
+    function registerUser(
+        username: string,
+        challengeAttempt: ChallengeAttempt,
+        referredBy: string | undefined
+    ): void {
+        state.set({ kind: "spinning" });
+        api.registerUser(username, challengeAttempt, referredBy).then((resp) => {
+            state.set({ kind: "awaiting_username" });
+            if (resp === "username_taken") {
+                error.set("register.usernameTaken");
+            } else if (resp === "username_too_short") {
+                error.set("register.usernameTooShort");
+            } else if (resp === "username_too_long") {
+                error.set("register.usernameTooLong");
+            } else if (resp === "username_invalid") {
+                error.set("register.usernameInvalid");
+            } else if (resp === "user_limit_reached") {
+                error.set("register.userLimitReached");
+            } else if (resp === "challenge_failed") {
+                error.set("register.challengeAttemptFailed");
+                createChallenge();
+            } else if (resp === "success") {
+                error.set(undefined);
+                loadUser();
+            }
+        });
+    }
+
+    function createChallenge(): void {
+        state.set({ kind: "spinning" });
+        challenge.set(undefined);
+        challengeAttempt = undefined;
+        api.createChallenge().then((challengeResponse) => {
+            if (challengeResponse.kind === "challenge") {
+                challenge.set(challengeResponse);
+                if ($username !== undefined) {
+                    // The user has submitted a username so goto the "challenge" panel.
+                    state.set({ kind: "awaiting_challenge_attempt" });
+                } else {
+                    // The user has not submitted a username so goto the "username" panel.
+                    state.set({ kind: "awaiting_username" });
+                }
+            } else {
+                // Creating a new challenge has failed.
+                // Goto the "username" panel and show the error message.
+                error.set("register.challengeThrottled");
+                state.set({ kind: "awaiting_username" });
+            }
+        });
+    }
+
+    function loadUser(): void {
+        state.set({ kind: "spinning" });
+        api.getCurrentUser().then((resp) => {
+            if (resp.kind === "created_user") {
+                state.set({ kind: "awaiting_completion" });
+                createdUser = resp;
+            }
+        });
     }
 
     function confirmChallenge(ev: CustomEvent<ChallengeAttempt>) {
-        controller.submitChallengeAttempt(ev.detail);
+        challengeAttempt = ev.detail;
+        challenge.set(undefined);
+        if ($username !== undefined) {
+            // The username has been entered so try to register the user.
+            registerUser($username, challengeAttempt, referredBy);
+        } else {
+            // The username has not been set so goto the "username" panel.
+            state.set({ kind: "awaiting_username" });
+        }
     }
 
     function cancelChallenge() {
-        controller.cancelChallengeAttempt();
+        challengeAttempt = undefined;
+        state.set({ kind: "awaiting_username" });
     }
 
     function complete() {
-        controller.complete();
+        if (createdUser !== undefined) {
+            dispatch("createdUser", createdUser);
+        }
     }
 
     let bgClass: "underwater" | "sunset" = "underwater";
@@ -53,7 +155,7 @@
     {:else if $state.kind === "awaiting_completion"}
         <Complete on:complete={complete} />
     {:else if $state.kind === "awaiting_challenge_attempt"}
-        <Challenge
+        <ChallengeComponent
             challenge={$challenge}
             error={$error}
             on:confirm={confirmChallenge}
@@ -64,7 +166,7 @@
             <Logo />
         </div>
         <EnterUsername
-            api={controller.api()}
+            {api}
             originalUsername={$username}
             error={$error}
             on:submitUsername={submitUsername} />

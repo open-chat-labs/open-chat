@@ -46,7 +46,7 @@
     import { messageToForwardStore } from "../../stores/messageToForward";
     import type { CreatedUser, User } from "../../domain/user/user";
     import { apiKey, ServiceContainer } from "../../services/serviceContainer";
-    import { currentUserKey } from "../../fsm/home.controller";
+    import { currentUserKey } from "../../stores/user";
 
     export let controller: ChatController;
     export let blocked: boolean;

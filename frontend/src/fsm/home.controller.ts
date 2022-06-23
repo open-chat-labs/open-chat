@@ -43,8 +43,6 @@ import {
 } from "../stores/chat";
 import type { IMessageReadTracker } from "../stores/markRead";
 
-export const currentUserKey = Symbol();
-
 export class HomeController {
     constructor(
         public api: ServiceContainer,

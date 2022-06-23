@@ -11,7 +11,7 @@
         MessageMatch,
         SearchAllMessagesResponse,
     } from "../../domain/search/search";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { CreatedUser, UserSummary } from "../../domain/user/user";
     import { createEventDispatcher, onMount, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import { push } from "svelte-spa-router";
@@ -20,7 +20,6 @@
     import type { DataContent } from "../../domain/data/data";
     import { userStore } from "../../stores/user";
     import NotificationsBar from "./NotificationsBar.svelte";
-    import type { HomeController } from "../../fsm/home.controller";
     import Markdown from "./Markdown.svelte";
     import { chatListScroll } from "../../stores/scrollPos";
     import {
@@ -29,21 +28,23 @@
         chatSummariesStore,
         selectedChatStore,
     } from "../../stores/chat";
+    import type { IMessageReadTracker } from "stores/markRead";
 
-    export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     export let messageSearchResults: Promise<SearchAllMessagesResponse> | undefined = undefined;
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
+    export let createdUser: CreatedUser;
+    export let messagesRead: IMessageReadTracker;
 
     const dispatch = createEventDispatcher();
 
     let chatsWithUnreadMsgs: number;
 
-    $: user = controller.user ? $userStore[controller.user?.userId] : undefined;
-    $: userId = controller.user!.userId;
+    $: user = $userStore[createdUser.userId];
+    $: userId = createdUser.userId;
     $: lowercaseSearch = searchTerm.toLowerCase();
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
@@ -66,11 +67,11 @@
             ? $chatSummariesListStore.filter(chatMatchesSearch)
             : $chatSummariesListStore;
 
-    let unsub = controller.messagesRead.subscribe((_val) => {
+    let unsub = messagesRead.subscribe((_val) => {
         chatsWithUnreadMsgs = chats
             ? chats.reduce(
                   (num, chat) =>
-                      controller.messagesRead.unreadMessageCount(
+                      messagesRead.unreadMessageCount(
                           chat.chatId,
                           getMinVisibleMessageIndex(chat),
                           chat.latestMessage?.event.messageIndex
@@ -169,7 +170,7 @@
                 {#each chats as chatSummary, i (chatSummary.chatId)}
                     <ChatSummary
                         index={i}
-                        messagesRead={controller.messagesRead}
+                        {messagesRead}
                         {chatSummary}
                         {userId}
                         selected={$selectedChatStore?.chatId === chatSummary.chatId}

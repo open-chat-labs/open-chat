@@ -12,6 +12,7 @@ const ONE_HOUR = 60 * ONE_MINUTE;
 const USER_UPDATE_INTERVAL = ONE_MINUTE;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 100;
 
+export const currentUserKey = Symbol();
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
 export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
 export const OPENCHAT_BOT_AVATAR_URL = "assets/robot.svg";
