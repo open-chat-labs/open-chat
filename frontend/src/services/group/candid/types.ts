@@ -82,6 +82,41 @@ export type ChangeRoleResponse = { 'Invalid' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null };
+export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+  { 'ParticipantJoined' : ParticipantJoined } |
+  { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
+  { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
+  { 'GroupChatCreated' : GroupChatCreated } |
+  { 'MessagePinned' : MessagePinned } |
+  { 'UsersBlocked' : UsersBlocked } |
+  { 'MessageUnpinned' : MessageUnpinned } |
+  { 'MessageReactionAdded' : UpdatedMessage } |
+  { 'ParticipantsRemoved' : ParticipantsRemoved } |
+  { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
+  { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
+  { 'Message' : Message } |
+  { 'PermissionsChanged' : PermissionsChanged } |
+  { 'PollEnded' : PollEnded } |
+  { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
+  { 'ThreadUpdated' : ThreadUpdated } |
+  { 'UsersUnblocked' : UsersUnblocked } |
+  { 'PollVoteRegistered' : UpdatedMessage } |
+  { 'ParticipantLeft' : ParticipantLeft } |
+  { 'MessageDeleted' : UpdatedMessage } |
+  { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
+  { 'GroupNameChanged' : GroupNameChanged } |
+  { 'RoleChanged' : RoleChanged } |
+  { 'PollVoteDeleted' : UpdatedMessage } |
+  { 'OwnershipTransferred' : OwnershipTransferred } |
+  { 'DirectChatCreated' : DirectChatCreated } |
+  { 'MessageEdited' : UpdatedMessage } |
+  { 'AvatarChanged' : AvatarChanged } |
+  { 'ParticipantsAdded' : ParticipantsAdded };
+export interface ChatEventWrapper {
+  'event' : ChatEvent,
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
 export type ChatId = CanisterId;
 export interface ChatMetrics {
   'audio_messages' : bigint,
@@ -98,6 +133,7 @@ export interface ChatMetrics {
   'replies' : bigint,
   'video_messages' : bigint,
   'polls' : bigint,
+  'proposals' : bigint,
   'reactions' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
@@ -145,7 +181,10 @@ export type DeleteGroupArgs = {};
 export type DeleteGroupResponse = { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'InternalError' : null };
-export interface DeleteMessagesArgs { 'message_ids' : Array<MessageId> }
+export interface DeleteMessagesArgs {
+  'message_ids' : Array<MessageId>,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
 export type DeleteMessagesResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : null };
 export interface DeletedContent {
@@ -153,18 +192,8 @@ export interface DeletedContent {
   'deleted_by' : UserId,
 }
 export type DirectChatCreated = {};
-export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
-  { 'MessageReactionAdded' : UpdatedMessage } |
-  { 'Message' : Message } |
-  { 'PollEnded' : PollEnded } |
-  { 'ThreadUpdated' : ThreadUpdated } |
-  { 'PollVoteRegistered' : UpdatedMessage } |
-  { 'MessageDeleted' : UpdatedMessage } |
-  { 'PollVoteDeleted' : UpdatedMessage } |
-  { 'DirectChatCreated' : DirectChatCreated } |
-  { 'MessageEdited' : UpdatedMessage };
 export interface DirectChatEventWrapper {
-  'event' : DirectChatEvent,
+  'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
 }
@@ -201,6 +230,7 @@ export type DisableInviteCodeResponse = { 'NotAuthorized' : null } |
 export interface EditMessageArgs {
   'content' : MessageContent,
   'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
@@ -230,8 +260,8 @@ export interface EventsRangeArgs {
 export type EventsResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
-  'affected_events' : Array<GroupChatEventWrapper>,
-  'events' : Array<GroupChatEventWrapper>,
+  'affected_events' : Array<ChatEventWrapper>,
+  'events' : Array<ChatEventWrapper>,
   'latest_event_index' : number,
 }
 export interface EventsWindowArgs {
@@ -284,40 +314,6 @@ export interface GroupChatCreated {
   'name' : string,
   'description' : string,
   'created_by' : UserId,
-}
-export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
-  { 'ParticipantJoined' : ParticipantJoined } |
-  { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
-  { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
-  { 'GroupChatCreated' : GroupChatCreated } |
-  { 'MessagePinned' : MessagePinned } |
-  { 'UsersBlocked' : UsersBlocked } |
-  { 'MessageUnpinned' : MessageUnpinned } |
-  { 'MessageReactionAdded' : UpdatedMessage } |
-  { 'ParticipantsRemoved' : ParticipantsRemoved } |
-  { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
-  { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
-  { 'Message' : Message } |
-  { 'PermissionsChanged' : PermissionsChanged } |
-  { 'PollEnded' : PollEnded } |
-  { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
-  { 'ThreadUpdated' : ThreadUpdated } |
-  { 'UsersUnblocked' : UsersUnblocked } |
-  { 'PollVoteRegistered' : UpdatedMessage } |
-  { 'ParticipantLeft' : ParticipantLeft } |
-  { 'MessageDeleted' : UpdatedMessage } |
-  { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
-  { 'GroupNameChanged' : GroupNameChanged } |
-  { 'RoleChanged' : RoleChanged } |
-  { 'PollVoteDeleted' : UpdatedMessage } |
-  { 'OwnershipTransferred' : OwnershipTransferred } |
-  { 'MessageEdited' : UpdatedMessage } |
-  { 'AvatarChanged' : AvatarChanged } |
-  { 'ParticipantsAdded' : ParticipantsAdded };
-export interface GroupChatEventWrapper {
-  'event' : GroupChatEvent,
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
@@ -447,6 +443,7 @@ export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,
   'event_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
   'mentioned_by' : UserId,
   'message_index' : MessageIndex,
 }
@@ -466,6 +463,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
+  { 'GovernanceProposal' : ProposalContent } |
   { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
@@ -509,6 +507,7 @@ export type MessagesByMessageIndexResponse = { 'CallerNotInGroup' : null } |
     }
   };
 export type Milliseconds = bigint;
+export type NeuronId = bigint;
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -599,6 +598,19 @@ export interface PollEnded {
   'message_index' : MessageIndex,
 }
 export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
+export interface ProposalContent {
+  'url' : string,
+  'title' : string,
+  'my_vote' : [] | [boolean],
+  'reject_votes' : number,
+  'deadline' : TimestampMillis,
+  'adopt_votes' : number,
+  'summary' : string,
+  'proposal_id' : ProposalId,
+  'governance_canister_id' : CanisterId,
+  'proposer' : NeuronId,
+}
+export type ProposalId = bigint;
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'name' : string,
@@ -620,6 +632,7 @@ export interface PublicSummarySuccess { 'summary' : PublicGroupSummary }
 export interface RegisterPollVoteArgs {
   'poll_option' : number,
   'operation' : VoteOperation,
+  'thread_root_message_index' : [] | [MessageIndex],
   'message_index' : MessageIndex,
 }
 export type RegisterPollVoteResponse = { 'CallerNotInGroup' : null } |
@@ -696,6 +709,7 @@ export interface SendMessageArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
+  { 'ThreadMessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   {
@@ -725,6 +739,7 @@ export interface ThreadSummary {
   'latest_event_index' : EventIndex,
 }
 export interface ThreadUpdated {
+  'updated_by' : UserId,
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }
@@ -732,6 +747,7 @@ export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export interface ToggleReactionArgs {
   'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : string,
 }
 export type ToggleReactionResponse = { 'MessageNotFound' : null } |

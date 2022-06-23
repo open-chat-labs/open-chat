@@ -820,7 +820,8 @@ export type SendMessageResponse =
     | CallerNotInGroup
     | InternalError
     | CryptoCurrencyNotSupported
-    | NotAuthorised;
+    | NotAuthorised
+    | ThreadMessageNotFound;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -839,6 +840,10 @@ export type TransferSuccess = {
 
 export type InvalidPoll = {
     kind: "invalid_poll";
+};
+
+export type ThreadMessageNotFound = {
+    kind: "thread_message_not_found";
 };
 
 export type CryptoCurrencyNotSupported = {

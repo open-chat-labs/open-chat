@@ -24,6 +24,7 @@ type SendMessageResponse =
         NotAuthorized;
         CallerNotInGroup;
         InvalidRequest: text;
+        ThreadMessageNotFound;
     };
 
 type EditMessageArgs =
@@ -399,8 +400,8 @@ type EventsWindowArgs =
 
 type EventsSuccessResult =
     record {
-        events: vec GroupChatEventWrapper;
-        affected_events: vec GroupChatEventWrapper;
+        events: vec ChatEventWrapper;
+        affected_events: vec ChatEventWrapper;
         latest_event_index: nat32;
     };
 

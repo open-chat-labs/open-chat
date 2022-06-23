@@ -40,6 +40,41 @@ export interface CanisterWasm {
   'version' : Version,
   'module' : Array<number>,
 }
+export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+  { 'ParticipantJoined' : ParticipantJoined } |
+  { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
+  { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
+  { 'GroupChatCreated' : GroupChatCreated } |
+  { 'MessagePinned' : MessagePinned } |
+  { 'UsersBlocked' : UsersBlocked } |
+  { 'MessageUnpinned' : MessageUnpinned } |
+  { 'MessageReactionAdded' : UpdatedMessage } |
+  { 'ParticipantsRemoved' : ParticipantsRemoved } |
+  { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
+  { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
+  { 'Message' : Message } |
+  { 'PermissionsChanged' : PermissionsChanged } |
+  { 'PollEnded' : PollEnded } |
+  { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
+  { 'ThreadUpdated' : ThreadUpdated } |
+  { 'UsersUnblocked' : UsersUnblocked } |
+  { 'PollVoteRegistered' : UpdatedMessage } |
+  { 'ParticipantLeft' : ParticipantLeft } |
+  { 'MessageDeleted' : UpdatedMessage } |
+  { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
+  { 'GroupNameChanged' : GroupNameChanged } |
+  { 'RoleChanged' : RoleChanged } |
+  { 'PollVoteDeleted' : UpdatedMessage } |
+  { 'OwnershipTransferred' : OwnershipTransferred } |
+  { 'DirectChatCreated' : DirectChatCreated } |
+  { 'MessageEdited' : UpdatedMessage } |
+  { 'AvatarChanged' : AvatarChanged } |
+  { 'ParticipantsAdded' : ParticipantsAdded };
+export interface ChatEventWrapper {
+  'event' : ChatEvent,
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
 export type ChatId = CanisterId;
 export interface ChatMetrics {
   'audio_messages' : bigint,
@@ -56,6 +91,7 @@ export interface ChatMetrics {
   'replies' : bigint,
   'video_messages' : bigint,
   'polls' : bigint,
+  'proposals' : bigint,
   'reactions' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
@@ -104,18 +140,8 @@ export interface DeletedContent {
   'deleted_by' : UserId,
 }
 export type DirectChatCreated = {};
-export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
-  { 'MessageReactionAdded' : UpdatedMessage } |
-  { 'Message' : Message } |
-  { 'PollEnded' : PollEnded } |
-  { 'ThreadUpdated' : ThreadUpdated } |
-  { 'PollVoteRegistered' : UpdatedMessage } |
-  { 'MessageDeleted' : UpdatedMessage } |
-  { 'PollVoteDeleted' : UpdatedMessage } |
-  { 'DirectChatCreated' : DirectChatCreated } |
-  { 'MessageEdited' : UpdatedMessage };
 export interface DirectChatEventWrapper {
-  'event' : DirectChatEvent,
+  'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
 }
@@ -191,40 +217,6 @@ export interface GroupChatCreated {
   'name' : string,
   'description' : string,
   'created_by' : UserId,
-}
-export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
-  { 'ParticipantJoined' : ParticipantJoined } |
-  { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
-  { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
-  { 'GroupChatCreated' : GroupChatCreated } |
-  { 'MessagePinned' : MessagePinned } |
-  { 'UsersBlocked' : UsersBlocked } |
-  { 'MessageUnpinned' : MessageUnpinned } |
-  { 'MessageReactionAdded' : UpdatedMessage } |
-  { 'ParticipantsRemoved' : ParticipantsRemoved } |
-  { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
-  { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
-  { 'Message' : Message } |
-  { 'PermissionsChanged' : PermissionsChanged } |
-  { 'PollEnded' : PollEnded } |
-  { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
-  { 'ThreadUpdated' : ThreadUpdated } |
-  { 'UsersUnblocked' : UsersUnblocked } |
-  { 'PollVoteRegistered' : UpdatedMessage } |
-  { 'ParticipantLeft' : ParticipantLeft } |
-  { 'MessageDeleted' : UpdatedMessage } |
-  { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
-  { 'GroupNameChanged' : GroupNameChanged } |
-  { 'RoleChanged' : RoleChanged } |
-  { 'PollVoteDeleted' : UpdatedMessage } |
-  { 'OwnershipTransferred' : OwnershipTransferred } |
-  { 'MessageEdited' : UpdatedMessage } |
-  { 'AvatarChanged' : AvatarChanged } |
-  { 'ParticipantsAdded' : ParticipantsAdded };
-export interface GroupChatEventWrapper {
-  'event' : GroupChatEvent,
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
@@ -346,6 +338,7 @@ export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,
   'event_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
   'mentioned_by' : UserId,
   'message_index' : MessageIndex,
 }
@@ -365,6 +358,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
+  { 'GovernanceProposal' : ProposalContent } |
   { 'Cryptocurrency' : CryptocurrencyContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
@@ -397,6 +391,7 @@ export interface MessageUnpinned {
   'message_index' : MessageIndex,
 }
 export type Milliseconds = bigint;
+export type NeuronId = bigint;
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -481,6 +476,19 @@ export interface PollEnded {
   'message_index' : MessageIndex,
 }
 export interface PollVotes { 'total' : TotalPollVotes, 'user' : Array<number> }
+export interface ProposalContent {
+  'url' : string,
+  'title' : string,
+  'my_vote' : [] | [boolean],
+  'reject_votes' : number,
+  'deadline' : TimestampMillis,
+  'adopt_votes' : number,
+  'summary' : string,
+  'proposal_id' : ProposalId,
+  'governance_canister_id' : CanisterId,
+  'proposer' : NeuronId,
+}
+export type ProposalId = bigint;
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'name' : string,
@@ -538,6 +546,7 @@ export interface ThreadSummary {
   'latest_event_index' : EventIndex,
 }
 export interface ThreadUpdated {
+  'updated_by' : UserId,
   'event_index' : EventIndex,
   'message_index' : MessageIndex,
 }

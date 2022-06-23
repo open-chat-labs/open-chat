@@ -4,7 +4,7 @@ use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::TestIdentity;
 use ic_fondue::ic_manager::IcHandle;
 use std::panic;
-use types::{EventIndex, GroupChatEvent, MessageContent, Role, TextContent};
+use types::{EventIndex, ChatEvent, MessageContent, Role, TextContent};
 
 pub fn pinned_messages_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(pinned_messages_tests_impl(handle, ctx));
@@ -176,14 +176,14 @@ async fn pinned_messages_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context
     {
         group_canister::events_range::Response::Success(r) => {
             assert_eq!(r.events.len(), 8);
-            assert!(matches!(r.events[0].event, GroupChatEvent::GroupChatCreated(_)));
-            assert!(matches!(r.events[1].event, GroupChatEvent::ParticipantsAdded(_)));
-            assert!(matches!(r.events[2].event, GroupChatEvent::Message(_)));
-            assert!(matches!(r.events[3].event, GroupChatEvent::Message(_)));
-            assert!(matches!(r.events[4].event, GroupChatEvent::MessagePinned(_)));
-            assert!(matches!(r.events[5].event, GroupChatEvent::RoleChanged(_)));
-            assert!(matches!(r.events[6].event, GroupChatEvent::MessagePinned(_)));
-            assert!(matches!(r.events[7].event, GroupChatEvent::MessageUnpinned(_)));
+            assert!(matches!(r.events[0].event, ChatEvent::GroupChatCreated(_)));
+            assert!(matches!(r.events[1].event, ChatEvent::ParticipantsAdded(_)));
+            assert!(matches!(r.events[2].event, ChatEvent::Message(_)));
+            assert!(matches!(r.events[3].event, ChatEvent::Message(_)));
+            assert!(matches!(r.events[4].event, ChatEvent::MessagePinned(_)));
+            assert!(matches!(r.events[5].event, ChatEvent::RoleChanged(_)));
+            assert!(matches!(r.events[6].event, ChatEvent::MessagePinned(_)));
+            assert!(matches!(r.events[7].event, ChatEvent::MessageUnpinned(_)));
         }
         response => panic!("events_range returned an error: {response:?}"),
     };
