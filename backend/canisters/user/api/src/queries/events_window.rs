@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{DirectChatEvent, EventWrapper, MessageIndex, UserId};
+use types::{ChatEvent, EventWrapper, MessageIndex, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -18,6 +18,6 @@ pub enum Response {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub events: Vec<EventWrapper<DirectChatEvent>>,
-    pub affected_events: Vec<EventWrapper<DirectChatEvent>>,
+    pub events: Vec<EventWrapper<ChatEvent>>,
+    pub affected_events: Vec<EventWrapper<ChatEvent>>,
 }

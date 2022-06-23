@@ -6,7 +6,7 @@ use ic_fondue::ic_manager::IcHandle;
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::panic;
-use types::{GroupChatEvent, MessageContent, PollConfig, PollContent, PollVotes, TotalVotes, VoteOperation};
+use types::{ChatEvent, MessageContent, PollConfig, PollContent, PollVotes, TotalVotes, VoteOperation};
 
 pub fn poll_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(poll_tests_impl(handle, ctx));
@@ -160,13 +160,13 @@ async fn poll_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     {
         group_canister::events_range::Response::Success(r) => {
             assert_eq!(r.events.len(), 7);
-            assert!(matches!(r.events[0].event, GroupChatEvent::GroupChatCreated(_)));
-            assert!(matches!(r.events[1].event, GroupChatEvent::ParticipantsAdded(_)));
-            assert!(matches!(r.events[2].event, GroupChatEvent::Message(_)));
-            assert!(matches!(r.events[3].event, GroupChatEvent::PollVoteRegistered(_)));
-            assert!(matches!(r.events[4].event, GroupChatEvent::PollVoteRegistered(_)));
-            assert!(matches!(r.events[5].event, GroupChatEvent::PollVoteRegistered(_)));
-            assert!(matches!(r.events[6].event, GroupChatEvent::PollVoteDeleted(_)));
+            assert!(matches!(r.events[0].event, ChatEvent::GroupChatCreated(_)));
+            assert!(matches!(r.events[1].event, ChatEvent::ParticipantsAdded(_)));
+            assert!(matches!(r.events[2].event, ChatEvent::Message(_)));
+            assert!(matches!(r.events[3].event, ChatEvent::PollVoteRegistered(_)));
+            assert!(matches!(r.events[4].event, ChatEvent::PollVoteRegistered(_)));
+            assert!(matches!(r.events[5].event, ChatEvent::PollVoteRegistered(_)));
+            assert!(matches!(r.events[6].event, ChatEvent::PollVoteDeleted(_)));
         }
         response => panic!("events_range returned an error: {response:?}"),
     };

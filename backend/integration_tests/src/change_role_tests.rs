@@ -5,7 +5,7 @@ use canister_client::TestIdentity;
 use ic_agent::Agent;
 use ic_fondue::ic_manager::IcHandle;
 use std::panic;
-use types::{ChatId, ChatSummary, GroupChatEvent, Role, UserId};
+use types::{ChatId, ChatSummary, ChatEvent, Role, UserId};
 
 pub fn change_role_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(change_role_tests_impl(handle, ctx));
@@ -145,13 +145,13 @@ async fn change_role_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         {
             group_canister::events_range::Response::Success(r) => {
                 assert_eq!(r.events.len(), 7);
-                assert!(matches!(r.events[0].event, GroupChatEvent::GroupChatCreated(_)));
-                assert!(matches!(r.events[1].event, GroupChatEvent::ParticipantsAdded(_)));
-                assert!(matches!(r.events[2].event, GroupChatEvent::RoleChanged(_)));
-                assert!(matches!(r.events[3].event, GroupChatEvent::RoleChanged(_)));
-                assert!(matches!(r.events[4].event, GroupChatEvent::RoleChanged(_)));
-                assert!(matches!(r.events[5].event, GroupChatEvent::RoleChanged(_)));
-                assert!(matches!(r.events[6].event, GroupChatEvent::OwnershipTransferred(_)));
+                assert!(matches!(r.events[0].event, ChatEvent::GroupChatCreated(_)));
+                assert!(matches!(r.events[1].event, ChatEvent::ParticipantsAdded(_)));
+                assert!(matches!(r.events[2].event, ChatEvent::RoleChanged(_)));
+                assert!(matches!(r.events[3].event, ChatEvent::RoleChanged(_)));
+                assert!(matches!(r.events[4].event, ChatEvent::RoleChanged(_)));
+                assert!(matches!(r.events[5].event, ChatEvent::RoleChanged(_)));
+                assert!(matches!(r.events[6].event, ChatEvent::OwnershipTransferred(_)));
             }
             response => panic!("events_range returned an error: {response:?}"),
         };

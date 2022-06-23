@@ -1,5 +1,5 @@
 use candid::{CandidType, Principal};
-use chat_events::GroupChatEvents;
+use chat_events::ChatEvents;
 use serde::{de, Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
@@ -403,7 +403,7 @@ impl ParticipantInternal {
         }
     }
 
-    pub fn get_most_recent_mentions(&self, events: &GroupChatEvents) -> Vec<Mention> {
+    pub fn get_most_recent_mentions(&self, events: &ChatEvents) -> Vec<Mention> {
         self.mentions
             .iter()
             .rev()
