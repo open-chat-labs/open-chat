@@ -18,7 +18,6 @@ import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.
 import { blockedUsers } from "./blockedUsers";
 import { push } from "svelte-spa-router";
 import { rollbar } from "../utils/logging";
-import { messagesRead } from "./markRead";
 import { closeNotificationsForChat } from "../utils/notifications";
 import type { CreatedUser, UserSummary } from "../domain/user/user";
 import { scrollStrategy } from "./settings";
@@ -144,7 +143,10 @@ export function setSelectedChat(
     );
 }
 
-function updateSummaryWithConfirmedMessage(chatId: string, message: EventWrapper<Message>): void {
+export function updateSummaryWithConfirmedMessage(
+    chatId: string,
+    message: EventWrapper<Message>
+): void {
     serverChatSummariesStore.update((summaries) => {
         const summary = summaries[chatId];
         if (summary === undefined) return summaries;
@@ -168,6 +170,7 @@ function updateSummaryWithConfirmedMessage(chatId: string, message: EventWrapper
         };
     });
 }
+
 function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
     const userIds = new Set<string>();
     chats.forEach((chat) => {
@@ -313,4 +316,15 @@ export function createDirectChat(chatId: string): void {
 
 export function startChatPoller(api: ServiceContainer): Poller {
     return new Poller(() => loadChats(api), CHAT_UPDATE_INTERVAL, CHAT_UPDATE_IDLE_INTERVAL, true);
+}
+
+export function removeChat(chatId: string): void {
+    serverChatSummariesStore.update((summaries) => {
+        return Object.entries(summaries).reduce((agg, [k, v]) => {
+            if (k !== chatId) {
+                agg[k] = v;
+            }
+            return agg;
+        }, {} as Record<string, ChatSummary>);
+    });
 }

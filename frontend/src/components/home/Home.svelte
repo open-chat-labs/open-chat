@@ -72,6 +72,8 @@
         setSelectedChat,
         serverChatSummariesStore,
         currentUserStore,
+        removeChat,
+        updateSummaryWithConfirmedMessage,
     } from "../../stores/chat";
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
@@ -325,35 +327,6 @@
         });
     }
 
-    function updateSummaryWithConfirmedMessage(
-        chatId: string,
-        message: EventWrapper<Message>
-    ): void {
-        // TODO maybe push this into the store
-        serverChatSummariesStore.update((summaries) => {
-            const summary = summaries[chatId];
-            if (summary === undefined) return summaries;
-
-            const latestEventIndex = Math.max(message.index, summary.latestEventIndex);
-            const overwriteLatestMessage =
-                summary.latestMessage === undefined ||
-                message.index > summary.latestMessage.index ||
-                // If they are the same message, take the confirmed one since it'll have the correct timestamp
-                message.event.messageId === summary.latestMessage.event.messageId;
-
-            const latestMessage = overwriteLatestMessage ? message : summary.latestMessage;
-
-            return {
-                ...summaries,
-                [chatId]: {
-                    ...summary,
-                    latestEventIndex,
-                    latestMessage,
-                },
-            };
-        });
-    }
-
     async function addMissingUsersFromMessage(message: EventWrapper<Message>): Promise<void> {
         const users = userIdsFromEvents([message]);
         const missingUsers = missingUserIds($userStore, users);
@@ -553,7 +526,6 @@
             .makeGroupPrivate(chatId)
             .then((resp) => {
                 if (resp === "success") {
-                    // TODO push this logic into the store itself
                     serverChatSummariesStore.update((summaries) => {
                         const summary = summaries[chatId];
                         if (summary === undefined || summary.kind !== "group_chat") {
@@ -621,18 +593,6 @@
                 rollbar.error("Unable to leave group", err);
                 push(`/${chatId}`);
             });
-    }
-
-    function removeChat(chatId: string): void {
-        // TODO push into the store
-        serverChatSummariesStore.update((summaries) => {
-            return Object.entries(summaries).reduce((agg, [k, v]) => {
-                if (k !== chatId) {
-                    agg[k] = v;
-                }
-                return agg;
-            }, {} as Record<string, ChatSummary>);
-        });
     }
 
     function deleteDirectChat(ev: CustomEvent<string>) {

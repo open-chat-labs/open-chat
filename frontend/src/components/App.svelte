@@ -1,34 +1,34 @@
 <script lang="ts">
     import { onMount } from "svelte";
 
-    import "./i18n/i18n";
-    import { rtlStore } from "./stores/rtl";
+    import "../i18n/i18n";
+    import { rtlStore } from "../stores/rtl";
     import { _ } from "svelte-i18n";
     import Router from "svelte-spa-router";
-    import { routes } from "./routes";
-    import Login from "./components/Login.svelte";
-    import Register from "./components/register/Register.svelte";
-    import Upgrading from "./components/upgrading/Upgrading.svelte";
-    import Loading from "./components/Loading.svelte";
-    import SessionExpired from "./components/sessionExpired/SessionExpired.svelte";
-    import { SessionExpiryError } from "./services/httpError";
-    import UpgradeBanner from "./components/UpgradeBanner.svelte";
-    import { mobileOperatingSystem } from "./utils/devices";
+    import { routes } from "../routes";
+    import Login from "./Login.svelte";
+    import Register from "./register/Register.svelte";
+    import Upgrading from "./upgrading/Upgrading.svelte";
+    import Loading from "./Loading.svelte";
+    import SessionExpired from "./sessionExpired/SessionExpired.svelte";
+    import { SessionExpiryError } from "../services/httpError";
+    import UpgradeBanner from "./UpgradeBanner.svelte";
+    import { mobileOperatingSystem } from "../utils/devices";
 
-    import "./theme/themes";
-    import "./stores/fontSize";
-    import { showTrace } from "./services/common/profiling";
-    import Profiler from "./components/Profiler.svelte";
+    import "../theme/themes";
+    import "../stores/fontSize";
+    import { showTrace } from "../services/common/profiling";
+    import Profiler from "./Profiler.svelte";
     import { writable } from "svelte/store";
     import type { Identity } from "@dfinity/agent";
-    import { ServiceContainer } from "./services/serviceContainer";
-    import type { CreatedUser } from "./domain/user/user";
-    import { Poller } from "./fsm/poller";
-    import { getIdentity, login, logout, startSession } from "./services/auth";
-    import { clearSelectedChat, currentUserStore, startChatPoller } from "./stores/chat";
-    import { apiStore } from "./stores/api";
-    import { startUserUpdatePoller } from "./stores/user";
-    import { MessageReadTracker, startMessagesReadTracker } from "./stores/markRead";
+    import { ServiceContainer } from "../services/serviceContainer";
+    import type { CreatedUser } from "../domain/user/user";
+    import { Poller } from "../fsm/poller";
+    import { getIdentity, login, logout, startSession } from "../services/auth";
+    import { clearSelectedChat, currentUserStore, startChatPoller } from "../stores/chat";
+    import { apiStore } from "../stores/api";
+    import { startUserUpdatePoller } from "../stores/user";
+    import { MessageReadTracker, startMessagesReadTracker } from "../stores/markRead";
 
     const UPGRADE_POLL_INTERVAL = 1000;
     const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -104,16 +104,16 @@
             identityState.set("upgrading_user");
             window.setTimeout(() => loadUser(id), UPGRADE_POLL_INTERVAL);
         } else {
-            identityState.set("logged_in");
-            api?.createUserClient(user.userId);
             currentUserStore.set(user);
             apiStore.set(api);
+            api?.createUserClient(user.userId);
             startMessagesReadTracker(api!);
             startOnlinePoller();
             startSession(id).then(() => endSession());
             chatPoller = startChatPoller(api!);
             usersPoller = startUserUpdatePoller(api);
             api.getUserStorageLimits();
+            identityState.set("logged_in");
         }
     }
 
@@ -170,6 +170,8 @@
             ev.preventDefault();
         }
     }
+
+    const allRoutes = routes(performLogout);
 </script>
 
 <svelte:head>
@@ -180,8 +182,8 @@
     <Login loading={$identityState === "logging_in"} on:login={() => doLogin()} />
 {:else if $identityState === "registering"}
     <Register on:logout={performLogout} on:createdUser={registeredUser} {api} {referredBy} />
-{:else if $identityState === "logged_in"}
-    <Router routes={routes(performLogout)} />
+{:else if $identityState === "logged_in" && $currentUserStore !== undefined}
+    <Router routes={allRoutes} />
 {:else if $identityState == "expired"}
     <SessionExpired on:login={() => acknowledgeExpiry()} />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
