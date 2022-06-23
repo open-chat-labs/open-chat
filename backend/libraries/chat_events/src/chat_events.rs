@@ -723,14 +723,16 @@ impl ChatEvents {
         to_event_index: EventIndex,
         my_user_id: Option<UserId>,
     ) -> Vec<EventWrapper<ChatEvent>> {
-        self.get_range_internal(from_event_index, to_event_index)
+        self.events
+            .get_range(from_event_index..=to_event_index)
             .iter()
             .map(|e| self.hydrate_event(e, my_user_id))
             .collect()
     }
 
     pub fn get_by_index(&self, indexes: Vec<EventIndex>, my_user_id: Option<UserId>) -> Vec<EventWrapper<ChatEvent>> {
-        self.get_by_index_internal(indexes)
+        self.events
+            .get_by_index(&indexes)
             .iter()
             .map(|e| self.hydrate_event(e, my_user_id))
             .collect()
@@ -744,7 +746,8 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         my_user_id: Option<UserId>,
     ) -> Vec<EventWrapper<ChatEvent>> {
-        self.from_index_internal(start, ascending, max_events, min_visible_event_index)
+        self.events
+            .from_index(start, ascending, max_events, min_visible_event_index)
             .into_iter()
             .map(|e| self.hydrate_event(e, my_user_id))
             .collect()
@@ -757,7 +760,8 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         my_user_id: Option<UserId>,
     ) -> Vec<EventWrapper<ChatEvent>> {
-        self.get_events_window_internal(mid_point, max_events, min_visible_event_index)
+        self.events
+            .get_window(mid_point, max_events, min_visible_event_index)
             .into_iter()
             .map(|e| self.hydrate_event(e, my_user_id))
             .collect()
@@ -785,38 +789,6 @@ impl ChatEvents {
             .collect();
 
         self.get_by_index(affected_event_indexes, my_user_id)
-    }
-
-    fn get_range_internal(
-        &self,
-        from_event_index: EventIndex,
-        to_event_index: EventIndex,
-    ) -> &[EventWrapper<ChatEventInternal>] {
-        self.events.get_range(from_event_index..=to_event_index)
-    }
-
-    fn get_by_index_internal(&self, indexes: Vec<EventIndex>) -> Vec<&EventWrapper<ChatEventInternal>> {
-        self.events.get_by_index(&indexes)
-    }
-
-    #[allow(clippy::wrong_self_convention)]
-    fn from_index_internal(
-        &self,
-        start: EventIndex,
-        ascending: bool,
-        max_events: usize,
-        min_visible_event_index: EventIndex,
-    ) -> Vec<&EventWrapper<ChatEventInternal>> {
-        self.events.from_index(start, ascending, max_events, min_visible_event_index)
-    }
-
-    fn get_events_window_internal(
-        &self,
-        mid_point: EventIndex,
-        max_events: usize,
-        min_visible_event_index: EventIndex,
-    ) -> Vec<&EventWrapper<ChatEventInternal>> {
-        self.events.get_window(mid_point, max_events, min_visible_event_index)
     }
 
     fn hydrate_event(&self, event: &EventWrapper<ChatEventInternal>, my_user_id: Option<UserId>) -> EventWrapper<ChatEvent> {
@@ -1062,7 +1034,7 @@ mod tests {
     fn get_range() {
         let events = setup_events();
 
-        let results = events.get_range_internal(10.into(), 20.into());
+        let results = events.events.get_range(10.into()..=20.into());
 
         let event_indexes: Vec<u32> = results.iter().map(|e| e.index.into()).collect();
 
@@ -1073,7 +1045,7 @@ mod tests {
     fn from_index_event_limit() {
         let events = setup_events();
 
-        let results = events.from_index_internal(10.into(), true, 25, EventIndex::default());
+        let results = events.events.from_index(10.into(), true, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -1086,7 +1058,7 @@ mod tests {
     fn from_index_event_limit_rev() {
         let events = setup_events();
 
-        let results = events.from_index_internal(40.into(), false, 25, EventIndex::default());
+        let results = events.events.from_index(40.into(), false, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -1099,7 +1071,7 @@ mod tests {
     fn from_index_start_index_exceeds_max() {
         let events = setup_events();
 
-        let results = events.from_index_internal(u32::MAX.into(), true, 25, EventIndex::default());
+        let results = events.events.from_index(u32::MAX.into(), true, 25, EventIndex::default());
 
         assert!(results.is_empty());
     }
@@ -1108,7 +1080,7 @@ mod tests {
     fn from_index_rev_start_index_exceeds_max() {
         let events = setup_events();
 
-        let results = events.from_index_internal(u32::MAX.into(), false, 25, EventIndex::default());
+        let results = events.events.from_index(u32::MAX.into(), false, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -1122,7 +1094,7 @@ mod tests {
         let events = setup_events();
         let mid_point = 21.into();
 
-        let results = events.get_events_window_internal(mid_point, 25, EventIndex::default());
+        let results = events.events.get_window(mid_point, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -1139,7 +1111,7 @@ mod tests {
         let events = setup_events();
         let mid_point = 21.into();
 
-        let results = events.get_events_window_internal(mid_point, 40, 18.into());
+        let results = events.events.get_window(mid_point, 40, 18.into());
 
         assert_eq!(
             results
