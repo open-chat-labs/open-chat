@@ -1,5 +1,5 @@
 import DRange from "drange";
-import type { ServiceContainer } from "services/serviceContainer";
+import type { ServiceContainer } from "../services/serviceContainer";
 import type { Subscriber, Unsubscriber } from "svelte/store";
 import type { MarkReadRequest, MarkReadResponse } from "../domain/chat/chat";
 import { indexIsInRanges } from "../domain/chat/chat.utils";
