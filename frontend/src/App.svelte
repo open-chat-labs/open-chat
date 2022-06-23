@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, setContext } from "svelte";
+    import { onMount } from "svelte";
 
     import "./i18n/i18n";
     import { rtlStore } from "./stores/rtl";
@@ -12,7 +12,6 @@
     import Loading from "./components/Loading.svelte";
     import SessionExpired from "./components/sessionExpired/SessionExpired.svelte";
     import Lazy from "./components/Lazy.svelte";
-    import { IdentityController } from "./fsm/identity.controller";
     import { SessionExpiryError } from "./services/httpError";
     import UpgradeBanner from "./components/UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "./utils/devices";
@@ -21,18 +20,47 @@
     import "./stores/fontSize";
     import { showTrace } from "./services/common/profiling";
     import Profiler from "./components/Profiler.svelte";
+    import { writable } from "svelte/store";
+    import type { Identity } from "@dfinity/agent";
+    import { ServiceContainer } from "./services/serviceContainer";
+    import type { CreatedUser } from "./domain/user/user";
+    import { Poller } from "./fsm/poller";
+    import { getIdentity, login, logout, startSession } from "./services/auth";
+    import { RegisterController } from "./fsm/register.controller";
+    import { clearSelectedChat, currentUserStore, startChatPoller } from "./stores/chat";
+    import { apiStore } from "./stores/api";
+    import { rtcConnectionsManager } from "./domain/webrtc/RtcConnectionsManager";
+    import { startUserUpdatePoller } from "./stores/user";
+    import { IMessageReadTracker, MessageReadTracker } from "./stores/markRead";
+
+    const UPGRADE_POLL_INTERVAL = 1000;
+    const MARK_ONLINE_INTERVAL = 61 * 1000;
+    type IdentityState =
+        | "requires_login"
+        | "loading_user"
+        | "logged_in"
+        | "registering"
+        | "logging_in"
+        | "upgrading_user"
+        | "upgrade_user"
+        | "expired";
 
     let viewPortContent = "width=device-width, initial-scale=1";
-    let controller: IdentityController = new IdentityController();
     let profileTrace = showTrace();
-    setContext("identityController", controller);
 
-    $: identityState = controller.state;
+    let identityState = writable<IdentityState>("requires_login");
+    let api: ServiceContainer;
+    let markOnlinePoller: Poller | undefined;
+    let chatPoller: Poller | undefined;
+    let usersPoller: Poller | undefined;
+    let referredBy: string | undefined = undefined;
+    let registerController: RegisterController | undefined = undefined;
+    let messagesRead: IMessageReadTracker;
+    let createdUser: CreatedUser;
 
     onMount(() => {
-        const referredBy = new URLSearchParams(window.location.search).get("ref") ?? undefined;
+        referredBy = new URLSearchParams(window.location.search).get("ref") ?? undefined;
         if (referredBy !== undefined) {
-            controller.setReferredBy(referredBy);
             history.replaceState(null, "", "/#/");
         }
 
@@ -42,7 +70,95 @@
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
+
+        getIdentity().then((id) => loadedIdentity(id));
     });
+
+    function loadedIdentity(id: Identity) {
+        const anon = id.getPrincipal().isAnonymous();
+        identityState.set(anon ? "requires_login" : "loading_user");
+        if (!anon) {
+            loadUser(id);
+        }
+    }
+
+    function loadUser(id: Identity) {
+        if (api === undefined || api.differentIdentity(id)) {
+            api = new ServiceContainer(id);
+        }
+        api.getCurrentUser().then((user) => {
+            switch (user.kind) {
+                case "unknown_user":
+                    identityState.set("registering");
+                    registerController = new RegisterController(
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        api!,
+                        user,
+                        (registeredUser) => onCreatedUser(id, registeredUser),
+                        referredBy
+                    );
+                    break;
+                case "created_user":
+                    onCreatedUser(id, user);
+                    break;
+            }
+        });
+    }
+
+    function onCreatedUser(id: Identity, user: CreatedUser): void {
+        if (user.canisterUpgradeStatus === "in_progress") {
+            identityState.set("upgrading_user");
+            window.setTimeout(() => loadUser(id), UPGRADE_POLL_INTERVAL);
+        } else {
+            createdUser = user;
+            identityState.set("logged_in");
+            api?.createUserClient(user.userId);
+            currentUserStore.set(user);
+            apiStore.set(api);
+            messagesRead = new MessageReadTracker(api!);
+            startOnlinePoller();
+            startSession(id).then(() => endSession());
+            chatPoller = startChatPoller(api!, messagesRead);
+            usersPoller = startUserUpdatePoller(api);
+            // TODO: rtcConnectionsManager.subscribe((msg) => this.handleWebRtcMessage(msg));
+            api.getUserStorageLimits();
+        }
+    }
+
+    function endSession(): void {
+        performLogout().then(() => identityState.set("expired"));
+    }
+
+    function performLogout(): Promise<void> {
+        return logout().then(() => {
+            currentUserStore.set(undefined);
+            apiStore.set(undefined);
+            identityState.set("requires_login");
+            messagesRead?.stop();
+            chatPoller?.stop();
+            usersPoller?.stop();
+            markOnlinePoller?.stop();
+            clearSelectedChat();
+            return;
+        });
+    }
+
+    function startOnlinePoller() {
+        api?.markAsOnline();
+        markOnlinePoller = new Poller(
+            () => api?.markAsOnline() ?? Promise.resolve(),
+            MARK_ONLINE_INTERVAL
+        );
+    }
+
+    function doLogin(): void {
+        identityState.set("logging_in");
+        login().then((id) => loadedIdentity(id));
+    }
+
+    function acknowledgeExpiry(): void {
+        doLogin();
+    }
 
     function calculateHeight() {
         // fix the issue with 100vh layouts in various mobile browsers
@@ -57,7 +173,7 @@
 
     function unhandledError(ev: Event) {
         if (ev instanceof PromiseRejectionEvent && ev.reason instanceof SessionExpiryError) {
-            controller.endSession();
+            endSession();
             ev.preventDefault();
         }
     }
@@ -68,16 +184,13 @@
 </svelte:head>
 
 {#if $identityState === "requires_login" || $identityState === "logging_in"}
-    <Login loading={$identityState === "logging_in"} on:login={() => controller.login()} />
-{:else if $identityState === "registering" && controller.registerController !== undefined}
-    <Lazy
-        component={Register}
-        identityController={controller}
-        controller={controller.registerController} />
+    <Login loading={$identityState === "logging_in"} on:login={() => doLogin()} />
+{:else if $identityState === "registering" && registerController !== undefined}
+    <Lazy component={Register} on:logout={performLogout} controller={registerController} />
 {:else if $identityState === "logged_in"}
-    <Router {routes} />
+    <Router routes={routes(messagesRead, performLogout)} />
 {:else if $identityState == "expired"}
-    <SessionExpired on:login={() => controller.acknowledgeExpiry()} />
+    <SessionExpired on:login={() => acknowledgeExpiry()} />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
     <Upgrading />
 {:else}

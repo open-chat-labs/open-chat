@@ -23,7 +23,12 @@
     import type { HomeController } from "../../fsm/home.controller";
     import Markdown from "./Markdown.svelte";
     import { chatListScroll } from "../../stores/scrollPos";
-    import { chatsLoading, chatSummariesListStore, chatSummariesStore } from "../../stores/chat";
+    import {
+        chatsLoading,
+        chatSummariesListStore,
+        chatSummariesStore,
+        selectedChatStore,
+    } from "../../stores/chat";
 
     export let controller: HomeController;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -39,7 +44,6 @@
 
     $: user = controller.user ? $userStore[controller.user?.userId] : undefined;
     $: userId = controller.user!.userId;
-    $: selectedChat = controller.selectedChat;
     $: lowercaseSearch = searchTerm.toLowerCase();
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
@@ -168,7 +172,7 @@
                         messagesRead={controller.messagesRead}
                         {chatSummary}
                         {userId}
-                        selected={$selectedChat?.chatId === chatSummary.chatId}
+                        selected={$selectedChatStore?.chatId === chatSummary.chatId}
                         on:click={closeSearch}
                         on:deleteDirectChat />
                 {/each}

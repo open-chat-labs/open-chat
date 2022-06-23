@@ -1,5 +1,16 @@
-import type { CreatedUser, PartialUserSummary, UserLookup } from "../domain/user/user";
+import { Poller } from "../fsm/poller";
+import type { ServiceContainer } from "../services/serviceContainer";
+import { get } from "svelte/store";
+import { chunk, groupBy } from "../utils/list";
+import { rollbar } from "../utils/logging";
+import type { PartialUserSummary, UserLookup } from "../domain/user/user";
+import { chatSummariesStore, currentUserStore } from "./chat";
 import { immutableStore } from "./immutable";
+
+const ONE_MINUTE = 60 * 1000;
+const ONE_HOUR = 60 * ONE_MINUTE;
+const USER_UPDATE_INTERVAL = ONE_MINUTE;
+const MAX_USERS_TO_UPDATE_PER_BATCH = 100;
 
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
 export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
@@ -27,8 +38,6 @@ export function overwriteUser(lookup: UserLookup, user: PartialUserSummary): Use
     };
 }
 
-export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
-
 export const userStore = {
     subscribe,
     set: (users: UserLookup): void => {
@@ -55,3 +64,57 @@ export const userStore = {
         });
     },
 };
+
+async function updateUsers(api: ServiceContainer) {
+    try {
+        const currentUser = get(currentUserStore);
+        if (currentUser === undefined) {
+            console.log("Current user not set, cannot update users");
+            return;
+        }
+
+        const allUsers = get(userStore);
+        const usersToUpdate = new Set<string>([currentUser.userId]);
+
+        // Update all users we have direct chats with
+        for (const chat of Object.values(get(chatSummariesStore))) {
+            if (chat.kind == "direct_chat") {
+                usersToUpdate.add(chat.them);
+            }
+        }
+
+        // Also update any users who haven't been updated for at least an hour
+        const now = BigInt(Date.now());
+        for (const user of Object.values(allUsers)) {
+            if (now - user.updated > ONE_HOUR && user.kind === "user") {
+                usersToUpdate.add(user.userId);
+            }
+        }
+
+        console.log(`getting updates for ${usersToUpdate.size} user(s)`);
+        for (const batch of chunk(Array.from(usersToUpdate), MAX_USERS_TO_UPDATE_PER_BATCH)) {
+            const userGroups = groupBy<string, bigint>(batch, (u) => {
+                return allUsers[u]?.updated ?? BigInt(0);
+            });
+
+            const usersResp = await api.getUsers({
+                userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
+                    users,
+                    updatedSince,
+                })),
+            });
+            userStore.addMany(usersResp.users);
+            if (usersResp.serverTimestamp !== undefined) {
+                userStore.setUpdated(batch, usersResp.serverTimestamp);
+            }
+        }
+        console.log("users updated");
+    } catch (err) {
+        rollbar.error("Error updating users", err as Error);
+    }
+}
+
+export function startUserUpdatePoller(api: ServiceContainer): Poller {
+    console.log("poll: starting chats poller");
+    return new Poller(() => updateUsers(api), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
+}

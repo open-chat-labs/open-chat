@@ -1,6 +1,5 @@
 import { push } from "svelte-spa-router";
-import { get, readable, Writable, writable } from "svelte/store";
-import DRange from "drange";
+import { get } from "svelte/store";
 import type {
     ChatSummary,
     DirectChatSummary,
@@ -11,19 +10,11 @@ import type {
     MemberRole,
     MessageContent,
 } from "../domain/chat/chat";
-import {
-    emptyChatMetrics,
-    getContentAsText,
-    getFirstUnreadMention,
-    getFirstUnreadMessageIndex,
-    updateArgsFromChats,
-    userIdsFromEvents,
-} from "../domain/chat/chat.utils";
+import { userIdsFromEvents } from "../domain/chat/chat.utils";
 import type { DataContent } from "../domain/data/data";
 import type { Notification } from "../domain/notifications";
-import type { CreatedUser, UserSummary } from "../domain/user/user";
-import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.utils";
-import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
+import type { CreatedUser } from "../domain/user/user";
+import { missingUserIds } from "../domain/user/user.utils";
 import type {
     WebRtcMessage,
     RemoteUserToggledReaction,
@@ -34,220 +25,32 @@ import type {
     RemoteUserSentMessage,
 } from "../domain/webrtc/webrtc";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { blockedUsers } from "../stores/blockedUsers";
 import { draftMessages } from "../stores/draftMessages";
-import { IMessageReadTracker, MessageReadTracker } from "../stores/markRead";
 import { toastStore } from "../stores/toast";
 import { typing } from "../stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
-import { chunk, groupBy } from "../utils/list";
 import { rollbar } from "../utils/logging";
-import { closeNotificationsForChat } from "../utils/notifications";
-import { ChatController } from "./chat.controller";
-import type { Poller } from "./poller";
-import { scrollStrategy } from "../stores/settings";
+import type { ChatController } from "./chat.controller";
 import { setCachedMessageFromNotification } from "../utils/caching";
 import {
     chatSummariesListStore,
     chatSummariesStore,
+    createDirectChat,
+    selectedChatStore,
     serverChatSummariesStore,
-    startChatPoller,
+    setSelectedChat,
 } from "../stores/chat";
-
-const ONE_MINUTE = 60 * 1000;
-const ONE_HOUR = 60 * ONE_MINUTE;
-const USER_UPDATE_INTERVAL = ONE_MINUTE;
-const CHAT_UPDATE_INTERVAL = 5000;
-const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
-const MAX_USERS_TO_UPDATE_PER_BATCH = 100;
+import type { IMessageReadTracker } from "../stores/markRead";
 
 export const currentUserKey = Symbol();
 
 export class HomeController {
-    public messagesRead: IMessageReadTracker;
-    private chatUpdatesSince?: bigint;
-    public initialised = false;
-    public selectedChat: Writable<ChatController | undefined> = writable(undefined);
-    private chatPoller: Poller | undefined;
-    private usersPoller: Poller | undefined;
-
-    constructor(public api: ServiceContainer, public user: CreatedUser) {
-        this.messagesRead = new MessageReadTracker(api);
-        if (process.env.NODE_ENV !== "test") {
-            this.chatPoller = startChatPoller(api, this.messagesRead);
-            // this.loadChats().then(() => {
-            // this.chatPoller = new Poller(
-            //     () => this.loadChats(),
-            //     CHAT_UPDATE_INTERVAL,
-            //     CHAT_UPDATE_IDLE_INTERVAL
-            // );
-            // this.usersPoller = new Poller(
-            //     () => this.updateUsers(),
-            //     USER_UPDATE_INTERVAL,
-            //     USER_UPDATE_INTERVAL
-            // );
-            // });
-            rtcConnectionsManager.subscribe((msg) => this.handleWebRtcMessage(msg));
-            this.api.getUserStorageLimits();
-        }
-    }
-
-    private async updateUsers() {
-        try {
-            const allUsers = get(userStore);
-            const usersToUpdate = new Set<string>([this.user.userId]);
-
-            // Update all users we have direct chats with
-            for (const chat of Object.values(get(chatSummariesStore))) {
-                if (chat.kind == "direct_chat") {
-                    usersToUpdate.add(chat.them);
-                }
-            }
-
-            // Also update any users who haven't been updated for at least an hour
-            const now = BigInt(Date.now());
-            for (const user of Object.values(allUsers)) {
-                if (now - user.updated > ONE_HOUR && user.kind === "user") {
-                    usersToUpdate.add(user.userId);
-                }
-            }
-
-            console.log(`getting updates for ${usersToUpdate.size} user(s)`);
-            for (const batch of chunk(Array.from(usersToUpdate), MAX_USERS_TO_UPDATE_PER_BATCH)) {
-                const userGroups = groupBy<string, bigint>(batch, (u) => {
-                    return allUsers[u]?.updated ?? BigInt(0);
-                });
-
-                const usersResp = await this.api.getUsers({
-                    userGroups: Array.from(userGroups).map(([updatedSince, users]) => ({
-                        users,
-                        updatedSince,
-                    })),
-                });
-                userStore.addMany(usersResp.users);
-                if (usersResp.serverTimestamp !== undefined) {
-                    userStore.setUpdated(batch, usersResp.serverTimestamp);
-                }
-            }
-            console.log("users updated");
-        } catch (err) {
-            rollbar.error("Error updating users", err as Error);
-        }
-    }
-
-    // TODO move this internal to the chat store
-    private async loadChats() {
-        try {
-            const chats = Object.values(get(serverChatSummariesStore));
-            const selectedChat = get(this.selectedChat);
-            const chatsResponse =
-                this.chatUpdatesSince === undefined
-                    ? await this.api.getInitialState(this.messagesRead, selectedChat?.chatId)
-                    : await this.api.getUpdates(
-                          chats,
-                          updateArgsFromChats(this.chatUpdatesSince, chats),
-                          this.messagesRead,
-                          selectedChat?.chatId
-                      );
-
-            this.chatUpdatesSince = chatsResponse.timestamp;
-
-            if (chatsResponse.wasUpdated) {
-                const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
-                if (!this.initialised) {
-                    for (const userId of this.user.referrals) {
-                        userIds.add(userId);
-                    }
-                }
-                userIds.add(this.user.userId);
-                const usersResponse = await this.api.getUsers(
-                    {
-                        userGroups: [
-                            {
-                                users: missingUserIds(get(userStore), userIds),
-                                updatedSince: BigInt(0),
-                            },
-                        ],
-                    },
-                    true
-                );
-
-                userStore.addMany(usersResponse.users);
-                blockedUsers.set(chatsResponse.blockedUsers);
-
-                const selectedChat = get(this.selectedChat);
-                let selectedChatInvalid = true;
-
-                serverChatSummariesStore.set(
-                    chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
-                        rec[chat.chatId] = chat;
-                        if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
-                            selectedChatInvalid = false;
-                        }
-                        return rec;
-                    }, {})
-                );
-
-                if (selectedChatInvalid) {
-                    this.clearSelectedChat();
-                } else if (selectedChat !== undefined) {
-                    selectedChat.chatUpdated(
-                        chatsResponse.affectedEvents[selectedChat.chatId] ?? []
-                    );
-                }
-
-                if (chatsResponse.avatarIdUpdate !== undefined) {
-                    const blobReference =
-                        chatsResponse.avatarIdUpdate === "set_to_none"
-                            ? undefined
-                            : {
-                                  canisterId: this.user.userId,
-                                  blobId: chatsResponse.avatarIdUpdate.value,
-                              };
-                    const dataContent = {
-                        blobReference,
-                        blobData: undefined,
-                        blobUrl: undefined,
-                    };
-                    const user = {
-                        ...get(userStore)[this.user.userId],
-                        ...dataContent,
-                    };
-                    userStore.add(this.api.rehydrateDataContent(user, "avatar"));
-                }
-
-                this.initialised = true;
-            }
-        } catch (err) {
-            rollbar.error("Error loading chats", err as Error);
-            throw err;
-        } finally {
-            // this.loading.set(false);
-        }
-    }
-
-    private userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
-        const userIds = new Set<string>();
-        chats.forEach((chat) => {
-            if (chat.kind === "direct_chat") {
-                userIds.add(chat.them);
-            } else if (chat.latestMessage !== undefined) {
-                userIds.add(chat.latestMessage.event.sender);
-                extractUserIdsFromMentions(
-                    getContentAsText(chat.latestMessage.event.content)
-                ).forEach((id) => userIds.add(id));
-            }
-        });
-        return userIds;
-    }
-
-    public destroy(): void {
-        this.messagesRead.stop();
-        this.chatPoller?.stop();
-        this.usersPoller?.stop();
-        this.clearSelectedChat();
-    }
+    constructor(
+        public api: ServiceContainer,
+        public user: CreatedUser,
+        public messagesRead: IMessageReadTracker
+    ) {}
 
     updateUserAvatar(data: DataContent): void {
         this.user = {
@@ -293,65 +96,10 @@ export class HomeController {
         });
     }
 
-    selectChat(chatId: string, messageIndex: number | undefined): void {
-        closeNotificationsForChat(chatId);
-
-        const chat = get(serverChatSummariesStore)[chatId];
-        if (chat !== undefined) {
-            const user: UserSummary = {
-                kind: "user",
-                userId: this.user.userId,
-                username: this.user.username,
-                lastOnline: Date.now(),
-                updated: BigInt(Date.now()),
-            };
-
-            this.selectedChat.update((selectedChat) => {
-                if (selectedChat !== undefined) {
-                    selectedChat.destroy();
-                }
-
-                const currentScrollStrategy = get(scrollStrategy);
-                if (messageIndex === undefined) {
-                    if (currentScrollStrategy === "firstMention") {
-                        messageIndex =
-                            getFirstUnreadMention(this.messagesRead, chat)?.messageIndex ??
-                            getFirstUnreadMessageIndex(this.messagesRead, chat);
-                    }
-                    if (currentScrollStrategy === "firstMessage") {
-                        messageIndex = getFirstUnreadMessageIndex(this.messagesRead, chat);
-                    }
-                }
-
-                const readableChatSummary = readable(chat, (set) =>
-                    // TODO - when and where does this get unsubscribed
-                    // we should get rid of this by just having a selectedChatId store
-                    // and then a selectedChatSummary derived store
-                    serverChatSummariesStore.subscribe((summaries) => {
-                        if (summaries[chatId] !== undefined) {
-                            set(summaries[chatId]);
-                        }
-                    })
-                );
-
-                return new ChatController(
-                    this.api,
-                    user,
-                    readableChatSummary,
-                    this.messagesRead,
-                    messageIndex,
-                    (message) => this.updateSummaryWithConfirmedMessage(chatId, message)
-                );
-            });
-        } else {
-            this.clearSelectedChat();
-        }
-    }
-
     clearSelectedChat(): void {
-        this.selectedChat.update((selectedChat) => {
-            if (selectedChat !== undefined) {
-                selectedChat.destroy();
+        selectedChatStore.update((controller) => {
+            if (controller !== undefined) {
+                controller.destroy();
                 push("/");
             }
             return undefined;
@@ -433,33 +181,6 @@ export class HomeController {
             });
     }
 
-    goToMessageIndex(messageIndex: number): void {
-        get(this.selectedChat)?.externalGoToMessage(messageIndex);
-    }
-
-    createDirectChat(chatId: string): void {
-        // TODO push this logic into the store itself
-        serverChatSummariesStore.update((chatSummaries) => {
-            return {
-                ...chatSummaries,
-                [chatId]: {
-                    kind: "direct_chat",
-                    them: chatId,
-                    chatId,
-                    readByMe: new DRange(),
-                    readByThem: new DRange(),
-                    latestMessage: undefined,
-                    latestEventIndex: 0,
-                    dateCreated: BigInt(Date.now()),
-                    notificationsMuted: false,
-                    metrics: emptyChatMetrics(),
-                    myMetrics: emptyChatMetrics(),
-                },
-            };
-        });
-        push(`/${chatId}`);
-    }
-
     replyPrivatelyTo(context: EnhancedReplyContext): void {
         const chat = get(chatSummariesListStore).find((c) => {
             return c.kind === "direct_chat" && c.them === context.sender?.userId;
@@ -472,7 +193,7 @@ export class HomeController {
             push(`/${chat.chatId}`);
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.createDirectChat(context.sender!.userId);
+            createDirectChat(context.sender!.userId);
         }
     }
 
@@ -496,7 +217,7 @@ export class HomeController {
         const parsedMsg = message as WebRtcMessage;
 
         const fromChat = this.findChatByChatType(parsedMsg);
-        const selectedChat = get(this.selectedChat);
+        const selectedChat = get(selectedChatStore);
 
         // if the chat can't be found - ignore
         if (fromChat === undefined) {
@@ -646,7 +367,7 @@ export class HomeController {
         ]).then(([m, _]) => {
             this.updateSummaryWithConfirmedMessage(chatId, m);
 
-            const selectedChat = get(this.selectedChat);
+            const selectedChat = get(selectedChatStore);
             if (selectedChat?.chatId === chatId) {
                 selectedChat.handleMessageSentByOther(m, true);
             }
@@ -659,7 +380,7 @@ export class HomeController {
     ): boolean {
         const chat = this.findChatByChatType(msg);
         if (chat === undefined) return false;
-        const selectedChat = get(this.selectedChat);
+        const selectedChat = get(selectedChatStore);
         if (selectedChat === undefined) return false;
         if (chat.chatId !== selectedChat.chatId) return false;
         fn(selectedChat);
@@ -723,14 +444,14 @@ export class HomeController {
             .then((resp) => {
                 if (resp.kind === "group_chat") {
                     this.addOrReplaceChat(resp);
-                    this.selectChat(group.chatId, undefined);
+                    setSelectedChat(this.api, this.messagesRead, group.chatId, undefined);
                     return true;
                 } else if (resp.kind === "already_in_group") {
                     this.addOrReplaceChat({
                         ...group,
                         myRole: "participant" as MemberRole,
                     });
-                    this.selectChat(group.chatId, undefined);
+                    setSelectedChat(this.api, this.messagesRead, group.chatId, undefined);
                     return true;
                 } else {
                     if (resp.kind === "blocked") {

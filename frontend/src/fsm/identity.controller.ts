@@ -1,10 +1,11 @@
 import type { Identity } from "@dfinity/agent";
-import { currentUserStore } from "stores/user";
+import { apiStore } from "stores/api";
+import { currentUserStore } from "../stores/chat";
 import { Writable, writable } from "svelte/store";
 import type { CreatedUser, User } from "../domain/user/user";
 import { getIdentity, login, logout, startSession } from "../services/auth";
 import { ServiceContainer } from "../services/serviceContainer";
-import { HomeController } from "./home.controller";
+// import { HomeController } from "./home.controller";
 import { Poller } from "./poller";
 import { RegisterController } from "./register.controller";
 
@@ -26,7 +27,7 @@ export class IdentityController {
     private _identity?: Identity;
     private _api?: ServiceContainer;
     public registerController?: RegisterController;
-    public homeController?: HomeController;
+    // public homeController?: HomeController;
     private _user?: User;
     private markOnlinePoller: Poller | undefined;
     private _referredBy: string | undefined = undefined;
@@ -75,9 +76,10 @@ export class IdentityController {
             this.state.set("logged_in");
             this._api?.createUserClient(user.userId);
             currentUserStore.set(user);
+            apiStore.set(this._api);
             this._user = { ...user };
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.homeController = new HomeController(this._api!, user);
+            // this.homeController = new HomeController(this._api!, user);
 
             this.startOnlinePoller();
             this.startSession(id);
@@ -105,8 +107,7 @@ export class IdentityController {
             this._identity = undefined;
             this._api = undefined;
             this._user = undefined;
-            this.homeController?.destroy();
-            this.homeController = undefined;
+            // this.homeController = undefined;
             this.markOnlinePoller?.stop();
             this.markOnlinePoller = undefined;
             this.state.set("requires_login");
@@ -122,9 +123,5 @@ export class IdentityController {
 
     public acknowledgeExpiry(): void {
         this.login();
-    }
-
-    public setReferredBy(referredBy: string): void {
-        this._referredBy = referredBy;
     }
 }

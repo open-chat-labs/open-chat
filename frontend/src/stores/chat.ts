@@ -1,25 +1,35 @@
-import type { ChatSummary } from "../domain/chat/chat";
+import type { ChatSummary, EventWrapper, Message } from "../domain/chat/chat";
 import { unconfirmed } from "./unconfirmed";
-import { derived, get, Readable, writable, Writable } from "svelte/store";
+import { derived, get, readable, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";
 import {
     compareChats,
+    emptyChatMetrics,
     getContentAsText,
+    getFirstUnreadMention,
+    getFirstUnreadMessageIndex,
     mergeUnconfirmedIntoSummary,
     updateArgsFromChats,
 } from "../domain/chat/chat.utils";
-import { currentUserStore, userStore } from "./user";
+import { userStore } from "./user";
 import { Poller } from "../fsm/poller";
-import type { ServiceContainer } from "services/serviceContainer";
-import { extractUserIdsFromMentions, missingUserIds } from "domain/user/user.utils";
+import type { ServiceContainer } from "../services/serviceContainer";
+import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.utils";
 import { blockedUsers } from "./blockedUsers";
 import { push } from "svelte-spa-router";
-import { rollbar } from "utils/logging";
+import { rollbar } from "../utils/logging";
 import type { IMessageReadTracker } from "./markRead";
+import { closeNotificationsForChat } from "../utils/notifications";
+import type { CreatedUser, UserSummary } from "../domain/user/user";
+import { scrollStrategy } from "./settings";
+import { ChatController } from "../fsm/chat.controller";
+import DRange from "drange";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
+
+let chatUpdatesSince: bigint | undefined = undefined;
 
 export type ChatState = {
     chatId: string;
@@ -49,6 +59,10 @@ type LoadedEventWindow = {
     allowRecursion: boolean;
 };
 
+export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
+
+export const selectedChatStore = writable<ChatController | undefined>(undefined);
+
 export const serverChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
 export const chatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
@@ -75,12 +89,87 @@ export const chatSummariesListStore = derived(chatSummariesStore, (summaries) =>
 );
 
 export const chatsLoading = writable(false);
+export const chatsInitialised = writable(false);
 
-export const selectedChatId = immutableStore<string | undefined>(undefined);
+export function setSelectedChat(
+    api: ServiceContainer,
+    messagesRead: IMessageReadTracker,
+    chatId: string,
+    messageIndex?: number
+): void {
+    const summaries = get(chatSummariesStore);
+    const currentUser = get(currentUserStore);
+    const currentScrollStrategy = get(scrollStrategy);
 
-let chatUpdatesSince: bigint | undefined = undefined;
-let chatsInitialised = false;
+    console.log("Are we getting here?");
+    if (currentUser === undefined) return;
 
+    console.log("Creating selected chat controller");
+
+    const chat = summaries[chatId];
+
+    if (chat === undefined) return;
+
+    closeNotificationsForChat(chatId);
+
+    const user: UserSummary = {
+        kind: "user",
+        userId: currentUser.userId,
+        username: currentUser.username,
+        lastOnline: Date.now(),
+        updated: BigInt(Date.now()),
+    };
+
+    if (messageIndex === undefined) {
+        if (currentScrollStrategy === "firstMention") {
+            messageIndex =
+                getFirstUnreadMention(messagesRead, chat)?.messageIndex ??
+                getFirstUnreadMessageIndex(messagesRead, chat);
+        }
+        if (currentScrollStrategy === "firstMessage") {
+            messageIndex = getFirstUnreadMessageIndex(messagesRead, chat);
+        }
+    }
+
+    const readableChatSummary = readable(chat, (set) =>
+        serverChatSummariesStore.subscribe((summaries) => {
+            if (summaries[chat.chatId] !== undefined) {
+                set(summaries[chat.chatId]);
+            }
+        })
+    );
+
+    selectedChatStore.set(
+        new ChatController(api, user, readableChatSummary, messagesRead, messageIndex, (message) =>
+            updateSummaryWithConfirmedMessage(chat.chatId, message)
+        )
+    );
+}
+
+function updateSummaryWithConfirmedMessage(chatId: string, message: EventWrapper<Message>): void {
+    serverChatSummariesStore.update((summaries) => {
+        const summary = summaries[chatId];
+        if (summary === undefined) return summaries;
+
+        const latestEventIndex = Math.max(message.index, summary.latestEventIndex);
+        const overwriteLatestMessage =
+            summary.latestMessage === undefined ||
+            message.index > summary.latestMessage.index ||
+            // If they are the same message, take the confirmed one since it'll have the correct timestamp
+            message.event.messageId === summary.latestMessage.event.messageId;
+
+        const latestMessage = overwriteLatestMessage ? message : summary.latestMessage;
+
+        return {
+            ...summaries,
+            [chatId]: {
+                ...summary,
+                latestEventIndex,
+                latestMessage,
+            },
+        };
+    });
+}
 function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
     const userIds = new Set<string>();
     chats.forEach((chat) => {
@@ -96,9 +185,10 @@ function userIdsFromChatSummaries(chats: ChatSummary[]): Set<string> {
     return userIds;
 }
 
-function clearSelectedChatId() {
-    selectedChatId.update((chatId) => {
-        if (chatId !== undefined) {
+export function clearSelectedChat(): void {
+    selectedChatStore.update((controller) => {
+        if (controller !== undefined) {
+            controller.destroy();
             push("/");
         }
         return undefined;
@@ -115,24 +205,26 @@ async function loadChats(api: ServiceContainer, messagesRead: IMessageReadTracke
 
         console.log("poll: loading chats");
 
-        chatsLoading.set(!chatsInitialised);
+        const init = get(chatsInitialised);
+
+        chatsLoading.set(!init);
         const chats = Object.values(get(serverChatSummariesStore));
-        const chatId = get(selectedChatId);
+        const selectedChat = get(selectedChatStore);
         const chatsResponse =
             chatUpdatesSince === undefined
-                ? await api.getInitialState(messagesRead, chatId)
+                ? await api.getInitialState(messagesRead, selectedChat?.chatId)
                 : await api.getUpdates(
                       chats,
                       updateArgsFromChats(chatUpdatesSince, chats),
                       messagesRead,
-                      chatId
+                      selectedChat?.chatId
                   );
 
         chatUpdatesSince = chatsResponse.timestamp;
 
         if (chatsResponse.wasUpdated) {
             const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries);
-            if (!chatsInitialised) {
+            if (!init) {
                 for (const userId of currentUser.referrals) {
                     userIds.add(userId);
                 }
@@ -153,13 +245,13 @@ async function loadChats(api: ServiceContainer, messagesRead: IMessageReadTracke
             userStore.addMany(usersResponse.users);
             blockedUsers.set(chatsResponse.blockedUsers);
 
-            const chatId = get(selectedChatId);
+            const selectedChat = get(selectedChatStore);
             let selectedChatInvalid = true;
 
             serverChatSummariesStore.set(
                 chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
                     rec[chat.chatId] = chat;
-                    if (chatId === chat.chatId) {
+                    if (selectedChat !== undefined && selectedChat.chatId === chat.chatId) {
                         selectedChatInvalid = false;
                     }
                     return rec;
@@ -167,10 +259,9 @@ async function loadChats(api: ServiceContainer, messagesRead: IMessageReadTracke
             );
 
             if (selectedChatInvalid) {
-                clearSelectedChatId();
-            } else if (chatId !== undefined) {
-                // TODO - what to do about this
-                // selectedChat.chatUpdated(chatsResponse.affectedEvents[chatId] ?? []);
+                clearSelectedChat();
+            } else if (selectedChat !== undefined) {
+                selectedChat.chatUpdated(chatsResponse.affectedEvents[selectedChat.chatId] ?? []);
             }
 
             if (chatsResponse.avatarIdUpdate !== undefined) {
@@ -193,7 +284,7 @@ async function loadChats(api: ServiceContainer, messagesRead: IMessageReadTracke
                 userStore.add(api.rehydrateDataContent(user, "avatar"));
             }
 
-            chatsInitialised = true;
+            chatsInitialised.set(true);
         }
     } catch (err) {
         rollbar.error("Error loading chats", err as Error);
@@ -201,6 +292,28 @@ async function loadChats(api: ServiceContainer, messagesRead: IMessageReadTracke
     } finally {
         chatsLoading.set(false);
     }
+}
+
+export function createDirectChat(chatId: string): void {
+    serverChatSummariesStore.update((chatSummaries) => {
+        return {
+            ...chatSummaries,
+            [chatId]: {
+                kind: "direct_chat",
+                them: chatId,
+                chatId,
+                readByMe: new DRange(),
+                readByThem: new DRange(),
+                latestMessage: undefined,
+                latestEventIndex: 0,
+                dateCreated: BigInt(Date.now()),
+                notificationsMuted: false,
+                metrics: emptyChatMetrics(),
+                myMetrics: emptyChatMetrics(),
+            },
+        };
+    });
+    push(`/${chatId}`);
 }
 
 export function startChatPoller(api: ServiceContainer, messagesRead: IMessageReadTracker): Poller {

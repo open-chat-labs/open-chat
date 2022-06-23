@@ -7,11 +7,12 @@
     import Challenge from "./Challenge.svelte";
     import EnterUsername from "./EnterUsername.svelte";
     import type { RegisterController } from "../../fsm/register.controller";
-    import type { IdentityController } from "../../fsm/identity.controller";
     import type { ChallengeAttempt } from "../../domain/user/user";
+    import { createEventDispatcher } from "svelte";
 
     export let controller: RegisterController;
-    export let identityController: IdentityController;
+
+    const dispatch = createEventDispatcher();
 
     $: state = controller.state;
     $: username = controller.username;
@@ -74,7 +75,7 @@
     class="logout"
     role="button"
     href="/#"
-    on:click|preventDefault|stopPropagation={() => identityController.logout()}>
+    on:click|preventDefault|stopPropagation={() => dispatch("logout")}>
     {$_("logout")}
 </a>
 
