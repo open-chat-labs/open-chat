@@ -4,7 +4,7 @@ use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::{TestIdentity, USER2_DEFAULT_NAME};
 use ic_fondue::ic_manager::IcHandle;
 use std::{panic, thread, time};
-use types::{ChatSummary, GroupChatEvent, Role};
+use types::{ChatSummary, ChatEvent, Role};
 
 pub fn make_super_admin_tests(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(make_super_admin_tests_impl(handle, ctx));
@@ -301,22 +301,22 @@ async fn make_super_admin_tests_impl(handle: IcHandle, ctx: &fondue::pot::Contex
         {
             group_canister::events_range::Response::Success(r) => {
                 assert_eq!(r.events.len(), 11);
-                assert!(matches!(r.events[0].event, GroupChatEvent::GroupChatCreated(_)));
-                assert!(matches!(r.events[1].event, GroupChatEvent::ParticipantsAdded(_)));
-                assert!(matches!(r.events[2].event, GroupChatEvent::ParticipantJoined(_)));
-                assert!(matches!(r.events[3].event, GroupChatEvent::OwnershipTransferred(_)));
-                assert!(matches!(r.events[4].event, GroupChatEvent::ParticipantLeft(_)));
-                assert!(matches!(r.events[5].event, GroupChatEvent::ParticipantsAdded(_)));
-                assert!(matches!(r.events[6].event, GroupChatEvent::ParticipantAssumesSuperAdmin(_)));
-                assert!(matches!(r.events[7].event, GroupChatEvent::ParticipantsRemoved(_)));
+                assert!(matches!(r.events[0].event, ChatEvent::GroupChatCreated(_)));
+                assert!(matches!(r.events[1].event, ChatEvent::ParticipantsAdded(_)));
+                assert!(matches!(r.events[2].event, ChatEvent::ParticipantJoined(_)));
+                assert!(matches!(r.events[3].event, ChatEvent::OwnershipTransferred(_)));
+                assert!(matches!(r.events[4].event, ChatEvent::ParticipantLeft(_)));
+                assert!(matches!(r.events[5].event, ChatEvent::ParticipantsAdded(_)));
+                assert!(matches!(r.events[6].event, ChatEvent::ParticipantAssumesSuperAdmin(_)));
+                assert!(matches!(r.events[7].event, ChatEvent::ParticipantsRemoved(_)));
                 assert!(matches!(
                     r.events[8].event,
-                    GroupChatEvent::ParticipantRelinquishesSuperAdmin(_)
+                    ChatEvent::ParticipantRelinquishesSuperAdmin(_)
                 ));
-                assert!(matches!(r.events[9].event, GroupChatEvent::ParticipantAssumesSuperAdmin(_)));
+                assert!(matches!(r.events[9].event, ChatEvent::ParticipantAssumesSuperAdmin(_)));
                 assert!(matches!(
                     r.events[10].event,
-                    GroupChatEvent::ParticipantDismissedAsSuperAdmin(_)
+                    ChatEvent::ParticipantDismissedAsSuperAdmin(_)
                 ));
             }
             response => panic!("EventsRange returned an error: {response:?}"),

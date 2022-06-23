@@ -3,9 +3,9 @@ use crate::model::participants::{ParticipantInternal, Participants};
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use chat_events::{GroupChatEvents, ThreadChatEvents};
+use chat_events::{ChatEvents, GroupChatEvents};
 use notifications_canister::c2c_push_notification;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -145,7 +145,8 @@ struct Data {
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
     pub participants: Participants,
-    pub events: GroupChatEvents,
+    #[serde(deserialize_with = "deserialize_chat_events")]
+    pub events: ChatEvents,
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
@@ -159,8 +160,16 @@ struct Data {
     pub permissions: GroupPermissions,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
-    #[serde(default)]
-    pub threads: HashMap<MessageIndex, ThreadChatEvents>,
+    #[serde(skip)]
+    pub threads: HashMap<MessageIndex, ChatEvents>,
+}
+
+fn deserialize_chat_events<'de, D>(deserializer: D) -> Result<ChatEvents, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    let group_chat_events: GroupChatEvents = de::Deserialize::deserialize(deserializer)?;
+    Ok(group_chat_events.inner)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -184,7 +193,7 @@ impl Data {
         permissions: Option<GroupPermissions>,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
-        let events = GroupChatEvents::new(chat_id, name.clone(), description.clone(), creator_user_id, now);
+        let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, now);
 
         Data {
             is_public,
