@@ -46,7 +46,7 @@ import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
 import type { ChatState } from "../stores/chat";
 import { draftMessages } from "../stores/draftMessages";
-import type { IMessageReadTracker } from "../stores/markRead";
+import type { MessageReadTracker } from "../stores/markRead";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { overwriteCachedEvents } from "../utils/caching";
@@ -90,7 +90,7 @@ export class ChatController {
         public api: ServiceContainer,
         public user: UserSummary,
         private serverChatSummary: Readable<ChatSummary>,
-        public markRead: IMessageReadTracker,
+        public markRead: MessageReadTracker,
         private _focusMessageIndex: number | undefined,
         private _updateSummaryWithConfirmedMessage: (message: EventWrapper<Message>) => void
     ) {

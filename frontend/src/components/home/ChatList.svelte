@@ -28,7 +28,7 @@
         chatSummariesStore,
         selectedChatStore,
     } from "../../stores/chat";
-    import type { IMessageReadTracker } from "stores/markRead";
+    import type { MessageReadTracker } from "stores/markRead";
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -37,7 +37,7 @@
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
     export let createdUser: CreatedUser;
-    export let messagesRead: IMessageReadTracker;
+    export let messagesRead: MessageReadTracker;
 
     const dispatch = createEventDispatcher();
 

@@ -1,4 +1,4 @@
-import type { IMessageReadTracker } from "../../stores/markRead";
+import type { MessageReadTracker } from "../../stores/markRead";
 import type {
     EventsResponse,
     UpdateArgs,
@@ -38,11 +38,11 @@ export interface IUserClient {
     getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
-        messagesRead: IMessageReadTracker,
+        messagesRead: MessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse>;
     getInitialState(
-        messagesRead: IMessageReadTracker,
+        messagesRead: MessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse>;
     chatEventsWindow(

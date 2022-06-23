@@ -80,7 +80,7 @@ import type {
     SearchDirectChatResponse,
     SearchGroupChatResponse,
 } from "../domain/search/search";
-import type { IMessageReadTracker, MarkMessagesRead } from "../stores/markRead";
+import type { MessageReadTracker, MarkMessagesRead } from "../stores/markRead";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
 import type { ToggleMuteNotificationResponse } from "../domain/notifications";
@@ -685,7 +685,7 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     private async handleMergedUpdatesResponse(
-        messagesRead: IMessageReadTracker,
+        messagesRead: MessageReadTracker,
         resp: MergedUpdatesResponse,
         rehydrateLastMessage = true
     ): Promise<MergedUpdatesResponse> {
@@ -719,7 +719,7 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     getInitialState(
-        messagesRead: IMessageReadTracker,
+        messagesRead: MessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         return this.userClient.getInitialState(messagesRead, selectedChatId).then((resp) => {
@@ -730,7 +730,7 @@ export class ServiceContainer implements MarkMessagesRead {
     getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
-        messagesRead: IMessageReadTracker,
+        messagesRead: MessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         return this.userClient

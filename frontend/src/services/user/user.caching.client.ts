@@ -61,7 +61,7 @@ import { GroupClient } from "../../services/group/group.client";
 import type { Identity } from "@dfinity/agent";
 import { scrollStrategy } from "../../stores/settings";
 import { get } from "svelte/store";
-import type { IMessageReadTracker } from "../../stores/markRead";
+import type { MessageReadTracker } from "../../stores/markRead";
 import { missingUserIds } from "../../domain/user/user.utils";
 import { userStore } from "stores/user";
 import { UserIndexClient } from "services/userIndex/userIndex.client";
@@ -210,7 +210,7 @@ export class CachingUserClient implements IUserClient {
     private async primeCaches(
         cachedResponse: MergedUpdatesResponse | undefined,
         nextResponse: MergedUpdatesResponse,
-        messagesRead: IMessageReadTracker,
+        messagesRead: MessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<void> {
         const cachedChats =
@@ -322,7 +322,7 @@ export class CachingUserClient implements IUserClient {
 
     @profile("userCachingClient")
     async getInitialState(
-        messagesRead: IMessageReadTracker,
+        messagesRead: MessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
@@ -356,8 +356,7 @@ export class CachingUserClient implements IUserClient {
     async getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
-        messagesRead: IMessageReadTracker,
-
+        messagesRead: MessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);

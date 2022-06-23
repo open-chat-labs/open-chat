@@ -73,14 +73,14 @@
         serverChatSummariesStore,
         currentUserStore,
     } from "../../stores/chat";
-    import type { IMessageReadTracker } from "../../stores/markRead";
+    import type { MessageReadTracker } from "../../stores/markRead";
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
     import { handleWebRtcMessage } from "../../domain/webrtc/rtcHandler";
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
-    export let messagesRead: IMessageReadTracker;
+    export let messagesRead: MessageReadTracker;
     export let logout: () => void;
 
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {

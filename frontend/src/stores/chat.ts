@@ -18,7 +18,7 @@ import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.
 import { blockedUsers } from "./blockedUsers";
 import { push } from "svelte-spa-router";
 import { rollbar } from "../utils/logging";
-import type { IMessageReadTracker } from "./markRead";
+import type { MessageReadTracker } from "./markRead";
 import { closeNotificationsForChat } from "../utils/notifications";
 import type { CreatedUser, UserSummary } from "../domain/user/user";
 import { scrollStrategy } from "./settings";
@@ -93,7 +93,7 @@ export const chatsInitialised = writable(false);
 
 export function setSelectedChat(
     api: ServiceContainer,
-    messagesRead: IMessageReadTracker,
+    messagesRead: MessageReadTracker,
     chatId: string,
     messageIndex?: number
 ): void {
@@ -195,15 +195,13 @@ export function clearSelectedChat(): void {
     });
 }
 
-async function loadChats(api: ServiceContainer, messagesRead: IMessageReadTracker) {
+async function loadChats(api: ServiceContainer, messagesRead: MessageReadTracker) {
     try {
         const currentUser = get(currentUserStore);
         if (currentUser === undefined) {
             console.log("Current user not set, cannot load chats");
             return;
         }
-
-        console.log("poll: loading chats");
 
         const init = get(chatsInitialised);
 
@@ -316,8 +314,7 @@ export function createDirectChat(chatId: string): void {
     push(`/${chatId}`);
 }
 
-export function startChatPoller(api: ServiceContainer, messagesRead: IMessageReadTracker): Poller {
-    console.log("poll: starting chats poller");
+export function startChatPoller(api: ServiceContainer, messagesRead: MessageReadTracker): Poller {
     return new Poller(
         () => loadChats(api, messagesRead),
         CHAT_UPDATE_INTERVAL,

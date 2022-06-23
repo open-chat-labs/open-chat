@@ -8,7 +8,7 @@
     import type { CreatedUser, UserSummary } from "../../domain/user/user";
     import { unsubscribeNotifications } from "../../utils/notifications";
     import type { ServiceContainer } from "../../services/serviceContainer";
-    import type { IMessageReadTracker } from "../../stores/markRead";
+    import type { MessageReadTracker } from "../../stores/markRead";
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -18,7 +18,7 @@
     export let searchResultsAvailable: boolean = false;
     export let api: ServiceContainer;
     export let user: CreatedUser;
-    export let messagesRead: IMessageReadTracker;
+    export let messagesRead: MessageReadTracker;
 
     $: userId = user.userId;
 

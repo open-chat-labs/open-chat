@@ -27,9 +27,8 @@
     import { getIdentity, login, logout, startSession } from "./services/auth";
     import { clearSelectedChat, currentUserStore, startChatPoller } from "./stores/chat";
     import { apiStore } from "./stores/api";
-    import { rtcConnectionsManager } from "./domain/webrtc/RtcConnectionsManager";
     import { startUserUpdatePoller } from "./stores/user";
-    import { IMessageReadTracker, MessageReadTracker } from "./stores/markRead";
+    import { MessageReadTracker } from "./stores/markRead";
 
     const UPGRADE_POLL_INTERVAL = 1000;
     const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -53,7 +52,7 @@
     let chatPoller: Poller | undefined;
     let usersPoller: Poller | undefined;
     let referredBy: string | undefined = undefined;
-    let messagesRead: IMessageReadTracker;
+    let messagesRead: MessageReadTracker;
 
     onMount(() => {
         referredBy = new URLSearchParams(window.location.search).get("ref") ?? undefined;
