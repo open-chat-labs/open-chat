@@ -13,35 +13,35 @@ fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> R
     if let Some(participant) = runtime_state.data.participants.get(caller) {
         let mut min_visible_event_index = participant.min_visible_event_index();
 
-        let chat_events = if let Some(thread_message_index) = args.thread_root_message_index {
-            if let Some(thread_events) = runtime_state.data.threads.get(&thread_message_index) {
+        if let Some(chat_events) = runtime_state
+            .data
+            .chat_events(args.thread_root_message_index, min_visible_event_index)
+        {
+            if args.thread_root_message_index.is_some() {
                 min_visible_event_index = EventIndex::default();
-                thread_events
-            } else {
-                return ThreadMessageNotFound;
             }
-        } else {
-            &runtime_state.data.events
-        };
 
-        let messages: Vec<_> = args
-            .messages
-            .into_iter()
-            .filter_map(|m| chat_events.message_by_message_index(m))
-            .filter(|m| m.index >= min_visible_event_index)
-            .map(|e| EventWrapper {
-                index: e.index,
-                timestamp: e.timestamp,
-                event: chat_events.hydrate_message(e.event, Some(participant.user_id)),
+            let messages: Vec<_> = args
+                .messages
+                .into_iter()
+                .filter_map(|m| chat_events.message_by_message_index(m))
+                .filter(|m| m.index >= min_visible_event_index)
+                .map(|e| EventWrapper {
+                    index: e.index,
+                    timestamp: e.timestamp,
+                    event: chat_events.hydrate_message(e.event, Some(participant.user_id)),
+                })
+                .collect();
+
+            let latest_event_index = chat_events.last().index;
+
+            Success(SuccessResult {
+                messages,
+                latest_event_index,
             })
-            .collect();
-
-        let latest_event_index = chat_events.last().index;
-
-        Success(SuccessResult {
-            messages,
-            latest_event_index,
-        })
+        } else {
+            ThreadMessageNotFound
+        }
     } else {
         CallerNotInGroup
     }
