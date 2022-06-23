@@ -257,7 +257,8 @@ export interface EventsRangeArgs {
   'from_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type EventsResponse = { 'CallerNotInGroup' : null } |
+export type EventsResponse = { 'ThreadMessageNotFound' : null } |
+  { 'CallerNotInGroup' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
   'affected_events' : Array<ChatEventWrapper>,
@@ -499,7 +500,10 @@ export interface MessagesByMessageIndexArgs {
   'messages' : Array<MessageIndex>,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type MessagesByMessageIndexResponse = { 'CallerNotInGroup' : null } |
+export type MessagesByMessageIndexResponse = {
+    'ThreadMessageNotFound' : null
+  } |
+  { 'CallerNotInGroup' : null } |
   {
     'Success' : {
       'messages' : Array<MessageEventWrapper>,
