@@ -1,4 +1,5 @@
 import DRange from "drange";
+import type { ServiceContainer } from "services/serviceContainer";
 import type { Subscriber, Unsubscriber } from "svelte/store";
 import type { MarkReadRequest, MarkReadResponse } from "../domain/chat/chat";
 import { indexIsInRanges } from "../domain/chat/chat.utils";
@@ -37,12 +38,12 @@ export class MessageReadTracker {
         };
     }
 
-    constructor(private api: MarkMessagesRead) {
+    start(api: ServiceContainer): void {
         if (process.env.NODE_ENV !== "test") {
-            this.interval = window.setInterval(() => this.sendToServer(), MARK_READ_INTERVAL);
+            this.interval = window.setInterval(() => this.sendToServer(api), MARK_READ_INTERVAL);
         }
         if (process.env.NODE_ENV !== "test") {
-            window.onbeforeunload = () => this.sendToServer();
+            window.onbeforeunload = () => this.sendToServer(api);
         }
     }
 
@@ -53,7 +54,7 @@ export class MessageReadTracker {
         }
     }
 
-    private sendToServer(): void {
+    private sendToServer(api: ServiceContainer): void {
         const req = Object.entries(this.state).reduce<MarkReadRequest>((req, [chatId, ranges]) => {
             if (ranges.length > 0) {
                 req.push({
@@ -66,7 +67,7 @@ export class MessageReadTracker {
 
         if (req.length > 0) {
             console.log("Sending messages read to the server: ", JSON.stringify(req));
-            this.api.markMessagesRead(req);
+            api.markMessagesRead(req);
         }
     }
 
@@ -190,4 +191,10 @@ export class MessageReadTracker {
             return false;
         }
     }
+}
+
+export const messagesRead = new MessageReadTracker();
+
+export function startMessagesReadTracker(api: ServiceContainer): void {
+    messagesRead.start(api);
 }

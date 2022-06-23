@@ -5,10 +5,7 @@ import { rangesAreEqual } from "../domain/chat/chat.utils";
 import type { EventWrapper, Message } from "../domain/chat/chat";
 
 describe("mark messages read", () => {
-    const api = {
-        markMessagesRead: jest.fn(),
-    };
-    const markRead = new MessageReadTracker(api);
+    const markRead = new MessageReadTracker();
 
     function createDummyMessage(messageId: bigint): EventWrapper<Message> {
         return {

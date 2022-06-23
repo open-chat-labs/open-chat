@@ -61,7 +61,7 @@ import { GroupClient } from "../../services/group/group.client";
 import type { Identity } from "@dfinity/agent";
 import { scrollStrategy } from "../../stores/settings";
 import { get } from "svelte/store";
-import type { MessageReadTracker } from "../../stores/markRead";
+import { messagesRead } from "../../stores/markRead";
 import { missingUserIds } from "../../domain/user/user.utils";
 import { userStore } from "stores/user";
 import { UserIndexClient } from "services/userIndex/userIndex.client";
@@ -210,7 +210,6 @@ export class CachingUserClient implements IUserClient {
     private async primeCaches(
         cachedResponse: MergedUpdatesResponse | undefined,
         nextResponse: MergedUpdatesResponse,
-        messagesRead: MessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<void> {
         const cachedChats =
@@ -243,11 +242,11 @@ export class CachingUserClient implements IUserClient {
 
                 if (currentScrollStrategy === "firstMention") {
                     targetMessageIndex =
-                        getFirstUnreadMention(messagesRead, chat)?.messageIndex ??
-                        getFirstUnreadMessageIndex(messagesRead, chat);
+                        getFirstUnreadMention(chat)?.messageIndex ??
+                        getFirstUnreadMessageIndex(chat);
                 }
                 if (currentScrollStrategy === "firstMessage") {
-                    targetMessageIndex = getFirstUnreadMessageIndex(messagesRead, chat);
+                    targetMessageIndex = getFirstUnreadMessageIndex(chat);
                 }
 
                 const range = indexRangeForChat(chat);
@@ -321,10 +320,7 @@ export class CachingUserClient implements IUserClient {
     }
 
     @profile("userCachingClient")
-    async getInitialState(
-        messagesRead: MessageReadTracker,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse> {
+    async getInitialState(selectedChatId: string | undefined): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         // if we have cached chats we will rebuild the UpdateArgs from that cached data
         if (cachedChats) {
@@ -332,20 +328,19 @@ export class CachingUserClient implements IUserClient {
                 .getUpdates(
                     cachedChats.chatSummaries,
                     updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries),
-                    messagesRead,
                     selectedChatId // WARNING: This was left undefined previously - is this correct now
                 )
                 .then((resp) => {
                     resp.wasUpdated = true;
-                    this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
+                    this.primeCaches(cachedChats, resp, selectedChatId);
                     return resp;
                 })
                 .then((resp) => this.setCachedChats(resp));
         } else {
             return this.client
-                .getInitialState(messagesRead, selectedChatId)
+                .getInitialState(selectedChatId)
                 .then((resp) => {
-                    this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
+                    this.primeCaches(cachedChats, resp, selectedChatId);
                     return resp;
                 })
                 .then((resp) => this.setCachedChats(resp));
@@ -356,14 +351,13 @@ export class CachingUserClient implements IUserClient {
     async getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
-        messagesRead: MessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         return this.client
-            .getUpdates(chatSummaries, args, messagesRead, selectedChatId) // WARNING: This was left undefined previously - is this correct now
+            .getUpdates(chatSummaries, args, selectedChatId) // WARNING: This was left undefined previously - is this correct now
             .then((resp) => {
-                this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
+                this.primeCaches(cachedChats, resp, selectedChatId);
                 return resp;
             })
             .then((resp) => this.setCachedChats(resp));

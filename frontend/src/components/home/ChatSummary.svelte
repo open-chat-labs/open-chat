@@ -21,7 +21,7 @@
     import Typing from "../Typing.svelte";
     import { TypersByChat, typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
-    import type { MessageReadTracker } from "../../stores/markRead";
+    import { messagesRead } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
     import { createEventDispatcher, onDestroy } from "svelte";
     import { toTitleCase } from "../../utils/string";
@@ -33,7 +33,6 @@
     export let chatSummary: ChatSummary;
     export let userId: string;
     export let selected: boolean;
-    export let messagesRead: MessageReadTracker;
 
     const dispatch = createEventDispatcher();
     let hovering = false;

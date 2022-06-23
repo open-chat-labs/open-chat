@@ -71,7 +71,6 @@
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
-    $: markRead = controller.markRead;
     $: pinned = controller.pinnedMessages;
     $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>

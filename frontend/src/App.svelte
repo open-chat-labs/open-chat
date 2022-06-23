@@ -28,7 +28,7 @@
     import { clearSelectedChat, currentUserStore, startChatPoller } from "./stores/chat";
     import { apiStore } from "./stores/api";
     import { startUserUpdatePoller } from "./stores/user";
-    import { MessageReadTracker } from "./stores/markRead";
+    import { MessageReadTracker, startMessagesReadTracker } from "./stores/markRead";
 
     const UPGRADE_POLL_INTERVAL = 1000;
     const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -108,10 +108,10 @@
             api?.createUserClient(user.userId);
             currentUserStore.set(user);
             apiStore.set(api);
-            messagesRead = new MessageReadTracker(api!);
+            startMessagesReadTracker(api!);
             startOnlinePoller();
             startSession(id).then(() => endSession());
-            chatPoller = startChatPoller(api!, messagesRead);
+            chatPoller = startChatPoller(api!);
             usersPoller = startUserUpdatePoller(api);
             api.getUserStorageLimits();
         }
@@ -181,7 +181,7 @@
 {:else if $identityState === "registering"}
     <Register on:logout={performLogout} on:createdUser={registeredUser} {api} {referredBy} />
 {:else if $identityState === "logged_in"}
-    <Router routes={routes(messagesRead, performLogout)} />
+    <Router routes={routes(performLogout)} />
 {:else if $identityState == "expired"}
     <SessionExpired on:login={() => acknowledgeExpiry()} />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}

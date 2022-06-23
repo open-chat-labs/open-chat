@@ -28,7 +28,7 @@
         chatSummariesStore,
         selectedChatStore,
     } from "../../stores/chat";
-    import type { MessageReadTracker } from "stores/markRead";
+    import { messagesRead } from "../../stores/markRead";
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -37,7 +37,6 @@
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
     export let createdUser: CreatedUser;
-    export let messagesRead: MessageReadTracker;
 
     const dispatch = createEventDispatcher();
 
@@ -170,7 +169,6 @@
                 {#each chats as chatSummary, i (chatSummary.chatId)}
                     <ChatSummary
                         index={i}
-                        {messagesRead}
                         {chatSummary}
                         {userId}
                         selected={$selectedChatStore?.chatId === chatSummary.chatId}

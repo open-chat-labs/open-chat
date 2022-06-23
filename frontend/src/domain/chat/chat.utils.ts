@@ -38,7 +38,7 @@ import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
 import { _ } from "svelte-i18n";
 import { unconfirmed } from "../../stores/unconfirmed";
-import type { MessageReadTracker } from "../../stores/markRead";
+import { messagesRead } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
 import { formatTokens } from "../../utils/cryptoFormatter";
@@ -899,7 +899,6 @@ function partitionEvents(
 export function replaceLocal(
     userId: string,
     chatId: string,
-    messageReadTracker: MessageReadTracker,
     readByMe: DRange,
     onClient: EventWrapper<ChatEvent>[],
     fromServer: EventWrapper<ChatEvent>[]
@@ -916,13 +915,13 @@ export function replaceLocal(
             // only now do we consider this message confirmed
             const idNum = BigInt(id);
             if (unconfirmed.delete(chatId, idNum)) {
-                messageReadTracker.confirmMessage(chatId, e.event.messageIndex, idNum);
+                messagesRead.confirmMessage(chatId, e.event.messageIndex, idNum);
             } else if (
                 e.event.sender === userId &&
                 !indexIsInRanges(e.event.messageIndex, readByMe)
             ) {
                 // If this message was sent by us and is not currently marked as read, mark it as read
-                messageReadTracker.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
+                messagesRead.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
             }
             revokeObjectUrls(clientMsgs[id]);
             clientMsgs[id] = e;
@@ -1486,20 +1485,14 @@ export function metricsEqual(a: ChatMetrics, b: ChatMetrics): boolean {
     );
 }
 
-export function getFirstUnreadMention(
-    messagesRead: MessageReadTracker,
-    chat: ChatSummary
-): Mention | undefined {
+export function getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
     if (chat.kind === "direct_chat") return undefined;
     return chat.mentions.find(
         (m) => !messagesRead.isRead(chat.chatId, m.messageIndex, m.messageId)
     );
 }
 
-export function getFirstUnreadMessageIndex(
-    messagesRead: MessageReadTracker,
-    chat: ChatSummary
-): number | undefined {
+export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {
     if (chat.kind === "group_chat" && chat.myRole === "previewer") return undefined;
 
     return messagesRead.getFirstUnreadMessageIndex(

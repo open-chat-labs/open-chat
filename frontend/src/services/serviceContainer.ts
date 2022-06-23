@@ -80,7 +80,7 @@ import type {
     SearchDirectChatResponse,
     SearchGroupChatResponse,
 } from "../domain/search/search";
-import type { MessageReadTracker, MarkMessagesRead } from "../stores/markRead";
+import { MarkMessagesRead, messagesRead } from "../stores/markRead";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
 import type { ToggleMuteNotificationResponse } from "../domain/notifications";
@@ -685,7 +685,6 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     private async handleMergedUpdatesResponse(
-        messagesRead: MessageReadTracker,
         resp: MergedUpdatesResponse,
         rehydrateLastMessage = true
     ): Promise<MergedUpdatesResponse> {
@@ -718,26 +717,20 @@ export class ServiceContainer implements MarkMessagesRead {
         };
     }
 
-    getInitialState(
-        messagesRead: MessageReadTracker,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse> {
-        return this.userClient.getInitialState(messagesRead, selectedChatId).then((resp) => {
-            return this.handleMergedUpdatesResponse(messagesRead, resp, false);
+    getInitialState(selectedChatId: string | undefined): Promise<MergedUpdatesResponse> {
+        return this.userClient.getInitialState(selectedChatId).then((resp) => {
+            return this.handleMergedUpdatesResponse(resp, false);
         });
     }
 
     getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
-        messagesRead: MessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
-        return this.userClient
-            .getUpdates(chatSummaries, args, messagesRead, selectedChatId)
-            .then((resp) => {
-                return this.handleMergedUpdatesResponse(messagesRead, resp);
-            });
+        return this.userClient.getUpdates(chatSummaries, args, selectedChatId).then((resp) => {
+            return this.handleMergedUpdatesResponse(resp);
+        });
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {

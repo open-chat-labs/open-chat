@@ -73,14 +73,12 @@
         serverChatSummariesStore,
         currentUserStore,
     } from "../../stores/chat";
-    import type { MessageReadTracker } from "../../stores/markRead";
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
     import { handleWebRtcMessage } from "../../domain/webrtc/rtcHandler";
 
     export let api: ServiceContainer;
     export let user: CreatedUser;
-    export let messagesRead: MessageReadTracker;
     export let logout: () => void;
 
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
@@ -213,7 +211,7 @@
                         hotGroups = { kind: "loading" };
                         previewChat(chatId).then((canPreview) => {
                             if (canPreview) {
-                                setSelectedChat(api, messagesRead, chatId, messageIndex);
+                                setSelectedChat(api, chatId, messageIndex);
                                 resetRightPanel();
                                 hotGroups = { kind: "idle" };
                             } else {
@@ -224,7 +222,7 @@
                 } else {
                     hotGroups = { kind: "idle" };
                     interruptRecommended = true;
-                    setSelectedChat(api, messagesRead, chatId, messageIndex);
+                    setSelectedChat(api, chatId, messageIndex);
                     resetRightPanel();
                 }
             }
@@ -743,14 +741,14 @@
             .then((resp) => {
                 if (resp.kind === "group_chat") {
                     addOrReplaceChat(resp);
-                    setSelectedChat(api, messagesRead, group.chatId, undefined);
+                    setSelectedChat(api, group.chatId, undefined);
                     return true;
                 } else if (resp.kind === "already_in_group") {
                     addOrReplaceChat({
                         ...group,
                         myRole: "participant" as MemberRole,
                     });
-                    setSelectedChat(api, messagesRead, group.chatId, undefined);
+                    setSelectedChat(api, group.chatId, undefined);
                     return true;
                 } else {
                     if (resp.kind === "blocked") {
@@ -879,7 +877,6 @@
             {searchTerm}
             {searchResultsAvailable}
             {searching}
-            {messagesRead}
             on:showAbout={() => (modal = ModalType.About)}
             on:showFaq={() => (modal = ModalType.Faq)}
             on:showRoadmap={() => (modal = ModalType.Roadmap)}

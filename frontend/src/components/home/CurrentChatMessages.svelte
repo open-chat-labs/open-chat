@@ -22,7 +22,7 @@
     import { toastStore } from "../../stores/toast";
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
     import type { ChatController } from "../../fsm/chat.controller";
-    import type { MessageReadState } from "../../stores/markRead";
+    import { MessageReadState, messagesRead } from "../../stores/markRead";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
     import { iconSize } from "../../stores/iconSize";
@@ -56,7 +56,6 @@
     $: loading = controller.loading;
     $: events = controller.events;
     $: focusMessageIndex = controller.focusMessageIndex;
-    $: markRead = controller.markRead;
     $: pinned = controller.pinnedMessages;
     $: editingEvent = controller.editingEvent;
     $: isBot = $chat.kind === "direct_chat" && $userStore[$chat.them]?.kind === "bot";
@@ -461,11 +460,7 @@
         if (preview) return true;
 
         if (evt.event.kind === "message") {
-            return controller.markRead.isRead(
-                $chat.chatId,
-                evt.event.messageIndex,
-                evt.event.messageId
-            );
+            return messagesRead.isRead($chat.chatId, evt.event.messageIndex, evt.event.messageId);
         }
         return true;
     }
@@ -518,7 +513,7 @@
                             evt.event.messageIndex === $focusMessageIndex}
                         confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem($chat, $unconfirmedReadByThem, evt)}
-                        readByMe={isReadByMe($markRead, evt)}
+                        readByMe={isReadByMe($messagesRead, evt)}
                         chatId={controller.chatId}
                         chatType={controller.kind}
                         user={controller.user}

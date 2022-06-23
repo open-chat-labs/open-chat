@@ -18,7 +18,7 @@ import { extractUserIdsFromMentions, missingUserIds } from "../domain/user/user.
 import { blockedUsers } from "./blockedUsers";
 import { push } from "svelte-spa-router";
 import { rollbar } from "../utils/logging";
-import type { MessageReadTracker } from "./markRead";
+import { messagesRead } from "./markRead";
 import { closeNotificationsForChat } from "../utils/notifications";
 import type { CreatedUser, UserSummary } from "../domain/user/user";
 import { scrollStrategy } from "./settings";
@@ -93,7 +93,6 @@ export const chatsInitialised = writable(false);
 
 export function setSelectedChat(
     api: ServiceContainer,
-    messagesRead: MessageReadTracker,
     chatId: string,
     messageIndex?: number
 ): void {
@@ -123,11 +122,10 @@ export function setSelectedChat(
     if (messageIndex === undefined) {
         if (currentScrollStrategy === "firstMention") {
             messageIndex =
-                getFirstUnreadMention(messagesRead, chat)?.messageIndex ??
-                getFirstUnreadMessageIndex(messagesRead, chat);
+                getFirstUnreadMention(chat)?.messageIndex ?? getFirstUnreadMessageIndex(chat);
         }
         if (currentScrollStrategy === "firstMessage") {
-            messageIndex = getFirstUnreadMessageIndex(messagesRead, chat);
+            messageIndex = getFirstUnreadMessageIndex(chat);
         }
     }
 
@@ -140,7 +138,7 @@ export function setSelectedChat(
     );
 
     selectedChatStore.set(
-        new ChatController(api, user, readableChatSummary, messagesRead, messageIndex, (message) =>
+        new ChatController(api, user, readableChatSummary, messageIndex, (message) =>
             updateSummaryWithConfirmedMessage(chat.chatId, message)
         )
     );
@@ -195,7 +193,7 @@ export function clearSelectedChat(): void {
     });
 }
 
-async function loadChats(api: ServiceContainer, messagesRead: MessageReadTracker) {
+async function loadChats(api: ServiceContainer) {
     try {
         const currentUser = get(currentUserStore);
         if (currentUser === undefined) {
@@ -210,11 +208,10 @@ async function loadChats(api: ServiceContainer, messagesRead: MessageReadTracker
         const selectedChat = get(selectedChatStore);
         const chatsResponse =
             chatUpdatesSince === undefined
-                ? await api.getInitialState(messagesRead, selectedChat?.chatId)
+                ? await api.getInitialState(selectedChat?.chatId)
                 : await api.getUpdates(
                       chats,
                       updateArgsFromChats(chatUpdatesSince, chats),
-                      messagesRead,
                       selectedChat?.chatId
                   );
 
@@ -314,11 +311,6 @@ export function createDirectChat(chatId: string): void {
     push(`/${chatId}`);
 }
 
-export function startChatPoller(api: ServiceContainer, messagesRead: MessageReadTracker): Poller {
-    return new Poller(
-        () => loadChats(api, messagesRead),
-        CHAT_UPDATE_INTERVAL,
-        CHAT_UPDATE_IDLE_INTERVAL,
-        true
-    );
+export function startChatPoller(api: ServiceContainer): Poller {
+    return new Poller(() => loadChats(api), CHAT_UPDATE_INTERVAL, CHAT_UPDATE_IDLE_INTERVAL, true);
 }
