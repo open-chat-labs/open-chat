@@ -1,6 +1,6 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
 use chat_events::{ChatEvents, DirectChatEvents};
-use serde::{Deserialize, Serialize, de};
+use serde::{de, Deserialize, Serialize};
 use types::{TimestampMillis, Timestamped, UserId};
 use utils::range_set::RangeSet;
 

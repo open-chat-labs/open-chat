@@ -5,7 +5,7 @@ use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use chat_events::{ChatEvents, GroupChatEvents};
 use notifications_canister::c2c_push_notification;
-use serde::{Deserialize, Serialize, de};
+use serde::{de, Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::Deref;

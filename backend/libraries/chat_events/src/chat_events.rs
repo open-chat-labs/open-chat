@@ -787,7 +787,11 @@ impl ChatEvents {
         self.get_by_index(affected_event_indexes, my_user_id)
     }
 
-    fn get_range_internal(&self, from_event_index: EventIndex, to_event_index: EventIndex) -> &[EventWrapper<ChatEventInternal>] {
+    fn get_range_internal(
+        &self,
+        from_event_index: EventIndex,
+        to_event_index: EventIndex,
+    ) -> &[EventWrapper<ChatEventInternal>] {
         self.events.get_range(from_event_index..=to_event_index)
     }
 
@@ -795,6 +799,7 @@ impl ChatEvents {
         self.events.get_by_index(&indexes)
     }
 
+    #[allow(clippy::wrong_self_convention)]
     fn from_index_internal(
         &self,
         start: EventIndex,
