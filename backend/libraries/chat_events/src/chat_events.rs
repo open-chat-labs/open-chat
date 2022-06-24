@@ -14,7 +14,6 @@ use types::*;
 #[derive(Serialize, Deserialize)]
 pub struct AllChatEvents {
     pub main: ChatEvents,
-    #[serde(default)]
     pub threads: HashMap<MessageIndex, ChatEvents>,
 }
 
@@ -327,7 +326,7 @@ impl ChatEvents {
 
         if new_reply {
             summary.reply_count += 1;
-            if !summary.participant_ids.iter().any(|p| *p == user_id) {
+            if !summary.participant_ids.contains(&user_id) {
                 summary.participant_ids.push(user_id);
             }
         }
