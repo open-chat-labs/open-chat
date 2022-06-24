@@ -101,8 +101,6 @@ export function setSelectedChat(
 
     if (currentUser === undefined) return;
 
-    console.log("Creating selected chat controller");
-
     const chat = summaries[chatId];
 
     if (chat === undefined) return;
