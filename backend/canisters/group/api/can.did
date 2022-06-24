@@ -409,6 +409,7 @@ type EventsResponse =
     variant {
         Success: EventsSuccessResult;
         CallerNotInGroup;
+        ThreadMessageNotFound;
     }; 
 
 type MessagesByMessageIndexArgs =
@@ -424,6 +425,7 @@ type MessagesByMessageIndexResponse =
             latest_event_index: EventIndex;
         };
         CallerNotInGroup;
+        ThreadMessageNotFound;
     };
 
 type SearchMessagesArgs =

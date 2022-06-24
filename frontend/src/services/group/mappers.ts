@@ -513,6 +513,9 @@ export function getMessagesByMessageIndexResponse(
     if ("CallerNotInGroup" in candid) {
         return "events_failed";
     }
+    if ("ThreadMessageNotFound" in candid) {
+        return "events_failed";
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiMessagesByMessageIndexResponse type received",
         candid
@@ -539,6 +542,9 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Gro
         return "events_failed";
     }
     if ("CallerNotInGroup" in candid) {
+        return "events_failed";
+    }
+    if ("ThreadMessageNotFound" in candid) {
         return "events_failed";
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);

@@ -3,9 +3,9 @@ use crate::model::participants::{ParticipantInternal, Participants};
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use chat_events::{ChatEvents, GroupChatEvents};
+use chat_events::ChatEvents;
 use notifications_canister::c2c_push_notification;
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -145,7 +145,6 @@ struct Data {
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
     pub participants: Participants,
-    #[serde(deserialize_with = "deserialize_chat_events")]
     pub events: ChatEvents,
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
@@ -160,16 +159,8 @@ struct Data {
     pub permissions: GroupPermissions,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
-    #[serde(skip)]
+    #[serde(default)]
     pub threads: HashMap<MessageIndex, ChatEvents>,
-}
-
-fn deserialize_chat_events<'de, D>(deserializer: D) -> Result<ChatEvents, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    let group_chat_events: GroupChatEvents = de::Deserialize::deserialize(deserializer)?;
-    Ok(group_chat_events.inner)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -243,6 +234,22 @@ impl Data {
         }
 
         self.is_public
+    }
+
+    pub fn chat_events(
+        &self,
+        thread_message_index: Option<MessageIndex>,
+        min_visible_event_index: EventIndex,
+    ) -> Option<(&ChatEvents, EventIndex)> {
+        if let Some(thread_message_index) = thread_message_index {
+            self.events
+                .get_event_index_by_message_index(thread_message_index)
+                .filter(|thread_event_index| *thread_event_index >= min_visible_event_index)
+                .and_then(|_| self.threads.get(&thread_message_index))
+                .map(|events| (events, EventIndex::default()))
+        } else {
+            Some((&self.events, min_visible_event_index))
+        }
     }
 }
 

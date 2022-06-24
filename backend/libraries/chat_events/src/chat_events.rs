@@ -26,17 +26,7 @@ pub struct ChatEvents {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct GroupChatEvents {
-    pub inner: ChatEvents,
-}
-
-#[derive(Serialize, Deserialize)]
 pub struct DirectChatEvents {
-    pub inner: ChatEvents,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ThreadChatEvents {
     pub inner: ChatEvents,
 }
 
