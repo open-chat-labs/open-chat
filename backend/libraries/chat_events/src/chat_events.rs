@@ -12,6 +12,100 @@ use std::ops::{Bound, Deref, DerefMut, RangeBounds, RangeInclusive};
 use types::*;
 
 #[derive(Serialize, Deserialize)]
+pub struct AllChatEvents {
+    pub main: ChatEvents,
+    #[serde(default)]
+    pub threads: HashMap<MessageIndex, ChatEvents>,
+}
+
+impl AllChatEvents {
+    pub fn is_message_accessible_by_id(
+        &self,
+        min_visible_event_index: EventIndex,
+        thread_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+    ) -> bool {
+        thread_message_index
+            .or_else(|| self.main.get_message_index(message_id))
+            .map_or(false, |message_index| {
+                self.is_message_accessible(min_visible_event_index, message_index)
+            })
+    }
+
+    pub fn is_message_accessible_by_index(
+        &self,
+        min_visible_event_index: EventIndex,
+        thread_message_index: Option<MessageIndex>,
+        message_index: MessageIndex,
+    ) -> bool {
+        self.is_message_accessible(min_visible_event_index, thread_message_index.unwrap_or(message_index))
+    }
+
+    fn is_message_accessible(&self, min_visible_event_index: EventIndex, message_index: MessageIndex) -> bool {
+        self.main
+            .get_event_index_by_message_index(message_index)
+            .map_or(false, |event_index| event_index >= min_visible_event_index)
+    }
+
+    pub fn are_messages_accessible(
+        &self,
+        min_visible_event_index: EventIndex,
+        thread_message_index: Option<MessageIndex>,
+        message_ids: &[MessageId],
+    ) -> bool {
+        if let Some(thread_message_index) = thread_message_index {
+            self.is_message_accessible(min_visible_event_index, thread_message_index)
+        } else {
+            message_ids.iter().all(|id| {
+                self.main
+                    .get_event_index_by_message_id(*id)
+                    .map_or(false, |event_index| event_index >= min_visible_event_index)
+            })
+        }
+    }
+
+    pub fn get(&self, thread_message_index: Option<MessageIndex>) -> Option<&ChatEvents> {
+        if let Some(thread_message_index) = thread_message_index {
+            if let Some(thread_events) = self.threads.get(&thread_message_index) {
+                Some(thread_events)
+            } else {
+                None
+            }
+        } else {
+            Some(&self.main)
+        }
+    }
+
+    pub fn get_with_min_visible_event_index(
+        &self,
+        thread_message_index: Option<MessageIndex>,
+        min_visible_event_index: EventIndex,
+    ) -> Option<(&ChatEvents, EventIndex)> {
+        if let Some(thread_message_index) = thread_message_index {
+            self.main
+                .get_event_index_by_message_index(thread_message_index)
+                .filter(|thread_event_index| *thread_event_index >= min_visible_event_index)
+                .and_then(|_| self.threads.get(&thread_message_index))
+                .map(|events| (events, EventIndex::default()))
+        } else {
+            Some((&self.main, min_visible_event_index))
+        }
+    }
+
+    pub fn get_mut(&mut self, thread_message_index: Option<MessageIndex>) -> Option<&mut ChatEvents> {
+        if let Some(thread_message_index) = thread_message_index {
+            if let Some(thread_events) = self.threads.get_mut(&thread_message_index) {
+                Some(thread_events)
+            } else {
+                None
+            }
+        } else {
+            Some(&mut self.main)
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
     #[serde(alias = "chat_type")]
     events_type: ChatEventsType,

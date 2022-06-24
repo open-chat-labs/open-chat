@@ -21,10 +21,11 @@ fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
             return NotAuthorized;
         }
 
-        if !runtime_state
-            .data
-            .is_message_accessible_by_index(participant.min_visible_event_index(), None, args.message_index)
-        {
+        if !runtime_state.data.events.is_message_accessible_by_index(
+            participant.min_visible_event_index(),
+            None,
+            args.message_index,
+        ) {
             return MessageNotFound;
         }
 
@@ -33,7 +34,7 @@ fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
 
             runtime_state.data.pinned_messages.remove(index);
 
-            let event_index = runtime_state.data.events.push_event(
+            let event_index = runtime_state.data.events.main.push_event(
                 ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
                     message_index: args.message_index,
                     unpinned_by: participant.user_id,

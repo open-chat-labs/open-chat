@@ -50,7 +50,7 @@ fn change_role_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             ChangeRoleResult::CallerNotInGroup => return CallerNotInGroup,
         };
 
-    runtime_state.data.events.push_event(event, now);
+    runtime_state.data.events.main.push_event(event, now);
     handle_activity_notification(runtime_state);
     Success
 }

@@ -18,13 +18,13 @@ fn c2c_end_poll_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
     let chat_events = if let Some(thread_message_index) = args.thread_root_message_index {
-        if let Some(thread_events) = runtime_state.data.threads.get_mut(&thread_message_index) {
+        if let Some(thread_events) = runtime_state.data.events.threads.get_mut(&thread_message_index) {
             thread_events
         } else {
             return PollNotFound;
         }
     } else {
-        &mut runtime_state.data.events
+        &mut runtime_state.data.events.main
     };
 
     match chat_events.end_poll(args.message_index, now) {

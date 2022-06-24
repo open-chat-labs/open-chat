@@ -19,7 +19,7 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let now = runtime_state.env.now();
         let sender = participant.user_id;
 
-        if !runtime_state.data.is_message_accessible_by_id(
+        if !runtime_state.data.events.is_message_accessible_by_id(
             participant.min_visible_event_index(),
             args.thread_root_message_index,
             args.message_id,
@@ -27,37 +27,34 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             return MessageNotFound;
         }
 
-        let chat_events = if let Some(thread_message_index) = args.thread_root_message_index {
-            if let Some(thread_events) = runtime_state.data.threads.get_mut(&thread_message_index) {
-                thread_events
-            } else {
-                return MessageNotFound;
+        if let Some(chat_events) = runtime_state.data.events.get_mut(args.thread_root_message_index) {
+            let edit_message_args = EditMessageArgs {
+                sender,
+                message_id: args.message_id,
+                content: args.content,
+                now,
+            };
+
+            match chat_events.edit_message(edit_message_args) {
+                EditMessageResult::Success(event_index) => {
+                    if let Some(thread_message_index) = args.thread_root_message_index {
+                        runtime_state.data.events.main.update_thread_summary(
+                            thread_message_index,
+                            sender,
+                            false,
+                            event_index,
+                            now,
+                        );
+                    }
+
+                    handle_activity_notification(runtime_state);
+                    Success
+                }
+                EditMessageResult::NotAuthorized => MessageNotFound,
+                EditMessageResult::NotFound => MessageNotFound,
             }
         } else {
-            &mut runtime_state.data.events
-        };
-
-        let edit_message_args = EditMessageArgs {
-            sender,
-            message_id: args.message_id,
-            content: args.content,
-            now,
-        };
-
-        match chat_events.edit_message(edit_message_args) {
-            EditMessageResult::Success(event_index) => {
-                if let Some(thread_message_index) = args.thread_root_message_index {
-                    runtime_state
-                        .data
-                        .events
-                        .update_thread_summary(thread_message_index, sender, false, event_index, now);
-                }
-
-                handle_activity_notification(runtime_state);
-                Success
-            }
-            EditMessageResult::NotAuthorized => MessageNotFound,
-            EditMessageResult::NotFound => MessageNotFound,
+            MessageNotFound
         }
     } else {
         CallerNotInGroup
