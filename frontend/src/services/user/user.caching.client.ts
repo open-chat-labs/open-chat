@@ -376,17 +376,6 @@ export class CachingUserClient implements IUserClient {
             .then(setCachedMessageFromSendResponse(this.db, this.userId, message));
     }
 
-    @profile("userCachingClient")
-    forwardMessage(
-        recipientId: string,
-        sender: UserSummary,
-        message: Message
-    ): Promise<SendMessageResponse> {
-        return this.client
-            .forwardMessage(recipientId, sender, message)
-            .then(setCachedMessageFromSendResponse(this.db, this.userId, message));
-    }
-
     blockUser(userId: string): Promise<BlockUserResponse> {
         return this.client.blockUser(userId);
     }
