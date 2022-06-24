@@ -10,8 +10,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::Deref;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, MessageIndex, Milliseconds,
-    Notification, TimestampMillis, Timestamped, UserId, Version,
+    Avatar, CanisterId, ChatId, Cycles, EventIndex, GroupChatSummaryInternal, GroupPermissions, MessageId, MessageIndex,
+    Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::env::Environment;
 use utils::memory;
@@ -234,6 +234,51 @@ impl Data {
         }
 
         self.is_public
+    }
+
+    pub fn is_message_accessible_by_id(
+        &self,
+        min_visible_event_index: EventIndex,
+        thread_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+    ) -> bool {
+        thread_message_index
+            .or_else(|| self.events.get_message_index(message_id))
+            .map_or(false, |message_index| {
+                self.is_message_accessible(min_visible_event_index, message_index)
+            })
+    }
+
+    pub fn is_message_accessible_by_index(
+        &self,
+        min_visible_event_index: EventIndex,
+        thread_message_index: Option<MessageIndex>,
+        message_index: MessageIndex,
+    ) -> bool {
+        self.is_message_accessible(min_visible_event_index, thread_message_index.unwrap_or(message_index))
+    }
+
+    fn is_message_accessible(&self, min_visible_event_index: EventIndex, message_index: MessageIndex) -> bool {
+        self.events
+            .get_event_index_by_message_index(message_index)
+            .map_or(false, |event_index| event_index >= min_visible_event_index)
+    }
+
+    pub fn are_messages_accessible(
+        &self,
+        min_visible_event_index: EventIndex,
+        thread_message_index: Option<MessageIndex>,
+        message_ids: &[MessageId],
+    ) -> bool {
+        if let Some(thread_message_index) = thread_message_index {
+            self.is_message_accessible(min_visible_event_index, thread_message_index)
+        } else {
+            message_ids.iter().all(|id| {
+                self.events
+                    .get_event_index_by_message_id(*id)
+                    .map_or(false, |event_index| event_index >= min_visible_event_index)
+            })
+        }
     }
 
     pub fn chat_events(

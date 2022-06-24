@@ -21,6 +21,13 @@ fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
             return NotAuthorized;
         }
 
+        if !runtime_state
+            .data
+            .is_message_accessible_by_index(participant.min_visible_event_index(), None, args.message_index)
+        {
+            return MessageNotFound;
+        }
+
         if let Ok(index) = runtime_state.data.pinned_messages.binary_search(&args.message_index) {
             let now = runtime_state.env.now();
 

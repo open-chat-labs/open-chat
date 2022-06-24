@@ -21,25 +21,49 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         let now = runtime_state.env.now();
+        let user_id = participant.user_id;
 
         if !participant.role.can_react_to_messages(&runtime_state.data.permissions) {
             return NotAuthorized;
         }
 
-        match runtime_state
-            .data
-            .events
-            .toggle_reaction(participant.user_id, args.message_id, args.reaction, now)
-        {
-            ToggleReactionResult::Added(e) => {
-                handle_activity_notification(runtime_state);
-                Added(e)
+        if !runtime_state.data.is_message_accessible_by_id(
+            participant.min_visible_event_index(),
+            args.thread_root_message_index,
+            args.message_id,
+        ) {
+            return MessageNotFound;
+        }
+
+        let chat_events = if let Some(thread_message_index) = args.thread_root_message_index {
+            if let Some(thread_events) = runtime_state.data.threads.get_mut(&thread_message_index) {
+                thread_events
+            } else {
+                return MessageNotFound;
             }
-            ToggleReactionResult::Removed(e) => {
-                handle_activity_notification(runtime_state);
-                Removed(e)
-            }
-            ToggleReactionResult::MessageNotFound => MessageNotFound,
+        } else {
+            &mut runtime_state.data.events
+        };
+
+        let (event_index, added) = match chat_events.toggle_reaction(user_id, args.message_id, args.reaction, now) {
+            ToggleReactionResult::Added(e) => (e, true),
+            ToggleReactionResult::Removed(e) => (e, false),
+            ToggleReactionResult::MessageNotFound => return MessageNotFound,
+        };
+
+        if let Some(thread_message_index) = args.thread_root_message_index {
+            runtime_state
+                .data
+                .events
+                .update_thread_summary(thread_message_index, user_id, false, event_index, now);
+        }
+
+        handle_activity_notification(runtime_state);
+
+        if added {
+            Added(event_index)
+        } else {
+            Removed(event_index)
         }
     } else {
         CallerNotInGroup

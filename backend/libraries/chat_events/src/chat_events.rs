@@ -46,13 +46,6 @@ pub struct PushMessageArgs {
     pub forwarded: bool,
 }
 
-pub struct ReplyToThreadArgs {
-    pub thread_message_index: MessageIndex,
-    pub sender: UserId,
-    pub latest_event_index: EventIndex,
-    pub now: TimestampMillis,
-}
-
 pub struct EditMessageArgs {
     pub sender: UserId,
     pub message_id: MessageId,
@@ -61,7 +54,7 @@ pub struct EditMessageArgs {
 }
 
 pub enum EditMessageResult {
-    Success,
+    Success(EventIndex),
     NotAuthorized,
     NotFound,
 }
@@ -220,31 +213,39 @@ impl ChatEvents {
         }
     }
 
-    pub fn add_reply_to_thread(&mut self, args: ReplyToThreadArgs) -> ThreadSummary {
-        let thread_message_index = args.thread_message_index;
+    pub fn update_thread_summary(
+        &mut self,
+        thread_message_index: MessageIndex,
+        user_id: UserId,
+        new_reply: bool,
+        latest_event_index: EventIndex,
+        now: TimestampMillis,
+    ) -> ThreadSummary {
         let root_message = self
-            .get_event_index_by_message_index(args.thread_message_index)
+            .get_event_index_by_message_index(thread_message_index)
             .and_then(|e| self.events.get_mut(e))
             .and_then(|e| e.event.as_message_mut())
             .unwrap_or_else(|| panic!("Root thread message not found with message index {thread_message_index:?}"));
 
         let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummary::default);
-        summary.reply_count += 1;
-        summary.latest_event_index = args.latest_event_index;
-        summary.latest_event_timestamp = args.now;
+        summary.latest_event_index = latest_event_index;
+        summary.latest_event_timestamp = now;
 
-        if !summary.participant_ids.iter().any(|p| *p == args.sender) {
-            summary.participant_ids.push(args.sender);
+        if new_reply {
+            summary.reply_count += 1;
+            if !summary.participant_ids.iter().any(|p| *p == user_id) {
+                summary.participant_ids.push(user_id);
+            }
         }
 
         let summary_clone = summary.clone();
 
         self.push_event(
             ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
-                updated_by: args.sender,
+                updated_by: user_id,
                 message_index: thread_message_index,
             })),
-            args.now,
+            now,
         );
 
         summary_clone
@@ -296,14 +297,14 @@ impl ChatEvents {
                     message.content = args.content.new_content_into_internal();
                     message.last_updated = Some(args.now);
                     message.last_edited = Some(args.now);
-                    self.push_event(
+                    let event_index = self.push_event(
                         ChatEventInternal::MessageEdited(Box::new(UpdatedMessageInternal {
                             updated_by: args.sender,
                             message_id: args.message_id,
                         })),
                         args.now,
                     );
-                    EditMessageResult::Success
+                    EditMessageResult::Success(event_index)
                 }
             } else {
                 EditMessageResult::NotAuthorized

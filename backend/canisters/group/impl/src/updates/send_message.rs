@@ -2,7 +2,7 @@ use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::{ChatEventInternal, ChatEvents, PushMessageArgs, ReplyToThreadArgs};
+use chat_events::{ChatEventInternal, ChatEvents, PushMessageArgs};
 use group_canister::send_message::{Response::*, *};
 use serde_bytes::ByteBuf;
 use std::collections::HashSet;
@@ -82,13 +82,13 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
                     let message_event = thread_events.push_message(push_message_args);
 
-                    let thread_summary = runtime_state.data.events.add_reply_to_thread(ReplyToThreadArgs {
+                    let thread_summary = runtime_state.data.events.update_thread_summary(
                         thread_message_index,
                         sender,
-                        latest_event_index: message_event.index,
+                        true,
+                        message_event.index,
                         now,
-                    });
-
+                    );
                     (
                         message_event,
                         Some(thread_summary.participant_ids),
