@@ -25,6 +25,11 @@ pub struct ChatEvents {
     per_user_metrics: HashMap<UserId, ChatMetrics>,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct DirectChatEvents {
+    pub inner: ChatEvents,
+}
+
 #[derive(CandidType, Serialize, Deserialize)]
 enum ChatEventsType {
     Direct,
@@ -215,35 +220,34 @@ impl ChatEvents {
         }
     }
 
-    pub fn add_reply_to_thread(&mut self, args: ReplyToThreadArgs) -> Option<ThreadSummary> {
-        if let Some(root_message) = self
+    pub fn add_reply_to_thread(&mut self, args: ReplyToThreadArgs) -> ThreadSummary {
+        let thread_message_index = args.thread_message_index;
+        let root_message = self
             .get_event_index_by_message_index(args.thread_message_index)
             .and_then(|e| self.events.get_mut(e))
             .and_then(|e| e.event.as_message_mut())
-        {
-            let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummary::default);
-            summary.reply_count += 1;
-            summary.latest_event_index = args.latest_event_index;
-            summary.latest_event_timestamp = args.now;
+            .unwrap_or_else(|| panic!("Root thread message not found with message index {thread_message_index:?}"));
 
-            if !summary.participant_ids.iter().any(|p| *p == args.sender) {
-                summary.participant_ids.push(args.sender);
-            }
+        let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummary::default);
+        summary.reply_count += 1;
+        summary.latest_event_index = args.latest_event_index;
+        summary.latest_event_timestamp = args.now;
 
-            let summary_clone = summary.clone();
-
-            self.push_event(
-                ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
-                    updated_by: args.sender,
-                    message_index: args.thread_message_index,
-                })),
-                args.now,
-            );
-
-            Some(summary_clone)
-        } else {
-            None
+        if !summary.participant_ids.iter().any(|p| *p == args.sender) {
+            summary.participant_ids.push(args.sender);
         }
+
+        let summary_clone = summary.clone();
+
+        self.push_event(
+            ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
+                updated_by: args.sender,
+                message_index: thread_message_index,
+            })),
+            args.now,
+        );
+
+        summary_clone
     }
 
     pub fn push_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> EventIndex {
@@ -626,33 +630,6 @@ impl ChatEvents {
             .collect()
     }
 
-    pub fn get_range(&self, from_event_index: EventIndex, to_event_index: EventIndex) -> &[EventWrapper<ChatEventInternal>] {
-        self.events.get_range(from_event_index..=to_event_index)
-    }
-
-    pub fn get_by_index(&self, indexes: Vec<EventIndex>) -> Vec<&EventWrapper<ChatEventInternal>> {
-        self.events.get_by_index(&indexes)
-    }
-
-    pub fn from_index(
-        &self,
-        start: EventIndex,
-        ascending: bool,
-        max_events: usize,
-        min_visible_event_index: EventIndex,
-    ) -> Vec<&EventWrapper<ChatEventInternal>> {
-        self.events.from_index(start, ascending, max_events, min_visible_event_index)
-    }
-
-    pub fn get_events_window(
-        &self,
-        mid_point: EventIndex,
-        max_events: usize,
-        min_visible_event_index: EventIndex,
-    ) -> Vec<&EventWrapper<ChatEventInternal>> {
-        self.events.get_window(mid_point, max_events, min_visible_event_index)
-    }
-
     pub fn get_event_index_by_message_index(&self, message_index: MessageIndex) -> Option<EventIndex> {
         self.message_index_map.get(&message_index).copied()
     }
@@ -728,6 +705,123 @@ impl ChatEvents {
 
     pub fn is_empty(&self) -> bool {
         self.events.is_empty()
+    }
+
+    pub fn get_range(
+        &self,
+        from_event_index: EventIndex,
+        to_event_index: EventIndex,
+        my_user_id: Option<UserId>,
+    ) -> Vec<EventWrapper<ChatEvent>> {
+        self.events
+            .get_range(from_event_index..=to_event_index)
+            .iter()
+            .map(|e| self.hydrate_event(e, my_user_id))
+            .collect()
+    }
+
+    pub fn get_by_index(&self, indexes: Vec<EventIndex>, my_user_id: Option<UserId>) -> Vec<EventWrapper<ChatEvent>> {
+        self.events
+            .get_by_index(&indexes)
+            .iter()
+            .map(|e| self.hydrate_event(e, my_user_id))
+            .collect()
+    }
+
+    pub fn from_index(
+        &self,
+        start: EventIndex,
+        ascending: bool,
+        max_events: usize,
+        min_visible_event_index: EventIndex,
+        my_user_id: Option<UserId>,
+    ) -> Vec<EventWrapper<ChatEvent>> {
+        self.events
+            .from_index(start, ascending, max_events, min_visible_event_index)
+            .into_iter()
+            .map(|e| self.hydrate_event(e, my_user_id))
+            .collect()
+    }
+
+    pub fn get_events_window(
+        &self,
+        mid_point: EventIndex,
+        max_events: usize,
+        min_visible_event_index: EventIndex,
+        my_user_id: Option<UserId>,
+    ) -> Vec<EventWrapper<ChatEvent>> {
+        self.events
+            .get_window(mid_point, max_events, min_visible_event_index)
+            .into_iter()
+            .map(|e| self.hydrate_event(e, my_user_id))
+            .collect()
+    }
+
+    pub fn affected_events(
+        &self,
+        events: &[EventWrapper<ChatEvent>],
+        my_user_id: Option<UserId>,
+    ) -> Vec<EventWrapper<ChatEvent>> {
+        // We use this set to exclude events that are already in the input list
+        let event_indexes_set: HashSet<_> = events.iter().map(|e| e.index).collect();
+
+        let affected_event_indexes = events
+            .iter()
+            .filter_map(|e| {
+                if let Some(affected_event_index) = e.event.affected_event() {
+                    if !event_indexes_set.contains(&affected_event_index) {
+                        return Some(affected_event_index);
+                    }
+                }
+                None
+            })
+            .unique()
+            .collect();
+
+        self.get_by_index(affected_event_indexes, my_user_id)
+    }
+
+    fn hydrate_event(&self, event: &EventWrapper<ChatEventInternal>, my_user_id: Option<UserId>) -> EventWrapper<ChatEvent> {
+        let event_data = match &event.event {
+            ChatEventInternal::DirectChatCreated(d) => ChatEvent::DirectChatCreated(*d),
+            ChatEventInternal::Message(m) => ChatEvent::Message(Box::new(self.hydrate_message(m, my_user_id))),
+            ChatEventInternal::MessageEdited(m) => ChatEvent::MessageEdited(self.hydrate_updated_message(m)),
+            ChatEventInternal::MessageDeleted(m) => ChatEvent::MessageDeleted(self.hydrate_updated_message(m)),
+            ChatEventInternal::MessageReactionAdded(m) => ChatEvent::MessageReactionAdded(self.hydrate_updated_message(m)),
+            ChatEventInternal::MessageReactionRemoved(m) => ChatEvent::MessageReactionRemoved(self.hydrate_updated_message(m)),
+            ChatEventInternal::GroupChatCreated(g) => ChatEvent::GroupChatCreated(*g.clone()),
+            ChatEventInternal::GroupNameChanged(g) => ChatEvent::GroupNameChanged(*g.clone()),
+            ChatEventInternal::GroupDescriptionChanged(g) => ChatEvent::GroupDescriptionChanged(*g.clone()),
+            ChatEventInternal::AvatarChanged(g) => ChatEvent::AvatarChanged(*g.clone()),
+            ChatEventInternal::OwnershipTransferred(e) => ChatEvent::OwnershipTransferred(*e.clone()),
+            ChatEventInternal::ParticipantsAdded(p) => ChatEvent::ParticipantsAdded(*p.clone()),
+            ChatEventInternal::ParticipantsRemoved(p) => ChatEvent::ParticipantsRemoved(*p.clone()),
+            ChatEventInternal::ParticipantJoined(p) => ChatEvent::ParticipantJoined(*p.clone()),
+            ChatEventInternal::ParticipantLeft(p) => ChatEvent::ParticipantLeft(*p.clone()),
+            ChatEventInternal::ParticipantAssumesSuperAdmin(p) => ChatEvent::ParticipantAssumesSuperAdmin(*p.clone()),
+            ChatEventInternal::ParticipantRelinquishesSuperAdmin(p) => ChatEvent::ParticipantRelinquishesSuperAdmin(*p.clone()),
+            ChatEventInternal::ParticipantDismissedAsSuperAdmin(p) => ChatEvent::ParticipantDismissedAsSuperAdmin(*p.clone()),
+            ChatEventInternal::RoleChanged(r) => ChatEvent::RoleChanged(*r.clone()),
+            ChatEventInternal::UsersBlocked(u) => ChatEvent::UsersBlocked(*u.clone()),
+            ChatEventInternal::UsersUnblocked(u) => ChatEvent::UsersUnblocked(*u.clone()),
+            ChatEventInternal::MessagePinned(p) => ChatEvent::MessagePinned(*p.clone()),
+            ChatEventInternal::PermissionsChanged(p) => ChatEvent::PermissionsChanged(*p.clone()),
+            ChatEventInternal::MessageUnpinned(u) => ChatEvent::MessageUnpinned(*u.clone()),
+            ChatEventInternal::PollVoteRegistered(v) => ChatEvent::PollVoteRegistered(self.hydrate_poll_vote_registered(v)),
+            ChatEventInternal::PollVoteDeleted(v) => ChatEvent::PollVoteDeleted(self.hydrate_updated_message(v)),
+            ChatEventInternal::PollEnded(m) => ChatEvent::PollEnded(self.hydrate_poll_ended(**m)),
+            ChatEventInternal::ThreadUpdated(m) => {
+                ChatEvent::ThreadUpdated(self.hydrate_thread_updated(m.updated_by, m.message_index))
+            }
+            ChatEventInternal::GroupVisibilityChanged(g) => ChatEvent::GroupVisibilityChanged(*g.clone()),
+            ChatEventInternal::GroupInviteCodeChanged(g) => ChatEvent::GroupInviteCodeChanged(*g.clone()),
+        };
+
+        EventWrapper {
+            index: event.index,
+            timestamp: event.timestamp,
+            event: event_data,
+        }
     }
 }
 
@@ -930,7 +1024,7 @@ mod tests {
     fn get_range() {
         let events = setup_events();
 
-        let results = events.get_range(10.into(), 20.into());
+        let results = events.events.get_range(10.into()..=20.into());
 
         let event_indexes: Vec<u32> = results.iter().map(|e| e.index.into()).collect();
 
@@ -941,7 +1035,7 @@ mod tests {
     fn from_index_event_limit() {
         let events = setup_events();
 
-        let results = events.from_index(10.into(), true, 25, EventIndex::default());
+        let results = events.events.from_index(10.into(), true, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -954,7 +1048,7 @@ mod tests {
     fn from_index_event_limit_rev() {
         let events = setup_events();
 
-        let results = events.from_index(40.into(), false, 25, EventIndex::default());
+        let results = events.events.from_index(40.into(), false, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -967,7 +1061,7 @@ mod tests {
     fn from_index_start_index_exceeds_max() {
         let events = setup_events();
 
-        let results = events.from_index(u32::MAX.into(), true, 25, EventIndex::default());
+        let results = events.events.from_index(u32::MAX.into(), true, 25, EventIndex::default());
 
         assert!(results.is_empty());
     }
@@ -976,7 +1070,7 @@ mod tests {
     fn from_index_rev_start_index_exceeds_max() {
         let events = setup_events();
 
-        let results = events.from_index(u32::MAX.into(), false, 25, EventIndex::default());
+        let results = events.events.from_index(u32::MAX.into(), false, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -990,7 +1084,7 @@ mod tests {
         let events = setup_events();
         let mid_point = 21.into();
 
-        let results = events.get_events_window(mid_point, 25, EventIndex::default());
+        let results = events.events.get_window(mid_point, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
 
@@ -1007,7 +1101,7 @@ mod tests {
         let events = setup_events();
         let mid_point = 21.into();
 
-        let results = events.get_events_window(mid_point, 40, 18.into());
+        let results = events.events.get_window(mid_point, 40, 18.into());
 
         assert_eq!(
             results

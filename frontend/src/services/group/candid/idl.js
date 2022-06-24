@@ -384,6 +384,7 @@ export const idlFactory = ({ IDL }) => {
     'old_owner' : UserId,
     'new_owner' : UserId,
   });
+  const DirectChatCreated = IDL.Record({});
   const AvatarChanged = IDL.Record({
     'changed_by' : UserId,
     'previous_avatar' : IDL.Opt(IDL.Nat),
@@ -394,7 +395,7 @@ export const idlFactory = ({ IDL }) => {
     'unblocked' : IDL.Vec(UserId),
     'added_by' : UserId,
   });
-  const GroupChatEvent = IDL.Variant({
+  const ChatEvent = IDL.Variant({
     'MessageReactionRemoved' : UpdatedMessage,
     'ParticipantJoined' : ParticipantJoined,
     'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin,
@@ -421,21 +422,23 @@ export const idlFactory = ({ IDL }) => {
     'RoleChanged' : RoleChanged,
     'PollVoteDeleted' : UpdatedMessage,
     'OwnershipTransferred' : OwnershipTransferred,
+    'DirectChatCreated' : DirectChatCreated,
     'MessageEdited' : UpdatedMessage,
     'AvatarChanged' : AvatarChanged,
     'ParticipantsAdded' : ParticipantsAdded,
   });
-  const GroupChatEventWrapper = IDL.Record({
-    'event' : GroupChatEvent,
+  const ChatEventWrapper = IDL.Record({
+    'event' : ChatEvent,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
   });
   const EventsSuccessResult = IDL.Record({
-    'affected_events' : IDL.Vec(GroupChatEventWrapper),
-    'events' : IDL.Vec(GroupChatEventWrapper),
+    'affected_events' : IDL.Vec(ChatEventWrapper),
+    'events' : IDL.Vec(ChatEventWrapper),
     'latest_event_index' : IDL.Nat32,
   });
   const EventsResponse = IDL.Variant({
+    'ThreadMessageNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
@@ -478,6 +481,7 @@ export const idlFactory = ({ IDL }) => {
     'index' : EventIndex,
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
+    'ThreadMessageNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Record({
       'messages' : IDL.Vec(MessageEventWrapper),

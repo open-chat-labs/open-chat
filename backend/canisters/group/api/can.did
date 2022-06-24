@@ -400,8 +400,8 @@ type EventsWindowArgs =
 
 type EventsSuccessResult =
     record {
-        events: vec GroupChatEventWrapper;
-        affected_events: vec GroupChatEventWrapper;
+        events: vec ChatEventWrapper;
+        affected_events: vec ChatEventWrapper;
         latest_event_index: nat32;
     };
 
@@ -409,6 +409,7 @@ type EventsResponse =
     variant {
         Success: EventsSuccessResult;
         CallerNotInGroup;
+        ThreadMessageNotFound;
     }; 
 
 type MessagesByMessageIndexArgs =
@@ -424,6 +425,7 @@ type MessagesByMessageIndexResponse =
             latest_event_index: EventIndex;
         };
         CallerNotInGroup;
+        ThreadMessageNotFound;
     };
 
 type SearchMessagesArgs =

@@ -3,9 +3,10 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum GroupChatEvent {
+pub enum ChatEvent {
     Message(Box<Message>),
     GroupChatCreated(GroupChatCreated),
+    DirectChatCreated(DirectChatCreated),
     GroupNameChanged(GroupNameChanged),
     GroupDescriptionChanged(GroupDescriptionChanged),
     AvatarChanged(AvatarChanged),
@@ -35,17 +36,17 @@ pub enum GroupChatEvent {
     ThreadUpdated(ThreadUpdated),
 }
 
-impl GroupChatEvent {
+impl ChatEvent {
     pub fn affected_event(&self) -> Option<EventIndex> {
         match self {
-            GroupChatEvent::MessageEdited(m) => Some(m.event_index),
-            GroupChatEvent::MessageDeleted(m) => Some(m.event_index),
-            GroupChatEvent::MessageReactionAdded(r) => Some(r.event_index),
-            GroupChatEvent::MessageReactionRemoved(r) => Some(r.event_index),
-            GroupChatEvent::PollVoteRegistered(v) => Some(v.event_index),
-            GroupChatEvent::PollVoteDeleted(v) => Some(v.event_index),
-            GroupChatEvent::PollEnded(p) => Some(p.event_index),
-            GroupChatEvent::ThreadUpdated(t) => Some(t.event_index),
+            ChatEvent::MessageEdited(m) => Some(m.event_index),
+            ChatEvent::MessageDeleted(m) => Some(m.event_index),
+            ChatEvent::MessageReactionAdded(r) => Some(r.event_index),
+            ChatEvent::MessageReactionRemoved(r) => Some(r.event_index),
+            ChatEvent::PollVoteRegistered(v) => Some(v.event_index),
+            ChatEvent::PollVoteDeleted(v) => Some(v.event_index),
+            ChatEvent::PollEnded(p) => Some(p.event_index),
+            ChatEvent::ThreadUpdated(t) => Some(t.event_index),
             _ => None,
         }
     }
@@ -208,63 +209,6 @@ pub struct ThreadUpdated {
     pub updated_by: UserId,
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum DirectChatEvent {
-    Message(Box<Message>),
-    DirectChatCreated(DirectChatCreated),
-    MessageEdited(UpdatedMessage),
-    MessageDeleted(UpdatedMessage),
-    MessageReactionAdded(UpdatedMessage),
-    MessageReactionRemoved(UpdatedMessage),
-    PollVoteRegistered(UpdatedMessage),
-    PollVoteDeleted(UpdatedMessage),
-    PollEnded(PollEnded),
-    ThreadUpdated(ThreadUpdated),
-}
-
-impl DirectChatEvent {
-    pub fn affected_event(&self) -> Option<EventIndex> {
-        match self {
-            DirectChatEvent::MessageEdited(m) => Some(m.event_index),
-            DirectChatEvent::MessageDeleted(m) => Some(m.event_index),
-            DirectChatEvent::MessageReactionAdded(r) => Some(r.event_index),
-            DirectChatEvent::MessageReactionRemoved(r) => Some(r.event_index),
-            DirectChatEvent::PollVoteRegistered(v) => Some(v.event_index),
-            DirectChatEvent::PollVoteDeleted(v) => Some(v.event_index),
-            DirectChatEvent::PollEnded(p) => Some(p.event_index),
-            DirectChatEvent::ThreadUpdated(t) => Some(t.event_index),
-            _ => None,
-        }
-    }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum ThreadChatEvent {
-    Message(Box<Message>),
-    MessageEdited(UpdatedMessage),
-    MessageDeleted(UpdatedMessage),
-    MessageReactionAdded(UpdatedMessage),
-    MessageReactionRemoved(UpdatedMessage),
-    PollVoteRegistered(UpdatedMessage),
-    PollVoteDeleted(UpdatedMessage),
-    PollEnded(PollEnded),
-}
-
-impl ThreadChatEvent {
-    pub fn affected_event(&self) -> Option<EventIndex> {
-        match self {
-            ThreadChatEvent::MessageEdited(m) => Some(m.event_index),
-            ThreadChatEvent::MessageDeleted(m) => Some(m.event_index),
-            ThreadChatEvent::MessageReactionAdded(r) => Some(r.event_index),
-            ThreadChatEvent::MessageReactionRemoved(r) => Some(r.event_index),
-            ThreadChatEvent::PollVoteRegistered(v) => Some(v.event_index),
-            ThreadChatEvent::PollVoteDeleted(v) => Some(v.event_index),
-            ThreadChatEvent::PollEnded(p) => Some(p.event_index),
-            _ => None,
-        }
-    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]

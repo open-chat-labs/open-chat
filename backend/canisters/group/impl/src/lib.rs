@@ -3,7 +3,7 @@ use crate::model::participants::{ParticipantInternal, Participants};
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use chat_events::{GroupChatEvents, ThreadChatEvents};
+use chat_events::ChatEvents;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -145,7 +145,7 @@ struct Data {
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
     pub participants: Participants,
-    pub events: GroupChatEvents,
+    pub events: ChatEvents,
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
@@ -160,7 +160,7 @@ struct Data {
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
     #[serde(default)]
-    pub threads: HashMap<MessageIndex, ThreadChatEvents>,
+    pub threads: HashMap<MessageIndex, ChatEvents>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -184,7 +184,7 @@ impl Data {
         permissions: Option<GroupPermissions>,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
-        let events = GroupChatEvents::new(chat_id, name.clone(), description.clone(), creator_user_id, now);
+        let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, now);
 
         Data {
             is_public,
@@ -234,6 +234,22 @@ impl Data {
         }
 
         self.is_public
+    }
+
+    pub fn chat_events(
+        &self,
+        thread_message_index: Option<MessageIndex>,
+        min_visible_event_index: EventIndex,
+    ) -> Option<(&ChatEvents, EventIndex)> {
+        if let Some(thread_message_index) = thread_message_index {
+            self.events
+                .get_event_index_by_message_index(thread_message_index)
+                .filter(|thread_event_index| *thread_event_index >= min_visible_event_index)
+                .and_then(|_| self.threads.get(&thread_message_index))
+                .map(|events| (events, EventIndex::default()))
+        } else {
+            Some((&self.events, min_visible_event_index))
+        }
     }
 }
 

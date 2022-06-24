@@ -2,7 +2,7 @@ use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::{ChatEventInternal, GroupChatEvents, PushMessageArgs, ReplyToThreadArgs, ThreadChatEvents};
+use chat_events::{ChatEventInternal, ChatEvents, PushMessageArgs, ReplyToThreadArgs};
 use group_canister::send_message::{Response::*, *};
 use serde_bytes::ByteBuf;
 use std::collections::HashSet;
@@ -78,20 +78,16 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                         .data
                         .threads
                         .entry(thread_message_index)
-                        .or_insert_with(|| ThreadChatEvents::new(chat_id));
+                        .or_insert_with(|| ChatEvents::new_thread(chat_id));
 
                     let message_event = thread_events.push_message(push_message_args);
 
-                    let thread_summary = runtime_state
-                        .data
-                        .events
-                        .add_reply_to_thread(ReplyToThreadArgs {
-                            thread_message_index,
-                            sender,
-                            latest_event_index: message_event.index,
-                            now,
-                        })
-                        .unwrap();
+                    let thread_summary = runtime_state.data.events.add_reply_to_thread(ReplyToThreadArgs {
+                        thread_message_index,
+                        sender,
+                        latest_event_index: message_event.index,
+                        now,
+                    });
 
                     (
                         message_event,
@@ -204,7 +200,7 @@ async fn register_end_poll_callback(
     let _ = callback_canister_c2c_client::c2c_register_callback(canister_id, &args).await;
 }
 
-fn get_user_being_replied_to(replies_to: &GroupReplyContext, events: &GroupChatEvents) -> Option<UserId> {
+fn get_user_being_replied_to(replies_to: &GroupReplyContext, events: &ChatEvents) -> Option<UserId> {
     if let Some(ChatEventInternal::Message(message)) = events.get(replies_to.event_index).map(|e| &e.event) {
         Some(message.sender)
     } else {

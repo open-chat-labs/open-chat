@@ -112,25 +112,11 @@ type DirectChatCreated =
     record {
     };
 
-type DirectChatEvent =
-    variant {
-        Message: Message;
-        DirectChatCreated: DirectChatCreated;
-        MessageEdited: UpdatedMessage;
-        MessageDeleted: UpdatedMessage;
-        MessageReactionAdded: UpdatedMessage;
-        MessageReactionRemoved: UpdatedMessage;
-        PollVoteRegistered: UpdatedMessage;
-        PollVoteDeleted: UpdatedMessage;
-        PollEnded: PollEnded;
-        ThreadUpdated: ThreadUpdated;
-    };
-
 type DirectChatEventWrapper =
     record {
         index: EventIndex;
         timestamp: TimestampMillis;
-        event: DirectChatEvent;
+        event: ChatEvent;
     };
 
 type DirectChatSummary =
@@ -194,10 +180,11 @@ type GroupChatCreated =
         created_by: UserId;
     };
 
-type GroupChatEvent =
+type ChatEvent =
     variant {
         Message: Message;
         GroupChatCreated: GroupChatCreated;
+        DirectChatCreated: DirectChatCreated;
         GroupNameChanged: GroupNameChanged;
         GroupDescriptionChanged: GroupDescriptionChanged;
         AvatarChanged: AvatarChanged;
@@ -227,11 +214,11 @@ type GroupChatEvent =
         ThreadUpdated: ThreadUpdated;
     };
 
-type GroupChatEventWrapper =
+type ChatEventWrapper =
     record {
         index: EventIndex;
         timestamp: TimestampMillis;
-        event: GroupChatEvent;
+        event: ChatEvent;
     };
 
 type GroupChatSummary =

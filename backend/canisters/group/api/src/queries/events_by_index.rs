@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{EventIndex, EventWrapper, GroupChatEvent, MessageIndex};
+use types::{ChatEvent, EventIndex, EventWrapper, MessageIndex};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -13,11 +13,12 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     CallerNotInGroup,
+    ThreadMessageNotFound,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub events: Vec<EventWrapper<GroupChatEvent>>,
-    pub affected_events: Vec<EventWrapper<GroupChatEvent>>,
+    pub events: Vec<EventWrapper<ChatEvent>>,
+    pub affected_events: Vec<EventWrapper<ChatEvent>>,
     pub latest_event_index: EventIndex,
 }

@@ -56,6 +56,41 @@ export interface CanisterWasm {
   'version' : Version,
   'module' : Array<number>,
 }
+export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+  { 'ParticipantJoined' : ParticipantJoined } |
+  { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
+  { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
+  { 'GroupChatCreated' : GroupChatCreated } |
+  { 'MessagePinned' : MessagePinned } |
+  { 'UsersBlocked' : UsersBlocked } |
+  { 'MessageUnpinned' : MessageUnpinned } |
+  { 'MessageReactionAdded' : UpdatedMessage } |
+  { 'ParticipantsRemoved' : ParticipantsRemoved } |
+  { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
+  { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
+  { 'Message' : Message } |
+  { 'PermissionsChanged' : PermissionsChanged } |
+  { 'PollEnded' : PollEnded } |
+  { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
+  { 'ThreadUpdated' : ThreadUpdated } |
+  { 'UsersUnblocked' : UsersUnblocked } |
+  { 'PollVoteRegistered' : UpdatedMessage } |
+  { 'ParticipantLeft' : ParticipantLeft } |
+  { 'MessageDeleted' : UpdatedMessage } |
+  { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
+  { 'GroupNameChanged' : GroupNameChanged } |
+  { 'RoleChanged' : RoleChanged } |
+  { 'PollVoteDeleted' : UpdatedMessage } |
+  { 'OwnershipTransferred' : OwnershipTransferred } |
+  { 'DirectChatCreated' : DirectChatCreated } |
+  { 'MessageEdited' : UpdatedMessage } |
+  { 'AvatarChanged' : AvatarChanged } |
+  { 'ParticipantsAdded' : ParticipantsAdded };
+export interface ChatEventWrapper {
+  'event' : ChatEvent,
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
 export type ChatId = CanisterId;
 export interface ChatMessagesRead {
   'message_ranges' : Array<MessageIndexRange>,
@@ -157,18 +192,8 @@ export interface DeletedContent {
   'deleted_by' : UserId,
 }
 export type DirectChatCreated = {};
-export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
-  { 'MessageReactionAdded' : UpdatedMessage } |
-  { 'Message' : Message } |
-  { 'PollEnded' : PollEnded } |
-  { 'ThreadUpdated' : ThreadUpdated } |
-  { 'PollVoteRegistered' : UpdatedMessage } |
-  { 'MessageDeleted' : UpdatedMessage } |
-  { 'PollVoteDeleted' : UpdatedMessage } |
-  { 'DirectChatCreated' : DirectChatCreated } |
-  { 'MessageEdited' : UpdatedMessage };
 export interface DirectChatEventWrapper {
-  'event' : DirectChatEvent,
+  'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
 }
@@ -231,8 +256,8 @@ export interface EventsRangeArgs {
 export type EventsResponse = { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
-  'affected_events' : Array<DirectChatEventWrapper>,
-  'events' : Array<DirectChatEventWrapper>,
+  'affected_events' : Array<ChatEventWrapper>,
+  'events' : Array<ChatEventWrapper>,
 }
 export interface EventsWindowArgs {
   'mid_point' : MessageIndex,
@@ -284,40 +309,6 @@ export interface GroupChatCreated {
   'name' : string,
   'description' : string,
   'created_by' : UserId,
-}
-export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
-  { 'ParticipantJoined' : ParticipantJoined } |
-  { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
-  { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
-  { 'GroupChatCreated' : GroupChatCreated } |
-  { 'MessagePinned' : MessagePinned } |
-  { 'UsersBlocked' : UsersBlocked } |
-  { 'MessageUnpinned' : MessageUnpinned } |
-  { 'MessageReactionAdded' : UpdatedMessage } |
-  { 'ParticipantsRemoved' : ParticipantsRemoved } |
-  { 'ParticipantRelinquishesSuperAdmin' : ParticipantRelinquishesSuperAdmin } |
-  { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
-  { 'Message' : Message } |
-  { 'PermissionsChanged' : PermissionsChanged } |
-  { 'PollEnded' : PollEnded } |
-  { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
-  { 'ThreadUpdated' : ThreadUpdated } |
-  { 'UsersUnblocked' : UsersUnblocked } |
-  { 'PollVoteRegistered' : UpdatedMessage } |
-  { 'ParticipantLeft' : ParticipantLeft } |
-  { 'MessageDeleted' : UpdatedMessage } |
-  { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
-  { 'GroupNameChanged' : GroupNameChanged } |
-  { 'RoleChanged' : RoleChanged } |
-  { 'PollVoteDeleted' : UpdatedMessage } |
-  { 'OwnershipTransferred' : OwnershipTransferred } |
-  { 'MessageEdited' : UpdatedMessage } |
-  { 'AvatarChanged' : AvatarChanged } |
-  { 'ParticipantsAdded' : ParticipantsAdded };
-export interface GroupChatEventWrapper {
-  'event' : GroupChatEvent,
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
