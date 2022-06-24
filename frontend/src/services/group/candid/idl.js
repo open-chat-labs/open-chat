@@ -438,6 +438,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : IDL.Nat32,
   });
   const EventsResponse = IDL.Variant({
+    'ThreadMessageNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
@@ -480,6 +481,7 @@ export const idlFactory = ({ IDL }) => {
     'index' : EventIndex,
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
+    'ThreadMessageNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Record({
       'messages' : IDL.Vec(MessageEventWrapper),

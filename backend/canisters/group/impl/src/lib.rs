@@ -159,6 +159,7 @@ struct Data {
     pub permissions: GroupPermissions,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
+    #[serde(default)]
     pub threads: HashMap<MessageIndex, ChatEvents>,
 }
 
@@ -233,6 +234,22 @@ impl Data {
         }
 
         self.is_public
+    }
+
+    pub fn chat_events(
+        &self,
+        thread_message_index: Option<MessageIndex>,
+        min_visible_event_index: EventIndex,
+    ) -> Option<(&ChatEvents, EventIndex)> {
+        if let Some(thread_message_index) = thread_message_index {
+            self.events
+                .get_event_index_by_message_index(thread_message_index)
+                .filter(|thread_event_index| *thread_event_index >= min_visible_event_index)
+                .and_then(|_| self.threads.get(&thread_message_index))
+                .map(|events| (events, EventIndex::default()))
+        } else {
+            Some((&self.events, min_visible_event_index))
+        }
     }
 }
 
