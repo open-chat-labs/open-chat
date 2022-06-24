@@ -106,10 +106,6 @@ export default [
             format: "iife",
         },
         plugins: [
-            // svelte({
-            //     preprocess: sveltePreprocess({ sourceMap: !production }),
-            //     compilerOptions: { dev: !production },
-            // }),
             commonjs(),
             typescript({
                 sourceMap: !production,
