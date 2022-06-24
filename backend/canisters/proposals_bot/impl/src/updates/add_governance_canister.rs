@@ -7,6 +7,7 @@ use canister_tracing_macros::trace;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
 use proposals_bot_canister::add_governance_canister::{Response::*, *};
+use std::fmt::Write;
 use types::{CanisterId, ChatId, GroupPermissions, PermissionRole};
 
 #[update(guard = "caller_is_service_owner")]
@@ -98,7 +99,7 @@ async fn create_group(args: &Args) -> Result<ChatId, Response> {
         is_public: true,
         creator_principal: my_principal,
         name: format!("{} Proposals", &args.name),
-        description: "".to_string(),
+        description: args.description.clone().unwrap_or_else(|| default_description(&args.name)),
         avatar: args.avatar.clone(),
         history_visible_to_new_joiners: true,
         permissions: Some(GroupPermissions {
@@ -115,4 +116,18 @@ async fn create_group(args: &Args) -> Result<ChatId, Response> {
             error
         ))),
     }
+}
+
+fn default_description(name: &str) -> String {
+    let mut description = String::new();
+    writeln!(&mut description, "Join this group to view and vote on {name} proposals.").unwrap();
+    writeln!(&mut description).unwrap();
+    writeln!(
+        &mut description,
+        "To vote on proposals you must add your UserId as a hotkey to any {name} neurons you wish to vote with."
+    )
+    .unwrap();
+    writeln!(&mut description).unwrap();
+    writeln!(&mut description, "You can find your UserId on the 'About OpenChat' page.").unwrap();
+    description
 }

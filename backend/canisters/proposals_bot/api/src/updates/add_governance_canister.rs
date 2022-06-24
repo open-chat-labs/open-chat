@@ -6,6 +6,7 @@ use types::{Avatar, CanisterId};
 pub struct Args {
     pub governance_canister_id: CanisterId,
     pub name: String,
+    pub description: Option<String>,
     pub avatar: Option<Avatar>,
 }
 
