@@ -72,12 +72,6 @@ export interface IUserClient {
         replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<SendMessageResponse>;
-    forwardMessage(
-        recipientId: string,
-        sender: UserSummary,
-        message: Message,
-        threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse>;
     sendGroupICPTransfer(
         groupId: string,
         recipientId: string,

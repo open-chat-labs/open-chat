@@ -214,7 +214,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.chatId])
-            .then(({ content }) => {
+            .then((content) => {
                 return this.handleResponse(
                     this.groupService.edit_message({
                         thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -233,50 +233,30 @@ export class GroupClient extends CandidService implements IGroupClient {
         message: Message,
         threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
-        return DataClient.create(this.identity)
-            .uploadData(message.content, [this.chatId])
-            .then(({ content }) => {
-                console.log("Thread: ", threadRootMessageIndex);
-                return this.handleResponse(
-                    this.groupService.send_message({
-                        content: apiMessageContent(content ?? message.content),
-                        message_id: message.messageId,
-                        sender_name: senderName,
-                        replies_to: apiOptional(
-                            (replyContext) => ({
-                                event_index: replyContext.eventIndex,
-                            }),
-                            message.repliesTo
-                        ),
-                        mentioned: mentioned.map(apiUser),
-                        forwarding: false,
-                        thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                    }),
-                    sendMessageResponse
-                );
-            });
-    }
+        const dataClient = DataClient.create(this.identity);
+        const uploadContentPromise = message.forwarded
+            ? dataClient.forwardData(message.content, [this.chatId])
+            : dataClient.uploadData(message.content, [this.chatId]);
 
-    @profile("groupClient")
-    forwardMessage(
-        senderName: string,
-        mentioned: User[],
-        message: Message,
-        threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
-        // TODO: first forward using the DataClient
-        return this.handleResponse(
-            this.groupService.send_message({
-                content: apiMessageContent(message.content),
-                message_id: message.messageId,
-                sender_name: senderName,
-                replies_to: [],
-                mentioned: mentioned.map(apiUser),
-                forwarding: message.forwarded,
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            }),
-            sendMessageResponse
-        );
+        return uploadContentPromise.then((content) => {
+            return this.handleResponse(
+                this.groupService.send_message({
+                    content: apiMessageContent(content ?? message.content),
+                    message_id: message.messageId,
+                    sender_name: senderName,
+                    replies_to: apiOptional(
+                        (replyContext) => ({
+                            event_index: replyContext.eventIndex,
+                        }),
+                        message.repliesTo
+                    ),
+                    mentioned: mentioned.map(apiUser),
+                    forwarding: message.forwarded,
+                    thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                }),
+                sendMessageResponse
+            );
+        });
     }
 
     @profile("groupClient")

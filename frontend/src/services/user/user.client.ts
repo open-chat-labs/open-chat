@@ -290,7 +290,7 @@ export class UserClient extends CandidService implements IUserClient {
     ): Promise<EditMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.userId, recipientId])
-            .then(({ content }) => {
+            .then((content) => {
                 const req = {
                     content: apiMessageContent(content ?? message.content),
                     user_id: Principal.fromText(recipientId),
@@ -309,43 +309,26 @@ export class UserClient extends CandidService implements IUserClient {
         replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
-        return DataClient.create(this.identity)
-            .uploadData(message.content, [this.userId, recipientId])
-            .then(({ content }) => {
-                const req: ApiSendMessageArgs = {
-                    content: apiMessageContent(content ?? message.content),
-                    recipient: Principal.fromText(recipientId),
-                    sender_name: sender.username,
-                    message_id: message.messageId,
-                    replies_to: apiOptional(
-                        (replyContext) => apiReplyContextArgs(replyContext, replyingToChatId),
-                        message.repliesTo
-                    ),
-                    forwarding: false,
-                    thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                };
-                return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
-            });
-    }
+        const dataClient = DataClient.create(this.identity);
+        const uploadContentPromise = message.forwarded
+            ? dataClient.forwardData(message.content, [this.userId, recipientId])
+            : dataClient.uploadData(message.content, [this.userId, recipientId]);
 
-    @profile("userClient")
-    forwardMessage(
-        recipientId: string,
-        sender: UserSummary,
-        message: Message,
-        threadRootMessageIndex?: number
-    ): Promise<SendMessageResponse> {
-        // TODO: first forward using the DataClient
-        const req: ApiSendMessageArgs = {
-            content: apiMessageContent(message.content),
-            recipient: Principal.fromText(recipientId),
-            sender_name: sender.username,
-            message_id: message.messageId,
-            replies_to: [],
-            forwarding: message.forwarded,
-            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-        };
-        return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
+        return uploadContentPromise.then((content) => {
+            const req: ApiSendMessageArgs = {
+                content: apiMessageContent(content ?? message.content),
+                recipient: Principal.fromText(recipientId),
+                sender_name: sender.username,
+                message_id: message.messageId,
+                replies_to: apiOptional(
+                    (replyContext) => apiReplyContextArgs(replyContext, replyingToChatId),
+                    message.repliesTo
+                ),
+                forwarding: message.forwarded,
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+            };
+            return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
+        });
     }
 
     @profile("userClient")
