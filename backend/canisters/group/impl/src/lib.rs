@@ -159,6 +159,7 @@ struct Data {
     pub permissions: GroupPermissions,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
+    #[serde(default)]
     pub threads: HashMap<MessageIndex, ChatEvents>,
 }
 
