@@ -58,8 +58,8 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                 }
             }
 
-            let latest_event = chat_events.last().index;
             if let Some(thread_message_index) = args.thread_root_message_index {
+                let latest_event = chat_events.last().index;
                 runtime_state
                     .data
                     .events
