@@ -1,3 +1,5 @@
+use crate::NervousSystemMetrics;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::{HashMap, VecDeque};
@@ -92,6 +94,14 @@ impl NervousSystems {
             n.next_proposal_id = next_proposal_id;
         }
     }
+
+    pub fn metrics(&self) -> Vec<NervousSystemMetrics> {
+        self.nervous_systems
+            .values()
+            .sorted_unstable_by_key(|ns| ns.name.as_str())
+            .map_into()
+            .collect()
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -127,6 +137,21 @@ impl NervousSystem {
 
     pub fn latest_sync(&self) -> Option<TimestampMillis> {
         max(self.latest_successful_sync, self.latest_failed_sync)
+    }
+}
+
+impl From<&NervousSystem> for NervousSystemMetrics {
+    fn from(ns: &NervousSystem) -> Self {
+        NervousSystemMetrics {
+            name: ns.name.clone(),
+            governance_canister_id: ns.governance_canister_id,
+            chat_id: ns.chat_id,
+            next_proposal_id: ns.next_proposal_id,
+            latest_successful_sync: ns.latest_successful_sync,
+            latest_failed_sync: ns.latest_failed_sync,
+            queued_proposals: ns.queued_proposals.iter().map(|p| p.id).collect(),
+            in_progress_proposal: ns.in_progress_proposal.as_ref().map(|p| p.id),
+        }
     }
 }
 

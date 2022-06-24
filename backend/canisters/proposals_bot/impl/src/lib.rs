@@ -5,7 +5,7 @@ use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, Cycles, TimestampMillis, Timestamped, Version};
+use types::{CanisterId, ChatId, Cycles, ProposalId, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 use utils::memory;
 
@@ -44,6 +44,7 @@ impl RuntimeState {
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            nervous_systems: self.data.nervous_systems.metrics(),
         }
     }
 }
@@ -83,4 +84,17 @@ pub struct Metrics {
     pub memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
+    pub nervous_systems: Vec<NervousSystemMetrics>,
+}
+
+#[derive(CandidType, Serialize, Debug)]
+pub struct NervousSystemMetrics {
+    pub name: String,
+    pub governance_canister_id: CanisterId,
+    pub chat_id: ChatId,
+    pub next_proposal_id: ProposalId,
+    pub latest_successful_sync: Option<TimestampMillis>,
+    pub latest_failed_sync: Option<TimestampMillis>,
+    pub queued_proposals: Vec<ProposalId>,
+    pub in_progress_proposal: Option<ProposalId>,
 }

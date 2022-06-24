@@ -24,6 +24,7 @@ group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = "0.5.1"
 ic-cdk-macros = "0.5.1"
+itertools = "0.10.3"
 msgpack = { path = "../../../libraries/msgpack" }
 proposals_bot_canister = { path = "../api" }
 serde = "1.0.137"

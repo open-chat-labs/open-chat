@@ -3181,6 +3181,7 @@ dependencies = [
  "http_request",
  "ic-cdk 0.5.1",
  "ic-cdk-macros",
+ "itertools",
  "msgpack",
  "proposals_bot_canister",
  "serde",
