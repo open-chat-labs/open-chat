@@ -99,7 +99,6 @@ export function setSelectedChat(
     const currentUser = get(currentUserStore);
     const currentScrollStrategy = get(scrollStrategy);
 
-    console.log("Are we getting here?");
     if (currentUser === undefined) return;
 
     console.log("Creating selected chat controller");
