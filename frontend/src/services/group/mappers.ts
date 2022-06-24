@@ -667,6 +667,11 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             created_by: candid.GroupChatCreated.created_by.toString(),
         };
     }
+    if ("DirectChatCreated" in candid) {
+        return {
+            kind: "direct_chat_created",
+        };
+    }
     if ("ParticipantsAdded" in candid) {
         return {
             kind: "participants_added",

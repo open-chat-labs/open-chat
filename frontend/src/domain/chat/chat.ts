@@ -337,13 +337,10 @@ export type GroupChatEvent =
     | PermissionsChanged
     | GroupVisibilityChanged
     | GroupInviteCodeChanged
+    | DirectChatCreated
     | ThreadUpdated;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
-
-export type DirectChatCreated = {
-    kind: "direct_chat_created";
-};
 
 export type ParticipantsAdded = {
     kind: "participants_added";
@@ -521,6 +518,10 @@ export type GroupChatCreated = {
     name: string;
     description: string;
     created_by: string;
+};
+
+export type DirectChatCreated = {
+    kind: "direct_chat_created";
 };
 
 export type EventWrapper<T extends ChatEvent> = {
