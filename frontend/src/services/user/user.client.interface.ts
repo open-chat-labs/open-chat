@@ -70,11 +70,6 @@ export interface IUserClient {
         message: Message,
         replyingToChatId?: string
     ): Promise<SendMessageResponse>;
-    forwardMessage(
-        recipientId: string,
-        sender: UserSummary,
-        message: Message
-    ): Promise<SendMessageResponse>;
     sendGroupICPTransfer(
         groupId: string,
         recipientId: string,

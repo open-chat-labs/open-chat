@@ -305,7 +305,7 @@
         };
 
         controller.api
-            .forwardMessage($chat, controller.user, [], msg)
+            .sendMessage($chat, controller.user, [], msg)
             .then((resp) => {
                 if (resp.kind === "success") {
                     controller.confirmMessage(msg, resp);
