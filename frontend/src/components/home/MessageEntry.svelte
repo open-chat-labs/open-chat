@@ -120,7 +120,7 @@
             : $_("enterMessage");
 
     export function insertTextAtCaret(text: string) {
-        inp?.focus();
+        restoreSelection();
         let range = window.getSelection()?.getRangeAt(0);
         if (range !== undefined) {
             range.deleteContents();
