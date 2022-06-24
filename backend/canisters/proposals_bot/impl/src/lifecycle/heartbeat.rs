@@ -74,23 +74,25 @@ mod retrieve_proposals {
             Ok(response) => {
                 mutate_state(|state| {
                     if let Some(raw_proposal) = response.into_iter().next() {
-                        if !raw_proposal.is_excluded() {
-                            match raw_proposal.try_into() {
-                                Ok(proposal) => {
-                                    state
-                                        .data
-                                        .nervous_systems
-                                        .enqueue_proposal(&governance_canister_id, proposal, false);
-                                }
-                                Err(error) => {
-                                    error!(error, "Failed to transform proposal");
+                        if raw_proposal.id() == next_proposal_id {
+                            if !raw_proposal.is_excluded() {
+                                match raw_proposal.try_into() {
+                                    Ok(proposal) => {
+                                        state
+                                            .data
+                                            .nervous_systems
+                                            .enqueue_proposal(&governance_canister_id, proposal, false);
+                                    }
+                                    Err(error) => {
+                                        error!(error, "Failed to transform proposal");
+                                    }
                                 }
                             }
+                            state
+                                .data
+                                .nervous_systems
+                                .set_next_proposal_id(&governance_canister_id, next_proposal_id + 1);
                         }
-                        state
-                            .data
-                            .nervous_systems
-                            .set_next_proposal_id(&governance_canister_id, next_proposal_id + 1);
                     }
 
                     let now = state.env.now();
