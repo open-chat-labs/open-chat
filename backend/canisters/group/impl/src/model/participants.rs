@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use chat_events::ChatEvents;
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::{
@@ -364,26 +364,10 @@ pub struct ParticipantInternal {
     pub date_added: TimestampMillis,
     pub role: Role,
     pub notifications_muted: bool,
-    #[serde(deserialize_with = "deserialize_mention")]
     pub mentions: Vec<MentionInternal>,
 
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,
-}
-
-fn deserialize_mention<'de, D>(deserializer: D) -> Result<Vec<MentionInternal>, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    let mentions: Vec<MessageIndex> = de::Deserialize::deserialize(deserializer)?;
-
-    Ok(mentions
-        .into_iter()
-        .map(|message_index| MentionInternal {
-            thread_root_message_index: None,
-            message_index,
-        })
-        .collect())
 }
 
 impl ParticipantInternal {
