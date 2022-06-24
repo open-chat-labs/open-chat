@@ -55,10 +55,10 @@
     import { removeQueryStringParam } from "../../utils/urls";
     import {
         canSendMessages,
-        emptyChatMetrics,
         mergeChatMetrics,
         userIdsFromEvents,
     } from "../../domain/chat/chat.utils";
+    import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
     import { trackEvent } from "../../utils/tracking";
     import { numberOfColumns, oldLayout } from "../../stores/layout";
     import { messageToForwardStore } from "../../stores/messageToForward";

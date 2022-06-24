@@ -71,7 +71,7 @@ import type {
     ApiProposalContent,
 } from "../user/candid/idl";
 import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
-import { emptyChatMetrics } from "../../domain/chat/chat.utils";
+import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
 import type { Cryptocurrency } from "../../domain/crypto";
 
 export function message(candid: ApiMessage): Message {

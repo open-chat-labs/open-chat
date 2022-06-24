@@ -13,8 +13,8 @@
         getDisplayDate,
         getMinVisibleMessageIndex,
         getTypingString,
-        isPreviewing,
     } from "../../domain/chat/chat.utils";
+    import { isPreviewing } from "../../domain/chat/chat.utils.shared";
     import type { ChatSummary } from "../../domain/chat/chat";
     import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";

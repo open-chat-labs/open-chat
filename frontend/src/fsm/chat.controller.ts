@@ -27,7 +27,6 @@ import {
     getNextEventIndex,
     getNextMessageIndex,
     indexRangeForChat,
-    isPreviewing,
     mergeUnconfirmedIntoSummary,
     pruneLocalReactions,
     replaceAffected,
@@ -57,6 +56,7 @@ import type { WebRtcMessage } from "../domain/webrtc/webrtc";
 import { immutableStore } from "../stores/immutable";
 import { replace } from "svelte-spa-router";
 import { messagesRead } from "../stores/markRead";
+import { isPreviewing } from "../domain/chat/chat.utils.shared";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;

@@ -47,11 +47,11 @@ import type { TypersByChat } from "../../stores/typing";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
 import Identicon from "identicon.js";
 import md5 from "md5";
+import { emptyChatMetrics } from "./chat.utils.shared";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
 export const MAX_MISSING = 30;
-export const MAX_EVENTS = 150;
 
 export function newMessageId(): bigint {
     return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
@@ -1066,10 +1066,6 @@ function getLatestMessage(
         : chat.latestMessage;
 }
 
-export function isPreviewing(chat: ChatSummary): boolean {
-    return chat.kind === "group_chat" && chat.myRole === "previewer";
-}
-
 export function groupChatFromCandidate(
     userId: string,
     chatId: string,
@@ -1438,25 +1434,6 @@ export function buildTransactionUrl(content: CryptocurrencyContent): string | un
     }
     // TODO: Where can we see the transactions for other tokens? In OpenChat I suppose...
     return `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`;
-}
-
-export function emptyChatMetrics(): ChatMetrics {
-    return {
-        audioMessages: 0,
-        cyclesMessages: 0,
-        edits: 0,
-        icpMessages: 0,
-        giphyMessages: 0,
-        deletedMessages: 0,
-        fileMessages: 0,
-        pollVotes: 0,
-        textMessages: 0,
-        imageMessages: 0,
-        replies: 0,
-        videoMessages: 0,
-        polls: 0,
-        reactions: 0,
-    };
 }
 
 export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {

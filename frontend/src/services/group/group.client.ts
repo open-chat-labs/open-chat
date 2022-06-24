@@ -73,7 +73,8 @@ import {
     registerPollVoteResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
-import { identity, MAX_EVENTS, mergeGroupChatDetails } from "../../domain/chat/chat.utils";
+import { identity, mergeGroupChatDetails } from "../../domain/chat/chat.utils";
+import { MAX_EVENTS } from "../../domain/chat/chat.utils.shared";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";

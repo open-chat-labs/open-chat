@@ -1,4 +1,4 @@
-import { isPreviewing, MAX_EVENTS } from "../domain/chat/chat.utils";
+import { isPreviewing, MAX_EVENTS } from "../domain/chat/chat.utils.shared";
 import DRange from "drange";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {

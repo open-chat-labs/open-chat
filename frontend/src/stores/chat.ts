@@ -4,7 +4,6 @@ import { derived, get, readable, Readable, writable, Writable } from "svelte/sto
 import { immutableStore } from "./immutable";
 import {
     compareChats,
-    emptyChatMetrics,
     getContentAsText,
     getFirstUnreadMention,
     getFirstUnreadMessageIndex,
@@ -23,6 +22,7 @@ import type { CreatedUser, UserSummary } from "../domain/user/user";
 import { scrollStrategy } from "./settings";
 import { ChatController } from "../fsm/chat.controller";
 import DRange from "drange";
+import { emptyChatMetrics } from "../domain/chat/chat.utils.shared";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;

@@ -57,7 +57,8 @@ import {
     publicProfileResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import { compareChats, MAX_EVENTS, mergeChatUpdates } from "../../domain/chat/chat.utils";
+import { compareChats, mergeChatUpdates } from "../../domain/chat/chat.utils";
+import { MAX_EVENTS } from "../../domain/chat/chat.utils.shared";
 import { cachingLocallyDisabled, Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {

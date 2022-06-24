@@ -15,9 +15,9 @@
         getFirstUnreadMessageIndex,
         getMessageContent,
         getStorageRequiredForMessage,
-        isPreviewing,
         newMessageId,
     } from "../../domain/chat/chat.utils";
+    import { isPreviewing } from "../../domain/chat/chat.utils.shared";
     import type {
         EnhancedReplyContext,
         EventWrapper,
