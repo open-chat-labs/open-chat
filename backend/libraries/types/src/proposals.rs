@@ -55,6 +55,7 @@ impl ProposalContentInternal {
         }
     }
 
+    // Attempts to register the vote, returns None if successful, else returns the existing vote.
     pub fn register_vote(&mut self, user_id: UserId, adopt: bool) -> Option<bool> {
         if adopt {
             if self.reject_votes.contains(&user_id) {
@@ -64,14 +65,12 @@ impl ProposalContentInternal {
             } else {
                 None
             }
+        } else if self.adopt_votes.contains(&user_id) {
+            Some(true)
+        } else if !self.reject_votes.insert(user_id) {
+            Some(false)
         } else {
-            if self.adopt_votes.contains(&user_id) {
-                Some(true)
-            } else if !self.reject_votes.insert(user_id) {
-                Some(false)
-            } else {
-                None
-            }
+            None
         }
     }
 
