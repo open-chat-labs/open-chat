@@ -162,6 +162,10 @@ impl ChatEventInternal {
                 decr(&mut metrics.poll_votes);
                 decr(&mut per_user_metrics.entry(v.updated_by).or_default().poll_votes);
             }
+            ChatEventInternal::ProposalVoteRegistered(v) => {
+                incr(&mut metrics.proposal_votes);
+                incr(&mut per_user_metrics.entry(v.updated_by).or_default().proposal_votes);
+            }
             _ => {}
         }
 
