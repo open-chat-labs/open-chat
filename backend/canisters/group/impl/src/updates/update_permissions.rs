@@ -60,5 +60,6 @@ fn merge_permissions(new: Args, old: &GroupPermissions) -> GroupPermissions {
         create_polls: new.create_polls.unwrap_or(old.create_polls),
         send_messages: new.send_messages.unwrap_or(old.send_messages),
         react_to_messages: new.react_to_messages.unwrap_or(old.react_to_messages),
+        reply_in_thread: new.reply_in_thread.unwrap_or(old.reply_in_thread),
     }
 }

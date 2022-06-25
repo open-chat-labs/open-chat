@@ -87,6 +87,7 @@ pub(crate) fn c2c_send_message_impl(
             if !chat.notifications_muted.value {
                 let notification = Notification::DirectMessageNotification(DirectMessageNotification {
                     sender,
+                    thread_root_message_index: None,
                     sender_name: args.sender_name,
                     message: message_event,
                 });

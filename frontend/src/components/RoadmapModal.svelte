@@ -24,28 +24,29 @@
             </li>
             <li><del>Share messages and receive shares from other apps</del></li>
             <li><del>Edit sent messages</del></li>
+            <li><del>Message forwarding</del></li>
+            <li>Threaded replies</li>
             <li>Send additional tokens as messages, such as BTC, ETH, Cycles, etc</li>
-            <li>Message forwarding</li>
-            <li>Improved UI design</li>
             <li>Tag messages (eg star) and search/filter by tag</li>
-            <li>Organise events with calendar</li>
             <li>Performance enhancements (asset caching with etags, WebRTC improvements)</li>
+            <li>Special groups for viewing/discussing/voting on NNS and SNS proposals</li>
             <li>Streamlined sign-in</li>
+            <li>Communities (think Slack workspaces or Discord servers)</li>
             <li>2-way voice calls</li>
             <li>2-way video calls</li>
-            <li>Send "red-letters" containing tokens</li>
+            <li>E2E encryption of messages</li>
             <li>Native iOS app</li>
             <li>Disappearing messages</li>
             <li>Tag groups and search/filter by tag</li>
             <li>Optionally sync with phone contacts and invite contacts</li>
             <li>Custom emojis, stickers</li>
+            <li>Send "red-letters" containing tokens</li>
             <li>Link previews</li>
-            <li>Communities (think Slack workspaces or Discord servers)</li>
+            <li>Organise events with calendar</li>
             <li>Report inappropriate content</li>
             <li>Incorporate token swap to allow other tokens to be sent</li>
             <li>Native Android app</li>
             <li>Group video calls (up to some limited number of participants)</li>
-            <li>E2E encryption of messages</li>
             <li>
                 Broadcast groups
                 <ul>

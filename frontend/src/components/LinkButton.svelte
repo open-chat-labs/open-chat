@@ -2,7 +2,7 @@
     export let underline: "never" | "always" | "hover" = "never";
 </script>
 
-<span class={underline} class:hover={underline === "hover"} on:click>
+<span class={`link-button ${underline}`} class:hover={underline === "hover"} on:click>
     <slot />
 </span>
 

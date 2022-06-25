@@ -12,22 +12,23 @@
     export let controller: ChatController | undefined;
     export let loadingChats: boolean = false;
     export let blocked: boolean;
-    export let recommendedGroups: RemoteData<GroupChatSummary[], string>;
+    export let hotGroups: RemoteData<GroupChatSummary[], string>;
     export let joining: GroupChatSummary | undefined;
+    export let selectedThreadMessageIndex: number | undefined;
 </script>
 
 <Panel middle>
-    {#if loadingChats || recommendedGroups.kind === "loading"}
+    {#if loadingChats || hotGroups.kind === "loading"}
         <Loading />
     {:else if controller === undefined}
-        {#if recommendedGroups.kind === "success"}
+        {#if hotGroups.kind === "success"}
             <RecommendedGroups
                 {joining}
                 on:cancelRecommendations
                 on:joinGroup
                 on:recommend
                 on:dismissRecommendation
-                groups={recommendedGroups.data} />
+                groups={hotGroups.data} />
         {:else}
             <div class="no-chat" in:fade>
                 <NoChatSelected on:recommend on:newchat />
@@ -38,6 +39,7 @@
             {joining}
             {blocked}
             {controller}
+            {selectedThreadMessageIndex}
             on:unblockUser
             on:clearSelection
             on:blockUser
@@ -51,6 +53,7 @@
             on:upgrade
             on:cancelPreview
             on:showPinned
+            on:replyInThread
             on:goToMessageIndex
             on:forward />
     {/if}

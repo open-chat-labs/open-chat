@@ -4,6 +4,7 @@ use types::{EventIndex, EventWrapper, Message, MessageIndex};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub thread_root_message_index: Option<MessageIndex>,
     pub messages: Vec<MessageIndex>,
 }
 
@@ -11,6 +12,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     CallerNotInGroup,
+    ThreadMessageNotFound,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

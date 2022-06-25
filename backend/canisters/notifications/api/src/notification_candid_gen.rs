@@ -4,6 +4,7 @@ use types::{DirectMessageNotification, EventWrapper, Message, MessageContent, No
 fn main() {
     let ignored = Notification::DirectMessageNotification(DirectMessageNotification {
         sender: Principal::anonymous().into(),
+        thread_root_message_index: None,
         sender_name: "".to_string(),
         message: EventWrapper {
             index: 0.into(),
@@ -17,6 +18,7 @@ fn main() {
                 reactions: Vec::new(),
                 edited: false,
                 forwarded: false,
+                thread_summary: None,
             },
         },
     });

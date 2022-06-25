@@ -112,24 +112,11 @@ type DirectChatCreated =
     record {
     };
 
-type DirectChatEvent =
-    variant {
-        Message: Message;
-        DirectChatCreated: DirectChatCreated;
-        MessageEdited: UpdatedMessage;
-        MessageDeleted: UpdatedMessage;
-        MessageReactionAdded: UpdatedMessage;
-        MessageReactionRemoved: UpdatedMessage;
-        PollVoteRegistered: UpdatedMessage;
-        PollVoteDeleted: UpdatedMessage;
-        PollEnded: PollEnded;
-    };
-
 type DirectChatEventWrapper =
     record {
         index: EventIndex;
         timestamp: TimestampMillis;
-        event: DirectChatEvent;
+        event: ChatEvent;
     };
 
 type DirectChatSummary =
@@ -193,10 +180,11 @@ type GroupChatCreated =
         created_by: UserId;
     };
 
-type GroupChatEvent =
+type ChatEvent =
     variant {
         Message: Message;
         GroupChatCreated: GroupChatCreated;
+        DirectChatCreated: DirectChatCreated;
         GroupNameChanged: GroupNameChanged;
         GroupDescriptionChanged: GroupDescriptionChanged;
         AvatarChanged: AvatarChanged;
@@ -223,13 +211,14 @@ type GroupChatEvent =
         PermissionsChanged: PermissionsChanged;
         GroupVisibilityChanged: GroupVisibilityChanged;
         GroupInviteCodeChanged: GroupInviteCodeChanged;
+        ThreadUpdated: ThreadUpdated;
     };
 
-type GroupChatEventWrapper =
+type ChatEventWrapper =
     record {
         index: EventIndex;
         timestamp: TimestampMillis;
-        event: GroupChatEvent;
+        event: ChatEvent;
     };
 
 type GroupChatSummary =
@@ -313,6 +302,7 @@ type AvatarIdUpdate =
 
 type Mention =
     record {
+        thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         message_index: MessageIndex;
         event_index: EventIndex;
@@ -327,6 +317,7 @@ type Message =
         content: MessageContent;
         replies_to: opt ReplyContext;
         reactions: vec record { text; vec UserId; };
+        thread_summary: opt ThreadSummary;
         edited: bool;
         forwarded: bool;
     };
@@ -830,6 +821,7 @@ type GroupPermissions =
         create_polls: PermissionRole;
         send_messages: PermissionRole;
         react_to_messages: PermissionRole;
+        reply_in_thread: PermissionRole;
     };
 
 type PermissionRole =
@@ -837,4 +829,19 @@ type PermissionRole =
         Owner;
         Admins;
         Members;
+    };
+
+type ThreadSummary =
+    record {
+        participant_ids: vec UserId;
+        reply_count: nat32;
+        latest_event_index: EventIndex;
+        latest_event_timestamp: TimestampMillis;
+    };
+
+type ThreadUpdated =
+    record {
+        updated_by: UserId;
+        event_index: EventIndex;
+        message_index: MessageIndex;
     };

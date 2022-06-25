@@ -6,7 +6,7 @@ use ic_agent::Agent;
 use ic_fondue::ic_manager::IcHandle;
 use std::panic;
 use types::{
-    CanisterId, ChatSummary, ChatSummaryUpdates, GroupChatEvent, MessageContent, SubscriptionInfo, SubscriptionKeys,
+    CanisterId, ChatSummary, ChatSummaryUpdates, ChatEvent, MessageContent, SubscriptionInfo, SubscriptionKeys,
     TextContent, User, UserId,
 };
 use user_canister::updates::{GroupChatUpdatesSince, UpdatesSince};
@@ -223,11 +223,11 @@ async fn mentions_tests_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         {
             group_canister::events_range::Response::Success(r) => {
                 assert_eq!(r.events.len(), 5);
-                assert!(matches!(r.events[0].event, GroupChatEvent::GroupChatCreated(_)));
-                assert!(matches!(r.events[1].event, GroupChatEvent::ParticipantsAdded(_)));
-                assert!(matches!(r.events[2].event, GroupChatEvent::Message(_)));
-                assert!(matches!(r.events[3].event, GroupChatEvent::Message(_)));
-                assert!(matches!(r.events[4].event, GroupChatEvent::Message(_)));
+                assert!(matches!(r.events[0].event, ChatEvent::GroupChatCreated(_)));
+                assert!(matches!(r.events[1].event, ChatEvent::ParticipantsAdded(_)));
+                assert!(matches!(r.events[2].event, ChatEvent::Message(_)));
+                assert!(matches!(r.events[3].event, ChatEvent::Message(_)));
+                assert!(matches!(r.events[4].event, ChatEvent::Message(_)));
             }
             response => panic!("EventsRange returned an error: {response:?}"),
         };

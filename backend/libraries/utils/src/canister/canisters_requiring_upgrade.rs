@@ -1,4 +1,5 @@
 use candid::CandidType;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
 use types::{CanisterId, Version};
@@ -60,10 +61,20 @@ impl CanistersRequiringUpgrade {
     }
 
     pub fn metrics(&self) -> Metrics {
+        let mut failed = Vec::new();
+        for ((from_version, to_version), group) in &self.failed.iter().group_by(|f| (f.from_version, f.to_version)) {
+            failed.push(FailedUpgradeCount {
+                from_version,
+                to_version,
+                count: group.count(),
+            })
+        }
+        failed.sort_unstable_by_key(|f| (f.from_version, f.to_version));
+
         Metrics {
             pending: self.pending.len(),
             in_progress: self.in_progress.len(),
-            failed: self.failed.len(),
+            failed,
             completed: self.completed,
         }
     }
@@ -71,7 +82,14 @@ impl CanistersRequiringUpgrade {
 
 pub struct Metrics {
     pub completed: u64,
-    pub failed: usize,
+    pub failed: Vec<FailedUpgradeCount>,
     pub pending: usize,
     pub in_progress: usize,
+}
+
+#[derive(CandidType, Serialize, Debug)]
+pub struct FailedUpgradeCount {
+    pub from_version: Version,
+    pub to_version: Version,
+    pub count: usize,
 }

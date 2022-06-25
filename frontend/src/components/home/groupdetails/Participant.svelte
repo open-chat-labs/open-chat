@@ -202,11 +202,11 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        border-bottom: var(--participants-bdb);
+        border-bottom: var(--participants-bd);
         background-color: var(--participants-bg);
         color: var(--participants-txt);
         padding: $sp3;
-        margin: 0 $sp3 $sp3 $sp3;
+        margin: 0 $sp3 0 $sp3;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
 
         &:not(.me) {

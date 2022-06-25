@@ -11,7 +11,7 @@
 
 <div
     class="avatar"
-    class:weeny={size === AvatarSize.Weeny}
+    class:miniscule={size === AvatarSize.Miniscule}
     class:tiny={size === AvatarSize.Tiny}
     class:small={size === AvatarSize.Small}
     class:medium={size === AvatarSize.Medium}
@@ -52,7 +52,7 @@
         position: relative;
         margin: 0 auto;
 
-        &.weeny {
+        &.miniscule {
             width: toRem(20);
             height: toRem(20);
         }

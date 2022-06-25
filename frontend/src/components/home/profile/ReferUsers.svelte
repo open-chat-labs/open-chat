@@ -83,7 +83,7 @@
                             <Avatar
                                 url={userAvatarUrl($userStore[userId])}
                                 status={UserStatus.None}
-                                size={AvatarSize.Weeny} />
+                                size={AvatarSize.Miniscule} />
                         </div>
                         <LinkButton underline="hover">
                             {$userStore[userId]?.username ?? $_("unknownUser")}

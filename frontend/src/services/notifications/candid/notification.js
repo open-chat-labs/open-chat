@@ -64,6 +64,18 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
           }),
+          'GovernanceProposal' : IDL.Record({
+            'url' : IDL.Text,
+            'title' : IDL.Text,
+            'my_vote' : IDL.Opt(IDL.Bool),
+            'reject_votes' : IDL.Nat32,
+            'deadline' : IDL.Nat64,
+            'adopt_votes' : IDL.Nat32,
+            'summary' : IDL.Text,
+            'proposal_id' : IDL.Nat64,
+            'governance_canister_id' : IDL.Principal,
+            'proposer' : IDL.Nat64,
+          }),
           'Cryptocurrency' : IDL.Record({
             'caption' : IDL.Opt(IDL.Text),
             'transfer' : IDL.Variant({
@@ -153,6 +165,14 @@ export const Notification = IDL.Variant({
         }),
         'edited' : IDL.Bool,
         'sender' : IDL.Principal,
+        'thread_summary' : IDL.Opt(
+          IDL.Record({
+            'latest_event_timestamp' : IDL.Nat64,
+            'participant_ids' : IDL.Vec(IDL.Principal),
+            'reply_count' : IDL.Nat32,
+            'latest_event_index' : IDL.Nat32,
+          })
+        ),
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
@@ -167,6 +187,7 @@ export const Notification = IDL.Variant({
       'index' : IDL.Nat32,
     }),
     'sender_name' : IDL.Text,
+    'thread_root_message_index' : IDL.Opt(IDL.Nat32),
   }),
   'GroupMessageNotification' : IDL.Record({
     'hide' : IDL.Bool,
@@ -235,6 +256,18 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
           }),
+          'GovernanceProposal' : IDL.Record({
+            'url' : IDL.Text,
+            'title' : IDL.Text,
+            'my_vote' : IDL.Opt(IDL.Bool),
+            'reject_votes' : IDL.Nat32,
+            'deadline' : IDL.Nat64,
+            'adopt_votes' : IDL.Nat32,
+            'summary' : IDL.Text,
+            'proposal_id' : IDL.Nat64,
+            'governance_canister_id' : IDL.Principal,
+            'proposer' : IDL.Nat64,
+          }),
           'Cryptocurrency' : IDL.Record({
             'caption' : IDL.Opt(IDL.Text),
             'transfer' : IDL.Variant({
@@ -324,6 +357,14 @@ export const Notification = IDL.Variant({
         }),
         'edited' : IDL.Bool,
         'sender' : IDL.Principal,
+        'thread_summary' : IDL.Opt(
+          IDL.Record({
+            'latest_event_timestamp' : IDL.Nat64,
+            'participant_ids' : IDL.Vec(IDL.Principal),
+            'reply_count' : IDL.Nat32,
+            'latest_event_index' : IDL.Nat32,
+          })
+        ),
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
@@ -339,6 +380,7 @@ export const Notification = IDL.Variant({
     }),
     'sender_name' : IDL.Text,
     'chat_id' : IDL.Principal,
+    'thread_root_message_index' : IDL.Opt(IDL.Nat32),
     'group_name' : IDL.Text,
   }),
   'AddedToGroupNotification' : IDL.Record({

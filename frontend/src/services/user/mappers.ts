@@ -80,17 +80,15 @@ import type { PublicProfile, SetBioResponse } from "../../domain/user/user";
 import type { ApiDirectChatSummary, ApiGroupChatSummary } from "./candid/idl";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
-    if ("Success" in candid) {
-        const profile = candid.Success;
-        return {
-            username: profile.username,
-            avatarId: optional(profile.avatar_id, identity),
-            bio: profile.bio,
-            isPremium: profile.is_premium,
-            phoneIsVerified: profile.phone_is_verified,
-        };
-    }
-    throw new UnsupportedValueError(`Unexpected ApiPublicProfileResponse type received`, candid);
+    const profile = candid.Success;
+    return {
+        username: profile.username,
+        avatarId: optional(profile.avatar_id, identity),
+        bio: profile.bio,
+        isPremium: profile.is_premium,
+        phoneIsVerified: profile.phone_is_verified,
+        created: profile.created,
+    };
 }
 
 export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
@@ -542,6 +540,15 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
             eventIndex: candid.PollEnded.event_index,
         };
     }
+
+    if ("ThreadUpdated" in candid) {
+        return {
+            kind: "thread_updated",
+            messageIndex: candid.ThreadUpdated.message_index,
+            eventIndex: candid.ThreadUpdated.event_index,
+        };
+    }
+
     // todo - we know there are other event types that we are not dealing with yet
     throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
 }

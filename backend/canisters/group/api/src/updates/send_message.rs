@@ -4,6 +4,7 @@ use types::{EventIndex, GroupReplyContext, InvalidPollReason, MessageContent, Me
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub content: MessageContent,
     pub sender_name: String,
@@ -15,6 +16,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
+    ThreadMessageNotFound,
     MessageEmpty,
     TextTooLong(u32),
     InvalidPoll(InvalidPollReason),

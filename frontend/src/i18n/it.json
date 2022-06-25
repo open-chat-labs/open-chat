@@ -48,8 +48,6 @@
     "account": "Account",
     "whatsHot": "Cosa c'è di nuovo?",
     "notInterested": "Non interessato",
-    "recommendSomething": "Consiglia alcuni gruppi",
-    "noRecommendations": "Nessun consiglio 😭",
     "checkBackLater": "Per favore riprova più tardi.",
     "refresh": "ricarica",
     "goHome": "Home",
@@ -93,7 +91,6 @@
     "change": "modifica",
     "noChatSelected": "Nessuna chat attualmente selezionata",
     "selectAChat": "Cerca un amico, crea un nuovo gruppo o seleziona una chat.",
-    "recommendedGroups": "Gruppi consigliati",
     "selectAGroup": "Seleziona un gruppo da visualizzare in anteprima o unirti.",
     "newChat": "Nuova chat",
     "newGroup": "Nuovo gruppo",
@@ -259,7 +256,8 @@
         "welcomeTo": "Benvenuto a ...",
         "blurbPartOne": "Un'app di chat sicura, intuitiva e decentralizzata che funziona interamente",
         "blurbPartTwo": " - la prima blockchain al mondo su scala Internet. Per saperne di più",
-        "signIn": "Registrazione"
+        "signIn": "Registrazione",
+        "signInOrRegister": "Accedi o Registrati"
     },
     "reactions": {
         "greaterThan99People": "99+ persone",
@@ -533,6 +531,17 @@
     "referralHeader": "Invita amici/familiari",
     "userReferralMessage": "Condividi questo link a OpenChat con amici e familiari. Per ogni persona che si registra con il tuo link e diventa un utente verificato riceverai un premio in token CHAT (da confermare nelle prossime settimane). Puoi andare avanti e condividere il link ora e assegneremo retrospettivamente i token CHAT una volta che saranno disponibili.",
     "userInfoHeader": "Pubblico",
+    "thread": {
+        "menu": "Rispondi nel thread",
+        "title": "Filo",
+        "replies": "risposte",
+        "reply": "rispondere",
+        "lastMessage": "(ultimo messaggio {date})",
+        "nreplies": "{number} {replies} {message}"
+    },
     "noChatsAvailable": "Nessuna chat disponibile!",
-    "invitedUsers": "Utenti invitati"
+    "invitedUsers": "Utenti invitati",
+    "hotGroups": "Gruppi caldi",
+    "showHotGroups": "Mostrami alcuni gruppi caldi",
+    "noHotGroups": "Nessun gruppo caldo 😭"
 }

@@ -1,5 +1,4 @@
 use crate::RuntimeState;
-use candid::Encode;
 use serde_bytes::ByteBuf;
 use types::{CanisterId, EventWrapper, Message, MessageContent, UserId};
 
@@ -55,15 +54,12 @@ mod send_message_common {
             message_index: MessageIndex,
             end_date: TimestampMillis,
         ) {
-            let payload = ByteBuf::from(
-                Encode!(&user_canister::c2c_end_poll::Args {
-                    user_id: other_user,
-                    message_index,
-                })
-                .unwrap(),
-            );
+            let payload = ByteBuf::from(msgpack::serialize(&user_canister::c2c_end_poll::Args {
+                user_id: other_user,
+                message_index,
+            }));
             let args = callback_canister::c2c_register_callback::Args {
-                method_name: "c2c_end_poll".to_string(),
+                method_name: "c2c_end_poll_msgpack".to_string(),
                 payload,
                 timestamp: end_date,
             };

@@ -68,7 +68,6 @@
     let supportsNotifications = notificationsSupported();
     let saving = false;
     let validUsername: string | undefined = undefined;
-    let usernameInput: UsernameInput;
     let checkingUsername: boolean;
     let selectedCryptoAccount: Cryptocurrency | undefined = undefined;
     let showManageCryptoAccount = false;
@@ -79,15 +78,6 @@
     }
 
     $: bioDirty = userbio !== originalBio;
-
-    export function reset() {
-        usernameInput.reset();
-        usernameError = undefined;
-        bioError = undefined;
-        api.getBio().then((bio) => {
-            originalBio = userbio = bio;
-        });
-    }
 
     function whySms() {
         dispatch("showFaqQuestion", "sms_icp");
@@ -221,7 +211,6 @@
             </div>
             <Legend>{$_("username")} ({$_("usernameRules")})</Legend>
             <UsernameInput
-                bind:this={usernameInput}
                 {api}
                 originalUsername={user?.username ?? ""}
                 bind:validUsername
@@ -252,7 +241,6 @@
             </div>
         </CollapsibleCard>
     </div>
-
     <div class="appearance">
         <CollapsibleCard
             on:toggle={appearanceSectionOpen.toggle}
@@ -296,7 +284,14 @@
             </div>
         </CollapsibleCard>
     </div>
-
+    <div class="invite">
+        <CollapsibleCard
+            on:toggle={referralOpen.toggle}
+            open={$referralOpen}
+            headerText={$_("referralHeader")}>
+            <ReferUsers />
+        </CollapsibleCard>
+    </div>
     <div class="chats">
         <CollapsibleCard
             on:toggle={chatsSectionOpen.toggle}
@@ -329,7 +324,6 @@
             {/each}
         </CollapsibleCard>
     </div>
-
     <div class="accounts">
         <CollapsibleCard
             on:toggle={accountSectionOpen.toggle}
@@ -406,14 +400,6 @@
             {/if}
         </CollapsibleCard>
     </div>
-    <div class="invite">
-        <CollapsibleCard
-            on:toggle={referralOpen.toggle}
-            open={$referralOpen}
-            headerText={$_("referralHeader")}>
-            <ReferUsers />
-        </CollapsibleCard>
-    </div>
     <div class="storage">
         <CollapsibleCard
             on:toggle={storageSectionOpen.toggle}
@@ -448,7 +434,6 @@
             {/if}
         </CollapsibleCard>
     </div>
-
     <div class="stats">
         <CollapsibleCard
             on:toggle={statsSectionOpen.toggle}

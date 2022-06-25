@@ -30,6 +30,7 @@ async fn transfer_crypto_within_group(args: Args) -> Response {
 
     let c2c_args = group_canister::send_message::Args {
         message_id: args.message_id,
+        thread_root_message_index: None,
         content: MessageContent::Cryptocurrency(CryptocurrencyContent {
             transfer: CryptoTransaction::Completed(completed_transaction.clone()),
             caption: args.content.caption,
@@ -52,6 +53,7 @@ async fn transfer_crypto_within_group(args: Args) -> Response {
             group_canister::send_message::Response::MessageEmpty
             | group_canister::send_message::Response::InvalidPoll(_)
             | group_canister::send_message::Response::NotAuthorized
+            | group_canister::send_message::Response::ThreadMessageNotFound
             | group_canister::send_message::Response::InvalidRequest(_)
             | group_canister::send_message::Response::TextTooLong(_) => unreachable!(),
         },

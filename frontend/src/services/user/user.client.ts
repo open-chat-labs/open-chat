@@ -132,7 +132,9 @@ export class UserClient extends CandidService implements IUserClient {
         eventIndexes: number[],
         userId: string
     ): Promise<EventsResponse<DirectChatEvent>> {
+        const thread_root_message_index: [] = [];
         const args = {
+            thread_root_message_index,
             user_id: Principal.fromText(userId),
             events: eventIndexes,
         };
@@ -150,7 +152,9 @@ export class UserClient extends CandidService implements IUserClient {
         messageIndex: number,
         interrupt: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>> {
+        const thread_root_message_index: [] = [];
         const args = {
+            thread_root_message_index,
             user_id: Principal.fromText(userId),
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
@@ -171,7 +175,9 @@ export class UserClient extends CandidService implements IUserClient {
         ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
+            const thread_root_message_index: [] = [];
             const args = {
+                thread_root_message_index,
                 user_id: Principal.fromText(userId),
                 max_events: MAX_EVENTS,
                 start_index: index,
@@ -281,12 +287,14 @@ export class UserClient extends CandidService implements IUserClient {
 
     @profile("userClient")
     editMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
+        const thread_root_message_index: [] = [];
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.userId, recipientId])
-            .then(({ content }) => {
+            .then((content) => {
                 const req = {
                     content: apiMessageContent(content ?? message.content),
                     user_id: Principal.fromText(recipientId),
+                    thread_root_message_index,
                     message_id: message.messageId,
                 };
                 return this.handleResponse(this.userService.edit_message(req), editMessageResponse);
@@ -300,9 +308,13 @@ export class UserClient extends CandidService implements IUserClient {
         message: Message,
         replyingToChatId?: string
     ): Promise<SendMessageResponse> {
-        return DataClient.create(this.identity)
-            .uploadData(message.content, [this.userId, recipientId])
-            .then(({ content }) => {
+        const dataClient = DataClient.create(this.identity);
+        const uploadContentPromise = message.forwarded
+            ? dataClient.forwardData(message.content, [this.userId, recipientId])
+            : dataClient.uploadData(message.content, [this.userId, recipientId]);
+
+        return uploadContentPromise
+            .then((content) => {
                 const req: ApiSendMessageArgs = {
                     content: apiMessageContent(content ?? message.content),
                     recipient: Principal.fromText(recipientId),
@@ -312,28 +324,11 @@ export class UserClient extends CandidService implements IUserClient {
                         (replyContext) => apiReplyContextArgs(replyContext, replyingToChatId),
                         message.repliesTo
                     ),
-                    forwarding: false,
+                    forwarding: message.forwarded,
+                    thread_root_message_index: [],
                 };
                 return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
             });
-    }
-
-    @profile("userClient")
-    forwardMessage(
-        recipientId: string,
-        sender: UserSummary,
-        message: Message
-    ): Promise<SendMessageResponse> {
-        // TODO: first forward using the DataClient
-        const req: ApiSendMessageArgs = {
-            content: apiMessageContent(message.content),
-            recipient: Principal.fromText(recipientId),
-            sender_name: sender.username,
-            message_id: message.messageId,
-            replies_to: [],
-            forwarding: message.forwarded,
-        };
-        return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
     }
 
     @profile("userClient")
@@ -409,6 +404,7 @@ export class UserClient extends CandidService implements IUserClient {
             this.userService.mark_read({
                 messages_read: request.map(({ chatId, ranges }) => ({
                     chat_id: Principal.fromText(chatId),
+                    thread_root_message_index: [],
                     message_ranges: ranges.subranges().map((r) => ({
                         from: r.low,
                         to: r.high,
@@ -428,6 +424,7 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.toggle_reaction({
                 user_id: Principal.fromText(otherUserId),
+                thread_root_message_index: [],
                 message_id: messageId,
                 reaction,
             }),
@@ -440,6 +437,7 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.delete_messages({
                 user_id: Principal.fromText(otherUserId),
+                thread_root_message_index: [],
                 message_ids: [messageId],
             }),
             deleteMessageResponse
@@ -554,6 +552,7 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.register_poll_vote({
                 user_id: Principal.fromText(otherUser),
+                thread_root_message_index: [],
                 poll_option: answerIdx,
                 operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
                 message_index: messageIdx,
@@ -569,9 +568,6 @@ export class UserClient extends CandidService implements IUserClient {
         const req = {
             withdrawal: apiPendingCryptocurrencyWithdrawal(domain),
         };
-        return this.handleResponse(
-            this.userService.withdraw_crypto(req),
-            withdrawCryptoResponse
-        );
+        return this.handleResponse(this.userService.withdraw_crypto(req), withdrawCryptoResponse);
     }
 }

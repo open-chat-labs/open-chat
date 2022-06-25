@@ -4,11 +4,9 @@
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
-    import { emojiStore } from "../../stores/emoji";
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
-    import type { ChatController } from "../../fsm/chat.controller";
     import { iconSize } from "../../stores/iconSize";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import { validateTokenInput } from "../../utils/cryptoFormatter";
@@ -18,25 +16,34 @@
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import type { PartialUserSummary, User } from "../../domain/user/user";
     import Button from "../Button.svelte";
-    import type { GroupChatSummary, MessageAction } from "../../domain/chat/chat";
+    import type {
+        ChatSummary,
+        EnhancedReplyContext,
+        EventWrapper,
+        GroupChatSummary,
+        Message,
+        MessageAction,
+        MessageContent,
+        Participant,
+    } from "../../domain/chat/chat";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "utils/urls";
     import { allQuestions, Questions } from "../../domain/faq";
 
-    export let controller: ChatController;
+    export let chat: ChatSummary;
     export let blocked: boolean;
     export let preview: boolean;
     export let canSend: boolean;
     export let messageAction: MessageAction = undefined;
     export let joining: GroupChatSummary | undefined;
-
-    $: textContent = controller.textContent;
-    $: editingEvent = controller.editingEvent;
-    $: fileToAttach = controller.fileToAttach;
-    $: participants = controller.participants;
-    $: blockedUsers = controller.blockedUsers;
-    $: replyingTo = controller.replyingTo;
+    export let fileToAttach: MessageContent | undefined;
+    export let editingEvent: EventWrapper<Message> | undefined;
+    export let replyingTo: EnhancedReplyContext | undefined;
+    export let textContent: string | undefined;
+    export let participants: Participant[];
+    export let blockedUsers: Set<string>;
+    export let mode: "thread" | "message" = "message";
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -63,23 +70,23 @@
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
 
-    $: messageIsEmpty = ($textContent?.trim() ?? "").length === 0 && $fileToAttach === undefined;
+    $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
 
     $: {
-        if ($editingEvent && !initialisedEdit) {
-            if ($editingEvent.event.content.kind === "text_content") {
-                inp.textContent = formatMentions($editingEvent.event.content.text);
+        if (editingEvent && !initialisedEdit) {
+            if (editingEvent.event.content.kind === "text_content") {
+                inp.textContent = formatMentions(editingEvent.event.content.text);
                 selectedRange = undefined;
                 restoreSelection();
                 initialisedEdit = true;
-            } else if ("caption" in $editingEvent.event.content) {
-                inp.textContent = $editingEvent.event.content.caption ?? "";
+            } else if ("caption" in editingEvent.event.content) {
+                inp.textContent = editingEvent.event.content.caption ?? "";
                 selectedRange = undefined;
                 restoreSelection();
                 initialisedEdit = true;
             }
         } else if (inp) {
-            const text = $textContent ?? "";
+            const text = textContent ?? "";
             // Only set the textbox text when required rather than every time, because doing so sets the focus back to
             // the start of the textbox on some devices.
             if (inp.textContent !== text) {
@@ -87,58 +94,46 @@
                 setCaretToEnd();
             }
         }
-        if ($editingEvent === undefined) {
+        if (editingEvent === undefined) {
             initialisedEdit = false;
         }
     }
 
     $: {
-        if ($fileToAttach !== undefined || $replyingTo !== undefined) {
+        if (fileToAttach !== undefined || replyingTo !== undefined) {
             inp?.focus();
         }
     }
 
     $: {
-        if (controller && $screenWidth === ScreenWidth.Large) {
+        if ($screenWidth === ScreenWidth.Large) {
             inp?.focus();
-        }
-    }
-
-    $: {
-        if ($emojiStore !== undefined) {
-            if (inp) {
-                restoreSelection();
-                document.execCommand("insertText", false, $emojiStore);
-                messageIsEmpty = false;
-                saveSelection();
-                emojiStore.set(undefined);
-            }
         }
     }
 
     // todo - doubt this will react properly
     $: placeholder =
-        $fileToAttach !== undefined
+        fileToAttach !== undefined
             ? $_("enterCaption")
             : dragging
             ? $_("dropFile")
             : $_("enterMessage");
 
     export function insertTextAtCaret(text: string) {
-        inp?.focus();
+        restoreSelection();
         let range = window.getSelection()?.getRangeAt(0);
         if (range !== undefined) {
             range.deleteContents();
             range.insertNode(document.createTextNode(text));
             range.collapse(false);
             const inputContent = inp.textContent ?? "";
-            controller.setTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
+            dispatch("setTextContent", inputContent.trim().length === 0 ? undefined : inputContent);
         }
     }
 
     function onInput() {
         const inputContent = inp.textContent ?? "";
-        controller.setTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
+        dispatch("setTextContent", inputContent.trim().length === 0 ? undefined : inputContent);
         triggerMentionLookup(inputContent);
         triggerEmojiLookup(inputContent);
         triggerTypingTimer();
@@ -194,16 +189,13 @@
             const now = Date.now();
             if (now - lastTypingUpdate > USER_TYPING_EVENT_MIN_INTERVAL_MS) {
                 lastTypingUpdate = now;
-                controller.startTyping();
+                dispatch("startTyping");
             }
             if (typingTimer !== undefined) {
                 clearTimeout(typingTimer);
             }
 
-            typingTimer = setTimeout(
-                () => controller.stopTyping(),
-                MARK_TYPING_STOPPED_INTERVAL_MS
-            );
+            typingTimer = setTimeout(() => dispatch("stopTyping"), MARK_TYPING_STOPPED_INTERVAL_MS);
         });
     }
 
@@ -211,7 +203,7 @@
         if (e.key === "Enter" && $enterSend && !e.shiftKey) {
             if (!messageIsEmpty) {
                 sendMessage();
-                controller.stopTyping();
+                dispatch("stopTyping");
             }
             e.preventDefault();
         }
@@ -277,7 +269,7 @@
             return true;
         }
 
-        if (controller.chatVal.kind === "group_chat") {
+        if (chat.kind === "group_chat") {
             const faqMatch = txt.match(/^\/faq( *(.*))$/);
             if (faqMatch && faqMatch[2] !== undefined) {
                 if (allQuestions.includes(faqMatch[2] as Questions)) {
@@ -308,7 +300,7 @@
     }
 
     function cancelEdit() {
-        controller.cancelEditEvent();
+        dispatch("cancelEditEvent");
     }
 
     function sendMessage() {
@@ -318,7 +310,8 @@
             dispatch("sendMessage", expandMentions(txt));
         }
         inp.textContent = "";
-        controller.setTextContent(undefined);
+        dispatch("setTextContent", undefined);
+
         inp.focus();
         messageActions.close();
     }
@@ -377,7 +370,7 @@
         )}${replacement} ${inp.textContent?.slice(rangeToReplace[1])}`;
         inp.textContent = replaced;
 
-        controller.setTextContent(inp.textContent || undefined);
+        dispatch("setTextContent", inp.textContent || undefined);
         setCaretTo(rangeToReplace[0] + replacement.length);
         rangeToReplace = undefined;
     }
@@ -407,24 +400,24 @@
 
     function joinGroup() {
         dispatch("joinGroup", {
-            group: controller.chatVal,
+            group: chat,
             select: true,
         });
     }
 
     function cancelPreview() {
-        dispatch("cancelPreview", controller.chatId);
+        dispatch("cancelPreview", chat.chatId);
     }
 </script>
 
 {#if showMentionPicker}
     <MentionPicker
-        blockedUsers={$blockedUsers}
+        {blockedUsers}
         offset={messageEntryHeight}
         on:close={cancelMention}
         on:mention={mention}
         prefix={mentionPrefix}
-        participants={$participants} />
+        {participants} />
 {/if}
 
 {#if showEmojiSearch}
@@ -437,7 +430,7 @@
 
 <div
     class="message-entry"
-    class:editing={$editingEvent !== undefined}
+    class:editing={editingEvent !== undefined}
     bind:clientHeight={messageEntryHeight}>
     {#if blocked}
         <div class="blocked">
@@ -464,10 +457,12 @@
         <MessageActions
             bind:this={messageActions}
             bind:messageAction
-            {controller}
-            editing={$editingEvent !== undefined}
+            {fileToAttach}
+            {mode}
+            editing={editingEvent !== undefined}
             on:tokenTransfer
             on:attachGif
+            on:clearAttachment
             on:fileSelected />
 
         {#if recording}
@@ -492,7 +487,7 @@
             on:drop={onDrop}
             on:input={onInput}
             on:keypress={keyPress} />
-        {#if $editingEvent === undefined}
+        {#if editingEvent === undefined}
             {#if messageIsEmpty && audioMimeType !== undefined && audioSupported}
                 <div class="record">
                     <AudioAttacher

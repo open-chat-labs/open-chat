@@ -1,14 +1,14 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use candid::Encode;
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::{ChatEventInternal, GroupChatEvents, PushMessageArgs};
+use chat_events::{ChatEventInternal, ChatEvents, PushMessageArgs, ReplyToThreadArgs};
 use group_canister::send_message::{Response::*, *};
 use serde_bytes::ByteBuf;
+use std::collections::HashSet;
 use types::{
-    CanisterId, ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, Message, MessageContent,
-    MessageIndex, Notification, TimestampMillis, UserId,
+    CanisterId, ChatId, ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, Message,
+    MessageContent, MessageIndex, Notification, TimestampMillis, UserId,
 };
 
 #[update_candid_and_msgpack]
@@ -40,7 +40,11 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let permissions = &runtime_state.data.permissions;
 
-        if !participant.role.can_send_messages(permissions) {
+        if args.thread_root_message_index.is_some() {
+            if !participant.role.can_reply_in_thread(permissions) {
+                return NotAuthorized;
+            }
+        } else if !participant.role.can_send_messages(permissions) {
             return NotAuthorized;
         }
 
@@ -63,35 +67,84 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             forwarded: args.forwarding,
         };
 
-        let message_event = runtime_state.data.events.push_message(push_message_args);
+        let (message_event, thread_participants, root_message_sender, first_thread_reply) = match args.thread_root_message_index
+        {
+            Some(thread_message_index) => {
+                if let Some(root_message) = runtime_state.data.events.message_by_message_index(thread_message_index) {
+                    let root_message_sender = root_message.event.sender;
+                    let chat_id: ChatId = runtime_state.env.canister_id().into();
 
-        handle_activity_notification(runtime_state);
+                    let thread_events = runtime_state
+                        .data
+                        .threads
+                        .entry(thread_message_index)
+                        .or_insert_with(|| ChatEvents::new_thread(chat_id));
+
+                    let message_event = thread_events.push_message(push_message_args);
+
+                    let thread_summary = runtime_state.data.events.add_reply_to_thread(ReplyToThreadArgs {
+                        thread_message_index,
+                        sender,
+                        latest_event_index: message_event.index,
+                        now,
+                    });
+
+                    (
+                        message_event,
+                        Some(thread_summary.participant_ids),
+                        Some(root_message_sender),
+                        thread_summary.reply_count == 1,
+                    )
+                } else {
+                    return ThreadMessageNotFound;
+                }
+            }
+            None => (runtime_state.data.events.push_message(push_message_args), None, None, false),
+        };
 
         let event_index = message_event.index;
         let message_index = message_event.event.message_index;
 
-        register_callbacks_if_required(&message_event, runtime_state);
+        handle_activity_notification(runtime_state);
 
-        let mut notification_recipients = runtime_state.data.participants.users_to_notify(sender);
+        register_callbacks_if_required(args.thread_root_message_index, &message_event, runtime_state);
 
-        let mut add_mention = |user_id: UserId| {
-            if runtime_state.data.participants.add_mention(&user_id, message_index) {
-                // Also notify any mentioned participants regardless of whether they have muted notifications for the group
-                notification_recipients.insert(user_id);
-            }
-        };
-
-        for u in &args.mentioned {
-            add_mention(u.user_id);
-        }
+        // Add mentions
+        let mut mentions: HashSet<UserId> = args.mentioned.iter().map(|m| m.user_id).collect();
         if let Some(user_id) = user_being_replied_to {
-            if user_id != sender {
-                add_mention(user_id);
+            mentions.insert(user_id);
+        }
+        mentions.remove(&sender);
+
+        for user_id in mentions.iter() {
+            runtime_state
+                .data
+                .participants
+                .add_mention(user_id, args.thread_root_message_index, message_index);
+        }
+
+        // If this is the first message in a thread then mention the original sender/message
+        if let (Some(user_id), Some(root_message_index)) = (root_message_sender, args.thread_root_message_index) {
+            if first_thread_reply {
+                runtime_state
+                    .data
+                    .participants
+                    .add_mention(&user_id, None, root_message_index);
             }
         }
+
+        // Build the notification recipients list
+        let mut notification_recipients = runtime_state.data.participants.users_to_notify(thread_participants.as_ref());
+        if let Some(user_id) = root_message_sender {
+            notification_recipients.insert(user_id);
+        }
+        notification_recipients.extend(&mentions);
+        notification_recipients.remove(&sender);
+        let notification_recipients: Vec<UserId> = notification_recipients.into_iter().collect();
 
         let notification = Notification::GroupMessageNotification(GroupMessageNotification {
             chat_id: runtime_state.env.canister_id().into(),
+            thread_root_message_index: args.thread_root_message_index,
             group_name: runtime_state.data.name.clone(),
             sender,
             sender_name: args.sender_name,
@@ -100,7 +153,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             hide: false,
         });
 
-        runtime_state.push_notification(notification_recipients.into_iter().collect(), notification);
+        runtime_state.push_notification(notification_recipients, notification);
 
         Success(SuccessResult {
             event_index,
@@ -112,11 +165,16 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 }
 
-fn register_callbacks_if_required(message_event: &EventWrapper<Message>, runtime_state: &mut RuntimeState) {
+fn register_callbacks_if_required(
+    thread_root_message_index: Option<MessageIndex>,
+    message_event: &EventWrapper<Message>,
+    runtime_state: &mut RuntimeState,
+) {
     if let MessageContent::Poll(p) = &message_event.event.content {
         if let Some(end_date) = p.config.end_date {
             ic_cdk::spawn(register_end_poll_callback(
                 runtime_state.data.callback_canister_id,
+                thread_root_message_index,
                 message_event.event.message_index,
                 end_date,
             ));
@@ -124,17 +182,25 @@ fn register_callbacks_if_required(message_event: &EventWrapper<Message>, runtime
     }
 }
 
-async fn register_end_poll_callback(canister_id: CanisterId, message_index: MessageIndex, end_date: TimestampMillis) {
-    let payload = ByteBuf::from(Encode!(&group_canister::c2c_end_poll::Args { message_index }).unwrap());
+async fn register_end_poll_callback(
+    canister_id: CanisterId,
+    thread_root_message_index: Option<MessageIndex>,
+    message_index: MessageIndex,
+    end_date: TimestampMillis,
+) {
+    let payload = ByteBuf::from(msgpack::serialize(&group_canister::c2c_end_poll::Args {
+        thread_root_message_index,
+        message_index,
+    }));
     let args = callback_canister::c2c_register_callback::Args {
-        method_name: "c2c_end_poll".to_string(),
+        method_name: "c2c_end_poll_msgpack".to_string(),
         payload,
         timestamp: end_date,
     };
     let _ = callback_canister_c2c_client::c2c_register_callback(canister_id, &args).await;
 }
 
-fn get_user_being_replied_to(replies_to: &GroupReplyContext, events: &GroupChatEvents) -> Option<UserId> {
+fn get_user_being_replied_to(replies_to: &GroupReplyContext, events: &ChatEvents) -> Option<UserId> {
     if let Some(ChatEventInternal::Message(message)) = events.get(replies_to.event_index).map(|e| &e.event) {
         Some(message.sender)
     } else {

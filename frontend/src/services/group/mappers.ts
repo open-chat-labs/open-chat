@@ -359,6 +359,10 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("NotAuthorized" in candid) {
         return { kind: "not_authorised" };
     }
+    if ("ThreadMessageNotFound" in candid) {
+        return { kind: "thread_message_not_found" };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
 
@@ -509,6 +513,9 @@ export function getMessagesByMessageIndexResponse(
     if ("CallerNotInGroup" in candid) {
         return "events_failed";
     }
+    if ("ThreadMessageNotFound" in candid) {
+        return "events_failed";
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiMessagesByMessageIndexResponse type received",
         candid
@@ -535,6 +542,9 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Gro
         return "events_failed";
     }
     if ("CallerNotInGroup" in candid) {
+        return "events_failed";
+    }
+    if ("ThreadMessageNotFound" in candid) {
         return "events_failed";
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
@@ -855,6 +865,14 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "group_invite_code_changed",
             change,
             changedBy: candid.GroupInviteCodeChanged.changed_by.toString(),
+        };
+    }
+
+    if ("ThreadUpdated" in candid) {
+        return {
+            kind: "thread_updated",
+            messageIndex: candid.ThreadUpdated.message_index,
+            eventIndex: candid.ThreadUpdated.event_index,
         };
     }
 

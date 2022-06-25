@@ -214,21 +214,6 @@ export class ServiceContainer implements MarkMessagesRead {
         throw new UnsupportedValueError("Unexpect chat type", chat);
     }
 
-    forwardMessage(
-        chat: ChatSummary,
-        user: UserSummary,
-        mentioned: User[],
-        msg: Message
-    ): Promise<SendMessageResponse> {
-        if (chat.kind === "group_chat") {
-            return this.getGroupClient(chat.chatId).forwardMessage(user.username, mentioned, msg);
-        }
-        if (chat.kind === "direct_chat") {
-            return this.userClient.forwardMessage(chat.them, user, msg);
-        }
-        throw new UnsupportedValueError("Unexpect chat type", chat);
-    }
-
     private sendGroupMessage(
         chatId: string,
         senderName: string,
@@ -485,15 +470,21 @@ export class ServiceContainer implements MarkMessagesRead {
                 const idx = ev.event.repliesTo.eventIndex;
                 const msg = messageEvents.find((me) => me.index === idx)?.event;
                 if (msg) {
-                    ev.event.repliesTo = {
-                        kind: "rehydrated_reply_context",
-                        content: this.rehydrateMessageContent(msg.content),
-                        senderId: msg.sender,
-                        messageId: msg.messageId,
-                        messageIndex: msg.messageIndex,
-                        eventIndex: idx,
-                        chatId,
-                        edited: msg.edited,
+                    return {
+                        ...ev,
+                        event: {
+                            ...ev.event,
+                            repliesTo: {
+                                kind: "rehydrated_reply_context",
+                                content: this.rehydrateMessageContent(msg.content),
+                                senderId: msg.sender,
+                                messageId: msg.messageId,
+                                messageIndex: msg.messageIndex,
+                                eventIndex: idx,
+                                chatId,
+                                edited: msg.edited,
+                            },
+                        },
                     };
                 }
                 return ev;
