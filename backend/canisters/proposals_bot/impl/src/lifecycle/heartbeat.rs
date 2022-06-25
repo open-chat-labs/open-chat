@@ -113,6 +113,7 @@ mod retrieve_proposals {
         match response {
             Ok(response) => {
                 mutate_state(|state| {
+                    // Proposals are returned in order 'latest -> oldest' so we must reverse them
                     for raw_proposal in response.into_iter().rev() {
                         let proposal_id = raw_proposal.id();
                         if proposal_id >= next_proposal_id {
