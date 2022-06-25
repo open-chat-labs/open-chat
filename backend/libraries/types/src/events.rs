@@ -30,6 +30,7 @@ pub enum ChatEvent {
     PollVoteRegistered(UpdatedMessage),
     PollVoteDeleted(UpdatedMessage),
     PollEnded(PollEnded),
+    ProposalVoteRegistered(UpdatedMessage),
     PermissionsChanged(PermissionsChanged),
     GroupVisibilityChanged(GroupVisibilityChanged),
     GroupInviteCodeChanged(GroupInviteCodeChanged),
@@ -46,6 +47,7 @@ impl ChatEvent {
             ChatEvent::PollVoteRegistered(v) => Some(v.event_index),
             ChatEvent::PollVoteDeleted(v) => Some(v.event_index),
             ChatEvent::PollEnded(p) => Some(p.event_index),
+            ChatEvent::ProposalVoteRegistered(v) => Some(v.event_index),
             ChatEvent::ThreadUpdated(t) => Some(t.event_index),
             _ => None,
         }
@@ -176,12 +178,6 @@ pub struct PollVoteRegistered {
 pub struct PollEnded {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ProposalVoteRegistered {
-    pub user_id: UserId,
-    pub message_id: MessageId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

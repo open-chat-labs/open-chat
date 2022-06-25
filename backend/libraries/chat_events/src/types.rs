@@ -8,8 +8,8 @@ use types::{
     GroupInviteCodeChanged, GroupNameChanged, GroupVisibilityChanged, MessageContentInternal, MessageId, MessageIndex,
     MessagePinned, MessageUnpinned, OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin,
     ParticipantJoined, ParticipantLeft, ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved,
-    PermissionsChanged, PollVoteRegistered, ProposalVoteRegistered, Reaction, ReplyContext, RoleChanged, ThreadSummary,
-    TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
+    PermissionsChanged, PollVoteRegistered, Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, UserId,
+    UsersBlocked, UsersUnblocked,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -40,7 +40,7 @@ pub enum ChatEventInternal {
     PollVoteRegistered(Box<PollVoteRegistered>),
     PollVoteDeleted(Box<UpdatedMessageInternal>),
     PollEnded(Box<MessageIndex>),
-    ProposalVoteRegistered(Box<ProposalVoteRegistered>),
+    ProposalVoteRegistered(Box<UpdatedMessageInternal>),
     PermissionsChanged(Box<PermissionsChanged>),
     GroupVisibilityChanged(Box<GroupVisibilityChanged>),
     GroupInviteCodeChanged(Box<GroupInviteCodeChanged>),
@@ -194,16 +194,16 @@ impl ChatEventInternal {
             ChatEventInternal::MessagePinned(m) => Some(m.pinned_by),
             ChatEventInternal::MessageUnpinned(m) => Some(m.unpinned_by),
             ChatEventInternal::PollVoteRegistered(v) => Some(v.user_id),
-            ChatEventInternal::ProposalVoteRegistered(v) => Some(v.user_id),
             ChatEventInternal::PermissionsChanged(p) => Some(p.changed_by),
             ChatEventInternal::GroupVisibilityChanged(p) => Some(p.changed_by),
             ChatEventInternal::GroupInviteCodeChanged(p) => Some(p.changed_by),
+            ChatEventInternal::ThreadUpdated(e) => Some(e.updated_by),
             ChatEventInternal::MessageEdited(e)
             | ChatEventInternal::MessageDeleted(e)
             | ChatEventInternal::MessageReactionAdded(e)
             | ChatEventInternal::MessageReactionRemoved(e)
-            | ChatEventInternal::PollVoteDeleted(e) => Some(e.updated_by),
-            ChatEventInternal::ThreadUpdated(e) => Some(e.updated_by),
+            | ChatEventInternal::PollVoteDeleted(e)
+            | ChatEventInternal::ProposalVoteRegistered(e) => Some(e.updated_by),
             ChatEventInternal::PollEnded(_) | ChatEventInternal::DirectChatCreated(_) => None,
         }
     }

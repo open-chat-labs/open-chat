@@ -463,7 +463,10 @@ impl ChatEvents {
                 return if existing_vote.is_none() {
                     message.last_updated = Some(now);
                     self.push_event(
-                        ChatEventInternal::ProposalVoteRegistered(Box::new(ProposalVoteRegistered { user_id, message_id })),
+                        ChatEventInternal::ProposalVoteRegistered(Box::new(UpdatedMessageInternal {
+                            updated_by: user_id,
+                            message_id,
+                        })),
                         now,
                     );
                     RegisterProposalVoteResult::Success(result)
@@ -859,6 +862,7 @@ impl ChatEvents {
             ChatEventInternal::PollVoteRegistered(v) => ChatEvent::PollVoteRegistered(self.hydrate_poll_vote_registered(v)),
             ChatEventInternal::PollVoteDeleted(v) => ChatEvent::PollVoteDeleted(self.hydrate_updated_message(v)),
             ChatEventInternal::PollEnded(m) => ChatEvent::PollEnded(self.hydrate_poll_ended(**m)),
+            ChatEventInternal::ProposalVoteRegistered(v) => ChatEvent::ProposalVoteRegistered(self.hydrate_updated_message(v)),
             ChatEventInternal::ThreadUpdated(m) => {
                 ChatEvent::ThreadUpdated(self.hydrate_thread_updated(m.updated_by, m.message_index))
             }
