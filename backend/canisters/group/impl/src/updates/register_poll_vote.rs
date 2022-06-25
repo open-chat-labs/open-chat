@@ -30,10 +30,10 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
         if let Some(chat_events) = runtime_state.data.events.get_mut(args.thread_root_message_index) {
             let result = chat_events.register_poll_vote(user_id, args.message_index, args.poll_option, args.operation, now);
 
-            let latest_event = chat_events.last().index;
-
             match result {
                 RegisterVoteResult::Success(votes) => {
+                    let latest_event = chat_events.last().index;
+
                     if let Some(thread_message_index) = args.thread_root_message_index {
                         runtime_state.data.events.main.update_thread_summary(
                             thread_message_index,
