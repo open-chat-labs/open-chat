@@ -208,6 +208,7 @@ type ChatEvent =
         PollVoteRegistered: UpdatedMessage;
         PollVoteDeleted: UpdatedMessage;
         PollEnded: PollEnded;
+        ProposalVoteRegistered: UpdatedMessage;
         PermissionsChanged: PermissionsChanged;
         GroupVisibilityChanged: GroupVisibilityChanged;
         GroupInviteCodeChanged: GroupInviteCodeChanged;
