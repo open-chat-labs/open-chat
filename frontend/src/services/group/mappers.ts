@@ -236,6 +236,9 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
     if ("CallerNotInGroup" in candid) {
         return "not_in_group";
     }
+    if ("MessageNotFound" in candid) {
+        return "message_not_found";
+    }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
@@ -481,6 +484,9 @@ export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageRes
     if ("MessageIndexOutOfRange" in candid) {
         return "index_out_of_range";
     }
+    if ("MessageNotFound" in candid) {
+        return "message_not_found";
+    }
     throw new UnsupportedValueError("Unexpected ApiPinMessageResponse type received", candid);
 }
 
@@ -496,6 +502,9 @@ export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMess
     }
     if ("NoChange" in candid) {
         return "no_change";
+    }
+    if ("MessageNotFound" in candid) {
+        return "message_not_found";
     }
     throw new UnsupportedValueError("Unexpected ApiUnpinMessageResponse type received", candid);
 }

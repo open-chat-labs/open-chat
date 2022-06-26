@@ -3,9 +3,9 @@ use crate::model::participants::{ParticipantInternal, Participants};
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use chat_events::ChatEvents;
+use chat_events::{AllChatEvents, ChatEvents};
 use notifications_canister::c2c_push_notification;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -73,7 +73,7 @@ impl RuntimeState {
 
     pub fn summary(&self, participant: &ParticipantInternal) -> GroupChatSummaryInternal {
         let data = &self.data;
-        let latest_event = data.events.last();
+        let latest_event = data.events.main.last();
         let min_visible_message_index = participant.min_visible_message_index();
 
         GroupChatSummaryInternal {
@@ -88,21 +88,23 @@ impl RuntimeState {
             min_visible_message_index,
             latest_message: data
                 .events
+                .main
                 .latest_message(Some(participant.user_id))
                 .filter(|m| m.event.message_index >= min_visible_message_index),
             latest_event_index: latest_event.index,
             joined: participant.date_added,
             participant_count: data.participants.len(),
             role: participant.role,
-            mentions: participant.get_most_recent_mentions(&data.events),
+            mentions: participant.get_most_recent_mentions(&data.events.main),
             pinned_message: None,
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             owner_id: data.owner_id,
             permissions: data.permissions.clone(),
             notifications_muted: participant.notifications_muted,
-            metrics: data.events.metrics().clone(),
+            metrics: data.events.main.metrics().clone(),
             my_metrics: data
                 .events
+                .main
                 .user_metrics(&participant.user_id, None)
                 .cloned()
                 .unwrap_or_default(),
@@ -110,7 +112,7 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
-        let chat_metrics = self.data.events.metrics();
+        let chat_metrics = self.data.events.main.metrics();
         Metrics {
             memory_used: memory::used(),
             now: self.env.now(),
@@ -145,7 +147,8 @@ struct Data {
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
     pub participants: Participants,
-    pub events: ChatEvents,
+    #[serde(deserialize_with = "deserialize_chat_events")]
+    pub events: AllChatEvents,
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
@@ -159,8 +162,17 @@ struct Data {
     pub permissions: GroupPermissions,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
-    #[serde(default)]
-    pub threads: HashMap<MessageIndex, ChatEvents>,
+}
+
+fn deserialize_chat_events<'de, D>(deserializer: D) -> Result<AllChatEvents, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    let chat_events: ChatEvents = de::Deserialize::deserialize(deserializer)?;
+    Ok(AllChatEvents {
+        main: chat_events,
+        threads: HashMap::new(),
+    })
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -184,7 +196,10 @@ impl Data {
         permissions: Option<GroupPermissions>,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
-        let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, now);
+        let events = AllChatEvents {
+            main: ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, now),
+            threads: HashMap::new(),
+        };
 
         Data {
             is_public,
@@ -207,7 +222,6 @@ impl Data {
             permissions: permissions.unwrap_or_default(),
             invite_code: None,
             invite_code_enabled: false,
-            threads: HashMap::new(),
         }
     }
 
@@ -234,22 +248,6 @@ impl Data {
         }
 
         self.is_public
-    }
-
-    pub fn chat_events(
-        &self,
-        thread_message_index: Option<MessageIndex>,
-        min_visible_event_index: EventIndex,
-    ) -> Option<(&ChatEvents, EventIndex)> {
-        if let Some(thread_message_index) = thread_message_index {
-            self.events
-                .get_event_index_by_message_index(thread_message_index)
-                .filter(|thread_event_index| *thread_event_index >= min_visible_event_index)
-                .and_then(|_| self.threads.get(&thread_message_index))
-                .map(|events| (events, EventIndex::default()))
-        } else {
-            Some((&self.events, min_visible_event_index))
-        }
     }
 }
 

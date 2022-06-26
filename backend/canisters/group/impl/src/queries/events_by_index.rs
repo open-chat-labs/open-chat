@@ -13,7 +13,8 @@ fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller, args.invite_code) {
         if let Some((chat_events, min_visible_event_index)) = runtime_state
             .data
-            .chat_events(args.thread_root_message_index, min_visible_event_index)
+            .events
+            .get_with_min_visible_event_index(args.thread_root_message_index, min_visible_event_index)
         {
             let mut event_indexes = args.events;
             if min_visible_event_index > EventIndex::default() {

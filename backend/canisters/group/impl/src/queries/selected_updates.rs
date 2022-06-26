@@ -16,7 +16,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     }
 
     let data = &runtime_state.data;
-    let latest_event_index = data.events.last().index;
+    let latest_event_index = data.events.main.last().index;
 
     if latest_event_index <= args.updates_since {
         return SuccessNoUpdates(latest_event_index);
@@ -38,7 +38,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     };
 
     // Iterate through the new events starting from most recent
-    for event_wrapper in data.events.since(args.updates_since).iter().rev() {
+    for event_wrapper in data.events.main.since(args.updates_since).iter().rev() {
         match &event_wrapper.event {
             ChatEventInternal::OwnershipTransferred(e) => {
                 user_updates_handler.mark_participant_updated(&mut result, e.old_owner, false);

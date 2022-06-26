@@ -15,7 +15,7 @@ fn public_summary_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     }
 
     let data = &runtime_state.data;
-    let latest_event = runtime_state.data.events.last();
+    let latest_event = runtime_state.data.events.main.last();
 
     let summary = PublicGroupSummary {
         chat_id: runtime_state.env.canister_id().into(),
@@ -23,7 +23,7 @@ fn public_summary_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         name: data.name.clone(),
         description: data.description.clone(),
         avatar_id: Avatar::id(&data.avatar),
-        latest_message: data.events.latest_message(None),
+        latest_message: data.events.main.latest_message(None),
         latest_event_index: latest_event.index,
         participant_count: data.participants.len(),
         pinned_message: None,
