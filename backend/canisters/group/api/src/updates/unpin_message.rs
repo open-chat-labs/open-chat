@@ -13,4 +13,5 @@ pub enum Response {
     NoChange,
     NotAuthorized,
     CallerNotInGroup,
+    MessageNotFound,
 }

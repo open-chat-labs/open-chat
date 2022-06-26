@@ -2,7 +2,7 @@ use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::{ChatEventInternal, ChatEvents, PushMessageArgs, ReplyToThreadArgs};
+use chat_events::{ChatEventInternal, ChatEvents, PushMessageArgs};
 use group_canister::send_message::{Response::*, *};
 use serde_bytes::ByteBuf;
 use std::collections::HashSet;
@@ -56,7 +56,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let user_being_replied_to = args
             .replies_to
             .as_ref()
-            .and_then(|r| get_user_being_replied_to(r, &runtime_state.data.events));
+            .and_then(|r| get_user_being_replied_to(r, &runtime_state.data.events.main));
 
         let push_message_args = PushMessageArgs {
             sender,
@@ -70,25 +70,26 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let (message_event, thread_participants, root_message_sender, first_thread_reply) = match args.thread_root_message_index
         {
             Some(thread_message_index) => {
-                if let Some(root_message) = runtime_state.data.events.message_by_message_index(thread_message_index) {
+                if let Some(root_message) = runtime_state.data.events.main.message_by_message_index(thread_message_index) {
                     let root_message_sender = root_message.event.sender;
                     let chat_id: ChatId = runtime_state.env.canister_id().into();
 
                     let thread_events = runtime_state
                         .data
+                        .events
                         .threads
                         .entry(thread_message_index)
                         .or_insert_with(|| ChatEvents::new_thread(chat_id));
 
                     let message_event = thread_events.push_message(push_message_args);
 
-                    let thread_summary = runtime_state.data.events.add_reply_to_thread(ReplyToThreadArgs {
+                    let thread_summary = runtime_state.data.events.main.update_thread_summary(
                         thread_message_index,
                         sender,
-                        latest_event_index: message_event.index,
+                        true,
+                        message_event.index,
                         now,
-                    });
-
+                    );
                     (
                         message_event,
                         Some(thread_summary.participant_ids),
@@ -99,7 +100,12 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     return ThreadMessageNotFound;
                 }
             }
-            None => (runtime_state.data.events.push_message(push_message_args), None, None, false),
+            None => (
+                runtime_state.data.events.main.push_message(push_message_args),
+                None,
+                None,
+                false,
+            ),
         };
 
         let event_index = message_event.index;

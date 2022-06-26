@@ -14,4 +14,5 @@ pub enum Response {
     MessageIndexOutOfRange,
     NotAuthorized,
     CallerNotInGroup,
+    MessageNotFound,
 }

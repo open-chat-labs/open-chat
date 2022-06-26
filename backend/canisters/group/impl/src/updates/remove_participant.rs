@@ -80,6 +80,7 @@ fn commit(removed_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState)
     runtime_state
         .data
         .events
+        .main
         .push_event(ChatEventInternal::ParticipantsRemoved(Box::new(event)), now);
 
     handle_activity_notification(runtime_state);
