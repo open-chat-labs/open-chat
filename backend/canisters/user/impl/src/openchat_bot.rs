@@ -105,9 +105,9 @@ pub(crate) fn send_voted_on_proposal_message(
     governance_canister_id: CanisterId,
     proposal_id: ProposalId,
     adopt: bool,
-    voted: Vec<NeuronId>,
-    unable_to_vote: Vec<(NeuronId, String)>,
-    errors: Vec<(NeuronId, String)>,
+    voted: &[NeuronId],
+    unable_to_vote: &[(NeuronId, String)],
+    errors: &[(NeuronId, String)],
     runtime_state: &mut RuntimeState,
 ) {
     let mut text = String::new();

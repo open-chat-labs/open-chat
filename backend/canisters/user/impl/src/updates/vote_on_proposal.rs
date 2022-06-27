@@ -5,7 +5,7 @@ use crate::{governance_client, mutate_state, run_regular_jobs};
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
-use types::{CanisterId, NeuronId, ProposalId};
+use types::{CanisterId, ChatId, MessageId, NeuronId, ProposalId};
 use user_canister::vote_on_proposal::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
@@ -42,12 +42,16 @@ async fn vote_on_proposal(args: Args) -> Response {
             args.governance_canister_id,
             args.proposal_id,
             args.adopt,
-            voted,
-            unable_to_vote,
-            errors,
+            &voted,
+            &unable_to_vote,
+            &errors,
             state,
         );
     });
+
+    if !voted.is_empty() {
+        ic_cdk::spawn(register_vote_in_group(args.chat_id, args.message_id, args.adopt));
+    }
 
     Success
 }
@@ -60,4 +64,9 @@ async fn register_vote(
 ) -> (NeuronId, CallResult<Result<(), GovernanceError>>) {
     let response = governance_client::register_vote(governance_canister_id, neuron_id, proposal_id, adopt).await;
     (neuron_id, response)
+}
+
+async fn register_vote_in_group(chat_id: ChatId, message_id: MessageId, adopt: bool) {
+    let c2c_args = group_canister::c2c_register_proposal_vote::Args { message_id, adopt };
+    let _ = group_canister_c2c_client::c2c_register_proposal_vote(chat_id.into(), &c2c_args).await;
 }
