@@ -37,4 +37,5 @@ pub struct SuccessResult {
     pub avatar_id: OptionUpdate<u128>,
     pub upgrades_in_progress: Vec<ChatId>,
     pub user_canister_wasm_version: Option<Version>,
+    pub pinned_chats: Vec<ChatId>,
 }

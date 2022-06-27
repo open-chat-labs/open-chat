@@ -34,6 +34,7 @@ async fn initial_state(_args: initial_state::Args) -> initial_state::Response {
                 cycles_balance: 0,
                 upgrades_in_progress: result.upgrades_in_progress,
                 user_canister_wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+                pinned_chats: result.pinned_chats,
             })
         }
         Err(error) => initial_state::Response::InternalError(error),
@@ -179,6 +180,7 @@ fn finalize(
 
     // let transactions = runtime_state.data.transactions.most_recent(updates_since, 20);
     let blocked_users = runtime_state.data.blocked_users.iter().copied().collect();
+    let pinned_chats = runtime_state.data.pinned_chats.iter().rev().copied().collect();
 
     let avatar_id = runtime_state
         .data
@@ -198,6 +200,7 @@ fn finalize(
         avatar_id,
         upgrades_in_progress: group_chat_upgrades_in_progress,
         user_canister_wasm_version: WASM_VERSION.with(|v| v.borrow().if_set_after(updates_since).copied()),
+        pinned_chats,
     }
 }
 

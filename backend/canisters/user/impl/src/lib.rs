@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
-use types::{Avatar, CanisterId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
+use types::{Avatar, CanisterId, ChatId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
 use utils::rand::get_random_item;
@@ -136,6 +136,8 @@ struct Data {
     pub storage_limit: u64,
     pub phone_is_verified: bool,
     pub user_created: TimestampMillis,
+    #[serde(default)]
+    pub pinned_chats: Vec<ChatId>,
 }
 
 impl Data {
@@ -173,6 +175,7 @@ impl Data {
             storage_limit: 0,
             phone_is_verified: false,
             user_created: now,
+            pinned_chats: Vec::new(),
         }
     }
 
@@ -186,6 +189,16 @@ impl Data {
         } else {
             None
         }
+    }
+
+    pub fn pin_chat(&mut self, chat_id: ChatId) {
+        if !self.pinned_chats.contains(&chat_id) {
+            self.pinned_chats.push(chat_id);
+        }
+    }
+
+    pub fn unpin_chat(&mut self, chat_id: &ChatId) {
+        self.pinned_chats.retain(|pinned_chat_id| pinned_chat_id != chat_id);
     }
 }
 
