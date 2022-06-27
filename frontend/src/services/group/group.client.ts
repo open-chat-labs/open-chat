@@ -211,7 +211,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         const thread_root_message_index: [] = [];
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.chatId])
-            .then(({ content }) => {
+            .then((content) => {
                 return this.handleResponse(
                     this.groupService.edit_message({
                         thread_root_message_index,
@@ -229,9 +229,13 @@ export class GroupClient extends CandidService implements IGroupClient {
         mentioned: User[],
         message: Message
     ): Promise<SendMessageResponse> {
-        return DataClient.create(this.identity)
-            .uploadData(message.content, [this.chatId])
-            .then(({ content }) => {
+        const dataClient = DataClient.create(this.identity);
+        const uploadContentPromise = message.forwarded
+            ? dataClient.forwardData(message.content, [this.chatId])
+            : dataClient.uploadData(message.content, [this.chatId]);
+
+        return uploadContentPromise
+            .then((content) => {
                 return this.handleResponse(
                     this.groupService.send_message({
                         content: apiMessageContent(content ?? message.content),
@@ -244,33 +248,12 @@ export class GroupClient extends CandidService implements IGroupClient {
                             message.repliesTo
                         ),
                         mentioned: mentioned.map(apiUser),
-                        forwarding: false,
+                        forwarding: message.forwarded,
                         thread_root_message_index: [],
                     }),
                     sendMessageResponse
                 );
             });
-    }
-
-    @profile("groupClient")
-    forwardMessage(
-        senderName: string,
-        mentioned: User[],
-        message: Message
-    ): Promise<SendMessageResponse> {
-        // TODO: first forward using the DataClient
-        return this.handleResponse(
-            this.groupService.send_message({
-                content: apiMessageContent(message.content),
-                message_id: message.messageId,
-                sender_name: senderName,
-                replies_to: [],
-                mentioned: mentioned.map(apiUser),
-                forwarding: message.forwarded,
-                thread_root_message_index: [],
-            }),
-            sendMessageResponse
-        );
     }
 
     @profile("groupClient")

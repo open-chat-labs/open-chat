@@ -70,6 +70,7 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const DeleteMessagesResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
   });
@@ -438,6 +439,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : IDL.Nat32,
   });
   const EventsResponse = IDL.Variant({
+    'ThreadMessageNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
@@ -480,6 +482,7 @@ export const idlFactory = ({ IDL }) => {
     'index' : EventIndex,
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
+    'ThreadMessageNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Record({
       'messages' : IDL.Vec(MessageEventWrapper),
@@ -489,6 +492,7 @@ export const idlFactory = ({ IDL }) => {
   const PinMessageArgs = IDL.Record({ 'message_index' : MessageIndex });
   const PinMessageResponse = IDL.Variant({
     'MessageIndexOutOfRange' : IDL.Null,
+    'MessageNotFound' : IDL.Null,
     'NoChange' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
@@ -530,6 +534,7 @@ export const idlFactory = ({ IDL }) => {
     'message_index' : MessageIndex,
   });
   const RegisterPollVoteResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'PollEnded' : IDL.Null,
     'Success' : PollVotes,
@@ -658,6 +663,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const UnpinMessageArgs = IDL.Record({ 'message_index' : MessageIndex });
   const UnpinMessageResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
     'NoChange' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,

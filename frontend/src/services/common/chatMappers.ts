@@ -728,5 +728,8 @@ export function registerPollVoteResponse(
     if ("ChatNotFound" in candid) {
         return "chat_not_found";
     }
+    if ("MessageNotFound" in candid) {
+        return "message_not_found";
+    }
     throw new UnsupportedValueError("Unexpected ApiRegisterPollVoteResponse type received", candid);
 }

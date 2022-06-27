@@ -185,7 +185,8 @@ export interface DeleteMessagesArgs {
   'message_ids' : Array<MessageId>,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type DeleteMessagesResponse = { 'CallerNotInGroup' : null } |
+export type DeleteMessagesResponse = { 'MessageNotFound' : null } |
+  { 'CallerNotInGroup' : null } |
   { 'Success' : null };
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
@@ -257,7 +258,8 @@ export interface EventsRangeArgs {
   'from_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type EventsResponse = { 'CallerNotInGroup' : null } |
+export type EventsResponse = { 'ThreadMessageNotFound' : null } |
+  { 'CallerNotInGroup' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
   'affected_events' : Array<ChatEventWrapper>,
@@ -499,7 +501,10 @@ export interface MessagesByMessageIndexArgs {
   'messages' : Array<MessageIndex>,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type MessagesByMessageIndexResponse = { 'CallerNotInGroup' : null } |
+export type MessagesByMessageIndexResponse = {
+    'ThreadMessageNotFound' : null
+  } |
+  { 'CallerNotInGroup' : null } |
   {
     'Success' : {
       'messages' : Array<MessageEventWrapper>,
@@ -573,6 +578,7 @@ export interface PermissionsChanged {
 }
 export interface PinMessageArgs { 'message_index' : MessageIndex }
 export type PinMessageResponse = { 'MessageIndexOutOfRange' : null } |
+  { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
@@ -635,7 +641,8 @@ export interface RegisterPollVoteArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'message_index' : MessageIndex,
 }
-export type RegisterPollVoteResponse = { 'CallerNotInGroup' : null } |
+export type RegisterPollVoteResponse = { 'MessageNotFound' : null } |
+  { 'CallerNotInGroup' : null } |
   { 'PollEnded' : null } |
   { 'Success' : PollVotes } |
   { 'OptionIndexOutOfRange' : null } |
@@ -768,7 +775,8 @@ export type UnblockUserResponse = { 'GroupNotPublic' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null };
 export interface UnpinMessageArgs { 'message_index' : MessageIndex }
-export type UnpinMessageResponse = { 'NoChange' : null } |
+export type UnpinMessageResponse = { 'MessageNotFound' : null } |
+  { 'NoChange' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : EventIndex };

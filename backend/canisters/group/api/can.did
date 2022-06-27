@@ -51,6 +51,7 @@ type DeleteMessagesResponse =
     variant {
         Success;
         CallerNotInGroup;
+        MessageNotFound;
     };
 
 type RegisterPollVoteArgs =
@@ -68,6 +69,7 @@ type RegisterPollVoteResponse =
         PollEnded;
         OptionIndexOutOfRange;
         CallerNotInGroup;
+        MessageNotFound;
     };
 
 type ToggleReactionArgs =
@@ -287,6 +289,7 @@ type PinMessageResponse =
         MessageIndexOutOfRange;
         NotAuthorized;
         CallerNotInGroup;
+        MessageNotFound;
     };
 
 type UnpinMessageArgs =
@@ -300,6 +303,7 @@ type UnpinMessageResponse =
         NoChange;
         NotAuthorized;
         CallerNotInGroup;
+        MessageNotFound;
     };
 
 type DeleteGroupArgs =
@@ -409,6 +413,7 @@ type EventsResponse =
     variant {
         Success: EventsSuccessResult;
         CallerNotInGroup;
+        ThreadMessageNotFound;
     }; 
 
 type MessagesByMessageIndexArgs =
@@ -424,6 +429,7 @@ type MessagesByMessageIndexResponse =
             latest_event_index: EventIndex;
         };
         CallerNotInGroup;
+        ThreadMessageNotFound;
     };
 
 type SearchMessagesArgs =

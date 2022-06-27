@@ -12,6 +12,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     CallerNotInGroup,
+    ThreadMessageNotFound,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

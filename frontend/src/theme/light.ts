@@ -61,13 +61,12 @@ export function lightTheme(): Theme {
         },
 
         participants: {
-            bg: "#efefef",
+            bg: "#ffffff",
             txt: "#191919",
-            hv: "#e2e2e2",
-            bd: "transparent",
+            hv: "#eeeeee",
+            bd: "1px solid #efefef",
             bdb: "transparent",
             panel: {
-                // bg: "#fff",
                 bg: "transparent",
             },
         },

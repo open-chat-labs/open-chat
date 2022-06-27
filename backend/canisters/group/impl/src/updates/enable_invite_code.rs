@@ -67,7 +67,7 @@ fn record_event(caller: Principal, change: GroupInviteCodeChange, runtime_state:
     let now = runtime_state.env.now();
 
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        runtime_state.data.events.push_event(
+        runtime_state.data.events.main.push_event(
             ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
                 change,
                 changed_by: participant.user_id,
