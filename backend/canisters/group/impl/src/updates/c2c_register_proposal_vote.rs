@@ -21,25 +21,24 @@ fn c2c_register_proposal_vote_impl(args: Args, runtime_state: &mut RuntimeState)
         return CallerNotInGroup;
     }
 
-    match runtime_state
-        .data
-        .events
-        .register_proposal_vote(caller, args.message_id, args.adopt, now)
-    {
+    let chat_events = &mut runtime_state.data.events.main;
+    match chat_events.register_proposal_vote(caller, args.message_id, args.adopt, now) {
         RegisterProposalVoteResult::Success(r) => {
+            let latest_event_index = chat_events.last().index;
             handle_activity_notification(runtime_state);
+
             Success(SuccessResult {
                 adopt_votes: r.adopt_votes,
                 reject_votes: r.reject_votes,
                 my_vote: args.adopt,
-                latest_event_index: runtime_state.data.events.last().index,
+                latest_event_index,
             })
         }
         RegisterProposalVoteResult::AlreadyVoted(r) => AlreadyVoted(SuccessResult {
             adopt_votes: r.adopt_votes,
             reject_votes: r.reject_votes,
             my_vote: args.adopt,
-            latest_event_index: runtime_state.data.events.last().index,
+            latest_event_index: chat_events.last().index,
         }),
         RegisterProposalVoteResult::ProposalNotFound => ProposalNotFound,
     }
