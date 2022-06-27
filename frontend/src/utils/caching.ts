@@ -507,14 +507,15 @@ export async function setCachedEvents<T extends ChatEvent>(
 export function setCachedMessageFromSendResponse(
     db: Database,
     chatId: string,
-    message: Message
+    message: Message,
+    threadRootMessageIndex?: number
 ): (resp: SendMessageResponse) => SendMessageResponse {
     return (resp: SendMessageResponse) => {
         if (resp.kind !== "success") return resp;
 
         const event = messageToEvent(message, resp);
 
-        setCachedMessage(db, chatId, event).catch((err) =>
+        setCachedMessage(db, chatId, event, threadRootMessageIndex).catch((err) =>
             rollbar.error("Unable to write message to cache: ", err)
         );
 

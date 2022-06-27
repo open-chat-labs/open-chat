@@ -79,6 +79,7 @@ import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
 import { base64ToBigint } from "../../utils/base64";
+import { debug } from "../../utils/logging";
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
@@ -240,20 +241,28 @@ export class GroupClient extends CandidService implements IGroupClient {
 
         return uploadContentPromise.then((content) => {
             return this.handleResponse(
-                this.groupService.send_message({
-                    content: apiMessageContent(content ?? message.content),
-                    message_id: message.messageId,
-                    sender_name: senderName,
-                    replies_to: apiOptional(
-                        (replyContext) => ({
-                            event_index: replyContext.eventIndex,
-                        }),
-                        message.repliesTo
-                    ),
-                    mentioned: mentioned.map(apiUser),
-                    forwarding: message.forwarded,
-                    thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                }),
+                this.groupService.send_message(
+                    debug(
+                        {
+                            content: apiMessageContent(content ?? message.content),
+                            message_id: message.messageId,
+                            sender_name: senderName,
+                            replies_to: apiOptional(
+                                (replyContext) => ({
+                                    event_index: replyContext.eventIndex,
+                                }),
+                                message.repliesTo
+                            ),
+                            mentioned: mentioned.map(apiUser),
+                            forwarding: message.forwarded,
+                            thread_root_message_index: apiOptional(
+                                identity,
+                                threadRootMessageIndex
+                            ),
+                        },
+                        "sending group message"
+                    )
+                ),
                 sendMessageResponse
             );
         });

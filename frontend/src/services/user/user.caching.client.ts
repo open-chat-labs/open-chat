@@ -397,7 +397,14 @@ export class CachingUserClient implements IUserClient {
     ): Promise<SendMessageResponse> {
         return this.client
             .sendMessage(recipientId, sender, message, replyingToChatId, threadRootMessageIndex)
-            .then(setCachedMessageFromSendResponse(this.db, this.userId, message));
+            .then(
+                setCachedMessageFromSendResponse(
+                    this.db,
+                    this.userId,
+                    message,
+                    threadRootMessageIndex
+                )
+            );
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {

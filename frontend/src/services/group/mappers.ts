@@ -336,6 +336,7 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
 }
 
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
+    console.log("Send message response: ", candid);
     if ("Success" in candid) {
         return {
             kind: "success",

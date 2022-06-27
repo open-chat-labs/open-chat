@@ -86,6 +86,8 @@
         $threadStore[threadRootMessageIndex] ?? []
     ).reverse() as EventWrapper<Message>[][][];
 
+    $: console.log("Threadrootmessageindex: ", threadRootMessageIndex);
+
     const dispatch = createEventDispatcher();
 
     function close() {

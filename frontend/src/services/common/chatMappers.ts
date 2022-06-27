@@ -624,7 +624,7 @@ function apiAudioContent(domain: AudioContent): ApiAudioContent {
 }
 
 export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [] | [A] {
-    return domain ? [mapper(domain)] : [];
+    return domain !== undefined ? [mapper(domain)] : [];
 }
 
 function apiBlobReference(domain?: BlobReference): [] | [ApiBlobReference] {

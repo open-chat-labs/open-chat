@@ -183,7 +183,14 @@ export class CachingGroupClient implements IGroupClient {
     ): Promise<SendMessageResponse> {
         return this.client
             .sendMessage(senderName, mentioned, message, threadRootMessageIndex)
-            .then(setCachedMessageFromSendResponse(this.db, this.chatId, message));
+            .then(
+                setCachedMessageFromSendResponse(
+                    this.db,
+                    this.chatId,
+                    message,
+                    threadRootMessageIndex
+                )
+            );
     }
 
     editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
