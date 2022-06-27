@@ -38,20 +38,11 @@ mod retrieve_proposals {
     async fn retrieve_nns_proposals(governance_canister_id: CanisterId, next_proposal_id: ProposalId) {
         let latest_proposal_args = ListProposalInfo {
             limit: 1,
-            before_proposal: None,
-            exclude_topic: Vec::new(),
-            include_reward_status: Vec::new(),
-            include_status: Vec::new(),
+            ..Default::default()
         };
 
         let mut response = governance_clients::nns::list_proposals(governance_canister_id, &latest_proposal_args).await;
-        if let Some(latest_proposal_id) = response
-            .as_ref()
-            .ok()
-            .and_then(|p| p.iter().next())
-            .and_then(|p| p.id.as_ref())
-            .map(|p| p.id)
-        {
+        if let Some(latest_proposal_id) = extract_first_proposal_id(&response) {
             // Check if we have missed any proposals, if so, try to grab them
             if latest_proposal_id > next_proposal_id {
                 let proposals_args = ListProposalInfo {
@@ -59,9 +50,7 @@ mod retrieve_proposals {
                     before_proposal: Some(WrappedProposalId {
                         id: latest_proposal_id + 1,
                     }),
-                    exclude_topic: Vec::new(),
-                    include_reward_status: Vec::new(),
-                    include_status: Vec::new(),
+                    ..Default::default()
                 };
                 response = governance_clients::nns::list_proposals(governance_canister_id, &proposals_args).await;
             }
@@ -73,20 +62,11 @@ mod retrieve_proposals {
     async fn retrieve_sns_proposals(governance_canister_id: CanisterId, next_proposal_id: ProposalId) {
         let latest_proposal_args = ListProposals {
             limit: 1,
-            before_proposal: None,
-            exclude_type: Vec::new(),
-            include_reward_status: Vec::new(),
-            include_status: Vec::new(),
+            ..Default::default()
         };
 
         let mut response = governance_clients::sns::list_proposals(governance_canister_id, &latest_proposal_args).await;
-        if let Some(latest_proposal_id) = response
-            .as_ref()
-            .ok()
-            .and_then(|p| p.iter().next())
-            .and_then(|p| p.id.as_ref())
-            .map(|p| p.id)
-        {
+        if let Some(latest_proposal_id) = extract_first_proposal_id(&response) {
             // Check if we have missed any proposals, if so, try to grab them
             if latest_proposal_id > next_proposal_id {
                 let proposals_args = ListProposals {
@@ -94,9 +74,7 @@ mod retrieve_proposals {
                     before_proposal: Some(WrappedProposalId {
                         id: latest_proposal_id + 1,
                     }),
-                    exclude_type: Vec::new(),
-                    include_reward_status: Vec::new(),
-                    include_status: Vec::new(),
+                    ..Default::default()
                 };
                 response = governance_clients::sns::list_proposals(governance_canister_id, &proposals_args).await;
             }
@@ -154,6 +132,10 @@ mod retrieve_proposals {
                 });
             }
         }
+    }
+
+    fn extract_first_proposal_id<R: RawProposal>(response: &CallResult<Vec<R>>) -> Option<ProposalId> {
+        response.as_ref().ok().and_then(|p| p.iter().next()).map(|p| p.id())
     }
 }
 

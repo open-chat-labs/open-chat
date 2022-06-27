@@ -18,7 +18,7 @@ pub async fn list_proposals(governance_canister_id: CanisterId, args: &ListPropo
     response.map(|r| r.0.proposal_info)
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Default)]
 pub struct ListProposalInfo {
     pub limit: u32,
     pub before_proposal: Option<WrappedProposalId>,
