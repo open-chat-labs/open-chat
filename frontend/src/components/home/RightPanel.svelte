@@ -117,8 +117,8 @@
     }
 
     $: threadRootEvent =
-        lastState.kind === "message_thread_panel" && $events !== undefined
-            ? findMessage($events, lastState.rootEvent.event.messageId)
+        lastState.kind === "message_thread_panel" && events !== undefined
+            ? findMessage($events ?? [], lastState.rootEvent.event.messageId)
             : undefined;
 </script>
 
