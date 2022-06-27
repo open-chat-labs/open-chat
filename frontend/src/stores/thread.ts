@@ -1,6 +1,7 @@
 import { writable } from "svelte/store";
 import { dedupe } from "../utils/list";
 import type {
+    ChatEvent,
     EventWrapper,
     LocalReaction,
     Message,
@@ -189,13 +190,16 @@ export const threadStore = {
     },
 };
 
-export function getNextEventAndMessageIndexes(
-    lookup: ThreadLookup,
-    messageIndex: number
-): [number, number] {
-    const evts = lookup[messageIndex] ?? [];
-    return [
-        (evts[evts.length - 1]?.index ?? 0) + 1,
-        (evts[evts.length - 1]?.event?.messageIndex ?? 0) + 1,
-    ];
+export function getNextEventAndMessageIndexes(events: EventWrapper<ChatEvent>[]): [number, number] {
+    return events.reduce(
+        ([maxEvtIdx, maxMsgIdx], evt) => {
+            const msgIdx =
+                evt.event.kind === "message"
+                    ? Math.max(evt.event.messageIndex + 1, maxMsgIdx)
+                    : maxMsgIdx;
+            const evtIdx = Math.max(evt.index + 1, maxEvtIdx);
+            return [evtIdx, msgIdx];
+        },
+        [0, 0]
+    );
 }

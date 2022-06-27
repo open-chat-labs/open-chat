@@ -173,12 +173,11 @@ export class UserClient extends CandidService implements IUserClient {
         userId: string,
         startIndex: number,
         ascending: boolean,
-        _threadRootMessageIndex?: number
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
-            const thread_root_message_index: [] = [];
             const args = {
-                thread_root_message_index,
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 user_id: Principal.fromText(userId),
                 max_events: MAX_EVENTS,
                 start_index: index,
@@ -425,7 +424,7 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.toggle_reaction({
                 user_id: Principal.fromText(otherUserId),
-                thread_root_message_index: [],
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 reaction,
             }),
@@ -442,7 +441,7 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.delete_messages({
                 user_id: Principal.fromText(otherUserId),
-                thread_root_message_index: [],
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_ids: [messageId],
             }),
             deleteMessageResponse

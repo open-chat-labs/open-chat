@@ -4,6 +4,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import Footer from "../Footer.svelte";
     import type {
+        ChatEvent,
         EnhancedReplyContext,
         EventWrapper,
         Message,
@@ -58,20 +59,25 @@
     let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
     let selectingGif = false;
     let focusMessageIndex: number | undefined = undefined;
+    let loading = false;
+    let previousRootIndex: number | undefined = undefined;
+
+    let events: EventWrapper<ChatEvent>[] = [];
 
     $: {
-        window.setTimeout(() => {
-            // todo this annoyingly fires twice - sigh
-            console.log("adding root message to thread");
-            threadStore.addMessageToThread(threadRootMessageIndex, rootEvent, rootEvent);
-        }, 500);
+        if (threadRootMessageIndex !== previousRootIndex) {
+            console.log("Loading the messages for thread: ", threadRootMessageIndex);
+            previousRootIndex = threadRootMessageIndex;
+
+            events = [rootEvent];
+            loadThreadMessages();
+        }
     }
 
     $: chat = controller.chat;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
     $: participants = controller.participants;
     $: blockedUsers = controller.blockedUsers;
-    $: pinned = controller.pinnedMessages;
     $: blocked = $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
         draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {}))
@@ -82,13 +88,41 @@
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
     $: canSend = canSendMessages($chat, $userStore);
     $: canReact = canReactToMessages($chat);
-    $: messages = groupEvents(
-        $threadStore[threadRootMessageIndex] ?? []
-    ).reverse() as EventWrapper<Message>[][][];
+    $: messages = groupEvents(events).reverse() as EventWrapper<Message>[][][];
 
     $: console.log("Threadrootmessageindex: ", threadRootMessageIndex);
+    $: console.log("Grouped: ", messages);
 
     const dispatch = createEventDispatcher();
+
+    async function loadThreadMessages(): Promise<void> {
+        if (rootEvent.event.thread === undefined || controller.chatVal === undefined) return;
+        loading = true;
+
+        const eventsPromise =
+            controller.chatVal.kind === "direct_chat"
+                ? api.directChatEvents(
+                      [0, Number.MAX_VALUE],
+                      controller.chatVal.them,
+                      rootEvent.event.thread.latestEventIndex,
+                      false,
+                      threadRootMessageIndex
+                  )
+                : api.groupChatEvents(
+                      [0, Number.MAX_VALUE],
+                      controller.chatVal.chatId,
+                      rootEvent.event.thread.latestEventIndex,
+                      false,
+                      threadRootMessageIndex
+                  );
+
+        const eventsResponse = await eventsPromise;
+
+        if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
+            events = [rootEvent, ...eventsResponse.events];
+        }
+        loading = false;
+    }
 
     function close() {
         dispatch("close");
@@ -100,7 +134,6 @@
     }
 
     function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
-        console.log("send message: ", ev.detail);
         if (!canSend) return;
         let [text, mentioned] = ev.detail;
         if ($editingEvent !== undefined) {
@@ -160,16 +193,13 @@
                 return;
             }
 
-            const [nextEventIndex, nextMessageIndex] = getNextEventAndMessageIndexes(
-                $threadStore,
-                threadRootMessageIndex
-            );
+            const [nextEventIndex, nextMessageIndex] = getNextEventAndMessageIndexes(events);
 
             const msg = newMessage(textContent, fileToAttach, nextMessageIndex);
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
             unconfirmed.add($chat.chatId, event);
-            threadStore.addMessageToThread(threadRootMessageIndex, rootEvent, event);
+            events = [...events, event];
 
             api.sendMessage($chat, controller.user, mentioned, msg, threadRootMessageIndex)
                 .then((resp) => {
@@ -181,24 +211,41 @@
                                 currentUser.cryptoAccount
                             );
                         }
+                        console.log("Result: ", event, resp);
+                        replaceMessage({
+                            ...event,
+                            index: resp.eventIndex,
+                            event: { ...event.event, messageIndex: resp.messageIndex },
+                        });
                         trackEvent("sent_threaded_message");
                     } else {
-                        threadStore.removeMessageFromThread(
-                            threadRootMessageIndex,
-                            msg.messageIndex
-                        );
+                        removeMessage(msg);
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
                     }
                 })
                 .catch((err) => {
-                    threadStore.removeMessageFromThread(threadRootMessageIndex, msg.messageIndex);
                     console.log(err);
                     unconfirmed.delete($chat.chatId, msg.messageId);
+                    removeMessage(msg);
                     toastStore.showFailureToast("errorSendingMessage");
                     rollbar.error("Exception sending message", err);
                 });
         }
+    }
+
+    function replaceMessage(evt: EventWrapper<Message>) {
+        events = events.map((e) => {
+            return e.event.kind === "message" && e.event.messageId === evt.event.messageId
+                ? evt
+                : e;
+        });
+    }
+
+    function removeMessage(msg: Message) {
+        events = events.filter(
+            (e) => e.event.kind !== "message" || e.event.messageId !== msg.messageId
+        );
     }
 
     function editMessageWithAttachment(
@@ -214,17 +261,23 @@
             };
 
             const event = { ...editingEvent, event: msg! };
-            threadStore.replaceMessageInThread(threadRootMessageIndex, event);
+            const original = replaceEvent(event);
             api.editMessage($chat, msg, threadRootMessageIndex)
                 .then((resp) => {
                     if (resp !== "success") {
                         rollbar.warn("Error response editing", resp);
                         toastStore.showFailureToast("errorEditingMessage");
+                        if (original !== undefined) {
+                            replaceEvent(original);
+                        }
                     }
                 })
                 .catch((err) => {
                     rollbar.error("Exception sending message", err);
                     toastStore.showFailureToast("errorEditingMessage");
+                    if (original !== undefined) {
+                        replaceEvent(original);
+                    }
                 });
         }
     }
@@ -332,7 +385,7 @@
     }
 
     function deleteMessage(ev: CustomEvent<Message>): void {
-        threadStore.replaceMessageContent(threadRootMessageIndex, ev.detail.messageIndex, {
+        replaceMessageContent(ev.detail.messageId, {
             kind: "deleted_content",
             deletedBy: currentUser.userId,
             timestamp: BigInt(Date.now()),
@@ -348,21 +401,33 @@
                 // check it worked - undo if it didn't
                 if (resp !== "success") {
                     toastStore.showFailureToast("deleteFailed");
-                    threadStore.replaceMessageContent(
-                        threadRootMessageIndex,
-                        ev.detail.messageIndex,
-                        ev.detail.content
-                    );
+                    replaceMessageContent(ev.detail.messageId, ev.detail.content);
                 }
             })
             .catch((_err) => {
                 toastStore.showFailureToast("deleteFailed");
-                threadStore.replaceMessageContent(
-                    threadRootMessageIndex,
-                    ev.detail.messageIndex,
-                    ev.detail.content
-                );
+                replaceMessageContent(ev.detail.messageId, ev.detail.content);
             });
+    }
+
+    function replaceMessageContent(messageId: unknown, content: MessageContent) {
+        events = events.map((e) => {
+            return e.event.kind === "message" && e.event.messageId === messageId
+                ? { ...e, event: { ...e.event, content } }
+                : e;
+        });
+    }
+
+    function replaceEvent(evt: EventWrapper<ChatEvent>): EventWrapper<ChatEvent> | undefined {
+        let original: EventWrapper<ChatEvent> | undefined = undefined;
+        events = events.map((e) => {
+            if (e.index === evt.index) {
+                original = e;
+                return evt;
+            }
+            return e;
+        });
+        return original;
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -504,7 +569,6 @@
                         canReact={canReactToMessages($chat)}
                         publicGroup={$chat.kind === "group_chat" && $chat.public}
                         editing={$editingEvent === evt}
-                        threadSummary={undefined}
                         selectedThreadMessageIndex={undefined}
                         on:chatWith
                         on:goToMessageIndex={goToMessageIndex}

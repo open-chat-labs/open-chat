@@ -873,6 +873,7 @@ function mergeMessageEvents(
                     ...existing.event,
                     content: incoming.event.content,
                     reactions: merged,
+                    thread: incoming.event.thread,
                 },
             };
         }

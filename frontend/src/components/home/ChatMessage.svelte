@@ -13,11 +13,7 @@
     import MenuItem from "../MenuItem.svelte";
     import Loading from "../Loading.svelte";
     import MenuIcon from "../MenuIcon.svelte";
-    import type {
-        Message,
-        EnhancedReplyContext,
-        ThreadSummary as ThreadSummaryType,
-    } from "../../domain/chat/chat";
+    import type { Message, EnhancedReplyContext } from "../../domain/chat/chat";
     import Typing from "../Typing.svelte";
     import RepliesTo from "./RepliesTo.svelte";
     import { _, locale } from "svelte-i18n";
@@ -86,7 +82,6 @@
     export let canReact: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let threadSummary: ThreadSummaryType | undefined;
     export let selectedThreadMessageIndex: number | undefined;
     export let inThread: boolean;
 
@@ -112,6 +107,7 @@
     $: showAvatar = !me && $screenWidth !== ScreenWidth.ExtraExtraSmall && groupChat;
     $: translated = $translationStore.has(Number(msg.messageId));
     $: senderTyping = $typing[chatId]?.has(senderId);
+    $: threadSummary = msg.thread;
 
     afterUpdate(() => {
         // console.log("updating ChatMessage component");
@@ -487,6 +483,7 @@
                 <pre>ReadByUs: {readByMe}</pre>
                 <pre>Pinned: {pinned}</pre>
                 <pre>edited: {msg.edited}</pre>
+                <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
             {/if}
 
             {#if !deleted && !preview}
@@ -633,7 +630,7 @@
         {/if}
     </div>
 
-    {#if threadSummary !== undefined}
+    {#if threadSummary !== undefined && !inThread}
         <ThreadSummary
             selected={msg.messageIndex === selectedThreadMessageIndex}
             {threadSummary}
