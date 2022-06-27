@@ -21,7 +21,7 @@ fn disable_invite_code_impl(runtime_state: &mut RuntimeState) -> Response {
             runtime_state.data.invite_code_enabled = false;
 
             let now = runtime_state.env.now();
-            runtime_state.data.events.push_event(
+            runtime_state.data.events.main.push_event(
                 ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
                     change: GroupInviteCodeChange::Disabled,
                     changed_by: participant.user_id,

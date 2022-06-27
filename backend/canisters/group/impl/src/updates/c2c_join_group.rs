@@ -55,8 +55,8 @@ fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Resp
             min_visible_event_index = EventIndex::default();
             min_visible_message_index = MessageIndex::default();
         } else {
-            min_visible_event_index = runtime_state.data.events.last().index.incr();
-            min_visible_message_index = runtime_state.data.events.next_message_index();
+            min_visible_event_index = runtime_state.data.events.main.last().index.incr();
+            min_visible_message_index = runtime_state.data.events.main.next_message_index();
         };
 
         match runtime_state.data.participants.add(
@@ -76,6 +76,7 @@ fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Resp
                 runtime_state
                     .data
                     .events
+                    .main
                     .push_event(ChatEventInternal::ParticipantJoined(Box::new(event)), now);
 
                 handle_activity_notification(runtime_state);

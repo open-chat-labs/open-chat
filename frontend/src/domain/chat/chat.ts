@@ -998,7 +998,11 @@ export type ToggleReactionResponse =
     | "not_authorised"
     | "chat_not_found";
 
-export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";
+export type DeleteMessageResponse =
+    | "not_in_group"
+    | "chat_not_found"
+    | "success"
+    | "message_not_found";
 
 export type SerializableMergedUpdatesResponse = Omit<MergedUpdatesResponse, "chatSummaries"> & {
     chatSummaries: SerializableChatSummary[];
@@ -1018,6 +1022,7 @@ export type UnpinMessageResponse =
     | "no_change"
     | "caller_not_in_group"
     | "not_authorised"
+    | "message_not_found"
     | "success";
 
 export type PinMessageResponse =
@@ -1025,6 +1030,7 @@ export type PinMessageResponse =
     | "no_change"
     | "caller_not_in_group"
     | "not_authorised"
+    | "message_not_found"
     | "success";
 
 export type RegisterPollVoteResponse =
@@ -1033,6 +1039,7 @@ export type RegisterPollVoteResponse =
     | "success"
     | "out_of_range"
     | "poll_not_found"
+    | "message_not_found"
     | "chat_not_found";
 
 export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised;

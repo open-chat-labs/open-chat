@@ -15,7 +15,8 @@ fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> R
 
         if let Some((chat_events, min_visible_event_index)) = runtime_state
             .data
-            .chat_events(args.thread_root_message_index, min_visible_event_index)
+            .events
+            .get_with_min_visible_event_index(args.thread_root_message_index, min_visible_event_index)
         {
             let messages: Vec<_> = args
                 .messages

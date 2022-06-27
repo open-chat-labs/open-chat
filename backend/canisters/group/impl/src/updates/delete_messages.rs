@@ -18,43 +18,65 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         let now = runtime_state.env.now();
+        let user_id = participant.user_id;
 
-        let mut files_to_delete = Vec::new();
+        if !runtime_state.data.events.are_messages_accessible(
+            participant.min_visible_event_index(),
+            args.thread_root_message_index,
+            &args.message_ids,
+        ) {
+            return MessageNotFound;
+        }
 
-        for message_id in args.message_ids {
-            if let Some(message_index) = runtime_state.data.events.get_message_index(message_id) {
-                // If the message being deleted is pinned, unpin it
-                if let Ok(index) = runtime_state.data.pinned_messages.binary_search(&message_index) {
-                    runtime_state.data.pinned_messages.remove(index);
+        if let Some(chat_events) = runtime_state.data.events.get_mut(args.thread_root_message_index) {
+            let mut files_to_delete = Vec::new();
 
-                    runtime_state.data.events.push_event(
-                        ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
-                            message_index,
-                            unpinned_by: participant.user_id,
-                            due_to_message_deleted: true,
-                        })),
-                        runtime_state.env.now(),
-                    );
+            for message_id in args.message_ids {
+                if let Some(message_index) = chat_events.get_message_index(message_id) {
+                    // If the message being deleted is pinned, unpin it
+                    if let Ok(index) = runtime_state.data.pinned_messages.binary_search(&message_index) {
+                        runtime_state.data.pinned_messages.remove(index);
+
+                        chat_events.push_event(
+                            ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
+                                message_index,
+                                unpinned_by: user_id,
+                                due_to_message_deleted: true,
+                            })),
+                            runtime_state.env.now(),
+                        );
+                    }
+                }
+
+                if let DeleteMessageResult::Success(content) = chat_events.delete_message(
+                    user_id,
+                    participant.role.can_delete_messages(&runtime_state.data.permissions),
+                    message_id,
+                    now,
+                ) {
+                    files_to_delete.extend(content.blob_references());
                 }
             }
 
-            if let DeleteMessageResult::Success(content) = runtime_state.data.events.delete_message(
-                participant.user_id,
-                participant.role.can_delete_messages(&runtime_state.data.permissions),
-                message_id,
-                now,
-            ) {
-                files_to_delete.extend(content.blob_references());
+            if let Some(thread_message_index) = args.thread_root_message_index {
+                let latest_event = chat_events.last().index;
+                runtime_state
+                    .data
+                    .events
+                    .main
+                    .update_thread_summary(thread_message_index, user_id, false, latest_event, now);
             }
+
+            if !files_to_delete.is_empty() {
+                ic_cdk::spawn(open_storage_bucket_client::delete_files(files_to_delete));
+            }
+
+            handle_activity_notification(runtime_state);
+
+            Success
+        } else {
+            MessageNotFound
         }
-
-        if !files_to_delete.is_empty() {
-            ic_cdk::spawn(open_storage_bucket_client::delete_files(files_to_delete));
-        }
-
-        handle_activity_notification(runtime_state);
-
-        Success
     } else {
         CallerNotInGroup
     }
