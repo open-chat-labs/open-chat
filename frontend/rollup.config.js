@@ -39,11 +39,13 @@ if (dfxNetwork) {
         process.env.GROUP_INDEX_CANISTER = canisters.group_index[dfxNetwork];
         process.env.NOTIFICATIONS_CANISTER = canisters.notifications[dfxNetwork];
         process.env.ONLINE_CANISTER = canisters.online_users_aggregator[dfxNetwork];
+        process.env.PROPOSALS_BOT_CANISTER = canisters.proposals_bot[dfxNetwork];
 
         console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
         console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);
         console.log("NotificationsCanisterId: ", process.env.NOTIFICATIONS_CANISTER);
         console.log("OnlineCanisterId: ", process.env.ONLINE_CANISTER);
+        console.log("ProposalsBotCanisterId: ", process.env.PROPOSALS_BOT_CANISTER);
     } else {
         console.log(
             "Couldn't find canisters JSON at: ",
@@ -180,6 +182,7 @@ export default [
                 "process.env.GROUP_INDEX_CANISTER": process.env.GROUP_INDEX_CANISTER,
                 "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
                 "process.env.ONLINE_CANISTER": process.env.ONLINE_CANISTER,
+                "process.env.PROPOSALS_BOT_CANISTER": process.env.PROPOSALS_BOT_CANISTER,
                 "process.env.OPEN_STORAGE_INDEX_CANISTER": process.env.OPEN_STORAGE_INDEX_CANISTER,
                 "process.env.LEDGER_CANISTER_ICP": process.env.LEDGER_CANISTER_ICP,
                 "process.env.LEDGER_CANISTER_BTC": process.env.LEDGER_CANISTER_BTC,

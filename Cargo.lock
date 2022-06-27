@@ -45,9 +45,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.56"
+version = "1.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4361135be9122e0870de935d7c439aef945b9f9ddd4199a553b5270b49c82a27"
+checksum = "08f9b8508dccb7687a1d6c4ce66b2b0ecef467c94667de27d8d7fe1f8d2a9cdc"
 
 [[package]]
 name = "arrayvec"
@@ -708,6 +708,7 @@ dependencies = [
  "ic-utils",
  "notifications_canister",
  "online_users_aggregator_canister",
+ "proposals_bot_canister",
  "root_canister",
  "root_canister_client",
  "serde",
@@ -2146,9 +2147,9 @@ dependencies = [
 
 [[package]]
 name = "ipnet"
-version = "2.4.0"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35e70ee094dc02fd9c13fdad4940090f22dbd6ac7c9e7094a46cf0232a50bc7c"
+checksum = "879d54834c8c76457ef4293a689b2a8c59b076067ad77b15efafbb05f92a592b"
 
 [[package]]
 name = "isahc"
@@ -3151,6 +3152,43 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c54b25569025b7fc9651de43004ae593a75ad88543b17178aa5e1b9c4f15f56f"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "proposals_bot_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen 0.1.0",
+ "serde",
+ "types 0.1.0",
+]
+
+[[package]]
+name = "proposals_bot_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "futures",
+ "group_canister",
+ "group_canister_c2c_client",
+ "group_index_canister",
+ "group_index_canister_c2c_client",
+ "http_request",
+ "ic-cdk 0.5.1",
+ "ic-cdk-macros",
+ "itertools",
+ "msgpack",
+ "proposals_bot_canister",
+ "serde",
+ "stable_memory",
+ "tracing",
+ "types 0.1.0",
+ "utils",
 ]
 
 [[package]]
