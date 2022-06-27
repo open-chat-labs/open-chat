@@ -45,6 +45,7 @@
     import { trackEvent } from "../../../utils/tracking";
     import { rollbar } from "../../../utils/logging";
     import { toastStore } from "../../../stores/toast";
+    import { dedupe } from "utils/list";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -60,20 +61,46 @@
     let selectingGif = false;
     let focusMessageIndex: number | undefined = undefined;
     let loading = false;
-    let previousRootIndex: number | undefined = undefined;
+
+    let previousRootEvent: EventWrapper<Message> | undefined;
 
     let events: EventWrapper<ChatEvent>[] = [];
 
     $: {
-        if (threadRootMessageIndex !== previousRootIndex) {
-            console.log("Loading the messages for thread: ", threadRootMessageIndex);
-            previousRootIndex = threadRootMessageIndex;
+        if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
+            console.log("thread: loading old ", thread?.latestEventIndex ?? 0);
+            previousRootEvent = rootEvent;
 
             events = [rootEvent];
-            loadThreadMessages();
+            if (thread !== undefined) {
+                loadThreadMessages(
+                    [0, thread.latestEventIndex],
+                    thread.latestEventIndex,
+                    false,
+                    threadRootMessageIndex
+                );
+            }
+        } else {
+            // we haven't changed the thread we are looking at, but the threads latest index has changed (i.e. an event has been added by someone else)
+            if (
+                thread !== undefined &&
+                thread.latestEventIndex !== previousRootEvent?.event.thread?.latestEventIndex
+            ) {
+                console.log(
+                    "thread: loading new ",
+                    previousRootEvent?.event.thread?.latestEventIndex ?? 0
+                );
+                loadThreadMessages(
+                    [0, thread.latestEventIndex],
+                    (previousRootEvent?.event.thread?.latestEventIndex ?? -1) + 1,
+                    true,
+                    threadRootMessageIndex
+                );
+            }
         }
     }
 
+    $: thread = rootEvent.event.thread;
     $: chat = controller.chat;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
     $: participants = controller.participants;
@@ -90,37 +117,44 @@
     $: canReact = canReactToMessages($chat);
     $: messages = groupEvents(events).reverse() as EventWrapper<Message>[][][];
 
-    $: console.log("Threadrootmessageindex: ", threadRootMessageIndex);
-    $: console.log("Grouped: ", messages);
-
     const dispatch = createEventDispatcher();
 
-    async function loadThreadMessages(): Promise<void> {
-        if (rootEvent.event.thread === undefined || controller.chatVal === undefined) return;
+    async function loadThreadMessages(
+        range: [number, number],
+        startIndex: number,
+        ascending: boolean,
+        threadRootMessageIndex: number
+    ): Promise<void> {
+        if (thread === undefined || controller.chatVal === undefined) return;
         loading = true;
 
         const eventsPromise =
             controller.chatVal.kind === "direct_chat"
                 ? api.directChatEvents(
-                      [0, Number.MAX_VALUE],
+                      range,
                       controller.chatVal.them,
-                      rootEvent.event.thread.latestEventIndex,
-                      false,
+                      startIndex,
+                      ascending,
                       threadRootMessageIndex
                   )
                 : api.groupChatEvents(
-                      [0, Number.MAX_VALUE],
+                      range,
                       controller.chatVal.chatId,
-                      rootEvent.event.thread.latestEventIndex,
-                      false,
+                      startIndex,
+                      ascending,
                       threadRootMessageIndex
                   );
 
         const eventsResponse = await eventsPromise;
 
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
-            events = [rootEvent, ...eventsResponse.events];
+            events = dedupe(
+                (a, b) => a.index === b.index,
+                [...events, ...eventsResponse.events].sort((a, b) => a.index - b.index)
+            );
         }
+
+        console.log("Events: ", events);
         loading = false;
     }
 
@@ -211,7 +245,6 @@
                                 currentUser.cryptoAccount
                             );
                         }
-                        console.log("Result: ", event, resp);
                         replaceMessage({
                             ...event,
                             index: resp.eventIndex,
