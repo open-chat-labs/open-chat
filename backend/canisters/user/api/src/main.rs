@@ -37,7 +37,7 @@ fn main() {
     generate_candid_method!(user, unmute_notifications, update);
     generate_candid_method!(user, unpin_chat, update);
     generate_candid_method!(user, withdraw_crypto, update);
-    
+
     candid::export_service!();
     std::print!("{}", __export_service());
 }
