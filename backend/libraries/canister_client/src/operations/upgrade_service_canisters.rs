@@ -107,6 +107,25 @@ pub async fn upgrade_callback_canister(
     println!("Callback canister upgraded");
 }
 
+pub async fn upgrade_proposals_bot_canister(
+    identity: BasicIdentity,
+    url: String,
+    proposals_bot_canister_id: CanisterId,
+    version: Version,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        proposals_bot_canister_id,
+        version,
+        proposals_bot_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::ProposalsBot,
+    )
+    .await;
+
+    println!("Proposals bot canister upgraded");
+}
+
 pub async fn upgrade_group_canister(
     identity: BasicIdentity,
     url: String,

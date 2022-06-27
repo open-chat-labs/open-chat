@@ -12,6 +12,99 @@ use std::ops::{Bound, Deref, DerefMut, RangeBounds, RangeInclusive};
 use types::*;
 
 #[derive(Serialize, Deserialize)]
+pub struct AllChatEvents {
+    pub main: ChatEvents,
+    pub threads: HashMap<MessageIndex, ChatEvents>,
+}
+
+impl AllChatEvents {
+    pub fn is_message_accessible_by_id(
+        &self,
+        min_visible_event_index: EventIndex,
+        thread_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+    ) -> bool {
+        thread_message_index
+            .or_else(|| self.main.get_message_index(message_id))
+            .map_or(false, |message_index| {
+                self.is_message_accessible(min_visible_event_index, message_index)
+            })
+    }
+
+    pub fn is_message_accessible_by_index(
+        &self,
+        min_visible_event_index: EventIndex,
+        thread_message_index: Option<MessageIndex>,
+        message_index: MessageIndex,
+    ) -> bool {
+        self.is_message_accessible(min_visible_event_index, thread_message_index.unwrap_or(message_index))
+    }
+
+    fn is_message_accessible(&self, min_visible_event_index: EventIndex, message_index: MessageIndex) -> bool {
+        self.main
+            .get_event_index_by_message_index(message_index)
+            .map_or(false, |event_index| event_index >= min_visible_event_index)
+    }
+
+    pub fn are_messages_accessible(
+        &self,
+        min_visible_event_index: EventIndex,
+        thread_message_index: Option<MessageIndex>,
+        message_ids: &[MessageId],
+    ) -> bool {
+        if let Some(thread_message_index) = thread_message_index {
+            self.is_message_accessible(min_visible_event_index, thread_message_index)
+        } else {
+            message_ids.iter().all(|id| {
+                self.main
+                    .get_event_index_by_message_id(*id)
+                    .map_or(false, |event_index| event_index >= min_visible_event_index)
+            })
+        }
+    }
+
+    pub fn get(&self, thread_message_index: Option<MessageIndex>) -> Option<&ChatEvents> {
+        if let Some(thread_message_index) = thread_message_index {
+            if let Some(thread_events) = self.threads.get(&thread_message_index) {
+                Some(thread_events)
+            } else {
+                None
+            }
+        } else {
+            Some(&self.main)
+        }
+    }
+
+    pub fn get_with_min_visible_event_index(
+        &self,
+        thread_message_index: Option<MessageIndex>,
+        min_visible_event_index: EventIndex,
+    ) -> Option<(&ChatEvents, EventIndex)> {
+        if let Some(thread_message_index) = thread_message_index {
+            self.main
+                .get_event_index_by_message_index(thread_message_index)
+                .filter(|thread_event_index| *thread_event_index >= min_visible_event_index)
+                .and_then(|_| self.threads.get(&thread_message_index))
+                .map(|events| (events, EventIndex::default()))
+        } else {
+            Some((&self.main, min_visible_event_index))
+        }
+    }
+
+    pub fn get_mut(&mut self, thread_message_index: Option<MessageIndex>) -> Option<&mut ChatEvents> {
+        if let Some(thread_message_index) = thread_message_index {
+            if let Some(thread_events) = self.threads.get_mut(&thread_message_index) {
+                Some(thread_events)
+            } else {
+                None
+            }
+        } else {
+            Some(&mut self.main)
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
     #[serde(alias = "chat_type")]
     events_type: ChatEventsType,
@@ -46,13 +139,6 @@ pub struct PushMessageArgs {
     pub forwarded: bool,
 }
 
-pub struct ReplyToThreadArgs {
-    pub thread_message_index: MessageIndex,
-    pub sender: UserId,
-    pub latest_event_index: EventIndex,
-    pub now: TimestampMillis,
-}
-
 pub struct EditMessageArgs {
     pub sender: UserId,
     pub message_id: MessageId,
@@ -61,7 +147,7 @@ pub struct EditMessageArgs {
 }
 
 pub enum EditMessageResult {
-    Success,
+    Success(EventIndex),
     NotAuthorized,
     NotFound,
 }
@@ -232,31 +318,39 @@ impl ChatEvents {
         }
     }
 
-    pub fn add_reply_to_thread(&mut self, args: ReplyToThreadArgs) -> ThreadSummary {
-        let thread_message_index = args.thread_message_index;
+    pub fn update_thread_summary(
+        &mut self,
+        thread_message_index: MessageIndex,
+        user_id: UserId,
+        new_reply: bool,
+        latest_event_index: EventIndex,
+        now: TimestampMillis,
+    ) -> ThreadSummary {
         let root_message = self
-            .get_event_index_by_message_index(args.thread_message_index)
+            .get_event_index_by_message_index(thread_message_index)
             .and_then(|e| self.events.get_mut(e))
             .and_then(|e| e.event.as_message_mut())
             .unwrap_or_else(|| panic!("Root thread message not found with message index {thread_message_index:?}"));
 
         let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummary::default);
-        summary.reply_count += 1;
-        summary.latest_event_index = args.latest_event_index;
-        summary.latest_event_timestamp = args.now;
+        summary.latest_event_index = latest_event_index;
+        summary.latest_event_timestamp = now;
 
-        if !summary.participant_ids.iter().any(|p| *p == args.sender) {
-            summary.participant_ids.push(args.sender);
+        if new_reply {
+            summary.reply_count += 1;
+            if !summary.participant_ids.contains(&user_id) {
+                summary.participant_ids.push(user_id);
+            }
         }
 
         let summary_clone = summary.clone();
 
         self.push_event(
             ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
-                updated_by: args.sender,
+                updated_by: user_id,
                 message_index: thread_message_index,
             })),
-            args.now,
+            now,
         );
 
         summary_clone
@@ -308,14 +402,14 @@ impl ChatEvents {
                     message.content = args.content.new_content_into_internal();
                     message.last_updated = Some(args.now);
                     message.last_edited = Some(args.now);
-                    self.push_event(
+                    let event_index = self.push_event(
                         ChatEventInternal::MessageEdited(Box::new(UpdatedMessageInternal {
                             updated_by: args.sender,
                             message_id: args.message_id,
                         })),
                         args.now,
                     );
-                    EditMessageResult::Success
+                    EditMessageResult::Success(event_index)
                 }
             } else {
                 EditMessageResult::NotAuthorized
@@ -607,7 +701,7 @@ impl ChatEvents {
                 .collect(),
             edited: message.last_edited.is_some(),
             forwarded: message.forwarded,
-            thread_summary: None,
+            thread_summary: message.thread_summary.clone(),
         }
     }
 

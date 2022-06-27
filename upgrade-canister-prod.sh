@@ -19,6 +19,7 @@ GROUP_INDEX_CANISTER_ID=$(dfx canister --network ic id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network ic id notifications)
 ONLINE_USERS_AGGREGATOR=$(dfx canister --network ic id online_users_aggregator)
 CALLBACK_CANISTER_ID=$(dfx canister --network ic id callback)
+PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network ic id proposals_bot)
 
 cargo run \
   --manifest-path backend/canister_upgrader/Cargo.toml \
@@ -30,5 +31,6 @@ cargo run \
   $NOTIFICATIONS_INDEX_CANISTER_ID \
   $ONLINE_USERS_AGGREGATOR \
   $CALLBACK_CANISTER_ID \
+  $PROPOSALS_BOT_CANISTER_ID \
   $CANISTER_TO_UPGRADE \
   $VERSION \

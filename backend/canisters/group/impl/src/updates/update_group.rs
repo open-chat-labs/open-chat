@@ -106,7 +106,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 
 fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
-    let events = &mut runtime_state.data.events;
+    let events = &mut runtime_state.data.events.main;
 
     if runtime_state.data.name != args.name {
         events.push_event(

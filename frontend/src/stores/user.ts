@@ -4,7 +4,7 @@ import { immutableStore } from "./immutable";
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
 export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
 export const OPENCHAT_BOT_AVATAR_URL = "assets/robot.svg";
-const botUser: PartialUserSummary = {
+const openChatBotUser: PartialUserSummary = {
     kind: "bot",
     userId: OPENCHAT_BOT_USER_ID,
     username: OPENCHAT_BOT_USERNAME,
@@ -13,8 +13,21 @@ const botUser: PartialUserSummary = {
     blobUrl: OPENCHAT_BOT_AVATAR_URL,
 };
 
+export const PROPOSALS_BOT_USER_ID = "process.env.PROPOSALS_BOT_CANISTER";
+export const PROPOSALS_BOT_USERNAME = "ProposalsBot";
+export const PROPOSALS_BOT_AVATAR_URL = "assets/robot.svg";
+const proposalsBotUser: PartialUserSummary = {
+    kind: "bot",
+    userId: PROPOSALS_BOT_USER_ID,
+    username: PROPOSALS_BOT_USERNAME,
+    lastOnline: 0,
+    updated: BigInt(0),
+    blobUrl: PROPOSALS_BOT_AVATAR_URL,
+};
+
 const { subscribe, update, set } = immutableStore<UserLookup>({
-    [OPENCHAT_BOT_USER_ID]: botUser,
+    [OPENCHAT_BOT_USER_ID]: openChatBotUser,
+    [PROPOSALS_BOT_USER_ID]: proposalsBotUser,
 });
 
 export function overwriteUser(lookup: UserLookup, user: PartialUserSummary): UserLookup {
@@ -30,7 +43,8 @@ export function overwriteUser(lookup: UserLookup, user: PartialUserSummary): Use
 export const userStore = {
     subscribe,
     set: (users: UserLookup): void => {
-        users[OPENCHAT_BOT_USER_ID] = botUser;
+        users[OPENCHAT_BOT_USER_ID] = openChatBotUser;
+        users[PROPOSALS_BOT_USER_ID] = proposalsBotUser;
         set(users);
     },
     add: (user: PartialUserSummary): void => {

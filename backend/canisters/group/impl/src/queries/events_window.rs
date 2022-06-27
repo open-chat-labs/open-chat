@@ -12,7 +12,8 @@ fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller, args.invite_code) {
         if let Some((chat_events, min_visible_event_index)) = runtime_state
             .data
-            .chat_events(args.thread_root_message_index, min_visible_event_index)
+            .events
+            .get_with_min_visible_event_index(args.thread_root_message_index, min_visible_event_index)
         {
             let user_id = runtime_state.data.participants.get(caller).map(|p| p.user_id);
             let latest_event_index = chat_events.last().index;
