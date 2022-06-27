@@ -11,6 +11,7 @@ TEST_MODE=$3
 ./generate-wasm.sh group_index_canister_impl
 ./generate-wasm.sh notifications_canister_impl
 ./generate-wasm.sh online_users_aggregator_canister_impl
+./generate-wasm.sh proposals_bot_canister_impl
 ./generate-wasm.sh root_canister_impl
 ./generate-wasm.sh user_canister_impl
 ./generate-wasm.sh user_index_canister_impl
@@ -24,6 +25,7 @@ GROUP_INDEX_CANISTER_ID=$(dfx canister --network ic id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network ic id notifications)
 ONLINE_USERS_AGGREGATOR_CANISTER_ID=$(dfx canister --network ic id online_users_aggregator)
 CALLBACK_CANISTER_ID=$(dfx canister --network ic id callback)
+PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network ic id proposals_bot)
 LEDGER_CANISTER_ID=ryjl3-tyaaa-aaaaa-aaaba-cai
 
 cargo run \
@@ -37,5 +39,6 @@ cargo run \
   $NOTIFICATIONS_INDEX_CANISTER_ID \
   $ONLINE_USERS_AGGREGATOR_CANISTER_ID \
   $CALLBACK_CANISTER_ID \
+  $PROPOSALS_BOT_CANISTER_ID \
   $OPEN_STORAGE_INDEX_CANISTER_ID \
   $LEDGER_CANISTER_ID \

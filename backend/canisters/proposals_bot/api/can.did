@@ -1,0 +1,19 @@
+import "../../../libraries/types/can.did";
+
+type AddGovernanceCanisterArgs =
+    record {
+        governance_canister_id: CanisterId;
+        name: text;
+        avatar: opt Avatar;
+    };
+
+type AddGovernanceCanisterResponse =
+    variant {
+        Success;
+        AlreadyAdded;
+        InternalError: text;
+    };
+
+service : {
+    add_governance_canister: (AddGovernanceCanisterArgs) -> (AddGovernanceCanisterResponse);
+}

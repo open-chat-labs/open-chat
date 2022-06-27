@@ -36,6 +36,12 @@
       "wasm": "target/wasm32-unknown-unknown/release/callback_canister_impl-opt.wasm.gz",
       "build": "./generate-wasm.sh callback_canister_impl"
     },
+    "proposals_bot": {
+      "type": "custom",
+      "candid": "backend/canisters/proposals_bot/api/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/proposals_bot_canister_impl-opt.wasm.gz",
+      "build": "./generate-wasm.sh proposals_bot_canister_impl"
+    },
     "user": {
       "type": "custom",
       "candid": "backend/canisters/user/api/can.did",

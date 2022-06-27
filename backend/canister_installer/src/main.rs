@@ -15,6 +15,7 @@ async fn main() {
         notifications: opts.notifications,
         online_users_aggregator: opts.online_users_aggregator,
         callback: opts.callback,
+        proposals_bot: opts.proposals_bot,
         open_storage_index: opts.open_storage_index,
         ledger: opts.ledger,
     };
@@ -36,6 +37,7 @@ struct Opts {
     notifications: CanisterId,
     online_users_aggregator: CanisterId,
     callback: CanisterId,
+    proposals_bot: CanisterId,
     open_storage_index: CanisterId,
     ledger: CanisterId,
 }

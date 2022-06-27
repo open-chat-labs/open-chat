@@ -21,6 +21,7 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 online_users_aggregator
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 callback
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 proposals_bot
 USER_INDEX_CANISTER_ID=$(dfx canister id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister id group_index)
 

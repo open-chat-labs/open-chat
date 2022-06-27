@@ -20,6 +20,8 @@ members = [
     "backend/canisters/online_users_aggregator/api",
     "backend/canisters/online_users_aggregator/client",
     "backend/canisters/online_users_aggregator/impl",
+    "backend/canisters/proposals_bot/api",
+    "backend/canisters/proposals_bot/impl",
     "backend/canisters/root/api",
     "backend/canisters/root/client",
     "backend/canisters/root/impl",
