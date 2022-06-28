@@ -3,12 +3,12 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { apiKey } from "../../services/serviceContainer";
-    import { currentUserKey } from "../../fsm/home.controller";
     import type { CreatedUser } from "../../domain/user/user";
     import type { ServiceContainer } from "../../services/serviceContainer";
     import type { Cryptocurrency } from "../../domain/crypto";
     import { rollbar } from "../../utils/logging";
     import { formatTokens } from "../../utils/cryptoFormatter";
+    import { currentUserKey } from "../../stores/user";
 
     const dispatch = createEventDispatcher();
     const api = getContext<ServiceContainer>(apiKey);

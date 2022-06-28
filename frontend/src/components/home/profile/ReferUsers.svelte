@@ -1,10 +1,10 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
-    import type { CreatedUser, PartialUserSummary } from "../../../domain/user/user";
+    import type { CreatedUser } from "../../../domain/user/user";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { _ } from "svelte-i18n";
-    import { currentUserKey } from "../../../fsm/home.controller";
+    import { currentUserKey } from "../../../stores/user";
     import Link from "../../Link.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import * as shareFunctions from "../../../domain/share";

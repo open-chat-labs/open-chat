@@ -80,7 +80,7 @@ import type {
     SearchDirectChatResponse,
     SearchGroupChatResponse,
 } from "../domain/search/search";
-import type { IMessageReadTracker, MarkMessagesRead } from "../stores/markRead";
+import { MarkMessagesRead, messagesRead } from "../stores/markRead";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
 import type { ToggleMuteNotificationResponse } from "../domain/notifications";
@@ -175,12 +175,16 @@ export class ServiceContainer implements MarkMessagesRead {
         return this._groupInvite?.chatId === chatId ? this._groupInvite.code : undefined;
     }
 
-    editMessage(chat: ChatSummary, msg: Message): Promise<EditMessageResponse> {
+    editMessage(
+        chat: ChatSummary,
+        msg: Message,
+        threadRootMessageIndex?: number
+    ): Promise<EditMessageResponse> {
         if (chat.kind === "group_chat") {
-            return this.editGroupMessage(chat.chatId, msg);
+            return this.editGroupMessage(chat.chatId, msg, threadRootMessageIndex);
         }
         if (chat.kind === "direct_chat") {
-            return this.editDirectMessage(chat.them, msg);
+            return this.editDirectMessage(chat.them, msg, threadRootMessageIndex);
         }
         throw new UnsupportedValueError("Unexpect chat type", chat);
     }
@@ -189,7 +193,8 @@ export class ServiceContainer implements MarkMessagesRead {
         chat: ChatSummary,
         user: UserSummary,
         mentioned: User[],
-        msg: Message
+        msg: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         if (chat.kind === "group_chat") {
             if (msg.content.kind === "crypto_content") {
@@ -200,7 +205,13 @@ export class ServiceContainer implements MarkMessagesRead {
                     msg
                 );
             }
-            return this.sendGroupMessage(chat.chatId, user.username, mentioned, msg);
+            return this.sendGroupMessage(
+                chat.chatId,
+                user.username,
+                mentioned,
+                msg,
+                threadRootMessageIndex
+            );
         }
         if (chat.kind === "direct_chat") {
             const replyingToChatId =
@@ -209,7 +220,13 @@ export class ServiceContainer implements MarkMessagesRead {
                 chat.chatId !== msg.repliesTo.chatId
                     ? msg.repliesTo.chatId
                     : undefined;
-            return this.sendDirectMessage(chat.them, user, msg, replyingToChatId);
+            return this.sendDirectMessage(
+                chat.them,
+                user,
+                msg,
+                replyingToChatId,
+                threadRootMessageIndex
+            );
         }
         throw new UnsupportedValueError("Unexpect chat type", chat);
     }
@@ -218,26 +235,47 @@ export class ServiceContainer implements MarkMessagesRead {
         chatId: string,
         senderName: string,
         mentioned: User[],
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
-        return this.getGroupClient(chatId).sendMessage(senderName, mentioned, message);
+        return this.getGroupClient(chatId).sendMessage(
+            senderName,
+            mentioned,
+            message,
+            threadRootMessageIndex
+        );
     }
 
-    private editGroupMessage(chatId: string, message: Message): Promise<EditMessageResponse> {
-        return this.getGroupClient(chatId).editMessage(message);
+    private editGroupMessage(
+        chatId: string,
+        message: Message,
+        threadRootMessageIndex?: number
+    ): Promise<EditMessageResponse> {
+        return this.getGroupClient(chatId).editMessage(message, threadRootMessageIndex);
     }
 
     private sendDirectMessage(
         recipientId: string,
         sender: UserSummary,
         message: Message,
-        replyingToChatId?: string
+        replyingToChatId?: string,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
-        return this.userClient.sendMessage(recipientId, sender, message, replyingToChatId);
+        return this.userClient.sendMessage(
+            recipientId,
+            sender,
+            message,
+            replyingToChatId,
+            threadRootMessageIndex
+        );
     }
 
-    private editDirectMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
-        return this.userClient.editMessage(recipientId, message);
+    private editDirectMessage(
+        recipientId: string,
+        message: Message,
+        threadRootMessageIndex?: number
+    ): Promise<EditMessageResponse> {
+        return this.userClient.editMessage(recipientId, message, threadRootMessageIndex);
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
@@ -288,23 +326,31 @@ export class ServiceContainer implements MarkMessagesRead {
         eventIndexRange: IndexRange,
         theirUserId: string,
         startIndex: number,
-        ascending: boolean
+        ascending: boolean,
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
             "direct",
             theirUserId,
-            this.userClient.chatEvents(eventIndexRange, theirUserId, startIndex, ascending)
+            this.userClient.chatEvents(
+                eventIndexRange,
+                theirUserId,
+                startIndex,
+                ascending,
+                threadRootMessageIndex
+            )
         );
     }
 
     directChatEventsByEventIndex(
         theirUserId: string,
-        eventIndexes: number[]
+        eventIndexes: number[],
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
             "direct",
             theirUserId,
-            this.userClient.chatEventsByIndex(eventIndexes, theirUserId)
+            this.userClient.chatEventsByIndex(eventIndexes, theirUserId, threadRootMessageIndex)
         );
     }
 
@@ -324,23 +370,30 @@ export class ServiceContainer implements MarkMessagesRead {
         eventIndexRange: IndexRange,
         chatId: string,
         startIndex: number,
-        ascending: boolean
+        ascending: boolean,
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             "group",
             chatId,
-            this.getGroupClient(chatId).chatEvents(eventIndexRange, startIndex, ascending)
+            this.getGroupClient(chatId).chatEvents(
+                eventIndexRange,
+                startIndex,
+                ascending,
+                threadRootMessageIndex
+            )
         );
     }
 
     groupChatEventsByEventIndex(
         chatId: string,
-        eventIndexes: number[]
+        eventIndexes: number[],
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
             "group",
             chatId,
-            this.getGroupClient(chatId).chatEventsByIndex(eventIndexes)
+            this.getGroupClient(chatId).chatEventsByIndex(eventIndexes, threadRootMessageIndex)
         );
     }
 
@@ -611,7 +664,6 @@ export class ServiceContainer implements MarkMessagesRead {
     }
 
     private async handleMergedUpdatesResponse(
-        messagesRead: IMessageReadTracker,
         resp: MergedUpdatesResponse,
         rehydrateLastMessage = true
     ): Promise<MergedUpdatesResponse> {
@@ -644,26 +696,20 @@ export class ServiceContainer implements MarkMessagesRead {
         };
     }
 
-    getInitialState(
-        messagesRead: IMessageReadTracker,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse> {
-        return this.userClient.getInitialState(messagesRead, selectedChatId).then((resp) => {
-            return this.handleMergedUpdatesResponse(messagesRead, resp, false);
+    getInitialState(selectedChatId: string | undefined): Promise<MergedUpdatesResponse> {
+        return this.userClient.getInitialState(selectedChatId).then((resp) => {
+            return this.handleMergedUpdatesResponse(resp, false);
         });
     }
 
     getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
-        messagesRead: IMessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
-        return this.userClient
-            .getUpdates(chatSummaries, args, messagesRead, selectedChatId)
-            .then((resp) => {
-                return this.handleMergedUpdatesResponse(messagesRead, resp);
-            });
+        return this.userClient.getUpdates(chatSummaries, args, selectedChatId).then((resp) => {
+            return this.handleMergedUpdatesResponse(resp);
+        });
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
@@ -750,25 +796,44 @@ export class ServiceContainer implements MarkMessagesRead {
     toggleGroupChatReaction(
         chatId: string,
         messageId: bigint,
-        reaction: string
+        reaction: string,
+        threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
-        return this.getGroupClient(chatId).toggleReaction(messageId, reaction);
+        return this.getGroupClient(chatId).toggleReaction(
+            messageId,
+            reaction,
+            threadRootMessageIndex
+        );
     }
 
     toggleDirectChatReaction(
         otherUserId: string,
         messageId: bigint,
-        reaction: string
+        reaction: string,
+        threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
-        return this.userClient.toggleReaction(otherUserId, messageId, reaction);
+        return this.userClient.toggleReaction(
+            otherUserId,
+            messageId,
+            reaction,
+            threadRootMessageIndex
+        );
     }
 
-    deleteGroupMessage(chatId: string, messageId: bigint): Promise<DeleteMessageResponse> {
-        return this.getGroupClient(chatId).deleteMessage(messageId);
+    deleteGroupMessage(
+        chatId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse> {
+        return this.getGroupClient(chatId).deleteMessage(messageId, threadRootMessageIndex);
     }
 
-    deleteDirectMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse> {
-        return this.userClient.deleteMessage(otherUserId, messageId);
+    deleteDirectMessage(
+        otherUserId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse> {
+        return this.userClient.deleteMessage(otherUserId, messageId, threadRootMessageIndex);
     }
 
     markAsOnline(): Promise<void> {
@@ -888,18 +953,31 @@ export class ServiceContainer implements MarkMessagesRead {
         chatId: string,
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
-        return this.getGroupClient(chatId).registerPollVote(messageIdx, answerIdx, voteType);
+        return this.getGroupClient(chatId).registerPollVote(
+            messageIdx,
+            answerIdx,
+            voteType,
+            threadRootMessageIndex
+        );
     }
 
     registerDirectChatPollVote(
         otherUser: string,
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
-        return this.userClient.registerPollVote(otherUser, messageIdx, answerIdx, voteType);
+        return this.userClient.registerPollVote(
+            otherUser,
+            messageIdx,
+            answerIdx,
+            voteType,
+            threadRootMessageIndex
+        );
     }
 
     withdrawCryptocurrency(

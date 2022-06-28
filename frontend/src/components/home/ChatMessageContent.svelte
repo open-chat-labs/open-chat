@@ -11,6 +11,7 @@
     import CryptoContent from "./CryptoContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
+    import ProposalContent from "./ProposalContent.svelte";
     import ImageObserver from "./ImageObserver.svelte";
     import type { MessageContent } from "../../domain/chat/chat";
     import { _ } from "svelte-i18n";
@@ -55,4 +56,6 @@
     <ImageObserver let:intersecting>
         <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} />
     </ImageObserver>
+{:else if content.kind === "proposal_content"}
+    <ProposalContent {content} />
 {/if}

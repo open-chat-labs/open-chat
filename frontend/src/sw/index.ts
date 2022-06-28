@@ -209,6 +209,10 @@ function extractMessageContent(
         result = {
             text: content.config.text ?? "New poll",
         };
+    } else if (content.kind === "proposal_content") {
+        result = {
+            text: "TODO - proposal content",
+        };
     } else {
         throw new UnsupportedValueError(
             "Unexpected message content type received with notification",

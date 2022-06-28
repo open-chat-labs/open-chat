@@ -73,11 +73,12 @@ import {
     registerPollVoteResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
-import { MAX_EVENTS, mergeGroupChatDetails } from "../../domain/chat/chat.utils";
+import { identity, mergeGroupChatDetails } from "../../domain/chat/chat.utils";
+import { MAX_EVENTS } from "../../domain/chat/chat.utils.shared";
 import type { SearchGroupChatResponse } from "../../domain/search/search";
 import { getChatEventsInLoop } from "../common/chatEvents";
 import { profile } from "../common/profiling";
-import { base64ToBigint } from "utils/base64";
+import { base64ToBigint } from "../../utils/base64";
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
@@ -103,10 +104,12 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>> {
-        const thread_root_message_index: [] = [];
+    chatEventsByIndex(
+        eventIndexes: number[],
+        threadRootMessageIndex?: number
+    ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
-            thread_root_message_index,
+            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             events: eventIndexes,
             invite_code: apiOptional(base64ToBigint, this.inviteCode),
         };
@@ -143,12 +146,12 @@ export class GroupClient extends CandidService implements IGroupClient {
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
+        threadRootMessageIndex?: number,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<GroupChatEvent>> {
         const getChatEventsFunc = (index: number, asc: boolean) => {
-            const thread_root_message_index: [] = [];
             const args = {
-                thread_root_message_index,
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 max_events: MAX_EVENTS,
                 ascending: asc,
                 start_index: index,
@@ -207,14 +210,13 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    editMessage(message: Message): Promise<EditMessageResponse> {
-        const thread_root_message_index: [] = [];
+    editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
         return DataClient.create(this.identity)
             .uploadData(message.content, [this.chatId])
             .then((content) => {
                 return this.handleResponse(
                     this.groupService.edit_message({
-                        thread_root_message_index,
+                        thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                         content: apiMessageContent(content ?? message.content),
                         message_id: message.messageId,
                     }),
@@ -227,33 +229,32 @@ export class GroupClient extends CandidService implements IGroupClient {
     sendMessage(
         senderName: string,
         mentioned: User[],
-        message: Message
+        message: Message,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         const dataClient = DataClient.create(this.identity);
         const uploadContentPromise = message.forwarded
             ? dataClient.forwardData(message.content, [this.chatId])
             : dataClient.uploadData(message.content, [this.chatId]);
 
-        return uploadContentPromise
-            .then((content) => {
-                return this.handleResponse(
-                    this.groupService.send_message({
-                        content: apiMessageContent(content ?? message.content),
-                        message_id: message.messageId,
-                        sender_name: senderName,
-                        replies_to: apiOptional(
-                            (replyContext) => ({
-                                event_index: replyContext.eventIndex,
-                            }),
-                            message.repliesTo
-                        ),
-                        mentioned: mentioned.map(apiUser),
-                        forwarding: message.forwarded,
-                        thread_root_message_index: [],
+        return uploadContentPromise.then((content) => {
+            const args = {
+                content: apiMessageContent(content ?? message.content),
+                message_id: message.messageId,
+                sender_name: senderName,
+                replies_to: apiOptional(
+                    (replyContext) => ({
+                        event_index: replyContext.eventIndex,
                     }),
-                    sendMessageResponse
-                );
-            });
+                    message.repliesTo
+                ),
+                mentioned: mentioned.map(apiUser),
+                forwarding: message.forwarded,
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+            };
+            console.log("Sending message: ", args);
+            return this.handleResponse(this.groupService.send_message(args), sendMessageResponse);
+        });
     }
 
     @profile("groupClient")
@@ -287,10 +288,14 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse> {
+    toggleReaction(
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex?: number
+    ): Promise<ToggleReactionResponse> {
         return this.handleResponse(
             this.groupService.toggle_reaction({
-                thread_root_message_index: [],
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 reaction,
             }),
@@ -299,10 +304,13 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    deleteMessage(messageId: bigint): Promise<DeleteMessageResponse> {
+    deleteMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.groupService.delete_messages({
-                thread_root_message_index: [],
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_ids: [messageId],
             }),
             deleteMessageResponse
@@ -423,11 +431,12 @@ export class GroupClient extends CandidService implements IGroupClient {
     registerPollVote(
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
         return this.handleResponse(
             this.groupService.register_poll_vote({
-                thread_root_message_index: [],
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 poll_option: answerIdx,
                 operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
                 message_index: messageIdx,

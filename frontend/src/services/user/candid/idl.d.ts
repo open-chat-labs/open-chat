@@ -26,6 +26,7 @@ import {
     AudioContent,
     GiphyContent,
     GiphyImageVariant,
+    ProposalContent,
     PollContent,
     PollVotes,
     PollConfig,
@@ -88,6 +89,7 @@ import {
     ChatMetrics,
     Cryptocurrency,
     PublicProfileResponse,
+    ThreadSummary,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -178,6 +180,8 @@ export {
     ChatMetrics as ApiChatMetrics,
     Cryptocurrency as ApiCryptocurrency,
     PublicProfileResponse as ApiPublicProfileResponse,
+    ThreadSummary as ApiThreadSummary,
+    ProposalContent as ApiProposalContent,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
