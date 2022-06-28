@@ -36,7 +36,6 @@
         groupEvents,
         replaceAffected,
         replaceLocal,
-        toggleReaction,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
     import { getNextEventAndMessageIndexes, threadStore } from "../../../stores/thread";
@@ -53,6 +52,7 @@
     import { toastStore } from "../../../stores/toast";
     import { dedupe } from "../../../utils/list";
     import { overwriteCachedEvents } from "../../../utils/caching";
+    import { localReactions, toggleReaction } from "../../../stores/reactions";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -68,7 +68,6 @@
     let selectingGif = false;
     let focusMessageIndex: number | undefined = undefined;
     let loading = false;
-    let localReactions: Record<string, LocalReaction[]> = {};
 
     let previousRootEvent: EventWrapper<Message> | undefined;
 
@@ -173,10 +172,8 @@
         if (resp === "events_failed") return [];
 
         return replaceAffected(
-            $chat.chatId,
             replaceLocal(currentUser.userId, $chat.chatId, $chat.readByMe, events, resp.events),
-            resp.affectedEvents,
-            localReactions
+            resp.affectedEvents
         );
 
         // TODO - we *will* need something like this
@@ -503,8 +500,7 @@
         draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
     }
 
-    // TODO - local reactions is keyed on messageId so it can just be made global and then this can become a pure util and
-    // we can get rid of the duplication
+    // TODO - we have got rid of a lot of duplication but there is more that can be done
     function swapReaction(messageId: bigint, reaction: string): void {
         messageId = BigInt(messageId);
         const key = messageId.toString();

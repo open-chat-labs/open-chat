@@ -3,18 +3,11 @@ import { dedupe } from "../utils/list";
 import type {
     ChatEvent,
     EventWrapper,
-    LocalReaction,
     Message,
     MessageContent,
     ThreadSummary,
 } from "../domain/chat/chat";
-import {
-    containsReaction,
-    toggleReaction,
-    updateEventPollContent,
-} from "../domain/chat/chat.utils";
-
-const localReactions: Record<string, LocalReaction[]> = {};
+import { updateEventPollContent } from "../domain/chat/chat.utils";
 
 /**
  * This just holds some dummy state for us while we don't have an api
@@ -146,45 +139,6 @@ export const threadStore = {
             store[rootMessageIndex] = store[rootMessageIndex].map((e) =>
                 updateEventPollContent(messageIndex, answerIndex, type, userId, e)
             );
-            return store;
-        });
-    },
-    // todo - this is not ready and isn't going to work yet
-    toggleReaction: (
-        rootMessageIndex: number,
-        messageId: bigint,
-        reaction: string,
-        userId: string
-    ): void => {
-        messageId = BigInt(messageId);
-        const key = messageId.toString();
-        if (localReactions[key] === undefined) {
-            localReactions[key] = [];
-        }
-        const messageReactions = localReactions[key];
-        update((store) => {
-            store[rootMessageIndex].map((e) => {
-                if (e.event.kind === "message" && e.event.messageId === messageId) {
-                    const addOrRemove = containsReaction(userId, reaction, e.event.reactions)
-                        ? "remove"
-                        : "add";
-                    messageReactions.push({
-                        reaction,
-                        timestamp: Date.now(),
-                        kind: addOrRemove,
-                        userId,
-                    });
-                    const updatedEvent = {
-                        ...e,
-                        event: {
-                            ...e.event,
-                            reactions: toggleReaction(userId, e.event.reactions, reaction),
-                        },
-                    };
-                    return updatedEvent;
-                }
-                return e;
-            });
             return store;
         });
     },

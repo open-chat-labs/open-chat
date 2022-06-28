@@ -10,7 +10,6 @@ import type {
     EventWrapper,
     FullParticipant,
     GroupChatDetails,
-    LocalReaction,
     Message,
     MessageContent,
     Participant,
@@ -28,12 +27,10 @@ import {
     getNextMessageIndex,
     indexRangeForChat,
     mergeUnconfirmedIntoSummary,
-    pruneLocalReactions,
     replaceAffected,
     replaceLocal,
     replaceMessageContent,
     serialiseMessageForRtc,
-    toggleReaction,
     userIdsFromEvents,
     indexIsInRanges,
     updateEventPollContent,
@@ -57,8 +54,8 @@ import { immutableStore } from "../stores/immutable";
 import { replace } from "svelte-spa-router";
 import { messagesRead } from "../stores/markRead";
 import { isPreviewing } from "../domain/chat/chat.utils.shared";
+import { localReactions, toggleReaction } from "../stores/reactions";
 
-const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 
 export class ChatController {
@@ -76,9 +73,7 @@ export class ChatController {
     public chatUserIds: Set<string>;
     public loading: Writable<boolean>;
 
-    private localReactions: Record<string, LocalReaction[]> = {};
     private initialised = false;
-    private pruneInterval: number | undefined;
     private groupDetails: GroupChatDetails | undefined;
     private onEvent?: (evt: ChatState) => void;
     private confirmedEventIndexesLoaded = new DRange();
@@ -121,19 +116,12 @@ export class ChatController {
             } else {
                 this.loadPreviousMessages();
             }
-            this.pruneInterval = window.setInterval(() => {
-                this.localReactions = pruneLocalReactions(this.localReactions);
-            }, PRUNE_LOCAL_REACTIONS_INTERVAL);
             this.loadDetails();
         }
     }
 
     destroy(): void {
-        if (this.pruneInterval !== undefined) {
-            console.log("Stopping the local reactions pruner");
-            window.clearInterval(this.pruneInterval);
-            this.events.set([]);
-        }
+        this.events.set([]);
     }
 
     get chatVal(): ChatSummary {
@@ -354,7 +342,6 @@ export class ChatController {
         }
 
         const updated = replaceAffected(
-            this.chatId,
             replaceLocal(
                 this.user.userId,
                 this.chatId,
@@ -362,8 +349,7 @@ export class ChatController {
                 keepCurrentEvents ? events : [],
                 resp.events
             ),
-            resp.affectedEvents,
-            this.localReactions
+            resp.affectedEvents
         );
 
         const userIds = userIdsFromEvents(updated);
@@ -679,10 +665,10 @@ export class ChatController {
     toggleReaction(messageId: bigint, reaction: string, userId: string): void {
         messageId = BigInt(messageId);
         const key = messageId.toString();
-        if (this.localReactions[key] === undefined) {
-            this.localReactions[key] = [];
+        if (localReactions[key] === undefined) {
+            localReactions[key] = [];
         }
-        const messageReactions = this.localReactions[key];
+        const messageReactions = localReactions[key];
         this.events.update((events) =>
             events.map((e) => {
                 if (e.event.kind === "message" && e.event.messageId === messageId) {
