@@ -9,11 +9,11 @@ use canister_state_macros::canister_state;
 use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
 use notifications_canister::c2c_push_notification;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
-use types::{Avatar, CanisterId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
+use types::{Avatar, CanisterId, ChatId, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
 use utils::rand::get_random_item;
@@ -117,7 +117,8 @@ struct Data {
     pub owner: Principal,
     pub direct_chats: DirectChats,
     pub group_chats: GroupChats,
-    pub blocked_users: HashSet<UserId>,
+    #[serde(deserialize_with = "deserialize_blocked_users")]
+    pub blocked_users: Timestamped<HashSet<UserId>>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_ids: Vec<CanisterId>,
@@ -136,6 +137,16 @@ struct Data {
     pub storage_limit: u64,
     pub phone_is_verified: bool,
     pub user_created: TimestampMillis,
+    #[serde(default)]
+    pub pinned_chats: Timestamped<Vec<ChatId>>,
+}
+
+fn deserialize_blocked_users<'de, D>(deserializer: D) -> Result<Timestamped<HashSet<UserId>>, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    let blocked_users: HashSet<UserId> = de::Deserialize::deserialize(deserializer)?;
+    Ok(Timestamped::new(blocked_users, 1))
 }
 
 impl Data {
@@ -155,7 +166,7 @@ impl Data {
             owner,
             direct_chats: DirectChats::default(),
             group_chats: GroupChats::default(),
-            blocked_users: HashSet::new(),
+            blocked_users: Timestamped::default(),
             user_index_canister_id,
             group_index_canister_id,
             notifications_canister_ids,
@@ -173,6 +184,7 @@ impl Data {
             storage_limit: 0,
             phone_is_verified: false,
             user_created: now,
+            pinned_chats: Timestamped::default(),
         }
     }
 
@@ -185,6 +197,32 @@ impl Data {
             Some(self.group_creation_limit)
         } else {
             None
+        }
+    }
+
+    pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) {
+        if self.blocked_users.value.insert(user_id) {
+            self.blocked_users.timestamp = now;
+        }
+    }
+
+    pub fn unblock_user(&mut self, user_id: &UserId, now: TimestampMillis) {
+        if self.blocked_users.value.remove(user_id) {
+            self.blocked_users.timestamp = now;
+        }
+    }
+
+    pub fn pin_chat(&mut self, chat_id: ChatId, now: TimestampMillis) {
+        if !self.pinned_chats.value.contains(&chat_id) {
+            self.pinned_chats.timestamp = now;
+            self.pinned_chats.value.insert(0, chat_id);
+        }
+    }
+
+    pub fn unpin_chat(&mut self, chat_id: &ChatId, now: TimestampMillis) {
+        if self.pinned_chats.value.contains(chat_id) {
+            self.pinned_chats.timestamp = now;
+            self.pinned_chats.value.retain(|pinned_chat_id| pinned_chat_id != chat_id);
         }
     }
 }
