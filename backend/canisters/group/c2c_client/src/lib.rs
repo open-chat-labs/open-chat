@@ -13,6 +13,7 @@ generate_c2c_call!(c2c_delete_group);
 generate_c2c_call!(c2c_dismiss_super_admin);
 generate_c2c_call!(c2c_join_group_v2);
 generate_c2c_call!(c2c_leave_group);
+generate_c2c_call!(c2c_register_proposal_vote);
 generate_c2c_call!(c2c_relinquish_super_admin);
 generate_c2c_call!(c2c_toggle_mute_notifications);
 generate_c2c_call!(send_message);

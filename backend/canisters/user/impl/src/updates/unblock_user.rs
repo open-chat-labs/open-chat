@@ -13,6 +13,7 @@ fn unblock_user(args: Args) -> Response {
 }
 
 fn unblock_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.blocked_users.remove(&args.user_id);
+    let now = runtime_state.env.now();
+    runtime_state.data.unblock_user(&args.user_id, now);
     Response::Success
 }

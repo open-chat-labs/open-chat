@@ -61,7 +61,7 @@ import { GroupClient } from "../../services/group/group.client";
 import type { Identity } from "@dfinity/agent";
 import { scrollStrategy } from "../../stores/settings";
 import { get } from "svelte/store";
-import type { IMessageReadTracker } from "../../stores/markRead";
+import { messagesRead } from "../../stores/markRead";
 import { missingUserIds } from "../../domain/user/user.utils";
 import { userStore } from "stores/user";
 import { UserIndexClient } from "services/userIndex/userIndex.client";
@@ -95,9 +95,10 @@ export class CachingUserClient implements IUserClient {
 
     private setCachedEvents<T extends ChatEvent>(
         userId: string,
-        resp: EventsResponse<T>
+        resp: EventsResponse<T>,
+        threadRootMessageIndex?: number
     ): EventsResponse<T> {
-        setCachedEvents(this.db, userId, resp).catch((err) =>
+        setCachedEvents(this.db, userId, resp, threadRootMessageIndex).catch((err) =>
             rollbar.error("Error writing cached group events", err)
         );
         return resp;
@@ -105,14 +106,15 @@ export class CachingUserClient implements IUserClient {
 
     private handleMissingEvents(
         userId: string,
-        [cachedEvents, missing]: [EventsSuccessResult<DirectChatEvent>, Set<number>]
+        [cachedEvents, missing]: [EventsSuccessResult<DirectChatEvent>, Set<number>],
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
         } else {
             return this.client
-                .chatEventsByIndex([...missing], userId)
-                .then((resp) => this.setCachedEvents(userId, resp))
+                .chatEventsByIndex([...missing], userId, threadRootMessageIndex)
+                .then((resp) => this.setCachedEvents(userId, resp, threadRootMessageIndex))
                 .then((resp) => {
                     if (resp !== "events_failed") {
                         return mergeSuccessResponses(cachedEvents, resp);
@@ -125,11 +127,15 @@ export class CachingUserClient implements IUserClient {
     @profile("userCachingClient")
     async chatEventsByIndex(
         eventIndexes: number[],
-        userId: string
+        userId: string,
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>> {
-        return getCachedEventsByIndex<DirectChatEvent>(this.db, eventIndexes, userId).then((res) =>
-            this.handleMissingEvents(userId, res)
-        );
+        return getCachedEventsByIndex<DirectChatEvent>(
+            this.db,
+            eventIndexes,
+            userId,
+            threadRootMessageIndex
+        ).then((res) => this.handleMissingEvents(userId, res, threadRootMessageIndex));
     }
 
     @profile("userCachingClient")
@@ -166,14 +172,16 @@ export class CachingUserClient implements IUserClient {
         userId: string,
         startIndex: number,
         ascending: boolean,
-        interrupt: ServiceRetryInterrupt
+        threadRootMessageIndex?: number,
+        interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
             this.db,
             eventIndexRange,
             userId,
             startIndex,
-            ascending
+            ascending,
+            threadRootMessageIndex
         );
 
         // we may or may not have all of the requested events
@@ -181,17 +189,27 @@ export class CachingUserClient implements IUserClient {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log("We didn't get enough back from the cache, going to the api");
             return this.client
-                .chatEvents(eventIndexRange, userId, startIndex, ascending, interrupt)
-                .then((resp) => this.setCachedEvents(userId, resp));
+                .chatEvents(
+                    eventIndexRange,
+                    userId,
+                    startIndex,
+                    ascending,
+                    threadRootMessageIndex,
+                    interrupt
+                )
+                .then((resp) => this.setCachedEvents(userId, resp, threadRootMessageIndex));
         } else {
-            return this.handleMissingEvents(userId, [cachedEvents, missing]);
+            return this.handleMissingEvents(
+                userId,
+                [cachedEvents, missing],
+                threadRootMessageIndex
+            );
         }
     }
 
     private async primeCaches(
         cachedResponse: MergedUpdatesResponse | undefined,
         nextResponse: MergedUpdatesResponse,
-        messagesRead: IMessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<void> {
         const cachedChats =
@@ -224,11 +242,11 @@ export class CachingUserClient implements IUserClient {
 
                 if (currentScrollStrategy === "firstMention") {
                     targetMessageIndex =
-                        getFirstUnreadMention(messagesRead, chat)?.messageIndex ??
-                        getFirstUnreadMessageIndex(messagesRead, chat);
+                        getFirstUnreadMention(chat)?.messageIndex ??
+                        getFirstUnreadMessageIndex(chat);
                 }
                 if (currentScrollStrategy === "firstMessage") {
-                    targetMessageIndex = getFirstUnreadMessageIndex(messagesRead, chat);
+                    targetMessageIndex = getFirstUnreadMessageIndex(chat);
                 }
 
                 const range = indexRangeForChat(chat);
@@ -249,7 +267,13 @@ export class CachingUserClient implements IUserClient {
 
                     return targetMessageIndex !== undefined
                         ? groupClient.chatEventsWindow(range, targetMessageIndex, () => true)
-                        : groupClient.chatEvents(range, chat.latestEventIndex, false, () => true);
+                        : groupClient.chatEvents(
+                              range,
+                              chat.latestEventIndex,
+                              false,
+                              undefined,
+                              () => true
+                          );
                 } else {
                     return targetMessageIndex !== undefined
                         ? this.chatEventsWindow(range, chat.chatId, targetMessageIndex, () => true)
@@ -258,6 +282,7 @@ export class CachingUserClient implements IUserClient {
                               chat.chatId,
                               chat.latestEventIndex,
                               false,
+                              undefined,
                               () => true
                           );
                 }
@@ -295,10 +320,7 @@ export class CachingUserClient implements IUserClient {
     }
 
     @profile("userCachingClient")
-    async getInitialState(
-        messagesRead: IMessageReadTracker,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse> {
+    async getInitialState(selectedChatId: string | undefined): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         // if we have cached chats we will rebuild the UpdateArgs from that cached data
         if (cachedChats) {
@@ -306,20 +328,19 @@ export class CachingUserClient implements IUserClient {
                 .getUpdates(
                     cachedChats.chatSummaries,
                     updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries),
-                    messagesRead,
                     selectedChatId // WARNING: This was left undefined previously - is this correct now
                 )
                 .then((resp) => {
                     resp.wasUpdated = true;
-                    this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
+                    this.primeCaches(cachedChats, resp, selectedChatId);
                     return resp;
                 })
                 .then((resp) => this.setCachedChats(resp));
         } else {
             return this.client
-                .getInitialState(messagesRead, selectedChatId)
+                .getInitialState(selectedChatId)
                 .then((resp) => {
-                    this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
+                    this.primeCaches(cachedChats, resp, selectedChatId);
                     return resp;
                 })
                 .then((resp) => this.setCachedChats(resp));
@@ -330,15 +351,13 @@ export class CachingUserClient implements IUserClient {
     async getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
-        messagesRead: IMessageReadTracker,
-
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse> {
         const cachedChats = await getCachedChats(this.db, this.userId);
         return this.client
-            .getUpdates(chatSummaries, args, messagesRead, selectedChatId) // WARNING: This was left undefined previously - is this correct now
+            .getUpdates(chatSummaries, args, selectedChatId) // WARNING: This was left undefined previously - is this correct now
             .then((resp) => {
-                this.primeCaches(cachedChats, resp, messagesRead, selectedChatId);
+                this.primeCaches(cachedChats, resp, selectedChatId);
                 return resp;
             })
             .then((resp) => this.setCachedChats(resp));
@@ -348,8 +367,12 @@ export class CachingUserClient implements IUserClient {
         return this.client.createGroup(group);
     }
 
-    editMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
-        return this.client.editMessage(recipientId, message);
+    editMessage(
+        recipientId: string,
+        message: Message,
+        threadRootMessageIndex?: number
+    ): Promise<EditMessageResponse> {
+        return this.client.editMessage(recipientId, message, threadRootMessageIndex);
     }
 
     @profile("userCachingClient")
@@ -369,11 +392,19 @@ export class CachingUserClient implements IUserClient {
         recipientId: string,
         sender: UserSummary,
         message: Message,
-        replyingToChatId?: string
+        replyingToChatId?: string,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse> {
         return this.client
-            .sendMessage(recipientId, sender, message, replyingToChatId)
-            .then(setCachedMessageFromSendResponse(this.db, this.userId, message));
+            .sendMessage(recipientId, sender, message, replyingToChatId, threadRootMessageIndex)
+            .then(
+                setCachedMessageFromSendResponse(
+                    this.db,
+                    this.userId,
+                    message,
+                    threadRootMessageIndex
+                )
+            );
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {
@@ -406,13 +437,18 @@ export class CachingUserClient implements IUserClient {
     toggleReaction(
         otherUserId: string,
         messageId: bigint,
-        reaction: string
+        reaction: string,
+        threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse> {
-        return this.client.toggleReaction(otherUserId, messageId, reaction);
+        return this.client.toggleReaction(otherUserId, messageId, reaction, threadRootMessageIndex);
     }
 
-    deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse> {
-        return this.client.deleteMessage(otherUserId, messageId);
+    deleteMessage(
+        otherUserId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse> {
+        return this.client.deleteMessage(otherUserId, messageId, threadRootMessageIndex);
     }
 
     searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse> {
@@ -458,9 +494,16 @@ export class CachingUserClient implements IUserClient {
         otherUser: string,
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse> {
-        return this.client.registerPollVote(otherUser, messageIdx, answerIdx, voteType);
+        return this.client.registerPollVote(
+            otherUser,
+            messageIdx,
+            answerIdx,
+            voteType,
+            threadRootMessageIndex
+        );
     }
 
     withdrawCryptocurrency(

@@ -40,7 +40,6 @@
     export let canInvite: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let threadSummary: ThreadSummary | undefined;
     export let selectedThreadMessageIndex: number | undefined;
     export let inThread: boolean;
 
@@ -48,8 +47,8 @@
         dispatch("editEvent", event as EventWrapper<Message>);
     }
 
-    function replyInThread(ev: CustomEvent<Message>) {
-        dispatch("replyInThread", { rootEvent: event, threadSummary: ev.detail });
+    function replyInThread() {
+        dispatch("replyInThread", { rootEvent: event });
     }
 </script>
 
@@ -77,7 +76,6 @@
         {canReact}
         {publicGroup}
         {editing}
-        {threadSummary}
         {inThread}
         on:chatWith
         on:goToMessageIndex

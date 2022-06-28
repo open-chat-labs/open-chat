@@ -31,6 +31,8 @@ import type {
     PendingCryptocurrencyWithdrawal,
     GiphyContent,
     GiphyImage,
+    ThreadSummary,
+    ProposalContent,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { User } from "../../domain/user/user";
@@ -65,9 +67,11 @@ import type {
     ApiGiphyContent,
     ApiGiphyImageVariant,
     ApiCryptocurrency,
+    ApiThreadSummary,
+    ApiProposalContent,
 } from "../user/candid/idl";
 import type { ApiRegisterPollVoteResponse as ApiRegisterGroupPollVoteResponse } from "../group/candid/idl";
-import { emptyChatMetrics } from "../../domain/chat/chat.utils";
+import { emptyChatMetrics } from "../../domain/chat/chat.utils.shared";
 import type { Cryptocurrency } from "../../domain/crypto";
 
 export function message(candid: ApiMessage): Message {
@@ -81,6 +85,16 @@ export function message(candid: ApiMessage): Message {
         reactions: reactions(candid.reactions),
         edited: candid.edited,
         forwarded: candid.forwarded,
+        thread: optional(candid.thread_summary, threadSummary),
+    };
+}
+
+export function threadSummary(candid: ApiThreadSummary): ThreadSummary {
+    return {
+        participantIds: new Set(candid.participant_ids.map((p) => p.toString())),
+        numberOfReplies: Number(candid.reply_count),
+        latestEventIndex: Number(candid.latest_event_index),
+        latestEventTimestamp: candid.latest_event_timestamp,
     };
 }
 
@@ -126,6 +140,9 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
     if ("Giphy" in candid) {
         return giphyContent(candid.Giphy);
     }
+    if ("GovernanceProposal" in candid) {
+        return governanceProposal(candid.GovernanceProposal);
+    }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
@@ -133,6 +150,22 @@ export function apiUser(domain: User): ApiUser {
     return {
         user_id: Principal.fromText(domain.userId),
         username: domain.username,
+    };
+}
+
+function governanceProposal(candid: ApiProposalContent): ProposalContent {
+    return {
+        kind: "proposal_content",
+        url: candid.url,
+        title: candid.title,
+        myVote: optional(candid.my_vote, identity),
+        rejectVotes: candid.reject_votes,
+        deadline: candid.deadline,
+        adoptVotes: candid.adopt_votes,
+        summary: candid.summary,
+        proposalId: candid.proposal_id,
+        governanceCanisterId: candid.governance_canister_id.toString(),
+        proposer: candid.proposer,
     };
 }
 
@@ -468,9 +501,27 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
         case "giphy_content":
             return { Giphy: apiGiphyContent(domain) };
 
+        case "proposal_content":
+            return { GovernanceProposal: apiProposalContent(domain) };
+
         case "placeholder_content":
             throw new Error("Incorrectly attempting to send placeholder content to the server");
     }
+}
+
+function apiProposalContent(domain: ProposalContent): ApiProposalContent {
+    return {
+        url: domain.url,
+        title: domain.title,
+        my_vote: apiOptional(identity, domain.myVote),
+        reject_votes: domain.rejectVotes,
+        deadline: domain.deadline,
+        adopt_votes: domain.adoptVotes,
+        summary: domain.summary,
+        proposal_id: domain.proposalId,
+        governance_canister_id: Principal.fromText(domain.governanceCanisterId),
+        proposer: domain.proposer,
+    };
 }
 
 function apiGiphyContent(domain: GiphyContent): ApiGiphyContent {
@@ -573,7 +624,7 @@ function apiAudioContent(domain: AudioContent): ApiAudioContent {
 }
 
 export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [] | [A] {
-    return domain ? [mapper(domain)] : [];
+    return domain !== undefined ? [mapper(domain)] : [];
 }
 
 function apiBlobReference(domain?: BlobReference): [] | [ApiBlobReference] {

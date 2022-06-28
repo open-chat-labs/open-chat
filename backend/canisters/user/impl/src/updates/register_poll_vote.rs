@@ -1,6 +1,6 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::RegisterVoteResult;
+use chat_events::RegisterPollVoteResult;
 use ic_cdk_macros::update;
 use user_canister::register_poll_vote::{Response::*, *};
 
@@ -22,10 +22,10 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
             .register_poll_vote(my_user_id, args.message_index, args.poll_option, args.operation, now);
 
         match result {
-            RegisterVoteResult::Success(votes) | RegisterVoteResult::SuccessNoChange(votes) => Success(votes),
-            RegisterVoteResult::PollEnded => PollEnded,
-            RegisterVoteResult::PollNotFound => PollNotFound,
-            RegisterVoteResult::OptionIndexOutOfRange => OptionIndexOutOfRange,
+            RegisterPollVoteResult::Success(votes) | RegisterPollVoteResult::SuccessNoChange(votes) => Success(votes),
+            RegisterPollVoteResult::PollEnded => PollEnded,
+            RegisterPollVoteResult::PollNotFound => PollNotFound,
+            RegisterPollVoteResult::OptionIndexOutOfRange => OptionIndexOutOfRange,
         }
     } else {
         ChatNotFound

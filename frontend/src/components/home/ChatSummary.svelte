@@ -13,15 +13,15 @@
         getDisplayDate,
         getMinVisibleMessageIndex,
         getTypingString,
-        isPreviewing,
     } from "../../domain/chat/chat.utils";
+    import { isPreviewing } from "../../domain/chat/chat.utils.shared";
     import type { ChatSummary } from "../../domain/chat/chat";
     import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
     import { TypersByChat, typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
-    import type { IMessageReadTracker } from "../../stores/markRead";
+    import { messagesRead } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
     import { createEventDispatcher, onDestroy } from "svelte";
     import { toTitleCase } from "../../utils/string";
@@ -33,7 +33,6 @@
     export let chatSummary: ChatSummary;
     export let userId: string;
     export let selected: boolean;
-    export let messagesRead: IMessageReadTracker;
 
     const dispatch = createEventDispatcher();
     let hovering = false;

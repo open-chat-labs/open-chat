@@ -14,7 +14,7 @@
     import { formatMessageDate } from "../../../utils/date";
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import type { CreatedUser } from "../../../domain/user/user";
-    import { currentUserKey } from "../../../fsm/home.controller";
+    import { currentUserKey } from "../../../stores/user";
 
     export let pinned: Set<number>;
     export let chatId: string;

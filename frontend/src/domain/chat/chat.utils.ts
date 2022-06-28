@@ -38,7 +38,7 @@ import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
 import { _ } from "svelte-i18n";
 import { unconfirmed } from "../../stores/unconfirmed";
-import type { IMessageReadTracker } from "../../stores/markRead";
+import { messagesRead } from "../../stores/markRead";
 import { applyOptionUpdate } from "../../utils/mapping";
 import { get } from "svelte/store";
 import { formatTokens } from "../../utils/cryptoFormatter";
@@ -47,12 +47,11 @@ import type { TypersByChat } from "../../stores/typing";
 import { Cryptocurrency, cryptoLookup } from "../crypto";
 import Identicon from "identicon.js";
 import md5 from "md5";
-import type { BlobReference } from "../../domain/data/data";
+import { emptyChatMetrics } from "./chat.utils.shared";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 export const EVENT_PAGE_SIZE = 50;
 export const MAX_MISSING = 30;
-export const MAX_EVENTS = 150;
 
 export function newMessageId(): bigint {
     return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
@@ -83,6 +82,8 @@ export function getContentAsText(content: MessageContent): string {
         text = "placeholder content";
     } else if (content.kind === "poll_content") {
         text = "poll";
+    } else if (content.kind === "proposal_content") {
+        text = "governance proposal";
     } else if (content.kind === "giphy_content") {
         text = captionedContent(get(_)("giphyMessage"), content.caption);
     } else {
@@ -305,6 +306,7 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "deleted_content" &&
         content.kind !== "placeholder_content" &&
         content.kind !== "poll_content" &&
+        content.kind !== "proposal_content" &&
         content.kind !== "crypto_content"
         ? { ...content, caption }
         : content;
@@ -871,6 +873,7 @@ function mergeMessageEvents(
                     ...existing.event,
                     content: incoming.event.content,
                     reactions: merged,
+                    thread: incoming.event.thread,
                 },
             };
         }
@@ -897,7 +900,6 @@ function partitionEvents(
 export function replaceLocal(
     userId: string,
     chatId: string,
-    messageReadTracker: IMessageReadTracker,
     readByMe: DRange,
     onClient: EventWrapper<ChatEvent>[],
     fromServer: EventWrapper<ChatEvent>[]
@@ -914,13 +916,13 @@ export function replaceLocal(
             // only now do we consider this message confirmed
             const idNum = BigInt(id);
             if (unconfirmed.delete(chatId, idNum)) {
-                messageReadTracker.confirmMessage(chatId, e.event.messageIndex, idNum);
+                messagesRead.confirmMessage(chatId, e.event.messageIndex, idNum);
             } else if (
                 e.event.sender === userId &&
                 !indexIsInRanges(e.event.messageIndex, readByMe)
             ) {
                 // If this message was sent by us and is not currently marked as read, mark it as read
-                messageReadTracker.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
+                messagesRead.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
             }
             revokeObjectUrls(clientMsgs[id]);
             clientMsgs[id] = e;
@@ -1065,10 +1067,6 @@ function getLatestMessage(
         : chat.latestMessage;
 }
 
-export function isPreviewing(chat: ChatSummary): boolean {
-    return chat.kind === "group_chat" && chat.myRole === "previewer";
-}
-
 export function groupChatFromCandidate(
     userId: string,
     chatId: string,
@@ -1117,6 +1115,32 @@ export function getStorageRequiredForMessage(content: MessageContent | undefined
         default:
             return 0;
     }
+}
+
+export function updateEventPollContent<T extends ChatEvent>(
+    messageIndex: number,
+    answerIndex: number,
+    type: "register" | "delete",
+    userId: string,
+    evt: EventWrapper<T>
+): EventWrapper<T> {
+    if (
+        evt.event.kind === "message" &&
+        evt.event.messageIndex === messageIndex &&
+        evt.event.content.kind === "poll_content"
+    ) {
+        return {
+            ...evt,
+            event: {
+                ...evt.event,
+                content: {
+                    ...evt.event.content,
+                    votes: updatePollVotes(userId, evt.event.content, answerIndex, type),
+                },
+            },
+        };
+    }
+    return evt;
 }
 
 export function updatePollVotes(
@@ -1412,25 +1436,6 @@ export function buildTransactionUrl(content: CryptocurrencyContent): string | un
     return `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`;
 }
 
-export function emptyChatMetrics(): ChatMetrics {
-    return {
-        audioMessages: 0,
-        cyclesMessages: 0,
-        edits: 0,
-        icpMessages: 0,
-        giphyMessages: 0,
-        deletedMessages: 0,
-        fileMessages: 0,
-        pollVotes: 0,
-        textMessages: 0,
-        imageMessages: 0,
-        replies: 0,
-        videoMessages: 0,
-        polls: 0,
-        reactions: 0,
-    };
-}
-
 export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {
     return {
         audioMessages: a.audioMessages + b.audioMessages,
@@ -1457,20 +1462,14 @@ export function metricsEqual(a: ChatMetrics, b: ChatMetrics): boolean {
     );
 }
 
-export function getFirstUnreadMention(
-    messagesRead: IMessageReadTracker,
-    chat: ChatSummary
-): Mention | undefined {
+export function getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
     if (chat.kind === "direct_chat") return undefined;
     return chat.mentions.find(
         (m) => !messagesRead.isRead(chat.chatId, m.messageIndex, m.messageId)
     );
 }
 
-export function getFirstUnreadMessageIndex(
-    messagesRead: IMessageReadTracker,
-    chat: ChatSummary
-): number | undefined {
+export function getFirstUnreadMessageIndex(chat: ChatSummary): number | undefined {
     if (chat.kind === "group_chat" && chat.myRole === "previewer") return undefined;
 
     return messagesRead.getFirstUnreadMessageIndex(

@@ -13,7 +13,8 @@ export class Poller {
         private fn: () => Promise<void>,
         private interval: number,
         // If idleInterval is undefined then the job will not run while the app is idle
-        private idleInterval?: number
+        private idleInterval?: number,
+        private immediate?: boolean // whether to kick off the first iteration immediately
     ) {
         this.unsubscribeBackground = background.subscribe((hidden) => {
             this.start(hidden);
@@ -39,6 +40,8 @@ export class Poller {
         const firstInterval =
             this.lastExecutionTimestamp !== undefined
                 ? Math.max(0, this.lastExecutionTimestamp + interval - Date.now())
+                : this.immediate
+                ? 0
                 : interval;
 
         const runThenLoop = () => {
@@ -49,6 +52,7 @@ export class Poller {
             });
         };
 
+        this.immediate = false;
         this.timeoutId = window.setTimeout(runThenLoop, firstInterval);
     }
 

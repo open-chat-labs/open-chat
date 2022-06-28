@@ -46,7 +46,7 @@
     import { apiKey, ServiceContainer } from "../../../services/serviceContainer";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
-    import { currentUserKey } from "../../../fsm/home.controller";
+    import { currentUserKey } from "../../../stores/user";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;

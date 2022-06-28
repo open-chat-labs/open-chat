@@ -1,6 +1,6 @@
 WATCH=$1
 
-export INTERNET_IDENTITY_URL=http://localhost:8000?canisterId=rwlgt-iiaaa-aaaaa-aaaaa-cai
+export INTERNET_IDENTITY_URL=http://localhost:8000?canisterId=rno2w-sqaaa-aaaaa-aaacq-cai
 export DFX_NETWORK=local
 export DEV_PORT=5001
 export CLIENT_CACHING=true

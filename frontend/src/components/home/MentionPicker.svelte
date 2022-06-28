@@ -12,7 +12,7 @@
     import type { PartialUserSummary } from "../../domain/user/user";
     import type { CreatedUser } from "../../domain/user/user";
     import { userAvatarUrl } from "../../domain/user/user.utils";
-    import { currentUserKey } from "../../fsm/home.controller";
+    import { currentUserKey } from "../../stores/user";
     import { mobileWidth } from "../../stores/screenDimensions";
 
     const user = getContext<CreatedUser>(currentUserKey);

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 export const isTouchDevice: boolean =
+    process.env.NODE_ENV !== "test" &&
     //@ts-ignore
-    "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+    ("ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0);
 
 export const mobileOperatingSystem = getMobileOperatingSystem();
 
@@ -12,6 +13,10 @@ export const mobileOperatingSystem = getMobileOperatingSystem();
  * @returns {String}
  */
 function getMobileOperatingSystem(): string {
+    if (process.env.NODE_ENV === "test") {
+        return "unknown";
+    }
+
     //@ts-ignore
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 

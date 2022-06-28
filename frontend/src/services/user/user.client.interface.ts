@@ -1,4 +1,3 @@
-import type { IMessageReadTracker } from "../../stores/markRead";
 import type {
     EventsResponse,
     UpdateArgs,
@@ -38,13 +37,9 @@ export interface IUserClient {
     getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
-        messagesRead: IMessageReadTracker,
         selectedChatId: string | undefined
     ): Promise<MergedUpdatesResponse>;
-    getInitialState(
-        messagesRead: IMessageReadTracker,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse>;
+    getInitialState(selectedChatId: string | undefined): Promise<MergedUpdatesResponse>;
     chatEventsWindow(
         eventIndexRange: IndexRange,
         userId: string,
@@ -53,22 +48,29 @@ export interface IUserClient {
     ): Promise<EventsResponse<DirectChatEvent>>;
     chatEventsByIndex(
         eventIndexes: number[],
-        userId: string
+        userId: string,
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<DirectChatEvent>>;
     chatEvents(
         eventIndexRange: IndexRange,
         userId: string,
         startIndex: number,
         ascending: boolean,
+        threadRootMessageIndex?: number,
         interrupt?: ServiceRetryInterrupt
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
-    editMessage(recipientId: string, message: Message): Promise<EditMessageResponse>;
+    editMessage(
+        recipientId: string,
+        message: Message,
+        threadRootMessageIndex?: number
+    ): Promise<EditMessageResponse>;
     sendMessage(
         recipientId: string,
         sender: UserSummary,
         message: Message,
-        replyingToChatId?: string
+        replyingToChatId?: string,
+        threadRootMessageIndex?: number
     ): Promise<SendMessageResponse>;
     sendGroupICPTransfer(
         groupId: string,
@@ -85,9 +87,14 @@ export interface IUserClient {
     toggleReaction(
         otherUserId: string,
         messageId: bigint,
-        reaction: string
+        reaction: string,
+        threadRootMessageIndex?: number
     ): Promise<ToggleReactionResponse>;
-    deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse>;
+    deleteMessage(
+        otherUserId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeleteMessageResponse>;
     searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse>;
     searchDirectChat(
         userId: string,
@@ -107,7 +114,8 @@ export interface IUserClient {
         otherUser: string,
         messageIdx: number,
         answerIdx: number,
-        voteType: "register" | "delete"
+        voteType: "register" | "delete",
+        threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse>;
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal

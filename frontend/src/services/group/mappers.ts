@@ -513,7 +513,6 @@ export function getMessagesByMessageIndexResponse(
     candid: ApiMessagesByMessageIndexResponse
 ): EventsResponse<Message> {
     if ("Success" in candid) {
-        console.log("event by index response: ", candid);
         return {
             events: candid.Success.messages.map(messageWrapper),
             affectedEvents: [],
@@ -541,7 +540,6 @@ export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Mes
 
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<GroupChatEvent> {
     if ("Success" in candid) {
-        console.log("event response: ", candid);
         return {
             events: candid.Success.events.map(event),
             affectedEvents: candid.Success.affected_events.map(event),
@@ -674,6 +672,11 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             name: candid.GroupChatCreated.name,
             description: candid.GroupChatCreated.description,
             created_by: candid.GroupChatCreated.created_by.toString(),
+        };
+    }
+    if ("DirectChatCreated" in candid) {
+        return {
+            kind: "direct_chat_created",
         };
     }
     if ("ParticipantsAdded" in candid) {

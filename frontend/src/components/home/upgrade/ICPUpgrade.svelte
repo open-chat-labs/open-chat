@@ -78,7 +78,6 @@
 
         api.upgradeStorage(newLimitBytes)
             .then((resp) => {
-                console.log("Notify: ", resp);
                 if (resp.kind === "success" || resp.kind === "success_no_change") {
                     refreshBalance();
                     updateStorageLimit(newLimitBytes);
