@@ -89,7 +89,7 @@
     let msgBubbleElement: HTMLElement;
     let groupChat = chatType === "group_chat";
     let showEmojiPicker = false;
-    let debug = false;
+    let debug = true;
     let viewProfile = false;
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
@@ -541,12 +541,12 @@
                                             slot="icon" />
                                         <div slot="text">{$_("reply")}</div>
                                     </MenuItem>
-                                    <!-- {#if !inThread}
+                                    {#if !inThread}
                                         <MenuItem on:click={replyInThread}>
                                             <span class="thread" slot="icon">🧵</span>
                                             <div slot="text">{$_("thread.menu")}</div>
                                         </MenuItem>
-                                    {/if} -->
+                                    {/if}
                                 {/if}
                                 {#if canForward(msg.content) && !inThread}
                                     <MenuItem on:click={forward}>

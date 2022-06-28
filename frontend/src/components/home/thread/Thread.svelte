@@ -71,7 +71,7 @@
             console.log("thread: loading old ", thread?.latestEventIndex ?? 0);
             previousRootEvent = rootEvent;
 
-            events = [rootEvent];
+            events = [];
             if (thread !== undefined) {
                 loadThreadMessages(
                     [0, thread.latestEventIndex],
@@ -148,10 +148,13 @@
         const eventsResponse = await eventsPromise;
 
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
-            events = dedupe(
-                (a, b) => a.index === b.index,
-                [...events, ...eventsResponse.events].sort((a, b) => a.index - b.index)
-            );
+            events = [
+                rootEvent,
+                ...dedupe(
+                    (a, b) => a.index === b.index,
+                    [...events, ...eventsResponse.events].sort((a, b) => a.index - b.index)
+                ),
+            ];
         }
 
         console.log("Events: ", events);
