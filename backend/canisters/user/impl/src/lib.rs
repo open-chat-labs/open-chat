@@ -166,7 +166,7 @@ impl Data {
             owner,
             direct_chats: DirectChats::default(),
             group_chats: GroupChats::default(),
-            blocked_users: Timestamped::new(HashSet::new(), 0),
+            blocked_users: Timestamped::default(),
             user_index_canister_id,
             group_index_canister_id,
             notifications_canister_ids,
@@ -184,7 +184,7 @@ impl Data {
             storage_limit: 0,
             phone_is_verified: false,
             user_created: now,
-            pinned_chats: Timestamped::new(Vec::new(), 0),
+            pinned_chats: Timestamped::default(),
         }
     }
 
@@ -215,7 +215,7 @@ impl Data {
     pub fn pin_chat(&mut self, chat_id: ChatId, now: TimestampMillis) {
         if !self.pinned_chats.value.contains(&chat_id) {
             self.pinned_chats.timestamp = now;
-            self.pinned_chats.value.push(chat_id);
+            self.pinned_chats.value.insert(0, chat_id);
         }
     }
 

@@ -602,7 +602,8 @@ export interface PermissionsChanged {
   'new_permissions' : GroupPermissions,
 }
 export interface PinChatRequest { 'chat_id' : ChatId }
-export type PinChatResponse = { 'Success' : null };
+export type PinChatResponse = { 'Success' : null } |
+  { 'PinnedLimitReached' : number };
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };

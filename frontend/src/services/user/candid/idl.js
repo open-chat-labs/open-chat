@@ -602,7 +602,10 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const PinChatRequest = IDL.Record({ 'chat_id' : ChatId });
-  const PinChatResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const PinChatResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'PinnedLimitReached' : IDL.Nat32,
+  });
   const PublicProfileArgs = IDL.Record({});
   const PublicProfile = IDL.Record({
     'bio' : IDL.Text,

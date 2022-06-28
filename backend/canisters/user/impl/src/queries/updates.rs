@@ -188,11 +188,7 @@ fn finalize(
         .if_set_after(updates_since)
         .map(|user_ids| user_ids.iter().copied().collect());
 
-    let pinned_chats = runtime_state
-        .data
-        .pinned_chats
-        .if_set_after(updates_since)
-        .map(|chat_ids| chat_ids.iter().rev().copied().collect());
+    let pinned_chats = runtime_state.data.pinned_chats.if_set_after(updates_since).cloned();
 
     let avatar_id = runtime_state
         .data

@@ -344,6 +344,7 @@ type PinChatRequest =
 type PinChatResponse =
     variant {
         Success;
+        PinnedLimitReached: nat32;
     };
 
 type UnpinChatRequest =
