@@ -74,6 +74,7 @@
         currentUserStore,
         removeChat,
         updateSummaryWithConfirmedMessage,
+        clearSelectedChat,
     } from "../../stores/chat";
     import { setCachedMessageFromNotification } from "../../utils/caching";
     import { missingUserIds } from "../../domain/user/user.utils";
@@ -122,6 +123,8 @@
     let interruptRecommended = false;
     let rightPanelHistory: RightPanelState[] = [];
     let messageToForward: Message | undefined = undefined;
+
+    $: console.log("Hot groups: ", hotGroups);
 
     $: selectedThreadMessageIndex = rightPanelHistory.reduce<number | undefined>(
         (_, s) => (s.kind === "message_thread_panel" ? s.rootEvent.event.messageIndex : undefined),
@@ -439,10 +442,6 @@
         searchTerm = "";
         searching = false;
         searchResultsAvailable = false;
-    }
-
-    function clearSelectedChat() {
-        push("/");
     }
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
