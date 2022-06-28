@@ -336,7 +336,6 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
 }
 
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
-    console.log("Send message response: ", candid);
     if ("Success" in candid) {
         return {
             kind: "success",
@@ -514,7 +513,6 @@ export function getMessagesByMessageIndexResponse(
     candid: ApiMessagesByMessageIndexResponse
 ): EventsResponse<Message> {
     if ("Success" in candid) {
-        console.log("event by index response: ", candid);
         return {
             events: candid.Success.messages.map(messageWrapper),
             affectedEvents: [],
@@ -542,7 +540,6 @@ export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Mes
 
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<GroupChatEvent> {
     if ("Success" in candid) {
-        console.log("event response: ", candid);
         return {
             events: candid.Success.events.map(event),
             affectedEvents: candid.Success.affected_events.map(event),
