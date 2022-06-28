@@ -71,9 +71,7 @@
             <div slot="body" class="body" class:modal>
                 <Avatar url={avatarUrl} size={AvatarSize.ExtraLarge} />
                 <h2>{profile.username}</h2>
-                {#if status.length > 0}
-                    <p>{status}</p>
-                {/if}
+                <p>{status === "" ? "..." : status}</p>
                 {#if profile.bio.length > 0}
                     <p class="bio"><Markdown text={profile.bio} /></p>
                 {/if}

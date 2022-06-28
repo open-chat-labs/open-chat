@@ -40,7 +40,7 @@
     function calculatePosition() {
         if (alignTo !== undefined) {
             let modalRect = divElement.getBoundingClientRect();
-            let top = Math.min(alignTo.top - 8, window.innerHeight - (modalRect.height + 32));
+            let top = Math.min(alignTo.top - 8, window.innerHeight - (modalRect.height + 10));
 
             style = `position: absolute; visibility: visible; top: ${top}px; `;
 
