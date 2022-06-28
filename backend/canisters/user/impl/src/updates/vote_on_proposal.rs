@@ -1,7 +1,7 @@
-use crate::governance_client::GovernanceError;
+use crate::governance_clients::nns;
 use crate::guards::caller_is_owner;
 use crate::openchat_bot::send_voted_on_proposal_message;
-use crate::{governance_client, mutate_state, run_regular_jobs};
+use crate::{mutate_state, run_regular_jobs};
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
@@ -13,15 +13,16 @@ use user_canister::vote_on_proposal::{Response::*, *};
 async fn vote_on_proposal(args: Args) -> Response {
     run_regular_jobs();
 
-    let mut neuron_ids = match governance_client::get_neuron_ids(args.governance_canister_id).await {
-        Ok(n) => n,
+    let mut ballots = match nns::get_ballots(args.governance_canister_id, args.proposal_id).await {
+        Ok(b) => b,
         Err(error) => return InternalError(format!("{:?}", error)),
     };
-    neuron_ids.sort_unstable();
+    ballots.sort_unstable_by_key(|(n, _)| *n);
 
-    let vote_futures: Vec<_> = neuron_ids
+    let vote_futures: Vec<_> = ballots
         .into_iter()
-        .map(|neuron_id| register_vote(args.governance_canister_id, neuron_id, args.proposal_id, args.adopt))
+        .filter(|(_, vote)| vote.is_none())
+        .map(|(neuron_id, _)| register_vote(args.governance_canister_id, neuron_id, args.proposal_id, args.adopt))
         .collect();
 
     let vote_results = futures::future::join_all(vote_futures).await;
@@ -61,8 +62,8 @@ async fn register_vote(
     neuron_id: NeuronId,
     proposal_id: ProposalId,
     adopt: bool,
-) -> (NeuronId, CallResult<Result<(), GovernanceError>>) {
-    let response = governance_client::register_vote(governance_canister_id, neuron_id, proposal_id, adopt).await;
+) -> (NeuronId, CallResult<Result<(), nns::GovernanceError>>) {
+    let response = nns::register_vote(governance_canister_id, neuron_id, proposal_id, adopt).await;
     (neuron_id, response)
 }
 
