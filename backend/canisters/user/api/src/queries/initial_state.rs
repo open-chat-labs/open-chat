@@ -19,4 +19,5 @@ pub struct SuccessResult {
     pub cycles_balance: Cycles,
     pub upgrades_in_progress: Vec<ChatId>,
     pub user_canister_wasm_version: Version,
+    pub pinned_chats: Vec<ChatId>,
 }

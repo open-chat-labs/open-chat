@@ -35,7 +35,6 @@ export class DataClient implements IDataClient {
     storageStatus(): Promise<StorageStatus> {
         return this.openStorageAgent.user().then((resp) => {
             if (resp.kind === "user") {
-                console.log("User storage: ", resp);
                 return {
                     byteLimit: Number(resp.byteLimit),
                     bytesUsed: Number(resp.bytesUsed),
@@ -112,8 +111,8 @@ export class DataClient implements IDataClient {
                     byteLimit = Number(video.projectedAllowance.byteLimit);
                     bytesUsed = Number(
                         video.projectedAllowance.bytesUsedAfterOperation +
-                        image.projectedAllowance.bytesUsedAfterOperation -
-                        image.projectedAllowance.bytesUsed
+                            image.projectedAllowance.bytesUsedAfterOperation -
+                            image.projectedAllowance.bytesUsed
                     );
                 });
             }
@@ -158,8 +157,8 @@ export class DataClient implements IDataClient {
                         ...content,
                         blobReference: {
                             canisterId: content.blobReference.canisterId,
-                            blobId: response.newFileId
-                        }
+                            blobId: response.newFileId,
+                        },
                     };
                 } else {
                     if (response.kind === "allowance_exceeded") {
@@ -182,21 +181,20 @@ export class DataClient implements IDataClient {
                     this.openStorageAgent.forwardFile(
                         Principal.fromText(videoCanisterId),
                         content.videoData.blobReference.blobId,
-                        accessorIds,
+                        accessorIds
                     ),
                     this.openStorageAgent.forwardFile(
                         Principal.fromText(imageCanisterId),
                         content.imageData.blobReference.blobId,
-                        accessorIds,
+                        accessorIds
                     ),
                 ]).then(([video, image]) => {
-
                     if (video.kind === "success" && image.kind === "success") {
                         byteLimit = Number(video.projectedAllowance.byteLimit);
                         bytesUsed = Number(
                             video.projectedAllowance.bytesUsedAfterOperation +
-                            image.projectedAllowance.bytesUsedAfterOperation -
-                            image.projectedAllowance.bytesUsed
+                                image.projectedAllowance.bytesUsedAfterOperation -
+                                image.projectedAllowance.bytesUsed
                         );
                         updatedContent = {
                             ...content,
@@ -205,7 +203,7 @@ export class DataClient implements IDataClient {
                                 blobReference: {
                                     canisterId: videoCanisterId,
                                     blobId: video.newFileId,
-                                }
+                                },
                             },
                             imageData: {
                                 ...content.imageData,
