@@ -6,7 +6,9 @@
     import type {
         ChatEvent,
         EnhancedReplyContext,
+        EventsResponse,
         EventWrapper,
+        LocalReaction,
         Message,
         MessageContent,
     } from "../../../domain/chat/chat";
@@ -27,10 +29,14 @@
         canPinMessages,
         canReactToMessages,
         canSendMessages,
+        containsReaction,
         createMessage,
         getMessageContent,
         getStorageRequiredForMessage,
         groupEvents,
+        replaceAffected,
+        replaceLocal,
+        toggleReaction,
     } from "../../../domain/chat/chat.utils";
     import { userStore } from "../../../stores/user";
     import { getNextEventAndMessageIndexes, threadStore } from "../../../stores/thread";
@@ -45,7 +51,8 @@
     import { trackEvent } from "../../../utils/tracking";
     import { rollbar } from "../../../utils/logging";
     import { toastStore } from "../../../stores/toast";
-    import { dedupe } from "utils/list";
+    import { dedupe } from "../../../utils/list";
+    import { overwriteCachedEvents } from "../../../utils/caching";
 
     const api = getContext<ServiceContainer>(apiKey);
     const currentUser = getContext<CreatedUser>(currentUserKey);
@@ -61,6 +68,7 @@
     let selectingGif = false;
     let focusMessageIndex: number | undefined = undefined;
     let loading = false;
+    let localReactions: Record<string, LocalReaction[]> = {};
 
     let previousRootEvent: EventWrapper<Message> | undefined;
 
@@ -150,12 +158,40 @@
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
             events = dedupe(
                 (a, b) => a.index === b.index,
-                [...events, ...eventsResponse.events].sort((a, b) => a.index - b.index)
+                handleEventsResponse(events, eventsResponse).sort((a, b) => a.index - b.index)
             );
         }
 
         console.log("Events: ", events);
         loading = false;
+    }
+
+    function handleEventsResponse(
+        events: EventWrapper<ChatEvent>[],
+        resp: EventsResponse<ChatEvent>
+    ): EventWrapper<ChatEvent>[] {
+        if (resp === "events_failed") return [];
+
+        return replaceAffected(
+            $chat.chatId,
+            replaceLocal(currentUser.userId, $chat.chatId, $chat.readByMe, events, resp.events),
+            resp.affectedEvents,
+            localReactions
+        );
+
+        // TODO - we *will* need something like this
+        // const userIds = userIdsFromEvents(updated);
+        // await this.updateUserStore(userIds);
+
+        // this.events.set(updated);
+
+        // TODO - do we need this confirmedEventIndexesLoaded thing?
+        // if (resp.events.length > 0) {
+        //     resp.events.forEach((e) => this.confirmedEventIndexesLoaded.add(e.index));
+        // }
+
+        // TODO - we will need this too
+        // this.makeRtcConnections();
     }
 
     function close() {
@@ -467,6 +503,58 @@
         draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
     }
 
+    // TODO - local reactions is keyed on messageId so it can just be made global and then this can become a pure util and
+    // we can get rid of the duplication
+    function swapReaction(messageId: bigint, reaction: string): void {
+        messageId = BigInt(messageId);
+        const key = messageId.toString();
+        if (localReactions[key] === undefined) {
+            localReactions[key] = [];
+        }
+        const messageReactions = localReactions[key];
+        events = events.map((e) => {
+            if (e.event.kind === "message" && e.event.messageId === messageId) {
+                const addOrRemove = containsReaction(
+                    currentUser.userId,
+                    reaction,
+                    e.event.reactions
+                )
+                    ? "remove"
+                    : "add";
+                messageReactions.push({
+                    reaction,
+                    timestamp: Date.now(),
+                    kind: addOrRemove,
+                    userId: currentUser.userId,
+                });
+                const updatedEvent = {
+                    ...e,
+                    event: {
+                        ...e.event,
+                        reactions: toggleReaction(currentUser.userId, e.event.reactions, reaction),
+                    },
+                };
+                overwriteCachedEvents($chat.chatId, [updatedEvent], threadRootMessageIndex).catch(
+                    (err) =>
+                        rollbar.error("Unable to overwrite cached event toggling reaction", err)
+                );
+                // TODO - deal with webrtc
+                // if (userId === currentUser.userId) {
+                //     rtcConnectionsManager.sendMessage([...this.chatUserIds], {
+                //         kind: "remote_user_toggled_reaction",
+                //         chatType: this.chatVal.kind,
+                //         chatId: this.chatVal.chatId,
+                //         messageId,
+                //         userId,
+                //         reaction,
+                //     });
+                // }
+                return updatedEvent;
+            }
+            return e;
+        });
+    }
+
     function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
         if (!canReact) return;
         // optimistic update
@@ -478,6 +566,7 @@
         //     ev.detail.reaction,
         //     controller.user.userId
         // );
+        swapReaction(ev.detail.message.messageId, ev.detail.reaction);
 
         const apiPromise =
             $chat.kind === "group_chat"

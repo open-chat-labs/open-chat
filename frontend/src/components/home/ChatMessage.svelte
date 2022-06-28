@@ -89,7 +89,7 @@
     let msgBubbleElement: HTMLElement;
     let groupChat = chatType === "group_chat";
     let showEmojiPicker = false;
-    let debug = true;
+    let debug = false;
     let viewProfile = false;
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
