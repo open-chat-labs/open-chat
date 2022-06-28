@@ -55,22 +55,15 @@ impl ProposalContentInternal {
         }
     }
 
-    // Attempts to register the vote, returns None if successful, else returns the existing vote.
-    pub fn register_vote(&mut self, user_id: UserId, adopt: bool) -> Option<bool> {
-        if adopt {
-            if self.reject_votes.contains(&user_id) {
-                Some(false)
-            } else if !self.adopt_votes.insert(user_id) {
-                Some(true)
-            } else {
-                None
-            }
-        } else if self.adopt_votes.contains(&user_id) {
-            Some(true)
-        } else if !self.reject_votes.insert(user_id) {
-            Some(false)
+    pub fn register_vote(&mut self, user_id: UserId, adopt: bool) -> Result<(), bool> {
+        if self.adopt_votes.contains(&user_id) {
+            Err(true)
+        } else if self.reject_votes.contains(&user_id) {
+            Err(false)
         } else {
-            None
+            let set = if adopt { &mut self.adopt_votes } else { &mut self.reject_votes };
+            set.insert(user_id);
+            Ok(())
         }
     }
 

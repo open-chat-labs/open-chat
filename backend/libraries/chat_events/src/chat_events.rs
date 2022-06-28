@@ -546,7 +546,7 @@ impl ChatEvents {
             .and_then(|e| e.event.as_message_mut())
         {
             if let MessageContentInternal::GovernanceProposal(p) = &mut message.content {
-                let existing_vote = p.register_vote(user_id, adopt);
+                let existing_vote = p.register_vote(user_id, adopt).err();
                 let adopt_votes = p.adopt_votes.len() as u32;
                 let reject_votes = p.reject_votes.len() as u32;
                 let result = RegisterProposalVoteSuccessResult {
