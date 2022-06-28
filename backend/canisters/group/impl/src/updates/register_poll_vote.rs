@@ -1,7 +1,7 @@
 use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::RegisterVoteResult;
+use chat_events::RegisterPollVoteResult;
 use group_canister::register_poll_vote::{Response::*, *};
 use ic_cdk_macros::update;
 
@@ -31,7 +31,7 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
             let result = chat_events.register_poll_vote(user_id, args.message_index, args.poll_option, args.operation, now);
 
             match result {
-                RegisterVoteResult::Success(votes) => {
+                RegisterPollVoteResult::Success(votes) => {
                     let latest_event = chat_events.last().index;
 
                     if let Some(thread_message_index) = args.thread_root_message_index {
@@ -47,10 +47,10 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
                     handle_activity_notification(runtime_state);
                     Success(votes)
                 }
-                RegisterVoteResult::SuccessNoChange(votes) => Success(votes),
-                RegisterVoteResult::PollEnded => PollEnded,
-                RegisterVoteResult::PollNotFound => PollNotFound,
-                RegisterVoteResult::OptionIndexOutOfRange => OptionIndexOutOfRange,
+                RegisterPollVoteResult::SuccessNoChange(votes) => Success(votes),
+                RegisterPollVoteResult::PollEnded => PollEnded,
+                RegisterPollVoteResult::PollNotFound => PollNotFound,
+                RegisterPollVoteResult::OptionIndexOutOfRange => OptionIndexOutOfRange,
             }
         } else {
             MessageNotFound

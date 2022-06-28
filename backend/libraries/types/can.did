@@ -32,7 +32,7 @@ type AudioContent =
         blob_reference: opt BlobReference;
     };
 
-type Avatar = 
+type Avatar =
     record {
         id: nat;
         mime_type: text;
@@ -75,6 +75,7 @@ type ChatMetrics =
         edits: nat64;
         reactions: nat64;
         proposals: nat64;
+        proposal_votes: nat64;
         last_active: TimestampMillis;
     };
 
@@ -208,6 +209,7 @@ type ChatEvent =
         PollVoteRegistered: UpdatedMessage;
         PollVoteDeleted: UpdatedMessage;
         PollEnded: PollEnded;
+        ProposalVoteRegistered: UpdatedMessage;
         PermissionsChanged: PermissionsChanged;
         GroupVisibilityChanged: GroupVisibilityChanged;
         GroupInviteCodeChanged: GroupInviteCodeChanged;
@@ -394,7 +396,7 @@ type ReplyContext =
         event_index: EventIndex;
     };
 
-type GiphyImageVariant = 
+type GiphyImageVariant =
     record {
         width: nat32;
         height: nat32;
@@ -556,7 +558,7 @@ type GroupInviteCodeChange =
         Enabled;
         Disabled;
         Reset;
-    };  
+    };
 
 type PollConfig =
     record {
@@ -594,7 +596,7 @@ type RoleChanged =
         old_role: Role;
         new_role: Role;
     };
-    
+
 type OwnershipTransferred =
     record {
         old_owner: UserId;

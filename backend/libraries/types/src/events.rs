@@ -30,6 +30,7 @@ pub enum ChatEvent {
     PollVoteRegistered(UpdatedMessage),
     PollVoteDeleted(UpdatedMessage),
     PollEnded(PollEnded),
+    ProposalVoteRegistered(UpdatedMessage),
     PermissionsChanged(PermissionsChanged),
     GroupVisibilityChanged(GroupVisibilityChanged),
     GroupInviteCodeChanged(GroupInviteCodeChanged),
@@ -46,6 +47,7 @@ impl ChatEvent {
             ChatEvent::PollVoteRegistered(v) => Some(v.event_index),
             ChatEvent::PollVoteDeleted(v) => Some(v.event_index),
             ChatEvent::PollEnded(p) => Some(p.event_index),
+            ChatEvent::ProposalVoteRegistered(v) => Some(v.event_index),
             ChatEvent::ThreadUpdated(t) => Some(t.event_index),
             _ => None,
         }
