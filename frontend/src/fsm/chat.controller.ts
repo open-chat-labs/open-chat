@@ -394,7 +394,7 @@ export class ChatController {
     }
 
     private getUsersToMakeRtcConnectionsWith(): string[] {
-        if (get(this.chat).kind === "direct_chat") {
+        if (this.chatVal.kind === "direct_chat") {
             return [this.chatId];
         }
 
@@ -1196,7 +1196,7 @@ export class ChatController {
     messageRead(messageIndex: number, messageId: bigint): void {
         messagesRead.markMessageRead(this.chatId, messageIndex, messageId);
 
-        if (get(this.chat).kind === "direct_chat") {
+        if (this.chatVal.kind === "direct_chat") {
             const rtc: WebRtcMessage = {
                 kind: "remote_user_read_message",
                 chatType: this.kind,
