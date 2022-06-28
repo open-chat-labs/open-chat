@@ -434,6 +434,7 @@ export type InitialStateResponse = {
       'chats' : Array<ChatSummary>,
       'blocked_users' : Array<UserId>,
       'timestamp' : TimestampMillis,
+      'pinned_chats' : Array<ChatId>,
     }
   } |
   { 'InternalError' : string };
@@ -600,6 +601,8 @@ export interface PermissionsChanged {
   'old_permissions' : GroupPermissions,
   'new_permissions' : GroupPermissions,
 }
+export interface PinChatRequest { 'chat_id' : ChatId }
+export type PinChatResponse = { 'Success' : null };
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
@@ -828,6 +831,8 @@ export type UnblockUserResponse = { 'Success' : null };
 export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
 export type UnmuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
+export interface UnpinChatRequest { 'chat_id' : ChatId }
+export type UnpinChatResponse = { 'Success' : null };
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,
@@ -841,10 +846,12 @@ export type UpdatesResponse = {
       'upgrades_in_progress' : Array<ChatId>,
       'chats_updated' : Array<ChatSummaryUpdates>,
       'blocked_users' : Array<UserId>,
+      'blocked_users_v2' : [] | [Array<UserId>],
       'chats_added' : Array<ChatSummary>,
       'avatar_id' : AvatarIdUpdate,
       'chats_removed' : Array<ChatId>,
       'timestamp' : TimestampMillis,
+      'pinned_chats' : [] | [Array<ChatId>],
     }
   } |
   { 'InternalError' : string };
@@ -919,6 +926,7 @@ export interface _SERVICE {
   'mute_notifications' : (arg_0: MuteNotificationsArgs) => Promise<
       MuteNotificationsResponse
     >,
+  'pin_chat' : (arg_0: PinChatRequest) => Promise<PinChatResponse>,
   'public_profile' : (arg_0: PublicProfileArgs) => Promise<
       PublicProfileResponse
     >,
@@ -950,6 +958,7 @@ export interface _SERVICE {
   'unmute_notifications' : (arg_0: UnmuteNotificationsArgs) => Promise<
       UnmuteNotificationsResponse
     >,
+  'unpin_chat' : (arg_0: UnpinChatRequest) => Promise<UnpinChatResponse>,
   'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
   'withdraw_crypto' : (arg_0: WithdrawCryptoRequest) => Promise<
       WithdrawCryptoResponse

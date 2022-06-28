@@ -13,7 +13,8 @@ fn block_user(args: Args) -> Response {
 }
 
 fn block_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.blocked_users.insert(args.user_id);
-    runtime_state.data.unpin_chat(&args.user_id.into());
+    let now = runtime_state.env.now();
+    runtime_state.data.block_user(args.user_id, now);
+    runtime_state.data.unpin_chat(&args.user_id.into(), now);
     Response::Success
 }

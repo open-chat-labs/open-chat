@@ -403,7 +403,8 @@ type UpdatesResponse =
             avatar_id: AvatarIdUpdate;
             upgrades_in_progress: vec ChatId;
             user_canister_wasm_version: opt Version;
-            pinned_chats: vec ChatId;
+            blocked_users_v2: opt vec UserId;
+            pinned_chats: opt vec ChatId;
         };
         InternalError: text;
     };

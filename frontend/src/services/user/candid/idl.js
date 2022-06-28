@@ -547,6 +547,7 @@ export const idlFactory = ({ IDL }) => {
       'chats' : IDL.Vec(ChatSummary),
       'blocked_users' : IDL.Vec(UserId),
       'timestamp' : TimestampMillis,
+      'pinned_chats' : IDL.Vec(ChatId),
     }),
     'InternalError' : IDL.Text,
   });
@@ -600,6 +601,8 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
   });
+  const PinChatRequest = IDL.Record({ 'chat_id' : ChatId });
+  const PinChatResponse = IDL.Variant({ 'Success' : IDL.Null });
   const PublicProfileArgs = IDL.Record({});
   const PublicProfile = IDL.Record({
     'bio' : IDL.Text,
@@ -786,6 +789,8 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
   });
+  const UnpinChatRequest = IDL.Record({ 'chat_id' : ChatId });
+  const UnpinChatResponse = IDL.Variant({ 'Success' : IDL.Null });
   const GroupChatUpdatesSince = IDL.Record({
     'updates_since' : TimestampMillis,
     'chat_id' : ChatId,
@@ -849,10 +854,12 @@ export const idlFactory = ({ IDL }) => {
       'upgrades_in_progress' : IDL.Vec(ChatId),
       'chats_updated' : IDL.Vec(ChatSummaryUpdates),
       'blocked_users' : IDL.Vec(UserId),
+      'blocked_users_v2' : IDL.Opt(IDL.Vec(UserId)),
       'chats_added' : IDL.Vec(ChatSummary),
       'avatar_id' : AvatarIdUpdate,
       'chats_removed' : IDL.Vec(ChatId),
       'timestamp' : TimestampMillis,
+      'pinned_chats' : IDL.Opt(IDL.Vec(ChatId)),
     }),
     'InternalError' : IDL.Text,
   });
@@ -911,6 +918,7 @@ export const idlFactory = ({ IDL }) => {
         [MuteNotificationsResponse],
         [],
       ),
+    'pin_chat' : IDL.Func([PinChatRequest], [PinChatResponse], []),
     'public_profile' : IDL.Func(
         [PublicProfileArgs],
         [PublicProfileResponse],
@@ -960,6 +968,7 @@ export const idlFactory = ({ IDL }) => {
         [UnmuteNotificationsResponse],
         [],
       ),
+    'unpin_chat' : IDL.Func([UnpinChatRequest], [UnpinChatResponse], []),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
     'withdraw_crypto' : IDL.Func(
         [WithdrawCryptoRequest],
